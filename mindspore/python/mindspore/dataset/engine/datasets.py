@@ -723,7 +723,7 @@ class Dataset:
         columns will be in the same order as specified in column_order.
 
         Args:
-            operations (Union[list[TensorOp], list[functions]]): List of operations to be
+            operations (Union[list[TensorOperation], list[functions]]): List of operations to be
                 applied on the dataset. Operations are applied in the order they appear in this list.
             input_columns (Union[str, list[str]], optional): List of the names of the columns that will be passed to
                 the first operation as input. The size of this list must match the number of
@@ -2969,7 +2969,7 @@ class MapDataset(UnionBaseDataset):
 
     Args:
         input_dataset (Dataset): Input Dataset to be mapped.
-        operations (TensorOp): A function mapping a nested structure of tensors
+        operations (Union[list[TensorOperation], list[functions]]): A function mapping a nested structure of tensors
             to another nested structure of tensor (default=None).
         input_columns (Union[str, list[str]]): List of names of the input columns
             (default=None, the operations will be applied on the first columns in the dataset).

@@ -27,11 +27,10 @@
         **返回：**
 
         SentencePieceVocab，从数据集构建的vocab。
-        
 
     .. py:method:: from_file(file_path, vocab_size, character_coverage, model_type, params)
 
-        从单词列表中构建一个SentencePiece对象。
+        从文件中构建一个SentencePiece对象。
 
         **参数：**
 
@@ -55,15 +54,13 @@
         **返回：**
 
         SentencePieceVocab，表示从文件中构建的vocab。
-        
 
     .. py:method:: save_model(vocab, path, filename)
 
         将模型保存到给定的文件路径。
 
         **参数：**
-        
+
         - **vocab** (SentencePieceVocab) - 表示一个SentencePiece对象。
         - **path** (str) - 表示存储模型的路径。
         - **filename** (str) - 表示文件名称。
-        

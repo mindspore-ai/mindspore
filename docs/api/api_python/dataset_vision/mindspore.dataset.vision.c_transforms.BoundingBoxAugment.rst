@@ -12,7 +12,7 @@ mindspore.dataset.vision.c_transforms.BoundingBoxAugment
 
     **异常：**
 
-    - **TypeError** - 如果 `transform` 不是 :class:`mindspore.dataset.vision.c_transforms.ImageTensorOperation` 的类型。
+    - **TypeError** - 如果 `transform` 不是 :class:`mindspore.dataset.vision.c_transforms` 模块中的图像处理操作。
     - **TypeError** - 如果 `ratio` 不是float类型。
     - **ValueError** - 如果 `ratio` 不在 [0, 1] 范围内。
     - **RuntimeError** - 如果给定的边界框无效。

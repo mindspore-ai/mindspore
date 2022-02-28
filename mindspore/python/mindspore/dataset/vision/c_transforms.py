@@ -282,16 +282,16 @@ class AutoContrast(ImageTensorOperation):
 
 class BoundingBoxAugment(ImageTensorOperation):
     """
-    Apply a given image transform on a random selection of bounding box regions of a given image.
+    Apply a given image processing operation on a random selection of bounding box regions of a given image.
 
     Args:
-        transform (TensorOperation): C++ transformation operator to be applied on random selection
+        transform (TensorOperation): C++ transformation operation to be applied on random selection
             of bounding box regions of a given image.
         ratio (float, optional): Ratio of bounding boxes to apply augmentation on.
             Range: [0, 1] (default=0.3).
 
     Raises:
-        TypeError: If `transform` is not of type :class:`mindspore.dataset.vision.c_transforms.ImageTensorOperation`.
+        TypeError: If `transform` is an image processing operation in :class:`mindspore.dataset.vision.c_transforms`.
         TypeError: If `ratio` is not of type float.
         ValueError: If `ratio` is not in range [0, 1].
         RuntimeError: If given bounding box is invalid.
@@ -1661,7 +1661,7 @@ class RandomResizedCrop(ImageTensorOperation):
         TypeError: If `size` is not of type integer or sequence of integer.
         TypeError: If `scale` is not of type tuple.
         TypeError: If `ratio` is not of type tuple.
-        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
@@ -1925,13 +1925,14 @@ class RandomSelectSubpolicy(ImageTensorOperation):
     Choose a random sub-policy from a policy list to be applied on the input image.
 
     Args:
-        policy (list(list(tuple(TensorOp, prob (float))))): List of sub-policies to choose from.
-            A sub-policy is a list of tuples (op, prob), where op is a TensorOp operation and prob is the probability
-            that this op will be applied, and the prob values must be in range [0, 1]. Once a sub-policy is selected,
-            each op within the sub-policy with be applied in sequence according to its probability.
+        policy (list[list[tuple[TensorOperation, float]]]): List of sub-policies to choose from.
+            A sub-policy is a list of tuple[operation, prob], where operation is a data processing operation and prob
+            is the probability that this operation will be applied, and the prob values must be in range [0, 1].
+            Once a sub-policy is selected, each operation within the sub-policy with be applied in sequence according
+            to its probability.
 
     Raises:
-        TypeError: If `policy` contains invalid TensorOp.
+        TypeError: If `policy` contains invalid data processing operations.
 
     Supported Platforms:
         ``CPU``
@@ -2007,8 +2008,8 @@ class RandomSolarize(ImageTensorOperation):
             If min=max, then invert all pixel values above min(max).
 
     Raises:
-        TypeError : If `threshold` is not a tuple.
-        ValueError: If `threshold` is not in range [0, 255].
+        TypeError : If `threshold` is not of type tuple.
+        ValueError: If `threshold` is not in range of [0, 255].
 
     Supported Platforms:
         ``CPU``
@@ -2251,9 +2252,7 @@ class Rotate(ImageTensorOperation):
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means resample method is bilinear interpolation.
-
             - Inter.NEAREST, means resample method is nearest-neighbor interpolation.
-
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
         expand (bool, optional):  Optional expansion flag (default=False). If set to True, expand the output
@@ -2270,7 +2269,7 @@ class Rotate(ImageTensorOperation):
     Raises:
         TypeError: If `degrees` is not of type integer, float or sequence.
         TypeError: If `resample` is not of type Inter.
-        TypeError: If `expand` is not of type boolean.
+        TypeError: If `expand` is not of type bool.
         TypeError: If `center` is not of type tuple.
         TypeError: If `fill_value` is not of type integer or tuple of integer.
         ValueError: If `fill_value` is not in range [0, 255].

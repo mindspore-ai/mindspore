@@ -7,13 +7,17 @@ mindspore.dataset.text
 
 `utils` 提供了一些文本处理的工具方法。
 
-
 在API示例中，常用的模块导入方法如下：
 
 .. code-block::
 
     import mindspore.dataset as ds
     from mindspore.dataset import text
+
+常用数据处理术语说明如下：
+
+- TensorOperation，所有C++实现的数据处理操作的基类。
+- TextTensorOperation，所有文本数据处理操作的基类，派生自TensorOperation。
 
 mindspore.dataset.text.transforms
 ---------------------------------

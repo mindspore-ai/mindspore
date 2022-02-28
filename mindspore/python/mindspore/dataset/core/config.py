@@ -424,34 +424,37 @@ def load(file):
 
 def set_enable_autotune(enable, json_filepath=None):
     """
-    Set the default state of AutoTune flag. If it is True, will facilitate users to improve the
-    performance for a given workload by automatically finding better settings for data pipeline.
-    Optionally save the AutoTuned data pipeline configuration to a JSON file, which
-    can be loaded with deserialize().
+    Set whether to enable AutoTune.
+
+    AutoTune is used to automatically adjust the global configuration of the data pipeline
+    according to the workload of environmental resources during the training process to
+    improve the speed of data processing.
+
+    The optimized global configuration can be saved as a JSON file by setting `json_filepath`
+    for subsequent reuse.
 
     Args:
-        enable (bool): Whether to use AutoTune feature when running data pipeline.
-        json_filepath (str, optional): The filepath where the AutoTuned data pipeline
-            configuration will be generated as a JSON file. If the file already exists,
-            it will be overwritten. If no AutoTuned data pipeline configuration is desired,
-            then set json_filepath to None (Default=None).
+        enable (bool): Whether to enable AutoTune.
+        json_filepath (str, optional): The filepath to save the optimized global configuration.
+            If the file already exists, it will be automatically overwritten. Default: None,
+            means not to save the configuration file.
 
     Raises:
-        TypeError: If enable is not a boolean data type.
-        TypeError: If json_filepath is not a str value.
-        RuntimeError: If the value of json_filepath is the empty string.
-        RuntimeError: If json_filepath a directory.
-        RuntimeError: If parent path for json_filepath does not exist.
-        RuntimeError: If parent path for json_filepath does not have write permission.
+        TypeError: If `enable` is not of type boolean.
+        TypeError: If `json_filepath` is not of type str.
+        RuntimeError: If `json_filepath` is an empty string.
+        RuntimeError: If `json_filepath` is a directory.
+        RuntimeError: If `json_filepath` does not exist.
+        RuntimeError: If `json_filepath` does not have write permission.
 
     Note:
-        When using enable is False, the value of json_filepath is ignored.
+        When `enable` is False, `json_filepath` will be ignored.
 
     Examples:
-        >>> # Enable AutoTune and save AutoTuned data pipeline configuration
+        >>> # enable AutoTune and save optimized data pipeline configuration
         >>> ds.config.set_enable_autotune(True, "/path/to/autotune_out.json")
         >>>
-        >>> # Enable AutoTune
+        >>> # enable AutoTune
         >>> ds.config.set_enable_autotune(True)
     """
     if not isinstance(enable, bool):
@@ -475,13 +478,13 @@ def set_enable_autotune(enable, json_filepath=None):
 
 def get_enable_autotune():
     """
-    Get the default state of AutoTune enabled variable.
+    Get whether AutoTune is currently enabled.
 
     Returns:
-        bool, the state of AutoTune enabled variable (default=True).
+        bool, whether AutoTune is currently enabled.
 
     Examples:
-        >>> # Get the flag of AutoTune feature.
+        >>> # get the state of AutoTune
         >>> autotune_flag = ds.config.get_enable_autotune()
     """
     return _config.get_enable_autotune()
@@ -489,18 +492,20 @@ def get_enable_autotune():
 
 def set_autotune_interval(interval):
     """
-    Set the interval (in steps) for data pipeline autotuning. Setting interval to 0
-    configures autotune to run after every epoch instead of after a certain number of steps.
-    Default value is set to 0, meaning epoch based autotuning.
+    Set the configuration adjustment interval (in steps) for AutoTune.
+
+    The default setting is 0, which will adjust the configuration after each epoch.
+    Otherwise, the configuration will be adjusted every `interval` steps.
 
     Args:
-        interval (int): Interval (in steps) to serve as gap for consecutive AutoTune runs.
+        interval (int): Interval (in steps) to adjust the configuration of the data pipeline.
 
     Raises:
-        ValueError: If interval is invalid when interval < 0 or interval > MAX_INT_32.
+        TypeError: If `interval` is not of type int.
+        ValueError: If `interval` is not non-negative.
 
     Examples:
-        >>> # Set a new global configuration value for the autotuning interval.
+        >>> # set a new interval for AutoTune
         >>> ds.config.set_autotune_interval(30)
     """
     if not isinstance(interval, int):
@@ -512,14 +517,13 @@ def set_autotune_interval(interval):
 
 def get_autotune_interval():
     """
-    Get the global configuration of pipeline autotuning step interval.
+    Get the current configuration adjustment interval (in steps) for AutoTune.
 
     Returns:
-        int, interval (in steps) for data pipeline autotuning.
+        int, the configuration adjustment interval (in steps) for AutoTune.
 
     Examples:
-        >>> # Get the global configuration of the autotuning interval.
-        >>> # If set_autotune_interval() is never called before, the default value(30) will be returned.
+        >>> # get the global configuration of the autotuning interval
         >>> autotune_interval = ds.config.get_autotune_interval()
     """
     return _config.get_autotune_interval()

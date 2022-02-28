@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Validators for TensorOps.
+"""Validators for data processing operations.
 """
 from functools import wraps
 import inspect

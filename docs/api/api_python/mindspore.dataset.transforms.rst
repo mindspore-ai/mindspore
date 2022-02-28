@@ -17,6 +17,11 @@ mindspore.dataset.transforms
     from mindspore.dataset.transforms import c_transforms
     from mindspore.dataset.transforms import py_transforms
 
+常用数据处理术语说明如下：
+
+- TensorOperation，所有C++实现的数据处理操作的基类。
+- PyTensorOperation，所有Python实现的数据处理操作的基类。
+
 mindspore.dataset.transforms.c_transforms
 -----------------------------------------
 

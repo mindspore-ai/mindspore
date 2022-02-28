@@ -8,3 +8,8 @@ API样例中常用的导入模块如下：
 
     import mindspore.dataset as ds
     import mindspore.dataset.audio.transforms as audio
+
+常用数据处理术语说明如下：
+
+- TensorOperation，所有C++实现的数据处理操作的基类。
+- AudioTensorOperation，所有音频数据处理操作的基类，派生自TensorOperation。

@@ -17,3 +17,16 @@ mindspore.dataset.vision.c_transforms.RandomResizedCropWithBBox
       - Inter.BICUBIC，双三次插值。
 
     - **max_attempts** (int, optional):  生成随机裁剪位置的最大尝试次数，超过该次数时将使用中心裁剪，默认值：10。
+
+    **异常：**
+
+    - **TypeError** - 当 `size` 的类型不为整型或整型序列。
+    - **TypeError** - 当 `scale` 的类型不为元组。
+    - **TypeError** - 当 `ratio` 的类型不为元组。
+    - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
+    - **TypeError** - 当 `max_attempts` 的类型不为整型。
+    - **ValueError** - 当 `size` 不为正数。
+    - **ValueError** - 当 `scale` 为负数。
+    - **ValueError** - 当 `ratio` 为负数。
+    - **ValueError** - 当 `max_attempts` 不为正数。
+    - **RuntimeError** 当输入图像的shape不为<H, W>或<H, W, C>。

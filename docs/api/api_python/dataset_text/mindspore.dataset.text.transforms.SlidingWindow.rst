@@ -12,6 +12,6 @@ mindspore.dataset.text.transforms.SlidingWindow
 
     **异常：**
 
-    - **TypeError** - 参数 `width` 的类型不是int。
-    - **ValueError** - 参数 `width` 的值不是正数。
-    - **TypeError** - 参数 `axis` 的类型不是int。
+    - **TypeError** - 参数 `width` 的类型不为整型。
+    - **ValueError** - 参数 `width` 不为正数。
+    - **TypeError** - 参数 `axis` 的类型不为整型。

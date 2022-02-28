@@ -105,7 +105,7 @@ class Vocab:
     @check_from_dataset
     def from_dataset(cls, dataset, columns=None, freq_range=None, top_k=None, special_tokens=None, special_first=True):
         """
-        Build a vocab from a dataset.
+        Build a Vocab from a dataset.
 
         This would collect all unique words in a dataset and return a vocab within
         the frequency range specified by user in freq_range. User would be warned if no words fall into the frequency.
@@ -130,7 +130,7 @@ class Vocab:
                 is specified and special_first is set to True, special_tokens will be prepended (default=True).
 
         Returns:
-            Vocab, vocab built from the dataset.
+            Vocab, Vocab object built from the dataset.
 
         Examples:
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
@@ -139,6 +139,7 @@ class Vocab:
             ...                                 special_first=True)
             >>> dataset = dataset.map(operations=text.Lookup(vocab, "<unk>"), input_columns=["text"])
         """
+
         vocab = Vocab()
         vocab.c_vocab = dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
         return vocab
@@ -157,11 +158,12 @@ class Vocab:
                 is specified and special_first is set to True, special_tokens will be prepended (default=True).
 
         Returns:
-            Vocab, vocab built from the `list`.
+            Vocab, Vocab object built from the list.
 
         Examples:
             >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
         """
+
         if special_tokens is None:
             special_tokens = []
         vocab = Vocab()
@@ -172,7 +174,7 @@ class Vocab:
     @check_from_file
     def from_file(cls, file_path, delimiter="", vocab_size=None, special_tokens=None, special_first=True):
         """
-        Build a vocab object from a list of word.
+        Build a vocab object from a file.
 
         Args:
             file_path (str): Path to the file which contains the vocab list.
@@ -186,7 +188,7 @@ class Vocab:
                 special_tokens will be prepended (default=True).
 
         Returns:
-            Vocab, vocab built from the file.
+            Vocab, Vocab object built from the file.
 
         Examples:
             >>> # Assume vocab file contains the following content:
@@ -203,6 +205,7 @@ class Vocab:
             >>> # Finally, there are 5 words in the vocab: "<pad>", "<unk>", "apple", "banana", "cat".
             >>> vocabulary = vocab.vocab()
         """
+
         if vocab_size is None:
             vocab_size = -1
         if special_tokens is None:
@@ -222,11 +225,12 @@ class Vocab:
                 to start from 0 and be continuous. ValueError will be raised if id is negative.
 
         Returns:
-            Vocab, vocab built from the `dict`.
+            Vocab, Vocab object built from the dict.
 
         Examples:
             >>> vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
         """
+
         vocab = Vocab()
         vocab.c_vocab = cde.Vocab.from_dict(word_dict)
         return vocab
@@ -280,7 +284,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
     @check_from_file_sentencepiece
     def from_file(cls, file_path, vocab_size, character_coverage, model_type, params):
         """
-        Build a SentencePiece object from a list of word.
+        Build a SentencePiece object from a file.
 
         Args:
             file_path(list): Path to the file which contains the SentencePiece list.
@@ -315,6 +319,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             >>> vocab = text.SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
             ...                                           SentencePieceModel.UNIGRAM, {})
         """
+
         return super().from_file(file_path, vocab_size, character_coverage,
                                  DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
 
@@ -335,6 +340,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             ...                                           SentencePieceModel.UNIGRAM, {})
             >>> text.SentencePieceVocab.save_model(vocab, "./", "m.model")
         """
+
         super().save_model(vocab, path, filename)
 
 
@@ -390,6 +396,7 @@ class JiebaMode(IntEnum):
     - JiebaMode.MP: tokenize with MPSegment algorithm.
     - JiebaMode.HMM: tokenize with Hidden Markov Model Segment algorithm.
     """
+
     MIX = 0
     MP = 1
     HMM = 2
@@ -408,6 +415,7 @@ class NormalizeForm(IntEnum):
     - NormalizeForm.NFD: normalize with Normalization Form D.
     - NormalizeForm.NFKD: normalize with Normalization Form KD.
     """
+
     NONE = 0
     NFC = 1
     NFKC = 2
@@ -429,6 +437,7 @@ class SentencePieceModel(IntEnum):
     - SentencePieceModel.CHAR: refers to char based sentencePiece Model type.
     - SentencePieceModel.WORD: refers to word based sentencePiece Model type.
     """
+
     UNIGRAM = 0
     BPE = 1
     CHAR = 2
@@ -452,19 +461,21 @@ class SPieceTokenizerOutType(IntEnum):
     - SPieceTokenizerOutType.STRING: means output type of SentencePice Tokenizer is string.
     - SPieceTokenizerOutType.INT: means output type of SentencePice Tokenizer is int.
     """
+
     STRING = 0
     INT = 1
 
 
 class SPieceTokenizerLoadType(IntEnum):
     """
-    An enumeration for SPieceTokenizerLoadType.
+    An enumeration for loading type of SentencePieceTokenizer.
 
-    Possible enumeration values are: SPieceTokenizerLoadType.FILE, SPieceTokenizerLoadTypeMODEL.
+    Possible enumeration values are: SPieceTokenizerLoadType.FILE, SPieceTokenizerLoadType.MODEL.
 
     - SPieceTokenizerLoadType.FILE: Load sentencepiece tokenizer from local sentencepiece vocab file.
     - SPieceTokenizerLoadType.MODEL: Load sentencepiece tokenizer from sentencepiece vocab instance.
     """
+
     FILE = 0
     MODEL = 1
 

@@ -10,6 +10,7 @@
 
     - **file_name** (str) - 转换生成的MindRecord文件路径。
     - **shard_num** (int，可选) - 生成MindRecord的文件个数。默认值：1。取值范围为[1, 1000]。
+    - **overwrite** (bool，可选) - 当指定目录存在同名文件时是否覆盖写。默认值：False。
 
     **异常：**
 

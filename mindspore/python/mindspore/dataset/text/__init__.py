@@ -23,6 +23,11 @@ Common imported modules in corresponding API examples are as follows:
 
     import mindspore.dataset as ds
     from mindspore.dataset import text
+
+Descriptions of common data processing terms are as follows:
+
+- TensorOperation, the base class of all data processing operations implemented in C++.
+- TextTensorOperation, the base class of all text processing operations. It is a derived class of TensorOperation.
 """
 import platform
 from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, \

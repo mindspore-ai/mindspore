@@ -27,6 +27,18 @@
 
     numpy.ndarray，带边界框和类别置信度的图像。
 
+    **异常：**
+
+    - **ImportError** - 当未安装opencv-python库。
+    - **AssertionError** - 当 `image` 的格式不为(H, W, C)或(C, H, W)。
+    - **AssertionError** - 当 `bboxes` 的格式不为(N, 4)或(N, 5)。
+    - **AssertionError** - 当 `labels` 的格式不为(N, 1)。
+    - **AssertionError** - 当 `segm` 的格式不为(M, H, W)。
+    - **AssertionError** - 当 `class_names` 的类型不为列表、元组或字典。
+    - **AssertionError** - 当 `bbox_color` 不为(B, G, R)格式的元组。
+    - **AssertionError** - 当 `text_color` 不为(B, G, R)格式的元组。
+    - **AssertionError** - 当 `mask_color` 不为(B, G, R)格式的元组。
+
     **imshow_det_bbox在VOC2012数据集的使用图示：**
 
     .. image:: browse_dataset.png

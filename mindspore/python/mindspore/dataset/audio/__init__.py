@@ -24,6 +24,11 @@ Common imported modules in corresponding API examples are as follows:
 
     import mindspore.dataset as ds
     import mindspore.dataset.audio.transforms as audio
+
+Descriptions of common data processing terms are as follows:
+
+- TensorOperation, the base class of all data processing operations implemented in C++.
+- AudioTensorOperation, the base class of all audio processing operations. It is a derived class of TensorOperation.
 """
 from . import transforms
 from .utils import *

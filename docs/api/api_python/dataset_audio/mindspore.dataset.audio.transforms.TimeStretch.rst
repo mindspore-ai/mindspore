@@ -13,6 +13,16 @@ mindspore.dataset.audio.transforms.TimeStretch
     - **n_freq** (int, 可选) - STFT中的滤波器组数，默认值：201。
     - **fixed_rate** (float, 可选) - 频谱在时域加快或减缓的比例，默认值：None，表示保持原始速率。
 
+    **异常：**
+
+    - **TypeError** - 当 `hop_length` 的类型不为整型。
+    - **ValueError** - 当 `hop_length` 不为正数。
+    - **TypeError** - 当 `n_freq` 的类型不为整型。
+    - **ValueError** - 当 `n_freq` 不为正数。
+    - **TypeError** - 当 `fixed_rate` 的类型不为浮点型。
+    - **ValueError** - 当 `fixed_rate` 不为正数。
+    - **RuntimeError** - 当输入音频的shape不为<..., freq, num_frame, complex=2>。
+
     .. image:: time_stretch_rate1.5.png
 
     .. image:: time_stretch_original.png

@@ -10,3 +10,7 @@ mindspore.dataset.vision.c_transforms.Rescale
     - **rescale** (float) - 缩放因子。
     - **shift** (float) - 平移因子。
 
+    **异常：**
+
+    - **TypeError** - 当 `rescale` 的类型不为浮点型。
+    - **TypeError** - 当 `shift` 的类型不为浮点型。

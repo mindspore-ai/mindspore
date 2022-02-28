@@ -125,7 +125,7 @@ class AmplitudeToDB(AudioTensorOperation):
         top_db (float, optional): Minimum cut-off decibels, which must be non-negative. Default: 80.0.
 
     Raises:
-        TypeError: If `stype` is not of type ScaleType.
+        TypeError: If `stype` is not of type :class:`mindspore.dataset.audio.utils.ScaleType`.
         TypeError: If `ref_value` is not of type float.
         ValueError: If `ref_value` is not a positive number.
         TypeError: If `amin` is not of type float.
@@ -870,9 +870,9 @@ class FrequencyMasking(AudioTensorOperation):
     Raises:
         TypeError: If `iid_masks` is not of type bool.
         TypeError: If `freq_mask_param` is not of type integer.
-        ValueError: If `freq_mask_param` is out of range of the length of audio waveform in frequency domain.
+        ValueError: If `freq_mask_param` is greater than the length of audio waveform in frequency domain.
         TypeError: If `mask_start` is not of type integer.
-        ValueError: If `mask_start` is out of range.
+        ValueError: If `mask_start` is a negative number.
         TypeError: If `mask_value` is not of type float.
         ValueError: If `mask_value` is a negative number.
         RuntimeError: If input tensor is not in shape of <..., freq, time>.
@@ -1492,9 +1492,9 @@ class TimeMasking(AudioTensorOperation):
     Raises:
         TypeError: If `iid_masks` is not of type bool.
         TypeError: If `time_mask_param` is not of type integer.
-        ValueError: If `time_mask_param` is out of range of the length of audio waveform in time domain.
+        ValueError: If `time_mask_param` is greater than the length of audio waveform in time domain.
         TypeError: If `mask_start` is not of type integer.
-        ValueError: If `mask_start` is out of range.
+        ValueError: If `mask_start` a negative number.
         TypeError: If `mask_value` is not of type float.
         ValueError: If `mask_value` is a negative number.
         RuntimeError: If input tensor is not in shape of <..., freq, time>.

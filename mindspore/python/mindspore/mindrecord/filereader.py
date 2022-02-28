@@ -75,7 +75,7 @@ class FileReader:
         Yield a batch of data according to columns at a time.
 
         Yields:
-            Dict: a batch whose keys are the same as columns.
+            dict, a batch whose keys are the same as columns.
 
         Raises:
             MRMUnsupportedSchemaError: If schema is invalid.
