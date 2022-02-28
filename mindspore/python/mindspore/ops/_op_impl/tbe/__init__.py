@@ -372,6 +372,7 @@ from .flatten_ds import _flatten_ds_tbe
 from .roi_align import _roi_align_tbe
 from .roi_align_grad import _roi_align_grad_tbe
 from .bounding_box_decode import _bounding_box_decode_tbe
+from .bounding_box_decode_ds import _bounding_box_decode_ds_tbe
 from .bounding_box_encode import _bounding_box_encode_tbe
 from .check_valid import _check_valid_tbe
 from .iou import _iou_tbe

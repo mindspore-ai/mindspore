@@ -155,7 +155,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         return anchor_box
 
 
-class BoundingBoxDecode(PrimitiveWithInfer):
+class BoundingBoxDecode(Primitive):
     """
     Decodes bounding boxes locations.
 
@@ -210,19 +210,6 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         if max_shape is not None:
             validator.check_value_type('max_shape', max_shape, [tuple], self.name)
             validator.check_equal_int(len(max_shape), 2, "max_shape len", self.name)
-
-    def infer_shape(self, anchor_box, deltas):
-        validator.check('anchor_box shape[0]', anchor_box[0], 'deltas shape[0]', deltas[0], Rel.EQ, self.name)
-        validator.check("anchor_box rank", len(anchor_box), "", 2, Rel.EQ, self.name)
-        validator.check("deltas rank", len(deltas), "", 2, Rel.EQ, self.name)
-        validator.check_equal_int(anchor_box[1], 4, 'anchor_box shape[1]', self.name)
-        validator.check_equal_int(deltas[1], 4, 'deltas shape[1]', self.name)
-        return anchor_box
-
-    def infer_dtype(self, anchor_box, deltas):
-        args = {"anchor_box": anchor_box, "deltas": deltas}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return anchor_box
 
 
 class CheckValid(PrimitiveWithInfer):
