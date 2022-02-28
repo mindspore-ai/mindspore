@@ -29,6 +29,7 @@ from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg
                         CusMatMulCubeDenseRight, CusMatMulCubeFraczLeftCast, Im2Col, NewIm2Col,
                         LoadIm2Col, UpdateThorGradient, Cholesky, CholeskyTrsm,
                         DetTriangle, ProdForceSeA)
+from ._ms_hybrid import (ms_hybrid)
 from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Stack, Unpack, Unstack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, Ones, Zeros, GatherNd, GatherV2, Gather, SparseGatherV2, InvertPermutation,
@@ -585,6 +586,11 @@ __sponge__ = [
     "Constrain",
 ]
 
+__custom__ = [
+    "ms_hybrid",
+]
+
 __all__.extend(__sponge__)
+__all__.extend(__custom__)
 
 __all__.sort()
