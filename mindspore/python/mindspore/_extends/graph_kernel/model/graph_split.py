@@ -78,6 +78,60 @@ def may_stitch(dom, a, r, stitch_axis_size, stitch_buffer_size):
     return False
 
 
+class CommonPattern:
+    """common fuse strategies across various devices"""
+
+    @staticmethod
+    def reshape(dom):
+        """fuse strategy for reshape dom"""
+        if dom.pattern != PrimLib.RESHAPE:
+            return None
+        min_area, forward_fuse = None, False
+        for a, _ in dom.out_relations.items():
+            if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
+                    (min_area is None or a.pattern < min_area.pattern):
+                min_area = a
+        for a, _ in dom.in_relations.items():
+            if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
+                    len(dom.ops[0].inputs[0].to_ops) == 1 and not a.is_output and \
+                    (min_area is None or a.pattern < min_area.pattern):
+                min_area, forward_fuse = a, True
+        return ([min_area], forward_fuse) if min_area else None
+
+    @staticmethod
+    def elemwise_depth(dom):
+        """fuse strategy in depth for elemwise dom"""
+        if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.in_relations) != 1:
+            return None
+        a, r = list(dom.in_relations.items())[0]
+        if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or r != PrimLib.ELEMWISE or \
+                a.dom_op().output.shape != dom.dom_op().output.shape:
+            return None
+        return [a], True
+
+    @staticmethod
+    def elemwise_width(dom):
+        """fuse strategy in width for elemwise dom"""
+        if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST):
+            return None
+        fused = []
+        for a, r in dom.in_relations.items():
+            if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_acyclic(dom) and \
+                    a.dom_op().output.shape == dom.dom_op().output.shape:
+                fused.append(a)
+        return fused, True
+
+    @staticmethod
+    def assign(dom):
+        """fuse strategy for assign dom"""
+        if len(dom.ops) != 1 or dom.dom_op().prim != "Assign":
+            return None
+        fused = []
+        for a, _ in dom.in_relations.items():
+            fused.append(a)
+        return fused, True
+
+
 class GraphSplitByPattern:
     """Graph splitter"""
 
@@ -306,6 +360,7 @@ class GraphSplitByPattern:
         self.flags = flags
         self.enable_recompute = self.flags.get("enable_recompute_fusion", False)
         self.enable_stitch_fusion = self.flags.get("enable_stitch_fusion", False)
+        self.enable_horizontal_fusion = self.flags.get("enable_horizontal_fusion", False)
         self.reach_tab = self.ReachTable(len(graph.ops) + 1 if self.enable_recompute else len(graph.ops))
         self.area_map = {}
         _, outputs = graph.deduce_parameters()
@@ -694,40 +749,6 @@ class GraphSplitGpu(GraphSplitByPattern):
     def pattern_fuse(self, fuse_func=None):
         """fuse Areas by pattern"""
 
-        def _reshape(dom):
-            if dom.pattern != PrimLib.RESHAPE:
-                return None
-            min_area, forward_fuse = None, False
-            for a, _ in dom.out_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
-                        (min_area is None or a.pattern < min_area.pattern):
-                    min_area = a
-            for a, _ in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
-                        len(dom.ops[0].inputs[0].to_ops) == 1 and not a.is_output and \
-                        (min_area is None or a.pattern < min_area.pattern):
-                    min_area, forward_fuse = a, True
-            return ([min_area], forward_fuse) if min_area else None
-
-        def _elemwise_depth(dom):
-            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.in_relations) != 1:
-                return None
-            a, r = list(dom.in_relations.items())[0]
-            if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or r != PrimLib.ELEMWISE or \
-                    a.dom_op().output.shape != dom.dom_op().output.shape:
-                return None
-            return [a], True
-
-        def _elemwise_width(dom):
-            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST):
-                return None
-            fused = []
-            for a, r in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_acyclic(dom) and \
-                        a.dom_op().output.shape == dom.dom_op().output.shape:
-                    fused.append(a)
-            return fused, True
-
         def _broadcast_pat_exclude(dom, a, r):
             if a.pattern == PrimLib.REDUCE:
                 return dom.pattern > PrimLib.ELEMWISE or r > PrimLib.ELEMWISE
@@ -846,14 +867,6 @@ class GraphSplitGpu(GraphSplitByPattern):
             for a, _ in dom.in_relations.items():
                 if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and len(a.ops) <= self.TRANSPOSE_FUSE_DEPTH:
                     fused.append(a)
-            return fused, True
-
-        def _assign(dom):
-            if len(dom.ops) != 1 or dom.dom_op().prim != "Assign":
-                return None
-            fused = []
-            for a, _ in dom.in_relations.items():
-                fused.append(a)
             return fused, True
 
         def _strided_slice(dom):
@@ -991,13 +1004,35 @@ class GraphSplitGpu(GraphSplitByPattern):
                     return [a], True
             return None
 
+        def _h_broadcast(dom, a):
+            if dom.pattern > PrimLib.BROADCAST:
+                return None
+            return a.pattern <= PrimLib.BROADCAST and dom.ops[0].output.shape == a.ops[0].output.shape
+
+        def _h_reduce(dom, a):
+            if dom.pattern != PrimLib.REDUCE or dom.stitch_info.stitch_ops:
+                return None
+            dom_op = dom.ops[0]
+            if not PrimLib.is_reduce(dom_op) or _is_atomic_add_available(dom):
+                return None
+            op = a.ops[0]
+            return a.pattern == PrimLib.REDUCE and not a.stitch_info.stitch_ops and \
+                PrimLib.is_reduce(op) and dom_op.inputs[0].shape == op.inputs[0].shape and \
+                dom_op.attrs.get("reduce_axis") == op.attrs.get("reduce_axis")
+
+        def _h_opaque(dom, a):
+            if dom.ops[0].prim not in {"StridedSlice"}:
+                return None
+            return a.ops[0].prim == dom.ops[0].prim and dom.ops[0].output.shape == a.ops[0].output.shape and \
+                dom.ops[0].inputs[0].shape == a.ops[0].inputs[0].shape
+
         def _fuse_loop():
             changed = True
             while changed:
-                changed = self.fuse(_reshape)
-                changed = self.fuse(_assign) or changed
-                changed = self.fuse(_elemwise_depth) or changed
-                changed = self.fuse(_elemwise_width) or changed
+                changed = self.fuse(CommonPattern.reshape)
+                changed = self.fuse(CommonPattern.assign) or changed
+                changed = self.fuse(CommonPattern.elemwise_depth) or changed
+                changed = self.fuse(CommonPattern.elemwise_width) or changed
                 changed = self.fuse(_reduce_depth) or changed
                 changed = self.fuse(_reduce_width) or changed
                 changed = self.fuse(_broadcast_depth) or changed
@@ -1010,11 +1045,15 @@ class GraphSplitGpu(GraphSplitByPattern):
                 if self.enable_stitch_fusion:
                     changed = self.fuse(_reduce_stitch) or changed
             self.fuse(_transpose)
+            if self.enable_horizontal_fusion:
+                self.hfuse(_h_broadcast)
+                self.hfuse(_h_reduce)
+                self.hfuse(_h_opaque)
 
         def _fuse_once(fuse_func):
-            if fuse_func(_reshape) or fuse_func(_elemwise_depth) or fuse_func(_elemwise_width) or \
-                    fuse_func(_reduce_depth) or fuse_func(_reduce_width) or fuse_func(_broadcast_depth) or \
-                    fuse_func(_broadcast_width):
+            if fuse_func(CommonPattern.reshape) or fuse_func(CommonPattern.elemwise_depth) or \
+                    fuse_func(CommonPattern.elemwise_width) or fuse_func(_reduce_depth) or \
+                    fuse_func(_reduce_width) or fuse_func(_broadcast_depth) or fuse_func(_broadcast_width):
                 return
             if fuse_func(_reduce_output) or (self.enable_stitch_fusion and fuse_func(_reduce_stitch)):
                 return
@@ -1056,40 +1095,6 @@ class GraphSplitAscend(GraphSplitByPattern):
             op = dom.dom_op()
             iter_size = tensor_size(op.output if not PrimLib.is_reduce(op) else op.inputs[0])
             return iter_size > 1024
-
-        def _reshape(dom):
-            if dom.pattern != PrimLib.RESHAPE:
-                return None
-            min_area, forward_fuse = None, False
-            for a, _ in dom.out_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
-                        (min_area is None or a.pattern < min_area.pattern):
-                    min_area = a
-            for a, _ in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
-                        len(dom.ops[0].inputs[0].to_ops) == 1 and not a.is_output and \
-                        (min_area is None or a.pattern < min_area.pattern):
-                    min_area, forward_fuse = a, True
-            return ([min_area], forward_fuse) if min_area else None
-
-        def _elemwise_depth(dom):
-            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.in_relations) != 1:
-                return None
-            a, r = list(dom.in_relations.items())[0]
-            if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or r != PrimLib.ELEMWISE or \
-                    a.dom_op().output.shape != dom.dom_op().output.shape:
-                return None
-            return [a], True
-
-        def _elemwise_width(dom):
-            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST):
-                return None
-            fused = []
-            for a, r in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_acyclic(dom) and \
-                        a.dom_op().output.shape == dom.dom_op().output.shape:
-                    fused.append(a)
-            return fused, True
 
         def _broadcast_pat_exclude(dom, a, r):
             if _likely_multicore(a) and (dom.is_output or len(dom.ops) > self.BROADCAST_FUSE_DEPTH):
@@ -1235,21 +1240,13 @@ class GraphSplitAscend(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
-        def _assign(dom):
-            if len(dom.ops) != 1 or dom.dom_op().prim != "Assign":
-                return None
-            fused = []
-            for a, _ in dom.in_relations.items():
-                fused.append(a)
-            return fused, True
-
         def _fuse_loop():
             changed = True
             while changed:
-                changed = self.fuse(_reshape)
-                changed = self.fuse(_assign) or changed
-                changed = self.fuse(_elemwise_depth) or changed
-                changed = self.fuse(_elemwise_width) or changed
+                changed = self.fuse(CommonPattern.reshape)
+                changed = self.fuse(CommonPattern.assign) or changed
+                changed = self.fuse(CommonPattern.elemwise_depth) or changed
+                changed = self.fuse(CommonPattern.elemwise_width) or changed
                 changed = self.fuse(_reduce_depth) or changed
                 changed = self.fuse(_reduce_width) or changed
                 changed = self.fuse(_broadcast_depth) or changed
@@ -1261,10 +1258,10 @@ class GraphSplitAscend(GraphSplitByPattern):
             self.fuse(_transdata)
 
         def _fuse_once(fuse_func):
-            if fuse_func(_reshape) or fuse_func(_elemwise_depth) or fuse_func(_elemwise_width) or \
-                    fuse_func(_reduce_depth) or fuse_func(_reduce_width) or fuse_func(_broadcast_depth) or \
-                    fuse_func(_broadcast_width) or fuse_func(_matmul_depth) or fuse_func(_reduce_output) or \
-                    fuse_func(_transdata):
+            if fuse_func(CommonPattern.reshape) or fuse_func(CommonPattern.elemwise_depth) or \
+                    fuse_func(CommonPattern.elemwise_width) or fuse_func(_reduce_depth) or \
+                    fuse_func(_reduce_width) or fuse_func(_broadcast_depth) or fuse_func(_broadcast_width) or \
+                    fuse_func(_matmul_depth) or fuse_func(_reduce_output) or fuse_func(_transdata):
                 pass
 
         if fuse_func is None:
@@ -1285,39 +1282,6 @@ class GraphSplitCpu(GraphSplitByPattern):
 
     def pattern_fuse(self, fuse_func=None):
         """fuse Areas by pattern"""
-        def _reshape(dom):
-            if dom.pattern != PrimLib.RESHAPE:
-                return None
-            min_area, forward_fuse = None, False
-            for a, _ in dom.out_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
-                        (min_area is None or a.pattern < min_area.pattern):
-                    min_area = a
-            for a, _ in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
-                        len(dom.ops[0].inputs[0].to_ops) == 1 and not a.is_output and \
-                        (min_area is None or a.pattern < min_area.pattern):
-                    min_area, forward_fuse = a, True
-            return ([min_area], forward_fuse) if min_area else None
-
-        def _elemwise_depth(dom):
-            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.in_relations) != 1:
-                return None
-            a, r = list(dom.in_relations.items())[0]
-            if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or r != PrimLib.ELEMWISE or \
-                    a.dom_op().output.shape != dom.dom_op().output.shape:
-                return None
-            return [a], True
-
-        def _elemwise_width(dom):
-            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST):
-                return None
-            fused = []
-            for a, r in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_acyclic(dom) and \
-                        a.dom_op().output.shape == dom.dom_op().output.shape:
-                    fused.append(a)
-            return fused, True
 
         def _broadcast_pat_exclude(dom, a, r):
             if a.pattern == PrimLib.REDUCE:
@@ -1350,14 +1314,6 @@ class GraphSplitCpu(GraphSplitByPattern):
                 return True
             return a.pattern > PrimLib.ELEMWISE or r > PrimLib.REDUCE or r == PrimLib.BROADCAST
 
-        def _reduce_depth(dom):
-            if dom.pattern != PrimLib.REDUCE or len(dom.in_relations) != 1:
-                return None
-            a, r = list(dom.in_relations.items())[0]
-            if _reduce_pat_exclude(dom, a, r) or len(a.out_relations) != 1:
-                return None
-            return [a], True
-
         def _reduce_width(dom):
             if dom.pattern != PrimLib.REDUCE:
                 return None
@@ -1367,31 +1323,31 @@ class GraphSplitCpu(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
-        def _assign(dom):
-            if len(dom.ops) != 1 or dom.dom_op().prim != "Assign":
+        def _reduce_depth(dom):
+            if dom.pattern != PrimLib.REDUCE or len(dom.in_relations) != 1:
                 return None
-            fused = []
-            for a, _ in dom.in_relations.items():
-                fused.append(a)
-            return fused, True
+            a, r = list(dom.in_relations.items())[0]
+            if _reduce_pat_exclude(dom, a, r) or len(a.out_relations) != 1:
+                return None
+            return [a], True
 
         def _fuse_loop():
             changed = True
             while changed:
                 changed = False
-                changed = self.fuse(_reshape) or changed
-                changed = self.fuse(_assign) or changed
-                changed = self.fuse(_elemwise_depth) or changed
-                changed = self.fuse(_elemwise_width) or changed
+                changed = self.fuse(CommonPattern.reshape) or changed
+                changed = self.fuse(CommonPattern.assign) or changed
+                changed = self.fuse(CommonPattern.elemwise_depth) or changed
+                changed = self.fuse(CommonPattern.elemwise_width) or changed
                 changed = self.fuse(_reduce_depth) or changed
                 changed = self.fuse(_reduce_width) or changed
                 changed = self.fuse(_broadcast_depth) or changed
                 changed = self.fuse(_broadcast_width) or changed
 
         def _fuse_once(fuse_func):
-            if fuse_func(_reshape) or fuse_func(_elemwise_depth) or fuse_func(_elemwise_width) or \
-                    fuse_func(_reduce_depth) or fuse_func(_reduce_width) or fuse_func(_broadcast_depth) or \
-                    fuse_func(_broadcast_width):
+            if fuse_func(CommonPattern.reshape) or fuse_func(CommonPattern.elemwise_depth) or \
+                    fuse_func(CommonPattern.elemwise_width) or fuse_func(_reduce_depth) or \
+                    fuse_func(_reduce_width) or fuse_func(_broadcast_depth) or fuse_func(_broadcast_width):
                 return
 
         if fuse_func is None:
