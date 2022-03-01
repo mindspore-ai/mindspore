@@ -38,6 +38,7 @@ class LossMonitor(Callback):
 
     Raises:
         ValueError: If per_print_times is not an integer or less than zero.
+        ValueError: If has_trained_epoch is not an integer or less than zero.
 
     Examples:
         >>> from mindspore import Model, nn

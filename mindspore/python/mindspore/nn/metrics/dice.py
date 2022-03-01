@@ -73,7 +73,7 @@ class Dice(Metric):
 
         Raises:
             ValueError: If the number of the inputs is not 2.
-            RuntimeError: If y_pred and y do not have the same shape.
+            ValueError: If y_pred and y do not have the same shape.
         """
         if len(inputs) != 2:
             raise ValueError("For 'Dice.update', it needs 2 inputs (predicted value, true value), "

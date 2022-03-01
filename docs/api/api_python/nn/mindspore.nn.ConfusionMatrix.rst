@@ -31,10 +31,6 @@ mindspore.nn.ConfusionMatrix
 
         numpy.ndarray，计算的结果。
 
-        **异常：**
-
-        - **RuntimeError** - 没有先调用update方法。
-
     .. py:method:: update(*inputs)
 
         使用y_pred和y更新内部评估结果。
@@ -46,5 +42,6 @@ mindspore.nn.ConfusionMatrix
 
         **异常：**
 
-        - **RuntimeError** - 没有先调用update方法。
+        - **ValueError** - 输入参数的数量不等于2。
+        - **ValueError** - 如果预测值和标签的维度不一致。
         
