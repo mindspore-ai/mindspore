@@ -353,7 +353,7 @@ bool LiteOpActor::NeedCastData(Tensor *dst_tensor, Tensor *src_tensor) {
 }
 
 int LiteOpActor::CastTensorInputData(Tensor *dst, Tensor *src) {
-  dst->MallocData();
+  dst->ReallocData();
   dst->ResetRefCount();
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   if (dst->shape() != src->shape()) {
