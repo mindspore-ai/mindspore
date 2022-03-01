@@ -56,8 +56,8 @@ class NodeOffloadPass : public IRTreePass {
     std::vector<std::shared_ptr<DatasetNode>> nodes_to_offload_;
     /// \brief Vector of supported offload operations
     const std::set<std::string> supported_ops_{
-      "HwcToChw",           "Normalize", "RandomColorAdjust", "RandomHorizontalFlip", "RandomSharpness",
-      "RandomVerticalFlip", "Rescale"};
+      "HwcToChw",        "Normalize",          "RandomColorAdjust", "RandomHorizontalFlip",
+      "RandomSharpness", "RandomVerticalFlip", "Rescale",           "TypeCast"};
     /// \brief std::map indicating if the map op for the input column is at the end of the pipeline
     std::map<std::string, bool> end_of_pipeline_;
     /// \brief bool indicating whether the auto_offload config option is enabled

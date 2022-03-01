@@ -369,6 +369,22 @@ class Normalize(nn.Cell):
         return x
 
 
+class TypeCast(nn.Cell):
+    """
+    Applies TypeCast transform on given input tensors.
+    """
+
+    def __init__(self, data_type_str):
+        super(TypeCast, self).__init__()
+
+        self.cast = P.Cast()
+        self.data_type = mstype.typing.str_to_type(data_type_str)
+
+    def construct(self, x):
+
+        return self.cast(x, self.data_type)
+
+
 class OffloadModel():
     def __init__(self, func, args_names=None):
         self.func = func
@@ -384,7 +400,8 @@ op_to_model = {
     "RandomHorizontalFlip": OffloadModel(RandomHorizontalFlip, ["prob"]),
     "RandomSharpness": OffloadModel(RandomSharpness, ["degrees"]),
     "RandomVerticalFlip": OffloadModel(RandomVerticalFlip, ["prob"]),
-    "Rescale": OffloadModel(Rescale, ["rescale", "shift"])
+    "Rescale": OffloadModel(Rescale, ["rescale", "shift"]),
+    "TypeCast": OffloadModel(TypeCast, ["data_type"])
 }
 
 
