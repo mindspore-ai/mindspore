@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,8 @@ class TreeConsumer {
   /// Constructor that prepares an empty tree_adapter
   TreeConsumer();
 
+  explicit TreeConsumer(int32_t num_epochs);
+
   /// \brief Destructor
   ~TreeConsumer() = default;
   /// Initializes the consumer, this involves constructing and preparing the tree.
@@ -54,6 +56,16 @@ class TreeConsumer {
   /// Function for all consumers to get the offload JSON string.
   /// \return Offload JSON string.
   std::string GetOffload();
+
+  /// Function to reset the current consumer to the provided step.
+  /// The consumer will terminate the pipeline and create a new one with skip injected.
+  /// \param step the step to reset the pipeline to.
+  /// \return Status error code
+  Status Reset(int64_t step);
+
+  /// Function to stop the consumer.
+  /// \return Status error code
+  virtual Status Stop() { return Status::OK(); }
 
 #ifndef ENABLE_SECURITY
   virtual Status RegisterProfilingManager();
@@ -80,6 +92,8 @@ class TreeConsumer {
   /// Method to return the name of the consumer
   /// \return string
   virtual std::string Name() = 0;
+
+  int32_t num_epochs_;
 };
 
 /// Consumer that iterates over the dataset and returns the rows one by one as a vector or a map
@@ -87,7 +101,7 @@ class IteratorConsumer : public TreeConsumer {
  public:
   /// Constructor which will call the base class default constructor.
   /// \param num_epochs number of epochs. Default to -1 (infinite epochs).
-  explicit IteratorConsumer(int32_t num_epochs = -1) : TreeConsumer(), num_epochs_(num_epochs) {}
+  explicit IteratorConsumer(int32_t num_epochs = -1) : TreeConsumer(num_epochs) {}
 
   ~IteratorConsumer() = default;
 
@@ -116,7 +130,6 @@ class IteratorConsumer : public TreeConsumer {
   std::string Name() override { return "IteratorConsumer"; }
 
  private:
-  int32_t num_epochs_;
   std::map<int32_t, std::string> column_order_;  // key: column id, val: column name
 };
 
@@ -182,7 +195,7 @@ class SaveToDisk : public TreeConsumer {
 /// Consumer that iterates over the dataset and send it to a device
 class ToDevice : public TreeConsumer {
  public:
-  explicit ToDevice(int32_t num_epochs = -1) : TreeConsumer(), num_epochs_(num_epochs) {}
+  explicit ToDevice(int32_t num_epochs = -1) : TreeConsumer(num_epochs) {}
 
   ~ToDevice() = default;
 
@@ -198,7 +211,7 @@ class ToDevice : public TreeConsumer {
 
   /// Stop to send data to device
   /// \return  Status error code
-  virtual Status Stop();
+  Status Stop() override;
 
   /// Continue to send data to device
   /// \return  Status error code
@@ -212,9 +225,6 @@ class ToDevice : public TreeConsumer {
   /// Method to return the name of the consumer
   /// \return string
   std::string Name() override { return "ToDevice"; }
-
- private:
-  int32_t num_epochs_;
 };
 
 /// Consumer that is used to get some pipeline information

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,11 @@ namespace dataset {
 using ProfilingRegistrationState = ProfilingManager::ProfilingRegistrationState;
 #endif
 // TreeConsumer
-TreeConsumer::TreeConsumer() { tree_adapter_ = std::make_unique<TreeAdapter>(); }
+TreeConsumer::TreeConsumer() : TreeConsumer(1) {}
+
+TreeConsumer::TreeConsumer(int32_t num_epochs) : num_epochs_(num_epochs) {
+  tree_adapter_ = std::make_unique<TreeAdapter>();
+}
 
 Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) {
   RETURN_IF_NOT_OK(tree_adapter_->Compile(std::move(d)));
@@ -335,6 +339,39 @@ Status ToDevice::Terminate() {
   op->StopWaiting();
 #endif
   return TreeConsumer::Terminate();
+}
+
+Status TreeConsumer::Reset(int64_t step) {
+  MS_LOG(INFO) << "Resetting TreeConsumer";
+
+  MS_LOG(INFO) << "Terminating pipeline with UUID:" << tree_adapter_->tree_->GetUniqueId();
+  std::shared_ptr<DatasetNode> old_root = tree_adapter_->input_ir_;
+  this->Stop();
+  {
+#ifdef ENABLE_PYTHON
+    py::gil_scoped_release gil_release;  // release GIL to allow python threads to terminate.
+#endif
+    this->Terminate();
+  }
+
+#ifdef ENABLE_GPUQUE
+  // clear the device if GPU is used.
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
+  if (op != nullptr) {
+    MS_LOG(INFO) << "Clearing the GPU device";
+    op->ClearDevice();
+  }
+#endif
+
+  tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeReset);
+  RETURN_IF_NOT_OK(tree_adapter_->Compile(old_root, num_epochs_, step));
+  RETURN_IF_NOT_OK(tree_adapter_->Launch());
+  MS_LOG(INFO) << "Launched a new pipeline after reset. UUID: " << tree_adapter_->tree_->GetUniqueId();
+  std::shared_ptr<DatasetOp> root2 = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root2 != nullptr, "Root is a nullptr.");
+  return Status::OK();
 }
 
 #ifndef ENABLE_ANDROID

@@ -6,6 +6,7 @@ set(DATASET_ENGINE_OPT_SRC_FILES
     pass.cc
     post/auto_worker_pass.cc
     post/repeat_pass.cc
+    pre/add_skip_pass.cc
     pre/cache_transform_pass.cc
     pre/cache_validation_pass.cc
     pre/deep_copy_pass.cc

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ namespace mindspore {
 namespace dataset {
 
 // Constructor for SkipNode
+SkipNode::SkipNode(int32_t count) : skip_count_(count) {}
+
 SkipNode::SkipNode(std::shared_ptr<DatasetNode> child, int32_t count) : skip_count_(count) { this->AddChild(child); }
 
 std::shared_ptr<DatasetNode> SkipNode::Copy() {
@@ -42,6 +44,9 @@ Status SkipNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
   auto op = std::make_shared<SkipOp>(skip_count_);
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
+  if (first_epoch_only_) {
+    op->SetFirstEpochOnly(true);
+  }
   node_ops->push_back(op);
   return Status::OK();
 }

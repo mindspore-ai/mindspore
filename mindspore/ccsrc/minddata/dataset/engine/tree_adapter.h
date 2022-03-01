@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ class TreeAdapter {
   // this flag is used to indicate the purpose of the creation of this tree adapter (type of the tree_consumer).
   // Currently there are 3 types of consumer, Iterator, Getter and TDT/Vocab/Save ...
   // To avoid premature optimization, the last type (TDT/Vocab/Save) is regarded as Iterator for now.
-  enum UsageFlag { kDeIterator = 0, kDeGetter = 1 };
+  enum UsageFlag { kDeIterator = 0, kDeGetter = 1, kDeReset = 2 };
 
   explicit TreeAdapter(UsageFlag flag = kDeIterator);
 
@@ -57,7 +57,7 @@ class TreeAdapter {
 
   // This function performs syntax checking, semantics checking, optimizes, and then builds
   // the Execution tree.
-  Status Compile(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs = -1);
+  Status Compile(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs = -1, int64_t step = 0);
 
   // Return the root node of the IR after cloned from the parsed IR tree
   std::shared_ptr<DatasetNode> RootIRNode() const { return root_ir_; }
@@ -118,6 +118,7 @@ class TreeAdapter {
   Status BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);
 
   std::unordered_map<std::string, int32_t> column_name_map_;
+  std::shared_ptr<DatasetNode> input_ir_;
   std::shared_ptr<DatasetNode> root_ir_;
   std::unique_ptr<ExecutionTree> tree_;  // current connector capacity of root op, used for profiling
   bool optimize_;                        // Flag to enable optional optimization pass

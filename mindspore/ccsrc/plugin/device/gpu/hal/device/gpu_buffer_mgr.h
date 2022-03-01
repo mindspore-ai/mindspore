@@ -84,6 +84,7 @@ class GpuBufferMgr {
                                  unsigned int timeout_in_sec);
   EXPORT BlockQueueStatus_T Front(unsigned int handle, std::vector<DataItemGpu> *data);
   EXPORT BlockQueueStatus_T Pop(unsigned int handle);
+  EXPORT BlockQueueStatus_T Clear(unsigned int handle);
 
   EXPORT void set_device_id(int device_id);
 

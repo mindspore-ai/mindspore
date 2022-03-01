@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,10 @@ class DeviceQueueOp : public PipelineOp {
 
 #ifdef ENABLE_TDTQUE
   void StopWaiting() { ascend_keep_waiting_ = false; }
+#endif
+
+#ifdef ENABLE_GPUQUE
+  Status ClearDevice();
 #endif
 
   Status GetDataInfo(DATA_INFO *data_info);

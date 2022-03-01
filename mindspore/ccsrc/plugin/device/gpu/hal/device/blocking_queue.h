@@ -89,6 +89,7 @@ class BlockingQueue {
   BlockQueueStatus_T Push(const std::vector<DataItemGpu> &data, unsigned int timeout_in_sec);
   BlockQueueStatus_T Front(std::vector<DataItemGpu> *data);
   BlockQueueStatus_T Pop();
+  BlockQueueStatus_T Clear();
   bool Destroy();
   size_t Size() { return queue_->Size(); }
   size_t Capacity() { return queue_->Capacity(); }

@@ -130,6 +130,14 @@ BlockQueueStatus_T GpuBufferMgr::Pop(unsigned int handle) {
   return iter->second->Pop();
 }
 
+BlockQueueStatus_T GpuBufferMgr::Clear(unsigned int handle) {
+  auto iter = handle_queue_map_.find(handle);
+  if (iter == handle_queue_map_.end()) {
+    return HANDLE_NOT_EXIST;
+  }
+  return iter->second->Clear();
+}
+
 void GpuBufferMgr::Close(unsigned int handle) noexcept {
   if (!handle_queue_map_.count(handle)) {
     return;

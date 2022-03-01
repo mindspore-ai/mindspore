@@ -142,6 +142,22 @@ BlockQueueStatus_T BlockingQueue::Pop() {
   return SUCCESS;
 }
 
+BlockQueueStatus_T BlockingQueue::Clear() {
+  std::unique_lock<std::mutex> locker(mutex_);
+  while (Size() > 0) {
+    std::vector<DataItemGpu> data;
+    auto ret = queue_->Front(&data);
+    if (ret) {
+      return ret;
+    }
+    ret = queue_->Pop();
+    if (ret) {
+      return ret;
+    }
+  }
+  return SUCCESS;
+}
+
 bool BlockingQueue::Destroy() {
   if (queue_ != nullptr) {
     return queue_->Destroy();
