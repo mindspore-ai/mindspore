@@ -17,12 +17,11 @@ from .ops import Cholesky
 from .ops import Eigh
 from .ops import LU
 from .ops import SolveTriangular
-from .utils import _nd_transpose, _value_in_check, _type_is_check, _type_in_check
-from .utils_const import _raise_value_error, _tensor_check, _square_check, _solve_check
+from .utils import _nd_transpose, _value_check, _type_check, _dtype_check, _mstype_check, _square_check, _solve_check
+from .utils_const import _raise_value_error
 from .. import numpy as mnp
 from .. import ops
 from ..common import dtype as mstype
-from ..common import Tensor
 from ..ops import functional as F
 from ..ops import operations as P
 
@@ -175,25 +174,17 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
         [4. 2. 4. 2.]
     """
     func_name = 'solve_triangular'
-    trsm_type_check = F.partial(_type_is_check, func_name)
-    trsm_value_check = F.partial(_value_in_check, func_name)
-    trsm_type_in_check = F.partial(_type_in_check, func_name)
-
-    _tensor_check(func_name, a, F.typeof(a), Tensor, 'a')
-    _tensor_check(func_name, b, F.typeof(b), Tensor, 'b')
-    trsm_type_check(trans, (int, str), 'trans')
-    trsm_type_check(lower, bool, 'lower')
-    trsm_type_check(overwrite_b, bool, 'overwrite_b')
-    trsm_type_check(check_finite, bool, 'check_finite')
-    trsm_type_in_check(a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
-                       'a', 'data type')
-    trsm_type_in_check(b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
-                       'b', 'data type')
-    trsm_type_in_check(a.dtype, b.dtype, ('a', 'b'), 'data type', fmt='match')
-
-    _solve_check(func_name, a.shape, b.shape)
-    trsm_value_check(debug, None, 'debug', op='is', fmt='todo')
-    trsm_value_check(trans, (0, 1, 2, 'N', 'T', 'C'), "trans", "value")
+    _mstype_check(func_name, a, mstype.tensor_type, 'a')
+    _mstype_check(func_name, b, mstype.tensor_type, 'b')
+    _type_check(func_name, trans, (int, str), 'trans')
+    _type_check(func_name, lower, bool, 'lower')
+    _type_check(func_name, overwrite_b, bool, 'overwrite_b')
+    _type_check(func_name, check_finite, bool, 'check_finite')
+    _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a')
+    _dtype_check(func_name, b, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b')
+    _solve_check(func_name, a, b)
+    _value_check(func_name, debug, None, 'debug', op='is', fmt='todo')
+    _value_check(func_name, trans, (0, 1, 2, 'N', 'T', 'C'), "trans", "value")
 
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
@@ -245,11 +236,11 @@ def inv(a, overwrite_a=False, check_finite=True):
          [8.8817842e-16 1.0000000e+00]]
     """
     func_name = "inv"
-    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
-    _type_is_check(func_name, check_finite, bool, 'check_finite')
-    _tensor_check(func_name, a, F.typeof(a), Tensor)
-    _square_check(func_name, a.shape)
-    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
+    _type_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_check(func_name, check_finite, bool, 'check_finite')
+    _mstype_check(func_name, a, mstype.tensor_type)
+    _square_check(func_name, a)
+    _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
 
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
@@ -309,12 +300,12 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
          [ 5.          1.          2.          1.5541857 ]]
     """
     func_name = "cho_factor"
-    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
-    _type_is_check(func_name, check_finite, bool, 'check_finite')
-    _type_is_check(func_name, lower, bool, 'lower')
-    _tensor_check(func_name, a, F.typeof(a), Tensor)
-    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
-    _square_check(func_name, a.shape)
+    _type_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_check(func_name, check_finite, bool, 'check_finite')
+    _type_check(func_name, lower, bool, 'lower')
+    _mstype_check(func_name, a, mstype.tensor_type)
+    _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
+    _square_check(func_name, a)
 
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
@@ -368,12 +359,12 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
          [2. 1.]]
     """
     func_name = "cholesky"
-    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
-    _type_is_check(func_name, check_finite, bool, 'check_finite')
-    _type_is_check(func_name, lower, bool, 'lower')
-    _tensor_check(func_name, a, F.typeof(a), Tensor)
-    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
-    _square_check(func_name, a.shape)
+    _type_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_check(func_name, check_finite, bool, 'check_finite')
+    _type_check(func_name, lower, bool, 'lower')
+    _mstype_check(func_name, a, mstype.tensor_type)
+    _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
+    _square_check(func_name, a)
 
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
@@ -422,16 +413,14 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
     """
     func_name = "cho_solve"
     (c, lower) = c_and_lower
-    _type_is_check(func_name, overwrite_b, bool, 'overwrite_b')
-    _type_is_check(func_name, check_finite, bool, 'check_finite')
-    _type_is_check(func_name, lower, bool, 'lower')
-    _tensor_check(func_name, c, F.typeof(c), Tensor, 'c')
-    _tensor_check(func_name, b, F.typeof(b), Tensor, 'b')
-    _type_in_check(func_name, c.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'c', 'data type')
-    _type_in_check(func_name, b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b', 'data type')
-    _type_in_check(func_name, c.dtype, b.dtype, ('c', 'b'), 'data type', fmt='match')
-
-    _solve_check(func_name, c.shape, b.shape, 'c', 'b')
+    _type_check(func_name, overwrite_b, bool, 'overwrite_b')
+    _type_check(func_name, check_finite, bool, 'check_finite')
+    _type_check(func_name, lower, bool, 'lower')
+    _mstype_check(func_name, c, mstype.tensor_type, 'c')
+    _mstype_check(func_name, b, mstype.tensor_type, 'b')
+    _dtype_check(func_name, c, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'c')
+    _dtype_check(func_name, b, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b')
+    _solve_check(func_name, c, b, 'c', 'b')
 
     if F.dtype(c) in (mstype.int32, mstype.int64):
         c = F.cast(c, mstype.float64)
@@ -533,8 +522,8 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         True
     """
     func_name = 'eigh'
-    eigh_type_check = F.partial(_type_is_check, func_name)
-    eigh_value_check = F.partial(_value_in_check, func_name)
+    eigh_type_check = F.partial(_type_check, func_name)
+    eigh_value_check = F.partial(_value_check, func_name)
 
     eigh_type_check(lower, bool, 'lower')
     eigh_type_check(eigvals_only, bool, 'eigvals_only')
@@ -542,12 +531,10 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     eigh_type_check(overwrite_b, bool, 'overwrite_b')
     eigh_type_check(turbo, bool, 'turbo')
     eigh_type_check(check_finite, bool, 'check_finite')
-    _tensor_check(func_name, a, F.typeof(a), Tensor)
-    _type_in_check(func_name, a.dtype,
-                   [mstype.int32, mstype.int64, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128],
-                   'a', 'data type')
-
-    _square_check(func_name, a.shape)
+    _mstype_check(func_name, a, mstype.tensor_type)
+    _dtype_check(func_name, a,
+                 [mstype.int32, mstype.int64, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128])
+    _square_check(func_name, a)
     eigh_value_check(b, None, 'b', op='is', fmt='todo')
     eigh_value_check(eigvals, None, 'eigvals', op='is', fmt='todo')
 
@@ -629,11 +616,11 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         [2 2 3 3]
     """
     func_name = "lu_factor"
-    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
-    _type_is_check(func_name, check_finite, bool, 'check_finite')
-    _tensor_check(func_name, a, F.typeof(a), Tensor)
-    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
-    _square_check(func_name, a.shape)
+    _type_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_check(func_name, check_finite, bool, 'check_finite')
+    _mstype_check(func_name, a, mstype.tensor_type)
+    _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
+    _square_check(func_name, a)
 
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
@@ -706,12 +693,12 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
          [ 0.         -0.         -0.          7.46153831]]
     """
     func_name = "lu"
-    _type_is_check(func_name, permute_l, bool, 'permute_l')
-    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
-    _type_is_check(func_name, check_finite, bool, 'check_finite')
-    _tensor_check(func_name, a, F.typeof(a), Tensor)
-    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
-    _value_in_check(func_name, a.ndim, 2, 'a', 'dimension')
+    _type_check(func_name, permute_l, bool, 'permute_l')
+    _type_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_check(func_name, check_finite, bool, 'check_finite')
+    _mstype_check(func_name, a, mstype.tensor_type)
+    _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
+    _value_check(func_name, a.ndim, 2, 'a', 'dimension')
 
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
@@ -773,22 +760,18 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
     """
     func_name = "lu_solve"
     lu_matrix, pivot = lu_and_piv
-    _type_is_check(func_name, overwrite_b, bool, 'overwrite_b')
-    _type_is_check(func_name, check_finite, bool, 'check_finite')
-    _tensor_check(func_name, lu_matrix, F.typeof(lu_matrix), Tensor)
-    _tensor_check(func_name, b, F.typeof(b), Tensor)
-    _tensor_check(func_name, pivot, F.typeof(pivot), Tensor)
-    _type_in_check(func_name, lu_matrix.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
-                   'lu_matrix', 'data type')
-    _type_in_check(func_name, b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
-                   'b', 'data type')
-    _type_in_check(func_name, pivot.dtype, [mstype.int32], 'pivot', 'data type')
-    _type_in_check(func_name, lu_matrix.dtype, b.dtype, ('lu_matrix', 'b'), 'data type', fmt='match')
-
-    _solve_check(func_name, lu_matrix.shape, b.shape, 'lu_matrix', 'b')
-    _value_in_check(func_name, pivot.ndim, 1, 'pivot', 'dimension')
-    _value_in_check(func_name, lu_matrix.shape, pivot.shape, 'lu_matrix', 'pivot', op='solve', fmt='solve')
-    _value_in_check(func_name, trans, (0, 1, 2), 'trans', 'value')
+    _type_check(func_name, overwrite_b, bool, 'overwrite_b')
+    _type_check(func_name, check_finite, bool, 'check_finite')
+    _mstype_check(func_name, lu_matrix, mstype.tensor_type, 'lu_matrix')
+    _mstype_check(func_name, b, mstype.tensor_type, 'b')
+    _mstype_check(func_name, pivot, mstype.tensor_type, 'pivot')
+    _dtype_check(func_name, lu_matrix, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'lu_matrix')
+    _dtype_check(func_name, b, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b')
+    _dtype_check(func_name, pivot, [mstype.int32], 'pivot')
+    _solve_check(func_name, lu_matrix, b, 'lu_matrix', 'b')
+    _value_check(func_name, pivot.ndim, 1, 'pivot', 'dimension')
+    _value_check(func_name, lu_matrix.shape, pivot.shape, 'lu_matrix', 'pivot', op='solve', fmt='solve')
+    _value_check(func_name, trans, (0, 1, 2), 'trans', 'value')
 
     if F.dtype(lu_matrix) in (mstype.int32, mstype.int64):
         lu_matrix = F.cast(lu_matrix, mstype.float64)
@@ -865,11 +848,11 @@ def det(a, overwrite_a=False, check_finite=True):
         3.0
     """
     func_name = "det"
-    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
-    _type_is_check(func_name, check_finite, bool, 'check_finite')
-    _tensor_check(func_name, a, F.typeof(a), Tensor)
-    _square_check(func_name, a.shape)
-    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
+    _type_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_check(func_name, check_finite, bool, 'check_finite')
+    _mstype_check(func_name, a, mstype.tensor_type)
+    _square_check(func_name, a)
+    _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64])
 
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)

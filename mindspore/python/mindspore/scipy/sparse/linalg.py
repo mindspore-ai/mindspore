@@ -19,7 +19,8 @@ from ...ops import functional as F
 from ...common import dtype as mstype
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
-from ..utils import _normalize_matvec, _to_tensor, _to_scalar, _safe_normalize, _eps, _norm
+from ..utils import _normalize_matvec, _to_tensor, _safe_normalize, _eps, _norm, _type_check, _value_check, \
+    _sparse_check
 from ..utils_const import _raise_value_error, _raise_type_error
 
 
@@ -241,7 +242,7 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
 
     Returns:
         - Tensor, the converged solution. Has the same structure as `b`.
-        - int, placeholder for convergence information: 0 : successful exit.
+        - Tensor, placeholder for convergence information: 0 : successful exit.
           >0 : convergence to tolerance not achieved, number of iterations. <0 : illegal input or breakdown.
 
     Supported Platforms:
@@ -278,7 +279,7 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
         x, info = BatchedGmres(A, M)(b, x0, tol, atol, restart, maxiter)
     else:
         _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got ", solve_method, ".")
-    return x, _to_scalar(info)
+    return x, info
 
 
 class CG(nn.Cell):
@@ -322,7 +323,7 @@ class CG(nn.Cell):
         return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
 
 
-def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
+def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None):
     """Use Conjugate Gradient iteration to solve the linear system:
 
     .. math::
@@ -358,14 +359,28 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
             inverse of A. Effective preconditioning dramatically improves the
             rate of convergence, which implies that fewer iterations are needed
             to reach a given error tolerance. Default: None.
+        callback (function, optional): User-supplied function to call after each iteration.
+            It is called as callback(xk), where xk is the current solution vector. Default: None.
 
     Returns:
         - Tensor, the converged solution. Has the same structure as `b`.
-        - int, placeholder for convergence information: 0 : successful exit.
+        - Tensor, placeholder for convergence information: 0 : successful exit.
           >0 : convergence to tolerance not achieved, number of iterations. <0 : illegal input or breakdown.
+
     Raises:
-        ValueError: If `x0` and `b` don't have the same structure.
-        TypeError: If `A`, `x0` and `b` don't have the same float types(`mstype.float32` or `mstype.float64`).
+        TypeError: If `tol` is not float.
+        TypeError: If `atol` is not float.
+        TypeError: If `maxiter` is not int.
+        ValueError: If `callback` is not None.
+        TypeError: If `A` is not Tensor or Function.
+        TypeError: If `M` is not None, Tensor or Function.
+        TypeError: If `b` is not Tensor.
+        TypeError: If `x0` is not None or Tensor.
+        ValueError: If `b` is not 1 or 2 dimension.
+        ValueError: If `x0` and `b` don't have the same structure and type.
+        ValueError: If `A` is a square matrix.
+        ValueError: If `M` is a square matrix when `M` is not a function.
+        TypeError: If `A` and `b` don't have the same data types.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -391,16 +406,15 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
     if M is None:
         M = lambda x: x
 
-    if x0.shape != b.shape:
-        _raise_value_error(
-            'Input x0 and b must have matching shapes: ', x0.shape, ' vs ', b.shape)
-
-    if (F.dtype(b) not in (mstype.float32, mstype.float64)) or (F.dtype(b) != F.dtype(x0)) or (
-            F.dtype(b) != F.dtype(A)):
-        _raise_type_error('Input A, x0 and b must have same float types')
+    func_name = 'cg'
+    _type_check(func_name, tol, float, 'tol')
+    _type_check(func_name, atol, float, 'atol')
+    _type_check(func_name, maxiter, int, 'maxiter')
+    _value_check(func_name, callback, None, 'callback', op='is', fmt='todo')
+    _sparse_check(func_name, A, M, b, x0)
 
     x, info = CG(A, M)(b, x0, tol, atol, maxiter)
-    return x, _to_scalar(info)
+    return x, info
 
 
 class BiCGStab(nn.Cell):
@@ -492,7 +506,7 @@ def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
 
     Returns:
         - Tensor, the converged solution. Has the same structure as `b`.
-        - int, placeholder for convergence information: 0 : successful exit.
+        - Tensor, placeholder for convergence information: 0 : successful exit.
           >0 : convergence to tolerance not achieved, number of iterations. <0 : illegal input or breakdown.
 
     Raises:
@@ -532,4 +546,4 @@ def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         _raise_type_error('Input A, x0 and b must have same float types')
 
     x, info = BiCGStab(A, M)(b, x0, tol, atol, maxiter)
-    return x, _to_scalar(info)
+    return x, info

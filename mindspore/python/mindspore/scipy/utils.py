@@ -19,7 +19,7 @@ from ..numpy import where, zeros_like, dot, greater
 from ..ops import functional as F
 from ..common import Tensor
 from ..common import dtype as mstype
-from .utils_const import _type_convert, _raise_value_error, _callable_const, _super_check
+from .utils_const import _type_convert, _raise_value_error, _callable_const, _super_check, pack
 from ..ops.composite import GradOperation
 
 grad = GradOperation(get_all=False, get_by_list=False, sens_param=False)
@@ -118,13 +118,59 @@ def _nd_transpose(a):
     return ops.transpose(a, axes)
 
 
-def _value_in_check(func_name, arg1, arg2, arg_name='', attr_name='', op="in", fmt="attr", msg=None):
+def _value_check(func_name, arg1, arg2, arg_name='', attr_name='', op="in", fmt="attr", msg=None):
     return _super_check((arg1, arg2), (func_name, arg_name, attr_name), op, fmt, msg, True)
 
 
-def _type_is_check(func_name, arg1, arg2, arg_name='', op="isinstance", fmt="type", msg=None):
+def _type_check(func_name, arg1, arg2, arg_name='', op="isinstance", fmt="type", msg=None):
     return _super_check((arg1, arg2), (func_name, arg_name), op, fmt, msg, False)
 
 
-def _type_in_check(func_name, arg1, arg2, arg_name='', attr_name='', op="in", fmt="attr", msg=None):
-    return _super_check((arg1, arg2), (func_name, arg_name, attr_name), op, fmt, msg, False)
+def _mstype_check(func_name, arg, arg_mstype, arg_name='a'):
+    return _super_check((F.typeof(arg), arg_mstype), pack(arg, arg_mstype, func_name, arg_name), "isinstance", "mstype",
+                        None, False)
+
+
+def _dtype_check(func_name, arg, arg_dtype, arg_name='a'):
+    return _super_check((arg.dtype, arg_dtype), (func_name, arg_name, "data type"), "in", "attr", None, False)
+
+
+def _square_check(func_name, arg, arg_name='a'):
+    arg_shape = arg.shape
+    _super_check((len(arg_shape), 2), (func_name, arg_name, 'dimension'), '==', 'attr', None, True)
+    _super_check(arg_shape, (func_name, arg_name), '==', 'square', None, True)
+    return func_name
+
+
+def _solve_check(func_name, arg1, arg2, arg1_name='a', arg2_name='b', sparse=False):
+    arg1_shape, arg1_dtype = arg1.shape, arg1.dtype
+    arg2_shape, arg2_dtype = arg2.shape, arg2.dtype
+    _square_check(func_name, arg1, arg1_name)
+    _super_check((len(arg2_shape), (1, 2)), (func_name, arg2_name, 'dimension'), 'in', 'attr', None, True)
+    _super_check((arg1_shape, arg2_shape), (func_name, arg1_name, arg2_name, sparse), 'solve', 'solve', None, True)
+    _super_check((arg1_dtype, arg2_dtype), (func_name, arg1_name, arg2_name, 'data type'), '==', 'match', None, False)
+    return func_name
+
+def _sparse_check(func_name, a, m, b, x0):
+    """Used for cg, bicgstab and gmres method."""
+    # Checking type
+    _mstype_check(func_name, a, [mstype.function_type, mstype.tensor_type, mstype.csr_tensor_type], 'A')
+    _mstype_check(func_name, m, [mstype.function_type, mstype.tensor_type, mstype.csr_tensor_type], 'M')
+    _mstype_check(func_name, b, mstype.tensor_type, 'b')
+    _mstype_check(func_name, x0, mstype.tensor_type, 'x0')
+
+    # Checking shape and dtype
+    if b.ndim != 1 or (b.ndim == 2 and b.shape[1] != 1):
+        _raise_value_error(
+            "For: '", func_name, "', the shape of b should be like (N,) or (N, 1), bug got ", b.shape, ".")
+    _super_check((b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64]),
+                 (func_name, 'b', "data type"), "in", "attr", None, False)
+    _super_check((b.dtype, x0.dtype), (func_name, 'b', 'x0', 'data type'), '==', 'match', None, True)
+    _super_check((b.shape, x0.shape), (func_name, 'b', 'x0', 'shape'), '==', 'match', None, True)
+
+    if not _callable_const(F.typeof(a)):
+        _solve_check(func_name, a, b, 'A', 'b', True)
+
+    if not _callable_const(F.typeof(m)):
+        _solve_check(func_name, m, b, 'M', 'b', True)
+    return func_name
