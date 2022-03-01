@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_SET_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_SET_H_
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined __APPLE__))
 #define ENABLE_RPC_ACTOR
 #endif
 

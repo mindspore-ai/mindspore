@@ -23,6 +23,7 @@
 #include <iterator>
 #include <map>
 #include <numeric>
+#include <limits>
 #include <unordered_set>
 #include <utility>
 #include <regex>
@@ -39,14 +40,11 @@
 #include "nlohmann/json.hpp"
 #include "debug/debugger/tensor_summary.h"
 #include "utils/file_utils.h"
-#include "climits"
 
 namespace mindspore {
-
+namespace {
 static constexpr const char *constant_prefix = "Default--data-";
 static constexpr const char *kNpyExt = ".npy";
-
-namespace {
 #ifdef __APPLE__
 constexpr int kStrErrorNone = 0;
 #else
@@ -733,10 +731,10 @@ void DebugServices::SortWatchpointsInfo(
     std::vector<int32_t>().swap((*chunk_error_codes)[i]);
     std::vector<unsigned int>().swap((*chunk_device_id)[i]);
     std::vector<unsigned int>().swap((*chunk_root_graph_id)[i]);
-    if ((*tensor_list_byte_size) > ULONG_LONG_MAX - (*chunk_tensor_byte_size)[i]) {
+    if ((*tensor_list_byte_size) > UINT64_MAX - (*chunk_tensor_byte_size)[i]) {
       MS_LOG(WARNING) << (*tensor_list_byte_size) << " + " << (*chunk_tensor_byte_size)[i]
                       << " would lead to integer overflow!";
-      (*tensor_list_byte_size) = ULONG_LONG_MAX;
+      (*tensor_list_byte_size) = UINT64_MAX;
     } else {
       (*tensor_list_byte_size) += (*chunk_tensor_byte_size)[i];
     }
@@ -1694,7 +1692,7 @@ void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::stri
 
 std::string DebugServices::IterationString(unsigned int iteration) {
   std::string iteration_string;
-  bool init_dbg_suspend = (iteration == UINT_MAX);
+  bool init_dbg_suspend = (iteration == std::numeric_limits<unsigned int>::max());
   if (init_dbg_suspend) {
     iteration_string = "init";
   } else {
