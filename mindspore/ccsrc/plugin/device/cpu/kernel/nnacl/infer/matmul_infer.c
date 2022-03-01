@@ -25,9 +25,6 @@ int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_
   if (a_shape_size < MIN_SHAPE_SIZE || b_shape_size < MIN_SHAPE_SIZE) {
     return NNACL_PARAM_INVALID;
   }
-  if (b_shape_size < 1) {
-    return NNACL_ERR;
-  }
   for (size_t i = 0; i < (a_shape_size - 2) && i < (b_shape_size - 2); ++i) {
     int min_value = MSMIN(a_shape[i], b_shape[i]);
     int max_value = MSMAX(a_shape[i], b_shape[i]);
@@ -39,19 +36,13 @@ int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_
     }
   }
   if (param->a_transpose_) {
-    if (a_shape_size < MIN_SHAPE_SIZE) {
-      return NNACL_ERR;
-    }
     iswap(&a_shape[a_shape_size - 1], &a_shape[a_shape_size - DIMENSION_2D]);
   }
   if (param->b_transpose_) {
-    if (b_shape_size < MIN_SHAPE_SIZE) {
-      return NNACL_ERR;
-    }
     iswap(&b_shape[b_shape_size - 1], &b_shape[b_shape_size - 2]);
-    if (bias_shape_size == DIMENSION_1D && bias_shape[0] != b_shape[b_shape_size - 1]) {
-      return NNACL_ERR;
-    }
+  }
+  if (bias_shape_size == DIMENSION_1D && bias_shape[0] != b_shape[b_shape_size - 1]) {
+    return NNACL_ERR;
   }
   if (a_shape[a_shape_size - 1] != b_shape[b_shape_size - 2]) {
     return NNACL_ERR;
@@ -76,7 +67,7 @@ int SetShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs
   if (inputs_size == kInputSize2) {
     TensorC *bias = (TensorC *)inputs[2];
     ShapeSet(bias_shape, &bias_shape_size, bias->shape_, bias->shape_size_);
-    MS_CHECK_TRUE_RET(bias_shape_size == b_shape_size || bias_shape_size == DIMENSION_1D, NNACL_ERR);
+    MS_CHECK_TRUE_RET(bias_shape_size <= DIMENSION_1D, NNACL_ERR);
   }
 
   if (a_shape_size == COMM_SHAPE_SIZE && a_shape[THIRD_INPUT] == 1 && a_shape[FOURTH_INPUT] == 1) {
