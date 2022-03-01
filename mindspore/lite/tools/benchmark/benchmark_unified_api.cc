@@ -956,6 +956,7 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
   ModelParallelRunner model_pool;
   auto runner_config = std::make_shared<RunnerConfig>();
   runner_config->context = context;
+  runner_config->workers_num = flags_->workers_num_;
   auto model_init_start = GetTimeUs();
   auto ret = model_pool.Init(flags_->model_file_, runner_config);
   if (ret != kSuccess) {
@@ -969,7 +970,7 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
     MS_LOG(ERROR) << "model pool input is empty.";
     return RET_ERROR;
   }
-  for (int i = 0; i < flags_->num_require_ + flags_->warm_up_loop_count_; i++) {
+  for (int i = 0; i < flags_->parallel_request_num_ + flags_->warm_up_loop_count_; i++) {
     auto status = LoadInput();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Generate input data error";
@@ -1000,7 +1001,7 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
       MS_LOG(ERROR) << "model pool predict failed.";
     }
     auto predict_end = GetTimeUs();
-    std::cout << "run predict time: " << (predict_end - predict_start) / kFloatMSEC << " ms\n";
+    std::cout << "per predict time: " << (predict_end - predict_start) / kFloatMSEC << " ms\n";
     if (!flags_->benchmark_data_file_.empty()) {
       auto status = CompareOutputForModelPool(&output);
       if (status != RET_OK) {
@@ -1015,11 +1016,11 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
   for (auto &warm_up_thread : model_thread_warm_up) {
     warm_up_thread.join();
   }
-  std::cout << "================ end warm up ================";
+  std::cout << "================ end warm up ================\n";
   auto all_start = GetTimeUs();
   for (int loop_count_num = 0; loop_count_num < flags_->loop_count_; loop_count_num++) {
     std::vector<std::thread> model_thread_run;
-    for (int i = 0; i < flags_->num_require_; i++) {
+    for (int i = 0; i < flags_->parallel_request_num_; i++) {
       model_thread_run.push_back(std::thread(model_pool_run, i + flags_->warm_up_loop_count_));
     }
     for (auto &run_thread : model_thread_run) {
@@ -1028,8 +1029,8 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
   }
   auto all_end = GetTimeUs();
   std::cout << "=================================" << std::endl;
-  std::cout << "model pool init time: " << (model_init_end - model_init_start) / kFloatMSEC << " ms\n";
-  std::cout << "model pool all run time: " << (all_end - all_start) / kFloatMSEC / flags_->loop_count_ << " ms\n";
+  std::cout << "parallel predict init time: " << (model_init_end - model_init_start) / kFloatMSEC << " ms\n";
+  std::cout << "parallel predict all run time: " << (all_end - all_start) / kFloatMSEC / flags_->loop_count_ << " ms\n";
   std::cout << "=================================" << std::endl;
   return RET_OK;
 }

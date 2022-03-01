@@ -20,7 +20,7 @@
 #include "include/lite_types.h"
 #include "src/common/config_file.h"
 #include "src/runtime/inner_allocator.h"
-#include "src/common//file_utils.h"
+#include "src/common/file_utils.h"
 #include "src/pack_weight_manager.h"
 #include "src/runtime/numa_adapter.h"
 #include "src/common/common.h"
@@ -39,33 +39,33 @@ int GetCoreNum() {
 #endif
   return core_num;
 }
+}  // namespace
 
-void SetNumaBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num, int node_id) {
+Status ModelPool::SetNumaBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num) {
   if (UNLIKELY(thread_num == 0)) {
     MS_LOG(ERROR) << "thread num is zero.";
-    return;
+    return kLiteError;
   }
-  std::vector<int> cpu_list = numa::NUMAAdapter::GetInstance()->GetCPUList(node_id);
-  auto cpu_num = cpu_list.size();
-  if (cpu_num == 0) {
-    return;
+  if (thread_num * static_cast<int>(workers_num_) > GetCoreNum()) {
+    MS_LOG(ERROR) << "thread num or worker num is wrong ,not support param.";
+    return kLiteNotSupport;
   }
-  std::vector<int> bind_id;
-  bind_id.reserve(thread_num);
-  all_model_bind_list->reserve(cpu_num / thread_num + 1);
-  bind_id.emplace_back(cpu_list[0]);
-  for (size_t i = 1; i < cpu_num; ++i) {
-    if (i % thread_num == 0) {
-      all_model_bind_list->emplace_back(bind_id);
-      bind_id.clear();
+  for (size_t i = 0; i < workers_num_;) {
+    std::vector<int> cpu_list = numa::NUMAAdapter::GetInstance()->GetCPUList(used_numa_node_num_);
+    if (static_cast<int>(cpu_list.size()) < thread_num) {
+      MS_LOG(ERROR) << "one numa node do not have enough cpu core for bind thread.";
+      return kLiteError;
     }
-    bind_id.emplace_back(cpu_list[i]);
+    for (size_t j = 0; j < cpu_list.size() / thread_num; j++) {
+      std::vector<int> bind_id;
+      bind_id.insert(bind_id.begin(), cpu_list.begin() + j * thread_num, cpu_list.begin() + (j + 1) * thread_num);
+      all_model_bind_list->push_back(bind_id);
+      i++;
+    }
+    used_numa_node_num_++;
   }
-  if (!bind_id.empty()) {
-    all_model_bind_list->emplace_back(bind_id);
-  }
+  return kSuccess;
 }
-}  // namespace
 
 void ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num) {
   if (thread_num == 0) {
@@ -74,7 +74,7 @@ void ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_li
   }
   int core_num = GetCoreNum();
   int core_id = 0;
-  for (size_t i = 0; i < num_models_; i++) {
+  for (size_t i = 0; i < workers_num_; i++) {
     std::vector<int> bind_id;
     for (int j = 0; j < thread_num; j++) {
       if (core_id >= core_num) {
@@ -92,6 +92,86 @@ ModelPool *ModelPool::GetInstance() {
   return &instance;
 }
 
+Status ModelPool::SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Context> &context) {
+  if (use_numa_bind_mode_) {
+    // now only supports the same number of cores per numa node
+    // do not use if there are extra cores
+    int one_numa_node_cpu_size = numa::NUMAAdapter::GetInstance()->GetCPUList(0).size();
+    if (context->GetThreadNum() > one_numa_node_cpu_size) {
+      MS_LOG(ERROR) << "thread num more than numa node cpu cores.";
+      return kLiteError;
+    } else {
+      workers_num_ = one_numa_node_cpu_size / static_cast<int>(context->GetThreadNum()) * numa_node_num_;
+    }
+  } else {
+    // each model binds all kernels in order
+    workers_num_ = GetCoreNum() / static_cast<int>(context->GetThreadNum());
+  }
+  return kSuccess;
+}
+
+Status ModelPool::InitDefaultContext(const std::shared_ptr<mindspore::Context> &context) {
+  MS_LOG(DEBUG) << "use default config.";
+  context->SetThreadNum(kNumThreads);
+  context->SetEnableParallel(true);
+  context->SetThreadAffinity(lite::HIGHER_CPU);
+  auto &device_list = context->MutableDeviceInfo();
+  auto device_info = std::make_shared<CPUDeviceInfo>();
+  device_info->SetEnableFP16(false);
+  device_list.push_back(device_info);
+  // set model num
+  auto status = SetDefaultOptimalModelNum(context);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
+std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
+  auto context = runner_config->context;
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "user set config context nullptr.";
+    return nullptr;
+  }
+  auto device_list = context->MutableDeviceInfo();
+  if (device_list.size() != 1) {
+    MS_LOG(ERROR) << "model pool only support device num 1.";
+    return nullptr;
+  }
+  auto device = device_list.front();
+  if (device->GetDeviceType() != kCPU && device->GetDeviceType() != kGPU) {
+    MS_LOG(ERROR) << "model pool only support cpu or gpu type.";
+    return nullptr;
+  }
+  auto cpu_context = device->Cast<CPUDeviceInfo>();
+  auto enable_fp16 = cpu_context->GetEnableFP16();
+  if (enable_fp16) {
+    MS_LOG(ERROR) << "model pool not support enable fp16.";
+    return nullptr;
+  }
+
+  if (device->GetDeviceType() == kGPU) {
+    workers_num_ = 1;
+  } else if (device->GetDeviceType() == kCPU) {
+    if (runner_config->workers_num == 0) {
+      // the user does not define the number of models, the default optimal number of models is used
+      auto status = SetDefaultOptimalModelNum(context);
+      if (status != kSuccess) {
+        MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
+        return nullptr;
+      }
+    } else {
+      // User defined number of models
+      workers_num_ = runner_config->workers_num;
+    }
+  } else {
+    MS_LOG(ERROR) << "not support device: " << device->GetDeviceType();
+    return nullptr;
+  }
+  return context;
+}
+
 std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConfig> &runner_config) {
   auto model_context = std::make_shared<mindspore::Context>();
   if (model_context == nullptr) {
@@ -99,40 +179,34 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
     return nullptr;
   }
   if (runner_config != nullptr) {
-    model_context = runner_config->context;
-    auto device_list = model_context->MutableDeviceInfo();
-    if (device_list.size() != 1) {
-      MS_LOG(ERROR) << "model pool only support device num 1.";
-      return nullptr;
-    }
-    auto device = device_list.front();
-    if (device->GetDeviceType() != kCPU && device->GetDeviceType() != kGPU) {
-      MS_LOG(ERROR) << "model pool only support cpu or gpu type.";
-      return nullptr;
-    }
-    auto cpu_context = device->Cast<CPUDeviceInfo>();
-    auto enable_fp16 = cpu_context->GetEnableFP16();
-    if (enable_fp16) {
-      MS_LOG(ERROR) << "model pool not support enable fp16.";
-      return nullptr;
-    }
-    if (device->GetDeviceType() == kGPU) {
-      num_models_ = 1;
-    } else {
-      num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
-    }
+    use_numa_bind_mode_ = numa::NUMAAdapter::GetInstance()->Available() &&
+                          runner_config->context->GetThreadAffinityMode() == lite::HIGHER_CPU;
+    numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
+    model_context = InitUserDefineContext(runner_config);
   } else {
-    MS_LOG(DEBUG) << "use default config.";
-    num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
-    model_context->SetThreadNum(kNumThreads);
-    model_context->SetEnableParallel(true);
-    model_context->SetThreadAffinity(lite::HIGHER_CPU);
-    auto &device_list = model_context->MutableDeviceInfo();
-    auto device_info = std::make_shared<CPUDeviceInfo>();
-    device_info->SetEnableFP16(false);
-    device_list.push_back(device_info);
+    use_numa_bind_mode_ = numa::NUMAAdapter::GetInstance()->Available();
+    numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
+    auto status = InitDefaultContext(model_context);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "use default context failed.";
+      return nullptr;
+    }
   }
   return model_context;
+}
+
+Status ModelPool::SetModelBindMode(std::vector<std::vector<int>> *all_model_bind_list,
+                                   std::shared_ptr<Context> model_context) {
+  if (numa::NUMAAdapter::GetInstance()->Available()) {
+    auto status = SetNumaBindStrategy(all_model_bind_list, static_cast<int>(model_context->GetThreadNum()));
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "SetNumaBindStrategy failed.";
+      return kLiteError;
+    }
+  } else {
+    SetBindStrategy(all_model_bind_list, static_cast<int>(model_context->GetThreadNum()));
+  }
+  return kSuccess;
 }
 
 ModelPoolContex ModelPool::CreateModelContext(const std::shared_ptr<RunnerConfig> &runner_config) {
@@ -145,27 +219,19 @@ ModelPoolContex ModelPool::CreateModelContext(const std::shared_ptr<RunnerConfig
     MS_LOG(ERROR) << "Invalid thread num " << model_context->GetThreadNum();
     return {};
   }
-  int node_id = -1;
-  if (numa::NUMAAdapter::GetInstance()->Available()) {
-    node_id = 0;
-    num_models_ =
-      numa::NUMAAdapter::GetInstance()->GetCPUList(node_id).size() / static_cast<int>(model_context->GetThreadNum());
-  } else {
-    num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
-  }
   ModelPoolContex model_pool_context;
   std::vector<std::vector<int>> all_model_bind_list;
   if (model_context->GetThreadAffinityMode() == lite::HIGHER_CPU) {
-    if (numa::NUMAAdapter::GetInstance()->Available()) {
-      SetNumaBindStrategy(&all_model_bind_list, static_cast<int>(model_context->GetThreadNum()), node_id);
-    } else {
-      SetBindStrategy(&all_model_bind_list, static_cast<int>(model_context->GetThreadNum()));
+    auto status = SetModelBindMode(&all_model_bind_list, model_context);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "SetModelBindMode failed.";
+      return {};
     }
   } else if (model_context->GetThreadAffinityMode() == lite::MID_CPU) {
     MS_LOG(ERROR) << "not support bind MID_CPU.";
     return {};
   }
-  for (size_t i = 0; i < num_models_; i++) {
+  for (size_t i = 0; i < workers_num_; i++) {
     auto context = std::make_shared<Context>();
     if (context == nullptr) {
       MS_LOG(ERROR) << "New Context failed.";
@@ -212,27 +278,44 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "CreateModelContext failed, context is empty.";
     return kLiteError;
   }
-
+  if (use_numa_bind_mode_) {
+    PredictTaskQueue::GetInstance()->SetTaskQueueNum(used_numa_node_num_);
+  } else {
+    PredictTaskQueue::GetInstance()->SetTaskQueueNum(1);
+  }
   size_t size = 0;
+  if (graph_buf_ != nullptr) {
+    delete[] graph_buf_;
+    graph_buf_ = nullptr;
+  }
   graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
   if (graph_buf_ == nullptr) {
     MS_LOG(ERROR) << "read file failed.";
     return kLiteError;
   }
-  lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(graph_buf_);
-  int node_id = -1;
-  if (numa::NUMAAdapter::GetInstance()->Available()) {
-    node_id = 0;
+  auto ret = lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(graph_buf_);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "InitWeightManagerByBuf failed.";
+    return kLiteError;
   }
   std::shared_ptr<ModelThread> model_thread = nullptr;
-  for (size_t i = 0; i < num_models_; i++) {
+  for (size_t i = 0; i < workers_num_; i++) {
+    int numa_node_id = 0;
+    if (use_numa_bind_mode_ && GetCoreNum() / model_pool_context[i]->GetThreadNum() < numa_node_num_) {
+      numa_node_id = i;
+    } else if (use_numa_bind_mode_ && numa_node_num_ != 0) {
+      numa_node_id = i / (GetCoreNum() / model_pool_context[i]->GetThreadNum() / numa_node_num_);
+    } else {
+      numa_node_id = 0;
+    }
     model_thread = std::make_shared<ModelThread>();
-    auto status = model_thread->Init(graph_buf_, size, model_pool_context[i], dec_key, dec_mode, node_id);
+    auto status = model_thread->Init(graph_buf_, size, model_pool_context[i], dec_key, dec_mode, numa_node_id);
     if (status != kSuccess) {
       MS_LOG(ERROR) << " model thread init failed.";
       return kLiteError;
     }
-    model_thread_vec_.push_back(std::thread(&ModelThread::Run, model_thread));
+    PredictTaskQueue::GetInstance()->IncreaseeWaitModelNum(1, numa_node_id);
+    model_thread_vec_.push_back(std::thread(&ModelThread::Run, model_thread, numa_node_id));
   }
   if (model_thread != nullptr) {
     model_inputs_ = model_thread->GetInputs();
@@ -409,14 +492,30 @@ Status ModelPool::FreeSplitTensor(std::vector<std::vector<MSTensor>> *new_inputs
   return kSuccess;
 }
 
+void ModelPool::GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num) {
+  *max_wait_worker_node_id = 0;
+  *max_wait_worker_num = PredictTaskQueue::GetInstance()->GetWaitModelNum(0);
+  for (int i = 1; i < used_numa_node_num_; i++) {
+    int worker_num = PredictTaskQueue::GetInstance()->GetWaitModelNum(i);
+    if (*max_wait_worker_num < worker_num) {
+      *max_wait_worker_num = worker_num;
+      *max_wait_worker_node_id = i;
+    }
+  }
+}
+
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
   mtx_split_task_.lock();
-  auto wait_model_num = PredictTaskQueue::GetInstance()->GetWaitModelNum();
+  int max_wait_worker_node_id = 0;
+  int max_wait_worker_num = 0;
+  GetMaxWaitWorkerNum(&max_wait_worker_node_id, &max_wait_worker_num);
+
   auto batch = inputs[0].Shape()[0];
-  if (PredictTaskQueue::GetInstance()->GetTaskNum() == 0 && wait_model_num > 1 && batch >= wait_model_num) {
-    size_t batch_split_num = PredictTaskQueue::GetInstance()->GetWaitModelNum();
-    PredictTaskQueue::GetInstance()->DecreaseWaitModelNum(batch_split_num);
+  if (PredictTaskQueue::GetInstance()->GetTaskNum(max_wait_worker_node_id) == 0 && max_wait_worker_num > 1 &&
+      batch >= max_wait_worker_num) {
+    size_t batch_split_num = PredictTaskQueue::GetInstance()->GetWaitModelNum(max_wait_worker_node_id);
+    PredictTaskQueue::GetInstance()->DecreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
     std::vector<std::vector<MSTensor>> new_inputs;
     std::vector<std::vector<MSTensor>> new_outputs;
     auto status = SplitInputTensorByBatch(inputs, &new_inputs, batch_split_num);
@@ -433,7 +532,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     std::vector<std::shared_ptr<PredictTask>> tasks;
     for (size_t i = 0; i < batch_split_num; i++) {
       auto predict_task = std::make_shared<PredictTask>(&new_inputs[i], &new_outputs.at(i), before, after);
-      PredictTaskQueue::GetInstance()->PushPredictTask(predict_task);
+      PredictTaskQueue::GetInstance()->PushPredictTask(predict_task, max_wait_worker_node_id);
       tasks.push_back(predict_task);
     }
     mtx_split_task_.unlock();
@@ -450,14 +549,14 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       MS_LOG(ERROR) << "free split tensor failed.";
       return kLiteError;
     }
+    PredictTaskQueue::GetInstance()->IncreaseeWaitModelNum(batch_split_num, max_wait_worker_node_id);
   } else {
-    if (wait_model_num == 1) {
-      PredictTaskQueue::GetInstance()->DecreaseWaitModelNum(1);
-    }
+    PredictTaskQueue::GetInstance()->DecreaseWaitModelNum(1, max_wait_worker_node_id);
     auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
-    PredictTaskQueue::GetInstance()->PushPredictTask(predict_task);
+    PredictTaskQueue::GetInstance()->PushPredictTask(predict_task, max_wait_worker_node_id);
     mtx_split_task_.unlock();
     PredictTaskQueue::GetInstance()->WaitUntilPredictActive(predict_task);
+    PredictTaskQueue::GetInstance()->IncreaseeWaitModelNum(1, max_wait_worker_node_id);
   }
   return kSuccess;
 }

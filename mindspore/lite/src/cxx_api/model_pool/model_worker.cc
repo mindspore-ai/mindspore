@@ -18,9 +18,9 @@
 #include "src/common/utils.h"
 #include "src/common/common.h"
 namespace mindspore {
-void ModelThread::Run() {
+void ModelThread::Run(int node_id) {
   while (!PredictTaskQueue::GetInstance()->IsPredictTaskDone()) {
-    auto task = PredictTaskQueue::GetInstance()->GetPredictTask();
+    auto task = PredictTaskQueue::GetInstance()->GetPredictTask(node_id);
     if (task == nullptr) {
       break;
     }
@@ -35,7 +35,7 @@ void ModelThread::Run() {
       PredictTaskQueue::GetInstance()->ActiveTask();
       continue;
     }
-    if (is_copy_output_) {
+    if (need_copy_output_) {
       std::vector<MSTensor> new_outputs;
       auto output_size = outputs->size();
       for (size_t i = 0; i < output_size; i++) {
@@ -63,7 +63,7 @@ Status ModelThread::Init(const char *model_buf, size_t size, const std::shared_p
                          const Key &dec_key, const std::string &dec_mode, int node_id) {
   model_ = std::make_shared<Model>();
   mindspore::ModelType model_type = kMindIR;
-  if (node_id > -1) {
+  if (node_id != -1) {
     model_->UpdateConfig(lite::kConfigServerInference, {lite::kConfigNUMANodeId, std::to_string(node_id)});
   }
   auto status = model_->Build(model_buf, size, model_type, model_context, dec_key, dec_mode);
@@ -131,7 +131,7 @@ Status ModelThread::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
       /* user set graph-output-tensor from outside */
       model_output[i].SetData(outputs->at(i).MutableData());
       model_output[i].SetAllocator(nullptr);
-      is_copy_output_ = false;
+      need_copy_output_ = false;
     }
   }
   auto status = model_->Predict(inputs, &model_output, before, after);
@@ -139,7 +139,7 @@ Status ModelThread::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
     MS_LOG(ERROR) << "model predict failed.";
     return status;
   }
-  if (is_copy_output_) {
+  if (need_copy_output_) {
     outputs->clear();
     outputs->insert(outputs->end(), model_output.begin(), model_output.end());
   } else {

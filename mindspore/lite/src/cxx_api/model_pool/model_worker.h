@@ -26,8 +26,6 @@
 #include "include/api/model.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
-using ModelPoolContex = std::vector<std::shared_ptr<Context>>;
-
 class ModelThread {
  public:
   ModelThread() = default;
@@ -45,7 +43,7 @@ class ModelThread {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
-  void Run();
+  void Run(int node_id);
 
  private:
   std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,
@@ -54,11 +52,9 @@ class ModelThread {
  private:
   std::shared_ptr<mindspore::Model> model_ = nullptr;
   std::mutex mtx_model_;
-  std::condition_variable model_cond_;
 
   // num thread is configured according to the hardware
-  int num_models_;
-  bool is_copy_output_ = true;
+  bool need_copy_output_ = true;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_THREAD_H_

@@ -27,6 +27,8 @@
 #include "src/cxx_api/model_pool/model_worker.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
+using ModelPoolContex = std::vector<std::shared_ptr<Context>>;
+
 class ModelPool {
  public:
   static ModelPool *GetInstance();
@@ -44,9 +46,18 @@ class ModelPool {
 
  private:
   ModelPool() = default;
-  void SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num);
+
   ModelPoolContex CreateModelContext(const std::shared_ptr<RunnerConfig> &runner_config);
   std::shared_ptr<Context> InitContext(const std::shared_ptr<RunnerConfig> &runner_config);
+
+  Status InitDefaultContext(const std::shared_ptr<mindspore::Context> &context);
+  std::shared_ptr<Context> InitUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config);
+  Status SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Context> &context);
+
+  Status SetModelBindMode(std::vector<std::vector<int>> *all_model_bind_list, std::shared_ptr<Context> model_context);
+  Status SetNumaBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num);
+  void SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num);
+
   Status SplitInputTensorByBatch(const std::vector<MSTensor> &inputs, std::vector<std::vector<MSTensor>> *new_inputs,
                                  size_t batch_split_num);
   Status SplitOutputTensorByBatch(std::vector<std::vector<MSTensor>> *outputs, std::vector<MSTensor> *new_outputs,
@@ -54,14 +65,18 @@ class ModelPool {
   Status ConcatPredictOutput(std::vector<std::vector<MSTensor>> *outputs, std::vector<MSTensor> *new_outputs);
   Status FreeSplitTensor(std::vector<std::vector<MSTensor>> *new_inputs,
                          std::vector<std::vector<MSTensor>> *new_outputs);
+  void GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num);
 
   std::vector<std::thread> model_thread_vec_;
   std::vector<MSTensor> model_inputs_;
   std::vector<MSTensor> model_outputs_;
   char *graph_buf_ = nullptr;
-  size_t num_models_ = 10;
+  size_t workers_num_ = 1;
   std::mutex mtx_split_task_;
   bool is_user_data_ = false;
+  int numa_node_num_ = 1;
+  int used_numa_node_num_ = 0;
+  bool use_numa_bind_mode_ = false;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H

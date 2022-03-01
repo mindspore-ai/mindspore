@@ -24,6 +24,7 @@
 namespace mindspore {
 struct RunnerConfig {
   std::shared_ptr<Context> context = nullptr;
+  int workers_num = 0;
 };
 
 /// \brief The ModelParallelRunner class is used to define a MindSpore ModelParallelRunner, facilitating Model
