@@ -1,0 +1,127 @@
+# Copyright 2020 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+import numpy as np
+import pytest
+
+import mindspore as ms
+from mindspore import nn, context, Tensor
+import mindspore.ops as ops
+
+def set_context():
+    context.set_context(mode=context.PYNATIVE_MODE)
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(device_num=8, parallel_mode="auto_parallel", search_mode="sharding_propagation")
+
+class NetMul(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.mul = ops.Mul()
+
+    def construct(self, x, y):
+        return self.mul(x, y)
+
+
+class NetMatMul(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.matmul = ops.MatMul()
+
+    def construct(self, x, y):
+        return self.matmul(x, y)
+
+class Net(nn.Cell):
+    def __init__(self, in_axes, out_axes):
+        super().__init__()
+        self.mul_net = NetMul()
+        self.matmul_net = NetMatMul()
+        self.mul_net.shard(in_axes=in_axes, out_axes=out_axes)
+
+    def construct(self, x, y):
+        out1 = self.matmul_net(x, y)
+        out2 = self.matmul_net(x, y)
+        return self.mul_net(out1, out2)
+
+def cell_shard_execution(in_axes, out_axes, error_log):
+
+    net = Net(in_axes, out_axes)
+
+    x = Tensor(np.ones([128, 128]), dtype=ms.float32)
+    y = Tensor(np.ones([128, 128]), dtype=ms.float32)
+
+    with pytest.raises(Exception) as err:
+        _ = net(x, y)
+    assert error_log in str(err.value)
+
+
+def test_in_axes_numbers_check():
+    """
+    Feature: shard function for cell
+    Description: inconsistent input number and in_axes number
+    Expectation: throw an exception indicating inconsistent input number and in_axes number
+    """
+    set_context()
+    in_axes = ((8, 1), None, (1, 8))
+    out_axes = (None,)
+    error_log = "Input numbers: 2 is not equal to in_axes numbers: 3"
+    cell_shard_execution(in_axes, out_axes, error_log)
+
+
+def test_out_axes_numbers_check():
+    """
+    Feature: shard function for cell
+    Description: inconsistent output number and out_axes number
+    Expectation: throw an exception indicating inconsistent output number and out_axes number
+    """
+    set_context()
+    in_axes = ((8, 1), None)
+    out_axes = (None, (8, 1))
+    error_log = "Output number: 1 is not equal to out_axes number: 2"
+    cell_shard_execution(in_axes, out_axes, error_log)
+
+def test_in_axes_dimension_check():
+    """
+    Feature: shard function for cell
+    Description: inconsistent input dimension and in_axes dimension
+    Expectation: throw an exception indicating inconsistent input_dimension and in_axes dimension
+    """
+    set_context()
+    in_axes = ((8, 1, 1), None)
+    out_axes = (None, (8, 1))
+    error_log = "Input dimension: 2 is not equal to in_axes dimension: 3 at index 0"
+    cell_shard_execution(in_axes, out_axes, error_log)
+
+def test_out_axes_dimension_check():
+    """
+    Feature: shard function for cell
+    Description: inconsistent output dimension and out_axes dimension
+    Expectation: throw an exception indicating inconsistent output_dimension and out_axes dimension
+    """
+    set_context()
+    in_axes = ((8, 1), None)
+    out_axes = ((8,),)
+    error_log = "Output dimension: 2 is not equal to out_axes dimension: 1 at index 0"
+    cell_shard_execution(in_axes, out_axes, error_log)
+
+def test_in_axes_format_check():
+    """
+    Feature: shard function for cell
+    Description: unsupported in_axes format
+    Expectation: throw an exception indicating an supported in_axes format
+    """
+    set_context()
+    in_axes = ([8, 1], None)
+    out_axes = (None,)
+    error_log = "in_axes should be a two-dimension tuple"
+    cell_shard_execution(in_axes, out_axes, error_log)
