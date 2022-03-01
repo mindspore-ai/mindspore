@@ -7,11 +7,11 @@ mindspore.ops.TensorShape
 
     **输入：**
 
-    - **input_x** (Tensor) - 第一个输入，是一个Tensor类型数据
+    - **input_x** (Tensor) - 第一个输入，是一个Tensor类型数据。
 
     **输出：**
 
-    Tensor，输入 `input_x` 的shape
+    Tensor，输入 `input_x` 的shape。
 
     **异常：**
 
