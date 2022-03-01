@@ -667,7 +667,7 @@ int LiteSession::IniPackWeightData(Model *model) {
   for (size_t i = 0; i < kernel_num; i++) {
     auto node = model->all_nodes_[i];
     auto node_type = node->node_type_;
-    if (IsPackedOp(node_type)) {
+    if (IsPackedOp(node_type) || IsShareConstOp(node_type)) {
       for (size_t j = 0; j < node->input_indices_.size(); j++) {
         auto tensor_index = node->input_indices_[j];
         auto src_tensor = lite_model->GetSchemaTensor(tensor_index);

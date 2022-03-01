@@ -126,11 +126,6 @@ set(CODER_OPCODERS_SRC
         #### custom
         ${MICRO_DIR}/coder/opcoders/custom/custom_coder.cc
         )
-if(MSLITE_ENABLE_SERVER_INFERENCE)
-    set(LITE_SRC
-        ${LITE_DIR}/src/pack_weight_manager.cc
-            )
-endif()
 
 set(REGISTRY_SRC
         ${MICRO_DIR}/coder/opcoders/kernel_registry.cc

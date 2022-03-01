@@ -93,5 +93,10 @@ bool IsPackedOp(int op_type) {
                                               schema::PrimitiveType_FullConnection, schema::PrimitiveType_MatMulFusion};
   return IsContain(packed_ops, op_type);
 }
+
+bool IsShareConstOp(int op_type) {
+  static const std::vector<int> packed_ops = {schema::PrimitiveType_Gather};
+  return IsContain(packed_ops, op_type);
+}
 }  // namespace lite
 }  // namespace mindspore
