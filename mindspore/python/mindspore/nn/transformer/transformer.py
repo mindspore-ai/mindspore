@@ -1326,30 +1326,18 @@ class TransformerEncoderLayer(Cell):
         self.layernorm1.shard(((parallel_config.data_parallel, 1),))
         self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
         self.layernorm2.shard(((parallel_config.data_parallel, 1),))
-        if self.use_moe is True:
-            self.attention = MultiHeadAttention(batch_size=batch_size,
-                                                src_seq_length=seq_length,
-                                                tgt_seq_length=seq_length,
-                                                hidden_size=hidden_size,
-                                                num_heads=num_heads,
-                                                hidden_dropout_rate=hidden_dropout_rate,
-                                                attention_dropout_rate=attention_dropout_rate,
-                                                softmax_compute_type=softmax_compute_type,
-                                                param_init_type=param_init_type,
-                                                use_past=use_past,
-                                                parallel_config=parallel_config.dpmp)
-        else:
-            self.attention = MultiHeadAttention(batch_size=batch_size,
-                                                src_seq_length=seq_length,
-                                                tgt_seq_length=seq_length,
-                                                hidden_size=hidden_size,
-                                                num_heads=num_heads,
-                                                hidden_dropout_rate=hidden_dropout_rate,
-                                                attention_dropout_rate=attention_dropout_rate,
-                                                softmax_compute_type=softmax_compute_type,
-                                                param_init_type=param_init_type,
-                                                use_past=use_past,
-                                                parallel_config=parallel_config)
+
+        self.attention = MultiHeadAttention(batch_size=batch_size,
+                                            src_seq_length=seq_length,
+                                            tgt_seq_length=seq_length,
+                                            hidden_size=hidden_size,
+                                            num_heads=num_heads,
+                                            hidden_dropout_rate=hidden_dropout_rate,
+                                            attention_dropout_rate=attention_dropout_rate,
+                                            softmax_compute_type=softmax_compute_type,
+                                            param_init_type=param_init_type,
+                                            use_past=use_past,
+                                            parallel_config=parallel_config.dpmp if self.use_moe else parallel_config)
         if self.use_moe:
             self.output = MoE(hidden_size=hidden_size,
                               dropout_rate=hidden_dropout_rate,
@@ -1647,55 +1635,31 @@ class TransformerDecoderLayer(Cell):
         self.layernorm1.shard(((parallel_config.data_parallel, 1),))
         self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
         self.layernorm2.shard(((parallel_config.data_parallel, 1),))
-        if self.use_moe is True:
-            self.attention = MultiHeadAttention(hidden_size=hidden_size,
-                                                num_heads=num_heads,
-                                                batch_size=batch_size,
-                                                src_seq_length=tgt_seq_length,
-                                                tgt_seq_length=tgt_seq_length,
-                                                hidden_dropout_rate=hidden_dropout_rate,
-                                                attention_dropout_rate=attention_dropout_rate,
-                                                use_past=use_past,
-                                                softmax_compute_type=softmax_compute_type,
-                                                param_init_type=param_init_type,
-                                                parallel_config=parallel_config.dpmp)
-        else:
-            self.attention = MultiHeadAttention(hidden_size=hidden_size,
-                                                num_heads=num_heads,
-                                                batch_size=batch_size,
-                                                src_seq_length=tgt_seq_length,
-                                                tgt_seq_length=tgt_seq_length,
-                                                hidden_dropout_rate=hidden_dropout_rate,
-                                                attention_dropout_rate=attention_dropout_rate,
-                                                use_past=use_past,
-                                                softmax_compute_type=softmax_compute_type,
-                                                param_init_type=param_init_type,
-                                                parallel_config=parallel_config)
+        self.attention = MultiHeadAttention(hidden_size=hidden_size,
+                                            num_heads=num_heads,
+                                            batch_size=batch_size,
+                                            src_seq_length=tgt_seq_length,
+                                            tgt_seq_length=tgt_seq_length,
+                                            hidden_dropout_rate=hidden_dropout_rate,
+                                            attention_dropout_rate=attention_dropout_rate,
+                                            use_past=use_past,
+                                            softmax_compute_type=softmax_compute_type,
+                                            param_init_type=param_init_type,
+                                            parallel_config=parallel_config.dpmp if self.use_moe else parallel_config)
+
         # Cross attention with the output of encoder as memory tensor
-        if self.use_moe is True:
-            self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
-                                                      num_heads=num_heads,
-                                                      batch_size=batch_size,
-                                                      src_seq_length=tgt_seq_length,
-                                                      tgt_seq_length=src_seq_length,
-                                                      hidden_dropout_rate=hidden_dropout_rate,
-                                                      attention_dropout_rate=attention_dropout_rate,
-                                                      softmax_compute_type=softmax_compute_type,
-                                                      use_past=use_past,
-                                                      param_init_type=param_init_type,
-                                                      parallel_config=parallel_config.dpmp)
-        else:
-            self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
-                                                      num_heads=num_heads,
-                                                      batch_size=batch_size,
-                                                      src_seq_length=tgt_seq_length,
-                                                      tgt_seq_length=src_seq_length,
-                                                      hidden_dropout_rate=hidden_dropout_rate,
-                                                      attention_dropout_rate=attention_dropout_rate,
-                                                      softmax_compute_type=softmax_compute_type,
-                                                      use_past=use_past,
-                                                      param_init_type=param_init_type,
-                                                      parallel_config=parallel_config)
+        self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
+                                                  num_heads=num_heads,
+                                                  batch_size=batch_size,
+                                                  src_seq_length=tgt_seq_length,
+                                                  tgt_seq_length=src_seq_length,
+                                                  hidden_dropout_rate=hidden_dropout_rate,
+                                                  attention_dropout_rate=attention_dropout_rate,
+                                                  softmax_compute_type=softmax_compute_type,
+                                                  use_past=use_past,
+                                                  param_init_type=param_init_type,
+                                                  parallel_config=parallel_config.dpmp
+                                                  if self.use_moe else parallel_config)
         self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
             layernorm_compute_type)
         self.cross_attention_layernorm.shard(((parallel_config.data_parallel, 1),))
@@ -2087,38 +2051,22 @@ class TransformerEncoder(Cell):
         self.num_layers = num_layers
         self.blocks = nn.CellList()
         for i in range(num_layers):
-            if self.use_moe is True:
-                block = TransformerEncoderLayer(hidden_size=hidden_size,
-                                                batch_size=batch_size,
-                                                ffn_hidden_size=ffn_hidden_size,
-                                                seq_length=seq_length,
-                                                attention_dropout_rate=attention_dropout_rate,
-                                                hidden_dropout_rate=hidden_dropout_rate,
-                                                layernorm_compute_type=layernorm_compute_type,
-                                                softmax_compute_type=softmax_compute_type,
-                                                num_heads=num_heads,
-                                                hidden_act=hidden_act,
-                                                post_layernorm_residual=post_layernorm_residual,
-                                                param_init_type=param_init_type,
-                                                use_past=use_past,
-                                                moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config)
-            else:
-                block = TransformerEncoderLayer(hidden_size=hidden_size,
-                                                batch_size=batch_size,
-                                                ffn_hidden_size=ffn_hidden_size,
-                                                seq_length=seq_length,
-                                                attention_dropout_rate=attention_dropout_rate,
-                                                hidden_dropout_rate=hidden_dropout_rate,
-                                                layernorm_compute_type=layernorm_compute_type,
-                                                softmax_compute_type=softmax_compute_type,
-                                                num_heads=num_heads,
-                                                hidden_act=hidden_act,
-                                                post_layernorm_residual=post_layernorm_residual,
-                                                param_init_type=param_init_type,
-                                                use_past=use_past,
-                                                moe_config=moe_config,
-                                                parallel_config=parallel_config.dp_mp_config)
+            block = TransformerEncoderLayer(hidden_size=hidden_size,
+                                            batch_size=batch_size,
+                                            ffn_hidden_size=ffn_hidden_size,
+                                            seq_length=seq_length,
+                                            attention_dropout_rate=attention_dropout_rate,
+                                            hidden_dropout_rate=hidden_dropout_rate,
+                                            layernorm_compute_type=layernorm_compute_type,
+                                            softmax_compute_type=softmax_compute_type,
+                                            num_heads=num_heads,
+                                            hidden_act=hidden_act,
+                                            post_layernorm_residual=post_layernorm_residual,
+                                            param_init_type=param_init_type,
+                                            use_past=use_past,
+                                            moe_config=moe_config,
+                                            parallel_config=parallel_config.moe_parallel_config if self.use_moe
+                                            else parallel_config.dp_mp_config)
             # If the user doesn't pass the fusion function, use the default one
             if not lambda_func:
                 lambda_func = _get_lambda_func()
@@ -2299,40 +2247,23 @@ class TransformerDecoder(Cell):
         _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
         for i in range(num_layers):
-            if self.use_moe is True:
-                block = TransformerDecoderLayer(hidden_size=hidden_size,
-                                                batch_size=batch_size,
-                                                ffn_hidden_size=ffn_hidden_size,
-                                                src_seq_length=src_seq_length,
-                                                tgt_seq_length=tgt_seq_length,
-                                                attention_dropout_rate=attention_dropout_rate,
-                                                hidden_dropout_rate=hidden_dropout_rate,
-                                                num_heads=num_heads,
-                                                layernorm_compute_type=layernorm_compute_type,
-                                                softmax_compute_type=softmax_compute_type,
-                                                hidden_act=hidden_act,
-                                                use_past=use_past,
-                                                param_init_type=param_init_type,
-                                                post_layernorm_residual=post_layernorm_residual,
-                                                moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config)
-            else:
-                block = TransformerDecoderLayer(hidden_size=hidden_size,
-                                                batch_size=batch_size,
-                                                ffn_hidden_size=ffn_hidden_size,
-                                                src_seq_length=src_seq_length,
-                                                tgt_seq_length=tgt_seq_length,
-                                                attention_dropout_rate=attention_dropout_rate,
-                                                hidden_dropout_rate=hidden_dropout_rate,
-                                                num_heads=num_heads,
-                                                layernorm_compute_type=layernorm_compute_type,
-                                                softmax_compute_type=softmax_compute_type,
-                                                hidden_act=hidden_act,
-                                                use_past=use_past,
-                                                param_init_type=param_init_type,
-                                                post_layernorm_residual=post_layernorm_residual,
-                                                moe_config=moe_config,
-                                                parallel_config=parallel_config.dp_mp_config)
+            block = TransformerDecoderLayer(hidden_size=hidden_size,
+                                            batch_size=batch_size,
+                                            ffn_hidden_size=ffn_hidden_size,
+                                            src_seq_length=src_seq_length,
+                                            tgt_seq_length=tgt_seq_length,
+                                            attention_dropout_rate=attention_dropout_rate,
+                                            hidden_dropout_rate=hidden_dropout_rate,
+                                            num_heads=num_heads,
+                                            layernorm_compute_type=layernorm_compute_type,
+                                            softmax_compute_type=softmax_compute_type,
+                                            hidden_act=hidden_act,
+                                            use_past=use_past,
+                                            param_init_type=param_init_type,
+                                            post_layernorm_residual=post_layernorm_residual,
+                                            moe_config=moe_config,
+                                            parallel_config=parallel_config.moe_parallel_config if self.use_moe
+                                            else parallel_config.dp_mp_config)
             # If the user doesn't pass the fusion function, use the default one
             if not lambda_func:
                 lambda_func = _get_lambda_func()

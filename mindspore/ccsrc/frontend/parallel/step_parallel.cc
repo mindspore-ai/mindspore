@@ -1173,7 +1173,11 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
       }
       if (!opt_shard_mirror_group.empty()) {
         // mirror ops is covered in not fully use opt shard case
-        backward_op = CreateMirrorOps(opt_shard_mirror_group, static_cast<size_t>(opt_shard_mirror_group[0]));
+        uint32_t group_rank_size = 0;
+        if (!CommManager::GetInstance().GetRankSize(opt_shard_mirror_group, &group_rank_size)) {
+          MS_LOG(EXCEPTION) << "Got the group size from the group " << opt_shard_mirror_group << " failed";
+        }
+        backward_op = CreateMirrorOps(opt_shard_mirror_group, static_cast<size_t>(group_rank_size));
       }
     }
     // not a RefKey
