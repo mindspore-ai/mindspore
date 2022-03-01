@@ -104,7 +104,6 @@ int ReduceBaseCPUKernel::Prepare() {
   if (in_tensors_.size() > 1) {
     auto axes_tensor = in_tensors_.at(1);
     MS_CHECK_TRUE_MSG(axes_tensor != nullptr, RET_ERROR, "axes-tensor is a nullptr.");
-    MS_CHECK_TRUE_MSG(axes_tensor->IsConst(), RET_ERROR, "axes-tensor must be a constant.");
     MS_CHECK_FALSE_MSG((axes_tensor->data_type() != kNumberTypeInt && axes_tensor->data_type() != kNumberTypeInt32),
                        RET_ERROR, "The data type of axes tensor should be int32");
     num_axes_ = axes_tensor->ElementsNum();
