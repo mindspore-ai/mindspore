@@ -19,6 +19,7 @@
     - **hidden_dropout_rate** (float) - 表示作用在隐藏层输出的丢弃率。默认值：0.1
     - **attention_dropout_rate** (float) - 表示注意力score的丢弃率。默认值：0.1
     - **post_layernorm_residual** (bool) - 表示是否在LayerNorm之前使用残差，即是否选择残差为Post-LayerNorm或者Pre-LayerNorm。默认值：False
+    - **use_past** (bool) - 表示是否开启增量推理。在推理中会缓存注意力机制计算结果，避免冗余计算。默认值为False。
     - **layernorm_compute_type** (dtype.Number) - 表示LayerNorm的计算类型。其值应为dtype.float32或dtype.float16。默认值为dtype.float32。
     - **softmax_compute_type** (dtype.Number) - 表示注意力机制中softmax的计算类型。其值应为dtype.float32或dtype.float16。默认值为mstype.float32。
     - **param_init_type** (dtype.Number) - 表示模块的参数初始化类型。其值应为dtype.float32或dtype.float16。默认值为dtype.float32。

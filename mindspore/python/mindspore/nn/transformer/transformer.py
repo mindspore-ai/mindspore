@@ -598,8 +598,8 @@ class VocabEmbedding(Cell):
     parallel_config(EmbeddingOpParallelConfig).
 
     Note:
-        When `AUTO_PARALLEL` mode is enabled, this layer support only 2-d dimension inputs, as the shard is designed
-        for 2d inputs.
+        When `AUTO_PARALLEL` or `SEMI_AUTO_PARALLEL` mode is enabled, this layer support only 2-d dimension inputs, as
+        the shard is designed for 2d inputs.
 
     Args:
         vocab_size: (int): Size of the dictionary of embeddings.

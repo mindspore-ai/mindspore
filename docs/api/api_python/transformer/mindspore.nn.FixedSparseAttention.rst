@@ -18,6 +18,7 @@
     - **num_different_global_patterns** (int) - 表示用于确定不同的全局注意力数量。虽然全局注意力由局部的代表性的块决定，
       但由于有多个头，所以每个头都可以使用不同的全局代表。目前只支持4。
     - **size_per_head** (int) - 表示每个注意力头的向量大小。目前仅支持64和128。
+    - **parallel_config** (OpParallelConfig) - 并行设置，内容请参阅 `OpParallelConfig` 的定义。默认值为 `default_dpmp_config` ，一个用默认参数初始化的 `OpParallelConfig` 的实例。
 
     **输入：**
 

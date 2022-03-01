@@ -2,6 +2,9 @@
 
     根据输入的索引查找参数表中的行作为返回值。当设置并行模式为 `AUTO_PARALLEL_MODE` 时，如果parallel_config.vocab_emb_dp为True时，那么embedding lookup表采用数据并行的方式，数据并行度为 `parallel_config.data_parallel` ，否则按 `parallel_config.model_parallel` 对embedding表中的第0维度进行切分。
 
+    .. note::
+        启用 `AUTO_PARALLEL` / `SEMI_AUTO_PARALLEL` 模式时，此层仅支持2维度的输入，因为策略是为2D输入而配置的。
+
     **参数：**
 
     - **vocab_size** （int) - 表示查找表的大小。
