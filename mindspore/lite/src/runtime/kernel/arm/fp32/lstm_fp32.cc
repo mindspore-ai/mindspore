@@ -102,15 +102,20 @@ int LstmCPUKernel::InitInputWeightBias() {
     return RET_ERROR;
   }
   memset(input_bias_, 0, weight_batch_ * lstm_param_->input_col_align_ * sizeof(float));
-  float *bias_data =
-    weight_i_data + gate_num * lstm_param_->hidden_size_ * (lstm_param_->input_size_ + lstm_param_->hidden_size_);
+
+  float *bias_data = nullptr;
+  int offset = gate_num * lstm_param_->hidden_size_ * (lstm_param_->input_size_ + lstm_param_->hidden_size_);
+  if (weight_i->ElementsNum() > offset) {
+    bias_data = weight_i_data + offset;
+  }
   if (in_tensors_.size() > mindir_input_tensors) {
     bias_data = reinterpret_cast<float *>(in_tensors_.at(onnx_bias_index)->data());
   }
 
-  CHECK_NULL_RETURN(bias_data);
-  PackLstmBias(input_bias_, bias_data, weight_batch_, lstm_param_->hidden_size_, lstm_param_->input_col_align_,
-               lstm_param_->bidirectional_, weights_order);
+  if (bias_data != nullptr) {
+    PackLstmBias(input_bias_, bias_data, weight_batch_, lstm_param_->hidden_size_, lstm_param_->input_col_align_,
+                 lstm_param_->bidirectional_, weights_order);
+  }
   return RET_OK;
 }
 
@@ -386,9 +391,6 @@ int LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_i, cons
     float *output_gate_t = output_gate + lstm_param_->batch_ * lstm_param_->hidden_size_ * real_t;
     float *output_ptr = output + real_t * lstm_param_->output_step_;
 
-    if (IsTrain() && IsTrainable()) {
-      RecordPreState(cell_state, is_backward ? real_t : t);
-    }
     LstmStepUnit(output_ptr, input_gate_t, forget_gate_t, cell_gate_t, output_gate_t, weight_h, state_bias,
                  hidden_state, cell_state, buffer_, lstm_param_);
     if (IsTrain() && IsTrainable()) {
@@ -397,15 +399,6 @@ int LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_i, cons
     }
   }
   return RET_OK;
-}
-
-void LstmCPUKernel::RecordPreState(float *cell_state_minus1, int step) {
-  float *states = reinterpret_cast<float *>(out_tensors_[out_intermediate_states_index]->data());
-  auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
-  auto stride = step * state_size;
-  auto seq_stride = lstm_param_->seq_len_ * state_size;
-  stride += (no_of_recorde_values - 1) * seq_stride;
-  memcpy(states + stride, cell_state_minus1, state_size * sizeof(float));
 }
 
 void LstmCPUKernel::RecordStates(float *hidden_state, float *cell_state, float *input_gate, float *output_gate,

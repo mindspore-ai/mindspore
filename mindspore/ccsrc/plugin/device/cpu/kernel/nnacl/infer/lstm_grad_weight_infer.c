@@ -17,7 +17,7 @@
 #include "nnacl/infer/lstm_grad_weight_infer.h"
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/fp32/lstm_fp32.h"
+#include "nnacl/fp32_grad/lstm_grad_fp32.h"
 
 int LstmGradWeightInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
@@ -42,8 +42,8 @@ int LstmGradWeightInferShape(const TensorC *const *inputs, size_t inputs_size, T
   if (input->shape_size_ != C3NUM || H->shape_size_ != C3NUM || Y->shape_size_ != C3NUM) {
     return NNACL_ERR;
   }
-  LstmParameter *param = (LstmParameter *)parameter;
-  bool has_bias = true;
+  LstmGradParameter *param = (LstmGradParameter *)parameter;
+  int has_bias = param->has_bias_;
   int output_shape[3] = {0, 1, 1};
   int gate_size = 4 * param->hidden_size_;
   output_shape[0] += gate_size * param->input_size_;

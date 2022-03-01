@@ -58,15 +58,19 @@ int LSTMGradWeightCPUKernel::Run() {
 
 int LSTMGradWeightCPUKernel::LstmBackpropUnidirectional(float *output, bool is_backward) {
   auto dW_tensor = out_tensors_.at(dW_out_index);
-  auto intermediate_tensor = in_tensors_.at(intermediate_data_index);
-  auto input_tensor = in_tensors_.at(input_index);
   MS_ASSERT(dW_tensor != nullptr);
+  auto intermediate_tensor = in_tensors_.at(intermediate_data_index);
   MS_ASSERT(intermediate_tensor != nullptr);
+  auto input_tensor = in_tensors_.at(input_index);
   MS_ASSERT(input_tensor != nullptr);
+  auto hidden_input_tensor = in_tensors_.at(hidden_input_index);
+  MS_ASSERT(hidden_input_tensor != nullptr);
+
   auto intermediate_data = reinterpret_cast<float *>(intermediate_tensor->data());
   auto input = reinterpret_cast<float *>(input_tensor->data());
-
   auto dW = reinterpret_cast<float *>(dW_tensor->data());
+  auto hidden_input_data = reinterpret_cast<float *>(hidden_input_tensor->data());
+
   auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
   auto seq_stride = lstm_param_->seq_len_ * state_size;
   float *hidden_state = intermediate_data;
@@ -75,27 +79,28 @@ int LSTMGradWeightCPUKernel::LstmBackpropUnidirectional(float *output, bool is_b
   memset(dW_tmp_, 0, dW_tensor->Size());  // dW_tmp is summed in the loop
   for (int t = lstm_param_->seq_len_ - 1; t >= 0; t--) {
     int real_t = is_backward ? lstm_param_->seq_len_ - t - 1 : t;
-    auto stride = real_t * state_size;
-    float *input_ptr = input + real_t * lstm_param_->batch_ * lstm_param_->input_size_;
-    float *hidden_state_t = hidden_state + stride;
-    float *dA_t = dA + t * num_of_gates * lstm_param_->output_step_;
-    LstmGradWeightStepUnit(input_ptr, hidden_state_t, dA_t, dW_tmp_, workspace_, lstm_param_);
+    float *curr_input = input + real_t * lstm_param_->batch_ * lstm_param_->input_size_;
+    float *prev_hidden_state = (real_t > 0) ? hidden_state + (real_t - 1) * state_size : hidden_input_data;
+    float *curr_da = dA + real_t * num_of_gates * lstm_param_->output_step_;
+    LstmGradDoWeightStep(curr_input, prev_hidden_state, curr_da, dW_tmp_, workspace_, lstm_param_);
   }
-  ReorderLstmWeightGrad(dW, dW_tmp_);
+  ReorderLstmWeightGrad(dW, dW_tmp_, lstm_param_->has_bias_);
   return RET_OK;
 }
 
-void LSTMGradWeightCPUKernel::ReorderLstmWeightGrad(float *dst, float *src) {
-  ReorderLstmWeights(dst, src, weight_batch_, lstm_param_->hidden_size_, lstm_param_->input_size_, weights_order_IOFG);
+void LSTMGradWeightCPUKernel::ReorderLstmWeightGrad(float *dst, float *src, bool has_bias) {
+  ReorderLstmWeights(dst, src, weight_batch_, lstm_param_->hidden_size_, lstm_param_->input_size_, getLstmOrderIOFG());
   src += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
   dst += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
-  ReorderLstmWeights(dst, src, weight_batch_, lstm_param_->hidden_size_, lstm_param_->hidden_size_, weights_order_IOFG);
+  ReorderLstmWeights(dst, src, weight_batch_, lstm_param_->hidden_size_, lstm_param_->hidden_size_, getLstmOrderIOFG());
   src += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
   dst += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
-  ReorderLstmWeights(dst, src, weight_batch_, 1, lstm_param_->hidden_size_, weights_order_IOFG);
-  // update senced bias term (only if separate GradData and GradWeight)
-  dst += weight_batch_ * lstm_param_->hidden_size_;
-  ReorderLstmWeights(dst, src, weight_batch_, 1, lstm_param_->hidden_size_, weights_order_IOFG);
+  if (has_bias) {
+    ReorderLstmWeights(dst, src, weight_batch_, 1, lstm_param_->hidden_size_, getLstmOrderIOFG());
+    // update secend bias term (only if separate GradData and GradWeight)
+    dst += weight_batch_ * lstm_param_->hidden_size_;
+    ReorderLstmWeights(dst, src, weight_batch_, 1, lstm_param_->hidden_size_, getLstmOrderIOFG());
+  }
 }
 
 int LSTMGradWeightCPUKernel::DoGrad(int thread_id) { return RET_OK; }
@@ -107,7 +112,6 @@ int LSTMGradWeightCPUKernel::InitParam() {
   lstm_param_->seq_len_ = in_shape.at(FIRST_INPUT);
   lstm_param_->batch_ = in_shape.at(SECOND_INPUT);
   lstm_param_->input_size_ = in_shape.at(THIRD_INPUT);
-
   auto y = in_tensors_.at(y_index);
   MS_ASSERT(y != nullptr);
   std::vector<int> y_shape = y->shape();

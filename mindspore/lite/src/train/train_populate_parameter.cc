@@ -30,6 +30,7 @@
 #include "nnacl/fp32_grad/dropout_parameter.h"
 #include "nnacl/fp32_grad/smooth_l1_loss.h"
 #include "nnacl/fp32_grad/resize_grad_parameter.h"
+#include "nnacl/fp32_grad/lstm_grad_fp32.h"
 
 using mindspore::lite::Registry;
 
@@ -511,17 +512,20 @@ OpParameter *PopulateLstmGradParameter(const void *prim) {
     return nullptr;
   }
 
-  auto *param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
+  auto *param = reinterpret_cast<LstmGradParameter *>(malloc(sizeof(LstmGradParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc LstmParameter failed.";
+    MS_LOG(ERROR) << "malloc LstmGradParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(LstmParameter));
+  memset(param, 0, sizeof(LstmGradParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
   param->bidirectional_ = value->bidirectional();
   param->zoneout_cell_ = value->zoneout_cell();
   param->zoneout_hidden_ = value->zoneout_hidden();
+  param->input_size_ = value->input_size();
+  param->has_bias_ = value->has_bias();
+
   return reinterpret_cast<OpParameter *>(param);
 }
 
@@ -534,17 +538,19 @@ OpParameter *PopulateLstmGradDataParameter(const void *prim) {
     return nullptr;
   }
 
-  auto *param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
+  auto *param = reinterpret_cast<LstmGradParameter *>(malloc(sizeof(LstmGradParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc LstmParameter failed.";
+    MS_LOG(ERROR) << "malloc LstmGradParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(LstmParameter));
+  memset(param, 0, sizeof(LstmGradParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
   param->bidirectional_ = value->bidirectional();
   param->zoneout_cell_ = value->zoneout_cell();
   param->zoneout_hidden_ = value->zoneout_hidden();
+  param->input_size_ = value->input_size();
+  param->has_bias_ = value->has_bias();
   return reinterpret_cast<OpParameter *>(param);
 }
 
@@ -557,12 +563,12 @@ OpParameter *PopulateLstmGradWeightParameter(const void *prim) {
     return nullptr;
   }
 
-  auto *param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
+  auto *param = reinterpret_cast<LstmGradParameter *>(malloc(sizeof(LstmGradParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc LstmParameter failed.";
+    MS_LOG(ERROR) << "malloc LstmGradParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(LstmParameter));
+  memset(param, 0, sizeof(LstmGradParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
   param->input_size_ = value->input_size();
@@ -570,6 +576,7 @@ OpParameter *PopulateLstmGradWeightParameter(const void *prim) {
   param->bidirectional_ = value->bidirectional();
   param->zoneout_cell_ = value->zoneout_cell();
   param->zoneout_hidden_ = value->zoneout_hidden();
+  param->has_bias_ = value->has_bias();
   return reinterpret_cast<OpParameter *>(param);
 }
 

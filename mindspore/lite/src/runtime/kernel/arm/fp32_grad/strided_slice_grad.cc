@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
@@ -56,31 +57,34 @@ void StridedSliceGradCPUKernel::FillEmptyDims() {
   int32_t strides[DIMENSION_8D];
   int32_t input_shape[DIMENSION_8D];
   int32_t i;
-  for (i = 0; i < param_->num_axes_; ++i) {
+
+  // invert the order of the dimension and fill defout outsize actual ranae
+  for (i = 0; i < DIMENSION_8D; ++i) {
     begins[i] = param_->begins_[i];
-    ends[i] = MSMIN(param_->ends_[i], param_->in_shape_[i]);
+    ends[i] = param_->ends_[i];
     strides[i] = param_->strides_[i];
     input_shape[i] = param_->in_shape_[i];
-  }
-  for (i = param_->num_axes_; i < param_->in_shape_length_; ++i) {
-    input_shape[i] = param_->in_shape_[i];
-    begins[i] = 0;
-    ends[i] = param_->in_shape_[i];
-    strides[i] = 1;
   }
 
   int32_t real_index = param_->in_shape_length_ - 1;
   for (i = DIMENSION_8D - 1; i >= 0; --i) {
     if (real_index >= 0) {
+      param_->in_shape_[i] = input_shape[real_index--];
+    } else {
+      param_->in_shape_[i] = 1;
+    }
+  }
+  int out_shape_length = in_tensors_.at(1)->shape().at(0);
+  real_index = out_shape_length - 1;
+  for (i = DIMENSION_8D - 1; i >= 0; --i) {
+    if (real_index >= 0) {
       param_->begins_[i] = begins[real_index];
       param_->ends_[i] = ends[real_index];
-      param_->strides_[i] = strides[real_index];
-      param_->in_shape_[i] = input_shape[real_index--];
+      param_->strides_[i] = strides[real_index--];
     } else {
       param_->begins_[i] = 0;
       param_->ends_[i] = 1;
       param_->strides_[i] = 1;
-      param_->in_shape_[i] = 1;
     }
   }
   param_->num_axes_ = DIMENSION_8D;

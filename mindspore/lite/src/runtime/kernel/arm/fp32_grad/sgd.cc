@@ -64,7 +64,7 @@ int DoSgdInit(float *weight, float *accumulate, float *gradient, float *stat, fl
       weight[i] -= accumulate[i] * learning_rate;
     }
   }
-  *stat = 1.0f;
+  *stat = 0.0f;
   return RET_OK;
 }
 

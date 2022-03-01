@@ -138,7 +138,6 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
   if (!inferflag) {
     return NNACL_OK;
   }
-
   int output_size = inputs[1]->shape_[0];
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;

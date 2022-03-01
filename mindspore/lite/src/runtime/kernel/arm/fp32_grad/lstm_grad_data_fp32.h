@@ -29,8 +29,8 @@ class LSTMGradDataCPUKernel : public InnerKernel {
  public:
   explicit LSTMGradDataCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
-    lstm_param_ = reinterpret_cast<LstmParameter *>(op_parameter_);
+      : InnerKernel(parameter, inputs, outputs, ctx) {
+    lstm_param_ = reinterpret_cast<LstmGradParameter *>(op_parameter_);
   }
   ~LSTMGradDataCPUKernel() {}
   int Prepare() override;
@@ -41,18 +41,16 @@ class LSTMGradDataCPUKernel : public InnerKernel {
  private:
   int LstmBackpropUnidirectional(float *output, bool is_backward);
 
+  void ReorderLstmWeightGrad(float *dst, float *src);
   int InitParam();
   int MallocRunBuffer();
   void FreeRunBuffer();
-  int InitInputWeightBias();
-  int InitStateWeightBias();
 
-  int thread_count_;
   static const int dy_index = 1;
   static const int dH_index = 2;
   static const int dC_index = 3;
   static const int weights_index = 4;
-  static const int cell_state_index = 6;
+  static const int cell_input_index = 6;
   static const int intermediate_data_index = 7;
   static const int dX_out_index = 0;
   static const int dH_out_index = 1;
@@ -61,19 +59,9 @@ class LSTMGradDataCPUKernel : public InnerKernel {
 
   int input_size_align_ = 1;
   float *dA_tmp_ = nullptr;
+  float *weights_tmp_ = nullptr;
   float *workspace_ = nullptr;
 
-  int64_t weight_size_ = 0;
-  int64_t weight_h_size_ = 0;
-  int64_t input_size_;
-  int64_t hidden_size_;
-  int64_t num_layers_;
-  int64_t batch_size_;
-  int64_t seq_len_;
-  int num_directions_;
-  bool bidirectional_;
-  bool has_bias_;
-  size_t reserve_size_;
   int row_tile_ = 0;
   int col_tile_ = 0;
   int state_row_tile_ = 0;
@@ -83,7 +71,7 @@ class LSTMGradDataCPUKernel : public InnerKernel {
   int input_thread_count_ = 0;
   int input_thread_stride_ = 0;
 
-  LstmParameter *lstm_param_ = nullptr;
+  LstmGradParameter *lstm_param_ = nullptr;
 };
 }  // namespace kernel
 }  // namespace mindspore

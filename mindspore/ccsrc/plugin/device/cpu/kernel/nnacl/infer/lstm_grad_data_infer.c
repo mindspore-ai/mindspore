@@ -18,6 +18,7 @@
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/fp32/lstm_fp32.h"
+#include "nnacl/fp32_grad/lstm_grad_fp32.h"
 
 int LstmGradDataInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                            OpParameter *parameter) {
@@ -25,25 +26,31 @@ int LstmGradDataInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-
-  const TensorC *dY = inputs[SECOND_INPUT];
+  LstmGradParameter *p = (LstmGradParameter *)parameter;
+  const TensorC *Y = inputs[SECOND_INPUT];
   const TensorC *H = inputs[THIRD_INPUT];
   const TensorC *C = inputs[FOURTH_INPUT];
   const TensorC *weight = inputs[FIFTH_INPUT];
-  TensorC *dX = outputs[FIRST_INPUT];
+
+  int out_shape[MAX_SHAPE_SIZE];
+  size_t out_shape_size = 0;
+
   for (int i = 0; i < outputs_size; i++) {
-    SetDataTypeFormat(outputs[i], dY);
+    SetDataTypeFormat(outputs[i], Y);
   }
 
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 
-  if (dY->shape_size_ != C3NUM || weight->shape_size_ != C3NUM) {
+  if (Y->shape_size_ != C3NUM || weight->shape_size_ != C3NUM) {
     return NNACL_ERR;
   }
+  ShapePush(out_shape, &out_shape_size, Y->shape_[out_shape_size]);
+  ShapePush(out_shape, &out_shape_size, Y->shape_[out_shape_size]);
+  ShapePush(out_shape, &out_shape_size, p->input_size_);
 
-  SetShapeArray(dX, dY->shape_, dY->shape_size_);
+  SetShapeArray(outputs[FIRST_INPUT], out_shape, C3NUM);
   SetShapeArray(outputs[SECOND_INPUT], H->shape_, H->shape_size_);
   SetShapeArray(outputs[THIRD_INPUT], C->shape_, C->shape_size_);
 

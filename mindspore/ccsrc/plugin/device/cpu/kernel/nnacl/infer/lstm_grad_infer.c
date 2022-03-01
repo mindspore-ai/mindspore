@@ -17,7 +17,7 @@
 #include "nnacl/infer/lstm_grad_infer.h"
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/fp32/lstm_fp32.h"
+#include "nnacl/fp32_grad/lstm_grad_fp32.h"
 
 int LstmGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                        OpParameter *parameter) {
