@@ -168,17 +168,10 @@ class FedAvgKernel : public AggregationKernel {
     return;
   }
 
-  bool ReInitForScaling() override {
-    DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler_, last_cnt_handler_});
-    return true;
-  }
+  bool ReInitForScaling() override { return true; }
 
   bool ReInitForUpdatingHyperParams(size_t aggr_threshold) override {
     done_count_ = aggr_threshold;
-    if (!DistributedCountService::GetInstance().ReInitCounter(name_, done_count_)) {
-      MS_LOG(ERROR) << "Reinitializing count for " << name_ << " failed.";
-      return false;
-    }
     return true;
   }
 
@@ -209,9 +202,6 @@ class FedAvgKernel : public AggregationKernel {
     return;
   }
 
-  MessageCallback first_cnt_handler_;
-  MessageCallback last_cnt_handler_;
-
   // The trainable parameter index of the kernel node which is parsed from the frontend func_graph.
   size_t cnode_weight_idx_;
 
@@ -220,9 +210,6 @@ class FedAvgKernel : public AggregationKernel {
   AddressPtr data_size_addr_;
   AddressPtr new_weight_addr_;
   AddressPtr new_data_size_addr_;
-
-  // Whether the kernel's Launch method is called.
-  bool participated_;
 
   // The kernel could be called concurrently so we need lock to ensure threadsafe.
   std::mutex weight_mutex_;
