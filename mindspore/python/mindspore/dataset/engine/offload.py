@@ -151,7 +151,6 @@ class RandomHorizontalFlip(nn.Cell):
 
         self.cast = P.Cast()
         self.shape = P.Shape()
-        self.uniformReal = P.UniformReal()
         self.reshape = P.Reshape()
         self.h_flip = P.ReverseV2(axis=[2])
         self.mul = P.Mul()
@@ -163,7 +162,7 @@ class RandomHorizontalFlip(nn.Cell):
         check_input_dims(x_shape, 4, 'RandomHorizontalFlip')
         bs, h, w, c = x_shape
 
-        flip_rand_factor = self.uniformReal((bs, 1))
+        flip_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
         flip_rand_factor = self.cast((self.prob > flip_rand_factor), mstype.float32)
         flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
@@ -185,7 +184,6 @@ class RandomVerticalFlip(nn.Cell):
 
         self.cast = P.Cast()
         self.shape = P.Shape()
-        self.uniformReal = P.UniformReal()
         self.reshape = P.Reshape()
         self.h_flip = P.ReverseV2(axis=[1])
         self.mul = P.Mul()
@@ -197,7 +195,7 @@ class RandomVerticalFlip(nn.Cell):
         check_input_dims(x_shape, 4, 'RandomVerticalFlip')
         bs, h, w, c = x_shape
 
-        flip_rand_factor = self.uniformReal((bs, 1))
+        flip_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
         flip_rand_factor = self.cast((self.prob > flip_rand_factor), mstype.float32)
         flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
@@ -231,7 +229,6 @@ class RandomColorAdjust(nn.Cell):
 
         self.cast = P.Cast()
         self.shape = P.Shape()
-        self.uniformReal = P.UniformReal()
         self.reshape = P.Reshape()
         self.unstack = P.Unstack(axis=-1)
         self.expand_dims = P.ExpandDims()
@@ -244,10 +241,12 @@ class RandomColorAdjust(nn.Cell):
         check_input_dims(x_shape, 4, 'RandomColorAdjust')
         bs, h, w, c = x_shape
 
-        br_rand_factor = self.br_min + (self.br_max - self.br_min)*self.uniformReal((bs, 1))
+        br_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
+        br_rand_factor = self.br_min + (self.br_max - self.br_min)*br_rand_factor
         br_rand_factor = self.reshape(C.repeat_elements(br_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
-        sa_rand_factor = self.sa_min + (self.sa_max - self.sa_min)*self.uniformReal((bs, 1))
+        sa_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
+        sa_rand_factor = self.sa_min + (self.sa_max - self.sa_min)*sa_rand_factor
         sa_rand_factor = self.reshape(C.repeat_elements(sa_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
         r, g, b = self.unstack(x)
@@ -279,7 +278,6 @@ class RandomSharpness(nn.Cell):
 
         self.cast = P.Cast()
         self.shape = P.Shape()
-        self.uniformReal = P.UniformReal()
         self.reshape = P.Reshape()
         self.expand_dims = P.ExpandDims()
         self.mul = P.Mul()
@@ -299,7 +297,8 @@ class RandomSharpness(nn.Cell):
         check_input_dims(x_shape, 4, 'RandomSharpness')
         bs, h, w, c = x_shape
 
-        degree_rand_factor = self.degree_min + (self.degree_max - self.degree_min)*self.uniformReal((bs, 1))
+        degree_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
+        degree_rand_factor = self.degree_min + (self.degree_max - self.degree_min)*degree_rand_factor
         degree_rand_factor = self.reshape(C.repeat_elements(degree_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
         x_sharp = self.filter(self.transpose(x, (0, 3, 1, 2)), self.weight)
