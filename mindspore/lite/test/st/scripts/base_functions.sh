@@ -95,10 +95,10 @@ function Convert() {
       echo "Convert ${model_name} ${quant_type} ......"
       echo ${model_name} >> "$4"
       echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
-        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape='${spec_shapes}\
+        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape="'${spec_shapes}'"'\
         ' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
       ./converter_lite  --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
-        --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
+        --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}"\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
