@@ -22,7 +22,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
 
-static const float kEpsilon = 0.01;
+static const float kScaleFactor = (0.01 * 0.01 * 24.0 / 5.0);
 
 namespace mindspore::lite::quant {
 WeightQuantizer::~WeightQuantizer() {
@@ -31,6 +31,16 @@ WeightQuantizer::~WeightQuantizer() {
       delete kv.second;
     }
   }
+}
+
+float WeightQuantizer::GetMinScale() const {
+  size_t max_tensor_size = 1;
+  for (auto tensor : weight_quantized_tensors_) {
+    if (tensor->DataSize() > max_tensor_size) {
+      max_tensor_size = tensor->DataSize();
+    }
+  }
+  return (max_tensor_size > 0) ? std::sqrt(kScaleFactor / max_tensor_size) : kScaleFactor;
 }
 
 int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
@@ -121,13 +131,9 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
     }
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
-      auto mixed_bit_init_scale = mixed_bit_init_scale_;
-      if (is_auto_tune_) {
-        mixed_bit_init_scale = kEpsilon + std::sqrt(tensor_info->DataSize()) * mixed_bit_init_scale_;
-      }
       status = MixedBitQuantFilter(parameter, tensor_info, primitive, flags_.commonQuantParam.quant_type,
-                                   WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale, idx - 1,
-                                   preferred_dim, symmetric);
+                                   WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1,
+                                   preferred_dim, symmetric, is_auto_tune_);
     } else if (type_id_ == kNumberTypeInt8) {
       status =
         FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, flags_.commonQuantParam.quant_type, q_max, q_min,

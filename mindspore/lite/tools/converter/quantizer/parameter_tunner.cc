@@ -34,17 +34,15 @@ namespace mindspore::lite::quant {
 static const int kOneChannel = 1;
 static const int kThreeChannels = 3;
 static const int kSixChannels = 6;
-static const int kDecreasingMinStep = 5;
-static const int kDecreasingCnt = 3;
-static const int kDefaultStartScale = 1;
-static const int kDefaultEndScale = 30000;
-static const int kDefaultExtendScale = 120000;
-static const int kMaxStepSize = 173;
+static const int kDefaultRangeStart = 1;
+static const int kDefaultRangeEnd = 30000;
+static const int kDefaultExtendFactor = 4;
+static const int kMaxStepCoarseSearch = 173;
+static const int kMaxStepFineSearch = 20;
 static const int kMaxFineSearchIterations = 3;
 static const int kFinestGranularity = 2;
 static const int kCompressToInt8Ratio = 4.0;
 static const int kTwo = 2;
-static const float kTenF = 10.0;
 
 static int ExtendBatchSize(mindspore::session::LiteSession *session, Vector<tensor::MSTensor *> *inputs, int batch) {
   Vector<Vector<int>> dims(inputs->size());
@@ -96,8 +94,8 @@ int ParameterOptimizer::CopyDataAndRun(session::LiteSession *origin_session, ses
 
 int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags,
                                                   session::LiteSession *origin_session, int origin_model_size,
-                                                  const InferenceParam &param, int *ret_scale,
-                                                  float *best_compress_ratio, bool *found_valid_scale) {
+                                                  InferenceParam *param, int *ret_scale, float *best_compress_ratio,
+                                                  bool *found_valid_scale) {
   CHECK_NULL_RETURN(flags);
   CHECK_NULL_RETURN(origin_session);
   CHECK_NULL_RETURN(ret_scale);
@@ -106,11 +104,8 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
   auto origin_out_tensor = origin_session->GetOutputs();
   const float threshold = 0.995f;
   *best_compress_ratio = 0.0f;
-  float best_compress_cos_sim = 0.0f;
-  int best_compressed_size = 0;
-  int decreasing_compression_cnt = 0;
-  float last_compression = 0.0f;
-  for (int scale = param.start_scale; scale < param.end_scale; scale += param.step) {
+  *found_valid_scale = false;
+  for (int scale = param->range_start; scale <= param->range_end; scale += param->step) {
     flags->commonQuantParam.quant_type = schema::QuantType_QUANT_WEIGHT;
     FuncGraphPtr func_graph_bak;
     auto ret = CloneFuncGraph(func_graph, flags, &func_graph_bak);
@@ -120,14 +115,27 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     }
     auto quantizer = std::make_unique<quant::WeightQuantizer>(*flags);
     CHECK_NULL_RETURN(quantizer);
-    auto status = quantizer->DoQuantize(func_graph_bak, 1.0 / (scale + kTenF));
+    auto status = quantizer->DoQuantize(func_graph_bak, 1.0f / scale);
     if (status != RET_OK) {
       MS_LOG(WARNING) << "DoQuantization failed " << status;
       continue;
     }
+    if (scale == 1) {
+      float inv_min_scale = quantizer->GetMinScale();
+      if (inv_min_scale != 0) {
+        if ((1.0 / inv_min_scale) > param->range_end) {
+          // extend scale end
+          int num_of_steps = (param->range_end - param->range_start) / param->step;
+          param->range_end = static_cast<int>(1.0 / inv_min_scale);
+          param->step = param->range_end / num_of_steps;
+        }
+      }
+      std::cout << "=== Basic search in range [1," << param->range_end << "] ===\n";
+    }
+
     MS_LOG(INFO) << "create quant session";
     int weight_quant_size;
-    auto weight_quant_sm = CreateSessionByFuncGraph(func_graph_bak, *flags, param.thread_num, &weight_quant_size);
+    auto weight_quant_sm = CreateSessionByFuncGraph(func_graph_bak, *flags, param->thread_num, &weight_quant_size);
     auto weight_quant_session = weight_quant_sm.session;
     auto weight_quant_model = weight_quant_sm.model;
     if (weight_quant_session == nullptr || weight_quant_model == nullptr) {
@@ -158,25 +166,14 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     if (cos_sim >= threshold) {
       if (compress_ratio > *best_compress_ratio) {
         *best_compress_ratio = compress_ratio;
-        best_compress_cos_sim = cos_sim;
-        best_compressed_size = weight_quant_size;
+        *found_valid_scale = true;
         *ret_scale = scale;
+        return RET_OK;
       }
-      if ((compress_ratio <= last_compression) && (param.step > kDecreasingMinStep)) {
-        decreasing_compression_cnt++;
-        if (decreasing_compression_cnt > kDecreasingCnt) {
-          *found_valid_scale = (best_compress_cos_sim < threshold) ? false : true;
-          return RET_OK;
-        }
-      }
-      last_compression = compress_ratio;
-    } else {
-      last_compression = 0.0;
     }
   }
-  *found_valid_scale = (best_compress_cos_sim < threshold) ? false : true;
-  MS_LOG(DEBUG) << " best compress ratio:" << *best_compress_ratio << " compressed model size:" << best_compressed_size
-                << " cos sim:" << best_compress_cos_sim << " scale:" << *ret_scale;
+  *found_valid_scale = false;
+  MS_LOG(DEBUG) << "Couldn't reach cosine similarity constraint";
   return RET_OK;
 }
 
@@ -341,7 +338,7 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
 
   SessionModel sm;
   int origin_model_size;
-  int internal_scale = kDefaultStartScale;
+  int search_param = kDefaultRangeStart;
   auto ret = OriginModelInference(func_graph, flags, &sm, &origin_model_size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Origin Model Inference failed.";
@@ -353,17 +350,17 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   float best_compress_ratio = 0;
   bool found_valid_scale = false;
   int steps_per_stage = flags->mixedBitWeightQuantParam.max_iterations / (kMaxFineSearchIterations + 1);
-  if (steps_per_stage > kMaxStepSize) {
-    steps_per_stage = kMaxStepSize;
+  if (steps_per_stage > kMaxStepCoarseSearch) {
+    steps_per_stage = kMaxStepCoarseSearch;
   }
 
-  int start_scale = kDefaultStartScale;
-  int end_scale = kDefaultEndScale;
-  int step = kDefaultEndScale / steps_per_stage;
-  InferenceParam param = {start_scale, end_scale, step, flags->commonQuantParam.thread_num};
+  int range_start = kDefaultRangeStart;
+  int range_end = kDefaultRangeEnd;
+  int step = kDefaultRangeEnd / steps_per_stage;
+  InferenceParam param = {range_start, range_end, step, flags->commonQuantParam.thread_num};
 
   std::cout << "====== Search for the best scale =======\n";
-  ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, param, &internal_scale,
+  ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, &param, &search_param,
                                   &best_compress_ratio, &found_valid_scale);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight quant graph inference failed.";
@@ -373,13 +370,13 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   }
 
   if (found_valid_scale == false ||
-      (internal_scale == kDefaultStartScale && (best_compress_ratio < kCompressToInt8Ratio))) {
-    start_scale = kDefaultEndScale;
-    end_scale = kDefaultExtendScale;
-    InferenceParam wider_range_param = {start_scale, end_scale, step, flags->commonQuantParam.thread_num};
+      (search_param == kDefaultRangeStart && (best_compress_ratio < kCompressToInt8Ratio))) {
+    range_start = param.range_end;
+    range_end = kDefaultExtendFactor * param.range_end;
+    InferenceParam wider_range_param = {range_start, range_end, step, flags->commonQuantParam.thread_num};
     std::cout << "=== Couldn't find proper compression, extending the search range ===\n";
-    ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, wider_range_param,
-                                    &internal_scale, &best_compress_ratio, &found_valid_scale);
+    ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, &wider_range_param,
+                                    &search_param, &best_compress_ratio, &found_valid_scale);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Weight quant graph inference failed.";
       delete origin_session;
@@ -387,24 +384,33 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
       return ret;
     }
     if (found_valid_scale == false) {
-      std::cout << " scale " << internal_scale << " coarse_compression " << best_compress_ratio << std::endl;
+      std::cout << "=== Couldn't find compression that will match similarity constraints. Aborting! ===\n";
+      std::cout << "======================= You may try fixed 8bit quantization =======================\n";
+      return RET_ERROR;
     }
   }
 
+  if (steps_per_stage > kMaxStepFineSearch) {
+    steps_per_stage = kMaxStepFineSearch;
+  }
   for (int search_cnt = 0; search_cnt < kMaxFineSearchIterations; search_cnt++) {
-    end_scale = internal_scale + step;
-    start_scale = std::max(1, internal_scale - kTwo * step);
-    step = (end_scale - start_scale) / steps_per_stage;
-    if (step < static_cast<int>(sqrt(static_cast<float>(end_scale - start_scale))) / kTwo) {
-      step = static_cast<int>(sqrt(static_cast<float>(end_scale - start_scale))) / kTwo;
+    int prev_prev_val = search_param - kTwo * step;
+    range_end = search_param;
+    range_start = std::max(1, prev_prev_val);
+    step = (range_end - range_start) / steps_per_stage;
+    if (step < static_cast<int>(sqrt(static_cast<float>(range_end - range_start))) / kTwo) {
+      step = static_cast<int>(sqrt(static_cast<float>(range_end - range_start))) / kTwo;
     }
-    start_scale = internal_scale - ((internal_scale - start_scale) / step) * step;  // align search to meet prev scale
+    range_start = search_param - ((search_param - range_start) / step) * step;  // align search to meet prev scale
+    if ((range_start == param.range_start) || (range_start == prev_prev_val)) {
+      range_start += step;
+    }
 
-    param.start_scale = start_scale;
-    param.end_scale = end_scale;
+    param.range_start = range_start;
+    param.range_end = range_end;
     param.step = step;
-    std::cout << "=== Fine search " << search_cnt << " in range [" << start_scale << "," << end_scale << "] ===\n";
-    ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, param, &internal_scale,
+    std::cout << "=== Fine search " << search_cnt << " in range [" << range_start << "," << range_end << "] ===\n";
+    ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, &param, &search_param,
                                     &best_compress_ratio, &found_valid_scale);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Weight quant graph inference failed.";
@@ -417,8 +423,8 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
     }
   }
 
-  std::cout << "best compression is " << best_compress_ratio << " at scale " << internal_scale << std::endl;
-  *init_scale = 1.0 / (internal_scale + kTenF);  // For higher levels, this should be the scale
+  std::cout << "best compression is " << best_compress_ratio << " at scale " << search_param << std::endl;
+  *init_scale = 1.0 / (search_param);
   delete origin_session;
   delete origin_model;
   return RET_OK;
