@@ -303,9 +303,8 @@ ValuePtr ConvertFuncGraph(const py::object &obj) {
     MS_LOG(ERROR) << "Resolve FuncGraph error, get ptr is null";
     return nullptr;
   }
-  auto new_fg = BasicClone(func_graph);
-  new_fg->set_attr("is_load", MakeValue(true));
-  return new_fg;
+  func_graph->set_attr("is_load", MakeValue(true));
+  return func_graph;
 }
 
 ValuePtr ConvertSlice(const py::object &obj) {

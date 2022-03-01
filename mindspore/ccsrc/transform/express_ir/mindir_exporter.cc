@@ -32,6 +32,7 @@
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
+#include "abstract/abstract_function.h"
 
 namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
@@ -91,6 +92,7 @@ class IrExporter {
  private:
   IrExportBuilderPtr builder_;
 };
+using IrExporterPtr = std::shared_ptr<IrExporter>;
 
 class IrExportBuilder {
  public:
@@ -115,8 +117,8 @@ class IrExportBuilder {
   bool SetParamToTensorProto(const ParameterPtr &param, mind_ir::TensorProto *const tensor_proto);
   bool SetTensorProto(const AbstractBasePtr &abstract, mind_ir::TensorProto *const tensor_proto);
   bool SetAttributeProto(const AnfNodePtr &node, mind_ir::NodeProto *const node_proto);
-  bool SetShapeToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
-  bool SetShapeToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
+  bool SetAbstractToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
+  bool SetAbstractToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTypeToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
@@ -135,24 +137,100 @@ class IrExportBuilder {
   std::string GetNodeName(const AnfNodePtr &node);
   std::string GetUniqueNodeName(const AnfNodePtr &node);
   std::string GetOpTypeName(const AnfNodePtr &node);
-  size_t GetNodeIndex() { return ++node_index_; }
-  void ResetNodeIndex() { node_index_ = 0; }
-  size_t GetTupleIndex() { return ++shape_index_; }
-  void ResetTupleIndex() { shape_index_ = 0; }
+  size_t GetUniqueID() { return ++unique_id_; }
 
  private:
+  bool SetAbstractFuncToAttributeProto(const abstract::AbstractBasePtr &abstract,
+                                       mind_ir::AttributeProto *const attr_proto);
+  std::string GetPrimitiveUniqueName(const PrimitivePtr &primitive_ptr);
+  bool BuildPrimitives();
+
   ModelProtoPtr model_;
   mind_ir::NodeProto *last_node_{nullptr};
   std::list<FuncGraphPtr> todo_;
-  std::map<AnfNodePtr, std::string> node_index_map_;
+  std::map<AnfNodePtr, std::string> node_name_map_;
+  std::map<PrimitivePtr, std::string> primitive_name_map_;
   std::set<std::string> nodeName_;
-  size_t node_index_{0};
-  size_t shape_index_{0};
-
+  size_t unique_id_{0};
   bool top_graph{true};
 };
 
-using IrExporterPtr = std::shared_ptr<IrExporter>;
+bool IrExportBuilder::SetAbstractFuncToAttributeProto(const abstract::AbstractBasePtr &abstract,
+                                                      mind_ir::AttributeProto *const attr_proto) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  MS_EXCEPTION_IF_NULL(attr_proto);
+  if (abstract->isa<abstract::FuncGraphAbstractClosure>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FUNCGRAPHCLOSURE);
+    auto func_name = abstract->cast<abstract::FuncGraphAbstractClosurePtr>()->func_graph()->ToString();
+    attr_proto->set_s(func_name);
+  } else if (abstract->isa<abstract::PrimitiveAbstractClosure>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_PRIMITIVECLOSURE);
+    auto prim = abstract->cast<abstract::PrimitiveAbstractClosurePtr>()->prim();
+    attr_proto->set_s(GetPrimitiveUniqueName(prim));
+  } else if (abstract->isa<abstract::PartialAbstractClosure>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_PARTIALCLOSURE);
+    auto node_ptr = abstract->cast<abstract::PartialAbstractClosurePtr>()->node();
+    MS_EXCEPTION_IF_NULL(node_ptr);
+    attr_proto->set_s(GetUniqueNodeName(node_ptr));
+  } else if (abstract->isa<abstract::AbstractFuncUnion>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_UNIONFUNCCLOSURE);
+    auto visit_func = [this, &attr_proto](const abstract::AbstractFuncAtomPtr &poss) {
+      auto element_attr_proto = attr_proto->add_values();
+      if (!this->SetAbstractFuncToAttributeProto(poss, element_attr_proto)) {
+        MS_LOG(EXCEPTION) << "Set union function abstract to proto error." << poss->ToString();
+      }
+    };
+    abstract->cast<abstract::AbstractFunctionPtr>()->Visit(visit_func);
+  } else {
+    MS_LOG(ERROR) << "The parameter abstract is not an abstractFunction: " << abstract->ToString();
+    return false;
+  }
+  return true;
+}
+
+std::string IrExportBuilder::GetPrimitiveUniqueName(const PrimitivePtr &primitive_ptr) {
+  auto it = primitive_name_map_.find(primitive_ptr);
+  if (it != primitive_name_map_.end()) {
+    return it->second;
+  }
+  auto answer = primitive_ptr->name() + ":" + std::to_string(GetUniqueID());
+  primitive_name_map_[primitive_ptr] = answer;
+  return answer;
+}
+
+bool IrExportBuilder::BuildPrimitives() {
+  for (auto it = primitive_name_map_.begin(); it != primitive_name_map_.end(); ++it) {
+    auto prim_proto = model_->add_primitives();
+    auto prim = it->first;
+    prim_proto->set_name(it->second);
+    prim_proto->set_op_type(prim->name());
+
+    if (prim->isa<prim::DoSignaturePrimitive>()) {
+      auto func = prim->cast<prim::DoSignaturePrimitivePtr>()->function();
+      if (func != nullptr && func->isa<Primitive>()) {
+        prim = func->cast<PrimitivePtr>();
+      }
+    }
+
+    // Set primitive attributes
+    for (const auto &attr : prim->attrs()) {
+      MS_LOG(DEBUG) << "attr: " << attr.first << " " << attr.second->DumpText() << " " << attr.second->type_name();
+      auto iter = g_export_attr_blacklist.find(attr.first);
+      if (iter != g_export_attr_blacklist.end()) {
+        continue;
+      }
+      mind_ir::AttributeProto *attr_proto = prim_proto->add_attribute();
+      attr_proto->set_name(attr.first);
+      auto attr_value = attr.second;
+      CheckAndConvertUtils::ConvertAttrValueInExport(prim->name(), attr.first, &attr_value);
+      if (!SetValueToAttributeProto(attr_value, attr_proto)) {
+        MS_LOG(ERROR) << "Set value to AttributeProto failed.";
+        return false;
+      }
+    }  // Loop of attrs
+  }    // Loop of primitives
+  return true;
+}
 
 std::string IrExporter::GetDumpString(const FuncGraphPtr &func_graph) {
   auto dump_proto = GetDumpProto(func_graph);
@@ -188,7 +266,7 @@ std::string IrExportBuilder::GetProtoString() const {
 }
 
 void IrExportBuilder::BuildModelInfo() {
-  constexpr auto ir_version = "0.1.0";
+  constexpr auto ir_version = "0.1.1";
   constexpr auto mindspore_name = "MindSpore";
   model_->set_ir_version(ir_version);
   model_->set_producer_name(mindspore_name);
@@ -239,9 +317,9 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
   mind_ir::GraphProto *graph_proto = model_->mutable_graph();
   graph_proto->set_name(func_graph->ToString());
   graph_proto->set_bprop_hash(func_graph->bprop_hash());
-  ResetNodeIndex();
   todo_.clear();
   nodeName_.clear();
+  primitive_name_map_.clear();
   // Build the main funcGraph
   (void)nodeName_.insert(func_graph->ToString());
   top_graph = true;
@@ -250,6 +328,7 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
     return false;
   }
 
+  // Build child funcGraphs
   std::set<FuncGraphPtr> graphVisited;
   (void)graphVisited.insert(func_graph);
   top_graph = false;
@@ -271,9 +350,14 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
       return false;
     }
   }
+
+  if (!BuildPrimitives()) {
+    return false;
+  }
   // Release resource
   nodeName_.clear();
-  node_index_map_.clear();
+  node_name_map_.clear();
+  primitive_name_map_.clear();
   return true;
 }
 
@@ -403,7 +487,7 @@ bool IrExportBuilder::SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueIn
     }
   } else if (type->isa<Tuple>()) {
     mind_ir::AttributeProto *attribute = value_proto->mutable_attr_info();
-    if (!SetShapeToNodeProto(node->abstract(), attribute)) {
+    if (!SetAbstractToNodeProto(node->abstract(), attribute)) {
       MS_LOG(ERROR) << "Set shape to Proto for " << node->DebugString() << " failed.";
       return false;
     }
@@ -541,7 +625,7 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
   if (IsValueNode<Primitive>(node)) {
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
     MS_EXCEPTION_IF_NULL(prim);
-    type_name = prim->ToString();
+    type_name = "REF::" + GetPrimitiveUniqueName(prim);
   } else if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
     MS_EXCEPTION_IF_NULL(fg);
@@ -562,7 +646,7 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
   return type_name;
 }
 
-bool IrExportBuilder::SetShapeToNodeProto(const AbstractBasePtr &abs, mind_ir::AttributeProto *const attr_proto) {
+bool IrExportBuilder::SetAbstractToNodeProto(const AbstractBasePtr &abs, mind_ir::AttributeProto *const attr_proto) {
   auto type = abs->BuildType();
   auto shape = abs->BuildShape();
   if (type->isa<Tuple>()) {
@@ -570,7 +654,7 @@ bool IrExportBuilder::SetShapeToNodeProto(const AbstractBasePtr &abs, mind_ir::A
     auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
     for (size_t i = 0; i < tuple_abs->size(); i++) {
       mind_ir::AttributeProto *attr_values = attr_proto->add_values();
-      if (!SetShapeToNodeProto((*tuple_abs)[i], attr_values)) {
+      if (!SetAbstractToNodeProto((*tuple_abs)[i], attr_values)) {
         return false;
       }
     }
@@ -584,11 +668,14 @@ bool IrExportBuilder::SetShapeToNodeProto(const AbstractBasePtr &abs, mind_ir::A
     } else {
       attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
       mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
-      tensor_proto->set_data_type(mind_ir::TensorProto_DataType_UINT64);
+      auto data_type = GetMindirDataType(type->type_id());
+      tensor_proto->set_data_type(data_type);
       tensor_proto->add_dims(1);
     }
   } else if (type->isa<Function>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_GRAPH);
+    if (!SetAbstractFuncToAttributeProto(abs, attr_proto)) {
+      return false;
+    }
   } else if (type->isa<String>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_STRING);
   } else if (type->isa<UMonadType>()) {
@@ -597,7 +684,7 @@ bool IrExportBuilder::SetShapeToNodeProto(const AbstractBasePtr &abs, mind_ir::A
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_IOMONAD);
   } else if (type->isa<CSRTensorType>()) {
     auto csr_tensor_abs = abs->cast<abstract::AbstractCSRTensorPtr>();
-    if (!SetShapeToNodeProto(csr_tensor_abs->element(), attr_proto)) {
+    if (!SetAbstractToNodeProto(csr_tensor_abs->element(), attr_proto)) {
       return false;
     }
   } else {
@@ -607,7 +694,7 @@ bool IrExportBuilder::SetShapeToNodeProto(const AbstractBasePtr &abs, mind_ir::A
   return true;
 }
 
-bool IrExportBuilder::SetShapeToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto) {
+bool IrExportBuilder::SetAbstractToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto) {
   // Get shape of cnode
   // 1. need to get shape from tuple element
   // 2. save shape in TensorProto
@@ -619,9 +706,8 @@ bool IrExportBuilder::SetShapeToNodeProto(const CNodePtr &node, mind_ir::NodePro
   if (type == nullptr || shape == nullptr) {
     return true;
   }
-  ResetTupleIndex();
   mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
-  if (!SetShapeToNodeProto(abs, attr_proto)) {
+  if (!SetAbstractToNodeProto(abs, attr_proto)) {
     MS_LOG(ERROR) << "Set shape to NodeProto for " << node->DebugString() << " failed.";
     return false;
   }
@@ -667,45 +753,19 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
   node_proto->set_op_type(type_name);
   last_node_ = node_proto;
   // Maybe Tensor or Function or nullptr
-  if (!SetShapeToNodeProto(node, node_proto)) {
+  if (!SetAbstractToNodeProto(node, node_proto)) {
     return false;
   }
 
   (void)std::for_each(input_names.begin(), input_names.end(),
                       [&node_proto](const string &name) { node_proto->add_input(name); });
-
-  // Add primitive attrs
-  if (IsValueNode<Primitive>(op)) {
-    auto prim = GetValueNode<PrimitivePtr>(op);
-    if (prim->isa<prim::DoSignaturePrimitive>()) {
-      auto func = prim->cast<prim::DoSignaturePrimitivePtr>()->function();
-      if (func != nullptr && func->isa<Primitive>()) {
-        prim = func->cast<PrimitivePtr>();
-      }
-    }
-    for (const auto &attr : prim->attrs()) {
-      MS_LOG(DEBUG) << "attr: " << attr.first << " " << attr.second->DumpText() << " " << attr.second->type_name();
-      auto iter = g_export_attr_blacklist.find(attr.first);
-      if (iter != g_export_attr_blacklist.end()) {
-        continue;
-      }
-      mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
-      attr_proto->set_name(attr.first);
-      auto attr_value = attr.second;
-      CheckAndConvertUtils::ConvertAttrValueInExport(type_name, attr.first, &attr_value);
-      if (!SetValueToAttributeProto(attr_value, attr_proto)) {
-        MS_LOG(ERROR) << "Set value to AttributeProto failed.";
-        return false;
-      }
-    }
-  }
   return true;
 }
 
 std::string IrExportBuilder::BuildInputNode(const AnfNodePtr &node, mind_ir::GraphProto *const graph_proto) {
   // Return the NodeName that the node has been processed.
-  auto iter = node_index_map_.find(node);
-  if (iter != node_index_map_.end()) {
+  auto iter = node_name_map_.find(node);
+  if (iter != node_name_map_.end()) {
     return iter->second;
   }
 
@@ -733,20 +793,20 @@ std::string IrExportBuilder::GetUniqueNodeName(const AnfNodePtr &node) {
   // Naming anfnode
   // 1. parameter is unique in one func_graph
   // 2. cnode and valuenode may be reduplicative, so add index to identify.
-  auto iter = node_index_map_.find(node);
-  if (iter != node_index_map_.end()) {
+  auto iter = node_name_map_.find(node);
+  if (iter != node_name_map_.end()) {
     return iter->second;
   } else {
     std::string node_name = GetNodeName(node);
     // Compatible before. CNode = FuncGraphName:CNodeName:index ,Parameter = FuncGraphName:ParameterName
     if (node->isa<CNode>()) {
-      node_name = node_name + ":" + std::to_string(GetNodeIndex());
+      node_name = node_name + ":" + std::to_string(GetUniqueID());
     }
     // Avoid duplicate name.
     while (nodeName_.count(node_name) > 0) {
-      node_name = node_name + "_" + std::to_string(GetNodeIndex());
+      node_name = node_name + "_" + std::to_string(GetUniqueID());
     }
-    node_index_map_[node] = node_name;
+    node_name_map_[node] = node_name;
     return node_name;
   }
 }

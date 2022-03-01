@@ -207,7 +207,6 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
   model_parser.SetMindIRDecKey(dec_key_);
   model_parser.SetMindIRKeySize(key_len_);
   model_parser.SetMindIRDecMode(dec_mode_);
-  model_parser.set_need_renormalize(need_renormalize_);
 
   if (!inc_load_) {
     MSANFModelParser::LoadTensorMapClear();
@@ -292,7 +291,6 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
   model_parser.SetMindIRDecKey(dec_key_);
   model_parser.SetMindIRKeySize(key_len_);
   model_parser.SetMindIRDecMode(dec_mode_);
-  model_parser.set_need_renormalize(need_renormalize_);
 
   if (!inc_load_) {
     MSANFModelParser::LoadTensorMapClear();

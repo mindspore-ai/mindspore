@@ -180,7 +180,6 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
     return std::make_pair(nullptr, layout_map);
   }
   MindIRLoader mindir_loader;
-  mindir_loader.set_need_renormalize(false);
   mindir_loader.set_weights_value_map(GenerateWeightsValueMap(weights));
   mindir_loader.set_has_parallel_info(has_parallel_info);
   auto fg = mindir_loader.LoadMindIR(realpath.value());
