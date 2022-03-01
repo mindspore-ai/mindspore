@@ -56,11 +56,19 @@ struct Chn4 {
   T c4;
 };
 
+/// \brief Struct representing the location of pixel.
+/// \note Location usually starts from the left top of image.
+/// \par Example
+/// \code
+///    // Define a point p points to the pixel at (X=10,Y=5).
+///    Point p = Point(10, 5);
+/// \endcode
 struct Point {
-  float x;
-  float y;
-  Point() : x(0), y(0) {}
-  Point(float _x, float _y) : x(_x), y(_y) {}
+  float x;  ///< X location of pixel.
+  float y;  ///< Y location of pixel.
+
+  Point() : x(0), y(0) {}                      ///< Constructor.
+  Point(float _x, float _y) : x(_x), y(_y) {}  ///< Constructor.
 };
 
 typedef struct imageToolsImage {
@@ -139,6 +147,20 @@ enum LPixelType {
 
 enum WARP_BORDER_MODE { WARP_BORDER_MODE_CONSTANT };
 
+/// \brief Class representing the data type.
+/// \note  Supported data type list:
+///     - LDataType::BOOL
+///     - LDataType::INT8
+///     - LDataType::UINT8
+///     - LDataType::INT16
+///     - LDataType::INT32
+///     - LDataType::UINT32
+///     - LDataType::INT64
+///     - LDataType::UINT64
+///     - LDataType::FLOAT16
+///     - LDataType::FLOAT32
+///     - LDataType::FLOAT64
+///     - LDataType::DOUBLE
 class LDataType {
  public:
   enum Type : uint8_t {
@@ -159,17 +181,22 @@ class LDataType {
     NUM_OF_TYPES /**< number of types. */
   };
 
+  /// \brief Constructor.
   LDataType() : type_(UNKNOWN) {}
 
   LDataType(Type d) : type_(d) {}
 
+  /// \brief Destructor.
   ~LDataType() = default;
 
   inline Type Value() const { return type_; }
+
   inline bool operator==(const LDataType &ps) const { return this->type_ == ps.type_; }
 
   inline bool operator!=(const LDataType &ps) const { return this->type_ != ps.type_; }
 
+  /// \brief Function to return the length of data type.
+  /// \return Memory length of data type.
   uint8_t SizeInBytes() const {
     if (type_ < LDataType::NUM_OF_TYPES)
       return SIZE_IN_BYTES[type_];
@@ -198,10 +225,10 @@ class LDataType {
   Type type_;
 };
 
+/// \brief Basic class storing the image data.
 class LiteMat {
-  // Class that represents a lite Mat of a Image.
  public:
-  /// \brief Constructor
+  /// \brief Constructor.
   LiteMat();
 
   /// \brief Function to create an LiteMat object.
@@ -237,7 +264,7 @@ class LiteMat {
   /// \param[in] data_type The data type of the input object.
   LiteMat(int width, int height, int channel, void *p_data, LDataType data_type = LDataType::UINT8);
 
-  /// \brief Destructor of LiteMat.
+  /// \brief Destructor.
   ~LiteMat();
 
   LiteMat(const LiteMat &m);
@@ -349,13 +376,88 @@ class LiteMat {
   bool release_flag;
 };
 
-/// \brief Calculates the difference between the two images for each element
+/// \brief Given image A and image B and calculate the difference of them (A - B).
+///      This is an element by element operation by subtracting corresponding elements of inputs.
+/// \param[in] src_a Input image data.
+/// \param[in] src_b Input image data.
+/// \param[in] dst The difference of input images.
+/// \par Example
+/// \code
+///     std::vector<uint8_t> mat1 = {3, 3, 3, 3};
+///     LiteMat lite_mat_src;
+///     lite_mat_src.Init(2, 2, 1, mat1.data(), LDataType::UINT8);
+///
+///     std::vector<uint8_t> mat2 = {2, 2, 2, 2};
+///     LiteMat lite_mat_src2;
+///     lite_mat_src2.Init(2, 2, 1, mat2.data(), LDataType::UINT8);
+///
+///     /* Calculate the difference of images */
+///     LiteMat diff;
+///     Subtract(lite_mat_src, lite_mat_src2, &diff);
+///     for (int i = 0; i < diff.height_; i++) {
+///       for (int j = 0; j < diff.width_; j++) {
+///         std::cout << std::to_string(diff.ptr<uint8_t>(i)[j]) << ", ";
+///       }
+///       std::cout << std::endl;
+///     }
+/// \endcode
+/// \return Return true if transform successfully.
 bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 
-/// \brief Calculates the division between the two images for each element
+/// \brief Given image A and image B and calculate the division of them (A / B).
+///      This is an element by element operation.
+/// \param[in] src_a Input image data.
+/// \param[in] src_b Input image data.
+/// \param[in] dst The division of input images.
+/// \par Example
+/// \code
+///     std::vector<uint8_t> mat1 = {8, 8, 8, 8};
+///     LiteMat lite_mat_src;
+///     lite_mat_src.Init(2, 2, 1, mat1.data(), LDataType::UINT8);
+///
+///     std::vector<uint8_t> mat2 = {2, 2, 2, 2};
+///     LiteMat lite_mat_src2;
+///     lite_mat_src2.Init(2, 2, 1, mat2.data(), LDataType::UINT8);
+///
+///     /* Calculate the division of images */
+///     LiteMat div;
+///     Divide(lite_mat_src, lite_mat_src2, &div);
+///     for (int i = 0; i < div.height_; i++) {
+///       for (int j = 0; j < div.width_; j++) {
+///         std::cout << std::to_string(div.ptr<uint8_t>(i)[j]) << ", ";
+///       }
+///       std::cout << std::endl;
+///     }
+/// \endcode
+/// \return Return true if transform successfully.
 bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 
-/// \brief Calculates the multiply between the two images for each element
+/// \brief Given image A and image B and calculate the product of them (A * B).
+///      This is an element by element operation by multiplying corresponding elements of inputs.
+/// \param[in] src_a Input image data.
+/// \param[in] src_b Input image data.
+/// \param[in] dst The product of input images.
+/// \par Example
+/// \code
+///     std::vector<uint8_t> mat1 = {4, 4, 4, 4};
+///     LiteMat lite_mat_src;
+///     lite_mat_src.Init(2, 2, 1, mat1.data(), LDataType::UINT8);
+///
+///     std::vector<uint8_t> mat2 = {2, 2, 2, 2};
+///     LiteMat lite_mat_src2;
+///     lite_mat_src2.Init(2, 2, 1, mat2.data(), LDataType::UINT8);
+///
+///     /* Calculate the product of images */
+///     LiteMat mut;
+///     Multiply(lite_mat_src, lite_mat_src2, &mut);
+///     for (int i = 0; i < mut.height_; i++) {
+///       for (int j = 0; j < mut.width_; j++) {
+///         std::cout << std::to_string(mut.ptr<uint8_t>(i)[j]) << ", ";
+///       }
+///       std::cout << std::endl;
+///     }
+/// \endcode
+/// \return Return true if transform successfully.
 bool Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 
 #define RETURN_FALSE_IF_LITEMAT_EMPTY(_m) \
