@@ -76,6 +76,12 @@ void AnalysisSchedule::HandleException(const std::exception &ex) {
     item->SetException();
   }
   schedule_list_.clear();
+  // The global primitive evaluate cache should be cleared,
+  // Since it may contains invalid results when exception raised.
+  auto &prim_eval_cache = AnalysisResultCacheMgr::GetInstance().prim_eval_cache();
+  if (prim_eval_cache != nullptr) {
+    prim_eval_cache->Clear();
+  }
 }
 
 void AnalysisSchedule::Stop() {
