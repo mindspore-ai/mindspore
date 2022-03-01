@@ -84,7 +84,8 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
                                                         {kReshape, ShapeSet{1}},
                                                         {kSlice, ShapeSet{1, 2}},
                                                         {kSliceGrad, ShapeSet{2, 3}},
-                                                        {kDynamicBroadcastTo, ShapeSet{1}}};
+                                                        {kDynamicBroadcastTo, ShapeSet{1}},
+                                                        {kReduceSum, ShapeSet{1}}};
 
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
@@ -98,7 +99,7 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   // Special dynamic shape depends for Ascend.
-  if (device == kAscendDevice && (prim_name == kReduceSum || prim_name == kTranspose)) {
+  if (device == kAscendDevice && prim_name == kTranspose) {
     return {1};
   }
 

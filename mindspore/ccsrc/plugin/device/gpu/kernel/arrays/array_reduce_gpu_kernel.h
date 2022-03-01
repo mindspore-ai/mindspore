@@ -32,7 +32,7 @@ const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
   {"ReduceAny", CUDNN_REDUCE_TENSOR_MAX},  {"ReduceAll", CUDNN_REDUCE_TENSOR_MUL},
   {"ReduceProd", CUDNN_REDUCE_TENSOR_MUL},
 };
-template <typename T>
+template <typename T, typename S = int64_t>
 class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
  public:
   ArrayReduceGpuKernelMod() { ResetResource(); }
@@ -42,6 +42,9 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
+    }
+    if (is_dynamic_axis_ && !get_dynamic_axis_value_) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of the axis when axis is dynamic!";
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -87,8 +90,13 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     }
     data_type_ = GetCudnnDataType(type_name);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+    constexpr size_t kDynamicAxisInputNum = 2;
+    if (input_num != 1 && input_num != kDynamicAxisInputNum) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1 or " << kDynamicAxisInputNum
+                        << ", but got " << input_num;
+    }
+    if (input_num == kDynamicAxisInputNum) {
+      is_dynamic_axis_ = true;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
@@ -96,29 +104,28 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     }
     int input_dim_length = SizeToInt(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0).size());
 
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    if (prim->GetAttr("axis")->isa<ValueTuple>() || prim->GetAttr("axis")->isa<ValueList>()) {
-      std::vector<int> attr_axis;
-      std::vector<int64_t> attr_axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
-      (void)std::transform(attr_axis_me.begin(), attr_axis_me.end(), std::back_inserter(attr_axis),
-                           [](const int64_t &value) { return static_cast<int>(value); });
-      if (attr_axis.empty()) {
-        axis_.push_back(-1);
-      } else {
-        for (auto axis : attr_axis) {
-          axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
-        }
-        std::sort(axis_.begin(), axis_.end());
-        auto multiple_pos = std::unique(axis_.begin(), axis_.end());
-        axis_.erase(multiple_pos, axis_.end());
+    std::vector<int64_t> attr_axis;
+    if (is_dynamic_axis_) {
+      get_dynamic_axis_value_ = GetDynamicAttrIntValue(kernel_node, kAxisIndex_, &attr_axis);
+      if (!get_dynamic_axis_value_) {
+        InitSizeLists();
+        return true;
       }
-    } else if (prim->GetAttr("axis")->isa<Int64Imm>()) {
-      int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
-      axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
+      dynamic_axis_size_ = attr_axis.size();
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', attribute 'axis' type is invalid.";
+      attr_axis = GetAxisValue(kernel_node);
     }
+    if (attr_axis.empty()) {
+      axis_.push_back(-1);
+    } else {
+      for (auto axis : attr_axis) {
+        axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
+      }
+      std::sort(axis_.begin(), axis_.end());
+      auto multiple_pos = std::unique(axis_.begin(), axis_.end());
+      axis_.erase(multiple_pos, axis_.end());
+    }
+
     keep_dims_ = GetAttr<bool>(kernel_node, "keep_dims");
 
     auto inputA_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
@@ -156,6 +163,9 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
+    dynamic_axis_size_ = 0;
+    is_dynamic_axis_ = false;
+    get_dynamic_axis_value_ = false;
   }
 
   void DestroyResource() noexcept override {
@@ -181,6 +191,10 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(inputA_descriptor_, &input_size_),
                                 "cudnnGetTensorSizeInBytes failed.");
     input_size_list_.push_back(input_size_);
+
+    if (is_dynamic_axis_) {
+      input_size_list_.push_back(dynamic_axis_size_ * sizeof(S));
+    }
 
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(outputC_descriptor_, &output_size_),
                                 "cudnnGetTensorSizeInBytes failed.");
@@ -279,6 +293,21 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     return;
   }
 
+  std::vector<int64_t> GetAxisValue(const CNodePtr &kernel_node) {
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    std::vector<int64_t> attr_axis_me;
+    if (prim->GetAttr("axis")->isa<ValueTuple>() || prim->GetAttr("axis")->isa<ValueList>()) {
+      attr_axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
+    } else if (prim->GetAttr("axis")->isa<Int64Imm>()) {
+      auto axis = GetAttr<int64_t>(kernel_node, "axis");
+      attr_axis_me.push_back(axis);
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', attribute 'axis' type is invalid.";
+    }
+    return attr_axis_me;
+  }
+
   cudnnHandle_t cudnn_handle_;
   cudnnReduceTensorOp_t reduce_tensor_op_;
   cudnnDataType_t data_type_;
@@ -295,7 +324,10 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
-  std::string kernel_name_;
+  size_t dynamic_axis_size_;
+  bool is_dynamic_axis_;
+  bool get_dynamic_axis_value_;
+  static constexpr size_t kAxisIndex_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore

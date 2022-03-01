@@ -118,7 +118,7 @@ class SqrtGrad(PrimitiveWithInfer):
         return x_dtype
 
 
-class BatchNormGrad(PrimitiveWithInfer):
+class BatchNormGrad(Primitive):
     """Performs grad of BatchNorm operation."""
 
     @prim_attr_register
@@ -126,13 +126,6 @@ class BatchNormGrad(PrimitiveWithInfer):
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
-
-    def infer_shape(self, y_backprop_shape, x_shape, scale_shape, save_mean_shape, save_variance_shape, reserve):
-        validator.check("BatchNorm y_backprop_shape", y_backprop_shape, "BatchNorm x_shape", x_shape)
-        return (x_shape, scale_shape, scale_shape)
-
-    def infer_dtype(self, y_backprop_type, x_type, scale_type, save_mean_shape, save_variance_shape, reserve):
-        return (x_type, scale_type, scale_type)
 
 
 class SyncBatchNormGrad(PrimitiveWithInfer):

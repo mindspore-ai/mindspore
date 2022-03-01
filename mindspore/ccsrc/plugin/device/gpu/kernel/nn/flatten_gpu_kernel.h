@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
+template <typename T, typename S = int64_t>
 class FlattenFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
   FlattenFwdGpuKernelMod() : input_size_(0), is_null_input_(false) {}
@@ -48,6 +48,7 @@ class FlattenFwdGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     auto shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     kernel_node_ = kernel_node;
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
@@ -75,6 +76,21 @@ class FlattenFwdGpuKernelMod : public NativeGpuKernelMod {
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(input_size_);
+    InitDynamicAttrSizeLists(kernel_node_.lock());
+  }
+
+  inline void InitDynamicAttrSizeLists(const CNodePtr &kernel_node) {
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num == 1) {
+      return;
+    }
+    for (size_t index = 1; index < input_num; ++index) {
+      size_t input_size = sizeof(S);
+      for (size_t x : AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, index)) {
+        input_size *= x;
+      }
+      input_size_list_.push_back(input_size);
+    }
   }
 
  private:
