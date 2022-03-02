@@ -457,10 +457,10 @@ class Cell(Cell_):
         this input/output and None represents data_parallel.
 
         Note:
-            Only effective in PYNATIVE_MODE and  in either ParallelMode.AUTO_PARALLEL and
-            set search_mode in auto_parallel_context as sharding_propagation or ParallelMode.SEMI_AUTO_PARALLEL.
+            Only effective in PYNATIVE_MODE and in either ParallelMode.AUTO_PARALLEL with
+            search_mode in auto_parallel_context set as sharding_propagation or ParallelMode.SEMI_AUTO_PARALLEL.
 
-        Inputs:
+        Args:
             in_axes (tuple): Define the layout of inputs, each element of the tuple should be a tuple or None. Tuple
                              defines the layout of the corresponding input and None represents a data parallel strategy.
             out_axes (tuple): Define the layout of outputs similar with in_axes.
