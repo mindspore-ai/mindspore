@@ -138,6 +138,10 @@ class TestPythonMultiprocAutotune:
         """
         Run before each test function.
         """
+        # Enable Dataset AutoTune
+        self.original_autotune = ds.config.get_enable_autotune()
+        ds.config.set_enable_autotune(True)
+
         # Reduce memory required by disabling the shared memory optimization
         self.mem_original = ds.config.get_enable_shared_mem()
         ds.config.set_enable_shared_mem(False)
@@ -146,7 +150,9 @@ class TestPythonMultiprocAutotune:
         """
         Run after each test function.
         """
+        # Restore settings
         ds.config.set_enable_shared_mem(self.mem_original)
+        ds.config.set_enable_autotune(self.original_autotune)
 
     @staticmethod
     def test_cifar10_pyfunc_pipeline():
