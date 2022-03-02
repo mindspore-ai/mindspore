@@ -440,14 +440,12 @@ void DumpCNodePrimalAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRIn
     return;
   }
   if (op->primal_attrs().empty()) {
-    gsub->buffer << std::endl;
     return;
   }
   auto primal_attrs = op->primal_attrs();
   gsub->buffer << " cnode_primal_attrs: {";
   DumpAttrs(primal_attrs, gsub);
   gsub->buffer << "}";
-  gsub->buffer << std::endl;
 }
 
 void DumpShape(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const std::shared_ptr<SubGraphIRInfo> &gsub) {
@@ -455,6 +453,7 @@ void DumpShape(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const std:
     return;
   }
 
+  gsub->buffer << std::endl;
   if (node != sub_graph->get_return()) {
     gsub->buffer << "      : (";
     PrintNodeInputType(gsub->buffer, node);
@@ -566,7 +565,9 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, OrderedMap<A
   DumpKernelInfo(node, gsub);
 
   if (dump_full_name) {
-    gsub->buffer << "      : (" << node->fullname_with_scope() << ")" << std::endl;
+    gsub->buffer << "      : # fullname_with_scope: (" << node->fullname_with_scope() << ")" << std::endl;
+  } else {
+    gsub->buffer << "      : # scope: (" << node->scope()->name() << ")" << std::endl;
   }
 
   // Print debug info

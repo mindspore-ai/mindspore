@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include <vector>
 #include "utils/hash_map.h"
 #include "pipeline/jit/parse/resolve.h"
+#include "pipeline/jit/pipeline.h"
 #include "include/common/utils/python_adapter.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
@@ -558,6 +559,9 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
     MS_LOG(DEBUG) << "Get the cache data, obj: " << obj_id;
     func_graph = value->cast<FuncGraphPtr>();
     if (!func_graph->dropped()) {
+      if (pipeline::GetJitLevel() == "o0") {
+        return BasicClone(func_graph);
+      }
       return func_graph;
     }
   }
