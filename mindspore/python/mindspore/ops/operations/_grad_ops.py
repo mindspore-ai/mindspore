@@ -306,6 +306,7 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         self.pad_list = pad
         self.add_prim_attr('pad_list', self.pad_list)
 
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if self.pad_mode != 'pad' and self.pad_list != (0, 0, 0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
@@ -737,6 +738,7 @@ class _PoolGrad(PrimitiveWithInfer):
 
         validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
         self.add_prim_attr("pad_mode", self.pad_mode)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)

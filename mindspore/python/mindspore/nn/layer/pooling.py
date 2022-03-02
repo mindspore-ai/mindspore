@@ -29,6 +29,7 @@ class _PoolNd(Cell):
     def __init__(self, kernel_size, stride, pad_mode, data_format="NCHW"):
         """Initialize _PoolNd."""
         super(_PoolNd, self).__init__()
+        validator.check_value_type('pad_mode', pad_mode, [str], self.cls_name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
@@ -204,6 +205,7 @@ class MaxPool1d(_PoolNd):
         super(MaxPool1d, self).__init__(kernel_size, stride, pad_mode)
         validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
         validator.check_value_type('stride', stride, [int], self.cls_name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.cls_name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
         validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
         validator.check_int(stride, 1, Rel.GE, "stride", self.cls_name)
@@ -368,6 +370,7 @@ class AvgPool1d(_PoolNd):
         """Initialize AvgPool1d."""
         validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
         validator.check_value_type('stride', stride, [int], self.cls_name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.cls_name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
         validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
         validator.check_int(stride, 1, Rel.GE, "stride", self.cls_name)
