@@ -63,6 +63,11 @@ class E2eDump {
 
   static void DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                              std::string *kernel_name, const Debugger *debugger);
+  // Dump input/output data without additional check, used for exception case only
+  static void DumpInputData(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
+                            std::string *kernel_name);
+  static void DumpOutputData(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
+                             std::string *kernel_name);
 
 #ifdef ENABLE_D
   static void DumpTensorToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data, char *data_ptr);
