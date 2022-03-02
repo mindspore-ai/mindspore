@@ -339,7 +339,7 @@
 
         递归设置该Cell中的所有算子的并行策略为数据并行。
 
-        .. note:: 仅在全自动并行(AUTO_PARALLEL)模式下生效。
+        .. note:: 仅在图模式、全自动并行(AUTO_PARALLEL)模式下生效。
 
     .. py:method:: shard(in_axes, out_axes, device="Ascend", level=0)
 
