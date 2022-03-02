@@ -34,8 +34,7 @@ class ModelPool {
   static ModelPool *GetInstance();
   ~ModelPool();
 
-  Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr,
-              const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
+  Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
 
   std::vector<MSTensor> GetInputs();
 

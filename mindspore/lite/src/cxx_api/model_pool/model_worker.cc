@@ -60,13 +60,13 @@ void ModelThread::Run(int node_id) {
 }
 
 Status ModelThread::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
-                         const Key &dec_key, const std::string &dec_mode, int node_id) {
+                         int node_id) {
   model_ = std::make_shared<Model>();
   mindspore::ModelType model_type = kMindIR;
   if (node_id != -1) {
     model_->UpdateConfig(lite::kConfigServerInference, {lite::kConfigNUMANodeId, std::to_string(node_id)});
   }
-  auto status = model_->Build(model_buf, size, model_type, model_context, dec_key, dec_mode);
+  auto status = model_->Build(model_buf, size, model_type, model_context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
     return status;
