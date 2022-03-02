@@ -53,7 +53,7 @@ def get_bprop_conv2d(self):
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     get_shape = P.Shape()
-    get_dyn_shape = P.DynamicShape()
+    get_dyn_shape = P.TensorShape()
 
     def bprop(x, w, out, dout):
         x_shape = get_shape(x)
@@ -1139,7 +1139,7 @@ def get_bprop_conv2d_backprop_input(self):
         dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
     )
     get_shape = P.Shape()
-    get_dyn_shape = P.DynamicShape()
+    get_dyn_shape = P.TensorShape()
 
     def bprop(x, w, f_sizes, out, dout):
         w_shape = get_shape(w)

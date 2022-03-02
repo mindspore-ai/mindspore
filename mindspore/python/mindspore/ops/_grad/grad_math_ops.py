@@ -33,7 +33,7 @@ from .._utils.utils import is_shape_unknown
 from ...common import dtype as mstype
 
 shape_op = P.Shape()
-dyn_shape_op = P.DynamicShape()
+dyn_shape_op = P.TensorShape()
 reduce_prod = P.ReduceProd()
 reduce_sum = P.ReduceSum()
 reshape = P.Reshape()
