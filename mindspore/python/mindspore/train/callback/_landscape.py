@@ -713,7 +713,7 @@ class SummaryLandscape:
             if path is False:
                 print("Current local landscape progress is %s/%s, landscape loss is %s."
                       % (i+1, len(alph), loss.get('Loss')))
-            vals = np.append(vals, loss['Loss'])
+            vals = np.append(vals, loss.get('Loss'))
 
         return vals
 

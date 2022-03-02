@@ -162,8 +162,6 @@ class SummaryRecord:
             'file_name': None,
             'file_path': None
         }
-        Validator.check_str_by_regular(file_prefix)
-        Validator.check_str_by_regular(file_suffix)
 
         log_path = _make_directory(log_dir, "log_dir")
 
@@ -174,6 +172,9 @@ class SummaryRecord:
         if not isinstance(file_prefix, str) or not isinstance(file_suffix, str):
             raise TypeError(f"For '{self.__class__.__name__}', `file_prefix` and `file_suffix`  should be str, "
                             f"but got type {type(file_prefix)}")
+
+        Validator.check_str_by_regular(file_prefix)
+        Validator.check_str_by_regular(file_suffix)
 
         if max_file_size is not None and max_file_size < 0:
             logger.warning("The 'max_file_size' should be greater than 0.")
@@ -207,7 +208,7 @@ class SummaryRecord:
         """Enter the context manager."""
         if self._status.get('closed'):
             raise ValueError(f'For "{self.__class__.__name__}", SummaryRecord has been closed, '
-                             f'please check if calling close() method')
+                             f'please check if close() method is called')
         return self
 
     def __exit__(self, *err):
@@ -321,7 +322,7 @@ class SummaryRecord:
         elif plugin == PluginEnum.LANDSCAPE.value:
             self._data_pool[plugin].append(dict(tag=name, value=value.SerializeToString()))
         else:
-            raise ValueError(f'For "{self.__class__.__name__}", No such plugin of {repr(plugin)}, '
+            raise ValueError(f'For "{self.__class__.__name__}", no such plugin of {repr(plugin)}, '
                              f'expect value is one of [tensor, scalar, image, histogram, train_lineage, '
                              f'eval_lineage, dataset_graph, custom_lineage_data, graph, landscape]')
 
@@ -358,7 +359,7 @@ class SummaryRecord:
 
         if self._status.get('closed'):
             logger.error(f"For '{self.__class__.__name__}', The record writer is closed, "
-                         f"please check if calling close() method")
+                         f"please check if close() method is called")
             return False
         # Set the current summary of train step
         if self.network is not None and not self._status.get('has_graph'):
@@ -436,7 +437,7 @@ class SummaryRecord:
         """
         if self._status.get('closed'):
             logger.error(f"For '{self.__class__.__name__}', the record writer is closed and can not flush, "
-                         f"please check if calling close() method")
+                         f"please check if close() method is called")
         elif self._event_writer:
             self._event_writer.flush()
 

@@ -91,10 +91,11 @@ def set_dump(target, enabled=True):
         ...         x = self.relu1(x)
         ...         return x
         >>>
-        >>> net = MyNet()
-        >>> set_dump(net.conv1)
-        >>> input_tensor = Tensor(np.ones([1, 5, 10, 10], dtype=np.float32))
-        >>> output = net(input_tensor)
+        >>> if __name__ == "__main__":
+        ...     net = MyNet()
+        ...     set_dump(net.conv1)
+        ...     input_tensor = Tensor(np.ones([1, 5, 10, 10], dtype=np.float32))
+        ...     output = net(input_tensor)
     """
     if security.enable_security():
         raise ValueError('The set_dump API is not supported, please recompile '
