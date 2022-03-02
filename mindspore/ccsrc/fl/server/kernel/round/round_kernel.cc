@@ -22,6 +22,7 @@
 #include <utility>
 #include <string>
 #include <vector>
+#include "fl/server/iteration.h"
 
 namespace mindspore {
 namespace fl {
@@ -42,20 +43,17 @@ void RoundKernel::StopTimer() const {
   return;
 }
 
-void RoundKernel::FinishIteration() const {
-  if (finish_iteration_cb_) {
-    finish_iteration_cb_(true, "");
+void RoundKernel::FinishIteration(bool is_last_iter_valid, const std::string &in_reason) const {
+  std::string reason = in_reason;
+  if (is_last_iter_valid) {
+    reason = "Round " + name_ + " finished! This iteration is valid. Proceed to next iteration.";
   }
-  return;
+  Iteration::GetInstance().NotifyNext(is_last_iter_valid, reason);
 }
 
 void RoundKernel::set_name(const std::string &name) { name_ = name; }
 
 void RoundKernel::set_stop_timer_cb(const StopTimerCb &timer_stopper) { stop_timer_cb_ = timer_stopper; }
-
-void RoundKernel::set_finish_iteration_cb(const FinishIterCb &finish_iteration_cb) {
-  finish_iteration_cb_ = finish_iteration_cb;
-}
 
 void RoundKernel::GenerateOutput(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
                                  size_t len) {

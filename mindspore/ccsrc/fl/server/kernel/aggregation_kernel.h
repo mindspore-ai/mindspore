@@ -45,6 +45,7 @@ class AggregationKernelMod : public NativeCpuKernelMod {
                       const std::vector<AddressPtr> &outputs) {
     return true;
   }
+  virtual bool AllReduce() = 0;
 
   // Server kernel's memory allocation method, which is different from the workflow in
   // Session(GPUSession/CPUSession/AscendSession).

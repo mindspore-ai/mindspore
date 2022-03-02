@@ -67,7 +67,7 @@ bool PushMetricsKernel::Reset() {
 
 void PushMetricsKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
   if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kPushMetrics) {
-    FinishIteration();
+    FinishIteration(true);
   }
   return;
 }

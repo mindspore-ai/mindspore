@@ -55,6 +55,9 @@ class UpdateModelKernel : public RoundKernel {
   ResultCode UpdateModel(const schema::RequestUpdateModel *update_model_req, const std::shared_ptr<FBBuilder> &fbb,
                          const DeviceMeta &device_meta);
   std::map<std::string, UploadData> ParseFeatureMap(const schema::RequestUpdateModel *update_model_req);
+
+  void RunAggregation();
+  ResultCode CountForAggregation(const std::string &req_fl_id);
   ResultCode CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
                                  const schema::RequestUpdateModel *update_model_req);
   sigVerifyResult VerifySignature(const schema::RequestUpdateModel *update_model_req);
@@ -67,8 +70,6 @@ class UpdateModelKernel : public RoundKernel {
 
   // The time window of one iteration.
   size_t iteration_time_window_{0};
-
-  std::unique_ptr<std::thread> last_count_thread_;
 };
 }  // namespace kernel
 }  // namespace server

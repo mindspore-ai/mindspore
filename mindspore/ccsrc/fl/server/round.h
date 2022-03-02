@@ -110,7 +110,6 @@ class Round {
 
   // The callbacks which will be set to the round kernel.
   StopTimerCb stop_timer_cb_;
-  FinishIterCb finish_iteration_cb_;
 };
 }  // namespace server
 }  // namespace fl

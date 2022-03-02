@@ -213,6 +213,7 @@ message SyncIterationResponse {
 message PrepareForNextIterRequest {
   bool is_last_iter_valid = 2;
   string reason = 3;
+  uint64 last_iteration = 4;
 }
 
 message PrepareForNextIterResponse {

@@ -68,7 +68,18 @@ enum PersistentState {
   PREPARING_PERSIST = 1;
   READY_PERSIST = 2;
   PERSISTING = 3;
-  FINISH_PERSIST = 4; 
+  FINISH_PERSIST = 4;
+}
+
+message CollectiveMessageMeta {
+  bool enable_flag = 1;
+  uint32 send_rank_id = 2;
+  uint32 recv_rank_id = 3;
+  uint32 iteration = 4;
+  bytes weight_name = 5;
+  bytes phase = 6; // ring, gather, reduce, broadcast
+  uint32 chunk_index = 7;
+  uint32 for_index = 8;
 }
 
 message MessageMeta {
@@ -82,6 +93,8 @@ message MessageMeta {
   uint32 rank_id = 4;
   // User-defined commands
   int32 user_cmd = 5;
+
+  CollectiveMessageMeta collective_meta = 6;
 }
 
 message RegisterMessage {
@@ -147,7 +160,7 @@ message ServersMeta {
   bool is_alive = 4;
   NodeRole role = 5;
   string node_id = 6;
-  PersistentState persistent_state = 7; 
+  PersistentState persistent_state = 7;
 }
 
 message SendMetadataMessage {

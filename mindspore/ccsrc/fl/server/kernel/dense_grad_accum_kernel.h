@@ -43,6 +43,7 @@ class DenseGradAccumKernel : public AggregationKernelMod {
     return true;
   }
 
+  bool AllReduce() override { return true; }
   void Reset() { accum_count_ = 0; }
 
   bool IsAggregationDone() { return accum_count_ >= done_count_; }

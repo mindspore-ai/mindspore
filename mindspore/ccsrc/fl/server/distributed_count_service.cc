@@ -18,6 +18,8 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include "fl/server/iteration.h"
+#include "fl/server/server.h"
 
 namespace mindspore {
 namespace fl {
@@ -252,20 +254,17 @@ void DistributedCountService::HandleCountRequest(const std::shared_ptr<ps::core:
     MS_LOG(INFO) << "Global current count for " << name << " is: " << global_current_count_[name].size() << "/"
                  << global_threshold_count_[name];
   }
-  std::string reason = "success";
-  if (!TriggerCounterEvent(name, &reason)) {
-    count_rsp.set_result(false);
-    count_rsp.set_reason(reason);
-  } else {
-    count_rsp.set_result(true);
-    count_rsp.set_reason(reason);
-  }
+  count_rsp.set_result(true);
+  count_rsp.set_reason("success");
   if (!communicator_->SendResponse(count_rsp.SerializeAsString().data(), count_rsp.SerializeAsString().size(),
                                    message)) {
     MS_LOG(WARNING) << "Sending response failed.";
     return;
   }
-  return;
+  std::string reason = "success";
+  if (!TriggerCounterEvent(name, &reason)) {
+    Iteration::GetInstance().NotifyNext(false, reason);
+  }
 }
 
 void DistributedCountService::HandleCountReachThresholdRequest(
@@ -360,15 +359,16 @@ bool DistributedCountService::TriggerFirstCountEvent(const std::string &name, st
       return false;
     }
   }
-
-  if (counter_handlers_.count(name) == 0) {
+  auto counter_it = counter_handlers_.find(name);
+  if (counter_it == counter_handlers_.end() || !counter_it->second.first_count_handler) {
     MS_LOG(WARNING) << "The counter handler of " << name << " is not registered.";
     return false;
   }
   // Leader server directly calls the callback.
   MS_LOG(DEBUG) << "Leader server call first count handler for " << name;
-  counter_handlers_[name].first_count_handler(nullptr);
-  MS_LOG(DEBUG) << "First count handler for " << name << " is successfully called.";
+  auto count_handler = counter_it->second.first_count_handler;
+  Server::GetInstance().SubmitTask([count_handler]() { count_handler(nullptr); });
+  MS_LOG(DEBUG) << "First count handler for " << name << " is successfully submitted.";
   return true;
 }
 
@@ -389,15 +389,16 @@ bool DistributedCountService::TriggerLastCountEvent(const std::string &name, std
       return false;
     }
   }
-
-  if (counter_handlers_.count(name) == 0) {
+  auto counter_it = counter_handlers_.find(name);
+  if (counter_it == counter_handlers_.end() || !counter_it->second.last_count_handler) {
     MS_LOG(WARNING) << "The counter handler of " << name << " is not registered.";
     return false;
   }
   // Leader server directly calls the callback.
   MS_LOG(DEBUG) << "Leader server call last count handler for " << name;
-  counter_handlers_[name].last_count_handler(nullptr);
-  MS_LOG(INFO) << "Last count handler for " << name << " is successfully called.";
+  auto count_handler = counter_it->second.last_count_handler;
+  Server::GetInstance().SubmitTask([count_handler]() { count_handler(nullptr); });
+  MS_LOG(INFO) << "Last count handler for " << name << " is successfully submitted.";
   return true;
 }
 }  // namespace server
