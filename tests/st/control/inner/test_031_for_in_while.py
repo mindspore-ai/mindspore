@@ -23,9 +23,11 @@ from mindspore.common import dtype as mstype
 from tests.security_utils import security_off_wrap
 
 grad_all = C.GradOperation(get_all=True)
-
-
-@pytest.mark.skip(reason="not supported for in while")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_for_in_while_01():
     class ForInWhileNet(nn.Cell):
         def __init__(self):
@@ -69,13 +71,16 @@ def test_for_in_while_01():
     graph_forward_res = forward_net(x)
     graph_backward_res = backward_net(x)
 
-    expect_forward_res = 0
-    expect_backward_res = 0
+    expect_forward_res = Tensor([128], mstype.int32)
+    expect_backward_res = (Tensor([64], mstype.int32),)
     assert graph_forward_res == expect_forward_res
     assert graph_backward_res == expect_backward_res
 
-
-@pytest.mark.skip(reason="not supported for in while")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 @security_off_wrap
 def test_for_in_while_02():
     class ForInWhileNet(nn.Cell):
@@ -116,7 +121,7 @@ def test_for_in_while_02():
     graph_forward_res = for_in_while_net(x)
     graph_backward_res = net(x)
 
-    expect_forward_res = 0
-    expect_backward_res = 0
+    expect_forward_res = Tensor([2], mstype.int32)
+    expect_backward_res = (Tensor([1], mstype.int32),)
     assert graph_forward_res == expect_forward_res
     assert graph_backward_res == expect_backward_res
