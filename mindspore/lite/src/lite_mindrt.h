@@ -107,9 +107,9 @@ class LiteOpActor : public OpActor<lite::Tensor> {
                         const std::set<void *> &receiver_tensors, const size_t &output_index,
                         std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
   int CreateEmptyArrow(const size_t &output_index);
-  bool ArrowHasCompiled(const AID &actor_name, const size_t &to_index,
+  bool ArrowHasCompiled(const AID &actor_name, size_t to_index,
                         const std::unordered_map<AID, std::set<size_t>> &receiver_index_set);
-  void MarkArrowAsCompiled(const AID *actor_name, const size_t *to_index,
+  void MarkArrowAsCompiled(const AID *actor_name, size_t to_index,
                            std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
 
  private:
