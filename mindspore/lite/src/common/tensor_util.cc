@@ -451,7 +451,7 @@ int CastTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
 }
 
 int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
-  dst->MallocData();
+  dst->ReallocData();
   dst->ResetRefCount();
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   if (dst->shape() != src->shape()) {
