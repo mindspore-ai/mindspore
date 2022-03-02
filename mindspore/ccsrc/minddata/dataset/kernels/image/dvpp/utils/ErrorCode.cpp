@@ -40,7 +40,6 @@ std::string GetAppErrCodeInfo(const APP_ERROR err) {
 void AssertErrorCode(const int code, const std::string file, const std::string function, const int line) {
   if (code != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed at " << file << "->" << function << "->" << line << ": error code=" << code;
-    exit(code);
   }
 }
 
