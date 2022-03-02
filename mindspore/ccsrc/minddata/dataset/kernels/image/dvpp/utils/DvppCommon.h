@@ -140,7 +140,7 @@ class DvppCommon {
                                          uint32_t &decSize);
   static APP_ERROR GetPngDecodeDataSize(const void *data, uint32_t dataSize, acldvppPixelFormat format,
                                         uint32_t &decSize);
-  static APP_ERROR GetJpegEncodeStrideSize(std::shared_ptr<DvppDataInfo> &input);
+  static APP_ERROR GetJpegEncodeStrideSize(std::shared_ptr<DvppDataInfo> &inputImage);
   static APP_ERROR SetEncodeLevel(uint32_t level, acldvppJpegeConfig &jpegeConfig);
   static APP_ERROR GetVideoDecodeStrideSize(uint32_t width, uint32_t height, acldvppPixelFormat format,
                                             uint32_t &widthStride, uint32_t &heightStride);
@@ -150,7 +150,7 @@ class DvppCommon {
   // The following interfaces can be called only when the DvppCommon object is initialized with Init
   APP_ERROR VpcResize(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize,
                       VpcProcessType processType = VPC_PT_DEFAULT);
-  APP_ERROR VpcCrop(const DvppCropInputInfo &input, const DvppDataInfo &output, bool withSynchronize);
+  APP_ERROR VpcCrop(const DvppCropInputInfo &cropInput, const DvppDataInfo &output, bool withSynchronize);
   APP_ERROR JpegDecode(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize);
 
   APP_ERROR PngDecode(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize);
@@ -162,7 +162,7 @@ class DvppCommon {
 
   // These functions started with "Combine" encapsulate the DVPP process together, malloc DVPP memory,
   // transfer pictures from host to device, and then execute the DVPP operation.
-  // The caller needs to pay attention to the release of the memory alloced in these functions.
+  // The caller needs to pay attention to the release of the memory allocated in these functions.
   // You can call the ReleaseDvppBuffer function to release memory after use completely.
   APP_ERROR CombineResizeProcess(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize,
                                  VpcProcessType processType = VPC_PT_DEFAULT);

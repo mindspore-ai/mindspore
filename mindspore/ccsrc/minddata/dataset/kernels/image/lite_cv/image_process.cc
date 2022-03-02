@@ -593,7 +593,6 @@ bool InitFromPixel(const unsigned char *data, LPixelType pixel_type, LDataType d
   } else {
     return false;
   }
-  return true;
 }
 
 bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
@@ -694,7 +693,6 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
   } else {
     return false;
   }
-  return true;
 }
 
 static bool CheckZero(const std::vector<float> &vs) {
@@ -936,7 +934,6 @@ bool Split(const LiteMat &src, std::vector<LiteMat> &mv) {
   } else {
     return false;
   }
-  return false;
 }
 
 template <typename T>
@@ -1285,7 +1282,6 @@ bool Transpose(const LiteMat &src, LiteMat &dst) {
   } else {
     return false;
   }
-  return true;
 }
 
 template <typename T>
@@ -1483,7 +1479,7 @@ void JacobiSVD(LiteMat &A, LiteMat &_W, LiteMat &V) {
 }
 
 template <typename T>
-void SVBkSb(int m, int n, int nb, LiteMat w, LiteMat u, LiteMat v, const LiteMat src2, LiteMat dst) {
+void SVBkSb(int m, int n, LiteMat w, LiteMat u, LiteMat v, const LiteMat src2, LiteMat dst) {
   T eps = DBL_EPSILON * 2;
   double thresgold = 0;
   int nm = std::min(m, n);
@@ -1522,7 +1518,6 @@ bool GetPerspectiveTransformImpl(const LiteMat &src1, const LiteMat &src2, LiteM
   int m = src1.height_;
   int m_ = m;
   int n = src1.width_;
-  int nb = src2.width_;
 
   if (m < n) {
     return false;
@@ -1540,7 +1535,7 @@ bool GetPerspectiveTransformImpl(const LiteMat &src1, const LiteMat &src2, LiteM
   JacobiSVD<double>(a, w, v);
   u = a;
 
-  SVBkSb<double>(m_, n, nb, w, u, v, src2, dst);
+  SVBkSb<double>(m_, n, w, u, v, src2, dst);
   return true;
 }
 

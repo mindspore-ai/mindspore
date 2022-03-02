@@ -46,9 +46,9 @@ Status SoftDvppDecodeRandomCropResizeJpegOp::GetCropInfo(const std::shared_ptr<T
   int y = 0;
   int crop_heigh = 0;
   int crop_widht = 0;
-  std::unique_ptr<RandomCropAndResizeOp> random_crop_resize(
-    new RandomCropAndResizeOp(target_height_, target_width_, scale_lb_, scale_ub_, aspect_lb_, aspect_ub_,
-                              InterpolationMode::kLinear, max_attempts_));
+  auto random_crop_resize =
+    std::make_unique<RandomCropAndResizeOp>(target_height_, target_width_, scale_lb_, scale_ub_, aspect_lb_, aspect_ub_,
+                                            InterpolationMode::kLinear, max_attempts_);
   RETURN_IF_NOT_OK(random_crop_resize->GetCropBox(img_height, img_width, &x, &y, &crop_heigh, &crop_widht));
   crop_info->left = x;
   crop_info->up = y;

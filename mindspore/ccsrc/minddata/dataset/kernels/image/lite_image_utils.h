@@ -82,8 +82,8 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
 /// \param[in] mean Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
 /// \param[in] std  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
 /// \param[out] output Normalized image Tensor of same input shape and type DE_FLOAT32
-Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> vec_mean,
-                 std::vector<float> vec_std);
+Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                 const std::vector<float> &vec_mean, const std::vector<float> &vec_std);
 
 /// \brief  Returns Resized image.
 /// \param[in] input

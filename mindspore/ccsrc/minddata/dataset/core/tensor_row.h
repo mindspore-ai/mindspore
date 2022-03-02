@@ -164,12 +164,12 @@ class TensorRow {
 
   std::vector<std::string> getPath() const { return path_; }
 
-  void setPath(std::vector<std::string> path) { path_ = path; }
+  void setPath(const std::vector<std::string> &path) { path_ = path; }
 
   const vector_type &getRow() const { return row_; }
 
-  int64_t SizeInBytes() const {
-    size_t sz = 0;
+  dsize_t SizeInBytes() const {
+    dsize_t sz = 0;
     for (auto &it : row_) {
       sz += it->SizeInBytes();
     }
@@ -189,9 +189,11 @@ class TensorRow {
 
   void resize(size_type size) { row_.resize(size); }
 
-  bool empty() { return row_.empty(); }
+  const bool empty() { return row_.empty(); }
 
-  void insert(iterator position, iterator first, iterator last) { row_.insert(position, first, last); }
+  void insert(const_iterator position, const_iterator first, const_iterator last) {
+    row_.insert(position, first, last);
+  }
 
   // Wrapper functions to support vector element access
   reference at(size_type index) { return row_.at(index); }
@@ -230,7 +232,7 @@ class TensorRow {
 
   bool skip() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagSkip)); }
 
-  TensorRowFlags Flags() { return tensor_row_flag_; }
+  const TensorRowFlags Flags() { return tensor_row_flag_; }
 
   explicit TensorRow(TensorRowFlags);
 

@@ -38,6 +38,7 @@ Status JsonHelper::CreateAlbum(const std::string &in_dir, const std::string &out
   // iterate over in dir and create json for all images
   uint64_t index = 0;
   auto dir_it = Path::DirIterator::OpenDirectory(&base_dir);
+  RETURN_UNEXPECTED_IF_NULL(dir_it);
   while (dir_it->HasNext()) {
     Path v = dir_it->Next();
     // check if found file fits image extension

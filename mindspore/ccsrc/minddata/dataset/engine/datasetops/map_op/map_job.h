@@ -35,7 +35,7 @@ class MapJob {
   MapJob() = default;
 
   // Destructor
-  ~MapJob() = default;
+  virtual ~MapJob() = default;
 
   Status AddOperation(std::shared_ptr<TensorOp> operation) {
     ops_.push_back(operation);

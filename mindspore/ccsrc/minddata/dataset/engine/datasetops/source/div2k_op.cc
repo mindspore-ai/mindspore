@@ -139,7 +139,7 @@ Status DIV2KOp::GetDIV2KLRDirRealName(const std::string &hr_dir_key, const std::
   if (lr_it == DatasetPramMap.end()) {
     std::string out_str = "{\n";
     std::for_each(DatasetPramMap.begin(), DatasetPramMap.end(),
-                  [&out_str](std::pair<std::string, std::string> item) -> void {
+                  [&out_str](const std::pair<std::string, std::string> &item) -> void {
                     out_str += ("\t" + item.first + ": " + item.second + ",\n");
                   });
     out_str += "\n}";
