@@ -182,6 +182,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
   }
   if (InferProcess(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "infer shape failed.";
+    (void)ResetSubGraphInput();
     return false;
   }
   if (ResetSubGraphInput() != lite::RET_OK) {
@@ -295,7 +296,9 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto status = node_infer_shape_->InferShape(cnode);
-    if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
+    bool infer_failed = (this->take_infer_invalid_as_failure_ && status == lite::RET_INFER_INVALID);
+    infer_failed |= (status != lite::RET_OK && status != lite::RET_INFER_INVALID);
+    if (infer_failed) {
       MS_LOG(ERROR) << "node infer shape failed, node is " << node->fullname_with_scope();
       return lite::RET_ERROR;
     }
