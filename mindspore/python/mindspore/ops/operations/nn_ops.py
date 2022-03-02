@@ -2337,7 +2337,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
     .. math::
         \begin{array}{ll} \\
             p_{ij} = softmax(X_{ij}) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)} \\
-            loss_{ij} = \begin{cases} -ln(p_{ij}), &j = y_i \cr -ln(1 - p_{ij}), & j \neq y_i \end{cases} \\
+            loss_{ij} = \begin{cases} -ln(p_{ij}), &j = y_i \cr 0, & j \neq y_i \end{cases} \\
             loss = \sum_{ij} loss_{ij}
         \end{array}
 
@@ -2601,7 +2601,7 @@ class SoftMarginLoss(Primitive):
 
 class L2Loss(Primitive):
     r"""
-    Calculates the L2 norm, but do not square the result.
+    Calculates half of the L2 norm, but do not square the result.
 
     Set input as x and output as loss.
 
