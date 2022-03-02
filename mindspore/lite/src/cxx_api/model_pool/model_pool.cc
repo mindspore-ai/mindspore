@@ -271,8 +271,7 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
   return model_outputs_;
 }
 
-Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config,
-                       const Key &dec_key, const std::string &dec_mode) {
+Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
   auto model_pool_context = CreateModelContext(runner_config);
   if (model_pool_context.empty()) {
     MS_LOG(ERROR) << "CreateModelContext failed, context is empty.";
@@ -309,7 +308,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
       numa_node_id = 0;
     }
     model_thread = std::make_shared<ModelThread>();
-    auto status = model_thread->Init(graph_buf_, size, model_pool_context[i], dec_key, dec_mode, numa_node_id);
+    auto status = model_thread->Init(graph_buf_, size, model_pool_context[i], numa_node_id);
     if (status != kSuccess) {
       MS_LOG(ERROR) << " model thread init failed.";
       return kLiteError;

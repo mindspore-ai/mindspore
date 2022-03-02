@@ -33,8 +33,7 @@ class ModelThread {
   ~ModelThread() = default;
 
   // the model pool is initialized once and can always accept model run requests
-  Status Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
-              const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm, int node_id = -1);
+  Status Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context, int node_id = -1);
 
   std::vector<MSTensor> GetInputs();
 
