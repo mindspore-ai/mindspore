@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -398,6 +398,67 @@ void InnerContext::ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_s
     this->SetLinkInfo(new_sender, item);
   }
 }
+
+#ifdef SERVER_INFERENCE
+float DtCostModel::load_cost_ = 1.0 / 64 * 11;   // 64: L2 cache size, 11 : L2 cache latency on Haswell
+float DtCostModel::store_cost_ = 1.0 / 64 * 11;  // 64: L2 cache size, 11 : L2 cache latency on Haswell
+float DtCostModel::compute_cycles_ = 1.0f;
+
+int DtCostModel::startup_cycles_ = 100000;
+int DtCostModel::per_thread_cycles_ = 100000;
+int DtCostModel::task_size_ = 40000;
+
+int DtCostModel::get_optimal_thread_num(const DtCostContext *dt_cost_context, const int thread_num) {
+  const int64_t max_oversharding_factor = 4;
+
+  int64_t block_size =
+    MSVALID(max_oversharding_factor * thread_num, thread_block_size(dt_cost_context), dt_cost_context->total_num_);
+  int64_t block_count = UP_DIV(dt_cost_context->total_num_, block_size);
+
+  int64_t max_block_size = MSMIN(dt_cost_context->total_num_, 2 * block_size);
+  double max_efficiency = static_cast<double>(block_count) / (UP_DIV(block_count, thread_num) * thread_num);
+  for (int64_t prev_block_count = block_count; max_efficiency < 1.0 && prev_block_count > 1;) {
+    int64_t cur_block_size = UP_DIV(dt_cost_context->total_num_, prev_block_count - 1);
+    if (cur_block_size > max_block_size) {
+      break;
+    }
+    const int64_t cur_block_count = UP_DIV(dt_cost_context->total_num_, cur_block_size);
+    MS_ASSERT(cur_block_count < prev_block_count);
+    prev_block_count = cur_block_count;
+    const double cur_efficiency =
+      static_cast<double>(cur_block_count) / (UP_DIV(cur_block_count, thread_num) * thread_num);
+    if (cur_efficiency + 0.01 >= max_efficiency) {  // update threshold : 0.01
+      block_size = cur_block_size;
+      block_count = cur_block_count;
+      if (max_efficiency < cur_efficiency) {
+        max_efficiency = cur_efficiency;
+      }
+    }
+  }
+
+  return block_count;
+}
+
+int UpdateThreadNum(const Context *context, const DtCostContext *dt_cost_context, int task_num) {
+  if (task_num <= 1) {
+    return task_num;
+  }
+  ThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
+  if (pool == nullptr) {
+    MS_LOG(ERROR) << "thread pool is nullptr";
+    return RET_NULL_PTR;
+  }
+
+  if (dt_cost_context != nullptr) {
+    if (DtCostModel::thread_num(dt_cost_context) == 1) {
+      return 1;
+    }
+    int opt_thread = static_cast<int>(DtCostModel::parallel_degree(dt_cost_context));
+    task_num = MSVALID(1, opt_thread, task_num);
+  }
+  return task_num;
+}
+#endif
 
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num) {
   ThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();

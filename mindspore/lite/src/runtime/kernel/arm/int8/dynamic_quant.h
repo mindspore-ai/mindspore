@@ -50,8 +50,8 @@ class DynamicQuantCPUKernel : public InnerKernel {
 
   float real_min_array_[8];
   float real_max_array_[8];
-  float real_min_;
-  float real_max_;
+  float real_min_ = FLT_MAX;
+  float real_max_ = FLT_MIN;
   int32_t src_dtype_{0};
   int32_t dst_dtype_{0};
   bool symmetric_ = false;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,6 +213,32 @@ int GetMaxFrequency(int core_id) {
   }
   (void)fclose(fp);
   return max_freq;
+}
+
+float CoreAffinity::GetServerFrequency() {
+  float max_freq = -1.0f;
+#ifdef SERVER_INFERENCE
+  // The CPU cores in the server of the numa architecture are the same.
+  // The main frequency of the first core is obtained.
+  FILE *fp = popen("cat /proc/cpuinfo|grep cpu\\ MHz | sed -e 's/.*:[^0-9]//'", "r");
+  if (fp == nullptr) {
+    THREAD_ERROR("get system cpuinfo frequency failed");
+    return max_freq;
+  }
+
+  while (feof(fp) == 0) {
+    float freq = 0;
+    int tmp = fscanf(fp, "%f", &freq);
+    if (tmp != 1) {
+      break;
+    }
+    if (max_freq < freq) {
+      max_freq = freq;
+    }
+  }
+  (void)fclose(fp);
+#endif
+  return max_freq;  // MHz
 }
 
 #ifdef _WIN32
