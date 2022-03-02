@@ -171,6 +171,7 @@ class MS_API NetTrain {
   float CompareData(const float *refOutput, int size, T *msTensorData) {
     size_t errorCount = 0;
     float meanError = 0;
+    std::cout << "Out tensor size is: " << size << std::endl;
     std::cout << "Data of model output: ";
     for (int j = 0; j < std::min(50, size); j++) {
       std::cout << static_cast<float>(msTensorData[j]) << " ";
