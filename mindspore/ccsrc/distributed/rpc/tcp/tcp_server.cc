@@ -19,20 +19,9 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-bool TCPServer::Initialize(const std::string &url) {
-  if (tcp_comm_ == nullptr) {
-    tcp_comm_ = std::make_unique<TCPComm>();
-    MS_EXCEPTION_IF_NULL(tcp_comm_);
-    bool rt = tcp_comm_->Initialize();
-    if (!rt) {
-      MS_LOG(EXCEPTION) << "Failed to initialize tcp comm";
-    }
-    rt = tcp_comm_->StartServerSocket(url);
-    return rt;
-  } else {
-    return true;
-  }
-}
+bool TCPServer::Initialize(const std::string &url) { return InitializeImpl(url); }
+
+bool TCPServer::Initialize() { return InitializeImpl(""); }
 
 void TCPServer::Finalize() {
   if (tcp_comm_ != nullptr) {
@@ -42,6 +31,34 @@ void TCPServer::Finalize() {
 }
 
 void TCPServer::SetMessageHandler(MessageHandler handler) { tcp_comm_->SetMessageHandler(handler); }
+
+std::string TCPServer::GetIP() { return ip_; }
+
+uint32_t TCPServer::GetPort() { return port_; }
+
+bool TCPServer::InitializeImpl(const std::string &url) {
+  if (tcp_comm_ == nullptr) {
+    tcp_comm_ = std::make_unique<TCPComm>();
+    MS_EXCEPTION_IF_NULL(tcp_comm_);
+    bool rt = tcp_comm_->Initialize();
+    if (!rt) {
+      MS_LOG(EXCEPTION) << "Failed to initialize tcp comm";
+    }
+    if (url != "") {
+      rt = tcp_comm_->StartServerSocket(url);
+      ip_ = SocketOperation::GetIP(url);
+    } else {
+      rt = tcp_comm_->StartServerSocket();
+      ip_ = SocketOperation::GetLocalIP();
+    }
+    auto server_fd = tcp_comm_->GetServerFd();
+    port_ = SocketOperation::GetPort(server_fd);
+
+    return rt;
+  } else {
+    return true;
+  }
+}
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore
