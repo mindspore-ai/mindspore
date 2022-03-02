@@ -18,6 +18,7 @@ import operator
 
 import numpy as onp
 
+from .. import context
 from ..common import Tensor
 from ..common import dtype as mstype
 from ..ops import operations as P
@@ -1041,7 +1042,13 @@ def tril(m, k=0):
     if not isinstance(m, Tensor):
         m = asarray_const(m)
     dtype = m.dtype
-    assist = nn_tril(m.shape, dtype, k)
+    device_target = context.get_context("device_target")
+    # Only Ascend hardware will reduce accuracy
+    if device_target == "Ascend":
+        m = m.astype(mstype.float32)
+        assist = nn_tril(m.shape, mstype.float32, k)
+    else:
+        assist = nn_tril(m.shape, dtype, k)
     return F.tensor_mul(assist, m).astype(dtype)
 
 
@@ -1078,7 +1085,13 @@ def triu(m, k=0):
     if not isinstance(m, Tensor):
         m = asarray_const(m)
     dtype = m.dtype
-    assist = nn_triu(m.shape, dtype, k)
+    device_target = context.get_context("device_target")
+    # Only Ascend hardware will reduce accuracy
+    if device_target == "Ascend":
+        m = m.astype(mstype.float32)
+        assist = nn_triu(m.shape, mstype.float32, k)
+    else:
+        assist = nn_triu(m.shape, dtype, k)
     return F.tensor_mul(assist, m).astype(dtype)
 
 
