@@ -27,6 +27,15 @@ def _callable_const(x):
 
 
 @constexpr
+def _nullable_const(x):
+    """
+    Returns true if x is None. It's aim to check whether the call is within MindSpore graph.
+    Because in graph mode, x should be None in constexpr when x is a variable of MindSpore.
+    """
+    return x is None
+
+
+@constexpr
 def _type_convert(new_type, obj):
     """
     Convert type of `obj` to `force`.
