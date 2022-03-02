@@ -14,11 +14,15 @@
 # ============================================================================
 
 import os
+import time
 import pytest
+import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
+import mindspore.dataset.transforms.py_transforms as py_transforms
 import mindspore.dataset.vision.c_transforms as CV
+import mindspore.dataset.vision.py_transforms as py_vision
 
 from mindspore import context, nn
 from mindspore.common import dtype as mstype, set_seed
@@ -30,6 +34,7 @@ def create_model():
     """
     Define and return a simple model
     """
+
     class Net(nn.Cell):
         def construct(self, x, y):
             return x
@@ -79,6 +84,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.forked
 def test_autotune_train_simple_model():
     """
     Feature: Dataset AutoTune
@@ -86,11 +92,13 @@ def test_autotune_train_simple_model():
     Expectation: Training completes successfully
 
     """
+    original_seed = ds.config.get_seed()
     set_seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     context.set_context(enable_graph_kernel=True)
 
     # Enable Dataset AutoTune
+    original_autotune = ds.config.get_enable_autotune()
     ds.config.set_enable_autotune(True)
 
     ds_train = create_dataset(os.path.join("/home/workspace/mindspore_dataset/mnist", "train"), 32, 1)
@@ -101,5 +109,84 @@ def test_autotune_train_simple_model():
     model.train(epoch_size, ds_train)
     print("Training is finished.")
 
-    # Disable Dataset AutoTune
-    ds.config.set_enable_autotune(False)
+    # Restore settings
+    ds.config.set_enable_autotune(original_autotune)
+    ds.config.set_seed(original_seed)
+
+
+def create_dataset_pyfunc_multiproc(data_path, batch_size=32, num_map_parallel_workers=1, max_rowsize=16):
+    """
+    Create dataset with Python ops list and python_multiprocessing=True for Map op
+    """
+
+    # Define dataset
+    data1 = ds.MnistDataset(data_path, num_parallel_workers=8)
+
+    data1 = data1.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
+                      num_parallel_workers=num_map_parallel_workers,
+                      python_multiprocessing=True, max_rowsize=max_rowsize)
+
+    # Setup transforms list which include Python ops
+    transforms_list = [
+        py_vision.ToTensor(),
+        lambda x: x,
+        py_vision.HWC2CHW(),
+        py_vision.RandomErasing(0.9, value='random'),
+        py_vision.Cutout(4, 2),
+        lambda y: y
+    ]
+    compose_op = py_transforms.Compose(transforms_list)
+    data1 = data1.map(operations=compose_op, input_columns="image", num_parallel_workers=num_map_parallel_workers,
+                      python_multiprocessing=True, max_rowsize=max_rowsize)
+
+    # Apply Dataset Ops
+    data1 = data1.batch(batch_size, drop_remainder=True)
+
+    return data1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.forked
+def test_autotune_pymultiproc_train_simple_model():
+    """
+    Feature: Dataset AutoTune
+    Description: Test Dataset AutoTune with Python Multiprocessing for Training of a Simple Model
+    Expectation: Training completes successfully
+
+    """
+    original_seed = ds.config.get_seed()
+    set_seed(20)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(enable_graph_kernel=True)
+
+    # Reduce memory required by disabling the shared memory optimization
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
+
+    # Enable Dataset AutoTune
+    original_autotune = ds.config.get_enable_autotune()
+    ds.config.set_enable_autotune(True)
+    original_interval = ds.config.get_autotune_interval()
+    ds.config.set_autotune_interval(100)
+
+    ds_train = create_dataset_pyfunc_multiproc(os.path.join("/home/workspace/mindspore_dataset/mnist", "train"), 32, 2)
+    model = create_model()
+
+    print("Start Model Training.")
+    model_start = time.time()
+    epoch_size = 2
+    model.train(epoch_size, ds_train)
+    print("Model training is finished. Took {}s".format(time.time() - model_start))
+
+    # Restore settings
+    ds.config.set_autotune_interval(original_interval)
+    ds.config.set_enable_autotune(original_autotune)
+    ds.config.set_enable_shared_mem(mem_original)
+    ds.config.set_seed(original_seed)
+
+
+if __name__ == "__main__":
+    test_autotune_train_simple_model()
+    test_autotune_pymultiproc_train_simple_model()

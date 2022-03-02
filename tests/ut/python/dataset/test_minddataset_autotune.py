@@ -16,6 +16,7 @@
 Testing Autotune support in DE for MindDataset
 """
 import os
+import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as vision
 from mindspore.dataset.vision import Inter
@@ -23,6 +24,7 @@ from util_minddataset import add_and_remove_cv_file
 
 
 # pylint: disable=unused-variable, redefined-outer-name
+@pytest.mark.forked
 def test_autotune_simple_pipeline_mindrecord(add_and_remove_cv_file):
     """
     Feature: Autotuning
