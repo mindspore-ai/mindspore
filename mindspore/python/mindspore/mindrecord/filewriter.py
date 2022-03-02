@@ -44,7 +44,7 @@ class FileWriter:
         file_name (str): File name of MindRecord file.
         shard_num (int, optional): The Number of MindRecord files. Default: 1.
             It should be between [1, 1000].
-        overwrite (bool, optional): Overwrite MindRecord files if true. Default: False.
+        overwrite (bool, optional): Whether to overwrite if the file already exists. Default: False.
 
     Raises:
         ParamValueError: If `file_name` or `shard_num` or `overwrite` is invalid.

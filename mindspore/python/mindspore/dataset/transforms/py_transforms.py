@@ -258,8 +258,8 @@ class RandomApply(PyTensorOperation):
     Raises:
         TypeError: If `transforms` is not of type list.
         ValueError: If `transforms` is empty.
-        TypeError: If elements of `transforms` are neither Python callable objects nor have
-            type :class:`mindspore.dataset.transforms.py_transforms.PyTensorOperation` .
+        TypeError: If elements of `transforms` are neither Python callable objects nor data
+            processing operations in py_transforms.
         TypeError: If `prob` is not of type bool.
         ValueError: If `prob` is not in range [0.0, 1.0].
 
@@ -304,8 +304,8 @@ class RandomChoice(PyTensorOperation):
 
     Raises:
         TypeError: If `transforms` is not of type list.
-        TypeError: If elements of `transforms` are neither Python callable objects nor have
-            type :class:`mindspore.dataset.transforms.py_transforms.PyTensorOperation` .
+        TypeError: If elements of `transforms` are neither Python callable objects nor data
+            processing operations in py_transforms.
         ValueError: If `transforms` is empty.
 
     Supported Platforms:
@@ -348,8 +348,8 @@ class RandomOrder(PyTensorOperation):
 
     Raises:
         TypeError: If `transforms` is not of type list.
-        TypeError: If elements of `transforms` are neither Python callable objects nor have
-            type :class:`mindspore.dataset.transforms.py_transforms.PyTensorOperation` .
+        TypeError: If elements of `transforms` are neither Python callable objects nor data
+            processing operations in py_transforms.
         ValueError: If `transforms` is empty.
 
     Supported Platforms:

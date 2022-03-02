@@ -16,3 +16,14 @@ mindspore.dataset.audio.transforms.AmplitudeToDB
 
     - **amin** (float, 可选) - 波形取值下界，低于该值的波形将会被裁切，取值必须大于0，默认值：1e-10。
     - **top_db** (float, 可选) - 最小负截止分贝值，默认值：80.0。
+
+    **异常：**
+
+    - **TypeError** - 当 `stype` 的类型不为 :class:`mindspore.dataset.audio.utils.ScaleType` 。
+    - **TypeError** - 当 `ref_value` 的类型不为浮点型。
+    - **ValueError** - 当 `ref_value` 不为正数。
+    - **TypeError** - 当 `amin` 的类型不为浮点型。
+    - **ValueError** - 当 `amin` 不为正数。
+    - **TypeError** - 当 `top_db` 的类型不为浮点型。
+    - **ValueError** - 当 `top_db` 不为正数。
+    - **RuntimeError** - 当输入音频的shape不为<..., freq, time>。

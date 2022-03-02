@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Validators for TensorOps.
+Validators for Audio processing operations.
 """
 
 from functools import wraps

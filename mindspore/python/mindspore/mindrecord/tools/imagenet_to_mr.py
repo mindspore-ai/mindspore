@@ -37,12 +37,12 @@ class ImageNetToMR:
     Args:
         map_file (str): the map file that indicates label. The map file content should be like this:
 
-                  .. code-block::
+            .. code-block::
 
-                      n02119789 0
-                      n02100735 1
-                      n02110185 2
-                      n02096294 3
+              n02119789 0
+              n02100735 1
+              n02110185 2
+              n02096294 3
 
         image_dir (str): image directory contains n02119789, n02100735, n02110185 and n02096294 directory.
         destination (str): the MindRecord file path to transform into.

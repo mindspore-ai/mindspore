@@ -273,7 +273,7 @@ class Mask(TensorOperation):
             Relational.GT, Relational.LE, Relational.GE], take Relational.EQ as example, EQ refers to equal.
         constant (Union[str, int, float, bool]): Constant to be compared to.
             Constant will be cast to the type of the input tensor.
-        dtype (mindspore.dtype, optional): Type of the generated mask (Default mstype.bool\_).
+        dtype (mindspore.dtype, optional): Type of the generated mask. Default: mindspore.dtype.bool\_.
 
     Raises:
         TypeError: `operator` is not of type Relational.
@@ -444,7 +444,7 @@ class Unique(TensorOperation):
         Call batch op before calling this function.
 
     Raises:
-        RuntimeError: If given tensor has two columns.
+        RuntimeError: If given Tensor has two columns.
 
     Supported Platforms:
         ``CPU``
@@ -466,7 +466,6 @@ class Unique(TensorOperation):
         >>> # +---------+-----------------+---------+
         >>> # | [0,1,2,3] | [0,1,2,1,2,3] | [1,2,2,1]
         >>> # +---------+-----------------+---------+
-
     """
 
     def parse(self):
@@ -483,8 +482,8 @@ class Compose(TensorOperation):
     Raises:
         TypeError: If `transforms` is not of type list.
         ValueError: If `transforms` is empty.
-        TypeError: If elements of `transforms` are neither Python callable objects nor have
-            type :class:`mindspore.dataset.transforms.c_transforms.TensorOperation` .
+        TypeError: If elements of `transforms` are neither Python callable objects nor data
+            processing operations in c_transforms.
 
     Supported Platforms:
         ``CPU``
@@ -519,8 +518,8 @@ class RandomApply(TensorOperation):
     Raises:
         TypeError: If `transforms` is not of type list.
         ValueError: If `transforms` is empty.
-        TypeError: If elements of `transforms` are neither Python callable objects nor have
-            type :class:`mindspore.dataset.transforms.c_transforms.TensorOperation` .
+        TypeError: If elements of `transforms` are neither Python callable objects nor data
+            processing operations in c_transforms.
         TypeError: If `prob` is not of type bool.
         ValueError: If `prob` is not in range [0.0, 1.0].
 
@@ -557,8 +556,8 @@ class RandomChoice(TensorOperation):
     Raises:
         TypeError: If `transforms` is not of type list.
         ValueError: If `transforms` is empty.
-        TypeError: If elements of `transforms` are neither Python callable objects nor have
-            type :class:`mindspore.dataset.transforms.c_transforms.TensorOperation` .
+        TypeError: If elements of `transforms` are neither Python callable objects nor data
+            processing operations in c_transforms.
 
     Supported Platforms:
         ``CPU``

@@ -302,7 +302,7 @@ class Lookup(TextTensorOperation):
 
 class Ngram(TextTensorOperation):
     """
-    TensorOp to generate n-gram from a 1-D string Tensor.
+    Generate n-gram from a 1-D string Tensor.
 
     Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
 
@@ -580,23 +580,25 @@ class UnicodeCharTokenizer(TextTensorOperation):
 
 class WordpieceTokenizer(TextTensorOperation):
     """
-    Tokenize scalar token or 1-D tokens to 1-D subword tokens.
+    Tokenize the input text to subword tokens.
 
     Args:
-        vocab (Vocab): A  vocabulary object.
-        suffix_indicator (str, optional): Used to show that the subword is the last part of a word (default='##').
-        max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split (default=100).
-        unknown_token (str, optional): When a token cannot be found: if 'unknown_token' is empty string,
-            return the token directly, else return 'unknown_token' (default='[UNK]').
-        with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+        vocab (Vocab): Vocabulary used to look up words.
+        suffix_indicator (str, optional): Prefix flags used to indicate subword suffixes. Default: '##'.
+        max_bytes_per_token (int, optional): The maximum length of tokenization, words exceeding this length will
+                not be split. Default: 100.
+        unknown_token (str, optional): The output for unknown words. When set to an empty string, the corresponding
+                unknown word will be directly returned as the output. Otherwise, the set string will be returned as the
+                output. Default: '[UNK]'.
+        with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
 
     Raises:
-        TypeError: If `vocab` is not of type text.Vocab.
-        TypeError: If `suffix_indicator` is not of type string.
+        TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab`.
+        TypeError: If `suffix_indicator` is not of type str.
         TypeError: If `max_bytes_per_token` is not of type int.
-        TypeError: If `unknown_token` is not of type string.
+        TypeError: If `unknown_token` is not of type str.
         TypeError: If `with_offsets` is not of type bool.
-        ValueError: If value of `max_bytes_per_token` is negative.
+        ValueError: If `max_bytes_per_token` is negative.
 
     Supported Platforms:
         ``CPU``
@@ -680,29 +682,30 @@ if platform.system().lower() != 'windows':
 
     class BasicTokenizer(TextTensorOperation):
         """
-        Tokenize a scalar tensor of UTF-8 string by specific rules.
+        Tokenize the input UTF-8 string by specific rules.
 
         Note:
-            BasicTokenizer is not supported on Windows platform yet.
+            `BasicTokenizer` is not supported on Windows platform yet.
 
         Args:
-            lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8 with `NFD` mode, RegexReplace operation
-                on input text to fold the text to lower case and strip accents characters. If False, only apply
-                NormalizeUTF8 operation with the specified mode on input text (default=False).
-            keep_whitespace (bool, optional): If True, the whitespace will be kept in output tokens (default=False).
-            normalization_form (NormalizeForm, optional): Used to specify a specific normalize mode
-                (default=NormalizeForm.NONE). This is only effective when `lower_case` is False. It can be any of
-                [NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD, NormalizeForm.NFKD].
+            lower_case (bool, optional): If True, will apply `CaseFold`, NormalizeForm.NFD mode `NormalizeUTF8`,
+                `RegexReplace` operations on the input to fold the text to lower case and strip accented characters.
+                If False, will only apply `NormalizeUTF8` operation of mode `normalization_form` on the input.
+                Default: False.
+            keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
+            normalization_form (NormalizeForm, optional): Normalization mode, only valid when `lower_case` is False,
+                can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
+                NormalizeForm.NFKD. Default: NormalizeForm.NONE.
 
-                - NormalizeForm.NONE, do nothing for input string tensor.
+                - NormalizeForm.NONE, do nothing for input string.
                 - NormalizeForm.NFC, normalize with Normalization Form C.
                 - NormalizeForm.NFKC, normalize with Normalization Form KC.
                 - NormalizeForm.NFD, normalize with Normalization Form D.
                 - NormalizeForm.NFKD, normalize with Normalization Form KD.
 
-            preserve_unused_token (bool, optional): If True, do not split special tokens like
-                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
-            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+            preserve_unused_token (bool, optional): If True, will not split special tokens like
+                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
+            with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
 
         Examples:
             >>> from mindspore.dataset.text import NormalizeForm
@@ -752,34 +755,36 @@ if platform.system().lower() != 'windows':
         Tokenizer used for Bert text process.
 
         Note:
-            BertTokenizer is not supported on Windows platform yet.
+            `BertTokenizer` is not supported on Windows platform yet.
 
         Args:
-            vocab (Vocab): A vocabulary object.
-            suffix_indicator (str, optional): Used to show that the subword is the last part of a word (default='##').
-            max_bytes_per_token (int, optional): If Tokens exceeding this length, it will not be further
-                split (default=100).
-            unknown_token (str, optional): When an unknown token is found, return the token directly if `unknown_token`
-                is an empty string, else return `unknown_token` instead (default='[UNK]').
-            lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8 with `NFD` mode, RegexReplace operation
-                on input text to fold the text to lower case and strip accented characters. If False, only apply
-                NormalizeUTF8 operation with the specified mode on input text (default=False).
-            keep_whitespace (bool, optional): If True, the whitespace will be kept in out tokens (default=False).
-            normalization_form (NormalizeForm, optional): This parameter is used to specify a specific normalize mode,
-                only effective when `lower_case` is False. See NormalizeUTF8 for details (default=NormalizeForm.NONE).
-            preserve_unused_token (bool, optional): If True, do not split special tokens like
-                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
-            with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+            vocab (Vocab): Vocabulary used to look up words.
+            suffix_indicator (str, optional): Prefix flags used to indicate subword suffixes. Default: '##'.
+            max_bytes_per_token (int, optional): The maximum length of tokenization, words exceeding this length will
+                not be split. Default: 100.
+            unknown_token (str, optional): The output for unknown words. When set to an empty string, the corresponding
+                unknown word will be directly returned as the output. Otherwise, the set string will be returned as the
+                output. Default: '[UNK]'.
+            lower_case (bool, optional): If True, will apply `CaseFold`, NormalizeForm.NFD mode `NormalizeUTF8`,
+                `RegexReplace` operations on the input to fold the text to lower case and strip accented characters.
+                If False, will only apply `NormalizeUTF8` operation of mode `normalization_form` on the input.
+                Default: False.
+            keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
+            normalization_form (NormalizeForm, optional): Normalization mode, only valid when `lower_case` is False.
+                See `NormalizeUTF8` for details. Default: NormalizeForm.NONE.
+            preserve_unused_token (bool, optional): If True, will not split special tokens like
+                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
+            with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
 
         Raises:
-            TypeError: If `vocab` is not of type text.Vocab.
-            TypeError: If `suffix_indicator` is not of type string.
+            TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab`.
+            TypeError: If `suffix_indicator` is not of type str.
             TypeError: If `max_bytes_per_token` is not of type int.
-            ValueError: If `max_bytes_per_token` is a negative number.
-            TypeError: If `unknown_token` is not of type string.
+            ValueError: If `max_bytes_per_token` is negative.
+            TypeError: If `unknown_token` is not of type str.
             TypeError: If `lower_case` is not of type bool.
             TypeError: If `keep_whitespace` is not of type bool.
-            TypeError: If `normalization_form` is not of type NormalizeForm.
+            TypeError: If `normalization_form` is not of type :class:`mindspore.dataset.text.NormalizeForm`.
             TypeError: If `preserve_unused_token` is not of type bool.
             TypeError: If `with_offsets` is not of type bool.
 
@@ -813,7 +818,6 @@ if platform.system().lower() != 'windows':
             ...                                                               "offsets_limit"],
             ...                                               column_order=["token", "offsets_start",
             ...                                                             "offsets_limit"])
-
         """
 
         @check_bert_tokenizer
@@ -874,6 +878,7 @@ if platform.system().lower() != 'windows':
             >>> replace_op = text.FilterWikipediaXML()
             >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
         """
+
         def parse(self):
             return cde.FilterWikipediaXMLOperation()
 

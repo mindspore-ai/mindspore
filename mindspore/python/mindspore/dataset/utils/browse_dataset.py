@@ -55,14 +55,14 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
 
     Raises:
         ImportError: If opencv-python is not installed.
-        AssertionError: Input image is not in (H, W, C) or (C, H, W) format.
-        AssertionError: Input bboxes is not in (N, 4) or (N, 5) format.
-        AssertionError: Input labels is not in (N, 1) format.
-        AssertionError: Input segm is not in (M, H, W) format.
-        AssertionError: Input class_names is not a list, tuple or dict.
-        AssertionError: Input bbox_color is a not tuple, formatted (B, G, R).
-        AssertionError: Input text_color is a not tuple, formatted (B, G, R).
-        AssertionError: Input mask_color is a not tuple, formatted (B, G, R).
+        AssertionError: If `image` is not in (H, W, C) or (C, H, W) format.
+        AssertionError: If `bboxes` is not in (N, 4) or (N, 5) format.
+        AssertionError: If `labels` is not in (N, 1) format.
+        AssertionError: If `segm` is not in (M, H, W) format.
+        AssertionError: If `class_names` is not of type list, tuple or dict.
+        AssertionError: If `bbox_color` is not a tuple in format of (B, G, R).
+        AssertionError: If `text_color` is not a tuple in format of (B, G, R).
+        AssertionError: If `mask_color` is not a tuple in format of (B, G, R).
 
     Examples:
         >>> import numpy as np

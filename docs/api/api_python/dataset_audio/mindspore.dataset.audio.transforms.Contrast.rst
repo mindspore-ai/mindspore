@@ -14,3 +14,9 @@ mindspore.dataset.audio.transforms.Contrast
     **参数：**
 
     - **enhancement_amount** (float, 可选) - 控制音频增益的量，取值范围为[0,100]，默认值：75.0。请注意当 `enhancement_amount` 等于0时，对比度增强效果仍然会很显著。
+
+    **异常：**
+
+    - **TypeError** - 当 `enhancement_amount` 的类型不为浮点型。
+    - **ValueError** - 当 `enhancement_amount` 取值不在[0, 100]范围内。
+    - **RuntimeError** - 当输入音频的shape不为<..., time>。

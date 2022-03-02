@@ -12,6 +12,5 @@ mindspore.dataset.transforms.py_transforms.RandomOrder
     **异常：**
       
     - **TypeError** - 参数 `transforms` 类型不为 list。
-    - **TypeError** - 参数 `transforms` 的元素不是Python可调用对象
-      或类型不为 :class:`mindspore.dataset.transforms.py_transforms.PyTensorOperation` 。
+    - **TypeError** - 参数 `transforms` 的元素不是Python可调用对象或py_transforms模块中的数据处理操作。
     - **ValueError** - 参数 `transforms` 的长度为空。

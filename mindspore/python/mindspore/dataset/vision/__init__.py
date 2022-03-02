@@ -24,6 +24,12 @@ Common imported modules in corresponding API examples are as follows:
     import mindspore.dataset.vision.c_transforms as c_vision
     import mindspore.dataset.vision.py_transforms as py_vision
     from mindspore.dataset.transforms import c_transforms
+
+Descriptions of common data processing terms are as follows:
+
+- TensorOperation, the base class of all data processing operations implemented in C++.
+- PyTensorOperation, the base class of all data processing operations implemented in Python.
+- ImageTensorOperation, the base class of all image processing operations. It is a derived class of TensorOperation.
 """
 from . import c_transforms
 from . import py_transforms

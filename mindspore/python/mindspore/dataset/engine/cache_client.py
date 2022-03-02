@@ -47,7 +47,7 @@ class DatasetCache:
             >>> # In the following code, suppose the session_id is 780643335
             >>> some_cache = ds.DatasetCache(session_id=780643335, size=0)
             >>>
-            >>> dataset_dir = "/path/to/imagefolder_directory"
+            >>> dataset_dir = "/path/to/image_folder_dataset_directory"
             >>> ds1 = ds.ImageFolderDataset(dataset_dir, cache=some_cache)
     """
 

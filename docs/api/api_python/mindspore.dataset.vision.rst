@@ -13,6 +13,12 @@ API样例中常用的导入模块如下：
     import mindspore.dataset.vision.py_transforms as py_vision
     from mindspore.dataset.transforms import c_transforms
 
+常用数据处理术语说明如下：
+
+- TensorOperation，所有C++实现的数据处理操作的基类。
+- PyTensorOperation，所有Python实现的数据处理操作的基类。
+- ImageTensorOperation，所有图像数据处理操作的基类，派生自TensorOperation。
+
 mindspore.dataset.vision.c_transforms
 ------------------------------------------------
 
