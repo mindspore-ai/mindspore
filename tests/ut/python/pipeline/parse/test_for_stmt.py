@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_for_stmt """
+import os
 from dataclasses import dataclass
 import numpy as np
 
@@ -91,6 +92,15 @@ def test_op_seq_test():
     input_me = Tensor(input_np)
     net(input_me)
 
+def test_op_seq_test_ge():
+    """
+    Feature: unify ge and vm backend
+    Description: test op seq with ge backend
+    Expectation: None
+    """
+    os.environ['MS_ENABLE_GE'] = "1"
+    test_op_seq_test()
+    del os.environ['MS_ENABLE_GE']
 
 _grad_fusion = C.MultitypeFuncGraph("grad_fushion")
 
@@ -124,3 +134,13 @@ def test_allreduce_fushio_test():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
     net(input_me)
+
+def test_allreduce_fushio_test_ge():
+    """
+    Feature: unify ge and vm backend
+    Description: test allreduce fushio with ge backend
+    Expectation: None
+    """
+    os.environ['MS_ENABLE_GE'] = "1"
+    test_allreduce_fushio_test()
+    del os.environ['MS_ENABLE_GE']

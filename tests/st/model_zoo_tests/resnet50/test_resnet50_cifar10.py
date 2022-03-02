@@ -18,7 +18,6 @@ import pytest
 from mindspore import log as logger
 from tests.st.model_zoo_tests import utils
 
-
 @pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -49,7 +48,6 @@ def test_resnet50_cifar10_ascend():
         loss = utils.get_loss_data_list(log_file.format(i))
         loss_list.append(loss[-1])
     assert sum(loss_list) / len(loss_list) < 0.70
-
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
