@@ -99,7 +99,7 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
     input_size_list_.push_back(learning_rate_size_);
     input_size_list_.push_back(gradient_size_);
     input_size_list_.push_back(momentum_size_);
-    output_size_list_.push_back(0);
+    output_size_list_.push_back(variable_size_);
   }
 
  private:

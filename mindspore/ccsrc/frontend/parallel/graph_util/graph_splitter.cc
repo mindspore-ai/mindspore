@@ -300,6 +300,8 @@ CNodePtr GraphSplitter::GenerateRecvNode(const AnfNodePtr &input, const AnfNodeP
   MS_EXCEPTION_IF_NULL(peer);
 
   std::vector<AnfNodePtr> recv_inputs = {NewValueNode(std::make_shared<Primitive>(kRpcRecvOpName))};
+  CNodePtr recv_node = nullptr;
+  AbstractBasePtr recv_node_abs = nullptr;
   if (IsPrimitiveCNode(input, prim::kPrimUpdateState)) {
     ValuePtr monad_value = nullptr;
     if (HasAbstractUMonad(input)) {
@@ -312,14 +314,25 @@ CNodePtr GraphSplitter::GenerateRecvNode(const AnfNodePtr &input, const AnfNodeP
     auto monad_input = NewValueNode(monad_value);
     monad_input->set_abstract(monad_value->ToAbstract());
     recv_inputs.push_back(monad_input);
+    recv_node_abs = input->abstract();
   } else {
-    auto mock_value = GenerateMockValueNode(true, input);
-    MS_EXCEPTION_IF_NULL(mock_value);
-    recv_inputs.push_back(mock_value);
+    if (input->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrUpdateParameter, input->cast<CNodePtr>()) &&
+        common::AnfAlgo::HasNodeAttr(kAttrParameterInputIndex, input->cast<CNodePtr>())) {
+      int64_t parameter_index = common::AnfAlgo::GetNodeAttr<int64_t>(input, kAttrParameterInputIndex);
+      auto kernel_with_index = common::AnfAlgo::VisitKernel(input, LongToUlong(parameter_index));
+      auto param_node = kernel_with_index.first;
+      recv_inputs.push_back(param_node);
+      recv_node_abs = param_node->abstract();
+    } else {
+      auto mock_value = GenerateMockValueNode(true, input);
+      MS_EXCEPTION_IF_NULL(mock_value);
+      recv_inputs.push_back(mock_value);
+      recv_node_abs = input->abstract();
+    }
   }
-  CNodePtr recv_node = func_graph_->NewCNode(recv_inputs);
+  recv_node = func_graph_->NewCNode(recv_inputs);
   MS_EXCEPTION_IF_NULL(recv_node);
-  recv_node->set_abstract(input->abstract());
+  recv_node->set_abstract(recv_node_abs);
 
   // The label should be the same as the node which Receives the 'input'.
   node_labels_[recv_node] = node_labels_[peer];

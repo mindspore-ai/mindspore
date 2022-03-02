@@ -51,6 +51,10 @@ class NativeCpuKernelModFactory {
   DISABLE_COPY_AND_ASSIGN(NativeCpuKernelModFactory)
   std::pair<bool, size_t> CPUKernelAttrCheck(const std::string &kernel_name, const KernelBuildInfo &kernel_info);
   bool CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr, const KernelBuildInfo &kernel_info) const;
+
+  // Set output and input ref map to kernel info which will be used by graph compiler.
+  void SetRefMapToKernelInfo(const std::string &kernel_name, size_t index, device::KernelInfo *kernel_info);
+
   std::map<std::string, std::vector<std::pair<KernelAttr, NativeCpuKernelModCreator>>> name_to_attr_creator_;
 };
 

@@ -48,6 +48,7 @@ std::shared_ptr<NativeCpuKernelMod> NativeCpuKernelModFactory::Create(const std:
   MS_EXCEPTION_IF_NULL(kernel_build_Info);
   std::pair<bool, size_t> ret_pair = CPUKernelAttrCheck(kernel_name, *kernel_build_Info);
   if (ret_pair.first) {
+    SetRefMapToKernelInfo(kernel_name, ret_pair.second, kernel_info);
     return (name_to_attr_creator_.find(kernel_name)->second)[ret_pair.second].second();
   }
   return nullptr;
@@ -161,6 +162,14 @@ bool NativeCpuKernelModFactory::CPUKernelSingleAttrCheck(const KernelAttr &kerne
     }
   }
   return true;
+}
+
+void NativeCpuKernelModFactory::SetRefMapToKernelInfo(const std::string &kernel_name, size_t index,
+                                                      device::KernelInfo *kernel_info) {
+  const auto &kernel_attr = (name_to_attr_creator_.find(kernel_name)->second)[index].first;
+  if (!kernel_attr.GetOutInRefMap().empty()) {
+    kernel_info->set_ref_map(kernel_attr.GetOutInRefMap());
+  }
 }
 
 std::vector<KernelAttr> NativeCpuKernelModFactory::GetSupportedKernelAttrList(const std::string &kernel_name) {

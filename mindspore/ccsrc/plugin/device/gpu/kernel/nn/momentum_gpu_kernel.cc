@@ -25,7 +25,8 @@ MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeFloat32)
-                          .AddOutputAttr(kNumberTypeFloat32),
+                          .AddOutputAttr(kNumberTypeFloat32)
+                          .AddOutInRef(0, 0),
                         MomentumGpuKernelMod, float, float, float)
 MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                         KernelAttr()
@@ -34,7 +35,8 @@ MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeFloat16)
-                          .AddOutputAttr(kNumberTypeFloat16),
+                          .AddOutputAttr(kNumberTypeFloat16)
+                          .AddOutInRef(0, 0),
                         MomentumGpuKernelMod, half, half, half)
 MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                         KernelAttr()
@@ -43,7 +45,8 @@ MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeFloat32)
-                          .AddOutputAttr(kNumberTypeFloat16),
+                          .AddOutputAttr(kNumberTypeFloat16)
+                          .AddOutInRef(0, 0),
                         MomentumGpuKernelMod, half, float, half)
 MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                         KernelAttr()
@@ -52,7 +55,8 @@ MS_REG_GPU_KERNEL_THREE(ApplyMomentum,
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddInputAttr(kNumberTypeFloat16)
                           .AddInputAttr(kNumberTypeFloat32)
-                          .AddOutputAttr(kNumberTypeFloat32),
+                          .AddOutputAttr(kNumberTypeFloat32)
+                          .AddOutInRef(0, 0),
                         MomentumGpuKernelMod, float, float, half)
 }  // namespace kernel
 }  // namespace mindspore

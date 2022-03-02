@@ -73,6 +73,9 @@ class KernelInfo : public KernelInfoDevice {
   const std::vector<std::shared_ptr<DeviceAddress>> &output_address_list() const { return output_address_list_; }
   const std::vector<std::shared_ptr<DeviceAddress>> &workspace_address_list() const { return workspace_address_list_; }
 
+  void set_ref_map(const OutputInputRefMap &ref_map) { out_in_ref_map_ = ref_map; }
+  const OutputInputRefMap &out_in_ref_map() const { return out_in_ref_map_; }
+
  private:
   bool is_feature_map_;
   kernel::KernelBuildInfoPtr select_kernel_build_info_;
@@ -85,6 +88,8 @@ class KernelInfo : public KernelInfoDevice {
   uint32_t stream_distinction_label_;
   // record which graph the node belong to
   uint32_t graph_id_;
+  // The map between kernel's output and input ref relationship.
+  OutputInputRefMap out_in_ref_map_;
 };
 }  // namespace device
 }  // namespace mindspore

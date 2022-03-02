@@ -18,8 +18,12 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL_T(
-  RpcRecv, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).SetAllSameAttr(true),
-  RpcRecvKernelMod, float);
+MS_REG_CPU_KERNEL_T(RpcRecv,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddOutputAttr(kNumberTypeFloat32)
+                      .SetAllSameAttr(true)
+                      .AddOutInRef(0, 0),
+                    RpcRecvKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore

@@ -189,6 +189,9 @@ class GraphCompiler {
   // setting operator info, creating kernel and transforming kernel graph to ActorSet.
   GraphId CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
+  // Add operators' output and input reference map to the graph.
+  void AddOutInRefToGraph(const KernelGraphPtr &graph) const;
+
   // Create device address for all anf nodes of graph.
   void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context,
                            bool is_gradient_out) const;
