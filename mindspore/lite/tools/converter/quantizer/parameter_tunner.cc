@@ -402,7 +402,7 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
       step = static_cast<int>(sqrt(static_cast<float>(range_end - range_start))) / kTwo;
     }
     range_start = search_param - ((search_param - range_start) / step) * step;  // align search to meet prev scale
-    if ((range_start == param.range_start) || (range_start == prev_prev_val)) {
+    if ((range_start == param.range_start) || (range_start == prev_prev_val) || (range_start == 1)) {
       range_start += step;
     }
 

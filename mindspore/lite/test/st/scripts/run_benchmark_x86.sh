@@ -260,6 +260,7 @@ models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
 models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
 models_weightquant_8bit_config=${basepath}/../config/models_weightquant_8bit.cfg
 models_weightquant_0bit_auto_tune_config=${basepath}/../config/models_weightquant_0bit_auto_tune.cfg
+models_weightquant_0bit_auto_tune_cv_config=${basepath}/../config/models_weightquant_0bit_auto_tune_cv.cfg
 models_weightquant_8bit_debug_config=${basepath}/../config/models_weightquant_8bit_debug.cfg
 models_process_only_config=${basepath}/../config/models_process_only.cfg
 
@@ -278,7 +279,8 @@ elif [[ $backend == "x86_mindir" || $backend == "x86_avx512_mindir" ]]; then
 elif [[ $backend == "x86_quant" ]]; then
   x86_cfg_file_list=("$models_posttraining_config" "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" \
                      "$models_weightquant_7bit_config" "$models_weightquant_0bit_auto_tune_config" \
-                     "$models_weightquant_8bit_debug_config" "$models_weightquant_9bit_config" "$models_process_only_config")
+                     "$models_weightquant_8bit_debug_config" "$models_weightquant_9bit_config" \
+                     "$models_process_only_config" "$models_weightquant_0bit_auto_tune_cv_config" )
 else
   x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                      "$models_posttraining_config" "$models_tflite_awaretraining_config" "$models_weightquant_0bit_config" \
