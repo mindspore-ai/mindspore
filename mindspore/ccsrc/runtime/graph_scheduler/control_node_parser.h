@@ -149,7 +149,6 @@ class ControlNodeParser {
 
   const std::vector<AnfNodePtr> &control_node_parameters() const { return control_node_parameters_; }
   const FrontToBackendNodeWithContext &front_to_backend_parameters() const { return front_to_backend_parameters_; }
-  const HostParameterToWeight &host_parameter_to_weights() const { return host_parameter_to_weights_; }
   const NodeWithDeviceContext &front_value_nodes() const { return front_value_nodes_; }
 
   // Fetch all funcgraphs that the call node may call.
@@ -220,17 +219,11 @@ class ControlNodeParser {
   void ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &control_nodes);
 
   // Get the relationship between the front and backend of the executable kernel in all kernel graphs.
-  void FetchFrontToBackendKernel(const std::vector<KernelGraphPtr> &graphs,
+  void ParseFrontToBackendKernel(const std::vector<KernelGraphPtr> &graphs,
                                  const std::vector<DeviceContext *> &device_contexts);
   void ParseFrontNodeToKernelGraph(const std::vector<KernelGraphPtr> &graphs);
   // nodes and call nodes of the root funcgraph.
   void ParseControlNodeParameter(const std::vector<AnfNodePtr> &control_nodes);
-  // Get all the front weight parameters related to the weight in the host parameter.
-  void FetchHostParameterToWeight();
-  // Get the dependency between kernel and call node in auto monad.
-  void FetchAutoMonadNode(const std::vector<AnfNodePtr> &control_nodes);
-  // Fetch the formal parameter in root graph by parameters in subgraph.
-  AnfNodePtr FetchRootGraphFrontNodeBySubFrontNode(const AnfNodePtr &sub_front_node);
   // Get the control nodes and kernel graphs which need to add a stack actor for them.
   // When a control node or kernel graph has input that is a call node, you need to add a stack actor for it.
   void ParseNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes);
@@ -275,10 +268,6 @@ class ControlNodeParser {
   // stack to d.
   mindspore::HashMap<AnfNodePtr, size_t> node_to_level_;
   CallNodeToFuncGraph call_node_to_func_graphs_;
-  // host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
-  // When initializing the weights, all related weights need to be recorded as the same device tensor.
-  HostParameterToWeight host_parameter_to_weights_;
-  mindspore::HashMap<AnfNodePtr, AnfNodePtr> sub_front_node_to_root_front_node_;
   // The front value node saves all value nodes that are not in the kernel graph. These nodes are generally the
   // input of the control node.
   NodeWithDeviceContext front_value_nodes_;
@@ -290,8 +279,6 @@ class ControlNodeParser {
   // is created for kernel graph which has a call input.
   std::set<KernelGraph *> call_input_kernel_graphs_;
   std::set<KernelGraphGroupInfoPtr> kernel_graph_group_infos_;
-  // The dependency between kernel and call node in auto monad.
-  mindspore::HashMap<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
   // Control nodes without a control node input in the topological sorting of funcgraph.
   mindspore::HashMap<FuncGraphPtr, std::set<AnfNodePtr>> func_graph_to_first_control_nodes_;
   // Kernel graphs need to link a control arrow to its entrance actor.

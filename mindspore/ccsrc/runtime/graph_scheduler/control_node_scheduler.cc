@@ -191,6 +191,10 @@ std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCo
       const auto &switch_actor =
         std::make_shared<SwitchActor>(actor_name, memory_manager_aid_, parameters, control_node);
       (void)switch_actors.emplace_back(switch_actor);
+      for (const auto &parameter : parameters) {
+        MS_LOG(DEBUG) << "Print formal parameter for actor:" << actor_name
+                      << " parameter:" << parameter.first->DebugString() << " index:" << parameter.second;
+      }
       InsertActor(switch_actor.get());
     }
   }
@@ -243,6 +247,10 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
       const auto &gather_actor =
         std::make_shared<GatherActor>(actor_name, memory_manager_aid_, parameters, control_node);
       (void)gather_actors.emplace_back(gather_actor);
+      for (const auto &parameter : parameters) {
+        MS_LOG(DEBUG) << "Print formal parameter for actor:" << actor_name
+                      << " parameter:" << parameter.first->DebugString() << " index:" << parameter.second;
+      }
       InsertActor(gather_actor.get());
 
       // The gather actor corresponding to a call node needs to set the branch id.
@@ -299,6 +307,10 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
       if (iter != func_graph_to_call_nodes.end()) {
         call_nodes = iter->second;
       }
+      for (const auto &formal_parameter : formal_parameters) {
+        MS_LOG(DEBUG) << "Print formal parameter for actor:" << actor_name
+                      << " parameter:" << formal_parameter.first->DebugString() << " index:" << formal_parameter.second;
+      }
       const auto &entrance_actor =
         std::make_shared<EntranceActor>(actor_name, memory_manager_aid_, formal_parameters, call_nodes, control_node);
       auto context_iter = parser->func_graph_to_device_contexts_.find(func_graph);
@@ -337,6 +349,10 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
       const auto &actor_name = func_graph->ToString() + kExitActorNameSuffix;
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &exit_actor = std::make_shared<ExitActor>(actor_name, memory_manager_aid_, parameters, control_node);
+      for (const auto &parameter : parameters) {
+        MS_LOG(DEBUG) << "Print formal parameter for actor:" << actor_name
+                      << " parameter:" << parameter.first->DebugString() << " index:" << parameter.second;
+      }
       auto context_iter = parser->control_node_to_device_contexts_.find(control_node);
       if (context_iter == parser->control_node_to_device_contexts_.end() ||
           context_iter->second.size() != parameters.size()) {
@@ -416,9 +432,13 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
       if (iter->second == kernel_graph_group_info->level_ && (!parser->IsRootGraphPersistentDeviceTensor(from_node))) {
         (void)formal_parameters.emplace_back(node_with_context.first);
         (void)device_contexts.emplace_back(node_with_context.second);
+        MS_LOG(DEBUG) << "Add normal parameter for actor:" << actor_name << " node:" << from_node->DebugString()
+                      << " index:" << node_with_context.first.second;
       } else {
         (void)formal_parameters.insert(formal_parameters.begin(), node_with_context.first);
         (void)device_contexts.insert(device_contexts.begin(), node_with_context.second);
+        MS_LOG(DEBUG) << "Add stack parameter for actor:" << actor_name << " node:" << from_node->DebugString()
+                      << " index:" << node_with_context.first.second;
         input_parameter_data_num++;
       }
     }
@@ -441,6 +461,7 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
 
   for (const auto &need_stack_control_node : parser->need_stack_control_nodes_) {
     MS_EXCEPTION_IF_NULL(need_stack_control_node);
+    MS_LOG(DEBUG) << "Build stack actor for control node:" << need_stack_control_node->DebugString();
 
     const auto &stack_actor_name = GetActorName(need_stack_control_node) + kStackActorNameSuffix;
     std::vector<KernelWithIndex> formal_parameters;
@@ -494,9 +515,13 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
       }
 
       if (control_node_level == iter->second && (!parser->IsRootGraphPersistentDeviceTensor(parameter.first))) {
+        MS_LOG(DEBUG) << "Add normal parameter:" << parameter.first->DebugString()
+                      << " for stack actor:" << stack_actor_name;
         (void)formal_parameters.emplace_back(parameter);
         (void)device_contexts.emplace_back(device_context);
       } else {
+        MS_LOG(DEBUG) << "Add stack parameter:" << parameter.first->DebugString()
+                      << " for stack actor:" << stack_actor_name;
         (void)formal_parameters.insert(formal_parameters.begin(), parameter);
         (void)device_contexts.insert(device_contexts.begin(), device_context);
 
@@ -703,6 +728,9 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
                                                       const KernelWithIndex &from_node_with_index,
                                                       const KernelWithIndex &to_node_with_index,
                                                       const GraphCompilerInfo &graph_compiler_info) {
+  MS_LOG(DEBUG) << "Link arrow by formal parameter, from node:" << from_node_with_index.first->DebugString()
+                << " from index:" << from_node_with_index.second << " to actor:" << to_actor->GetAID()
+                << " to index:" << to_node_with_index.second;
   const auto &from_node = from_node_with_index.first;
   MS_EXCEPTION_IF_NULL(from_node);
   if (from_node->isa<ValueNode>()) {
@@ -748,6 +776,7 @@ void ControlNodeScheduler::LinkArrowByValueNode(const AnfNodePtr &value_node, Co
   if (IsValueNode<FuncGraph>(value_node)) {
     // Link local partial.
     const auto &func_graph = GetValueNode<FuncGraphPtr>(value_node);
+    MS_LOG(DEBUG) << "Add local partial, graph:" << func_graph->ToString() << " for actor:" << to_actor->GetAID();
     to_actor->local_partials_[to_index] = std::make_shared<OpPartial>();
     *(to_actor->local_partials_[to_index]) = {func_graph.get(), {}, {}};
   } else {
@@ -767,6 +796,8 @@ void ControlNodeScheduler::LinkArrowByValueNode(const AnfNodePtr &value_node, Co
     }
     to_actor->local_device_tensors_[to_index] = AnfAlgo::GetMutableOutputAddr(value_node, from_index, false).get();
     to_actor->local_device_tensors_[to_index]->SetNodeIndex(value_node, from_index);
+    MS_LOG(DEBUG) << "Add local device tensor:" << to_actor->local_device_tensors_[to_index] << " index:" << to_index
+                  << " for actor:" << to_actor->GetAID() << " from index:" << from_index;
   }
 }
 
@@ -775,6 +806,8 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
                                                 const KernelWithIndex &to_node_with_index,
                                                 const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(parser);
+  MS_LOG(DEBUG) << "Link arrow by parameter:" << parameter->DebugString() << " indx:" << from_node_with_index.second
+                << " for actor:" << to_actor->GetAID();
   if (parser->IsRootGraphPersistentDeviceTensor(parameter)) {
     (void)to_actor->device_tensor_store_keys_.emplace_back(to_node_with_index.second, parameter);
     return;
@@ -841,10 +874,13 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
         LinkDataArrowForExitActor(exit_actor, to_actor, from_node_with_index.second, to_node_with_index.second,
                                   branch_id);
       }
+      MS_LOG(DEBUG) << "Link data arrow from:" << exit_actor->GetAID() << " index:" << from_node_with_index.second
+                    << " to:" << to_actor->GetAID() << " index" << to_node_with_index.second;
     }
     if (real_abstract->isa<abstract::AbstractFunction>()) {
       to_actor->input_partials_num_++;
     } else {
+      MS_LOG(DEBUG) << "Actor:" << to_actor->GetAID() << " add input num:" << to_actor->input_datas_num_;
       to_actor->input_datas_num_++;
     }
   } else {
@@ -873,6 +909,7 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
   MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
   const auto &parser = graph_compiler_info.control_node_parser_;
   const auto &graph = parser->FetchKernelGraphByFrontNode(from_node);
+  MS_LOG(DEBUG) << "Link arrow by kernel, from mode:" << from_node->DebugString() << " to actor:" << to_actor->GetAID();
   MS_EXCEPTION_IF_NULL(graph);
   const auto &group_name = parser->FetchGroupNameByKernelGraph(graph);
 
@@ -895,6 +932,7 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
   } else {
     // Link arrow from exit actor of kernel graph to exit actor of function graph.
     const auto &actor_name = parser->FetchGroupNameByKernelGraph(graph) + kExitActorNameSuffix;
+    MS_LOG(DEBUG) << "Actor name:" << actor_name << " from node:" << from_node->DebugString();
     auto actor = FetchActor(actor_name);
     MS_EXCEPTION_IF_NULL(actor);
     auto exit_actor = dynamic_cast<ExitActor *>(actor);
@@ -1144,6 +1182,8 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
 
 void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, const AnfNodePtr &from_node,
                                                        const ControlNodeParserPtr &parser) {
+  MS_LOG(DEBUG) << "Link auto monad control arrow from node:" << from_node->DebugString()
+                << " to actor:" << to_actor->GetAID();
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(from_node);
   MS_EXCEPTION_IF_NULL(parser);
@@ -1153,6 +1193,7 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
 
   for (const auto &depend_node : depend_nodes) {
     MS_EXCEPTION_IF_NULL(depend_node);
+    MS_LOG(DEBUG) << "Add depend node:" << depend_node->DebugString() << " for actor:" << to_actor->GetAID();
     auto from_actor = FetchActor(depend_node->DebugString());
     auto graph = parser->FetchKernelGraphByFrontNode(depend_node);
 
@@ -1202,9 +1243,12 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
     stack_actor->input_controls_num_--;
     stack_actor->input_stack_controls_num_++;
     for (const auto &actor : from_actors) {
+      MS_LOG(DEBUG) << "Add stack control aid:" << actor->GetAID() << " for actor:" << stack_actor->GetAID();
       (void)stack_actor->stack_control_aids_.emplace(actor->GetAID());
     }
   }
+  MS_LOG(DEBUG) << "Link auto monad control arrow from node:" << from_node->DebugString()
+                << " to actor:" << to_actor->GetAID() << " end";
 }
 
 void ControlNodeScheduler::LinkBranchIDArrowForControlActor(ControlActorSet *const control_actor_set) {
@@ -1281,7 +1325,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
                                                       const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(parser);
-
+  MS_LOG(DEBUG) << "Link data arrow by kernel graph:" << graph->ToString();
   auto from_actor = entrance_actor;
   // If there is a call node in the input of the graph, the parameter of the graph needs to be sent by the
   // corresponding stack actor, otherwise it is sent by the entrance actor.
@@ -1326,6 +1370,8 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       // If the formal parameter is a tuple type, the parameter of the kernel graph will not directly correspond
       // to the front parameter, but the node in the internal parameter.
       const auto &from_node = from_node_with_index.first;
+      MS_LOG(DEBUG) << "Graph:" << graph->ToString() << " from node:" << from_node_with_index.first->DebugString()
+                    << " index:" << from_node_with_index.second;
 
       // Fetch actor and link.
       auto type = FetchKernelTransformType(kernel, graph, {});
@@ -1423,6 +1469,9 @@ void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompile
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(parameter, 0, false);
       UpdateRefCount(device_tensor.get(), true);
       device_tensor->SetNodeIndex(parameter, 0);
+    } else {
+      MS_LOG(INFO) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
+                   << " for actor:" << to_actor->GetAID();
     }
   }
 }
@@ -1455,6 +1504,9 @@ void ControlNodeScheduler::LinkDataArrow(AbstractActor *const from_actor, Abstra
     MS_LOG(WARNING) << "Kernel actor:" << from_actor->GetAID() << " link data arrow to actor:" << to_actor->GetAID()
                     << " is not an exit actor.";
   }
+
+  MS_LOG(DEBUG) << "Link data arrow from:" << from_actor->GetAID() << " index:" << from_index
+                << " to:" << to_actor->GetAID() << " index" << to_index;
   auto data_arrow = std::make_shared<DataArrow>(from_index, to_actor->GetAID(), to_index);
   (void)from_actor->output_data_arrows_.emplace_back(data_arrow);
   (void)from_actor->output_data_nodes_.emplace_back(from_kernel);
@@ -1468,11 +1520,13 @@ void ControlNodeScheduler::LinkControlArrow(AbstractActor *const from_actor, Abs
   (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
   to_actor->input_controls_num_++;
   (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
+  MS_LOG(DEBUG) << "Link control arrow from:" << from_actor->GetAID() << " to:" << to_actor->GetAID();
 }
 
 void ControlNodeScheduler::LinkLoopBodyControlArrow(AbstractActor *from_actor, EntranceActor *to_actor) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
+  MS_LOG(DEBUG) << "Link loop body control arrow from:" << from_actor->GetAID() << " to actor:" << to_actor->GetAID();
   (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
   to_actor->loop_body_input_controls_nums_++;
   (void)to_actor->loop_body_input_control_arrow_aids_.emplace_back(from_actor->GetAID());
@@ -1483,6 +1537,8 @@ void ControlNodeScheduler::LinkDataArrowForExitActor(ExitActor *const exit_actor
   MS_EXCEPTION_IF_NULL(exit_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
 
+  MS_LOG(DEBUG) << "Link data arrow from actor:" << exit_actor->GetAID() << " from index:" << from_index
+                << " to actor:" << to_actor->GetAID() << " to index:" << to_index;
   auto data_arrow = std::make_shared<DataArrow>(from_index, to_actor->GetAID(), to_index);
   (void)exit_actor->output_branch_data_arrows_[branch_id].emplace_back(data_arrow);
   (void)to_actor->input_data_arrow_aids_.emplace_back(exit_actor->GetAID());
@@ -1492,6 +1548,8 @@ void ControlNodeScheduler::LinkPartialArrowForExitActor(ExitActor *const exit_ac
                                                         size_t from_index, size_t to_index, int branch_id) {
   MS_EXCEPTION_IF_NULL(exit_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
+  MS_LOG(DEBUG) << "Link partial arrow from actor:" << exit_actor->GetAID() << " from index:" << from_index
+                << " to actor:" << to_actor->GetAID() << " to index:" << to_index;
   auto partial_arrow = std::make_shared<DataArrow>(from_index, to_actor->GetAID(), to_index);
   (void)exit_actor->output_branch_partial_arrows_[branch_id].emplace_back(partial_arrow);
   (void)to_actor->input_partial_arrow_aids_.emplace_back(exit_actor->GetAID());
@@ -1501,6 +1559,7 @@ void ControlNodeScheduler::LinkControlArrowForExitActor(ExitActor *from_actor, A
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
 
+  MS_LOG(DEBUG) << "Link control arrow from:" << from_actor->GetAID() << " to:" << to_actor->GetAID();
   (void)from_actor->output_branch_control_arrows_[branch_id].emplace_back(to_actor->GetAID());
   to_actor->input_controls_num_++;
   (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
