@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
+import java.util.ArrayList;
 
 /**
  * Defining the general process of federated learning tasks.
@@ -490,7 +491,8 @@ public class FLLiteClient {
 
     private float calWeightUpdateNorm(Map<String, float[]> originalData, Map<String, float[]> newData) {
         float updateL2Norm = 0f;
-        for (String key : originalData.keySet()) {
+        ArrayList<String> featureList = secureProtocol.getUpdateFeatureName();
+        for (String key : featureList) {
             float[] data = originalData.get(key);
             float[] dataAfterUpdate = newData.get(key);
             for (int j = 0; j < data.length; j++) {
