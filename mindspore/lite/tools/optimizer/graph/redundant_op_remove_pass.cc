@@ -255,8 +255,8 @@ int RemoveRedundantOpPass::RemoveDropoutOp(const AnfNodePtr &anf_node, const Fun
       }
       auto get_index = CastToInt(get_index_node->value()).front();
       if (get_index > 0 && !manager->node_users()[node].empty()) {
-        MS_LOG(ERROR) << "dropout's second output is useful.";
-        return lite::RET_ERROR;
+        MS_LOG(DEBUG) << "dropout's second output is useful.";
+        continue;
       }
       manager->Replace(node, cnode->input(1));
     }
