@@ -152,7 +152,7 @@ TEST_F(TCPTest, SendOneMessage) {
   bool ret = server->Initialize(server_url);
   ASSERT_TRUE(ret);
 
-  server->SetMessageHandler([](std::unique_ptr<MessageBase> &&message) -> void { IncrDataMsgNum(1); });
+  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> void { IncrDataMsgNum(1); });
 
   // Start the tcp client.
   auto client_url = "127.0.0.1:1234";
@@ -191,7 +191,7 @@ TEST_F(TCPTest, sendTwoMessages) {
   bool ret = server->Initialize(server_url);
   ASSERT_TRUE(ret);
 
-  server->SetMessageHandler([](std::unique_ptr<MessageBase> &&message) -> void { IncrDataMsgNum(1); });
+  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> void { IncrDataMsgNum(1); });
 
   // Start the tcp client.
   auto client_url = "127.0.0.1:1234";

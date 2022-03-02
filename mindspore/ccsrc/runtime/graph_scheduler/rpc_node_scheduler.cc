@@ -130,6 +130,19 @@ void RpcNodeScheduler::SetOpcontext(OpContext<DeviceTensor> *const op_context) {
   }
 }
 
+void RpcNodeScheduler::ResetOpcontext() {
+  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
+
+  for (auto &recv_actor : rpc_actor_set_->recv_actors_) {
+    MS_EXCEPTION_IF_NULL(recv_actor);
+    recv_actor->ResetOpcontext();
+  }
+  for (auto &send_actor : rpc_actor_set_->send_actors_) {
+    MS_EXCEPTION_IF_NULL(send_actor);
+    send_actor->ResetOpcontext();
+  }
+}
+
 ActorRouteTableProxyPtr RpcNodeScheduler::CreateRouteTableProxy() {
   ActorRouteTableProxyPtr actor_route_table_proxy;
   if (!ClusterContext::instance()->IsScheduler()) {

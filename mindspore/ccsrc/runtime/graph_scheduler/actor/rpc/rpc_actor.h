@@ -56,7 +56,11 @@ class RpcActor : public KernelActor {
 
   // Normally, an actor's op_context is passed by its input actor, but rpc actors could be triggered by inter-process
   // arrows which do not contain op_context. So we need to set op_context manually.
-  void SetOpcontext(OpContext<DeviceTensor> *const op_context);
+  virtual void SetOpcontext(OpContext<DeviceTensor> *const op_context);
+
+  // Reset op context. Because op context is recreated for each each sinked loop, this method should be called after
+  // each sinked loop is done in case rpc actors visit the invalid op context.
+  virtual void ResetOpcontext() {}
 
   // Set the actor route proxy for rpc actors.
   void SetActorRouteRableProxy(const ActorRouteTableProxyPtr &proxy);
@@ -69,7 +73,7 @@ class RpcActor : public KernelActor {
                             const std::string &dst_node_name) {}
 
  protected:
-  // The op context to run rpc actor inter-process op.
+  // The op context to run rpc actor inter-process op. Set by method 'SetOpcontext'.
   OpContext<DeviceTensor> *op_context_;
 
   // The inter-process edge name. It is also used as the actor id for route. It's a string consists of source node name

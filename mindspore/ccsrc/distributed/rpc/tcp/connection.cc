@@ -253,12 +253,12 @@ int Connection::ReceiveMessage() {
     return 0;
   }
 
-  std::unique_ptr<MessageBase> msg(recv_message);
+  std::shared_ptr<MessageBase> msg(recv_message);
   recv_message = nullptr;
 
   // Call msg handler if set
   if (message_handler) {
-    message_handler(std::move(msg));
+    message_handler(msg);
   } else {
     MS_LOG(INFO) << "Message handler was not found";
   }
