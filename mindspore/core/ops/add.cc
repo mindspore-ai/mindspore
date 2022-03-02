@@ -39,6 +39,9 @@ AbstractBasePtr AddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
   auto output_type = CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim_name);
+  if (output_shape->IsDimZero()) {
+    output_type = input_args[0]->BuildType();
+  }
   return abstract::MakeAbstract(output_shape, output_type);
 }
 REGISTER_PRIMITIVE_C(kNameAdd, Add);
