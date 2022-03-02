@@ -110,10 +110,11 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *c
     for (size_t i = 1; i < inputs.size(); ++i) {
       const auto &tnode = inputs[i];
       auto tensor = GetValueNode<tensor::TensorPtr>(tnode);
-      if (tensor == nullptr || tensor->DataSize() == 1) {
-        continue;
+      if (tensor == nullptr) continue;
+      // data is nullptr means uninitialized.
+      if (tensor->data().const_data() == nullptr || tensor->DataSize() > 1) {
+        (void)value_nodes.insert(tnode);
       }
-      (void)value_nodes.insert(tnode);
     }
   }
   if (value_nodes.empty()) return false;
