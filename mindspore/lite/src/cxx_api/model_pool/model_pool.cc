@@ -42,7 +42,7 @@ int GetCoreNum() {
 }  // namespace
 
 Status ModelPool::SetNumaBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num) {
-  if (UNLIKELY(thread_num == 0)) {
+  if (MS_UNLIKELY(thread_num == 0)) {
     MS_LOG(ERROR) << "thread num is zero.";
     return kLiteError;
   }

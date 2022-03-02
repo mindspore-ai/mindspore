@@ -27,7 +27,8 @@
 namespace mindspore::lite {
 int MindrtExecutor::PrepareGraphInput(const std::vector<kernel::LiteKernel *> &kernels,
                                       const std::vector<Tensor *> &inputs) {
-  for (size_t j = 0; j < kernels.size(); ++j) {
+  auto kernels_size = kernels.size();
+  for (size_t j = 0; j < kernels_size; ++j) {
     auto in_tensor_size = kernels[j]->in_tensors().size();
     for (size_t k = 0; k < in_tensor_size; ++k) {
       auto tensor = kernels[j]->in_tensors()[k];
@@ -52,7 +53,8 @@ int MindrtExecutor::PrepareGraphInput(const std::vector<kernel::LiteKernel *> &k
 
 int MindrtExecutor::PrepareGraphOutput(const std::vector<kernel::LiteKernel *> &kernels,
                                        const std::vector<Tensor *> &outputs) {
-  for (size_t i = 0; i < outputs.size(); ++i) {
+  auto outputs_size = outputs.size();
+  for (size_t i = 0; i < outputs_size; ++i) {
     Tensor *graph_output_tensor = outputs[i];
     if (graph_output_tensor->IsGraphInput()) {
       continue;
@@ -66,8 +68,8 @@ int MindrtExecutor::PrepareGraphOutput(const std::vector<kernel::LiteKernel *> &
       });
     MS_ASSERT(current_output_map != isolate_output_map_->end());
     Tensor *subgraph_output_tensor = current_output_map->first;
-
-    for (size_t j = 0; j < kernels.size(); ++j) {
+    auto kernels_size = kernels.size();
+    for (size_t j = 0; j < kernels_size; ++j) {
       auto out_tensor_size = kernels[j]->out_tensors().size();
       for (size_t k = 0; k < out_tensor_size; ++k) {
         if (subgraph_output_tensor != kernels[j]->out_tensors()[k]) {

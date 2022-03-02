@@ -16,12 +16,17 @@
 
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_NUMA_ADAPTER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_NUMA_ADAPTER_H_
-#include <numa.h>
+#include <cstdint>
 #include <cstddef>
 #include <vector>
 
 namespace mindspore {
 namespace numa {
+struct bitmask {
+  uint64_t size;
+  uint64_t *maskp;
+};
+
 struct NUMAInterface {
   int (*numa_available)(void);
   int (*numa_num_configured_nodes)(void);
@@ -49,7 +54,7 @@ class NUMAAdapter {
     return &instance;
   }
 
-  virtual ~NUMAAdapter();
+  ~NUMAAdapter();
   inline bool Available() const { return available_; }
   void Bind(int node_id);
   void *Malloc(int node_id, size_t size);

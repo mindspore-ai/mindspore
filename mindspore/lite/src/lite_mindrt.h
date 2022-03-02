@@ -52,7 +52,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   }
   void RunOpData(OpData<lite::Tensor> *input_data, OpContext<lite::Tensor> *context = nullptr) override;
   virtual int CompileArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
-  int RunKernel(const KernelCallBack &before, const KernelCallBack &after) {
+  int RunKernel(KernelCallBack before, KernelCallBack after) {
     auto ret = kernel_->Execute(before, after);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel_->name();

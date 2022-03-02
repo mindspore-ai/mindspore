@@ -41,12 +41,11 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
 
   auto ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
                        *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
+  input_op_datas_.erase(op_uuid);
   if (ret != RET_OK) {
-    input_op_datas_.erase(op_uuid);
     context->SetFailed(ret);
     return;
   }
-  input_op_datas_.erase(op_uuid);
   AsyncOutput(context);
   SetOutputData(context);
   return;
@@ -117,7 +116,8 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
     }
 
     TypeId new_data_type = GetSubgraphInTensorDataType(kernel_, old_tensor);
-    Tensor *new_tensor = new Tensor(new_data_type, old_tensor->shape(), old_tensor->format(), old_tensor->category());
+    Tensor *new_tensor =
+      new (std::nothrow) Tensor(new_data_type, old_tensor->shape(), old_tensor->format(), old_tensor->category());
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "new Tensor failed.";
       return RET_NULL_PTR;
@@ -394,6 +394,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
     MS_LOG(ERROR) << "thread pool is nullptr";
     return actors;
   }
+  actors.reserve(kernels.size());
   for (auto &kernel : kernels) {
     /* make subgraph name (actor name) unique */
     kernel->set_name(kernel->name() + "_" + to_string(actor_count++));
