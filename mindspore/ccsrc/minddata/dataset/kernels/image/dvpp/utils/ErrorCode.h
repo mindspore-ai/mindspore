@@ -77,7 +77,7 @@ enum {
   APP_ERR_COMM_OPEN_FAIL = APP_ERR_COMM_BASE + 19,           // Device, file or resource open failed
   APP_ERR_COMM_READ_FAIL = APP_ERR_COMM_BASE + 20,           // Device, file or resource read failed
   APP_ERR_COMM_WRITE_FAIL = APP_ERR_COMM_BASE + 21,          // Device, file or resource write failed
-  APP_ERR_COMM_DESTORY_FAIL = APP_ERR_COMM_BASE + 22,        // Device, file or resource destory failed
+  APP_ERR_COMM_DESTORY_FAIL = APP_ERR_COMM_BASE + 22,        // Device, file or resource destroy failed
   APP_ERR_COMM_EXIT = APP_ERR_COMM_BASE + 23,                // End of data stream, stop the application
   APP_ERR_COMM_CONNECTION_CLOSE = APP_ERR_COMM_BASE + 24,    // Out of connection, Communication shutdown
   APP_ERR_COMM_CONNECTION_FAILURE = APP_ERR_COMM_BASE + 25,  // connection fail
@@ -89,8 +89,8 @@ enum {
   APP_ERR_DVPP_CROP_FAIL = APP_ERR_DVPP_BASE + 1,            // DVPP: crop fail
   APP_ERR_DVPP_RESIZE_FAIL = APP_ERR_DVPP_BASE + 2,          // DVPP: resize fail
   APP_ERR_DVPP_CROP_RESIZE_FAIL = APP_ERR_DVPP_BASE + 3,     // DVPP: corp and resize fail
-  APP_ERR_DVPP_CONVERT_FROMAT_FAIL = APP_ERR_DVPP_BASE + 4,  // DVPP: convert image fromat fail
-  APP_ERR_DVPP_VPC_FAIL = APP_ERR_DVPP_BASE + 5,             // DVPP: VPC(crop, resize, convert fromat) fail
+  APP_ERR_DVPP_CONVERT_FROMAT_FAIL = APP_ERR_DVPP_BASE + 4,  // DVPP: convert image format fail
+  APP_ERR_DVPP_VPC_FAIL = APP_ERR_DVPP_BASE + 5,             // DVPP: VPC(crop, resize, convert format) fail
   APP_ERR_DVPP_JPEG_DECODE_FAIL = APP_ERR_DVPP_BASE + 6,     // DVPP: decode jpeg or jpg fail
   APP_ERR_DVPP_JPEG_ENCODE_FAIL = APP_ERR_DVPP_BASE + 7,     // DVPP: encode jpeg or jpg fail
   APP_ERR_DVPP_PNG_DECODE_FAIL = APP_ERR_DVPP_BASE + 8,      // DVPP: encode png fail
@@ -128,7 +128,7 @@ enum {
   // define the error code of blocking queue
   APP_ERR_QUEUE_BASE = 5000,
   APP_ERR_QUEUE_EMPTY = APP_ERR_QUEUE_BASE + 1,   // Queue: empty queue
-  APP_ERR_QUEUE_STOPED = APP_ERR_QUEUE_BASE + 2,  // Queue: queue stoped
+  APP_ERR_QUEUE_STOPED = APP_ERR_QUEUE_BASE + 2,  // Queue: queue stopped
   APP_ERROR_QUEUE_FULL = APP_ERR_QUEUE_BASE + 3,  // Queue: full queue
 
   // define the idrecognition web error code
@@ -235,7 +235,7 @@ const std::string APP_ERR_INFER_LOG_STRING[] = {
 const std::string APP_ERR_QUEUE_LOG_STRING[] = {
   [0] = "Placeholder",
   [1] = "empty queue",
-  [2] = "queue stoped",
+  [2] = "queue stopped",
   [3] = "full queue",
 };
 

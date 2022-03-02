@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace dataset {
-inline dataset::DataType MSTypeToDEType(TypeId data_type) {
+inline dataset::DataType MSTypeToDEType(const TypeId data_type) {
   switch (data_type) {
     case kNumberTypeBool:
       return dataset::DataType(dataset::DataType::DE_BOOL);

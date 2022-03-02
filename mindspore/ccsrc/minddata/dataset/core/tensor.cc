@@ -513,7 +513,7 @@ Status Tensor::GetItemPtr(T **ptr, const std::vector<dsize_t> &index) const {
     dsize_t flat_idx;
     RETURN_IF_NOT_OK(shape_.ToFlatIndex(index, &flat_idx));
     *ptr = reinterpret_cast<T *>(data_ + flat_idx * type_.SizeInBytes());
-    RETURN_UNEXPECTED_IF_NULL(ptr);
+    RETURN_UNEXPECTED_IF_NULL(*ptr);
 
     return Status::OK();
   } else {
@@ -650,7 +650,6 @@ Status Tensor::GetBufferInfo(Tensor *t, py::buffer_info *out) {
                          t->Rank(),               /* Number of dimensions */
                          t->shape().AsVector(),   /* Buffer dimensions */
                          t->Strides());
-  RETURN_UNEXPECTED_IF_NULL(out);
   return Status::OK();
 }
 #endif
@@ -857,7 +856,6 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   (void)std::transform(strides.begin(), strides.end(), strides.begin(),
                        [&max_value](const auto &s) { return s * max_value; });
   *data = py::array(py::dtype("S" + std::to_string(max_value)), shape_.AsVector(), strides, tmp_data);
-  RETURN_UNEXPECTED_IF_NULL(data);
   data_allocator_->deallocate(reinterpret_cast<uchar *>(tmp_data));
   return Status::OK();
 }

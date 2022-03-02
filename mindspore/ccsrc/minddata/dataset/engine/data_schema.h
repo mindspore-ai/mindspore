@@ -157,7 +157,7 @@ class DataSchema {
 
   /// \brief getter
   /// \return The number of columns in the schema
-  int32_t NumColumns() const { return col_descs_.size(); }
+  size_t NumColumns() const { return col_descs_.size(); }
 
   bool Empty() const { return NumColumns() == 0; }
 

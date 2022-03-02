@@ -804,13 +804,13 @@ inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::strin
       return (*out)->Reshape(shape);
     }
   }
-  auto length_sum = [](dsize_t sum, const std::string &s) { return s.length() + sum; };
+  auto length_sum = [](size_t sum, const std::string &s) { return s.length() + sum; };
   dsize_t total_length = std::accumulate(items.begin(), items.end(), 0, length_sum);
 
   // total bytes needed = offset array + strings
   // offset array needs to store one offset var per element + 1 extra to get the length of the last string.
   // strings will be null-terminated --> need 1 extra byte per element
-  dsize_t num_bytes = (kOffsetSize + 1) * (*out)->shape_.NumOfElements() + kOffsetSize + total_length;
+  size_t num_bytes = (kOffsetSize + 1) * (*out)->shape_.NumOfElements() + kOffsetSize + total_length;
 
   RETURN_IF_NOT_OK((*out)->AllocateBuffer(num_bytes));
   auto offset_arr = reinterpret_cast<offset_t *>((*out)->data_);

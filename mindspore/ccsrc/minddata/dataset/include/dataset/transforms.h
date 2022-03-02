@@ -112,7 +112,7 @@ class MS_API SliceOption {
   explicit SliceOption(const std::vector<dsize_t> &indices) : indices_(indices) {}
 
   /// \param[in] slice Slice the generated indices from the slice object along the dimension.
-  explicit SliceOption(Slice slice) : slice_(slice) {}
+  explicit SliceOption(const Slice &slice) : slice_(slice) {}
 
   SliceOption(SliceOption const &slice) = default;
 

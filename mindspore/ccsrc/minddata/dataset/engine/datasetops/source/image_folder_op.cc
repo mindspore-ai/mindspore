@@ -251,6 +251,7 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
   }
   std::queue<std::string> folder_paths;
   std::shared_ptr<Path::DirIterator> dir_itr = Path::DirIterator::OpenDirectory(&dir);
+  RETURN_UNEXPECTED_IF_NULL(dir_itr);
   std::unordered_set<std::string> folder_names;
   while (dir_itr->HasNext()) {
     Path subdir = dir_itr->Next();

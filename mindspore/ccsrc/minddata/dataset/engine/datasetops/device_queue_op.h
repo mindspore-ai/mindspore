@@ -129,7 +129,6 @@ class DeviceQueueOp : public PipelineOp {
   // Description: Print info when first batch send successful in sink_mode
   void PrintEndInfoWhenFirstBatch(bool *first_push_flag);
 
- private:
 #ifdef ENABLE_TDTQUE
   void WaitContinueSignal() const;
   Status SendDataToAscend();
