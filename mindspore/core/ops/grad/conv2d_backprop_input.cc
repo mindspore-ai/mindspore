@@ -25,9 +25,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kDoutIndex = 0;
-constexpr size_t kInputIndex = 1;
-constexpr size_t kSizeIndex = 2;
+constexpr size_t kConv2DBackpropInputDoutIndex = 0;
+constexpr size_t kConv2DBackpropInputInputIndex = 1;
+constexpr size_t kConv2DBackpropInputSizeIndex = 2;
 
 void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
                 const std::vector<int64_t> &x_size_v) {
@@ -86,7 +86,7 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   std::vector<int64_t> out_shape;
   abstract::ShapePtr ret_shape;
-  auto input_size = input_args[kSizeIndex];
+  auto input_size = input_args[kConv2DBackpropInputSizeIndex];
   auto input_size_v = input_size->BuildValue();
   MS_EXCEPTION_IF_NULL(input_size_v);
 
@@ -95,7 +95,7 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
       out_shape = CheckAndConvertUtils::CheckTensorIntValue("input x size", input_size_v, prim_name);
       ret_shape = std::make_shared<abstract::Shape>(out_shape);
     } else {
-      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kSizeIndex);
+      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kConv2DBackpropInputSizeIndex);
       MS_EXCEPTION_IF_NULL(shape_ptr);
       auto shape_shape = shape_ptr->shape();
       if (shape_shape.size() != 1) {
@@ -137,7 +137,8 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s input[x size] must be a tuple or Tensor, "
                             << "but got " << size_type->ToString();
   }
-  auto dout_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDoutIndex]->BuildShape())[kShape];
+  auto dout_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropInputDoutIndex]->BuildShape())[kShape];
 
   auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
   ShapeVector tmp_shape = {dout_shape[0], dout_shape[2], dout_shape[3], dout_shape[1]};
@@ -152,8 +153,8 @@ TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector
   // check
   std::map<std::string, TypePtr> types;
   // todo: check input_sizes
-  (void)types.emplace("x", input_args[kInputIndex]->BuildType());
-  (void)types.emplace("doutput", input_args[kDoutIndex]->BuildType());
+  (void)types.emplace("x", input_args[kConv2DBackpropInputInputIndex]->BuildType());
+  (void)types.emplace("doutput", input_args[kConv2DBackpropInputDoutIndex]->BuildType());
   std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }

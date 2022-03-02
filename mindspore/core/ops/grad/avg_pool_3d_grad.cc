@@ -23,9 +23,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t k5DInputDims = 5;
-
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t input_num = 2;
@@ -34,6 +33,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     MS_EXCEPTION_IF_NULL(item);
   }
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
+  constexpr int64_t k5DInputDims = 5;
   (void)CheckAndConvertUtils::CheckInteger("grad_rank", SizeToLong(grad_shape.size()), kEqual, k5DInputDims, op_name);
   std::vector<int64_t> origin_input_size;
   if (input_args[0]->isa<abstract::AbstractTuple>()) {  // origin_size is tuple
@@ -44,7 +44,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(origin_input_size);
 }
 
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AvgPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t input_num = 2;
@@ -60,8 +60,8 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
 
 AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
-  auto res = std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                        InferShape(primitive, input_args)->shape());
+  auto res = std::make_shared<abstract::AbstractTensor>(AvgPool3DGradInferType(primitive, input_args),
+                                                        AvgPool3DGradInferShape(primitive, input_args)->shape());
   return res;
 }
 

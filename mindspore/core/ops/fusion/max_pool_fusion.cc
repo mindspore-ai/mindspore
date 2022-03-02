@@ -51,7 +51,8 @@ ActivationType MaxPoolFusion::get_activation_type() const {
 }
 
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MaxPoolFusionInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto op_name = primitive->name();
@@ -93,7 +94,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) { return input_args[0]->BuildType(); }
+TypePtr MaxPoolFusionInferType(const std::vector<AbstractBasePtr> &input_args) { return input_args[0]->BuildType(); }
 }  // namespace
 
 AbstractBasePtr MaxPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -102,7 +103,8 @@ AbstractBasePtr MaxPoolFusionInfer(const abstract::AnalysisEnginePtr &, const Pr
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args));
+  return std::make_shared<abstract::AbstractTensor>(MaxPoolFusionInferType(input_args),
+                                                    MaxPoolFusionInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameMaxPoolFusion, MaxPoolFusion);
 }  // namespace ops

@@ -21,7 +21,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
+                                                 const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(primitive);
   const int input_num = 5;
@@ -72,7 +73,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
                                            selected_indices_max_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr NonMaxSuppressionV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(prim);
   const int input_num = 5;
@@ -107,7 +108,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr NonMaxSuppressionV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(NonMaxSuppressionV3InferShape(primitive, input_args),
+                                NonMaxSuppressionV3InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(NonMaxSuppressionV3, prim::kPrimNonMaxSuppressionV3, NonMaxSuppressionV3Infer, nullptr,
                              true);

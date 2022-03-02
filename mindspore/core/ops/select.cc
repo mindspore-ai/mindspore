@@ -21,9 +21,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr auto kCondIndex = 0;
-constexpr auto kXIndex = 1;
-constexpr auto kYIndex = 2;
+constexpr auto kSelectCondIndex = 0;
+constexpr auto kSelectXIndex = 1;
+constexpr auto kSelectYIndex = 2;
 template <typename T>
 void SelectImpl(const bool *conds, void *x, void *y, void *result, size_t size) {
   MS_EXCEPTION_IF_NULL(x);
@@ -43,9 +43,9 @@ void SelectImpl(const bool *conds, void *x, void *y, void *result, size_t size) 
 }
 abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kCondIndex]->BuildShape());
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kXIndex]->BuildShape());
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kYIndex]->BuildShape());
+  auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->BuildShape());
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->BuildShape());
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->BuildShape());
   bool error_flag = false;
   if (x_shape[kShape] != cond_shape[kShape] || x_shape[kShape] != y_shape[kShape]) {
     error_flag = true;
@@ -59,9 +59,9 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std
     }
   }
   if (error_flag) {
-    MS_LOG(ERROR) << " cond shape :" << input_args[kCondIndex]->BuildShape()->ToString();
-    MS_LOG(ERROR) << " x shape :" << input_args[kXIndex]->BuildShape()->ToString();
-    MS_LOG(ERROR) << " y shape :" << input_args[kYIndex]->BuildShape()->ToString();
+    MS_LOG(ERROR) << " cond shape :" << input_args[kSelectCondIndex]->BuildShape()->ToString();
+    MS_LOG(ERROR) << " x shape :" << input_args[kSelectXIndex]->BuildShape()->ToString();
+    MS_LOG(ERROR) << " y shape :" << input_args[kSelectYIndex]->BuildShape()->ToString();
     MS_EXCEPTION(ValueError) << "The shape of cond, x and y should be equal";
   }
   return input_args[1]->BuildShape();
@@ -69,9 +69,9 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std
 
 TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto x_type = input_args[kXIndex]->BuildType();
-  auto y_type = input_args[kYIndex]->BuildType();
-  auto cond_type = input_args[kCondIndex]->BuildType();
+  auto x_type = input_args[kSelectXIndex]->BuildType();
+  auto y_type = input_args[kSelectYIndex]->BuildType();
+  auto cond_type = input_args[kSelectCondIndex]->BuildType();
   (void)CheckAndConvertUtils::CheckSubClass("x_type", x_type, {kTensorType}, prim_name);
   (void)CheckAndConvertUtils::CheckSubClass("y_type", y_type, {kTensorType}, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("cond", cond_type, {kBool}, prim_name);
@@ -166,9 +166,9 @@ void SelectInnerInferValue(const tensor::TensorPtr &cond_tensor, const tensor::T
 ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   (void)SelectInferType(prim, input_args);
   auto result_shape = SelectInferShape(prim, input_args)->cast<abstract::ShapePtr>();
-  auto cond_value = input_args[kCondIndex]->BuildValue();
-  auto x = input_args[kXIndex]->BuildValue();
-  auto y = input_args[kYIndex]->BuildValue();
+  auto cond_value = input_args[kSelectCondIndex]->BuildValue();
+  auto x = input_args[kSelectXIndex]->BuildValue();
+  auto y = input_args[kSelectYIndex]->BuildValue();
   if (x == nullptr || y == nullptr || cond_value == nullptr || result_shape->IsDynamic()) {
     return nullptr;
   }

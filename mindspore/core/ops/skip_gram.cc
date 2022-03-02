@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr SkipGramInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   if (input_args.size() != 1) {
     MS_LOG(ERROR) << "Skip Gram should have one input";
@@ -34,7 +34,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(in_shape);
 }
 
-TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
+TypePtr SkipGramInferType(const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = input_args[0]->BuildType();
   return infer_type;
 }
@@ -65,7 +65,8 @@ void SkipGram::Init(const bool include_all_grams, const int64_t max_skip_size, c
 
 AbstractBasePtr SkipGramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(SkipGramInferType(input_args),
+                                                    SkipGramInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameSkipGram, SkipGram);
 }  // namespace ops
