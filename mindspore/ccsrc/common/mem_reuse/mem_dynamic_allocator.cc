@@ -16,7 +16,6 @@
 
 #include "common/mem_reuse/mem_dynamic_allocator.h"
 #include <string>
-#include "utils/ms_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
@@ -29,6 +28,13 @@ constexpr size_t kGBToByte = 1024 << 20;
 // The smallest memory request size, if it is smaller than this size, the device memory request may fail
 // Set experience value to 10M
 const size_t kMinimumAllocMem = 10 << 20;
+
+thread_local AllocatorDebugInfo DynamicMemAllocatorDebugInfo::debug_info_;
+
+static const std::map<DynamicMemBufStatus, std::string> kBufStatusString = {
+  {kMemBufIdle, "idle"},
+  {kMemBufUsed, "used"},
+};
 
 DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
   persistent_mem_->clear();
@@ -43,8 +49,11 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   if (!device_addr) {
     device_addr = AddMemBlockAndMemBuf(align_size, from_persistent_mem);
   }
+
+  // Alloc memory failed and dump the info.
   if (!device_addr) {
-    DumpDynamicMemPoolInfo();
+    DumpDynamicMemPoolDebugInfo();
+    DumpDynamicMemPoolStateInfo();
   }
   return device_addr;
 }
@@ -79,7 +88,9 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(size_t
   DynamicMemBufPtr continuous_mem_buf;
   auto buf_addr = device_addr;
   for (size_t i : size_list) {
-    continuous_mem_buf = std::make_shared<DynamicMemBuf>(buf_addr, kMemBufUsed, i);
+    continuous_mem_buf =
+      std::make_shared<DynamicMemBuf>(buf_addr, kMemBufUsed, i, DynamicMemAllocatorDebugInfo::GetDebugInfo().name_);
+    MS_EXCEPTION_IF_NULL(continuous_mem_buf);
     (void)mem_block->block_all_mem_buf_map_.emplace(buf_addr, continuous_mem_buf);
     device_addr_list.emplace_back(buf_addr);
     buf_addr = AddressOffset(buf_addr, i);
@@ -111,6 +122,7 @@ DeviceMemPtr DynamicMemPoolBestFit::FindIdleMemBuf(size_t size, bool from_persis
                         << "] mem_buf_address[" << mem_buf->device_addr_ << "].";
     }
     mem_buf->status_ = kMemBufUsed;
+    mem_buf->allocator_name_ = DynamicMemAllocatorDebugInfo::GetDebugInfo().name_;
     // Remove map of old idle memory buf
     (void)mem_mng->idle_mem_buf_map_.erase(iter);
     // Divide memory buf
@@ -200,7 +212,8 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
     std::upper_bound(mem_mng->mem_block_list_.begin(), mem_mng->mem_block_list_.end(), device_addr, CmpMemBlock);
   (void)mem_mng->mem_block_list_.insert(iter, mem_block);
   // Add new memory buf
-  auto mem_buf = std::make_shared<DynamicMemBuf>(device_addr, kMemBufUsed, real_alloc_size);
+  auto mem_buf = std::make_shared<DynamicMemBuf>(device_addr, kMemBufUsed, real_alloc_size,
+                                                 DynamicMemAllocatorDebugInfo::GetDebugInfo().name_);
   MS_EXCEPTION_IF_NULL(mem_buf);
   // Add map of new memory buf in the block
   (void)mem_block->block_all_mem_buf_map_.emplace(device_addr, mem_buf);
@@ -395,7 +408,7 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
   fn(persistent_mem_);
 }
 
-void DynamicMemPoolBestFit::DumpDynamicMemPoolInfo() {
+void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
   auto fn = [](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
     if (mem_mng->mem_block_list_.empty()) {
       return;
@@ -409,17 +422,73 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolInfo() {
           idle_size += mb->second->size_;
         }
       }
-      buf << ", block[" << i << "] idle size " << idle_size;
+      buf << ", block[" << i << "] block size:" << mem_mng->mem_block_list_[i]->mem_block_size_
+          << " idle size:" << idle_size;
     }
     // Dump all the memory buf info
-    MS_LOG(WARNING) << mem_type << "pool info: block size " << mem_mng->unit_size_ << ", block counts "
+    MS_LOG(WARNING) << mem_type << " pool info: block size " << mem_mng->unit_size_ << ", block counts "
                     << mem_mng->mem_block_list_.size() << buf.str() << ". Total allocated mem "
                     << mem_mng->mps_.total_mem_size_ << ", peak used mem " << mem_mng->mps_.used_mem_peak_size_
                     << ", in used mem " << mem_mng->mps_.total_used_mem_size_ << ", total idle mem "
                     << mem_mng->mps_.total_mem_size_ - mem_mng->mps_.total_used_mem_size_;
   };
+
   fn(common_mem_, std::string(kCommonMem));
   fn(persistent_mem_, std::string(kPersistentParamMem));
+}
+
+void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
+  auto fn = [](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
+    size_t total_mem = 0;
+    size_t total_used_mem = 0;
+    size_t total_idle_mem1 = 0;
+    size_t total_idle_mem2 = 0;
+    // Dump the memory block info and memory buf info.
+    MS_LOG(INFO) << mem_type << " all mem_block info: counts[" << mem_mng->mem_block_list_.size() << "].";
+    for (auto iter = mem_mng->mem_block_list_.begin(); iter != mem_mng->mem_block_list_.end(); ++iter) {
+      total_mem += (*iter)->size();
+      auto mem_buf_map = (*iter)->block_all_mem_buf_map_;
+      MS_LOG(INFO) << " MemBlock info: number[" << iter - mem_mng->mem_block_list_.begin() << "] mem_buf_counts["
+                   << mem_buf_map.size() << "] base_address[" << (*iter)->device_addr() << "] block_size["
+                   << (*iter)->size() << "].";
+      for (auto iter_mem_buf = mem_buf_map.begin(); iter_mem_buf != mem_buf_map.end(); ++iter_mem_buf) {
+        auto mem_buf = iter_mem_buf->second;
+        MS_EXCEPTION_IF_NULL(mem_buf);
+        if (mem_buf->status_ == kMemBufIdle) {
+          total_idle_mem1 += mem_buf->size_;
+        } else {
+          total_used_mem += mem_buf->size_;
+        }
+        auto user_name = (mem_buf->status_ == kMemBufUsed) ? ("] name[" + mem_buf->allocator_name_ + "].") : "].";
+        MS_LOG(INFO) << "  MemBuf info: address[" << mem_buf->device_addr_ << "] size[" << mem_buf->size_ << "] status["
+                     << kBufStatusString.at(mem_buf->status_) << user_name;
+      }
+    }
+    // Dump all the idle memory buf info.
+    MS_LOG(INFO) << mem_type << " all idle mem_buf info: counts[" << mem_mng->idle_mem_buf_map_.size() << "].";
+    for (auto iter_idle = mem_mng->idle_mem_buf_map_.begin(); iter_idle != mem_mng->idle_mem_buf_map_.end();
+         ++iter_idle) {
+      auto mem_buf = iter_idle->second;
+      MS_EXCEPTION_IF_NULL(mem_buf);
+      total_idle_mem2 += mem_buf->size_;
+      MS_LOG(INFO) << " Idle mem_buf info: size[" << mem_buf->size_ << "] address[" << mem_buf->device_addr_
+                   << "] status[" << kBufStatusString.at(mem_buf->status_) << "].";
+    }
+    // Dump the memory statistical info.
+    MS_LOG(INFO) << mem_type << " total allocated memory[" << total_mem << "], used memory[" << total_used_mem
+                 << "], idle memory[" << total_idle_mem1 << "].";
+    if (total_idle_mem1 != total_idle_mem2) {
+      MS_LOG(ERROR) << "Check error: the idle memory in the mem_block is not equal the global idle memory.";
+    }
+    if (total_mem != total_used_mem + total_idle_mem1) {
+      MS_LOG(ERROR) << "Check error: the the total memory is not equal the sum of used memory and idle memory.";
+    }
+  };
+
+  MS_LOG(INFO) << "Start dump dynamic memory pool debug info.";
+  fn(common_mem_, std::string(kCommonMem));
+  fn(persistent_mem_, std::string(kPersistentParamMem));
+  MS_LOG(INFO) << "Finish dump dynamic memory pool debug info.";
 }
 }  // namespace device
 }  // namespace mindspore

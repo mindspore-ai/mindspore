@@ -24,6 +24,8 @@
 #include <utility>
 #include <thread>
 #include <mutex>
+#include <string>
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -43,13 +45,42 @@ struct DeviceAddrCmp {
   bool operator()(const DeviceMemPtr &addr1, const DeviceMemPtr &addr2) const { return addr1 < addr2; }
 };
 
+// Recording information for debugging the memory allocator.
+struct AllocatorDebugInfo {
+  std::string name_{"Unknown"};
+  int input_index_{-1};
+  int output_index_{-1};
+};
+
+// The AllocatorDebugInfo warpper which is the local thread for the dynamic memory pool.
+class DynamicMemAllocatorDebugInfo {
+ public:
+  static AllocatorDebugInfo &GetDebugInfo() noexcept { return debug_info_; }
+
+  // Set the debug info when memory alloc.
+  static void SetDebugInfo(const std::string &name, int input_index = -1, int output_index = -1) {
+    debug_info_.name_ = name;
+    debug_info_.input_index_ = input_index;
+    debug_info_.output_index_ = output_index;
+  }
+
+ private:
+  DynamicMemAllocatorDebugInfo() = default;
+  virtual ~DynamicMemAllocatorDebugInfo() = default;
+  DISABLE_COPY_AND_ASSIGN(DynamicMemAllocatorDebugInfo);
+
+  static thread_local AllocatorDebugInfo debug_info_;
+};
+
 // Memory buf is the smallest operation object of dynamic memory pool.
 struct DynamicMemBuf {
-  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size)
-      : device_addr_(addr), status_(status), size_(size) {}
+  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size,
+                const std::string &allocator_name = "Unknown")
+      : device_addr_(addr), status_(status), size_(size), allocator_name_(allocator_name) {}
   DeviceMemPtr device_addr_;
   DynamicMemBufStatus status_;
   size_t size_;
+  std::string allocator_name_;
 };
 using DynamicMemBufPtr = std::shared_ptr<DynamicMemBuf>;
 // Multimap key is the tensor size, for finding the idle memory buf by tensor size.
@@ -123,6 +154,8 @@ class DynamicMemPoolBestFit {
   void SetMemAllocUintSize(size_t common_size, size_t persist_size = DYNAMIC_MEM_ALLOC_UNIT_SIZE);
   // Set mem pool block size
   void SetMemPoolBlockSize(size_t available_device_mem_size);
+
+  // The statistics information.
   size_t TotalMemStatistics() const {
     return common_mem_->mps_.total_mem_size_ + persistent_mem_->mps_.total_mem_size_;
   }
@@ -132,6 +165,11 @@ class DynamicMemPoolBestFit {
   size_t UsedMemPeakStatistics() const {
     return common_mem_->mps_.used_mem_peak_size_ + persistent_mem_->mps_.used_mem_peak_size_;
   }
+
+  // Display the brief state information of memory block and memory buf.
+  void DumpDynamicMemPoolStateInfo();
+  // Display the detailed debug information of memory block and memory buf.
+  void DumpDynamicMemPoolDebugInfo();
 
   // The related interface of device memory real operation, needs override by device type.
   virtual size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) = 0;
@@ -164,8 +202,6 @@ class DynamicMemPoolBestFit {
                      const MemStatusManagerPtr &mem_mng);
   // Erase the idle memory buf by size and device address when idle memory buf is combined.
   void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng);
-  // Display the information of memory block and memory buf.
-  void DumpDynamicMemPoolInfo();
 
   // Support multi-thread.
   std::mutex mutex_;

@@ -74,6 +74,7 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
     }
     try {
       // Allocate memory through the device context.
+      device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name());
       if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
         SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
         return;
@@ -112,6 +113,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
     auto &device_context = (*device_contexts)[i];
     MS_EXCEPTION_IF_NULL(device_context);
     // Allocate memory through the device context.
+    device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name());
     if (!device_context->AllocateContinuousMemory(alloc_list, total_size, size_list)) {
       SetOpContextMemoryAllocFail(from_aid.Name(), device_context, total_size, op_context);
       return;
@@ -144,6 +146,7 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
 
     try {
       // Allocate memory through the device context.
+      device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name());
       if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
         SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
         return;
