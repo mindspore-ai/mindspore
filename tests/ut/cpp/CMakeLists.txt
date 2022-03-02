@@ -30,6 +30,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/stub/runtime/)
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_BINARY_DIR}/proto/graphengine_protos)
 include_directories(${CMAKE_BINARY_DIR}/proto/metadef_protos)
+include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
@@ -175,8 +176,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/common/session/executor_manager.cc"
         "../../../mindspore/ccsrc/backend/common/session/session_factory.cc"
         "../../../mindspore/ccsrc/backend/common/session/kernel_build_client.cc"
-        "../../../mindspore/ccsrc/transform/graph_ir/*.cc"
-        "../../../mindspore/ccsrc/transform/graph_ir/op_declare/*.cc"
         "../../../mindspore/ccsrc/ps/*.cc"
         "../../../mindspore/ccsrc/fl/*.cc"
         "../../../mindspore/ccsrc/distributed/cluster/actor_route_table_service.cc"
@@ -190,9 +189,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/kernel/kernel.cc"
         "../../../mindspore/ccsrc/kernel/ascend_kernel_mod.cc"
         "../../../mindspore/ccsrc/backend/common/optimizer/helper.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/executor/tiling/op_tiling_adapter.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/executor/aicpu_ext_info_handle.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ge_types_convert.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_util.cc"
         )
 
@@ -229,6 +226,7 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/tbe_kernel_compile.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/cpu/kernel/akg/akg_cpu_kernel_mod.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.cc")
+
 if(ENABLE_SECURITY)
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/profiling.cc")
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/memory_profiling.cc")
@@ -240,8 +238,7 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/as
 
 add_library(_ut_mindspore_obj OBJECT ${MINDSPORE_SRC_LIST})
 add_library(_ut_ut_obj OBJECT ${UT_SRCS})
-add_dependencies(_ut_mindspore_obj graph)
-add_dependencies(_ut_ut_obj engine-cache-server graph)
+add_dependencies(_ut_ut_obj engine-cache-server)
 set(ut_objects $<TARGET_OBJECTS:_ut_ut_obj> $<TARGET_OBJECTS:_ut_mindspore_obj>
         $<TARGET_OBJECTS:core_obj> $<TARGET_OBJECTS:core_proto_obj> $<TARGET_OBJECTS:mindrt_mid>
         $<TARGET_OBJECTS:mindspore_shared_lib_obj> $<TARGET_OBJECTS:_mindspore_utils_obj>
@@ -269,11 +266,6 @@ if(MINDSPORE_PROTO_LIST)
     set_target_properties(proto_input_ut PROPERTIES COMPILE_FLAGS "-Wno-unused-variable")
 endif()
 
-if(ENABLE_D)
-    target_link_libraries(ut_tests PRIVATE graph ge_runner ge_client)
-    target_link_libraries(mindspore PRIVATE tsdclient)
-endif()
-
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads
                           mindspore::event_openssl ${PYTHON_LIBRARIES} pthread util dl)
@@ -290,4 +282,4 @@ if(USE_GLOG)
     target_link_libraries(ut_tests PRIVATE mindspore::glog)
 endif()
 
-target_link_libraries(ut_tests PRIVATE mindspore securec graph error_manager)
+target_link_libraries(ut_tests PRIVATE mindspore securec)
