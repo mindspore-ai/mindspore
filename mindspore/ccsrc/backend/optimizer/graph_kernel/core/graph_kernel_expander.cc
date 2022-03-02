@@ -83,8 +83,6 @@ std::vector<PrimitivePtr> GetExpandOps() {
     {kCPUDevice, OpLevel_0, prim::kPrimBiasAdd},
     {kCPUDevice, OpLevel_1, prim::kPrimBiasAddGrad},
     {kCPUDevice, OpLevel_0, prim::kPrimRelu},
-    {kCPUDevice, OpLevel_1, prim::kPrimMaximumGrad},
-    {kCPUDevice, OpLevel_1, prim::kPrimMinimumGrad},
     {kCPUDevice, OpLevel_1, prim::kPrimAdam},
     {kCPUDevice, OpLevel_1, prim::kPrimTanhGrad},
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplus},
