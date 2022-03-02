@@ -185,6 +185,9 @@ class GraphMemoryParser:
         self.static_mem = 0
         self.allocations = 0
         self.deallocations = 0
+        self.node_sampling_num = 2000
+        self.tensor_node_id = 0
+        self.sampling_step = 1
         self._mem_change = []
         self.breakdowns = []
         self._lifetime = []
@@ -202,17 +205,24 @@ class GraphMemoryParser:
 
         # calculate memory usage of the graph by number of nodes and details of tensors
         nodes_proto = self._graph_proto.node_mems
+        node_num = len(nodes_proto)
         # init memory usage list with static memory
-        self._mem_change = [self.graph.static_mem for _ in range(len(nodes_proto))]
-        self._lifetime = [[] for _ in range(len(nodes_proto))]
+        self._mem_change = [self.graph.static_mem for _ in range(node_num)]
+        self._lifetime = [[] for _ in range(node_num)]
         self._calc_mem_change()  # update self._mem_change and self._lifetime
-        self.graph.lines = self._mem_change
+
+        # To prevent large memory data, sample the memory.
+        self.sampling_step = node_num // self.node_sampling_num
+        if node_num > self.node_sampling_num:
+            self.graph.lines = self._mem_change[::self.sampling_step]
+        else:
+            self.graph.lines = self._mem_change
 
         # process nodes in graph
         self.graph.nodes = self._parse_nodes(nodes_proto)
 
         self._process_memory_breakdowns()
-        self.graph.breakdowns = self.breakdowns
+        self.graph.breakdowns = self.breakdowns[self.tensor_node_id]
 
         # update fp_start and bp_end
         point_id = self._locate_fp_bp_id()
@@ -255,6 +265,11 @@ class GraphMemoryParser:
             self._update_tensor_source(node)
             self.nodes[node.name] = node
             nodes_list.append(node.to_dict())
+            node_num = index + 1
+
+            # To prevent large memory data, sample the memory.
+            if node_num > self.node_sampling_num:
+                return nodes_list[::self.sampling_step]
 
         return nodes_list
 
