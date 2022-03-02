@@ -39,13 +39,20 @@ class GatherBaseCPUKernel : public InnerKernel {
   int *indices_data_{nullptr};
 
  private:
+  int InitDynamicStatus();
   int ChooseThreadCuttingstrategy();
-  bool split_by_index{false};  // default by outer-size
+  struct BlockBoundaryInfo {
+    int64_t begin_batch;
+    int64_t begin_index;
+    int64_t end_batch;
+    int64_t end_index;
+  };
   int axis_ = 0;
-  int thread_count_{0};
   int64_t outer_size_{0};
-  int64_t inner_size_{0};
-  std::vector<int64_t> split_points_;  // split by outer-size or index-data.
+  int64_t indices_size_{0};
+  int64_t byte_inner_size_{0};
+  int64_t limit_{0};
+  std::vector<BlockBoundaryInfo> block_boundary_infos_;
 };
 }  // namespace mindspore::kernel
 
