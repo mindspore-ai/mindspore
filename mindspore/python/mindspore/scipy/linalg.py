@@ -107,6 +107,9 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
         - `solve_triangular` is not supported on Windows platform yet.
         - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
           `int64` is passed, it will be cast to :class:`mstype.float64`.
+        - The floating point error will accumulate when the size of input matrix gets larger. Substituting
+          result `x` back into :math:`a x = b` would be a way to evaluate the result. If the input shape is large
+          enough, using `float64` instead of `float32` is also a way to mitigate the error.
 
     Args:
         a (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`.
