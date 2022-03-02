@@ -13,17 +13,17 @@
 # limitations under the License.
 # ============================================================================
 """internal graph-compatible utility functions"""
+from types import FunctionType
 from collections.abc import Iterable
 from ..ops.primitive import constexpr
-from .._c_expression import typing
 from ..common import Tensor, CSRTensor
-from ..common.dtype import tensor_type, csr_tensor_type
+from ..common import dtype as mstype
 
 
 @constexpr
 def _callable_const(x):
     """Returns true if x is a function in graph mode."""
-    return isinstance(x, typing.Function)
+    return isinstance(x, mstype.function_type)
 
 
 @constexpr
@@ -97,19 +97,20 @@ def _tuple(x):
     return tuple_x
 
 
-def pytype_to_mstype(type_):
+def mstype_to_pytype(type_):
     """
-    Convert python type to MindSpore type.
+    Convert MindSpore type to Python type.
 
     Args:
-        type_: A python type object.
+        type_: A MindSpore type object.
 
     Returns:
-        Type of MindSpore type.
+        Type of Python type.
     """
     return {
-        Tensor: tensor_type,
-        CSRTensor: csr_tensor_type,
+        mstype.tensor_type: Tensor,
+        mstype.csr_tensor_type: CSRTensor,
+        mstype.function_type: FunctionType,
     }.get(type_)
 
 
@@ -118,6 +119,7 @@ _op_dict.register("in", lambda x: x[0] in _tuple(x[1]))
 _op_dict.register("is", lambda x: x[0] is x[1])
 _op_dict.register("isinstance", lambda x: isinstance(x[0], _tuple(x[1])))
 _op_dict.register("solve", lambda x: x[0][1] == x[1][0])
+_op_dict.register("==", lambda x: x[0] == x[1])
 
 
 def _attr(args, names):
@@ -153,9 +155,10 @@ def _match(args, names):
            f"the {attr_name} of '{arg1_name}' is {arg1_value} and the {attr_name} of '{arg2_name}' is {arg2_value}."
 
 
-def _tensor(_, names):
-    arg, tgt_type, func_name, arg_name = names
-    return _type((arg, tgt_type), (func_name, arg_name))
+def _mstype(_, names):
+    arg, ms_type, func_name, arg_name = names
+    py_type = [mstype_to_pytype(t) for t in _tuple(ms_type)]
+    return _type((arg, py_type), (func_name, arg_name))
 
 
 def _not_support(args, names):
@@ -166,10 +169,11 @@ def _not_support(args, names):
 
 def _solve(args, names):
     a_shape, b_shape = args
-    func_name, a_name, b_name = names
+    func_name, a_name, b_name, sparse = names
     return f"For '{func_name}', the last two dimensions of '{a_name}' and '{b_name}' should be matched, " + \
            f"but got shape of {a_shape} and {b_shape}. " + \
-           f"Please make sure that the shape of '{a_name}' and '{b_name}' be like (N, N) X (N, M) or (N, N) X (N)."
+           f"Please make sure that the shape of '{a_name}' and '{b_name}' be like (N, N) X (N, " \
+           f"{'1' if sparse else 'M'}) or (N, N) X (N)."
 
 
 _fmt_dict = StringDict()
@@ -177,7 +181,7 @@ _fmt_dict.register("attr", _attr)
 _fmt_dict.register("square", _square)
 _fmt_dict.register("type", _type)
 _fmt_dict.register("match", _match)
-_fmt_dict.register("tensor", _tensor)
+_fmt_dict.register("mstype", _mstype)
 _fmt_dict.register("todo", _not_support)
 _fmt_dict.register("solve", _solve)
 
@@ -218,20 +222,5 @@ def _super_check(args, names, op, fmt, msg, val_err):
 
 
 @constexpr
-def _tensor_check(func_name, arg, arg_type, tgt_type, arg_name='a'):
-    ms_type = pytype_to_mstype(tgt_type)
-    return _super_check((arg_type, ms_type), (arg, tgt_type, func_name, arg_name), "isinstance", "tensor", None, False)
-
-
-@constexpr
-def _square_check(func_name, arg, arg_name='a'):
-    _super_check((len(arg), 2), (func_name, arg_name, 'dimension'), 'in', 'attr', None, True)
-    _super_check(arg, (func_name, arg_name), 'in', 'square', None, True)
-    return arg
-
-
-@constexpr
-def _solve_check(func_name, arg1, arg2, arg1_name='a', arg2_name='b'):
-    _square_check(func_name, arg1, arg1_name)
-    _super_check((len(arg2), (1, 2)), (func_name, arg2_name, 'dimension'), 'in', 'attr', None, True)
-    _super_check((arg1, arg2), (func_name, arg1_name, arg2_name), 'solve', 'solve', None, True)
+def pack(*args):
+    return args
