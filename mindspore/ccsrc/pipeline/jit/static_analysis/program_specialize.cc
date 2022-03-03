@@ -74,6 +74,93 @@ inline bool CanSpecializeValueNode(const AnfNodePtr &node) {
   }
   return false;
 }
+
+// Second elimination.
+// Eliminate the dead node in sequence node, and purify the abstract of sequence node.
+void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
+  // Call PurifyElements() to purify tuple/list elements.
+  static const auto enable_only_mark_unused_element = (common::GetEnv("MS_DEV_DDE_ONLY_MARK") == "1");
+  if (enable_only_mark_unused_element) {
+    return;
+  }
+
+  // Purify the abstract of tuple/list.
+  constexpr int recursive_level = 2;
+  for (auto &abstract_and_node : specializer->sequence_abstract_list()) {
+    auto &sequence_abs = abstract_and_node.first;
+    if (!sequence_abs->PurifyElements()) {
+      MS_LOG(ERROR) << "Purify elements failed, abstract: " << sequence_abs->ToString()
+                    << ", node: " << abstract_and_node.second->DebugString(recursive_level);
+    } else {
+      MS_LOG(DEBUG) << "Purify elements, abstract: " << sequence_abs->ToString()
+                    << ", node: " << abstract_and_node.second->DebugString(recursive_level);
+    }
+  }
+
+  // Eliminate DeadNode in tuple/list.
+  for (auto &dead_node_info : specializer->dead_node_list()) {
+    auto pos = dead_node_info.second;
+    auto node = dead_node_info.first;
+    auto flags = GetSequenceNodeElementsUseFlags(node);
+    if (flags == nullptr) {
+      continue;
+    }
+
+    // Handle MakeTuple/MakeList CNode.
+    auto cnode = dyn_cast<CNode>(node);
+    if (cnode != nullptr) {
+      if (pos + 1 >= cnode->inputs().size()) {
+        continue;
+      }
+      auto input_value = GetValueNode<StringImmPtr>(cnode->input(pos + 1));
+      if (input_value == nullptr || input_value->value() != kDeadNodeName) {
+        continue;
+      }
+
+      MS_LOG(DEBUG) << "Erase elements[" << pos << "] DeadNode as zero for " << cnode->DebugString(recursive_level);
+      // Change the node.
+      auto zero_value = NewValueNode(MakeValue(0));
+      zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+      cnode->set_input(pos + 1, zero_value);
+
+      // Change the abstract.
+      (*flags)[pos] = false;  // Change the use flag as 0.
+      auto sequence_abs = dyn_cast<AbstractSequence>(node->abstract());
+      if (sequence_abs != nullptr && !sequence_abs->PurifyElements()) {
+        MS_LOG(ERROR) << "Purify elements failed, abstract: " << sequence_abs->ToString()
+                      << ", node: " << node->DebugString(recursive_level);
+      }
+      continue;
+    }
+    // Handle ValueTuple/ValueList.
+    if (IsValueNode<ValueTuple>(node) || IsValueNode<ValueList>(node)) {
+      auto sequence_value = GetValueNode<ValueSequencePtr>(node);
+      MS_EXCEPTION_IF_NULL(sequence_value);
+      if (pos >= sequence_value->value().size()) {
+        continue;
+      }
+      ValuePtr element_value = sequence_value->value()[pos];
+      auto element_str_value = element_value->cast<StringImmPtr>();
+      if (element_str_value == nullptr || element_str_value->value() != kDeadNodeName) {
+        continue;
+      }
+
+      MS_LOG(DEBUG) << "Erase elements[" << pos << "] DeadNode as zero for " << node->DebugString();
+      // Change the node.
+      auto zero = MakeValue(0);
+      auto value_list = const_cast<ValuePtrList &>(sequence_value->value());
+      value_list[pos] = zero;
+
+      // Change the abstract.
+      (*flags)[pos] = false;  // Change the use flag as 0.
+      auto sequence_abs = dyn_cast<AbstractSequence>(node->abstract());
+      if (sequence_abs != nullptr && !sequence_abs->PurifyElements()) {
+        MS_LOG(ERROR) << "Purify elements failed, abstract: " << sequence_abs->ToString()
+                      << ", node: " << node->DebugString(recursive_level);
+      }
+    }
+  }
+}
 }  // namespace
 
 FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisContextPtr &context) {
@@ -86,17 +173,7 @@ FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisConte
     MS_LOG(INFO) << "Specialize set top func graph context: " << context->ToString();
   }
   auto res = SpecializeFuncGraph(fg, context);
-  // Call PurifyElements() to purify tuple/list elements.
-  static const auto enable_only_mark_unused_element = (common::GetEnv("MS_DEV_DDE_ONLY_MARK") == "1");
-  if (!enable_only_mark_unused_element) {
-    for (auto &abstract_and_node : sequence_abstract_list_) {
-      auto &sequence_abs = abstract_and_node.first;
-      if (!sequence_abs->PurifyElements()) {
-        MS_LOG(ERROR) << "Purify elements failed, abstract: " << sequence_abs->ToString()
-                      << ", node: " << abstract_and_node.second->DebugString();
-      }
-    }
-  }
+  EliminateCollectedSequenceNodes(this);
   return res;
 }
 
@@ -534,6 +611,7 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   if (flags == nullptr) {
     return;
   }
+  std::vector<size_t> dead_node_positions;
   ValuePtrList elements;
   for (size_t i = 0; i < (*flags).size(); ++i) {
     ValuePtr old_sequence_value = sequence_value->value()[i];
@@ -544,11 +622,10 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
       MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
                     << index << "] of " << cnode->DebugString();
     } else if (old_sequence_str_value != nullptr && old_sequence_str_value->value() == kDeadNodeName) {
-      auto zero = MakeValue(0);
-      elements.emplace_back(zero);
-      (*flags)[i] = false;  // Change the use flag as 0.
-      MS_LOG(DEBUG) << "Erase elements[" << i << "] DeadNode as zero for " << old_input->DebugString()
+      MS_LOG(DEBUG) << "Collect for erasing elements[" << i << "] DeadNode as zero for " << old_input->DebugString()
                     << ", which is inputs[" << index << "] of " << cnode->DebugString();
+      dead_node_positions.emplace_back(i);
+      (void)elements.emplace_back(old_sequence_value);
     } else {
       (void)elements.emplace_back(old_sequence_value);
     }
@@ -568,11 +645,16 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
                 << ", which is inputs[" << index << "] of " << cnode->DebugString() << ", flags: " << (*flags);
   // Keep the node not to release before we purify its abstract.
   (void)specializer->sequence_abstract_list().emplace_back(std::pair(new_sequence_abs, old_input));
+  for (size_t pos : dead_node_positions) {
+    specializer->dead_node_list().emplace_back(std::pair(new_input, pos));
+  }
   cnode->set_input(index, new_input);
 }
 }  // namespace
 
+// First elimination.
 // Eliminate the unused items of Tuple/List.
+// Just adjust the nodes, not change the abstracts and dead nodes.
 void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
   if (cnode == nullptr || cnode->abstract() == nullptr) {
     MS_LOG(EXCEPTION) << "The parameter \'node\' and its abstract should not be null.";
@@ -617,12 +699,11 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
           constexpr int recursive_level = 2;
           MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << cnode->DebugString(recursive_level);
         } else if (old_input_value != nullptr && old_input_value->value() == kDeadNodeName) {
-          auto zero_value = NewValueNode(MakeValue(0));
-          zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
-          inputs.emplace_back(zero_value);
-          (*flags)[i] = false;  // Change the use flag as 0.
           constexpr int recursive_level = 2;
-          MS_LOG(DEBUG) << "Erase elements[" << i << "] DeadNode as zero for " << cnode->DebugString(recursive_level);
+          MS_LOG(DEBUG) << "Collect for erasing elements[" << i << "] DeadNode as zero for " << cnode << "/"
+                        << cnode->DebugString(recursive_level);
+          specializer_->dead_node_list().emplace_back(std::pair(cnode, i));
+          (void)inputs.emplace_back(old_input);
         } else {
           (void)inputs.emplace_back(old_input);
         }

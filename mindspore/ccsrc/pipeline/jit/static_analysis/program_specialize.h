@@ -69,6 +69,7 @@ class ProgramSpecializer {
   void SpecializeCNodeInput0FuncGraph();
 
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
+  std::vector<std::pair<AnfNodePtr, size_t>> &dead_node_list() { return dead_node_list_; }
 
  private:
   std::shared_ptr<AnalysisEngine> engine_;
@@ -79,6 +80,8 @@ class ProgramSpecializer {
   AnalysisContextPtr top_context_;
   // The list to purify tuple/list elements.
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> sequence_abstract_list_;
+  // The list to erase the DeadNode in tuple/list elements.
+  std::vector<std::pair<AnfNodePtr, size_t>> dead_node_list_;
   // Map for unspecialized abstract function to specialized abstract;
   std::unordered_map<AbstractFunctionPtr, AbstractBasePtr, AbstractFunctionHasher, AbstractFunctionEqual>
     specialized_abs_map_;
