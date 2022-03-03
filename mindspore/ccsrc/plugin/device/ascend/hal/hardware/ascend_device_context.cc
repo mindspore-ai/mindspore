@@ -62,6 +62,7 @@
 #include "profiler/device/ascend/memory_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "utils/anf_utils.h"
+#include "profiler/device/ascend/pynative_profiling.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -815,7 +816,15 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
       dynamic_kernel->Execute();
       dynamic_kernel->PostExecute();
     } else {
-      ret = kernel_mod->Launch(real_inputs, workspace, outputs, compute_stream_);
+      auto stream = GetKernelStream(kernel);
+#ifndef ENABLE_SECURITY
+      auto profiler_inst = profiler::ascend::PynativeProfiler::GetInstance();
+      (void)profiler_inst->OpDataProducerBegin(runtime_instance_, stream, kernel->fullname_with_scope());
+#endif
+      ret = kernel_mod->Launch(real_inputs, workspace, outputs, stream);
+#ifndef ENABLE_SECURITY
+      (void)profiler_inst->OpDataProducerEnd();
+#endif
       if (!ret) {
         MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
         return false;

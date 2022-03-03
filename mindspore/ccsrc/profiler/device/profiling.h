@@ -90,6 +90,8 @@ class Profiler {
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);
   void SetRunTimeData(const std::string &op_name, const uint64_t start, const float duration);
   uint64_t GetHostMonoTimeStamp() const;
+  // Get timestamp in us
+  uint64_t GetRealTimeStamp() const;
   virtual void SaveProfileData() = 0;
   virtual void ClearInst() = 0;
   std::pair<double, double> single_op_launch_start_time_end_time_;

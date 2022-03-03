@@ -51,6 +51,16 @@ uint64_t Profiler::GetHostMonoTimeStamp() const {
   return cur_time_stamp;
 }
 
+uint64_t Profiler::GetRealTimeStamp() const {
+  struct timeval tv = {0, 0};
+  (void)gettimeofday(&tv, NULL);
+  int64_t kUSecondInSecond = 1000000;
+  int64_t ts = kUSecondInSecond * static_cast<int64_t>(tv.tv_sec);
+  ts += static_cast<int64_t>(tv.tv_usec);
+  // us timestamp
+  return ts;
+}
+
 void Profiler::SetRunTimeData(const std::string &op_name, const float time_elapsed) {
   auto iter = op_info_map_.find(op_name);
   if (iter != op_info_map_.end()) {
