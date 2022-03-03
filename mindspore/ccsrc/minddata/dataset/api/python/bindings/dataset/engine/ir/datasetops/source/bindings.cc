@@ -69,6 +69,7 @@
 
 // IR leaf nodes disabled for android
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/ir/datasetops/source/kitti_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/lj_speech_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/lsun_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
@@ -405,6 +406,18 @@ PYBIND_REGISTER(IWSLT2017Node, 2, ([](const py::module *m) {
                                                         toShuffleMode(shuffle), num_shards, shard_id, nullptr);
                       THROW_IF_ERROR(iwslt2017->ValidateParams());
                       return iwslt2017;
+                    }));
+                }));
+
+PYBIND_REGISTER(KITTINode, 2, ([](const py::module *m) {
+                  (void)py::class_<KITTINode, DatasetNode, std::shared_ptr<KITTINode>>(*m, "KITTINode",
+                                                                                       "to create a KITTINode")
+                    .def(py::init([](const std::string &dataset_dir, const std::string &usage, bool decode,
+                                     const py::handle &sampler) {
+                      std::shared_ptr<KITTINode> kitti =
+                        std::make_shared<KITTINode>(dataset_dir, usage, decode, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(kitti->ValidateParams());
+                      return kitti;
                     }));
                 }));
 
