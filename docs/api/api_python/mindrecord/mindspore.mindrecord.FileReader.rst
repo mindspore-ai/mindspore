@@ -28,10 +28,10 @@
 
         按列名一次返回一个batch的数据。
 
-	    **返回：**
+        **返回：**
 
-	    dict，下一批数据，键值与数据列名相同。
+        dict，下一批数据，键值与数据列名相同。
 
-	    **异常：**
+        **异常：**
 
-	    - **MRMUnsupportedSchemaError** - 当schema无效。
+        - **MRMUnsupportedSchemaError** - 当schema无效。
