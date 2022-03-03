@@ -73,13 +73,14 @@ class MS_API AutoAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] policy An enum for the data auto augmentation policy (default=AutoAugmentPolicy::kImageNet).
-  ///     - AutoAugmentPolicy::kIMAGENET, AutoAugment policy learned on the ImageNet dataset.
-  ///     - AutoAugmentPolicy::kCIFAR10, AutoAugment policy learned on the Cifar10 dataset.
+  ///     - AutoAugmentPolicy::kImageNet, AutoAugment policy learned on the ImageNet dataset.
+  ///     - AutoAugmentPolicy::kCifar10, AutoAugment policy learned on the Cifar10 dataset.
   ///     - AutoAugmentPolicy::kSVHN, AutoAugment policy learned on the SVHN dataset.
   /// \param[in] interpolation An enum for the mode of interpolation (default=InterpolationMode::kNearestNeighbour).
-  ///     - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
   ///     - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///     - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
   ///     - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///     - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
   /// \param[in] fill_value A vector representing the pixel intensity of the borders (default={0, 0, 0}).
   /// \par Example
   /// \code
