@@ -43,6 +43,8 @@ TextFileNode::TextFileNode(std::vector<std::string> dataset_files, int32_t num_s
 
 std::shared_ptr<DatasetNode> TextFileNode::Copy() {
   auto node = std::make_shared<TextFileNode>(dataset_files_, num_samples_, shuffle_, num_shards_, shard_id_, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -132,6 +134,7 @@ Status TextFileNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
 Status TextFileNode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_files"] = dataset_files_;
   args["num_samples"] = num_samples_;
   args["shuffle"] = shuffle_;
@@ -148,6 +151,7 @@ Status TextFileNode::to_json(nlohmann::json *out_json) {
 
 Status TextFileNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kTextFileNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kTextFileNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_files", kTextFileNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_samples", kTextFileNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "shuffle", kTextFileNode));

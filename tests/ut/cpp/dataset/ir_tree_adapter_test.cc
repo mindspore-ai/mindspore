@@ -21,24 +21,15 @@
 #include "minddata/dataset/include/dataset/transforms.h"
 
 // IR non-leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
 #include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
-#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
-#include "minddata/dataset/engine/ir/datasetops/map_node.h"
-#include "minddata/dataset/engine/ir/datasetops/project_node.h"
-#include "minddata/dataset/engine/ir/datasetops/rename_node.h"
-#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
-#include "minddata/dataset/engine/ir/datasetops/skip_node.h"
-#include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
 #include "minddata/dataset/engine/tree_modifier.h"
+#include "minddata/dataset/engine/serdes.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;
 
-class MindDataTestTreeAdapter : public UT::DatasetOpTesting {
- protected:
-};
+class MindDataTestTreeAdapter : public UT::DatasetOpTesting {};
 
 TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
   MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestSimpleTreeAdapter.";
@@ -148,6 +139,121 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
   EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
 }
 
+// Feature: Test for Serializing and Deserializing an optimized IR Tree after the tree has been modified with
+// TreeModifier or in other words through Autotune indirectly.
+// Description: Create a simple tree, modify the workers and queue size, serialize the optimized IR Tree, obtain a new
+// tree with deserialize and then compare the output of serializing the new optimized IR tree with the first tree.
+// Expectation: No failures.
+TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune) {
+  MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestOptimizedTreeSerializeDeserializeForAutoTune.";
+
+  // Create a CSVDataset, with single CSV file
+  std::string train_file = datasets_root_path_ + "/testCSV/1.csv";
+  std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
+  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, 0, ShuffleMode::kFalse);
+  ASSERT_NE(ds, nullptr);
+  ds = ds->Project({"col1"});
+  ASSERT_NE(ds, nullptr);
+  ds = ds->Repeat(2);
+  ASSERT_NE(ds, nullptr);
+  auto to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt32);
+  ASSERT_NE(to_number, nullptr);
+  ds = ds->Map({to_number}, {"col1"}, {"col1"});
+  ds->SetNumWorkers(1);
+  ds = ds->Batch(1);
+  ds->SetNumWorkers(1);
+
+  // Create a tree adapter and compile the IR Tree
+  auto tree_adapter1 = std::make_shared<TreeAdapter>();
+  ASSERT_OK(tree_adapter1->Compile(ds->IRNode(), 1));
+
+  // Change num_parallel_workers and connector_queue_size for some ops
+  auto tree_modifier = std::make_unique<TreeModifier>(tree_adapter1.get());
+  tree_modifier->AddChangeRequest(1, std::make_shared<ChangeNumWorkersRequest>(10));
+  tree_modifier->AddChangeRequest(1, std::make_shared<ResizeConnectorRequest>(20));
+  tree_modifier->AddChangeRequest(0, std::make_shared<ResizeConnectorRequest>(100));
+  tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(10));
+
+  std::vector<int32_t> expected_result = {1, 5, 9, 1, 5, 9};
+  TensorRow row;
+
+  uint64_t i = 0;
+  ASSERT_OK(tree_adapter1->GetNext(&row));
+  while (!row.empty()) {
+    auto tensor = row[0];
+    int32_t num;
+    ASSERT_OK(tensor->GetItemAt(&num, {0}));
+    EXPECT_EQ(num, expected_result[i]);
+    ASSERT_OK(tree_adapter1->GetNext(&row));
+    i++;
+  }
+  // Expect 6 samples
+  EXPECT_EQ(i, 6);
+
+  // Serialize the optimized IR Tree
+  nlohmann::json out_json;
+  ASSERT_OK(Serdes::SaveToJSON(tree_adapter1->RootIRNode(), "", &out_json));
+
+  // Check that updated values of num_parallel_workers and connector_queue_size are not reflected in the json
+  EXPECT_EQ(out_json["op_type"], "Batch");
+  EXPECT_NE(out_json["num_parallel_workers"], 10);
+  EXPECT_NE(out_json["connector_queue_size"], 100);
+
+  EXPECT_EQ(out_json["children"][0]["op_type"], "Map");
+  EXPECT_NE(out_json["children"][0]["num_parallel_workers"], 10);
+  EXPECT_NE(out_json["children"][0]["connector_queue_size"], 20);
+
+  // Create an op_id to dataset op mapping
+  std::map<int32_t, std::shared_ptr<DatasetOp>> op_mapping;
+  auto tree = tree_adapter1->GetExecutionTree();
+  ASSERT_NE(tree, nullptr);
+
+  for (auto itr = tree->begin(); itr != tree->end(); ++itr) {
+    op_mapping[itr->id()] = itr.get();
+  }
+
+  // Update the serialized JSON object of the optimized IR tree
+  ASSERT_OK(Serdes::UpdateOptimizedIRTreeJSON(&out_json, op_mapping));
+
+  // Check that updated values of num_parallel_workers and connector_queue_size are reflected in the json now
+  EXPECT_EQ(out_json["op_type"], "Batch");
+  EXPECT_EQ(out_json["num_parallel_workers"], 10);
+  EXPECT_EQ(out_json["connector_queue_size"], 100);
+
+  EXPECT_EQ(out_json["children"][0]["op_type"], "Map");
+  EXPECT_EQ(out_json["children"][0]["num_parallel_workers"], 10);
+  EXPECT_EQ(out_json["children"][0]["connector_queue_size"], 20);
+
+  // Deserialize the above updated serialized optimized IR Tree
+  std::shared_ptr<DatasetNode> deserialized_node;
+  ASSERT_OK(Serdes::ConstructPipeline(out_json, &deserialized_node));
+
+  // Create a new tree adapter and compile the IR Tree obtained from deserialization above
+  auto tree_adapter2 = std::make_shared<TreeAdapter>();
+  ASSERT_OK(tree_adapter2->Compile(deserialized_node, 1));
+
+  // Serialize the new optimized IR Tree
+  nlohmann::json out_json1;
+  ASSERT_OK(Serdes::SaveToJSON(tree_adapter2->RootIRNode(), "", &out_json1));
+
+  // Ensure that both the serialized outputs are equal
+  EXPECT_TRUE(out_json == out_json1);
+
+  i = 0;
+  ASSERT_OK(tree_adapter2->GetNext(&row));
+  while (!row.empty()) {
+    auto tensor = row[0];
+    int32_t num;
+    ASSERT_OK(tensor->GetItemAt(&num, {0}));
+    EXPECT_EQ(num, expected_result[i]);
+    ASSERT_OK(tree_adapter2->GetNext(&row));
+    i++;
+  }
+
+  // Expect 6 samples
+  EXPECT_EQ(i, 6);
+}
+
 // Feature: Basic test for TreeModifier
 // Description: Create simple tree and modify the tree by adding workers, change queue size and then removing workers
 // Expectation: No failures.
@@ -193,7 +299,7 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
   uint64_t i = 0;
   ASSERT_OK(tree_adapter->GetNext(&row));
 
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto tensor = row[0];
     int32_t num;
     ASSERT_OK(tensor->GetItemAt(&num, {0}));
@@ -232,7 +338,7 @@ TEST_F(MindDataTestTreeAdapter, TestTreeModifierMindRecord) {
   // Iterate the dataset and collect the file_names in the dataset
   ASSERT_OK(tree_adapter->GetNext(&row));
   uint64_t i = 0;
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto tensor = row[0];
     std::string_view sv;
     ASSERT_OK(tensor->GetItemAt(&sv, {}));
@@ -255,7 +361,7 @@ TEST_F(MindDataTestTreeAdapter, TestTreeModifierMindRecord) {
 
   i = 0;
   ASSERT_OK(tree_adapter2->GetNext(&row));
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto tensor = row[0];
     std::string_view sv;
     ASSERT_OK(tensor->GetItemAt(&sv, {}));
@@ -278,7 +384,7 @@ TEST_F(MindDataTestTreeAdapter, TestTreeModifierMindRecord) {
 
   i = 0;
   ASSERT_OK(tree_adapter3->GetNext(&row));
-  while (row.size() != 0) {
+  while (!row.empty()) {
     auto tensor = row[0];
     std::string_view sv;
     ASSERT_OK(tensor->GetItemAt(&sv, {}));

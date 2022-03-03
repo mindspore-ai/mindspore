@@ -61,6 +61,8 @@ std::shared_ptr<DatasetNode> BatchNode::Copy() {
 #else
   auto node = std::make_shared<BatchNode>(nullptr, batch_size_, drop_remainder_);
 #endif
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -155,6 +157,7 @@ Status BatchNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
 Status BatchNode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["batch_size"] = batch_size_;
   args["drop_remainder"] = drop_remainder_;
 #ifdef ENABLE_PYTHON
@@ -170,12 +173,14 @@ Status BatchNode::to_json(nlohmann::json *out_json) {
 Status BatchNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                             std::shared_ptr<DatasetNode> *result) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kBatchNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kBatchNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "batch_size", kBatchNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "drop_remainder", kBatchNode));
   int32_t batch_size = json_obj["batch_size"];
   bool drop_remainder = json_obj["drop_remainder"];
   *result = std::make_shared<BatchNode>(ds, batch_size, drop_remainder);
   (*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (*result)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 

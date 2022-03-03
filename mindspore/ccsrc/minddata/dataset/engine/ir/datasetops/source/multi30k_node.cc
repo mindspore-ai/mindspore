@@ -50,6 +50,8 @@ void Multi30kNode::Print(std::ostream &out) const {
 std::shared_ptr<DatasetNode> Multi30kNode::Copy() {
   auto node = std::make_shared<Multi30kNode>(dataset_dir_, usage_, language_pair_, num_samples_, shuffle_, num_shards_,
                                              shard_id_, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -139,6 +141,7 @@ Status Multi30kNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
 Status Multi30kNode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["num_samples"] = num_samples_;
   args["shuffle"] = shuffle_;

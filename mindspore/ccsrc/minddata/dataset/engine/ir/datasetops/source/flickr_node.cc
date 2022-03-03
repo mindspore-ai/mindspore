@@ -42,6 +42,8 @@ FlickrNode::FlickrNode(const std::string &dataset_dir, const std::string &annota
 std::shared_ptr<DatasetNode> FlickrNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<FlickrNode>(dataset_dir_, annotation_file_, decode_, sampler, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -133,6 +135,7 @@ Status FlickrNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["annotation_file"] = annotation_file_;
   args["decode"] = decode_;
@@ -147,6 +150,7 @@ Status FlickrNode::to_json(nlohmann::json *out_json) {
 
 Status FlickrNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kFlickrNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kFlickrNode));
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("annotation_file") != json_obj.end(), "Failed to find annotation_file");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
@@ -158,7 +162,8 @@ Status FlickrNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNod
   std::shared_ptr<DatasetCache> cache = nullptr;
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   *ds = std::make_shared<FlickrNode>(dataset_dir, annotation_file, decode, sampler, cache);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 }  // namespace dataset

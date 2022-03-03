@@ -304,6 +304,9 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \brief Getter of the number of workers
   int32_t NumWorkers() const { return num_workers_; }
 
+  /// \brief Getter of the connector queue size
+  int32_t ConnectorQueueSize() { return connector_que_size_; }
+
   /// \brief Getter of dataset cache
   std::shared_ptr<DatasetCache> GetDatasetCache() { return cache_; }
 
@@ -311,6 +314,8 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \param[in] num_workers The number of threads in this operator
   /// \return Shared pointer to the original object
   std::shared_ptr<DatasetNode> SetNumWorkers(int32_t num_workers);
+
+  std::shared_ptr<DatasetNode> SetConnectorQueueSize(int32_t connector_queue_size);
 
   /// \brief Setter function for DatasetCache
   /// \param[in] cache Shared pointer to DatasetCache

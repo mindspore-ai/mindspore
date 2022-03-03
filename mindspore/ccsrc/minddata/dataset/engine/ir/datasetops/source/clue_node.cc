@@ -40,6 +40,8 @@ CLUENode::CLUENode(const std::vector<std::string> clue_files, std::string task, 
 std::shared_ptr<DatasetNode> CLUENode::Copy() {
   auto node =
     std::make_shared<CLUENode>(dataset_files_, task_, usage_, num_samples_, shuffle_, num_shards_, shard_id_, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -223,6 +225,7 @@ Status CLUENode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
 Status CLUENode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_files_;
   args["task"] = task_;
   args["usage"] = usage_;
@@ -241,6 +244,7 @@ Status CLUENode::to_json(nlohmann::json *out_json) {
 
 Status CLUENode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "num_parallel_workers", kCLUENode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "connector_queue_size", kCLUENode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "dataset_dir", kCLUENode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "task", kCLUENode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "usage", kCLUENode));
@@ -258,7 +262,8 @@ Status CLUENode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode>
   std::shared_ptr<DatasetCache> cache = nullptr;
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   *ds = std::make_shared<CLUENode>(dataset_files, task, usage, num_samples, shuffle, num_shards, shard_id, cache);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*ds)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 // Note: The following two functions are common among NonMappableSourceNode and should be promoted to its parent

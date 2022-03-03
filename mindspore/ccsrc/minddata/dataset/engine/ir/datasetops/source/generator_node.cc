@@ -55,6 +55,8 @@ std::shared_ptr<DatasetNode> GeneratorNode::Copy() {
   } else {
     node = std::make_shared<GeneratorNode>(generator_function_, schema_, source_len_, sampler_, num_parallel_workers_);
   }
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 

@@ -21,10 +21,11 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <string>
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/nonmappable_leaf_op.h"
+#include "minddata/dataset/engine/serdes.h"
 #endif
-
 #include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {
@@ -53,8 +54,22 @@ Status AutoTune::Main() {
   } else if (step_gap_ == 0) {
     mode_ = AutoTuneMode::kAutoTuneModeEpoch;
   }
+  const bool nodes_offloaded = !tree_adapter_->GetOffloadJson().empty();
+  if (nodes_offloaded) {
+    // When nodes are offloaded they are removed from the optimized IR tree.
+    // Serializing the optimized IR Tree and then deserializing will not work.
+    MS_LOG(WARNING) << "Some nodes have been offloaded. AutoTune is unable to write the autotune configuration to "
+                       "disk. Disable offload to prevent this from happening.";
+  }
+  bool output_final_config = save_autoconfig_ && !nodes_offloaded;
+  bool output_intermediate_config = save_intermediate_autoconfig_ && output_final_config;
   Status rc;
+  int loop_cnt = 0;
   while (!this_thread::is_interrupted() && !(tree_adapter_->tree_->isFinished())) {
+#ifndef ENABLE_ANDROID
+    auto last_epoch = cur_epoch_;
+    auto last_step = cur_step_;
+#endif
     if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
       rc = RunIterationEpoch();
     } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
@@ -65,6 +80,16 @@ Status AutoTune::Main() {
       RETURN_IF_NOT_OK(profiling_manager_->Stop());
       break;
     }
+#ifndef ENABLE_ANDROID
+    if (last_epoch != cur_epoch_ || last_step != cur_step_) {
+      if (output_intermediate_config &&
+          (SaveAutotuneConfig(tree_adapter_->tree_->GetUniqueId() + "_autotune_" + std::to_string(loop_cnt) + ".json")
+             .IsError())) {
+        MS_LOG(WARNING) << "Failed to write current iteration autotune configuration to disk";
+      }
+      ++loop_cnt;
+    }
+#endif
     rc = cv_.WaitFor(&_lock, GlobalContext::config_manager()->monitor_sampling_interval());
     // the thread may be interrupted for tree termination when waiting (we should not report error in this case)
     if (rc.IsError() && rc != StatusCode::kMDInterrupted) {
@@ -79,11 +104,43 @@ Status AutoTune::Main() {
                << "mindspore.dataset.config.set_num_parallel_workers";
   MS_LOG(INFO) << "Suggest to choose maximum prefetch_size from tuned result and set by global setting API: "
                << "mindspore.dataset.config.set_prefetch_size";
+#ifndef ENABLE_ANDROID
+  if (output_final_config && (SaveAutotuneConfig(autotune_json_filepath_).IsError())) {
+    MS_LOG(WARNING) << "Failed to write final autotune configuration to disk";
+  }
+#endif
   return Status::OK();
 }
 
-void AutoTune::PrintTreeConfiguration() {
-  ExecutionTree *tree = tree_adapter_->tree_.get();
+#ifndef ENABLE_ANDROID
+Status AutoTune::SaveAutotuneConfig(const std::string &file_name) {
+  RETURN_IF_NOT_OK(SetAutotuneConfigJson());
+  // The Execution Tree is built by visiting the optimized IR Tree in DFS order.
+  // So we visit the optimized IR tree in DFS order and try to match each IR node with its corresponding dataset op.
+  RETURN_IF_NOT_OK(Serdes::UpdateOptimizedIRTreeJSON(&autotune_config_json_, ops_));
+  RETURN_IF_NOT_OK(Serdes::SaveJSONToFile(autotune_config_json_, file_name));
+  return Status::OK();
+}
+
+Status AutoTune::SetAutotuneConfigJson() {
+  if (autotune_config_json_.empty()) {
+    nlohmann::json out_json;
+    RETURN_IF_NOT_OK(Serdes::SaveToJSON(tree_adapter_->RootIRNode(), "", &out_json));
+    // We do not want to serialize TransferNode/DeviceQueueOp
+    if (out_json["op_type"] == kTransferNode) {
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        out_json["children"].size() == 1,
+        "Expected Transfer node to have exactly 1 child but it has " + std::to_string(out_json["children"].size()));
+      out_json = out_json["children"][0];
+    }
+    autotune_config_json_ = std::move(out_json);
+  }
+  return Status::OK();
+}
+#endif
+
+void AutoTune::PrintTreeConfiguration() const {
+  ExecutionTree const *tree = tree_adapter_->tree_.get();
   for (auto itr = tree->begin(); itr != tree->end(); itr++) {
     if (!itr->inlined() && itr->Name() != "DeviceQueueOp") {
       MS_LOG(INFO) << itr->NameWithID() << " num_parallel_workers: " << itr->NumWorkers()
@@ -106,7 +163,7 @@ Status AutoTune::LaunchThread() {
 }
 
 Status AutoTune::CollectOpsInfo() {
-  ExecutionTree *tree = tree_adapter_->tree_.get();
+  ExecutionTree const *tree = tree_adapter_->tree_.get();
   RETURN_UNEXPECTED_IF_NULL(tree);
   for (auto itr = tree->begin(); itr != tree->end(); ++itr) {
     ops_[itr->id()] = itr.get();

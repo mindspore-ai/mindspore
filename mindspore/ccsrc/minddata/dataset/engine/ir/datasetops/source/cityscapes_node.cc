@@ -40,6 +40,8 @@ CityscapesNode::CityscapesNode(const std::string &dataset_dir, const std::string
 std::shared_ptr<DatasetNode> CityscapesNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<CityscapesNode>(dataset_dir_, usage_, quality_mode_, task_, decode_, sampler, cache_);
+  node->SetNumWorkers(num_workers_);
+  node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -127,6 +129,7 @@ Status CityscapesNode::to_json(nlohmann::json *out_json) {
   RETURN_IF_NOT_OK(sampler_->to_json(&sampler_args));
   args["sampler"] = sampler_args;
   args["num_parallel_workers"] = num_workers_;
+  args["connector_queue_size"] = connector_que_size_;
   args["dataset_dir"] = dataset_dir_;
   args["usage"] = usage_;
   args["quality_mode"] = quality_mode_;
