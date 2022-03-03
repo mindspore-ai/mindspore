@@ -507,7 +507,8 @@ def set_auto_parallel_context(**kwargs):
 
                         - parallel_optimizer_threshold(int): Set the threshold of parallel optimizer. When parallel
                           optimizer is enabled, parameters with size smaller than this threshold will not be sharded
-                          across the devices. Unit: KB. Default: 64.
+                          across the devices. Parameter size = shape[0] \* ... \* shape[n] \* size(dtype). Non-negative.
+                          Unit: KB. Default: 64.
 
         comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
                         communication fusion config has two keys: "mode" and "config".
@@ -546,7 +547,7 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(enable_parallel_optimizer=False)
         >>> context.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
         >>> context.set_auto_parallel_context(pipeline_stages=2)
-        >>> parallel_config = {"gradient_accumulation_shard": True}
+        >>> parallel_config = {"gradient_accumulation_shard": True, "parallel_optimizer_threshold": 24}
         >>> context.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
         >>> config = {"allreduce": {"mode": "size", "config": 32}, "allgather": {"mode": "size", "config": 32}}
         >>> context.set_auto_parallel_context(comm_fusion=config)

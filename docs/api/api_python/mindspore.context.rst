@@ -216,7 +216,7 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
     - **parallel_optimizer_config** (dict) - 用于开启优化器并行后的行为配置。仅在enable_parallel_optimizer=True的时候生效。目前，它支持关键字如下的关键字：
 
       - gradient_accumulation_shard(bool)：设置累积梯度变量是否在数据并行维度上进行切分。开启后，将进一步减小模型的显存占用，但是会在反向计算梯度时引入额外的通信算子（ReduceScatter）。此配置仅在流水线并行训练和梯度累积模式下生效。默认值：True。
-      - parallel_optimizer_threshold(int)：设置参数切分的阈值。占用内存小于该阈值的参数不做切分。单位： KB。默认值：64。
+      - parallel_optimizer_threshold(int)：设置参数切分的阈值。占用内存小于该阈值的参数不做切分。占用内存大小 = shape[0] \* ... \* shape[n] \* size(dtype)。该阈值非负。单位： KB。默认值：64。
 
     - **comm_fusion** (dict) - 用于设置通信算子的融合配置。可以同一类型的通信算子按梯度张量的大小或者顺序分块传输。输入格式为{"通信类型": {"mode":str, "config": None int 或者 list}},每种通信算子的融合配置有两个键："mode"和"config"。支持以下通信类型的融合类型和配置：
 
