@@ -195,45 +195,6 @@ def test_fallback_int():
     assert foo() == 5
 
 
-def test_fallback_list():
-    """
-    Feature: JIT Fallback
-    Description: Test list() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = list([1, 2, 3])
-        return x
-    print(foo())
-
-
-def test_fallback_max():
-    """
-    Feature: JIT Fallback
-    Description: Test max() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = max([1, 2, 3])
-        return x
-    assert foo() == 3
-
-
-def test_fallback_min():
-    """
-    Feature: JIT Fallback
-    Description: Test min() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = min([1, 2, 3])
-        return x
-    assert foo() == 1
-
-
 def test_fallback_oct():
     """
     Feature: JIT Fallback
@@ -271,19 +232,6 @@ def test_fallback_reversed():
         x = reversed([1, 2, 3])
         return list(x)
     assert foo() == (3, 2, 1)
-
-
-def test_fallback_round():
-    """
-    Feature: JIT Fallback
-    Description: Test round() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = round(0.6)
-        return x
-    assert foo() == 1
 
 
 def test_fallback_set():
@@ -337,29 +285,3 @@ def test_fallback_str():
         x = str(10)
         return x
     assert foo() == '10'
-
-
-def test_fallback_sum():
-    """
-    Feature: JIT Fallback
-    Description: Test sum() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = sum([1, 2, 3])
-        return x
-    assert foo() == 6
-
-
-def test_fallback_tuple():
-    """
-    Feature: JIT Fallback
-    Description: Test tuple() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        tuple_x = tuple([1, 2, 3])
-        return tuple_x
-    print(foo())
