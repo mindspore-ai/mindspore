@@ -98,6 +98,20 @@ const std::map<ProtoDataType, mindspore::TypeId> kDataTypetoMSTypeMap = {
   {ProtoDataType::DT_STRING, mindspore::TypeId::kObjectTypeString}};
 #endif
 
+std::string GenDataFilePath(const CNodePtr &node, const std::string &kernel_name, const std::string &dump_path,
+                            size_t slot, bool is_input) {
+  std::string op_type = common::AnfAlgo::GetCNodeName(node);
+  std::string op_name = GetOpNameWithoutScope(kernel_name);
+  uint64_t timestamp = GetTimeStamp();
+  uint32_t task_id = 0;
+  uint32_t stream_id = 0;
+  std::string tensor_type = is_input ? ".input." : ".output.";
+  std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
+                          std::to_string(stream_id) + '.' + std::to_string(timestamp) + tensor_type +
+                          std::to_string(slot);
+  return file_path;
+}
+
 bool E2eDump::IsDeviceTargetGPU() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -200,6 +214,31 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
   }
 }
 
+void E2eDump::DumpOutputData(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
+                             std::string *kernel_name) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (IsDeviceTargetGPU() || debugger->GetAscendKernelByKernelFlag()) {
+    MS_LOG(INFO) << "DumpInputData is only for graph mode on Ascend";
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(node);
+  GetFileKernelName(NOT_NULL(kernel_name));
+  auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
+  for (size_t j = 0; j < output_size; ++j) {
+    if (!AnfAlgo::OutputAddrExist(node, j)) {
+      continue;
+    }
+    auto addr = AnfAlgo::GetOutputAddr(node, j);
+    MS_EXCEPTION_IF_NULL(addr);
+    ShapeVector int_shapes;
+    GetDumpIntShape(node, j, NOT_NULL(&int_shapes), trans_flag);
+    auto type = common::AnfAlgo::GetOutputInferDataType(node, j);
+    std::string file_path = GenDataFilePath(node, *kernel_name, dump_path, j, false);
+    DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
+  }
+}
+
 void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
@@ -262,9 +301,6 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     if (!AnfAlgo::OutputAddrExist(input, index)) {
       continue;
     }
-    auto addr = AnfAlgo::GetOutputAddr(input, index);
-    MS_EXCEPTION_IF_NULL(addr);
-
     std::string tensor_name = GetKernelNodeName(node);
     size_t slot = j;
     if (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
@@ -284,6 +320,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     uint32_t stream_id = 0;
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
+    auto addr = AnfAlgo::GetOutputAddr(input, index);
     MS_EXCEPTION_IF_NULL(addr);
     if (DumpJsonParser::GetInstance().IsStatisticDump() &&
         (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag())) {
@@ -301,6 +338,34 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
         DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
       }
     }
+  }
+}
+
+void E2eDump::DumpInputData(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
+                            std::string *kernel_name) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (IsDeviceTargetGPU() || debugger->GetAscendKernelByKernelFlag()) {
+    MS_LOG(INFO) << "DumpInputData is only for graph mode on Ascend";
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(node);
+  GetFileKernelName(NOT_NULL(kernel_name));
+  auto input_size = common::AnfAlgo::GetInputTensorNum(node);
+  for (size_t j = 0; j < input_size; ++j) {
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, j);
+    auto input = kernel_with_index.first;
+    auto index = kernel_with_index.second;
+    if (!AnfAlgo::OutputAddrExist(input, index)) {
+      continue;
+    }
+    auto addr = AnfAlgo::GetOutputAddr(input, index);
+    MS_EXCEPTION_IF_NULL(addr);
+    ShapeVector int_shapes;
+    GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
+    auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
+    std::string file_path = GenDataFilePath(node, *kernel_name, dump_path, j, true);
+    DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
   }
 }
 

@@ -713,8 +713,8 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* 
     auto full_scope_name = node->fullname_with_scope();
     MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/output data to: " << path
                   << trace::DumpSourceLines(node);
-    E2eDump::DumpInputImpl(node, false, path, &full_scope_name, nullptr);
-    E2eDump::DumpOutputImpl(node, false, path, &full_scope_name, nullptr);
+    E2eDump::DumpInputData(node, false, path, &full_scope_name);
+    E2eDump::DumpOutputData(node, false, path, &full_scope_name);
   }
 }
 #endif
