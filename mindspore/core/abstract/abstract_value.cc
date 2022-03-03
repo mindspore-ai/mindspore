@@ -140,6 +140,28 @@ std::string AbstractBase::ToString() const {
   return buffer.str();
 }
 
+std::string AbstractBase::ToString(bool verbose) const {
+  if (verbose) {
+    return ToString();
+  }
+  std::ostringstream buffer;
+  auto tensor_value = BuildValue();
+  auto shape = BuildShape();
+  auto type = BuildType();
+  if (shape != nullptr && type != nullptr) {
+    buffer << type << ", " << shape->ToString();
+    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+      buffer << ", value=...";
+    }
+  } else if (type != nullptr) {
+    buffer << type;
+    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+      buffer << ", value=...";
+    }
+  }
+  return buffer.str();
+}
+
 AbstractBasePtr AbstractScalar::Broaden() const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -445,6 +467,26 @@ std::string AbstractSequence::ToString() const {
   }
   ss << "}";
   return ss.str();
+}
+
+std::string AbstractSequence::ToString(bool verbose) const {
+  if (verbose) {
+    return ToString();
+  }
+  std::ostringstream buffer;
+  size_t i = 0;
+  size_t size = elements_.size();
+  buffer << type_name() << " {";
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    buffer << element->ToString(false);
+    if (i < size - 1) {
+      buffer << ", ";
+    }
+    i++;
+  }
+  buffer << "}";
+  return buffer.str();
 }
 
 AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &other) {

@@ -69,6 +69,8 @@ class MS_CORE_API AbstractFuncUnion final : public AbstractFunction {
 
   std::string ToString() const override;
 
+  std::string ToString(bool verbose) const override;
+
   AbstractFunctionPtr GetUnique() override { MS_LOG(EXCEPTION) << "Cannot get unique from AbstractFuncUnion"; }
 
   /// \brief Check whether the input AbstractFunction is in AbstractFuncUnion.
@@ -122,6 +124,8 @@ class MS_CORE_API PrimitiveAbstractClosure final : public AbstractFuncAtom {
   std::size_t hash() const override;
 
   std::string ToString() const override { return "Prim: " + prim_->name(); }
+
+  std::string ToString(bool verbose) const override;
 
   ValuePtr RealBuildValue() const override { return prim_; }
 
@@ -177,6 +181,8 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   std::size_t hash() const override;
 
   std::string ToString() const override;
+
+  std::string ToString(bool verbose) const override;
 
  private:
   FuncGraphPtr func_graph_;
@@ -289,6 +295,8 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   std::size_t hash() const override;
 
   std::string ToString() const override;
+
+  std::string ToString(bool verbose) const override;
 
  protected:
   ValuePtr RealBuildValue() const override { return fn_->BuildValue(); }

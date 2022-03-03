@@ -47,7 +47,7 @@ std::string GetNodeFuncStr(const AnfNodePtr &nd) {
   std::string str;
   const auto &abs = nd->abstract();
 
-  if (IsValueNode<FuncGraph>(nd) || abs == nullptr || !abs->isa<abstract::AbstractFunction>()) {
+  if (abs == nullptr || !abs->isa<abstract::AbstractFunction>()) {
     return str;
   }
   const auto &abs_func = abs->cast<abstract::AbstractFunctionPtr>();

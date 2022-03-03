@@ -78,6 +78,25 @@ std::string AbstractFuncUnion::ToString() const {
   return buffer.str();
 }
 
+std::string AbstractFuncUnion::ToString(bool verbose) const {
+  if (verbose) {
+    return ToString();
+  }
+  std::ostringstream buffer;
+  buffer << type_name() << "({";
+  size_t i = 0;
+  for (const auto &func : func_list_) {
+    MS_EXCEPTION_IF_NULL(func);
+    buffer << func->ToString(false);
+    i++;
+    if (i < func_list_.size()) {
+      buffer << ", ";
+    }
+  }
+  buffer << "})";
+  return buffer.str();
+}
+
 bool AbstractFuncUnion::IsSuperSet(const AbstractFunctionPtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   std::vector<bool> is_in_list;
@@ -151,6 +170,13 @@ std::size_t PrimitiveAbstractClosure::hash() const {
   return hash_value;
 }
 
+std::string PrimitiveAbstractClosure::ToString(bool verbose) const {
+  if (verbose) {
+    return ToString();
+  }
+  return type_name() + " (" + prim_->name() + ")";
+}
+
 bool FuncGraphAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!other.isa<FuncGraphAbstractClosure>()) {
     return false;
@@ -175,6 +201,16 @@ std::string FuncGraphAbstractClosure::ToString() const {
   MS_EXCEPTION_IF_NULL(context_);
   ss << "FuncGraphAbstractClosure: "
      << "FuncGraph: " << func_graph_->ToString() << "; Context: " << context_->ToString();
+  return ss.str();
+}
+
+std::string FuncGraphAbstractClosure::ToString(bool verbose) const {
+  if (verbose) {
+    return ToString();
+  }
+  std::stringstream ss;
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  ss << type_name() << "(" << func_graph_->ToString() << ")";
   return ss.str();
 }
 
@@ -235,6 +271,15 @@ std::string PartialAbstractClosure::ToString() const {
     }
   }
   buffer << "))";
+  return buffer.str();
+}
+
+std::string PartialAbstractClosure::ToString(bool verbose) const {
+  if (verbose) {
+    return ToString();
+  }
+  std::ostringstream buffer;
+  buffer << type_name() << "(" << fn_->ToString(false) << " (argc=" << args_spec_list_.size() << "))";
   return buffer.str();
 }
 

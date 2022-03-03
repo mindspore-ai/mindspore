@@ -429,7 +429,6 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
     auto value_node = BuildPrimitiveValueNode(prim::kPrimPartial);
     AnfNodePtrList cnode_inputs{value_node, BuildFuncGraphValueNode(func_graph)};
     auto partial_node = func_graph_user->NewCNode(std::move(cnode_inputs));
-    partial_node->set_abstract(value_node->abstract());
     iter->second = partial_node;
   }
   auto cnode = dyn_cast<CNode>(iter->second);
@@ -471,6 +470,13 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   }
   cnode->set_inputs(inputs);
   OrderParameters(func_graph, inputs, caller_first_arg_index);
+
+  AbstractBasePtrList args_spec_list;
+  (void)std::for_each(inputs.begin() + caller_first_arg_index, inputs.end(),
+                      [&args_spec_list](const AnfNodePtr &node) { args_spec_list.push_back(node->abstract()); });
+  auto abs = std::make_shared<abstract::PartialAbstractClosure>(
+    func_graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_spec_list, cnode);
+  cnode->set_abstract(abs);
 }
 
 void Cloner::OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs, size_t arg_start_index) {

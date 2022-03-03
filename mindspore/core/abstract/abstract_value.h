@@ -71,6 +71,11 @@ class MS_CORE_API AbstractBase : public Base {
   /// \return A string.
   std::string ToString() const override;
 
+  /// \brief Get the formatted text to describe the abstract.
+  ///
+  /// \return A string.
+  virtual std::string ToString(bool verbose) const;
+
   /// \brief Overwrite the operator '==' to compare other abstract.
   ///
   /// \param[in] other The other abstract to be joined.
@@ -790,6 +795,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
 
   std::string ToStringInternal() const;
   std::string ToString() const override;
+  std::string ToString(bool verbose) const override;
 
   /// \brief Overwrite the operator '[]' to get an element.
   ///
