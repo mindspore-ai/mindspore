@@ -56,6 +56,9 @@ class TCPComm {
   // Create the server socket represented by url.
   bool StartServerSocket(const std::string &url);
 
+  // Create the server socket with local IP and random port.
+  bool StartServerSocket();
+
   // Connection operation for a specified destination.
   void Connect(const std::string &dst_url);
   bool IsConnected(const std::string &dst_url);
@@ -66,6 +69,9 @@ class TCPComm {
 
   // Set the message processing handler.
   void SetMessageHandler(MessageHandler handler);
+
+  // Get the file descriptor of server socket.
+  int GetServerFd();
 
  private:
   // Build the connection.

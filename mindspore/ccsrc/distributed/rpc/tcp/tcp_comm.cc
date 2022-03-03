@@ -234,6 +234,15 @@ bool TCPComm::StartServerSocket(const std::string &url) {
   return true;
 }
 
+bool TCPComm::StartServerSocket() {
+  auto ip = SocketOperation::GetLocalIP();
+  // The port 0 means that the port will be allocated randomly by the os system.
+  auto url = ip + ":0";
+  return StartServerSocket(url);
+}
+
+int TCPComm::GetServerFd() { return server_fd_; }
+
 void TCPComm::ReadCallBack(void *connection) {
   const int max_recv_count = 3;
   Connection *conn = reinterpret_cast<Connection *>(connection);

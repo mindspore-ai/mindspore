@@ -217,6 +217,19 @@ TEST_F(TCPTest, sendTwoMessages) {
   client->Finalize();
   server->Finalize();
 }
+
+/// Feature: test start the tcp server with random port.
+/// Description: start a socket server without specified fixed port.
+/// Expectation: the server started successfully.
+TEST_F(TCPTest, StartServerWithRandomPort) {
+  std::unique_ptr<TCPServer> server = std::make_unique<TCPServer>();
+  bool ret = server->Initialize();
+  ASSERT_TRUE(ret);
+
+  auto port = server->GetPort();
+  EXPECT_LT(0, port);
+  server->Finalize();
+}
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore

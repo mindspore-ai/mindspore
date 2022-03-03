@@ -31,8 +31,11 @@ class TCPServer {
   TCPServer() = default;
   ~TCPServer() = default;
 
-  // Init the tcp server.
+  // Init the tcp server using the specified url.
   bool Initialize(const std::string &url);
+
+  // Init the tcp server using local IP and random port.
+  bool Initialize();
 
   // Destroy the tcp server.
   void Finalize();
@@ -40,9 +43,18 @@ class TCPServer {
   // Set the message processing handler.
   void SetMessageHandler(MessageHandler handler);
 
+  // Return the IP and port binded by this server.
+  std::string GetIP();
+  uint32_t GetPort();
+
  private:
+  bool InitializeImpl(const std::string &url);
+
   // The basic TCP communication component used by the server.
   std::unique_ptr<TCPComm> tcp_comm_;
+
+  std::string ip_{""};
+  uint32_t port_{0};
 
   DISABLE_COPY_AND_ASSIGN(TCPServer);
 };

@@ -16,6 +16,9 @@
 
 #include "distributed/rpc/tcp/socket_operation.h"
 
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <securec.h>
 #include <netinet/tcp.h>
@@ -109,6 +112,38 @@ int SocketOperation::CreateSocket(sa_family_t family) {
     return -1;
   }
   return fd;
+}
+
+std::string SocketOperation::GetLocalIP() {
+  // Lookup all the network interfaces on the local machine.
+  struct ifaddrs *if_addrs;
+  if (getifaddrs(&if_addrs) != 0) {
+    MS_LOG(ERROR) << "Failed to lookup local network interfaces.";
+    freeifaddrs(if_addrs);
+    return "";
+  }
+  // Find the first physical network interface.
+  struct ifaddrs *if_addr = if_addrs;
+  MS_EXCEPTION_IF_NULL(if_addr);
+  while (if_addr != nullptr) {
+    if (if_addr->ifa_addr == nullptr) continue;
+
+    if (if_addr->ifa_addr->sa_family == AF_INET && !(if_addr->ifa_flags & IFF_LOOPBACK)) {
+      auto sock_addr = reinterpret_cast<struct sockaddr_in *>(if_addr->ifa_addr);
+      MS_EXCEPTION_IF_NULL(sock_addr);
+
+      auto ip_addr = inet_ntoa(sock_addr->sin_addr);
+      MS_EXCEPTION_IF_NULL(ip_addr);
+
+      std::string ip(ip_addr, ip_addr + strlen(ip_addr));
+      freeifaddrs(if_addrs);
+      return ip;
+    } else {
+      if_addr = if_addr->ifa_next;
+    }
+  }
+  freeifaddrs(if_addrs);
+  return "";
 }
 
 std::string SocketOperation::GetIP(const std::string &url) {
