@@ -1009,6 +1009,11 @@ def tri(N, M=None, k=0, dtype=mstype.float32):
     return nn_tril((N, M), dtype, k)
 
 
+@constexpr
+def _device_target():
+    return context.get_context("device_target")
+
+
 def tril(m, k=0):
     """
     Returns a lower triangle of a tensor.
@@ -1042,7 +1047,7 @@ def tril(m, k=0):
     if not isinstance(m, Tensor):
         m = asarray_const(m)
     dtype = m.dtype
-    device_target = context.get_context("device_target")
+    device_target = _device_target()
     # Only Ascend hardware will reduce accuracy
     if device_target == "Ascend":
         m = m.astype(mstype.float32)
@@ -1085,7 +1090,7 @@ def triu(m, k=0):
     if not isinstance(m, Tensor):
         m = asarray_const(m)
     dtype = m.dtype
-    device_target = context.get_context("device_target")
+    device_target = _device_target()
     # Only Ascend hardware will reduce accuracy
     if device_target == "Ascend":
         m = m.astype(mstype.float32)
