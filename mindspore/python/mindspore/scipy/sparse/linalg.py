@@ -21,7 +21,7 @@ from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
 from ..utils import _normalize_matvec, _to_tensor, _safe_normalize, _eps, _norm, _type_check, _value_check, \
     _sparse_check
-from ..utils_const import _raise_value_error, _raise_type_error
+from ..utils_const import _raise_value_error, _raise_type_error, _nullable_const
 
 
 def gram_schmidt(Q, q):
@@ -323,6 +323,45 @@ class CG(nn.Cell):
         return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
 
 
+class CGv2(nn.Cell):
+    """
+    This is a new version of CG, which contains all parameters in a graph.
+    """
+
+    def __init__(self):
+        super(CGv2, self).__init__()
+
+    def construct(self, A, M, b, x0, tol, atol, maxiter):
+        # Constant tensor which avoids loop unrolling
+        _INT_ZERO = _to_tensor(0)
+
+        A = _normalize_matvec(A)
+        M = _normalize_matvec(M)
+
+        atol_ = mnp.maximum(atol, tol * _norm(b))
+
+        r = b - A(x0)
+        z = p = M(r)
+        rho = mnp.dot(r, z)
+        k = _INT_ZERO
+        x = x0
+        while k < maxiter and _norm(r) > atol_:
+            q = A(p)
+            alpha = rho / mnp.dot(p, q)
+            x = x + alpha * p
+            r = r - alpha * q
+
+            z = M(r)
+            rho_ = mnp.dot(r, z)
+            beta = rho_ / rho
+            p = z + beta * p
+            rho = rho_
+
+            k += 1
+
+        return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
+
+
 def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None):
     """Use Conjugate Gradient iteration to solve the linear system:
 
@@ -343,7 +382,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
         - `cg` is not supported on Windows platform yet.
 
     Args:
-        A (Union[Tensor, function]): 2D Tensor or function that calculates the linear
+        A (Union[Tensor, CSRTensor, function]): 2D Tensor, CSRTensor or function that calculates the linear
             map (matrix-vector product) :math:`Ax` when called like :math:`A(x)`.
             As function, `A` must return Tensor with the same structure and shape as its input matrix.
         b (Tensor): Right hand side of the linear system representing a single vector. Can be
@@ -372,8 +411,8 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
         TypeError: If `atol` is not float.
         TypeError: If `maxiter` is not int.
         ValueError: If `callback` is not None.
-        TypeError: If `A` is not Tensor or Function.
-        TypeError: If `M` is not None, Tensor or Function.
+        TypeError: If `A` is not Tensor, CSRTensor, or Function.
+        TypeError: If `M` is not None, Tensor, CSRTensor, or Function.
         TypeError: If `b` is not Tensor.
         TypeError: If `x0` is not None or Tensor.
         ValueError: If `b` is not 1 or 2 dimension.
@@ -411,9 +450,12 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
     _type_check(func_name, atol, float, 'atol')
     _type_check(func_name, maxiter, int, 'maxiter')
     _value_check(func_name, callback, None, 'callback', op='is', fmt='todo')
-    _sparse_check(func_name, A, M, b, x0)
+    A, M, b, x0 = _sparse_check(func_name, A, M, b, x0)
 
-    x, info = CG(A, M)(b, x0, tol, atol, maxiter)
+    if not _nullable_const(A):
+        x, info = CG(A, M)(b, x0, tol, atol, maxiter)
+    else:
+        x, info = CGv2()(A, M, b, x0, tol, atol, maxiter)
     return x, info
 
 

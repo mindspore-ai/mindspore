@@ -17,6 +17,7 @@ from typing import List
 from functools import cmp_to_key
 
 import numpy as onp
+import scipy.sparse.linalg
 from mindspore import Tensor
 import mindspore.ops as ops
 import mindspore.numpy as mnp
@@ -96,6 +97,18 @@ def create_sym_pos_matrix(shape, dtype):
     n = shape[-1]
     x = onp.random.random(shape)
     return (onp.matmul(x, x.T) + onp.eye(n)).astype(dtype)
+
+
+def create_sym_pos_sparse_matrix(shape, dtype, indice_dtype=onp.int32):
+    if len(shape) != 2 or shape[0] != shape[1]:
+        raise ValueError(
+            'Symmetric positive definite matrix must be a square matrix, but has shape: ', shape)
+
+    n = shape[-1]
+    indptr = onp.arange(n + 1).astype(indice_dtype)
+    indices = onp.arange(n).astype(indice_dtype)
+    values = onp.random.random(n).astype(dtype)
+    return scipy.sparse.csr_matrix((values, indices, indptr), shape=shape)
 
 
 def gradient_check(x, net, epsilon=1e-3, enumerate_fn=onp.ndenumerate):
