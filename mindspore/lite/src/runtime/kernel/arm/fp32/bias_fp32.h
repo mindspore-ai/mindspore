@@ -36,14 +36,13 @@ class BiasCPUKernel : public InnerKernel {
   int DoExecute(int task_id);
 
  private:
-  void GetThreadSegmentInfos();
+  int ChooseThreadCuttingstrategy();
   ArithmeticParameter *bias_param_;
   bool batch_priority_{false};
   int64_t inner_num_{0};
   int64_t outer_num_{0};
   int64_t total_num_{0};
-  std::vector<int64_t> split_start_points_;
-  std::vector<int64_t> split_end_points_;
+  std::vector<int64_t> split_points_;
 };
 }  // namespace mindspore::kernel
 
