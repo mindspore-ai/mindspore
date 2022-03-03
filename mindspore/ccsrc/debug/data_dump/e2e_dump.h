@@ -20,6 +20,7 @@
 #include <dirent.h>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "backend/common/session/kernel_graph.h"
 #include "runtime/device/device_address.h"
@@ -34,6 +35,19 @@ using mindspore::kernel::KernelLaunchInfo;
 class Debugger;
 #endif
 namespace mindspore {
+struct dump_data_t {
+  std::string dump_file_path;
+  char *data_ptr;
+  mindspore::TypeId data_type;
+  std::string format;
+  ShapeVector device_shape;
+  ShapeVector host_shape;
+  size_t data_size;
+  int32_t sub_format;
+  std::string in_out_str;
+  uint32_t slot;
+};
+
 class E2eDump {
  public:
   E2eDump() = default;
@@ -102,9 +116,10 @@ class E2eDump {
 #ifdef ENABLE_D
   static nlohmann::json ParseOverflowInfo(char *data_ptr);
 
-  template <typename T>
-  static bool ConvertFormatForTensorAndDump(std::string dump_path, const T &tensor, char *data_ptr,
-                                            const std::string &io, uint32_t slot);
+  static bool ConvertFormatForTensorAndDump(const dump_data_t &dump_tensor_info);
+
+  static void ConvertFormatForTensors(const std::vector<dump_data_t> &dump_tensor_vec, uint32_t start_idx,
+                                      uint32_t end_idx);
 #endif
 
   inline static unsigned int starting_graph_id = INT32_MAX;
