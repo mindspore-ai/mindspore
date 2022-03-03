@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.dataset.text.SentencePieceModel
 
-    `SentencePiece` 分词方法的枚举类。
+    SentencePiece分词方法的枚举类。
 
     可选的枚举值包括： `SentencePieceModel.UNIGRAM` 、 `SentencePieceModel.BPE` 、 `SentencePieceModel.CHAR` 和 `SentencePieceModel.WORD` 。
 

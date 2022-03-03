@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.dataset.text.JiebaMode
 
-    :class:`JiebaTokenizer` 的枚举值。
+    :class:`mindspore.dataset.text.transforms.JiebaTokenizer` 的枚举值。
 
     可选的枚举值包括： `JiebaMode.MIX` 、 `JiebaMode.MP` 和 `JiebaMode.HMM` 。
 

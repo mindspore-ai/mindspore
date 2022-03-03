@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.dataset.text.SPieceTokenizerLoadType
 
-    :class:`SentencePieceTokenizer` 加载类型的枚举值。
+    :class:`mindspore.dataset.text.transforms.SentencePieceTokenizer` 加载类型的枚举值。
 
     可选的枚举值包括：SPieceTokenizerLoadType.FILE和SPieceTokenizerLoadType.MODEL。
 
