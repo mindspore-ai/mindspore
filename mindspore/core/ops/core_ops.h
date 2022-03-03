@@ -149,6 +149,7 @@ constexpr auto kReshape = "Reshape";
 constexpr auto kLstsq = "Lstsq";
 constexpr auto kLowerBound = "LowerBound";
 constexpr auto kUpperBound = "UpperBound";
+constexpr auto kNonZero = "NonZero";
 constexpr auto kCummax = "Cummax";
 constexpr auto kTril = "Tril";
 constexpr auto kEye = "Eye";

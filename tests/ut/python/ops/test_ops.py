@@ -61,6 +61,7 @@ from mindspore.ops.operations.nn_ops import PSROIPooling
 from mindspore.ops.operations.nn_ops import AvgPoolV1
 from mindspore.ops.operations._grad_ops import AvgPoolGradV1
 from mindspore.ops.operations.nn_ops import MaxPoolV1
+from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix
 from mindspore.nn.layer import normalization
@@ -3101,6 +3102,11 @@ test_case_array_ops = [
         'block': P.LowerBound(),
         'desc_inputs': [Tensor(np.arange(20).reshape(4, 5), mstype.int8),
                         Tensor([[3], [5], [7], [8]], mstype.int8)],
+        'skip': ['backward'],
+    }),
+    ('NonZero', {
+        'block': NonZero(),
+        'desc_inputs': [Tensor([[1, 2]], mstype.int32)],
         'skip': ['backward'],
     }),
     ('UpperBound', {

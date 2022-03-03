@@ -85,6 +85,7 @@ constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
 constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
 constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
+constexpr auto kNonZero = "NonZero";
 constexpr auto kMaxPoolV1 = "MaxPoolV1";
 constexpr auto kMaxPoolGradV1 = "MaxPoolGradV1";
 constexpr auto kAvgPoolV1 = "AvgPoolV1";
@@ -114,6 +115,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kGather, "GatherV2"},
   {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"},
   {kAvgPoolV1, "AvgPool"},
+  {kNonZero, "Where"},
   {kAvgPoolGradV1, "AvgPoolGrad"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
