@@ -109,6 +109,15 @@ class AdamApplyOneWithDecayRuleCond5 : public AdamApplyOneWithDecayRule {
   const BaseRef DefinePattern() const override;
 };
 
+class AdamApplyOneWithDecayRuleCond6 : public AdamApplyOneWithDecayRule {
+ public:
+  explicit AdamApplyOneWithDecayRuleCond6(bool multigraph = true)
+      : AdamApplyOneWithDecayRule("adam_apply_one_with_decay_rule_cond6", multigraph) {}
+
+  ~AdamApplyOneWithDecayRuleCond6() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
 class AdamApplyOneWithDecayAssignRuleCond1 : public AdamApplyOneWithDecayRule {
  public:
   explicit AdamApplyOneWithDecayAssignRuleCond1(bool multigraph = true)

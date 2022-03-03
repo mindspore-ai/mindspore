@@ -1838,7 +1838,7 @@ RangePair ShapeRangeTransfer::FRAC_NZRange(const RangePair &ori_range, const Typ
   auto cube = GetCubeSizeByType(type);
   auto ori_size = ori_range.size();
   if (ori_size < kDims2) {
-    MS_LOG(EXCEPTION) << "Format FracNZ can not support range size: " << ori_size;
+    return ori_range;
   } else {
     (void)std::copy(ori_range.begin(), ori_range.end() - kDims2, std::back_inserter(dst_range));
   }

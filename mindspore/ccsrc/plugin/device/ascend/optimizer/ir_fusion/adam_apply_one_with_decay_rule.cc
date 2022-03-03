@@ -145,6 +145,26 @@ const BaseRef AdamApplyOneWithDecayRuleCond5::DefinePattern() const {
   return sub0;
 }
 
+const BaseRef AdamApplyOneWithDecayRuleCond6::DefinePattern() const {
+  auto sqrt = std::make_shared<Primitive>(kSqrtOpName);
+  auto real_div = std::make_shared<Primitive>(kRealDivOpName);
+  VectorRef mul0({prim::kPrimMul, mul0_x_, input2_});
+  VectorRef mul1({prim::kPrimMul, mul1_x_, input0_});
+  VectorRef square0({prim::kPrimSquare, input0_});
+  VectorRef add0({add0_var_, mul0, mul1});
+  VectorRef mul2({prim::kPrimMul, mul2_x_, input1_});
+  VectorRef mul3({prim::kPrimMul, mul3_x_, square0});
+  VectorRef add1({add1_var_, mul2, mul3});
+  VectorRef sqrt0({sqrt, add1});
+  VectorRef add2({prim::kPrimAdd, add2_y_, sqrt0});
+  VectorRef mul4({prim::kPrimMul, mul4_x_, input3_});
+  VectorRef real_div0({real_div, add0, add2});
+  VectorRef add3({prim::kPrimAdd, mul4, real_div0});
+  VectorRef mul5({prim::kPrimMul, input4_, add3});
+  VectorRef sub0({prim::kPrimSub, input3_, mul5});
+  return sub0;
+}
+
 const BaseRef AdamApplyOneWithDecayAssignRuleCond1::DefinePattern() const {
   auto sqrt = std::make_shared<Primitive>(kSqrtOpName);
   auto real_div = std::make_shared<Primitive>(kRealDivOpName);
