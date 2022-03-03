@@ -1843,6 +1843,7 @@ void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *c
 
   for (const auto &backend_to_front : graph->graph_output_map()) {
     if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first) ||
+        backend_to_front.first.first->isa<Parameter>() ||
         common::AnfAlgo::CheckPrimitiveType(backend_to_front.second.first, prim::kPrimPartial) ||
         backend_to_front.second.first->isa<ValueNode>()) {
       continue;
