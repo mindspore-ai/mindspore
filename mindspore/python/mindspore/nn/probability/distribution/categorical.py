@@ -432,7 +432,7 @@ class Categorical(Distribution):
         sample_tensor = self.fill(self.dtype, shape, 1.0)
         sample_tensor = self.reshape(sample_tensor, (-1, 1))
         num_sample = self.shape(sample_tensor)[0]
-        samples = self.multinomial(probs_2d, num_sample)
+        samples = C.multinomial(probs_2d, num_sample, seed=self.seed)
         samples = self.squeeze(self.transpose(samples, (1, 0)))
         samples = self.cast(self.reshape(samples, sample_shape), self.dtype)
         if drop_dim:
