@@ -218,6 +218,7 @@ class CostModelSplitSchemer : public SplitSchemer {
     flag_json["dump_as_text"] = flags.dump_as_text;
     flag_json["enable_stitch_fusion"] = flags.enable_stitch_fusion;
     flag_json["enable_recompute_fusion"] = flags.enable_recompute_fusion;
+    flag_json["enable_horizontal_fusion"] = flags.enable_horizontal_fusion;
     return flag_json.dump();
   }
 

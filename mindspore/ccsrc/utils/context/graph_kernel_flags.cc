@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,6 +250,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion, opt_level == OptLevel_3);
   reg.AddFlag("enable_recompute_fusion", &enable_recompute_fusion, opt_level >= OptLevel_2);
   reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion, opt_level == OptLevel_3);
+  reg.AddFlag("enable_horizontal_fusion", &enable_horizontal_fusion, false);
   reg.AddFlag("enable_low_precision", &enable_low_precision);
   reg.AddFlag("enable_trans_op_optimize", &enable_trans_op_optimize);
 
@@ -283,6 +284,7 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_stitch_fusion"] = enable_stitch_fusion;
   json["enable_recompute_fusion"] = enable_recompute_fusion;
   json["enable_parallel_fusion"] = enable_parallel_fusion;
+  json["enable_horizontal_fusion"] = enable_horizontal_fusion;
   json["enable_low_precision"] = enable_low_precision;
   json["enable_trans_op_optimize"] = enable_trans_op_optimize;
 

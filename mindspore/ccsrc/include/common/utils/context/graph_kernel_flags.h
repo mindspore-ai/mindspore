@@ -80,6 +80,11 @@ class COMMON_EXPORT GraphKernelFlags {
   bool enable_parallel_fusion{false};
 
   /**
+   * Enable horizontal fusion in graph kernel fusion strategy, default is false.
+   */
+  bool enable_horizontal_fusion{false};
+
+  /**
    * Parallel AKG's operators by level.
    * 0: Parallel operators by local data relation analyzation with less memory influence.
    * 1: Parallel operators with global analyzation with more memory influence.
