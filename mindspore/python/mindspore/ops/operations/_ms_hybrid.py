@@ -140,7 +140,6 @@ INTRIN_UNARY_OP = {
     'sign': numpy.sign,
     'log': numpy.log,
     'tanh': numpy.tanh,
-    'power': numpy.power,
     'exp': numpy.exp,
     'abs': numpy.abs,
     'int32': numpy.int32,
@@ -148,11 +147,16 @@ INTRIN_UNARY_OP = {
     'float32': numpy.float32,
 }
 
+INTRIN_BINARY_OP = {
+    'power': numpy.power,
+}
+
 INTRIN_GLOBALS = {
     **INTRIN_BUFFER,
     **INTRIN_LOOP,
     **INTRIN_WITH_SCOPE,
     **INTRIN_UNARY_OP,
+    **INTRIN_BINARY_OP,
 }
 
 INTRIN_GPU_UNARY_OP = {
@@ -287,7 +291,8 @@ class VariableUsage(ast.NodeVisitor):
             raise TypeError(
                 "In the function {} written in the Hybrid DSL, function {} "
                 "expects one input, but get {}".format(self.func_name, func_id, len(node.args)))
-        if func_id in list(INTRIN_GPU_BINARY_OP.keys()) + list(INTRIN_BUFFER.keys()) and len(node.args) != 2:
+        if func_id in list(INTRIN_BINARY_OP.keys()) + list(INTRIN_GPU_BINARY_OP.keys()) + \
+                list(INTRIN_BUFFER.keys()) and len(node.args) != 2:
             raise TypeError(
                 "In the function {} written in the Hybrid DSL, function {} "
                 "expects two inputs, but get {}".format(self.func_name, func_id, len(node.args)))
@@ -503,8 +508,8 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
         ...    .target("GPU") \
         ...    .get_op_info()
         >>> # Create inputs for the custom op.
-        >>> input_x = Tensor(np.ones([4, 4]).astype(np.float32))
-        >>> input_y = Tensor(np.ones([4, 4]).astype(np.float32))
+        >>> input_x = np.ones([4, 4]).astype(np.float32)
+        >>> input_y = np.ones([4, 4]).astype(np.float32)
         ...
         >>> # Write a Hybrid DSL function through the decorator @ms_hybrid.
         >>> # We can also pass the compile attrs and the reg info through the decorator.
@@ -520,10 +525,15 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
         ...                     c[i0, i1] = c[i0, i1] + (a[i0, i2] * b[i2, i1])
         ...     return c
         ...
+        >>> # We can use the function directly as a python function.
+        >>> # In this case, the inputs should be numpy arrays.
+        >>> result = outer_product(input_x, input_y)
+        ...
         >>> # Create a custom op with mode "hybrid" (default value) by the Hybrid DSL function.
         >>> # In this case, we will enjoy the automatic dtype/shape infer for free.
+        >>> # The inputs should be mindspore tensors.
         >>> test_op_hybrid = ops.Custom(outer_product)
-        >>> output = test_op_akg(input_x, input_y)
+        >>> output = test_op_akg(Tensor(input_x), Tensor(input_y))
     """
     if compile_attrs is None:
         compile_attrs = {}

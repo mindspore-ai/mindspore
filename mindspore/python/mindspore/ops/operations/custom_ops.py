@@ -112,7 +112,7 @@ class Custom(ops.PrimitiveWithInfer):
 
                        Custom(func="{dir_path}/{file_name}:{func_name}",...)
                        (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_dtype=mstype.float32,
-                       "aot")
+                       "aot"))
 
               2. for "julia":
 
@@ -129,7 +129,7 @@ class Custom(ops.PrimitiveWithInfer):
                    .. code-block::
 
                        Custom(func="{dir_path}/{file_name}:{module_name}:{func_name}",...)
-                       (ex. Custom(func="./add.jl:Add:add", out_shape=[1], out_dtype=mstype.float32, "julia")
+                       (ex. Custom(func="./add.jl:Add:add", out_shape=[1], out_dtype=mstype.float32, "julia"))
 
         out_shape (Union[function, list, tuple]): The output shape infer function or the value of output shape of
             `func`. Default: None.
@@ -225,9 +225,11 @@ class Custom(ops.PrimitiveWithInfer):
         ...                 c[i0, i1] = c[i0, i1] + (a[i0, i2] * b[i2, i1])
         ...     return c
         >>>
-        >>> test_op_hybrid = ops.Custom(outer_product)
+        >>> test_op_hybrid = ops.Custom(outer_product_script)
         >>> output = test_op_hybrid(input_x, input_y)
-        >>>
+        >>> # the result will be a 16 * 16 tensor with all elements 16
+        >>> print(output.shape)
+        (16, 16)
         >>> # Example, func_type = "akg"
         >>> def outer_product(a_1, b_1):
         ...     d = output_tensor(a_1.shape, a_1.dtype)
@@ -420,14 +422,14 @@ class Custom(ops.PrimitiveWithInfer):
         elif self.func_type == "hybrid":
             if not hasattr(self.func, "ms_hybrid_flag"):
                 raise TypeError(
-                    "To use the mode ms_hybrid, the input func should a function decorated by ms_hybrid")
+                    "To use the mode hybrid, the input func should a function decorated by ms_hybrid")
             self._is_ms_hybrid = True
             self._func_compile_attrs = getattr(self.func, "compile_attrs", {})
         elif self.func_type == "akg":
             if hasattr(self.func, "ms_hybrid_flag"):
-                logger.warning("To have a better user experience, the mode ms_hybrid is suggested "
+                logger.warning("To have a better user experience, the mode hybrid is suggested "
                                "for the input function with decorator @ms_hybrid"
-                               "To enable this mode, set the func_type to be \"ms_hybrid\"")
+                               "To enable this mode, set the func_type to be \"hybrid\"")
         elif self.func_type == "pyfunc":
             if hasattr(self.func, "ms_hybrid_flag"):
                 logger.warning("Now you are using the function with decorator @ms_hybrid in the mode pyfunc"
@@ -782,7 +784,10 @@ class Custom(ops.PrimitiveWithInfer):
 
         # deal with the case of ms script
         # enable auto infer function if any infer information is missing
-        if self._is_ms_hybrid:
+        if self._is_ms_hybrid and (infer_dtype is None or infer_shape is None):
+            logger.warning("Now Custom Op is inferring the shape and dtype automatically. "
+                           "There might be some Python RuntimeWarning but it wouldn't influence the result.")
+
             fake_output, enable_infer_value = self._auto_infer(*args)
 
             # use automatically inferred shape/dtype if the input infer values are null
