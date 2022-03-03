@@ -343,4 +343,32 @@ int GenerateRandomData(mindspore::tensor::MSTensor *tensor) {
   }
   return RET_OK;
 }
+
+int GenerateRandomData(mindspore::MSTensor *tensor) {
+  MS_ASSERT(tensor != nullptr);
+  auto input_data = tensor->MutableData();
+  if (input_data == nullptr) {
+    MS_LOG(ERROR) << "MallocData for inTensor failed";
+    return RET_ERROR;
+  }
+  int status = RET_ERROR;
+  if (static_cast<TypeId>(tensor->DataType()) == kObjectTypeString) {
+    MSTensor *input = MSTensor::StringsToTensor(tensor->Name(), {"you're the best."});
+    if (input == nullptr) {
+      std::cerr << "StringsToTensor failed" << std::endl;
+      MS_LOG(ERROR) << "StringsToTensor failed";
+      return RET_ERROR;
+    }
+    *tensor = *input;
+    delete input;
+  } else {
+    status = GenerateRandomData(tensor->DataSize(), input_data, static_cast<int>(tensor->DataType()));
+  }
+  if (status != RET_OK) {
+    std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
+    MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
+    return status;
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::lite

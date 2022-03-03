@@ -131,6 +131,14 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
 
+if(MSLITE_ENABLE_MODEL_ENCRYPTION)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/decrypt.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
+            )
+endif()
+
 if(MSLITE_ENABLE_SERVER_INFERENCE)
 set(LITE_SRC
         ${LITE_SRC}
@@ -272,8 +280,7 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/opt_allocator.cc
-        ${TOOLS_DIR}/common/storage.cc
-        ${TOOLS_DIR}/common/meta_graph_serializer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/storage.cc
         ${TOOLS_DIR}/converter/optimizer.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pass.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pattern.cc

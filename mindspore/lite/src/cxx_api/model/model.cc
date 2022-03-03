@@ -30,16 +30,74 @@
 #include "src/cxx_api/callback/callback_adapter.h"
 #include "src/cxx_api/callback/callback_impl.h"
 #include "src/cxx_api/model/model_impl.h"
+#ifdef ENABLE_OPENSSL
+#include "src/common/decrypt.h"
+#include "src/common/file_utils.h"
+#endif
 
 namespace mindspore {
 std::mutex g_impl_init_lock;
+#ifdef ENABLE_OPENSSL
+Status DecryptModel(const std::string &cropto_lib_path, const void *model_buf, size_t model_size, const Key &dec_key,
+                    const std::string &dec_mode, std::unique_ptr<Byte[]> *decrypt_buffer, size_t *decrypt_len) {
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "model_buf is nullptr.";
+    return kLiteError;
+  }
+  *decrypt_len = 0;
+  *decrypt_buffer = lite::Decrypt(cropto_lib_path, decrypt_len, reinterpret_cast<const Byte *>(model_buf), model_size,
+                                  dec_key.key, dec_key.len, dec_mode);
+  if (*decrypt_buffer == nullptr || *decrypt_len == 0) {
+    MS_LOG(ERROR) << "Decrypt buffer failed";
+    return kLiteError;
+  }
+  return kSuccess;
+}
+#endif
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
-                    const std::shared_ptr<Context> &model_context, const Key &dec_key,
-                    const std::vector<char> &dec_mode) {
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
+                    const std::string &cropto_lib_path) {
+#ifdef ENABLE_OPENSSL
   if (impl_ == nullptr) {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+    impl_ = std::make_shared<ModelImpl>();
+    if (impl_ == nullptr) {
+      MS_LOG(ERROR) << "Model implement is null.";
+      return kLiteFileError;
+    }
+  }
+  if (dec_key.len > 0) {
+    std::unique_ptr<Byte[]> decrypt_buffer;
+    size_t decrypt_len = 0;
+    Status ret = DecryptModel(cropto_lib_path, model_data, data_size, dec_key, dec_mode, &decrypt_buffer, &decrypt_len);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Decrypt model failed.";
+      return ret;
+    }
+    ret = impl_->Build(decrypt_buffer.get(), decrypt_len, model_type, model_context);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Build model failed.";
+      return ret;
+    }
+  } else {
+    Status ret = impl_->Build(model_data, data_size, model_type, model_context);
+    if (ret != kSuccess) {
+      return ret;
+    }
+  }
+  return kSuccess;
+#else
+  MS_LOG(ERROR) << "The lib is not support Decrypt Model.";
+  return kLiteError;
+#endif
+}
+
+Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
+                    const std::shared_ptr<Context> &model_context) {
+  if (impl_ == nullptr) {
+    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
+    impl_ = std::make_shared<ModelImpl>();
     if (impl_ == nullptr) {
       MS_LOG(ERROR) << "Model implement is null.";
       return kLiteFileError;
@@ -54,11 +112,59 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 }
 
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
-                    const std::shared_ptr<Context> &model_context, const Key &dec_key,
-                    const std::vector<char> &dec_mode) {
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
+                    const std::vector<char> &cropto_lib_path) {
+#ifdef ENABLE_OPENSSL
   if (impl_ == nullptr) {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+    impl_ = std::make_shared<ModelImpl>();
+    if (impl_ == nullptr) {
+      MS_LOG(ERROR) << "Model implement is null.";
+      return kLiteFileError;
+    }
+  }
+  if (dec_key.len > 0) {
+    size_t model_size;
+    auto model_buf = lite::ReadFile(model_path.data(), &model_size);
+    if (model_buf == nullptr) {
+      MS_LOG(ERROR) << "Read model file failed";
+      return kLiteError;
+    }
+    std::unique_ptr<Byte[]> decrypt_buffer;
+    size_t decrypt_len = 0;
+    Status ret = DecryptModel(CharToString(cropto_lib_path), model_buf, model_size, dec_key, dec_mode, &decrypt_buffer,
+                              &decrypt_len);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Decrypt model failed.";
+      delete[] model_buf;
+      return ret;
+    }
+    ret = impl_->Build(decrypt_buffer.get(), decrypt_len, model_type, model_context);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Build model failed.";
+      delete[] model_buf;
+      return ret;
+    }
+    delete[] model_buf;
+  } else {
+    Status ret = impl_->Build(CharToString(model_path), model_type, model_context);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Build model failed.";
+      return ret;
+    }
+  }
+  return kSuccess;
+#else
+  MS_LOG(ERROR) << "The lib is not support Decrypt Model.";
+  return kLiteError;
+#endif
+}
+
+Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
+                    const std::shared_ptr<Context> &model_context) {
+  if (impl_ == nullptr) {
+    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
+    impl_ = std::make_shared<ModelImpl>();
     if (impl_ == nullptr) {
       MS_LOG(ERROR) << "Model implement is null.";
       return kLiteFileError;
@@ -77,7 +183,7 @@ Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_conte
   std::stringstream err_msg;
   if (impl_ == nullptr) {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+    impl_ = std::make_shared<ModelImpl>();
     if (impl_ == nullptr) {
       MS_LOG(ERROR) << "Model implement is null.";
       return kLiteFileError;
@@ -258,7 +364,7 @@ Status Model::LoadConfig(const std::vector<char> &config_path) {
     return Status(kLiteFileError, "Illegal operation.");
   }
 
-  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return Status(kLiteFileError, "Fail to load config file.");
@@ -276,7 +382,7 @@ Status Model::UpdateConfig(const std::vector<char> &section,
                            const std::pair<std::vector<char>, std::vector<char>> &config) {
   std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
   if (impl_ == nullptr) {
-    impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+    impl_ = std::make_shared<ModelImpl>();
   }
   if (impl_ != nullptr) {
     return impl_->UpdateConfig(CharToString(section), {CharToString(config.first), CharToString(config.second)});
@@ -388,5 +494,4 @@ float Model::GetLearningRate() {
   }
   return impl_->GetLearningRate();
 }
-
 }  // namespace mindspore

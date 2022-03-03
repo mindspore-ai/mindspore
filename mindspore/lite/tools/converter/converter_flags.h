@@ -40,6 +40,7 @@ constexpr auto kMaxSplitRatio = 10;
 constexpr auto kComputeRate = "computeRate";
 constexpr auto kSplitDevice0 = "device0";
 constexpr auto kSplitDevice1 = "device1";
+constexpr size_t kEncMaxLen = 16;
 struct ParallelSplitConfig {
   ParallelSplitType parallel_split_type_ = SplitNo;
   std::vector<int64_t> parallel_compute_rates_;
@@ -50,7 +51,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
  public:
   Flags();
 
-  ~Flags() override = default;
+  ~Flags() override;
 
   int InitInputOutputDataType();
 
@@ -66,7 +67,15 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int InitExtendedIntegrationInfo(const lite::ConfigFileParser &config_file_parser);
 
+  int InitEncrypt();
+
+  int InitPreInference();
+
+  int InitSaveFP16();
+
   int Init(int argc, const char **argv);
+
+  int PreInit(int argc, const char **argv);
 
   std::string modelFile;
   std::string outputFile;
@@ -91,7 +100,19 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string graphInputFormatStr;
   std::string device;
   mindspore::Format graphInputFormat = mindspore::NHWC;
-  bool enable_micro = false;
+  std::string encKeyStr;
+  std::string encMode = "AES-GCM";
+  std::string inferStr;
+#ifdef ENABLE_OPENSSL
+  std::string encryptionStr = "true";
+  bool encryption = true;
+#else
+  std::string encryptionStr = "false";
+  bool encryption = false;
+#endif
+  bool infer = false;
+  unsigned char encKey[kEncMaxLen];
+  size_t keyLen = 0;
 
   lite::quant::CommonQuantParam commonQuantParam;
   lite::quant::MixedBitWeightQuantParam mixedBitWeightQuantParam;

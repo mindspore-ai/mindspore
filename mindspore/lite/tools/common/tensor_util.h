@@ -78,6 +78,8 @@ std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schem
 
 int GenerateRandomData(mindspore::tensor::MSTensor *tensors);
 
+int GenerateRandomData(mindspore::MSTensor *tensors);
+
 int GenerateRandomData(size_t size, void *data, int data_type);
 
 template <typename T, typename Distribution>

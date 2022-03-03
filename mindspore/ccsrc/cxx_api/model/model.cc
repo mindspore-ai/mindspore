@@ -52,14 +52,13 @@ Status Model::Build(GraphCell graph_cell, const std::shared_ptr<Context> &model_
   return impl_->Build();
 }
 
-Status Model::Build(const void *, size_t, ModelType, const std::shared_ptr<Context> &, const Key &,
-                    const std::vector<char> &) {
+Status Model::Build(const std::vector<char> &, ModelType, const std::shared_ptr<Context> &, const Key &,
+                    const std::string &, const std::vector<char> &) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kMCFailed;
 }
 
-Status Model::Build(const std::vector<char> &, ModelType, const std::shared_ptr<Context> &, const Key &,
-                    const std::vector<char> &) {
+Status Model::Build(const std::vector<char> &, ModelType, const std::shared_ptr<Context> &) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kMCFailed;
 }

@@ -173,7 +173,7 @@ class MS_API Model {
   /// \return Status of operation
   Status UpdateFeatureMaps(const std::vector<MSTensor> &new_weights);
 
-    /// \brief Obtains optimizer params tensors of the model.
+  /// \brief Obtains optimizer params tensors of the model.
   ///
   /// \return The vector that includes all params tensors.
   std::vector<MSTensor> GetOptimizerParams() const;
@@ -256,17 +256,14 @@ class MS_API Model {
   /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
   ///
   /// \param[in] model_data Define the buffer read from a model file.
-  /// \param[in] size Define bytes number of model buffer.
+  /// \param[in] data_size Define bytes number of model buffer.
   /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
   /// ModelType::kMindIR is valid for Lite.
   /// \param[in] model_context Define the context used to store options during execution.
-  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16, 24, or 32.
-  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM, AES-CBC.
   ///
   /// \return Status.
-  inline Status Build(const void *model_data, size_t data_size, ModelType model_type,
-                      const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
-                      const std::string &dec_mode = kDecModeAesGcm);
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context = nullptr);
 
   /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
   ///
@@ -274,13 +271,40 @@ class MS_API Model {
   /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
   /// ModelType::kMindIR is valid for Lite.
   /// \param[in] model_context Define the context used to store options during execution.
-  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16, 24, or 32.
-  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM, AES-CBC.
   ///
   /// \return Status.
-  inline Status Build(const std::string &model_path, ModelType model_type,
-                      const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
-                      const std::string &dec_mode = kDecModeAesGcm);
+  Status Build(const std::string &model_path, ModelType model_type,
+               const std::shared_ptr<Context> &model_context = nullptr);
+
+  /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
+  ///
+  /// \param[in] model_data Define the buffer read from a model file.
+  /// \param[in] data_size Define bytes number of model buffer.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
+  /// ModelType::kMindIR is valid for Lite.
+  /// \param[in] model_context Define the context used to store options during execution.
+  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16.
+  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM.
+  /// \param[in] cropto_lib_path Define the openssl library path.
+  ///
+  /// \return Status.
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
+               const std::string &cropto_lib_path);
+
+  /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
+  ///
+  /// \param[in] model_path Define the model path.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
+  /// ModelType::kMindIR is valid for Lite.
+  /// \param[in] model_context Define the context used to store options during execution.
+  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16.
+  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM.
+  /// \param[in] cropto_lib_path Define the openssl library path.
+  ///
+  /// \return Status.
+  Status Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
+               const Key &dec_key, const std::string &dec_mode, const std::string &cropto_lib_path);
 
  private:
   friend class Serialization;
@@ -291,11 +315,10 @@ class MS_API Model {
   std::vector<MSTensor> GetOutputsByNodeName(const std::vector<char> &node_name);
   Status LoadConfig(const std::vector<char> &config_path);
   Status UpdateConfig(const std::vector<char> &section, const std::pair<std::vector<char>, std::vector<char>> &config);
-  Status Build(const void *model_data, size_t data_size, ModelType model_type,
-               const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::vector<char> &dec_mode);
+  Status Build(const std::vector<char> &model_path, ModelType model_type,
+               const std::shared_ptr<Context> &model_context);
   Status Build(const std::vector<char> &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
-               const Key &dec_key, const std::vector<char> &dec_mode);
-
+               const Key &dec_key, const std::string &dec_mode, const std::vector<char> &cropto_lib_path);
   std::shared_ptr<ModelImpl> impl_;
 };
 
@@ -321,14 +344,15 @@ Status Model::UpdateConfig(const std::string &section, const std::pair<std::stri
   return UpdateConfig(StringToChar(section), config_pair);
 }
 
-Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
-                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode) {
-  return Build(model_data, data_size, model_type, model_context, dec_key, StringToChar(dec_mode));
+inline Status Model::Build(const std::string &model_path, ModelType model_type,
+                           const std::shared_ptr<Context> &model_context, const Key &dec_key,
+                           const std::string &dec_mode, const std::string &cropto_lib_path) {
+  return Build(StringToChar(model_path), model_type, model_context, dec_key, dec_mode, StringToChar(cropto_lib_path));
 }
 
-Status Model::Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
-                    const Key &dec_key, const std::string &dec_mode) {
-  return Build(StringToChar(model_path), model_type, model_context, dec_key, StringToChar(dec_mode));
+inline Status Model::Build(const std::string &model_path, ModelType model_type,
+                           const std::shared_ptr<Context> &model_context) {
+  return Build(StringToChar(model_path), model_type, model_context);
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

@@ -58,19 +58,19 @@ public class Model {
     /**
      * Build model.
      *
-     * @param buffer    model buffer.
-     * @param modelType model type.
-     * @param context   model build context.
-     * @param dec_key   define the key used to decrypt the ciphertext model. The key length is 16, 24, or 32.
-     * @param dec_mode  define the decryption mode. Options: AES-GCM, AES-CBC.
+     * @param buffer          model buffer.
+     * @param modelType       model type.
+     * @param context         model build context.
+     * @param dec_key         define the key used to decrypt the ciphertext model. The key length is 16.
+     * @param dec_mode        define the decryption mode. Options: AES-GCM.
+     * @param cropto_lib_path define the openssl library path.
      * @return model build status.
      */
-    public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context, char[] dec_key,
-                         String dec_mode) {
+    public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context, char[] dec_key, String dec_mode, String cropto_lib_path) {
         if (context == null || buffer == null || dec_key == null || dec_mode == null) {
             return false;
         }
-        modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), dec_key, dec_mode);
+        modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), dec_key, dec_mode, cropto_lib_path);
         return modelPtr != 0;
     }
 
@@ -86,7 +86,7 @@ public class Model {
         if (context == null || buffer == null) {
             return false;
         }
-        modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), null, "");
+        modelPtr = this.buildByBuffer(buffer, modelType, context.getMSContextPtr(), null, "", "");
         return modelPtr != 0;
     }
 
@@ -94,18 +94,19 @@ public class Model {
     /**
      * Build model.
      *
-     * @param modelPath model path.
-     * @param modelType model type.
-     * @param context   model build context.
-     * @param dec_key   define the key used to decrypt the ciphertext model. The key length is 16, 24, or 32.
-     * @param dec_mode  define the decryption mode. Options: AES-GCM, AES-CBC.
+     * @param modelPath       model path.
+     * @param modelType       model type.
+     * @param context         model build context.
+     * @param dec_key         define the key used to decrypt the ciphertext model. The key length is 16.
+     * @param dec_mode        define the decryption mode. Options: AES-GCM.
+     * @param cropto_lib_path define the openssl library path.
      * @return model build status.
      */
-    public boolean build(String modelPath, int modelType, MSContext context, char[] dec_key, String dec_mode) {
+    public boolean build(String modelPath, int modelType, MSContext context, char[] dec_key, String dec_mode, String cropto_lib_path) {
         if (context == null || modelPath == null || dec_key == null || dec_mode == null) {
             return false;
         }
-        modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), dec_key, dec_mode);
+        modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), dec_key, dec_mode, cropto_lib_path);
         return modelPtr != 0;
     }
 
@@ -121,7 +122,7 @@ public class Model {
         if (context == null || modelPath == null) {
             return false;
         }
-        modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), null, "");
+        modelPtr = this.buildByPath(modelPath, modelType, context.getMSContextPtr(), null, "", "");
         return modelPtr != 0;
     }
 
@@ -256,8 +257,7 @@ public class Model {
      * @param outputTensorNames tensor name used for export inference graph.
      * @return Whether the export is successful.
      */
-    public boolean export(String fileName, int quantizationType, boolean isOnlyExportInfer,
-                          List<String> outputTensorNames) {
+    public boolean export(String fileName, int quantizationType, boolean isOnlyExportInfer, List<String> outputTensorNames) {
         if (fileName == null) {
             return false;
         }
@@ -355,10 +355,11 @@ public class Model {
 
     private native long buildByGraph(long graphPtr, long contextPtr, long cfgPtr);
 
-    private native long buildByPath(String modelPath, int modelType, long contextPtr, char[] dec_key, String dec_mod);
+    private native long buildByPath(String modelPath, int modelType, long contextPtr,
+                                    char[] dec_key, String dec_mod, String cropto_lib_path);
 
-    private native long buildByBuffer(MappedByteBuffer buffer, int modelType, long contextPtr, char[] dec_key,
-                                      String dec_mod);
+    private native long buildByBuffer(MappedByteBuffer buffer, int modelType, long contextPtr,
+                                      char[] dec_key, String dec_mod, String cropto_lib_path);
 
     private native List<Long> getInputs(long modelPtr);
 
@@ -380,8 +381,7 @@ public class Model {
 
     private native boolean resize(long modelPtr, long[] inputs, int[][] dims);
 
-    private native boolean export(long modelPtr, String fileName, int quantizationType, boolean isOnlyExportInfer,
-                                  String[] outputTensorNames);
+    private native boolean export(long modelPtr, String fileName, int quantizationType, boolean isOnlyExportInfer, String[] outputTensorNames);
 
     private native List<Long> getFeatureMaps(long modelPtr);
 
@@ -389,6 +389,5 @@ public class Model {
 
     private native boolean setLearningRate(long modelPtr, float learning_rate);
 
-    private native boolean setupVirtualBatch(long modelPtr, int virtualBatchMultiplier, float learningRate,
-                                             float momentum);
+    private native boolean setupVirtualBatch(long modelPtr, int virtualBatchMultiplier, float learningRate, float momentum);
 }

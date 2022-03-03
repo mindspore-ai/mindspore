@@ -206,7 +206,8 @@ bool MetaGraphSerializer::ExtraAndSerializeModelWeight(const schema::MetaGraphT 
   return true;
 }
 
-bool MetaGraphSerializer::SerializeModelAndUpdateWeight(const schema::MetaGraphT &meta_graphT) {
+bool MetaGraphSerializer::SerializeModelAndUpdateWeight(const schema::MetaGraphT &meta_graphT, const Byte *key,
+                                                        const size_t key_len, const std::string &enc_mode) {
   // serialize model
   flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
   auto offset = schema::MetaGraph::Pack(builder, &meta_graphT);
@@ -214,7 +215,7 @@ bool MetaGraphSerializer::SerializeModelAndUpdateWeight(const schema::MetaGraphT
   schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
   auto content = builder.GetBufferPointer();
-  if (!SerializeModel(content, size)) {
+  if (!SerializeModel(content, size, key, key_len, enc_mode)) {
     MS_LOG(ERROR) << "Serialize graph failed";
     return false;
   }
@@ -238,7 +239,8 @@ bool MetaGraphSerializer::SerializeModelAndUpdateWeight(const schema::MetaGraphT
   return true;
 }
 
-int MetaGraphSerializer::Save(const schema::MetaGraphT &graph, const std::string &output_path) {
+int MetaGraphSerializer::Save(const schema::MetaGraphT &graph, const std::string &output_path, const Byte *key,
+                              const size_t key_len, const std::string &enc_mode) {
   flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
   auto offset = schema::MetaGraph::Pack(builder, &graph);
   builder.Finish(offset);
@@ -255,7 +257,7 @@ int MetaGraphSerializer::Save(const schema::MetaGraphT &graph, const std::string
     return RET_ERROR;
   }
   if (save_together) {
-    if (!meta_graph_serializer.SerializeModel(builder.GetBufferPointer(), size)) {
+    if (!meta_graph_serializer.SerializeModel(builder.GetBufferPointer(), size, key, key_len, enc_mode)) {
       MS_LOG(ERROR) << "Serialize graph failed";
       return RET_ERROR;
     }
@@ -264,7 +266,7 @@ int MetaGraphSerializer::Save(const schema::MetaGraphT &graph, const std::string
       MS_LOG(ERROR) << "Serialize graph weight failed";
       return RET_ERROR;
     }
-    if (!meta_graph_serializer.SerializeModelAndUpdateWeight(graph)) {
+    if (!meta_graph_serializer.SerializeModelAndUpdateWeight(graph, key, key_len, enc_mode)) {
       MS_LOG(ERROR) << "Serialize graph and adjust weight failed";
       return RET_ERROR;
     }
@@ -283,14 +285,25 @@ MetaGraphSerializer::~MetaGraphSerializer() {
   }
 }
 
-bool MetaGraphSerializer::SerializeModel(const void *content, size_t size) {
+bool MetaGraphSerializer::SerializeModel(const void *content, size_t size, const Byte *key, const size_t key_len,
+                                         const std::string &enc_mode) {
   MS_ASSERT(model_fs_ != nullptr);
   if (size == 0 || content == nullptr) {
     MS_LOG(ERROR) << "Input meta graph buffer is nullptr";
     return false;
   }
-
-  model_fs_->write((const char *)content, static_cast<int64_t>(size));
+  if (key_len > 0) {
+    size_t encrypt_len;
+    auto encrypt_content = Encrypt(&encrypt_len, reinterpret_cast<const Byte *>(content), size, key, key_len, enc_mode);
+    if (encrypt_content == nullptr || encrypt_len == 0) {
+      MS_LOG(ERROR) << "Encrypt failed.";
+      model_fs_->close();
+      return RET_ERROR;
+    }
+    model_fs_->write(reinterpret_cast<const char *>(encrypt_content.get()), encrypt_len);
+  } else {
+    model_fs_->write((const char *)content, static_cast<int64_t>(size));
+  }
   if (model_fs_->bad()) {
     MS_LOG(ERROR) << "Write model file failed: " << save_model_path_;
     return RET_ERROR;

@@ -83,6 +83,20 @@ Flags::Flags() {
           "");
   AddFlag(&Flags::graphInputFormatStr, "inputDataFormat",
           "Assign the input format of exported model. Only Valid for 4-dimensional input. NHWC | NCHW", "NHWC");
+#ifdef ENABLE_OPENSSL
+  AddFlag(&Flags::encryptionStr, "encryption",
+          "Whether to export the encryption model."
+          "true | false",
+          "true");
+  AddFlag(&Flags::encKeyStr, "encryptKey",
+          "The key used to encrypt the file, expressed in hexadecimal characters. Only support AES-GCM and the key "
+          "length is 16.",
+          "");
+#endif
+  AddFlag(&Flags::inferStr, "infer",
+          "Whether to do pre-inference after convert."
+          "true | false",
+          "false");
 }
 
 int Flags::InitInputOutputDataType() {
@@ -310,8 +324,56 @@ int Flags::InitConfigFile() {
   return RET_OK;
 }
 
-int Flags::Init(int argc, const char **argv) {
-  int ret;
+int Flags::InitSaveFP16() {
+  if (saveFP16Str == "on") {
+    saveFP16 = true;
+  } else if (saveFP16Str == "off") {
+    saveFP16 = false;
+  } else {
+    std::cerr << "Init save_fp16 failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int Flags::InitPreInference() {
+  if (this->inferStr == "true") {
+    this->infer = true;
+  } else if (this->inferStr == "false") {
+    this->infer = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL: infer must be true|false " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int Flags::InitEncrypt() {
+  if (this->encryptionStr == "true") {
+    this->encryption = true;
+  } else if (this->encryptionStr == "false") {
+    this->encryption = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL: encryption must be true|false " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (this->encryption) {
+    if (encKeyStr.empty()) {
+      MS_LOG(ERROR) << "If you don't need to use model encryption, please set --encryption=false.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    keyLen = lite::Hex2ByteArray(encKeyStr, encKey, kEncMaxLen);
+    if (keyLen != kEncMaxLen) {
+      MS_LOG(ERROR) << "enc_key " << encKeyStr << " must expressed in hexadecimal characters "
+                    << " and only support AES-GCM method and the key length is 16.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    encKeyStr.clear();
+  }
+  return RET_OK;
+}
+
+int Flags::PreInit(int argc, const char **argv) {
   if (argc == 1) {
     std::cout << this->Usage() << std::endl;
     return lite::RET_SUCCESS_EXIT;
@@ -353,19 +415,23 @@ int Flags::Init(int argc, const char **argv) {
   }
 
   if (!this->configFile.empty()) {
-    ret = InitConfigFile();
+    auto ret = InitConfigFile();
     if (ret != RET_OK) {
       std::cerr << "Init config file failed." << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }
   }
+  return RET_OK;
+}
 
-  if (saveFP16Str == "on") {
-    saveFP16 = true;
-  } else if (saveFP16Str == "off") {
-    saveFP16 = false;
-  } else {
-    std::cerr << "Init save_fp16 failed." << std::endl;
+int Flags::Init(int argc, const char **argv) {
+  auto ret = PreInit(argc, argv);
+  if (ret != RET_OK) {
+    return ret;
+  }
+  ret = InitSaveFP16();
+  if (ret != RET_OK) {
+    std::cerr << "Init save fp16 failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
@@ -398,7 +464,24 @@ int Flags::Init(int argc, const char **argv) {
     std::cerr << "Init graph input format failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
+
+  ret = InitEncrypt();
+  if (ret != RET_OK) {
+    std::cerr << "Init encrypt failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = InitPreInference();
+  if (ret != RET_OK) {
+    std::cerr << "Init pre inference failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
+}
+Flags::~Flags() {
+  dec_key.clear();
+  encKeyStr.clear();
+  memset(encKey, 0, kEncMaxLen);
 }
 
 bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config) {

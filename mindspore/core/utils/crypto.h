@@ -26,6 +26,7 @@ namespace mindspore {
 constexpr size_t MAX_BLOCK_SIZE = 512 * 1024 * 1024;  // Maximum ciphertext segment, units is Byte
 constexpr size_t RESERVED_BYTE_PER_BLOCK = 50;        // Reserved byte per block to save addition info
 constexpr unsigned int MAGIC_NUM = 0x7F3A5ED8;        // Magic number
+constexpr size_t Byte16 = 16;
 
 MS_CORE_API std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, size_t plain_len,
                                             const Byte *key, size_t key_len, const std::string &enc_mode);

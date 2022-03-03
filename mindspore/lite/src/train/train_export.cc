@@ -26,7 +26,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/train/train_utils.h"
 #include "src/common/quant_utils.h"
-#include "tools/common/meta_graph_serializer.h"
+#include "src/common/storage.h"
 #include "src/train/graph_fusion.h"
 #include "src/train/graph_dropout.h"
 #include "src/weight_decoder.h"
@@ -553,7 +553,7 @@ int TrainExport::ExportInit(const std::string model_name, std::string version) {
   return RET_OK;
 }
 
-int TrainExport::SaveToFile() { return MetaGraphSerializer::Save(*meta_graph_, file_name_); }
+int TrainExport::SaveToFile() { return Storage::Save(*meta_graph_, file_name_); }
 
 bool TrainExport::IsInputTensor(const schema::TensorT &t) {
   int total_dims = std::accumulate(t.dims.begin(), t.dims.end(), 1, std::multiplies<int>());
