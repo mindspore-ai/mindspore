@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_EFFECT_INFO_H_
 
 namespace mindspore {
-
 struct EffectInfo {
   enum State : unsigned char {
     kUnknown = 0,
@@ -49,15 +48,11 @@ class EffectInfoHolder {
   // Set effect info.
   void SetEffectInfo(const EffectInfo &info) { effect_info_ = info; }
 
-  // Unset effect info.
-  void UnsetEffectInfo() { effect_info_ = {EffectInfo::kUnknown, false, false}; }
-
-  ~EffectInfoHolder() {}
+  ~EffectInfoHolder() = default;
 
  protected:
   EffectInfo effect_info_;
 };
-
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_EFFECT_INFO_H_

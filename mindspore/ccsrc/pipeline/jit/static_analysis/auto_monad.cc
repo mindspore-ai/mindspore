@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "utils/hash_set.h"
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
+#include "base/effect_info.h"
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
 

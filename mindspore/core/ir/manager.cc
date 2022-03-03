@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -501,7 +501,7 @@ void FuncGraphManager::ProcessInputsEdgeRemove(const CNodePtr &cnode) {
   }
 }
 
-static inline void FollowGraph(const FuncGraphPtr &fg, size_t seen, std::vector<AnfNodePtr> *nodes) {
+static inline void FollowGraph(const FuncGraphPtr &fg, SeenNum seen, std::vector<AnfNodePtr> *nodes) {
   if (fg == nullptr) {
     return;
   }
@@ -1088,7 +1088,7 @@ void RecursiveComputer::CheckRecursiveGraphs(const FuncGraphPtr &fg, std::list<F
   }
 }
 
-bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr &fg, size_t seen_num) {
+bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr &fg, SeenNum seen_num) {
   MS_EXCEPTION_IF_NULL(fg);
   if (fg->seen_ == seen_num) {
     MS_LOG(DEBUG) << fg->ToString() << " had been checked";

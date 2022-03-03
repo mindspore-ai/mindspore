@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ bool ExistRoute(const CNodePtr &src, const CNodePtr &dst) {
     return true;
   }
 
-  size_t seen = NewSeenGeneration();
+  auto seen = NewSeenGeneration();
   std::queue<CNodePtr> to_do;
   to_do.push(dst);
   while (!to_do.empty()) {

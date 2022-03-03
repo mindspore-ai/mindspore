@@ -25,6 +25,7 @@
 #include <memory>
 #include <utility>
 #include <set>
+#include <bitset>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
@@ -57,6 +58,7 @@ using BaseShapePtr = std::shared_ptr<abstract::BaseShape>;
 using AbstractBasePtr = std::shared_ptr<abstract::AbstractBase>;
 using AbstractBasePtrList = std::vector<AbstractBasePtr>;
 using NodeDebugInfoSet = std::set<NodeDebugInfoPtr, DebugInfoCompare>;
+using SeenNum = uint32_t;
 
 class Value;
 using ValuePtr = std::shared_ptr<Value>;
@@ -114,12 +116,7 @@ class MS_CORE_API AnfNode : public Base {
         abstract_(nullptr),
         debug_info_(std::move(debug_info)),
         fullname_with_scope_(""),
-        scope_(ScopeManager::GetInstance().GetCurrentScope()),
-        kernel_info_(nullptr),
-        interpret_(false),
-        interpret_internal_type_(false),
-        interpret_special_type_(false),
-        interpreted_node_(nullptr) {}
+        scope_(ScopeManager::GetInstance().GetCurrentScope()) {}
 
   /// \brief Constructor.
   ///
@@ -156,22 +153,22 @@ class MS_CORE_API AnfNode : public Base {
   /// \brief Obtain device kernel program information.
   ///
   /// \return Device kernel program information.
-  const KernelInfoDevice *kernel_info() const { return kernel_info_.get(); }
+  const KernelInfoDevice *kernel_info() const { return kernel_info_ptr().get(); }
 
   /// \brief Obtain device kernel program information.
   ///
   /// \return Device kernel program information.
-  KernelInfoDevice *kernel_info() { return kernel_info_.get(); }
+  KernelInfoDevice *kernel_info() { return kernel_info_ptr().get(); }
 
   /// \brief Obtain the pointer of KernelInfoDevice.
   ///
   /// \return The pointer of KernelInfoDevice.
-  const KernelInfoDevicePtr &kernel_info_ptr() const { return kernel_info_; }
+  KernelInfoDevicePtr kernel_info_ptr() const { return user_data<KernelInfoDevice>(kKernelInfoKey); }
 
   /// \brief Set device kernel program information.
   ///
   /// \param[in] kernel_info New device kernel program information.
-  void set_kernel_info(const KernelInfoDevicePtr &kernel_info) { kernel_info_ = kernel_info; }
+  void set_kernel_info(const KernelInfoDevicePtr &kernel_info) { set_user_data(kKernelInfoKey, kernel_info); }
 
   /// \brief Obtain the inferred abstract value of this AnfNode.
   ///
@@ -269,9 +266,6 @@ class MS_CORE_API AnfNode : public Base {
     return os;
   }
 
-  size_t seen_{0};
-  size_t extra_seen_{0};
-
   /// \brief Set user data.
   ///
   /// \param[in] key The key of user data.
@@ -328,46 +322,39 @@ class MS_CORE_API AnfNode : public Base {
   /// \brief Check if there is an interpret node.
   ///
   /// \return True if there is an interpret node, otherwise false.
-  bool interpret() const { return interpret_; }
+  bool interpret() const { return interpret_flags_[kInterpret]; }
 
   /// \brief Whether to use interpretation
   ///
   /// \param[in] interpret Boolean.
-  void set_interpret(const bool &interpret) { interpret_ = interpret; }
+  void set_interpret(const bool &interpret) { interpret_flags_[kInterpret] = interpret; }
 
   /// \brief Check if there is an interpret node related to the unsupported internal type.
   ///
   /// \return True if there is an interpret node related to the unsupported internal type, otherwise false.
-  bool interpret_internal_type() { return interpret_internal_type_; }
+  bool interpret_internal_type() { return interpret_flags_[kInterpretInternalType]; }
 
   /// \brief Whether there is an interpret node with unsupported internal type.
   ///
   /// \param[in] interpret_internal_type Boolean.
   void set_interpret_internal_type(const bool &interpret_internal_type) {
-    interpret_internal_type_ = interpret_internal_type;
+    interpret_flags_[kInterpretInternalType] = interpret_internal_type;
   }
 
   /// \brief Check if there is an interpret node related to the unsupported special type.
   ///
   /// \return True if there is an interpret node related to the unsupported special type, otherwise false.
-  bool interpret_special_type() { return interpret_special_type_; }
+  bool interpret_special_type() { return interpret_flags_[kInterpretSpecialType]; }
 
   /// \brief Whether there is an interpret node with unsupported internal type.
   ///
   /// \param[in] interpret_special_type Boolean.
   void set_interpret_special_type(const bool &interpret_special_type) {
-    interpret_special_type_ = interpret_special_type;
+    interpret_flags_[kInterpretSpecialType] = interpret_special_type;
   }
 
-  /// \brief Get interpreted node.
-  ///
-  /// \return Interpreted node.
-  AnfNodePtr interpreted_node() { return interpreted_node_; }
-
-  /// \brief Set interpreted node.
-  ///
-  /// \param[in] Interpreted node.
-  void set_interpreted_node(const AnfNodePtr &node) { interpreted_node_ = node; }
+  SeenNum seen_{0};
+  SeenNum extra_seen_{0};
 
  protected:
   // Hold a weak ref to Graph as Graph also hold ref to AnfNode.
@@ -378,13 +365,15 @@ class MS_CORE_API AnfNode : public Base {
   std::string fullname_with_scope_;
 
  private:
+  static constexpr size_t kInterpret = 0;
+  static constexpr size_t kInterpretInternalType = 1;
+  static constexpr size_t kInterpretSpecialType = 2;
+  static constexpr size_t kNumInterpretFlags = 3;
+  static constexpr auto kKernelInfoKey = "kernel_info";
+
   ScopePtr scope_;
-  KernelInfoDevicePtr kernel_info_;
   UserData user_data_;
-  bool interpret_;
-  bool interpret_internal_type_;
-  bool interpret_special_type_;
-  AnfNodePtr interpreted_node_;
+  std::bitset<kNumInterpretFlags> interpret_flags_;
 };
 
 // CNode represents the complex node with a set of arguments.
@@ -395,8 +384,8 @@ class MS_CORE_API AnfNode : public Base {
 // Using add_input(input) to append a new input for a CNode.
 // Using set_input(i, input) to change some input of these inputs.
 // Using set_inputs(inputs) to refresh all of the inputs of a CNode.
-// func_graph_as_var_: used in opt pattern matching to match a real FuncGraph.
-// stop_gradient_: a flag used to stop gradient.
+// func_graph_as_var: used in opt pattern matching to match a real FuncGraph.
+// stop_gradient: a flag used to stop gradient.
 // Using stop_gradient() to get this flag, mainly used in ad.
 // Using set_stop_gradient() to set this flag.
 class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
@@ -417,14 +406,10 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   ///
   /// \param[in] inputs Input nodes of this Cnode.
   /// \param[in] func_graph_as_var The FuncGraph of type VarPtr to which this CNode belongs,
-  CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var)
-      : AnfNode(nullptr),
-        inputs_(inputs),
-        func_graph_as_var_(func_graph_as_var),
-        stop_gradient_(false),
-        input_tensor_num_(-1) {
+  CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var) : AnfNode(nullptr), inputs_(inputs) {
     primal_attrs_ = PrimalAttrManager::GetInstance().GetCurrentPrimalAttr();
     primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
+    set_user_data(kFuncGraphVarKey, func_graph_as_var);
   }
 
   /// \brief Constructor.
@@ -477,47 +462,38 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \param[in] inputs Input nodes.
   void set_inputs(const std::vector<AnfNodePtr> &inputs);
 
-  /// \brief Record the cnode input value and id to inputs_value_.
-  ///
-  /// \param[in] input_value Input value.
-  /// \param[in] id The id.
-  void add_input_value(const ValuePtr &input_value, const std::string &id) {
-    inputs_value_.push_back(std::make_pair(input_value, id));
-  }
-
-  /// \brief Clear the record of cnode input value in inputs_value_.
-  void clear_inputs_value() { inputs_value_.clear(); }
-
-  /// \brief Set the record of cnode input value.
-  ///
-  /// \param[in] values New record.
-  void set_inputs_value(const std::vector<std::pair<ValuePtr, std::string>> &values) { inputs_value_ = values; }
-
-  /// \brief Get the record of input value of this CNode.
-  ///
-  /// \return The input values of this CNode.
-  const std::vector<std::pair<ValuePtr, std::string>> &inputs_value() const { return inputs_value_; }
+  // output_value store cnode value and id in pynative mode.
+  using OutputValue = std::pair<ValueNodePtr, std::string>;
 
   /// \brief Record the cnode value and id to output_value_.
   ///
   /// \param[in] forward The cnode value.
   /// \param[in] id The id.
-  void set_forward(const ValueNodePtr &forward, const std::string &id) { output_value_ = std::make_pair(forward, id); }
+  void set_forward(const ValueNodePtr &forward, const std::string &id) {
+    set_user_data(kOutputValueKey, std::make_shared<OutputValue>(forward, id));
+  }
 
   /// \brief Get the record of output value of this CNode.
   ///
   /// \return The output value of this CNode.
-  const std::pair<ValueNodePtr, std::string> &forward() const { return output_value_; }
+  const OutputValue &forward() const {
+    static const OutputValue empty_value;
+    auto ptr = user_data<OutputValue>(kOutputValueKey);
+    if (ptr == nullptr) {
+      return empty_value;
+    }
+    return *ptr;
+  }
 
   /// \brief Check if stop_gradient is set.
   ///
   /// \return True if stop_gradient is set, otherwise false.
-  bool stop_gradient() const { return stop_gradient_; }
+  bool stop_gradient() const { return flags_[kStopGradient]; }
 
   /// \brief Set stop_gradient.
   ///
   /// \param[in] stop_gradient Boolean.
-  void set_stop_gradient(bool stop_gradient) { stop_gradient_ = stop_gradient; }
+  void set_stop_gradient(bool stop_gradient) { flags_[kStopGradient] = stop_gradient; }
 
   std::string fullname_with_scope() override;
 
@@ -532,25 +508,25 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Set in_forward_flag for this CNode.
   ///
   /// \param[in] flag Boolean.
-  void set_in_forward_flag(bool flag) { in_forward_flag_ = flag; }
+  void set_in_forward_flag(bool flag) { flags_[kInForwardFlag] = flag; }
   /// \brief Check if in_forward_flag is set.
   ///
   /// \return True if in_forward_flag is set, otherwise false.
-  bool in_forward_flag() const { return in_forward_flag_; }
+  bool in_forward_flag() const { return flags_[kInForwardFlag]; }
 
   /// \brief Check if the primitive of this CNode is load.
   ///
   /// \param[in] is_load Boolean.
-  void set_load_flag(bool is_load) { is_load_ = is_load; }
+  void set_load_flag(bool is_load) { flags_[kIsLoad] = is_load; }
   /// \brief Check if is_load_ is set.
   ///
   /// \return True if is_load_ is set, otherwise false.
-  bool get_load_flag() const { return is_load_; }
+  bool get_load_flag() const { return flags_[kIsLoad]; }
 
   /// \brief Get func_graph_as_var of this CNode.
   ///
   /// \return func_graph_as_var.
-  VarPtr func_graph_as_var() const { return func_graph_as_var_; }
+  VarPtr func_graph_as_var() const { return user_data<Var>(kFuncGraphVarKey); }
 
   /// \brief Get all attributes of this CNode.
   ///
@@ -648,7 +624,6 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
     MS_EXCEPTION_IF_NULL(node);
     set_abstract(node->abstract());
     set_forward(node->forward().first, node->forward().second);
-    set_inputs_value(node->inputs_value());
     set_attrs(node->attrs());
     set_primal_attrs(node->primal_attrs());
     set_load_flag(node->get_load_flag());
@@ -666,12 +641,12 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Is effect have been handled.
   ///
   /// \return True if effect have been handled, otherwise false.
-  bool IsEffectHandled() const { return effect_handled_; }
+  bool IsEffectHandled() const { return flags_[kEffectHandled]; }
 
   /// \brief Set effect handled or not.
   ///
   /// \param[in] handled Boolean.
-  void SetEffectHandled(bool handled) { effect_handled_ = handled; }
+  void SetEffectHandled(bool handled) { flags_[kEffectHandled] = handled; }
 
   /// \brief Get the debug infos of fused nodes.
   ///
@@ -706,31 +681,31 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Check whether this node is in ms_function or not in PyNative Mode.
   ///
   /// \return True if in ms_function, otherwise false.
-  bool is_parallel() const { return is_parallel_; }
+  bool is_parallel() const { return flags_[kIsParallel]; }
 
   /// \brief Set is_parallel_ for CNode.
   ///
   /// \param[in] is_parallel_ Boolean.
-  void set_parallel(bool parallel) { is_parallel_ = parallel; }
+  void set_parallel(bool parallel) { flags_[kIsParallel] = parallel; }
 
  private:
+  static constexpr size_t kStopGradient = 0;
+  static constexpr size_t kInForwardFlag = 1;
+  static constexpr size_t kEffectHandled = 2;
+  static constexpr size_t kIsLoad = 3;
+  static constexpr size_t kIsParallel = 4;
+  static constexpr size_t kNumFlags = 5;
+  static constexpr auto kFuncGraphVarKey = "fg_var";
+  static constexpr auto kOutputValueKey = "out_value";
+
   std::vector<AnfNodePtr> inputs_;
-  VarPtr func_graph_as_var_;
-  bool stop_gradient_;
-  bool in_forward_flag_ = false;
-  bool effect_handled_ = false;
-  bool is_load_ = false;
-  // is_parallel represents whether this cnode lies in ms_function or not in PyNative Mode
-  bool is_parallel_ = false;
-  // inputs_value_ store cnode input value and id in pynative mode
-  // output_value_ store cnode value and id in pynative mode
-  std::vector<std::pair<ValuePtr, std::string>> inputs_value_;
-  std::pair<ValueNodePtr, std::string> output_value_;
+  ssize_t input_tensor_num_ = -1;
+  std::bitset<kNumFlags> flags_;
+
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   mindspore::HashMap<std::string, ValuePtr> primal_attrs_;
   NodeDebugInfoSet primal_debug_infos_;
   NodeDebugInfoSet fused_debug_infos_;
-  ssize_t input_tensor_num_ = -1;
 };
 
 // ANode represents the atomic node. It's derived Parameter and ValueNode.
@@ -763,19 +738,13 @@ class MS_CORE_API Parameter final : public ANode {
   /// \brief Constructor.
   ///
   /// \param[in] func_graph The FuncGraph to which this Parameter belongs.
-  explicit Parameter(const FuncGraphPtr &func_graph)
-      : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr), used_graph_count_(0) {}
+  explicit Parameter(const FuncGraphPtr &func_graph) : ANode(func_graph) {}
 
   /// \brief Constructor.
   ///
   /// \param[in] func_graph The FuncGraph to which this Parameter belongs.
   /// \param[in] debug_info The debug info to be used for this Parameter.
-  Parameter(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
-      : ANode(func_graph, std::move(debug_info)),
-        name_(""),
-        has_default_(false),
-        default_param_(nullptr),
-        used_graph_count_(0) {}
+  Parameter(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info) : ANode(func_graph, std::move(debug_info)) {}
 
   /// \brief Destructor.
   ~Parameter() override = default;
@@ -812,20 +781,20 @@ class MS_CORE_API Parameter final : public ANode {
   /// \brief Get the default parameter.
   ///
   /// \return The default parameter.
-  ValuePtr default_param() const { return default_param_; }
+  const ValuePtr &default_param() const { return default_param_; }
 
   /// \brief Get the parameter information.
   ///
   /// \return The parameter information.
   ParamInfoPtr param_info() const;
 
-  /// \brief Increase used_graph_count_.
+  /// \brief Increase used_graph_count.
   void IncreaseUsedGraphCount() { used_graph_count_++; }
-  /// \brief Decrease used_graph_count_.
+  /// \brief Decrease used_graph_count.
   void DecreaseUsedGraphCount() { used_graph_count_--; }
-  /// \brief Get used_graph_count_.
+  /// \brief Get used_graph_count.
   ///
-  /// \return used_graph_count_.
+  /// \return used_graph_count.
   int used_graph_count() const { return used_graph_count_; }
 
   bool is_top_graph_param() const { return is_top_graph_param_; }
@@ -851,10 +820,7 @@ class MS_CORE_API Parameter final : public ANode {
   ///
   /// \param[in] graph_id True if used, otherwise false.
   bool IsUsedByRealKernelInGraph(uint32_t graph_id) const {
-    if (not_used_in_graphs_.find(graph_id) != not_used_in_graphs_.end()) {
-      return false;
-    }
-    return true;
+    return not_used_in_graphs_.find(graph_id) == not_used_in_graphs_.end();
   }
 
   /// \brief Set whether this Parameter has a dynamic shape.
@@ -904,14 +870,13 @@ class MS_CORE_API Parameter final : public ANode {
     int64_t hidden_size = 0;
   };
   std::string name_;
-  bool has_default_;
-  std::set<uint32_t> not_used_in_graphs_;
-  bool has_dynamic_shape_ = false;
   ValuePtr default_param_;
-  // The count of graphs using the parameter.
-  int used_graph_count_;
-  // some attrs used in special format
+  // Some attrs used in special format.
   FormatAttr format_attrs_;
+  std::set<uint32_t> not_used_in_graphs_;
+  int used_graph_count_ = 0;
+  bool has_default_ = false;
+  bool has_dynamic_shape_ = false;
   bool is_top_graph_param_ = false;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
@@ -1046,8 +1011,8 @@ class MS_CORE_API ValueNode final : public ANode {
 
  private:
   ValuePtr value_;
-  bool has_new_value_ = false;
   size_t used_graph_count_{0};
+  bool has_new_value_ = false;
 };
 
 template <typename T>
@@ -1175,7 +1140,7 @@ inline S GetValueNode(const AnfNodePtr &node) {
   return s;
 }
 
-MS_CORE_API size_t NewSeenGeneration();
+MS_CORE_API SeenNum NewSeenGeneration();
 
 namespace id_generator {
 MS_CORE_API std::string get_id(const AnfNodePtr &node);

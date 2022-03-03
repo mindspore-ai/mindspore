@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,7 +325,6 @@ AnfNodePtr FunctionBlock::MakeInterpret(const std::string &script_text, const An
   auto script_node = NewValueNode(script);
   auto node = func_graph_->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
-  node->set_interpreted_node(orig_node);
   node->set_interpret_internal_type(orig_node->interpret_internal_type());
   return node;
 }
