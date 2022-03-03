@@ -46,10 +46,10 @@
 
         - **params** (dict)：表示没有传入参数的字典（参数派生自SentencePiece库）。
 
-            .. code-block::
+          .. code-block::
 
-                input_sentence_size 0
-                max_sentencepiece_length 16
+              input_sentence_size 0
+              max_sentencepiece_length 16
 
         **返回：**
 

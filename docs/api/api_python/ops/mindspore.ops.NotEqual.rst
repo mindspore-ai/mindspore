@@ -28,5 +28,5 @@ mindspore.ops.NotEqual
     Tensor，输出shape与输入相同，数据类型为bool。
 
     **异常：**
-    - **TypeError** - `x` 和`y` 不是以下之一：Tensor、Number、bool。
-    - **TypeError** - `x` 和`y` 都不是Tensor。
+    - **TypeError** - `x` 和 `y` 不是以下之一：Tensor、Number、bool。
+    - **TypeError** - `x` 和 `y` 都不是Tensor。
