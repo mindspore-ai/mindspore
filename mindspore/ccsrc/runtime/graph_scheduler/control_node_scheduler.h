@@ -42,6 +42,8 @@ class ControlNodeScheduler {
   // Link control actors.
   void Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
 
+  void Optimize(const ControlActorSet *control_actor_set);
+
   bool CheckActorValid(const ActorSet *actor_set) const;
 
   // The control flow actor will generate some data in the loop body execution, so need clear on the end of execution.
@@ -102,6 +104,9 @@ class ControlNodeScheduler {
   void LinkDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor, size_t from_index, size_t to_index,
                      const AnfNodePtr &from_kernel = nullptr);
   void LinkBranchIDArrow(ControlActor *const from_actor, ControlActor *const to_actor);
+  // Convert the invalid data arrow to control arrow.
+  void ConvertDataArrowToControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor,
+                                      const DataArrowPtr &data_arrow, size_t data_arrow_index);
 
   // Since the output of exit actor has branches, it needs to be based on a dedicated interface.
   void LinkControlArrowForExitActor(ExitActor *from_actor, AbstractActor *to_actor, int branch_id);

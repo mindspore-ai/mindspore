@@ -191,6 +191,42 @@ void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_c
   UpdateRefCount(device_tensor.get(), is_max_ref_count);
 }
 
+void FreeMemoryInner(DeviceTensor *const device_tensor, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  // The device context may be not accurate in the control flow scene, so need fetch by device name and device id.
+  if ((device_context == nullptr) || (device_context->GetDeviceAddressType() != device_tensor->DeviceType())) {
+    const auto &new_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {device_tensor->device_name(), device_tensor->device_id()});
+    MS_EXCEPTION_IF_NULL(new_device_context);
+    new_device_context->FreeMemory(device_tensor);
+  } else {
+    device_context->FreeMemory(device_tensor);
+  }
+}
+
+// Only one of the static and dynamic reference counts will take effect.
+void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
+                          const std::string &op_name) {
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  if (device_tensor->original_ref_count() != SIZE_MAX) {
+    // The static reference count is decremented to zero to free memory, and reset to the original count.
+    device_tensor->DecreaseRefCount();
+    if (device_tensor->ref_count() == 0) {
+      if (device_tensor->GetPtr() != nullptr) {
+        FreeMemoryInner(device_tensor, device_context);
+      }
+      device_tensor->ResetRefCount();
+    }
+  } else if (device_tensor->dynamic_ref_count() != INT32_MAX) {
+    // The dynamic reference count is decremented to zero to free memory.
+    device_tensor->DecreaseDynamicRefCount(op_name);
+    if ((device_tensor->dynamic_ref_count() == 0) && (device_tensor->GetPtr() != nullptr)) {
+      MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr();
+      FreeMemoryInner(device_tensor, device_context);
+    }
+  }
+}
+
 AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(backend_node);
   MS_EXCEPTION_IF_NULL(graph);
@@ -276,13 +312,13 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
   std::string actor_name = "";
   switch (kernel_type) {
     case KernelTransformType::kSuperKernelActor:
-      actor_name = kernel_graph->ToString() + "_SuperKernelActor";
+      actor_name = kernel_graph->ToString() + kSuperKernelActorNameSuffix;
       break;
     case KernelTransformType::kDeviceDataSourceActor:
-      actor_name = actor_set_name + "_DeviceDSActor" + "_" + std::to_string(kernel_graph->graph_id());
+      actor_name = actor_set_name + kDeviceDSActorNameSuffix + "_" + std::to_string(kernel_graph->graph_id());
       break;
     case KernelTransformType::kHostDataSourceActor:
-      actor_name = actor_set_name + "_HostDSActor";
+      actor_name = actor_set_name + kHostDSActorNameSuffix;
       break;
     case KernelTransformType::kKernelActor:
       MS_EXCEPTION_IF_NULL(node);

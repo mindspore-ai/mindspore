@@ -32,12 +32,14 @@
 #include "utils/log_adapter.h"
 #include "ir/tensor.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 namespace runtime {
 using mindspore::session::KernelWithIndex;
 using tensor::TensorPtr;
 using DeviceTensor = mindspore::device::DeviceAddress;
+using mindspore::device::DeviceContext;
 
 // The execution result of actor.
 constexpr int kSuccess = 0;
@@ -47,6 +49,16 @@ enum class GraphExecutionStrategy {
   kPipeline,  // The actor running is triggered only by data.
   kStep       // The actor running need be triggered by control in addition.
 };
+
+const char kDataPrepareActorNameSuffix[] = "_DataPrepareActor";
+const char kHostDSActorNameSuffix[] = "_HostDSActor";
+const char kDeviceDSActorNameSuffix[] = "_DeviceDSActor";
+const char kSuperKernelActorNameSuffix[] = "_SuperKernelActor";
+const char kLoopCountActorNameSuffix[] = "_LoopCountActor";
+const char kOutputActorNameSuffix[] = "_OutputActor";
+const char kEntranceActorNameSuffix[] = "_EntranceActor";
+const char kExitActorNameSuffix[] = "_ExitActor";
+const char kStackActorNameSuffix[] = "_StackActor";
 
 enum class KernelTransformType {
   kUnknown,
@@ -207,6 +219,8 @@ bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_
 void UpdateRefCount(DeviceTensor *const device_tensor, bool is_max_ref_count = false);
 // Update the reference count of device tensor by the output index of node.
 void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_count = false);
+void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
+                          const std::string &op_name);
 
 // Get front node by backend node.
 AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph);

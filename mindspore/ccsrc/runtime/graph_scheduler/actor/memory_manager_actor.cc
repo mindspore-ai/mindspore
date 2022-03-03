@@ -17,49 +17,11 @@
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "runtime/graph_scheduler/actor/data_source_actor.h"
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
-#include "runtime/hardware/device_context_manager.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace runtime {
-namespace {
-void FreeMemoryInner(DeviceTensor *const device_tensor, const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  // The device context may be not accurate in the control flow scene, so need fetch by device name and device id.
-  if ((device_context == nullptr) || (device_context->GetDeviceAddressType() != device_tensor->DeviceType())) {
-    const auto &new_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {device_tensor->device_name(), device_tensor->device_id()});
-    MS_EXCEPTION_IF_NULL(new_device_context);
-    new_device_context->FreeMemory(device_tensor);
-  } else {
-    device_context->FreeMemory(device_tensor);
-  }
-}
-
-// Only one of the static and dynamic reference counts will take effect.
-void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context, const AID &from_aid) {
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  if (device_tensor->original_ref_count() != SIZE_MAX) {
-    // The static reference count is decremented to zero to free memory, and reset to the original count.
-    device_tensor->DecreaseRefCount();
-    if (device_tensor->ref_count() == 0) {
-      if (device_tensor->GetPtr() != nullptr) {
-        FreeMemoryInner(device_tensor, device_context);
-      }
-      device_tensor->ResetRefCount();
-    }
-  } else if (device_tensor->dynamic_ref_count() != INT32_MAX) {
-    // The dynamic reference count is decremented to zero to free memory.
-    device_tensor->DecreaseDynamicRefCount(from_aid.Name());
-    if ((device_tensor->dynamic_ref_count() == 0) && (device_tensor->GetPtr() != nullptr)) {
-      MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr();
-      FreeMemoryInner(device_tensor, device_context);
-    }
-  }
-}
-}  // namespace
-
 void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc_list,
                                         const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
                                         const AID &from_aid) {
@@ -162,7 +124,7 @@ void MemoryManagerActor::FreeMemory(const std::vector<DeviceTensor *> *free_list
                                     OpContext<DeviceTensor> *, const AID &from_aid) {
   MS_EXCEPTION_IF_NULL(free_list);
   for (auto &device_tensor : *free_list) {
-    FreeMemoryByRefCount(device_tensor, device_context, from_aid);
+    FreeMemoryByRefCount(device_tensor, device_context, from_aid.Name());
   }
 }
 
@@ -180,7 +142,7 @@ void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free
   for (size_t i = 0; i < (*free_list).size(); ++i) {
     auto &device_tensor = (*free_list)[i];
     auto &device_context = (*device_contexts)[i];
-    FreeMemoryByRefCount(device_tensor, device_context, from_aid);
+    FreeMemoryByRefCount(device_tensor, device_context, from_aid.Name());
   }
 }
 

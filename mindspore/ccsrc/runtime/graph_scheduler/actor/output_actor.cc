@@ -87,14 +87,18 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
   MS_EXCEPTION_IF_NULL(context);
-  // Collect the output result in the last loop which is represented by "loop_count_ - current_count_ == 1".
-  if (loop_count_ - current_count_ != 1) {
-    return;
-  }
 
   auto output_position = IntToSize(input_data->index_);
   if (output_position >= outputs_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
+  }
+
+  // Collect the output result in the last loop which is represented by "loop_count_ - current_count_ == 1".
+  if (loop_count_ - current_count_ != 1) {
+    // The output device memory will be taken over by tensor in the last loop, otherwise needs to free the memory in
+    // the no last loop to avoid the memory leak when memory used by dynamic ref count.
+    FreeMemoryByRefCount(input_data->data_, device_contexts_[output_position], GetAID().Name());
+    return;
   }
 
   auto node_with_index = input_data->data_->GetNodeIndex();

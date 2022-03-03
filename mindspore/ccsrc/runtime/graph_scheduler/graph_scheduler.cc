@@ -378,6 +378,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   MS_EXCEPTION_IF_NULL(actor_set);
   CacheGraphOutputToActor(graph_compiler_info);
   Link(actor_set.get(), graph_compiler_info);
+  Optimize(actor_set.get());
 
   DumpActor(actor_set.get(), graph_compiler_info);
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
@@ -648,6 +649,11 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
 #endif
 }
 
+void GraphScheduler::Optimize(ActorSet *const actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  control_node_scheduler_.Optimize(actor_set->control_actors_.get());
+}
+
 std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const GraphCompilerInfo &graph_compiler_info,
                                                                      const HostTensorQueuePtr &host_queue) {
   std::vector<DataSourceActorPtr> data_source_actors;
@@ -677,7 +683,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
         }
 
         if (host_queue_ds_actor == nullptr) {
-          auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
+          auto actor_name = graph_compiler_info.name_ + kHostDSActorNameSuffix;
           MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
           host_queue_ds_actor = std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid_, nullptr,
                                                                            nullptr, host_queue);
@@ -712,7 +718,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
           return IsDeviceQueueDSActor(node, graph_compiler_info.strategy_);
         });
       if (iter != execution_order.end()) {
-        auto actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
+        auto actor_name =
+          graph_compiler_info.name_ + kDeviceDSActorNameSuffix + "_" + std::to_string(graph->graph_id());
         MS_LOG(INFO) << "Create queue data source actor: " << actor_name;
         auto device_queue_ds_actor = std::make_shared<DeviceQueueDataSourceActor>(
           actor_name, 1, device_context, memory_manager_aid_, debug_aid_, recorder_aid_);
@@ -736,7 +743,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       continue;
     }
     if (host_queue_ds_actor == nullptr) {
-      auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
+      auto actor_name = graph_compiler_info.name_ + kHostDSActorNameSuffix;
       MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
       host_queue_ds_actor =
         std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid_, nullptr, nullptr, host_queue);
@@ -849,7 +856,7 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
       continue;
     }
 
-    auto actor_name = graph->ToString() + "_SuperKernelActor";
+    auto actor_name = graph->ToString() + kSuperKernelActorNameSuffix;
     auto super_kernel_actor =
       std::make_shared<SuperKernelActor>(actor_name, graph, device_context, memory_manager_aid_, debug_aid_, nullptr);
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
@@ -871,7 +878,7 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
     loop_count = 1;
   }
 
-  auto actor_name = graph_compiler_info.name_ + "_LoopCountActor";
+  auto actor_name = graph_compiler_info.name_ + kLoopCountActorNameSuffix;
   auto loop_count_actor =
     std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_);
   MS_LOG(INFO) << "Create loop count actor: " << actor_name;
@@ -893,7 +900,7 @@ OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_c
     loop_count = 1;
   }
 
-  auto actor_name = graph_compiler_info.name_ + "_" + "OutputActor";
+  auto actor_name = graph_compiler_info.name_ + kOutputActorNameSuffix;
   auto output_actor = std::make_shared<OutputActor>(actor_name, loop_count, graph_compiler_info.outputs_num_);
   MS_LOG(INFO) << "Create output actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(output_actor);
@@ -911,7 +918,7 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
   if (iter != data_source_actors.end()) {
     host_queue_ds_actor = std::dynamic_pointer_cast<HostQueueDataSourceActor>(*iter);
   }
-  auto actor_name = graph_compiler_info.name_ + "_DataPrepareActor";
+  auto actor_name = graph_compiler_info.name_ + kDataPrepareActorNameSuffix;
   auto data_prepare_actor = std::make_shared<DataPrepareActor>(actor_name, memory_manager_aid_, debug_aid_,
                                                                &graph_compiler_info, host_queue_ds_actor, host_queue);
   MS_LOG(INFO) << "Create data prepare actor: " << actor_name;
@@ -1015,7 +1022,7 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
     return;
   }
 
-  auto to_actor_name = graph->ToString() + "_SuperKernelActor";
+  auto to_actor_name = graph->ToString() + kSuperKernelActorNameSuffix;
   auto to_actor = FetchActor(to_actor_name);
   MS_EXCEPTION_IF_NULL(to_actor);
 
