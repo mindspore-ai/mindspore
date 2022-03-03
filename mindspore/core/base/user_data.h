@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,33 +19,58 @@
 
 #include <string>
 #include <memory>
+#include <utility>
 #include "utils/hash_map.h"
 
 namespace mindspore {
 class UserData {
  public:
+  using DataMap = mindspore::HashMap<std::string, std::shared_ptr<void>>;
+
+  UserData() = default;
+  UserData(const UserData &other) : data_(other.data_ ? std::make_unique<DataMap>(*other.data_) : nullptr) {}
+  UserData(UserData &&other) : data_(std::move(other.data_)) {}
+  UserData &operator=(const UserData &other) {
+    data_ = (other.data_ ? std::make_unique<DataMap>(*other.data_) : nullptr);
+    return *this;
+  }
+  UserData &operator=(UserData &&other) {
+    data_ = std::move(other.data_);
+    return *this;
+  }
+  ~UserData() = default;
+
   template <typename T>
   void set(const std::string &key, const std::shared_ptr<T> &value) {
+    InitData();
     if (value == nullptr) {
-      data_.erase(key);
+      data_->erase(key);
     } else {
-      data_.insert_or_assign(key, value);
+      data_->insert_or_assign(key, value);
     }
   }
 
   template <typename T>
   std::shared_ptr<T> get(const std::string &key) const {
-    auto iter = data_.find(key);
-    if (iter == data_.end()) {
+    if (data_ == nullptr) {
+      return nullptr;
+    }
+    auto iter = data_->find(key);
+    if (iter == data_->end()) {
       return nullptr;
     }
     return std::static_pointer_cast<T>(iter->second);
   }
 
-  bool has(const std::string &key) const { return data_.find(key) != data_.end(); }
+  bool has(const std::string &key) const { return (data_ != nullptr) && (data_->find(key) != data_->end()); }
 
  private:
-  mindspore::HashMap<std::string, std::shared_ptr<void>> data_;
+  void InitData() {
+    if (data_ == nullptr) {
+      data_ = std::make_unique<DataMap>();
+    }
+  }
+  std::unique_ptr<DataMap> data_;
 };
 }  // namespace mindspore
 

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,17 @@
 
 #include "ir/graph_utils.h"
 
+#include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "ir/func_graph.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {
 // Dump the circle from the strike node `next`.
-static size_t DumpSortingCircleList(const std::deque<AnfNodePtr> &todo, const AnfNodePtr &next, size_t seen) {
+static size_t DumpSortingCircleList(const std::deque<AnfNodePtr> &todo, const AnfNodePtr &next, SeenNum seen) {
   size_t pos = 0;
   auto circle_node_it = std::find(todo.begin(), todo.end(), next);
   for (; circle_node_it != todo.end(); circle_node_it++) {
@@ -47,7 +48,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
     return res;
   }
   res.reserve(kVecReserve);
-  size_t seen = NewSeenGeneration();
+  auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
   (void)todo.emplace_back(root);
   while (!todo.empty()) {

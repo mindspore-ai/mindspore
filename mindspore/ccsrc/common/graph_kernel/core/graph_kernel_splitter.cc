@@ -88,7 +88,6 @@ CNodePtr NewRecomputeNode(const AnfNodePtr &orig_node, std::map<AnfNodePtr, AnfN
   func_graph->AddNode(cp_node);
   cp_node->set_abstract(cnode->abstract());
   cp_node->set_forward(cnode->forward().first, cnode->forward().second);
-  cp_node->set_inputs_value(cnode->inputs_value());
   ScopePtr scope = (orig_node->scope() != kDefaultScope) ? orig_node->scope() : kDefaultScope;
   cp_node->set_scope(scope);
   cp_node->set_kernel_info(cnode->kernel_info_ptr());

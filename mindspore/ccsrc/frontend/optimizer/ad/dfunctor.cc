@@ -368,7 +368,6 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     auto grad_exec = pynative_exec->grad_executor();
     if (grad_exec->eliminate_forward()) {
       PynativeDFunctor::ReplaceEquivdout(k_app, cnode_morph);
-      cnode_morph->clear_inputs_value();
     }
   }
 

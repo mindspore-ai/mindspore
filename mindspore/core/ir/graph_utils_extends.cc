@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ class DeepFirstSearcher : public AnfIrVisitor {
   }
 
  private:
-  size_t seen_{0};
+  SeenNum seen_{0};
   IncludeFunc include_;
   FilterFunc filter_;
   std::vector<AnfNodePtr> res_{};

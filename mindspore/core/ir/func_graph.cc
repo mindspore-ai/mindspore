@@ -782,8 +782,8 @@ void FuncGraph::set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forwa
   });
 }
 
-size_t NewFgSeenGeneration() {
-  static size_t fg_seen_generation = 0;
+SeenNum NewFgSeenGeneration() {
+  static SeenNum fg_seen_generation = 0;
   return ++fg_seen_generation;
 }
 

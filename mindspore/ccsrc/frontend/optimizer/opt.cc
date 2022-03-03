@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ static void UpdateTransformingListForIR(const AnfNodePtr &node, std::deque<AnfNo
 }
 
 static void UpdateTransformingListWithUserNodes(const OptimizerPtr &optimizer, const AnfNodePtr &node,
-                                                std::deque<AnfNodePtr> *todo, bool change, size_t seen) {
+                                                std::deque<AnfNodePtr> *todo, bool change, SeenNum seen) {
   if (!change) {
     return;
   }

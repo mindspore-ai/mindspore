@@ -34,7 +34,6 @@ AnfNodePtr CloneCNode(const AnfNodePtr &anf_node) {
   CNodePtr node = func_graph->NewCNode(cnode->inputs());
   node->set_abstract(cnode->abstract());
   node->set_forward(cnode->forward().first, cnode->forward().second);
-  node->set_inputs_value(cnode->inputs_value());
   ScopePtr scope = (anf_node->scope() != kDefaultScope) ? anf_node->scope() : kDefaultScope;
   node->set_scope(scope);
   node->set_kernel_info(cnode->kernel_info_ptr());

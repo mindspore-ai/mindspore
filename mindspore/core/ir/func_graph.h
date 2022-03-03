@@ -318,7 +318,7 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
   mindspore::HashMap<std::string, FuncGraphTransform> transforms_;
   // Parameter default value.
   std::map<std::string, AnfNodePtr> parameter_default_value_;
-  size_t seen_;
+  SeenNum seen_;
 
   std::list<CNodePtr> GetOrderedCnodes();
   void EraseUnusedNodeInOrder(const AnfNodePtr &n);
@@ -469,7 +469,7 @@ inline CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &f
   return fg->NewCNode(std::move(inputs));
 }
 
-size_t NewFgSeenGeneration();
+SeenNum NewFgSeenGeneration();
 
 // Find the root cnodes of a segment of cnodes.
 std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr> &segment);

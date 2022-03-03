@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,29 +47,20 @@ void AnfNode::set_abstract(const AbstractBasePtr &abs) {
 CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph)
     : AnfNode(func_graph),
       inputs_(inputs),
-      stop_gradient_(false),
-      output_value_(std::make_pair(nullptr, "")),
       primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
-      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()),
-      input_tensor_num_(-1) {}
+      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {}
 
 CNode::CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph)
     : AnfNode(func_graph),
       inputs_(std::move(inputs)),
-      stop_gradient_(false),
-      output_value_(std::make_pair(nullptr, "")),
       primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
-      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()),
-      input_tensor_num_(-1) {}
+      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {}
 
 CNode::CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
     : AnfNode(func_graph, std::move(debug_info)),
       inputs_(std::move(inputs)),
-      stop_gradient_(false),
-      output_value_(std::make_pair(nullptr, "")),
       primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
-      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()),
-      input_tensor_num_(-1) {}
+      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {}
 
 // Check if CNode is an apply with the specific Primitive.
 bool CNode::IsApply(const PrimitivePtr &value) const {
@@ -378,8 +369,8 @@ bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner) {
                      [&monad, kMonadInput](const CNodePtr &load) { return load->inputs().at(kMonadInput) == monad; });
 }
 
-size_t NewSeenGeneration() {
-  static size_t seen_generation = 0;
+SeenNum NewSeenGeneration() {
+  static SeenNum seen_generation = 0;
   return ++seen_generation;
 }
 
