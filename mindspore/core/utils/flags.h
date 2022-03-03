@@ -22,9 +22,9 @@ namespace mindspore {
 inline const char GRAPH_FLAG_MIX_PRECISION_FP16[] = "fp16";
 inline const char GRAPH_FLAG_MIX_PRECISION_FP32[] = "fp32";
 inline const char GRAPH_FLAG_CACHE_ENABLE[] = "cache_enable";
-inline const char GRAPH_FLAG_RANDOM_EFFECT[] = "_random_effect";
 inline const char GRAPH_FLAG_SIDE_EFFECT_IO[] = "side_effect_io";
 inline const char GRAPH_FLAG_SIDE_EFFECT_MEM[] = "side_effect_mem";
+inline const char GRAPH_FLAG_SIDE_EFFECT_HIDDEN[] = "side_effect_hidden";
 inline const char GRAPH_FLAG_SIDE_EFFECT_EXCEPTION[] = "side_effect_exception";
 inline const char GRAPH_FLAG_SIDE_EFFECT_PROPAGATE[] = "side_effect_propagate";
 inline const char GRAPH_FLAG_SIDE_EFFECT_BACKPROP[] = "side_effect_backprop";
