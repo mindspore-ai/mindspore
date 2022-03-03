@@ -273,6 +273,9 @@ std::vector<int64_t> DynamicComputeInferShape(const PrimitivePtr &primitive, con
   while (i < x_rank || j < slice_len) {
     int64_t slicing_length = -1;
     int64_t x_dim_size = x_shape[i];
+    if (x_dim_size == 1) {
+      slicing_length = 1;
+    }
     if (j >= slice_len && x_dim_size > 0) {
       start = 0;
       finish = x_shape[i];
@@ -328,11 +331,15 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const size_t x_index = 0;
-  auto x_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, x_index);
-  if (x_shape->IsDynamic()) {
-    MS_EXCEPTION(ValueError) << "input x dynamic shape is currently not supported.";
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->BuildShape());
+  auto x_shape = shape_map[kShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
+  bool x_is_dyn =
+    std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::SHP_ANY; });
+  if (x_is_dyn && (min_shape.size() == 0 || max_shape.size() == 0)) {
+    MS_EXCEPTION(ValueError) << "Input x dynamic shape is currently not supported without giving the min and max shape";
   }
-
   ShapeVector begin_v;
   ShapeVector end_v;
   ShapeVector strides_v;
@@ -349,24 +356,27 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
                              << ", 'strides': " << stride_len;
   }
   bool slice_dynamic = false;
-  if (begin_dynamic || end_dynamic || stride_dynamic) {
+  if (begin_dynamic || end_dynamic || stride_dynamic || x_is_dyn) {
     slice_dynamic = true;
   }
   if (!slice_dynamic) {
-    ret_in_shape = ComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape->shape());
+    ret_in_shape = ComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape);
     bool has_zero_shape = std::any_of(ret_in_shape.begin(), ret_in_shape.end(), [](int64_t i) { return i == 0; });
     if (has_zero_shape) {
       MS_LOG(EXCEPTION) << "StridedSlice haven't support zero shape yet, now the out shape is " << ret_in_shape;
     }
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
-  ret_in_shape = DynamicComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape->shape(), begin_len);
-  ShapeVector ret_min_shape(x_shape->shape().size(), 1);
-  ShapeVector ret_max_shape = x_shape->shape();
+  ret_in_shape = DynamicComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape, begin_len);
+  ShapeVector ret_min_shape(x_shape.size(), 1);
+  ShapeVector ret_max_shape = x_shape;
   for (size_t i = 0; i < ret_in_shape.size(); i++) {
     if (ret_in_shape[i] > 0) {
       ret_min_shape[i] = ret_in_shape[i];
       ret_max_shape[i] = ret_in_shape[i];
+    } else {
+      ret_min_shape[i] = min_shape[i];
+      ret_max_shape[i] = max_shape[i];
     }
   }
   return std::make_shared<abstract::Shape>(ret_in_shape, ret_min_shape, ret_max_shape);
