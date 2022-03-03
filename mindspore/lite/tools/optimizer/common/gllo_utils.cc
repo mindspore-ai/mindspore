@@ -469,6 +469,9 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
   if (utils::isa<ParameterPtr>(input)) {
     auto parameter = input->cast<ParameterPtr>();
     abstract = parameter->abstract();
+  } else if (utils::isa<ValueNodePtr>(input)) {
+    auto value_node = input->cast<ValueNodePtr>();
+    abstract = value_node->abstract();
   } else if (utils::isa<CNodePtr>(input)) {
     auto input_cnode = input->cast<CNodePtr>();
     if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
