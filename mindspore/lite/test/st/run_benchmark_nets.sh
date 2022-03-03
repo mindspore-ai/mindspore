@@ -162,3 +162,12 @@ if [[ $backend == "all" || $backend == "x86_ascend310" || $backend == "x86_ascen
       exit 1
     fi
 fi
+
+if [[ $backend == "all" || $backend == "server_inference_x86" || $backend == "server_inference_arm" ]]; then
+    sh $cur_path/scripts/run_benchmark_server_inference.sh -r $release_path -m $models_path -e $backend
+    server_inference_status=$?
+    if [[ server_inference_status -ne 0 ]]; then
+      echo "Run server inference failed"
+      exit 1
+    fi
+fi
