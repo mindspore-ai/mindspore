@@ -122,6 +122,7 @@ typedef NPUOp *(*NPUGetOp)(const schema::Primitive *primitive, const std::vector
 template <class T>
 NPUOp *GetNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors, std::string name) {
+  MS_ASSERT(primitive != nullptr);
   auto shape = out_tensors.front().Shape();
   if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
     MS_LOG(ERROR) << "NPU does not support runtime inference shape.";

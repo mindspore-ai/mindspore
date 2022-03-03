@@ -20,6 +20,10 @@ namespace mindspore {
 int ConvolutionInt8NPUOp::IsSupport(const schema::Primitive *primitive,
                                     const std::vector<mindspore::MSTensor> &in_tensors,
                                     const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (!in_tensors[1].IsConst()) {
+    MS_LOG(WARNING) << "NPU convolution does not support dynamic weight.";
+    return RET_NOT_SUPPORT;
+  }
   auto conv_prim = primitive->value_as_Conv2DFusion();
   if (conv_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;

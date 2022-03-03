@@ -30,30 +30,23 @@ int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
     return RET_NOT_SUPPORT;
   }
   // a hidden limitation in npu bottom implementation
-  if (in_shape_0.size() == NPU_SHAPE_SIZE && in_shape_1.size() == NPU_SHAPE_SIZE) {
-    auto in_w_0 = in_shape_0.at(NHWC_W);
-    auto in_w_1 = in_shape_1.at(NHWC_W);
-    auto out_h = out_shape.at(NHWC_H);
-    auto out_w = out_shape.at(NHWC_W);
-    if (in_tensors[0].format() == Format::NCHW) {
-      in_w_0 = in_shape_0.at(NCHW_W);
-      in_w_1 = in_shape_1.at(NCHW_W);
-      out_h = out_shape.at(NCHW_H);
-      out_w = out_shape.at(NCHW_W);
-    }
-    if ((in_w_0 == 1 || in_w_1 == 1) && out_h * out_w > MAX_HW_SIZE) {
+  if (type_ == schema::PrimitiveType_MulFusion && out_shape.size() == NPU_SHAPE_SIZE) {
+    bool is_nhwc = out_tensors[0].format() == Format::NHWC;
+    auto out_h = is_nhwc ? out_shape.at(NHWC_H) : out_shape.at(NCHW_H);
+    auto out_w = is_nhwc ? out_shape.at(NHWC_W) : out_shape.at(NCHW_W);
+    // two inputs have different shape with the output, which means both of them need broadcast
+    if (in_shape_0 != out_shape && in_shape_1 != out_shape && out_h * out_w > MAX_HW_SIZE) {
       MS_LOG(WARNING) << "The size of out_height * out_width is larger than the max value (1664) that npu supports "
                          "during broadcasting.";
       return RET_NOT_SUPPORT;
     }
   }
-  auto type = primitive->value_type();
-  if (type == mindspore::schema::PrimitiveType_Less && in_tensors[0].Shape().size() == 1) {
-    MS_LOG(WARNING) << name_ << " not support input 1d";
+  if (type_ == mindspore::schema::PrimitiveType_Less && in_shape_0.size() == 1) {
+    MS_LOG(WARNING) << name_ << " dose not support 1d input.";
     return RET_NOT_SUPPORT;
   }
-  if (type == mindspore::schema::PrimitiveType_Equal && in_tensors[0].Shape().size() == ARITHMETIC_INPUT_NUM) {
-    MS_LOG(WARNING) << name_ << " not support input 2d";
+  if (type_ == mindspore::schema::PrimitiveType_Equal && in_shape_0.size() == ARITHMETIC_INPUT_NUM) {
+    MS_LOG(WARNING) << name_ << " dose not support 2d input.";
     return RET_NOT_SUPPORT;
   }
   return RET_OK;

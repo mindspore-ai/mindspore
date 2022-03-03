@@ -26,7 +26,7 @@ int FlattenNPUOp::IsSupport(const schema::Primitive *primitive, const std::vecto
     MS_LOG(WARNING) << "The output tensor can only be flatten to 2 dimension.";
     return RET_NOT_SUPPORT;
   }
-  use_reshape_ = !NPUManager::CheckDDKVerGreatEqual("100.330.011.032");
+  use_reshape_ = !NPUManager::CheckDDKVerGreatEqual("100.500.010.045");
   return RET_OK;
 }
 

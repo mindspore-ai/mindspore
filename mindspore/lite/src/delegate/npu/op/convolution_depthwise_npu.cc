@@ -17,6 +17,16 @@
 #include "src/delegate/npu/op/convolution_depthwise_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
+int ConvolutionDepthwiseNPUOp::IsSupport(const schema::Primitive *primitive,
+                                         const std::vector<mindspore::MSTensor> &in_tensors,
+                                         const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (!in_tensors[1].IsConst()) {
+    MS_LOG(WARNING) << "NPU convolution does not support dynamic weight.";
+    return RET_NOT_SUPPORT;
+  }
+  return RET_OK;
+}
+
 int ConvolutionDepthwiseNPUOp::SetConvDwParam(const schema::Conv2DFusion *conv_prim) {
   CHECK_NULL_RETURN(conv_prim->stride());
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));

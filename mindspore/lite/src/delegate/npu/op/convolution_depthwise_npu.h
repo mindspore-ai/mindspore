@@ -30,9 +30,7 @@ class ConvolutionDepthwiseNPUOp : public ConvolutionBaseNPUOp {
   ~ConvolutionDepthwiseNPUOp() override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override {
-    return RET_OK;
-  }
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
   int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
            const std::vector<mindspore::MSTensor> &out_tensors) override;
