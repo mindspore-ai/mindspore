@@ -88,8 +88,7 @@ bool TensorQuantParamsInited(const schema::TensorT &tensor);
 
 int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
                         const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
-                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetry,
-                        bool use_auto_tune_alg);
+                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetry);
 
 int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first);
 

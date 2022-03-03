@@ -35,19 +35,6 @@ int ReadImage(const std::string &image_path, cv::Mat *image) {
   return RET_OK;
 }
 
-int DecodeBuffer(const unsigned char *buffer, int length, cv::Mat *image) {
-  if (image == nullptr) {
-    MS_LOG(ERROR) << "image is nullptr.";
-    return RET_ERROR;
-  }
-  *image = cv::imdecode(std::vector<uchar>(buffer, buffer + length), cv::IMREAD_COLOR);
-  if (image->empty() || image->data == nullptr) {
-    MS_LOG(ERROR) << "missing file, improper permissions, unsupported or invalid format.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 int ConvertImageFormat(cv::Mat *image, cv::ColorConversionCodes to_format) {
   if (image == nullptr) {
     MS_LOG(ERROR) << "image is nullptr.";

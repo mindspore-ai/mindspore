@@ -396,7 +396,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, FSEBitStream *bs
                                  int table_log) {
   MSLITE_CHECK_PTR(tensor_input);
   MSLITE_CHECK_PTR(bs);
-  const int extend_size = 8;
+  const int extend_size = 2;
   auto max_size = tensor_input->data.size() * extend_size;
   auto *out8 = static_cast<uint8_t *>(malloc(max_size));
   MSLITE_CHECK_PTR(out8);
