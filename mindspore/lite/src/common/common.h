@@ -22,10 +22,10 @@
 namespace mindspore {
 namespace lite {
 #ifndef MS_UNLIKELY
-#if defined(__x86_64__) || defined(__amd64__) || defined(_M_IX86) || defined(_M_X64)
-#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
-#else
+#ifdef _MSC_VER
 #define MS_UNLIKELY(x) x
+#else
+#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #endif
 #endif
 
