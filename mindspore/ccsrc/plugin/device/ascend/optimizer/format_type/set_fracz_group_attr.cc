@@ -78,17 +78,25 @@ bool HasFraczGroupAttrAndSet(const AnfNodePtr &node, size_t index, int64_t group
       return true;
     }
     if (kInOutOperatorSet.find(node_name) != kInOutOperatorSet.end()) {
-      auto index_l = SizeToLong(index);
+      auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+      if (index >= input_num) {
+        MS_LOG(EXCEPTION) << "Index out of range, node[" << node->fullname_with_scope() << "] only have " << input_num
+                          << " inputs, but get index " << index;
+      }
+      std::vector<int64_t> fz_group_idx(input_num, 1);
       if (common::AnfAlgo::HasNodeAttr(kAttrFracZGroupIdx, cnode)) {
-        auto fz_group_idx = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
-        if (std::find(fz_group_idx.begin(), fz_group_idx.end(), index_l) != fz_group_idx.end()) {
-          return true;
+        fz_group_idx = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
+        if (input_num > fz_group_idx.size()) {
+          fz_group_idx.insert(fz_group_idx.begin(), input_num - fz_group_idx.size(), 1);
         }
-        fz_group_idx.push_back(index_l);
-        common::AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(fz_group_idx), cnode);
-        return false;
+        if (fz_group_idx[index] == 1) {
+          fz_group_idx[index] = groups;
+          common::AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(fz_group_idx), cnode);
+          return false;
+        }
       } else {
-        common::AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(std::vector<int64_t>{index_l}), cnode);
+        fz_group_idx[index] = groups;
+        common::AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(fz_group_idx), cnode);
       }
     }
     if (common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {

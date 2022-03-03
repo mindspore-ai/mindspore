@@ -1521,13 +1521,12 @@ int64_t AnfAlgo::GetAttrGroups(const AnfNodePtr &node, size_t index) {
     if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
       auto node_name = AnfAlgo::GetCNodeName(cnode);
       if (node_name == kAllReduceOpName || node_name == kBroadcastOpName) {
-        // if index not exists in fracz_group_idx, return default value 1
         auto fz_group_idx = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
-        int64_t out_index = SizeToLong(index);
-        auto fz_iter = std::find(std::begin(fz_group_idx), std::end(fz_group_idx), out_index);
-        if (fz_iter == std::end(fz_group_idx)) {
-          return 1;
+        if (index >= fz_group_idx.size()) {
+          MS_LOG(EXCEPTION) << "Index out of range, attr fracz_group_idx of node[" << node->fullname_with_scope()
+                            << "] only have " << fz_group_idx.size() << " numbers, but get index " << index;
         }
+        return fz_group_idx[index];
       }
       return AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFracZGroup);
     }
