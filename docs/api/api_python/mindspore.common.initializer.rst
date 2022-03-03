@@ -149,8 +149,8 @@ mindspore.common.initializer
 
     **参数：**
 
-    **sparsity** (float) - 矩阵每列中元素被置0的比例。
-    **sigma** (float) - 正态分布的标准差，默认值为0.01。
+    - **sparsity** (float) - 矩阵每列中元素被置0的比例。
+    - **sigma** (float) - 正态分布的标准差，默认值为0.01。
 
     **异常：**
 
@@ -158,19 +158,19 @@ mindspore.common.initializer
 
 
 
-.. py:class:: mindspore.common.initializer.Dirac(group=1)
+.. py:class:: mindspore.common.initializer.Dirac(groups=1)
 
     利用Dirac delta函数生成一个array用于初始化Tensor。这种初始化方式将会保留卷积层的输入。对于group
     卷积，通道的每个分组会被分别保留。
 
     **参数：**
 
-    **group** (int) - 卷积层中的分组，默认值为1。
+    **groups** (int) - 卷积层中的分组，默认值为1。
 
     **异常：**
 
-    - **ValueError** - group不在[3, 4, 5]的范围内。
-    - **ValueError** - 初始化的Tensor的第一个维度不能被group整除。
+    - **ValueError** - groups不在[3, 4, 5]的范围内。
+    - **ValueError** - 初始化的Tensor的第一个维度不能被groups整除。
 
 
 
@@ -198,9 +198,9 @@ mindspore.common.initializer
 
     **参数：**
 
-    **scale** (float) - 比例因子，默认值为1.0。
-    **mode** (str) - 其值应为"fan_in"，"fan_out"或者"fan_avg"，默认值为"fan_in"。
-    **distribution** (str) - 用于采样的分布类型。它可以是"uniform"，"truncated_normal"或"untruncated_normal"，
+    - **scale** (float) - 比例因子，默认值为1.0。
+    - **mode** (str) - 其值应为"fan_in"，"fan_out"或者"fan_avg"，默认值为"fan_in"。
+    - **distribution** (str) - 用于采样的分布类型。它可以是"uniform"，"truncated_normal"或"untruncated_normal"，
     默认值为"truncated_normal"。
 
 

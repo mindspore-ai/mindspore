@@ -547,7 +547,7 @@ class VarianceScaling(Initializer):
         scale (float): The scaling factor. Default: 1.0.
         mode (str): Should be 'fan_in', 'fan_out' or 'fan_avg'. Default: 'fan_in'.
         distribution(str): The type of distribution chose to sample values. It should be
-        'uniform', 'truncated_normal' or 'untruncated_normal'. Default: 'truncated_normal'.
+            'uniform', 'truncated_normal' or 'untruncated_normal'. Default: 'truncated_normal'.
 
     Raises:
         ValueError: If scale is not greater than 0.
