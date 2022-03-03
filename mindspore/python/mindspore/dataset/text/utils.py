@@ -62,7 +62,7 @@ class Vocab:
         If token does not exist, return id with value -1.
 
         Args:
-            tokens(Union[str, list[str]]): One or several token(s) to convert to token id(s).
+            tokens (Union[str, list[str]]): One or several token(s) to convert to token id(s).
 
         Returns:
             The token id or list of token ids.
@@ -85,7 +85,7 @@ class Vocab:
         If id does not exist, return empty string.
 
         Args:
-            ids(Union[int, list[int]]): The token id (or token ids) to convert to tokens.
+            ids (Union[int, list[int]]): The token id (or token ids) to convert to tokens.
 
         Returns:
             The decoded token(s).
@@ -113,21 +113,22 @@ class Vocab:
         would be ordered lexicographically.
 
         Args:
-            dataset(Dataset): dataset to build vocab from.
-            columns(list[str], optional): column names to get words from. It can be a list of column names.
+            dataset (Dataset): dataset to build vocab from.
+            columns (list[str], optional): column names to get words from. It can be a list of column names.
                 (default=None, where all columns will be used. If any column isn't string type, will return error).
-            freq_range(tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
+            freq_range (tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
                 range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency=0 is the same as
                 min_frequency=1. max_frequency > total_words is the same as max_frequency = total_words.
                 min_frequency/max_frequency can be None, which corresponds to 0/total_words separately
                 (default=None, all words are included).
-            top_k(int, optional): top_k is greater than 0. Number of words to be built into vocab. top_k means most
+            top_k (int, optional): top_k is greater than 0. Number of words to be built into vocab. top_k means most
                 frequent words are taken. top_k is taken after freq_range. If not enough top_k, all words will be taken
                 (default=None, all words are included).
-            special_tokens(list, optional):  A list of strings, each one is a special token. For example
+            special_tokens (list, optional):  A list of strings, each one is a special token. For example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
-            special_first(bool, optional): Whether special_tokens will be prepended/appended to vocab. If special_tokens
-                is specified and special_first is set to True, special_tokens will be prepended (default=True).
+            special_first (bool, optional): Whether special_tokens will be prepended/appended to vocab. If
+                special_tokens is specified and special_first is set to True, special_tokens will be prepended
+                (default=True).
 
         Returns:
             Vocab, Vocab object built from the dataset.
@@ -151,10 +152,10 @@ class Vocab:
         Build a vocab object from a list of word.
 
         Args:
-            word_list(list): A list of string where each element is a word of type string.
-            special_tokens(list, optional):  A list of strings, each one is a special token. For example
+            word_list (list): A list of string where each element is a word of type string.
+            special_tokens (list, optional):  A list of strings, each one is a special token. For example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
-            special_first(bool, optional): Whether special_tokens is prepended or appended to vocab. If special_tokens
+            special_first (bool, optional): Whether special_tokens is prepended or appended to vocab. If special_tokens
                 is specified and special_first is set to True, special_tokens will be prepended (default=True).
 
         Returns:
@@ -248,13 +249,13 @@ class SentencePieceVocab(cde.SentencePieceVocab):
         Build a SentencePiece from a dataset.
 
         Args:
-            dataset(Dataset): Dataset to build SentencePiece.
-            col_names(list): The list of the col name.
-            vocab_size(int): Vocabulary size.
-            character_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for
+            dataset (Dataset): Dataset to build SentencePiece.
+            col_names (list): The list of the col name.
+            vocab_size (int): Vocabulary size.
+            character_coverage (float): Amount of characters covered by the model, good defaults are: 0.9995 for
                 languages with rich character set like Japanese or Chinese and 1.0 for other languages with small
                 character set.
-            model_type(SentencePieceModel): It can be any of [SentencePieceModel.UNIGRAM, SentencePieceModel.BPE,
+            model_type (SentencePieceModel): It can be any of [SentencePieceModel.UNIGRAM, SentencePieceModel.BPE,
                 SentencePieceModel.CHAR, SentencePieceModel.WORD], default is SentencePieceModel.UNIGRAM. The input
                 sentence must be pre-tokenized when using SentencePieceModel.WORD type.
 
@@ -265,7 +266,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
                 - SentencePieceModel.CHAR, refers to char based sentencePiece Model type.
                 - SentencePieceModel.WORD, refers to word based sentencePiece Model type.
 
-            params(dict): A dictionary with no incoming parameters.
+            params (dict): A dictionary with no incoming parameters.
 
         Returns:
             SentencePieceVocab, vocab built from the dataset.
@@ -287,12 +288,12 @@ class SentencePieceVocab(cde.SentencePieceVocab):
         Build a SentencePiece object from a file.
 
         Args:
-            file_path(list): Path to the file which contains the SentencePiece list.
-            vocab_size(int): Vocabulary size.
-            character_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for
+            file_path (list): Path to the file which contains the SentencePiece list.
+            vocab_size (int): Vocabulary size.
+            character_coverage (float): Amount of characters covered by the model, good defaults are: 0.9995 for
                 languages with rich character set like Japanese or Chinese and 1.0 for other languages with small
                 character set.
-            model_type(SentencePieceModel): It can be any of [SentencePieceModel.UNIGRAM, SentencePieceModel.BPE,
+            model_type (SentencePieceModel): It can be any of [SentencePieceModel.UNIGRAM, SentencePieceModel.BPE,
                 SentencePieceModel.CHAR, SentencePieceModel.WORD], default is SentencePieceModel.UNIGRAM. The input
                 sentence must be pre-tokenized when using SentencePieceModel.WORD type.
 
@@ -303,7 +304,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
                 - SentencePieceModel.CHAR, refers to char based sentencePiece Model type.
                 - SentencePieceModel.WORD, refers to word based sentencePiece Model type.
 
-            params(dict): A dictionary with no incoming parameters(The parameters are derived from SentencePiece
+            params (dict): A dictionary with no incoming parameters(The parameters are derived from SentencePiece
                 library).
 
                 .. code-block::
@@ -330,9 +331,9 @@ class SentencePieceVocab(cde.SentencePieceVocab):
         Save model into given filepath.
 
         Args:
-            vocab(SentencePieceVocab): A SentencePiece object.
-            path(str): Path to store model.
-            filename(str): The name of the file.
+            vocab (SentencePieceVocab): A SentencePiece object.
+            path (str): Path to store model.
+            filename (str): The name of the file.
 
         Examples:
             >>> from mindspore.dataset.text import SentencePieceModel
@@ -458,8 +459,8 @@ class SPieceTokenizerOutType(IntEnum):
 
     Possible enumeration values are: SPieceTokenizerOutType.STRING, SPieceTokenizerOutType.INT.
 
-    - SPieceTokenizerOutType.STRING: means output type of SentencePice Tokenizer is string.
-    - SPieceTokenizerOutType.INT: means output type of SentencePice Tokenizer is int.
+    - SPieceTokenizerOutType.STRING: means output type of SentencePiece Tokenizer is string.
+    - SPieceTokenizerOutType.INT: means output type of SentencePiece Tokenizer is int.
     """
 
     STRING = 0
@@ -472,8 +473,8 @@ class SPieceTokenizerLoadType(IntEnum):
 
     Possible enumeration values are: SPieceTokenizerLoadType.FILE, SPieceTokenizerLoadType.MODEL.
 
-    - SPieceTokenizerLoadType.FILE: Load sentencepiece tokenizer from local sentencepiece vocab file.
-    - SPieceTokenizerLoadType.MODEL: Load sentencepiece tokenizer from sentencepiece vocab instance.
+    - SPieceTokenizerLoadType.FILE: Load SentencePiece tokenizer from a Vocab file.
+    - SPieceTokenizerLoadType.MODEL: Load SentencePiece tokenizer from a Vocab instance.
     """
 
     FILE = 0

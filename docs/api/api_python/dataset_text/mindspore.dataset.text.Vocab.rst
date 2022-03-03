@@ -21,7 +21,7 @@
         - **freq_range** (tuple，可选) - 表示整数元组（min_frequency，max_frequency）。频率范围内的单词将被保留。0 <= min_frequency <= max_frequency <= total_words。min_frequency=0等同于min_frequency=1。max_frequency > total_words等同于max_frequency = total_words。min_frequency和max_frequency可以为None，分别对应于0和total_words，默认值：None。
         - **top_k** (int，可选) - `top_k` 大于0。要在vocab中 `top_k` 建立的单词数量表示取用最频繁的单词。 `top_k` 在 `freq_range` 之后取用。如果没有足够的 `top_k` ，所有单词都将被取用,默认值：None。
         - **special_tokens** (list，可选) - 表示字符串列表。每个字符串都是一个特殊的标记。例如，special_tokens=["<pad>","<unk>"]，默认值：None，表示不添加特殊标记。
-        - **Special_first** (bool，可选) - 表示是否添加 `special_tokens` 到vocab。如果指定了 `special_tokens` 并将 `special_first` 设置为True，则添加special_tokens，默认值：True。
+        - **special_first** (bool，可选) - 表示是否添加 `special_tokens` 到vocab。如果指定了 `special_tokens` 并将 `special_first` 设置为True，则添加special_tokens，默认值：True。
 
         **返回：**
 
