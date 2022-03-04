@@ -45,9 +45,9 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     return nullptr;
   }
   auto act_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(act_node->input(0));
-  if (act_prim == nullptr ||
-      (act_prim->GetAttr(ops::kActivationType) != nullptr && act_prim->get_activation_type() != mindspore::RELU &&
-       act_prim->get_activation_type() != mindspore::RELU6)) {
+  MS_CHECK_TRUE_MSG(act_prim != nullptr, nullptr, "activation prim is nullptr.");
+  if (act_prim->GetAttr(ops::kActivationType) != nullptr && act_prim->get_activation_type() != mindspore::RELU &&
+      act_prim->get_activation_type() != mindspore::RELU6) {
     return nullptr;
   }
 

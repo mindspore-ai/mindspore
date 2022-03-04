@@ -139,6 +139,7 @@ STATUS CustomAscendKernel::ProcDynamicInput(std::vector<mindspore::MSTensor> *in
     }
     mindspore::MSTensor batch_size_input("batch", DataType::kNumberTypeInt32, {1}, batch_size, sizeof(int32_t));
     inputs->emplace_back(batch_size_input);
+    free(batch_size);
   }
   if (!acl_options_.image_size.empty()) {
     int32_t *image_size = reinterpret_cast<int32_t *>(malloc(kImageSizeHwNum * sizeof(int32_t)));
@@ -154,6 +155,7 @@ STATUS CustomAscendKernel::ProcDynamicInput(std::vector<mindspore::MSTensor> *in
     mindspore::MSTensor image_size_input("batch", DataType::kNumberTypeInt32, {2}, image_size,
                                          kImageSizeHwNum * sizeof(int32_t));
     inputs->emplace_back(image_size_input);
+    free(image_size);
   }
   return lite::RET_OK;
 }

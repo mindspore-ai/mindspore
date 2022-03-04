@@ -56,6 +56,26 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImpl(const std::stri
   return impl;
 }
 
+std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImplByDeepCopy(const std::string &name, enum DataType type,
+                                                                           const std::vector<int64_t> &shape,
+                                                                           const void *data, size_t data_len) {
+  std::vector<int32_t> truncated_shape;
+  truncated_shape = TruncateShape(shape, static_cast<enum TypeId>(type), data_len, false);
+  auto lite_tensor =
+    lite::Tensor::CreateTensorByDeepCopy(name, static_cast<enum TypeId>(type), truncated_shape, data, data_len);
+  if (lite_tensor == nullptr) {
+    MS_LOG(ERROR) << "Failed to allocate lite tensor.";
+    return nullptr;
+  }
+  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) Impl(lite_tensor));
+  if (impl == nullptr) {
+    MS_LOG(ERROR) << "Failed to allocate tensor impl.";
+    return nullptr;
+  }
+  impl->set_from_session(false);
+  return impl;
+}
+
 #ifndef STRING_KERNEL_CLIP
 std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::string &name,
                                                                     const std::vector<std::string> &str) {
