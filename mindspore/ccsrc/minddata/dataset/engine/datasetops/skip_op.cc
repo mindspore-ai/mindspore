@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,9 @@ Status SkipOp::GetNextRow(TensorRow *row) {
   }
   if (row->eoe()) {
     UpdateRepeatAndEpochCounter();
-    skip_count_ = 0;
+    if (!first_epoch_only_) {
+      skip_count_ = 0;
+    }
   }
   return Status::OK();
 }

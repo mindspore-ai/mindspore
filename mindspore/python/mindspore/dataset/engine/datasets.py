@@ -86,6 +86,43 @@ OffloadToManualOffloadMode = {
     True: cde.ManualOffloadMode.ENABLED
 }
 
+_train_dataset = None
+
+
+def _set_training_dataset(dataset):
+    """
+    Set the dataset to be used when training recovery has occurred.
+
+    Args:
+        dataset: the training dataset or iterator
+    """
+    global _train_dataset
+    _train_dataset = dataset
+
+
+def _get_training_dataset():
+    """
+    Get the dataset to be used when training recovery has occurred.
+
+    Returns:
+        training dataset/iterator
+    """
+    return _train_dataset
+
+
+def _reset_training_dataset(step):
+    """
+    Reset the training dataset to the given step number.
+
+    Args:
+        step (int): Global step number.
+    """
+    dataset = _get_training_dataset()
+    if dataset is not None:
+        dataset.reset(step)
+    else:
+        raise RuntimeError("Training dataset is not set.")
+
 
 class Shuffle(str, Enum):
     """Specify the shuffle mode.
@@ -3352,6 +3389,9 @@ class _ToDevice:
     def send(self):
         self._to_device.Send()
 
+    def reset(self, step):
+        self._to_device.Reset(step)
+
     def stop_send(self):
         """
         send stop send signal to pipeline, it is used when end of sequence is sent at the epoch end.
@@ -3458,6 +3498,11 @@ class TransferDataset(Dataset):
     def continue_send(self):
         if self._to_device is not None:
             self._to_device.continue_send()
+
+    def reset(self, step):
+        if self._to_device is not None:
+            logger.info("Reset the dataset pipeline to step " + str(step))
+            self._to_device.reset(step)
 
     def get_data_info(self):
         """

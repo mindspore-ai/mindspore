@@ -27,6 +27,8 @@ namespace mindspore {
 namespace dataset {
 class SkipNode : public DatasetNode {
  public:
+  explicit SkipNode(int32_t count);
+
   /// \brief Constructor
   explicit SkipNode(std::shared_ptr<DatasetNode> child, int32_t count);
 
@@ -95,8 +97,11 @@ class SkipNode : public DatasetNode {
   static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
                           std::shared_ptr<DatasetNode> *result);
 
+  void SetFirstEpochOnly(bool flag) { first_epoch_only_ = flag; }
+
  private:
   int32_t skip_count_;
+  bool first_epoch_only_ = false;
 };
 }  // namespace dataset
 }  // namespace mindspore

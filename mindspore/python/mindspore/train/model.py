@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ from ..parallel._cost_model_context import _set_multi_subgraphs
 from .dataset_helper import DatasetHelper, connect_network_with_dataset
 from . import amp
 from ..common.api import _pynative_executor, _cell_graph_executor
-
+from ..dataset.engine.datasets import _set_training_dataset
 
 def _transfer_tensor_to_tuple(inputs):
     """
@@ -392,6 +392,10 @@ class Model:
 
         if dataset_sink_mode:
             network = connect_network_with_dataset(network, dataset_helper)
+
+        if is_train:
+            _set_training_dataset(dataset_helper)  # pylint: disable=W0212
+
 
         network.set_train(is_train)
         network.phase = phase

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/opt/post/generator_node_pass.h"
 #endif
+#include "minddata/dataset/engine/opt/pre/add_skip_pass.h"
 #include "minddata/dataset/engine/opt/pre/cache_validation_pass.h"
 #include "minddata/dataset/engine/opt/pre/deep_copy_pass.h"
 #include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
@@ -57,6 +58,7 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   actions.emplace_back(std::make_unique<InputValidationPass>());
   actions.emplace_back(std::make_unique<CacheValidationPass>());
   actions.emplace_back(std::make_unique<NodeRemovalPass>());
+  if (usage_ == kDeReset) actions.emplace_back(std::make_unique<AddSkipPass>());
   actions.emplace_back(std::make_unique<EpochCtrlPass>());
   if (usage_ == kDeGetter) actions.emplace_back(std::make_unique<GetterPass>());
 #ifndef ENABLE_ANDROID
@@ -176,9 +178,9 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
   return Status::OK();
 }
 
-Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_epochs) {
+Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_epochs, int64_t step) {
   RETURN_UNEXPECTED_IF_NULL(input_ir);
-
+  input_ir_ = input_ir;
   tree_state_ = kCompileStateIRGraphBuilt;
   MS_LOG(INFO) << "Input plan:" << '\n' << *input_ir << '\n';
 
@@ -194,6 +196,7 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
   RETURN_IF_NOT_OK(cloning_tree.Run(input_ir, &m));
   std::shared_ptr<RootNode> root_ir = cloning_tree.Root();
   root_ir->SetNumEpochs(num_epochs);
+  root_ir->SetStep(step);
 
   tree_state_ = kCompileStateIRTreeCloned;
   MS_LOG(INFO) << "Plan before optimization:" << '\n' << *root_ir << '\n';

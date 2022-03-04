@@ -669,6 +669,24 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
 
   return Status::OK();
 }
+
+Status DeviceQueueOp::ClearDevice() {
+  MS_LOG(INFO) << "Clearing the data in GPU device: " << device_id_ << " channel: " << channel_name_;
+  auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
+  auto handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, {}, release_function);
+  if (handle == INVALID_HANDLE) {
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "[Internal ERROR] Failed to open channel for clearing the device.");
+  }
+
+  BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Clear(handle);
+  CHECK_FAIL_RETURN_UNEXPECTED(!ret, "Failed to clear the device.");
+
+  GpuBufferMgr::GetInstance().Close(handle);
+  GpuBufferMgr::GetInstance().CloseConfirm();
+  return Status::OK();
+}
+
 #endif
 
 Status DeviceQueueOp::SendDataToCPU() {

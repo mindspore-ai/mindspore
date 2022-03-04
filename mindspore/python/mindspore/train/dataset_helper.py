@@ -330,6 +330,10 @@ class DatasetHelper:
         """Continue to send data to device at the beginning of epoch."""
         self.iter.continue_send()
 
+    def reset(self, step):
+        """Reset the dataset to the provided step."""
+        self.iter.reset(step)
+
     def get_data_info(self):
         """
         In sink mode, it returns the types and shapes of the current data.
@@ -383,6 +387,7 @@ class _DatasetIter:
         self.stop_send = dataset.__transfer_dataset__.stop_send
         self.release = dataset.__transfer_dataset__.release
         self.continue_send = dataset.__transfer_dataset__.continue_send
+        self.reset = dataset.__transfer_dataset__.reset
         self.get_data_info = dataset.__transfer_dataset__.get_data_info
         self.dynamic_min_max_shapes = dataset.dynamic_min_max_shapes
         self.dataset_types, self.dataset_shapes = _get_types_and_shapes(dataset)

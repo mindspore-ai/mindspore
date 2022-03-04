@@ -57,6 +57,12 @@ class RootNode : public DatasetNode {
   /// \brief Getter of number of epochs
   int32_t num_epochs() const { return num_epochs_; }
 
+  /// \brief Getter of number of epochs
+  int64_t step() const { return step_; }
+
+  /// \brief Setter of number of epochs
+  void SetStep(int64_t step) { step_ = step; }
+
   /// \brief Setter of number of epochs
   void SetNumEpochs(int32_t num_epochs) override { num_epochs_ = num_epochs; }
 
@@ -78,6 +84,7 @@ class RootNode : public DatasetNode {
 
  private:
   int32_t num_epochs_;
+  int64_t step_;  // to support reset
 };
 }  // namespace dataset
 }  // namespace mindspore

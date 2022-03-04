@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -632,7 +632,7 @@ Status DatasetNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &siz
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  if (!IsSizeDefined()) {
+  if (!IsSizeDefined() && size_getter != nullptr) {
     RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), dataset_size));
     dataset_size_ = *dataset_size;
     return Status::OK();

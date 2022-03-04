@@ -144,6 +144,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/ir/datasetops/repeat_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/project_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/shuffle_node.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/skip_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/album_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/mnist_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/distributed_sampler_ir.cc
@@ -161,6 +162,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/datasetops/device_queue_op.cc
         ${MINDDATA_DIR}/engine/datasetops/project_op.cc
         ${MINDDATA_DIR}/engine/datasetops/shuffle_op.cc
+        ${MINDDATA_DIR}/engine/datasetops/skip_op.cc
         ${MINDDATA_DIR}/engine/datasetops/pipeline_op.cc
         ${MINDDATA_DIR}/engine/datasetops/batch_op.cc
         ${MINDDATA_DIR}/engine/datasetops/map_op/map_op.cc
@@ -170,6 +172,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/datasetops/source/mappable_leaf_op.cc
 
         ${MINDDATA_DIR}/engine/datasetops/source/io_block.cc
+        ${MINDDATA_DIR}/engine/opt/pre/add_skip_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/getter_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/input_validation_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/cache_validation_pass.cc

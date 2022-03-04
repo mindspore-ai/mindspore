@@ -178,6 +178,15 @@ class Iterator:
             self._getters()
         return self._col_names
 
+    def reset(self, step):
+        """
+        Reset the iterator to the given step number.
+
+        Args:
+            step (int): Global step number.
+        """
+        self._iterator.Reset(step)
+
 
 class DictIterator(Iterator):
     """
