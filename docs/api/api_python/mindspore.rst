@@ -8,6 +8,8 @@ mindspore
     :toctree: mindspore
 
     mindspore.Tensor
+    mindspore.COOTensor
+    mindspore.CSRTensor
     mindspore.RowTensor
     mindspore.SparseTensor
 

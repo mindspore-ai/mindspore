@@ -18,6 +18,7 @@
 from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
+from ....common import CSRTensor
 
 
 div = base.MultitypeFuncGraph("div", True)
@@ -25,6 +26,17 @@ div = base.MultitypeFuncGraph("div", True)
 div is a metafuncgraph object which will div two objects according to input type
 using ".register" decorator
 """
+
+@div.register("CSRTensor", "Tensor")
+def _csrtensor_div_tensor(x, y):
+    """
+    Returns x / y where x is CSRTensor and y is Tensor.
+
+    Outputs:
+       CSRTensor, equal to x * y.
+    """
+    data = F.csr_div(x, y)
+    return CSRTensor(x.indptr, x.indices, data, x.shape)
 
 
 @div.register("Number", "Number")

@@ -36,12 +36,13 @@ class CSRReduceSum(PrimitiveWithInfer):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, CSRTensor, ops
+        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore.ops.operations import _csr_ops
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.op = ops.CSRReduceSum()
+        ...         self.op = _csr_ops.CSRReduceSum()
         ...
         ...     def construct(self, indptr, indices, values, dense_shape, axis):
         ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
@@ -83,12 +84,13 @@ class CSRMV(PrimitiveWithInfer):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, CSRTensor, ops
+        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore.ops.operations import _csr_ops
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.op = ops.CSRMV()
+        ...         self.op = _csr_ops.CSRMV()
         ...
         ...     def construct(self, indptr, indices, values, dense_shape, dense):
         ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
@@ -135,12 +137,13 @@ class CSRMul(PrimitiveWithInfer):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, CSRTensor, ops
+        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore.ops.operations import _csr_ops
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.op = ops.CSRMul()
+        ...         self.op = _csr_ops.CSRMul()
         ...
         ...     def construct(self, indptr, indices, values, dense_shape, dense):
         ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
@@ -184,12 +187,13 @@ class CSRGather(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import _csr_ops
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.op = ops.CSRGather()
+        ...         self.op = _csr_ops.CSRGather()
         ...
         ...     def construct(self, indptr, indices, dense, sparse_shape):
         ...         return self.op(indptr, indices, dense, sparse_shape)
@@ -228,11 +232,12 @@ class CSR2COO(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import _csr_ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.op = ops.CSR2COO()
+        ...         self.op = _csr_ops.CSR2COO()
         ...
         ...     def construct(self, indptr, nnz):
         ...         return self.op(indptr, nnz)
@@ -267,12 +272,13 @@ class COO2CSR(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import _csr_ops
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.op = ops.COO2CSR()
+        ...         self.op = _csr_ops.COO2CSR()
         ...
         ...     def construct(self, row_indices, height):
         ...         return self.op(row_indices, height)
@@ -286,3 +292,52 @@ class COO2CSR(PrimitiveWithInfer):
     def __init__(self):
         """Initialize COO2CSR"""
         self.init_prim_io_names(inputs=['row_indices', 'height'], outputs=['output'])
+
+
+class CSRDiv(PrimitiveWithInfer):
+    """
+    Elemwise division on a CSRTensor and a dense tensor.
+
+    Note:
+        The op outputs a 1-D dense tensor whose shape and values are the same as input `CSRTensor.values`.
+        If expect a CSRTensor output, please use `/` directly, e.g. `x / y`, can be CSRTensor.
+
+    Inputs:
+        - **sparse_tensor** (CSRTensor) - A CSRTensor.
+        - **dense_tensor** (Tensor) - A Tensor.
+
+    Outputs:
+        Tensor, the dtype and shape is the same as `sparse_tensor.values`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore.ops.operations import _csr_ops
+        >>> from mindspore import dtype as mstype
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.op = _csr_ops.CSRDiv()
+        ...
+        ...     def construct(self, indptr, indices, values, dense_shape, dense):
+        ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        ...         return self.op(csr_tensor, dense)
+        >>> indptr = Tensor([0, 1, 2])
+        >>> indices = Tensor([0, 1])
+        >>> values = Tensor([2, 1], dtype=mstype.float32)
+        >>> dense_shape = (2, 4)
+        >>> dense = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
+        >>> out = Net()(indptr, indices, values, dense_shape, dense)
+        >>> print(out)
+        [2. 1.]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize CSRDiv"""
+        self.init_prim_io_names(inputs=['indptr', 'indices', 'values', 'dense_shape', 'dense_tensor'],
+                                outputs=['output'])

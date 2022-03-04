@@ -1894,3 +1894,62 @@ def filter_(fun, iter_):
         if fun(elem):
             result.append(elem)
     return result
+
+##################
+# Sparse methods #
+##################
+
+
+def csr_astype(x, dtype):
+    """Implementation of `astype` for CSRTensor."""
+    data = F.cast(x.values, dtype)
+    return F.make_csr_tensor(x.indptr, x.indices, data, x.shape)
+
+def csr_sum(x, axis):
+    """Implementation of `sum` for CSRTensor."""
+    return F.csr_reduce_sum(x, axis)
+
+def csr_abs(x):
+    """Implementation of `abs` for CSRTensor."""
+    data = F.absolute(x.values)
+    return F.make_csr_tensor(x.indptr, x.indices, data, x.shape)
+
+def csr_mv(x, dense_vector):
+    """Implementation of `abs` for CSRTensor."""
+    return F.csr_mv(x, dense_vector)
+
+def csr_to_tuple(x):
+    """Implementation of `to_tuple` for CSRTensor."""
+    res = (x.indptr, x.indices, x.values, x.shape)
+    return res
+
+def coo_astype(x, dtype):
+    """Implementation of `astype` for COOTensor."""
+    data = F.cast(x.values, dtype)
+    return F.make_coo_tensor(x.indices, data, x.shape)
+
+def coo_to_tuple(x):
+    """Implementation of `to_tuple` for COOTensor."""
+    return x.indices, x.values, x.shape
+
+def coo_abs(x):
+    """Implementation of `abs` for COOTensor."""
+    data = F.absolute(x.values)
+    return F.make_coo_tensor(x.indices, data, x.shape)
+
+################
+# Sparse Attrs #
+################
+
+
+def sparse_size_(x):
+    """
+    Return the size of SparseTensor.values. That is the number of non-zero values in SparseTensor.
+    """
+    return size_(x.values)
+
+def sparse_ndim_(x):
+    """
+    Return the ndim of SparseTensor, according to its dense shape.
+    """
+    return F.tuple_len(x.shape)

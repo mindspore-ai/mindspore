@@ -2424,6 +2424,7 @@ class COOTensor(COOTensor_):
             supplies the values for each element in `indices`.
         shape (tuple(int)): A integer tuple of size `ndims`,
             which specifies the dense_shape of the sparse tensor.
+        coo_tensor (COOTensor): A COOTensor object.
 
     Returns:
         COOTensor, composed of `indices`, `values`, and `shape`.
@@ -2485,6 +2486,61 @@ class COOTensor(COOTensor_):
         zeros_tensor = tensor_operator_registry.get("zeros")(self.shape, self.values.dtype)
         return tensor_operator_registry.get("tensor_scatter_update")(
             zeros_tensor, self.indices, self.values)
+
+    @property
+    def dtype(self):
+        """Return the dtype of the values of COOTensor (:class:`mindspore.dtype`)."""
+        return self._dtype
+
+    @property
+    def size(self):
+        """Return the number of non-zero values."""
+        return self.values.size
+
+    @property
+    def itemsize(self):
+        """Return the length of one tensor element in bytes."""
+        return self.values.itemsize
+
+    @property
+    def ndim(self):
+        """Return the number of tensor dimensions."""
+        return len(self.shape)
+
+    def astype(self, dtype):
+        """
+        Return a copy of the COOTensor, cast its values to a specified type.
+
+        Args:
+            dtype (class:`mindspore.dtype`): Designated tensor dtype.
+
+        Returns:
+            COOTensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, COOTensor
+            >>> indices = Tensor([[0, 1], [1, 2]])
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (3, 4)
+            >>> x = COOTensor(indices, values, shape)
+            >>> print(x.astype(ms.float64).dtype)
+            Float64
+        """
+        data = self.values.astype(dtype)
+        return COOTensor(self.indices, data, self.shape)
+
+    def to_tuple(self):
+        """Return indices, values and shape as a tuple."""
+        return self.indices, self.values, self.shape
+
+    def abs(self):
+        """Return absolute value element-wisely."""
+        data = self.values.abs()
+        return COOTensor(self.indices, data, self.shape)
 
 
 class CSRTensor(CSRTensor_):
@@ -2565,6 +2621,13 @@ class CSRTensor(CSRTensor_):
         res = tensor_operator_registry.get('csr_mul')(self, other)
         return CSRTensor(self.indptr, self.indices, res, self.shape)
 
+    def __div__(self, other):
+        res = tensor_operator_registry.get('csr_div')(self, other)
+        return CSRTensor(self.indptr, self.indices, res, self.shape)
+
+    def __truediv__(self, other):
+        return self.__div__(other)
+
     @property
     def indptr(self):
         return Tensor(self._indptr)
@@ -2581,17 +2644,127 @@ class CSRTensor(CSRTensor_):
     def shape(self):
         return self._shape
 
+    @property
+    def dtype(self):
+        """Return the dtype of the values of CSRTensor (:class:`mindspore.dtype`)."""
+        return self._dtype
+
+    @property
+    def size(self):
+        """Return the number of non-zero values."""
+        return self.values.size
+
+    @property
+    def itemsize(self):
+        """Return the length of one tensor element in bytes."""
+        return self.values.itemsize
+
+    @property
+    def ndim(self):
+        """Return the number of tensor dimensions."""
+        return len(self.shape)
+
     def to_tuple(self):
+        """Return indptr, indices, values and shape as a tuple."""
         return self.indptr, self.indices, self.values, self.shape
 
     def to_coo(self):
+        """Return a COOTensor."""
         row_indices = tensor_operator_registry.get("csr2coo")(self.indptr, self.values.shape[0])
         coo_indices = tensor_operator_registry.get("stack")(1)((row_indices, self.indices))
         return COOTensor(coo_indices, self.values, self.shape)
 
     def to_dense(self):
+        """Return a dense Tensor."""
         coo_tensor = self.to_coo()
         return coo_tensor.to_dense()
+
+    def astype(self, dtype):
+        """
+        Return a copy of the CSRTensor, cast its values to a specified type.
+
+        Args:
+            dtype (class:`mindspore.dtype`): Designated tensor dtype.
+
+        Returns:
+            CSRTensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, CSRTensor
+            >>> indptr = Tensor([0, 1, 2])
+            >>> indices = Tensor([0, 1])
+            >>> values = Tensor([1, 2], dtype=ms.float32)
+            >>> shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
+            >>> print(x.astype(ms.float64).dtype)
+            Float64
+        """
+        data = self.values.astype(dtype)
+        return CSRTensor(self.indptr, self.indices, data, self.shape)
+
+    def mv(self, dense_vector):
+        """
+        Sparse matrix-vector multiplication.
+
+        Args:
+            dense_vector (Tensor) - A dense Tensor.
+
+        Returns:
+            Tensor.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> from mindspore import Tensor, CSRTensor
+            >>> from mindspore import dtype as mstype
+            >>> indptr = Tensor([0, 1, 2])
+            >>> indices = Tensor([0, 1])
+            >>> values = Tensor([2, 1], dtype=mstype.float32)
+            >>> dense_shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+            >>> dense = Tensor([[1], [1], [1], [1]], dtype=mstype.float32)
+            >>> print(csr_tensor.mv(dense))
+            [[2.]
+            [1.]]
+        """
+        return tensor_operator_registry.get("csr_mv")(self, dense_vector)
+
+    def sum(self, axis):
+        """
+        Reduces a dimension of a CSRTensor by summing all elements in the dimension.
+
+        Args:
+            axis (int) - The dimensions to reduce.
+
+        Returns:
+            Tensor, the dtype is the same as `sparse_tensor.values`.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> from mindspore import Tensor, CSRTensor
+            >>> from mindspore import dtype as mstype
+            >>> indptr = Tensor([0, 1, 2])
+            >>> indices = Tensor([0, 1])
+            >>> values = Tensor([2, 1], dtype=mstype.float32)
+            >>> dense_shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+            >>> print(csr_tensor.sum(1))
+            [[2.]
+            [1.]]
+        """
+        return tensor_operator_registry.get("csr_reduce_sum")(self, axis)
+
+    def abs(self):
+        """Return absolute value element-wisely."""
+        data = self.values.abs()
+        return CSRTensor(self.indptr, self.indices, data, self.shape)
 
 
 def _vm_compare(*args):

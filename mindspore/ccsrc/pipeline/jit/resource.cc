@@ -214,19 +214,27 @@ BuiltInTypeMap &GetMethodMap() {
                                        {
                                          {"__add__", prim::kPrimRowTensorAdd},  // P.row_tensor_add
                                        }},
-                                      {kObjectTypeJTagged, {}},
-                                      {kObjectTypeSymbolicKeyType, {}},
-                                      {kObjectTypeEnvType, {}},
-                                      {kObjectTypeCOOTensorType,
-                                       {
-                                         {"to_csr", std::string("coo_to_csr")},
-                                         {"to_dense", std::string("coo_to_dense")},
-                                       }},
                                       {kObjectTypeCSRTensorType,
                                        {
-                                         {"to_coo", std::string("csr_to_coo")},
-                                         {"to_dense", std::string("csr_to_dense")},
-                                       }}};
+                                         {"astype", std::string("csr_astype")},      // C.csr_astype
+                                         {"abs", std::string("csr_abs")},            // C.csr_abs
+                                         {"sum", std::string("csr_sum")},            // C.csr_sum
+                                         {"mv", std::string("csr_mv")},              // C.csr_mv
+                                         {"to_tuple", std::string("csr_to_tuple")},  // C.csr_to_tuple
+                                         {"to_coo", std::string("csr_to_coo")},      // C.csr_to_coo
+                                         {"to_dense", std::string("csr_to_dense")},  // C.csr_to_dense
+                                       }},
+                                      {kObjectTypeCOOTensorType,
+                                       {
+                                         {"astype", std::string("coo_astype")},      // C.coo_astype
+                                         {"abs", std::string("coo_abs")},            // C.coo_abs
+                                         {"to_tuple", std::string("coo_to_tuple")},  // C.coo_to_tuple
+                                         {"to_csr", std::string("coo_to_csr")},      // C.coo_to_csr
+                                         {"to_dense", std::string("coo_to_dense")},  // C.coo_to_dense
+                                       }},
+                                      {kObjectTypeJTagged, {}},
+                                      {kObjectTypeSymbolicKeyType, {}},
+                                      {kObjectTypeEnvType, {}}};
   return method_map;
 }
 
@@ -254,6 +262,10 @@ BuiltInTypeMap &GetAttrMap() {
        {"values", prim::kPrimCOOTensorGetValues},     // F.coo_tensor_get_values
        {"indices", prim::kPrimCOOTensorGetIndices},   // F.coo_tensor_get_indices
        {"shape", prim::kPrimCOOTensorGetDenseShape},  // F.coo_tensor_get_dense_shape
+       {"dtype", std::string("dtype_")},              // C.dtype_
+       {"size", std::string("sparse_size_")},         // C.sparse_size_
+       {"ndim", std::string("sparse_ndim_")},         // C.sparse_ndim_
+       {"itemsize", std::string("itemsize_")},        // C.itemsize_
      }},
     {kObjectTypeCSRTensorType,
      {
@@ -261,6 +273,10 @@ BuiltInTypeMap &GetAttrMap() {
        {"values", prim::kPrimCSRTensorGetValues},     // F.csr_tensor_get_values
        {"indices", prim::kPrimCSRTensorGetIndices},   // F.csr_tensor_get_indices
        {"shape", prim::kPrimCSRTensorGetDenseShape},  // F.csr_tensor_get_shape
+       {"dtype", std::string("dtype_")},              // C.dtype_
+       {"size", std::string("sparse_size_")},         // C.sparse_size_
+       {"ndim", std::string("sparse_ndim_")},         // C.sparse_ndim_
+       {"itemsize", std::string("itemsize_")},        // C.itemsize_
      }},
   };
   return attr_map;
