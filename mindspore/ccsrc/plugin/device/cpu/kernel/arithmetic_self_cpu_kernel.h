@@ -151,6 +151,14 @@ MS_REG_CPU_KERNEL(Cosh, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputA
                   ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Cosh, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
                   ArithmeticSelfCpuKernelMod);
+MS_REG_CPU_KERNEL(Sinh, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                  ArithmeticSelfCpuKernelMod);
+MS_REG_CPU_KERNEL(Cosh, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                  ArithmeticSelfCpuKernelMod);
+MS_REG_CPU_KERNEL(Sinh, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+                  ArithmeticSelfCpuKernelMod);
+MS_REG_CPU_KERNEL(Cosh, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+                  ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Asinh, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Asinh, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
