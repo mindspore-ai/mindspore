@@ -6970,7 +6970,7 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
 
 class BasicLSTMCell(PrimitiveWithInfer):
     """
-    It's similar to operator :class:`DynamicRNN`. BasicLSTMCell will be deprecated in the future.
+    It's similar to operator :class:`mindspore.ops.DynamicRNN`. BasicLSTMCell will be deprecated in the future.
     Please use DynamicRNN instead.
 
     Supported Platforms:

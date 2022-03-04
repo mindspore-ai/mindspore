@@ -106,13 +106,13 @@ class Custom(ops.PrimitiveWithInfer):
 
                    Examples: see details in tests/st/ops/graph_kernel/custom/aot_test_files/
 
-                - Use it in Custom:
+                 - Use it in Custom:
 
-                  .. code-block::
+                   .. code-block::
 
-                      Custom(func="{dir_path}/{file_name}:{func_name}",...)
-                      (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_dtype=mstype.float32,
-                      "aot")
+                       Custom(func="{dir_path}/{file_name}:{func_name}",...)
+                       (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_dtype=mstype.float32,
+                       "aot")
 
               2. for "julia":
 

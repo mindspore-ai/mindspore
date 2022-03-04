@@ -200,9 +200,7 @@ mindspore.common.initializer
 
     - **scale** (float) - 比例因子，默认值为1.0。
     - **mode** (str) - 其值应为"fan_in"，"fan_out"或者"fan_avg"，默认值为"fan_in"。
-    - **distribution** (str) - 用于采样的分布类型。它可以是"uniform"，"truncated_normal"或"untruncated_normal"，
-    默认值为"truncated_normal"。
-
+    - **distribution** (str) - 用于采样的分布类型。它可以是"uniform"，"truncated_normal"或"untruncated_normal"，默认值为"truncated_normal"。
 
     **异常：**
 
