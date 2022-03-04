@@ -37,7 +37,6 @@ int BroadcastToCPUKernel::ReSize() {
   shape_info_.input_shape_size_ = static_cast<int>(input_shape.size());
   shape_info_.output_shape_size_ = static_cast<int>(output_shape.size());
 
-  data_type_ = in_tensors_.at(0)->data_type();
   return RET_OK;
 }
 
@@ -56,7 +55,8 @@ int BroadcastToCPUKernel::Run() {
   CHECK_NULL_RETURN(input_data);
   CHECK_NULL_RETURN(output_data);
 
-  switch (data_type_) {
+  auto data_type = in_tensors_.at(0)->data_type();
+  switch (data_type) {
     case kNumberTypeFloat32:
       return BROADCAST_TO(float, reinterpret_cast<const float *>(input_data), &shape_info_,
                           reinterpret_cast<float *>(output_data));
@@ -70,7 +70,7 @@ int BroadcastToCPUKernel::Run() {
       return BROADCAST_TO(int, reinterpret_cast<const int *>(input_data), &shape_info_,
                           reinterpret_cast<int *>(output_data));
     default:
-      MS_LOG(ERROR) << "UnSupported data type: " << data_type_;
+      MS_LOG(ERROR) << "UnSupported data type: " << data_type;
       return RET_ERROR;
   }
 }
