@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 
 #include <iostream>
 #include <iterator>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 #include "ir/meta_func_graph.h"
-#include "ir/param_info.h"
 #include "ir/primitive.h"
 #include "ir/graph_utils.h"
-#include "include/common/utils/utils.h"
-#include "frontend/operator/composite/composite.h"
-#include "frontend/parallel/ops_info/operator_info.h"
-#include "pipeline/jit/parse/resolve.h"
 #include "ir/tensor.h"
+#include "include/common/utils/utils.h"
+#include "include/common/debug/anf_dump_utils.h"
 
 namespace mindspore {
 // namespace to support debug utils
@@ -43,20 +41,6 @@ std::string ValueType(const ValueNodePtr &node) {
   auto v = node->value();
   MS_EXCEPTION_IF_NULL(v);
   return v->type_name();
-}
-
-std::string ReplaceSpecialChar(const std::string &str) {
-  std::ostringstream oss;
-  for (size_t i = 0; i < str.size(); i++) {
-    if (str[i] == '<') {
-      oss << "「";
-    } else if (str[i] == '>') {
-      oss << "」";
-    } else {
-      oss << str[i];
-    }
-  }
-  return oss.str();
 }
 }  // namespace
 
@@ -400,12 +384,8 @@ static void DrawValueNode(Graphviz *const graph_obj, const ValueNodePtr &node) {
                       << "'>";
   graph_obj->buffer() << "<tr><td bgcolor='white'>" << ValueType(node) << "</td></tr>"
                       << "<tr><td>";
-  if (IsValueNode<MetaFuncGraph>(node)) {
-    graph_obj->buffer() << node->value()->cast<MetaFuncGraphPtr>()->name();
-  } else if (IsValueNode<parse::NameSpace>(node)) {
-    graph_obj->buffer() << node->value()->cast<parse::NameSpacePtr>()->name();
-  } else if (IsValueNode<parse::Symbol>(node)) {
-    graph_obj->buffer() << ReplaceSpecialChar(node->value()->cast<parse::SymbolPtr>()->name());
+  if (std::string value_node_str = AnfDumpHandler::ValueNodeStr(node); !value_node_str.empty()) {
+    graph_obj->buffer() << value_node_str;
   } else {
     std::ostringstream ss;
     ss << node->value()->ToString();
@@ -448,18 +428,16 @@ static void DrawParallelInfo(Graphviz *const graph_obj, const CNodePtr &node) {
   if (graph_obj == nullptr || node == nullptr) {
     return;
   }
-  auto distributed_operation_info = node->user_data<parallel::OperatorInfo>();
-  if (distributed_operation_info != nullptr) {
-    auto strategyPtr = distributed_operation_info->strategy();
-    if (strategyPtr != nullptr) {
-      auto num = node->inputs().size();
-      graph_obj->buffer() << "<tr><td colspan='" << num << "' ";
-      graph_obj->buffer() << "bgcolor='" << graph_obj->Color(node) << "'>";
-      std::vector<ValuePtr> temp = {MakeValue(strategyPtr->GetInputStage()), MakeValue(strategyPtr->GetInputDim())};
-      ValueTuplePtr strategy_tuple = std::make_shared<ValueTuple>(temp);
-      graph_obj->buffer() << "Strategy " << strategy_tuple->ToString();
-      graph_obj->buffer() << "</td></tr>" << std::endl;
-    }
+
+  auto in_value = AnfDumpHandler::InStrategyValue(node);
+  auto in_stage_value = AnfDumpHandler::InStrategyStageValue(node);
+  if (in_value != nullptr && in_stage_value != nullptr) {
+    auto num = node->inputs().size();
+    graph_obj->buffer() << "<tr><td colspan='" << num << "' ";
+    graph_obj->buffer() << "bgcolor='" << graph_obj->Color(node) << "'>";
+    ValueTuplePtr strategy_tuple = std::make_shared<ValueTuple>(std::vector<ValuePtr>{in_stage_value, in_value});
+    graph_obj->buffer() << "Strategy " << strategy_tuple->ToString();
+    graph_obj->buffer() << "</td></tr>" << std::endl;
   }
 }
 

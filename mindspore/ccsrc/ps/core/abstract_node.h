@@ -34,12 +34,13 @@
 #include "ps/core/recovery_base.h"
 #include "ps/core/communicator/task_executor.h"
 #include "ps/core/communicator/communicator_base.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
 class FollowerScaler;
-class AbstractNode : public Node {
+class BACKEND_EXPORT AbstractNode : public Node {
  public:
   AbstractNode()
       : heart_beat_thread_(nullptr),

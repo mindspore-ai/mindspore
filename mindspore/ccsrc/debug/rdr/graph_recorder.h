@@ -19,7 +19,8 @@
 #include <string>
 #include <memory>
 
-#include "debug/rdr/base_recorder.h"
+#include "include/common/debug/rdr/base_recorder.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 struct DumpGraphParams {
@@ -45,5 +46,10 @@ class GraphRecorder : public BaseRecorder {
   DumpGraphParams dump_graph_info_{false, 0};
 };
 using GraphRecorderPtr = std::shared_ptr<GraphRecorder>;
+
+namespace RDR {
+BACKEND_EXPORT bool RecordAnfGraph(const SubModuleId module, const std::string &name, const FuncGraphPtr &graph,
+                                   const DumpGraphParams &info, const std::string &file_type = ".ir;.pb;.dat");
+}  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_GRAPH_RECORDER_H_

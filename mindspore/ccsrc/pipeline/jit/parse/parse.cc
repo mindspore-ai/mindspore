@@ -32,7 +32,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "utils/ms_context.h"
 #include "utils/interpret_node_recorder.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 #include "mindspore/core/ir/cell.h"
 #include "include/common/utils/utils.h"
 

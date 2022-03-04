@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 
 #include <memory>
 #include <iomanip>
@@ -299,6 +299,15 @@ std::string Common::GetCompilerCachePath() {
   }
   const std::string compile_cache_dir = user_defined_path + "rank_" + rank_id_str + "/";
   return compile_cache_dir;
+}
+
+bool Common::GetDebugTerminate() { return debugger_terminate_; }
+
+bool Common::GetDebugExitSuccess() { return exit_success_; }
+
+void Common::DebugTerminate(bool val, bool exit_success) {
+  debugger_terminate_ = val;
+  exit_success_ = exit_success;
 }
 
 struct GlogLogDirRegister {

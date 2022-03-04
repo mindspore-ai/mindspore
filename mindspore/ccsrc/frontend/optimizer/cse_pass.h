@@ -23,7 +23,7 @@
 #include <memory>
 
 #include "utils/hash_map.h"
-#include "frontend/optimizer/cse.h"
+#include "include/common/utils/cse.h"
 
 #include "frontend/optimizer/optimizer.h"
 

@@ -20,7 +20,7 @@
 #include "ir/func_graph.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"
-#include "frontend/optimizer/cse.h"
+#include "include/common/utils/cse.h"
 #include "utils/log_adapter.h"
 #include "utils/hashing.h"
 #include "include/common/utils/convert_utils.h"

@@ -17,7 +17,7 @@
 #include "pybind_api/ir/cell_py.h"
 #include <string>
 
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/parse/data_converter.h"
 

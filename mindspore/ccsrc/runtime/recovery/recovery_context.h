@@ -24,6 +24,7 @@
 #include "distributed/persistent/storage/file_io_utils.h"
 #include "distributed/persistent/storage/json_utils.h"
 #include "runtime/collective/collective_communication_lib.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace runtime {
@@ -35,15 +36,14 @@ enum class RecoveryErrCode { kUnKnownError, kAllGatherHostNameFailed, kBroadcast
 
 // Used to save disaster recovery-related state quantities and provide disaster recovery-related
 // functions, such as reinitializing collective communication, etc.
-class RecoveryContext {
+class BACKEND_EXPORT RecoveryContext {
  public:
   static std::shared_ptr<RecoveryContext> &GetInstance() {
-    static std::shared_ptr<RecoveryContext> instance = nullptr;
-    if (instance == nullptr) {
-      instance.reset(new (std::nothrow) RecoveryContext());
-      instance->Initialize();
+    if (instance_ == nullptr) {
+      instance_.reset(new (std::nothrow) RecoveryContext());
+      instance_->Initialize();
     }
-    return instance;
+    return instance_;
   }
   ~RecoveryContext() = default;
 
@@ -105,6 +105,8 @@ class RecoveryContext {
   bool need_reinit_collective() const { return need_reinit_collective_.load(); }
 
  private:
+  inline static std::shared_ptr<RecoveryContext> instance_{};
+
   RecoveryContext() = default;
   DISABLE_COPY_AND_ASSIGN(RecoveryContext);
 

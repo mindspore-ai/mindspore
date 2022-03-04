@@ -23,7 +23,7 @@
 
 #include "./tinyxml2.h"
 
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"

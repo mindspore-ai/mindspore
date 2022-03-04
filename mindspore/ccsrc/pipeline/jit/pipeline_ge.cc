@@ -22,13 +22,13 @@
 #include <algorithm>
 
 #include "utils/hash_map.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "ir/tensor.h"
 #include "include/transform/graph_ir/convert.h"
 #include "include/transform/graph_ir/df_graph_manager.h"
 #include "include/transform/graph_ir/graph_builder.h"
 #include "include/transform/graph_ir/graph_runner.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"

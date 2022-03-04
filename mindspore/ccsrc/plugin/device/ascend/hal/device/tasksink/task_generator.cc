@@ -27,7 +27,7 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
+#include "debug/rdr/task_debug_info_recorder.h"
 #endif
 
 namespace mindspore {

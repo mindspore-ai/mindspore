@@ -19,7 +19,7 @@
 #include "pipeline/jit/resource.h"
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/utils.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/pass/getitem_tuple.h"

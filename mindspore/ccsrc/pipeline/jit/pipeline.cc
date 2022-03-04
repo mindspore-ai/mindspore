@@ -48,12 +48,12 @@
 #include "utils/crypto.h"
 #include "include/common/utils/comm_manager.h"
 #include "utils/interpret_node_recorder.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
-#include "debug/anf_ir_utils.h"
-#include "debug/trace.h"
-#include "debug/draw.h"
-#include "debug/common.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
+#include "pipeline/jit/debug/anf_ir_utils.h"
+#include "pipeline/jit/debug/trace.h"
+#include "include/common/debug/draw.h"
+#include "include/common/debug/common.h"
 #include "load_mindir/load_model.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "backend/common/session/executor_manager.h"
@@ -88,8 +88,8 @@
 #endif
 
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#include "debug/rdr/recorder_manager.h"
+#include "debug/rdr/graph_recorder.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #include "ir/cell.h"
 #endif
 
@@ -119,10 +119,6 @@ const char IR_TYPE_MINDIR[] = "mind_ir";
 
 GraphExecutorPyPtr GraphExecutorPy::executor_ = nullptr;
 std::mutex GraphExecutorPy::instance_lock_;
-#ifdef ENABLE_DEBUGGER
-bool GraphExecutorPy::debugger_terminate_ = false;
-bool GraphExecutorPy::exit_success_ = false;
-#endif
 
 std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBasePtrListHasher,
                    abstract::AbstractBasePtrListEqual>
@@ -1149,14 +1145,10 @@ void GraphExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &pha
 
 #ifdef ENABLE_DEBUGGER
 void GraphExecutorPy::TerminateDebugger() {
-  if (debugger_terminate_) {
+  if (Common::GetDebugTerminate()) {
     MS_LOG(INFO) << "Terminate debugger and clear resources!";
     ClearResAtexit();
-    if (exit_success_) {
-      exit(0);
-    } else {
-      exit(1);
-    }
+    exit(static_cast<int>(!Common::GetDebugExitSuccess()));
   }
 }
 #endif

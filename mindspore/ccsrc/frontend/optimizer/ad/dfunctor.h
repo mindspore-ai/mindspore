@@ -34,7 +34,7 @@
 #include "frontend/optimizer/ad/adjoint.h"
 #include "frontend/optimizer/ad/pynative_dfunctor.h"
 #include "frontend/operator/ops.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {

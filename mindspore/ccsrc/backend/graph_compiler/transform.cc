@@ -25,13 +25,13 @@
 #include <vector>
 
 #include "abstract/abstract_value.h"
+#include "abstract/abstract_function.h"
 #ifdef ENABLE_D
 #include "include/transform/graph_ir/convert.h"
 #endif
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
-#include "debug/trace.h"
-#include "debug/anf_ir_dump.h"
+#include "utils/trace_base.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_context.h"
 #endif

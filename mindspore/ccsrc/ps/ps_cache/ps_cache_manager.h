@@ -35,6 +35,7 @@
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "ps/ps_cache/embedding_hash_map.h"
 #include "ps/ps_cache/ps_cache_factory.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
@@ -108,12 +109,9 @@ struct PsCacheStatisticsInfo {
   size_t mem_cache_hit_count_{0};
 };
 
-class PsCacheManager {
+class BACKEND_EXPORT PsCacheManager {
  public:
-  static PsCacheManager &GetInstance() {
-    static PsCacheManager instance;
-    return instance;
-  }
+  static PsCacheManager &GetInstance();
   void Initialize();
   void InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,
                            size_t vocab_size);

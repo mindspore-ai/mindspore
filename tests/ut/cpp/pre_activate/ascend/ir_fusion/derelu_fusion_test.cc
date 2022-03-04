@@ -17,7 +17,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/derelu_fusion.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace opt {

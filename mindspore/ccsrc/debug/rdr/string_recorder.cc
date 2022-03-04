@@ -16,9 +16,10 @@
 #include "debug/rdr/string_recorder.h"
 #include <sys/stat.h>
 #include <fstream>
-#include "debug/common.h"
+#include <utility>
 #include "include/common/utils/utils.h"
 #include "mindspore/core/utils/log_adapter.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 
 namespace mindspore {
 void StringRecorder::Export() {
@@ -38,4 +39,16 @@ void StringRecorder::Export() {
   // set file mode to read only by user
   ChangeFileMode(file_path, S_IRUSR);
 }
+
+namespace RDR {
+bool RecordString(SubModuleId module, const std::string &name, const std::string &data) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  StringRecorderPtr string_recorder = std::make_shared<StringRecorder>(submodule_name, name, data);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(string_recorder));
+  return ans;
+}
+}  // namespace RDR
 }  // namespace mindspore

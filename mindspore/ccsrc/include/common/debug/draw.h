@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEBUG_DRAW_H_
-#define MINDSPORE_CCSRC_DEBUG_DRAW_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_DRAW_H_
+#define MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_DRAW_H_
 
 #include <fstream>
 #include <memory>
@@ -22,7 +22,7 @@
 #include <vector>
 #include "ir/anf.h"
 #include "utils/any.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace draw {
@@ -94,8 +94,8 @@ class ModelDigraph : public BaseDigraph {
 };
 
 // API to draw
-void Draw(const std::string &filename, const FuncGraphPtr &func_graph);
-void DrawUserFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph);
+COMMON_EXPORT void Draw(const std::string &filename, const FuncGraphPtr &func_graph);
+COMMON_EXPORT void DrawUserFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph);
 
 }  // namespace draw
 }  // namespace mindspore

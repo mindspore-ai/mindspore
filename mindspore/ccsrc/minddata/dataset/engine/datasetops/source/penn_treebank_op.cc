@@ -22,7 +22,7 @@
 #include <string>
 #include <utility>
 
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/execution_tree.h"

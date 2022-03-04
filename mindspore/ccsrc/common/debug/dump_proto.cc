@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/dump_proto.h"
+#include "include/common/debug/dump_proto.h"
 
 #include <algorithm>
 #include <fstream>
@@ -22,15 +22,14 @@
 #include <utility>
 #include <vector>
 
-#include "debug/anf_ir_utils.h"
 #include "proto/anf_ir.pb.h"
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "include/common/utils/utils.h"
-#include "pipeline/jit/base.h"
+#include "include/common/debug/anf_dump_utils.h"
 #include "utils/anf_utils.h"
-#include "mindspore/ccsrc/frontend/parallel/ops_info/operator_info.h"
+#include "frontend/parallel/ops_info/ops_utils.h"  // todo: use constant string now
 
 namespace mindspore {
 class ProtoExporter {
@@ -368,15 +367,11 @@ void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const CNodePtr &
   }
 
   // Only CNode save the operator strategy
-  auto operator_info = cnode->user_data<parallel::OperatorInfo>();
-  if (operator_info != nullptr) {
-    auto strategy = operator_info->strategy();
-    if (strategy != nullptr) {
-      ValuePtr strategy_value = MakeValue(strategy->GetInputDim());
-      irpb::AttributeProto *attr_proto = node_proto->add_attribute();
-      attr_proto->set_name(mindspore::parallel::IN_STRATEGY);
-      SetValueToProto(strategy_value, attr_proto->mutable_value());
-    }
+  auto strategy_value = AnfDumpHandler::InStrategyValue(cnode);
+  if (strategy_value != nullptr) {
+    irpb::AttributeProto *attr_proto = node_proto->add_attribute();
+    attr_proto->set_name(mindspore::parallel::IN_STRATEGY);
+    SetValueToProto(strategy_value, attr_proto->mutable_value());
   }
 
   node_proto->set_scope(op_node->scope()->name());

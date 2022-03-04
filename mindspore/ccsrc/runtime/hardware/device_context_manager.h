@@ -25,16 +25,15 @@
 #include <mutex>
 #include <vector>
 #include "runtime/hardware/device_context.h"
+#include "include/backend/visible.h"
+
 namespace mindspore {
 namespace device {
 using DeviceContextCreator = std::function<std::shared_ptr<DeviceContext>(const DeviceContextKey &)>;
 
-class DeviceContextManager {
+class BACKEND_EXPORT DeviceContextManager {
  public:
-  static DeviceContextManager &GetInstance() {
-    static DeviceContextManager instance;
-    return instance;
-  }
+  static DeviceContextManager &GetInstance();
   void Register(const std::string &device_name, DeviceContextCreator &&device_context_creator);
   DeviceContext *GetOrCreateDeviceContext(const DeviceContextKey &device_context_key);
   void UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key);

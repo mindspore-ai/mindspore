@@ -22,7 +22,7 @@
 #include "utils/hash_set.h"
 #include "ir/func_graph_cloner.h"
 #include "abstract/utils.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 #include "utils/ms_context.h"
 #include "pipeline/jit/static_analysis/stack_frame.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"

@@ -108,7 +108,7 @@ BaseRef FinalVM::Ref(int64_t i) {
     if (utils::isa<PyObjectRef>(insts_stack_[sp_next])) {
       py::object value = utils::cast<PyObjectRef>(insts_stack_[sp_next]).object_;
       MS_LOG(DEBUG) << "VM ref python:" << py::str(value);
-      return parse::data_converter::PyDataToValue(value);
+      return python_adapter::PyAdapterCallback::PyDataToValue(value);
     }
     MS_LOG(DEBUG) << "Ref not python :" << insts_stack_[sp_next].ToString();
     return insts_stack_[sp_next];
@@ -471,9 +471,7 @@ void FinalVM::InstPushPrim(const VectorRef &args) {
   }
 
   if (prim->name() == kBpropCutOpName) {
-    auto py_prim = prim->cast<PrimitivePyPtr>();
-    MS_EXCEPTION_IF_NULL(py_prim);
-    auto outs = py_prim->RunHookFunction(tuple);
+    BaseRef outs = python_adapter::PyAdapterCallback::RunPrimitivePyHookFunction(prim, tuple);
     Push(outs);
   } else {
     auto outs = RunOperation(prim, tuple);

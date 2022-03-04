@@ -16,7 +16,9 @@
 #include "debug/rdr/mem_address_recorder.h"
 #include <fstream>
 #include <sstream>
+#include <utility>
 #include "kernel/kernel.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 
 namespace mindspore {
 namespace {
@@ -76,4 +78,48 @@ void MemAddressRecorder::CleanUp() {
   mem_info_stream_.str("");
   printed_ = false;
 }
+
+namespace RDR {
+bool RecordMemAddressInfo(const SubModuleId module, const std::string &name) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  MemAddressRecorderPtr mem_info_recorder = std::make_shared<MemAddressRecorder>(submodule_name, name);
+  mem_info_recorder->Reset();
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(mem_info_recorder));
+  return ans;
+}
+
+bool UpdateMemAddress(const SubModuleId module, const std::string &name, const std::string &op_name,
+                      const kernel::KernelLaunchInfo &mem_info) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  auto recorder = mindspore::RecorderManager::Instance().GetRecorder(submodule_name, name);
+  bool ans = false;
+  if (recorder != nullptr) {
+    auto mem_recorder = std::dynamic_pointer_cast<MemAddressRecorder>(recorder);
+    mem_recorder->SaveMemInfo(op_name, mem_info);
+    ans = true;
+  }
+  return ans;
+}
+
+void ClearMemAddressInfo() {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return;
+  }
+  if (RecorderManager::Instance().CheckRdrMemIsRecord()) {
+    std::string name = "mem_address_list";
+    std::string submodule_name = "KERNEL";
+    auto recorder = RecorderManager::Instance().GetRecorder(submodule_name, name);
+    if (recorder != nullptr) {
+      auto mem_recorder = std::dynamic_pointer_cast<MemAddressRecorder>(recorder);
+      mem_recorder->CleanUp();
+    }
+  }
+}
+}  // namespace RDR
 }  // namespace mindspore

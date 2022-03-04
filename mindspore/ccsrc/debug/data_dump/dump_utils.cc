@@ -20,13 +20,13 @@
 
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
-#include "debug/anf_ir_utils.h"
+#include "pipeline/jit/debug/anf_ir_utils.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "include/common/utils/utils.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 
 using mindspore::runtime::DeviceTensorStore;

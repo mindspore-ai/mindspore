@@ -17,7 +17,7 @@
 #include <map>
 #include <string>
 #include "common/util/error_manager/error_manager.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "profiler/device/ascend/memory_profiling.h"

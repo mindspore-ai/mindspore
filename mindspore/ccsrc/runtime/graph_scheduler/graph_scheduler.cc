@@ -38,14 +38,13 @@
 #include "debug/data_dump/dump_json_parser.h"
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/recorder_manager.h"
-#include "debug/rdr/running_data_recorder.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
 #include "profiler/device/profiling.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "runtime/recovery/recovery_context.h"
 
 namespace mindspore {
@@ -183,6 +182,11 @@ void IntHandler(int, siginfo_t *, void *) {
 }
 #endif
 }  // namespace
+
+GraphScheduler &GraphScheduler::GetInstance() noexcept {
+  static GraphScheduler instance{};
+  return instance;
+}
 
 void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs,
                            const std::vector<AnfNodePtr> &root_graph_parameters,

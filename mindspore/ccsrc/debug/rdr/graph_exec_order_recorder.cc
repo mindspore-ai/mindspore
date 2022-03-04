@@ -15,11 +15,12 @@
  */
 #include "debug/rdr/graph_exec_order_recorder.h"
 #include <fstream>
+#include <utility>
 #include "mindspore/core/ir/anf.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 
 namespace mindspore {
 namespace {
@@ -56,4 +57,18 @@ void GraphExecOrderRecorder::Export() {
   std::string real_file_path = realpath.value() + ".txt";
   DumpGraphExeOrder(real_file_path, exec_order_);
 }
+
+namespace RDR {
+bool RecordGraphExecOrder(const SubModuleId module, const std::string &name,
+                          const std::vector<CNodePtr> &final_exec_order) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  GraphExecOrderRecorderPtr graph_exec_order_recorder =
+    std::make_shared<GraphExecOrderRecorder>(submodule_name, name, final_exec_order);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(graph_exec_order_recorder));
+  return ans;
+}
+}  // namespace RDR
 }  // namespace mindspore

@@ -25,7 +25,7 @@
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 
 namespace mindspore {
 namespace opt {

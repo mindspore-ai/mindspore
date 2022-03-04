@@ -23,11 +23,12 @@
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
 #include "base/base_ref.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
-extern const char kMsVm[];
-extern const char kGeVm[];
-extern const char kMsConvert[];
+BACKEND_EXPORT extern const char kMsVm[];
+BACKEND_EXPORT extern const char kGeVm[];
+BACKEND_EXPORT extern const char kMsConvert[];
 
 namespace compile {
 class GraphPartition {

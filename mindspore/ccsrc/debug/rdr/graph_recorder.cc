@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 #include "debug/rdr/graph_recorder.h"
+#include <fstream>
+#include <utility>
 #include "mindspore/core/base/base.h"
-#include "mindspore/core/ir/func_graph.h"
 #include "backend/common/session/kernel_graph.h"
 #include "mindspore/core/utils/log_adapter.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/anf_ir_utils.h"
-#include "debug/dump_proto.h"
-#include "debug/common.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/anf_dump_utils.h"
+#include "include/common/debug/dump_proto.h"
+#include "include/common/debug/common.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 
 namespace mindspore {
 namespace protobuf {
@@ -64,11 +66,7 @@ void GraphRecorder::Export() {
   std::string realpath = tmp_realpath.value();
   if (graph_type_.find(".dat") != std::string::npos) {
     save_flag = true;
-    AnfExporter exporter("");
-    std::string realpath_dat = realpath + ".dat";
-    ChangeFileMode(realpath_dat, S_IRWXU);
-    exporter.ExportFuncGraph(realpath_dat, func_graph_);
-    ChangeFileMode(realpath_dat, S_IRUSR);
+    AnfDumpHandler::DumpDat(realpath, func_graph_);
   }
   if (graph_type_.find(".ir") != std::string::npos) {
     save_flag = true;
@@ -90,4 +88,18 @@ void GraphRecorder::Export() {
     MS_LOG(WARNING) << "Unknown save graph type: " << graph_type_;
   }
 }
+
+namespace RDR {
+bool RecordAnfGraph(const SubModuleId module, const std::string &name, const FuncGraphPtr &graph,
+                    const DumpGraphParams &info, const std::string &file_type) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  GraphRecorderPtr graph_recorder = std::make_shared<GraphRecorder>(submodule_name, name, graph, file_type);
+  graph_recorder->SetDumpFlag(info);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(graph_recorder));
+  return ans;
+}
+}  // namespace RDR
 }  // namespace mindspore

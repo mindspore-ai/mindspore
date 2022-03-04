@@ -23,7 +23,7 @@
 #include "frontend/operator/cc_implementations.h"
 #include "ir/anf.h"
 #include "frontend/optimizer/opt.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
 // namespace to support composite operators definition

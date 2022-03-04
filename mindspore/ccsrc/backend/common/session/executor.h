@@ -33,6 +33,7 @@
 #include "utils/any.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/contract.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace session {
@@ -152,7 +153,7 @@ class ExitTask : public Task {
 
 enum class ExecutorEvent { kClear, kRunGraphFinished, kException };
 
-class Executor {
+class BACKEND_EXPORT Executor {
  public:
   Executor(const std::string &device_name, uint32_t device_id);
   ~Executor();

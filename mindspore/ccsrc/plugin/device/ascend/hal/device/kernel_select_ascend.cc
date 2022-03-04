@@ -33,7 +33,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"

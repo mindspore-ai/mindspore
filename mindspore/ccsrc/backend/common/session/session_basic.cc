@@ -41,8 +41,8 @@
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "include/common/utils/utils.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
 #include "utils/file_utils.h"
 #include "utils/trace_base.h"
 #include "include/common/utils/parallel_context.h"
@@ -63,8 +63,8 @@
 #include "debug/debugger/proto_exporter_stub.h"
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#include "debug/rdr/recorder_manager.h"
+#include "debug/rdr/graph_exec_order_recorder.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/graph_recorder.h"
 #include "runtime/hardware/device_context_manager.h"
 #endif

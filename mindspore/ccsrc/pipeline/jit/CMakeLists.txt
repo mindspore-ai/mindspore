@@ -9,6 +9,7 @@ file(GLOB_RECURSE _PIPELINE_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "compile_cache_manager.cc"
     "parse/*.cc"
     "static_analysis/*.cc"
+    "debug/*.cc"
 )
 
 
@@ -20,6 +21,9 @@ set_property(SOURCE ${PARSER_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_I
 
 file(GLOB_RECURSE ANALYZER_SRC_FILES "static_analysis/*.cc")
 set_property(SOURCE ${ANALYZER_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ANALYZER)
+
+file(GLOB_RECURSE DEBUG_SRC_FILES "debug/*.cc")
+set_property(SOURCE ${DEBUG_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEBUG)
 
 if(ENABLE_D)
     file(GLOB_RECURSE _PIPELINE_GE_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "pipeline_ge.cc")

@@ -19,7 +19,7 @@
 #include "runtime/device/kernel_info.h"
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "backend/common/pass/convert_const_input_to_attr.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 

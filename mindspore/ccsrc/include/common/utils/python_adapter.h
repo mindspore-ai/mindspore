@@ -23,8 +23,11 @@
 #include "pybind11/embed.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
+#include "pybind11/numpy.h"
 
 #include "utils/log_adapter.h"
+#include "ir/tensor.h"
+#include "base/base_ref.h"
 #include "include/common/visible.h"
 
 namespace py = pybind11;
@@ -71,6 +74,12 @@ py::object CallPyFn(const std::string &module, const std::string &name, T... arg
   }
   return py::none();
 }
+
+class COMMON_EXPORT PyAdapterCallback {
+  HANDLER_DEFINE(ValuePtr, PyDataToValue, py::object);
+  HANDLER_DEFINE(BaseRef, RunPrimitivePyHookFunction, PrimitivePtr, VectorRef);
+  HANDLER_DEFINE(py::array, TensorToNumpy, tensor::Tensor);
+};
 }  // namespace python_adapter
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_PYTHON_ADAPTER_H_

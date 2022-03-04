@@ -24,7 +24,7 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"
 #include "mindspore/core/utils/log_adapter.h"
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
 namespace mindspore::ge::model_runner {

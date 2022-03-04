@@ -26,11 +26,13 @@
 #include <vector>
 #include "utils/ms_utils.h"
 #include "runtime/device/kernel_runtime.h"
+#include "include/backend/visible.h"
+
 namespace mindspore {
 namespace device {
 using KernelRuntimeCreator = std::function<std::shared_ptr<KernelRuntime>()>;
 
-class KernelRuntimeManager {
+class BACKEND_EXPORT KernelRuntimeManager {
  public:
   static KernelRuntimeManager &Instance();
   void Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator);

@@ -33,7 +33,7 @@
 #include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
-#include "debug/env_config_parser.h"
+#include "include/common/debug/env_config_parser.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif

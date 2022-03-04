@@ -16,7 +16,7 @@
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "runtime/device/kernel_info.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 

@@ -16,9 +16,9 @@
 #ifndef PYBIND_API_API_IR_RANDOM_NORMAL_RANDOM_CPU_KERNEL_H_
 #define PYBIND_API_API_IR_RANDOM_NORMAL_RANDOM_CPU_KERNEL_H_
 #include <vector>
-#include "pybind_api/random_normal/philox_generator.h"
+#include "include/common/utils/philox_generator.h"
 #include "pybind11/pybind11.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 
 namespace py = pybind11;
@@ -42,10 +42,10 @@ class NormalDistribution<T, float> {
     return true;
   }
 
-  std::array<float, gResultNum> operator()(T *generator) {
+  std::array<float, kResultNum> operator()(T *generator) {
     std::array<uint32_t, 4> generate_value = (*generator)();
     const float PI = 3.14;
-    for (uint32_t i = 0; i < gResultNum; i += 2) {
+    for (uint32_t i = 0; i < kResultNum; i += 2) {
       float temp[2];
       UInt32ToFloat32(generate_value[i], &temp[0]);
       UInt32ToFloat32(generate_value[i + 1], &temp[1]);
@@ -59,31 +59,9 @@ class NormalDistribution<T, float> {
   }
 
  private:
-  std::array<float, gResultNum> result_;
+  std::array<float, kResultNum> result_;
 };
 
-template <class T>
-bool FillRandoms(PhiloxGenerator generator, float *output, int64_t vet_size, int64_t thread_Id) {
-  T distribution;
-  errno_t mem_ret;
-  generator.JumpStep((vet_size * thread_Id + gResultNum - 1) / gResultNum);
-  for (int32_t i = 0; i < vet_size; i += gResultNum) {
-    auto outputResult = distribution(&generator);
-    size_t max_length = 0;
-    if (vet_size - i >= gResultNum) {
-      max_length = gResultNum * sizeof(float);
-      mem_ret = memcpy_s(&output[i], max_length, &outputResult[0], max_length);
-    } else {
-      max_length = (vet_size - i) * sizeof(float);
-      mem_ret = memcpy_s(&output[i], max_length, &outputResult[0], max_length);
-    }
-    if (mem_ret != EOK) {
-      MS_LOG(ERROR) << "FillRandoms memcpy is failed";
-      return false;
-    }
-  }
-  return true;
-}
 bool InitRandomNormal(std::vector<int64_t> out_shape, int64_t seed, int64_t seed2, const py::object &output_tensor);
 }  // namespace mindspore
 

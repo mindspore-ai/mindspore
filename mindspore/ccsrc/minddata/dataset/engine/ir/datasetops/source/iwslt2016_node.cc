@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "minddata/dataset/engine/datasetops/source/iwslt_op.h"
 #include "utils/file_utils.h"
 

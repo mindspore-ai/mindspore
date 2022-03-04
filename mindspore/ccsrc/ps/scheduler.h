@@ -22,15 +22,13 @@
 #include "ps/core/ps_scheduler_node.h"
 #include "ps/util.h"
 #include "ps/ps_context.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
-class Scheduler {
+class BACKEND_EXPORT Scheduler {
  public:
-  static Scheduler &GetInstance() {
-    static Scheduler instance;
-    return instance;
-  }
+  static Scheduler &GetInstance();
 
   void Run();
 

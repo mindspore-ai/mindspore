@@ -19,7 +19,7 @@
 #include <vector>
 #include "cxx_api/model/acl/acl_model_options.h"
 #include "cxx_api/model/acl/acl_vm/acl_multi_graph_session.h"
-#include "debug/trace.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace {

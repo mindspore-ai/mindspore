@@ -26,8 +26,8 @@
 #include "runtime/device/kernel_adjust.h"
 
 #ifndef ENABLE_SECURITY
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
 #endif
 
 namespace mindspore {

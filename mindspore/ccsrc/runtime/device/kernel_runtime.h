@@ -37,6 +37,7 @@
 #include "runtime/device/memory_scheduler.h"
 #include "runtime/device/executor/dynamic_kernel.h"
 #include "ir/device_event.h"
+#include "include/backend/visible.h"
 
 using mindspore::tensor::Tensor;
 using std::vector;
@@ -64,8 +65,8 @@ class KernelRuntime {
   void RunOpClearMemory(const session::KernelGraph &graph) const;
   void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors);
 #ifdef ENABLE_DEBUGGER
-  static bool DumpDataEnabled();
-  static bool DumpDataEnabledIteration();
+  BACKEND_EXPORT static bool DumpDataEnabled();
+  BACKEND_EXPORT static bool DumpDataEnabledIteration();
 #endif
   virtual bool LoadData(const session::KernelGraph &graph);
   virtual bool Load(const session::KernelGraph &graph, bool is_task_sink);

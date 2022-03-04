@@ -35,7 +35,7 @@
 #include "backend/common/pass/sparse_process.h"
 #include "backend/common/pass/insert_assign_for_custom_op.h"
 #include "utils/ms_context.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace opt {

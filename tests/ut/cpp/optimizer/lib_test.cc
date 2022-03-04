@@ -27,7 +27,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "pipeline/jit/resource.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "include/common/utils/convert_utils.h"
 

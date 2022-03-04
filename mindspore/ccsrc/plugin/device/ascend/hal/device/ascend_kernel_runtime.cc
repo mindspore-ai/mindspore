@@ -51,13 +51,13 @@
 #include "utils/trace_base.h"
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
 #include "common/util/error_manager/error_manager.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/runtime_error_codes.h"
 #ifdef MEM_REUSE_DEBUG
 #include "common/mem_reuse/mem_reuse_checker.h"
-#include "debug/env_config_parser.h"
+#include "include/common/debug/env_config_parser.h"
 #endif
 #include "plugin/device/ascend/hal/device/executor/hccl_dynamic_kernel.h"
 #include "include/common/utils/config_manager.h"
@@ -67,7 +67,7 @@
 using mindspore::dataset::TdtHandle;
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
 #include "backend/common/session/pynative_task_manager.h"

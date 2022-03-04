@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class EmbeddingLookUpCpuKernelMod : public NativeCpuKernelMod {
+class BACKEND_EXPORT EmbeddingLookUpCpuKernelMod : public NativeCpuKernelMod {
  public:
   EmbeddingLookUpCpuKernelMod() {}
   ~EmbeddingLookUpCpuKernelMod() override {}

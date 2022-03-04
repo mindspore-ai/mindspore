@@ -13,45 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_
-#define MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_RDR_BASE_RECORDER_H_
+#define MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_RDR_BASE_RECORDER_H_
 #include <memory>
 #include <string>
 #include <sstream>
 #include <chrono>
 #include <iomanip>
-#include "debug/common.h"
-#include "debug/env_config_parser.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "include/common/debug/common.h"
+#include "include/common/visible.h"
+#include "utils/log_adapter.h"
 
 const int maxNameLength = 64;
 namespace mindspore {
-class BaseRecorder {
+class COMMON_EXPORT BaseRecorder {
  public:
-  BaseRecorder() : module_(""), name_(""), directory_(""), filename_(""), timestamp_("") {}
-  BaseRecorder(const std::string &module, const std::string &name) : module_(module), name_(name), filename_("") {
-    directory_ = mindspore::EnvConfigParser::GetInstance().RdrPath();
-
-    if (name.length() > maxNameLength) {
-      name_ = name.substr(0, maxNameLength);
-      MS_LOG(WARNING) << "The name length is " << name.length() << ", exceeding the limit " << maxNameLength
-                      << ". It will be intercepted as '" << name_ << "'.";
-    }
-
-    std::string err_msg = module_ + ":" + name_ + " set filename failed.";
-    if (!filename_.empty() && !Common::IsFilenameValid(filename_, MAX_FILENAME_LENGTH, err_msg)) {
-      filename_ = "";
-    }
-    auto sys_time = GetTimeString();
-    for (auto ch : sys_time) {
-      if (ch == '.') {
-        break;
-      }
-      if (ch != '-' && ch != ':') {
-        timestamp_.push_back(ch);
-      }
-    }
-  }
+  BaseRecorder();
+  BaseRecorder(const std::string &module, const std::string &name);
   virtual ~BaseRecorder() {}
 
   std::string GetModule() const { return module_; }
@@ -76,4 +54,4 @@ using CNodePtr = std::shared_ptr<CNode>;
 class FuncGraph;
 using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_RDR_BASE_RECORDER_H_

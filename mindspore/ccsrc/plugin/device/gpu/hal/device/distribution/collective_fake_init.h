@@ -17,12 +17,13 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_
 
-#include "string"
+#include <string>
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
 namespace gpu {
-class CollectiveFakeInitializer {
+class BACKEND_EXPORT CollectiveFakeInitializer {
  public:
   CollectiveFakeInitializer() = default;
   ~CollectiveFakeInitializer() = default;

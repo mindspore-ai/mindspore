@@ -25,13 +25,14 @@
 #else
 #include "distributed/cluster/dummy_cluster_context.h"
 #endif
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
 // The static methods of MindSpore distributed execution. They can be exported by Pybind.
 
 // Initialize and finalize distributed execution.
-bool Initialize();
+BACKEND_EXPORT bool Initialize();
 bool Finalize();
 
 // Initialize and finalize the cluster based on MindSpore communication framework.

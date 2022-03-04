@@ -23,7 +23,7 @@
 
 #include "backend/common/somas/somas_solver_core.h"
 #include "backend/common/somas/somas_solver_pre.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace somas {

@@ -31,10 +31,9 @@
 #include "pybind11/embed.h"
 #include "pybind11/stl.h"
 #ifdef ONLINE_DBG_MODE
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "debug/debugger/debugger.h"
-#include "debug/anf_ir_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/debug/anf_dump_utils.h"
 #include "include/common/utils/anfalgo.h"
 #endif
 #include "debug/utils.h"

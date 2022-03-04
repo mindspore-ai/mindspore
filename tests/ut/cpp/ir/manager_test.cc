@@ -21,7 +21,7 @@
 #include "pipeline/jit/parse/parse.h"
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "utils/label.h"
 
 namespace mindspore {

@@ -32,6 +32,7 @@
 #include "ir/graph_utils.h"
 #include "include/common/utils/contract.h"
 #include "runtime/device/kernel_info.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace session {
@@ -52,7 +53,7 @@ struct KernelWithIndexCmp {
 using DeviceAddressType = device::DeviceAddressType;
 using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::KernelWithIndexCmp>;
 
-class KernelGraph : public FuncGraph {
+class BACKEND_EXPORT KernelGraph : public FuncGraph {
  public:
   KernelGraph() : graph_id_(0), start_label_(nullptr), end_goto_(nullptr), current_epoch_(0), is_dynamic_shape_(false) {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();

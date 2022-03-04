@@ -20,6 +20,7 @@
 #include <dlfcn.h>
 #include <vector>
 #include <string>
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
@@ -32,7 +33,7 @@ using GetRankIDByGroupFunc = int (*)(const std::string &);
 using GetGroupSizeFunc = int (*)(const std::string &);
 using DestroyGroupFunc = bool (*)(const std::string &);
 
-class CollectiveInitializer {
+class BACKEND_EXPORT CollectiveInitializer {
  public:
   CollectiveInitializer(CollectiveInitializer const &) = delete;
   CollectiveInitializer &operator=(const CollectiveInitializer &) = delete;

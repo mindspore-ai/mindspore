@@ -25,8 +25,8 @@
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 #include "abstract/dshape.h"
-#include "pybind_api/api_register.h"
-#include "debug/trace.h"
+#include "include/common/pybind_api/api_register.h"
+#include "pipeline/jit/debug/trace.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore {

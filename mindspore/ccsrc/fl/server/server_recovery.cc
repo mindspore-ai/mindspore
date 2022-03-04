@@ -16,7 +16,7 @@
 
 #include "fl/server/server_recovery.h"
 #include "fl/server/local_meta_store.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace fl {

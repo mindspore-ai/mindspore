@@ -28,9 +28,9 @@
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/optimizer/opt.h"
 #include "utils/symbolic.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "ir/signature.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 

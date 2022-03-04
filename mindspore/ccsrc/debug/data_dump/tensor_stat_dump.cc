@@ -19,7 +19,7 @@
 #include <memory>
 #include <map>
 #include "utils/file_utils.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "debug/debug_services.h"
 #include "debug/debugger/debugger.h"
 

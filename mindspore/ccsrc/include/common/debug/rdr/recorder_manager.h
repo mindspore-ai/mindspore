@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEBUG_RDR_RECORDER_MANAGER_H_
-#define MINDSPORE_CCSRC_DEBUG_RDR_RECORDER_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_RDR_RECORDER_MANAGER_H_
+#define MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_RDR_RECORDER_MANAGER_H_
 #include <vector>
 #include <string>
 #include <sstream>
@@ -23,8 +23,9 @@
 #include <mutex>
 #include <utility>
 #include "utils/hash_map.h"
-#include "debug/env_config_parser.h"
-#include "debug/rdr/base_recorder.h"
+#include "include/common/debug/rdr/base_recorder.h"
+#include "include/common/debug/env_config_parser.h"
+#include "include/common/visible.h"
 
 namespace mindspore {
 // The number is the reciprocal of the golden ratio.
@@ -52,13 +53,9 @@ struct pair_hash {
   }
 };
 
-class RecorderManager {
+class COMMON_EXPORT RecorderManager {
  public:
-  static RecorderManager &Instance() {
-    static RecorderManager manager;
-    manager.UpdateRdrEnable();
-    return manager;
-  }
+  static RecorderManager &Instance();
 
   void UpdateRdrEnable();
   bool RdrEnable() const;
@@ -83,5 +80,11 @@ class RecorderManager {
   // <module, name>, BaserRecorderPtr
   mindspore::HashMap<std::pair<std::string, std::string>, BaseRecorderPtr, pair_hash> recorder_container_;
 };
+
+namespace RDR {
+COMMON_EXPORT void TriggerAll();
+COMMON_EXPORT void Snapshot();
+COMMON_EXPORT void ResetRecorder();
+}  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_RECORDER_MANAGER_H_

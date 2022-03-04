@@ -15,7 +15,7 @@
  */
 #include "common/backend_common_test.h"
 #include "frontend/operator/ops.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "backend/common/optimizer/optimizer.h"

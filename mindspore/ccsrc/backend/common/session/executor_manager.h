@@ -20,15 +20,14 @@
 #include <string>
 #include <memory>
 #include "backend/common/session/executor.h"
+#include "include/backend/visible.h"
+
 namespace mindspore {
 namespace session {
 class Executor;
-class ExecutorManager {
+class BACKEND_EXPORT ExecutorManager {
  public:
-  static ExecutorManager &Instance() {
-    static ExecutorManager instance{};
-    return instance;
-  }
+  static ExecutorManager &Instance();
   std::shared_ptr<Executor> GetExecutor(const std::string &device_name, uint32_t device_id);
   void OnEvent(const ExecutorEvent &event);
   void Clear();

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEBUG_ENV_CONFIG_PARSER_H_
-#define MINDSPORE_CCSRC_DEBUG_ENV_CONFIG_PARSER_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_ENV_CONFIG_PARSER_H_
+#define MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_ENV_CONFIG_PARSER_H_
 
 #include <string>
 #include <map>
@@ -22,16 +22,14 @@
 #include <mutex>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
+#include "include/common/visible.h"
+
 namespace mindspore {
 enum RdrModes : int { Exceptional = 1, Normal = 2 };
 
-class EnvConfigParser {
+class COMMON_EXPORT EnvConfigParser {
  public:
-  static EnvConfigParser &GetInstance() {
-    static EnvConfigParser instance = EnvConfigParser();
-    instance.Parse();
-    return instance;
-  }
+  static EnvConfigParser &GetInstance();
 
   void Parse();
   std::string ConfigPath() const { return config_file_; }
@@ -83,4 +81,4 @@ class EnvConfigParser {
   void ConfigToString();
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEBUG_ENV_CONFIG_PARSER_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_ENV_CONFIG_PARSER_H_

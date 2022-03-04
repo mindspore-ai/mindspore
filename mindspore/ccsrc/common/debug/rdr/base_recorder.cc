@@ -13,12 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/rdr/base_recorder.h"
-#include "debug/common.h"
-#include "include/common/utils/utils.h"
+#include "include/common/debug/rdr/base_recorder.h"
+#include "include/common/debug/common.h"
 #include "include/common/utils/comm_manager.h"
+#include "include/common/debug/env_config_parser.h"
 
 namespace mindspore {
+namespace {
+constexpr int kMaxNameLength = 32;
+}  // namespace
+BaseRecorder::BaseRecorder() : module_(""), name_(""), directory_(""), filename_(""), timestamp_("") {}
+BaseRecorder::BaseRecorder(const std::string &module, const std::string &name)
+    : module_(module), name_(name), filename_("") {
+  directory_ = mindspore::EnvConfigParser::GetInstance().RdrPath();
+
+  if (name.length() > kMaxNameLength) {
+    name_ = name.substr(0, kMaxNameLength);
+    MS_LOG(WARNING) << "The name length is " << name.length() << ", exceeding the limit " << kMaxNameLength
+                    << ". It will be intercepted as '" << name_ << "'.";
+  }
+
+  std::string err_msg = module_ + ":" + name_ + " set filename failed.";
+  if (!filename_.empty() && !Common::IsFilenameValid(filename_, MAX_FILENAME_LENGTH, err_msg)) {
+    filename_ = "";
+  }
+  auto sys_time = GetTimeString();
+  for (auto ch : sys_time) {
+    if (ch == '.') {
+      break;
+    }
+    if (ch != '-' && ch != ':') {
+      timestamp_.push_back(ch);
+    }
+  }
+}
+
 std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suffix) const {
   std::string filename;
   if (filename_.empty()) {

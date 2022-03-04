@@ -28,6 +28,7 @@
 #include "ps/core/worker_node.h"
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/communicator/tcp_communicator.h"
+#include "include/backend/visible.h"
 
 struct EncryptPublicKeys {
   std::string flID;
@@ -67,12 +68,9 @@ enum class IterationState {
 namespace worker {
 // This class is used for hybrid training mode for now. In later version, parameter server mode will also use this class
 // as worker.
-class FLWorker {
+class BACKEND_EXPORT FLWorker {
  public:
-  static FLWorker &GetInstance() {
-    static FLWorker instance;
-    return instance;
-  }
+  static FLWorker &GetInstance();
   void Run();
   void Finalize();
   bool SendToServer(uint32_t server_rank, const void *data, size_t size, ps::core::TcpUserCommand command,

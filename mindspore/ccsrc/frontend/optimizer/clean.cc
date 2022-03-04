@@ -26,7 +26,7 @@
 #include "abstract/abstract_value.h"
 #include "base/base.h"
 #include "base/core_ops.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/anf.h"

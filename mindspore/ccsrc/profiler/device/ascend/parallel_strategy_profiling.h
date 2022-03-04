@@ -20,11 +20,12 @@
 
 #include "ir/func_graph.h"
 #include "base/base.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph);
+BACKEND_EXPORT void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph);
 void SaveParallelStrategyToFile();
 }  // namespace ascend
 }  // namespace profiler

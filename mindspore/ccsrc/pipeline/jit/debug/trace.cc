@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 
 #include <iostream>
 #include <fstream>
@@ -32,8 +32,8 @@
 #include "ir/graph_utils.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
-#include "debug/anf_ir_utils.h"
-#include "debug/common.h"
+#include "pipeline/jit/debug/anf_ir_utils.h"
+#include "include/common/debug/common.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "pipeline/jit/base.h"

@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ApplyMomentumCpuKernelMod : public NativeCpuKernelMod {
+class BACKEND_EXPORT ApplyMomentumCpuKernelMod : public NativeCpuKernelMod {
  public:
   ApplyMomentumCpuKernelMod() = default;
   ~ApplyMomentumCpuKernelMod() override = default;

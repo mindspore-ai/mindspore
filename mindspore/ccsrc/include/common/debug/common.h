@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEBUG_COMMON_H_
-#define MINDSPORE_CCSRC_DEBUG_COMMON_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_COMMON_H_
+#define MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_COMMON_H_
 
 #include <string>
 #include <optional>
+#include "include/common/visible.h"
 #include "include/common/utils/contract.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/comm_manager.h"
@@ -30,7 +31,7 @@ static const int MAX_FILENAME_LENGTH = 128;
 static const int MAX_OS_FILENAME_LENGTH = 255;
 static const char kCOMPILER_CACHE_PATH[] = "MS_COMPILER_CACHE_PATH";
 
-class Common {
+class COMMON_EXPORT Common {
  public:
   Common() = default;
   ~Common() = default;
@@ -46,10 +47,16 @@ class Common {
   static bool FileExists(const std::string &filepath);
   static bool CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path, std::string *value);
   static std::string GetCompilerCachePath();
+  static bool GetDebugTerminate();
+  static bool GetDebugExitSuccess();
+  static void DebugTerminate(bool val, bool exit_success);
 
  private:
   static bool IsEveryFilenameValid(const std::string &path, size_t length_limit, const std::string &error_message);
   static std::string GetUserDefineCachePath();
+
+  inline static bool debugger_terminate_ = false;
+  inline static bool exit_success_ = false;
 };
 
 inline std::string GetSaveGraphsPathName(const std::string &file_name, const std::string &save_path = "") {
@@ -91,4 +98,4 @@ inline std::string ErrnoToString(const int error_number) {
   return ret_info.str();
 }
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEBUG_COMMON_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_COMMON_H_

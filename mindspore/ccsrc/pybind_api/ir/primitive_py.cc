@@ -23,7 +23,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "include/common/utils/python_adapter.h"
 #include "pybind11/pytypes.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "pybind_api/export_flags.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "utils/convert_utils_base.h"
@@ -102,6 +102,17 @@ py::tuple ConstructCellHookFnArgs(const std::string &cell_id, const py::object &
   }
   return hook_fn_args;
 }
+
+struct RunPrimitivePyHookFunctionRegister {
+  RunPrimitivePyHookFunctionRegister() {
+    python_adapter::PyAdapterCallback::SetRunPrimitivePyHookFunctionHandler(
+      [](const PrimitivePtr &prim, const VectorRef &args) -> BaseRef {
+        auto py_prim = prim->cast<PrimitivePyPtr>();
+        MS_EXCEPTION_IF_NULL(py_prim);
+        return py_prim->RunHookFunction(args);
+      });
+  }
+} callback_register;
 }  // namespace
 std::map<std::string, py::object> PrimitivePy::hook_grad_;
 

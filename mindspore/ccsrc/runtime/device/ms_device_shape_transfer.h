@@ -38,6 +38,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace trans {
@@ -300,7 +301,7 @@ bool TransFormat(const FormatArgs &args, void *result, const AnfNodePtr &node, s
 /**
  * Interface of data format trans from host to device
  * */
-bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, int64_t groups = 1);
+BACKEND_EXPORT bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, int64_t groups = 1);
 
 /**
  * Interface of data format trans from device to host
@@ -320,7 +321,7 @@ void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5
 /**
  * Get shape after padding
  * */
-ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);
+BACKEND_EXPORT ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);
 
 /**
  *  If need padding

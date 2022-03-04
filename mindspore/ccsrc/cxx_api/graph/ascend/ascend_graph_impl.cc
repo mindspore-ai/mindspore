@@ -26,16 +26,53 @@
 #include "backend/common/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/dev.h"
-#include "pipeline/jit/pipeline.h"
-#include "frontend/parallel/step_parallel.h"
-#include "pybind11/pybind11.h"
+#include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
+namespace {
 API_FACTORY_REG(GraphCell::GraphImpl, AscendGraphImpl);
 
-static constexpr const char *kHcclEnable = "MS_ENABLE_HCCL";
-static constexpr const char *kHcclGroupFile = "PARA_GROUP_FILE";
+constexpr const char *kHcclEnable = "MS_ENABLE_HCCL";
+constexpr const char *kHcclGroupFile = "PARA_GROUP_FILE";
 
+void InitHccl() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  mindspore::python_adapter::set_python_env_flag(true);
+  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  if (ms_context->backend_policy() == "ms") {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+#ifndef ENABLE_SECURITY
+    runtime_instance->PreInit();
+#endif
+    (void)context::OpenTsd(ms_context);
+    if (!runtime_instance->Init()) {
+      MS_LOG(EXCEPTION) << "Runtime init failed.";
+    }
+  } else {
+    (void)context::OpenTsd(ms_context);
+  }
+}
+
+bool CreateGroupsByCkptFile(const std::string &file) {
+  parallel::GroupInfoMap group_info_map;
+  if (parallel::StrategyCheckpoint::GetInstance().LoadGroupInfo(file, &group_info_map) != parallel::SUCCESS) {
+    return false;
+  }
+
+  for (const auto &[group_name, rank_ids] : group_info_map) {
+    if (!CommManager::GetInstance().CreateGroupSync(group_name, rank_ids)) {
+      MS_LOG(ERROR) << "Create group " << group_name << " rank ids " << rank_ids << " failed.";
+      return false;
+    }
+  }
+
+  MS_LOG(INFO) << "Create groups by checkpoint file success";
+  return true;
+}
+}  // namespace
 AscendGraphImpl::AscendGraphImpl()
     : session_impl_(nullptr),
       graph_id_(0),
@@ -308,13 +345,13 @@ AscendGraphImpl::MsEnvGuard::MsEnvGuard(uint32_t device_id) {
   ms_context->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
 
   if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
-    pipeline::InitHccl();
+    InitHccl();
     auto para_group_file = common::GetEnv(kHcclGroupFile);
     if (para_group_file.empty()) {
       MS_LOG(INFO) << "Cannot get Env " << kHcclGroupFile << ", skip.";
     } else {
       MS_LOG(INFO) << "Get env " << kHcclGroupFile << " success: " << para_group_file;
-      if (!parallel::CreateGroupsByCkptFile(para_group_file)) {
+      if (!CreateGroupsByCkptFile(para_group_file)) {
         MS_LOG(ERROR) << "CreateGroupsByCkptFile failed.";
         errno_ = kMCFailed;
         return;

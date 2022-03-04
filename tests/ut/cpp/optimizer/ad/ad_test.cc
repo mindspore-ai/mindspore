@@ -26,7 +26,7 @@
 #include "ir/graph_utils.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/parse.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
 

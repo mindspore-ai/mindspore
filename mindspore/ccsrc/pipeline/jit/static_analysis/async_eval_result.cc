@@ -15,9 +15,9 @@
  */
 
 #include "pipeline/jit/static_analysis/async_eval_result.h"
-#include <debug/trace.h>
+#include "pipeline/jit/debug/trace.h"
 #include "utils/symbolic.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "pipeline/jit/base.h"
 #include "include/common/utils/utils.h"
 

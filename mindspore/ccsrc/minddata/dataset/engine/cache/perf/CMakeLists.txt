@@ -8,7 +8,6 @@ if(ENABLE_CACHE)
   target_link_libraries(cache_perf
       _c_dataengine
       _c_mindrecord
-      mindspore
       mindspore::protobuf
       ${PYTHON_LIBRARIES}
       pthread)
@@ -21,7 +20,6 @@ if(ENABLE_CACHE)
   target_link_libraries(cache_pipeline
       _c_dataengine
       _c_mindrecord
-      mindspore
       mindspore::protobuf
       ${PYTHON_LIBRARIES}
       pthread)

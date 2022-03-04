@@ -52,8 +52,20 @@ add_dependencies(engine
     engine-datasetops-mapop
     )
 
+# for include pb.h
+if(ENABLE_CACHE)
+    add_dependencies(engine-opt engine-cache-server)
+else()
+    add_dependencies(engine-opt engine-cache-client)
+endif()
+
 if(NOT ENABLE_SECURITY)
     add_dependencies(engine engine-perf)
+    if(ENABLE_CACHE)
+        add_dependencies(engine-perf engine-cache-server)
+    else()
+        add_dependencies(engine-perf engine-cache-client)
+    endif()
 endif()
 
 if(ENABLE_TDTQUE)

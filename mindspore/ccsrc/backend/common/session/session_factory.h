@@ -23,10 +23,12 @@
 #include <utility>
 #include "utils/ms_utils.h"
 #include "backend/common/session/session_basic.h"
+#include "include/backend/visible.h"
+
 namespace mindspore {
 namespace session {
 using SessionCreator = std::function<std::shared_ptr<SessionBasic>()>;
-class SessionFactory {
+class BACKEND_EXPORT SessionFactory {
  public:
   static SessionFactory &Get();
   void Register(const std::string &device_name, SessionCreator &&session_creator);

@@ -15,7 +15,7 @@
  */
 #include "ir/param_info.h"
 #include "pybind11/pybind11.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
 namespace py = pybind11;

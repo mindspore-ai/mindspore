@@ -15,7 +15,7 @@
  */
 
 #include "pipeline/jit/static_analysis/stack_frame.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 
 namespace mindspore {

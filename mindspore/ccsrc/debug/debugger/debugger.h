@@ -30,6 +30,7 @@
 #include "debug/dump_data_builder.h"
 #endif
 #include "runtime/device/device_address.h"
+#include "include/backend/visible.h"
 
 using debugger::Chunk;
 using debugger::DataType;
@@ -61,7 +62,7 @@ enum class DebuggerCommand {
   kUnknownCMD = -1
 };
 
-class Debugger : public std::enable_shared_from_this<Debugger> {
+class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
  public:
   static std::shared_ptr<Debugger> GetInstance() {
     std::lock_guard<std::mutex> i_lock(instance_lock_);
@@ -331,8 +332,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 #endif
 
   // singleton
-  static std::mutex instance_lock_;
-  static std::shared_ptr<Debugger> debugger_;
+  inline static std::mutex instance_lock_ = {};
+  inline static std::shared_ptr<Debugger> debugger_ = nullptr;
   uint32_t not_dataset_graph_sum_;
   std::list<uint32_t> rungraph_id_list_;
   bool ascend_kernel_by_kernel_;

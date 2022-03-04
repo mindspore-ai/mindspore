@@ -25,6 +25,11 @@
 namespace mindspore {
 namespace fl {
 namespace worker {
+FLWorker &FLWorker::GetInstance() {
+  static FLWorker instance;
+  return instance;
+}
+
 void FLWorker::Run() {
   if (running_.load()) {
     return;

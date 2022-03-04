@@ -22,7 +22,7 @@
 #include <ctime>
 #include "profiler/device/gpu/cupti_interface.h"
 #include "profiler/device/gpu/gpu_data_saver.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "utils/profile.h"

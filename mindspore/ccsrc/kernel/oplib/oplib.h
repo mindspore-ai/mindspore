@@ -23,6 +23,7 @@
 #include <nlohmann/json.hpp>
 #include "utils/ms_utils.h"
 #include "kernel/oplib/opinfo.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,7 +31,7 @@ class OpLib {
  public:
   OpLib() = default;
   virtual ~OpLib() = default;
-  static bool RegOp(const std::string &json_string, const std::string &impl_path);
+  BACKEND_EXPORT static bool RegOp(const std::string &json_string, const std::string &impl_path);
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type,
                                         bool is_dynamic_shape = false);
 

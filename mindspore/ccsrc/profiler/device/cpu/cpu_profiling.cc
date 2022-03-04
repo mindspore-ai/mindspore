@@ -20,7 +20,7 @@
 #include <cmath>
 #include <ctime>
 #include "profiler/device/cpu/cpu_data_saver.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"

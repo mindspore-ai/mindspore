@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/backend_common_test.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
 #include "plugin/device/ascend/optimizer/format_type/remove_internal_output.h"
 

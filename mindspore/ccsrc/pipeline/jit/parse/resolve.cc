@@ -30,9 +30,43 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/symbol_resolver.h"
+#include "include/common/debug/anf_dump_utils.h"
 
 namespace mindspore {
 namespace parse {
+namespace {
+std::string ReplaceSpecialChar(const std::string &str) {
+  std::ostringstream oss;
+  for (size_t i = 0; i < str.size(); i++) {
+    if (str[i] == '<') {
+      oss << "「";
+    } else if (str[i] == '>') {
+      oss << "」";
+    } else {
+      oss << str[i];
+    }
+  }
+  return oss.str();
+}
+
+struct AnfDumpHandlerRegister {
+  AnfDumpHandlerRegister() {
+    AnfDumpHandler::SetValueNodeStrHandler([](const std::shared_ptr<ValueNode> &node) -> std::string {
+      if (node == nullptr) {
+        return "";
+      }
+      if (IsValueNode<MetaFuncGraph>(node)) {
+        return node->value()->cast<MetaFuncGraphPtr>()->name();
+      } else if (IsValueNode<parse::NameSpace>(node)) {
+        return node->value()->cast<parse::NameSpacePtr>()->name();
+      } else if (IsValueNode<parse::Symbol>(node)) {
+        return ReplaceSpecialChar(node->value()->cast<parse::SymbolPtr>()->name());
+      }
+      return "";
+    });
+  }
+} callback_register;
+}  // namespace
 abstract::AbstractBasePtr ClassObject::ToAbstract() {
   ClassPtr cls_ptr = ParseDataClass(obj());
   auto abs_scalar = std::make_shared<abstract::AbstractScalar>();

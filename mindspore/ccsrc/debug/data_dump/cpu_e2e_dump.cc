@@ -16,10 +16,11 @@
 
 #include "debug/data_dump/cpu_e2e_dump.h"
 #include <map>
+#include <fstream>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "debug/anf_ir_utils.h"
-#include "debug/common.h"
+#include "include/common/debug/anf_dump_utils.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 void CPUE2eDump::DumpCNodeData(const CNodePtr &node, uint32_t graph_id) {

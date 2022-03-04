@@ -17,7 +17,7 @@
 #include <climits>
 #include "profiler/device/ascend/options.h"
 #include "utils/ms_context.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "profiler/device/ascend/ascend_profiling.h"
 
 constexpr char kOutputPath[] = "output";

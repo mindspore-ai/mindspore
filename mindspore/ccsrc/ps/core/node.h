@@ -38,6 +38,7 @@
 #include "ps/core/communicator/tcp_client.h"
 #include "ps/core/communicator/tcp_server.h"
 #include "ps/core/file_configuration.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
@@ -45,7 +46,7 @@ namespace core {
 constexpr int kTimeoutInSeconds = 30;
 constexpr int kCommTimeoutInSeconds = 10;
 constexpr int kCommTimeoutInThreeSeconds = 3;
-class Node {
+class BACKEND_EXPORT Node {
  public:
   Node()
       : is_ready_(false),

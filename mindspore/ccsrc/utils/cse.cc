@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/cse.h"
+#include "include/common/utils/cse.h"
 
 #include <vector>
 #include <set>

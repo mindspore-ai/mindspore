@@ -35,6 +35,7 @@
 #include "ir/anf.h"
 #include "actor/actormgr.h"
 #include "include/common/thread_pool.h"
+#include "include/backend/visible.h"
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
@@ -127,7 +128,7 @@ struct ParallelSearchInfo {
   size_t search_count{0};
 };
 
-class NativeCpuKernelMod : public CpuKernelMod {
+class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
  public:
   NativeCpuKernelMod() = default;
   ~NativeCpuKernelMod() override = default;

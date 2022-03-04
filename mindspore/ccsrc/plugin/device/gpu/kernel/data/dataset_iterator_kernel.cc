@@ -29,7 +29,7 @@
 #include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
 namespace mindspore {

@@ -21,7 +21,7 @@
 #include "ir/anf.h"
 #include "ir/manager.h"
 #include "utils/ms_context.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

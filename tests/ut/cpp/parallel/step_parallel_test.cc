@@ -17,7 +17,7 @@
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "common/py_func_graph_fetcher.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "include/common/utils/convert_utils_py.h"

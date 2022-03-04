@@ -36,6 +36,7 @@
 #ifdef ENABLE_RPC_ACTOR
 #include "runtime/graph_scheduler/rpc_node_scheduler.h"
 #endif
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace runtime {
@@ -47,12 +48,9 @@ using mindspore::session::KernelWithIndex;
 // output node.
 using GraphOutputPair = std::pair<AbstractActor *, KernelWithIndex>;
 
-class GraphScheduler {
+class BACKEND_EXPORT GraphScheduler {
  public:
-  static GraphScheduler &GetInstance() noexcept {
-    static GraphScheduler instance;
-    return instance;
-  }
+  static GraphScheduler &GetInstance() noexcept;
 
   // 1. Thread pool creating.
   // 2. The global actors creating and scheduling.

@@ -3,16 +3,7 @@ include_directories(${CMAKE_BINARY_DIR})
 file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" MSVERSION)
 add_definitions(-DMSVERSION=\"${MSVERSION}\")
 
-set(_DEBUG_SRC_LIST
-    "${CMAKE_CURRENT_SOURCE_DIR}/anf_ir_dump.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/anf_ir_utils.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/anf_dump_utils.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/draw.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/dump_proto.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/env_config_parser.cc"
-)
+set(_DEBUG_SRC_LIST)
 
 set(_OFFLINE_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
@@ -57,7 +48,6 @@ if(NOT ENABLE_SECURITY)
         )
     if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         list(APPEND _DEBUG_SRC_LIST
-            "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/e2e_dump.cc"
             )
     endif()
@@ -65,7 +55,15 @@ endif()
 
 set_property(SOURCE ${_DEBUG_SRC_LIST} ${_RDR_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
     SUBMODULE_ID=mindspore::SubModuleId::SM_DEBUG)
-add_library(_mindspore_debug_obj OBJECT ${_DEBUG_SRC_LIST} ${_RDR_SRC_LIST})
+list(APPEND _DEBUG_SRC_LIST ${_RDR_SRC_LIST})
+list(LENGTH _DEBUG_SRC_LIST debug_files_size)
+if(${debug_files_size} GREATER 0)
+  add_library(mindspore_debug STATIC ${_DEBUG_SRC_LIST})
+  if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+      target_compile_definitions(mindspore_debug PRIVATE BACKEND_DLL)
+  endif()
+  add_dependencies(mindspore_debug proto_input)
+endif()
 if(ENABLE_DEBUGGER)
     if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         add_compile_options(-Wall -DOFFLINE_DBG_MODE -fPIC -O2)

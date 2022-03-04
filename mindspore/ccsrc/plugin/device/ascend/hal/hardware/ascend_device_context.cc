@@ -41,8 +41,8 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include "toolchain/adx_datadump_server.h"
 #include "toolchain/adx_datadump_callback.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "debug/debugger/debugger_utils.h"
 #endif
@@ -53,8 +53,7 @@
 #include "debug/debugger/proto_exporter_stub.h"
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#include "debug/rdr/recorder_manager.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/graph_recorder.h"
 #endif
 

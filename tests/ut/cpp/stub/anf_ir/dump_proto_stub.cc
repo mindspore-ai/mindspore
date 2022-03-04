@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/dump_proto.h"
+#include "include/common/debug/dump_proto.h"
 #include "proto/mind_ir.pb.h"
 
 namespace mindspore {

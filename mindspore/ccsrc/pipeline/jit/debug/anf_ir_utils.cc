@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "debug/anf_ir_utils.h"
+#include "pipeline/jit/debug/anf_ir_utils.h"
 
 #include <fstream>
 #include <map>
@@ -36,27 +36,30 @@
 #include "utils/ordered_set.h"
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 #include "utils/label.h"
 #include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/base.h"
-#include "debug/common.h"
-#include "debug/anf_dump_utils.h"
+#include "include/common/debug/common.h"
+#include "include/common/debug/anf_dump_utils.h"
 
 using mindspore::tensor::TensorPy;
 
 namespace mindspore {
-std::string GetKernelNodeName(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  std::string kernel_name = anf_node->fullname_with_scope();
-  if (kernel_name.empty()) {
-    kernel_name = anf_node->ToString();
+namespace {
+struct AnfDumpHandlerRegister {
+  AnfDumpHandlerRegister() {
+    AnfDumpHandler::SetDumpDatHandler([](const std::string &realpath, const FuncGraphPtr &graph) {
+      AnfExporter exporter("");
+      std::string realpath_dat = realpath + ".dat";
+      ChangeFileMode(realpath_dat, S_IRWXU);
+      exporter.ExportFuncGraph(realpath_dat, graph);
+      ChangeFileMode(realpath_dat, S_IRUSR);
+    });
   }
-  MS_LOG(DEBUG) << "Full scope kernel name is " << kernel_name << ".";
-  return kernel_name;
-}
-
+} callback_register;
+}  // namespace
 // ============================================= MindSpore IR Exporter =============================================
 std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
   MS_EXCEPTION_IF_NULL(nd);

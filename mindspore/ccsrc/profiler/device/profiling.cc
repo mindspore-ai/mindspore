@@ -19,7 +19,7 @@
 #include <cxxabi.h>
 #include <cmath>
 #include <ctime>
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #if ENABLE_GPU

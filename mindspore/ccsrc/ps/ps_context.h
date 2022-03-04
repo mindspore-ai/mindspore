@@ -23,6 +23,7 @@
 #include "ps/constants.h"
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
@@ -54,7 +55,7 @@ const std::map<uint32_t, ResetterRound> kServerContextToResetRoundMap = {{0b0010
                                                                          {0b1100, ResetterRound::kPushMetrics},
                                                                          {0b0100, ResetterRound::kPushMetrics}};
 
-class PSContext {
+class BACKEND_EXPORT PSContext {
  public:
   ~PSContext() = default;
   PSContext(PSContext const &) = delete;

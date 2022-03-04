@@ -26,7 +26,7 @@
 #include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/resource.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "utils/log_adapter.h"
 #include "base/core_ops.h"
 

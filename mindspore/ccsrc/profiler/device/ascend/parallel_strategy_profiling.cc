@@ -18,9 +18,8 @@
 #include <vector>
 #include "sys/stat.h"
 
-#include "debug/dump_proto.h"
+#include "include/common/debug/dump_proto.h"
 #include "include/common/utils/parallel_context.h"
-#include "frontend/parallel/device_manager.h"
 #include "profiler/device/ascend/options.h"
 #include "profiler/device/ascend/ascend_profiling.h"
 #include "proto/profiling_parallel.pb.h"
@@ -84,24 +83,34 @@ irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph) {
   GetFuncGraphProto(func_graph, graph_proto);
 
   // set parallel model
-  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  std::string parallel_mode = parallel_context->parallel_mode();
   irpb::Config *config = profiling_parallel.mutable_config();
   MS_EXCEPTION_IF_NULL(config);
   config->set_parallel_type(parallel_mode);
 
-  // Note: Only parallel mode is AUTO_PARALLEL or SEMI_AUTO_PARALLEL, the
-  // g_device_manager is not nullptr;
-  if (parallel::g_device_manager != nullptr) {
-    auto rank_id = parallel::g_device_manager->global_rank();
-    auto stage_id = parallel::g_device_manager->stage_id();
+  if (parallel_context->parallel_mode() == parallel::kAutoParallel ||
+      parallel_context->parallel_mode() == parallel::kSemiAutoParallel) {
+    uint32_t rank_id = CommManager::GetInstance().GetRank();
+    uint32_t rank_size = 0;
+    bool ret = CommManager::GetInstance().GetRankSize(kHcclWorldGroup, &rank_size);
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "Get rank size failed.";
+    }
+    int64_t stage_num = parallel_context->pipeline_stage_split_num();
+    if (static_cast<int64_t>(rank_size) % stage_num != 0) {
+      MS_LOG(EXCEPTION) << "Invalid stage num " << stage_num << " is not divisible by rank size " << rank_size;
+    }
+    int64_t device_per_stage = static_cast<int64_t>(rank_size) / stage_num;
+    int64_t stage_id = static_cast<int64_t>(rank_id) / device_per_stage;
     config->set_rank_id(rank_id);
-    config->set_stage_id(stage_id);
-
-    // set stage_devices
-    for (std::vector<int64_t> devices : parallel::g_device_manager->stage_devices()) {
+    config->set_stage_id(IntToUint(LongToInt(stage_id)));
+    int64_t device = 0;
+    for (int64_t i = 0; i < stage_num; ++i) {
       irpb::TensorShapeProto *stage_devices = config->add_stage_devices();
       MS_EXCEPTION_IF_NULL(stage_devices);
-      for (int64_t device : devices) {
+      for (int64_t j = 0; j < device_per_stage && device < static_cast<int64_t>(rank_size); ++j, ++device) {
         stage_devices->add_dim()->set_size(device);
       }
     }

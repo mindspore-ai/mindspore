@@ -21,7 +21,7 @@
 #include "ir/manager.h"
 #include "common/common_test.h"
 #include "frontend/optimizer/ad/dfunctor.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "common/py_func_graph_fetcher.h"
 #include "include/common/utils/convert_utils.h"
 

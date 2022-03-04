@@ -30,6 +30,7 @@
 #include "fl/server/common.h"
 #include "fl/server/executor.h"
 #include "fl/server/iteration.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace fl {
@@ -38,12 +39,9 @@ namespace server {
 constexpr uint32_t kServerSleepTimeForNetworking = 1000;
 constexpr uint64_t kDefaultReplayAttackTimeDiff = 600000;
 // Class Server is the entrance of MindSpore's parameter server training mode and federated learning.
-class Server {
+class BACKEND_EXPORT Server {
  public:
-  static Server &GetInstance() {
-    static Server instance;
-    return instance;
-  }
+  static Server &GetInstance();
 
   void Initialize(bool use_tcp, bool use_http, uint16_t http_port, const std::vector<RoundConfig> &rounds_config,
                   const CipherConfig &cipher_config, const FuncGraphPtr &func_graph, size_t executor_threshold);

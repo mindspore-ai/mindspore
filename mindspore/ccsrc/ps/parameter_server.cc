@@ -26,6 +26,11 @@ namespace ps {
 static const uint32_t kMaxThreadNum = 16;
 static const uint32_t kCPUCoreNum = std::thread::hardware_concurrency();
 
+ParameterServer &ParameterServer::GetInstance() {
+  static ParameterServer instance{};
+  return instance;
+}
+
 void ParameterServer::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "PServer starts connecting to scheduler and workers...";

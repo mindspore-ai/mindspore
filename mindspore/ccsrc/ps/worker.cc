@@ -23,6 +23,11 @@ namespace {
 constexpr int kRetryDuration = 2000;
 }  // namespace
 
+Worker &Worker::GetInstance() {
+  static Worker instance{};
+  return instance;
+}
+
 void Worker::Run() {
   std::lock_guard<std::mutex> lock(running_mutex_);
 

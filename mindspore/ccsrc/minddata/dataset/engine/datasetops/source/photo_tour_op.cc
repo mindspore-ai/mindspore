@@ -24,7 +24,7 @@
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "mindspore/ccsrc/debug/common.h"
+#include "mindspore/ccsrc/include/common/debug/common.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 

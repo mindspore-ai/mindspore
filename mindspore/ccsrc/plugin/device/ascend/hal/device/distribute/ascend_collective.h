@@ -24,6 +24,8 @@
 #include "hccl/hccl_types.h"
 #include "include/common/utils/utils.h"
 #include "utils/dlopen_macro.h"
+#include "include/backend/visible.h"
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -38,7 +40,7 @@ ORIGIN_METHOD(GetDeviceId, int);
 ORIGIN_METHOD(CreateCommForGroup, bool, const std::string &, const std::vector<unsigned int> &);
 ORIGIN_METHOD(DestroyHcclComm, void);
 
-class HcclCollectiveGroup {
+class BACKEND_EXPORT HcclCollectiveGroup {
  public:
   HcclCollectiveGroup(HcclCollectiveGroup const &) = delete;
   HcclCollectiveGroup &operator=(const HcclCollectiveGroup &) = delete;

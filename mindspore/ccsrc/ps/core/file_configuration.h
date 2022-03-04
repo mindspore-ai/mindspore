@@ -33,6 +33,7 @@
 #include "utils/log_adapter.h"
 #include "ps/core/comm_util.h"
 #include "ps/core/configuration.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
@@ -46,7 +47,7 @@ namespace core {
 //   "server_num": 16,
 //   "total_node_num": 16
 //}
-class FileConfiguration : public Configuration {
+class BACKEND_EXPORT FileConfiguration : public Configuration {
  public:
   explicit FileConfiguration(const std::string &path) : file_path_(path), is_initialized_(false) {}
   ~FileConfiguration() = default;
