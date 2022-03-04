@@ -248,7 +248,7 @@ const std::string APP_ERR_FACE_LOG_STRING[] = {
   [5] = "no face detected",
 };
 
-std::string GetAppErrCodeInfo(APP_ERROR err);
+std::string GetAppErrCodeInfo(const APP_ERROR err);
 void AssertErrorCode(const int code, const std::string file, const std::string function, const int line);
 void CheckErrorCode(const int code, const std::string file, const std::string function, const int line);
 
