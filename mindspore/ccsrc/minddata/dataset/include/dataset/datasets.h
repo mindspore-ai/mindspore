@@ -2076,7 +2076,7 @@ class MS_API CoNLL2000Dataset : public Dataset {
 /// \par Example
 /// \code
 ///      /* Define dataset path and MindData object */
-///      std::string folder_path = "/path/to/conll2000_dataset_directory";
+///      std::string dataset_dir = "/path/to/conll2000_dataset_directory";
 ///      std::shared_ptr<Dataset> ds = CoNLL2000(dataset_dir, "all", 0, ShuffleMode::kGlobal);
 ///
 ///      /* Create iterator to read dataset */
