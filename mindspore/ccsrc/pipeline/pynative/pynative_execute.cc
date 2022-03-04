@@ -357,7 +357,7 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
   bool has_const_input = false;
   const auto &op_prim = op_exec_info->py_primitive;
   MS_EXCEPTION_IF_NULL(op_prim);
-  bool is_random_effect_op = op_prim->HasAttr(GRAPH_FLAG_RANDOM_EFFECT);
+  bool has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
   for (size_t index = 0; index < input_tensors.size(); ++index) {
     MS_EXCEPTION_IF_NULL(input_tensors[index]);
     buf << input_tensors[index]->shape();
@@ -365,7 +365,7 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
     buf << input_tensors[index]->padding_type();
     // In the case of the same shape, but dtype and format are inconsistent
     auto tensor_addr = input_tensors[index]->device_address();
-    if (tensor_addr != nullptr && !is_random_effect_op) {
+    if (tensor_addr != nullptr && !has_hidden_side_effect) {
       auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
       MS_EXCEPTION_IF_NULL(p_address);
       buf << p_address->type_id();
@@ -407,8 +407,8 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
     buf << build_type->type_id();
   }
 
-  // Random effect operator
-  if (is_random_effect_op) {
+  // Operator with hidden side effect.
+  if (has_hidden_side_effect) {
     buf << "_" << std::to_string(op_prim->id());
   }
 

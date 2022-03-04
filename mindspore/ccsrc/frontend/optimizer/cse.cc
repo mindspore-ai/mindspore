@@ -133,13 +133,12 @@ bool CSE::BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) const {
   return changed;
 }
 
-bool CSE::HasRandomEffect(const AnfNodePtr &node) {
+bool CSE::HasHiddenSideEffect(const AnfNodePtr &node) {
   auto prim = GetCNodePrimitive(node);
   if (prim == nullptr) {
     return false;
   }
-  auto attr = prim->GetAttr(GRAPH_FLAG_RANDOM_EFFECT);
-  return (attr != nullptr) && attr->isa<BoolImm>() && GetValue<bool>(attr);
+  return prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
 }
 
 bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const {
@@ -181,7 +180,7 @@ bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const {
       return false;
     }
     // We don't merge primitive cnodes with random effect.
-    return !HasRandomEffect(c_main);
+    return !HasHiddenSideEffect(c_main);
   }
   // a parameter node.
   return false;

@@ -111,7 +111,7 @@ bool BackendCSE::CheckCNode(const CNodePtr &main, const CNodePtr &node) const {
   if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) && CheckIgnoreCase(main)) {
     return false;
   }
-  if (HasRandomEffect(main) || HasRandomEffect(node)) {
+  if (HasHiddenSideEffect(main) || HasHiddenSideEffect(node)) {
     return false;
   }
   if (!CheckEqualKernelBuildInfo(main, node)) {

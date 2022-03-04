@@ -38,7 +38,7 @@ class CSE {
 
   virtual bool Cse(const FuncGraphPtr root, const FuncGraphManagerPtr manager) const;
 
-  static bool HasRandomEffect(const AnfNodePtr &node);
+  static bool HasHiddenSideEffect(const AnfNodePtr &node);
 
  protected:
   bool BuildOrderGroupAndDoReplaceForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) const;

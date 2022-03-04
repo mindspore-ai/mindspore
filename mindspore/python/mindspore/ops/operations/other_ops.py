@@ -678,6 +678,7 @@ class Push(PrimitiveWithInfer):
         """Initialize Push"""
         self.add_prim_attr("primitive_target", "CPU")
         self.init_prim_io_names(inputs=['optim_inputs', 'optim_input_shapes'], outputs=['key'])
+        self.add_prim_attr("side_effect_hidden", True)
 
     def infer_shape(self, inputs, shapes):
         return [1]
