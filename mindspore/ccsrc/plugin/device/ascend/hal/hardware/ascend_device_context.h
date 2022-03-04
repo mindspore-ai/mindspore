@@ -131,6 +131,9 @@ class AscendDeviceContext : public DeviceContext {
   // set rt_context_ to this thread to control device
   void BindDeviceToCurrentThread() const;
 
+  // Launch device aicpu library
+  void LaunchDeviceLibrary() const;
+
  private:
   // Graph loader interface
   void AllocateGraphMemory(const NotNull<KernelGraphPtr> &root_graph) const;

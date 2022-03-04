@@ -342,6 +342,15 @@ void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const
   MS_LOG(INFO) << "Status record: end create kernel.";
 }
 
+void AscendDeviceContext::LaunchDeviceLibrary() const {
+  MS_LOG(INFO) << "Status record: start launch device library.";
+  auto ret = mindspore::kernel::AicpuOpKernelLoad::GetInstance().LaunchAicpuKernelSo();
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Cust aicpu kernel so load failed.";
+  }
+  MS_LOG(INFO) << "Status record: end launch device library.";
+}
+
 void AscendDeviceContext::UpdateExecOrder(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<CNodePtr> new_orders;
@@ -403,6 +412,7 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
       opt::AscendDynamicShapeConvert(graph);
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
       AssignOutputNopNodeDeviceAddress(graph);
+      LaunchDeviceLibrary();
     } else {
       PreprocessBeforeRunSingleOpGraph(graph);
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
@@ -711,10 +721,7 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
   }
 
   CreateKernel(atomic_nodes);
-
-  if (!mindspore::kernel::AicpuOpKernelLoad::GetInstance().LaunchAicpuKernelSo()) {
-    MS_LOG(EXCEPTION) << "Cust aicpu kernel so load failed.";
-  }
+  LaunchDeviceLibrary();
 }
 
 void AscendDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {}
