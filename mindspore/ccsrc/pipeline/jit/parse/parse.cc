@@ -188,8 +188,13 @@ void Parser::TransformParallelCall() {
     }
     auto middle_graph_output_cnode = dyn_cast<CNode>(middle_graph_output);
     MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
+    // If latter_call_graph is not the tail call in middle funcgraph, keep the dependency node for later use.
+    AnfNodePtr middle_graph_dependency_node = nullptr;
     if (IsDependOfIsolatedNodes(middle_graph_output_cnode)) {
       auto middle_graph_real_output_cnode = dyn_cast<CNode>(middle_graph_output_cnode->input(1));
+      // Get the dependency node;
+      constexpr auto dependency_node_index = 2;
+      middle_graph_dependency_node = middle_graph_output_cnode->input(dependency_node_index);
       MS_EXCEPTION_IF_NULL(middle_graph_real_output_cnode);
       middle_graph_output_cnode = middle_graph_real_output_cnode;
     }
@@ -202,13 +207,20 @@ void Parser::TransformParallelCall() {
     bool use_arguments_pack = false;
     auto latter_graph_node = middle_graph_output_cnode->input(0);
     constexpr auto output_inputs_num = 2;
+    AnfNodePtr new_middle_graph_output = nullptr;
     if (middle_graph_output_cnode_size == output_inputs_num) {  // Only one argument.
-      middle_graph_output_cnode->set_input(0, NewValueNode(prim::kPrimReturn));
-      middle_call_graph->set_return(middle_graph_output_cnode);
+      new_middle_graph_output = middle_graph_output_cnode->input(1);
     } else {  // More than one argument, pack them with tuple.
       middle_graph_output_cnode->set_input(0, NewValueNode(prim::kPrimMakeTuple));
+      new_middle_graph_output = middle_graph_output_cnode;
       use_arguments_pack = true;
     }
+    // Adjust the middle funcgraph output with Depend.
+    if (middle_graph_dependency_node != nullptr) {
+      new_middle_graph_output = middle_graph_output_cnode->func_graph()->NewCNode(
+        {NewValueNode(prim::kPrimDepend), new_middle_graph_output, middle_graph_dependency_node});
+    }
+    middle_call_graph->set_output(new_middle_graph_output);
 
     // Transform the call of {former_graph -> middle_graph}.
     auto latter_call_graph = GetValueNode<FuncGraphPtr>(latter_graph_node);
