@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@
 #include <string>
 #include <vector>
 
+#ifdef ENABLE_PYTHON
+#include "minddata/dataset/api/python/python_mp.h"
+#endif
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
@@ -32,7 +35,8 @@ class MapNode : public DatasetNode {
           std::vector<std::string> input_columns = {}, std::vector<std::string> output_columns = {},
           const std::vector<std::string> &columns = {}, std::shared_ptr<DatasetCache> cache = nullptr,
           std::vector<std::shared_ptr<DSCallback>> callbacks = {},
-          ManualOffloadMode offload = ManualOffloadMode::kUnspecified);
+          ManualOffloadMode offload = ManualOffloadMode::kUnspecified,
+          std::shared_ptr<PythonMultiprocessingRuntime> python_mp = nullptr);
 
   /// \brief Destructor
   ~MapNode() override = default;
@@ -125,6 +129,8 @@ class MapNode : public DatasetNode {
 
   /// \brief ManualOffloadMode to indicate manual_offload status
   ManualOffloadMode offload_;
+
+  std::shared_ptr<PythonMultiprocessingRuntime> python_mp_;
 };
 }  // namespace dataset
 }  // namespace mindspore

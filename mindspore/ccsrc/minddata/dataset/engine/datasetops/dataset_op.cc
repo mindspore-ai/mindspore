@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -460,5 +460,6 @@ int64_t DatasetOp::GetTreeRepeatCount() {
     return 1;
   }
 }
+std::vector<int32_t> DatasetOp::GetMPWorkerPIDs() const { return std::vector<int32_t>(); }
 }  // namespace dataset
 }  // namespace mindspore

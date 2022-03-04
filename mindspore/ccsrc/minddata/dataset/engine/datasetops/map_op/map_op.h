@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "minddata/dataset/api/python/python_mp.h"
 #include "minddata/dataset/callback/ds_callback.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/map_op/map_job.h"
@@ -127,6 +128,14 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
     return false;
   }
 
+  /// Set the instance of python multiprocessing which will passed from python
+  /// \param python_mp PythonMultiprocessingRuntime
+  void SetPythonMp(std::shared_ptr<PythonMultiprocessingRuntime> python_mp);
+
+  /// Return the list of PIDs of worker processes
+  /// \return vector of int
+  std::vector<int32_t> GetMPWorkerPIDs() const override;
+
  private:
   // A helper function to create jobs for workers.
   Status GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job);
@@ -150,6 +159,8 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   std::vector<size_t> to_process_indices_;
 
   std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
+
+  std::shared_ptr<PythonMultiprocessingRuntime> python_mp_;  // python multiprocessing instance
 
   // Private function for worker/thread to loop continuously. It comprises the main
   // logic of MapOp: getting the data from previous Op, validating user specified column names,
@@ -192,6 +203,13 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   /// \param worker_id id of the worker
   /// \return Status code
   Status SendQuitFlagToWorker(int32_t worker_id) override;
+
+ protected:
+  Status Launch() override;
+
+ protected:
+  Status AddNewWorkers(int32_t num_new_workers) override;
+  Status RemoveWorkers(int32_t num_workers) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

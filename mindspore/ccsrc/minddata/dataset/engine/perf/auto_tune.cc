@@ -419,10 +419,6 @@ Status AutoTune::Analyse() {
     if (ops_[op_id]->Name() == "GeneratorOp") {
       continue;
     }
-    // Skip python op
-    if (ops_[op_id]->IsPython()) {
-      continue;
-    }
     //  NonMappableDataset is not supported in AutoTune
 #ifndef ENABLE_ANDROID
     if (std::dynamic_pointer_cast<NonMappableLeafOp>(ops_[op_id]) != nullptr) {

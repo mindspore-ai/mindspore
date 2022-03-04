@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std
     : ParallelOp(num_workers, op_connector_size),
       tfuncs_(std::move(tensor_funcs)),
       in_columns_(in_col_names),
-      out_columns_(out_col_names) {
+      out_columns_(out_col_names),
+      python_mp_(nullptr) {
   // Set connector size via config.
   // If caller didn't specify the out_col_names, assume they are same as the in_columns.
   if (out_columns_.empty() || out_columns_[0].empty()) {
@@ -386,6 +387,41 @@ Status MapOp::SendQuitFlagToWorker(int32_t worker_id) {
   TensorRow quit_flag(TensorRow::kFlagQuit);
   RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->Add(std::make_unique<MapWorkerJob>(quit_flag)));
   return Status::OK();
+}
+
+Status MapOp::AddNewWorkers(int32_t num_new_workers) {
+  RETURN_IF_NOT_OK(ParallelOp::AddNewWorkers(num_new_workers));
+  if (python_mp_ != nullptr) {
+    CHECK_FAIL_RETURN_UNEXPECTED(num_new_workers > 0, "Number of workers added should be greater than 0.");
+    python_mp_->AddNewWorkers(num_new_workers);
+  }
+  return Status::OK();
+}
+
+Status MapOp::RemoveWorkers(int32_t num_workers) {
+  RETURN_IF_NOT_OK(ParallelOp::RemoveWorkers(num_workers));
+  if (python_mp_ != nullptr) {
+    CHECK_FAIL_RETURN_UNEXPECTED(num_workers > 0, "Number of workers removed should be greater than 0.");
+    python_mp_->RemoveWorkers(num_workers);
+  }
+  return Status::OK();
+}
+void MapOp::SetPythonMp(std::shared_ptr<PythonMultiprocessingRuntime> python_mp) { python_mp_ = std::move(python_mp); }
+
+Status MapOp::Launch() {
+  // launch python multiprocessing. This will create the MP pool and shared memory if needed.
+  if (python_mp_) {
+    MS_LOG(DEBUG) << "Launch Python Multiprocessing for MapOp:" << id();
+    python_mp_->Launch(id());
+  }
+  return DatasetOp::Launch();
+}
+
+std::vector<int32_t> MapOp::GetMPWorkerPIDs() const {
+  if (python_mp_ != nullptr) {
+    return python_mp_->GetPIDs();
+  }
+  return DatasetOp::GetMPWorkerPIDs();
 }
 }  // namespace dataset
 }  // namespace mindspore

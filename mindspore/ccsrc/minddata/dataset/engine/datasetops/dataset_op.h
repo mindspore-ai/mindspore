@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -348,6 +348,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   virtual bool IsPython() const { return false; }
 
+  virtual std::vector<int32_t> GetMPWorkerPIDs() const;
+
  protected:
   // \brief Removes a parent operator from this operator
   // \notes External callers do not have access to this function
@@ -369,6 +371,9 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // Increase op_current_repeats_ by 1 when one repeat finished.
   // If this repeat happen to be the last repeat in the current epoch, also increase op_current_epochs_ by 1.
   void UpdateRepeatAndEpochCounter();
+
+  // Launch the Op
+  virtual Status Launch() { return Status::OK(); }
 
   std::vector<std::shared_ptr<DatasetOp>> child_;                // Child nodes
   std::vector<DatasetOp *> parent_;                              // Parent nodes. No ownership

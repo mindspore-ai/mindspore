@@ -2722,7 +2722,7 @@ class _PythonCallable:
         return self.py_callable.to_json()
 
 
-class _PythonMultiprocessing:
+class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
     """
     A wrapper to multiprocessing.pool that performs cleanup and ensure proper termination of forked processes.
     """
@@ -2748,25 +2748,47 @@ class _PythonMultiprocessing:
             self.mp_pool_exit_preprocess()
 
     def __init__(self, op_name, num_parallel_workers, operations, max_row_size=16):
+        super(_PythonMultiprocessing, self).__init__()
         self.op_name = op_name
         self.num_parallel_workers = num_parallel_workers
+        self.operations = operations
         self.max_row_size = max_row_size
+
+        self.process_pool = None
+        self.op_id = -1
+
         self.arg_q_list = []
         self.res_q_list = []
-        self.queuemap = {}
+        self.queues_map = {}
         self.next_queue = 0
+
         self.eot = None
         self.watch_dog = None
         self.workers = []
+        self.hook = None
 
+    def Launch(self, op_id=-1):
+        self.op_id = op_id
+        logger.info("Launching new Python Multiprocessing pool for Op:" + str(self.op_id))
+        self.create_pool()
+
+    def create_pool(self):
+        """
+
+        Returns:
+
+        """
         if get_enable_shared_mem():
             self.create_shared_memory()
+
+        if self.process_pool is not None:
+            raise Exception("Pool was already created, close it first.")
 
         # Construct python multiprocessing pool.
         # The _pyfunc_worker_init is used to pass lambda function to subprocesses.
         self.process_pool = multiprocessing.Pool(processes=self.num_parallel_workers,
                                                  initializer=_pyfunc_worker_init,
-                                                 initargs=(operations,
+                                                 initargs=(self.operations,
                                                            self.arg_q_list, self.res_q_list))
 
         self.gather_workers_info()
@@ -2781,8 +2803,45 @@ class _PythonMultiprocessing:
         if sys.version_info >= (3, 8):
             atexit.register(self.process_pool.close)
 
+    def Terminate(self):
+        logger.info("Terminating Python Multiprocessing pool for Op:" + str(self.op_id))
+        self.delete_shared_memory()
+        self.close_pool()
+        self.abort_watchdog()
+        self.process_pool = None
+
+    def GetPIDs(self):
+        # obtain process IDs from multiprocessing.pool
+        return [w.pid for w in self.workers]
+
+    def AddNewWorkers(self, num_new_workers):
+        logger.info(
+            "Increasing num_parallel_workers of Python Multiprocessing pool for Op:" + str(self.op_id) +
+            ", old num_workers=" + str(self.num_parallel_workers) + " new num_workers" + str(self.num_parallel_workers +
+                                                                                             num_new_workers) + ".")
+        self.Terminate()
+        self.num_parallel_workers += num_new_workers
+        self.Launch(self.op_id)
+
+    def RemoveWorkers(self, num_removed_workers):
+        logger.info(
+            "Decreasing num_parallel_workers of Python Multiprocessing pool for Op:" + str(self.op_id) +
+            ", old num_workers=" + str(self.num_parallel_workers) + " new num_workers" + str(self.num_parallel_workers -
+                                                                                             num_removed_workers) + ".")
+        self.Terminate()
+        self.num_parallel_workers -= num_removed_workers
+        self.Launch(self.op_id)
+
+    def IsMPEnabled(self):
+        return self.process_pool is not None
+
     def create_shared_memory(self):
         _check_shm_usage(self.num_parallel_workers, 1, self.max_row_size, 2)
+        self.arg_q_list = []
+        self.res_q_list = []
+        self.queues_map = {}
+        self.next_queue = 0
+
         for _ in range(self.num_parallel_workers):
             self.arg_q_list.append(_SharedQueue(1, max_rowsize=self.max_row_size))
             self.res_q_list.append(_SharedQueue(1, max_rowsize=self.max_row_size))
@@ -2803,16 +2862,17 @@ class _PythonMultiprocessing:
                 del self.res_q_list[res_q_list_len - idx - 1]
             del self.res_q_list
 
+        #  recreate the lists for next pool creation
+        self.arg_q_list = []
+        self.res_q_list = []
+
     def gather_workers_info(self):
-        global _OP_NAME, _OP_PROCESS, _LOCK
-        op_id = _OP_NAME[self.op_name]
-        process_id = {op_id: [self.num_parallel_workers, set()]}
-        # obtain process id from multiprocessing.pool
-        for pool in self.process_pool._pool:  # pylint: disable=W0212
-            process_id[op_id][1].add(pool.pid)
-            self.workers.append(pool)
-        with _LOCK:
-            _OP_PROCESS.update(process_id)
+        """
+        Collect the PIDs of the children processes.
+        """
+        self.workers = [w for w in self.process_pool._pool]  # pylint: disable=W0212
+        pids = self.GetPIDs()
+        logger.info("Op: " + str(self.op_id) + " Python multiprocessing pool workers' PIDs: " + str(pids))
 
     def execute(self, py_callable, idx, *args):
         """
@@ -2847,12 +2907,12 @@ class _PythonMultiprocessing:
         if self.arg_q_list:
             tid = threading.get_ident()
             # Need to register each thread to use a different queue to send data to pool
-            if tid not in self.queuemap:
+            if tid not in self.queues_map:
                 qid = self.next_queue
-                self.next_queue = self.next_queue + 1
-                self.queuemap[tid] = qid
+                self.next_queue += 1
+                self.queues_map[tid] = qid
             else:
-                qid = self.queuemap[tid]
+                qid = self.queues_map[tid]
             self.arg_q_list[qid].put(args)
 
             # This call will send the tensors along with Python callable index to the process pool.
@@ -2995,9 +3055,7 @@ class _PythonMultiprocessing:
 
     def __del__(self):
         # Cleanup when the iter had been deleted from ITERATORS_LIST
-        self.delete_shared_memory()
-        self.close_pool()
-        self.abort_watchdog()
+        self.Terminate()
 
 
 class MapDataset(UnionBaseDataset):
@@ -3069,7 +3127,7 @@ class MapDataset(UnionBaseDataset):
 
         callbacks = [cb.create_runtime_obj() for cb in self.callbacks]
         return cde.MapNode(children[0], operations, self.input_columns, self.output_columns, self.column_order,
-                           callbacks, self.max_rowsize, OffloadToManualOffloadMode[self.offload])
+                           callbacks, self.max_rowsize, OffloadToManualOffloadMode.get(self.offload), self.process_pool)
 
     def __deepcopy__(self, memodict):
         return self.__safe_deepcopy__(memodict, exclude=("operations", "callbacks", "__transfer_dataset__"))
