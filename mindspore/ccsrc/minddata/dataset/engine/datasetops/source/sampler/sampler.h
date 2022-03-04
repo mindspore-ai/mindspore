@@ -69,7 +69,7 @@ class SamplerRT {
   SamplerRT(const SamplerRT &s) : SamplerRT(s.num_samples_, s.samples_per_tensor_) {}
 
   // default destructor
-  ~SamplerRT() = default;
+  virtual ~SamplerRT() = default;
 
   // Get a list of sample ids.
   // @note It is Sampler responsibility to make sure that the id is not out of bound.

@@ -1022,7 +1022,7 @@ APP_ERROR MDAclProcess::device_memory_release() {
 
 std::vector<uint32_t> MDAclProcess::Get_Primary_Shape() {
   std::vector<uint32_t> pri_shape;
-  if (!dvppCommon_) {
+  if (dvppCommon_) {
     pri_shape.emplace_back(dvppCommon_->GetDecodedImage()->heightStride);
     pri_shape.emplace_back(dvppCommon_->GetDecodedImage()->widthStride);
   }

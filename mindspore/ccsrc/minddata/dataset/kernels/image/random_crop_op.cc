@@ -120,7 +120,7 @@ void RandomCropOp::GenRandomXY(int *x, int *y, const int32_t &padded_image_w, co
 
 Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  if (input.size() != 1) {
+  if (input.size() > 1) {
     for (size_t i = 0; i < input.size() - 1; i++) {
       if (input[i]->Rank() != 2 && input[i]->Rank() != 3) {
         std::string err_msg =
@@ -170,8 +170,7 @@ Status RandomCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
   TensorShape out = TensorShape{crop_height_, crop_width_};
   if (inputs[0].Rank() == 2) {
     (void)outputs.emplace_back(out);
-  }
-  if (inputs[0].Rank() == 3) {
+  } else if (inputs[0].Rank() == 3) {
     (void)outputs.emplace_back(out.AppendDim(inputs[0][2]));
   }
   if (!outputs.empty()) {

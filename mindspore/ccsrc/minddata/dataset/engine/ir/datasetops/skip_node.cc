@@ -72,7 +72,7 @@ Status SkipNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
   int64_t num_rows;
   RETURN_IF_NOT_OK(children_[0]->GetDatasetSize(size_getter, estimate, &num_rows));
   *dataset_size = 0;
-  if (skip_count_ >= 0 && skip_count_ < num_rows) {
+  if (skip_count_ < num_rows) {
     *dataset_size = num_rows - skip_count_;
   }
   dataset_size_ = *dataset_size;

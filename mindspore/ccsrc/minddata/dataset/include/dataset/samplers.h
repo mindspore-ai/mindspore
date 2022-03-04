@@ -81,7 +81,7 @@ class MS_API Sampler : std::enable_shared_from_this<Sampler> {
   Sampler() = default;
 
   /// \brief Destructor
-  ~Sampler() = default;
+  virtual ~Sampler() = default;
 
   /// \brief A virtual function to add a child sampler.
   /// \param[in] child The child sampler to be added as a children of this sampler.

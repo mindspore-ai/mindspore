@@ -230,7 +230,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   return Status::OK();
 }
 
-static LDataType GetLiteCVDataType(DataType data_type) {
+static LDataType GetLiteCVDataType(const DataType &data_type) {
   if (data_type == DataType::DE_UINT8) {
     return LDataType::UINT8;
   } else if (data_type == DataType::DE_FLOAT32) {
@@ -326,8 +326,8 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
   return Status::OK();
 }
 
-Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> vec_mean,
-                 std::vector<float> vec_std) {
+Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                 const std::vector<float> &vec_mean, const std::vector<float> &vec_std) {
   if (input->Rank() != 3) {
     RETURN_STATUS_UNEXPECTED("Normalize: image shape is not <H,W,C>.");
   }

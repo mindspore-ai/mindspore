@@ -278,7 +278,7 @@ Status USPSOp::CalculateNumRowsPerShard() {
   }
   if (num_rows_ == 0) {
     std::stringstream ss;
-    for (int i = 0; i < data_files_list_.size(); ++i) {
+    for (size_t i = 0; i < data_files_list_.size(); ++i) {
       ss << " " << data_files_list_[i];
     }
     std::string file_list = ss.str();

@@ -178,7 +178,6 @@ Status BoundingBox::UpdateBBoxesForCrop(TensorPtr *bbox_list, size_t *bbox_count
   // create new tensor and copy over bboxes still valid to the image
   // bboxes outside of new cropped region are ignored - empty tensor returned in case of none
   *bbox_count = correct_ind.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(*bbox_count >= 0, "BoundingBox: correct_ind.size() is smaller than zero.");
   bbox_float temp = 0.0;
   for (auto slice : correct_ind) {  // for every index in the loop
     for (dsize_t ix = 0; ix < bboxDim; ix++) {

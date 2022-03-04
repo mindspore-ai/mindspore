@@ -43,7 +43,7 @@ class TreeConsumer {
   explicit TreeConsumer(int32_t num_epochs);
 
   /// \brief Destructor
-  ~TreeConsumer() = default;
+  virtual ~TreeConsumer() = default;
   /// Initializes the consumer, this involves constructing and preparing the tree.
   /// \param d The dataset node that represent the root of the IR tree.
   /// \return Status error code.

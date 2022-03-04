@@ -423,8 +423,12 @@ std::shared_ptr<SchemaObj> SchemaCharIF(const std::vector<char> &schema_file) {
 // Function to create a Batch dataset
 BatchDataset::BatchDataset(const std::shared_ptr<Dataset> &input, int32_t batch_size, bool drop_remainder) {
   // Default values
-  auto ds = std::make_shared<BatchNode>(input->IRNode(), batch_size, drop_remainder);
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    auto ds = std::make_shared<BatchNode>(input->IRNode(), batch_size, drop_remainder);
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 
 #ifndef ENABLE_ANDROID
@@ -453,12 +457,15 @@ BucketBatchByLengthDataset::BucketBatchByLengthDataset(
     }
     map.insert({p.first, {TensorShape(p.second.first), rt}});
   }
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    auto ds = std::make_shared<BucketBatchByLengthNode>(
+      input->IRNode(), VectorCharToString(column_names), bucket_boundaries, bucket_batch_sizes, c_func,
+      PadInfoCharToString(map), pad_to_bucket_boundary, drop_remainder);
 
-  auto ds = std::make_shared<BucketBatchByLengthNode>(input->IRNode(), VectorCharToString(column_names),
-                                                      bucket_boundaries, bucket_batch_sizes, c_func,
-                                                      PadInfoCharToString(map), pad_to_bucket_boundary, drop_remainder);
-
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 
 ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) {
@@ -467,7 +474,6 @@ ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datase
                        [](const std::shared_ptr<Dataset> &dataset) -> std::shared_ptr<DatasetNode> {
                          return (dataset != nullptr) ? dataset->IRNode() : nullptr;
                        });
-
   auto ds = std::make_shared<ConcatNode>(all_datasets);
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
@@ -480,9 +486,12 @@ FilterDataset::FilterDataset(const std::shared_ptr<Dataset> &input,
   if (predicate) {
     c_func = std::make_shared<CFuncOp>(std::bind(FuncPtrConverter, predicate, std::placeholders::_1));
   }
-  auto ds = std::make_shared<FilterNode>(input->IRNode(), c_func, VectorCharToString(input_columns));
-
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    auto ds = std::make_shared<FilterNode>(input->IRNode(), c_func, VectorCharToString(input_columns));
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 #endif
 
@@ -493,53 +502,81 @@ MapDataset::MapDataset(const std::shared_ptr<Dataset> &input,
                        const std::vector<std::vector<char>> &project_columns,
                        const std::shared_ptr<DatasetCache> &cache,
                        const std::vector<std::shared_ptr<DSCallback>> &callbacks) {
-  auto ds = std::make_shared<MapNode>(input->IRNode(), operations, VectorCharToString(input_columns),
-                                      VectorCharToString(output_columns), VectorCharToString(project_columns), cache,
-                                      callbacks);
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    auto ds = std::make_shared<MapNode>(input->IRNode(), operations, VectorCharToString(input_columns),
+                                        VectorCharToString(output_columns), VectorCharToString(project_columns), cache,
+                                        callbacks);
 
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 
 ProjectDataset::ProjectDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::vector<char>> &columns) {
-  auto ds = std::make_shared<ProjectNode>(input->IRNode(), VectorCharToString(columns));
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    auto ds = std::make_shared<ProjectNode>(input->IRNode(), VectorCharToString(columns));
 
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 
 #ifndef ENABLE_ANDROID
 RenameDataset::RenameDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::vector<char>> &input_columns,
                              const std::vector<std::vector<char>> &output_columns) {
-  auto ds = std::make_shared<RenameNode>(input->IRNode(), VectorCharToString(input_columns),
-                                         VectorCharToString(output_columns));
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    auto ds = std::make_shared<RenameNode>(input->IRNode(), VectorCharToString(input_columns),
+                                           VectorCharToString(output_columns));
 
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 #endif
 
 RepeatDataset::RepeatDataset(const std::shared_ptr<Dataset> &input, int32_t count) {
-  auto ds = std::make_shared<RepeatNode>(input->IRNode(), count);
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    auto ds = std::make_shared<RepeatNode>(input->IRNode(), count);
 
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 
 ShuffleDataset::ShuffleDataset(const std::shared_ptr<Dataset> &input, int32_t buffer_size) {
-  // Pass in reshuffle_each_epoch with true
-  auto ds = std::make_shared<ShuffleNode>(input->IRNode(), buffer_size, true);
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    // Pass in reshuffle_each_epoch with true
+    auto ds = std::make_shared<ShuffleNode>(input->IRNode(), buffer_size, true);
 
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 
 #ifndef ENABLE_ANDROID
 SkipDataset::SkipDataset(const std::shared_ptr<Dataset> &input, int32_t count) {
-  auto ds = std::make_shared<SkipNode>(input->IRNode(), count);
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    auto ds = std::make_shared<SkipNode>(input->IRNode(), count);
 
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 
 TakeDataset::TakeDataset(const std::shared_ptr<Dataset> &input, int32_t count) {
-  auto ds = std::make_shared<TakeNode>(input->IRNode(), count);
+  if (input == nullptr) {
+    ir_node_ = nullptr;
+  } else {
+    auto ds = std::make_shared<TakeNode>(input->IRNode(), count);
 
-  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+    ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+  }
 }
 
 ZipDataset::ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) {
