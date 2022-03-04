@@ -2396,7 +2396,7 @@ class BatchDataset(UnionBaseDataset):
     def parse(self, children=None):
         return cde.BatchNode(children[0], self.batch_size, self.drop_remainder, self.pad, self.input_columns,
                              self.output_columns, self.column_order, self.batch_size_func, self.per_batch_map,
-                             self.pad_info)
+                             self.pad_info, self.process_pool)
 
     @staticmethod
     def _is_ancestor_of_repeat(dataset):
@@ -2442,7 +2442,7 @@ class BatchDataset(UnionBaseDataset):
         """
         if self.python_multiprocessing:
             if self.per_batch_map is None:
-                logger.warning("per_batch_map is None so python_multiprocessing does not work.")
+                logger.warning("per_batch_map is None so python_multiprocessing is ignored for batch.")
                 return
 
             # If user didn't specify num_parallel_workers, set it to default
