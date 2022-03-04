@@ -20,6 +20,7 @@ mindspore.nn.LSTMCell
     其中 :math:`\sigma` 是sigmoid函数， :math:`*` 是乘积。 :math:`W,b` 是公式中输出和输入之间的可学习权重。例如，:math:`W_{ix}, b_{ix}` 是用于从输入 :math:`x` 转换为 :math:`i` 的权重和偏置。详见论文 `LONG SHORT-TERM MEMORY <https://www.bioinf.jku.at/publications/older/2604.pdf>`_ 和 `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_ 。
 
     **参数：**
+    
     - **input_size** (int) - 输入的大小。
     - **hidden_size** (int)- 隐藏状态大小。
     - **has_bias** (bool) - cell是否有偏置 `b_ih` 和 `b_hh` 。默认值：True。

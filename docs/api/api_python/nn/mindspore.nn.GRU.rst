@@ -36,6 +36,7 @@ mindspore.nn.GRU
     **输出：**
 
     Tuple，包含(`output`, `h_n`)的tuple。
+
     - **output** (Tensor) - shape为(seq_len, batch_size, num_directions * `hidden_size`)或(batch_size, seq_len, num_directions * `hidden_size`)的Tensor。
     - **hx_n** (Tensor) - shape为(num_directions * `num_layers`, batch_size, `hidden_size`)的Tensor。
 

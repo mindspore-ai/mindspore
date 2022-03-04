@@ -314,9 +314,11 @@
         - **hook_fn** (function) – 捕获Cell对象信息和正向输入数据的hook_fn函数。
 
         **返回：**
+
         - **handle** – 与hook_fn函数对应的handle对象。
 
         **异常：**
+
         - **TypeError** – 如果 `hook_fn` 不是Python函数。
 
     .. py:method:: register_forward_hook(hook_fn)
@@ -333,9 +335,11 @@
         - **hook_fn** (function) – 捕获Cell对象信息和正向输入，输出数据的hook_fn函数。
 
         **返回：**
+
         - **handle** – 与hook_fn函数对应的handle对象。
 
         **异常：**
+
         - **TypeError** – 如果 `hook_fn` 不是Python函数。
 
     .. py:method:: register_backward_hook(hook_fn)
@@ -352,9 +356,11 @@
         - **hook_fn** (function) – 捕获Cell对象信息和反向输入，输出梯度的hook_fn函数。
 
         **返回：**
+
         - **handle** – 与hook_fn函数对应的handle对象。
 
         **异常：**
+
         - **TypeError** – 如果 `hook_fn` 不是Python函数。
 
     .. py:method:: remove_redundant_parameters()

@@ -29,7 +29,7 @@ mindspore.nn.GRUCell
 
     **输出：**
 
-    - **h'** (Tensor) - shape为(batch_size, `hidden_size`)的Tensor。
+    - **hx** (Tensor) - shape为(batch_size, `hidden_size`)的Tensor。
 
     **异常：**
 
