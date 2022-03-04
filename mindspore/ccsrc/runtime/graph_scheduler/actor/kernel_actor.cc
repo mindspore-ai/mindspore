@@ -319,6 +319,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   // Update the input device tensor.
   input_device_tensors_[input_data->index_] = new_device_tensor.get();
 
+  device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), input_data->index_);
   if ((new_device_tensor->GetPtr() == nullptr) &&
       (!device_contexts_[0]->AllocateMemory(new_device_tensor.get(), new_device_tensor->GetSize()))) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *(device_contexts_[0]), GetAID().Name(),

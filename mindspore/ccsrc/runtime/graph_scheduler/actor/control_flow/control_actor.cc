@@ -394,6 +394,7 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
       const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {device_tensor->device_name(), device_tensor->device_id()});
       MS_EXCEPTION_IF_NULL(device_context);
+      device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), 0);
       if ((device_tensor->GetPtr() == nullptr) &&
           (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize()))) {
         SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
