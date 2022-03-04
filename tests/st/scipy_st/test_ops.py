@@ -112,7 +112,7 @@ def test_eig(shape, data_type, rtol, atol):
     compare_eigen_decomposition((mw, mv), (sw, sv), True, rtol, atol)
 
     # Eig only calculate eigenvalues when compute_v is False
-    mw = Eig(False)(tensor_a)
+    mw, _ = Eig(False)(tensor_a)
     mw = mw.asnumpy()
     sw = eigvals(a)
     compare_eigen_decomposition((mw,), (sw,), False, rtol, atol)

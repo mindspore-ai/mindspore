@@ -26,8 +26,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kInputsNum = 1;
-constexpr size_t kOutputsNumNV = 1;
-constexpr size_t kOutputsNumV = 2;
+constexpr size_t kOutputsNum = 2;
 }  // namespace
 
 void EigCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape) {
@@ -51,16 +50,13 @@ void EigCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape) {
 
 void EigCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  // If compute_v_ is true, then: w, v = Eig(a)
-  // If compute_v_ is false, then: w = Eig(a)
   if (common::AnfAlgo::HasNodeAttr(COMPUTE_V, kernel_node)) {
     compute_v_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, COMPUTE_V);
   }
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  auto expect_output_num = compute_v_ ? kOutputsNumV : kOutputsNumNV;
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, expect_output_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
   auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
   InitMatrixInfo(input_shape);
 
@@ -101,16 +97,6 @@ bool EigCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
 }
 
 std::vector<std::pair<KernelAttr, EigCpuKernelMod::EigFunc>> EigCpuKernelMod::func_list_ = {
-  // If compute_v is false.
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
-   &EigCpuKernelMod::LaunchKernel<float, float_complex>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
-   &EigCpuKernelMod::LaunchKernel<double, double_complex>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &EigCpuKernelMod::LaunchKernel<float_complex, float_complex>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &EigCpuKernelMod::LaunchKernel<double_complex, double_complex>},
-  // If compute_v is true.
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeComplex64)

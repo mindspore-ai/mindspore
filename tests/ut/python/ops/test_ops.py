@@ -42,6 +42,7 @@ from mindspore.ops.operations.array_ops import ConjugateTranspose
 from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
+from mindspore.ops.operations.math_ops import Eig
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import MatrixExp
 from mindspore.ops.operations.math_ops import MatrixSolve
@@ -1452,6 +1453,10 @@ test_case_math_ops = [
         'block': P.BitwiseOr(),
         'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
                         Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
+    ('Eig', {
+        'block': Eig(),
+        'desc_inputs': [Tensor(np.array([[1, 0], [0, 1]]).astype(np.float32))],
         'skip': ['backward']}),
     ('BitwiseOr_1', {
         'block': P.BitwiseOr(),
