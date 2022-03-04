@@ -123,36 +123,6 @@ std::string GetCompileDepFilesHash(const py::list &dep_files) {
   return files_hash;
 }
 
-bool CheckDepFilesHashConsistency(const std::string &current_dep_files_hash) {
-  if (current_dep_files_hash.empty()) {
-    MS_LOG(ERROR) << "Get current dependency files hash failed.";
-    return false;
-  }
-  std::string dep_files_hash_path = GetDepFilesHashPath();
-  auto realpath = Common::CreatePrefixPath(dep_files_hash_path, true);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path of file " << dep_files_hash_path << " failed.";
-    return false;
-  }
-  std::fstream input(realpath.value(), std::ios::in | std::ios::binary);
-  if (!input) {
-    MS_LOG(WARNING) << "Open the hash file " << realpath.value() << " failed. The file may not exist."
-                    << ErrnoToString(errno);
-    return false;
-  }
-  std::string checkpoint_hash;
-  input >> checkpoint_hash;
-  if (checkpoint_hash.empty()) {
-    MS_LOG(ERROR) << "Get the compilation dependency files hash from " << realpath.value() << " failed.";
-    return false;
-  }
-  if (checkpoint_hash != current_dep_files_hash) {
-    MS_LOG(WARNING) << "The compilation dependency files are changed.";
-    return false;
-  }
-  return true;
-}
-
 std::map<string, ValuePtr> GenerateWeightsValueMap(const py::dict &weights) {
   std::map<string, ValuePtr> ret{};
   for (auto weight = weights.begin(); weight != weights.end(); ++weight) {
@@ -230,14 +200,38 @@ void CompileCacheManager::InitCompileCacheHash(const py::list &compile_cache_dep
   compile_cache_dep_files_hash_ = GetCompileDepFilesHash(compile_cache_dep_files);
 }
 
+bool CompileCacheManager::CheckDepFilesHashConsistency() {
+  if (compile_cache_dep_files_hash_.empty()) {
+    MS_LOG(ERROR) << "Get current dependency files hash failed.";
+    return false;
+  }
+  std::string dep_files_hash_path = GetDepFilesHashPath();
+  auto realpath = Common::CreatePrefixPath(dep_files_hash_path, true);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path of file " << dep_files_hash_path << " failed.";
+    return false;
+  }
+  std::fstream input(realpath.value(), std::ios::in | std::ios::binary);
+  if (!input) {
+    MS_LOG(WARNING) << "Open the hash file " << realpath.value() << " failed. The file may not exist."
+                    << ErrnoToString(errno);
+    return false;
+  }
+  std::string checkpoint_hash;
+  input >> checkpoint_hash;
+  if (checkpoint_hash.empty()) {
+    MS_LOG(ERROR) << "Get the compilation dependency files hash from " << realpath.value() << " failed.";
+    return false;
+  }
+  if (checkpoint_hash != compile_cache_dep_files_hash_) {
+    MS_LOG(WARNING) << "The compilation dependency files are changed.";
+    return false;
+  }
+  return true;
+}
+
 FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &manager, const py::dict &weights,
                                                      const std::string &queue_name) {
-  // Compare the dependency files hash.
-  if (!CheckDepFilesHashConsistency(compile_cache_dep_files_hash_)) {
-    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
-    return nullptr;
-  }
-
   // Determine whether to load parallel information.
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   bool has_parallel_info = false;

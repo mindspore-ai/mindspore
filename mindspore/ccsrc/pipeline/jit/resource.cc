@@ -354,9 +354,20 @@ Any Resource::GetAttrPtr(const TypeId &type, const std::string &name) {
 }
 
 void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, const py::dict &weights,
-                                       const std::string &queue_name, size_t compile_cache_id) {
+                                       const std::string &queue_name, size_t compile_cache_id,
+                                       bool *compile_cache_consistent) {
   compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
+  MS_EXCEPTION_IF_NULL(compile_cache_consistent);
+  if (!*compile_cache_consistent) {
+    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+    return;
+  }
   compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
+  *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
+  if (!*compile_cache_consistent) {
+    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+    return;
+  }
   func_graph_ = compile_cache_manager_->GetCachedFuncGraph(manager_, weights, queue_name);
   layout_map_ = compile_cache_manager_->layout_map();
 }

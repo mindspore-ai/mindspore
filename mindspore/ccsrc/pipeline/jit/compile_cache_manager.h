@@ -35,6 +35,8 @@ class CompileCacheManager {
 
   // Get the hash of dependent files when compiling graph.
   void InitCompileCacheHash(const py::list &compile_cache_dep_files);
+  // Compare the dependency files hash.
+  bool CheckDepFilesHashConsistency();
   // Load the cached func_graph from mindir file.
   FuncGraphPtr GetCachedFuncGraph(const FuncGraphManagerPtr &manager, const py::dict &weights,
                                   const std::string &queue_name);

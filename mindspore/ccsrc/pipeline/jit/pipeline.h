@@ -162,6 +162,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   std::string queue_name_;
   bool enable_tuple_broaden_{false};
   py::list compile_cache_dep_files_;
+  bool compile_cache_consistent_{true};
   py::dict weights_;
   std::map<PyObject *, AbstractBasePtr> cur_convert_input_;
 };

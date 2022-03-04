@@ -109,6 +109,27 @@ def run_twice_with_different_networks(file_name_first, file_name_second, cache_p
     shutil.rmtree(cache_path)
 
 
+def run_two_cells_networks_once(file_name, cache_path, log_file_name):
+    # Clear compile cache folder
+    if os.path.exists(cache_path):
+        shutil.rmtree(cache_path)
+    assert not os.path.exists(cache_path)
+
+    # First run without compile cache
+    cmd = f"GLOG_v=2 python " + file_name + " '" + cache_path + "' > " + log_file_name + " 2>&1"
+    subprocess.check_output(cmd, shell=True)
+    assert os.path.exists(log_file_name)
+    assert os.path.exists(cache_path)
+    with open(log_file_name, "r") as f:
+        data = f.read()
+    assert data.count(
+        "Check the consistency of dependency files hash failed. Execute all the compilation actions.") == 2
+
+    # Clean log files
+    os.remove(log_file_name)
+    shutil.rmtree(cache_path)
+
+
 def check_log(role, log_name, str_to_check):
     assert os.path.exists(role + "/" + log_name)
     with open(role + "/" + log_name, "r") as f:
@@ -291,3 +312,16 @@ def test_compile_cache_ms_function():
     """
     run_twice_with_same_network("run_lenet_ms_function.py", "./lenet_ms_function", "lenet_ms_function_first.txt",
                                 "lenet_ms_function_second.txt")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_compile_cache_run_two_cells_once():
+    """
+    Feature: Compile cache.
+    Description: Test whether all the cells don't read the cached graph when run multiple cells once.
+    Expectation: success.
+    """
+    run_two_cells_networks_once("run_lenet_two_cells.py", "./lenet_two_cells", "lenet_two_cells.txt")
