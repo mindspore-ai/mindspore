@@ -14,7 +14,7 @@
 
     **输入：**
 
-    - **input_ids** (Tensor) - shape为(batch_size, seq_length)的输入，其数据类型为int32。
+    **input_ids** (Tensor) - shape为(batch_size, seq_length)的输入，其数据类型为int32。
 
     **输出：**
 

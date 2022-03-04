@@ -24,7 +24,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **输出：**
 
-    Tuple(Tensor), adasum处理后更新的权重。
+    - **Tuple** (Tensor) - adasum处理后更新的权重。
 
 .. py:class:: mindspore.boost.AutoBoost(level="O0", boost_config_dict="")
 
@@ -169,8 +169,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     
         **参数：**
     
-        - network (Cell)，训练网络。
-        - optimizer (Union[Cell])，用于更新权重的优化器。
+        - **network** (Cell) - 训练网络。
+        - **optimizer** (Union[Cell]) - 用于更新权重的优化器。
     
     .. py:method:: network_auto_process_eval(network)
     
@@ -178,7 +178,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     
         **参数：**
     
-        network(Cell)，推理网络。
+        **network** (Cell) - 推理网络。
 
 .. py:class:: mindspore.boost.BoostTrainOneStepCell(network, optimizer, sens=1.0)
 

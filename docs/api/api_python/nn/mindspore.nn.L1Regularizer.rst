@@ -13,11 +13,11 @@ mindspore.nn.L1Regularizer
 
     **参数：**
 
-    - **scale (int, float)** - L1正则化因子，其值大于0。
+    - **scale** (int, float) - L1正则化因子，其值大于0。
 
     **输入：**
 
-    - **weights** (Tensor)** - L1Regularizer的输入，任意维度的Tensor，数据类型为float16或float32。
+    - **weights** (Tensor) - L1Regularizer的输入，任意维度的Tensor，数据类型为float16或float32。
 
     **输出：**
 
