@@ -104,7 +104,7 @@ Status UnsortedSegmentOpInfo::InferMirrorOps() {
   Shape tensor_map = inputs_tensor_map_[0];
   std::vector<Group> group;
   if (CreateGroupByTensorMap(tensor_map, &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Create group failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 
@@ -198,7 +198,7 @@ Status UnsortedSegmentOpInfo::InferForwardCommunication() {
     tmp_group_tensor_map.push_back(0);
   }
   if (CreateGroupByTensorMap(tmp_group_tensor_map, &group_list) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Infer forward communication, create group failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   } else if (group_list.empty()) {
     MS_LOG(INFO) << name_ << " : Forward all reduce is not required.";

@@ -78,7 +78,9 @@ std::shared_ptr<ReshapeLayoutTransfer> RedistributionLayoutTransfer::UnifyDevice
 std::shared_ptr<ReshapeLayoutTransfer> RedistributionLayoutTransfer::UnifyDeviceArrangementAndTensorShape() const {
   std::shared_ptr<ReshapeLayoutTransfer> unified_device_arrangement_ptr = UnifyDeviceArrangement();
   if (unified_device_arrangement_ptr == nullptr) {
-    return nullptr;
+    ReshapeLayoutTransfer out;
+    out.SetExpandAble(false);
+    return std::make_shared<ReshapeLayoutTransfer>(out);
   }
   Shape in_expand_shape;
   Status status = ExpandShape(unified_device_arrangement_ptr->from_in().tensor_shape().array(),

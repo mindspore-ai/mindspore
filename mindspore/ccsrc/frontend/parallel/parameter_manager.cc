@@ -764,7 +764,10 @@ std::vector<bool> IsBorderAdaSumSendReceive(const AnfNodePtr &node, const RankLi
     group_list = {rank, origin_dest_rank};
     new_dest_src_rank = 1;
   }
-  Group adasum_send_rec_group = g_device_manager->CreateGroup(group_list);
+  Group adasum_send_rec_group;
+  if (g_device_manager->CreateGroup(group_list, &adasum_send_rec_group) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create send/receive group in adasum failed, the group is:" << group_list;
+  }
   send_rec_prim->set_attr(GROUP, MakeValue(adasum_send_rec_group.name()));
   if (is_send) {
     send_rec_prim->set_attr(DEST_RANK, MakeValue(new_dest_src_rank));
@@ -843,7 +846,10 @@ void HandleAdasumAllReduce(const PrimitivePtr &prim, const RankList &group_devic
     int64_t neighbor_id = (node_rank / double_d * double_d + index) * ADASUM_MIN_DIS + rank % ADASUM_MIN_DIS;
     neighbor_ids.push_back(neighbor_id);
   }
-  Group adasum_allreduce_group = g_device_manager->CreateGroup(neighbor_ids);
+  Group adasum_allreduce_group;
+  if (g_device_manager->CreateGroup(neighbor_ids, &adasum_allreduce_group) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create group allreduce group in adasum failed, the group is " << neighbor_ids;
+  }
   auto new_group_name = MakeValue(adasum_allreduce_group.name());
   int64_t fusion_id = GetValue<int64_t>(prim->GetAttr("origin_fusion"));
   int64_t new_fusion_id = fusion_id + g_device_manager->DeviceNum() * (border_step + 1);
@@ -1018,7 +1024,10 @@ void ResetMirrorAttr(const PrimitivePtr &prim, const RankList &new_group) {
     prim->set_attr(GROUP_RANKS, MakeValue(std::to_string(new_group[0])));
     return;
   }
-  Group adasum_mirror_group = g_device_manager->CreateGroup(new_group);
+  Group adasum_mirror_group;
+  if (g_device_manager->CreateGroup(new_group, &adasum_mirror_group) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create new mirror group failed in adasum, new group is: " << new_group;
+  }
   auto new_group_name = MakeValue(adasum_mirror_group.name());
   prim->set_attr(GROUP, new_group_name);
   prim->set_attr(DEV_NUM, MakeValue<int64_t>(new_group.size()));

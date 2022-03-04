@@ -53,6 +53,10 @@ class MatMulBase : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
   void InitTensorInfoForCost(std::vector<TensorInfo> *);
+  Status GenerateStrategiesBase(int64_t stage_id, size_t dev_num, const Shape &input0_shape, Shape input1_shape,
+                                std::vector<StrategyPtr> *const sp_vector);
+  Status GenerateStrategiesNotPower2(int64_t stage_id, size_t dev_num_not_2_power,
+                                     const std::vector<StrategyPtr> &sp_vector_2_power_part);
   Status CheckForTensorSliceValid() const;
   Status GetAttrs() override;
 

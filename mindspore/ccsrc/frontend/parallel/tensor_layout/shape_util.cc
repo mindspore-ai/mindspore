@@ -77,7 +77,7 @@ Status AccumulateProductToShape(const Shape &shape_accum, Shape *shape) {
       return Status::FAILED;
     }
     if ((*iter) % value != 0) {
-      MS_LOG(ERROR) << "shape_accum is not a accumulate product in ascending order";
+      MS_LOG(INFO) << "shape_accum is not a accumulate product in ascending order";
       return Status::FAILED;
     }
     shape->push_back(static_cast<int64_t>((*iter) / value));

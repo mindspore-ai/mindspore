@@ -115,7 +115,7 @@ std::shared_ptr<std::vector<Arrangement>> Arrangement::GetExpandShapeList(const 
   for (size_t i = 0; i < expand_shape.GetDimSize(); i++) {
     size *= expand_shape.GetDimByIdx(i);
     if (size > GetDimByIdx(ind)) {
-      MS_LOG(ERROR) << "invalid expand_shape";
+      MS_LOG(INFO) << "invalid expand_shape:" << expand_shape.array();
       return nullptr;
     } else if (size < GetDimByIdx(ind)) {
       shape.push_back(expand_shape.GetDimByIdx(i));
@@ -131,7 +131,7 @@ std::shared_ptr<std::vector<Arrangement>> Arrangement::GetExpandShapeList(const 
     }
   }
   if (ind != GetDimSize()) {
-    MS_LOG(ERROR) << "invalid expand_shape";
+    MS_LOG(INFO) << "invalid expand_shape:" << expand_shape.array();
     return nullptr;
   }
   auto arrangement_new = std::make_shared<std::vector<Arrangement>>(arrangement_list);

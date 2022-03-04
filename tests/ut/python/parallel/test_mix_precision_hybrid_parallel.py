@@ -74,7 +74,7 @@ def test_two_matmul():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    strategy1 = ((2, 2), (2, 1))
+    strategy1 = ((1, 1), (1, 8))
     strategy2 = ((4, 2), (2, 1))
     strategy3 = ((1, 8), (8, 1))
     strategy4 = ((2, 4), (4, 1))

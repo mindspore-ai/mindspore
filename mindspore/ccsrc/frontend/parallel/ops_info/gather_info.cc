@@ -322,7 +322,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
   auto param_strategy = strategy->GetInputDim().at(0);
   auto slice_shape = param_shape.at(param_shape.size() - 1) / param_strategy.at(param_strategy.size() - 1);
   if ((target_ != CPU) && (slice_shape % 8 != 0) && (slice_shape != 1)) {
-    MS_LOG(ERROR) << name_ << ": Last dim of param slice shape need 32Byte aligned.";
+    ReportError(name_ + ": Last dim of param slice shape need 32Byte aligned.");
     return FAILED;
   }
 
@@ -445,7 +445,7 @@ Status GatherInfo::InferMirrorOps() {
   Shape input_a_tensor_map = inputs_tensor_map_.at(0);
   std::vector<Group> input_a_group;
   if (CreateGroupByTensorMap(input_a_tensor_map, &input_a_group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Create group for input a failed.";
+    ReportError(name_ + " : Create group for input a failed.");
     return FAILED;
   }
 
@@ -782,7 +782,10 @@ Status GatherInfo::InferGroup() {
   }
 
   MS_LOG(INFO) << name_ << ": The group ranks is " << group_devices;
-  group_ = g_device_manager->CreateGroup(group_devices);
+  if (g_device_manager->CreateGroup(group_devices, &group_) != SUCCESS) {
+    MS_LOG(ERROR) << "The node " << cnode_->fullname_with_scope() << " create reduce group failed in table row split.";
+    return FAILED;
+  }
   return SUCCESS;
 }
 

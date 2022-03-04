@@ -196,7 +196,7 @@ Status TensorDotInfo::InferForwardCommunication() {
 
   std::vector<Group> forward_group;
   if (CreateGroupByTensorMap(forward_group_map, &forward_group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create group by tensor map failed";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 

@@ -651,7 +651,7 @@ Status Conv2DInfo::InferForwardCommunication() {
 
   std::vector<Group> group_list;
   if (CreateGroupByDim(relevant_dim_index, &group_list) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create group failed";
+    ReportError(name_ + ": Create group failed");
     return FAILED;
   }
 
@@ -1080,7 +1080,7 @@ Status Conv2DBackpropInputInfo::InferMirrorOps() {
   for (size_t i = 0; i < inputs_tensor_map_.size(); ++i) {
     std::vector<Group> group;
     if (CreateGroupByTensorMap(inputs_tensor_map_[i], &group) != SUCCESS) {
-      MS_LOG(ERROR) << name_ << ": Create group failed, the input index is " << i;
+      ReportError(name_ + ": Create group failed, the input index is " + std::to_string(i));
       mirror_ops_.clear();
       return FAILED;
     }

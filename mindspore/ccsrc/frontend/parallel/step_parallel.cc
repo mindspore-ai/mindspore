@@ -3178,13 +3178,23 @@ static void InsertAllReduceForNormValue(const AnfNodePtr &res_node) {
   auto sqrt_node = MatchPattern(expand_dims_node, node_user_map, REDUCE_SUM_MATCH_PATTERN);
   if (!sqrt_node) return;
   auto cur_stage_rank_list = g_device_manager->GetDeviceListInThisStage();
-  Group cur_stage_device_list = g_device_manager->CreateGroup(cur_stage_rank_list);
+  Group cur_stage_device_list;
+  if (g_device_manager->CreateGroup(cur_stage_rank_list, &cur_stage_device_list) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create the communication group for allreduce in calculating global norm failed, "
+                         "the rank_list is: "
+                      << cur_stage_rank_list;
+  }
   InsertAllReduceToNodeInput(sqrt_node->cast<CNodePtr>(), cur_stage_device_list.name(), PARALLEL_GLOBALNORM);
   MS_LOG(INFO) << "Insert the AllReduce for global norm value in stages succeed.";
   if (pipeline_stages > 1) {
     MS_LOG(INFO) << "Insert the AllReduce for global norm value between stages succeed.";
     auto ranks_between_stages = g_device_manager->GetDeviceListBetweenStage();
-    Group group_between_stages = g_device_manager->CreateGroup(ranks_between_stages);
+    Group group_between_stages;
+    if (g_device_manager->CreateGroup(ranks_between_stages, &group_between_stages)) {
+      MS_LOG(EXCEPTION) << "Create the communication group for allreduce in calculating global norm "
+                           "with pipeline parallel failed, the rank_list is: "
+                        << cur_stage_rank_list;
+    }
     InsertAllReduceToNodeInput(sqrt_node->cast<CNodePtr>(), group_between_stages.name(), PARALLEL_GLOBALNORM_BETWEEN);
   }
 }

@@ -170,7 +170,11 @@ Status BatchNormInfo::InferAllReduceGroupBySize() {
   }
   MS_LOG(INFO) << name_ << ": The group rank list is " << group_rank_list;
 
-  Group g = g_device_manager->CreateGroup(group_rank_list);
+  Group g;
+  if (g_device_manager->CreateGroup(group_rank_list, &g) != SUCCESS) {
+    MS_LOG(ERROR) << "The node " << cnode_->fullname_with_scope() << " create sync allreduce failed";
+    return FAILED;
+  }
   forward_allreduce_group_.push_back(g);
   return SUCCESS;
 }
@@ -224,7 +228,7 @@ Status BatchNormInfo::InferForwardCommunication() {
 
   std::vector<Group> group_list;
   if (CreateGroupByTensorMap(tmp_map, &group_list) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create group failed";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 

@@ -186,7 +186,7 @@ Status ReduceMethod::InferForwardCommunication() {
   }
   std::vector<Group> forward_group;
   if (CreateGroupByTensorMap(group_creat_map, &forward_group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferForwardCommunication group failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
   if (!forward_group.empty()) {
@@ -264,7 +264,7 @@ Status ReduceMeanInfo::InferForwardCommunication() {
 
   std::vector<Group> forward_group;
   if (CreateGroupByTensorMap(group_creat_map, &forward_group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": InferForwardCommunication group failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
   if (!forward_group.empty()) {
@@ -285,7 +285,7 @@ Status ReduceMethod::InferMirrorOps() {
   Shape input_tensor_map = inputs_tensor_map_.at(0);
   std::vector<Group> input_group;
   if (CreateGroupByTensorMap(input_tensor_map, &input_group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " Infer MirrorOps failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 
@@ -310,7 +310,7 @@ Status ArgMaxWithValueInfo::InferMirrorOps() {
   Shape input_tensor_map = inputs_tensor_map_.at(0);
   std::vector<Group> input_group;
   if (CreateGroupByTensorMap(input_tensor_map, &input_group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer MirrorOps failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 

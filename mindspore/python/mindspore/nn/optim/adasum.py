@@ -416,7 +416,6 @@ class AdaSumByGradWrapCell(Cell):
         self.sync_tensor = Parameter(Tensor(0, dtype=mstype.int32))
 
     def construct(self, grads):
-        """adasum algorithm process."""
         adasum_res = self.adasum(grads)
         sync_tensor = F.depend(self.sync_tensor, adasum_res)
         sync_flag = P.AllReduce()(sync_tensor)
@@ -462,7 +461,6 @@ class AdaSumByDeltaWeightWrapCell(Cell):
         self.scale = Tensor(1.0, dtype=mstype.float32)
 
     def construct(self, grads):
-        """adasum algorithm process."""
         grad_clone = self.hyper_map(F.partial(_clone_weight, self.scale), self.parameters)
         grads = F.depend(grads, grad_clone)
         opt_result = self.optimizer(grads)

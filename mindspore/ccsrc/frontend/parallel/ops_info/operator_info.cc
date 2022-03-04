@@ -187,7 +187,7 @@ Status OperatorInfo::InferMirrorOps() {
   for (size_t i = 0; i < inputs_tensor_map_.size(); ++i) {
     std::vector<Group> group;
     if (CreateGroupByTensorMap(inputs_tensor_map_[i], &group) != SUCCESS) {
-      MS_LOG(ERROR) << name_ << ": Create group failed, the input index is " << i;
+      ReportError(name_ + ": Create group failed, the input index is " + std::to_string(i));
       mirror_ops_.clear();
       return FAILED;
     }
@@ -590,8 +590,24 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
     MS_LOG(INFO) << "The dev size is 1, no need to create group.";
     return SUCCESS;
   }
+  if (is_auto_parallel_) {
+    if (g_device_manager->CheckDeviceList(group_devices) != SUCCESS) {
+      MS_LOG(INFO) << "Try to create communication group : " << group_devices
+                   << " failed in auto parallel mode, "
+                      "this error can be ignored in parallel strategies searching step";
+      return FAILED;
+    }
+    return SUCCESS;
+  }
 
-  Group g = g_device_manager->CreateGroup(group_devices);
+  Group g;
+  if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
+    MS_LOG(ERROR) << "Operator " << name_
+                  << " create communication group by tensor_map failed, the rank_list is: " << group_devices
+                  << ", the input strategy is " << strategy_->GetInputDim()
+                  << ", the full_name of node is: " << cnode_->fullname_with_scope();
+    return FAILED;
+  }
   group->push_back(g);
   return SUCCESS;
 }
@@ -630,7 +646,15 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
     RankList new_group_devices(
       group_devices.begin() + index / optimizer_weight_shard_size * optimizer_weight_shard_size,
       group_devices.begin() + (index / optimizer_weight_shard_size + 1) * optimizer_weight_shard_size);
-    Group allgather_group = g_device_manager->CreateGroup(new_group_devices);
+    Group allgather_group;
+    if (g_device_manager->CreateGroup(new_group_devices, &allgather_group) != SUCCESS) {
+      MS_LOG(ERROR) << "Operator " << name_
+                    << " create communication group for allgather in optimizer parallel failed,"
+                       " the rank_list is: "
+                    << group_devices << ", the input strategy is " << strategy_->GetInputDim()
+                    << ", the full_name of node is: " << cnode_->fullname_with_scope();
+      return FAILED;
+    }
     groups->push_back(allgather_group);
     tensor_layout->set_opt_shard_group(allgather_group.name());
     MS_LOG(INFO) << "Parallel optimizer: create allgather group " << allgather_group.name();
@@ -643,14 +667,30 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
     if (temp_dev_matrix.GetDevicesAlongDim(0, &mirror_group_devices) != SUCCESS) {
       return FAILED;
     }
-    Group mirror_group = g_device_manager->CreateGroup(mirror_group_devices);
+    Group mirror_group;
+    if (g_device_manager->CreateGroup(mirror_group_devices, &mirror_group)) {
+      MS_LOG(ERROR) << "Operator " << name_
+                    << " create communication group for mirror in optimizer parallel failed,"
+                       " the rank_list is: "
+                    << group_devices << ", the input strategy is " << strategy_->GetInputDim()
+                    << ", the full_name of node is: " << cnode_->fullname_with_scope();
+      return FAILED;
+    }
     groups->push_back(mirror_group);
     tensor_layout->set_opt_shard_mirror_group(mirror_group.name());
     MS_LOG(INFO) << "Parallel optimizer: create mirror group " << mirror_group.name();
   } else {
     // fully use opt shard
     // create allgather group
-    Group allgather_group = g_device_manager->CreateGroup(group_devices);
+    Group allgather_group;
+    if (g_device_manager->CreateGroup(group_devices, &allgather_group) != SUCCESS) {
+      MS_LOG(ERROR) << "Operator " << name_
+                    << " create communication group for allgather in optimizer parallel failed,"
+                       " the rank_list is: "
+                    << group_devices << ", the input strategy is " << strategy_->GetInputDim()
+                    << ", the full_name of node is: " << cnode_->fullname_with_scope();
+      return FAILED;
+    }
     groups->push_back(allgather_group);
     tensor_layout->set_opt_shard_group(allgather_group.name());
     MS_LOG(INFO) << "Parallel optimizer: create allgather group " << allgather_group.name();
@@ -684,8 +724,23 @@ Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
     MS_LOG(INFO) << "The dev size is 1, no need to create group.";
     return SUCCESS;
   }
-
-  Group g = g_device_manager->CreateGroup(group_devices);
+  if (is_auto_parallel_) {
+    if (g_device_manager->CheckDeviceList(group_devices) != SUCCESS) {
+      MS_LOG(INFO) << "Try to create communication group : " << group_devices
+                   << " failed in auto parallel mode, "
+                      "this error can be ignored in parallel strategies searching step";
+      return FAILED;
+    }
+    return SUCCESS;
+  }
+  Group g;
+  if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
+    MS_LOG(ERROR) << "Operator " << name_
+                  << " create communication group by dim failed, the rank_list is: " << group_devices
+                  << ", the input strategy is " << strategy_->GetInputDim()
+                  << ", the full_name of node is: " << cnode_->fullname_with_scope();
+    return FAILED;
+  }
   group->push_back(g);
   return SUCCESS;
 }
@@ -774,7 +829,7 @@ Status OperatorInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out
 
 Status OperatorInfo::InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
   if (InitForCostModelWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Init for cost model failed.";
+    ReportError(name_ + " : Init for cost model failed.");
     return FAILED;
   }
 
@@ -844,7 +899,19 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
     MS_LOG(ERROR) << name_ << ": InferTensorInfo failed.";
     return FAILED;
   }
+  auto stage_dev_num = g_device_manager->stage_device_num();
+  if ((stage_dev_num & (stage_dev_num - 1)) == 0) {
+    return SUCCESS;
+  }
+  if (InferForwardCommunication() != SUCCESS) {
+    MS_LOG(WARNING) << name_ << ": InferForwardCommunication failed in auto parallel searching strategies step.";
+    return FAILED;
+  }
 
+  if (InferMirrorOps() != SUCCESS) {
+    MS_LOG(WARNING) << name_ << ": InferMirrorOps failed in auto parallel searching strategies step.";
+    return FAILED;
+  }
   return SUCCESS;
 }
 
@@ -1244,26 +1311,9 @@ Status GenerateStrategiesForBroadcastBoth(int64_t stage_id, const Shapes &inputs
   return SUCCESS;
 }
 
-// 'splittable_inputs' has the same dimensions as 'inputs_shape_'. '0' in 'splittable_inputs' means that
-// the corresponding dimension is unsplittable, '1' in 'splittable_inputs' means that the corresponding
-// dimension is splittable. 'inputs_partitions' is the result of partitions.
-// NOTE: This implementation would partition all splittable dimensions in all inputs. Some operators requiring
-// specific dimensions in inputs have the identical partition should have individual implementation.
-Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &inputs_shape,
-                                              const Shapes &splittable_inputs,
-                                              std::vector<StrategyPtr> *const sp_vector) {
-  if (sp_vector == nullptr) {
-    MS_LOG(ERROR) << "The sp_vector is null.";
-    return FAILED;
-  }
-  if (splittable_inputs.size() != inputs_shape.size()) {
-    MS_LOG(ERROR) << "Splittable_inputs do not have the same input number of inputs shape, " << splittable_inputs.size()
-                  << " : " << inputs_shape.size();
-    return FAILED;
-  }
-  CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
-
+Status GenerateStrategiesForIndependentInputsBase(int64_t stage_id, size_t dev_num, const Shapes &inputs_shape,
+                                                  const Shapes &splittable_inputs,
+                                                  std::vector<StrategyPtr> *const sp_vector) {
   Shape combined_inputs_shape, combined_splittable_inputs, combined_partitions;
   for (size_t j = 0; j < inputs_shape.size(); ++j) {
     (void)combined_inputs_shape.insert(combined_inputs_shape.end(), inputs_shape[j].begin(), inputs_shape[j].end());
@@ -1310,6 +1360,57 @@ Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &in
   recursive(0, dev_num);
   if (sp_vector->empty()) {
     MS_LOG(EXCEPTION) << "No available strategy for current OperatorInfo.";
+  }
+  return SUCCESS;
+}
+
+// 'splittable_inputs' has the same dimensions as 'inputs_shape_'. '0' in 'splittable_inputs' means that
+// the corresponding dimension is unsplittable, '1' in 'splittable_inputs' means that the corresponding
+// dimension is splittable. 'inputs_partitions' is the result of partitions.
+// NOTE: This implementation would partition all splittable dimensions in all inputs. Some operators requiring
+// specific dimensions in inputs have the identical partition should have individual implementation.
+Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &inputs_shape,
+                                              const Shapes &splittable_inputs,
+                                              std::vector<StrategyPtr> *const sp_vector) {
+  if (sp_vector == nullptr) {
+    MS_LOG(ERROR) << "The sp_vector is null.";
+    return FAILED;
+  }
+  if (splittable_inputs.size() != inputs_shape.size()) {
+    MS_LOG(ERROR) << "Splittable_inputs do not have the same input number of inputs shape, " << splittable_inputs.size()
+                  << " : " << inputs_shape.size();
+    return FAILED;
+  }
+  CheckGlobalDeviceManager();
+  size_t dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+  auto dev_num_2_power = (dev_num & (dev_num - 1));
+  if (dev_num_2_power == 0) {
+    return GenerateStrategiesForIndependentInputsBase(stage_id, dev_num, inputs_shape, splittable_inputs, sp_vector);
+  }
+  auto dev_num_not_2_power = dev_num / (dev_num - dev_num_2_power);
+  std::vector<StrategyPtr> sp_vector_2_power_part;
+  if (GenerateStrategiesForIndependentInputsBase(stage_id, dev_num - dev_num_2_power, inputs_shape, splittable_inputs,
+                                                 &sp_vector_2_power_part) != SUCCESS) {
+    MS_LOG(ERROR) << "Generate strategy in the power of 2 devices part failed.";
+    return FAILED;
+  }
+  // Handle the not power of 2 part.
+  for (auto &stra : sp_vector_2_power_part) {
+    auto stra_arrays = stra->GetInputDim();
+    size_t stras_size = stra_arrays.size();
+    for (size_t i = 0; i < stras_size; ++i) {
+      auto split_input = splittable_inputs[i];
+      size_t stra_size = stra_arrays[i].size();
+      for (size_t j = 0; j < stra_size; ++j) {
+        if (split_input[j] == 0) {
+          continue;
+        }
+        auto new_stra_arrays{stra_arrays};
+        new_stra_arrays[i][j] = new_stra_arrays[i][j] * dev_num_not_2_power;
+        StrategyPtr new_stra = std::make_shared<Strategy>(stage_id, new_stra_arrays);
+        sp_vector->push_back(new_stra);
+      }
+    }
   }
   return SUCCESS;
 }

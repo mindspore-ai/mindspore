@@ -262,7 +262,7 @@ Status MatMulBase::InferForwardCommunication() {
 
   std::vector<Group> group_list;
   if (CreateGroupByDim(relevant_dimension_index, &group_list) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Infer forward communication, create group failed.";
+    ReportError(name_ + " : Infer forward communication, create group failed.");
     return FAILED;
   } else if (group_list.empty()) {
     MS_LOG(INFO) << name_ << " : Forward all reduce is not required.";
@@ -405,6 +405,92 @@ Status MatMulBase::SwapLastTwoElements(mindspore::parallel::Shape *const input) 
   return SUCCESS;
 }
 
+Status MatMulBase::GenerateStrategiesBase(int64_t stage_id, size_t dev_num, const Shape &input0_shape,
+                                          Shape input1_shape, std::vector<StrategyPtr> *const sp_vector) {
+  // The shape of input0 (input1)
+  // E.g., input0 = [100, 200, 300], input1 = [300, 400]
+
+  // Combining the input0_shape and input1_shape
+  // E.g., combined_shape = [100, 200, 300, 400]
+  size_t input1_shape_size = input1_shape.size(), input0_shape_size = input0_shape.size();
+  Dimensions combined_partitions;
+  Shape combined_shape;
+  // In SwapLastTwoElements(), it is guaranteed that input0_shape.size() and input1_shape.size() are both larger than 2
+  if (input0_shape.size() >= input1_shape.size()) {
+    combined_shape = input0_shape;
+    combined_shape.push_back(input1_shape[input1_shape.size() - 1]);
+  } else {
+    combined_shape = input1_shape;
+    combined_shape.push_back(input0_shape[input0_shape.size() - 2]);
+  }
+  std::function<void(uint64_t, size_t)> recursive = [&stage_id, &dev_num, &sp_vector, &combined_partitions,
+                                                     &combined_shape, &input1_shape_size, &recursive,
+                                                     &input0_shape_size, this](uint64_t current_index, size_t n) {
+    // Finishing the recursive steps, if the strategy is valid, then calculate the cost
+    // for this operator under the strategy.
+    if (current_index == combined_shape.size()) {
+      StrategyPtr sp;
+      if (this->PrepareStrategy(stage_id, dev_num, combined_partitions, input0_shape_size, input1_shape_size, &sp) ==
+          FAILED) {
+        return;
+      }
+      sp_vector->push_back(sp);
+    } else {
+      MS_LOG(DEBUG) << name_ << " : The value input0_shape_size: " << input0_shape_size
+                    << ", input1_shape_size: " << input1_shape_size;
+      for (uint64_t i = 1; i <= n; i *= 2) {
+        if (n % i == 0 && LongToSize(combined_shape[current_index]) % i == 0) {
+          combined_partitions.push_back(i);
+          recursive(current_index + 1, n / i);
+          combined_partitions.pop_back();
+        }
+      }
+    }
+  };
+  recursive(0, dev_num);
+  if (sp_vector->empty()) {
+    MS_LOG(EXCEPTION) << name_ << " : No available strategy.";
+  }
+  return Status::SUCCESS;
+}
+
+Status MatMulBase::GenerateStrategiesNotPower2(int64_t stage_id, size_t dev_num_not_2_power,
+                                               const std::vector<StrategyPtr> &sp_vector_2_power_part) {
+  std::vector<StrategyPtr> sp_vector;
+  size_t related_dim_left = transpose_a_ ? inputs_shape_[0].size() - 2 : inputs_shape_[0].size() - 1;
+  size_t related_dim_right = transpose_b_ ? inputs_shape_[1].size() - 1 : inputs_shape_[1].size() - 2;
+  // Handle the not power of 2 part.
+  for (auto &stra : sp_vector_2_power_part) {
+    auto stra_arrays = stra->GetInputDim();
+    if (stra_arrays.size() != 2) {
+      MS_LOG(ERROR) << "The generated strategy of matmul dose not match two input, the strategy is: " << stra_arrays;
+    }
+    for (size_t i = 0; i < 2; ++i) {
+      size_t stra_size = stra_arrays[i].size();
+      for (size_t j = 0; j < stra_size; ++j) {
+        if (i == 1 && j == related_dim_right) {
+          continue;
+        }
+        auto new_stra_arrays{stra_arrays};
+        new_stra_arrays[i][j] = new_stra_arrays[i][j] * dev_num_not_2_power;
+        if (i == 0 && j == related_dim_left) {
+          new_stra_arrays[1][related_dim_right] = new_stra_arrays[1][related_dim_right] * dev_num_not_2_power;
+        }
+        StrategyPtr new_stra = std::make_shared<Strategy>(stage_id, new_stra_arrays);
+        sp_vector.push_back(new_stra);
+      }
+    }
+  }
+  strategy_cost_.clear();
+  for (auto &sp : sp_vector) {
+    if (SetCostUnderStrategy(sp) == FAILED) {
+      MS_LOG(WARNING) << name_ << " : Calculating cost for strategy failed.";
+      continue;
+    }
+  }
+  return SUCCESS;
+}
+
 Status MatMulBase::GenerateStrategies(int64_t stage_id) {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : GetAttrs failed.";
@@ -424,54 +510,28 @@ Status MatMulBase::GenerateStrategies(int64_t stage_id) {
       MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
     }
   }
-  // The shape of input0 (input1)
-  // E.g., input0 = [100, 200, 300], input1 = [300, 400]
-
-  // Combining the input0_shape and input1_shape
-  // E.g., combined_shape = [100, 200, 300, 400]
-  size_t input1_shape_size = input1_shape.size(), input0_shape_size = input0_shape.size();
-  Dimensions combined_partitions;
-  Shape combined_shape;
-  // In SwapLastTwoElements(), it is guaranteed that input0_shape.size() and input1_shape.size() are both larger than 2
-  if (input0_shape.size() >= input1_shape.size()) {
-    combined_shape = input0_shape;
-    combined_shape.push_back(input1_shape[input1_shape.size() - 1]);
-  } else {
-    combined_shape = input1_shape;
-    combined_shape.push_back(input0_shape[input0_shape.size() - 2]);
-  }
-  std::function<void(uint64_t, size_t)> recursive = [&stage_id, &dev_num, &combined_partitions, &combined_shape,
-                                                     &input1_shape_size, &recursive, &input0_shape_size,
-                                                     this](uint64_t current_index, size_t n) {
-    // Finishing the recursive steps, if the strategy is valid, then calculate the cost
-    // for this operator under the strategy.
-    if (current_index == combined_shape.size()) {
-      StrategyPtr sp;
-      if (this->PrepareStrategy(stage_id, dev_num, combined_partitions, input0_shape_size, input1_shape_size, &sp) ==
-          FAILED) {
-        return;
-      }
-      if (this->SetCostUnderStrategy(sp) == FAILED) {
+  auto dev_num_2_power = (dev_num & (dev_num - 1));
+  std::vector<StrategyPtr> sp_vector_2_power_part;
+  if (dev_num_2_power == 0) {
+    if (GenerateStrategiesBase(stage_id, dev_num, input0_shape, input1_shape, &sp_vector_2_power_part) != SUCCESS) {
+      return FAILED;
+    }
+    strategy_cost_.clear();
+    for (auto &sp : sp_vector_2_power_part) {
+      if (SetCostUnderStrategy(sp) == FAILED) {
         MS_LOG(WARNING) << name_ << " : Calculating cost for strategy failed.";
-        return;
-      }
-    } else {
-      MS_LOG(DEBUG) << name_ << " : The value input0_shape_size: " << input0_shape_size
-                    << ", input1_shape_size: " << input1_shape_size;
-      for (uint64_t i = 1; i <= n; i *= 2) {
-        if (n % i == 0 && LongToSize(combined_shape[current_index]) % i == 0) {
-          combined_partitions.push_back(i);
-          recursive(current_index + 1, n / i);
-          combined_partitions.pop_back();
-        }
+        continue;
       }
     }
-  };
-  recursive(0, dev_num);
-  if (strategy_cost_.empty()) {
-    MS_LOG(EXCEPTION) << name_ << " : No available strategy.";
+    return SUCCESS;
   }
-  return Status::SUCCESS;
+  auto dev_num_not_2_power = dev_num / (dev_num - dev_num_2_power);
+  if (GenerateStrategiesBase(stage_id, dev_num - dev_num_2_power, input0_shape, input1_shape,
+                             &sp_vector_2_power_part) != SUCCESS) {
+    MS_LOG(ERROR) << "Generating strategy in power of 2 devices failed.";
+    return FAILED;
+  }
+  return GenerateStrategiesNotPower2(stage_id, dev_num_not_2_power, sp_vector_2_power_part);
 }
 
 std::vector<StrategyPtr> MatMulBase::GenerateOpStrategies(int64_t) {
@@ -601,7 +661,7 @@ std::shared_ptr<Strategys> BatchMatMulInfo::GenerateBatchStrategies() {
 
 Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (InitForCostModel(strategy, nullptr) == FAILED) {
-    MS_LOG(ERROR) << name_ << " : Initialization under the strategy failed.";
+    MS_LOG(INFO) << name_ << " : Initialization under the strategy failed.";
     return FAILED;
   }
   PrintStrategy(strategy);

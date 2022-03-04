@@ -41,7 +41,7 @@ Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, cons
   operator_vector_.clear();
   output_info_vector_.clear();
 
-  if (constructor_.Init(dev_list_, dev_mat_.array()) != Status::SUCCESS) {
+  if (constructor_.Init(dev_list_, dev_mat_.array(), is_cost_model) != Status::SUCCESS) {
     MS_LOG(ERROR) << "Init constructor failed";
     return Status::FAILED;
   }

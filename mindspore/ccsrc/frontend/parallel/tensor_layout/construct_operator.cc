@@ -22,10 +22,11 @@
 
 namespace mindspore {
 namespace parallel {
-Status ConstructOperator::Init(const RankList &dev_list, const Shape &dev_matrix_shape) {
+Status ConstructOperator::Init(const RankList &dev_list, const Shape &dev_matrix_shape, bool is_cost_model) {
   dev_size_ = dev_matrix_shape.size();
   dev_matrix_shape_ = dev_matrix_shape;
   dev_list_ = dev_list;
+  is_cost_model_ = is_cost_model;
   return Status::SUCCESS;
 }
 
@@ -260,8 +261,14 @@ Status ConstructOperator::CreateGroupByDim(size_t axis, std::vector<Group> *grou
     MS_LOG(INFO) << "the group is empty";
     return SUCCESS;
   }
-
-  Group g = g_device_manager->CreateGroup(group_devices);
+  if (is_cost_model_) {
+    return g_device_manager->CheckDeviceList(group_devices);
+  }
+  Group g;
+  if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
+    MS_LOG(ERROR) << "Create communication group in redistribution failed, the rank_list is: " << group_devices;
+    return FAILED;
+  }
   group->push_back(g);
   return SUCCESS;
 }

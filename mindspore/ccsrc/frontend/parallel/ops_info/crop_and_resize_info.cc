@@ -121,7 +121,10 @@ Status CropAndResizeInfo::InferGroup() {
   }
 
   MS_LOG(INFO) << name_ << ": The group rank is " << group_devices;
-  group_ = g_device_manager->CreateGroup(group_devices);
+  if (g_device_manager->CreateGroup(group_devices, &group_) != SUCCESS) {
+    MS_LOG(ERROR) << "The node " << cnode_->fullname_with_scope() << " create sync allreduce failed";
+    return FAILED;
+  }
   return SUCCESS;
 }
 
