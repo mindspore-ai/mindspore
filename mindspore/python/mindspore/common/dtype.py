@@ -17,6 +17,7 @@
 """Data type for MindSpore."""
 
 import numpy as np
+from mindspore import log as logger
 from .._c_expression import typing
 from .._c_expression.typing import Type
 
@@ -292,6 +293,7 @@ def issubclass_(type_, dtype):
     Returns:
         bool, True or False.
     """
+    logger.warning("'issubclass_' will be deprecated and removed in a future version.")
     if not isinstance(type_, typing.Type):
         return False
     return typing.is_subclass(type_, dtype)
