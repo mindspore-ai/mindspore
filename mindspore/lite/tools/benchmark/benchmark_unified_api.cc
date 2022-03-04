@@ -51,7 +51,9 @@ constexpr int kFrequencyDefault = 3;
 constexpr int kPercentageDivisor = 100;
 constexpr int kDumpInputsAndOutputs = 0;
 constexpr int kDumpOutputs = 2;
-
+#ifdef SERVER_INFERENCE
+constexpr int kMaxRequestNum = 200;
+#endif
 namespace lite {
 #ifdef ENABLE_OPENGL_TEXTURE
 int BenchmarkUnifiedApi::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture) {
@@ -948,6 +950,12 @@ int BenchmarkUnifiedApi::PrintInputData() {
 }
 #ifdef SERVER_INFERENCE
 int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> context) {
+  if (flags_->warm_up_loop_count_ > kMaxRequestNum) {
+    MS_LOG(WARNING) << "in parallel predict warm up loop count should less than" << kMaxRequestNum;
+  }
+  if (flags_->parallel_request_num_ > kMaxRequestNum) {
+    MS_LOG(WARNING) << "parallel request num should less than" << kMaxRequestNum;
+  }
   if (flags_->resize_dims_.empty()) {
     MS_LOG(ERROR) << "use parallel predict, inputShapes can not use empty.";
     return RET_ERROR;
