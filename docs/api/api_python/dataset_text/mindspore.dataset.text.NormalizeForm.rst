@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.dataset.text.NormalizeForm
 
-    :class:`NormalizeUTF8` 的枚举值。
+    :class:`mindspore.dataset.text.transforms.NormalizeUTF8` 的枚举值。
 
     可选的枚举值包括： `NormalizeForm.NONE` 、 `NormalizeForm.NFC` 、 `NormalizeForm.NFKC` 、 `NormalizeForm.NFD` 和 `NormalizeForm.NFKD` 。
 

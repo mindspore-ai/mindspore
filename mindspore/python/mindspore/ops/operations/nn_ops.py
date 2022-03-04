@@ -1929,7 +1929,7 @@ class AvgPool(_Pool):
 
 class Conv2DBackpropInput(Primitive):
     r"""
-    The Conv2DBackpropInput interface is deprecated, please refer to :class:`mindspore.ops.Conv2dTranspose` if you
+    The Conv2DBackpropInput interface is deprecated, please refer to :class:`mindspore.ops.Conv2DTranspose` if you
     want to do unsampling.
 
     Supported Platforms:

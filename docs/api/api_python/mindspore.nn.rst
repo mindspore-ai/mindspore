@@ -285,7 +285,7 @@ Wrapper
 评估指标
 --------
 
-.. mscnautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
