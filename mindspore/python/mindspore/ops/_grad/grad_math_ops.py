@@ -65,6 +65,18 @@ def binop_grad_common(x, y, dx, dy, shift=0):
 
     The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
     """
+
+    def reduce_sum_with_cast(dx, axis):
+        dx_origin_dtype = dx.dtype
+        # Currently, for Ascend and GPU, the reduce_sum's input does not support int16, int32 and int64.
+        if dx_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
+            dx = F.cast(dx, mstype.float32)
+            dx = reduce_sum(dx, axis)
+            dx = F.cast(dx, dx_origin_dtype)
+        else:
+            dx = reduce_sum(dx, axis)
+        return dx
+
     shape_of_x = shape_op(x)
     shape_of_y = shape_op(y)
     broadcast_shape_of_x = shape_of_x
@@ -80,27 +92,20 @@ def binop_grad_common(x, y, dx, dy, shift=0):
         if rx[0]:
             # if dx is scalar whose shape is (), do not need reduce
             if shape_op(dx):
-                dx_origin_dtype = dx.dtype
-                # Currently, for Ascend and GPU, the reduce_sum's input does not support int16, int32 and int64.
-                if dx_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
-                    dx = F.cast(dx, mstype.float32)
-                    dx = reduce_sum(dx, rx[0])
-                    dx = F.cast(dx, dx_origin_dtype)
-                else:
-                    dx = reduce_sum(dx, rx[0])
+                dx = reduce_sum_with_cast(dx, rx[0])
             reduce_dx = reshape(dx, shape_of_x)
         if rx[1]:
             # if dy is scalar whose shape is (), do not need reduce
             if shape_op(dy):
-                dy = reduce_sum(dy, rx[1])
+                dy = reduce_sum_with_cast(dy, rx[1])
             reduce_dy = reshape(dy, shape_of_y)
         return reduce_dx, reduce_dy
     if not shape_of_x or not shape_of_y:
         # x or y is scalar
         if not shape_of_x:
-            reduce_dx = reduce_sum(dx, ())
+            reduce_dx = reduce_sum_with_cast(dx, ())
         if not shape_of_y:
-            reduce_dy = reduce_sum(dy, ())
+            reduce_dy = reduce_sum_with_cast(dy, ())
         return reduce_dx, reduce_dy
 
     return dyn_binop_grad_common(x, y, dx, dy)
@@ -121,7 +126,7 @@ def _dyn_reduced_shape(input_shape, axis):
         elif not axis:
             axis = range(input_rank)
         for i in axis:
-            real_axis += ((i + input_rank)%input_rank,)
+            real_axis += ((i + input_rank) % input_rank,)
         axis_shape = (len(real_axis),)
     return DynamicStitch()([to_array(range(input_rank)), to_array(axis)],
                            [input_shape, P.Fill()(ms.int32, axis_shape, 1)])
@@ -616,6 +621,7 @@ def get_bprop_erfc(self):
         x_square = square(x)
         dx = dout * (neg(half_root_pi) * exp(neg(x_square)))
         return (dx,)
+
     return bprop
 
 
@@ -655,6 +661,7 @@ def get_bprop_einsum(self):
     def bprop(x, out, dout):
         dx = grad_func(x, dout)
         return (dx,)
+
     return bprop
 
 
@@ -1086,6 +1093,7 @@ def get_bprop_asin(self):
     def bprop(x, out, dout):
         dx = input_grad(x, dout)
         return (dx,)
+
     return bprop
 
 
@@ -1099,6 +1107,7 @@ def get_bprop_asin_grad(self):
         d2x = dout * grad * x * p_pow((1 - x * x), - 1.5)
         ddy = input_grad(x, dout)
         return (d2x, ddy)
+
     return bprop
 
 
@@ -1110,6 +1119,7 @@ def get_bprop_asinh(self):
     def bprop(x, out, dout):
         dx = input_grad(out, dout)
         return (dx,)
+
     return bprop
 
 
@@ -1123,6 +1133,7 @@ def get_bprop_asinh_grad(self):
         dy = dout * out * -1.0 * tanh(y)
         dgrad = input_grad(y, dout)
         return dy, dgrad
+
     return bprop
 
 
@@ -1175,7 +1186,6 @@ def get_bprop_acos_grad(self):
         return (d2x, ddy)
 
     return bprop
-
 
 
 @bprop_getters.register(P.Acosh)
@@ -1259,7 +1269,7 @@ def get_bprop_imag(self):
 
     def bprop(x, out, dout):
         zeros = zeros_like(dout)
-        return (complex_op(zeros, zeros-1) * dout,)
+        return (complex_op(zeros, zeros - 1) * dout,)
 
     return bprop
 
@@ -1350,6 +1360,7 @@ def get_bprop_bessel_i0e(self):
     def bprop(x, out, dout):
         dx = dout * (bessel_i1e(x) - sign(x) * out)
         return (dx,)
+
     return bprop
 
 
@@ -1361,6 +1372,7 @@ def get_bprop_atan(self):
     def bprop(x, out, dout):
         dx = input_grad(x, dout)
         return (dx,)
+
     return bprop
 
 
@@ -1373,6 +1385,7 @@ def get_bprop_atan_grad(self):
         dgrad = input_grad(x, dout)
         dx = out * dgrad * -2.0 * x
         return dx, dgrad
+
     return bprop
 
 
@@ -1414,6 +1427,7 @@ def get_bprop_bessel_i1e(self):
         tmp = bessel_i0e(x_safe) - out * (sign(x_safe) + reciprocal(x_safe))
         dx = select(x_is_valid, tmp, cast(0.5, dtype(x)) + zeros) * dout
         return (dx,)
+
     return bprop
 
 
@@ -1427,6 +1441,7 @@ def get_bprop_atanh(self):
         tmp = 1 - power(x, 2)
         dx = div(1, tmp) * dout
         return (dx,)
+
     return bprop
 
 
@@ -1438,6 +1453,7 @@ def get_bprop_inv(self):
     def bprop(x, out, dout):
         dx = inv_grad(out, dout)
         return (dx,)
+
     return bprop
 
 

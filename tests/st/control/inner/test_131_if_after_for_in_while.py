@@ -21,8 +21,11 @@ from mindspore.common.parameter import Parameter
 
 grad_all = C.GradOperation(get_all=True)
 
-
-@pytest.mark.skip(reason="not supported for in while")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_if_after_for_in_while():
     class IfAfterForInWhileNet(nn.Cell):
         def __init__(self):
@@ -35,7 +38,7 @@ def test_if_after_for_in_while():
             while self.param_a > self.param_b:
                 self.param_b += 1
                 for _ in range(4):
-                    self.param_a += 3
+                    self.param_a -= 3
             self.param_a -= 40
             if x > self.param_a:
                 out += self.param_a * 10
@@ -60,14 +63,7 @@ def test_if_after_for_in_while():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    if_after_for_in_while_net = IfAfterForInWhileNet()
-    net = GradNet(if_after_for_in_while_net)
-
-    forward_net = IfAfterForInWhileNet()
-    pynative_forward_res = forward_net(x)
-    pynative_backward_res = net(x)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
+    expect_forward_res = Tensor([-463], mstype.int32)
+    expect_backward_res = (Tensor([1], mstype.int32),)
+    assert graph_forward_res == expect_forward_res
+    assert graph_backward_res == expect_backward_res

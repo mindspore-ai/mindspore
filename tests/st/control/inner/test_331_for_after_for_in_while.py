@@ -23,8 +23,11 @@ from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
 
-
-@pytest.mark.skip(reason="not supported for in while")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_for_after_for_in_while_01():
     class ForAfterForInWhileNet(nn.Cell):
         def __init__(self):
@@ -46,7 +49,7 @@ def test_for_after_for_in_while_01():
         def construct(self, x, y):
             while self.param_c > x:
                 self.param_b = self.add(self.param_c, self.param_b)
-                for _ in range(0, 20):
+                for _ in range(0, 5):
                     self.param_b = self.param_a + 2
                 self.param_c = self.param_c - 1
                 x = x + 2
@@ -81,20 +84,14 @@ def test_for_after_for_in_while_01():
     graph_forward_res = forward_net(x, y)
     graph_backward_res = net(x, y)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    for_after_for_in_while_net = ForAfterForInWhileNet()
-    net = GradNet(for_after_for_in_while_net)
+    assert graph_forward_res == Tensor([1], mstype.int32)
+    assert graph_backward_res == (Tensor([0], mstype.int32), Tensor([0], mstype.int32))
 
-    forward_net = ForAfterForInWhileNet()
-    pynative_forward_res = forward_net(x, y)
-    pynative_backward_res = net(x, y)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
-
-
-@pytest.mark.skip(reason="not supported for in while")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_for_after_for_in_while_02():
     class ForAfterForInWhileNet(nn.Cell):
         def __init__(self):
@@ -110,7 +107,7 @@ def test_for_after_for_in_while_02():
         def construct(self, x, y):
             while self.param_c > x:
                 self.param_b = self.add(self.param_c, self.param_b)
-                for _ in range(0, 20):
+                for _ in range(0, 5):
                     self.assign(self.param_b, self.param_a + 2)
                 self.assign(self.param_c, self.param_c - 1)
                 x = x + 2
@@ -139,14 +136,5 @@ def test_for_after_for_in_while_02():
     graph_forward_res = forward_net(x, y)
     graph_backward_res = net(x, y)
 
-    # pynative mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    for_after_for_in_while_net = ForAfterForInWhileNet()
-    net = GradNet(for_after_for_in_while_net)
-
-    forward_net = ForAfterForInWhileNet()
-    pynative_forward_res = forward_net(x, y)
-    pynative_backward_res = net(x, y)
-
-    assert graph_forward_res == pynative_forward_res
-    assert graph_backward_res == pynative_backward_res
+    assert graph_forward_res == Tensor([-13], mstype.int32)
+    assert graph_backward_res == (Tensor([-1], mstype.int32), Tensor([-1], mstype.int32))

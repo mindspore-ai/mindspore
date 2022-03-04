@@ -49,27 +49,35 @@ class BackwardNet(nn.Cell):
     def __init__(self, net):
         super(BackwardNet, self).__init__(auto_prefix=False)
         self.forward_net = net
-        self.grad = C.GradOperation()
+        self.grad = C.GradOperation(get_all=True)
 
     def construct(self, *inputs):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
-
-@pytest.mark.skip(reason="not supported for in while")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
     forward_net = ForwardNet(max_cycles=3)
     out = forward_net(x, y)
-    print("forward out:", out)
+    expect_forward_res = Tensor([36], mstype.int32)
+    assert out == expect_forward_res
 
-
-@pytest.mark.skip(reason="not supported for in while")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
     forward_net = ForwardNet(max_cycles=3)
     backward_net = BackwardNet(forward_net)
     grads = backward_net(x, y)
-    print("grads:", grads)
+    expect_backward_res = (Tensor([36], mstype.int32), Tensor([12], mstype.int32))
+    assert grads == expect_backward_res
