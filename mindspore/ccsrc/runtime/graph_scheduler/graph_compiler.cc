@@ -469,11 +469,12 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Execute optimization pass.
   device_context->OptimizeGraph(graph);
 
-  AddOutInRefToGraph(graph);
-
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   device_context->CreateKernel(graph->execution_order());
+
+  // Read the output and input ref map and set to the kernel graph.
+  AddOutInRefToGraph(graph);
 
 #ifndef ENABLE_SECURITY
   session_->SetSummaryNodes(graph.get());
@@ -602,7 +603,10 @@ void GraphCompiler::AddOutInRefToGraph(const KernelGraphPtr &graph) const {
       MS_LOG(INFO) << "The reference relation output " << final_pair.first->fullname_with_scope()
                    << ", output index: " << final_pair.second << " to input "
                    << origin_pair.first->fullname_with_scope() << ", output index: " << origin_pair.second;
-      graph->AddRefCorrespondPairs(final_pair, origin_pair);
+      // Add to graph only if the input is not a monad.
+      if (!HasAbstractUMonad(origin_pair.first) && !HasAbstractIOMonad(origin_pair.first)) {
+        graph->AddRefCorrespondPairs(final_pair, origin_pair);
+      }
     }
   }
 }
