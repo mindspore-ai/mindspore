@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,30 @@ using mindspore::schema::ActivationType_SWISH;
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
+namespace {
+const std::map<int, float> dt_activation_cost_map_ = {
+  {schema::ActivationType_RELU, 1.806f},
+  {schema::ActivationType_RELU6, 1.806f},
+  {schema::ActivationType_LEAKY_RELU, 1.806f},
+  // {schema::ActivationType_SIGMOID, 10.0f}, {schema::ActivationType_TANH, 10.0f},
+  // {schema::ActivationType_SWISH, 1.0f}, {schema::ActivationType_HSWISH, 1.0f},
+  // {schema::ActivationType_HSIGMOID, 1.0f}, {schema::ActivationType_HARD_TANH, 1.0f},
+  // {schema::ActivationType_GELU, 1.0f}, {schema::ActivationType_SOFTPLUS, 1.0f},   {schema::ActivationType_ELU, 1.0f},
+};
+}  // namespace
+
+#ifdef SERVER_INFERENCE
+int ActivationCPUKernel::SetDtCostContext() {
+  if (dt_activation_cost_map_.count(type_) > 0) {
+    dt_cost_context_ = std::make_unique<DtCostContext>();
+    dt_cost_context_->bytes_loaded_ = 1;
+    dt_cost_context_->bytes_stored_ = 1;
+    dt_cost_context_->compute_cost_ = dt_activation_cost_map_.at(type_);
+  }
+  return RET_OK;
+}
+#endif
+
 int ActivationCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
@@ -55,6 +79,11 @@ int ActivationCPUKernel::Prepare() {
       return RET_ERROR;
     }
   }
+#ifdef SERVER_INFERENCE
+  if (SetDtCostContext() != RET_OK) {
+    return RET_ERROR;
+  }
+#endif
   return RET_OK;
 }
 
@@ -163,6 +192,12 @@ int ActivationRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ActivationCPUKernel::Run() {
+#ifdef SERVER_INFERENCE
+  if (dt_cost_context_ != nullptr) {
+    dt_cost_context_->total_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_count_ = UpdateThreadNum(this->ms_context_, dt_cost_context_.get(), thread_count_);
+  }
+#endif
   int error_code = ParallelLaunch(this->ms_context_, ActivationRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";

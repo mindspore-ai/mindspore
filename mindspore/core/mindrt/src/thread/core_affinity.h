@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ class CoreAffinity {
   int BindProcess(BindMode bind_mode);
   std::vector<int> GetCoreId(size_t thread_num, BindMode bind_mode);
   void SetCoreId(const std::vector<int> &core_list);
+  static float GetServerFrequency();
 
  private:
 #ifdef _WIN32

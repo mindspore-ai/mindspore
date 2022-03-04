@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,6 +149,7 @@ class MS_CORE_API ThreadPool {
   void ActiveWorkers() const;
   void SetWorkerIdMap();
   const std::unordered_map<std::thread::id, size_t> &GetWorkerIdMap() const { return worker_ids_; }
+  float GetServerCpuFrequence() const { return server_cpu_frequence; }
 
  protected:
   ThreadPool() = default;
@@ -174,6 +175,7 @@ class MS_CORE_API ThreadPool {
   bool occupied_actor_thread_{true};
   int max_spin_count_{kDefaultSpinCount};
   int min_spin_count_{kMinSpinCount};
+  float server_cpu_frequence = -1.0f;  // Unit : GHz
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_

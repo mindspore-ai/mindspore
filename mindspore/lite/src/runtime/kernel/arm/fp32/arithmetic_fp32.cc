@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,61 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
+namespace {
+const std::map<std::pair<int, int>, float> dt_arithmetic_cost_map_ = {
+  // {{PrimitiveType_MulFusion, schema::ActivationType_RELU}, 1.0f},
+  // {{PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 1.0f},
+  // {{PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+
+  {{PrimitiveType_AddFusion, schema::ActivationType_RELU}, 1.806f},
+  {{PrimitiveType_AddFusion, schema::ActivationType_RELU6}, 1.806f},
+  {{PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},
+
+  {{PrimitiveType_SubFusion, schema::ActivationType_RELU}, 1.806f},
+  {{PrimitiveType_SubFusion, schema::ActivationType_RELU6}, 1.806f},
+  {{PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},
+
+  // {{PrimitiveType_DivFusion, schema::ActivationType_RELU}, 1.0f},
+  // {{PrimitiveType_DivFusion, schema::ActivationType_RELU6}, 1.0f},
+  // {{PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+
+  // {{PrimitiveType_RealDiv, schema::ActivationType_RELU}, 1.0f},
+  // {{PrimitiveType_RealDiv, schema::ActivationType_RELU6}, 1.0f},
+  // {{PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+
+  // {{PrimitiveType_LogicalAnd, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_LogicalOr, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_Maximum, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_Minimum, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_FloorMod, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_FloorDiv, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_Mod, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_SquaredDifference, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+};
+}  // namespace
+
+#ifdef SERVER_INFERENCE
+int ArithmeticCPUKernel::SetDtCostContext() {
+  std::pair<int, int> fusion_type = std::make_pair(param_->op_parameter_.type_, param_->activation_type_);
+  if (dt_arithmetic_cost_map_.count(fusion_type) > 0) {
+    dt_cost_context_ = std::make_unique<DtCostContext>();
+    dt_cost_context_->bytes_loaded_ = 1;
+    dt_cost_context_->bytes_stored_ = 1;
+    dt_cost_context_->compute_cost_ = dt_arithmetic_cost_map_.at(fusion_type);
+  }
+  return RET_OK;
+}
+#endif
+
 int ArithmeticCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto primitive_type = param_->op_parameter_.type_;
+#ifdef SERVER_INFERENCE
+  if (SetDtCostContext() != RET_OK) {
+    return RET_ERROR;
+  }
+#endif
   if (primitive_type == schema::PrimitiveType_Eltwise) {
     switch (param_->eltwise_mode_) {
       case schema::EltwiseMode_PROD:
@@ -437,9 +488,17 @@ int ArithmeticCPUKernel::Run() {
   }
   output_ptr_ = out_tensors_[0]->data();
   CHECK_NULL_RETURN(output_ptr_);
+
   batch_a_ptr_ = static_cast<uint8_t *>(input0_ptr_);
   batch_b_ptr_ = static_cast<uint8_t *>(input1_ptr_);
   batch_c_ptr_ = static_cast<uint8_t *>(output_ptr_);
+
+#ifdef SERVER_INFERENCE
+  if (dt_cost_context_ != nullptr) {
+    dt_cost_context_->total_num_ = in_tensors_.at(0)->ElementsNum();
+    op_parameter_->thread_num_ = UpdateThreadNum(this->ms_context_, dt_cost_context_.get(), op_parameter_->thread_num_);
+  }
+#endif
   auto ret = ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "arithmetic failed";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,36 @@ struct TYPE_FUNC_INFO {
   int primitive_type_ = 0;
   ArithmeticSelfFunc func_ = nullptr;
 };
+
+const std::map<int, float> dt_arithmetic_self_cost_map_ = {
+  // {schema::PrimitiveType_Abs, 0.5f},
+  // {schema::PrimitiveType_Cos, 1.0f},
+  // {schema::PrimitiveType_Log, 1.0f},
+  // {schema::PrimitiveType_Square, 10.0f},
+  {schema::PrimitiveType_Sqrt, 1.806f},
+  // {schema::PrimitiveType_Rsqrt, 1.0f},
+  // {schema::PrimitiveType_Sin, 1.0f},
+  // {schema::PrimitiveType_LogicalNot, 1.0f},
+  // {schema::PrimitiveType_Floor, 1.0f},
+  // {schema::PrimitiveType_Ceil, 1.0f},
+  // {schema::PrimitiveType_Round, 1.0f},
+  // {schema::PrimitiveType_Neg, 1.0f},
+  // {schema::PrimitiveType_Reciprocal, 1.0f},
+  // {schema::PrimitiveType_Erf, 1.0f},
+};
 }  // namespace
+
+#ifdef SERVER_INFERENCE
+int ArithmeticSelfCPUKernel::SetDtCostContext() {
+  if (dt_arithmetic_self_cost_map_.count(type_) > 0) {
+    dt_cost_context_ = std::make_unique<DtCostContext>();
+    dt_cost_context_->bytes_loaded_ = 1;
+    dt_cost_context_->bytes_stored_ = 1;
+    dt_cost_context_->compute_cost_ = dt_arithmetic_self_cost_map_.at(type_);
+  }
+  return RET_OK;
+}
+#endif
 
 ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_type) const {
   TYPE_FUNC_INFO type_func_table[] = {{mindspore::schema::PrimitiveType_Abs, ElementAbs},
@@ -62,6 +91,11 @@ ArithmeticSelfBoolFunc ArithmeticSelfCPUKernel::GetArithmeticSelfBoolFun(int pri
 int ArithmeticSelfCPUKernel::Prepare() {
   CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
   CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
+#ifdef SERVER_INFERENCE
+  if (SetDtCostContext() != RET_OK) {
+    return RET_ERROR;
+  }
+#endif
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -117,6 +151,12 @@ int ArithmeticSelfRun(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 int ArithmeticSelfCPUKernel::Run() {
+#ifdef SERVER_INFERENCE
+  if (dt_cost_context_ != nullptr) {
+    dt_cost_context_->total_num_ = in_tensors_.at(0)->ElementsNum();
+    op_parameter_->thread_num_ = UpdateThreadNum(this->ms_context_, dt_cost_context_.get(), op_parameter_->thread_num_);
+  }
+#endif
   auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";

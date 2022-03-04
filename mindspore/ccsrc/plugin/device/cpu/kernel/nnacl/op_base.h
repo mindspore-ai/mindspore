@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -529,6 +529,13 @@ typedef struct QuantMulArg {
   int left_shift_;
   int right_shift_;
 } QuantMulArg;
+
+typedef struct DtCostContext {
+  int64_t total_num_;
+  float bytes_loaded_;
+  float bytes_stored_;
+  float compute_cost_;
+} DtCostContext;
 
 typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
 typedef enum PadMode { Pad_pad, Pad_same, Pad_valid } PadMode;

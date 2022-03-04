@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ACTIVATION_H_
 
 #include <vector>
+#include <map>
+#include <memory>
 #include "src/inner_kernel.h"
 #include "nnacl/fp32/activation_fp32.h"
 
@@ -34,6 +36,7 @@ class ActivationCPUKernel : public InnerKernel {
   }
   ~ActivationCPUKernel() override = default;
 
+  int SetDtCostContext();
   int Prepare() override;
   int ReSize() override;
   int Run() override;
