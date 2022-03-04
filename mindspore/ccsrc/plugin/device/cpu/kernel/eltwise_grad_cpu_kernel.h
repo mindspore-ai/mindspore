@@ -22,7 +22,7 @@
 #include <string>
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
@@ -31,172 +31,35 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kInputMinNum = 2;
 constexpr size_t kOutputNum = 1;
-template <typename T>
 class EltWiseGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   EltWiseGradCpuKernelMod() = default;
+  explicit EltWiseGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~EltWiseGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    if (inputs.size() < kInputMinNum || outputs.size() != kOutputNum) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', it requires at least 2 inputs and 1 output, but got "
+                    << inputs.size() << " input(s) and " << outputs.size() << " output(s).";
+      return false;
+    }
+    if (outputs[0]->size == 0) {
+      MS_LOG(WARNING) << "For '" << kernel_name_ << "', the memory size of output should be greater than 0, but got 0.";
+      return true;
+    }
+    return func_obj_->RunFunc(inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void InitComputeFunc();
-  void ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void SqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void RsqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AsinGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void ACosGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void ComplexAsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void ComplexAcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void SoftplusGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-
-  using TypeComputeFunc = std::function<void(EltWiseGradCpuKernelMod *, const T *, const T *, T *, size_t, size_t)>;
-  TypeComputeFunc compute_func_{nullptr};
+  std::shared_ptr<CpuKernelFunc> func_obj_;
+  std::string kernel_type_;
 };
-
-MS_REG_CPU_KERNEL_T(
-  ReluGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  ReLU6Grad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  AbsGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  EltWiseGradCpuKernelMod, int);
-MS_REG_CPU_KERNEL_T(
-  AbsGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  AbsGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EltWiseGradCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(
-  SigmoidGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  SqrtGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  SqrtGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EltWiseGradCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(
-  TanhGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(GeLUGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  AsinGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  AsinGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EltWiseGradCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(
-  ACosGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  ACosGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EltWiseGradCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(
-  AtanGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  AsinhGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  AsinhGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EltWiseGradCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(AsinhGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeComplex64)
-                      .AddInputAttr(kNumberTypeComplex64)
-                      .AddOutputAttr(kNumberTypeComplex64),
-                    EltWiseGradCpuKernelMod, complex64);
-MS_REG_CPU_KERNEL_T(AsinhGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeComplex128)
-                      .AddInputAttr(kNumberTypeComplex128)
-                      .AddOutputAttr(kNumberTypeComplex128),
-                    EltWiseGradCpuKernelMod, complex128);
-MS_REG_CPU_KERNEL_T(
-  AcoshGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  AcoshGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EltWiseGradCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(AcoshGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeComplex64)
-                      .AddInputAttr(kNumberTypeComplex64)
-                      .AddOutputAttr(kNumberTypeComplex64),
-                    EltWiseGradCpuKernelMod, complex64);
-MS_REG_CPU_KERNEL_T(AcoshGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeComplex128)
-                      .AddInputAttr(kNumberTypeComplex128)
-                      .AddOutputAttr(kNumberTypeComplex128),
-                    EltWiseGradCpuKernelMod, complex128);
-MS_REG_CPU_KERNEL_T(
-  SoftplusGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  RsqrtGrad, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-  EltWiseGradCpuKernelMod, int8_t);
-MS_REG_CPU_KERNEL_T(
-  RsqrtGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  EltWiseGradCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(
-  RsqrtGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EltWiseGradCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  RsqrtGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EltWiseGradCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(RsqrtGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeComplex128)
-                      .AddInputAttr(kNumberTypeComplex128)
-                      .AddOutputAttr(kNumberTypeComplex128),
-                    EltWiseGradCpuKernelMod, complex128);
-MS_REG_CPU_KERNEL_T(RsqrtGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeComplex64)
-                      .AddInputAttr(kNumberTypeComplex64)
-                      .AddOutputAttr(kNumberTypeComplex64),
-                    EltWiseGradCpuKernelMod, complex64);
 }  // namespace kernel
 }  // namespace mindspore
 

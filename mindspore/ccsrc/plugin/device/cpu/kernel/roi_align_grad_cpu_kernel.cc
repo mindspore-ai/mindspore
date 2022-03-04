@@ -15,10 +15,53 @@
  */
 
 #include "plugin/device/cpu/kernel/roi_align_grad_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
+#include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+template <typename T>
+class ROIAlignGradCpuKernelFunc : public CpuKernelFunc {
+ public:
+  ROIAlignGradCpuKernelFunc() = default;
+  ~ROIAlignGradCpuKernelFunc() override = default;
+
+  void InitFunc(const CNodePtr &kernel_node) override;
+
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  void CheckParam(const CNodePtr &kernel_node);
+
+  void bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low, int *x_high,
+                            int *y_high, T *w1, T *w2, T *w3, T *w4);
+
+  void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale, const int sample_num,
+               int roi_end_mode, const int channels, const int height, const int width, const int pooled_height,
+               const int pooled_width, int *offset, int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h,
+               int *roi_bin_grid_w, T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w);
+
+  std::vector<int> xdiff_shape_;
+  int pooled_height_{0};
+  int pooled_width_{0};
+  T spatial_scale_{0.0};
+  int sample_num_{0};
+  int roi_end_mode_{0};
+
+  int roi_rows_{0};
+  int roi_cols_{0};
+  int batch_size_{0};
+  int channels_{0};
+  int height_{0};
+  int width_{0};
+
+  std::string kernel_name_;
+};
+
 template <typename T, typename U>
 void AtomicAddTask(T *const address, const T val) {
   auto *address_as_ull = reinterpret_cast<U *>(address);
@@ -57,7 +100,7 @@ void AtomicAdd(T *const address, const T val) {
 }
 
 template <typename T>
-void ROIAlignGradCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
+void ROIAlignGradCpuKernelFunc<T>::CheckParam(const CNodePtr &kernel_node) {
   //  Get the number of the input args
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
@@ -82,7 +125,7 @@ void ROIAlignGradCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void ROIAlignGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void ROIAlignGradCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
@@ -107,9 +150,9 @@ void ROIAlignGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ROIAlignGradCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool ROIAlignGradCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &,
+                                           const std::vector<kernel::AddressPtr> &outputs) {
   const T *dy = reinterpret_cast<T *>(inputs[0]->addr);
   const T *rois = reinterpret_cast<T *>(inputs[1]->addr);
   T *dx = reinterpret_cast<T *>(outputs[0]->addr);
@@ -185,13 +228,14 @@ bool ROIAlignGradCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename T>
-void ROIAlignGradCpuKernelMod<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low,
-                                                       int *y_low, int *x_high, int *y_high, T *w1, T *w2, T *w3,
-                                                       T *w4) {
+void ROIAlignGradCpuKernelFunc<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low,
+                                                        int *y_low, int *x_high, int *y_high, T *w1, T *w2, T *w3,
+                                                        T *w4) {
   constexpr float eps = 0.00007;
   const T ZERO = T(0.0);
   const T ONE = T(1.0);
-  if (y < static_cast<T>(-1.0) || y > static_cast<T>(height) || x < static_cast<T>(-1.0) || x > static_cast<T>(width)) {
+  const T NEG_ONE = static_cast<T>(-1.0);
+  if (y < NEG_ONE || y > static_cast<T>(height) || x < NEG_ONE || x > static_cast<T>(width)) {
     *w1 = *w2 = *w3 = *w4 = ZERO;
     *x_low = *x_high = *y_low = *y_high = -1;
     return;
@@ -232,11 +276,12 @@ void ROIAlignGradCpuKernelMod<T>::bilinear_interpolate(const int height, const i
 }
 
 template <typename T>
-void ROIAlignGradCpuKernelMod<T>::bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale,
-                                          const int sample_num, int roi_end_mode, const int channels, const int height,
-                                          const int width, const int pooled_height, const int pooled_width, int *offset,
-                                          int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
-                                          T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
+void ROIAlignGradCpuKernelFunc<T>::bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale,
+                                           const int sample_num, int roi_end_mode, const int channels, const int height,
+                                           const int width, const int pooled_height, const int pooled_width,
+                                           int *offset, int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h,
+                                           int *roi_bin_grid_w, T *bin_size_h, T *bin_size_w, T *roi_start_h,
+                                           T *roi_start_w) {
   constexpr float eps = 0.00007;
   constexpr int START_W = 0;
   constexpr int START_H = 1;
@@ -285,5 +330,39 @@ void ROIAlignGradCpuKernelMod<T>::bin_box(int thread_idx, const T *roi_boxes, in
   *roi_bin_grid_w = (sample_num > 0) ? sample_num : static_cast<int>(floor(roi_width / static_cast<T>(pooled_width)));
   return;
 }
+
+template <typename T>
+std::shared_ptr<CpuKernelFunc> SpecializeROIAlignGradFunc() {
+  return std::make_shared<ROIAlignGradCpuKernelFunc<T>>();
+}
+using SpecializeROIAlignGradFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+static std::vector<std::pair<KernelAttr, SpecializeROIAlignGradFuncCreator>> kernel_attr_list = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   SpecializeROIAlignGradFunc<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   SpecializeROIAlignGradFunc<float16>}};
+}  // namespace
+
+void ROIAlignGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "ROIAlignGrad does not support this kernel data type: " << kernel_attr;
+  }
+
+  func_obj_ = kernel_attr_list[index].second();
+  func_obj_->InitFunc(kernel_node);
+}
+
+std::vector<KernelAttr> ROIAlignGradCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(kernel_attr_list.begin(), kernel_attr_list.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, SpecializeROIAlignGradFuncCreator> &pair) { return pair.first; });
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ROIAlignGrad, ROIAlignGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

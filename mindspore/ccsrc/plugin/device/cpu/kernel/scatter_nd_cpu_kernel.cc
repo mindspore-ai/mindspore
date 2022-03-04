@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/scatter_nd_cpu_kernel.h"
+#include <algorithm>
 #include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
@@ -28,8 +29,18 @@ constexpr size_t kMinIndiceRank = 2;
 constexpr char kKernelName[] = "ScatterNd";
 
 template <typename S, typename T>
-void Compute(ScatterNdCpuKernelMod<S, T> *content, const ComputeParams<S, T> *params, const size_t start,
-             const size_t end) {
+struct ComputeParams {
+  T *target_{nullptr};
+  S *indices_{nullptr};
+  T *updates_{nullptr};
+  int unit_size_{0};
+  int indices_unit_rank_{0};
+  std::vector<int> *out_strides_{nullptr};
+  size_t target_mem_size_{0};
+};
+
+template <typename S, typename T>
+void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, const size_t start, const size_t end) {
   T *target = params->target_;
   S *indices = params->indices_;
   T *updates = params->updates_;
@@ -55,8 +66,7 @@ void Compute(ScatterNdCpuKernelMod<S, T> *content, const ComputeParams<S, T> *pa
 }
 }  // namespace
 
-template <typename S, typename T>
-void ScatterNdCpuKernelMod<S, T>::InitKernel(const CNodePtr &kernel_node) {
+void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   Check(kernel_node);
@@ -106,11 +116,20 @@ void ScatterNdCpuKernelMod<S, T>::InitKernel(const CNodePtr &kernel_node) {
     out_strides_.push_back(out_stride);
   }
   reverse(out_strides_.begin(), out_strides_.end());
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, ScatterNdFunc> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "ScatterNd does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename S, typename T>
-bool ScatterNdCpuKernelMod<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
+bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   auto target = reinterpret_cast<T *>(outputs[0]->addr);
   auto target_init = memset_s(target, outputs[0]->size, 0, outputs[0]->size);
@@ -135,8 +154,7 @@ bool ScatterNdCpuKernelMod<S, T>::Launch(const std::vector<kernel::AddressPtr> &
   return true;
 }
 
-template <typename S, typename T>
-void ScatterNdCpuKernelMod<S, T>::Check(const CNodePtr &kernel_node) {
+void ScatterNdCpuKernelMod::Check(const CNodePtr &kernel_node) {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kScatterNdInputSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num
@@ -148,5 +166,56 @@ void ScatterNdCpuKernelMod<S, T>::Check(const CNodePtr &kernel_node) {
                       << " output(s).";
   }
 }
+
+std::vector<std::pair<KernelAttr, ScatterNdCpuKernelMod::ScatterNdFunc>> ScatterNdCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint8_t>}};
+
+std::vector<KernelAttr> ScatterNdCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, ScatterNdFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNd, ScatterNdCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

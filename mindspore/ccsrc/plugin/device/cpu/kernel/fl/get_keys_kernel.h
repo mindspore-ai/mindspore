@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "fl/worker/fl_worker.h"
 #include "fl/armour/secure_protocol/key_agreement.h"
 
@@ -38,6 +38,12 @@ class GetKeysKernelMod : public NativeCpuKernelMod {
   void Init(const CNodePtr &kernel_node) override;
 
   void InitKernel(const CNodePtr &kernel_node) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
 
  private:
   void BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb);

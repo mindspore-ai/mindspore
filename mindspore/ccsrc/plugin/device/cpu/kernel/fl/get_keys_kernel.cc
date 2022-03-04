@@ -141,6 +141,6 @@ bool GetKeysKernelMod::SavePublicKeyList(
   return true;
 }
 
-MS_REG_CPU_KERNEL(GetKeys, KernelAttr().AddOutputAttr(kNumberTypeFloat32), GetKeysKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, GetKeys, GetKeysKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

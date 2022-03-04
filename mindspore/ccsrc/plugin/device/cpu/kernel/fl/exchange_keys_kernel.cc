@@ -170,6 +170,11 @@ std::vector<uint8_t> ExchangeKeysKernelMod::GetPubicKeyBytes() {
   return pubkey_bytes;
 }
 
-MS_REG_CPU_KERNEL(ExchangeKeys, KernelAttr().AddOutputAttr(kNumberTypeFloat32), ExchangeKeysKernelMod);
+std::vector<KernelAttr> ExchangeKeysKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ExchangeKeys, ExchangeKeysKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

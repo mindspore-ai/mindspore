@@ -19,12 +19,13 @@
 
 #include <vector>
 #include <memory>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
+
 class DynamicStitchCpuKernelMod : public NativeCpuKernelMod {
  public:
   DynamicStitchCpuKernelMod() = default;
@@ -32,26 +33,20 @@ class DynamicStitchCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using DynamicStitchFunc = std::function<bool(DynamicStitchCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, DynamicStitchFunc>> func_list_;
+  DynamicStitchFunc kernel_func_;
   size_t input_tuple_num_{1};
 };
-
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, int8_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, int16_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, int32_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, int64_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, uint8_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, uint16_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, uint32_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, uint64_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, bool)
-
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DYNAMIC_STITCH_CPU_KERNEL_H_

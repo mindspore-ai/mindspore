@@ -19,21 +19,35 @@
 
 #include <vector>
 #include <string>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class LUSolverCpuKernelMod : public NativeCpuKernelMod {
  public:
   LUSolverCpuKernelMod() = default;
   ~LUSolverCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using LUSolverFunc =
+    std::function<bool(LUSolverCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, LUSolverFunc>> func_list_;
+  LUSolverFunc kernel_func_;
+
   size_t a_row_{1};
   size_t a_col_{1};
   size_t b_row_{1};
@@ -43,15 +57,6 @@ class LUSolverCpuKernelMod : public NativeCpuKernelMod {
   std::string trans_{};
   TypeId dtype_{kNumberTypeFloat32};
 };
-
-MS_REG_CPU_KERNEL_T(
-  LUSolver,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  LUSolverCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  LUSolver,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  LUSolverCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 

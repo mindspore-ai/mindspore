@@ -18,52 +18,31 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2NORMALIZE_GRAD_CPU_KERNEL_H_
 
 #include <vector>
+#include <memory>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class L2NormalizeGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   L2NormalizeGradCpuKernelMod() = default;
   ~L2NormalizeGradCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-
   void InitKernel(const CNodePtr &kernel_node) override;
 
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return func_obj_->RunFunc(inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
-  void CheckInputShape(const std::vector<size_t> &output_shape);
-  std::vector<size_t> OneDimIndexToHighDimIndex(size_t one_dim_index);
-  void HighDimIndexToOneDimIndex(size_t *one_dim_index, const std::vector<size_t> &high_dim_index);
-  std::vector<T> GetVector(const std::vector<size_t> &high_dim_index, const T *x);
-  void GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector, T *ss);
-  void GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
-                 const std::vector<T> &dout_vector, const std::vector<size_t> &high_dim_index, T *output);
-  std::vector<std::vector<size_t>> input_shape_list_;
-  std::vector<size_t> dim_elem_num_list_;
-  int axis_{0};
-  T epsilon_{0};
+  std::shared_ptr<CpuKernelFunc> func_obj_;
 };
-
-MS_REG_CPU_KERNEL_T(L2NormalizeGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    L2NormalizeGradCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(L2NormalizeGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddOutputAttr(kNumberTypeFloat16),
-                    L2NormalizeGradCpuKernelMod, float16);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2NORMALIZE_GRAD_CPU_KERNEL_H_

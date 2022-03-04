@@ -21,7 +21,7 @@
 #include <vector>
 #include <random>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "nnacl/base/tile_base.h"
 
 namespace mindspore {
@@ -36,6 +36,13 @@ class MultinomialCpuKernel : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)};
+    return support_list;
+  }
+
  private:
   std::vector<size_t> input_shape_;
   int seed_{0};
@@ -43,10 +50,7 @@ class MultinomialCpuKernel : public NativeCpuKernelMod {
   std::default_random_engine rng_;
 };
 
-MS_REG_CPU_KERNEL(
-  Multinomial,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  MultinomialCpuKernel)
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Multinomial, MultinomialCpuKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_

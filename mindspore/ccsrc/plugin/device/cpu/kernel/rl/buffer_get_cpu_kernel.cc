@@ -18,6 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL(BufferGetItem, KernelAttr(), BufferGetCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BufferGetItem, BufferGetCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

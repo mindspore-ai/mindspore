@@ -45,7 +45,6 @@
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
 #include "utils/ms_context.h"
 #include "kernel/kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
 #include "plugin/device/cpu/kernel/ps/pserver_kernel.h"
 #include "plugin/device/cpu/kernel/ps/sparse_apply_adam_ps_kernel.h"
 #include "plugin/device/cpu/kernel/ps/sparse_apply_lazy_adam_ps_kernel.h"

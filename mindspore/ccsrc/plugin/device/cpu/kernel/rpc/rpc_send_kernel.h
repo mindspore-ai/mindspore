@@ -23,7 +23,6 @@
 namespace mindspore {
 namespace kernel {
 // RpcSendKernel send data to another process across network communication.
-template <typename T>
 class RpcSendKernelMod : public RpcKernelMod {
  public:
   RpcSendKernelMod() = default;
@@ -36,7 +35,8 @@ class RpcSendKernelMod : public RpcKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override { return; }
 
- private:
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -18,15 +18,17 @@
 
 #include <string>
 #include <algorithm>
+#include <map>
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr auto kConv2DBackpropFilter = "Conv2DBackpropFilter";
+constexpr auto kConv3DBackpropFilter = "Conv3DBackpropFilter";
 constexpr size_t kConvGradFilterInputsNum = 2;
 constexpr size_t kConvGradFilterOutputsNum = 1;
 }  // namespace
-
 void ConvGradFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -111,5 +113,28 @@ bool ConvGradFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
   ExecutePrimitive();
   return true;
 }
+
+std::vector<KernelAttr> ConvGradFilterCpuKernelMod::GetOpSupport() {
+  static std::map<std::string, std::vector<KernelAttr>> support_list_map = {{kConv2DBackpropFilter,
+                                                                             {KernelAttr()
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddOutputAttr(kNumberTypeFloat32)}},
+                                                                            {kConv3DBackpropFilter,
+                                                                             {KernelAttr()
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddOutputAttr(kNumberTypeFloat32)}}};
+  auto iter = support_list_map.find(kernel_type_);
+  if (iter == support_list_map.end()) {
+    MS_LOG(EXCEPTION) << "ConvGradFilter does not support " << kernel_type_;
+  }
+  return iter->second;
+}
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Conv2DBackpropFilter,
+                                 []() { return std::make_shared<ConvGradFilterCpuKernelMod>(kConv2DBackpropFilter); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Conv3DBackpropFilter,
+                                 []() { return std::make_shared<ConvGradFilterCpuKernelMod>(kConv3DBackpropFilter); });
 }  // namespace kernel
 }  // namespace mindspore

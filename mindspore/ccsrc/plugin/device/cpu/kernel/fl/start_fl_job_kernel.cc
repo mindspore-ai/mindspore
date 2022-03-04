@@ -18,6 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL(StartFLJob, KernelAttr().AddOutputAttr(kNumberTypeFloat32), StartFLJobKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, StartFLJob, StartFLJobKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

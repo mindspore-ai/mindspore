@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -47,7 +47,7 @@ class MaximumGradCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(MaximumGrad, KernelAttr(), MaximumGradCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MaximumGrad, MaximumGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

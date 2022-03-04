@@ -19,7 +19,7 @@
 #include <memory>
 #include "plugin/device/cpu/kernel/nnacl/fp32_grad/strided_slice_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {

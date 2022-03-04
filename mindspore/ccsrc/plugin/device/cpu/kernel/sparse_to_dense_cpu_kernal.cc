@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/sparse_to_dense_cpu_kernal.h"
 #include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -26,8 +27,7 @@ constexpr size_t kSparseToDenseInputsNum = 3;
 constexpr size_t kSparseToDenseOutputsNum = 1;
 }  // namespace
 
-template <typename I, typename T>
-void SparseToDenseCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
+void SparseToDenseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -44,10 +44,17 @@ void SparseToDenseCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
   }
   values_size_ = values_shape[0];
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "SparseToDense does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename I, typename T>
-bool SparseToDenseCpuKernelMod<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+bool SparseToDenseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                              const std::vector<kernel::AddressPtr> & /*workspace*/,
                                              const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseInputsNum, kernel_name_);
@@ -93,5 +100,88 @@ bool SparseToDenseCpuKernelMod<I, T>::Launch(const std::vector<kernel::AddressPt
   }
   return true;
 }
+
+std::vector<std::pair<KernelAttr, SparseToDenseCpuKernelMod::SparseToDenseFunc>> SparseToDenseCpuKernelMod::func_list_ =
+  {{KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeBool)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeBool),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, bool>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt8)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeInt8),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, int8_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt16)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeInt16),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, int16_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeInt32),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeInt64),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, int64_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeUInt8)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeUInt8),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, uint8_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeUInt16)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeUInt16),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, uint16_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeUInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeUInt32),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, uint32_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeUInt64)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeUInt64),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, uint64_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat16),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, float16>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, float>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeFloat64)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat64),
+    &SparseToDenseCpuKernelMod::LaunchKernel<int32_t, double>}};
+
+std::vector<KernelAttr> SparseToDenseCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, SparseToDenseFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseToDense, SparseToDenseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

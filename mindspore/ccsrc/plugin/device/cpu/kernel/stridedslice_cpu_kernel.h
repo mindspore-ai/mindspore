@@ -20,7 +20,7 @@
 #include <vector>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
 
 namespace mindspore {
@@ -34,6 +34,40 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeBool)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeBool),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat64)};
+    return support_list;
+  }
 
  private:
   enum ParallelStrategy { kOnSplitAxis, kOnOuter };
@@ -59,47 +93,7 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   StridedSliceParameter slice_param_;
 };
 
-MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                  StridedSliceCpuKernelMod);
-MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  StridedSliceCpuKernelMod);
-MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  StridedSliceCpuKernelMod);
-MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  StridedSliceCpuKernelMod);
-
-MS_REG_CPU_KERNEL(StridedSlice,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeBool)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeBool),
-                  StridedSliceCpuKernelMod);
-MS_REG_CPU_KERNEL(StridedSlice,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  StridedSliceCpuKernelMod);
-MS_REG_CPU_KERNEL(StridedSlice,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  StridedSliceCpuKernelMod);
-MS_REG_CPU_KERNEL(StridedSlice,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeFloat64),
-                  StridedSliceCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, StridedSlice, StridedSliceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

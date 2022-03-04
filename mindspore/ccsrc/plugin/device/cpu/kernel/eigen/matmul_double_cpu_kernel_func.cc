@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/eigen/matmul_double_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/eigen/matmul_double_cpu_kernel_func.h"
 #include <Eigen/Dense>
 #include <vector>
 
@@ -33,7 +33,21 @@ using Eigen::RowMajor;
 template <int Major>
 using DoubleMatrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Major>;
 }  // namespace
-void MatmulDoubleCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+
+template <typename Derived>
+inline void matmul_b(const MatrixBase<Derived> &A, double *b_addr, double *output_addr, size_t b_row_, size_t b_col_,
+                     size_t out_row_, size_t out_col_, bool trans_b) {
+  Map<DoubleMatrix<RowMajor>> output(output_addr, out_row_, out_col_);
+  if (trans_b) {
+    Map<DoubleMatrix<ColMajor>> b(b_addr, b_col_, b_row_);
+    output.noalias() = A * b;
+  } else {
+    Map<DoubleMatrix<RowMajor>> b(b_addr, b_row_, b_col_);
+    output.noalias() = A * b;
+  }
+}
+
+void MatmulDoubleCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -53,22 +67,9 @@ void MatmulDoubleCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   out_col_ = out_shape[kDim1];
 }
 
-template <typename Derived>
-inline void matmul_b(const MatrixBase<Derived> &A, double *b_addr, double *output_addr, size_t b_row_, size_t b_col_,
-                     size_t out_row_, size_t out_col_, bool trans_b) {
-  Map<DoubleMatrix<RowMajor>> output(output_addr, out_row_, out_col_);
-  if (trans_b) {
-    Map<DoubleMatrix<ColMajor>> b(b_addr, b_col_, b_row_);
-    output.noalias() = A * b;
-  } else {
-    Map<DoubleMatrix<RowMajor>> b(b_addr, b_row_, b_col_);
-    output.noalias() = A * b;
-  }
-}
-
-bool MatmulDoubleCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool MatmulDoubleCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatMulOutputsNum, kernel_name_);
   const auto a_addr = reinterpret_cast<double *>(inputs[0]->addr);

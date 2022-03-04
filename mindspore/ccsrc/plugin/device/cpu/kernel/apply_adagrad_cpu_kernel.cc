@@ -116,5 +116,25 @@ void ApplyAdagradCpuKernelMod::LaunchApplyAdagrad(T *var, T *accum, const T *lr,
     var[i] -= lr[0] * gradient[i] * (one / sqrt(accum[i] + eps));
   }
 }
+
+std::vector<KernelAttr> ApplyAdagradCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddOutputAttr(kNumberTypeFloat32)
+                                                       .AddOutputAttr(kNumberTypeFloat32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddOutputAttr(kNumberTypeFloat16)
+                                                       .AddOutputAttr(kNumberTypeFloat16)};
+  return kernel_attr_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyAdagrad, ApplyAdagradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

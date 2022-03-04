@@ -20,7 +20,7 @@
 #include <vector>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,13 +34,18 @@ class EmbeddingLookUpCommGradCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
+
  private:
   int64_t split_num_;
 };
 
-MS_REG_CPU_KERNEL(EmbeddingLookupCommGrad,
-                  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EmbeddingLookUpCommGradCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EmbeddingLookupCommGrad, EmbeddingLookUpCommGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

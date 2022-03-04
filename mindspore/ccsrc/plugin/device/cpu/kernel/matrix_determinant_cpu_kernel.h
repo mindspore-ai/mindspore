@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,6 +34,16 @@ class MatrixDeterminantCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+      KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128)};
+    return support_list;
+  }
+
  private:
   CNodeWeakPtr node_wpt_;
   TypeId dtype_{kTypeUnknown};
@@ -41,19 +51,7 @@ class MatrixDeterminantCpuKernelMod : public NativeCpuKernelMod {
   void LaunchMatrixDeterminant(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };
 
-MS_REG_CPU_KERNEL(MatrixDeterminant, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  MatrixDeterminantCpuKernelMod);
-
-MS_REG_CPU_KERNEL(MatrixDeterminant, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  MatrixDeterminantCpuKernelMod);
-
-MS_REG_CPU_KERNEL(MatrixDeterminant,
-                  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-                  MatrixDeterminantCpuKernelMod);
-
-MS_REG_CPU_KERNEL(MatrixDeterminant,
-                  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-                  MatrixDeterminantCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixDeterminant, MatrixDeterminantCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_DETERMINANT_CPU_KERNEL_H_

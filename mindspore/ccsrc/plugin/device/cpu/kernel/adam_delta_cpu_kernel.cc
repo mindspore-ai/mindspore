@@ -149,5 +149,22 @@ bool AdamDeltaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   LaunchAdamDelta<float>(delta, m, v, lr, beta1, beta2, epsilon, grad, lens);
   return true;
 }
+
+std::vector<KernelAttr> AdamDeltaCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddOutputAttr(kNumberTypeFloat32)};
+  return kernel_attr_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AdamNoUpdateParam, AdamDeltaCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

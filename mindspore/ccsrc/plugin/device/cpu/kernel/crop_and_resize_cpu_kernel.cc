@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -98,12 +97,13 @@ void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     method_ = BILINEAR_V2;
   }
   extrapolation_value_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "extrapolation_value");
+
+  InitFunc(kernel_node);
 }
 
 template <typename T>
-bool CropAndResizeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool CropAndResizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
   auto *input_image = reinterpret_cast<T *>(inputs[IMAGE]->addr);
   auto *input_boxes = reinterpret_cast<float *>(inputs[BOXES]->addr);
   auto *input_box_index = reinterpret_cast<int *>(inputs[BOX_INDEX]->addr);
@@ -218,5 +218,153 @@ bool CropAndResizeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> 
   ParallelLaunchAutoSearch(task, IntToSize(output_size_), this, &parallel_search_info_);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, CropAndResizeCpuKernelMod::CropAndResizeFunc>> CropAndResizeCpuKernelMod::func_list_ =
+  {{KernelAttr()
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<float16>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<float16>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<float>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<float>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeFloat64)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<double>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeFloat64)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<double>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt8)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<int8_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt8)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<int8_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt16)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<int16_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt16)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<int16_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt8)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<int8_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<int32_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt64)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<int64_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeInt64)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<int64_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeUInt8)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<uint8_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeUInt8)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<uint8_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeUInt16)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<uint16_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeUInt16)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &CropAndResizeCpuKernelMod::LaunchKernel<uint16_t>}};
+
+void CropAndResizeCpuKernelMod::InitFunc(const CNodePtr &kernel_node) {
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Concat does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = func_list_[index].second;
+}
+
+std::vector<KernelAttr> CropAndResizeCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, CropAndResizeFunc> &pair) { return pair.first; });
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CropAndResize, CropAndResizeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

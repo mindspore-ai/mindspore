@@ -21,7 +21,7 @@
 #include <string>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,6 +36,9 @@ class BinaryCrossEntropyCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   template <typename T>
   void LaunchToScalar(const int &input_size, const int &reduction, T *loss, T *tmp_loss) const;
@@ -47,28 +50,6 @@ class BinaryCrossEntropyCpuKernelMod : public NativeCpuKernelMod {
   ReductionType reduction_{kNone};
   bool weight_defined_{false};  // true: there are 3 inputs, false: there are 2 inputs(no [weight])
 };
-MS_REG_CPU_KERNEL(BinaryCrossEntropy,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeFloat16),
-                  BinaryCrossEntropyCpuKernelMod);
-MS_REG_CPU_KERNEL(BinaryCrossEntropy,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  BinaryCrossEntropyCpuKernelMod);
-MS_REG_CPU_KERNEL(
-  BinaryCrossEntropy,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BinaryCrossEntropyCpuKernelMod);
-MS_REG_CPU_KERNEL(
-  BinaryCrossEntropy,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BinaryCrossEntropyCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NN_BINARY_CROSS_ENTROPY_KERNEL_H

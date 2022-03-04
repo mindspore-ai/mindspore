@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <utility>
 #include <cmath>
+#include <map>
+#include <set>
 
 #include "utils/profile.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
@@ -80,6 +82,125 @@ void NativeCpuKernelMod::Init(const CNodePtr &kernel_node) {
 
   InitKernel(kernel_node);
   InitInputOutputSize(kernel_node);
+}
+
+std::vector<TypeId> NativeCpuKernelMod::GetInputDtypes(const CNodePtr &kernel_node) {
+  std::vector<TypeId> input_types;
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
+    auto dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
+    input_types.emplace_back(dtype);
+  }
+  return input_types;
+}
+
+std::vector<std::string> NativeCpuKernelMod::GetInputFormats(const CNodePtr &kernel_node) {
+  std::vector<std::string> input_formats;
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
+    input_formats.emplace_back(kOpFormat_DEFAULT);
+  }
+  return input_formats;
+}
+
+std::vector<TypeId> NativeCpuKernelMod::GetOutputDtypes(const CNodePtr &kernel_node) {
+  std::vector<TypeId> output_types;
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    auto dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
+    output_types.emplace_back(dtype);
+  }
+  return output_types;
+}
+
+std::vector<std::string> NativeCpuKernelMod::GetOutputFormats(const CNodePtr &kernel_node) {
+  std::vector<std::string> output_formats;
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    output_formats.emplace_back(kOpFormat_DEFAULT);
+  }
+  return output_formats;
+}
+
+std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::string &kernel_name) {
+  if (initialize_.count(kernel_name) == 0) {
+    std::vector<KernelAttr> kernel_attrs;
+    auto kernel_support = GetOpSupport();
+    (void)kernel_attrs.insert(kernel_attrs.end(), kernel_support.begin(), kernel_support.end());
+    if (kernel_attrs.empty()) {
+      auto oplib_support = GetSupportFromOpLib(kernel_name);
+      (void)kernel_attrs.insert(kernel_attrs.end(), oplib_support.begin(), oplib_support.end());
+    }
+    (void)support_map_.emplace(kernel_name, kernel_attrs);
+    initialize_.insert(kernel_name);
+  }
+
+  return support_map_[kernel_name];
+}
+
+std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::string &kernel_name) {
+  static std::set<std::string> same_op_name = {"Concat", "Pack", "Stack",        "Split",        "Transpose",
+                                               "Unpack", "AddN", "ConcatOffset", "DynamicStitch"};
+  auto op_info = mindspore::kernel::OpLib::FindOp(kernel_name, kernel::OpImplyType::kCPU);
+  if (op_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Not find op[" << kernel_name << "] in cpu. For more details, "
+                      << "please refer to the list of supported cpu operations at https://www.mindspore.cn.";
+  }
+
+  std::vector<KernelAttr> support_kernel_attrs;
+  auto inputs_ptr = op_info->inputs_ptr();
+  auto outputs_ptr = op_info->outputs_ptr();
+  if (outputs_ptr.empty()) {
+    MS_LOG(EXCEPTION) << "The output dimension of operator '" << kernel_name << "' should not be zero.";
+  }
+
+  auto support_size = outputs_ptr[0]->dtypes().size();
+  for (size_t i = 0; i < support_size; i++) {
+    KernelAttr kernel_attr;
+    for (size_t j = 0; j < inputs_ptr.size(); j++) {
+      auto input_dtypes = inputs_ptr[j]->dtypes();
+      auto input_formats = inputs_ptr[j]->formats();
+      (void)kernel_attr.AddInputAttr(kernel::DtypeToTypeId(input_dtypes[i]), input_formats[i]);
+    }
+    for (size_t j = 0; j < outputs_ptr.size(); j++) {
+      auto output_dtypes = outputs_ptr[j]->dtypes();
+      auto output_formats = outputs_ptr[j]->formats();
+      (void)kernel_attr.AddOutputAttr(kernel::DtypeToTypeId(output_dtypes[i]), output_formats[i]);
+    }
+    if (same_op_name.count(op_info->op_name()) != 0) {
+      (void)kernel_attr.AddAllSameAttr(true);
+    }
+    support_kernel_attrs.push_back(kernel_attr);
+  }
+
+  return support_kernel_attrs;
+}
+
+std::map<std::string, std::vector<KernelAttr>> NativeCpuKernelMod::support_map_{};
+std::set<std::string> NativeCpuKernelMod::initialize_{};
+
+void NativeCpuKernelMod::SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {
+  auto kernel_attrs = GetOpSupport();
+  if (kernel_attrs.empty()) {
+    return;
+  }
+
+  auto kernel_attr = GetKernelAttrFromNode(apply_kernel);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, kernel_attrs);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
+                      << " does not support this kernel data type: " << kernel_attr;
+  }
+
+  MS_EXCEPTION_IF_NULL(apply_kernel);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  const KernelBuildInfo *kernel_build_Info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(kernel_build_Info);
+  const auto &matched_kernel_attr = kernel_attrs[index];
+  if (!matched_kernel_attr.GetOutInRefMap().empty()) {
+    kernel_info->set_ref_map(matched_kernel_attr.GetOutInRefMap());
+  }
 }
 
 void CPUKernelUtils::ExpandDimsTo4(std::vector<size_t> *shape) {
@@ -434,6 +555,16 @@ void AxisIterator::Init(const std::vector<size_t> &input_shape, size_t axis) {
   for (size_t i = axis + 1; i < input_shape.size(); ++i) {
     inner_size_ *= input_shape[i];
   }
+}
+
+int Sign(float x) {
+  if (x > 0) {
+    return 1;
+  }
+  if (x < 0) {
+    return -1;
+  }
+  return 0;
 }
 }  // namespace kernel
 }  // namespace mindspore

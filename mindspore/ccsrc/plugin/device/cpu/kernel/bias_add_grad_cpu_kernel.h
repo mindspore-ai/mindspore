@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,7 +37,6 @@ class BiasAddGradCpuKernelMod : public NativeCpuKernelMod {
  private:
   std::vector<size_t> input_shape_;
 };
-MS_REG_CPU_KERNEL(BiasAddGrad, KernelAttr(), BiasAddGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BIAS_ADD_GRAD_CPU_KERNEL_H_

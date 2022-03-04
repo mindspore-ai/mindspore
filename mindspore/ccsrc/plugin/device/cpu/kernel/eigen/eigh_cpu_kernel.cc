@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/eigen/eigh_cpu_kernel.h"
+#include <algorithm>
+#include <tuple>
 #include <type_traits>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "Eigen/Eigenvalues"
@@ -27,8 +29,7 @@ constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 2;
 }  // namespace
 
-template <typename T>
-void EighCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void EighCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   compute_eigen_vectors_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
@@ -44,6 +45,15 @@ void EighCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
                       << A_shape[kDim1] << "].";
   }
   m_ = A_shape[kDim0];
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Eigh does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = std::get<1>(func_list_[index]);
+  const size_t kTwoIdx = 2;
+  init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
 }
 
 template <typename T>
@@ -70,14 +80,14 @@ void SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *out
 }
 
 template <typename T>
-void EighCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+void EighCpuKernelMod::InitIOFunc(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back(m_ * m_ * sizeof(T));
 }
 
 template <typename T>
-bool EighCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) {
+bool EighCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                    const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   auto A_addr = reinterpret_cast<T *>(inputs[0]->addr);
   // is the Matrix a symmetric matrix(true lower triangle, false upper triangle)
@@ -103,5 +113,39 @@ bool EighCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const st
   }
   return true;
 }
+
+std::vector<std::tuple<KernelAttr, EighCpuKernelMod::EighFunc, EighCpuKernelMod::EighInitFunc>>
+  EighCpuKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &EighCpuKernelMod::LaunchKernel<float>, &EighCpuKernelMod::InitIOFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &EighCpuKernelMod::LaunchKernel<double>, &EighCpuKernelMod::InitIOFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &EighCpuKernelMod::LaunchKernel<float_complex>, &EighCpuKernelMod::InitIOFunc<float_complex>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &EighCpuKernelMod::LaunchKernel<double_complex>, &EighCpuKernelMod::InitIOFunc<double_complex>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &EighCpuKernelMod::LaunchKernel<float>, &EighCpuKernelMod::InitIOFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &EighCpuKernelMod::LaunchKernel<double>, &EighCpuKernelMod::InitIOFunc<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &EighCpuKernelMod::LaunchKernel<float_complex>, &EighCpuKernelMod::InitIOFunc<float_complex>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &EighCpuKernelMod::LaunchKernel<double_complex>, &EighCpuKernelMod::InitIOFunc<double_complex>}};
+
+std::vector<KernelAttr> EighCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::tuple<KernelAttr, EighFunc, EighInitFunc> &item) { return std::get<0>(item); });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Eigh, EighCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

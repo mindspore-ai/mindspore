@@ -34,6 +34,41 @@ class SparseApplyAdamCpuKernelMod : public SparseOptimizerCpuKernelMod {
  protected:
   bool use_nesterov_{false};
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
+
  private:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
@@ -45,41 +80,7 @@ class SparseApplyAdamCpuKernelMod : public SparseOptimizerCpuKernelMod {
                     const std::vector<kernel::AddressPtr> &workspace) const;
 };
 
-MS_REG_CPU_KERNEL(FusedSparseAdam,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyAdamCpuKernelMod);
-
-MS_REG_CPU_KERNEL(FusedSparseAdam,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyAdamCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedSparseAdam, SparseApplyAdamCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

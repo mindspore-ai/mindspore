@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/lu_solve_cpu_kernel.h"
+#include <utility>
+#include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -30,8 +32,7 @@ size_t get_element_num(const std::vector<size_t> &shape) {
   return size;
 }
 
-template <typename T1, typename T2>
-void LuSolveCpuKernelMod<T1, T2>::InitKernel(const CNodePtr &kernel_node) {
+void LuSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -94,12 +95,22 @@ void LuSolveCpuKernelMod<T1, T2>::InitKernel(const CNodePtr &kernel_node) {
                                << "batch dimension of LU_pivots should match batch dimension of LU_data.";
     }
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, LuSolveFunc> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "LuSolve does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T1, typename T2>
-void LuSolveCpuKernelMod<T1, T2>::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs, T1 *b_working_ptr,
-                                          T1 *lu_working_ptr, int32_t *pivots_working_ptr, size_t b_stride, size_t a) {
+void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &outputs, T1 *b_working_ptr, T1 *lu_working_ptr,
+                                  int32_t *pivots_working_ptr, size_t b_stride, size_t a) {
   auto input_0_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
   auto input_1_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 1);
   auto output_y = reinterpret_cast<T2 *>(outputs[0]->addr);
@@ -123,9 +134,8 @@ void LuSolveCpuKernelMod<T1, T2>::LuSolve(const std::vector<kernel::AddressPtr> 
 }
 
 template <typename T1, typename T2>
-bool LuSolveCpuKernelMod<T1, T2>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   auto input_x0 = reinterpret_cast<T2 *>(inputs[0]->addr);
   auto input_x1 = reinterpret_cast<T2 *>(inputs[1]->addr);
   auto input_x2 = reinterpret_cast<int32_t *>(inputs[2]->addr);
@@ -151,7 +161,7 @@ bool LuSolveCpuKernelMod<T1, T2>::Launch(const std::vector<kernel::AddressPtr> &
       T1 *b_working_ptr = input_0.data() + i * b_stride;
       T1 *lu_working_ptr = input_1.data() + i * lu_stride;
       int32_t *pivots_working_ptr = &input_x2[i * pivots_stride];
-      LuSolve(inputs, outputs, b_working_ptr, lu_working_ptr, pivots_working_ptr, b_stride, i);
+      LuSolve<T1, T2>(inputs, outputs, b_working_ptr, lu_working_ptr, pivots_working_ptr, b_stride, i);
     }
   } else {
     std::vector<size_t> b_shape = b_dims_vector;
@@ -167,11 +177,34 @@ bool LuSolveCpuKernelMod<T1, T2>::Launch(const std::vector<kernel::AddressPtr> &
       T1 *b_working_ptr = input_0.data() + iter.GetInputPosA() * b_stride;
       T1 *lu_working_ptr = input_1.data() + iter.GetInputPosB() * lu_stride;
       int32_t *pivots_working_ptr = &input_x2[iter.GetInputPosB() * pivots_stride];
-      LuSolve(inputs, outputs, b_working_ptr, lu_working_ptr, pivots_working_ptr, b_stride, i);
+      LuSolve<T1, T2>(inputs, outputs, b_working_ptr, lu_working_ptr, pivots_working_ptr, b_stride, i);
       iter.GenNextPos();
     }
   }
   return true;
 }
+
+std::vector<std::pair<KernelAttr, LuSolveCpuKernelMod::LuSolveFunc>> LuSolveCpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &LuSolveCpuKernelMod::LaunchKernel<float, float16>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &LuSolveCpuKernelMod::LaunchKernel<float, float>}};
+
+std::vector<KernelAttr> LuSolveCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, LuSolveFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LuSolve, LuSolveCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

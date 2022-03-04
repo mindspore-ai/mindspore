@@ -15,12 +15,12 @@
  */
 
 #include "plugin/device/cpu/kernel/boundingbox_decode_cpu_kernel.h"
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void BoundingBoxDecodeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void BoundingBoxDecodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -71,12 +71,13 @@ void BoundingBoxDecodeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the length of 'max_shape' should be at least 2, but got: " << max_shape_.size();
   }
+
+  InitTaskFunc(kernel_node);
 }
 
 template <typename T>
-bool BoundingBoxDecodeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool BoundingBoxDecodeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                                 const std::vector<AddressPtr> &outputs) {
   auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);
   auto deltas = reinterpret_cast<T *>(inputs[1]->addr);
   auto bboxes = reinterpret_cast<T *>(outputs[0]->addr);
@@ -156,5 +157,30 @@ bool BoundingBoxDecodeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressP
   ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, BoundingBoxDecodeCpuKernelMod::BoundingBoxDecodeFunc>>
+  BoundingBoxDecodeCpuKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &BoundingBoxDecodeCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &BoundingBoxDecodeCpuKernelMod::LaunchKernel<float16>}};
+
+void BoundingBoxDecodeCpuKernelMod::InitTaskFunc(const CNodePtr &kernel_node) {
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "BoundingBoxDecode does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+}
+
+std::vector<KernelAttr> BoundingBoxDecodeCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, BoundingBoxDecodeFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BoundingBoxDecode, BoundingBoxDecodeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

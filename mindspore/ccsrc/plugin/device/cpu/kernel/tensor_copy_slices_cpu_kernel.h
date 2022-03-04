@@ -20,7 +20,7 @@
 #include <vector>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
 
 namespace mindspore {
@@ -43,7 +43,7 @@ class TensorCopySlicesCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> output_shape_;
 };
 
-MS_REG_CPU_KERNEL(TensorCopySlices, KernelAttr(), TensorCopySlicesCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorCopySlices, TensorCopySlicesCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

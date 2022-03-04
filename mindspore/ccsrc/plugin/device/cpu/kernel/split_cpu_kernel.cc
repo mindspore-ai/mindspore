@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/split_cpu_kernel.h"
 #include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
 
@@ -25,8 +26,7 @@ namespace {
 constexpr size_t kSplitInputsNum = 1;
 }  // namespace
 
-template <typename T>
-void SplitCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void SplitCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
@@ -42,26 +42,29 @@ void SplitCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
                       << SPLIT_STRIDES_SIZE << "], but got " << input_shape_.size();
   }
   CheckParam(kernel_node);
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  std::vector<KernelAttr> support_list;
+  std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::tuple<KernelAttr, SplitFunc, InitIOFunc> &tuple_item) { return std::get<0>(tuple_item); });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Split does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = std::get<1>(func_list_[index]);
+  const size_t kTwoIdx = 2;
+  init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
 }
 
 template <typename T>
-void SplitCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+void SplitCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back((sizeof(T *) * LongToSize(output_num_)));
 }
 
 template <typename T>
-bool SplitCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &workspace,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSplitInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
-  LaunchKernel(inputs, workspace, outputs);
-  return true;
-}
-
-template <typename T>
-void SplitCpuKernelMod<T>::LaunchSplit(T *input, T **output, size_t /* size */) {
+void SplitCpuKernelMod::LaunchSplit(T *input, T **output, size_t /* size */) {
   SplitParameter param;
   param.num_split_ = SizeToInt(output_num_);
   param.split_dim_ = LongToInt(axis_);
@@ -88,9 +91,9 @@ void SplitCpuKernelMod<T>::LaunchSplit(T *input, T **output, size_t /* size */) 
 }
 
 template <typename T>
-void SplitCpuKernelMod<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool SplitCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &workspace,
+                                     const std::vector<AddressPtr> &outputs) {
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   T **output = reinterpret_cast<T **>(workspace[0]->addr);
   for (size_t i = 0; i < outputs.size(); i++) {
@@ -98,11 +101,10 @@ void SplitCpuKernelMod<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
   size_t size = static_cast<size_t>(inputs[0]->size / sizeof(T));
   LaunchSplit(input, output, size);
-  return;
+  return true;
 }
 
-template <typename T>
-void SplitCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
+void SplitCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   int64_t dims = SizeToLong(input_shape_.size());
   if (dims == 0 || dims > SPLIT_STRIDES_SIZE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be in range [1, "
@@ -120,5 +122,29 @@ void SplitCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
                       << input_shape_[axis_] << ", but got " << output_num_;
   }
 }
+
+bool SplitCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                               const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSplitInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
+  return kernel_func_(this, inputs, workspace, outputs);
+}
+
+std::vector<std::tuple<KernelAttr, SplitCpuKernelMod::SplitFunc, SplitCpuKernelMod::InitIOFunc>>
+  SplitCpuKernelMod::func_list_ = {
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &SplitCpuKernelMod::LaunchKernel<float>, &SplitCpuKernelMod::InitIOSize<float>},
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &SplitCpuKernelMod::LaunchKernel<float16>, &SplitCpuKernelMod::InitIOSize<float16>},
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &SplitCpuKernelMod::LaunchKernel<double>, &SplitCpuKernelMod::InitIOSize<double>},
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &SplitCpuKernelMod::LaunchKernel<int32_t>, &SplitCpuKernelMod::InitIOSize<int32_t>},
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &SplitCpuKernelMod::LaunchKernel<uint32_t>, &SplitCpuKernelMod::InitIOSize<uint32_t>},
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &SplitCpuKernelMod::LaunchKernel<int64_t>, &SplitCpuKernelMod::InitIOSize<int64_t>}};
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Split, SplitCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

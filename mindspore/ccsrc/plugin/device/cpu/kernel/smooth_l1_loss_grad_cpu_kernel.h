@@ -20,12 +20,12 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class SmoothL1LossGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   SmoothL1LossGradCpuKernelMod() = default;
@@ -34,28 +34,26 @@ class SmoothL1LossGradCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using SmoothL1LossGradFunc =
+    std::function<bool(SmoothL1LossGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, SmoothL1LossGradFunc>> func_list_;
+  SmoothL1LossGradFunc kernel_func_;
+
   float beta_{1.0};
   uint64_t tensor_size_{1};
 };
-
-MS_REG_CPU_KERNEL_T(SmoothL1LossGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddOutputAttr(kNumberTypeFloat16),
-                    SmoothL1LossGradCpuKernelMod, float16);
-
-MS_REG_CPU_KERNEL_T(SmoothL1LossGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    SmoothL1LossGradCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SMOOTH_L1_LOSS_GRAD_CPU_KERNEL_H_

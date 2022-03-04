@@ -21,7 +21,7 @@
 #include <memory>
 #include <unordered_map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "nnacl/base/unsorted_segment_sum_base.h"
 
 namespace mindspore {
@@ -36,6 +36,16 @@ class UnsortedSegmentSumCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32)};
+    return support_list;
+  }
+
  private:
   TypeId dtype_{kTypeUnknown};
   TypeId segment_ids_dtype_{kTypeUnknown};
@@ -45,22 +55,7 @@ class UnsortedSegmentSumCpuKernelMod : public NativeCpuKernelMod {
   size_t output_dim1_{1};
 };
 
-MS_REG_CPU_KERNEL(
-  UnsortedSegmentSum,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  UnsortedSegmentSumCpuKernelMod);
-MS_REG_CPU_KERNEL(
-  UnsortedSegmentSum,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  UnsortedSegmentSumCpuKernelMod);
-MS_REG_CPU_KERNEL(
-  UnsortedSegmentSum,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  UnsortedSegmentSumCpuKernelMod);
-MS_REG_CPU_KERNEL(
-  UnsortedSegmentSum,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  UnsortedSegmentSumCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentSum, UnsortedSegmentSumCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

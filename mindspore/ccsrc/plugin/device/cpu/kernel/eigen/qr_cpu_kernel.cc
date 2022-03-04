@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/eigen/qr_cpu_kernel.h"
+#include <algorithm>
 #include <string>
+#include <utility>
 #include "Eigen/Dense"
 
 namespace mindspore {
@@ -30,9 +32,7 @@ constexpr size_t kPermutationIndex = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 }  // namespace
-
-template <typename T>
-void QRCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void QRCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kQRInputsNum, kernel_name_);
@@ -62,11 +62,19 @@ void QRCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   if (mode == "economic") {
     economic_ = true;
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "QR does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool QRCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool QRCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
   T *a_value = reinterpret_cast<T *>(inputs[0]->addr);
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> input_a(a_value, a_row_, a_col_);
   T *q_value = reinterpret_cast<T *>(outputs[0]->addr);
@@ -91,5 +99,20 @@ bool QRCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   }
   MS_LOG_EXCEPTION << kernel_name_ << " output lu shape invalid.";
 }
+
+std::vector<std::pair<KernelAttr, QRCpuKernelMod::QRFunc>> QRCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &QRCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &QRCpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> QRCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, QRFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, QR, QRCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

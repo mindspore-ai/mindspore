@@ -16,12 +16,12 @@
 
 #include "plugin/device/cpu/kernel/matrix_band_part_cpu_kernel.h"
 #include <algorithm>
+#include <utility>
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void MatrixBandPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void MatrixBandPartCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   dim_size_ = shapes_.size();
   if (shapes_.size() < kDim2) {
@@ -33,11 +33,18 @@ void MatrixBandPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     out_range_size_ *= shapes_[i];
   }
   matrix_size_ = out_range_size_ * m_ * n_;
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "MatrixBandPart does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool MatrixBandPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
   T *in_value = reinterpret_cast<T *>(inputs[0]->addr);
   const int64_t *lower = reinterpret_cast<int64_t *>(inputs[1]->addr);
   const int64_t *upper = reinterpret_cast<int64_t *>(inputs[2]->addr);
@@ -76,5 +83,40 @@ bool MatrixBandPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
   ParallelLaunch(func, out_range_size_ * diag_len);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, MatrixBandPartCpuKernelMod::MatrixBandPartFunc>>
+  MatrixBandPartCpuKernelMod::func_list_ = {{KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeInt32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeInt64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat32)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeFloat32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<float>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeFloat64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> MatrixBandPartCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, MatrixBandPartFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixBandPart, MatrixBandPartCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

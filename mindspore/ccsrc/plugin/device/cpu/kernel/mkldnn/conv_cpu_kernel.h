@@ -35,8 +35,8 @@ class ConvCpuKernelMod : public MKLCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(Conv2D, KernelAttr(), ConvCpuKernelMod);
-MS_REG_CPU_KERNEL(Conv3D, KernelAttr(), ConvCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Conv2D, ConvCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Conv3D, ConvCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

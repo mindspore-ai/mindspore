@@ -15,16 +15,43 @@
  */
 
 #include "plugin/device/cpu/kernel/l2normalize_grad_cpu_kernel.h"
+#include <algorithm>
+#include <string>
+#include <memory>
+#include <utility>
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kL2NormalizeGradInputsNum = 3;
 constexpr size_t kL2NormalizeGradOutputsNum = 1;
-}  // namespace
 
 template <typename T>
-void L2NormalizeGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+class L2NormalizeGradCpuFunc : public CpuKernelFunc {
+ public:
+  L2NormalizeGradCpuFunc() = default;
+  ~L2NormalizeGradCpuFunc() override = default;
+  void InitFunc(const CNodePtr &kernel_node) override;
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  void CheckInputShape(const std::vector<size_t> &output_shape);
+  std::vector<size_t> OneDimIndexToHighDimIndex(size_t one_dim_index);
+  void HighDimIndexToOneDimIndex(size_t *one_dim_index, const std::vector<size_t> &high_dim_index);
+  std::vector<T> GetVector(const std::vector<size_t> &high_dim_index, const T *x);
+  void GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector, T *ss);
+  void GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
+                 const std::vector<T> &dout_vector, const std::vector<size_t> &high_dim_index, T *output);
+  std::vector<std::vector<size_t>> input_shape_list_;
+  std::vector<size_t> dim_elem_num_list_;
+  int axis_{0};
+  T epsilon_{0};
+  std::string kernel_name_;
+};
+
+template <typename T>
+void L2NormalizeGradCpuFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   for (size_t i = 0; i < kL2NormalizeGradInputsNum; i++) {
@@ -46,9 +73,8 @@ void L2NormalizeGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool L2NormalizeGradCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
-                                            const std::vector<AddressPtr> &outputs) {
+bool L2NormalizeGradCpuFunc<T>::RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                        const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2NormalizeGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2NormalizeGradOutputsNum, kernel_name_);
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
@@ -70,7 +96,7 @@ bool L2NormalizeGradCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &input
 }
 
 template <typename T>
-void L2NormalizeGradCpuKernelMod<T>::CheckInputShape(const std::vector<size_t> &output_shape) {
+void L2NormalizeGradCpuFunc<T>::CheckInputShape(const std::vector<size_t> &output_shape) {
   for (const auto &shape : input_shape_list_) {
     if (output_shape != shape) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -87,7 +113,7 @@ void L2NormalizeGradCpuKernelMod<T>::CheckInputShape(const std::vector<size_t> &
 }
 
 template <typename T>
-std::vector<size_t> L2NormalizeGradCpuKernelMod<T>::OneDimIndexToHighDimIndex(size_t one_dim_index) {
+std::vector<size_t> L2NormalizeGradCpuFunc<T>::OneDimIndexToHighDimIndex(size_t one_dim_index) {
   std::vector<size_t> high_dim_index;
   high_dim_index.reserve(dim_elem_num_list_.size());
   for (const auto &item : dim_elem_num_list_) {
@@ -100,8 +126,8 @@ std::vector<size_t> L2NormalizeGradCpuKernelMod<T>::OneDimIndexToHighDimIndex(si
 }
 
 template <typename T>
-void L2NormalizeGradCpuKernelMod<T>::HighDimIndexToOneDimIndex(size_t *one_dim_index,
-                                                               const std::vector<size_t> &high_dim_index) {
+void L2NormalizeGradCpuFunc<T>::HighDimIndexToOneDimIndex(size_t *one_dim_index,
+                                                          const std::vector<size_t> &high_dim_index) {
   *one_dim_index = 0;
   int len = high_dim_index.size();
   for (int i = 0; i < len; i++) {
@@ -110,7 +136,7 @@ void L2NormalizeGradCpuKernelMod<T>::HighDimIndexToOneDimIndex(size_t *one_dim_i
 }
 
 template <typename T>
-std::vector<T> L2NormalizeGradCpuKernelMod<T>::GetVector(const std::vector<size_t> &high_dim_index, const T *x) {
+std::vector<T> L2NormalizeGradCpuFunc<T>::GetVector(const std::vector<size_t> &high_dim_index, const T *x) {
   auto x_shape = input_shape_list_[0];
   std::vector<T> x_vector;
   x_vector.reserve(x_shape[axis_]);
@@ -127,8 +153,7 @@ std::vector<T> L2NormalizeGradCpuKernelMod<T>::GetVector(const std::vector<size_
 }
 
 template <typename T>
-void L2NormalizeGradCpuKernelMod<T>::GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector,
-                                                     T *ss) {
+void L2NormalizeGradCpuFunc<T>::GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector, T *ss) {
   size_t len = x_vector.size();
   std::vector<T> tmp_vector(len);
   for (size_t i = 0; i < len; i++) {
@@ -150,9 +175,9 @@ void L2NormalizeGradCpuKernelMod<T>::GetSumOfProduct(const std::vector<T> &x_vec
 }
 
 template <typename T>
-void L2NormalizeGradCpuKernelMod<T>::GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
-                                               const std::vector<T> &dout_vector,
-                                               const std::vector<size_t> &high_dim_index, T *output) {
+void L2NormalizeGradCpuFunc<T>::GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
+                                          const std::vector<T> &dout_vector, const std::vector<size_t> &high_dim_index,
+                                          T *output) {
   size_t axis_index = high_dim_index[axis_];
   T dout = dout_vector[axis_index];
   T y = y_vector[axis_index];
@@ -167,5 +192,46 @@ void L2NormalizeGradCpuKernelMod<T>::GetOutput(const std::vector<T> &input_x_vec
     *output = (dout - y * tmp_sum1) / epsilon_;
   }
 }
+
+template <typename T>
+std::shared_ptr<CpuKernelFunc> SpecializeL2NormGradFunc() {
+  return std::make_shared<L2NormalizeGradCpuFunc<T>>();
+}
+using SpecializeL2NormGradFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+std::vector<std::pair<KernelAttr, SpecializeL2NormGradFuncCreator>> func_class_list = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   SpecializeL2NormGradFunc<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
+   SpecializeL2NormGradFunc<float16>}};
+}  // namespace
+
+void L2NormalizeGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "L2Norm does not support this kernel data type: " << kernel_attr;
+  }
+
+  func_obj_ = func_class_list[index].second();
+  func_obj_->InitFunc(kernel_node);
+}
+
+std::vector<KernelAttr> L2NormalizeGradCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_class_list.begin(), func_class_list.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, SpecializeL2NormGradFuncCreator> &pair) { return pair.first; });
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, L2NormalizeGrad, L2NormalizeGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

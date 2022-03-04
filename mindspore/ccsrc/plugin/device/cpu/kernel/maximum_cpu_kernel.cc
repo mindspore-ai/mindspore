@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/maximum_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -31,8 +33,7 @@ constexpr size_t kMaximumInputsNum = 2;
 constexpr size_t kMaximumOutputsNum = 1;
 }  // namespace
 
-template <typename T>
-void MaximumCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void MaximumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -55,10 +56,19 @@ void MaximumCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
                       << "', inputs should be two tensors or one tensor and one scalar, but got " << input_x_dtype
                       << " and " << input_y_dtype;
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, MaximumLaunchFunc> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Maximum does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
-template <typename T>
-void MaximumCpuKernelMod<T>::InitInputTensorAndScalar(size_t max_input_shape_size) {
+void MaximumCpuKernelMod::InitInputTensorAndScalar(size_t max_input_shape_size) {
   if (max_input_shape_size != output_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output tensor should be equal to the max "
@@ -68,8 +78,7 @@ void MaximumCpuKernelMod<T>::InitInputTensorAndScalar(size_t max_input_shape_siz
   need_broadcast_ = false;
 }
 
-template <typename T>
-void MaximumCpuKernelMod<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype) {
+void MaximumCpuKernelMod::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype) {
   if (input_x_dtype == kNumberTypeBool && input_y_dtype == kNumberTypeBool) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor types should not be both bool.";
   }
@@ -81,9 +90,8 @@ void MaximumCpuKernelMod<T>::InitInputTensors(TypeId input_x_dtype, TypeId input
 }
 
 template <typename T>
-bool MaximumCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool MaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaximumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaximumOutputsNum, kernel_name_);
   T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
@@ -94,7 +102,7 @@ bool MaximumCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-void MaximumCpuKernelMod<T>::BroadcastArith(const T *input_x, const T *input_y, T *output) const {
+void MaximumCpuKernelMod::BroadcastArith(const T *input_x, const T *input_y, T *output) const {
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_y);
   MS_EXCEPTION_IF_NULL(output);
@@ -119,8 +127,7 @@ void MaximumCpuKernelMod<T>::BroadcastArith(const T *input_x, const T *input_y, 
   }
 }
 
-template <typename T>
-bool MaximumCpuKernelMod<T>::IsBroadcast() const {
+bool MaximumCpuKernelMod::IsBroadcast() const {
   if (input_x_shape_.size() != input_y_shape_.size()) {
     return true;
   }
@@ -132,8 +139,7 @@ bool MaximumCpuKernelMod<T>::IsBroadcast() const {
   return false;
 }
 
-template <typename T>
-void MaximumCpuKernelMod<T>::InitTensorBroadcastShape() {
+void MaximumCpuKernelMod::InitTensorBroadcastShape() {
   if (output_shape_.size() > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output should be less than or equal to 7, but got "
@@ -160,20 +166,16 @@ void MaximumCpuKernelMod<T>::InitTensorBroadcastShape() {
 }
 
 // Broadcast comparison
-template <typename T>
-size_t MaximumCpuKernelMod<T>::Index(const size_t &index, const size_t &dim) const {
-  return dim == 1 ? 0 : index;
-}
+size_t MaximumCpuKernelMod::Index(const size_t &index, const size_t &dim) const { return dim == 1 ? 0 : index; }
 
 // Broadcast Arithmetic
 template <typename T>
-void MaximumCpuKernelMod<T>::BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
-                                                  const size_t l4, const size_t l5, const size_t l6, const size_t r0,
-                                                  const size_t r1, const size_t r2, const size_t r3, const size_t r4,
-                                                  const size_t r5, const size_t r6, const size_t d0, const size_t d1,
-                                                  const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                                  const size_t d6, const T *input_x, const T *input_y,
-                                                  T *output) const {
+void MaximumCpuKernelMod::BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
+                                               const size_t l4, const size_t l5, const size_t l6, const size_t r0,
+                                               const size_t r1, const size_t r2, const size_t r3, const size_t r4,
+                                               const size_t r5, const size_t r6, const size_t d0, const size_t d1,
+                                               const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                                               const size_t d6, const T *input_x, const T *input_y, T *output) const {
   for (size_t pos = 0; pos < output_num_; pos++) {
     size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
     size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
@@ -202,7 +204,7 @@ void MaximumCpuKernelMod<T>::BroadcastArithKernel(const size_t l0, const size_t 
 }
 
 template <typename T>
-void MaximumCpuKernelMod<T>::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const {
+void MaximumCpuKernelMod::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const {
   if (input_x_shape_.size() == 0) {
     for (size_t i = 0; i < output_num_; ++i) {
       output[i] = MaximumFunc(input_x[0], input_y[i]);
@@ -215,10 +217,26 @@ void MaximumCpuKernelMod<T>::BroadcastArithOneScalarOneTensor(const T *input_x, 
 }
 
 template <typename T>
-void MaximumCpuKernelMod<T>::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const {
+void MaximumCpuKernelMod::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const {
   for (size_t i = 0; i < output_num_; ++i) {
     output[i] = MaximumFunc(input_x[i], input_y[i]);
   }
 }
+
+std::vector<std::pair<KernelAttr, MaximumCpuKernelMod::MaximumLaunchFunc>> MaximumCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &MaximumCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MaximumCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &MaximumCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &MaximumCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &MaximumCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &MaximumCpuKernelMod::LaunchKernel<double>}};
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Maximum, MaximumCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

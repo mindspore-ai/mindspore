@@ -33,6 +33,19 @@ class BatchNormGradCpuKernelMod : public MKLCpuKernelMod {
 
  protected:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
 
  private:
   float momentum{0.9};
@@ -46,18 +59,7 @@ class BatchNormGradCpuKernelMod : public MKLCpuKernelMod {
   enum output_list_ { DX, DSCALE, DBIAS };
 };
 
-MS_REG_CPU_KERNEL(BatchNormGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  BatchNormGradCpuKernelMod)
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BatchNormGrad, BatchNormGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

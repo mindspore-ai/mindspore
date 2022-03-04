@@ -15,15 +15,26 @@
  */
 
 #include "plugin/device/cpu/kernel/rpc/rpc_recv_kernel.h"
+#include <utility>
+#include <algorithm>
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL_T(RpcRecv,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32)
-                      .SetAllSameAttr(true)
-                      .AddOutInRef(0, 0),
-                    RpcRecvKernelMod, float);
+std::vector<std::pair<KernelAttr, RpcRecvKernelMod::RpcRecvFunc>> RpcRecvKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddAllSameAttr(true)
+     .AddOutInRef(0, 0),
+   &RpcRecvKernelMod::LaunchKernel<float>}};
+
+std::vector<KernelAttr> RpcRecvKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, RpcRecvFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RpcRecv, RpcRecvKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

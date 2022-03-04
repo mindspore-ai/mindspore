@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,8 +41,6 @@ class AdamWeightDecayCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
   enum input_list_ { VAR, M, V, LR, BETA1, BETA2, EPSILON, DECAY, GRAD };
 };
-
-MS_REG_CPU_KERNEL(AdamWeightDecay, KernelAttr(), AdamWeightDecayCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

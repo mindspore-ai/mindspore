@@ -19,12 +19,12 @@
 
 #include <vector>
 #include <memory>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class ConcatOffsetCpuKernelMod : public NativeCpuKernelMod {
  public:
   ConcatOffsetCpuKernelMod() = default;
@@ -33,22 +33,22 @@ class ConcatOffsetCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using ConcatOffsetFunc = std::function<bool(ConcatOffsetCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                              const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, ConcatOffsetFunc>> func_list_;
+  ConcatOffsetFunc kernel_func_;
   size_t axis_{0};
 };
-
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, int8_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, int16_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, int32_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, int64_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, uint8_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, uint16_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, uint32_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, uint64_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore
 

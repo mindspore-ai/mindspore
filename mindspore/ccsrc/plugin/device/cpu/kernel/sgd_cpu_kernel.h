@@ -19,12 +19,12 @@
 
 #include <thread>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class SGDCpuKernelMod : public NativeCpuKernelMod {
  public:
   SGDCpuKernelMod() = default;
@@ -32,37 +32,27 @@ class SGDCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using SGDFunc = std::function<bool(SGDCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, SGDFunc>> func_list_;
+  SGDFunc kernel_func_;
+
   float dampening_{0.0};
   float weight_decay_{0.0};
   bool nesterov_{true};
   enum input_list_ { PARAM, GRAD, LR, ACCUM, MOMENTUM, STAT };
 };
-
-MS_REG_CPU_KERNEL_T(SGD,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    SGDCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(SGD,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddOutputAttr(kNumberTypeFloat16),
-                    SGDCpuKernelMod, float16);
 }  // namespace kernel
 }  // namespace mindspore
 #endif

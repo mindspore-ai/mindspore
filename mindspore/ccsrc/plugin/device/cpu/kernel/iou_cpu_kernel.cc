@@ -18,6 +18,7 @@
 
 #include <string>
 #include <algorithm>
+#include <utility>
 
 namespace mindspore {
 namespace kernel {
@@ -27,8 +28,7 @@ constexpr size_t kIOUOutputsNum = 1;
 constexpr size_t kBoxCoordinateLen = 4;
 }  // namespace
 
-template <typename T>
-void IOUCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void IOUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto anchor_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, ANCHOR_BOXES);
@@ -55,11 +55,18 @@ void IOUCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   if (iou_mode == "iof") {
     mode_ = IOF_MODE;
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "IOU does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool IOUCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool IOUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIOUInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIOUOutputsNum, kernel_name_);
   auto anchor_boxes = reinterpret_cast<T *>(inputs[ANCHOR_BOXES]->addr);
@@ -98,5 +105,20 @@ bool IOUCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   ParallelLaunchAutoSearch(task, iou_size_, this, &parallel_search_info_);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, IOUCpuKernelMod::IOUFunc>> IOUCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &IOUCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &IOUCpuKernelMod::LaunchKernel<float16>}};
+
+std::vector<KernelAttr> IOUCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, IOUFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IOU, IOUCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

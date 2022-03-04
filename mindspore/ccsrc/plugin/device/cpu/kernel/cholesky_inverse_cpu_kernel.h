@@ -18,13 +18,12 @@
 #include <Eigen/Dense>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 constexpr size_t kInputNum = 1;
 constexpr size_t kOutputNum = 1;
 namespace kernel {
-template <typename T>
 class CholeskyInverseCpuKernelMod : public NativeCpuKernelMod {
  public:
   CholeskyInverseCpuKernelMod() = default;
@@ -32,16 +31,18 @@ class CholeskyInverseCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  std::function<bool(const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)> kernel_func_;
   CNodePtr node_wpt_;
 };
-MS_REG_CPU_KERNEL_T(CholeskyInverse, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    CholeskyInverseCpuKernelMod, float)
-MS_REG_CPU_KERNEL_T(CholeskyInverse, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                    CholeskyInverseCpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKYINVERSE_CPU_KERNEL_H_

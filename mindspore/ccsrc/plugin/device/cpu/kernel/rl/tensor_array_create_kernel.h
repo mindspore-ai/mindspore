@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,6 +32,12 @@ class TensorArrayCreateCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
+
  private:
   bool is_dynamic_;
   int64_t size_;
@@ -40,7 +46,7 @@ class TensorArrayCreateCpuKernelMod : public NativeCpuKernelMod {
   std::string name_;
 };
 
-MS_REG_CPU_KERNEL(TensorArray, KernelAttr().AddOutputAttr(kNumberTypeInt64), TensorArrayCreateCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArray, TensorArrayCreateCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

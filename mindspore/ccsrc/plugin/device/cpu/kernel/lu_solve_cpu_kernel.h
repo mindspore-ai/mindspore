@@ -18,14 +18,14 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <memory>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 constexpr size_t kInputNum = 3;
 constexpr size_t kOutputNum = 1;
 namespace kernel {
-template <typename T1, typename T2>
 class LuSolveCpuKernelMod : public NativeCpuKernelMod {
  public:
   LuSolveCpuKernelMod() = default;
@@ -33,32 +33,29 @@ class LuSolveCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-  void LuSolve(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-               T1 *b_working_ptr, T1 *lu_working_ptr, int32_t *pivots_working_ptr, size_t b_stride, size_t a);
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T1, typename T2>
+  void LuSolve(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
+               T1 *b_working_ptr, T1 *lu_working_ptr, int32_t *pivots_working_ptr, size_t b_stride, size_t a);
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using LuSolveFunc = std::function<bool(LuSolveCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, LuSolveFunc>> func_list_;
+  LuSolveFunc kernel_func_;
   CNodePtr node_wpt_;
   std::vector<size_t> input_0_Shape;
   std::vector<size_t> input_1_Shape;
   std::vector<size_t> input_2_Shape;
 };
-
-MS_REG_CPU_KERNEL_T_S(LuSolve,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      LuSolveCpuKernelMod, float, float16);
-MS_REG_CPU_KERNEL_T_S(LuSolve,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      LuSolveCpuKernelMod, float, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LUSOLVE_CPU_KERNEL_H_

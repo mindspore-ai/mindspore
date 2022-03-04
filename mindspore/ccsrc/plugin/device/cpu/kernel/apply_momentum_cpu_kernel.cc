@@ -57,5 +57,28 @@ bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   }
   return true;
 }
+
+std::vector<KernelAttr> ApplyMomentumCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddOutputAttr(kNumberTypeFloat32)
+                                                       .AddOutInRef(0, 0),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddOutputAttr(kNumberTypeFloat32)
+                                                       .AddOutputAttr(kNumberTypeFloat32)
+                                                       .AddOutInRef(0, 0)};
+  return kernel_attr_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyMomentum, ApplyMomentumCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

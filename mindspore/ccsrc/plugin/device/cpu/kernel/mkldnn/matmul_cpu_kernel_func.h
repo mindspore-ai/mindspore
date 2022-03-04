@@ -14,35 +14,35 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATMUL_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATMUL_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_MATMUL_CPU_KERNEL_FUNC_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_MATMUL_CPU_KERNEL_FUNC_H_
 
 #include <vector>
 #include <memory>
+#include <map>
+#include <string>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class MatMulCpuKernelMod : public MKLCpuKernelMod {
+class MatMulCpuKernelFunc : public CpuKernelFunc, private MKLCpuKernelMod {
  public:
-  MatMulCpuKernelMod() = default;
-  ~MatMulCpuKernelMod() override = default;
+  MatMulCpuKernelFunc() = default;
+  ~MatMulCpuKernelFunc() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  void InitFunc(const CNodePtr &kernel_node) override;
 
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  void InitKernel(const CNodePtr &kernel_node) override {}
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return true;
+  }
 };
-MS_REG_CPU_KERNEL(
-  MatMul,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  MatMulCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  BatchMatMul,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  MatMulCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATMUL_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_MATMUL_CPU_KERNEL_FUNC_H_

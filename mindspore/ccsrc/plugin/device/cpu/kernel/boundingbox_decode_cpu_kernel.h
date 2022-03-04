@@ -19,15 +19,15 @@
 
 #include <vector>
 #include <algorithm>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr size_t MIN_MAX_SHAPE_SIZE = 2;
 constexpr size_t INPUT_NUMS = 2;
-template <typename T>
 class BoundingBoxDecodeCpuKernelMod : public NativeCpuKernelMod {
  public:
   BoundingBoxDecodeCpuKernelMod() = default;
@@ -35,26 +35,30 @@ class BoundingBoxDecodeCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  void InitTaskFunc(const CNodePtr &kernel_node);
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using BoundingBoxDecodeFunc =
+    std::function<bool(BoundingBoxDecodeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, BoundingBoxDecodeFunc>> func_list_;
+  BoundingBoxDecodeFunc kernel_func_;
+
   std::vector<float> means_;
   std::vector<float> stds_;
   std::vector<int> max_shape_;
   float wh_ratio_clip_{0.016};
 };
-
-MS_REG_CPU_KERNEL_T(
-  BoundingBoxDecode,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BoundingBoxDecodeCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(
-  BoundingBoxDecode,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BoundingBoxDecodeCpuKernelMod, float16);
-
 }  // namespace kernel
 }  // namespace mindspore
 

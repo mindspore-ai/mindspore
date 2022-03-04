@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/eigen/cholesky_solve_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "Eigen/Cholesky"
 namespace mindspore {
@@ -29,8 +31,7 @@ constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 }  // namespace
 
-template <typename T>
-void CholeskySolveCpuKernelMod<T>::InitRightMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+void CholeskySolveCpuKernelMod::InitRightMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   if (shape.empty()) {
     MS_LOG_EXCEPTION << kernel_name_ << " input shape is empty which is invalid.";
   }
@@ -47,9 +48,8 @@ void CholeskySolveCpuKernelMod<T>::InitRightMatrixInfo(const std::vector<size_t>
   outer_batch_ /= ((*row) * (*col));
 }
 
-template <typename T>
-void CholeskySolveCpuKernelMod<T>::InitLeftMatrixInfo(const std::vector<size_t> &shape, const bool is_rank_equal,
-                                                      size_t *row, size_t *col) {
+void CholeskySolveCpuKernelMod::InitLeftMatrixInfo(const std::vector<size_t> &shape, const bool is_rank_equal,
+                                                   size_t *row, size_t *col) {
   if (shape.empty()) {
     MS_LOG_EXCEPTION << kernel_name_ << " input or output shape is empty which is invalid.";
   }
@@ -62,8 +62,7 @@ void CholeskySolveCpuKernelMod<T>::InitLeftMatrixInfo(const std::vector<size_t> 
   }
 }
 
-template <typename T>
-void CholeskySolveCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void CholeskySolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -85,11 +84,18 @@ void CholeskySolveCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG_EXCEPTION << kernel_name_ << " llt solve input a row is not match to b row: " << input_a_row_ << " vs "
                      << input_b_row_;
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "CholeskySolve does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool CholeskySolveCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                          const std::vector<AddressPtr> &outputs) {
+bool CholeskySolveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                             const std::vector<AddressPtr> &outputs) {
   T *batch_input_value = reinterpret_cast<T *>(inputs[kInputAIndex]->addr);
   T *batch_input_b_value = reinterpret_cast<T *>(inputs[kInputBIndex]->addr);
   T *batch_output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
@@ -110,5 +116,20 @@ bool CholeskySolveCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
   }
   return true;
 }
+
+std::vector<std::pair<KernelAttr, CholeskySolveCpuKernelMod::CholeskySolveFunc>> CholeskySolveCpuKernelMod::func_list_ =
+  {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    &CholeskySolveCpuKernelMod::LaunchKernel<float>},
+   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    &CholeskySolveCpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> CholeskySolveCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, CholeskySolveFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CholeskySolve, CholeskySolveCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

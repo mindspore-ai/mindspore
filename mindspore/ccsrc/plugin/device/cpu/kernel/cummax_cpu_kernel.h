@@ -19,12 +19,12 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class CummaxCPUKernelMod : public NativeCpuKernelMod {
  public:
   CummaxCPUKernelMod() = default;
@@ -32,38 +32,25 @@ class CummaxCPUKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using CummaxFunc = std::function<bool(CummaxCPUKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, CummaxFunc>> func_list_;
+  CummaxFunc kernel_func_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> output1_shape_;
   std::vector<size_t> output2_shape_;
   size_t dim_;
 };
-
-MS_REG_CPU_KERNEL_T(
-  Cummax,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-  CummaxCPUKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  Cummax,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
-  CummaxCPUKernelMod, float16);
-MS_REG_CPU_KERNEL_T(
-  Cummax, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  CummaxCPUKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(
-  Cummax, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  CummaxCPUKernelMod, int64_t);
-MS_REG_CPU_KERNEL_T(
-  Cummax, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
-  CummaxCPUKernelMod, int8_t);
-MS_REG_CPU_KERNEL_T(
-  Cummax, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
-  CummaxCPUKernelMod, uint8_t);
-MS_REG_CPU_KERNEL_T(
-  Cummax, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
-  CummaxCPUKernelMod, uint32_t);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CUMMAX_CPU_KERNEL_H_

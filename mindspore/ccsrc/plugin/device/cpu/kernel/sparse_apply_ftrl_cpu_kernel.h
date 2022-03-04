@@ -37,6 +37,29 @@ class SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKernelMod {
   float l2_{0.0};
   float lr_power_{0.0};
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
+
  private:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
@@ -48,29 +71,7 @@ class SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKernelMod {
                     const std::vector<kernel::AddressPtr> &workspace) const;
 };
 
-MS_REG_CPU_KERNEL(FusedSparseFtrl,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyFtrlCpuKernelMod);
-
-MS_REG_CPU_KERNEL(FusedSparseFtrl,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyFtrlCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedSparseFtrl, SparseApplyFtrlCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -19,7 +19,7 @@
 
 #include "plugin/device/cpu/kernel/embedding_look_up_cpu_kernel.h"
 #include <vector>
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,15 +34,19 @@ class EmbeddingLookUpProxyKernel : public EmbeddingLookUpCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
+
  private:
   size_t key_{0};
   size_t input_dims_{1};
 };
 
-MS_REG_CPU_KERNEL(
-  EmbeddingLookupProxy,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  EmbeddingLookUpProxyKernel);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EmbeddingLookupProxy, EmbeddingLookUpProxyKernel);
 }  // namespace ps
 }  // namespace kernel
 }  // namespace mindspore

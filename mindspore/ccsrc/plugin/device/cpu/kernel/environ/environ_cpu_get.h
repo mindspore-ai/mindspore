@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,6 +32,61 @@ class EnvironGetCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &node) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeInt32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt16)
+                                                     .AddOutputAttr(kNumberTypeInt16),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeUInt32)
+                                                     .AddOutputAttr(kNumberTypeUInt32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeUInt16)
+                                                     .AddOutputAttr(kNumberTypeUInt16),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeUInt8)
+                                                     .AddOutputAttr(kNumberTypeUInt8),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeUInt64)
+                                                     .AddOutputAttr(kNumberTypeUInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeFloat16)
+                                                     .AddOutputAttr(kNumberTypeFloat16),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeBool)
+                                                     .AddOutputAttr(kNumberTypeBool)};
+    return support_list;
+  }
+
  private:
   // The type of env tensor get.
   TypeId value_type_attr_;
@@ -41,76 +96,7 @@ class EnvironGetCpuKernelMod : public NativeCpuKernelMod {
   size_t value_size_;
 };
 
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironGetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  EnvironGetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt16)
-                    .AddOutputAttr(kNumberTypeInt16),
-                  EnvironGetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddOutputAttr(kNumberTypeUInt32),
-                  EnvironGetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeUInt16)
-                    .AddOutputAttr(kNumberTypeUInt16),
-                  EnvironGetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeUInt8)
-                    .AddOutputAttr(kNumberTypeUInt8),
-                  EnvironGetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddOutputAttr(kNumberTypeUInt64),
-                  EnvironGetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  EnvironGetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeFloat16),
-                  EnvironGetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironGet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeBool)
-                    .AddOutputAttr(kNumberTypeBool),
-                  EnvironGetCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EnvironGet, EnvironGetCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

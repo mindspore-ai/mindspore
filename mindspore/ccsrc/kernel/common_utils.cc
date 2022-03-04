@@ -543,16 +543,6 @@ bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &
   return true;
 }
 
-int Sign(float x) {
-  if (x > 0) {
-    return 1;
-  }
-  if (x < 0) {
-    return -1;
-  }
-  return 0;
-}
-
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
                                                           const std::vector<AnfNodePtr> &input_list,
                                                           const std::vector<AnfNodePtr> &output_list) {
@@ -1010,6 +1000,123 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
   }
 
   return bytes;
+}
+
+KernelAttr &KernelAttr::AddInputAttr(const TypeId &ms_type, const std::string &format) {
+  input_type_.emplace_back(ms_type, format);
+  return *this;
+}
+
+KernelAttr &KernelAttr::AddOutputAttr(const TypeId &ms_type, const std::string &format) {
+  output_type_.emplace_back(ms_type, format);
+  return *this;
+}
+
+KernelAttr &KernelAttr::AddAllSameAttr(const bool &all_same) {
+  all_same_ = all_same;
+  return *this;
+}
+
+KernelAttr &KernelAttr::AddOutInRef(size_t output_index, size_t input_index) {
+  out_in_ref_map_[output_index] = input_index;
+  return *this;
+}
+
+void KernelAttr::SetInputAttrList(const std::vector<DataType> &addr_list) {
+  input_type_.assign(addr_list.begin(), addr_list.end());
+}
+
+std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr) {
+  std::stringstream ss;
+  ss << "[Kernel Attr] all same: " << kernel_attr.GetAllSame();
+  size_t input_num = kernel_attr.GetInputSize();
+  if (input_num > 0) {
+    ss << ", input(";
+    for (size_t i = 0; i < input_num; ++i) {
+      ss << TypeIdLabel(kernel_attr.GetInputAttr(i).first);
+      if (i != input_num - 1) {
+        ss << ",";
+      }
+    }
+    ss << ") ";
+  }
+  size_t output_num = kernel_attr.GetOutputSize();
+  if (output_num > 0) {
+    ss << ", output(";
+    for (size_t i = 0; i < output_num; ++i) {
+      ss << TypeIdLabel(kernel_attr.GetOutputAttr(i).first);
+      if (i != output_num - 1) {
+        ss << ",";
+      }
+    }
+    ss << ").";
+  }
+
+  return os << ss.str();
+}
+
+std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
+                                        const std::vector<KernelAttr> &kernel_attr_list) {
+  // kernel_attr should not be all same. If so, then return false.
+  if (kernel_attr.GetAllSame()) {
+    return std::make_pair(false, 0);
+  }
+
+  auto input_num = kernel_attr.GetInputSize();
+  auto output_num = kernel_attr.GetOutputSize();
+
+  for (size_t index = 0; index < kernel_attr_list.size(); ++index) {
+    const auto &cur_kernel_attr = kernel_attr_list[index];
+    auto cur_input_num = cur_kernel_attr.GetInputSize();
+    auto cur_output_num = cur_kernel_attr.GetOutputSize();
+    if (!cur_kernel_attr.GetAllSame() && (input_num != cur_input_num || output_num != cur_output_num)) {
+      continue;
+    }
+
+    bool mis_match = false;
+    for (size_t i = 0; i < input_num; ++i) {
+      auto dtype = cur_kernel_attr.GetInputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).first;
+      auto format = cur_kernel_attr.GetInputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).second;
+      if (kernel_attr.GetInputAttr(i).first != dtype || kernel_attr.GetInputAttr(i).second != format) {
+        mis_match = true;
+        break;
+      }
+    }
+    if (mis_match) {
+      continue;
+    }
+
+    for (size_t i = 0; i < output_num; ++i) {
+      auto dtype = cur_kernel_attr.GetOutputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).first;
+      auto format = cur_kernel_attr.GetOutputAttr(cur_kernel_attr.GetAllSame() ? 0 : i).second;
+      if (kernel_attr.GetOutputAttr(i).first != dtype || kernel_attr.GetOutputAttr(i).second != format) {
+        mis_match = true;
+        break;
+      }
+    }
+    if (!mis_match) {
+      return std::make_pair(true, index);
+    }
+  }
+
+  return std::make_pair(false, 0);
+}
+
+KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info) {
+  MS_EXCEPTION_IF_NULL(build_info);
+  KernelAttr kernel_attr;
+  for (size_t i = 0; i < build_info->GetInputNum(); i++) {
+    kernel_attr.AddInputAttr(build_info->GetInputDeviceType(i), build_info->GetInputFormat(i));
+  }
+  for (size_t j = 0; j < build_info->GetOutputNum(); j++) {
+    kernel_attr.AddOutputAttr(build_info->GetOutputDeviceType(j), build_info->GetOutputFormat(j));
+  }
+  return kernel_attr;
+}
+
+KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node) {
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  return GetKernelAttrFromBuildInfo(build_info);
 }
 }  // namespace kernel
 }  // namespace mindspore

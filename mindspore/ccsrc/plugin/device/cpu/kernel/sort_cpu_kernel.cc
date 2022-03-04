@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/sort_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 #include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void SortCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void SortCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -44,10 +45,16 @@ void SortCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   }
 
   axisIterator_.Init(input_shape, axis_t);
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Sort does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
-template <typename T>
-void SortCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+void SortCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   // id
@@ -55,8 +62,8 @@ void SortCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool SortCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) {
+bool SortCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                    const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size()
                       << " input(s).";
@@ -116,5 +123,20 @@ bool SortCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const st
   ParallelLaunch(tasks);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, SortCpuKernelMod::SortFunc>> SortCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+   &SortCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+   &SortCpuKernelMod::LaunchKernel<float>}};
+
+std::vector<KernelAttr> SortCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, SortFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Sort, SortCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

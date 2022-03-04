@@ -18,20 +18,38 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RPC_RPC_RECV_KERNEL_H_
 
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/rpc/rpc_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 // RpcRecvKernel receives data from another process across network communication. It should not be launched until remote
 // data is received and inputs are ready.
-template <typename T>
 class RpcRecvKernelMod : public RpcKernelMod {
  public:
   RpcRecvKernelMod() : recv_monad_(false) {}
   ~RpcRecvKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+  void InitKernel(const CNodePtr &kernel_node) override {
+    auto input0 = common::AnfAlgo::GetInputNode(kernel_node, 0);
+    // If the input is a monad, no need to launch recv kernel.
+    if (HasAbstractUMonad(input0) || HasAbstractIOMonad(input0)) {
+      recv_monad_ = true;
+    }
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<AddressPtr> &outputs) {
     if (recv_monad_) {
       MS_LOG(DEBUG) << "RpcRecv has a monad as input, no need to launch it.";
       return true;
@@ -46,16 +64,12 @@ class RpcRecvKernelMod : public RpcKernelMod {
 
     return true;
   }
+  using RpcRecvFunc =
+    std::function<bool(RpcRecvKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, RpcRecvFunc>> func_list_;
+  RpcRecvFunc kernel_func_;
 
-  void InitKernel(const CNodePtr &kernel_node) override {
-    auto input0 = common::AnfAlgo::GetInputNode(kernel_node, 0);
-    // If the input is a monad, no need to launch recv kernel.
-    if (HasAbstractUMonad(input0) || HasAbstractIOMonad(input0)) {
-      recv_monad_ = true;
-    }
-  }
-
- private:
   // Whether this RpcRecv node receives a monda data.
   bool recv_monad_;
 };

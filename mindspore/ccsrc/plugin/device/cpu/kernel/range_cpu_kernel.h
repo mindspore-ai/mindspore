@@ -20,7 +20,7 @@
 #include <vector>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,7 +41,7 @@ class RangeCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(Range, KernelAttr(), RangeCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Range, RangeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

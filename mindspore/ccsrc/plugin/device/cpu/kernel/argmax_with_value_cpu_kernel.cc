@@ -61,34 +61,9 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
 }  // namespace
 
 template <typename T>
-void ArgMaxWithValueCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  size_t shape_len = shape_.size();
-  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  axis += SizeToLong(shape_len);
-  if (axis < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)
-                      << "], but got " << axis;
-  }
-  axis = axis % SizeToLong(shape_len);
-  num_before_axis_ = 1;
-  num_after_axis_ = 1;
-  for (size_t i = 0; i < shape_len; i++) {
-    if (SizeToLong(i) < axis) {
-      num_before_axis_ *= shape_[i];
-    } else if (SizeToLong(i) > axis) {
-      num_after_axis_ *= shape_[i];
-    }
-  }
-  dim_axis_ = shape_[LongToSize(axis)];
-}
-
-template <typename T>
-bool ArgMaxWithValueCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool ArgMaxWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                               const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &outputs) {
   if (!check_validation<T>(shape_, num_before_axis_, num_after_axis_, inputs, outputs)) {
     return false;
   }
@@ -116,5 +91,47 @@ bool ArgMaxWithValueCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr
   }
   return true;
 }
+
+void ArgMaxWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  size_t shape_len = shape_.size();
+  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  axis += SizeToLong(shape_len);
+  if (axis < 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)
+                      << "], but got " << axis;
+  }
+  axis = axis % SizeToLong(shape_len);
+  num_before_axis_ = 1;
+  num_after_axis_ = 1;
+  for (size_t i = 0; i < shape_len; i++) {
+    if (SizeToLong(i) < axis) {
+      num_before_axis_ *= shape_[i];
+    } else if (SizeToLong(i) > axis) {
+      num_after_axis_ *= shape_[i];
+    }
+  }
+  dim_axis_ = shape_[LongToSize(axis)];
+
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  if (build_info->GetInputNum() < 1) {
+    MS_LOG(EXCEPTION) << "Argmax input size should not less than 1!";
+  }
+  auto input_type_id = build_info->GetInputDeviceType(0);
+  switch (input_type_id) {
+    case kNumberTypeFloat32:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<float>;
+      break;
+    case kNumberTypeFloat16:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<float16>;
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Argmax kernel does not support " << TypeIdToString(input_type_id);
+  }
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ArgMaxWithValue, ArgMaxWithValueCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

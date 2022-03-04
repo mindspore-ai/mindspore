@@ -21,8 +21,9 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "ps/ps_context.h"
 #include "fl/worker/fl_worker.h"
 
@@ -30,7 +31,6 @@ namespace mindspore {
 namespace kernel {
 // The duration between two PushWeight requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPushWeights = 200;
-template <typename T>
 class FusedPushWeightKernelMod : public NativeCpuKernelMod {
  public:
   FusedPushWeightKernelMod()
@@ -111,7 +111,45 @@ class FusedPushWeightKernelMod : public NativeCpuKernelMod {
     return true;
   }
 
-  void Init(const CNodePtr &kernel_node) {
+  void Init(const CNodePtr &kernel_node) override {
+    auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      MS_LOG(EXCEPTION) << "FusedPushWeight does not support this kernel data type: " << kernel_attr;
+    }
+    init_func_ = func_list_[index].second;
+    init_func_(this, kernel_node);
+  }
+
+  void InitKernel(const CNodePtr &kernel_node) override { return; }
+
+ protected:
+  void InitSizeLists() { return; }
+  std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
+  bool BuildPushWeightReq(std::shared_ptr<fl::FBBuilder> fbb, const std::vector<AddressPtr> &weights) {
+    std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;
+    for (size_t i = 0; i < weight_full_names_.size(); i++) {
+      const std::string &weight_name = weight_full_names_[i];
+      auto fbs_weight_fullname = fbb->CreateString(weight_name);
+      auto fbs_weight_data =
+        fbb->CreateVector(reinterpret_cast<const float *>(weights[i]->addr), weights[i]->size / sizeof(float));
+      auto fbs_feature_map = schema::CreateFeatureMap(*(fbb.get()), fbs_weight_fullname, fbs_weight_data);
+      fbs_feature_maps.push_back(fbs_feature_map);
+    }
+    auto fbs_feature_maps_vector = fbb->CreateVector(fbs_feature_maps);
+
+    schema::RequestPushWeightBuilder req_push_weight_builder(*(fbb.get()));
+    req_push_weight_builder.add_iteration(fl_iteration_);
+    req_push_weight_builder.add_feature_map(fbs_feature_maps_vector);
+    auto req_push_weight = req_push_weight_builder.Finish();
+    fbb->Finish(req_push_weight);
+    return true;
+  }
+
+  template <typename T>
+  void InitFunc(const CNodePtr &kernel_node) {
     MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; i++) {
@@ -138,31 +176,9 @@ class FusedPushWeightKernelMod : public NativeCpuKernelMod {
     return;
   }
 
-  void InitKernel(const CNodePtr &kernel_node) { return; }
-
- protected:
-  void InitSizeLists() { return; }
-
- private:
-  bool BuildPushWeightReq(std::shared_ptr<fl::FBBuilder> fbb, const std::vector<AddressPtr> &weights) {
-    std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;
-    for (size_t i = 0; i < weight_full_names_.size(); i++) {
-      const std::string &weight_name = weight_full_names_[i];
-      auto fbs_weight_fullname = fbb->CreateString(weight_name);
-      auto fbs_weight_data =
-        fbb->CreateVector(reinterpret_cast<const float *>(weights[i]->addr), weights[i]->size / sizeof(float));
-      auto fbs_feature_map = schema::CreateFeatureMap(*(fbb.get()), fbs_weight_fullname, fbs_weight_data);
-      fbs_feature_maps.push_back(fbs_feature_map);
-    }
-    auto fbs_feature_maps_vector = fbb->CreateVector(fbs_feature_maps);
-
-    schema::RequestPushWeightBuilder req_push_weight_builder(*(fbb.get()));
-    req_push_weight_builder.add_iteration(fl_iteration_);
-    req_push_weight_builder.add_feature_map(fbs_feature_maps_vector);
-    auto req_push_weight = req_push_weight_builder.Finish();
-    fbb->Finish(req_push_weight);
-    return true;
-  }
+  using FusedPushWeightInitFunc = std::function<void(FusedPushWeightKernelMod *, const CNodePtr &)>;
+  static std::vector<std::pair<KernelAttr, FusedPushWeightInitFunc>> func_list_;
+  FusedPushWeightInitFunc init_func_;
 
   uint32_t server_num_;
   std::vector<int64_t> indices_;

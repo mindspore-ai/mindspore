@@ -15,32 +15,39 @@
  */
 
 #include "plugin/device/cpu/kernel/ps/push_kernel.h"
+#include <tuple>
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL_T(Push,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeUInt64),
-                    PushKernelMod, float);
+std::vector<std::tuple<KernelAttr, PushKernelMod::PushFunc, PushKernelMod::PushInitFunc>> PushKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt64),
+   &PushKernelMod::LaunchKernel<float>, &PushKernelMod::InitFunc<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+   &PushKernelMod::LaunchKernel<float>, &PushKernelMod::InitFunc<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeUInt64),
+   &PushKernelMod::LaunchKernel<float>, &PushKernelMod::InitFunc<float>}};
 
-MS_REG_CPU_KERNEL_T(
-  Push, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
-  PushKernelMod, float);
+std::vector<KernelAttr> PushKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::tuple<KernelAttr, PushFunc, PushInitFunc> &tuple_item) { return std::get<0>(tuple_item); });
+  return support_list;
+}
 
-MS_REG_CPU_KERNEL_T(Push,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeUInt64),
-                    PushKernelMod, float);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Push, PushKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

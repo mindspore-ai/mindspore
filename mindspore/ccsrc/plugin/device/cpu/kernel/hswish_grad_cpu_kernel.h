@@ -20,12 +20,12 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class HSwishGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   HSwishGradCpuKernelMod() = default;
@@ -33,19 +33,21 @@ class HSwishGradCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using HSwishGradFunc = std::function<bool(HSwishGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, HSwishGradFunc>> func_list_;
+  HSwishGradFunc kernel_func_;
   std::vector<size_t> x_shape_;
   uint64_t tensor_size_ = 1;
 };
-
-MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCpuKernelMod, int8_t);
-MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCpuKernelMod, int16_t);
-MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCpuKernelMod, int64_t);
-MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSWISH_GRAD_CPU_KERNEL_H_

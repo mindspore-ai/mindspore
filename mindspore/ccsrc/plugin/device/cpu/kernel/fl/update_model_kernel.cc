@@ -18,8 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL(UpdateModel,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  UpdateModelKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UpdateModel, UpdateModelKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -18,19 +18,28 @@
 
 #include <vector>
 #include <memory>
+#include <map>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kFusedAdaFactor = "FusedAdaFactor";
+constexpr auto kFusedAdaFactorWithGlobalNorm = "FusedAdaFactorWithGlobalNorm";
+constexpr auto kUnknown = "Unknown";
 class FusedAdaFactorCpuKernelMod : public NativeCpuKernelMod {
  public:
   FusedAdaFactorCpuKernelMod() = default;
+  explicit FusedAdaFactorCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~FusedAdaFactorCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   void CheckInputAddresses(const std::vector<AddressPtr> &inputs) const;
@@ -73,77 +82,9 @@ class FusedAdaFactorCpuKernelMod : public NativeCpuKernelMod {
   };
 
   enum WorkspaceEnum { UPDATE, R_FACTOR, C_FACTOR };
+
+  std::string kernel_type_{kUnknown};
 };
-
-MS_REG_CPU_KERNEL(FusedAdaFactor,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  FusedAdaFactorCpuKernelMod)
-
-MS_REG_CPU_KERNEL(FusedAdaFactor,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeFloat16),
-                  FusedAdaFactorCpuKernelMod)
-
-MS_REG_CPU_KERNEL(FusedAdaFactorWithGlobalNorm,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  FusedAdaFactorCpuKernelMod)
-
-MS_REG_CPU_KERNEL(FusedAdaFactorWithGlobalNorm,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat16),
-                  FusedAdaFactorCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

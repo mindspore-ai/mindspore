@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,36 +34,30 @@ class LogMatrixDeterminantCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex64)
+        .AddOutputAttr(kNumberTypeComplex64)
+        .AddOutputAttr(kNumberTypeComplex64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex128)
+        .AddOutputAttr(kNumberTypeComplex128)
+        .AddOutputAttr(kNumberTypeComplex128)};
+    return support_list;
+  }  // namespace kernel
+
  private:
   CNodeWeakPtr node_wpt_;
   TypeId dtype_{kTypeUnknown};
   template <typename T>
   void LaunchLogMatrixDeterminant(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-};
+};  // namespace kernel
 
-MS_REG_CPU_KERNEL(
-  LogMatrixDeterminant,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  LogMatrixDeterminantCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  LogMatrixDeterminant,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  LogMatrixDeterminantCpuKernelMod);
-
-MS_REG_CPU_KERNEL(LogMatrixDeterminant,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeComplex64)
-                    .AddOutputAttr(kNumberTypeComplex64)
-                    .AddOutputAttr(kNumberTypeComplex64),
-                  LogMatrixDeterminantCpuKernelMod);
-
-MS_REG_CPU_KERNEL(LogMatrixDeterminant,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeComplex128)
-                    .AddOutputAttr(kNumberTypeComplex128)
-                    .AddOutputAttr(kNumberTypeComplex128),
-                  LogMatrixDeterminantCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LogMatrixDeterminant, LogMatrixDeterminantCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LOG_MATRIX_DETERMINANT_CPU_KERNEL_H_

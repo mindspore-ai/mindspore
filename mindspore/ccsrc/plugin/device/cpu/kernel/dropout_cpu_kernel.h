@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -46,8 +46,6 @@ class DropoutCpuKernelMod : public NativeCpuKernelMod {
   float keep_prob_{0.0};
   uint64_t tensor_size_{1};
 };
-
-MS_REG_CPU_KERNEL(Dropout, KernelAttr(), DropoutCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DROPOUT_CPU_KERNEL_H_

@@ -18,57 +18,39 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SELECT_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class SelectCpuKernelMod : public NativeCpuKernelMod {
  public:
   SelectCpuKernelMod() = default;
   ~SelectCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using SelectFunc =
+    std::function<bool(SelectCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, SelectFunc>> func_list_;
+  SelectFunc kernel_func_;
+
   size_t element_num_{1};
 };
-
-MS_REG_CPU_KERNEL_T(Select,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    SelectCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(Select,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddOutputAttr(kNumberTypeFloat64),
-                    SelectCpuKernelMod, double);
-
-MS_REG_CPU_KERNEL_T(Select,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddOutputAttr(kNumberTypeFloat16),
-                    SelectCpuKernelMod, float16);
-
-MS_REG_CPU_KERNEL_T(Select,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeInt32),
-                    SelectCpuKernelMod, int);
 }  // namespace kernel
 }  // namespace mindspore
 

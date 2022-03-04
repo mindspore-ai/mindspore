@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MINIMUM_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class MinimumCpuKernelMod : public NativeCpuKernelMod {
  public:
   MinimumCpuKernelMod() = default;
@@ -31,36 +31,44 @@ class MinimumCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  private:
   bool IsBroadcast() const;
-
   size_t Index(const size_t &index, const size_t &dim) const;
-
   void InitTensorBroadcastShape();
-
   void InitInputTensorAndScalar(size_t max_input_shape_size);
-
   void InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype);
 
   // Broadcast Arithmetic
+  template <typename T>
   void BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3, const size_t l4,
                             const size_t l5, const size_t l6, const size_t r0, const size_t r1, const size_t r2,
                             const size_t r3, const size_t r4, const size_t r5, const size_t r6, const size_t d0,
                             const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
                             const size_t d6, const T *input_x, const T *input_y, T *output) const;
-
-  T MinimumFunc(const T &lhs, const T &rhs) const { return lhs < rhs ? lhs : rhs; }
-
+  template <typename T>
+  T MinimumFunc(const T &lhs, const T &rhs) const {
+    return lhs < rhs ? lhs : rhs;
+  }
+  template <typename T>
   void BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const;
-
+  template <typename T>
   void BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const;
-
+  template <typename T>
   void BroadcastArith(const T *input_x, const T *input_y, T *output) const;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
  private:
+  using MinimumLaunchFunc = std::function<bool(MinimumCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, MinimumLaunchFunc>> func_list_;
+  MinimumLaunchFunc kernel_func_;
+
   bool need_broadcast_{false};
   size_t input_x_num_{1};
   size_t input_y_num_{1};
@@ -73,13 +81,6 @@ class MinimumCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> broadcast_output_shape_;
   const size_t max_dims_{7};
 };
-
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, uint32_t);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, int64_t);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, uint64_t);
-MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -373,5 +373,80 @@ void FusedAdaFactorCpuKernelMod::CheckWorkspaceAddresses(const std::vector<kerne
                       << update_size / last_col_dim_size_ << ", but got " << workspaces[C_FACTOR]->size;
   }
 }
+
+std::vector<KernelAttr> FusedAdaFactorCpuKernelMod::GetOpSupport() {
+  static std::map<std::string, std::vector<KernelAttr>> support_list_map = {{kFusedAdaFactor,
+                                                                             {KernelAttr()
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddOutputAttr(kNumberTypeFloat32),
+                                                                              KernelAttr()
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddOutputAttr(kNumberTypeFloat16)}},
+                                                                            {kFusedAdaFactorWithGlobalNorm,
+                                                                             {KernelAttr()
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddOutputAttr(kNumberTypeFloat32),
+                                                                              KernelAttr()
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat16)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddOutputAttr(kNumberTypeFloat16)}}};
+  auto iter = support_list_map.find(kernel_type_);
+  if (iter == support_list_map.end()) {
+    MS_LOG(EXCEPTION) << "Does not support " << kernel_type_ << "!";
+  }
+
+  return iter->second;
+}
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FusedAdaFactor,
+                                 []() { return std::make_shared<FusedAdaFactorCpuKernelMod>(kFusedAdaFactor); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FusedAdaFactorWithGlobalNorm, []() {
+  return std::make_shared<FusedAdaFactorCpuKernelMod>(kFusedAdaFactorWithGlobalNorm);
+});
 }  // namespace kernel
 }  // namespace mindspore

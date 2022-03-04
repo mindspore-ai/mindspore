@@ -15,8 +15,10 @@
  */
 
 #include "plugin/device/cpu/kernel/eigen/lu_solve_cpu_kernel.h"
+#include <algorithm>
 #include <vector>
 #include <string>
+#include <utility>
 #include "utils/ms_utils.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "Eigen/Dense"
@@ -34,8 +36,7 @@ constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 }  // namespace
 
-template <typename T>
-void LUSolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void LUSolverCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -71,12 +72,19 @@ void LUSolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     out_col_ = output_lu_shape.at(output_lu_shape.size() - kColIndex);
   }
   trans_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, TRANS);
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "LUSolver does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool LUSolverCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool LUSolverCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   T *a_value = reinterpret_cast<T *>(inputs[kLUaIndex]->addr);
   Map<Matrix<T, RowMajor>> input_a(a_value, a_row_, a_col_);
 
@@ -102,5 +110,20 @@ bool LUSolverCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
 
   return true;
 }
+
+std::vector<std::pair<KernelAttr, LUSolverCpuKernelMod::LUSolverFunc>> LUSolverCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &LUSolverCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &LUSolverCpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> LUSolverCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, LUSolverFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LUSolver, LUSolverCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

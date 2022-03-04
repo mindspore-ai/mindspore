@@ -15,6 +15,7 @@
  */
 #include <random>
 #include <thread>
+#include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/random_cpu_kernel.h"
 
@@ -143,5 +144,29 @@ bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   }
   return true;
 }
+
+std::vector<KernelAttr> RandomCpuKernelMod::GetOpSupport() {
+  static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
+    {kStandardNormal, {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kUniformInt,
+     {KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeInt32)}},
+    {kUniformReal, {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)}}};
+  auto iter = support_list_map.find(kernel_type_);
+  if (iter == support_list_map.end()) {
+    MS_LOG(EXCEPTION) << "Does not support " << kernel_type_ << "!";
+  }
+  return iter->second;
+}
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, StandardNormal,
+                                 []() { return std::make_shared<RandomCpuKernelMod>(kStandardNormal); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, UniformInt,
+                                 []() { return std::make_shared<RandomCpuKernelMod>(kUniformInt); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, UniformReal,
+                                 []() { return std::make_shared<RandomCpuKernelMod>(kUniformReal); });
 }  // namespace kernel
 }  // namespace mindspore

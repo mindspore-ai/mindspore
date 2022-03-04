@@ -153,5 +153,26 @@ void CoalesceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
     y_shape_addr[i] = x_shape_addr[i];
   }
 }
+
+std::vector<KernelAttr> CoalesceCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                   .AddInputAttr(kNumberTypeInt64)
+                                                   .AddInputAttr(kNumberTypeFloat32)
+                                                   .AddInputAttr(kNumberTypeInt64)
+                                                   .AddOutputAttr(kNumberTypeInt64)
+                                                   .AddOutputAttr(kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeInt64),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeInt64)
+                                                   .AddInputAttr(kNumberTypeFloat16)
+                                                   .AddInputAttr(kNumberTypeInt64)
+                                                   .AddOutputAttr(kNumberTypeInt64)
+                                                   .AddOutputAttr(kNumberTypeFloat16)
+                                                   .AddOutputAttr(kNumberTypeInt64)};
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Coalesce, CoalesceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

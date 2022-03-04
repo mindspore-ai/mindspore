@@ -16,8 +16,11 @@
 
 #include "plugin/device/cpu/kernel/eigen/matrix_triangular_solve_cpu_kernel.h"
 #include <Eigen/Dense>
+#include <algorithm>
 #include <vector>
 #include <string>
+#include <utility>
+
 namespace mindspore {
 namespace kernel {
 using Eigen::ColMajor;
@@ -37,8 +40,7 @@ constexpr auto kAVectorxDimNum = 1;
 constexpr auto kAMatrixDimNum = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
-template <typename T>
-void MatrixTriangularSolveCpuKernelMod<T>::InitShape(const CNodePtr &kernel_node) {
+void MatrixTriangularSolveCpuKernelMod::InitShape(const CNodePtr &kernel_node) {
   auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   // Since the shape check is done in frontend, we can suppose that the shape of a, b here is valid.
@@ -58,8 +60,7 @@ void MatrixTriangularSolveCpuKernelMod<T>::InitShape(const CNodePtr &kernel_node
   }
 }
 
-template <typename T>
-void MatrixTriangularSolveCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void MatrixTriangularSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   InitShape(kernel_node);
   if (common::AnfAlgo::HasNodeAttr(ADJOINT, kernel_node)) {
@@ -84,6 +85,13 @@ void MatrixTriangularSolveCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_nod
                         << "].";
     }
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "SolveTriangular does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename Derived_a, typename Derived_b, typename T>
@@ -106,9 +114,9 @@ inline void solve(const MatrixBase<Derived_a> &a, const MatrixBase<Derived_b> &b
 }
 
 template <typename T>
-bool MatrixTriangularSolveCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> & /* workspace */,
-                                                  const std::vector<AddressPtr> &outputs) {
+bool MatrixTriangularSolveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                     const std::vector<AddressPtr> &,
+                                                     const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
 
@@ -137,5 +145,22 @@ bool MatrixTriangularSolveCpuKernelMod<T>::Launch(const std::vector<AddressPtr> 
 
   return true;
 }
+
+std::vector<std::pair<KernelAttr, MatrixTriangularSolveCpuKernelMod::MatrixTriangularSolveFunc>>
+  MatrixTriangularSolveCpuKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &MatrixTriangularSolveCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &MatrixTriangularSolveCpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> MatrixTriangularSolveCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, MatrixTriangularSolveFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SolveTriangular, MatrixTriangularSolveCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixTriangularSolve, MatrixTriangularSolveCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

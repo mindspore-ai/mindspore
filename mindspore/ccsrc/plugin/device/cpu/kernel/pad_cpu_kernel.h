@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -49,7 +49,7 @@ class PadCpuKernelMod : public NativeCpuKernelMod {
   size_t output_size_{1};
 };
 
-MS_REG_CPU_KERNEL(Pad, KernelAttr(), PadCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Pad, PadCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PAD_CPU_KERNEL_H_

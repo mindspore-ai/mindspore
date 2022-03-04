@@ -70,5 +70,7 @@ bool BiasAddGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BiasAddGrad, BiasAddGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

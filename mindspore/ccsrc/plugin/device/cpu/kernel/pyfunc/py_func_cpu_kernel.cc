@@ -23,7 +23,7 @@
 #include "abstract/utils.h"
 #include "plugin/device/cpu/hal/device/cpu_common.h"
 #include "pybind_api/ir/tensor_py.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -355,6 +355,6 @@ py::function PyFuncCpuKernelMod::GetPythonFunc() {
   return py_func_obj.cast<py::function>();
 }
 
-MS_REG_CPU_KERNEL(PyFunc, KernelAttr(), PyFuncCpuKernelMod)
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PyFunc, PyFuncCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

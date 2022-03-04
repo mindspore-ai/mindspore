@@ -21,20 +21,57 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <map>
 
 #include "plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kAvgPoolGrad = "AvgPoolGrad";
+constexpr auto kAvgPool3DGrad = "AvgPool3DGrad";
+constexpr auto kMaxPoolGrad = "MaxPoolGrad";
+constexpr auto kMaxPool3DGrad = "MaxPool3DGrad";
+constexpr auto kUnknown = "Unknown";
 class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
  public:
   PoolingGradCpuKernelMod() = default;
+  explicit PoolingGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~PoolingGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::map<std::string, std::vector<KernelAttr>> support_list = {
+      {kAvgPoolGrad,
+       {{KernelAttr()
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddOutputAttr(kNumberTypeFloat32)}}},
+      {kAvgPool3DGrad, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}}},
+      {kMaxPoolGrad,
+       {{KernelAttr()
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddOutputAttr(kNumberTypeFloat32)}}},
+      {kMaxPool3DGrad,
+       {{KernelAttr()
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddOutputAttr(kNumberTypeFloat32)}}}};
+
+    auto iter = support_list.find(kernel_type_);
+    if (iter == support_list.end()) {
+      MS_LOG(EXCEPTION) << "PoolingGrad does not support kernel type: " << kernel_type_;
+    }
+    return iter->second;
+  }
 
  private:
   void InitFields(const CNodePtr &kernel_node);
@@ -45,34 +82,9 @@ class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
   dnnl::memory::desc workspace_desc_{};
   dnnl::pooling_forward::primitive_desc forward_prim_desc_{};
   size_t grad_index_{0};
+
+  std::string kernel_type_{kUnknown};
 };
-
-MS_REG_CPU_KERNEL(AvgPoolGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  PoolingGradCpuKernelMod)
-
-MS_REG_CPU_KERNEL(AvgPool3DGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  PoolingGradCpuKernelMod)
-
-MS_REG_CPU_KERNEL(MaxPoolGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  PoolingGradCpuKernelMod)
-
-MS_REG_CPU_KERNEL(MaxPool3DGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  PoolingGradCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

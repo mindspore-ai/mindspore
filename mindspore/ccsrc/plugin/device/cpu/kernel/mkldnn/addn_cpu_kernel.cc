@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/mkldnn/addn_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
@@ -42,8 +44,7 @@ void AddT(const T *in0, const T *in1, T *out, int start, int end) {
 }
 }  // namespace
 
-template <typename T>
-void AddNCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void AddNCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -64,11 +65,19 @@ void AddNCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_SRC_0, src0_mem_desc);
   AddArgument(DNNL_ARG_SRC_1, src1_mem_desc);
   AddArgument(DNNL_ARG_DST, dst_mem_desc);
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "AddN does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool AddNCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool AddNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> &,
+                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAddNOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
@@ -110,8 +119,7 @@ bool AddNCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   return true;
 }
 
-template <typename T>
-void AddNCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
+void AddNCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   auto src0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (src0_shape != dst_shape) {
@@ -124,5 +132,38 @@ void AddNCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
     }
   }
 }
+
+std::vector<std::pair<KernelAttr, AddNCpuKernelMod::AddNFunc>> AddNCpuKernelMod::func_list_ = {
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &AddNCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &AddNCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &AddNCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &AddNCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &AddNCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &AddNCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &AddNCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &AddNCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &AddNCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &AddNCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &AddNCpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> AddNCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, AddNFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AddN, AddNCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

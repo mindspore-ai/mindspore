@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -47,7 +47,7 @@ class MinimumGradCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(MinimumGrad, KernelAttr(), MinimumGradCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MinimumGrad, MinimumGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MINIMUMGRAD_CPU_KERNEL_H_

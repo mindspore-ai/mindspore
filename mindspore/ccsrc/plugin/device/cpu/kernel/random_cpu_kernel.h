@@ -21,10 +21,14 @@
 #include <string>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kStandardNormal = "StandardNormal";
+constexpr auto kUniformInt = "UniformInt";
+constexpr auto kUniformReal = "UniformReal";
+constexpr auto kUnknown = "Unknown";
 enum RandomOptype { RANDOM_OP_NORMAL = 0, RANDOM_OP_UNIFORM_INT, RANDOM_OP_UNIFORM_REAL, RANDOM_OP_INVALID_TYPE = 255 };
 
 const std::map<std::string, RandomOptype> kRandomOpTypeMap = {
@@ -33,29 +37,22 @@ const std::map<std::string, RandomOptype> kRandomOpTypeMap = {
 class RandomCpuKernelMod : public NativeCpuKernelMod {
  public:
   RandomCpuKernelMod() = default;
+  explicit RandomCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~RandomCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   RandomOptype random_op_type_{RANDOM_OP_INVALID_TYPE};
   int seed_{0};
   int seed2_{0};
+  std::string kernel_type_{kUnknown};
 };
-
-MS_REG_CPU_KERNEL(StandardNormal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                  RandomCpuKernelMod);
-MS_REG_CPU_KERNEL(UniformInt,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  RandomCpuKernelMod)
-MS_REG_CPU_KERNEL(UniformReal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                  RandomCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_CPU_KERNEL_H_

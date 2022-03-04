@@ -18,8 +18,12 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL_T(
-  Pull, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  PullKernelMod, float);
+std::vector<KernelAttr> PullKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {
+    KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Pull, PullKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

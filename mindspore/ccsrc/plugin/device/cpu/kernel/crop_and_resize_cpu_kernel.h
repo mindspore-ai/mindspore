@@ -20,9 +20,10 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,7 +41,6 @@ constexpr size_t BOX_INDEX = 2;
 constexpr size_t CROP_SIZE = 3;
 constexpr size_t IMAGE_HEIGHT = 1;
 constexpr size_t IMAGE_WEIGHT = 2;
-template <typename T>
 class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
  public:
   CropAndResizeCpuKernelMod() = default;
@@ -49,9 +49,22 @@ class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  void InitFunc(const CNodePtr &kernel_node);
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+  using CropAndResizeFunc = std::function<bool(CropAndResizeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, CropAndResizeFunc>> func_list_;
+  CropAndResizeFunc kernel_func_;
   int method_{1};
   float extrapolation_value_{0.0};
   int output_size_{0};
@@ -61,168 +74,6 @@ class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
   int final_width_{0};
   int channel_{0};
 };
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, float16);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, float16);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, double);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, double);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt8)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, int8_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt8)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, int8_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt16)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, int16_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt16)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, int16_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt8)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, int8_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, int32_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeUInt8)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, uint8_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeUInt8)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, uint8_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeUInt16)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, uint16_t);
-
-MS_REG_CPU_KERNEL_T(CropAndResize,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeUInt16)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCpuKernelMod, uint16_t);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -21,7 +21,7 @@
 #include <memory>
 #include <unordered_map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,6 +34,47 @@ class UpdateCacheCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeInt32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
 
  private:
   template <typename T>
@@ -49,59 +90,7 @@ class UpdateCacheCpuKernelMod : public NativeCpuKernelMod {
   CNodeWeakPtr node_wpt_;
 };
 
-MS_REG_CPU_KERNEL(UpdateCache,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  UpdateCacheCpuKernelMod);
-
-MS_REG_CPU_KERNEL(UpdateCache,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  UpdateCacheCpuKernelMod);
-
-MS_REG_CPU_KERNEL(UpdateCache,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  UpdateCacheCpuKernelMod);
-
-MS_REG_CPU_KERNEL(UpdateCache,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  UpdateCacheCpuKernelMod);
-
-MS_REG_CPU_KERNEL(UpdateCache,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  UpdateCacheCpuKernelMod);
-
-MS_REG_CPU_KERNEL(UpdateCache,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  UpdateCacheCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UpdateCache, UpdateCacheCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

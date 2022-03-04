@@ -19,15 +19,15 @@
 
 #include <complex>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-template <typename T>
 class OnesLikeCpuKernelMod : public NativeCpuKernelMod {
  public:
   OnesLikeCpuKernelMod() = default;
@@ -35,37 +35,26 @@ class OnesLikeCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using OnesLikeFunc =
+    std::function<bool(OnesLikeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, OnesLikeFunc>> func_list_;
+  OnesLikeFunc kernel_func_;
+
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
 };
-
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                    OnesLikeCpuKernelMod, float16);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    OnesLikeCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                    OnesLikeCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                    OnesLikeCpuKernelMod, int8_t);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                    OnesLikeCpuKernelMod, int16_t);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    OnesLikeCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                    OnesLikeCpuKernelMod, int64_t);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                    OnesLikeCpuKernelMod, uint8_t);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                    OnesLikeCpuKernelMod, uint16_t);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                    OnesLikeCpuKernelMod, bool);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-                    OnesLikeCpuKernelMod, complex64);
-MS_REG_CPU_KERNEL_T(OnesLike, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-                    OnesLikeCpuKernelMod, complex128);
 }  // namespace kernel
 }  // namespace mindspore
 

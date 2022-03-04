@@ -22,59 +22,25 @@
 #include <string>
 #include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class ReduceCpuKernelMod : public NativeCpuKernelMod {
  public:
   ReduceCpuKernelMod() = default;
+  explicit ReduceCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~ReduceCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return func_obj_->RunFunc(inputs, workspace, outputs);
+  }
 
  private:
-  void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
-
-  enum ReduceType { kReduceAll, kReduceAny, kReduceMax, kReduceMin, kReduceSum, kReduceMean, kReduceProd };
-  std::vector<size_t> input_shape_;
-  std::vector<int64_t> axis_;
-  ReduceType reduce_type_{kReduceAll};
-  std::function<void(const T *, size_t, T *)> reduce_func_;
-  bool simple_execute_{false};
+  std::shared_ptr<CpuKernelFunc> func_obj_;
+  std::string kernel_type_{"Unknown"};
 };
-
-MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, int64_t);
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, bool);
-
-MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(ReduceAll, KernelAttr(), ReduceCpuKernelMod, bool);
-
-MS_REG_CPU_KERNEL_T(ReduceAny, KernelAttr(), ReduceCpuKernelMod, bool);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCE_CPU_KERNEL_H_

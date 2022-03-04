@@ -25,7 +25,7 @@
 #include <utility>
 #include "dnnl.hpp"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
 #include "dnnl_threadpool.hpp"
 #include "dnnl_threadpool_iface.hpp"

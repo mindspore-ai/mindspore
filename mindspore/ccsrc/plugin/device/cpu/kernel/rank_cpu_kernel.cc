@@ -18,14 +18,15 @@
 #include <functional>
 #include <map>
 #include <type_traits>
+#include <algorithm>
+#include <tuple>
 #include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
 using rank::Method;
 using rank::NaOption;
-template <typename T>
-void RankCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void RankCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
@@ -64,10 +65,19 @@ void RankCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 
   axisIterator_.Init(input_shape, axis_);
   SetFunc();
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Rank does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = std::get<1>(func_list_[index]);
+  const size_t kTwoIdx = 2;
+  init_func_ = std::get<kTwoIdx>(func_list_[index]);
 }
 
 template <typename T>
-void RankCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+void RankCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   // id
@@ -80,8 +90,7 @@ void RankCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   }
 }
 
-template <typename T>
-void RankCpuKernelMod<T>::SetFunc() {
+void RankCpuKernelMod::SetFunc() {
   switch (method_) {
     case Method::Max: {
       func_ = [](size_t i, size_t duplicate_count, int /* culmutive_rank */, const AxisIterator &axisIterator,
@@ -138,14 +147,14 @@ void RankCpuKernelMod<T>::SetFunc() {
 }
 
 template <typename T>
-void RankCpuKernelMod<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter,
-                                   float *output_addr) const {
+void RankCpuKernelMod::Launch1D(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter,
+                                float *output_addr) const {
   const size_t n = axisIterator_.AxisSize();
   for (size_t i = 0; i < n; ++i) {
     values[i] = input_addr[iter.GetPos(i)];
   }
 
-  SortIndex(sort_idx, values, iter);
+  SortIndex<T>(sort_idx, values, iter);
 
   int culmutive_rank = 1;
   size_t duplicate_count = 0;
@@ -161,8 +170,7 @@ void RankCpuKernelMod<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *val
   PctConvert(output_addr, iter, culmutive_rank);
 }
 
-template <typename T>
-void RankCpuKernelMod<T>::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank) const {
+void RankCpuKernelMod::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank) const {
   const size_t n = iter.AxisSize();
   if (pct_) {
     // pct calculation
@@ -181,10 +189,10 @@ void RankCpuKernelMod<T>::PctConvert(float *output_addr, const AxisIterator &ite
 }
 
 template <typename T>
-void RankCpuKernelMod<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan,
-                                   const AxisIterator &iter, float *output_addr) const {
+void RankCpuKernelMod::Launch1D(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan,
+                                const AxisIterator &iter, float *output_addr) const {
   const size_t n = iter.AxisSize();
-  T nan_padding_value = GetPaddingValue();
+  T nan_padding_value = GetPaddingValue<T>();
 
   for (size_t i = 0; i < n; ++i) {
     const T value = input_addr[iter.GetPos(i)];
@@ -197,7 +205,7 @@ void RankCpuKernelMod<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *val
     }
   }
 
-  SortIndex(sort_idx, values, iter);
+  SortIndex<T>(sort_idx, values, iter);
 
   int culmutive_rank = 1;
   size_t duplicate_count = 0;
@@ -224,9 +232,8 @@ void RankCpuKernelMod<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *val
   PctConvert(output_addr, iter, culmutive_rank, nans_count);
 }
 
-template <typename T>
-void RankCpuKernelMod<T>::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank,
-                                     size_t nans_count) const {
+void RankCpuKernelMod::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank,
+                                  size_t nans_count) const {
   const size_t n = iter.AxisSize();
   if (pct_) {
     // pct calculation
@@ -251,8 +258,8 @@ void RankCpuKernelMod<T>::PctConvert(float *output_addr, const AxisIterator &ite
 }
 
 template <typename T>
-bool RankCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) {
+bool RankCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                    const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size();
   }
@@ -288,11 +295,11 @@ bool RankCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const st
         T *values = values_addr + offset;
 
         if constexpr (std::is_integral_v<T>) {
-          Launch1D(input_addr, sort_idx, values, iter, output_addr);
+          Launch1D<T>(input_addr, sort_idx, values, iter, output_addr);
         } else {
           auto flags_addr = reinterpret_cast<bool *>(workspace[2]->addr);
           bool *is_nan = flags_addr + offset;
-          Launch1D(input_addr, sort_idx, values, is_nan, iter, output_addr);
+          Launch1D<T>(input_addr, sort_idx, values, is_nan, iter, output_addr);
         }
         return common::SUCCESS;
       });
@@ -301,5 +308,24 @@ bool RankCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const st
   ParallelLaunch(tasks);
   return true;
 }
+
+std::vector<std::tuple<KernelAttr, RankCpuKernelMod::RankFunc, RankCpuKernelMod::InitFunc>>
+  RankCpuKernelMod::func_list_ = {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                                   &RankCpuKernelMod::LaunchKernel<float>, &RankCpuKernelMod::InitIOSize<float>},
+                                  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32),
+                                   &RankCpuKernelMod::LaunchKernel<double>, &RankCpuKernelMod::InitIOSize<double>},
+                                  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+                                   &RankCpuKernelMod::LaunchKernel<int32_t>, &RankCpuKernelMod::InitIOSize<int32_t>},
+                                  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+                                   &RankCpuKernelMod::LaunchKernel<int64_t>, &RankCpuKernelMod::InitIOSize<int64_t>}};
+
+std::vector<KernelAttr> RankCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::tuple<KernelAttr, RankFunc, InitFunc> &tuple_item) { return std::get<0>(tuple_item); });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Rank, RankCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

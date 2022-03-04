@@ -129,5 +129,25 @@ void BinaryCrossEntropyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << reduction;
   }
 }
+
+std::vector<KernelAttr> BinaryCrossEntropyCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> kernel_attr_list = {
+    KernelAttr()
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddOutputAttr(kNumberTypeFloat16),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+
+  return kernel_attr_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BinaryCrossEntropy, BinaryCrossEntropyCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

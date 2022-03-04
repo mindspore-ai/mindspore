@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "fl/worker/fl_worker.h"
 
 namespace mindspore {
@@ -96,6 +96,10 @@ class StartFLJobKernelMod : public NativeCpuKernelMod {
 
  protected:
   void InitSizeLists() { return; }
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
 
  private:
   bool BuildStartFLJobReq(const std::shared_ptr<fl::FBBuilder> &fbb) {

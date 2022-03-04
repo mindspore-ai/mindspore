@@ -33,6 +33,13 @@ class SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
+
  private:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
   void ForwardPostExecute(const int *labels, const float *losses, float *output) const;
@@ -42,10 +49,8 @@ class SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
   size_t batch_size_{0};
 };
 
-MS_REG_CPU_KERNEL(
-  SparseSoftmaxCrossEntropyWithLogits,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseSoftmaxCrossEntropyWithLogits,
+                      SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SEARCHSORTED_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename S, typename T>
 class SearchSortedCpuKernelMod : public NativeCpuKernelMod {
  public:
   SearchSortedCpuKernelMod() = default;
@@ -32,11 +32,24 @@ class SearchSortedCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename S>
   const S *CustomizedLowerBound(const S *seq_start, const S *seq_end, const S key);
+  template <typename S, typename T>
   void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  template <typename S, typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using SearchSortedFunc = std::function<bool(SearchSortedCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                              const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, SearchSortedFunc>> func_list_;
+  SearchSortedFunc kernel_func_;
 
   bool right_{false};
   size_t search_len{0};
@@ -44,66 +57,6 @@ class SearchSortedCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> values_shape_;
   std::vector<size_t> output_shape_;
 };
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCpuKernelMod, double, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCpuKernelMod, float, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCpuKernelMod, int64_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCpuKernelMod, int32_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCpuKernelMod, int16_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
-  SearchSortedCpuKernelMod, int8_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCpuKernelMod, double, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCpuKernelMod, float, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCpuKernelMod, int64_t, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCpuKernelMod, int32_t, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCpuKernelMod, int16_t, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  SearchSorted,
-  KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
-  SearchSortedCpuKernelMod, int8_t, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SEARCHSORTED_CPU_KERNEL_H_

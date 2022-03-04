@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,15 +37,11 @@ class AdamCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   void LaunchAdam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
   void LaunchAdamNnacl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
   bool use_nesterov_{false};
   TypeId dtype_{kTypeUnknown};
   enum input_list_ { VAR, M, V, BETA1_POWER, BETA2_POWER, LR, BETA1, BETA2, EPSILON, GRAD };
 };
-
-MS_REG_CPU_KERNEL(Adam, KernelAttr(), AdamCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

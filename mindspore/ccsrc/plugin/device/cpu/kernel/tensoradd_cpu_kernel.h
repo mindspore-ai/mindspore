@@ -19,12 +19,12 @@
 
 #include <vector>
 #include <memory>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class TensorAddCpuKernelMod : public NativeCpuKernelMod {
  public:
   TensorAddCpuKernelMod() = default;
@@ -33,29 +33,26 @@ class TensorAddCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using AddFunc = std::function<bool(TensorAddCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, AddFunc>> func_list_;
+  AddFunc kernel_func_;
+
   std::vector<size_t> input_shape_a_;
   std::vector<size_t> input_shape_b_;
   std::vector<size_t> output_shape_;
 };
-
-MS_REG_CPU_KERNEL_T(
-  Add, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  TensorAddCpuKernelMod, int64_t);
-MS_REG_CPU_KERNEL_T(
-  Add, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  TensorAddCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(
-  Add, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  TensorAddCpuKernelMod, uint32_t);
-MS_REG_CPU_KERNEL_T(
-  Add, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  TensorAddCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  Add, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  TensorAddCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 

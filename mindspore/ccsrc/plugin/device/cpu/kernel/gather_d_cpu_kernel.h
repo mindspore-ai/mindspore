@@ -17,12 +17,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHER_D_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename I>
 class GatherDCpuKernelMod : public NativeCpuKernelMod {
  public:
   GatherDCpuKernelMod() = default;
@@ -31,24 +31,21 @@ class GatherDCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  private:
+  template <typename T, typename I>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using GatherDFunc = std::function<bool(GatherDCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, GatherDFunc>> func_list_;
+  GatherDFunc kernel_func_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> index_shape_;
   std::vector<size_t> output_shape_;
 };
-
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, float, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, float, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, float16, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, float16, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, int32_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, int32_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, int64_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, int64_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, bool, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, bool, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

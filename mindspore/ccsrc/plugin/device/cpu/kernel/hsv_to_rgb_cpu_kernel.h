@@ -18,11 +18,10 @@
 #include <vector>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class HSVToRGBCpuKernelMod : public NativeCpuKernelMod {
  public:
   HSVToRGBCpuKernelMod() = default;
@@ -31,6 +30,15 @@ class HSVToRGBCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
+    return support_list;
+  }
 
  private:
   TypeId input_dtype;
@@ -43,12 +51,8 @@ class HSVToRGBCpuKernelMod : public NativeCpuKernelMod {
   const size_t kInputNum = 1;
   const size_t kOutputNum = 1;
 };
-MS_REG_CPU_KERNEL_T(HSVToRGB, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                    HSVToRGBCpuKernelMod, float16);
-MS_REG_CPU_KERNEL_T(HSVToRGB, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    HSVToRGBCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(HSVToRGB, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                    HSVToRGBCpuKernelMod, double);
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HSVToRGB, HSVToRGBCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif

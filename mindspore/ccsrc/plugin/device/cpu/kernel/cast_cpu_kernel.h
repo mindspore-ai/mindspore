@@ -22,11 +22,10 @@
 #include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename S, typename T>
 class CastCpuKernelMod : public NativeCpuKernelMod {
  public:
   CastCpuKernelMod() = default;
@@ -35,169 +34,24 @@ class CastCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    const size_t kCastInputsNum = 1;
+    const size_t kCastOutputsNum = 1;
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCastInputsNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCastOutputsNum, kernel_name_);
+    if (outputs[0]->size == 0) {
+      MS_LOG(WARNING) << "For '" << kernel_name_ << "', the memory size of output should be greater than 0, but got 0.";
+      return true;
+    }
+    return kernel_func_->RunFunc(inputs, workspace, outputs);
+  }
 
  private:
   TypeId source_dtype_{kTypeUnknown};
   TypeId target_dtype_{kTypeUnknown};
+
+  std::shared_ptr<CpuKernelFunc> kernel_func_;
 };
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint8_t, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint16_t, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint32_t, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, uint64_t, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int8_t, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int16_t, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int32_t, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, int64_t, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float16, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, float, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, double, bool);
-
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, uint8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, uint16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, uint32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, uint64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, int8_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, int16_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, int32_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, int64_t);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, float16);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, float);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, double);
-MS_REG_CPU_KERNEL_T_S(Cast, KernelAttr(), CastCpuKernelMod, bool, bool);
-
 }  // namespace kernel
 }  // namespace mindspore
 

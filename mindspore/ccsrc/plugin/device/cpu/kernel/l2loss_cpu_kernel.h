@@ -20,12 +20,12 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class L2LossCpuKernelMod : public NativeCpuKernelMod {
  public:
   L2LossCpuKernelMod() = default;
@@ -34,16 +34,21 @@ class L2LossCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using L2LossFunc = std::function<bool(L2LossCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, L2LossFunc>> func_list_;
+  L2LossFunc kernel_func_;
   TypeId dtype_{kTypeUnknown};
   size_t tensor_size_ = 1;
   std::vector<size_t> input_shape_;
 };
-
-MS_REG_CPU_KERNEL_T(L2Loss, KernelAttr(), L2LossCpuKernelMod, float16);
-MS_REG_CPU_KERNEL_T(L2Loss, KernelAttr(), L2LossCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2_LOSS_CPU_KERNEL_H_

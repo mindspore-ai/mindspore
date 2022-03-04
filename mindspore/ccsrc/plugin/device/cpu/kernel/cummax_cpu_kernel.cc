@@ -15,22 +15,30 @@
  */
 
 #include "plugin/device/cpu/kernel/cummax_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void CummaxCPUKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void CummaxCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output1_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   output2_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 1);
   dim_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "dim");
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Cummax does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool CummaxCPUKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool CummaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                      const std::vector<kernel::AddressPtr> &outputs) {
   auto input_data_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output1_data_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto output2_data_addr = reinterpret_cast<int64_t *>(outputs[1]->addr);
@@ -98,5 +106,31 @@ bool CummaxCPUKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs
   }
   return true;
 }
+
+std::vector<std::pair<KernelAttr, CummaxCPUKernelMod::CummaxFunc>> CummaxCPUKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+   &CummaxCPUKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
+   &CummaxCPUKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &CummaxCPUKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &CummaxCPUKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+   &CummaxCPUKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+   &CummaxCPUKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+   &CummaxCPUKernelMod::LaunchKernel<uint32_t>}};
+
+std::vector<KernelAttr> CummaxCPUKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, CummaxFunc> &pair) { return pair.first; });
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Cummax, CummaxCPUKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

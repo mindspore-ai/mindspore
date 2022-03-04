@@ -22,9 +22,7 @@ namespace kernel {
 namespace {
 constexpr size_t kDynamicShapeOutputNum = 1;
 }  // namespace
-
-template <typename T>
-void TensorShapeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void TensorShapeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
@@ -34,10 +32,9 @@ void TensorShapeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-template <typename T>
-bool TensorShapeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorShapeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicShapeOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();
   if (node_ == nullptr) {
@@ -60,5 +57,8 @@ bool TensorShapeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &i
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, DynamicShape, TensorShapeCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorShape, TensorShapeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

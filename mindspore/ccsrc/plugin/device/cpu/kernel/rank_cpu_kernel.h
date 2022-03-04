@@ -19,8 +19,9 @@
 #include <vector>
 #include <string>
 #include <limits>
+#include <tuple>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace mindspore {
@@ -41,7 +42,6 @@ enum NaOption : int {
   OptionNotDefined,
 };
 }  // namespace rank
-template <typename T>
 class RankCpuKernelMod : public NativeCpuKernelMod {
  public:
   RankCpuKernelMod() = default;
@@ -51,17 +51,23 @@ class RankCpuKernelMod : public NativeCpuKernelMod {
 
   void SetFunc();
 
+  template <typename T>
   void Launch1D(const T *input_addr, size_t *sort_idx, T *values, const AxisIterator &iter, float *output_addr) const;
+  template <typename T>
   void Launch1D(const T *input_addr, size_t *sort_idx, T *values, bool *is_nan, const AxisIterator &iter,
                 float *output_addr) const;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
  protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+  void InitInputOutputSize(const CNodePtr &kernel_node) override { init_func_(this, kernel_node); }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
   inline void SortIndex(size_t *sort_idx, const T *values, const AxisIterator &iter) const {
     std::iota(sort_idx, sort_idx + iter.AxisSize(), 0);
     if (ascending_) {
@@ -72,6 +78,7 @@ class RankCpuKernelMod : public NativeCpuKernelMod {
                        [values](size_t lhs, size_t rhs) { return values[lhs] > values[rhs]; });
     }
   }
+  template <typename T>
   inline T GetPaddingValue() const {
     if (ascending_ != (option_ == rank::NaOption::Top)) {
       return std::numeric_limits<T>::max();
@@ -81,6 +88,20 @@ class RankCpuKernelMod : public NativeCpuKernelMod {
   }
   void PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank, size_t nans_count) const;
   void PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank) const;
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  template <typename T>
+  void InitIOSize(const CNodePtr &kernel_node);
+
+  using RankFunc = std::function<bool(RankCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                      const std::vector<AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using InitFunc = std::function<void(RankCpuKernelMod *, const CNodePtr &)>;
+  static std::vector<std::tuple<KernelAttr, RankFunc, InitFunc>> func_list_;
+  RankFunc kernel_func_;
+  InitFunc init_func_;
+
   // shape info
   AxisIterator axisIterator_{};
   // parameters
@@ -91,19 +112,6 @@ class RankCpuKernelMod : public NativeCpuKernelMod {
   bool ascending_{true};
   bool pct_{false};
 };
-
-MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    RankCpuKernelMod, float)
-
-MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32),
-                    RankCpuKernelMod, double)
-
-MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                    RankCpuKernelMod, int32_t)
-
-MS_REG_CPU_KERNEL_T(Rank, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-                    RankCpuKernelMod, int64_t)
-
 }  // namespace kernel
 }  // namespace mindspore
 

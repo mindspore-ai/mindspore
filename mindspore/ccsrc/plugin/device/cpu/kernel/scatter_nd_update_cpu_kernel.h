@@ -21,7 +21,7 @@
 #include <memory>
 #include <unordered_map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -64,77 +64,69 @@ class ScatterNdUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
  protected:
   void *ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
                               const std::vector<kernel::AddressPtr> &outputs) override;
+
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddOutputAttr(kNumberTypeFloat64),
+
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeInt32),
+
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
 };
 
 class TensorScatterUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
  protected:
   void *ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
                               const std::vector<kernel::AddressPtr> &outputs) override;
+
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddOutputAttr(kNumberTypeFloat64),
+
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeInt32),
+
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
 };
 
-MS_REG_CPU_KERNEL(ScatterNdUpdate,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  ScatterNdUpdateCpuKernelMod)
-
-MS_REG_CPU_KERNEL(TensorScatterUpdate,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TensorScatterUpdateCpuKernelMod)
-
-MS_REG_CPU_KERNEL(ScatterNdUpdate,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddOutputAttr(kNumberTypeFloat64),
-                  ScatterNdUpdateCpuKernelMod)
-
-MS_REG_CPU_KERNEL(TensorScatterUpdate,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddOutputAttr(kNumberTypeFloat64),
-                  TensorScatterUpdateCpuKernelMod)
-
-MS_REG_CPU_KERNEL(ScatterNdUpdate,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  ScatterNdUpdateCpuKernelMod)
-
-MS_REG_CPU_KERNEL(TensorScatterUpdate,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  TensorScatterUpdateCpuKernelMod)
-
-MS_REG_CPU_KERNEL(ScatterNdUpdate,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  ScatterNdUpdateCpuKernelMod)
-
-MS_REG_CPU_KERNEL(TensorScatterUpdate,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  TensorScatterUpdateCpuKernelMod)
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdUpdate, ScatterNdUpdateCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterUpdate, TensorScatterUpdateCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

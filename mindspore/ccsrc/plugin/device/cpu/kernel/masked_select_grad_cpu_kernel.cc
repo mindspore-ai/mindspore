@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/masked_select_grad_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 
 namespace mindspore {
 namespace kernel {
@@ -23,8 +25,7 @@ constexpr size_t kMaskedSelectGradInputsNum = 3;
 constexpr size_t kMaskedSelectGradOutputsNum = 1;
 }  // namespace
 
-template <typename T>
-void MaskedSelectGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void MaskedSelectGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, INPUT);
@@ -34,12 +35,18 @@ void MaskedSelectGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   for (const uint64_t &d : output_shape_) {
     tensor_size_ *= d;
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "MaskedSelectGrad does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool MaskedSelectGradCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool MaskedSelectGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectGradOutputsNum, kernel_name_);
   auto mask = reinterpret_cast<bool *>(inputs[MASK]->addr);
@@ -71,5 +78,52 @@ bool MaskedSelectGradCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPt
   }
   return true;
 }
+
+std::vector<std::pair<KernelAttr, MaskedSelectGradCpuKernelMod::MaskedSelectGradFunc>>
+  MaskedSelectGradCpuKernelMod::func_list_ = {{KernelAttr()
+                                                 .AddInputAttr(kNumberTypeFloat32)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeFloat32)
+                                                 .AddOutputAttr(kNumberTypeFloat32),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<float>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeInt32)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeInt32)
+                                                 .AddOutputAttr(kNumberTypeInt32),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<int>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeFloat16)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeFloat16)
+                                                 .AddOutputAttr(kNumberTypeFloat16),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<float16>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeFloat64)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeFloat64)
+                                                 .AddOutputAttr(kNumberTypeFloat64),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<double>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeInt16)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeInt16)
+                                                 .AddOutputAttr(kNumberTypeInt16),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<int16_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeInt64)
+                                                 .AddOutputAttr(kNumberTypeInt64),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<int64_t>}};
+
+std::vector<KernelAttr> MaskedSelectGradCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, MaskedSelectGradFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MaskedSelectGrad, MaskedSelectGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

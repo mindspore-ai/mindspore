@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/depthtospace_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 
 namespace mindspore {
 namespace kernel {
@@ -23,19 +25,25 @@ constexpr size_t kDepthToSpaceInputsNum = 1;
 constexpr size_t kDepthToSpaceOutputsNum = 1;
 }  // namespace
 
-template <typename T>
-void DepthToSpaceCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void DepthToSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   block_size_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "block_size"));
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "DepthToSpace does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool DepthToSpaceCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> & /* workspace */,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool DepthToSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDepthToSpaceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDepthToSpaceOutputsNum, kernel_name_);
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
@@ -76,5 +84,37 @@ bool DepthToSpaceCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &
   ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, DepthToSpaceCpuKernelMod::DepthToSpaceFunc>> DepthToSpaceCpuKernelMod::func_list_ = {
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<int>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<uint64_t>}};
+
+std::vector<KernelAttr> DepthToSpaceCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, DepthToSpaceFunc> &pair) { return pair.first; });
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, DepthToSpace, DepthToSpaceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

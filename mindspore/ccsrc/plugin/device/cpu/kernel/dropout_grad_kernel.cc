@@ -101,5 +101,7 @@ void DropoutGradBwdCpuKernelMod::DropoutBackwardKernel(const std::vector<Address
     DropoutGrad(input, mask, output, SizeToInt(num_count_), scale);
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, DropoutGrad, DropoutGradBwdCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

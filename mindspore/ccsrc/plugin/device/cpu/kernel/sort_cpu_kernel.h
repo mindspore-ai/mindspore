@@ -17,12 +17,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SORT_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class SortCpuKernelMod : public NativeCpuKernelMod {
  public:
   SortCpuKernelMod() = default;
@@ -31,23 +31,28 @@ class SortCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using SortFunc = std::function<bool(SortCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                      const std::vector<AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, SortFunc>> func_list_;
+  SortFunc kernel_func_;
+
   AxisIterator axisIterator_{};
   bool descending_{false};
 };
-
-MS_REG_CPU_KERNEL_T(
-  Sort, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-  SortCpuKernelMod, float16)
-
-MS_REG_CPU_KERNEL_T(
-  Sort, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-  SortCpuKernelMod, float)
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -47,7 +47,7 @@ class TopKCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(TopK, KernelAttr(), TopKCpuKernelMod)
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TopK, TopKCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TOPK_CPU_KERNEL_H_

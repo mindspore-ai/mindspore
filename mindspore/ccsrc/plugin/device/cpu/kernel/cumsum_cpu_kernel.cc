@@ -240,5 +240,17 @@ void CumSumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
+
+std::vector<KernelAttr> CumSumCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8)},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8)}};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CumSum, CumSumCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

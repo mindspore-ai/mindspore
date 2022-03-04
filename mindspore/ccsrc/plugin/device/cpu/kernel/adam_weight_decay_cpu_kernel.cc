@@ -144,5 +144,7 @@ bool AdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AdamWeightDecay, AdamWeightDecayCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

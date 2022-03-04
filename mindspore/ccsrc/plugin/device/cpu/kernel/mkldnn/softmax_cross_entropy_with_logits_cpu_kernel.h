@@ -35,19 +35,22 @@ class SoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
 
  protected:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
 
  private:
   void ForwardPostExecute(const float *logits, const float *labels, float *output1, float *output2) const;
   size_t class_num_{0};
   size_t batch_size_{0};
 };
-MS_REG_CPU_KERNEL(SoftmaxCrossEntropyWithLogits,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  SoftmaxCrossEntropyWithLogitsCpuKernelMod);
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SoftmaxCrossEntropyWithLogits, SoftmaxCrossEntropyWithLogitsCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

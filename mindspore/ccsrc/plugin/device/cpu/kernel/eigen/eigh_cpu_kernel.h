@@ -19,67 +19,52 @@
 
 #include <vector>
 #include <complex>
+#include <tuple>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
 
 using float_complex = std::complex<float>;
 using double_complex = std::complex<double>;
-/**
- * this is for Symmetric matrix eigenvalues & eigenvectors, can decompress the lower/upper triangle matrix
- * @tparam T , input Type
- * @tparam C , output Type, complex
- */
-template <typename T>
 class EighCpuKernelMod : public NativeCpuKernelMod {
  public:
   EighCpuKernelMod() = default;
   ~EighCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+  void InitInputOutputSize(const CNodePtr &kernel_node) override { init_io_func_(this, kernel_node); }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  /**
+   * this is for Symmetric matrix eigenvalues & eigenvectors, can decompress the lower/upper triangle matrix
+   * @tparam T , input Type
+   */
+  template <typename T>
+  void InitIOFunc(const CNodePtr &kernel_node);
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using EighFunc =
+    std::function<bool(EighCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using EighInitFunc = std::function<void(EighCpuKernelMod *, const CNodePtr &)>;
+  static std::vector<std::tuple<KernelAttr, EighFunc, EighInitFunc>> func_list_;
+  EighFunc kernel_func_;
+  EighInitFunc init_io_func_;
+
   size_t m_{1};
   bool compute_eigen_vectors_{false};
   bool lower_{true};
   TypeId dtype_{kNumberTypeFloat32};
 };
-
-MS_REG_CPU_KERNEL_T(Eigh, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    EighCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(Eigh, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                    EighCpuKernelMod, double);
-
-MS_REG_CPU_KERNEL_T(Eigh, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-                    EighCpuKernelMod, float_complex);
-MS_REG_CPU_KERNEL_T(Eigh, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-                    EighCpuKernelMod, double_complex);
-
-MS_REG_CPU_KERNEL_T(
-  Eigh,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EighCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  Eigh,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EighCpuKernelMod, double);
-
-MS_REG_CPU_KERNEL_T(Eigh,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeComplex64)
-                      .AddOutputAttr(kNumberTypeComplex64)
-                      .AddOutputAttr(kNumberTypeComplex64),
-                    EighCpuKernelMod, float_complex);
-MS_REG_CPU_KERNEL_T(Eigh,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeComplex128)
-                      .AddOutputAttr(kNumberTypeComplex128)
-                      .AddOutputAttr(kNumberTypeComplex128),
-                    EighCpuKernelMod, double_complex);
 }  // namespace kernel
 }  // namespace mindspore
 

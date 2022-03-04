@@ -27,10 +27,13 @@ namespace {
 constexpr size_t kPoolingInputsNum = 1;
 constexpr size_t kPoolingOutputsNum = 1;
 constexpr size_t kPoolingGradDilation = 1;
+constexpr auto kMaxPool3D = "MaxPool3D";
+constexpr auto kMaxPool = "MaxPool";
+constexpr auto kAvgPool = "AvgPool";
+constexpr auto kAvgPool3D = "AvgPool3D";
 }  // namespace
 
 std::unordered_map<void *, std::vector<unsigned char>> PoolingCpuKernelMod::pooling_max_workspace_;
-
 void PoolingCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (algorithm_ == dnnl::algorithm::pooling_max) {
@@ -173,6 +176,21 @@ void PoolingCpuKernelMod::ReComputeDivisor(float *dst) {
   ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
 }
 
+std::vector<KernelAttr> PoolingCpuKernelMod::GetOpSupport() {
+  static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
+    {kMaxPool, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kMaxPool3D, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kAvgPool, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kAvgPool3D, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}}};
+
+  auto iter = support_list_map.find(kernel_type_);
+  if (iter == support_list_map.end()) {
+    MS_LOG(EXCEPTION) << "Does not support " << kernel_type_ << "!";
+  }
+
+  return iter->second;
+}
+
 bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                  const std::vector<kernel::AddressPtr> &workspace,
                                  const std::vector<kernel::AddressPtr> &outputs) {
@@ -208,5 +226,14 @@ bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool3D,
+                                 []() { return std::make_shared<PoolingCpuKernelMod>(kMaxPool3D); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool,
+                                 []() { return std::make_shared<PoolingCpuKernelMod>(kMaxPool); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool,
+                                 []() { return std::make_shared<PoolingCpuKernelMod>(kAvgPool); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool3D,
+                                 []() { return std::make_shared<PoolingCpuKernelMod>(kAvgPool3D); });
 }  // namespace kernel
 }  // namespace mindspore

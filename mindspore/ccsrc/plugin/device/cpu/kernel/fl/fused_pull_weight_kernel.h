@@ -22,8 +22,9 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "schema/fl_job_generated.h"
 #include "ps/ps_context.h"
 #include "fl/worker/fl_worker.h"
@@ -32,7 +33,6 @@ namespace mindspore {
 namespace kernel {
 // The duration between two PullWeight requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPullWeights = 200;
-template <typename T>
 class FusedPullWeightKernelMod : public NativeCpuKernelMod {
  public:
   FusedPullWeightKernelMod()
@@ -124,7 +124,25 @@ class FusedPullWeightKernelMod : public NativeCpuKernelMod {
     return true;
   }
 
-  void Init(const CNodePtr &kernel_node) {
+  void Init(const CNodePtr &kernel_node) override {
+    auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      MS_LOG(EXCEPTION) << "FusedPullWeight does not support this kernel data type: " << kernel_attr;
+    }
+    init_func_ = func_list_[index].second;
+    init_func_(this, kernel_node);
+  }
+
+  void InitKernel(const CNodePtr &kernel_node) override { return; }
+
+ protected:
+  void InitSizeLists() { return; }
+  std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
+  template <typename T>
+  void InitFunc(const CNodePtr &kernel_node) {
     MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; i++) {
@@ -151,12 +169,6 @@ class FusedPullWeightKernelMod : public NativeCpuKernelMod {
     return;
   }
 
-  void InitKernel(const CNodePtr &kernel_node) { return; }
-
- protected:
-  void InitSizeLists() { return; }
-
- private:
   bool BuildPullWeightReq(std::shared_ptr<fl::FBBuilder> fbb) {
     MS_EXCEPTION_IF_NULL(fbb);
     std::vector<flatbuffers::Offset<flatbuffers::String>> fbs_weight_names;
@@ -191,6 +203,10 @@ class FusedPullWeightKernelMod : public NativeCpuKernelMod {
     }
     return feature_map;
   }
+
+  using FusedPullWeightInitFunc = std::function<void(FusedPullWeightKernelMod *, const CNodePtr &)>;
+  static std::vector<std::pair<KernelAttr, FusedPullWeightInitFunc>> func_list_;
+  FusedPullWeightInitFunc init_func_;
 
   uint32_t server_num_;
   std::vector<int64_t> indices_;
