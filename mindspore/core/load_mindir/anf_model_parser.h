@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,6 @@ class MSANFModelParser {
   CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::NodeProto &node_proto);
   bool BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool GetAttrValueForCNode(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
-  bool GetAttrValueForCNodeWithType(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   void ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
                                    mindspore::HashMap<std::string, ValuePtr> *multi_value_map);
@@ -80,16 +79,13 @@ class MSANFModelParser {
   bool SetEmptyTensorProtoCNodeAbstract(const AnfNodePtr &node_ptr);
   bool SetCNodeAbstract(const mind_ir::AttributeProto &attr_proto, const CNodePtr &cnode_ptr);
   bool SetNodeAbstractFromAttrProto(const mind_ir::AttributeProto &attr_proto, const AnfNodePtr &node_ptr);
-  abstract::AbstractBasePtr GetNodeAbstractFromAttrProtoWithType(const mind_ir::AttributeProto &attr_proto);
   void SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &node_proto, const CNodePtr &cnode_ptr);
   bool ObtainValueNodeInTensorForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInTupleTensorForm(const string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool GetAttrValueForValueNode(const std::string &value_node_name, const mind_ir::AttributeProto &attr_tensor);
-  bool GetAttrValueForValueNodeWithType(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
-  bool ObtainValueNodeInNoneForm(const std::string &value_node_name);
+  bool ObtainValueNodeInNoneForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
-  ValuePtr ObtainValueInSequenceForm(const mind_ir::AttributeProto &attr_proto);
   bool little_endian() { return little_endian_; }
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> GetAbstractForNode(
     const mind_ir::AttributeProto &attr_proto);
