@@ -3402,6 +3402,14 @@ class StridedSlice(PrimitiveWithInfer):
     def _check_and_get_value(self, slice_input, name):
         """Check begin, end, strides. Get its length and value."""
         slice_value = slice_input['value']
+        has_special_value = False
+        if "min_value" in slice_input and "max_value" in slice_input:
+            slice_min = slice_input["min_value"]
+            slice_max = slice_input["max_value"]
+            has_special_value = True
+        else:
+            slice_min = slice_value
+            slice_max = slice_value
         if slice_value is None:
             validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
             slice_shape = slice_input['shape']
@@ -3409,7 +3417,12 @@ class StridedSlice(PrimitiveWithInfer):
                 raise ValueError(f"For '{self.name}', both the 'begins', 'ends', and 'strides' must be 1-D, "
                                  f"but got '{name}' shape: {slice_shape}.")
             # not support scalar
-            return slice_value, slice_shape[0]
+            slices = {
+                'value': slice_value,
+                'min_value': slice_min,
+                'max_value': slice_max
+            }
+            return slices, slice_shape[0], has_special_value
 
         if isinstance(slice_value, Tensor_):
             validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
@@ -3421,24 +3434,64 @@ class StridedSlice(PrimitiveWithInfer):
         if tuple(filter(lambda x: not isinstance(x, int), slice_value)):
             raise TypeError(f"For '{self.name}', the elements of 'begin', 'end', and 'strides' must be int, "
                             f"but got {name}: {slice_value}.")
-        return slice_value, len(slice_value)
+
+        if name == 'strides':
+            if slice_value is not None and tuple(filter(lambda x: x == 0, slice_value)):
+                raise ValueError(f"For '{self.name}', 'strides' cannot contain 0, but got 'strides': {slice_value}.")
+
+        slices = {
+            'value': slice_value,
+            'min_value': slice_min,
+            'max_value': slice_max
+        }
+        return slices, len(slice_value), has_special_value
+
+    def _check_and_get_shape(self, x):
+        """Check the shape of x. Get its shape and min/max_shape."""
+        x_shape = x['shape']
+        min_shape = None
+        max_shape = None
+        if "min_shape" in x and "max_shape" in x:
+            min_shape = x["min_shape"]
+            max_shape = x["max_shape"]
+        if (-1 in x_shape and (min_shape is None or max_shape is None)):
+            raise ValueError(f"For '{self.name}',  "
+                             f"input x is currently not support dynamic shape without giving the min and max shape.")
+        return x_shape, min_shape, max_shape
 
     def __infer__(self, x, begin, end, strides):
-        x_shape = x['shape']
-        if -1 in x_shape:
-            raise ValueError(f"For '{self.name}', input x is currently not support dynamic shape.")
-        begin_v, begin_len = self._check_and_get_value(begin, 'begin')
-        end_v, end_len = self._check_and_get_value(end, 'end')
-        strides_v, strides_len = self._check_and_get_value(strides, 'strides')
-
-        if strides_v is not None and tuple(filter(lambda x: x == 0, strides_v)):
-            raise ValueError(f"For '{self.name}', the 'strides' cannot contain 0, but got 'strides': {strides_v}.")
+        x_shape, min_shape, max_shape = self._check_and_get_shape(x)
+        begin_v, begin_len, begin_specical_value = self._check_and_get_value(begin, 'begin')
+        end_v, end_len, end_specical_value = self._check_and_get_value(end, 'end')
+        strides_v, strides_len = self._check_and_get_value(strides, 'strides')[0:2]
 
         if begin_len != strides_len or end_len != strides_len:
             raise ValueError(f"For '{self.name}', 'begin', 'end' and 'strides' must be the same length, but got "
                              f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}.")
 
-        if None in (strides_v, begin_v, end_v):
+        bd_has_min_max_value = False
+        if begin_specical_value or end_specical_value:
+            bd_has_min_max_value = True
+
+        if bd_has_min_max_value and (-1 not in x_shape):
+            ret_shape = [-1] * len(x_shape)
+            ret_min_shape = list(x_shape)
+            ret_max_shape = list(x_shape)
+            for i, val in enumerate(ret_shape):
+                ret_min_shape[i] = end_v['min_value'][i] - begin_v['min_value'][i]
+                ret_max_shape[i] = end_v['max_value'][i] - begin_v['max_value'][i]
+            i = 0
+            for a, b in zip(ret_min_shape, ret_max_shape):
+                if a == b:
+                    ret_shape[i] = a
+                i += 1
+            return {'shape': tuple(ret_shape),
+                    'dtype': x['dtype'],
+                    'value': None,
+                    'max_shape': tuple(ret_max_shape),
+                    'min_shape': tuple(ret_min_shape)}
+
+        if None in (begin_v['value'], end_v['value'], strides_v['value']) or (-1 in x_shape):
             ret_shape = self._compute_dynamic_slicing_shape(x_shape, begin_len)
             ret_min_shape = [1] * len(x_shape)
             ret_max_shape = x_shape
@@ -3446,13 +3499,16 @@ class StridedSlice(PrimitiveWithInfer):
                 if val > 0:
                     ret_min_shape[i] = val
                     ret_max_shape[i] = val
+                elif -1 in x_shape:
+                    ret_min_shape[i] = min_shape[i]
+                    ret_max_shape[i] = max_shape[i]
             return {'shape': ret_shape,
                     'dtype': x['dtype'],
                     'value': None,
                     'max_shape': ret_max_shape,
                     'min_shape': ret_min_shape}
 
-        ret_shape = self._compute_slicing_shape(x_shape, begin_v, end_v, strides_v)
+        ret_shape = self._compute_slicing_shape(x_shape, begin_v['value'], end_v['value'], strides_v['value'])
         if all(ret_shape):
             value = None
         else:
@@ -3466,7 +3522,7 @@ class StridedSlice(PrimitiveWithInfer):
             max_value_np = np.array(x["max_value"])
             min_value_np = np.array(x["min_value"])
             slice_index = []
-            for begin_i, end_i, strides_i in zip(begin_v, end_v, strides_v):
+            for begin_i, end_i, strides_i in zip(begin_v['value'], end_v['value'], strides_v['value']):
                 s = slice(begin_i, end_i, strides_i)
                 slice_index.append(s)
             slice_index = tuple(slice_index)
@@ -3577,7 +3633,7 @@ class StridedSlice(PrimitiveWithInfer):
         ret_shape = []
         i, j = 0, 0
         while i < x_rank or j < slice_len:
-            slicing_length = -1
+            slicing_length = -1 if x_shape[i] != 1 else 1
             if j >= slice_len:
                 if i >= len(x_shape):
                     raise ValueError(f"For 'StridedSlice', the index must be less than or equal to "
