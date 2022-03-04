@@ -757,7 +757,7 @@ class _AutoParallelContext:
         return self._context_handle.get_enable_parallel_optimizer()
 
     def set_parallel_optimizer_config(self, parallel_optimizer_config):
-        """
+        r"""
         Set the configure for parallel optimizer. The configure provides more detailed behavior control about parallel
         training when parallel optimizer is enabled.
         Currently it supports the key `gradient_accumulation_shard`. The configure will be effective
@@ -775,9 +775,10 @@ class _AutoParallelContext:
                                                  This configuration is effective only when the model runs on pipeline
                                                  training or gradient accumulation with data parallel.
 
-            - parallel_optimizer_threshold(int): Set the threshold of parallel optimizer. When parallel optimizer
-                                                 is enabled, parameters with size smaller than this threshold will
-                                                 not be sharded across the devices. Unit: KB. Default: 64.
+            - parallel_optimizer_threshold(int): Set the threshold of parallel optimizer. When parallel optimizer is
+                                                 enabled, parameters with size smaller than this threshold will not be
+                                                 sharded across the devices. Parameter size = shape[0] \* ... \*
+                                                 shape[n] \* size(dtype). Non-negative. Unit: KB. Default: 64.
         """
         self.check_context_handle()
         grad_shard_name = _ParallelOptimizerConfig.GRADIENT_ACCUMULATION_SHARD
@@ -789,7 +790,7 @@ class _AutoParallelContext:
                 parallel_optimizer_config[grad_shard_name])
 
         if threshold_name in parallel_optimizer_config:
-            Validator.check_positive_int(
+            Validator.check_non_negative_int(
                 parallel_optimizer_config[threshold_name])
             self._context_handle.set_parallel_optimizer_threshold(
                 parallel_optimizer_config[threshold_name])
