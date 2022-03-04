@@ -54,7 +54,12 @@ TypePtr SubInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 
 AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(SubInferShape(primitive, input_args), SubInferType(primitive, input_args));
+  auto shape = SubInferShape(primitive, input_args);
+  auto type = SubInferType(primitive, input_args);
+  if (shape->IsDimZero()) {
+    type = input_args[0]->BuildType();
+  }
+  return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_C(kNameSub, Sub);
 }  // namespace ops
