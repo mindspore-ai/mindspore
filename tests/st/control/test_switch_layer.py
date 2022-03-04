@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+import os
 import numpy as np
 import pytest
 
@@ -50,6 +50,33 @@ class CaseNet(nn.Cell):
         return x
 
 
+class SimpleCell(nn.Cell):
+    def __init__(self, i):
+        super().__init__()
+        self.i = i
+
+    def construct(self, x):
+        return self.i * x
+
+
+class CellInList(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.cell_list = nn.CellList()
+        self.cell_list.append(SimpleCell(4))
+        self.cell_list.append(SimpleCell(5))
+        self.cell_list.append(SimpleCell(6))
+
+    def construct(self, t, x):
+        out = t
+        while x < 3:
+            add = self.cell_list[x](t)
+            out = out + add
+            x += 1
+
+        return out
+
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -79,31 +106,6 @@ def test_cell_in_list():
     Description: test recursive switch layer.
     Expectation: success if grad and output are correct.
     """
-
-    class TestCell(nn.Cell):
-        def __init__(self, i):
-            super().__init__()
-            self.i = i
-
-        def construct(self, x):
-            return self.i * x
-
-    class CellInList(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.cell_list = nn.CellList()
-            self.cell_list.append(TestCell(4))
-            self.cell_list.append(TestCell(5))
-            self.cell_list.append(TestCell(6))
-
-        def construct(self, t, x):
-            out = t
-            while x < 3:
-                add = self.cell_list[x](t)
-                out = out + add
-                x += 1
-            return out
-
     net = CellInList()
     t = Tensor(10, mstype.int32)
     x = Tensor(0, mstype.int32)
@@ -113,3 +115,22 @@ def test_cell_in_list():
 
     assert out == Tensor(160, mstype.int32)
     assert grad_out == Tensor(16, mstype.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_cell_in_list_ge():
+    """
+    Feature: Switch layer in while in ge backend.
+    Description: test recursive switch layer in ge backend.
+    Expectation: success.
+    """
+    os.environ['MS_ENABLE_GE'] = "1"
+    net = CellInList()
+    t = Tensor(20, mstype.int32)
+    x = Tensor(0, mstype.int32)
+    out = net(t, x)
+    del os.environ['MS_ENABLE_GE']
+    assert out == Tensor(320, mstype.int32)

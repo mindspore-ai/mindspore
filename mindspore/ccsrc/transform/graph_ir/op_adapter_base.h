@@ -63,7 +63,10 @@ using DynInputOpFunc = std::function<void(OperatorPtr, unsigned int, OperatorPtr
 using DynInputHandleFunc = std::function<void(OperatorPtr, unsigned int, OutHandler)>;
 using UpdateOutputDescFunc = std::function<void(OperatorPtr, GeTensorDesc)>;
 using CreateDynOutputOpFunc = std::function<void(OperatorPtr, unsigned int)>;
+using UpdateDynOutputDescFunc = std::function<void(OperatorPtr, unsigned int, GeTensorDesc)>;
+using SubGraphFunc = std::function<void(OperatorPtr, DfGraphPtr)>;
 using CreateDynSubGraphFunc = std::function<void(OperatorPtr, unsigned int)>;
+
 using DynSubGraphFunc = std::function<void(OperatorPtr, unsigned int, DfGraphPtr)>;
 
 struct AttrDesc {
@@ -85,6 +88,11 @@ struct DynInputDesc {
   DynInputHandleFunc set_handle;
 };
 
+struct SubGraphDesc {
+  std::string name;
+  SubGraphFunc set_subgraph;
+};
+
 struct DynSubGraphDesc {
   std::string name;
   CreateDynSubGraphFunc create_dyn_subgraph;
@@ -99,6 +107,7 @@ struct OutputDesc {
 struct DynOutputDesc {
   std::string name;
   CreateDynOutputOpFunc create_dyn_output;
+  UpdateDynOutputDescFunc update_dyn_output_desc;
 };
 
 class BaseOpAdapter {
@@ -106,6 +115,9 @@ class BaseOpAdapter {
   virtual ~BaseOpAdapter() {}
   virtual OperatorPtr generate(const AnfNodePtr &anf) = 0;
   virtual OperatorPtr generate(const std::string &type) { return std::make_shared<ge::Operator>(type); }
+  virtual OperatorPtr generateDynOutputOp(const AnfNodePtr &anf) { return nullptr; }
+  virtual void setDynamicOutputNum(const OperatorPtr &op, size_t dyn_output_size) { return; }
+  virtual int setSubgraph(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) = 0;
   virtual int setSubgraph(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OperatorPtr &input) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OutHandler &handle) = 0;
@@ -130,6 +142,7 @@ class BaseOpAdapter {
   virtual const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() = 0;
   virtual const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() = 0;
   virtual const mindspore::HashMap<int, OutputDesc> &getOutputMap() = 0;
+  virtual const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() = 0;
   virtual const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() = 0;
   void AddAttrToDrawGraph(const std::string &attr_str) { attrs_vec_.push_back(attr_str); }
   const std::vector<std::string> &GetAttrsFromDrawGraph() const { return attrs_vec_; }

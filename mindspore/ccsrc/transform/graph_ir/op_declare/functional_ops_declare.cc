@@ -23,5 +23,12 @@ DYN_INPUT_MAP(Case) = {{2, DYN_INPUT_DESC(input)}};
 ATTR_MAP(Case) = EMPTY_ATTR_MAP;
 DYN_OUTPUT_MAP(Case) = {{0, DYN_OUTPUT_DESC(output)}};
 DYN_SUBGRAPH_MAP(Case) = {{0, DYN_SUBGRAPH_DESC(branches)}};
-REG_ADPT_DESC(Case, kNameCase, ADPT_DESC(Case))
+REG_ADPT_DESC(Case, kNameCase, ADPT_DESC(Case));
+
+// While
+DYN_INPUT_MAP(While) = {{1, DYN_INPUT_DESC(input)}};
+ATTR_MAP(While) = {{"parallel_iterations", ATTR_DESC(parallel_iterations, AnyTraits<int32_t>())}};
+DYN_OUTPUT_MAP(While) = {{0, DYN_OUTPUT_DESC(output)}};
+SUBGRAPH_MAP(While) = {{0, SUBGRAPH_DESC(cond)}, {1, SUBGRAPH_DESC(body)}};
+REG_ADPT_DESC(While, kNameWhile, ADPT_DESC(While));
 }  // namespace mindspore::transform
