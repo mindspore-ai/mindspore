@@ -267,9 +267,9 @@ class GraphMemoryParser:
             nodes_list.append(node.to_dict())
             node_num = index + 1
 
-            # To prevent large memory data, sample the memory.
-            if node_num > self.node_sampling_num:
-                return nodes_list[::self.sampling_step]
+        # To prevent large memory data, sample the memory.
+        if node_num > self.node_sampling_num:
+            return nodes_list[::self.sampling_step]
 
         return nodes_list
 
