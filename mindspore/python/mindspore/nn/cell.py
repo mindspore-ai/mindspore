@@ -438,13 +438,16 @@ class Cell(Cell_):
         strategy will be generated for those primitive ops.
 
         Note:
-            Only effective while using auto_parallel_context = ParallelMode.AUTO_PARALLEL.
+            Only effective while using auto_parallel_context = ParallelMode.AUTO_PARALLEL under graph mode.
 
         Examples:
             >>> import mindspore.nn as nn
             >>> net = nn.Dense(3, 4)
             >>> net.set_data_parallel()
         """
+        if context._get_mode() == context.PYNATIVE_MODE:
+            raise ValueError("set_data_parallel: does not support PyNative mode.")
+
         all_prims = self._get_prims_recursively()
         for prim in all_prims:
             prim.add_prim_attr("strategy_gen_mode", "data_parallel")
