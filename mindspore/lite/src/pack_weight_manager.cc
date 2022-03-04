@@ -198,12 +198,12 @@ void PackWeightManager::FreePackedWeight(ModelConstWeight *weight) {
 PackWeightManager::~PackWeightManager() {
   for (auto &item : path_model_weight_) {
     FreePackedWeight(item.second);
-    path_model_weight_.erase(item.first);
   }
+  path_model_weight_.clear();
   for (auto &item : buf_model_weight_) {
     FreePackedWeight(item.second);
-    buf_model_weight_.erase(item.first);
   }
+  buf_model_weight_.clear();
 }
 }  // namespace mindspore::lite
 #endif

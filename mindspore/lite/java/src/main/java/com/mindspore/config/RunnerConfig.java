@@ -48,12 +48,12 @@ public class RunnerConfig {
     }
 
     /**
-     * Set num models
+     * Set workers num
      *
-     * @param numModel The number of parallel models.
+     * @param workersNum The number of parallel models.
      */
-    public void setNumModel(int numModel) {
-        setNumModel(runnerConfigPtr, numModel);
+    public void setWorkersNum(int workersNum) {
+        setWorkersNum(runnerConfigPtr, workersNum);
     }
 
     /**
@@ -67,6 +67,6 @@ public class RunnerConfig {
 
     private native long createRunnerConfig(long msContextPtr);
 
-    private native void setNumModel(long runnerConfigPtr, int numModel);
+    private native void setWorkersNum(long runnerConfigPtr, int workersNum);
 
 }
