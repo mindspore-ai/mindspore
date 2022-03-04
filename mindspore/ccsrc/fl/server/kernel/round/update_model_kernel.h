@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_FL_SERVER_KERNEL_UPDATE_MODEL_KERNEL_H_
 
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -25,6 +26,7 @@
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
 #include "fl/server/executor.h"
+#include "fl/server/model_store.h"
 #ifdef ENABLE_ARMOUR
 #include "fl/armour/cipher/cipher_meta_storage.h"
 #endif
@@ -58,6 +60,11 @@ class UpdateModelKernel : public RoundKernel {
 
   void RunAggregation();
   ResultCode CountForAggregation(const std::string &req_fl_id);
+  std::map<std::string, UploadData> ParseSignDSFeatureMap(const schema::RequestUpdateModel *update_model_req,
+                                                          size_t data_size,
+                                                          std::map<std::string, std::vector<float>> *weight_map);
+  bool VerifySignDSFeatureMap(const std::unordered_map<std::string, size_t> &model,
+                              const schema::RequestUpdateModel *update_model_req);
   ResultCode CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
                                  const schema::RequestUpdateModel *update_model_req);
   sigVerifyResult VerifySignature(const schema::RequestUpdateModel *update_model_req);

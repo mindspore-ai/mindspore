@@ -616,30 +616,57 @@ public class SecureProtocol {
     }
 
     /**
-     * SignDS model weights.
+     * select num indexes from inputList, and put them into outputList.
      *
-     * @param builder       the FlatBufferBuilder object used for serialization model weights.
-     * @param trainDataSize tne size of train data set.
-     * @return the serialized model weights after adding masks.
+     * @param secureRandom cryptographically strong random number generator.
+     * @param inputList    select index from inputList.
+     * @param outputList   put random index into outputList.
+     * @param num          the number of select indexes.
      */
+    private static void randomSelect(SecureRandom secureRandom, List<Integer> inputList, List<Integer> outputList, int num) {
+        if (num <= 0) {
+            LOGGER.severe(Common.addTag("[SignDS] The number to be selected is set incorrectly!"));
+            return;
+        }
+        if (inputList.isEmpty()) {
+            LOGGER.severe(Common.addTag("[SignDS] The input List is empty!"));
+            return;
+        }
+        if (inputList.size() < num) {
+            LOGGER.severe(Common.addTag("[SignDS] The size of inputList is small than num!"));
+            return;
+        }
+        for (int i = inputList.size(); i > inputList.size() - num; i--) {
+            int randomIndex = secureRandom.nextInt(i);
+            int randomSelectTopkIndex = inputList.get(randomIndex);
+            inputList.set(randomIndex, inputList.get(i - 1));
+            inputList.set(i - 1, randomSelectTopkIndex);
+            outputList.add(randomSelectTopkIndex);
+        }
+    }
 
-    public int[] signDSModel(FlatBufferBuilder builder, int trainDataSize, Map<String, float[]> trainedMap) {
+    /**
+     * SignDS alg.
+     *
+     * @param trainedMap trained model.
+     * @param sign       random sign value.
+     * @return index list.
+     */
+    public int[] signDSModel(Map<String, float[]> trainedMap, boolean sign) {
         Map<String, float[]> mapBeforeTrain = modelMap;
         int layerNum = updateFeatureName.size();
-        int[] featuresMap = new int[layerNum];
         SecureRandom secureRandom = Common.getSecureRandom();
-        boolean sign = secureRandom.nextBoolean();
-        List<String> nonTopkKeyList = new ArrayList<>();
-        List<String> topkKeyList = new ArrayList<>();
-        Map<String, Float> allUpdateMap = new HashMap<>();
+        List<Integer> nonTopkKeyList = new ArrayList<>();
+        List<Integer> topkKeyList = new ArrayList<>();
+        Map<Integer, Float> allUpdateMap = new HashMap<>();
+        int index = 0;
         for (int i = 0; i < layerNum; i++) {
             String key = updateFeatureName.get(i);
             float[] dataAfterTrain = trainedMap.get(key);
             float[] dataBeforeTrain = mapBeforeTrain.get(key);
             for (int j = 0; j < dataAfterTrain.length; j++) {
                 float updateData = dataAfterTrain[j] - dataBeforeTrain[j];
-                String ij = Integer.toString(i) + ',' + j;
-                allUpdateMap.put(ij, updateData);
+                allUpdateMap.put(index++, updateData);
             }
         }
         int inputDim = allUpdateMap.size();
@@ -667,8 +694,7 @@ public class SecureProtocol {
             LOGGER.severe("[SignDS] topkDim or signDimOut is ERROR! please check");
             return new int[0];
         }
-
-        List<Map.Entry<String, Float>> allUpdateList = new ArrayList<>(allUpdateMap.entrySet());
+        List<Map.Entry<Integer, Float>> allUpdateList = new ArrayList<>(allUpdateMap.entrySet());
         if (sign) {
             allUpdateList.sort((o1, o2) -> Float.compare(o2.getValue(), o1.getValue()));
         } else {
@@ -680,42 +706,11 @@ public class SecureProtocol {
         for (int i = topkDim; i < allUpdateList.size(); i++) {
             nonTopkKeyList.add(allUpdateList.get(i).getKey());
         }
-        List<String> outputDimensionIJStringList = new ArrayList<>();
-        for (int i = topkKeyList.size(); i > topkKeyList.size() - numInter; i--) {
-            int randomIndex = secureRandom.nextInt(i);
-            String randomChoiceTopkIJString = topkKeyList.get(randomIndex);
-            topkKeyList.set(randomIndex, topkKeyList.get(i - 1));
-            topkKeyList.set(i - 1, randomChoiceTopkIJString);
-            outputDimensionIJStringList.add(randomChoiceTopkIJString);
-        }
-        for (int i = nonTopkKeyList.size(); i > nonTopkKeyList.size() - numOuter; i--) {
-            int randomIndex = secureRandom.nextInt(i);
-            String randomChoiceNonTopkIJString = nonTopkKeyList.get(randomIndex);
-            nonTopkKeyList.set(randomIndex, nonTopkKeyList.get(i - 1));
-            nonTopkKeyList.set(i - 1, randomChoiceNonTopkIJString);
-            outputDimensionIJStringList.add(randomChoiceNonTopkIJString);
-        }
-        float signValue = sign ? 1f * signGlobalLr : -1f * signGlobalLr;
-        for (String ijString : outputDimensionIJStringList) {
-            String[] ij = ijString.split(",");
-            int iKeyIndex = Integer.parseInt(ij[0]);
-            int jDataIndex = Integer.parseInt(ij[1]);
-            String key = updateFeatureName.get(iKeyIndex);
-            float[] dataBeforeTrain = mapBeforeTrain.get(key);
-            dataBeforeTrain[jDataIndex] += signValue;
-            mapBeforeTrain.put(key, dataBeforeTrain);
-        }
-        for (int i = 0; i < layerNum; i++) {
-            String key = updateFeatureName.get(i);
-            float[] dataBeforeTrain = mapBeforeTrain.get(key);
-            for (int j = 0; j < dataBeforeTrain.length; j++) {
-                dataBeforeTrain[j] *= trainDataSize;
-            }
-            int featureName = builder.createString(key);
-            int weight = FeatureMap.createDataVector(builder, dataBeforeTrain);
-            int featureMap = FeatureMap.createFeatureMap(builder, featureName, weight);
-            featuresMap[i] = featureMap;
-        }
-        return featuresMap;
+        List<Integer> outputDimensionIndexList = new ArrayList<>();
+        randomSelect(secureRandom, topkKeyList, outputDimensionIndexList, numInter);
+        randomSelect(secureRandom, nonTopkKeyList, outputDimensionIndexList, numOuter);
+        outputDimensionIndexList.sort(Integer::compare);
+        LOGGER.info(Common.addTag("[SignDS] outputDimension size is " + outputDimensionIndexList.size()));
+        return outputDimensionIndexList.stream().mapToInt(i -> i).toArray();
     }
 }
