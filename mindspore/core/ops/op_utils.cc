@@ -73,9 +73,16 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
     return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
   }
   auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
-  auto min_broadcast_shape = CalBroadCastShape(x_min_shape, y_min_shape, op_name);
-  auto max_broadcast_shape = CalBroadCastShape(x_max_shape, y_max_shape, op_name);
-  return std::make_shared<abstract::Shape>(broadcast_shape, min_broadcast_shape, max_broadcast_shape);
+  bool is_x_dyn =
+    std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::SHP_ANY; });
+  bool is_y_dyn =
+    std::any_of(y_shape.begin(), y_shape.end(), [](int64_t value) { return value == abstract::Shape::SHP_ANY; });
+  if (is_x_dyn || is_y_dyn) {
+    auto min_broadcast_shape = CalBroadCastShape(x_min_shape, y_min_shape, op_name);
+    auto max_broadcast_shape = CalBroadCastShape(x_max_shape, y_max_shape, op_name);
+    return std::make_shared<abstract::Shape>(broadcast_shape, min_broadcast_shape, max_broadcast_shape);
+  }
+  return std::make_shared<abstract::Shape>(broadcast_shape);
 }
 }  // namespace ops
 }  // namespace mindspore
