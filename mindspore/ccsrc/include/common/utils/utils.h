@@ -784,6 +784,10 @@ const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
   kCastOpName,      kExpandDimsOpName, kReshapeOpName,   kEmbeddingLookupOpName, kTransposeOpName, kReduceSumOpName,
   kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName, kReduceAllOpName,       kReduceAnyOpName, kConcatOpName};
 
+// The map between kernel's output and input ref relationship.
+// Key is the output index while the value is input index which will be used as the reference of output.
+using OutputInputRefMap = std::map<size_t, size_t>;
+
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   if (access(file_name.c_str(), F_OK) == -1) {
     return;

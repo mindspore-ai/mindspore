@@ -469,6 +469,8 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Execute optimization pass.
   device_context->OptimizeGraph(graph);
 
+  AddOutInRefToGraph(graph);
+
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   device_context->CreateKernel(graph->execution_order());
@@ -584,6 +586,25 @@ KernelGraphPtr GraphCompiler::Fetch(const GraphInfo &graph_info) const {
     return nullptr;
   }
   return iter->second;
+}
+
+void GraphCompiler::AddOutInRefToGraph(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  for (const auto &cnode : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(cnode->kernel_info());
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    for (const auto &ref : kernel_info->out_in_ref_map()) {
+      size_t output_index = ref.first;
+      size_t input_index = ref.second;
+      auto final_pair = std::make_pair(cnode, output_index);
+      auto origin_pair = common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(cnode, input_index), 0);
+      MS_LOG(INFO) << "The reference relation output " << final_pair.first->fullname_with_scope()
+                   << ", output index: " << final_pair.second << " to input "
+                   << origin_pair.first->fullname_with_scope() << ", output index: " << origin_pair.second;
+      graph->AddRefCorrespondPairs(final_pair, origin_pair);
+    }
+  }
 }
 
 void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context,

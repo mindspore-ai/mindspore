@@ -81,6 +81,9 @@ struct InterProcessOpEdge {
 using InterProcessOpPair = std::tuple<CNodePtr, CNodePtr, CNodePtr, int>;
 using InterProcessOpEdgesInfo = std::map<InterProcessOpEdge, InterProcessOpPair>;
 
+constexpr char kAttrUpdateParameter[] = "update_parameter";
+constexpr char kAttrParameterInputIndex[] = "parameter_input_index";
+
 // The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the
 // cluster.
 class GraphSplitter {

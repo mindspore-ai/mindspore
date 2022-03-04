@@ -54,6 +54,11 @@ class KernelAttr {
     return *this;
   }
 
+  KernelAttr &AddOutInRef(size_t output_index, size_t input_index) {
+    out_in_ref_map_[output_index] = input_index;
+    return *this;
+  }
+
   const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
   const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
   bool GetAllSame() const { return all_same_; }
@@ -63,10 +68,13 @@ class KernelAttr {
 
   size_t GetInputSize() const { return input_type_.size(); }
   size_t GetOutputSize() const { return output_type_.size(); }
+  const OutputInputRefMap &GetOutInRefMap() const { return out_in_ref_map_; }
 
  private:
   std::vector<DataType> input_type_;
   std::vector<DataType> output_type_;
+  // The map between kernel's output and input ref relationship.
+  OutputInputRefMap out_in_ref_map_;
   bool all_same_;
 };
 }  // namespace cpu

@@ -120,6 +120,14 @@ void NativeGpuKernelModFactory::CheckSM(const KernelBuildInfo *kernel_info, cons
   }
 }
 
+void NativeGpuKernelModFactory::SetRefMapToKernelInfo(const std::string &kernel_name, size_t index,
+                                                      device::KernelInfo *kernel_info) {
+  const auto &kernel_attr = (map_kernel_name_to_creater_.find(kernel_name)->second)[index].first;
+  if (!kernel_attr.GetOutInRefMap().empty()) {
+    kernel_info->set_ref_map(kernel_attr.GetOutInRefMap());
+  }
+}
+
 std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std::string &kernel_name,
                                                                       const KernelBuildInfo *kernel_info) {
   auto iter = map_kernel_name_to_creater_.find(kernel_name);
@@ -181,6 +189,7 @@ NativeGpuKernelMod *NativeGpuKernelModFactory::Create(const std::string &kernel_
   MS_EXCEPTION_IF_NULL(kernel_build_Info);
   std::pair<bool, size_t> ret_pair = GpuKernelAttrCheck(kernel_name, kernel_build_Info);
   if (ret_pair.first) {
+    SetRefMapToKernelInfo(kernel_name, ret_pair.second, kernel_info);
     return (map_kernel_name_to_creater_.find(kernel_name)->second)[ret_pair.second].second();
   }
   return nullptr;
