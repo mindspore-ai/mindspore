@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-using MessageHandler = std::function<void(std::unique_ptr<MessageBase> &&msg)>;
+using MessageHandler = std::function<void(const std::shared_ptr<MessageBase> &)>;
 using DeleteCallBack = void (*)(const std::string &from, const std::string &to);
 using ConnectionCallBack = void (*)(void *conn);
 

@@ -422,8 +422,8 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
 
 #ifdef ENABLE_RPC_ACTOR
   // Set OpContext to rpc node scheduler.
-  MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
-  rpc_node_scheduler_->SetOpcontext(&op_context);
+  auto op_context_setter = std::make_shared<RpcActorOpContextSetter>(rpc_node_scheduler_.get(), &op_context);
+  MS_EXCEPTION_IF_NULL(op_context_setter);
 #endif
 
   if ((strategy == GraphExecutionStrategy::kStep) && IsSingleOpActorSet(actor_set)) {

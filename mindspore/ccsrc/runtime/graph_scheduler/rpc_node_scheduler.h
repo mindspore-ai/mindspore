@@ -52,14 +52,31 @@ class RpcNodeScheduler {
   void InsertSendActor(const SendActorPtr &send_actor);
   void InsertRecvActor(const RecvActorPtr &recv_actor);
 
-  // Set op_context to rpc actors.
+  // Set op context to rpc actors.
   void SetOpcontext(OpContext<DeviceTensor> *const op_context);
+
+  // Reset op context for rpc actors.
+  void ResetOpcontext();
 
  private:
   // Create new route table proxy.
   ActorRouteTableProxyPtr CreateRouteTableProxy();
 
   RpcActorSetPtr rpc_actor_set_;
+};
+
+// The setter of op context for rpc actors.
+class RpcActorOpContextSetter {
+ public:
+  explicit RpcActorOpContextSetter(RpcNodeScheduler *rpc_node_scheduler, OpContext<DeviceTensor> *const op_context)
+      : rpc_node_scheduler_(rpc_node_scheduler), op_context_(op_context) {
+    rpc_node_scheduler_->SetOpcontext(op_context_);
+  }
+  ~RpcActorOpContextSetter() { rpc_node_scheduler_->ResetOpcontext(); }
+
+ private:
+  RpcNodeScheduler *rpc_node_scheduler_;
+  OpContext<DeviceTensor> *op_context_;
 };
 }  // namespace runtime
 }  // namespace mindspore

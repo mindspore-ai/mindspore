@@ -37,7 +37,7 @@ class RpcKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override { return; }
 
   // Set remote data as input.
-  void SetRemoteInput(std::unique_ptr<MessageBase> &&) {}
+  void SetRemoteInput(const std::shared_ptr<MessageBase> &msg) {}
 
  private:
 };

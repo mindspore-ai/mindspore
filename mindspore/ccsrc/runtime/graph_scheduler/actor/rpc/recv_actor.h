@@ -18,9 +18,11 @@
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_RPC_RECV_ACTOR_H_
 
 #include <set>
+#include <mutex>
 #include <vector>
 #include <string>
 #include <memory>
+#include <condition_variable>
 #include "runtime/graph_scheduler/actor/rpc/rpc_actor.h"
 
 namespace mindspore {
@@ -36,8 +38,12 @@ class RecvActor : public RpcActor {
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor) {}
   ~RecvActor() override = default;
 
-  // When an inter-process data received, this method is called.
-  void RunOpInterProcessData(std::unique_ptr<MessageBase> &&msg, OpContext<DeviceTensor> *const context);
+  // Besides set the op context, this method also notify the message handler to 'RunOpInterProcessData'.
+  void SetOpcontext(OpContext<DeviceTensor> *const op_context) override;
+
+  // This method means the op context is invalid now. If the message handler is called while the op context is invalid,
+  // it should be blocked until 'SetOpcontext' is called.
+  void ResetOpcontext() override;
 
   // Set recv actor's source peer info, in another word, recv actor's input.
   void SetRouteInfo(uint32_t src_rank, const std::string &src_role, const std::string &recv_src_node_name,
@@ -47,20 +53,27 @@ class RecvActor : public RpcActor {
   bool StartServer();
 
  protected:
+  // When an inter-process data received, this method is called.
+  void RunOpInterProcessData(const std::shared_ptr<MessageBase> &msg, OpContext<DeviceTensor> *const context);
+
   // Besides the checking method in base class AbstractActor, condition of inter-process arrows should be checked for
   // recv actor.
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
 
  private:
-  void HandleMessage(std::unique_ptr<MessageBase> &&msg);
-
-  friend class GraphScheduler;
+  // The message callback of the tcp server.
+  void HandleMessage(const std::shared_ptr<MessageBase> &msg);
 
   // The network address of this recv actor. It's generated automatically by rpc module.
   std::string ip_;
   uint16_t port_;
 
   std::unique_ptr<TCPServer> server_;
+
+  // The variables used to ensure thread-safe of op context visited by recv actor.
+  bool is_context_valid_;
+  std::mutex context_mtx_;
+  std::condition_variable context_cv_;
 };
 
 using RecvActorPtr = std::shared_ptr<RecvActor>;

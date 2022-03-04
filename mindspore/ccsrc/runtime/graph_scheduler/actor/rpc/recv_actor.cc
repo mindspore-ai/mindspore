@@ -16,31 +16,24 @@
 
 #include "runtime/graph_scheduler/actor/rpc/recv_actor.h"
 
+#include <memory>
 #include <utility>
+#include <functional>
+#include <condition_variable>
 #include "plugin/device/cpu/kernel/rpc/rpc_recv_kernel.h"
 
 namespace mindspore {
 namespace runtime {
-void RecvActor::RunOpInterProcessData(std::unique_ptr<MessageBase> &&msg, OpContext<DeviceTensor> *const context) {
-  MS_ERROR_IF_NULL_WO_RET_VAL(msg);
-  MS_ERROR_IF_NULL_WO_RET_VAL(op_context_);
-  auto &sequential_num = context->sequential_num_;
-  (void)input_op_inter_process_[sequential_num].emplace_back(msg->From().Name());
+void RecvActor::SetOpcontext(OpContext<DeviceTensor> *const op_context) {
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  op_context_ = op_context;
+  is_context_valid_ = true;
+  context_cv_.notify_all();
+}
 
-  auto is_run = CheckRunningCondition(context);
-  MS_LOG(INFO) << "Actor(" << GetAID().Name() << ") receive the input op inter-process. Edge is "
-               << inter_process_edge_name_ << ". Check running condition:" << is_run;
-
-  // Parse the message from remote peer and set to rpc recv kernel.
-  auto recv_kernel_mod = dynamic_cast<kernel::RpcKernelMod *>(kernel_info_->MutableKernelMod());
-  MS_ERROR_IF_NULL_WO_RET_VAL(recv_kernel_mod);
-  // We set remote data by the interface of the rpc kernel, because currently there's no remote input for a kernel mod.
-  recv_kernel_mod->SetRemoteInput(std::move(msg));
-
-  if (is_run) {
-    Run(context);
-  }
-  return;
+void RecvActor::ResetOpcontext() {
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  is_context_valid_ = false;
 }
 
 void RecvActor::SetRouteInfo(uint32_t, const std::string &, const std::string &recv_src_node_name,
@@ -59,6 +52,7 @@ bool RecvActor::StartServer() {
   }
 
   // Step 2: Set the message handler of the server.
+  server_->SetMessageHandler(std::bind(&RecvActor::HandleMessage, this, std::placeholders::_1));
 
   // Step 2: Register the server address to route table. The server should not be connected before this step is done.
   ActorAddress recv_actor_addresss;
@@ -71,6 +65,28 @@ bool RecvActor::StartServer() {
                       << " when starting server.";
   }
   return true;
+}
+
+void RecvActor::RunOpInterProcessData(const std::shared_ptr<MessageBase> &msg, OpContext<DeviceTensor> *const context) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(msg);
+  MS_ERROR_IF_NULL_WO_RET_VAL(op_context_);
+  auto &sequential_num = context->sequential_num_;
+  (void)input_op_inter_process_[sequential_num].emplace_back(msg->From().Name());
+
+  auto is_run = CheckRunningCondition(context);
+  MS_LOG(INFO) << "Actor(" << GetAID().Name() << ") receive the input op inter-process. Edge is "
+               << inter_process_edge_name_ << ". Check running condition:" << is_run;
+
+  // Parse the message from remote peer and set to rpc recv kernel.
+  auto recv_kernel_mod = dynamic_cast<kernel::RpcKernelMod *>(kernel_info_->MutableKernelMod());
+  MS_ERROR_IF_NULL_WO_RET_VAL(recv_kernel_mod);
+  // We set remote data by the interface of the rpc kernel, because currently there's no remote input for a kernel mod.
+  recv_kernel_mod->SetRemoteInput(msg);
+
+  if (is_run) {
+    Run(context);
+  }
+  return;
 }
 
 bool RecvActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) const {
@@ -100,10 +116,15 @@ bool RecvActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) co
   return true;
 }
 
-void RecvActor::HandleMessage(std::unique_ptr<MessageBase> &&msg) {
+void RecvActor::HandleMessage(const std::shared_ptr<MessageBase> &msg) {
+  // Block the message handler if the context is invalid.
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  context_cv_.wait(lock, [this] { return is_context_valid_; });
+  lock.unlock();
+
   MS_ERROR_IF_NULL_WO_RET_VAL(msg);
   MS_ERROR_IF_NULL_WO_RET_VAL(op_context_);
-  RunOpInterProcessData(std::move(msg), op_context_);
+  ActorDispatcher::Send(GetAID(), &RecvActor::RunOpInterProcessData, msg, op_context_);
 }
 }  // namespace runtime
 }  // namespace mindspore
