@@ -59,6 +59,11 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32) {
           indices_data_[i] = static_cast<int>(reinterpret_cast<float *>(indices_tensor->MutableData())[i]);
         }
         break;
+      case kNumberTypeBool:
+        for (int i = 0; i < indices_num; i++) {
+          indices_data_[i] = static_cast<int>(reinterpret_cast<bool *>(indices_tensor->MutableData())[i]);
+        }
+        break;
       default:
         MS_LOG(ERROR) << "Does not support data type: " << indices_tensor->data_type();
         return RET_ERROR;
@@ -71,4 +76,5 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32) {
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Gather, LiteKernelCreator<GatherCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Gather, LiteKernelCreator<GatherCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Gather, LiteKernelCreator<GatherCPUKernel>)
 }  // namespace mindspore::kernel

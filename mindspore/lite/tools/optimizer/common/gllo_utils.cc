@@ -212,6 +212,21 @@ int CopyTensorDataFromTensorInfo(const tensor::TensorPtr &tensor_info,
         tensor_data[i] = static_cast<int>(origin_data[i]);
       }
     }
+  } else if (tensor_info->data_type() == kNumberTypeFloat64) {
+    auto *tensor_data = reinterpret_cast<float *>(tensor_info_dst->data_c());
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "new data failed";
+      return RET_ERROR;
+    }
+    auto *origin_data = reinterpret_cast<double_t *>(tensor_info->data_c());
+    for (size_t i = 0; i < data_count; ++i) {
+      if (origin_data[i] > static_cast<double_t>(FLT_MAX) || origin_data[i] < static_cast<double_t>(FLT_MIN)) {
+        MS_LOG(WARNING) << "float64 data " << origin_data[i] << " cannot fit into float32";
+        tensor_data[i] = origin_data[i] > 0 ? FLT_MAX : FLT_MIN;
+      } else {
+        tensor_data[i] = static_cast<float>(origin_data[i]);
+      }
+    }
   } else {
     tensor_info_dst->set_data_type(tensor_info->data_type());
     auto *tensor_data = reinterpret_cast<int8_t *>(tensor_info_dst->data_c());
@@ -724,7 +739,12 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr
   std::vector<int64_t> shape_vector;
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
                  [](const int &val) { return static_cast<int64_t>(val); });
-  auto data_type = tensor_info->data_type() == kNumberTypeInt64 ? kNumberTypeInt32 : tensor_info->data_type();
+  auto data_type = tensor_info->data_type();
+  if (tensor_info->data_type() == kNumberTypeInt64) {
+    data_type = kNumberTypeInt32;
+  } else if (tensor_info->data_type() == kNumberTypeFloat64) {
+    data_type = kNumberTypeFloat32;
+  }
   param_node->set_name(node->fullname_with_scope());
   auto tensor_info_new = std::make_shared<tensor::Tensor>(data_type, shape_vector);
   if (tensor_info_new == nullptr) {

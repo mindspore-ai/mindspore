@@ -32,6 +32,9 @@ ops::PrimitiveC *OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const
       if (dst_type == kNumberTypeInt64) {
         dst_type = kNumberTypeInt32;
       }
+      if (dst_type == kNumberTypeFloat64) {
+        dst_type = kNumberTypeFloat32;
+      }
       prim->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
     }
   }
