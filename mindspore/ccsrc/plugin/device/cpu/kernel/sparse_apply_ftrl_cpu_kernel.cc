@@ -50,12 +50,13 @@ void ComputeFtrl(MultiThreadComputeParams<T> *input_params, size_t start, size_t
       auto summed_grad = unique_sparse_grad.value_[k];
       auto accum_new = accum[j] + summed_grad * summed_grad;
       float y;
+      linear[j] += summed_grad;
       if (lr_power == -0.5) {
         y = std::sqrt(accum_new);
-        linear[j] += (summed_grad - (y - std::sqrt(accum[j])) / lr) * var[j];
+        linear[j] -= ((y - std::sqrt(accum[j])) / lr) * var[j];
       } else {
         y = std::pow(accum_new, -lr_power);
-        linear[j] += (summed_grad - (y - std::pow(accum[j], -lr_power)) / lr) * var[j];
+        linear[j] -= ((y - std::pow(accum[j], -lr_power)) / lr) * var[j];
       }
       accum[j] = accum_new;
       auto x = Sign(linear[j]) * l1 - linear[j];
