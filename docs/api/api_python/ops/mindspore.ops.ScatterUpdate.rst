@@ -1,0 +1,32 @@
+﻿mindspore.ops.ScatterUpdate
+============================
+
+.. py:class:: mindspore.ops.ScatterUpdate(use_locking=True)
+
+    使用给定的更新值和输入索引更新数据的值。
+
+    对于每个在 `indices.shape` 中的 `i, ..., j` ：
+
+    .. math::
+        \text{input_x}[\text{indices}[i, ..., j], :]= \text{updates}[i, ..., j, :]
+
+    输入的 `input_x` 和 `updates` 遵循隐式类型转换规则，以确保数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为高精度数据类型。当需要转换Parameter的数据类型时，会抛出RuntimeError异常。
+
+    **参数：**
+
+    - **use_locking** (bool) - 表示是否使用锁来保护。默认值：True。
+
+    **输入：**
+
+    - **input_x** (Parameter) -  ScatterUpdate的输入，任意维度的Parameter。
+    - **indices** (Tensor) - 指定更新操作的索引。数据类型为int32。如果索引中存在重复项，则更新的顺序无法得知。
+    - **updates** (Tensor) - 指定与 `input_x` 更新操作的Tensor，其数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
+
+    **输出：**
+
+    Tensor，shape和数据类型与输入 `input_x` 相同。
+
+    **异常：**
+
+    - **TypeError** - `use_locking` 不是bool。
+    - **TypeError** - `indices` 不是int32。
