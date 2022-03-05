@@ -1359,7 +1359,23 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
     MS_EXCEPTION_IF_NULL(mindrt_backend);
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+    auto is_parallel = (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
+    // Run in GRAPH_MODE if the func_graph is ms_function or the func_graph contain multi-subgraph.
+    bool pynative_switch_to_graph_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+                                         (!func_graph->is_bprop() || func_graph->manager()->func_graphs().size() > 1) &&
+                                         !is_parallel;
+    if (pynative_switch_to_graph_mode) {
+      MS_LOG(INFO) << "PyNative graph Compile and Run in GRAPH_MODE";
+      context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+      SetRunMode(func_graph, mindrt_backend.get());
+    }
     auto &actor_info = mindrt_backend->CompileGraphs(func_graph);
+    if (pynative_switch_to_graph_mode) {
+      context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kPynativeMode);
+    }
     VectorRef args;
     if (need_run) {
       VectorRef outputs;

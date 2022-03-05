@@ -55,7 +55,6 @@
 #endif
 #include "backend/common/session/session_factory.h"
 #include "backend/common/session/pynative_task_manager.h"
-#include "pipeline/pynative/pynative_execute.h"
 #include "runtime/op_builder/op_lazy_builder.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
@@ -1434,18 +1433,24 @@ void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithInde
 
 void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                                               std::map<std::string, size_t> *forward_op_output_tensor_id) {
-  if (!pynative::PynativeExecutor::GetInstance()->grad_executor()->grad_is_running()) {
-    return;
-  }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+    return;
+  }
   // Cpu can not clear device address, because it's device address and host address is the same
   if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
     return;
   }
-  MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
-  const auto &forward_op_output_id = pynative::PynativeExecutor::GetInstance()->grad_executor()->forward_op_output_id();
+  if (!common::AnfAlgo::HasNodeAttr(kAttrForwardOpOutputId, graph->get_return())) {
+    MS_LOG(INFO) << "Graph " << graph->ToString() << " has no forward op output id attr, skip.";
+    return;
+  }
+  auto forward_op_output_id_vec =
+    common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(graph->get_return(), kAttrForwardOpOutputId);
+  std::set<std::string> forward_op_output_id(forward_op_output_id_vec.begin(), forward_op_output_id_vec.end());
   MS_LOG(DEBUG) << "Total forward op out put size " << forward_op_output_id.size();
+  MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   for (const auto &kernel : graph->execution_order()) {
     const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t i = 1; i <= input_tensor_num; ++i) {

@@ -452,17 +452,6 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   ms_execution_mode_ = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   real_execution_mode_ = ms_execution_mode_;
-  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  auto is_parallel = (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
-
-  // Run in GRAPH_MODE if the func_graph is ms_function or the func_graph contain multi-subgraph.
-  if (ms_execution_mode_ == kPynativeMode &&
-      (!func_graph->is_bprop() || func_graph->manager()->func_graphs().size() > 1) && !is_parallel) {
-    real_execution_mode_ = kGraphMode;
-    context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-    pipeline::SetRunMode(func_graph, this);
-    MS_LOG(INFO) << "PyNative graph Compile and Run in GRAPH_MODE";
-  }
 
   // Compile root graph.
   graph_id_to_device_context_.clear();
