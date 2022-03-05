@@ -67,9 +67,6 @@ constexpr size_t kMakeCSRTensorInputStartPos = 1;
 constexpr size_t kMakeTensorInputStartPos = 1;
 constexpr size_t kMakeCSRTensorInputNum = 4;
 
-const char kEntranceActorNameSuffix[] = "_EntranceActor";
-const char kExitActorNameSuffix[] = "_ExitActor";
-const char kStackActorNameSuffix[] = "_StackActor";
 using NodeWithContext = std::pair<AnfNodePtr, DeviceContext *>;
 struct NodeWithContextCmp {
   bool operator()(const NodeWithContext &node1, const NodeWithContext &node2) const {

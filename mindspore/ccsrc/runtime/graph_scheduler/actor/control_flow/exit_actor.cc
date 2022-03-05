@@ -32,6 +32,11 @@ void ExitActor::Init() {
       (void)output_branch_data_[i].emplace_back(data_arrow->from_output_index_, std::move(data));
     }
   }
+
+  // Check device contexts number.
+  if (device_contexts_.size() != input_device_tensors_.size()) {
+    MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
+  }
 }
 
 void ExitActor::FetchInput(OpContext<DeviceTensor> *const context) {
@@ -128,6 +133,14 @@ void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context)
       IncreaseDynamicRefCount(output_partial);
     }
   }
+
+  // The input device tensor may not have users and needs to free the memory.
+  for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
+    if ((input_device_tensors_[i] != nullptr) && (input_device_tensors_[i]->dynamic_ref_count() == 0)) {
+      MS_LOG(WARNING) << GetAID().Name() << " input index:" << i << " has no user and free the memory.";
+      device_contexts_[i]->FreeMemory(input_device_tensors_[i]);
+    }
+  }
 }
 
 void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
@@ -146,12 +159,11 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   std::vector<DeviceTensor *> new_device_tensors;
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     auto input_device_tensor = input_device_tensors_[i];
-    if (!is_need_copy_device_tensors_[i]) {
+    if ((input_device_tensor == nullptr) || (!is_need_copy_device_tensors_[i])) {
       (void)new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }
 
-    MS_EXCEPTION_IF_NULL(input_device_tensor);
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
     if (HasAbstractRef(node_with_index.first)) {

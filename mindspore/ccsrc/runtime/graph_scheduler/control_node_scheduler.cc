@@ -1398,11 +1398,11 @@ void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompile
   auto to_actor = dynamic_cast<EntranceActor *>(FetchActor(entrance_actor_name));
   MS_EXCEPTION_IF_NULL(to_actor);
 
-  const auto &host_ds_actor_name = graph_compiler_info.name_ + "_HostDSActor";
+  const auto &host_ds_actor_name = graph_compiler_info.name_ + kHostDSActorNameSuffix;
   auto host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(host_ds_actor_name));
   // No host data source actor scenario.
   if (host_ds_actor == nullptr) {
-    const auto &data_prepare_actor_name = graph_compiler_info.name_ + "_DataPrepareActor";
+    const auto &data_prepare_actor_name = graph_compiler_info.name_ + kDataPrepareActorNameSuffix;
     auto data_prepare_actor = FetchActor(data_prepare_actor_name);
     MS_EXCEPTION_IF_NULL(data_prepare_actor);
     LinkControlArrow(data_prepare_actor, to_actor);
@@ -1532,6 +1532,64 @@ void ControlNodeScheduler::LinkBranchIDArrow(ControlActor *const from_actor, Con
   to_actor->input_branch_ids_num_++;
 }
 
+void ControlNodeScheduler::ConvertDataArrowToControlArrow(AbstractActor *const from_actor,
+                                                          AbstractActor *const to_actor, const DataArrowPtr &data_arrow,
+                                                          size_t data_arrow_index) {
+  MS_EXCEPTION_IF_NULL(from_actor);
+  MS_EXCEPTION_IF_NULL(to_actor);
+  MS_EXCEPTION_IF_NULL(data_arrow);
+  MS_EXCEPTION_IF_CHECK_FAIL((data_arrow_index < from_actor->output_data_nodes_.size()), "Index out of range.");
+  auto &need_converted_node = from_actor->output_data_nodes_[data_arrow_index];
+  MS_EXCEPTION_IF_NULL(need_converted_node);
+
+  // Erase the output data arrow in from actor.
+  (void)from_actor->output_data_arrows_.erase(from_actor->output_data_arrows_.begin() + data_arrow_index);
+  (void)from_actor->output_data_nodes_.erase(from_actor->output_data_nodes_.begin() + data_arrow_index);
+
+  // Erase the input data arrow aid in to actor.
+  bool to_actor_erase = false;
+  for (auto iter = to_actor->input_data_arrow_aids_.begin(); iter != to_actor->input_data_arrow_aids_.end(); ++iter) {
+    if (*iter == from_actor->GetAID()) {
+      (void)to_actor->input_data_arrow_aids_.erase(iter);
+      to_actor_erase = true;
+      to_actor->input_datas_num_--;
+      break;
+    }
+  }
+  if (to_actor_erase == false) {
+    MS_LOG(EXCEPTION) << "Erase no input data arrow, from actor:" << from_actor->GetAID().Name()
+                      << ", to actor:" << to_actor->GetAID().Name() << ", data arrow index:" << data_arrow_index;
+  }
+
+  // Recalculate the ref count of converted node.
+  auto device_tensor = AnfAlgo::GetMutableOutputAddr(need_converted_node, data_arrow->from_output_index_, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  size_t old_ref_count = device_tensor->ref_count();
+  // Ref count Initial value is 1.
+  size_t new_ref_count = 1;
+  for (auto &output_data_arrow : from_actor->output_data_arrows_) {
+    MS_EXCEPTION_IF_NULL(output_data_arrow);
+    if (output_data_arrow->from_output_index_ != data_arrow->from_output_index_) {
+      continue;
+    }
+    if ((output_data_arrow->to_op_id_.Name().find(kExitActorNameSuffix) != std::string::npos) ||
+        (output_data_arrow->to_op_id_.Name().find(kOutputActorNameSuffix) != std::string::npos)) {
+      new_ref_count = SIZE_MAX;
+      break;
+    }
+    ++new_ref_count;
+  }
+  device_tensor->set_original_ref_count(new_ref_count);
+  device_tensor->ResetRefCount();
+  MS_LOG(INFO) << "Erase the invalid data arrow, from actor:" << from_actor->GetAID().Name()
+               << ", from index:" << data_arrow->from_output_index_ << ", to actor:" << to_actor->GetAID().Name()
+               << ", to index:" << data_arrow->to_input_index_ << ", old ref count:" << old_ref_count
+               << ", new ref count:" << new_ref_count;
+
+  // Add the control arrow.
+  LinkControlArrow(from_actor, to_actor);
+}
+
 bool ControlNodeScheduler::CheckActorValid(const ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   if (actor_set->control_actors_ == nullptr) {
@@ -1594,6 +1652,59 @@ bool ControlNodeScheduler::CheckActorValid(const ActorSet *actor_set) const {
 bool ControlNodeScheduler::IsNoInputActor(const ControlActor *control_actor) const {
   return (control_actor->input_datas_num_ == 0 && control_actor->input_controls_num_ == 0 &&
           control_actor->input_partials_num_ == 0 && control_actor->input_branch_ids_num_ == 0);
+}
+
+void ControlNodeScheduler::Optimize(const ControlActorSet *control_actor_set) {
+  if (control_actor_set == nullptr) {
+    return;
+  }
+
+  auto is_arrow_in_actor = [](const DataArrowPtr &from_data_arrow, const AbstractActorPtr &to_actor) {
+    if (from_data_arrow->to_op_id_ != to_actor->GetAID()) {
+      return false;
+    }
+    return std::any_of(to_actor->output_data_arrows().begin(), to_actor->output_data_arrows().end(),
+                       [&from_data_arrow](const DataArrowPtr &to_data_arrow) {
+                         return from_data_arrow->to_input_index_ == to_data_arrow->from_output_index_;
+                       });
+  };
+
+  // Optimize the exit actor whose input data has no user.
+  for (auto &exit_actor : control_actor_set->exit_actors_) {
+    MS_EXCEPTION_IF_NULL(exit_actor);
+    // The input_data_arrow_aids_ of  exit actor will be changed in the ConvertDataArrowToControlArrow, so need copy.
+    auto input_data_arrow_aids = exit_actor->input_data_arrow_aids_;
+    for (auto &input_data_arrow_aid : input_data_arrow_aids) {
+      auto input_actor = FetchActor(input_data_arrow_aid.Name());
+      MS_EXCEPTION_IF_NULL(input_actor);
+      MS_EXCEPTION_IF_CHECK_FAIL((input_actor != nullptr), (input_data_arrow_aid.Name() + " is nullptr."));
+      // Only handle the kernel actor to kernel graph exit actor.
+      if ((input_actor->type() != KernelTransformType::kKernelActor) || (exit_actor->node_ != nullptr)) {
+        continue;
+      }
+
+      std::vector<DataArrowPtr> no_used_arrows;
+      std::vector<size_t> no_used_arrow_indices;
+      // Get all the no used arrows.
+      for (size_t i = 0; i < input_actor->output_data_arrows_.size(); ++i) {
+        auto &output_data_arrow = input_actor->output_data_arrows_[i];
+        MS_EXCEPTION_IF_NULL(output_data_arrow);
+        // Skip the valid data arrow.
+        if ((output_data_arrow->to_op_id_ != exit_actor->GetAID()) ||
+            (is_arrow_in_actor(output_data_arrow, exit_actor))) {
+          continue;
+        }
+        (void)no_used_arrows.emplace_back(output_data_arrow);
+        (void)no_used_arrow_indices.emplace_back(i);
+      }
+
+      // Convert the no used data arrow to control arrow backward to avoid the vector index error.
+      for (size_t arrow_index = no_used_arrows.size(); arrow_index > 0; --arrow_index) {
+        ConvertDataArrowToControlArrow(input_actor, exit_actor.get(), no_used_arrows[arrow_index - 1],
+                                       no_used_arrow_indices[arrow_index - 1]);
+      }
+    }
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore
