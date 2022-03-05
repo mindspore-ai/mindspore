@@ -1187,7 +1187,7 @@ void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, A
         dst[ci] = value;
       }
     }
-  } else {
+  } else if (out_type == OutType_TileC8) {
     for (int i = 0; i < row; ++i) {
       int src_r_offset = i;
       int dst_r_offset = i * col * stride;
