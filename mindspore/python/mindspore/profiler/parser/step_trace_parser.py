@@ -255,6 +255,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
     def __init__(self, *args, **kwargs):
         super(GpuStepTraceParser, self).__init__(*args, **kwargs)
         self._source_file_path = self._input_dir
+        self._reduce_op_type = []
 
     def get_fp_bp(self, f_obj, all_step_fp, all_step_bp):
         """Parser the fp and bp."""
@@ -398,6 +399,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
             # add communication op start and end time, time unit from ns to 10ns.
             reduce_time_info.append(reduce_item.split(',')[1][:-1])
             reduce_time_info.append(reduce_item.split(',')[2][:-1])
+            self._reduce_op_type.append(reduce_item.split(',')[0].split('/')[-1])
         step_trace = {
             'start': start_time,
             'fp': fp_time,
@@ -438,7 +440,8 @@ class GpuStepTraceParser(BaseStepTraceParser):
         """
         reduce_info = {}
 
-        op_type = 'AllReduce'
+        index = int(field_name.split('_')[2])
+        op_type = self._reduce_op_type[index]
         # append field name with op type.
         field_name += '_' + op_type
         reduce_info[field_name] = int(end_point) - int(start_point)

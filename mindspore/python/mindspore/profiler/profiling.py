@@ -317,7 +317,7 @@ class Profiler:
         logger.info("Profiling: all the data have been analyzed.")
 
     def _ascend_analyse(self):
-        """Collect and analyse ascend performance data"""
+        """Collect and analyse ascend performance data."""
         self._rank_size = 1
         if self._profile_communication and not GlobalComm.INITED:
             self._profile_communication = False
@@ -559,17 +559,22 @@ class Profiler:
             logger.info("Profiling: stop time: %d", self._stop_time)
 
     def _gpu_analyse(self):
-        """Collect and analyse gpu performance data"""
+        """Collect and analyse gpu performance data."""
         self._dev_id = context.get_context("device_id")
+        self._rank_size = 1
         if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
             self._dev_id = str(get_rank())
+
+        if GlobalComm.INITED:
+            self._rank_size = get_group_size()
 
         if self._has_started:
             self.stop()
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
 
-        timeline_generator = self._generate_timeline()
+        reduce_op_type = self._get_step_reduce_op_type()
+        timeline_generator = self._generate_timeline(reduce_op_type)
 
         # parse minddata pipeline operator and queue for GPU
         try:
@@ -603,12 +608,32 @@ class Profiler:
             'otherwise, this warning can be ignored.'
         )
 
+        logger.warning(
+            '\nProfile communication is not supported on GPU currently.\n'
+            'Please running on Ascend if you would like to see cluster communication analysis, '
+            'otherwise, this warning can be ignored.'
+        )
+
+    def _get_step_reduce_op_type(self):
+        """Gets all communication operator names."""
+
+        step_trace_original_filename = f'step_trace_profiling_{self._dev_id}.txt'
+        step_trace_file_path = os.path.join(self._output_path, step_trace_original_filename)
+        step_trace_file_path = validate_and_normalize_path(step_trace_file_path)
+        reduce_op_type = []
+        with open(step_trace_file_path, 'r') as f_obj:
+            one_step_info = f_obj.readline().strip().split()
+            # The communication operator starts at index 4.
+            for reduce_item in one_step_info[4:]:
+                reduce_op_type.append(reduce_item.split(',')[0].split('/')[-1])
+        return reduce_op_type
+
     def _cpu_analyse(self):
-        """Collect and analyse cpu performance data"""
+        """Collect and analyse cpu performance data."""
 
         try:
             size_limit = 100 * 1024 * 1024  # 100MB
-            timeline_generator = CpuTimelineGenerator(self._output_path, 0)
+            timeline_generator = CpuTimelineGenerator(self._output_path, 0, 1)
             timeline_generator.init_timeline()
             timeline_generator.write_timeline(size_limit)
             timeline_generator.write_timeline_summary()
@@ -616,7 +641,6 @@ class Profiler:
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
             raise RuntimeError('Fail to write timeline data.')
-
 
     def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True,
                             is_gpu_kernel_async_launch_flag=False):
@@ -711,12 +735,12 @@ class Profiler:
         timeline_analyser.write_timeline(size_limit)
         timeline_analyser.write_timeline_summary()
 
-    def _generate_timeline(self):
+    def _generate_timeline(self, reduce_op_type):
         """Used for gpu, generate timeline info, write to json format file."""
         try:
             size_limit = 100 * 1024 * 1024  # 100MB
-            timeline_generator = GpuTimelineGenerator(self._output_path, self._dev_id)
-            timeline_generator.init_timeline()
+            timeline_generator = GpuTimelineGenerator(self._output_path, self._dev_id, self._rank_size)
+            timeline_generator.init_timeline(reduce_op_type)
             timeline_generator.write_timeline(size_limit)
             timeline_generator.write_timeline_summary()
             return timeline_generator

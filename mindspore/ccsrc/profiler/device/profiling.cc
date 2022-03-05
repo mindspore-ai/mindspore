@@ -126,6 +126,7 @@ void Profiler::RecordOneStepStartEndInfo() {
       step_start_end_info_vector_.erase(step_start_end_info_vector_.begin(),
                                         step_start_end_info_vector_.begin() + iter_end_op_index + 1);
     } else {
+      step_start_end_info_.fp_start_op_name = step_start_end_info_vector_[1];
       step_start_end_info_.iter_end_op_name = step_start_end_info_vector_[step_start_end_info_vector_.size() - 1];
       step_start_end_info_vector_.clear();
     }
