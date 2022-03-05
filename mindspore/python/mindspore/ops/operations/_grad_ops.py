@@ -675,6 +675,7 @@ class BNTrainingUpdateGrad(Primitive):
         self.init_prim_io_names(inputs=['grads', 'x', 'batch_mean', 'batch_variance'],
                                 outputs=['diff_scale', 'diff_offset'])
 
+
 class NeighborExchangeV2Grad(PrimitiveWithInfer):
     """"Gradients of NeighborExchangeV2 operation."""
 
@@ -1686,8 +1687,19 @@ class ResizeBilinearGrad(PrimitiveWithInfer):
     """Performs grad of ResizeBilinear operation."""
 
     @prim_attr_register
-    def __init__(self, align_corners=False):
+    def __init__(self, align_corners=False, half_pixel_centers=False):
         """init"""
+        validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        validator.check_value_type("half_pixel_centers", half_pixel_centers, [bool], self.name)
+        self.align_corners = validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
+                                                             half_pixel_centers, [bool], self.name)
+        if half_pixel_centers and align_corners:
+            raise ValueError(f"If half_pixel_centers is True, align_corners should be False, but got {align_corners}")
+        target = context.get_context("device_target")
+        if half_pixel_centers and target.lower() != "ascend":
+            raise ValueError(f"Currently `half_pixel_centers`=True only support in Ascend device_target, "
+                             f"but got {target}")
 
     def infer_shape(self, dout_shape, orig_shape):
         return orig_shape
@@ -1789,7 +1801,6 @@ class SigmoidGrad(Primitive):
     def __init__(self):
         """Initialize SigmoidGrad"""
         self.init_prim_io_names(inputs=['y', 'dy'], outputs=['output'])
-
 
 
 class _ActivationGrad(PrimitiveWithInfer):

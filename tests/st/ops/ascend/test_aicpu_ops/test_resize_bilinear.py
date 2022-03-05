@@ -22,10 +22,20 @@ from mindspore.ops.composite import GradOperation
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.resize = P.ResizeBilinear((2, 4), False)
+
+    def construct(self, x):
+        return self.resize(x)
+
+
+class NetCenter(nn.Cell):
+    def __init__(self):
+        super(NetCenter, self).__init__()
+        self.resize = P.ResizeBilinear((2, 4), False, True)
 
     def construct(self, x):
         return self.resize(x)
@@ -59,6 +69,38 @@ def test_net_grad():
     print("forward input: ", x)
     print("forward output: ", y)
     print("backward input: ", dy)
+    print("backward output: ", dx)
+
+    y_expect = np.array([[[[1.0, 2.25, 3.5, 4.75],
+                           [2.0, 4.5, 5.0, 7.75]]]])
+    dx_expect = np.array([[[[1.0, 1.5, 2.0, 2.5, 3.0],
+                            [2.0, 3.0, 4.0, 4.0, 3.0]]]])
+    assert np.array_equal(y_expect, y.asnumpy())
+    assert np.array_equal(dx_expect, dx[0].asnumpy())
+
+
+def net_center_float16():
+    tensor = Tensor([[[[1, 2, 3, 4, 5], [2, 4, 6, 4, 9]]]], mindspore.float16)
+    net = NetCenter()
+    output = net(tensor)
+    return output
+
+
+def test_net_center_grad():
+    """
+    Feature: Test ResizeBilinear operator in args with align_corners=False and half_pixel_centers=True.
+    Description: input with half_pixel_centers=True.
+    Expectation: align_corners and half_pixel_centers are all True.
+    """
+    net = Grad(NetCenter())
+    x = Tensor([[[[1, 2, 3, 4, 5], [2, 4, 6, 4, 9]]]], mindspore.float16)
+    y = net_center_float16()
+    grad = Tensor([[[[1, 2, 3, 4], [2, 4, 6, 4]]]], mindspore.float16)
+    grad = P.Cast()(grad, mindspore.float32)
+    dx = net(x, grad)
+    print("forward input: ", x)
+    print("forward output: ", y)
+    print("backward input: ", grad)
     print("backward output: ", dx)
 
     y_expect = np.array([[[[1.0, 2.25, 3.5, 4.75],

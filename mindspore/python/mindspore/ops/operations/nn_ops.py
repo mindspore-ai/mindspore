@@ -3208,6 +3208,8 @@ class ResizeBilinear(PrimitiveWithInfer):
         align_corners (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
                        which exactly aligns the 4 corners of images and resized images. If false,
                        rescale by :math:`new\_height / height`. Default: False.
+        half_pixel_centers (bool): Whether half pixel center. If set to True, `align_corners` should be False.
+                           Default: False.
 
     Inputs:
         - **x** (Tensor) - Image to be resized. Input images must be a 4-D tensor with shape
@@ -3220,6 +3222,9 @@ class ResizeBilinear(PrimitiveWithInfer):
     Raises:
         TypeError: If `size` is neither a tuple nor list.
         TypeError: If `align_corners` is not a bool.
+        TypeError: If `half_pixel_centers` is not a bool.
+        TypeError: If `align_corners` and `half_pixel_centers` are all True.
+        TypeError: If `half_pixel_centers` is True and device_target not Ascend.
         TypeError: If dtype of `x` is neither float16 nor float32.
         TypeError: If `x` is not a Tensor.
         ValueError: If length of shape of `x` is not equal to 4.
@@ -3240,14 +3245,22 @@ class ResizeBilinear(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, size, align_corners=False):
+    def __init__(self, size, align_corners=False, half_pixel_centers=False):
         """Initialize ResizeBilinear."""
         validator.check_value_type("size", size, [tuple, list], self.name)
         validator.check_equal_int(len(size), 2, "size len", self.name)
         for item in size:
             validator.check_positive_int(item, 'size item', self.name)
             validator.check_value_type("size item", item, int, self.name)
-        validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.align_corners = validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
+                                                             half_pixel_centers, [bool], self.name)
+        if half_pixel_centers and align_corners:
+            raise ValueError(f"If half_pixel_centers is True, align_corners should be False, but got {align_corners}")
+        target = context.get_context("device_target")
+        if half_pixel_centers and target.lower() != "ascend":
+            raise ValueError(f"Currently `half_pixel_centers`=True only support in Ascend device_target, "
+                             f"but got {target}")
         for i, value in enumerate(size):
             validator.check_positive_int(value, f'{i}th value of size', self.name)
 
