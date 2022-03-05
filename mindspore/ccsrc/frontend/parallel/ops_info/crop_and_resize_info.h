@@ -45,6 +45,7 @@ class CropAndResizeInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferForwardCommunication() override { return SUCCESS; }
+  Status InferMirrorOps() override;
 
  private:
   Status InferBias();

@@ -215,5 +215,15 @@ std::vector<StrategyPtr> CropAndResizeInfo::GenerateOpStrategies(int64_t stage_i
                        });
   return sp_vector;
 }
+
+Status CropAndResizeInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() == FAILED) {
+    return FAILED;
+  }
+
+  OperatorVector op_for_crop_size;
+  (void)mirror_ops_.emplace_back(std::move(op_for_crop_size));
+  return SUCCESS;
+}
 }  // namespace parallel
 }  // namespace mindspore
