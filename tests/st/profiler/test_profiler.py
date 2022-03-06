@@ -89,7 +89,7 @@ class LeNet5(nn.Cell):
 def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers=1):
     """create dataset for train"""
     # define dataset
-    mnist_ds = ds.MnistDataset(data_path, num_samples=batch_size * 100)
+    mnist_ds = ds.MnistDataset(data_path, num_samples=batch_size * 10)
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0

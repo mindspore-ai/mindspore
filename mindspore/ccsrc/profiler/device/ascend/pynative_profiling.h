@@ -33,11 +33,14 @@ using mindspore::device::ascend::AscendKernelRuntime;
 
 struct PynativeOpInfo {
   std::string op_name;
+  int thread_index;
   // the unit is ms
   double_t start_timestamp = 0l;
   // the unit is ms
   double_t duration = 0l;
-  void *stream;
+  void *stream{nullptr};
+  std::shared_ptr<DeviceEvent> start;
+  std::shared_ptr<DeviceEvent> end;
 };
 
 class MS_CORE_API PynativeProfiler : public Profiler {
@@ -47,28 +50,26 @@ class MS_CORE_API PynativeProfiler : public Profiler {
   ~PynativeProfiler() {}
   void Init(const std::string &profileDataPath) override;
   void Stop() override;
-  void OpDataProducerBegin(AscendKernelRuntime *runtime_instance_, void *stream, const std::string &op_name);
-  void OpDataProducerEnd();
+  void OpDataProducerBegin(AscendKernelRuntime *runtime_instance_, void *stream, std::thread::id thread_id,
+                           const std::string &op_name);
+  void OpDataProducerEnd() override;
+  void OpDataProducerEnd(std::thread::id thread_id);
   void StepProfilingEnable(const bool enable_flag) override;
 
  private:
   void WriteOpDetail(const std::string &out_path_dir);
-  void ChangeFileMode(const std::string &file_path) const;
   void WriteStartTime();
   void SaveProfileData() override;
   void ClearInst() override;
+  int NewThreadIndex();
 
   static std::shared_ptr<PynativeProfiler> profiler_inst_;
-  std::shared_ptr<DeviceEvent> start;
-  std::shared_ptr<DeviceEvent> end;
   std::int32_t rank_id_;
   std::vector<PynativeOpInfo> pynative_op_info_;
-  std::string op_name_;
   bool enable_flag_ = false;
-  float start_timestamp;
-  void *stream_;
   const uint64_t kUSecondInSecond = 1000000;
   const uint64_t milli_second_ratio = 1000;
+  std::map<std::thread::id, PynativeOpInfo> thread_op_info_map_;
 };
 }  // namespace ascend
 }  // namespace profiler

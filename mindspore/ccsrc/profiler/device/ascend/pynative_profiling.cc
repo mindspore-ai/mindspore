@@ -19,6 +19,7 @@
 #include <memory>
 #include <algorithm>
 
+#include "include/common/utils/utils.h"
 #include "profiler/device/profiling.h"
 #include "profiler/device/ascend/pynative_profiling.h"
 #include "pybind_api/api_register.h"
@@ -65,7 +66,7 @@ void PynativeProfiler::WriteStartTime() {
     MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
   }
   ofs.close();
-  ChangeFileMode(file_path);
+  ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
   MS_LOG(INFO) << "Write profiler start time infos into file: " << file_path;
 }
 
@@ -73,50 +74,59 @@ void PynativeProfiler::SaveProfileData() { WriteOpDetail(profile_data_path_); }
 
 void PynativeProfiler::ClearInst() { pynative_op_info_.clear(); }
 
+void PynativeProfiler::OpDataProducerEnd() {}
+
 void PynativeProfiler::OpDataProducerBegin(AscendKernelRuntime *runtime_instance_, void *stream,
-                                           const std::string &op_name) {
+                                           std::thread::id thread_id, const std::string &op_name) {
   if (enable_flag_ == false) {
     return;
   }
-
   MS_EXCEPTION_IF_NULL(runtime_instance_);
-  start = runtime_instance_->CreateDeviceTimeEvent();
-  end = runtime_instance_->CreateDeviceTimeEvent();
+  MS_EXCEPTION_IF_NULL(stream);
+
+  std::shared_ptr<DeviceEvent> start = runtime_instance_->CreateDeviceTimeEvent();
+  std::shared_ptr<DeviceEvent> end = runtime_instance_->CreateDeviceTimeEvent();
   MS_EXCEPTION_IF_NULL(start);
   MS_EXCEPTION_IF_NULL(end);
   start->set_record_stream(stream);
   end->set_record_stream(stream);
   start->RecordEvent();
 
-  op_name_ = op_name;
-  stream_ = stream;
+  PynativeOpInfo op_info;
+  op_info.start = start;
+  op_info.end = end;
+  op_info.op_name = op_name;
+  op_info.stream = stream;
+  if (thread_op_info_map_.find(thread_id) == thread_op_info_map_.end()) {
+    op_info.thread_index = NewThreadIndex();
+  } else {
+    op_info.thread_index = thread_op_info_map_[thread_id].thread_index;
+  }
+  thread_op_info_map_[thread_id] = op_info;
 }
 
 void PynativeProfiler::StepProfilingEnable(const bool enable_flag) { enable_flag_ = enable_flag; }
 
-void PynativeProfiler::OpDataProducerEnd() {
+void PynativeProfiler::OpDataProducerEnd(std::thread::id thread_id) {
   if (enable_flag_ == false) {
     return;
   }
 
-  if (start == nullptr || end == nullptr) {
-    MS_LOG(WARNING) << "Pynative profiling, the start or end time of op is null"
+  if (thread_op_info_map_.find(thread_id) == thread_op_info_map_.end()) {
+    MS_LOG(WARNING) << "Pynative profiling, the start time of op is null"
                     << ", please call the OpDataProducerBegin function first.";
     return;
   }
 
+  PynativeOpInfo op_info = thread_op_info_map_[thread_id];
   float cost_time = 0;
   // Operator asynchronous execution changed to synchronous
-  end->RecordEvent();
-  start->SyncEvent();
-  end->SyncEvent();
-  start->ElapsedTime(&cost_time, end.get());
+  op_info.end->RecordEvent();
+  op_info.start->SyncEvent();
+  op_info.end->SyncEvent();
+  op_info.start->ElapsedTime(&cost_time, op_info.end.get());
 
-  PynativeOpInfo op_info;
-  op_info.op_name = op_name_;
-  op_info.stream = stream_;
   op_info.duration = cost_time;
-
   int64_t milli_second_ratio = 1000;
   int64_t end_timestamp = GetRealTimeStamp();
   int64_t start_timestamp = end_timestamp - static_cast<int64_t>(cost_time * milli_second_ratio);
@@ -144,23 +154,18 @@ void PynativeProfiler::WriteOpDetail(const std::string &out_path_dir) {
     std::sort(pynative_op_info_.begin(), pynative_op_info_.end(),
               [](const auto &op1, const auto &op2) { return op1.start_timestamp < op2.start_timestamp; });
     for (PynativeOpInfo op_info : pynative_op_info_) {
-      ofs << op_info.op_name << ",0," << std::to_string(op_info.start_timestamp) << "," << op_info.duration
-          << std::endl;
+      ofs << op_info.op_name << "," << op_info.thread_index << "," << std::to_string(op_info.start_timestamp) << ","
+          << op_info.duration << std::endl;
     }
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Write " << file_path << "failed: " << e.what();
   }
   ofs.close();
-  ChangeFileMode(file_path);
+  ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
   MS_LOG(INFO) << "Write " << pynative_op_info_.size() << " op detail infos into file: " << file_path;
 }
 
-void PynativeProfiler::ChangeFileMode(const std::string &file_path) const {
-  if (chmod(common::SafeCStr(file_path), S_IRUSR | S_IWUSR) == -1) {
-    MS_LOG(WARNING) << "Modify file: " << file_path << " to rw fail.";
-    return;
-  }
-}
+int PynativeProfiler::NewThreadIndex() { return thread_op_info_map_.size() + 1; }
 
 REGISTER_PYBIND_DEFINE(PynativeProfiler_, ([](const py::module *m) {
                          (void)py::class_<PynativeProfiler, std::shared_ptr<PynativeProfiler>>(*m, "PynativeProfiler")
