@@ -50,6 +50,7 @@ struct TaskInfo {
 };
 
 struct PreBuildResult {
+  std::string core_type;
   std::string json_name;
   kernel::FusionType fusion_type;
   nlohmann::json output_data_desc;

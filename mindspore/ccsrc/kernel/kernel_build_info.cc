@@ -185,6 +185,11 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetFusionType(FusionType fusion_ty
   kernel_build_info_->fusion_type_ = fusion_type;
 }
 
+void KernelBuildInfo::KernelBuildInfoBuilder::SetCoreType(const std::string &core_type) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  kernel_build_info_->core_type_ = core_type;
+}
+
 void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputDataDesc(const std::vector<nlohmann::json> &data_desc) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->output_data_desc_ = data_desc;

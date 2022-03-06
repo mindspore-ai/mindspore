@@ -49,6 +49,7 @@ using FusedNodeRecord = std::vector<mindspore::HashSet<AnfNodePtr>>;
 
 struct BufferFusionInfo_t {
   std::string full_name;
+  std::string core_type;
   std::vector<AnfNodePtr> anf_nodes;
   std::vector<AnfNodePtr> inputs_list;
   std::vector<AnfNodePtr> outputs_list;

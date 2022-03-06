@@ -36,6 +36,7 @@ class KernelBuildInfo {
     fusion_type_ = OPAQUE;
     processor_ = AICORE;
     op_pattern_ = kCommonPattern;
+    core_type_ = "";
     input_reshape_type_ = {};
     output_reshape_type_ = {};
     origin_data_format_ = kOpFormat_DEFAULT;
@@ -82,6 +83,8 @@ class KernelBuildInfo {
 
   std::vector<std::string> GetAllInputReshapeType() const;
 
+  std::string core_type() const { return core_type_; }
+
   OpPattern op_pattern() const { return op_pattern_; }
 
   std::vector<nlohmann::json> output_data_desc() const { return output_data_desc_; }
@@ -109,6 +112,7 @@ class KernelBuildInfo {
  private:
   KernelType kernel_type_;
   std::string origin_data_format_;
+  std::string core_type_;
   std::vector<std::string> inputs_format_;
   OpPattern op_pattern_;
   std::vector<std::string> outputs_format_;
@@ -133,6 +137,8 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
     SetFusionType(kernel_build_info->fusion_type());
     SetProcessor(kernel_build_info->processor());
     SetOpPattern(kernel_build_info->op_pattern());
+    SetCoreType(kernel_build_info->core_type());
+    SetOutputDataDesc(kernel_build_info->output_data_desc());
     for (size_t index = 0; index < kernel_build_info->GetInputNum(); ++index) {
       kernel_build_info_->inputs_device_type_.emplace_back(kernel_build_info->GetInputDeviceType(index));
       kernel_build_info_->inputs_format_.emplace_back(kernel_build_info->GetInputFormat(index));
@@ -165,6 +171,8 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
   void SetInputsValueDepend(const std::vector<std::string> &input_value_depend);
 
   void SetOutputsReshapeType(const std::vector<std::string> &output_reshape_type);
+
+  void SetCoreType(const std::string &core_type);
 
   void SetFusionType(FusionType fusion_type);
   // save prebuild result

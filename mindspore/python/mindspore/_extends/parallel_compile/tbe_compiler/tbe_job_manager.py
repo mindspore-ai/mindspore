@@ -393,6 +393,7 @@ class TbeJobManager:
                 pre_compile_result = dict()
                 pre_compile_result["op_pattern"] = target_job.result
                 pre_compile_result["op_params"] = op_params
+                pre_compile_result["core_type"] = new_job["core_type"]
                 target_job.result = json.dumps(pre_compile_result)
             target_job.info("Query result:{}".format(new_job["result"]))
             if new_job["status_code"] == 0:

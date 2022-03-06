@@ -33,9 +33,9 @@ namespace mindspore::kernel {
 using mindspore::kernel::tbe::TbeAdapter;
 bool FusionBuildTbeJsonCreator::GenJson(const FusionScopeInfo &fusion_scope_info, nlohmann::json *fusion_json) {
   MS_EXCEPTION_IF_NULL(fusion_json);
-
   MS_LOG(DEBUG) << "Start Generate Fusion Json, Fusion Node: " << fusion_scope_info.full_name;
   nlohmann::json soc_info_json = kernel::tbe::TbeUtils::GenSocInfo();
+  soc_info_json[kJCoreType] = fusion_scope_info.core_type;
   (*fusion_json)[kJSocInfo] = soc_info_json;
 
   std::vector<nlohmann::json> op_list_json;
@@ -44,7 +44,6 @@ bool FusionBuildTbeJsonCreator::GenJson(const FusionScopeInfo &fusion_scope_info
     return false;
   }
   (*fusion_json)[kJOpList] = op_list_json;
-
   GenFusionOpName(fusion_json, kJFusionKernelNamePrefix);
   AddOpNameForComputeNode(fusion_json);
   (*fusion_json)[kJL1Size] = -1;
