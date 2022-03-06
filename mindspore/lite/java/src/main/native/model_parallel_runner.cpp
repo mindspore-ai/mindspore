@@ -126,11 +126,11 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_ModelParallelRunner_pred
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_ModelParallelRunner_free(JNIEnv *env, jobject thiz,
-  jlong model_parallel_runner_ptr) {
-auto *pointer = reinterpret_cast<mindspore::ModelParallelRunner *>(model_parallel_runner_ptr);
-if (pointer == nullptr) {
-MS_LOGE("ModelParallelRunner pointer from java is nullptr");
-return;
-}
-delete pointer;
+                                                                              jlong model_parallel_runner_ptr) {
+  auto *pointer = reinterpret_cast<mindspore::ModelParallelRunner *>(model_parallel_runner_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("ModelParallelRunner pointer from java is nullptr");
+    return;
+  }
+  delete pointer;
 }

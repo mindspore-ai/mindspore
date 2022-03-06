@@ -57,7 +57,7 @@ class PackWeightManager {
   void FreePackedWeight(ModelConstWeight *weight);
 
   std::map<const std::string, ModelConstWeight *> path_model_weight_;
-  std::map<const std::string, ModelConstWeight *> buf_model_weight_;
+  std::map<const void *, ModelConstWeight *> buf_model_weight_;
   std::map<const std::string, std::vector<const void *>> path_model_buf_;
   std::mutex mtx_weight_;
 };
