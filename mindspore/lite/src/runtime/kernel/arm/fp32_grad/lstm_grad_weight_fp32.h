@@ -44,8 +44,6 @@ class LSTMGradWeightCPUKernel : public InnerKernel {
   int InitParam();
   int MallocRunBuffer();
   void FreeRunBuffer();
-  // int InitInputWeightBias();
-  // int InitStateWeightBias(); AA to be removed
   void ReorderLstmWeightGrad(float *dst, float *src, bool has_bias);
 
   static const int input_index = 0;
