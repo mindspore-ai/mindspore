@@ -22,8 +22,6 @@
 #include <set>
 #include "schema/inner/model_generated.h"
 namespace mindspore::lite::quant {
-constexpr int kMinIterations = 40;
-
 enum ActivationQuantizedMethod {
   MAX_MIN = 0,
   KL = 1,
@@ -50,8 +48,6 @@ struct CommonQuantParam {
 struct MixedBitWeightQuantParam {
   double init_scale = 0.02;
   bool auto_tune = false;
-  bool use_cv_data = false;
-  int max_iterations = kMinIterations;
 };
 
 struct FullQuantParam {

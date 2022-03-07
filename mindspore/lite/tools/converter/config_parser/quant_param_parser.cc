@@ -46,7 +46,7 @@ int QuantParamParser::ParseFilter(const CommonQuantString &common_quant_string, 
     }
 
     if (common_quant->min_quant_weight_channel < kMinSize || common_quant->min_quant_weight_channel > kMaxSize) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_channel should be in the range [0,65535]." << std::endl;
+      MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_channel should in [0,65535]." << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }
   }
@@ -125,23 +125,6 @@ int QuantParamParser::ParseMixedBitWeightQuant(const MixedBitWeightQuantString &
     MS_LOG(ERROR) << "INPUT ILLEGAL: init_scale should at (0,1)";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (!mixed_bit_weight_quant_string.use_cv_data.empty() &&
-      !ConvertBool(mixed_bit_weight_quant_string.use_cv_data, &mixed_bit_weight_quant->use_cv_data)) {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: use_cv_data should be true or false.";
-    return RET_INPUT_PARAM_INVALID;
-  }
-  if (!mixed_bit_weight_quant_string.max_iterations.empty()) {
-    if (!ConvertIntNum(mixed_bit_weight_quant_string.max_iterations, &mixed_bit_weight_quant->max_iterations)) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: max_iterations should be a valid number.";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if (mixed_bit_weight_quant->max_iterations < quant::kMinIterations ||
-        mixed_bit_weight_quant->max_iterations > kMaxSize) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: max_iterations should be in the range [40,65535]." << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
-  }
-
   if (!mixed_bit_weight_quant_string.auto_tune.empty() &&
       !ConvertBool(mixed_bit_weight_quant_string.auto_tune, &mixed_bit_weight_quant->auto_tune)) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: auto_tune should be true or false.";
