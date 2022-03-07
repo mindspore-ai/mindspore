@@ -138,6 +138,7 @@ constexpr auto kPReluOpName = "PReLU";
 constexpr auto kGreaterOpName = "Greater";
 constexpr auto kSqrtOpName = "Sqrt";
 constexpr auto kRsqrtOpName = "Rsqrt";
+constexpr auto kRsqrtGradOpName = "RsqrtGrad";
 constexpr auto kErfOpName = "Erf";
 constexpr auto kRealDivOpName = "RealDiv";
 constexpr auto kLambUpdateWithLROpName = "LambUpdateWithLR";

@@ -56,6 +56,8 @@ from .acos_grad import _acos_grad_aicpu
 from .expand_dims import _expand_dims_aicpu
 from .randperm import _randperm_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu
+from .rsqrt import _rsqrt_aicpu
+from .rsqrt_grad import _rsqrt_grad_aicpu
 from .search_sorted import _search_sorted_aicpu
 from .stack import _stack_aicpu
 from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu

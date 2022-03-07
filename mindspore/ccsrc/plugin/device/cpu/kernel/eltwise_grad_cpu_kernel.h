@@ -49,6 +49,7 @@ class EltWiseGradCpuKernelMod : public NativeCpuKernelMod {
   void AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void SqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
+  void RsqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AsinGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
@@ -170,6 +171,32 @@ MS_REG_CPU_KERNEL_T(
   SoftplusGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   EltWiseGradCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(
+  RsqrtGrad, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+  EltWiseGradCpuKernelMod, int8_t);
+MS_REG_CPU_KERNEL_T(
+  RsqrtGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  EltWiseGradCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(
+  RsqrtGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  EltWiseGradCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(
+  RsqrtGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  EltWiseGradCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(RsqrtGrad,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeComplex128)
+                      .AddInputAttr(kNumberTypeComplex128)
+                      .AddOutputAttr(kNumberTypeComplex128),
+                    EltWiseGradCpuKernelMod, complex128);
+MS_REG_CPU_KERNEL_T(RsqrtGrad,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeComplex64)
+                      .AddInputAttr(kNumberTypeComplex64)
+                      .AddOutputAttr(kNumberTypeComplex64),
+                    EltWiseGradCpuKernelMod, complex64);
 }  // namespace kernel
 }  // namespace mindspore
 

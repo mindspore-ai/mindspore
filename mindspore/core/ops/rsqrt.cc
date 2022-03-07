@@ -15,49 +15,40 @@
  */
 
 #include "ops/rsqrt.h"
-#include <string>
-#include <algorithm>
-#include <memory>
-#include <set>
-#include <vector>
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr RsqrtInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto x = input_args[0]->BuildShape();
+  auto x = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
 }
 
-TypePtr RsqrtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
-  }
-  auto x_dtype = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, common_valid_types_with_complex, prim->name());
-  return x_dtype;
+TypePtr RsqrtInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
 
 AbstractBasePtr RsqrtInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputNum = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-  auto infer_type = RsqrtInferType(primitive, input_args);
-  auto infer_shape = RsqrtInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  const size_t kInputNum = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  auto types = RsqrtInferType(primitive, input_args);
+  auto shapes = RsqrtInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shapes, types);
 }
+
 REGISTER_PRIMITIVE_EVAL_IMPL(Rsqrt, prim::kPrimRsqrt, RsqrtInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
