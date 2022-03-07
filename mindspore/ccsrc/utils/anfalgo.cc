@@ -961,6 +961,25 @@ bool AnfAlgo::IsNeedSkipNopOpAddr(const AnfNodePtr &node) {
   return GetValue<bool>(skip_nop_op_addr_attr);
 }
 
+bool AnfAlgo::IsNeedSkipNopOpExecution(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+
+  auto primitive = AnfAlgo::GetCNodePrimitive(node);
+  if (primitive == nullptr) {
+    return false;
+  }
+
+  auto skip_nop_execution_attr = primitive->GetAttr(kAttrSkipNopOpExecution);
+  if (skip_nop_execution_attr == nullptr) {
+    return false;
+  }
+
+  return GetValue<bool>(skip_nop_execution_attr);
+}
+
 FuncGraphPtr AnfAlgo::GetValueNodeFuncGraph(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto value_node = node->cast<ValueNodePtr>();

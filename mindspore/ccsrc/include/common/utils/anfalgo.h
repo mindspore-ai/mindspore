@@ -145,6 +145,7 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsInplaceNode(const AnfNodePtr &node, const string &type);
   static bool IsGetNext(const NotNull<AnfNodePtr> &node);
   static bool IsNeedSkipNopOpAddr(const AnfNodePtr &node);
+  static bool IsNeedSkipNopOpExecution(const AnfNodePtr &node);
   static FuncGraphPtr GetValueNodeFuncGraph(const AnfNodePtr &node);
   static bool IsSwitchCall(const CNodePtr &call_node);
   static bool IsScalarInput(const CNodePtr &cnode, size_t index);
