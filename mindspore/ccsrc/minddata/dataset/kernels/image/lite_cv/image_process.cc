@@ -2030,5 +2030,47 @@ bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float 
   return true;
 }
 
+template <typename T>
+void HWC2CHWImpl(const T *src_ptr, T *dst_ptr, int height, int width, int channel) {
+  int stride = width * height;
+  for (int i = 0; i != stride; ++i) {
+    for (int c = 0; c != channel; ++c) {
+      dst_ptr[c * stride + i] = src_ptr[i * channel + c];
+    }
+  }
+}
+
+bool HWC2CHW(LiteMat &src, LiteMat &dst) {
+  if (src.IsEmpty()) {
+    return false;
+  }
+  if (dst.IsEmpty() || dst.width_ != src.height_ || dst.height_ != src.channel_ || dst.channel_ != src.width_ ||
+      dst.data_type_ != src.data_type_) {
+    dst.Init(src.height_, src.channel_, src.width_, src.data_type_);
+  }
+  if (src.data_type_ == LDataType::FLOAT32) {
+    HWC2CHWImpl<float>(src, dst, src.height_, src.width_, src.channel_);
+  } else if (src.data_type_ == LDataType::UINT8) {
+    HWC2CHWImpl<uint8_t>(src, dst, src.height_, src.width_, src.channel_);
+  } else if (src.data_type_ == LDataType::INT16) {
+    HWC2CHWImpl<int16_t>(src, dst, src.height_, src.width_, src.channel_);
+  } else if (src.data_type_ == LDataType::INT32) {
+    HWC2CHWImpl<int32_t>(src, dst, src.height_, src.width_, src.channel_);
+  } else if (src.data_type_ == LDataType::INT64) {
+    HWC2CHWImpl<int64_t>(src, dst, src.height_, src.width_, src.channel_);
+  } else if (src.data_type_ == LDataType::UINT16) {
+    HWC2CHWImpl<uint16_t>(src, dst, src.height_, src.width_, src.channel_);
+  } else if (src.data_type_ == LDataType::UINT32) {
+    HWC2CHWImpl<uint32_t>(src, dst, src.height_, src.width_, src.channel_);
+  } else if (src.data_type_ == LDataType::UINT64) {
+    HWC2CHWImpl<uint64_t>(src, dst, src.height_, src.width_, src.channel_);
+  } else if (src.data_type_ == LDataType::DOUBLE) {
+    HWC2CHWImpl<double>(src, dst, src.height_, src.width_, src.channel_);
+  } else {
+    return false;
+  }
+  return true;
+}
+
 }  // namespace dataset
 }  // namespace mindspore

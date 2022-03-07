@@ -606,6 +606,22 @@ bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, Lit
 bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float (*ratioShiftWShiftH)[3],
                                 float (*invM)[2][3], int img_orientation);
 
+/// \brief Transpose the input image; shape (H, W, C) to shape (C, H, W).
+/// \param[in] src Input image data.
+/// \param[in] dst Output image data.
+/// \par Example
+/// \code
+///     /* Assume p_rgb is a pointer that points to an image with shape (width, height, channel) */
+///     LiteMat lite_mat_src;
+///     lite_mat_src.Init(width, height, channel, p_rgb, LDataType::UINT8);
+///     LiteMat lite_mat_dst;
+///
+///     HWC2CHW(lite_mat_src, lite_mat_dst);
+///     std::cout << lite_mat_dst.width_ << " " << lite_mat_dst.height_ << " " << lite_mat_dst.channel_ << std::endl;
+/// \endcode
+/// \return Return true if transform successfully.
+bool HWC2CHW(LiteMat &src, LiteMat &dst);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // IMAGE_PROCESS_H_

@@ -165,6 +165,11 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 /// \param[in] op_name operator name.
 /// \param[in] rank refers to the rank of input image shape.
 Status ValidateImageRank(const std::string &op_name, int32_t rank);
+
+/// \brief Swaps the channels in the image, i.e. converts HWC to CHW
+/// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param output: Tensor of shape <C,H,W> or <H,W> and same input type.
+Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_LITE_IMAGE_UTILS_H_
