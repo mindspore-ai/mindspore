@@ -164,6 +164,7 @@
 #include "include/common/utils/context/graph_kernel_flags.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
+#include "debug/draw.h"
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
 #endif
@@ -491,7 +492,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kWholeStack);
     DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
-    kernel_graph->DumpFuncGraph("hwopt_d_end");
+    draw::Draw("hwopt_d_end.dot", kernel_graph);
   }
 #endif
   PROF_END(ascend_backend_optimization);

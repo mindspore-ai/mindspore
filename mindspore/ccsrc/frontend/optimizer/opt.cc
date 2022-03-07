@@ -308,7 +308,7 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
         DumpIR(fg_name + ".ir", func_graph);
         if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
           ExportIR(fg_name + ".dat", func_graph);
-          func_graph->DumpFuncGraph(fg_name);
+          draw::Draw(fg_name + ".dot", func_graph);
         }
       }
 #endif
