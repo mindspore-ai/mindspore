@@ -83,7 +83,7 @@ mindspore.ops.Primitive
 
         - **stage** (int) - 当前stage的ID。
 
-    .. py:method:: shard(in_strategy, out_strategy)
+    .. py:method:: shard(in_strategy=None, out_strategy=None)
 
         将切分策略添加到Primitive属性中。
 
