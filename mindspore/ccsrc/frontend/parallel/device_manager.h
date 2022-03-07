@@ -71,8 +71,8 @@ class DeviceManager {
   Device CreateNewDeviceByRank(int64_t rank) const;
   std::vector<Device> CreateDeviceListByRankList(RankList ranks);
   std::string GenerateGroupNameByRanks(RankList dev_ranks);
-  Group CreateGroup(const std::string &group_name, const std::vector<Device> &devices);
-  Group CreateGroup(const RankList &dev_ranks);
+  Status CreateGroup(const std::string &group_name, const std::vector<Device> &devices, Group *const comm_group);
+  Status CreateGroup(const RankList &dev_ranks, Group *const comm_group);
 
   size_t DeviceNum() const { return devices_.size(); }
   int64_t stage_num() const { return stage_num_; }
@@ -91,6 +91,7 @@ class DeviceManager {
   std::vector<std::pair<std::string, std::vector<uint32_t>>> group_info() const { return gm_.group_info(); }
   std::string FindRankListNameByHashName(const std::string &hash_name);
   RankList FindRankListByHashName(const std::string &hash_name);
+  Status CheckDeviceList(const RankList &rank_list);
 
  private:
   std::vector<std::shared_ptr<Device>> devices_;

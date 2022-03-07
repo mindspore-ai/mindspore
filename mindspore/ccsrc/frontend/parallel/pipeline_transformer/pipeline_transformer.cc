@@ -181,9 +181,17 @@ void PipelineTransformer::LabelMicroBatch() {
 void PipelineTransformer::CreateForwardGroup() {
   std::vector<int64_t> rank_list = g_device_manager->GetDeviceListBetweenStage();
   auto dev_list = g_device_manager->CreateDeviceListByRankList(rank_list);
-  auto g = g_device_manager->CreateGroup(rank_list);
+  Group g;
+  if (g_device_manager->CreateGroup(rank_list, &g) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create forward communication group between all pipeline stages failed, the rank_list is: "
+                      << rank_list;
+  }
   auto g_back_name = g.name() + BACKWARD;
-  auto g_back = g_device_manager->CreateGroup(g_back_name, dev_list);
+  Group g_back;
+  if (g_device_manager->CreateGroup(g_back_name, dev_list, &g_back) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create backward communication group between all pipeline stages failed, the rank_list is: "
+                      << rank_list;
+  }
   group_.push_back(g.name());
   group_.push_back(g_back.name());
 }

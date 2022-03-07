@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "utils/hash_set.h"
 #include "frontend/parallel/step_parallel.h"
@@ -158,6 +159,67 @@ std::shared_ptr<Device> GetListMemberByIndex(size_t index, const std::vector<std
     ++i;
   }
   return result;
+}
+
+namespace {
+constexpr size_t NODE_PER_SERVER = 8;
+Status IsFeasibleDeiveListOneServer(const RankList &rank_list) {
+  if (rank_list.size() == 1 || rank_list.size() == 8) {
+    return SUCCESS;
+  }
+  if (rank_list.size() == 4 && (rank_list[3] - rank_list[0] == 3) && (rank_list[0] == 0 || rank_list[3] == 7)) {
+    return SUCCESS;
+  }
+  if (rank_list.size() == 4 && (rank_list[3] % 2 == rank_list[2] % 2) && (rank_list[2] % 2 == rank_list[1] % 2) &&
+      (rank_list[1] % 2 == rank_list[0] % 2)) {
+    return SUCCESS;
+  }
+  if (rank_list.size() == 2) {
+    if (rank_list[1] - rank_list[0] == 4) {
+      return SUCCESS;
+    }
+    if (rank_list[1] < 4 && rank_list[0] < 4) {
+      return SUCCESS;
+    }
+    if (rank_list[1] >= 4 && rank_list[0] >= 4) {
+      return SUCCESS;
+    }
+  }
+  return FAILED;
+}
+
+Status IsFeasibleDeiveList(const RankList &rank_list) {
+  std::unordered_map<int64_t, RankList> server_ranks_map;
+  for (auto rank : rank_list) {
+    int64_t server_id = rank / NODE_PER_SERVER;
+    int64_t local_rank = rank % NODE_PER_SERVER;
+    server_ranks_map[server_id].push_back(local_rank);
+  }
+  std::vector<RankList> server_ranks_list;
+  std::transform(server_ranks_map.begin(), server_ranks_map.end(), std::back_inserter(server_ranks_list),
+                 [](auto pairs) { return pairs.second; });
+  auto server0_local_ranks = server_ranks_list[0];
+  bool is_all_server_same_count =
+    std::all_of(server_ranks_list.begin(), server_ranks_list.end(),
+                [&server0_local_ranks](auto ranks) { return ranks == server0_local_ranks; });
+  if (!is_all_server_same_count) {
+    MS_LOG(INFO) << "All server should has the same ranks, which means rank_id % 8 in each server should be the same. "
+                    "current rank list is"
+                 << rank_list;
+    return FAILED;
+  }
+  return IsFeasibleDeiveListOneServer(server0_local_ranks);
+}
+}  // namespace
+
+Status DeviceManager::CheckDeviceList(const RankList &rank_list) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend == kAscendDevice || backend == kDavinciDevice) {
+    return IsFeasibleDeiveList(rank_list);
+  }
+  return SUCCESS;
 }
 
 // E.g. devices = [0, 1, 2, 3, 4, 5, 6, 7], stage_map = [4, 4],
@@ -357,23 +419,32 @@ std::string DeviceManager::GenerateGroupNameByRanks(RankList ranks) {
 // Create the group with the given devices and the given name. The GroupManager
 // gm_ will create a new group only if there does not exit a group with the same
 // name. Otherwise, let the pointer g point to that group.
-Group DeviceManager::CreateGroup(const std::string &group_name,
-                                 const std::vector<mindspore::parallel::Device> &devices) {
-  Group g;
-  (void)gm_.CreateGroup(group_name, devices, &g);
-  return g;
+Status DeviceManager::CreateGroup(const std::string &group_name,
+                                  const std::vector<mindspore::parallel::Device> &devices, Group *const comm_group) {
+  RankList rank_list;
+  std::transform(devices.begin(), devices.end(), std::back_inserter(rank_list),
+                 [](Device device) { return device.rank(); });
+  if (CheckDeviceList(rank_list) != SUCCESS) {
+    MS_LOG(ERROR) << "Create communication group failed, the rank list is: " << rank_list;
+    return FAILED;
+  }
+  return gm_.CreateGroup(group_name, devices, comm_group);
 }
 
 // Create the group with only the given devices' ranks.
-Group DeviceManager::CreateGroup(const RankList &dev_ranks) {
+Status DeviceManager::CreateGroup(const RankList &dev_ranks, Group *const comm_group) {
   mindspore::HashSet<int64_t> rank_set(dev_ranks.begin(), dev_ranks.end());
   if (dev_ranks.size() != rank_set.size()) {
-    MS_LOG(EXCEPTION) << "Invalid dev ranks(" << dev_ranks << "), it has the Duplicate elements in list";
+    MS_LOG(ERROR) << "Invalid dev ranks(" << dev_ranks << "), it has the Duplicate elements in list";
+    return FAILED;
   }
-
+  if (CheckDeviceList(dev_ranks) != SUCCESS) {
+    MS_LOG(ERROR) << "Create communication group failed, the rank list is: " << dev_ranks;
+    return FAILED;
+  }
   std::string group_name = GenerateGroupNameByRanks(dev_ranks);
   auto dev_list = CreateDeviceListByRankList(dev_ranks);
-  return CreateGroup(group_name, dev_list);
+  return CreateGroup(group_name, dev_list, comm_group);
 }
 
 void DeviceManager::Clear() {

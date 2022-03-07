@@ -90,6 +90,11 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   if (ParallelInit() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Parallel init failed";
   }
+  if (strategy_search_mode == kRecursiveProgramming &&
+      ((g_device_manager->DeviceNum() & (g_device_manager->DeviceNum() - 1)) != 0)) {
+    MS_LOG(EXCEPTION)
+      << "The recursive auto parallel strategy searching mode requires the device num be the power of 2.";
+  }
   // mark the forward cnodes, parallel only care these nodes
   MarkForwardCNode(root);
   if (IsInsertVirtualOutput(root)) {
@@ -354,6 +359,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_input_value(input_value);
   operator_info->set_outputs_dtype(cnode->Type());
   operator_info->set_cnode(cnode);
+  operator_info->set_auto_parallel(true);
 
   AddOperatorToIgnoreCandidates(prim, operator_info);
   // key of strategy map

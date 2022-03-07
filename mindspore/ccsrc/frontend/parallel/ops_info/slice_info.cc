@@ -131,7 +131,7 @@ Status SliceInfo::InferMirrorOps() {
   Shape input_tensor_map = inputs_tensor_map_[0];
   std::vector<Group> group;
   if (CreateGroupByTensorMap(input_tensor_map, &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create group for input failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 

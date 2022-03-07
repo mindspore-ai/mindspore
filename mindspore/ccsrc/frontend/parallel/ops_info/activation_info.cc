@@ -280,7 +280,7 @@ Status CumSumInfo::InferMirrorOps() {
   Shape input_a_tensor_map = inputs_tensor_map_.at(0);
   std::vector<Group> input_a_group;
   if (CreateGroupByTensorMap(input_a_tensor_map, &input_a_group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create group for input a failed.";
+    ReportError(name_ + ": Create group for input a failed.");
     return FAILED;
   }
   OperatorVector op_for_input_a, op_for_axis;
@@ -315,7 +315,7 @@ Status ActivationBase::InferMirrorOps() {
   Shape tensor_map = inputs_tensor_map_[0];
   std::vector<Group> group;
   if (CreateGroupByTensorMap(tensor_map, &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Create group failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 
@@ -423,7 +423,7 @@ Status CastInfo::InferMirrorOps() {
   Shape tensor_map = inputs_tensor_map_[0];
   std::vector<Group> group;
   if (CreateGroupByTensorMap(tensor_map, &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Create group failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 
@@ -515,7 +515,7 @@ Status ExpandDimsInfo::InferMirrorOps() {
 
   std::vector<Group> group;
   if (CreateGroupByTensorMap(inputs_tensor_map_[0], &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create group failed";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 

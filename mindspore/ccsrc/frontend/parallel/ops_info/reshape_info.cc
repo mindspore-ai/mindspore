@@ -51,7 +51,7 @@ Status ReshapeInfo::InferMirrorOps() {
   Shape input_tensor_map = input_layout_.tensor_map().array();
   std::vector<Group> input_group;
   if (CreateGroupByTensorMap(input_tensor_map, &input_group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer MirrorOps failed.";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 

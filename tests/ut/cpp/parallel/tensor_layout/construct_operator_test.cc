@@ -68,7 +68,7 @@ void TestConstructOperator::SetUp() {
   Shape tensor_shape = {512, 1024};
   Shape dev_matrix_shape = {2, 4, 8, 16, 1};
   RankList used_dev_list = g_device_manager->GetDeviceListByStageId(0);
-  constructor.Init(used_dev_list, dev_matrix_shape);
+  constructor.Init(used_dev_list, dev_matrix_shape, false);
   constructor.UpdateTensorShape(tensor_shape);
 }
 

@@ -119,9 +119,9 @@ def test_tile_tensor_no_full_split():
 
 
 def test_tile_tensor_no_full_split2():
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy1 = ((2, 2, 1), (2, 2, 1))
-    strategy2 = ((2, 2, 1),)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    strategy1 = ((4, 4, 1), (4, 4, 1))
+    strategy2 = ((4, 4, 1),)
     net = Net3(_w1, strategy1, strategy2)
     compile_net(net, _x1, _b)
 

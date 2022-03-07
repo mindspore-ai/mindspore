@@ -165,7 +165,10 @@ class OperatorInfo {
   void SetIsStrategyCostExactTrue() { is_strategy_cost_exact_ = true; }
   void ClearStrategyCost() { strategy_cost_.clear(); }
   void CheckSelectedStrategy(const StrategyPtr &);
-  Status InitSelectedStrategy(const StrategyPtr &s_strategy) { return Init(s_strategy, nullptr); }
+  Status InitSelectedStrategy(const StrategyPtr &s_strategy) {
+    set_auto_parallel(false);
+    return Init(s_strategy, nullptr);
+  }
   void set_input_value(const std::vector<ValuePtr> &input_value) { input_value_ = input_value; }
   const std::vector<ValuePtr> &input_value() const { return input_value_; }
   void set_outputs_dtype(const TypePtr &dtype) { outputs_dtype_ = dtype; }
@@ -201,6 +204,7 @@ class OperatorInfo {
   Status CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group);
   Status CreateGroupForOptShard(TensorLayout *const tensor_layout, std::vector<Group> *group);
   virtual void ReplaceNodeInputOrAttrs() {}
+  void set_auto_parallel(bool is_auto_parallel) { is_auto_parallel_ = is_auto_parallel; }
 
   // Key for user data.
   constexpr static char key[] = "OpInfo";
@@ -241,6 +245,13 @@ class OperatorInfo {
   float GetFloatAttr(const std::string &attr_name);
   std::string GetStringAttr(const std::string &attr_name);
   std::vector<int64_t> GetTupleIntAttr(const std::string &attr_name);
+  void ReportError(const std::string &error_msg) {
+    if (is_auto_parallel_) {
+      MS_LOG(INFO) << error_msg;
+    } else {
+      MS_LOG(ERROR) << error_msg;
+    }
+  }
 
   std::string name_;
   Shapes inputs_shape_;
@@ -339,6 +350,9 @@ std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shap
                                                               const std::vector<bool> &split_flag_list);
 std::string StrategyToString(const Strategys &strategy);
 void PrintStrategy(const StrategyPtr &strategy);
+Status GenerateStrategiesForIndependentInputsBase(int64_t stage_id, size_t dev_num, const Shapes &inputs_shape,
+                                                  const Shapes &splittable_inputs,
+                                                  std::vector<StrategyPtr> *const sp_vector);
 // generate strategies for that all inputs' dimensions are independent, such as: ([a, b, c, d])
 Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &inputs_shape,
                                               const Shapes &splittable_inputs, std::vector<StrategyPtr> *sp_vector);

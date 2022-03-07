@@ -119,12 +119,12 @@ def test_pipeline_split_stage0():
     Description:pipeline opt detection
     Expectation:success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     net = PipelineCell(PipelineSplit(strategy1, strategy2), 4)
     params = net.trainable_params()
     dataset = DatasetLenet(data, label, 3)
@@ -141,12 +141,12 @@ def test_pipeline_split_stage1():
     Description:pipeline opt detection
     Expectation:success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2)
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     net = PipelineCell(PipelineSplit(strategy1, strategy2), 4)
     params = net.trainable_params()
     dataset = DatasetLenet(data, label, 4)
@@ -164,12 +164,12 @@ def test_pipeline_split_shared_parameter_stage0():
     Description:pipeline opt detection
     Expectation:success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     net = PipelineCell(PipelineSplitSharedParam(strategy1, strategy2), 4)
     params = net.trainable_params()
     dataset = DatasetLenet(data, label, 6)
@@ -184,12 +184,12 @@ def test_pipeline_split_shared_parameter_stage1():
     Description:pipeline opt detection
     Expectation:success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2)
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     net = PipelineCell(PipelineSplitSharedParam(strategy1, strategy2), 4)
     params = net.trainable_params()
     dataset = DatasetLenet(data, label, 7)
@@ -204,12 +204,12 @@ def test_pipeline_split_stage0_opt_shard():
     Description:pipeline opt detection
     Expectation:success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2, enable_parallel_optimizer=True)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     net = PipelineCell(PipelineSplit(strategy1, strategy2), 4)
     params = net.trainable_params()
     dataset = DatasetLenet(data, label, 6)
@@ -227,12 +227,12 @@ def test_pipeline_split_stage1_opt_shard():
     Description:pipeline opt detection
     Expectation:success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2, enable_parallel_optimizer=True)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     net = PipelineCell(PipelineSplit(strategy1, strategy2), 4)
     params = net.trainable_params()
     dataset = DatasetLenet(data, label, 8)
@@ -250,12 +250,12 @@ def test_pipeline_split_shared_parameter_stage0_opt_shard():
     Description:pipeline opt detection
     Expectation:success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2, enable_parallel_optimizer=True)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     net = PipelineCell(PipelineSplitSharedParam(strategy1, strategy2), 4)
     params = net.trainable_params()
     dataset = DatasetLenet(data, label, 2)
@@ -270,12 +270,12 @@ def test_pipeline_split_shared_parameter_stage1_opt_shard():
     Description:pipeline opt detection
     Expectation:success
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2, enable_parallel_optimizer=True)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     net = PipelineCell(PipelineSplitSharedParam(strategy1, strategy2), 4)
     params = net.trainable_params()
     dataset = DatasetLenet(data, label, 9)
@@ -290,12 +290,12 @@ def test_pipeline_split_with_micro_batch_interleaved_stage0():
     Description: net with MicroBatchInterleaved in semi auto parallel.
     Expectation: success.
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     micro_batch_interleaved = 2
     net = PipelineCell(MicroBatchInterleaved(PipelineSplit(strategy1, strategy2), micro_batch_interleaved), 4)
     params = net.trainable_params()
@@ -314,12 +314,12 @@ def test_pipeline_split_with_micro_batch_interleaved_stage1():
     Description: net with MicroBatchInterleaved in semi auto parallel.
     Expectation: success.
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2)
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     micro_batch_interleaved = 2
     net = PipelineCell(MicroBatchInterleaved(PipelineSplit(strategy1, strategy2), micro_batch_interleaved), 4)
     params = net.trainable_params()
@@ -338,12 +338,12 @@ def test_pipeline_split_shared_parameter_with_micro_batch_interleaved_stage0_opt
     Description: net with MicroBatchInterleaved in semi auto parallel.
     Expectation: success.
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2, enable_parallel_optimizer=True)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     micro_batch_interleaved = 2
     net = PipelineCell(MicroBatchInterleaved(PipelineSplitSharedParam(strategy1, strategy2),
                                              micro_batch_interleaved), 4)
@@ -360,12 +360,12 @@ def test_pipeline_split_shared_parameter_with_micro_batch_interleaved_stage1_opt
     Description: net with MicroBatchInterleaved in semi auto parallel.
     Expectation: success.
     """
-    context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2, enable_parallel_optimizer=True)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((4, 1), (1, 1))
-    strategy2 = ((2, 1), (1, 1))
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
     micro_batch_interleaved = 2
     net = PipelineCell(MicroBatchInterleaved(PipelineSplitSharedParam(strategy1, strategy2),
                                              micro_batch_interleaved), 4)

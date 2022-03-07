@@ -120,7 +120,7 @@ Status TopKInfo::InferMirrorOps() {
   for (size_t i = 0; i < inputs_tensor_map_.size(); ++i) {
     std::vector<Group> group;
     if (CreateGroupByTensorMap(inputs_tensor_map_[i], &group) != SUCCESS) {
-      MS_LOG(ERROR) << name_ << ": Create group failed, the input index is " << i;
+      ReportError(name_ + ": Create group failed, the input index is " + std::to_string(i));
       mirror_ops_.clear();
       return FAILED;
     }

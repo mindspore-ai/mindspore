@@ -154,7 +154,7 @@ Status GatherDInfo::InferMirrorOps() {
 
   std::vector<Group> group;
   if (CreateGroupByTensorMap(inputs_tensor_map_[0], &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create group failed";
+    ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
 
