@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/pipeline.h"
+#include "pipeline/jit/static_analysis/static_analysis.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/ms_context.h"
@@ -858,11 +859,12 @@ EvalResultPtr StandardPrimEvaluator::RunPyInferValue(const AnalysisEnginePtr &en
 }
 
 // Apply EvalResult from cached result for a given primitive.
-static inline void ApplyCacheEvalResult(const PrimitivePtr &prim, const EvalResultPtr &result) {
+static inline EvalResultPtr ApplyCacheEvalResult(const PrimitivePtr &prim, const EvalResultPtr &result) {
   auto &attrs = result->attribute();
   if (attrs != nullptr) {
     prim->set_evaluate_added_attrs(*attrs);
   }
+  return std::make_shared<EvalResult>(result->abstract()->Clone(), attrs);
 }
 
 EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
@@ -870,7 +872,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   auto eval_result = evaluator_cache_mgr_->GetValue(args);
   if (eval_result != nullptr) {
     // Evaluator cache hit.
-    return eval_result;
+    return std::make_shared<EvalResult>(eval_result->abstract()->Clone(), eval_result->attribute());
   }
   // In pynative mode (engine == nullptr), it is difficult to set added_attrs to
   // python object by C++ code, so we disable global eval cache in pynative mode.
@@ -880,9 +882,8 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
     eval_result = eval_cache_->Get(prim_, args);
     if (eval_result != nullptr) {
       // Global primitive evaluate cache hit.
-      ApplyCacheEvalResult(prim_, eval_result);
       evaluator_cache_mgr_->SetValue(args, eval_result);
-      return eval_result;
+      return ApplyCacheEvalResult(prim_, eval_result);
     }
   }
   // PrimitivePy is expected for EvalPyCheckPrim.
@@ -1020,38 +1021,38 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   }
   // Try to get infer result from evaluator cache.
   auto eval_result = evaluator_cache_mgr_->GetValue(args);
-  if (eval_result == nullptr) {
-    // In pynative mode (engine == nullptr), it is difficult to set added_attrs to
-    // python object by C++ code, so we disable global eval cache in pynative mode.
-    const bool enable_global_cache = (engine != nullptr);
-    if (enable_global_cache) {
-      // Try to get infer result from global primitive eval cache.
-      eval_result = eval_cache_->Get(prim_py_, args);
-    }
-    if (eval_result != nullptr) {
-      // Apply global cache result.
-      ApplyCacheEvalResult(prim_py_, eval_result);
-    } else {
-      // Cache miss, run infer. We should copy attributes before
-      // running infer, since they may be changed during infer.
-      auto input_attrs = prim_py_->attrs();
-      auto py_args = PreparePyInputs(prim_py_, args);
-      prim_py_->BeginRecordAddAttr();
-      py::dict output = prim_py_->RunInfer(py_args);
-      prim_py_->EndRecordAddAttr();
-      const auto &added_attrs = prim_py_->evaluate_added_attrs();
-      MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
-      auto res_abs = PyInferRes2Abstract(prim_py_, output);
-      MS_LOG(DEBUG) << "Python InferTensor result abstract: " << res_abs->ToString();
-      eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
-      // Save result to global primitive eval cache.
-      if (enable_global_cache) {
-        eval_cache_->Put(prim_py_, std::move(input_attrs), args, eval_result);
-      }
-    }
-    // Save result to evaluator cache.
-    evaluator_cache_mgr_->SetValue(args, eval_result);
+  if (eval_result != nullptr) {
+    return std::make_shared<EvalResult>(eval_result->abstract()->Clone(), eval_result->attribute());
   }
+  // In pynative mode (engine == nullptr), it is difficult to set added_attrs to
+  // python object by C++ code, so we disable global eval cache in pynative mode.
+  const bool enable_global_cache = (engine != nullptr);
+  if (enable_global_cache) {
+    // Try to get infer result from global primitive eval cache.
+    eval_result = eval_cache_->Get(prim_py_, args);
+    if (eval_result != nullptr) {
+      // Global cache hit.
+      evaluator_cache_mgr_->SetValue(args, eval_result);
+      return ApplyCacheEvalResult(prim_py_, eval_result);
+    }
+  }
+  // Cache miss, run infer. We should copy attributes before
+  // running infer, since they may be changed during infer.
+  auto input_attrs = prim_py_->attrs();
+  auto py_args = PreparePyInputs(prim_py_, args);
+  prim_py_->BeginRecordAddAttr();
+  py::dict output = prim_py_->RunInfer(py_args);
+  prim_py_->EndRecordAddAttr();
+  const auto &added_attrs = prim_py_->evaluate_added_attrs();
+  MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
+  auto res_abs = PyInferRes2Abstract(prim_py_, output);
+  MS_LOG(DEBUG) << "Python InferTensor result abstract: " << res_abs->ToString();
+  eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
+  // Save result to global primitive eval cache.
+  if (enable_global_cache) {
+    eval_cache_->Put(prim_py_, std::move(input_attrs), args, eval_result);
+  }
+  evaluator_cache_mgr_->SetValue(args, eval_result);
   return eval_result;
 }
 
