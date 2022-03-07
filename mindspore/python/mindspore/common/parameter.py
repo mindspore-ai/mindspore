@@ -207,6 +207,7 @@ class Parameter(Tensor_):
         else:
             raise TypeError(f"The type of the argument 'default_input' must be in ['Tensor', 'int', 'float',"
                             f" 'numpy.ndarray', 'list']. But got type {type(default_input)}.")
+        self.param_info.parameter_shape = self.shape
 
     def __deepcopy__(self, memodict):
         new_obj = Parameter(self)
