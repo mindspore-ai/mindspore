@@ -41,7 +41,7 @@ class GetModelKernel : public RoundKernel {
   bool Reset() override;
 
  private:
-  void GetModel(const schema::RequestGetModel *get_model_req, const std::shared_ptr<FBBuilder> &fbb);
+  void GetModel(const schema::RequestGetModel *get_model_req, const std::shared_ptr<ps::core::MessageHandler> &message);
   void BuildGetModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                         const std::string &reason, const size_t iter,
                         const std::map<std::string, AddressPtr> &feature_maps, const std::string &timestamp);

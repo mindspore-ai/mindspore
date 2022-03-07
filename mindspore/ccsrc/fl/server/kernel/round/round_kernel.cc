@@ -79,6 +79,28 @@ void RoundKernel::GenerateOutput(const std::shared_ptr<ps::core::MessageHandler>
   }
 }
 
+void RoundKernel::GenerateOutputInference(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
+                                          size_t len, ps::core::RefBufferRelCallback cb) {
+  if (message == nullptr) {
+    MS_LOG(WARNING) << "The message handler is nullptr.";
+    return;
+  }
+  if (data == nullptr || len == 0) {
+    std::string reason = "The output of the round " + name_ + " is empty.";
+    MS_LOG(WARNING) << reason;
+    if (!message->SendResponse(reason.c_str(), reason.size())) {
+      MS_LOG(WARNING) << "Sending response failed.";
+      return;
+    }
+    return;
+  }
+  IncreaseTotalClientNum();
+  if (!message->SendResponseInference(data, len, cb)) {
+    MS_LOG(WARNING) << "Sending response failed.";
+    return;
+  }
+}
+
 void RoundKernel::IncreaseTotalClientNum() { total_client_num_ += 1; }
 
 void RoundKernel::IncreaseAcceptClientNum() { accept_client_num_ += 1; }

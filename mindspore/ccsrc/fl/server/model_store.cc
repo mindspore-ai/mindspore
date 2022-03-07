@@ -85,6 +85,7 @@ void ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
   }
   iteration_to_model_[iteration] = memory_register;
   SaveCheckpoint(iteration, new_model);
+  OnIterationUpdate();
   return;
 }
 
@@ -104,6 +105,7 @@ void ModelStore::Reset() {
   initial_model_ = iteration_to_model_.rbegin()->second;
   iteration_to_model_.clear();
   iteration_to_model_[kInitIterationNum] = initial_model_;
+  OnIterationUpdate();
 }
 
 const std::map<size_t, std::shared_ptr<MemoryRegister>> &ModelStore::iteration_to_model() {
@@ -191,6 +193,90 @@ void ModelStore::SaveCheckpoint(size_t iteration, const std::map<std::string, Ad
 
   python_adapter::CallPyModFn(mod, PYTHON_MOD_SAFE_WEIGHT, py::str(checkpoint_dir), py::str(fl_name),
                               py::str(std::to_string(iteration)), dict_data);
+}
+
+void ModelStore::RelModelResponseCache(const void *data, size_t datalen, void *extra) {
+  auto &instance = GetInstance();
+  std::unique_lock<std::mutex> lock(instance.model_response_cache_lock_);
+  auto it =
+    std::find_if(instance.model_response_cache_.begin(), instance.model_response_cache_.end(),
+                 [data](const HttpResponseModelCache &item) { return item.cache && item.cache->data() == data; });
+  if (it == instance.model_response_cache_.end()) {
+    MS_LOG(WARNING) << "Model response cache has been releaed";
+    return;
+  }
+  if (it->reference_count > 0) {
+    it->reference_count -= 1;
+    instance.total_sub_reference_count++;
+  }
+}
+
+std::shared_ptr<std::vector<uint8_t>> ModelStore::GetModelResponseCache(const string &round_name,
+                                                                        size_t cur_iteration_num,
+                                                                        size_t model_iteration_num) {
+  std::unique_lock<std::mutex> lock(model_response_cache_lock_);
+  auto it = std::find_if(model_response_cache_.begin(), model_response_cache_.end(),
+                         [&round_name, cur_iteration_num, model_iteration_num](const HttpResponseModelCache &item) {
+                           return item.round_name == round_name && item.cur_iteration_num == cur_iteration_num &&
+                                  item.model_iteration_num == model_iteration_num;
+                         });
+  if (it == model_response_cache_.end()) {
+    return nullptr;
+  }
+  it->reference_count += 1;
+  total_add_reference_count += 1;
+  return it->cache;
+}
+
+std::shared_ptr<std::vector<uint8_t>> ModelStore::StoreModelResponseCache(const string &round_name,
+                                                                          size_t cur_iteration_num,
+                                                                          size_t model_iteration_num, const void *data,
+                                                                          size_t datalen) {
+  std::unique_lock<std::mutex> lock(model_response_cache_lock_);
+  auto it = std::find_if(model_response_cache_.begin(), model_response_cache_.end(),
+                         [&round_name, cur_iteration_num, model_iteration_num](const HttpResponseModelCache &item) {
+                           return item.round_name == round_name && item.cur_iteration_num == cur_iteration_num &&
+                                  item.model_iteration_num == model_iteration_num;
+                         });
+  if (it != model_response_cache_.end()) {
+    it->reference_count += 1;
+    total_add_reference_count += 1;
+    return it->cache;
+  }
+  auto cache = std::make_shared<std::vector<uint8_t>>(datalen);
+  if (cache == nullptr) {
+    MS_LOG(ERROR) << "Malloc data of size " << datalen << " failed";
+    return nullptr;
+  }
+  auto ret = memcpy_s(cache->data(), cache->size(), data, datalen);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "memcpy_s  error, errorno(" << ret << ")";
+    return nullptr;
+  }
+  HttpResponseModelCache item;
+  item.round_name = round_name;
+  item.cur_iteration_num = cur_iteration_num;
+  item.model_iteration_num = model_iteration_num;
+  item.cache = cache;
+  item.reference_count = 1;
+  total_add_reference_count += 1;
+  model_response_cache_.push_back(item);
+  return cache;
+}
+
+void ModelStore::OnIterationUpdate() {
+  std::unique_lock<std::mutex> lock(model_response_cache_lock_);
+  for (auto it = model_response_cache_.begin(); it != model_response_cache_.end();) {
+    if (it->reference_count == 0) {
+      it->cache = nullptr;
+      it = model_response_cache_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  MS_LOG(INFO) << "Current model cache number: " << model_response_cache_.size()
+               << ", total add and sub reference count: " << total_add_reference_count << ", "
+               << total_sub_reference_count;
 }
 }  // namespace server
 }  // namespace fl

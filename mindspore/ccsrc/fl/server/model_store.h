@@ -64,6 +64,13 @@ class ModelStore {
   // Returns the model size, which could be calculated at the initializing phase.
   size_t model_size() const;
 
+  static void RelModelResponseCache(const void *data, size_t datalen, void *extra);
+  std::shared_ptr<std::vector<uint8_t>> GetModelResponseCache(const std::string &round_name, size_t cur_iteration_num,
+                                                              size_t model_iteration_num);
+  std::shared_ptr<std::vector<uint8_t>> StoreModelResponseCache(const std::string &round_name, size_t cur_iteration_num,
+                                                                size_t model_iteration_num, const void *data,
+                                                                size_t datalen);
+
  private:
   ModelStore() : max_model_count_(0), model_size_(0), iteration_to_model_({}) {}
   ~ModelStore() = default;
@@ -90,6 +97,19 @@ class ModelStore {
   std::map<size_t, std::shared_ptr<MemoryRegister>> iteration_to_model_;
 
   uint32_t rank_id_;
+
+  struct HttpResponseModelCache {
+    std::string round_name;  // startFlJob, getModel
+    size_t cur_iteration_num = 0;
+    size_t model_iteration_num = 0;
+    size_t reference_count = 0;
+    std::shared_ptr<std::vector<uint8_t>> cache = nullptr;
+  };
+  size_t total_add_reference_count = 0;
+  size_t total_sub_reference_count = 0;
+  std::mutex model_response_cache_lock_;
+  std::vector<HttpResponseModelCache> model_response_cache_;
+  void OnIterationUpdate();
 };
 }  // namespace server
 }  // namespace fl
