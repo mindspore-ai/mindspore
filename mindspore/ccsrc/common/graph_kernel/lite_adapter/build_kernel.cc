@@ -20,10 +20,12 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/lite_adapter/akg_build.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ops/custom.h"
+#include "utils/anf_utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore::graphkernel {
@@ -57,6 +59,29 @@ AnfNodePtr KernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, const C
   auto kernel_name = GetValue<std::string>(fg->get_attr("kernel_name"));
   std::vector<uint8_t> kernel_name_str(kernel_name.begin(), kernel_name.end());
   custom_attrs["kernel_name"] = kernel_name_str;
+  std::string output_shape_str;
+  std::string output_format_str;
+  std::string output_type_str;
+  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
+  auto cb = Callback::Instance();
+  for (size_t i = 0; i < output_num; i++) {
+    auto output_shape = cb->GetOutputShape(cnode, i);
+    output_shape_str += std::to_string(output_shape.size()) + ",";
+    for (auto &v : output_shape) {
+      output_shape_str += std::to_string(v) + ",";
+    }
+    auto output_format = cb->GetOutputFormat(cnode, i);
+    if (output_format == kOpFormat_NHWC) {
+      output_format_str += "1,";
+    } else {  // default, NCHW
+      output_format_str += "0,";
+    }
+    auto output_type = cb->GetOutputType(cnode, i);
+    output_type_str += std::to_string(static_cast<int>(output_type)) + ",";
+  }
+  custom_attrs["outputs_shape"] = std::vector<uint8_t>(output_shape_str.begin(), output_shape_str.end());
+  custom_attrs["outputs_format"] = std::vector<uint8_t>(output_format_str.begin(), output_format_str.end());
+  custom_attrs["outputs_type"] = std::vector<uint8_t>(output_type_str.begin(), output_type_str.end());
   primc->set_attr(custom_attrs);
   auto inputs = cnode->inputs();
   inputs.erase(inputs.begin());
