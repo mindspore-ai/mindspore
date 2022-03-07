@@ -21,6 +21,7 @@ import ast
 import hashlib
 import inspect
 import types
+import platform
 from dataclasses import is_dataclass
 from textwrap import dedent
 
@@ -591,11 +592,14 @@ class Parser:
         # Used to resolve mindspore builtin ops namespace.
         self.ms_common_ns = CellNamespace('mindspore.common')
         self.ms_nn_ns = CellNamespace('mindspore.nn')
-        self.ms_scipy_ns = CellNamespace('mindspore.scipy')
         self.ms_ops_ns = CellNamespace('mindspore.ops')
         self.ms_ops_c_ns = CellNamespace('mindspore.ops.composite')
         self.ms_ops_c_multitype_ns = CellNamespace('mindspore.ops.composite.multitype_ops')
         self.ms_ops_p_ns = CellNamespace('mindspore.ops.operations')
+        if platform.system().lower() != 'windows':
+            self.ms_scipy_ns = CellNamespace('mindspore.scipy')
+        else:
+            self.ms_scipy_ns = {}
         # Used to resolve the function's globals namespace.
         self.global_namespace = CellNamespace(fn.__module__)
         self.function_module = fn.__module__
@@ -691,45 +695,8 @@ class Parser:
         error_info = f"The name '{var}' is not defined in function '{self.function_name}'."
         return None, error_info
 
-    def is_supported_namespace_module(self, value):
-        """To check if the module is allowed to support."""
-        # Check `mindspore` namespace.
-        if not hasattr(value, '__name__'):
-            logger.debug(f"'{str(value)}' has no '__name__' attribute, we suppose it's supported.")
-            return True
-        name = value.__name__
-        if name == 'mindspore':
-            logger.debug(f"Found 'mindspore' root namespace.")
-            return True
-        if name == 'mindspore.ops':
-            logger.debug(f"Found 'mindspore.ops' namespace.")
-            return True
-        if name == 'mindspore.nn':
-            logger.debug(f"Found 'mindspore.nn' namespace.")
-            return True
-        if name == 'mindspore.numpy':
-            logger.debug(f"Found 'mindspore.numpy' namespace.")
-            return True
-        if name == 'mindspore.scipy':
-            logger.debug(f"Found 'mindspore.scipy' namespace.")
-            return True
-        if name == 'mindspore.context':
-            logger.debug(f"Found 'mindspore.context' namespace.")
-            return True
-
-        # Check `builtins` namespace.
-        if hasattr(value, '__module__'):  # Not types.ModuleType
-            mod = value.__module__
-            if mod == 'builtins':
-                logger.debug(f"Found '{name}' in 'builtins' namespace.")
-                return True
-
-        # We suppose it's supported if not a Module.
-        if not isinstance(value, types.ModuleType):
-            logger.debug(f"Found '{name}', not a module.")
-            return True
-
-        # Check supported Module namespace.
+    def is_rightmost_name_in_namespace_module(self, name):
+        """Check supported Module namespace."""
         rightmost_name = name.split('.')[-1]
         if rightmost_name in self.ms_ops_ns:
             logger.debug(f"Found '{name}'({rightmost_name}) in ops namespace: {str(self.ms_ops_ns)}.")
@@ -756,6 +723,49 @@ class Parser:
             return True
         if rightmost_name in trope_ns:
             logger.debug(f"Found '{name}'({rightmost_name}) in trope namespace: {str(trope_ns)}.")
+            return True
+        return False
+
+    def is_supported_namespace_module(self, value):
+        """To check if the module is allowed to support."""
+        # Check `mindspore` namespace.
+        if not hasattr(value, '__name__'):
+            logger.debug(f"'{str(value)}' has no '__name__' attribute, we suppose it's supported.")
+            return True
+        name = value.__name__
+        if name == 'mindspore':
+            logger.debug(f"Found 'mindspore' root namespace.")
+            return True
+        if name == 'mindspore.ops':
+            logger.debug(f"Found 'mindspore.ops' namespace.")
+            return True
+        if name == 'mindspore.nn':
+            logger.debug(f"Found 'mindspore.nn' namespace.")
+            return True
+        if name == 'mindspore.numpy':
+            logger.debug(f"Found 'mindspore.numpy' namespace.")
+            return True
+        if platform.system().lower() != 'windows' and name == 'mindspore.scipy':
+            logger.debug(f"Found 'mindspore.scipy' namespace.")
+            return True
+        if name == 'mindspore.context':
+            logger.debug(f"Found 'mindspore.context' namespace.")
+            return True
+
+        # Check `builtins` namespace.
+        if hasattr(value, '__module__'):  # Not types.ModuleType
+            mod = value.__module__
+            if mod == 'builtins':
+                logger.debug(f"Found '{name}' in 'builtins' namespace.")
+                return True
+
+        # We suppose it's supported if not a Module.
+        if not isinstance(value, types.ModuleType):
+            logger.debug(f"Found '{name}', not a module.")
+            return True
+
+        # Check supported Module namespace.
+        if self.is_rightmost_name_in_namespace_module(name):
             return True
 
         logger.info(f"Not found '{name}' in mindspore supported namespace.")
