@@ -531,18 +531,15 @@ void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
   }
   auto phase = pybind11::cast<std::string>(py_phase);
   auto iter = info_.find(phase);
-  if (iter == info_.end()) {
-    MS_LOG(ERROR) << "ExecutorInfo for phase:" << phase << " not exist.";
-    return;
+  if (iter != info_.end()) {
+    auto res = iter->second->resource;
+    if (res->HasResult(kStepParallelGraph)) {
+      std::string layout_graph = phase + kStepParallelGraph;
+      (void)info_.erase(layout_graph);
+    }
+    (void)info_.erase(phase);
+    MS_LOG(DEBUG) << "Delete phase: " << phase << ", info size: " << info_.size();
   }
-
-  auto res = iter->second->resource;
-  if (res->HasResult(kStepParallelGraph)) {
-    std::string layout_graph = phase + kStepParallelGraph;
-    (void)info_.erase(layout_graph);
-  }
-  (void)info_.erase(phase);
-  MS_LOG(DEBUG) << "Delete phase: " << phase << ", info size: " << info_.size();
 }
 
 void GraphExecutorPy::ClearRes() {

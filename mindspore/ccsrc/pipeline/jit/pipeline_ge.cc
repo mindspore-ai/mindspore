@@ -89,24 +89,13 @@ Status CreateSessionAndGraphRunner(bool is_training = true) {
 
     options["ge.enablePrintOpPass"] = "0";
     sess = transform::GraphRunner::NewSession(options);
-    if (sess == nullptr) {
-      MS_LOG(ERROR) << "Init data graph failed, because of create Ge session failed";
-      return Status::FAILED;
-    } else {
-      DfGraphManager::GetInstance().SetGeSession(sess);
-    }
+    DfGraphManager::GetInstance().SetGeSession(sess);
   }
 
   transform::GraphRunnerOptions options;
   options.sess_ptr = sess;
   auto graph_runner = std::make_shared<transform::GraphRunner>(options);
-  if (graph_runner == nullptr) {
-    MS_LOG(ERROR) << "Create new graph runner failed";
-    return Status::FAILED;
-  } else {
-    DfGraphManager::GetInstance().SetGraphRunner(graph_runner);
-  }
-
+  DfGraphManager::GetInstance().SetGraphRunner(graph_runner);
   return Status::SUCCESS;
 }
 
@@ -130,9 +119,10 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
     return false;
   }
 
+  auto env_ge = common::GetEnv("MS_ENABLE_GE");
   auto env_training = common::GetEnv("MS_GE_TRAIN");
   bool training = false;
-  if (env_training == "1") {
+  if (env_ge == "1" && env_training == "1") {
     training = true;
   }
   if (training) {
@@ -262,9 +252,10 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, co
     return nullptr;
   }
 
+  auto env_ge = common::GetEnv("MS_ENABLE_GE");
   auto env_training = common::GetEnv("MS_GE_TRAIN");
   bool training = false;
-  if (env_training == "1") {
+  if (env_ge == "1" && env_training == "1") {
     training = true;
   }
   if (training) {
