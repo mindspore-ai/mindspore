@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,10 +221,21 @@ class BaseFuncGraphEvaluator : public Evaluator {
   AnalysisContextPtr parent_context() const { return parent_context_; }
   void set_parent_context(const AnalysisContextPtr &parent_context) { parent_context_ = parent_context; }
 
+  void PushAlwaysEvalFlag(bool flag) { always_eval_flags_.push_back(flag); }
+  void PopAlwaysEvalFlag() { always_eval_flags_.pop_back(); }
+  bool always_eval_flag() const {
+    if (always_eval_flags_.empty()) {
+      MS_LOG(EXCEPTION) << "Always_eval_flag should not be empty";
+    }
+    return always_eval_flags_.back();
+  }
+
  protected:
   AnalysisContextPtr parent_context_;
 
  private:
+  // As evaluator can be recursively called, so use a vector to simulate a stack of flags.
+  std::vector<bool> always_eval_flags_;
   AbstractBasePtr LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
                                       const AnalysisContextPtr &context);
   // Add functions for stack frame routine.
@@ -397,6 +408,8 @@ class ShardEvaluator : public Evaluator {
 };
 
 void BroadenArgs(const AbstractBasePtrList &args_spec_list, AbstractBasePtrList *broaded_args);
+
+bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_EVALUATOR_H_

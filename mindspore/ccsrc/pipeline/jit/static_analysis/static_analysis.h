@@ -299,6 +299,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   AnalysisResult Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
   void SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result);
   EvalResultPtr ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf);
+  // Evaluate a CNode without look up cache.
+  EvalResultPtr ObtainEvalResultWithoutCache(const AnfNodeConfigPtr &conf);
   // Return the Evaluator for the given function.
   EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &fn);
 
