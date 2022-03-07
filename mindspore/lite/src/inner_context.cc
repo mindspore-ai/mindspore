@@ -360,18 +360,20 @@ ThreadPool *InnerContext::thread_pool() const { return thread_pool_; }
 bool InnerContext::device_and_pkg_support_fp16() const { return this->device_and_pkg_support_fp16_; }
 
 std::set<void *> InnerContext::GetLinkInfo(void *pre) const {
-  if (link_info_.find(pre) == link_info_.end()) {
+  auto iter = link_info_.find(pre);
+  if (iter == link_info_.end()) {
     MS_LOG(DEBUG) << "Not found precursor in link information.";
     return {};
   }
-  return link_info_.at(pre);
+  return iter->second;
 }
 
 std::unordered_map<void *, std::set<void *>> InnerContext::GetAllLinkInfo() const { return link_info_; }
 
 void InnerContext::SetLinkInfo(void *pre, void *suc) {
-  if (link_info_.find(pre) != link_info_.end()) {
-    link_info_.at(pre).insert(suc);
+  auto iter = link_info_.find(pre);
+  if (iter != link_info_.end()) {
+    iter->second.insert(suc);
     return;
   }
   std::set<void *> suc_set{suc};
@@ -385,9 +387,10 @@ void InnerContext::SetAllLinkInfo(const std::unordered_map<void *, std::set<void
 void InnerContext::ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *old_receiver) {
   for (auto &info : link_info_) {
     auto &receivers = info.second;
-    if (receivers.find(old_receiver) != receivers.end()) {
+    auto iter = receivers.find(old_receiver);
+    if (iter != receivers.end()) {
+      receivers.erase(iter);
       receivers.insert(new_receiver);
-      receivers.erase(old_receiver);
     }
   }
 }

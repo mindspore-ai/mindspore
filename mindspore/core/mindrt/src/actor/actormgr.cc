@@ -196,6 +196,14 @@ int ActorMgr::EnqueueMessage(const mindspore::ActorReference actor, std::unique_
 
 int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteLink, bool isExactNotRemote) {
   // The destination is local
+#ifdef BUILD_LITE
+  auto actor = GetActor(to);
+  if (actor != nullptr) {
+    return EnqueueMessage(actor, std::move(msg));
+  } else {
+    return ACTOR_NOT_FIND;
+  }
+#else
   if (IsLocalAddres(to)) {
     auto actor = GetActor(to);
     if (actor != nullptr) {
@@ -225,6 +233,7 @@ int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteL
       return IO_NOT_FIND;
     }
   }
+#endif
 }
 
 AID ActorMgr::Spawn(const ActorReference &actor, bool shareThread) {
@@ -237,7 +246,7 @@ AID ActorMgr::Spawn(const ActorReference &actor, bool shareThread) {
   MS_LOG(DEBUG) << "ACTOR was spawned,a=" << actor->GetAID().Name().c_str();
 
   if (shareThread) {
-    auto mailbox = std::unique_ptr<MailBox>(new (std::nothrow) NonblockingMailBox());
+    auto mailbox = std::make_unique<NonblockingMailBox>();
     auto hook = std::unique_ptr<std::function<void()>>(
       new std::function<void()>([actor]() { ActorMgr::GetActorMgrRef()->SetActorReady(actor); }));
     // the mailbox has this hook, the hook holds the actor reference, the actor has the mailbox. this is a cycle which

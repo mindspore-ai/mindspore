@@ -20,6 +20,7 @@
 #include "mindrt/include/mindrt.hpp"
 #include "src/lite_kernel_util.h"
 #include "src/common/tensor_util.h"
+#include "src/common/common.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
@@ -39,10 +40,11 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
 
   InitInputData();
 
-  auto ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
-                       *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
+  auto ret = kernel_->Execute(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
+                              *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
   input_op_datas_.erase(op_uuid);
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "run kernel failed, name: " << kernel_->name();
     context->SetFailed(ret);
     return;
   }
@@ -93,7 +95,7 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
   isolate_input_map_ = input_map;
   std::vector<kernel::LiteKernel *> kernels{};
   std::transform(actors->begin(), actors->end(), std::back_inserter(kernels),
-                 [](std::shared_ptr<LiteOpActor> actor) { return actor->kernel_; });
+                 [](const std::shared_ptr<LiteOpActor> &actor) { return actor->kernel_; });
   size_t in_tensor_size = kernel_->in_tensors().size();
   for (size_t i = 0; i < in_tensor_size; i++) {
     Tensor *old_tensor = kernel_->in_tensors()[i];
@@ -240,38 +242,41 @@ int LiteOpActor::UpdateActorOutput() {
 }
 #endif
 
-bool LiteOpActor::ArrowHasCompiled(const AID &actor_name, const size_t &to_index,
+bool LiteOpActor::ArrowHasCompiled(const AID &actor_name, size_t to_index,
                                    const std::unordered_map<AID, std::set<size_t>> &receiver_index_set) {
-  if (receiver_index_set.find(actor_name) != receiver_index_set.end()) {
-    return receiver_index_set.at(actor_name).find(to_index) != receiver_index_set.at(actor_name).end();
+  auto iter = receiver_index_set.find(actor_name);
+  if (iter != receiver_index_set.end()) {
+    return iter->second.find(to_index) != iter->second.end();
   }
   return false;
 }
 
-void LiteOpActor::MarkArrowAsCompiled(const AID *actor_name, const size_t *to_index,
+void LiteOpActor::MarkArrowAsCompiled(const AID *actor_name, size_t to_index,
                                       std::unordered_map<AID, std::set<size_t>> *receiver_index_set) {
   if (receiver_index_set->find(*actor_name) == receiver_index_set->end()) {
-    std::set<size_t> tmp{*to_index};
+    std::set<size_t> tmp{to_index};
     receiver_index_set->insert(std::pair<AID, std::set<size_t>>(*actor_name, tmp));
   } else {
-    receiver_index_set->at(*actor_name).insert(*to_index);
+    receiver_index_set->at(*actor_name).insert(to_index);
   }
 }
 
 int LiteOpActor::CreateCommonArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
                                    const std::set<void *> &receiver_tensors, const size_t &output_index,
                                    std::unordered_map<AID, std::set<size_t>> *receiver_index_set) {
+  std::unordered_map<void *, std::set<std::pair<AID, size_t>>>::const_iterator iter;
   for (auto receiver_tensor : receiver_tensors) {
-    if (receivers_map.find(receiver_tensor) == receivers_map.end()) {
+    iter = receivers_map.find(receiver_tensor);
+    if (iter == receivers_map.end()) {
       MS_LOG(DEBUG) << "not a useful receiver.";
       continue;
     }
-    auto receiver_set = receivers_map.at(receiver_tensor);
+    auto receiver_set = iter->second;
     for (auto item : receiver_set) {
       if (ArrowHasCompiled(item.first, item.second, *receiver_index_set)) {
         continue;
       }
-      MarkArrowAsCompiled(&(item.first), &(item.second), receiver_index_set);
+      MarkArrowAsCompiled(&(item.first), item.second, receiver_index_set);
       auto arrow = std::make_shared<DataArrow>(output_index, item.first, item.second);
       MS_CHECK_TRUE_MSG(arrow != nullptr, RET_ERROR, "create arrow failed.");
       output_data_arrows_.push_back(arrow);
@@ -357,8 +362,9 @@ void LiteOpActor::InitInputData() {
 }
 
 void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
-  for (size_t i = 0; i < output_data_arrows_.size(); i++) {
-    auto data = outputs_data_.at(i);
+  auto output_size = output_data_arrows_.size();
+  for (size_t i = 0; i < output_size; ++i) {
+    auto data = outputs_data_[i];
     Async(output_data_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
   }
 }
@@ -377,11 +383,11 @@ int LiteOpActor::PrepareOutputData() {
     auto &arrow = output_data_arrows_[i];
     auto data = std::make_shared<OpData<Tensor>>(this->GetAID(), (kernel_->out_tensors()).at(arrow->from_output_index_),
                                                  static_cast<int>(arrow->to_input_index_));
-    if (data == nullptr) {
+    if (MS_UNLIKELY(data == nullptr)) {
       MS_LOG(ERROR) << "new output_data failed.";
       return RET_NULL_PTR;
     }
-    outputs_data_.at(i) = data;
+    outputs_data_[i] = data;
   }
   return RET_OK;
 }

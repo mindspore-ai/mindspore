@@ -33,7 +33,7 @@ std::list<std::unique_ptr<MessageBase>> *BlockingMailBox::GetMsgs() {
     while (enqueMailBox->empty()) {
       cond.wait(ulk, [this] { return !this->enqueMailBox->empty(); });
     }
-    SwapMailBox(&enqueMailBox, &dequeMailBox);
+    enqueMailBox->swap(*dequeMailBox);
     ret = dequeMailBox;
   }
   return ret;
@@ -62,7 +62,7 @@ std::list<std::unique_ptr<MessageBase>> *NonblockingMailBox::GetMsgs() {
       released_ = true;
       return nullptr;
     }
-    SwapMailBox(&enqueMailBox, &dequeMailBox);
+    dequeMailBox->swap(*enqueMailBox);
     ret = dequeMailBox;
     released_ = false;
   }

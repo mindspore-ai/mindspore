@@ -18,6 +18,7 @@
 #include <memory>
 #include "src/lite_mindrt.h"
 #include "include/errorcode.h"
+#include "src/common/common.h"
 #include "src/common/tensor_util.h"
 #ifdef ENABLE_FP16
 #include "nnacl/base/cast_base.h"
@@ -41,7 +42,7 @@ int MindrtExecutor::PrepareGraphInput(const std::vector<kernel::LiteKernel *> &k
         return RET_ERROR;
       }
       auto data = std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), inputs.at(idx), static_cast<int>(k));
-      if (data == nullptr) {
+      if (MS_UNLIKELY(data == nullptr)) {
         MS_LOG(ERROR) << "new opdata failed.";
         return RET_NULL_PTR;
       }
@@ -77,7 +78,7 @@ int MindrtExecutor::PrepareGraphOutput(const std::vector<kernel::LiteKernel *> &
         }
         auto data =
           std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), subgraph_output_tensor, static_cast<int>(k));
-        if (data == nullptr) {
+        if (MS_UNLIKELY(data == nullptr)) {
           MS_LOG(ERROR) << "new opdata failed.";
           return RET_NULL_PTR;
         }
@@ -116,8 +117,9 @@ std::unordered_map<void *, std::set<std::pair<AID, size_t>>> MindrtExecutor::Bui
     for (size_t i = 0; i < input_tensors.size(); ++i) {
       auto key = input_tensors[i];
       auto pair = std::make_pair(op_actor->GetAID(), i);
-      if (receivers_map.find(key) != receivers_map.end()) {
-        receivers_map.at(key).insert(pair);
+      auto iter = receivers_map.find(key);
+      if (iter != receivers_map.end()) {
+        iter->second.emplace(pair);
       } else {
         std::set<std::pair<AID, size_t>> tmp_set{pair};
         receivers_map[input_tensors[i]] = tmp_set;
@@ -129,7 +131,7 @@ std::unordered_map<void *, std::set<std::pair<AID, size_t>>> MindrtExecutor::Bui
 
 int MindrtExecutor::LinkActors() {
   auto receivers_map = BuildReceiverMap();
-  for (auto op_actor : op_actors_) {
+  for (auto &&op_actor : op_actors_) {
     auto ret = op_actor->CompileArrow(receivers_map);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "actor: " << op_actor->GetAID() << " compile arrow failed.";
@@ -140,7 +142,7 @@ int MindrtExecutor::LinkActors() {
 }
 
 int MindrtExecutor::PostInitActors() {
-  for (auto actor : op_actors_) {
+  for (auto &&actor : op_actors_) {
     auto ret = actor->PostInit();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "PrepareGraphOutput failed, actor aid: " << actor->GetAID();
