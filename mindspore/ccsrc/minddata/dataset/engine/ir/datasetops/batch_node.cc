@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, boo
                      const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
                      const std::vector<std::string> &col_order, py::function batch_size_func,
                      py::function batch_map_func,
-                     std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map)
+                     std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map,
+                     std::shared_ptr<PythonMultiprocessingRuntime> python_mp)
     : batch_size_(batch_size),
       drop_remainder_(drop_remainder),
       pad_(pad),
@@ -43,7 +44,8 @@ BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, boo
       col_order_(col_order),
       batch_size_func_(batch_size_func),
       batch_map_func_(batch_map_func),
-      pad_map_(pad_map) {
+      pad_map_(pad_map),
+      python_mp_(python_mp) {
   this->AddChild(child);
 }
 #endif
@@ -57,7 +59,7 @@ BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, boo
 std::shared_ptr<DatasetNode> BatchNode::Copy() {
 #ifdef ENABLE_PYTHON
   auto node = std::make_shared<BatchNode>(nullptr, batch_size_, drop_remainder_, pad_, in_col_names_, out_col_names_,
-                                          col_order_, batch_size_func_, batch_map_func_, pad_map_);
+                                          col_order_, batch_size_func_, batch_map_func_, pad_map_, python_mp_);
 #else
   auto node = std::make_shared<BatchNode>(nullptr, batch_size_, drop_remainder_);
 #endif
@@ -105,6 +107,9 @@ Status BatchNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
                                       in_col_names_, out_col_names_, batch_size_func_, batch_map_func_, pad_map_);
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
+  if (python_mp_ != nullptr) {
+    op->SetPythonMp(python_mp_);
+  }
   node_ops->push_back(op);
 #else
   node_ops->push_back(std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,

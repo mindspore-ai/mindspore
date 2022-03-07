@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 #include <utility>
 #include <vector>
 
+#include "minddata/dataset/api/python/python_mp.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
@@ -218,6 +219,14 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
     return false;
   }
 
+  /// Set the instance of Python multiprocessing which will passed from Python
+  /// \param python_mp PythonMultiprocessingRuntime
+  void SetPythonMp(std::shared_ptr<PythonMultiprocessingRuntime> python_mp);
+
+  /// Return the list of PIDs of worker processes
+  /// \return vector of int
+  std::vector<int32_t> GetMPWorkerPIDs() const override;
+
  private:
   // Worker thread for doing the memcpy of batch
   // @param int32_t param workerId
@@ -284,6 +293,13 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   py::function batch_size_func_;  // Function pointer of batch size function
   py::function batch_map_func_;   // Function pointer of per batch map function
 #endif
+  std::shared_ptr<PythonMultiprocessingRuntime> python_mp_;  // python multiprocessing instance
+
+ protected:
+  Status Launch() override;
+
+  Status AddNewWorkers(int32_t num_new_workers) override;
+  Status RemoveWorkers(int32_t num_workers) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

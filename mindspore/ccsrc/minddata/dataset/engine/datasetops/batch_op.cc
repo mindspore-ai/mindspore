@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,8 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size,
       in_col_names_(cols_to_map),
       pad_info_(pad_map),
       batch_num_(0),
-      batch_cnt_(0) {
+      batch_cnt_(0),
+      python_mp_(nullptr) {
   // Adjust connector queue size.  After batch each row is batch_size times larger
   worker_connector_size_ = std::max(1, worker_connector_size_ / start_batch_size_);
   if (num_workers == 1) {
@@ -614,6 +615,7 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
   }
   return Status::OK();
 }
+
 Status BatchOp::SendWaitFlagToWorker(int32_t worker_id) {
   RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kWait))));
   return Status::OK();
@@ -622,6 +624,44 @@ Status BatchOp::SendWaitFlagToWorker(int32_t worker_id) {
 Status BatchOp::SendQuitFlagToWorker(int32_t worker_id) {
   RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kQuit))));
   return Status::OK();
+}
+
+Status BatchOp::AddNewWorkers(int32_t num_new_workers) {
+  RETURN_IF_NOT_OK(ParallelOp::AddNewWorkers(num_new_workers));
+  if (python_mp_ != nullptr) {
+    CHECK_FAIL_RETURN_UNEXPECTED(num_new_workers > 0, "Number of workers added should be greater than 0.");
+    python_mp_->AddNewWorkers(num_new_workers);
+  }
+  return Status::OK();
+}
+
+Status BatchOp::RemoveWorkers(int32_t num_workers) {
+  RETURN_IF_NOT_OK(ParallelOp::RemoveWorkers(num_workers));
+  if (python_mp_ != nullptr) {
+    CHECK_FAIL_RETURN_UNEXPECTED(num_workers > 0, "Number of workers removed should be greater than 0.");
+    python_mp_->RemoveWorkers(num_workers);
+  }
+  return Status::OK();
+}
+
+void BatchOp::SetPythonMp(std::shared_ptr<PythonMultiprocessingRuntime> python_mp) {
+  python_mp_ = std::move(python_mp);
+}
+
+Status BatchOp::Launch() {
+  // Launch Python multiprocessing. This will create the MP pool and shared memory if needed.
+  if (python_mp_) {
+    MS_LOG(DEBUG) << "Launch Python Multiprocessing for BatchOp:" << id();
+    python_mp_->Launch(id());
+  }
+  return DatasetOp::Launch();
+}
+
+std::vector<int32_t> BatchOp::GetMPWorkerPIDs() const {
+  if (python_mp_ != nullptr) {
+    return python_mp_->GetPIDs();
+  }
+  return DatasetOp::GetMPWorkerPIDs();
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -24,16 +24,18 @@ import mindspore.dataset.vision.c_transforms as c_vision
 import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore.dataset.vision import Inter
 
-DATA_DIR = "../data/dataset/testCifar10Data"
+CIFAR10_DATA_DIR = "../data/dataset/testCifar10Data"
+CIFAR100_DATA_DIR = "../data/dataset/testCifar100Data"
 
 
 def create_pyfunc_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, num_samples=None):
     """
     Create Cifar10 dataset pipline with Map ops containing only Python functions and Python Multiprocessing enabled
+    for Map ops and Batch op
     """
 
     # Define dataset
-    cifar10_ds = ds.Cifar10Dataset(DATA_DIR, num_samples=num_samples)
+    cifar10_ds = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=num_samples)
 
     cifar10_ds = cifar10_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
                                 num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
@@ -59,11 +61,12 @@ def create_pyfunc_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, 
 
 def create_pyop_cop_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, num_samples=None):
     """
-    Create Cifar10 dataset pipeline with Map ops containing just C Ops or just Pyfuncs
+    Create Cifar10 dataset pipeline with Map ops containing just C Ops or just Pyfuncs, and
+    Python Multiprocessing enabled for Map ops and Batch op
     """
 
     # Define dataset
-    cifar10_ds = ds.Cifar10Dataset(DATA_DIR, num_samples=num_samples)
+    cifar10_ds = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=num_samples)
 
     # Map#1 - with Pyfunc
     cifar10_ds = cifar10_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
@@ -103,11 +106,12 @@ def create_pyop_cop_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1
 
 def create_mixed_map_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, num_samples=None):
     """
-    Create Cifar10 dataset pipeline with a Map op containing of both C Ops and Pyfuncs
+    Create Cifar10 dataset pipeline with a Map op containing of both C Ops and Pyfuncs, and
+    Python Multiprocessing enabled for Map ops and Batch op
     """
 
     # Define dataset
-    cifar10_ds = ds.Cifar10Dataset(DATA_DIR, num_samples=num_samples)
+    cifar10_ds = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=num_samples)
 
     cifar10_ds = cifar10_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
                                 num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
@@ -119,13 +123,79 @@ def create_mixed_map_dataset(batch_size=32, repeat_size=1, num_parallel_workers=
     hwc2chw_op = c_vision.HWC2CHW()
     cifar10_ds = cifar10_ds.map(
         operations=[lambda x: x, resize_op, rescale_op, rescale_nml_op, hwc2chw_op, lambda y: y],
-        input_columns="image", num_parallel_workers=num_parallel_workers,
-        python_multiprocessing=True)
+        input_columns="image", num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
+
+    # Apply Dataset Ops
+    cifar10_ds = cifar10_ds.batch(batch_size, drop_remainder=True)
+    cifar10_ds = cifar10_ds.repeat(repeat_size)
+
+    return cifar10_ds
+
+
+def create_per_batch_map_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, num_samples=None):
+    """
+    Create Cifar100 dataset pipline with Batch op using per_batch_map and Python Multiprocessing enabled
+    """
+
+    # Define dataset
+    cifar100_ds = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_samples=num_samples)
+
+    cifar100_ds = cifar100_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="fine_label")
+
+    cifar100_ds = cifar100_ds.map(operations=[lambda z: z], input_columns="image")
+
+    # Callable function to delete 3rd column
+    def del_column(col1, col2, col3, batch_info):
+        return (col1, col2,)
+
+    # Apply Dataset Ops
+    buffer_size = 10000
+    cifar100_ds = cifar100_ds.shuffle(buffer_size=buffer_size)
+    # Note: Test repeat before batch
+    cifar100_ds = cifar100_ds.repeat(repeat_size)
+    cifar100_ds = cifar100_ds.batch(batch_size, per_batch_map=del_column,
+                                    input_columns=['image', 'fine_label', 'coarse_label'],
+                                    output_columns=['image', 'label'], drop_remainder=True,
+                                    num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
+
+    return cifar100_ds
+
+
+def create_mp_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, num_samples=None):
+    """
+    Create Cifar10 dataset pipline with Python Multiprocessing enabled for
+    - Batch op using batch_per_map
+    - Map ops using Pyfuncs
+    """
+
+    # Define dataset
+    cifar10_ds = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=num_samples)
+
+    cifar10_ds = cifar10_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
+                                num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
+
+    # Setup transforms list which include Python ops / Pyfuncs
+    transforms_list = [
+        py_vision.ToPIL(),
+        py_vision.RandomGrayscale(prob=0.8),
+        np.array]  # need to convert PIL image to a NumPy array to pass it to C++ operation
+    compose_op = py_transforms.Compose(transforms_list)
+    cifar10_ds = cifar10_ds.map(operations=compose_op, input_columns="image",
+                                num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
+
+    # Callable function to swap columns
+    def swap_columns(col1, col2, batch_info):
+        return (col2, col1,)
 
     # Apply Dataset Ops
     buffer_size = 10000
     cifar10_ds = cifar10_ds.shuffle(buffer_size=buffer_size)
-    cifar10_ds = cifar10_ds.batch(batch_size, drop_remainder=True)
+    cifar10_ds = cifar10_ds.batch(batch_size, drop_remainder=True,
+                                  per_batch_map=swap_columns,
+                                  input_columns=['image', 'label'],
+                                  output_columns=['mylabel', 'myimage'],
+                                  num_parallel_workers=num_parallel_workers,
+                                  python_multiprocessing=True)
     cifar10_ds = cifar10_ds.repeat(repeat_size)
 
     return cifar10_ds
@@ -155,7 +225,7 @@ class TestPythonMultiprocAutotune:
         ds.config.set_enable_autotune(self.original_autotune)
 
     @staticmethod
-    def test_cifar10_pyfunc_pipeline():
+    def test_pymultiproc_at_map_pyfunc():
         """
         Feature: Python Multiprocessing with AutoTune
         Description: Test pipeline with Map ops containing only Python function
@@ -169,7 +239,7 @@ class TestPythonMultiprocAutotune:
         assert mycount1 == 12
 
     @staticmethod
-    def test_cifar10_pyfunc_pipeline_all_samples():
+    def test_pymultiproc_at_map_pyfunc_pipeline_all_samples():
         """
         Feature: Python Multiprocessing with AutoTune
         Description: Test pipeline with Map ops containing only Python function, with all samples in dataset
@@ -183,7 +253,7 @@ class TestPythonMultiprocAutotune:
         assert mycount1 == 312
 
     @staticmethod
-    def test_cifar10_pyop_cop_pipeline():
+    def test_pymultiproc_at_map_pyop_cop():
         """
         Feature: Python Multiprocessing with AutoTune
         Description: Test pipeline with Map ops containing just C Ops or just Pyfuncs
@@ -196,14 +266,50 @@ class TestPythonMultiprocAutotune:
         assert mycount1 == 37
 
     @staticmethod
-    def test_cifar10_mixed_map_pipeline():
+    def test_pymultiproc_at_map_mixed():
         """
         Feature: Python Multiprocessing with AutoTune
         Description: Test pipeline with a Map op containing of both C Ops and Pyfuncs
         Expectation: Data pipeline executes successfully with correct number of rows
         """
-        mydata1 = create_mixed_map_dataset(32, 2, num_parallel_workers=12, num_samples=500)
+        mydata1 = create_mixed_map_dataset(32, 2, num_parallel_workers=2, num_samples=500)
         mycount1 = 0
         for _ in mydata1.create_dict_iterator(num_epochs=1):
             mycount1 += 1
         assert mycount1 == 30
+
+    @staticmethod
+    def test_pymultiproc_at_per_batch_map():
+        """
+        Feature: Python Multiprocessing with AutoTune
+        Description: Test pipeline with Batch op using per_batch_map
+        Expectation: Data pipeline executes successfully with correct number of rows
+        """
+        # Note: Set num_parallel_workers to minimum of 1
+        mydata1 = create_per_batch_map_dataset(32, repeat_size=3, num_parallel_workers=1, num_samples=300)
+        mycount1 = 0
+        for _ in mydata1.create_dict_iterator(num_epochs=1):
+            mycount1 += 1
+        assert mycount1 == 28
+
+    @staticmethod
+    def test_pymultiproc_at_pipeline():
+        """
+        Feature: Python Multiprocessing with AutoTune
+        Description: Test pipeline with Python multiprocessing enabled for dataset, map and batch ops
+        Expectation: Data pipeline executes successfully with correct number of rows
+        """
+        mydata1 = create_mp_dataset(32, repeat_size=2, num_parallel_workers=2, num_samples=700)
+        mycount1 = 0
+        for _ in mydata1.create_dict_iterator(num_epochs=1):
+            mycount1 += 1
+        assert mycount1 == 42
+
+
+if __name__ == '__main__':
+    TestPythonMultiprocAutotune.test_pymultiproc_at_map_pyfunc()
+    TestPythonMultiprocAutotune.test_pymultiproc_at_map_pyfunc_pipeline_all_samples()
+    TestPythonMultiprocAutotune.test_pymultiproc_at_map_pyop_cop()
+    TestPythonMultiprocAutotune.test_pymultiproc_at_map_mixed()
+    TestPythonMultiprocAutotune.test_pymultiproc_at_per_batch_map()
+    TestPythonMultiprocAutotune.test_pymultiproc_at_pipeline()

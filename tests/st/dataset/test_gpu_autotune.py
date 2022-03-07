@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -124,16 +124,18 @@ def test_autotune_train_simple_model(tmp_path):
     ds.config.set_seed(original_seed)
 
 
-def create_dataset_pyfunc_multiproc(data_path, batch_size=32, num_map_parallel_workers=1, max_rowsize=16):
+def create_dataset_pyfunc_multiproc(data_path, batch_size=32, num_op_parallel_workers=1, max_rowsize=16):
     """
-    Create dataset with Python ops list and python_multiprocessing=True for Map op
+    Create Mnist dataset pipline with Python Multiprocessing enabled for
+    - Batch op using per_batch_map
+    - Map ops using Pyfuncs
     """
 
-    # Define dataset
+    # Define dataset with num_parallel_workers=8 for reasonable performance
     data1 = ds.MnistDataset(data_path, num_parallel_workers=8)
 
     data1 = data1.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
-                      num_parallel_workers=num_map_parallel_workers,
+                      num_parallel_workers=num_op_parallel_workers,
                       python_multiprocessing=True, max_rowsize=max_rowsize)
 
     # Setup transforms list which include Python ops
@@ -146,11 +148,18 @@ def create_dataset_pyfunc_multiproc(data_path, batch_size=32, num_map_parallel_w
         lambda y: y
     ]
     compose_op = py_transforms.Compose(transforms_list)
-    data1 = data1.map(operations=compose_op, input_columns="image", num_parallel_workers=num_map_parallel_workers,
+    data1 = data1.map(operations=compose_op, input_columns="image", num_parallel_workers=num_op_parallel_workers,
                       python_multiprocessing=True, max_rowsize=max_rowsize)
 
+    # Callable function to swap order of 2 columns
+    def swap_columns(col1, col2, batch_info):
+        return (col2, col1,)
+
     # Apply Dataset Ops
-    data1 = data1.batch(batch_size, drop_remainder=True)
+    data1 = data1.batch(batch_size, drop_remainder=True, per_batch_map=swap_columns,
+                        input_columns=['image', 'label'],
+                        output_columns=['mylabel', 'myimage'],
+                        num_parallel_workers=num_op_parallel_workers, python_multiprocessing=True)
 
     return data1
 
