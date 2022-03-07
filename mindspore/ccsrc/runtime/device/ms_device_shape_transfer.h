@@ -355,7 +355,7 @@ std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape) {
       shape_5d[W_ncdhw] = shape[H_ncdhw];
       break;
     default:
-      MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
+      MS_LOG(EXCEPTION) << "Unexpected shape :" << shape;
   }
   return shape_5d;
 }
@@ -385,7 +385,7 @@ std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape) {
       std::copy(shape.begin(), shape.end(), shape_4d.begin());
       break;
     default:
-      MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
+      MS_LOG(EXCEPTION) << "Unexpected shape : " << shape;
   }
   return shape_4d;
 }

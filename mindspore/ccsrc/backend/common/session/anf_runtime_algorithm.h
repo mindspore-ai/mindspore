@@ -147,6 +147,9 @@ class AnfRuntimeAlgorithm {
   static void SetFusionType(const AnfNodePtr &node, const kernel::FusionType &type);
   static void SetOutputDataDesc(const AnfNodePtr &node, const std::vector<nlohmann::json> &desc);
   static std::vector<nlohmann::json> GetOutputDataDesc(const AnfNodePtr &node);
+  // core type
+  static void SetCoreType(const AnfNodePtr &node, const std::string &core_type);
+  static std::string GetCoreType(const AnfNodePtr &node);
   // set select kernel_build_info
   static void SetSelectKernelBuildInfo(const kernel::KernelBuildInfoPtr &select_kernel_build_info, AnfNode *node);
   // get select kernel_build_info

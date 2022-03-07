@@ -114,7 +114,7 @@ RangePair PaddingRangeTo5D(const RangePair &ori_range) {
       dst_range[W_ncdhw] = ori_range[H_ncdhw];
       break;
     default:
-      MS_LOG(EXCEPTION) << "Unexpected shape size = " << ori_range.size();
+      MS_LOG(EXCEPTION) << "Unexpected shape size: " << ori_range.size();
   }
   return dst_range;
 }

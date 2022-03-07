@@ -400,11 +400,13 @@ void TbeKernelCompileManager::SavePreBuildResult(int32_t task_id, const std::str
   auto op_pattern = GetJsonValue<std::string>(result, "op_pattern");
   auto fusion_type = kernel::GetFusionTypeByName(op_pattern);
   auto output_data_desc = GetJsonValue<nlohmann::json>(result, "op_params");
+  auto core_type = GetJsonValue<nlohmann::json>(result, "core_type");
   auto json_name = task_iter->second.json_name;
   // save pre build result
   struct PreBuildResult pre_res;
   pre_res.json_name = json_name;
   pre_res.fusion_type = fusion_type;
+  pre_res.core_type = core_type;
   pre_res.output_data_desc = output_data_desc;
   prebuild_res_map_[json_name] = pre_res;
 }
@@ -584,6 +586,8 @@ void TbeKernelCompileManager::UpdateFusionTypeAndOutputDataDesc(const std::vecto
     auto pre_res = prebuild_res_map_[kernel_name];
     auto fusion_type = pre_res.fusion_type;
     auto output_data_desc = pre_res.output_data_desc;
+    auto core_type = pre_res.core_type;
+    AnfAlgo::SetCoreType(node, core_type);
     AnfAlgo::SetFusionType(node, fusion_type);
     AnfAlgo::SetOutputDataDesc(node, {output_data_desc});
   }

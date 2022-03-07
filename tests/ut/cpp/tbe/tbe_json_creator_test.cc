@@ -304,7 +304,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
     }
   }
 
-  FusionScopeInfo fusion_scope_info(0, full_name, input_nodes, compute_nodes, {});
+  FusionScopeInfo fusion_scope_info(0, full_name, "", input_nodes, compute_nodes, {});
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));
@@ -364,7 +364,7 @@ TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
     }
   }
 
-  FusionScopeInfo fusion_scope_info(0, full_name, input_nodes, compute_nodes, {});
+  FusionScopeInfo fusion_scope_info(0, full_name, "", input_nodes, compute_nodes, {});
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));

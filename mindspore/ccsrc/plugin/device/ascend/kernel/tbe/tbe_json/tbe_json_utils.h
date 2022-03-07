@@ -83,6 +83,7 @@ constexpr auto kJPyModulePath = "py_module_path";
 constexpr auto kJAttrs = "attrs";
 constexpr auto kJAttrDesc = "attr_desc";
 constexpr auto kJSocInfo = "SocInfo";
+constexpr auto kJCoreType = "coreType";
 constexpr auto kJFusionOpName = "fusion_op_name";
 constexpr auto kJGraphID = "graph_id";
 constexpr auto kJType = "type";

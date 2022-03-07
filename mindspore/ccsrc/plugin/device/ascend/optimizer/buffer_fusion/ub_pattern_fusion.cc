@@ -305,6 +305,8 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
     fusion_info.all_outputs_from_last_node = true;
     for (size_t node_idx = 0; node_idx < fusion_info.anf_nodes.size(); ++node_idx) {
       const auto &node = fusion_info.anf_nodes[node_idx];
+      auto core_type = AnfAlgo::GetCoreType(node);
+      fusion_info.core_type = core_type;
       size_t old_output_num = fusion_info.outputs_list.size();
       if (common::AnfAlgo::GetOutputTensorNum(node) == 1) {
         auto use_nodes = manager->node_users()[node];
@@ -471,7 +473,7 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
   std::transform(buffer_fusion_infos.begin(), buffer_fusion_infos.end(), std::back_inserter(fusion_scope_infos),
                  [](const auto &buffer_fusion_info) -> mindspore::kernel::FusionScopeInfo {
                    return mindspore::kernel::FusionScopeInfo(
-                     buffer_fusion_info.first, buffer_fusion_info.second.full_name,
+                     buffer_fusion_info.first, buffer_fusion_info.second.full_name, buffer_fusion_info.second.core_type,
                      buffer_fusion_info.second.inputs_list, buffer_fusion_info.second.anf_nodes,
                      buffer_fusion_info.second.outputs_list);
                  });
