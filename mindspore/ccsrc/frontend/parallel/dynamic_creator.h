@@ -215,6 +215,8 @@ REGISTER(IOUInfo);
 REGISTER(RandomChoiceWithMaskInfo);
 REGISTER(CropAndResizeInfo);
 REGISTER(ROIAlignInfo);
+REGISTER(ReduceProdInfo);
+REGISTER(ReduceAllInfo);
 }  // namespace parallel
 }  // namespace mindspore
 
