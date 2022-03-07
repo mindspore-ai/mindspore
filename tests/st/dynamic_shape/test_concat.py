@@ -36,7 +36,7 @@ class Net(nn.Cell):
         out2_shape = self.reshape(out2_unique, (1, -1, 2))
         return self.concat((out1_shape, out2_shape))
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
