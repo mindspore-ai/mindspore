@@ -439,6 +439,17 @@ py::bytes GraphExecutorPy::GetOptimizeGraphProto(const std::string &phase) {
 
 void GraphExecutorPy::SetJitConfig(const py::dict &jit_config) { jit_config_ = GenerateJitConfigMap(jit_config); }
 
+py::dict GraphExecutorPy::GetParallelGraphInfo(const std::string &phase) {
+  MS_LOG(DEBUG) << "GetParallelGraphInfo!";
+  std::string parallel_phase = phase + kStepParallelGraph;
+  auto graph = GetFuncGraph(parallel_phase);
+  if (graph == nullptr) {
+    MS_LOG(EXCEPTION) << "Can not access FuncGraph according to phase: " << parallel_phase;
+  }
+
+  return mindspore::parallel::GetParallelCNodeInfoFromGraph(graph);
+}
+
 py::dict GraphExecutorPy::GetParameterLayout(const std::string &phase) {
   MS_LOG(DEBUG) << "GetParameterLayout!";
   std::string layout_graph = phase + kStepParallelGraph;

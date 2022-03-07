@@ -20,6 +20,8 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
+from parallel.utils.utils import ParallelValidator
+
 POOLED_HEIGHT = 2
 POOLED_WIDTH = 2
 SPATIAL_SCALE = 0.5
@@ -47,8 +49,9 @@ class Net(Cell):
 def compile_net(net: Cell, *inputs):
     net.set_auto_parallel()
     net.set_train()
-    _cell_graph_executor.compile(net, *inputs)
+    phase, _ = _cell_graph_executor.compile(net, *inputs, auto_parallel_mode=True)
     context.reset_auto_parallel_context()
+    return phase
 
 
 def test_roi_align_auto_parallel():
@@ -86,3 +89,36 @@ def test_roi_align_strategy_error():
     with pytest.raises(RuntimeError):
         compile_net(net, _features, _rois)
     context.reset_auto_parallel_context()
+
+
+def test_roi_align_layout():
+    """
+    Features: ROIAlignInfo
+    Description: validate layout and structure
+    Expectation: No raise RuntimeError
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy = ((4, 1, 1, 1), (2, 1))
+    net = Net(POOLED_HEIGHT, POOLED_WIDTH, SPATIAL_SCALE, strategy)
+    phase = compile_net(net, _features, _rois)
+
+    validator = ParallelValidator(net, phase)
+    # check layout
+    features_expect_layout = ([4, 2], [1, -1, -1, -1], [8, 3, 256, 256], 0, True, '')
+    assert validator.check_parameter_layout('features', features_expect_layout)
+
+    # check attrs
+    roi_expect_attrs = {'pooled_height': POOLED_HEIGHT, 'pooled_width': POOLED_WIDTH, 'spatial_scale': SPATIAL_SCALE}
+    assert validator.check_node_attrs('ROIAlign-0', roi_expect_attrs)
+
+    # check inputs
+    roi_expect_inputs = ['features', 'TensorScatterUpdate-0']
+    assert validator.check_node_inputs('ROIAlign-0', roi_expect_inputs)
+
+    # check sub_graph
+    sub_graph = {
+        'ROIAlign-0': ['features', 'TensorScatterUpdate-0'],
+        'MaskedFill-0': ['ROIAlign-0', 'ExpandDims-2', 0.0],
+        'AllReduce-0': ['MaskedFill-0']
+    }
+    assert validator.check_graph_structure(sub_graph)

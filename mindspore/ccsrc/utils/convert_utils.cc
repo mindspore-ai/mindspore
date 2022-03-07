@@ -275,7 +275,7 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar) {
     case kNumberTypeFloat64:
       return std::make_shared<tensor::Tensor>(GetValue<double>(scalar), data_type);
     default:
-      MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << "is valid.";
+      MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << " is invalid.";
   }
 }
 
