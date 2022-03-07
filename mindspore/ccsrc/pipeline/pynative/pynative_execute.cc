@@ -2006,6 +2006,10 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
                   << " device address: " << tensor->device_address() << " shape and dtype "
                   << tensor->GetShapeAndDataTypeInfo();
   }
+  common::AnfAlgo::SetNodeAttr(kAttrForwardOpOutputId,
+                               MakeValue<std::vector<std::string>>(std::vector<std::string>(
+                                 top_cell()->forward_op_output_id().begin(), top_cell()->forward_op_output_id().end())),
+                               bprop_graph->get_return());
 }
 
 py::tuple ForwardExecutor::RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_exec_info) {
