@@ -58,6 +58,9 @@ class NodeManager {
   uint32_t NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta);
   uint32_t checkIfRankIdExist(const RegisterMessage &register_message);
 
+  // Re-Add the server or worker node into the registered node list if the node do not existed in the scheduler.
+  void ReAddNodeIfNotExists(const std::string node_id, const std::string ip, uint32_t port);
+
   void UpdateHeartbeat(const std::string &node_id);
   std::vector<ServersMeta> FetchServersMeta();
   // Fetch metadata information of all nodes.

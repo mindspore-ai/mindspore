@@ -45,24 +45,23 @@ uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message
     return rank_id;
   }
   // This is for scheduler recovery
+  ReAddNodeIfNotExists(node_id, register_message.ip(), register_message.port());
+  return rank_id;
+}
+
+void NodeManager::ReAddNodeIfNotExists(const std::string node_id, const std::string ip, uint32_t port) {
   core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
   std::unordered_map<std::string, NodeInfo> recovery_node_infos = clusterConfig.initial_registered_nodes_infos;
 
-  if (recovery_node_infos.find(node_id) != recovery_node_infos.end()) {
-    const std::string &new_ip = register_message.ip();
-    uint32_t new_port = register_message.port();
-    rank_id = recovery_node_infos[node_id].rank_id_;
+  if (registered_nodes_info_.find(node_id) == registered_nodes_info_.end() &&
+      recovery_node_infos.find(node_id) != recovery_node_infos.end()) {
     recovery_node_infos[node_id].is_alive = true;
-    recovery_node_infos[node_id].ip_ = new_ip;
-    recovery_node_infos[node_id].port_ = static_cast<uint16_t>(new_port);
+    recovery_node_infos[node_id].ip_ = ip;
+    recovery_node_infos[node_id].port_ = static_cast<uint16_t>(port);
     registered_nodes_info_[node_id] = recovery_node_infos[node_id];
-    MS_LOG(INFO) << "The node id: " << node_id << " is recovery successful!"
-                 << ", ip: " << recovery_node_infos[node_id].ip_ << ", port: " << recovery_node_infos[node_id].port_
-                 << ", rank id: " << rank_id << ", alive: " << recovery_node_infos[node_id].is_alive
-                 << ", the node_role:" << CommUtil::NodeRoleToString(recovery_node_infos[node_id].node_role_);
-    return rank_id;
+    MS_LOG(ERROR) << "The node id: " << node_id << " is recovery successful!"
+                  << ", ip: " << ip << ", port: " << port;
   }
-  return rank_id;
 }
 
 uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta) {
