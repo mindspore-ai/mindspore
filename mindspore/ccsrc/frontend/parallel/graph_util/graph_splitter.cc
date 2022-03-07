@@ -281,8 +281,8 @@ CNodePtr GraphSplitter::GenerateSendNode(const AnfNodePtr &input, const AnfNodeP
     send_inputs.push_back(mock_value);
     send_inputs.push_back(input);
   } else {
-    mock_value = GenerateMockValueNode(true, input);
     send_inputs.push_back(input);
+    mock_value = GenerateMockValueNode(true, input);
   }
   CNodePtr send_node = func_graph_->NewCNode(send_inputs);
   MS_EXCEPTION_IF_NULL(send_node);
@@ -319,7 +319,8 @@ CNodePtr GraphSplitter::GenerateRecvNode(const AnfNodePtr &input, const AnfNodeP
     if (input->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrUpdateParameter, input->cast<CNodePtr>()) &&
         common::AnfAlgo::HasNodeAttr(kAttrParameterInputIndex, input->cast<CNodePtr>())) {
       int64_t parameter_index = common::AnfAlgo::GetNodeAttr<int64_t>(input, kAttrParameterInputIndex);
-      auto kernel_with_index = common::AnfAlgo::VisitKernel(input, LongToUlong(parameter_index));
+      auto kernel_with_index =
+        common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(input->cast<CNodePtr>(), parameter_index), 0);
       auto param_node = kernel_with_index.first;
       recv_inputs.push_back(param_node);
       recv_node_abs = param_node->abstract();
@@ -458,7 +459,8 @@ ValueNodePtr GraphSplitter::GenerateMockValueNode(bool use_origin_node, const An
     MS_EXCEPTION_IF_NULL(origin_node);
     auto origin_abstract = origin_node->abstract()->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(origin_abstract);
-    mock_tensor = std::make_shared<tensor::Tensor>(1.0, origin_abstract->element()->BuildType());
+    mock_tensor = std::make_shared<tensor::Tensor>(origin_abstract->element()->BuildType()->type_id(),
+                                                   origin_abstract->shape()->shape());
     MS_EXCEPTION_IF_NULL(mock_tensor);
   } else {
     mock_tensor = std::make_shared<tensor::Tensor>(1.0);

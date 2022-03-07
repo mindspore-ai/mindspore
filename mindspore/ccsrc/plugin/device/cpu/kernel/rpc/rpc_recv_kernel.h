@@ -27,17 +27,37 @@ namespace kernel {
 template <typename T>
 class RpcRecvKernelMod : public RpcKernelMod {
  public:
-  RpcRecvKernelMod() = default;
+  RpcRecvKernelMod() : recv_monad_(false) {}
   ~RpcRecvKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
+    if (recv_monad_) {
+      MS_LOG(DEBUG) << "RpcRecv has a monad as input, no need to launch it.";
+      return true;
+    }
+
+    MS_EXCEPTION_IF_NULL(remote_input_);
+    T *recv_data = GetDeviceAddress<T>(outputs, 0);
+    int ret = memcpy_s(recv_data, outputs[0]->size, remote_input_->Body().data(), remote_input_->Body().size());
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
+    }
+
     return true;
   }
 
-  void InitKernel(const CNodePtr &kernel_node) override { return; }
+  void InitKernel(const CNodePtr &kernel_node) override {
+    auto input0 = common::AnfAlgo::GetInputNode(kernel_node, 0);
+    // If the input is a monad, no need to launch recv kernel.
+    if (HasAbstractUMonad(input0) || HasAbstractIOMonad(input0)) {
+      recv_monad_ = true;
+    }
+  }
 
  private:
+  // Whether this RpcRecv node receives a monda data.
+  bool recv_monad_;
 };
 }  // namespace kernel
 }  // namespace mindspore

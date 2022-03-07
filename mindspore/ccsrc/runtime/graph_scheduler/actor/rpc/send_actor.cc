@@ -58,12 +58,12 @@ void SendActor::SendOutput(OpContext<DeviceTensor> *const context) {
     input_op_inter_process_.erase(context->sequential_num_);
   }
 
-  // Step 3: Send output data(inter-process data) to peers.
-  if (launch_info_.outputs_.empty()) {
+  // Step 3: Send input data(inter-process data is the input of the Send kernel) to peers.
+  if (launch_info_.inputs_.empty()) {
     MS_LOG(ERROR) << "Send kernel has no output tensor.";
     return;
   }
-  auto send_output = launch_info_.outputs_[0];
+  auto send_output = launch_info_.inputs_[0];
   for (const auto &peer : peer_actor_urls_) {
     std::string peer_server_url = peer.second;
     auto message = BuildRpcMessage(send_output, peer_server_url);
