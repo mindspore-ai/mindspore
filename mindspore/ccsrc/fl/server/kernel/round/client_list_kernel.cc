@@ -153,7 +153,7 @@ bool ClientListKernel::Launch(const uint8_t *req_data, size_t len,
     BuildClientListRsp(fbb, schema::ResponseCode_RequestError, reason, client_list,
                        std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::GetClientList *get_clients_req = flatbuffers::GetRoot<schema::GetClientList>(req_data);
@@ -162,7 +162,7 @@ bool ClientListKernel::Launch(const uint8_t *req_data, size_t len,
     BuildClientListRsp(fbb, schema::ResponseCode_RequestError, reason, client_list,
                        std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   // verify signature
@@ -173,7 +173,7 @@ bool ClientListKernel::Launch(const uint8_t *req_data, size_t len,
       BuildClientListRsp(fbb, schema::ResponseCode_RequestError, reason, client_list,
                          std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     if (verify_result == sigVerifyResult::TIMEOUT) {
@@ -181,7 +181,7 @@ bool ClientListKernel::Launch(const uint8_t *req_data, size_t len,
       BuildClientListRsp(fbb, schema::ResponseCode_OutOfTime, reason, client_list,
                          std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     MS_LOG(DEBUG) << "verify signature passed!";
@@ -193,7 +193,7 @@ bool ClientListKernel::Launch(const uint8_t *req_data, size_t len,
                   << ". client request iteration is " << iter_client;
     BuildClientListRsp(fbb, schema::ResponseCode_OutOfTime, "iter num is error.", client_list,
                        std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -204,7 +204,7 @@ bool ClientListKernel::Launch(const uint8_t *req_data, size_t len,
   if (!DealClient(iter_num, get_clients_req, fbb)) {
     MS_LOG(WARNING) << "Get Client List not ready.";
   }
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }  // namespace fl
 

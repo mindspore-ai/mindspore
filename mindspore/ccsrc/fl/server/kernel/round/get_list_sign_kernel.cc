@@ -95,7 +95,7 @@ bool GetListSignKernel::Launch(const uint8_t *req_data, size_t len,
     BuildGetListSignKernelRsp(fbb, schema::ResponseCode_RequestError, reason,
                               std::to_string(CURRENT_TIME_MILLI.count()), iter_num, list_signs);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::RequestAllClientListSign *get_list_sign_req =
@@ -105,7 +105,7 @@ bool GetListSignKernel::Launch(const uint8_t *req_data, size_t len,
     BuildGetListSignKernelRsp(fbb, schema::ResponseCode_RequestError, reason,
                               std::to_string(CURRENT_TIME_MILLI.count()), iter_num, list_signs);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -117,7 +117,7 @@ bool GetListSignKernel::Launch(const uint8_t *req_data, size_t len,
       BuildGetListSignKernelRsp(fbb, schema::ResponseCode_RequestError, reason,
                                 std::to_string(CURRENT_TIME_MILLI.count()), iter_num, list_signs);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -126,7 +126,7 @@ bool GetListSignKernel::Launch(const uint8_t *req_data, size_t len,
       BuildGetListSignKernelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(CURRENT_TIME_MILLI.count()),
                                 iter_num, list_signs);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -141,7 +141,7 @@ bool GetListSignKernel::Launch(const uint8_t *req_data, size_t len,
                   << ". client request iteration is " << iter_client;
     BuildGetListSignKernelRsp(fbb, schema::ResponseCode_OutOfTime, "iter num is error.",
                               std::to_string(CURRENT_TIME_MILLI.count()), iter_num, list_signs);
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   std::string fl_id = get_list_sign_req->fl_id()->str();
@@ -150,7 +150,7 @@ bool GetListSignKernel::Launch(const uint8_t *req_data, size_t len,
   }
   if (!GetListSign(iter_num, std::to_string(CURRENT_TIME_MILLI.count()), get_list_sign_req, fbb)) {
     MS_LOG(WARNING) << "get list signs not ready.";
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   std::string count_reason = "";
@@ -161,7 +161,7 @@ bool GetListSignKernel::Launch(const uint8_t *req_data, size_t len,
     MS_LOG(ERROR) << reason;
     return true;
   }
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 

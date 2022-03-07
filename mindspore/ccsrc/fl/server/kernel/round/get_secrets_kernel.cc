@@ -109,7 +109,7 @@ bool GetSecretsKernel::Launch(const uint8_t *req_data, size_t len,
     std::string reason = "The schema of GetShareSecrets is invalid.";
     cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_RequestError, iter_num, next_timestamp, nullptr);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::GetShareSecrets *get_secrets_req = flatbuffers::GetRoot<schema::GetShareSecrets>(req_data);
@@ -117,7 +117,7 @@ bool GetSecretsKernel::Launch(const uint8_t *req_data, size_t len,
     std::string reason = "Building flatbuffers schema failed for GetExchangeKeys.";
     cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_RequestError, iter_num, next_timestamp, nullptr);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -128,7 +128,7 @@ bool GetSecretsKernel::Launch(const uint8_t *req_data, size_t len,
       std::string reason = "verify signature failed.";
       cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_RequestError, iter_num, next_timestamp, nullptr);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -136,7 +136,7 @@ bool GetSecretsKernel::Launch(const uint8_t *req_data, size_t len,
       std::string reason = "verify signature timestamp failed.";
       cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_OutOfTime, iter_num, next_timestamp, nullptr);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -149,7 +149,7 @@ bool GetSecretsKernel::Launch(const uint8_t *req_data, size_t len,
     MS_LOG(ERROR) << "GetSecretsKernel iteration invalid. server now iteration is " << iter_num
                   << ". client request iteration is " << iter_client;
     cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_OutOfTime, iter_num, next_timestamp, nullptr);
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -160,14 +160,14 @@ bool GetSecretsKernel::Launch(const uint8_t *req_data, size_t len,
   bool response = cipher_share_->GetSecrets(get_secrets_req, fbb, next_timestamp);
   if (!response) {
     MS_LOG(WARNING) << "get secret shares not ready.";
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   if (!CountForGetSecrets(fbb, get_secrets_req, iter_num)) {
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 

@@ -31,7 +31,7 @@ bool PushMetricsKernel::Launch(const uint8_t *req_data, size_t len,
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, reason.c_str(), reason.size());
+    SendResponseMsg(message, reason.c_str(), reason.size());
     return true;
   }
 
@@ -40,7 +40,7 @@ bool PushMetricsKernel::Launch(const uint8_t *req_data, size_t len,
     std::string reason = "The schema of RequestPushMetrics is invalid.";
     BuildPushMetricsRsp(fbb, schema::ResponseCode_RequestError);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -49,12 +49,12 @@ bool PushMetricsKernel::Launch(const uint8_t *req_data, size_t len,
     std::string reason = "Building flatbuffers schema failed for RequestPushMetrics";
     BuildPushMetricsRsp(fbb, schema::ResponseCode_RequestError);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
 
   ResultCode result_code = PushMetrics(fbb, push_metrics_req);
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
   return ConvertResultCode(result_code);
 }
 

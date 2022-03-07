@@ -55,8 +55,8 @@ void RoundKernel::set_name(const std::string &name) { name_ = name; }
 
 void RoundKernel::set_stop_timer_cb(const StopTimerCb &timer_stopper) { stop_timer_cb_ = timer_stopper; }
 
-void RoundKernel::GenerateOutput(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
-                                 size_t len) {
+void RoundKernel::SendResponseMsg(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
+                                  size_t len) {
   if (message == nullptr) {
     MS_LOG(WARNING) << "The message handler is nullptr.";
     return;
@@ -72,6 +72,28 @@ void RoundKernel::GenerateOutput(const std::shared_ptr<ps::core::MessageHandler>
   }
   IncreaseTotalClientNum();
   if (!message->SendResponse(data, len)) {
+    MS_LOG(WARNING) << "Sending response failed.";
+    return;
+  }
+}
+
+void RoundKernel::SendResponseMsgInference(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
+                                           size_t len, ps::core::RefBufferRelCallback cb) {
+  if (message == nullptr) {
+    MS_LOG(WARNING) << "The message handler is nullptr.";
+    return;
+  }
+  if (data == nullptr || len == 0) {
+    std::string reason = "The output of the round " + name_ + " is empty.";
+    MS_LOG(WARNING) << reason;
+    if (!message->SendResponse(reason.c_str(), reason.size())) {
+      MS_LOG(WARNING) << "Sending response failed.";
+      return;
+    }
+    return;
+  }
+  IncreaseTotalClientNum();
+  if (!message->SendResponseInference(data, len, cb)) {
     MS_LOG(WARNING) << "Sending response failed.";
     return;
   }

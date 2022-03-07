@@ -257,8 +257,25 @@ void HttpMessageHandler::QuickResponse(int code, const void *body, size_t len) {
   MS_EXCEPTION_IF_NULL(event_request_);
   MS_EXCEPTION_IF_NULL(body);
   MS_EXCEPTION_IF_NULL(resp_buf_);
-  if (evbuffer_add(resp_buf_, body, len) == -1) {
-    MS_LOG(EXCEPTION) << "Add body to response body failed.";
+  auto ret = evbuffer_add(resp_buf_, body, len);
+  if (ret == -1) {
+    MS_LOG(WARNING) << "Add body to response body failed.";
+    return;
+  }
+  evhttp_send_reply(event_request_, code, nullptr, resp_buf_);
+}
+
+void HttpMessageHandler::QuickResponseInference(int code, const void *body, size_t len, evbuffer_ref_cleanup_cb cb) {
+  MS_EXCEPTION_IF_NULL(event_request_);
+  MS_EXCEPTION_IF_NULL(body);
+  MS_EXCEPTION_IF_NULL(resp_buf_);
+  auto ret = evbuffer_add_reference(resp_buf_, body, len, cb, nullptr);
+  if (ret == -1) {  // -1 if an error occurred
+    MS_LOG(WARNING) << "Add body to response body failed.";
+    if (cb != nullptr) {
+      cb(body, len, nullptr);
+    }
+    return;
   }
   evhttp_send_reply(event_request_, code, nullptr, resp_buf_);
 }

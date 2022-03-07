@@ -106,7 +106,7 @@ bool ShareSecretsKernel::Launch(const uint8_t *req_data, size_t len,
     cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime,
                                         "Current amount for ShareSecretsKernel is enough.",
                                         std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   flatbuffers::Verifier verifier(req_data, len);
@@ -115,7 +115,7 @@ bool ShareSecretsKernel::Launch(const uint8_t *req_data, size_t len,
     cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_RequestError, reason,
                                         std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::RequestShareSecrets *share_secrets_req = flatbuffers::GetRoot<schema::RequestShareSecrets>(req_data);
@@ -124,7 +124,7 @@ bool ShareSecretsKernel::Launch(const uint8_t *req_data, size_t len,
     cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_RequestError, reason,
                                         std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   // verify signature
@@ -135,7 +135,7 @@ bool ShareSecretsKernel::Launch(const uint8_t *req_data, size_t len,
       cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_RequestError, reason,
                                           std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -144,7 +144,7 @@ bool ShareSecretsKernel::Launch(const uint8_t *req_data, size_t len,
       cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime, reason,
                                           std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     MS_LOG(INFO) << "verify signature passed!";
@@ -156,21 +156,21 @@ bool ShareSecretsKernel::Launch(const uint8_t *req_data, size_t len,
                   << ". client request iteration is " << iter_client;
     cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime, "ShareSecretsKernel iteration invalid",
                                         std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   response = cipher_share_->ShareSecrets(SizeToInt(iter_num), share_secrets_req, fbb,
                                          std::to_string(CURRENT_TIME_MILLI.count()));
   if (!response) {
     MS_LOG(ERROR) << "update secret shares is failed.";
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   if (!CountForShareSecrets(fbb, share_secrets_req, iter_num)) {
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 
