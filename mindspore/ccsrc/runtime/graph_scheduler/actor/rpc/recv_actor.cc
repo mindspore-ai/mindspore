@@ -44,12 +44,15 @@ void RecvActor::SetRouteInfo(uint32_t, const std::string &, const std::string &r
 
 bool RecvActor::StartServer() {
   // Step 1: Create a tcp server and start listening.
-  std::string server_url = ip_ + ":" + std::to_string(port_);
   server_ = std::make_unique<TCPServer>();
   MS_EXCEPTION_IF_NULL(server_);
-  if (!server_->Initialize(server_url)) {
-    MS_LOG(EXCEPTION) << "Failed to initialize tcp server for recv actor. Server url: " << server_url;
+  if (!server_->Initialize()) {
+    MS_LOG(EXCEPTION) << "Failed to initialize tcp server for recv actor";
   }
+  ip_ = server_->GetIP();
+  port_ = server_->GetPort();
+  std::string server_url = ip_ + ":" + std::to_string(port_);
+  MS_LOG(INFO) << "Start server for recv actor. Server address: " << server_url;
 
   // Step 2: Set the message handler of the server.
   server_->SetMessageHandler(std::bind(&RecvActor::HandleMessage, this, std::placeholders::_1));
@@ -58,7 +61,7 @@ bool RecvActor::StartServer() {
   ActorAddress recv_actor_addresss;
   recv_actor_addresss.set_actor_id(inter_process_edge_name_);
   recv_actor_addresss.set_ip(ip_);
-  recv_actor_addresss.set_port(static_cast<uint32_t>(port_));
+  recv_actor_addresss.set_port(port_);
   MS_EXCEPTION_IF_NULL(actor_route_table_proxy_);
   if (!actor_route_table_proxy_->RegisterRoute(inter_process_edge_name_, recv_actor_addresss)) {
     MS_LOG(EXCEPTION) << "Failed to register route for " << inter_process_edge_name_ << " " << server_url

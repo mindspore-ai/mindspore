@@ -42,6 +42,7 @@ bool SendActor::ConnectServer() {
     if (!client_->Connect(server_url)) {
       MS_LOG(EXCEPTION) << "Failed to connect to server of actor " << peer_actor_id << ", server_url: " << server_url;
     }
+    MS_LOG(INFO) << "Successfully connect to server " << server_url;
     peer_actor_urls_[peer_actor_id] = server_url;
   }
   return true;
