@@ -42,7 +42,11 @@ class InnerKernel : public Kernel {
       : op_parameter_(parameter),
         in_tensors_(std::move(in_tensors)),
         out_tensors_(std::move(out_tensors)),
-        ms_context_(ctx) {}
+        ms_context_(ctx) {
+    if (parameter != nullptr) {
+      thread_num_ = parameter->thread_num_;
+    }
+  }
 
   virtual ~InnerKernel() {
     if (op_parameter_ != nullptr) {
@@ -190,7 +194,11 @@ class InnerKernel : public Kernel {
   size_t workspace_size_ = 0;
   void *workspace_ = nullptr;
   const lite::Context *ms_context_ = nullptr;
-  std::unique_ptr<DtCostContext> dt_cost_context_ = nullptr;
+
+  int thread_num_ = 1;
+#ifdef SERVER_INFERENCE
+  std::unique_ptr<ThreadCostContext> thread_cost_context = nullptr;
+#endif
 };
 }  // namespace mindspore::kernel
 

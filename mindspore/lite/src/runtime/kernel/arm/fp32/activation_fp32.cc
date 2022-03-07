@@ -34,6 +34,7 @@ using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
 namespace {
+#ifdef SERVER_INFERENCE
 const std::map<int, float> dt_activation_cost_map_ = {
   {schema::ActivationType_RELU, 1.806f},
   {schema::ActivationType_RELU6, 1.806f},
@@ -43,15 +44,16 @@ const std::map<int, float> dt_activation_cost_map_ = {
   // {schema::ActivationType_HSIGMOID, 1.0f}, {schema::ActivationType_HARD_TANH, 1.0f},
   // {schema::ActivationType_GELU, 1.0f}, {schema::ActivationType_SOFTPLUS, 1.0f},   {schema::ActivationType_ELU, 1.0f},
 };
+#endif
 }  // namespace
 
 #ifdef SERVER_INFERENCE
-int ActivationCPUKernel::SetDtCostContext() {
+int ActivationCPUKernel::SetThreadCostContext() {
   if (dt_activation_cost_map_.count(type_) > 0) {
-    dt_cost_context_ = std::make_unique<DtCostContext>();
-    dt_cost_context_->bytes_loaded_ = 1;
-    dt_cost_context_->bytes_stored_ = 1;
-    dt_cost_context_->compute_cost_ = dt_activation_cost_map_.at(type_);
+    thread_cost_context = std::make_unique<ThreadCostContext>();
+    thread_cost_context->per_unit_load_num_ = 1;
+    thread_cost_context->per_unit_store_num_ = 1;
+    thread_cost_context->per_unit_compute_cost_ = dt_activation_cost_map_.at(type_);
   }
   return RET_OK;
 }
@@ -60,6 +62,12 @@ int ActivationCPUKernel::SetDtCostContext() {
 int ActivationCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+
+#ifdef SERVER_INFERENCE
+  if (SetThreadCostContext() != RET_OK) {
+    return RET_ERROR;
+  }
+#endif
 
   if (in_tensors().front()->data_type() == kNumberTypeInt32) {
     if (type_ != schema::ActivationType_RELU) {
@@ -79,15 +87,23 @@ int ActivationCPUKernel::Prepare() {
       return RET_ERROR;
     }
   }
-#ifdef SERVER_INFERENCE
-  if (SetDtCostContext() != RET_OK) {
-    return RET_ERROR;
+
+  if (!InferShapeDone()) {
+    return RET_OK;
   }
-#endif
-  return RET_OK;
+  return ReSize();
 }
 
-int ActivationCPUKernel::ReSize() { return RET_OK; }
+int ActivationCPUKernel::ReSize() {
+#ifdef SERVER_INFERENCE
+  if (thread_cost_context != nullptr) {
+    thread_cost_context->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context.get(), op_parameter_->thread_num_);
+  }
+#endif
+
+  return RET_OK;
+}
 
 int ActivationCPUKernel::DoActivation(int task_id) {
   if (in_tensors_.front()->data_type() == kNumberTypeFloat32) {
@@ -105,7 +121,7 @@ int ActivationCPUKernel::DoActivationInt32(int task_id) {
   MS_ASSERT(output_addr != nullptr);
   auto length = in_tensors_.at(0)->ElementsNum();
 
-  int stride = UP_DIV(length, thread_count_);
+  int stride = UP_DIV(length, thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -134,7 +150,7 @@ int ActivationCPUKernel::DoActivationFp32(int task_id) {
   MS_ASSERT(output_addr != nullptr);
   auto length = in_tensors_.at(0)->ElementsNum();
 
-  int stride = UP_DIV(length, thread_count_);
+  int stride = UP_DIV(length, thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -192,13 +208,7 @@ int ActivationRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ActivationCPUKernel::Run() {
-#ifdef SERVER_INFERENCE
-  if (dt_cost_context_ != nullptr) {
-    dt_cost_context_->total_num_ = in_tensors_.at(0)->ElementsNum();
-    thread_count_ = UpdateThreadNum(this->ms_context_, dt_cost_context_.get(), thread_count_);
-  }
-#endif
-  int error_code = ParallelLaunch(this->ms_context_, ActivationRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, ActivationRun, this, thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";
     return RET_ERROR;

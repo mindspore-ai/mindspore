@@ -400,29 +400,29 @@ void InnerContext::ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_s
 }
 
 #ifdef SERVER_INFERENCE
-float DtCostModel::load_cost_ = 1.0 / 64 * 11;   // 64: L2 cache size, 11 : L2 cache latency on Haswell
-float DtCostModel::store_cost_ = 1.0 / 64 * 11;  // 64: L2 cache size, 11 : L2 cache latency on Haswell
-float DtCostModel::compute_cycles_ = 1.0f;
+float DtCostModel::per_unit_load_cost_ = 1.0 / 64 * 11;   // 64: L2 cache size, 11 : L2 cache latency on Haswell
+float DtCostModel::per_unit_store_cost_ = 1.0 / 64 * 11;  // 64: L2 cache size, 11 : L2 cache latency on Haswell
+int64_t DtCostModel::per_unit_compute_num_ = 1;           // 1 : per unit compute num
 
-int DtCostModel::startup_cycles_ = 100000;
-int DtCostModel::per_thread_cycles_ = 100000;
-int DtCostModel::task_size_ = 40000;
+float DtCostModel::thread_startup_cost_ = 100000.0f;  // 100000 : thread startup inherent cost
+float DtCostModel::single_thread_cost_ = 100000.0f;   // 100000 : Minimum cost of single-threaded
+float DtCostModel::parallel_thread_cost_ = 40000.0f;  // 40000 : Minimum cost of per thread in parallel-thread
 
-int DtCostModel::get_optimal_thread_num(const DtCostContext *dt_cost_context, const int thread_num) {
+int DtCostModel::get_optimal_thread_num(const ThreadCostContext *dt_cost_context, const int thread_num) {
   const int64_t max_oversharding_factor = 4;
 
   int64_t block_size =
-    MSVALID(max_oversharding_factor * thread_num, thread_block_size(dt_cost_context), dt_cost_context->total_num_);
-  int64_t block_count = UP_DIV(dt_cost_context->total_num_, block_size);
+    MSVALID(max_oversharding_factor * thread_num, thread_block_size(dt_cost_context), dt_cost_context->total_unit_num_);
+  int64_t block_count = UP_DIV(dt_cost_context->total_unit_num_, block_size);
 
-  int64_t max_block_size = MSMIN(dt_cost_context->total_num_, 2 * block_size);
+  int64_t max_block_size = MSMIN(dt_cost_context->total_unit_num_, 2 * block_size);
   double max_efficiency = static_cast<double>(block_count) / (UP_DIV(block_count, thread_num) * thread_num);
   for (int64_t prev_block_count = block_count; max_efficiency < 1.0 && prev_block_count > 1;) {
-    int64_t cur_block_size = UP_DIV(dt_cost_context->total_num_, prev_block_count - 1);
+    int64_t cur_block_size = UP_DIV(dt_cost_context->total_unit_num_, prev_block_count - 1);
     if (cur_block_size > max_block_size) {
       break;
     }
-    const int64_t cur_block_count = UP_DIV(dt_cost_context->total_num_, cur_block_size);
+    const int64_t cur_block_count = UP_DIV(dt_cost_context->total_unit_num_, cur_block_size);
     MS_ASSERT(cur_block_count < prev_block_count);
     prev_block_count = cur_block_count;
     const double cur_efficiency =
@@ -439,7 +439,7 @@ int DtCostModel::get_optimal_thread_num(const DtCostContext *dt_cost_context, co
   return block_count;
 }
 
-int UpdateThreadNum(const Context *context, const DtCostContext *dt_cost_context, int task_num) {
+int UpdateThreadNum(const Context *context, const ThreadCostContext *dt_cost_context, int task_num) {
   if (task_num <= 1) {
     return task_num;
   }

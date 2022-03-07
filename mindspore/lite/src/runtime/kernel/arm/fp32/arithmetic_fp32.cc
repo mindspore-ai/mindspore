@@ -25,6 +25,7 @@ using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 namespace {
+#ifdef SERVER_INFERENCE
 const std::map<std::pair<int, int>, float> dt_arithmetic_cost_map_ = {
   // {{PrimitiveType_MulFusion, schema::ActivationType_RELU}, 1.0f},
   // {{PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 1.0f},
@@ -55,16 +56,17 @@ const std::map<std::pair<int, int>, float> dt_arithmetic_cost_map_ = {
   // {{PrimitiveType_Mod, schema::ActivationType_NO_ACTIVATION}, 1.0f},
   // {{PrimitiveType_SquaredDifference, schema::ActivationType_NO_ACTIVATION}, 1.0f},
 };
+#endif
 }  // namespace
 
 #ifdef SERVER_INFERENCE
-int ArithmeticCPUKernel::SetDtCostContext() {
+int ArithmeticCPUKernel::SetThreadCostContext() {
   std::pair<int, int> fusion_type = std::make_pair(param_->op_parameter_.type_, param_->activation_type_);
   if (dt_arithmetic_cost_map_.count(fusion_type) > 0) {
-    dt_cost_context_ = std::make_unique<DtCostContext>();
-    dt_cost_context_->bytes_loaded_ = 1;
-    dt_cost_context_->bytes_stored_ = 1;
-    dt_cost_context_->compute_cost_ = dt_arithmetic_cost_map_.at(fusion_type);
+    thread_cost_context = std::make_unique<ThreadCostContext>();
+    thread_cost_context->per_unit_load_num_ = 1;
+    thread_cost_context->per_unit_store_num_ = 1;
+    thread_cost_context->per_unit_compute_cost_ = dt_arithmetic_cost_map_.at(fusion_type);
   }
   return RET_OK;
 }
@@ -73,12 +75,14 @@ int ArithmeticCPUKernel::SetDtCostContext() {
 int ArithmeticCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto primitive_type = param_->op_parameter_.type_;
+
 #ifdef SERVER_INFERENCE
-  if (SetDtCostContext() != RET_OK) {
+  if (SetThreadCostContext() != RET_OK) {
     return RET_ERROR;
   }
 #endif
+
+  auto primitive_type = param_->op_parameter_.type_;
   if (primitive_type == schema::PrimitiveType_Eltwise) {
     switch (param_->eltwise_mode_) {
       case schema::EltwiseMode_PROD:
@@ -108,6 +112,12 @@ bool ArithmeticCPUKernel::IsScalarClac() {
   return false;
 }
 int ArithmeticCPUKernel::ReSize() {
+#ifdef SERVER_INFERENCE
+  if (thread_cost_context != nullptr) {
+    thread_cost_context->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context.get(), op_parameter_->thread_num_);
+  }
+#endif
   CalcMultiplesAndStrides(param_);
   scalar_ = IsScalarClac();
   int ret = RET_OK;
@@ -416,7 +426,7 @@ int ArithmeticCPUKernel::DoExecute(const void *input0, const void *input1, void 
 }
 
 int ArithmeticCPUKernel::CalcArithmeticByBatch(int task_id) {
-  int batch_per_thread = UP_DIV(out_batch_, op_parameter_->thread_num_);
+  int batch_per_thread = UP_DIV(out_batch_, thread_num_);
   int start_batch = batch_per_thread * task_id;
   int end_batch = MSMIN(start_batch + batch_per_thread, out_batch_);
   for (int i = start_batch; i < end_batch; i++) {
@@ -444,7 +454,7 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
 
   int64_t element_num = out_tensors_[0]->ElementsNum();
   auto ret = RET_ERROR;
-  int stride = UP_DIV(element_num, op_parameter_->thread_num_);
+  int stride = UP_DIV(element_num, thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -493,13 +503,7 @@ int ArithmeticCPUKernel::Run() {
   batch_b_ptr_ = static_cast<uint8_t *>(input1_ptr_);
   batch_c_ptr_ = static_cast<uint8_t *>(output_ptr_);
 
-#ifdef SERVER_INFERENCE
-  if (dt_cost_context_ != nullptr) {
-    dt_cost_context_->total_num_ = in_tensors_.at(0)->ElementsNum();
-    op_parameter_->thread_num_ = UpdateThreadNum(this->ms_context_, dt_cost_context_.get(), op_parameter_->thread_num_);
-  }
-#endif
-  auto ret = ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticsRun, this, thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "arithmetic failed";
     return RET_ERROR;

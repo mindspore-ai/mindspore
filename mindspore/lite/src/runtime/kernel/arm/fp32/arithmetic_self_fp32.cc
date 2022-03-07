@@ -28,6 +28,7 @@ struct TYPE_FUNC_INFO {
   ArithmeticSelfFunc func_ = nullptr;
 };
 
+#ifdef SERVER_INFERENCE
 const std::map<int, float> dt_arithmetic_self_cost_map_ = {
   // {schema::PrimitiveType_Abs, 0.5f},
   // {schema::PrimitiveType_Cos, 1.0f},
@@ -44,15 +45,16 @@ const std::map<int, float> dt_arithmetic_self_cost_map_ = {
   // {schema::PrimitiveType_Reciprocal, 1.0f},
   // {schema::PrimitiveType_Erf, 1.0f},
 };
+#endif
 }  // namespace
 
 #ifdef SERVER_INFERENCE
-int ArithmeticSelfCPUKernel::SetDtCostContext() {
-  if (dt_arithmetic_self_cost_map_.count(type_) > 0) {
-    dt_cost_context_ = std::make_unique<DtCostContext>();
-    dt_cost_context_->bytes_loaded_ = 1;
-    dt_cost_context_->bytes_stored_ = 1;
-    dt_cost_context_->compute_cost_ = dt_arithmetic_self_cost_map_.at(type_);
+int ArithmeticSelfCPUKernel::SetThreadCostContext() {
+  if (thread_cost_context == nullptr && dt_arithmetic_self_cost_map_.count(type_) > 0) {
+    thread_cost_context = std::make_unique<ThreadCostContext>();
+    thread_cost_context->per_unit_load_num_ = 1;
+    thread_cost_context->per_unit_store_num_ = 1;
+    thread_cost_context->per_unit_compute_cost_ = dt_arithmetic_self_cost_map_.at(type_);
   }
   return RET_OK;
 }
@@ -91,23 +93,33 @@ ArithmeticSelfBoolFunc ArithmeticSelfCPUKernel::GetArithmeticSelfBoolFun(int pri
 int ArithmeticSelfCPUKernel::Prepare() {
   CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
   CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
+
 #ifdef SERVER_INFERENCE
-  if (SetDtCostContext() != RET_OK) {
+  if (SetThreadCostContext() != RET_OK) {
     return RET_ERROR;
   }
 #endif
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-int ArithmeticSelfCPUKernel::ReSize() { return RET_OK; }
+int ArithmeticSelfCPUKernel::ReSize() {
+#ifdef SERVER_INFERENCE
+  if (thread_cost_context != nullptr) {
+    thread_cost_context->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context.get(), op_parameter_->thread_num_);
+  }
+#endif
+  return RET_OK;
+}
 
 int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
   int elements_num = in_tensors_.at(0)->ElementsNum();
-  MS_CHECK_TRUE_RET(op_parameter_->thread_num_ != 0, RET_ERROR);
-  int stride = UP_DIV(elements_num, op_parameter_->thread_num_);
+  MS_CHECK_TRUE_RET(thread_num_ != 0, RET_ERROR);
+  int stride = UP_DIV(elements_num, thread_num_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, stride, RET_ERROR);
   int offset = task_id * stride;
   int count = MSMIN(stride, elements_num - offset);
@@ -151,13 +163,7 @@ int ArithmeticSelfRun(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 int ArithmeticSelfCPUKernel::Run() {
-#ifdef SERVER_INFERENCE
-  if (dt_cost_context_ != nullptr) {
-    dt_cost_context_->total_num_ = in_tensors_.at(0)->ElementsNum();
-    op_parameter_->thread_num_ = UpdateThreadNum(this->ms_context_, dt_cost_context_.get(), op_parameter_->thread_num_);
-  }
-#endif
-  auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfRun, this, thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
   }
