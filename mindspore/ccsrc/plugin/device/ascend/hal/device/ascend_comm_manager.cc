@@ -20,11 +20,10 @@
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/parallel_context.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace {
-constexpr char kHcclWorldGroup[] = "hccl_world_group";
-
 #define HCCL_RUN_CHECK(op_name, group, op)                      \
   do {                                                          \
     auto hccl_result = (op);                                    \
@@ -42,12 +41,12 @@ constexpr char kHcclWorldGroup[] = "hccl_world_group";
     }                                                              \
   } while (0)
 
-#define HCCL_GROUP_CHECK_IS_WORLD(group)                                \
-  do {                                                                  \
-    if (group == "hccl_world_group") {                                  \
-      MS_LOG(ERROR) << "The group name should not be hccl_world_group"; \
-      return false;                                                     \
-    }                                                                   \
+#define HCCL_GROUP_CHECK_IS_WORLD(group)                                   \
+  do {                                                                     \
+    if (group == kHcclWorldGroup) {                                        \
+      MS_LOG(ERROR) << "The group name should not be " << kHcclWorldGroup; \
+      return false;                                                        \
+    }                                                                      \
   } while (0)
 
 class AscendCommManager : public CommManager {

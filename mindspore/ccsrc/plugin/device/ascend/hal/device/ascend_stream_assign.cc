@@ -23,7 +23,6 @@
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/parallel_context.h"
-#include "frontend/parallel/device_manager.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_adjust.h"
@@ -65,7 +64,7 @@ bool IsSameServer(const std::vector<uint32_t> &rank_ids) {
   return ((max - min < kDeviceNumOfServer) && (min / kDeviceNumOfServer == max / kDeviceNumOfServer));
 }
 
-string DoGetHcomGroup(const string &original_group) {
+string DoGetHcomGroup(const string &original_group, const std::vector<uint32_t> &rank_ids) {
   string communi_parallel_mode = parallel::ParallelContext::GetInstance()->communi_parallel_mode();
   if (communi_parallel_mode == parallel::kAllGroupParallel) {
     return original_group;
@@ -75,22 +74,14 @@ string DoGetHcomGroup(const string &original_group) {
     return kDefaultGroup;
   }
 
-  MS_EXCEPTION_IF_NULL(parallel::g_device_manager);
-  auto group_info = parallel::g_device_manager->group_info();
-  for (const auto &info : group_info) {
-    if (info.first != original_group) {
-      continue;
-    }
-
-    const auto &rank_ids = info.second;
-    if (IsSameServer(rank_ids)) {
-      return original_group;
-    } else {
-      return kDefaultGroup;
-    }
+  if (rank_ids.empty() || original_group == kHcclWorldGroup) {
+    return kDefaultGroup;
   }
 
-  // world group is not in group_info.
+  if (IsSameServer(rank_ids)) {
+    return original_group;
+  }
+
   return kDefaultGroup;
 }
 
@@ -101,7 +92,10 @@ string GetHcomGroup(const CNodePtr &cnode) {
   }
 
   auto group_name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
-  auto new_group = DoGetHcomGroup(group_name);
+  auto rank_ids = common::AnfAlgo::HasNodeAttr(kAttrGroupRankIds, cnode)
+                    ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrGroupRankIds)
+                    : std::vector<uint32_t>();
+  auto new_group = DoGetHcomGroup(group_name, rank_ids);
   MS_LOG_INFO << "hcom node: " << cnode->fullname_with_scope() << ", old group: " << group_name
               << ", new group: " << new_group;
 
@@ -114,8 +108,10 @@ uint32_t GetHcomTaskNum(const CNodePtr &cnode) {
     MS_LOG_EXCEPTION << "Hcom node " << cnode->fullname_with_scope() << " has no group attribute.";
   }
 
-  if (parallel::g_device_manager == nullptr) {
-    MS_LOG(INFO) << "Device manager is nullptr.";
+  auto rank_ids = common::AnfAlgo::HasNodeAttr(kAttrGroupRankIds, cnode)
+                    ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrGroupRankIds)
+                    : std::vector<uint32_t>();
+  if (rank_ids.empty()) {
     return kTaskNumPerHcomNode;
   }
 
@@ -124,30 +120,25 @@ uint32_t GetHcomTaskNum(const CNodePtr &cnode) {
     return kTaskNumPerHcomSendRecvNode;
   }
 
-  MS_EXCEPTION_IF_NULL(parallel::g_device_manager);
-  auto device_num = parallel::g_device_manager->DeviceNum();
-  auto group_name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
-  auto group_info = parallel::g_device_manager->group_info();
-  for (const auto &info : group_info) {
-    if (info.first != group_name) {
-      continue;
-    }
-    const auto &rank_ids = info.second;
-    if (IsSameServer(rank_ids)) {
-      return kTaskNumPerSameServerHcomNode;
-    } else if (rank_ids.size() == static_cast<size_t>(device_num) && device_num >= kDeviceNumThreshold) {
-      return kTaskNumPerWorldHcomNode;
-    } else {
-      return kTaskNumPerHcomNode;
-    }
+  uint32_t device_num = 0;
+  if (!CommManager::GetInstance().GetRankSize(kHcclWorldGroup, &device_num)) {
+    MS_LOG(EXCEPTION) << "Get rank size failed.";
   }
+  auto group_name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
+  if (group_name == kHcclWorldGroup) {
+    if (device_num >= kDeviceNumThreshold) {
+      return kTaskNumPerWorldHcomNode;
+    }
 
-  // world group is not in group_info.
-  if (device_num >= kDeviceNumThreshold) {
-    return kTaskNumPerWorldHcomNode;
-  } else {
     return kTaskNumPerHcomNode;
   }
+
+  if (IsSameServer(rank_ids)) {
+    return kTaskNumPerSameServerHcomNode;
+  } else if (rank_ids.size() == static_cast<size_t>(device_num) && device_num >= kDeviceNumThreshold) {
+    return kTaskNumPerWorldHcomNode;
+  }
+  return kTaskNumPerHcomNode;
 }
 
 CNodePtr GetHcomAndOverflowMarker(const NotNull<KernelGraphPtr> &graph_ptr, vector<CNodePtr> *hcom_nodes) {

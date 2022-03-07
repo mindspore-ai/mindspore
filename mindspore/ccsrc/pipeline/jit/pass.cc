@@ -41,6 +41,7 @@
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
+#include "frontend/optimizer/comm_op_attrs.h"
 #include "frontend/optimizer/environ_conversion.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
@@ -622,6 +623,12 @@ bool SliceRecomputeActivationPass(const ResourcePtr &res) {
   return true;
 }
 
+bool CommOpAddAttrs(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  opt::CommOpAttrs(res->func_graph());
+  return true;
+}
+
 bool AddCacheEmbeddingPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
@@ -787,19 +794,22 @@ bool EnvironConversionPass(const ResourcePtr &res) {
   return true;
 }
 
-std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
-                                   {"opt_a", OptPassAGroup},
-                                   {"clean_after_opta", CleanAfterOptAPass},
-                                   {"opt_b", OptPassBGroup},
-                                   {"cconv", CconvPass},
-                                   {"opt_after_cconv", OptPassAfterCconvGroup},
-                                   {"remove_dup_value", RemoveValueNodeDuplicationsPass},
-                                   {"tuple_transform", OptPassTransformGraphGroup},
-                                   {"add_cache_embedding", AddCacheEmbeddingPass},
-                                   {"add_recomputation", AddRecomputationPass},
-                                   {"cse_after_recomputation", OptAfterRecomputeGroup},
-                                   {"environ_conv", EnvironConversionPass},
-                                   {"slice_recompute_activation", SliceRecomputeActivationPass}};
+std::vector<PassItem> kVmPasses = {
+  {"simplify_data_structures", SimplifyDataStructuresPass},
+  {"opt_a", OptPassAGroup},
+  {"clean_after_opta", CleanAfterOptAPass},
+  {"opt_b", OptPassBGroup},
+  {"cconv", CconvPass},
+  {"opt_after_cconv", OptPassAfterCconvGroup},
+  {"remove_dup_value", RemoveValueNodeDuplicationsPass},
+  {"tuple_transform", OptPassTransformGraphGroup},
+  {"add_cache_embedding", AddCacheEmbeddingPass},
+  {"add_recomputation", AddRecomputationPass},
+  {"cse_after_recomputation", OptAfterRecomputeGroup},
+  {"environ_conv", EnvironConversionPass},
+  {"slice_recompute_activation", SliceRecomputeActivationPass},
+  {"comm_op_add_attrs", CommOpAddAttrs},
+};
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_a", OptPassAGroup},
