@@ -37,6 +37,14 @@ API示例所需模块的导入代码如下：
 
     bool，表示是否启用共享内存。
 
+.. py:function:: mindspore.dataset.config.get_enable_watchdog()
+
+    获取当前是否开启watchdog Python线程。默认初始状态是开启。
+
+    **返回：**
+
+    bool，表示是否开启watchdog Python线程。
+
 .. py:function:: mindspore.dataset.config.get_monitor_sampling_interval()
 
     获取性能监控采样时间间隔的全局配置。
@@ -44,6 +52,14 @@ API示例所需模块的导入代码如下：
     **返回：**
 
     int，表示性能监控采样间隔时间（毫秒）。
+
+.. py:function:: mindspore.dataset.config.get_multiprocessing_timeout_interval()
+
+    获取在多进程下，主进程获取数据超时时，告警日志打印的时间间隔的全局配置。
+
+    **返回：**
+
+    int，表示多进程下，主进程获取数据超时时，告警日志打印的时间间隔（秒）。
 
 .. py:function:: mindspore.dataset.config.get_numa_enable()
 
@@ -137,6 +153,18 @@ API示例所需模块的导入代码如下：
 
     - **TypeError** - `enable` 不是布尔数据类型。
 
+.. py:function:: mindspore.dataset.config.set_enable_watchdog(enable)
+
+    设置watchdog Python线程是否启用。默认情况下，watchdog Python线程是启用的。watchdog Python线程负责清理卡死或假死的子进程。
+
+    **参数：**
+
+    - **enable** (bool) - 是否开启watchdog Python线程。默认情况下，watchdog Python线程是启用的。
+
+    **异常：**
+
+    - **TypeError** - `enable` 不是布尔数据类型。
+
 .. py:function:: mindspore.dataset.config.set_monitor_sampling_interval(interval)
 
     设置监测采样的默认间隔时间（毫秒）。
@@ -144,6 +172,18 @@ API示例所需模块的导入代码如下：
     **参数：**
 
     - **interval** (int) - 表示用于性能监测采样的间隔时间（毫秒）。
+
+    **异常：**
+
+    - **ValueError** - `interval` 小于等于0或 `interval` 大于MAX_INT_32时， `interval` 无效。
+
+.. py:function:: mindspore.dataset.config.set_multiprocessing_timeout_interval(interval)
+
+    设置在多进程下，主进程获取数据超时时，告警日志打印的默认时间间隔（秒）。
+
+    **参数：**
+
+    - **interval** (int) - 表示多进程下，主进程获取数据超时时，告警日志打印的时间间隔（秒）。
 
     **异常：**
 
