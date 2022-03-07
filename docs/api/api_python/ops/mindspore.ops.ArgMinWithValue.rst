@@ -26,6 +26,7 @@
     **输出：**
 
     tuple(Tensor)，表示2个Tensor组成的tuple，包含对应的索引和输入Tensor的最小值。
+
 	- **index** (Tensor) - 输入Tensor最小值的索引。如果 `keep_dims` 为True，则输出Tensor的shape为 :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)` 。否则，shape为 :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` 。
 	- **output_x** (Tensor) - 输入Tensor的最小值，其shape与索引相同。
 
