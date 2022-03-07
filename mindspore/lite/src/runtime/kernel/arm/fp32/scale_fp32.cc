@@ -31,13 +31,15 @@ namespace {
 int CheckInputsOutputsDataType(const std::vector<lite::Tensor *> &in_tensors,
                                const std::vector<lite::Tensor *> &out_tensors) {
   if (std::any_of(in_tensors.begin(), in_tensors.end(), [](const lite::Tensor *input) {
-        return input->data_type() != kNumberTypeFloat && input->data_type() != kNumberTypeFloat32;
+        return input->data_type() != kNumberTypeFloat && input->data_type() != kNumberTypeFloat32 &&
+               input->data_type() != kNumberTypeFloat16;
       })) {
     MS_LOG(ERROR) << "scale op input data type should float32";
     return RET_ERROR;
   }
   if (std::any_of(out_tensors.begin(), out_tensors.end(), [](const lite::Tensor *output) {
-        return output->data_type() != kNumberTypeFloat && output->data_type() != kNumberTypeFloat32;
+        return output->data_type() != kNumberTypeFloat && output->data_type() != kNumberTypeFloat32 &&
+               output->data_type() != kNumberTypeFloat16;
       })) {
     MS_LOG(ERROR) << "scale op output data type should float32";
     return RET_ERROR;
