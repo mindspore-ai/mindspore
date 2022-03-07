@@ -56,7 +56,9 @@ ConfigManager::ConfigManager()
       auto_offload_(false),
       enable_autotune_(false),
       save_autoconfig_(false),
-      autotune_interval_(kCfgAutoTuneInterval) {
+      autotune_interval_(kCfgAutoTuneInterval),
+      enable_watchdog_(true),
+      multiprocessing_timeout_interval_(kCfgMultiprocessingTimeoutInterval) {
   autotune_json_filepath_ = kEmptyString;
   num_cpu_threads_ = num_cpu_threads_ > 0 ? num_cpu_threads_ : std::numeric_limits<uint16_t>::max();
   num_parallel_workers_ = num_parallel_workers_ < num_cpu_threads_ ? num_parallel_workers_ : num_cpu_threads_;

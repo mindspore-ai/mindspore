@@ -45,7 +45,8 @@ from .datasets import UnionBaseDataset, MappableDataset, Schema, to_list, _Pytho
 from . import samplers
 from .queue import _SharedQueue
 from .validators import check_generatordataset, check_numpyslicesdataset, check_paddeddataset
-from ..core.config import get_enable_shared_mem, get_prefetch_size
+from ..core.config import get_enable_shared_mem, get_prefetch_size, get_multiprocessing_timeout_interval, \
+    get_enable_watchdog
 from ..core.datatypes import mstypelist_to_detypelist
 from ..core.py_util_helpers import ExceptionHandler
 
@@ -161,7 +162,7 @@ class SamplerFn:
         self.need_join = False
         self.ppid = os.getpid()
         self.pids = []
-        self.check_interval = 300  # the interval of check queue's size
+        self.check_interval = get_multiprocessing_timeout_interval()  # the interval of check queue's size
         self._final_join = True
 
         # Event for end of epoch
@@ -185,7 +186,7 @@ class SamplerFn:
         for _ in range(num_worker):
             if multi_process is True:
                 try:
-                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size)
+                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid)
                 except Exception:
                     raise RuntimeError("Init multiprocessing.Queue() failed, This might be caused by insufficient shm,"
                                        + " and the recommended shm size is at least 5 GB.")
@@ -200,19 +201,7 @@ class SamplerFn:
                 worker = _GeneratorWorkerMt(dataset, self.eof)
                 worker.daemon = True
             self.workers.append(worker)
-        if multi_process is True and platform.system().lower() != 'windows':
-            self.eot = threading.Event()
-            self.watch_dog = threading.Thread(target=_PythonMultiprocessing._watch_dog,  # pylint: disable=W0212
-                                              args=(self.eot, self.workers))
-            self.watch_dog.daemon = True
-            self.watch_dog.start()
-
-            if self._final_join is True:
-                self._jointhread = Finalize(
-                    self.watch_dog, self._finalize_join,
-                    args=(weakref.ref(self.watch_dog), self.eot),
-                    exitpriority=-5
-                )
+        self._launch_cleanup_worker(multi_process=multi_process)
 
     def process(self, indices):
         """
@@ -250,7 +239,11 @@ class SamplerFn:
                     if cost_time / self.check_interval >= wait_count:
                         wait_count += 1
                         logger.warning("It has been waiting for " + str(cost_time) + "s because the multi "
-                                       "thread/process of the generator generates data had been hung by gil lock.")
+                                       "thread/process of the generator generates data had been hung by gil lock. "
+                                       "Check whether the source of generator has an infinite loop operation or the "
+                                       "output data is too large. You can also set the timeout interval by "
+                                       "ds.config.set_multiprocessing_interval to adjust the output frequency of this "
+                                       "log.")
 
                 result = self.workers[i % self.num_worker].get()
                 if isinstance(result, ExceptionHandler):
@@ -268,6 +261,33 @@ class SamplerFn:
                 idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
             yield _convert_row(result)
 
+    def _launch_cleanup_worker(self, multi_process):
+        """
+        We need a extra thread and process if main process or subprocess was killed.
+
+        Args:
+            multi_process: Whether use multiprocess.
+        """
+        if multi_process is True and platform.system().lower() != 'windows':
+            _clean_worker_func = _PythonMultiprocessing._clean_process  # pylint: disable=W0212
+            self.cleaning_process = multiprocessing.Process(target=_clean_worker_func, args=(self.ppid, self.workers))
+            self.cleaning_process.daemon = True
+            self.cleaning_process.start()
+
+            if get_enable_watchdog():
+                self.eot = threading.Event()
+                self.watch_dog = threading.Thread(target=_PythonMultiprocessing._watch_dog,  # pylint: disable=W0212
+                                                  args=(self.eot, self.workers + [self.cleaning_process]))
+                self.watch_dog.daemon = True
+                self.watch_dog.start()
+
+                if self._final_join is True:
+                    self._jointhread = Finalize(
+                        self.watch_dog, self._finalize_join,
+                        args=(weakref.ref(self.watch_dog), self.eot),
+                        exitpriority=-5
+                    )
+
     def _stop_subprocess(self):
         """Only the main process can call join."""
         if self.need_join is True and self.ppid == os.getpid():
@@ -281,6 +301,8 @@ class SamplerFn:
     def _abort_watchdog(self):
         if hasattr(self, 'eot') and self.eot is not None and not self.eot.is_set():
             self.eot.set()
+        if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
+            _PythonMultiprocessing._terminate_process([self.cleaning_process])  # pylint: disable=W0212
 
     @classmethod
     def _finalize_join(cls, twr, eot):
@@ -306,7 +328,7 @@ def _ignore_sigint(is_multiprocessing):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiprocessing):
+def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiprocessing, ppid=-1):
     """
     Multithread or multiprocess generator worker process loop.
     """
@@ -318,14 +340,8 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
         # Fetch index, block
         try:
             idx = idx_queue.get(timeout=1)
-        except KeyboardInterrupt:
-            if is_multiprocessing:
-                eof.set()
-                idx_queue.cancel_join_thread()
-                result_queue.cancel_join_thread()
-            raise Exception("Generator worker receives KeyboardInterrupt.")
         except queue.Empty:
-            if eof.is_set():
+            if eof.is_set() or (is_multiprocessing and not _PythonMultiprocessing.process_still_alive(ppid)):
                 if is_multiprocessing:
                     idx_queue.cancel_join_thread()
                     result_queue.cancel_join_thread()
@@ -352,14 +368,8 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
         while True:
             try:
                 result_queue.put(result, timeout=5)
-            except KeyboardInterrupt:
-                if is_multiprocessing:
-                    eof.set()
-                    idx_queue.cancel_join_thread()
-                    result_queue.cancel_join_thread()
-                raise Exception("Generator worker receives KeyboardInterrupt.")
             except queue.Full:
-                if eof.is_set():
+                if eof.is_set() or (is_multiprocessing and not _PythonMultiprocessing.process_still_alive(ppid)):
                     if is_multiprocessing:
                         idx_queue.cancel_join_thread()
                         result_queue.cancel_join_thread()
@@ -407,7 +417,7 @@ class _GeneratorWorkerMp(multiprocessing.Process):
     Worker process for multiprocess Generator.
     """
 
-    def __init__(self, dataset, eof, max_rowsize, queue_size):
+    def __init__(self, dataset, eof, max_rowsize, queue_size, ppid):
         self.idx_queue = multiprocessing.Queue(queue_size)
         if get_enable_shared_mem():
             self.res_queue = _SharedQueue(queue_size, max_rowsize=max_rowsize)
@@ -415,7 +425,7 @@ class _GeneratorWorkerMp(multiprocessing.Process):
             self.res_queue = multiprocessing.Queue(queue_size)
         self.idx_queue._joincancelled = True  # pylint: disable=W0212
         self.res_queue._joincancelled = True  # pylint: disable=W0212
-        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, True))
+        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, True, ppid))
 
     def put(self, item):
         """

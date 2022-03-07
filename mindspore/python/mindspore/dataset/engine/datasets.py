@@ -65,7 +65,8 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_rename, check_device_send, check_take, check_project, \
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
     check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
-from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers
+from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
+    get_enable_watchdog
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
@@ -227,8 +228,11 @@ def _get_operator_process():
     keys = process_info.keys()
     fetched_all = True
     for key in keys:
-        op_process[key] = list(process_info[key][1])
-        item_full = (len(process_info[key][1]) == process_info[key][0])
+        try:
+            op_process[key] = list(process_info[key][1])
+            item_full = (len(process_info[key][1]) == process_info[key][0])
+        except KeyError as err:
+            raise err
         fetched_all = fetched_all and item_full
     return op_process, fetched_all
 
@@ -1535,7 +1539,7 @@ class Dataset:
         if self._col_names is None:
             runtime_getter = self._init_tree_getters()
             self._col_names = runtime_getter[0].GetColumnNames()
-            self.close_pool()
+            runtime_getter[2].close_pool()
             runtime_getter[2].notify_watchdog()
         return self._col_names
 
@@ -1554,7 +1558,7 @@ class Dataset:
             runtime_getter = self._init_tree_getters()
             self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
-            self.close_pool()
+            runtime_getter[2].close_pool()
             runtime_getter[2].notify_watchdog()
         if self.dynamic_setting[0]:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
@@ -1575,7 +1579,7 @@ class Dataset:
             runtime_getter = self._init_tree_getters()
             self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
-            self.close_pool()
+            runtime_getter[2].close_pool()
             runtime_getter[2].notify_watchdog()
         if self.dynamic_setting[0]:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
@@ -1595,7 +1599,7 @@ class Dataset:
         if self.dataset_size is None:
             runtime_getter = self.__init_size_getter()
             self.dataset_size = runtime_getter[0].GetDatasetSize(False)
-            self.close_pool()
+            runtime_getter[2].close_pool()
             runtime_getter[2].notify_watchdog()
         return self.dataset_size
 
@@ -1743,7 +1747,7 @@ class Dataset:
         if self._num_classes is None:
             runtime_getter = self._init_tree_getters()
             self._num_classes = runtime_getter[0].GetNumClasses()
-            self.close_pool()
+            runtime_getter[2].close_pool()
             runtime_getter[2].notify_watchdog()
         if self._num_classes == -1:
             return None
@@ -2656,6 +2660,9 @@ _LOCK = threading.Lock()
 # Python multiprocessing library forbid sending lambda function through pipe.
 # This init function allow us to add all Python function to a global collection and then fork afterwards.
 def _pyfunc_worker_init(pyfunc_list, args_queue, ret_queue):
+    # Some threads in multiprocess.pool can't process sigint signal,
+    # and will occur hang problem, so ctrl+c will pass to parent process.
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     global _GLOBAL_PYFUNC_LIST
     global _ARGS_QUEUE
     global _RET_QUEUE
@@ -2765,6 +2772,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.eot = None
         self.watch_dog = None
         self.workers = []
+        self.ppid = os.getpid()
         self.hook = None
 
     def Launch(self, op_id=-1):
@@ -2974,19 +2982,20 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             raise TypeError("[Internal Error] The 3rd parameter of watch dog thread should be multiprocessing.Pool, " \
                             "but got {}".format(type(pool)))
         while not eot.is_set():
-            subprocess_exit_num = 0
+            clear_subprocess_timeout = 0
             # Monitoring and count how many subprocesses already exit
-            subprocess_exit_num = _PythonMultiprocessing._monitor_subprocess_exit(workers)
+            clear_subprocess_timeout = _PythonMultiprocessing._monitor_subprocess_exit(workers)
             # If find subprocess exit, we will wait for 30s and do some waitpid operations
-            if subprocess_exit_num > 0:
+            if clear_subprocess_timeout > 0:
                 if pool is not None:
                     # Python multiprocessing.pool has a bug, if sub process of pool is killed, pool will launch
                     # a new sub process, so we have to set worker_handler._state to TERMINATE to stop relaunching.
                     if pool._state == RUN:  # pylint: disable=W0212
                         pool._state = TERMINATE  # pylint: disable=W0212
                         pool._worker_handler._state = TERMINATE  # pylint: disable=W0212
+                        pool._worker_handler.join()  # pylint: disable=W0212
                 start = time.time()
-                while time.time() - start < 30:
+                while time.time() - start < clear_subprocess_timeout:
                     # We need to distinguishing get_dataset_size or train finished normally and hang scenario.
                     # If get_dataset_size or train finished normally, _stop_subprocess can be execute and
                     # self.need_abort can be set to True. If main process is hang in get(), self.need_abort
@@ -3002,7 +3011,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                 else:
                     _PythonMultiprocessing._terminate_process(workers)
                 logger.critical("The subprocess of dataset may exit unexpected or be killed, "
-                                "main process will exit.")
+                                "main process will exit. If this is not an artificial operation, you can use "
+                                "ds.config.set_enable_watchdog(False) to block this error.")
                 os.kill(os.getpid(), signal.SIGTERM)
 
     @staticmethod
@@ -3013,23 +3023,92 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                 w.terminate()
         for w in workers:
             if w._closed is False:  # pylint: disable=W0212
-                w.join()
+                # We don't use w.join because join can only used in main process or join will raise an error.
+                w._popen.wait()  # pylint: disable=W0212
 
     # Monitor the exit number of subprocesses
     @staticmethod
     def _monitor_subprocess_exit(workers):
-        subprocess_exit_num = 0
+        """
+        To monitor whether process is exit.
+
+        Args:
+            workers (list of multiprocessing.Process): multiprocessing.Process.
+
+        Returns:
+            int, the timeout(in seconds) when process exit.
+        """
         for w in workers:
-            if w.exitcode is not None:
-                subprocess_exit_num += 1
-        return subprocess_exit_num
+            exit_code = w.exitcode
+            if exit_code is not None:
+                # For kill -9, we can exit quickly
+                if exit_code == -9:
+                    return 1
+                # For kill -15, we still exit after 30s
+                if exit_code == -15:
+                    return 30
+        return 0
+
+    # Monitor the exit status of main process
+    @staticmethod
+    def process_still_alive(ppid):
+        """
+        We always hit dead lock when we use psutil or w.exitcode to check whether a process is still alive. So we use
+        os.kill(ppid, 0) as the best solution when we want to check whether process is still alive.
+        """
+        try:
+            os.kill(ppid, 0)
+        except OSError:
+            return False
+        return True
+
+    # When main process exit, subprocesses will be terminate
+    @staticmethod
+    def _clean_process(ppid, workers, pool=None):
+        """
+        This is the execute function of clean process, if we found main process is exit, we will clean subprocesses.
+
+        :param ppid: The process id of main process.
+        :param workers: The list of subprocesses.
+        :param pool: multiprocessing.Pool object, we can get list of subprocesses from _pool.
+        """
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        while _PythonMultiprocessing.process_still_alive(ppid):
+            time.sleep(0.1)
+        if pool is not None:
+            # Python multiprocessing.pool has a bug, if sub process of pool is killed, pool will launch
+            # a new sub process, so we have to set worker_handler._state to TERMINATE to stop relaunching.
+            # But this pool is not the same object as it in main process, so we don't support kill main process then
+            # kill subprocess.
+            if pool._state == RUN:  # pylint: disable=W0212
+                pool._state = TERMINATE  # pylint: disable=W0212
+                pool._worker_handler._state = TERMINATE  # pylint: disable=W0212
+                pool._worker_handler.join()  # pylint: disable=W0212
+        if pool is not None:
+            _PythonMultiprocessing._terminate_process(pool._pool)  # pylint: disable=W0212
+        else:
+            _PythonMultiprocessing._terminate_process(workers)
+        os.kill(os.getpid(), signal.SIGTERM)
 
     def _launch_watch_dog(self):
+        """
+        We will launch a watchdog thread and a clean process to cleaning subprocess when there is process was killed.
+        The watchdog thread will cleanup subprocesses and main process when one of the subprocesses was killed.
+        The cleaning subprocess will cleanup subprocesses when main process was killed.
+        """
         if platform.system().lower() != 'windows':
-            self.eot = threading.Event()
-            self.watch_dog = threading.Thread(target=self._watch_dog, args=(self.eot, self.workers, self.process_pool))
-            self.watch_dog.daemon = True
-            self.watch_dog.start()
+            self.cleaning_process = multiprocessing.Process(target=self._clean_process,
+                                                            args=(self.ppid, self.workers, self.process_pool))
+            self.cleaning_process.daemon = True
+            self.cleaning_process.start()
+
+            if get_enable_watchdog():
+                self.eot = threading.Event()
+                self.watch_dog = threading.Thread(target=self._watch_dog,
+                                                  args=(self.eot, self.workers + [self.cleaning_process],
+                                                        self.process_pool))
+                self.watch_dog.daemon = True
+                self.watch_dog.start()
 
     def _abort_watchdog(self):
         if not self.eot.is_set():
@@ -3038,6 +3117,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
     def abort_watchdog(self):
         if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
             self._abort_watchdog()
+        if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
+            _PythonMultiprocessing._terminate_process([self.cleaning_process])
 
     def is_running(self):
         # note here: the RUN state of python3.7 and python3.8 is different:
