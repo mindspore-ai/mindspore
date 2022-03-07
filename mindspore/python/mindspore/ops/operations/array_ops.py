@@ -3892,7 +3892,7 @@ class DiagPart(PrimitiveWithInfer):
         return Tensor(ret)
 
 
-class Eye(PrimitiveWithInfer):
+class Eye(Primitive):
     """
     Creates a tensor with ones on the diagonal and zeros in the rest.
 
@@ -3919,15 +3919,7 @@ class Eye(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Eye"""
-
-    def infer_value(self, n, m, t):
-        validator.check_positive_int(n, "n", self.name)
-        validator.check_positive_int(m, "m", self.name)
-        args = {"dtype": t}
-        validator.check_types_same_and_valid(args, mstype.number_type + (mstype.bool_,), self.name)
-        np_type = mstype.dtype_to_nptype(t)
-        ret = np.eye(n, m, dtype=np_type)
-        return Tensor(ret)
+        self.init_prim_io_names(inputs=['n', 'm', 't'], outputs=['output'])
 
 
 class ScatterNd(PrimitiveWithInfer):

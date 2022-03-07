@@ -139,6 +139,7 @@ constexpr auto kLowerBound = "LowerBound";
 constexpr auto kUpperBound = "UpperBound";
 constexpr auto kCummax = "Cummax";
 constexpr auto kTril = "Tril";
+constexpr auto kEye = "Eye";
 constexpr auto kTriu = "Triu";
 
 // NN
@@ -403,6 +404,7 @@ GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBound)
 GVAR_DEF(PrimitivePtr, kPrimCummax, std::make_shared<Primitive>(kCummax));
 GVAR_DEF(PrimitivePtr, kPrimRightShift, std::make_shared<Primitive>(kRightShift));
 GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTril));
+GVAR_DEF(PrimitivePtr, kPrimEye, std::make_shared<Primitive>(kEye));
 GVAR_DEF(PrimitivePtr, kPrimTriu, std::make_shared<Primitive>(kTriu));
 
 // image
