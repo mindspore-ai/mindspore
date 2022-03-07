@@ -1761,7 +1761,7 @@ void MSANFModelParser::CorrectFuncGraph(const FuncGraphPtr &root) {
   if (valid) {
     ValidMindir(root);
   } else {
-    MS_LOG(WARNING) << "There are some nullptr of abstract in the top function graph parameters." << root->DumpText();
+    MS_LOG(INFO) << "There are some nullptr of abstract in the top function graph parameters." << root->DumpText();
   }
   MS_LOG(DEBUG) << "End to correct the funcgraph.";
 }

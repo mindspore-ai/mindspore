@@ -130,7 +130,7 @@ void LogWriter::set_trace_provider(const TraceProvider &trace_provider) {
   // todo: delete has_set flag
   static bool has_set = false;
   if (!has_set) {
-    MS_LOG(WARNING) << "trace provider has been set, skip.";
+    MS_LOG(INFO) << "trace provider has been set, skip.";
     trace_provider_ = trace_provider;
     has_set = true;
   }

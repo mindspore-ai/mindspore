@@ -3339,8 +3339,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   if (!root->has_flag(kAutoParallel) || ((parallel_mode != kAutoParallel) && (parallel_mode != kSemiAutoParallel)) ||
       (root->has_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY))) {
     if (!root->has_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY)) {
-      MS_LOG(WARNING) << "Strategies would be ignored in " << parallel_mode
-                      << ", shard() only valid in [semi_]auto_parallel.";
+      MS_LOG(INFO) << "Strategies would be ignored in " << parallel_mode
+                   << ", shard() only valid in [semi_]auto_parallel.";
       root->set_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY, true);
     }
     ReorderForPipelineSplit(root, manager, pipeline_stages);
