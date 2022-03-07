@@ -92,10 +92,31 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
   if (node == nullptr) {
     return;
   }
+
+  ValuePtr tensor_value = nullptr;
+  abstract::AbstractSequencePtr sequence_abs = nullptr;
   auto abstract = node->abstract();
   if (abstract != nullptr) {
-    buffer << "<" << abstract->ToString(false);
-    auto sequence_abs = dyn_cast<abstract::AbstractSequence>(abstract);
+    if (abstract->isa<abstract::AbstractTensor>()) {
+      tensor_value = abstract->BuildValue();
+    }
+    sequence_abs = dyn_cast<abstract::AbstractSequence>(abstract);
+  }
+
+  abstract::ShapePtr shape = dyn_cast<abstract::Shape>(node->Shape());
+  TypePtr type = dyn_cast<Type>(node->Type());
+  if ((shape != nullptr) && (type != nullptr)) {
+    buffer << "<" << type << ", " << shape->ToString();
+    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+      buffer << ", value=...";
+    }
+    PrintTupleNodeUsedFlags(buffer, sequence_abs);
+    buffer << ">";
+  } else if (type != nullptr) {
+    buffer << "<" << type;
+    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+      buffer << ", value=...";
+    }
     PrintTupleNodeUsedFlags(buffer, sequence_abs);
     buffer << ">";
   } else {

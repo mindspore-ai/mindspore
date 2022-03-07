@@ -1,6 +1,11 @@
 syntax = "proto2";
 package mind_ir;
 
+enum Version {
+  IR_VERSION_START = 0;
+  IR_VERSION = 1;
+}
+
 message AttributeProto {
   enum AttributeType {
     UNDEFINED = 0;
@@ -87,7 +92,7 @@ message ModelProto {
   optional bool little_endian = 10; // bytes order in load device.
   optional ParallelProto parallel = 11; // information for parallel.
   repeated PrimitiveProto primitives = 12; // all the primitives of the model.
-
+  optional int64 mind_ir_version = 13;
 }
 
 

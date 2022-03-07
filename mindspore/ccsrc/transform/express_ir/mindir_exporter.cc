@@ -272,6 +272,7 @@ void IrExportBuilder::BuildModelInfo() {
   model_->set_producer_name(mindspore_name);
   model_->set_model_version(VERSION);
   model_->set_little_endian(common::IsLittleByteOrder());
+  model_->set_mind_ir_version(mind_ir::Version_MAX);
 }
 
 void IrExportBuilder::BuildLayout(const FuncGraphPtr &func_graph) {

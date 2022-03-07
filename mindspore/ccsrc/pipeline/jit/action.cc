@@ -1241,8 +1241,8 @@ bool SetMindIRGraphAction(const ResourcePtr &res) {
   if (mng == nullptr) {
     auto res_mng = res->manager();
     MS_EXCEPTION_IF_NULL(res_mng);
+    res_mng->Clear();
     res_mng->AddFuncGraph(fg);
-    fg->set_manager(res_mng);
   }
   abstract::AbstractBasePtrList broaded_args;
   const auto &args_spec_list = res->args_spec();

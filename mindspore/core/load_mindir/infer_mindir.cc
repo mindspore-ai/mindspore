@@ -101,7 +101,7 @@ bool MindIREngine::InferShape(const AbstractBasePtrList &args) {
     MS_LOG(DEBUG) << "Finish to Infere.";
     return true;
   }
-  MS_LOG(WARNING) << "Not finished to infer: " << todo_.size();
+  MS_LOG(INFO) << "Not finished to infer: " << todo_.size();
   for (const auto &node : todo_) {
     MS_LOG(DEBUG) << "Node uninfered: " << node->DebugString();
   }
@@ -171,18 +171,18 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, cons
     }
     if (raise_exception_) {
       MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
-                        << " primitive type:" << prim->type_name() << " It will keep the prevalue witch danger.";
+                        << " primitive type:" << prim->type_name() << " It will keep the previous value with danger.";
     } else {
-      MS_LOG(WARNING) << "Get infer shape function failed, primitive name:" << prim->name()
-                      << " primitive type:" << prim->type_name() << " It will keep the prevalue witch danger.";
+      MS_LOG(INFO) << "Get infer shape function failed, primitive name:" << prim->name()
+                   << " primitive type:" << prim->type_name() << " It will keep the previous value with danger.";
     }
   } catch (const std::exception &ex) {
     if (raise_exception_) {
       MS_LOG(EXCEPTION) << "Catch primitive:" << prim->ToString() << " InferPrimitiveShape exception:" << ex.what()
-                        << " It will keep the prevalue witch danger.";
+                        << " It will keep the previous value with danger.";
     } else {
-      MS_LOG(WARNING) << "Catch primitive:" << prim->ToString() << " InferPrimitiveShape exception:" << ex.what()
-                      << " It will keep the prevalue witch danger.";
+      MS_LOG(INFO) << "Catch primitive:" << prim->ToString() << " InferPrimitiveShape exception:" << ex.what()
+                   << " It will keep the previous value with danger.";
     }
   }
   return nullptr;
@@ -203,7 +203,7 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
   auto result = InferPrimitiveShape(prim, args_spec_list);
   if (result == nullptr) {
     MS_LOG(INFO) << node->ToString()
-                 << " can't be inferred shape. It will keep the prevalue witch danger. Prim: " << prim->ToString();
+                 << " can't be inferred shape. It will keep the previous value with danger. Prim: " << prim->ToString();
     result = node->abstract();
   }
   SaveNodeInferResult(node, result);
@@ -221,7 +221,7 @@ void MindIREngine::EvalReturnPrimitive(const CNodePtr &node) {
       MS_LOG_TRY_CATCH_SCOPE;
       result = result->Join(it->second);
     } catch (const std::exception &e) {
-      MS_LOG(WARNING) << "Join abstract for return node " << node->DebugString() << " failed, exception: " << e.what();
+      MS_LOG(INFO) << "Join abstract for return node " << node->DebugString() << " failed, exception: " << e.what();
     }
   }
   this->func_graph_result_[funcName] = result;
@@ -306,7 +306,7 @@ void MindIREngine::SaveNodeInferResult(const AnfNodePtr &node, const AbstractBas
       }
     }
   } catch (const std::exception &e) {
-    MS_LOG(WARNING) << "Join abstract for node " << node->DebugString() << " failed, exception: " << e.what();
+    MS_LOG(INFO) << "Join abstract for node " << node->DebugString() << " failed, exception: " << e.what();
     return;
   }
 
@@ -532,7 +532,7 @@ bool InferMindir(const FuncGraphPtr &root, const AbstractBasePtrList &args, bool
 
 bool ValidMindir(const FuncGraphPtr &root) {
   if (MsContext::GetInstance() == nullptr) {
-    MS_LOG(WARNING) << "MsContext::GetInstance() is nullptr.";
+    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
     MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
       device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
     });
