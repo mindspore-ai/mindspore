@@ -667,6 +667,9 @@ class DynamicShape(Primitive):
     """
     Same as operator TensorShape. DynamicShape will be deprecated in the future.
     Please use TensorShape instead.
+
+    Supported Platforms:
+        Deprecated
     """
 
     @deprecated("1.7", "TensorShape", True)
