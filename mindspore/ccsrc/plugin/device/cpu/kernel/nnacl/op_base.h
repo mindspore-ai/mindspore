@@ -482,8 +482,9 @@ enum PrimType {
   PrimType_DynamicQuant = 203,
   PrimType_LSTMGradData = 204,
   PrimType_LSTMGradWeight = 205,
+  PrimType_RandomNormal = 206,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_LSTMGradWeight + 1,
+  PrimType_MAX = PrimType_RandomNormal + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,

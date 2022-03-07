@@ -20,8 +20,10 @@
 #include <algorithm>
 #include <memory>
 #include "ops/resize.h"
+#include "ops/random_normal.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
+#include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::lite {
@@ -378,6 +380,44 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
   }
   return lite::RET_OK;
 }
+
+STATUS AdjustRandomNormal(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  if (cnode->size() != 1) {
+    return RET_OK;
+  }
+  auto prim = GetValueNode<std::shared_ptr<ops::RandomNormal>>(cnode->input(0));
+  MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kDataType) != nullptr, RET_ERROR);
+  TypeId data_type = static_cast<TypeId>(GetValue<int>(prim->GetAttr(ops::kDataType)));
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kShape) != nullptr, RET_ERROR);
+  std::vector<int64_t> shape = GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kShape));
+  size_t data_size = abstract::TypeIdSize(data_type);
+  for (auto dim : shape) {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(static_cast<int>(data_size), static_cast<int>(dim), RET_ERROR);
+    data_size *= static_cast<size_t>(dim);
+  }
+  MS_CHECK_TRUE_RET(data_size != 0, RET_ERROR);
+  auto data = malloc(data_size);
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "malloc data failed.";
+    return RET_ERROR;
+  }
+  if (memset_s(data, data_size, 0, data_size) != EOK) {
+    MS_LOG(ERROR) << "malloc data failed.";
+    return RET_ERROR;
+  }
+  auto tensor_info = CreateTensorInfo(data, data_size, shape, data_type);
+  free(data);
+  MS_CHECK_TRUE_RET(tensor_info != nullptr, RET_ERROR);
+  auto parameter = opt::BuildParameterNode(func_graph, cnode, tensor_info);
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "BuildParameterNode failed.";
+    return RET_ERROR;
+  }
+  cnode->set_input(1, parameter);
+  return RET_OK;
+}
 }  // namespace
 
 bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph) {
@@ -417,6 +457,8 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph) {
       status = AdjustStridedSlice(func_graph, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimResize)) {
       status = AdjustResize(&need_update_manager, cnode);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimRandomNormal)) {
+      status = AdjustRandomNormal(func_graph, cnode);
     } else {
       continue;
     }

@@ -223,6 +223,7 @@ union PrimitiveType {
     DynamicQuant,
     LSTMGradData,
     LSTMGradWeight,
+    RandomNormal,
 }
 
 table Abs {
@@ -1247,4 +1248,10 @@ table LSTMGradWeight {
     dropout: float;
     zoneout_cell: float = 0;
     zoneout_hidden: float = 0;
+}
+
+table RandomNormal {
+    seed: float;
+    mean: float;
+    scale: float;
 }

@@ -263,6 +263,7 @@ constexpr auto kIsOriginalPadMode = "is_original_pad_mode";
 constexpr auto kOriginalOpName = "original_op_name";
 constexpr auto kSymmetric = "symmetric";
 constexpr auto kDstType = "dst_type";
+constexpr auto kMean = "mean";
 
 enum Index : size_t {
   kInputIndex0 = 0,

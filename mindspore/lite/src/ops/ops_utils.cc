@@ -833,6 +833,11 @@ std::unique_ptr<schema::PrimitiveT> DynamicQuantPrimitiveCreator(const AnfNodePt
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
+std::unique_ptr<schema::PrimitiveT> RandomNormalPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::RandomNormal>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
 RegistryMSOps g_absPrimitiveCreatorRegistry("Abs", AbsPrimitiveCreator);
 RegistryMSOps g_absGradPrimitiveCreatorRegistry("AbsGrad", AbsGradPrimitiveCreator);
 RegistryMSOps g_activationPrimitiveCreatorRegistry("Activation", ActivationPrimitiveCreator);
@@ -1065,6 +1070,7 @@ RegistryMSOps g_ScatterNdUpdateCreatorRegistry("ScatterNdUpdate", ScatterNdUpdat
 RegistryMSOps g_AllGatherCreatorRegistry("AllGather", AllGatherPrimitiveCreator);
 RegistryMSOps g_ReduceScatterCreatorRegistry("ReduceScatter", ReduceScatterPrimitiveCreator);
 RegistryMSOps g_DynamicQuantCreatorRegistry("DynamicQuant", DynamicQuantPrimitiveCreator);
+RegistryMSOps g_RandomNormalCreatorRegistry("RandomNormal", RandomNormalPrimitiveCreator);
 
 std::unique_ptr<schema::PrimitiveT> CustomPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Custom>>(node);
