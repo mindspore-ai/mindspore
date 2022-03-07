@@ -31,7 +31,7 @@ class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.unique = P.Unique()
-        self.shape = P.DynamicShape()
+        self.shape = P.TensorShape()
         self.reshape = P.Reshape()
         self.add = P.Add()
 

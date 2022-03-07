@@ -49,7 +49,7 @@ tile = P.Tile()
 size = P.Size()
 ones_like = P.OnesLike()
 shape = P.Shape()
-dyn_shape = P.DynamicShape()
+dyn_shape = P.TensorShape()
 rank = P.Rank()
 reshape = P.Reshape()
 
