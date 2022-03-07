@@ -49,7 +49,7 @@ uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message
   return rank_id;
 }
 
-void NodeManager::ReAddNodeIfNotExists(const std::string node_id, const std::string ip, uint32_t port) {
+void NodeManager::ReAddNodeIfNotExists(const std::string &node_id, const std::string &ip, uint32_t port) {
   core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
   std::unordered_map<std::string, NodeInfo> recovery_node_infos = clusterConfig.initial_registered_nodes_infos;
 
