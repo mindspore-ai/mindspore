@@ -131,7 +131,8 @@ class ReduceAnyInfo : public ReduceMethod {
   ~ReduceAnyInfo() override = default;
 
  protected:
-  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferForwardCommunication() override;
+  ForwardOp CreateForwardOp(const std::vector<Group> &forward_group);
 };
 
 class ReduceMinInfo : public ReduceMethod {
@@ -143,6 +144,28 @@ class ReduceMinInfo : public ReduceMethod {
   }
 
   ~ReduceMinInfo() override = default;
+};
+
+class ReduceProdInfo : public ReduceMethod {
+ public:
+  ReduceProdInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
+      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceProdCost>()) {
+    reduce_method_ = REDUCE_OP_PROD;
+  }
+
+  ~ReduceProdInfo() override = default;
+};
+
+class ReduceAllInfo : public ReduceAnyInfo {
+ public:
+  ReduceAllInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : ReduceAnyInfo(name, inputs_shape, outputs_shape, attrs) {
+    reduce_method_ = REDUCE_OP_ALL;
+  }
+
+  ~ReduceAllInfo() override = default;
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -752,6 +752,7 @@ class ReduceSumCost : public OperatorCost {
   bool cross_batch_ = false;
 };
 using ReduceMethodCost = ReduceSumCost;
+using ReduceProdCost = ReduceSumCost;
 
 class ReduceMeanCost : public ReduceSumCost {
  public:
