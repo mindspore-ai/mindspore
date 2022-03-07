@@ -371,9 +371,7 @@ void StackActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
 
   if (input_op_partials_.count(sequential_num) > 0) {
     for (auto &input_partial_pair : input_op_partials_[sequential_num]) {
-      const auto &partial_device_tensors = GetAllDeviceTensors(input_partial_pair.second);
-      (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
-                      std::back_inserter(memory_free_list));
+      GetAllDeviceTensors(input_partial_pair.second, &memory_free_list);
     }
   }
 
@@ -388,9 +386,7 @@ void StackActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if ((input_stack_partials_num_ != 0) && (input_stack_partials_.count(sequential_num) > 0)) {
     for (auto &stack_partial_pair : input_stack_partials_[sequential_num]) {
       if (!stack_partial_pair.second.empty()) {
-        const auto &partial_device_tensors = GetAllDeviceTensors(stack_partial_pair.second.top());
-        (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
-                        std::back_inserter(memory_free_list));
+        GetAllDeviceTensors(stack_partial_pair.second.top(), &memory_free_list);
       }
     }
   }

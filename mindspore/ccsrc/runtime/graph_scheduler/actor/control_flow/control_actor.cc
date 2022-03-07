@@ -42,34 +42,28 @@ void ControlActor::Init() {
   }
 }
 
-std::vector<DeviceTensor *> ControlActor::GetAllDeviceTensors(const OpPartialPtr &op_partial) {
+void ControlActor::GetAllDeviceTensors(const OpPartialPtr &op_partial, std::vector<DeviceTensor *> *device_tensors) {
   MS_EXCEPTION_IF_NULL(op_partial);
-  std::vector<DeviceTensor *> ret;
-  for (auto &device_tensor : op_partial->device_tensors_) {
-    (void)ret.emplace_back(device_tensor.second);
-  }
+  (void)std::transform(op_partial->device_tensors_.begin(), op_partial->device_tensors_.end(),
+                       std::back_inserter(*device_tensors),
+                       [](const auto &device_tensor) { return device_tensor.second; });
 
   // Foreach the op partial to fetch the device tensors.
   for (auto &partial : op_partial->partials_) {
-    const auto &ret_inner = GetAllDeviceTensors(partial.second);
-    (void)std::copy(ret_inner.begin(), ret_inner.end(), std::back_inserter(ret));
+    GetAllDeviceTensors(partial.second, device_tensors);
   }
-
-  return ret;
 }
 
-std::vector<DeviceTensor *> ControlActor::GetAllDeviceTensors(const OpRealParameterWithBranchID &op_real_parameter) {
-  std::vector<DeviceTensor *> ret;
+void ControlActor::GetAllDeviceTensors(const OpRealParameterWithBranchID &op_real_parameter,
+                                       std::vector<DeviceTensor *> *device_tensors) {
   for (auto &device_tensor : op_real_parameter.device_tensors_) {
-    (void)ret.emplace_back(device_tensor.second);
+    (void)device_tensors->emplace_back(device_tensor.second);
   }
 
   // Foreach the op partial to fetch the device tensors.
   for (auto &partial : op_real_parameter.partials_) {
-    const auto &ret_inner = GetAllDeviceTensors(partial.second);
-    (void)std::copy(ret_inner.begin(), ret_inner.end(), std::back_inserter(ret));
+    GetAllDeviceTensors(partial.second, device_tensors);
   }
-  return ret;
 }
 
 void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) {
@@ -80,7 +74,8 @@ void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) 
 
 void ControlActor::IncreaseDynamicRefCount(const OpPartialPtr &op_partial) {
   MS_EXCEPTION_IF_NULL(op_partial);
-  const auto &partial_device_tensors = GetAllDeviceTensors(op_partial);
+  std::vector<DeviceTensor *> partial_device_tensors;
+  GetAllDeviceTensors(op_partial, &partial_device_tensors);
   for (auto &partial_device_tensor : partial_device_tensors) {
     MS_EXCEPTION_IF_NULL(partial_device_tensor);
     partial_device_tensor->IncreaseDynamicRefCount(GetAID().Name());
@@ -88,7 +83,8 @@ void ControlActor::IncreaseDynamicRefCount(const OpPartialPtr &op_partial) {
 }
 
 void ControlActor::IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op_real_parameter) {
-  const auto &partial_device_tensors = GetAllDeviceTensors(op_real_parameter);
+  std::vector<DeviceTensor *> partial_device_tensors;
+  GetAllDeviceTensors(op_real_parameter, &partial_device_tensors);
   for (auto &partial_device_tensor : partial_device_tensors) {
     MS_EXCEPTION_IF_NULL(partial_device_tensor);
     partial_device_tensor->IncreaseDynamicRefCount(GetAID().Name());
@@ -308,9 +304,7 @@ void ControlActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
 
   if (input_op_partials_.count(sequential_num) > 0) {
     for (auto &input_op_partial : input_op_partials_[sequential_num]) {
-      const auto &partial_device_tensors = GetAllDeviceTensors(input_op_partial.second);
-      (void)std::copy(partial_device_tensors.begin(), partial_device_tensors.end(),
-                      std::back_inserter(memory_free_list));
+      GetAllDeviceTensors(input_op_partial.second, &memory_free_list);
     }
   }
 
