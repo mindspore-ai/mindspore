@@ -485,8 +485,8 @@ ValuePtr ObjCast(const py::object &obj) {
   return obj.cast<T>();
 }
 
-std::vector<DataConverterPtr> GetDataConverters() {
-  static std::vector<DataConverterPtr> data_converters = {
+static const std::vector<DataConverterPtr> &GetDataConverters() {
+  static const std::vector<DataConverterPtr> data_converters{
     // Convert data by python object type.
     std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
     std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
@@ -532,7 +532,7 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
   }
   ValuePtr converted = nullptr;
   bool matched = false;
-  auto converters = GetDataConverters();
+  const auto &converters = GetDataConverters();
   for (auto &converter : converters) {
     if (converter->Matched(obj)) {
       converted = converter->ConvertPyObject(obj, use_signature, dtype);
