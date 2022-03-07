@@ -125,6 +125,7 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
     input_num = 1;
     output_num = 1;
   }
+  // traverse input
   for (size_t i = 0; i < input_num; ++i) {
     if (AnfAlgo::GetInputFormat(cnode, i) == kOpFormat_FRAC_Z) {
       auto input = cnode->input(i + 1);
@@ -140,16 +141,15 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
       }
     }
   }
-  if (kOptOperatorSet.find(node_name) == kOptOperatorSet.end()) {
-    for (size_t i = 0; i < output_num; ++i) {
-      if (AnfAlgo::GetOutputFormat(cnode, i) == kOpFormat_FRAC_Z) {
-        auto output = GetOutputItem(manager, cnode, groups, i);
-        if (output != nullptr) {
-          std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                         [](KernelWithIndex node_index) {
-                           return KernelWithIndex{node_index.first, node_index.second - 1};
-                         });
-        }
+  // traverse output
+  for (size_t i = 0; i < output_num; ++i) {
+    if (AnfAlgo::GetOutputFormat(cnode, i) == kOpFormat_FRAC_Z) {
+      auto output = GetOutputItem(manager, cnode, groups, i);
+      if (output != nullptr) {
+        std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
+                       [](KernelWithIndex node_index) {
+                         return KernelWithIndex{node_index.first, node_index.second - 1};
+                       });
       }
     }
   }
