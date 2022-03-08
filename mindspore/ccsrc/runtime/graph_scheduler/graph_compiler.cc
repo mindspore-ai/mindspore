@@ -112,7 +112,7 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
 }
 
 void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, const ValuePtr &node_value,
-                                       size_t output_idx, const ValueNodePtr &value_node) {
+                                       size_t output_idx, const ValueNodePtr &value_node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(node_value);
   MS_EXCEPTION_IF_NULL(value_node);
@@ -128,9 +128,9 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
     }
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     if (output_address != nullptr && output_address->DeviceType() == device_context->GetDeviceAddressType()) {
-      bool is_pynative_infer = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-      bool is_graph_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode);
-      if (is_graph_mode || is_pynative_infer) {
+      // The input of PyNative bprop graph is ValueNode.
+      // Setting the address to the ValueNode will lead to memory leak.
+      if (!graph->is_bprop()) {
         AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
                                value_node.get());
       }
@@ -165,7 +165,7 @@ void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const Ker
     const auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
     if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
-      CreateDeviceAddressForTensorValue(device_context, node_value, 0, value_node);
+      CreateDeviceAddressForTensorValue(device_context, node_value, 0, value_node, graph);
     } else if (node_value->isa<StringImm>()) {
       auto value = GetValue<std::string>(node_value);
       size_t tensor_size = value.size();
