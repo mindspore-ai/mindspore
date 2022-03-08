@@ -73,6 +73,7 @@ class TfliteNodeParser {
     }
     switch (tensor->type) {
       case tflite::TensorType_UINT8: {
+        CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(uint8_t));
         for (int i = 0; i < count; i++) {
           uint8_t data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
@@ -81,6 +82,7 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_INT8: {
+        CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(int8_t));
         for (int i = 0; i < count; i++) {
           int8_t data = *(static_cast<int8_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
@@ -89,6 +91,7 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_INT16: {
+        CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(int16_t));
         for (int i = 0; i < count; i++) {
           int16_t data = *(static_cast<int16_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
@@ -97,6 +100,7 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_INT32: {
+        CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(int32_t));
         for (int i = 0; i < count; i++) {
           int32_t data = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
@@ -105,6 +109,7 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_INT64: {
+        CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(int64_t));
         for (int i = 0; i < count; i++) {
           int64_t data = *(static_cast<int64_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
@@ -113,6 +118,7 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_FLOAT32: {
+        CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(float));
         for (int i = 0; i < count; i++) {
           float data = *(static_cast<float *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
