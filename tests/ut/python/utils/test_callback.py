@@ -29,7 +29,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.train.callback import ModelCheckpoint, RunContext, LossMonitor, _InternalCallbackParam, \
-    _CallbackManager, Callback, CheckpointConfig, _set_cur_net, _checkpoint_cb_for_save_op
+    _CallbackManager, Callback, CheckpointConfig, _set_cur_net, _checkpoint_cb_for_save_op, History, LambdaCallback
 from mindspore.train.callback._checkpoint import _chg_ckpt_file_name_if_same_exist
 
 
@@ -492,3 +492,58 @@ def test_step_end_save_graph():
         os.remove('./test_files/test-graph.meta')
     ckpoint_cb.step_end(run_context)
     assert not os.path.exists('./test_files/test-graph.meta')
+
+
+def test_history():
+    """
+    Feature: callback.
+    Description: Test history object saves epoch and history properties.
+    Expectation: run success.
+    """
+    cb_params = _InternalCallbackParam()
+    cb_params.cur_epoch_num = 4
+    cb_params.epoch_num = 4
+    cb_params.cur_step_num = 2
+    cb_params.batch_num = 2
+    cb_params.net_outputs = Tensor(2.0)
+    cb_params.metrics = {'mae': 6.343789100646973, 'mse': 59.03999710083008}
+
+    run_context = RunContext(cb_params)
+    history_cb = History()
+    callbacks = [history_cb]
+    with _CallbackManager(callbacks) as callbacklist:
+        callbacklist.begin(run_context)
+        callbacklist.epoch_begin(run_context)
+        callbacklist.step_begin(run_context)
+        callbacklist.step_end(run_context)
+        callbacklist.epoch_end(run_context)
+        callbacklist.end(run_context)
+    print(history_cb.epoch)
+    print(history_cb.history)
+
+
+def test_lambda():
+    """
+    Feature: callback.
+    Description: Test lambda callback.
+    Expectation: run success.
+    """
+    cb_params = _InternalCallbackParam()
+    cb_params.cur_epoch_num = 4
+    cb_params.epoch_num = 4
+    cb_params.cur_step_num = 2
+    cb_params.batch_num = 2
+    cb_params.net_outputs = Tensor(2.0)
+
+    run_context = RunContext(cb_params)
+    lambda_cb = LambdaCallback(
+        epoch_end=lambda run_context: print("loss result: ", run_context.original_args().net_outputs))
+
+    callbacks = [lambda_cb]
+    with _CallbackManager(callbacks) as callbacklist:
+        callbacklist.begin(run_context)
+        callbacklist.epoch_begin(run_context)
+        callbacklist.step_begin(run_context)
+        callbacklist.step_end(run_context)
+        callbacklist.epoch_end(run_context)
+        callbacklist.end(run_context)

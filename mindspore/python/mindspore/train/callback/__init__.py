@@ -29,7 +29,9 @@ from ._summary_collector import SummaryCollector
 from ._lr_scheduler_callback import LearningRateScheduler
 from ._landscape import SummaryLandscape
 from ._fl_manager import FederatedLearningManager
+from ._history import History
+from ._lambda_callback import LambdaCallback
 
 __all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint",
            "SummaryCollector", "CheckpointConfig", "RunContext", "LearningRateScheduler", "SummaryLandscape",
-           "FederatedLearningManager"]
+           "FederatedLearningManager", "History", "LambdaCallback"]
