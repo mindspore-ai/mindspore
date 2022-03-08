@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,15 @@ constexpr auto kNameIdentity = "Identity";
 class MS_CORE_API Identity : public PrimitiveC {
  public:
   /// \brief Constructor.
-  Identity() : PrimitiveC(kNameIdentity) {}
+  Identity() : PrimitiveC(kNameIdentity) { InitIOName({"x"}, {"y"}); }
   /// \brief Destructor.
   ~Identity() = default;
   MS_DECLARE_PARENT(Identity, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Identity for the inputs.
   void Init() const {}
 };
+AbstractBasePtr IdentityInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

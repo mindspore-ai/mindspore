@@ -115,6 +115,7 @@ constexpr auto kCoalesce = "Coalesce";
 constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kOnes = "Ones";
 constexpr auto kOnesLike = "OnesLike";
+constexpr auto kIdentity = "Identity";
 constexpr auto kDiag = "Diag";
 constexpr auto kDiagPart = "DiagPart";
 constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
@@ -249,6 +250,7 @@ GVAR_DEF(PrimitivePtr, kPrimStackPush, std::make_shared<Primitive>("StackPush"))
 GVAR_DEF(PrimitivePtr, kPrimStackPop, std::make_shared<Primitive>("StackPop"));
 
 // Arrays
+GVAR_DEF(PrimitivePtr, kPrimIdentitys, std::make_shared<Primitive>(kIdentity));
 GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastTo, std::make_shared<Primitive>(kDynamicBroadcastTo));
 GVAR_DEF(PrimitivePtr, kPrimCummin, std::make_shared<Primitive>("Cummin"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcastTo, std::make_shared<Primitive>("BroadcastTo"));
