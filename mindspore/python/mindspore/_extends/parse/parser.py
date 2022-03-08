@@ -85,7 +85,7 @@ parse_expr_statement_white_list = (
 _builtin_function_or_method_type = type(abs)
 
 _unsupported_python_builtin_type = (
-    list, tuple, set, dict, slice, bool, int, float, str, complex, reversed,
+    list, tuple, set, dict, slice, bool, int, float, str, complex, reversed, type,
 )
 
 _unsupported_internal_type = (
