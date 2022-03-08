@@ -198,7 +198,7 @@ class AbstractNode : public Node {
   bool CheckSchedulerTimeout() const;
   bool Disconnect(const std::shared_ptr<TcpClient> &client, const uint32_t &timeout);
   bool WaitForDisconnect(const uint32_t &timeout);
-  bool InitClientToScheduler();
+  virtual bool InitClientToScheduler();
   void InitClientToServer();
   const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const uint32_t &rank_id,
                                                          const NodeRole &role = NodeRole::SERVER);
