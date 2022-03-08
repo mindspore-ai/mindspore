@@ -166,6 +166,7 @@ INTRIN_GPU_UNARY_OP = {
     'int8': numpy.int8,
     'int16': numpy.int16,
     'int64': numpy.int64,
+    'float64': numpy.float64,
     'sin': numpy.sin,
     'cos': numpy.cos,
     'isinf': numpy.isinf,
@@ -472,11 +473,11 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
     When a function written by the Hybrid DSL is decorated by ms_hybrid,
     it can be run as a usual Python function.
     Also, this function can be used in the api Custom and to create a Custom op, with func_type
-    "ms_hybrid" or "py_func". Creating a custom op with mode "ms_hybrid" by the Hybrid DSL function
+    "hybrid" or "py_func". Creating a custom op with mode "hybrid" by the Hybrid DSL function
     will enjoy the automatic dtype/shape infer for free.
 
     Args:
-        fn (Function): The Python function that will be run as a graph. Default: None.
+        fn (Function): The Python function that will be run as a custom operator. Default: None.
         reg_info (tuple[str, dict]): Each item represents registration information in json format. Default: None.
         compile_attrs (Dict): The Python object is used to distinguish the compiled function. Default: None.
 
