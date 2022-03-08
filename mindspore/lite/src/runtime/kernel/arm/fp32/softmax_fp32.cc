@@ -43,6 +43,23 @@ int SoftmaxCPUKernel::Prepare() {
   return ReSize();
 }
 
+#ifdef SERVER_INFERENCE
+int SoftmaxCPUKernel::UpdateThreadNumPass() {
+  if (thread_cost_context_ == nullptr) {
+    thread_cost_context_ = new lite::ThreadCostContext();
+    thread_cost_context_->per_unit_load_num_ = softmax_param_->input_shape_[softmax_param_->axis_];
+    thread_cost_context_->per_unit_store_num_ = softmax_param_->input_shape_[softmax_param_->axis_];
+    thread_cost_context_->per_unit_compute_cost_ = 42.042;  // 42.042 : split per unit compute cost
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+  }
+  return RET_OK;
+}
+#endif
+
 int SoftmaxCPUKernel::ReSize() {
   auto ret = SoftmaxBaseCPUKernel::ReSize();
   if (ret != RET_OK) {
@@ -73,11 +90,17 @@ int SoftmaxCPUKernel::ReSize() {
       return RET_ERROR;
     }
   }
+
+#ifdef SERVER_INFERENCE
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
+  }
+#endif
   return RET_OK;
 }
 
 int SoftmaxCPUKernel::DoSoftmaxLastAxis(int task_id) {
-  int unit = UP_DIV(out_plane_size_, op_parameter_->thread_num_);
+  int unit = UP_DIV(out_plane_size_, thread_num_);
   if (INT_MUL_OVERFLOW(task_id, unit)) {
     MS_LOG(ERROR) << "int mul overflow.";
     return RET_ERROR;
@@ -109,7 +132,7 @@ int SoftmaxLastAxisRun(void *cdata, int task_id, float lhs_scale, float rhs_scal
 int SoftmaxCPUKernel::Run() {
   int ret = RET_OK;
   if (in_plane_size_ == 1) {
-    ret = ParallelLaunch(this->ms_context_, SoftmaxLastAxisRun, this, op_parameter_->thread_num_);
+    ret = ParallelLaunch(this->ms_context_, SoftmaxLastAxisRun, this, thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SoftmaxCPUKernel ParallelLaunch failed, ret: " << ret;
     }

@@ -36,7 +36,7 @@ class ActivationCPUKernel : public InnerKernel {
   }
   ~ActivationCPUKernel() override = default;
 
-  int SetThreadCostContext();
+  int UpdateThreadNumPass();
   int Prepare() override;
   int ReSize() override;
   int Run() override;

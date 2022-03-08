@@ -43,10 +43,10 @@ class SplitBaseCPUKernel : public InnerKernel {
   int Run() override;
   virtual int Split(int task_id);
   static int CheckAndInitSplitParam(const lite::Tensor &in_tensor, SplitParameter *param);
+  int UpdateThreadNumPass();
 
  protected:
   int thread_n_stride_ = 0;
-  int thread_n_num_ = 0;
   int num_unit_ = 0;
   SplitParameter *param = nullptr;
   void *input_ptr_ = nullptr;

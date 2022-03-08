@@ -35,7 +35,7 @@ using mindspore::schema::PrimitiveType_Activation;
 namespace mindspore::kernel {
 namespace {
 #ifdef SERVER_INFERENCE
-const std::map<int, float> dt_activation_cost_map_ = {
+const std::map<int, float> activation_compute_cost_map_ = {
   {schema::ActivationType_RELU, 1.806f},
   {schema::ActivationType_RELU6, 1.806f},
   {schema::ActivationType_LEAKY_RELU, 1.806f},
@@ -48,12 +48,17 @@ const std::map<int, float> dt_activation_cost_map_ = {
 }  // namespace
 
 #ifdef SERVER_INFERENCE
-int ActivationCPUKernel::SetThreadCostContext() {
-  if (dt_activation_cost_map_.count(type_) > 0) {
-    thread_cost_context = std::make_unique<ThreadCostContext>();
-    thread_cost_context->per_unit_load_num_ = 1;
-    thread_cost_context->per_unit_store_num_ = 1;
-    thread_cost_context->per_unit_compute_cost_ = dt_activation_cost_map_.at(type_);
+int ActivationCPUKernel::UpdateThreadNumPass() {
+  if (thread_cost_context_ == nullptr && activation_compute_cost_map_.count(type_) > 0) {
+    thread_cost_context_ = new lite::ThreadCostContext();
+    thread_cost_context_->per_unit_load_num_ = 1;
+    thread_cost_context_->per_unit_store_num_ = 1;
+    thread_cost_context_->per_unit_compute_cost_ = activation_compute_cost_map_.at(type_);
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
   }
   return RET_OK;
 }
@@ -62,12 +67,6 @@ int ActivationCPUKernel::SetThreadCostContext() {
 int ActivationCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-
-#ifdef SERVER_INFERENCE
-  if (SetThreadCostContext() != RET_OK) {
-    return RET_ERROR;
-  }
-#endif
 
   if (in_tensors().front()->data_type() == kNumberTypeInt32) {
     if (type_ != schema::ActivationType_RELU) {
@@ -96,9 +95,8 @@ int ActivationCPUKernel::Prepare() {
 
 int ActivationCPUKernel::ReSize() {
 #ifdef SERVER_INFERENCE
-  if (thread_cost_context != nullptr) {
-    thread_cost_context->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
-    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context.get(), op_parameter_->thread_num_);
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
   }
 #endif
 

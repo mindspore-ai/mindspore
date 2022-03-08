@@ -25,6 +25,23 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
+#ifdef SERVER_INFERENCE
+int SplitBaseCPUKernel::UpdateThreadNumPass() {
+  if (thread_cost_context_ == nullptr) {
+    thread_cost_context_ = new lite::ThreadCostContext();
+    thread_cost_context_->per_unit_load_num_ = in_tensors_.at(0)->ElementsNum() / num_unit_;
+    thread_cost_context_->per_unit_store_num_ = in_tensors_.at(0)->ElementsNum() / num_unit_;
+    thread_cost_context_->per_unit_compute_cost_ = 17.573;  // 17.573 : split per unit compute cost
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+  }
+  return RET_OK;
+}
+#endif
+
 int SplitBaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
@@ -102,10 +119,17 @@ int SplitBaseCPUKernel::ReSize() {
   // e.g. input dims is [1, 3, 4, 8], split axis is 2, num_split is 2, so split_count_ is 1*3, num_unit_ is 1*3*2
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(param->split_count_, param->num_split_), RET_ERROR);
   num_unit_ = param->split_count_ * param->num_split_;
-  thread_n_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
-  if (thread_n_num_ != 0) {
-    thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
+
+#ifdef SERVER_INFERENCE
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
   }
+#else
+  thread_num_ = MSMIN(thread_num_, num_unit_);
+#endif
+
+  CHECK_LESS_RETURN(thread_num_, 1);
+  thread_n_stride_ = UP_DIV(num_unit_, thread_num_);
   return RET_OK;
 }
 
@@ -152,7 +176,7 @@ int SplitBaseCPUKernel::Run() {
     }
   }
 
-  auto ret = ParallelLaunch(this->ms_context_, SplitRun, this, thread_n_num_);
+  auto ret = ParallelLaunch(this->ms_context_, SplitRun, this, thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "split error error_code[" << ret << "]";
   }
