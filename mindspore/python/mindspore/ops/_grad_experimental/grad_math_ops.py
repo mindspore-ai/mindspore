@@ -335,3 +335,16 @@ def get_bprop_cross(self):
         return cross(input2, dout), cross(dout, input1)
 
     return bprop
+
+
+@bprop_getters.register(P.MulNoNan)
+def get_bprop_mul_no_nan(self):
+    """Grad definition for `MulNoNan` operation."""
+    mul_func = P.Mul()
+
+    def bprop(x, y, out, dout):
+        bc_x = mul_func(dout, y)
+        bc_y = mul_func(x, dout)
+        return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop

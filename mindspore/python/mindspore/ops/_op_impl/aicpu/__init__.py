@@ -124,3 +124,4 @@ from .cross import _cross_aicpu
 from .cummax import _cummax_aicpu
 from .floor_div import _floor_div_aicpu
 from .one_hot import _one_hot_aicpu
+from .mul_no_nan import _mul_no_nan_aicpu

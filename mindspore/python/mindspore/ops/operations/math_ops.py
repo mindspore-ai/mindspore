@@ -2902,7 +2902,7 @@ class MulNoNan(_MathBinaryOp):
 
     .. math::
         output_{ij} = \begin{cases}
-        0, & if\ x_{ij} = 0\ or\ y_{ij} = 0;\\
+        0, & y_{ij} = 0;\\
         x_{ij} * y_{ij}, & otherwise.
         \end{cases}
 
@@ -2912,9 +2912,9 @@ class MulNoNan(_MathBinaryOp):
 
     Inputs:
         - **x** (Union[Tensor]) - The first input is a tensor whose data type is one of
-          float16, float32, int32, int64 currently or scalar.
+          int32, int64, float16, float32, float64, complex64, complex128 currently or scalar.
         - **y** (Union[Tensor]) - The second input is a tensor whose data type is one of
-          float16, float32, int32, int64 currently or scalar.
+          int32, int64, float16, float32, float64, complex64, complex128 currently or scalar.
 
     Outputs:
         Tensor, the shape is the same as the shape after broadcasting,
@@ -2922,7 +2922,7 @@ class MulNoNan(_MathBinaryOp):
 
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Raises:
         TypeError: If neither `x` nor `y` is a bool Tensor.
@@ -2937,12 +2937,12 @@ class MulNoNan(_MathBinaryOp):
         [[ 1. 24. 0.]
         [ 0. 21. 4.]]
         >>> # case 2 : the shape of two inputs is same, there are some 0 in x, y.
-        >>> x = Tensor(np.array([[-1.0, 6.0, 0], [0, np.nan, 4.0]]), mindspore.int32)
+        >>> x = Tensor(np.array([[-1.0, 6.0, 0], [0, np.nan, 4.0]]), mindspore.float32)
         >>> y = Tensor(np.array([[-1.0, 4.0, np.inf], [np.nan, 0, 1.0]]), mindspore.float32)
         >>> output = mul_no_nan(x, y)
         >>> print(output)
         [[ 1. 24. nan]
-         [ nan  0. 4.]]
+         [nan  0. 4.]]
         >>> print(output.dtype)
         Float32
         >>> # case 3 : the y is a scalar.
@@ -2950,8 +2950,8 @@ class MulNoNan(_MathBinaryOp):
         >>> y = Tensor(0, mindspore.float32)
         >>> output = mul_no_nan(x, y)
         >>> print(output)
-        [[ 0. 0. 0.]
-         [ 0. 0. 0.]]
+        [[0. 0. 0.]
+         [0. 0. 0.]]
     """
 
     @prim_attr_register
