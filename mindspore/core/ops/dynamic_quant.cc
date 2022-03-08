@@ -39,7 +39,8 @@ AbstractBasePtr DynamicQuantInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto dst_type = TypeIdToType(TypeId(GetValue<int64_t>(primitive->GetAttr(kDstType))));
   MS_EXCEPTION_IF_NULL(dst_type);
   if (input_type->type_id() != kNumberTypeFloat16 && input_type->type_id() != kNumberTypeFloat32) {
-    MS_EXCEPTION(TypeError) << "Input type should be kNumberTypeFloat16 or kNumberTypeFloat32"
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                            << "', Input type should be kNumberTypeFloat16 or kNumberTypeFloat32"
                             << ", but " << input_type->ToString();
   }
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];

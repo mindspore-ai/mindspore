@@ -37,7 +37,8 @@ abstract::ShapePtr CdistGradInferShape(const PrimitivePtr &primitive, const std:
   auto y_size = y_shape.size();
   CheckAndConvertUtils::Check("grad shape", grad_shape, kEqual, cdist_shape, prim_name, ValueError);
   if (x_size != y_size) {
-    MS_EXCEPTION(ValueError) << "For CdistGrad, rank of input_x and input_y should be equal.";
+    MS_EXCEPTION(ValueError) << "For 'CdistGrad', rank of input_x and input_y should be equal, but got input_x size: "
+                             << x_size << ", input_y size: " << y_size << ".";
   }
   CheckAndConvertUtils::CheckInRange("input_x dim", x_size, kIncludeBoth, {2, 3}, "CdistGrad");
   auto out_shape = x_shape;

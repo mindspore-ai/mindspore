@@ -59,7 +59,8 @@ TypePtr PowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
     (void)type_infer_dict.emplace(std::make_pair(kComplex128, kComplex64), kComplex128);
     (void)type_infer_dict.emplace(std::make_pair(kComplex64, kComplex128), kComplex128);
     if (!type_infer_dict.count(std::make_pair(x1_type, x2_type))) {
-      MS_EXCEPTION(TypeError) << "Complex math binary op expecting Tensor [complex64, complex64],"
+      MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                              << "', Complex math binary op expecting Tensor [complex64, complex64],"
                               << "[complex64, float32], [float32, complex64], [complex128, complex128],"
                               << "[complex128, float64], [float64, complex128],"
                               << "but got : " << x1_type->meta_type() << "," << x2_type->meta_type();

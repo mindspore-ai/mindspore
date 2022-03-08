@@ -31,10 +31,11 @@ abstract::TupleShapePtr CummaxInferShape(const PrimitivePtr &primitive,
   auto x_shape_value = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
   auto dim = GetValue<int64_t>(primitive->GetAttr("dim"));
   if (x_shape_value.size() <= 0) {
-    MS_EXCEPTION(ValueError) << "Inputs should not be a " << x_shape_value.size() << " dimensional tensor.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', Inputs should not be a " << x_shape_value.size()
+                             << " dimensional tensor.";
   }
   if (dim >= static_cast<int64_t>(x_shape_value.size()) || dim < -static_cast<int64_t>(x_shape_value.size())) {
-    MS_EXCEPTION(ValueError) << "The value of `dim` should be in the range of ["
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',The value of `dim` should be in the range of ["
                              << -static_cast<int64_t>(x_shape_value.size()) << ","
                              << static_cast<int64_t>(x_shape_value.size()) << ")";
   }

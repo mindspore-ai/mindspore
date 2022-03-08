@@ -40,7 +40,8 @@ abstract::ShapePtr FakeQuantWithMinMaxVarsInferShape(const PrimitivePtr &primiti
   for (size_t i = 0; i < in_shape.size(); i++) {
     shape_val = shape_val * in_shape[i];
     if (min_shape[0] > 1 && min_shape[0] != shape_val) {
-      MS_EXCEPTION(ValueError) << "For" + prim_name + " the shape of \'min\' cannot broadcast to the shape of  \'x\'";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', the shape of \'min\' cannot broadcast to the shape of  \'x\'";
     }
   }
   return std::make_shared<abstract::Shape>(in_shape);

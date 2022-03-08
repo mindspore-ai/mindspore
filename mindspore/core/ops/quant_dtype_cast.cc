@@ -39,7 +39,9 @@ AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const P
   auto dst_type = TypeIdToType(TypeId(GetValue<int64_t>(primitive->GetAttr(kDstT))));
   MS_EXCEPTION_IF_NULL(dst_type);
   if (input_type != dst_type) {
-    MS_EXCEPTION(TypeError) << "Input type should be " << dst_type->ToString() << ", but " << input_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', Input type should be " << dst_type->ToString()
+                            << ", but got " << input_type->ToString();
+    input_type->ToString();
   }
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   return std::make_shared<abstract::AbstractTensor>(dst_type, input_shape);

@@ -52,8 +52,8 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
     }
   }
   if (x_shape.size() != p_value.size()) {
-    MS_EXCEPTION(ValueError) << "The dimension of x " << x_shape.size() << " and perm " << p_value.size()
-                             << " must be equal.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', The dimension of x " << x_shape.size() << " and perm "
+                             << p_value.size() << " must be equal.";
   }
   for (auto i : p_value) {
     (void)CheckAndConvertUtils::CheckInteger("perm element", i, kGreaterEqual, 0, op_name);
@@ -66,7 +66,7 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
       it = tmp.erase(it);
     }
     if (std::find(tmp.begin(), tmp.end(), dim) != tmp.end()) {
-      MS_EXCEPTION(ValueError) << "The value of perm is wrong";
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', The value of perm is wrong";
     }
   }
   std::vector<int64_t> in_shape(p_value);

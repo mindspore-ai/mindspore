@@ -35,7 +35,8 @@ T GetAndCheckKeepProp(const tensor::TensorPtr &keep_prop) {
   T min = (T)0.0;
   T max = (T)1.0;
   if (*value < min || *value > max) {
-    MS_EXCEPTION(ValueError) << "DropoutDoMask's keep_prop input value must in the range [0, 1], but got " << *value;
+    MS_EXCEPTION(ValueError) << "For 'DropoutDoMask', the `keep_prop` input value must in the range [0, 1], but got "
+                             << *value << ".";
   }
   return *value;
 }
@@ -55,19 +56,22 @@ abstract::ShapePtr DropoutDoMaskInferShape(const PrimitivePtr &primitive,
       x_size *= x_shape_vector[i];
     }
     if (mask_shape_vector.size() != 1) {
-      MS_EXCEPTION(ValueError) << "DropoutDoMask input mask must be 1-dimension.";
+      MS_EXCEPTION(ValueError) << "For 'DropoutDoMask', the input mask must be 1-dimension, but got "
+                               << mask_shape_vector.size() << ".";
     }
     auto mask_size = mask_shape_vector[0] * 8;
     if (x_size > mask_size) {
-      MS_EXCEPTION(ValueError) << "DropoutDoMask input mask do not match input,  input_x shape: " << x_shape->ToString()
-                               << ", mask shape: " << mask_shape->ToString();
+      MS_EXCEPTION(ValueError)
+        << "For 'DropoutDoMask', the input mask should be less than or equal to match input, but got input_x shape: "
+        << x_shape->ToString() << ", mask shape: " << mask_shape->ToString();
     }
   }
   auto keep_prop = input_args[kInputIndex2];
   if (keep_prop->isa<abstract::AbstractTensor>()) {
     auto keep_prop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(keep_prop->BuildShape())[kShape];
     if (!keep_prop_shape.empty()) {
-      MS_EXCEPTION(ValueError) << "DropoutDoMask keep_prop's dim must be 0(scalar), but got " << keep_prop_shape.size();
+      MS_EXCEPTION(ValueError) << "'For DropoutDoMask', the keep_prop's dim must be 0(scalar), but got "
+                               << keep_prop_shape.size();
     }
   }
   return x_shape;
@@ -99,15 +103,15 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
   } else if (keep_prop->isa<abstract::AbstractScalar>()) {
     if (keep_prop_value != nullptr) {
       if (!keep_prop_value->isa<FloatImm>()) {
-        MS_EXCEPTION(TypeError) << "DropoutDoMask's keep_prop input type must be float.";
+        MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the keep_prop input type must be float.";
       }
       auto value = GetValue<float>(keep_prop_value);
       if (value < 0 || value > 1) {
-        MS_EXCEPTION(ValueError) << "DropoutDoMask's keep_prop input value must in the range [0, 1].";
+        MS_EXCEPTION(ValueError) << "For 'DropoutDoMask', the keep_prop input value must in the range [0, 1].";
       }
     }
   } else {
-    MS_EXCEPTION(TypeError) << "The DropoutDoMask's keep_prop input must be a float number or tensor.";
+    MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the keep_prop input must be a float number or tensor.";
   }
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->BuildType(), {kUInt8}, op_name);

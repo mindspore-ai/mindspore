@@ -65,7 +65,8 @@ TypePtr MaximumInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
       return type_y;
     } else {
       MS_EXCEPTION(TypeError)
-        << "Complex math binary op expecting Tensor [complex64, complex64],[complex64, float32], [float32, "
+        << "For '" << op_name
+        << "', Complex math binary op expecting Tensor [complex64, complex64],[complex64, float32], [float32, "
            "complex64],[complex128, complex128],[complex128, float64], [float64, complex128], but got["
         << type_x->ToString() << ", " << type_y->ToString() << "].";
     }

@@ -68,14 +68,16 @@ abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
   // shape_value is AnyValue
   auto shapex_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, shape_index);
   if (shapex_shape->shape().size() != 1) {
-    MS_EXCEPTION(ValueError) << "For StridedSliceGrad, shapex must be 1-D.";
+    MS_EXCEPTION(ValueError) << "For StridedSliceGrad, shapex must be 1-D, but got " << shapex_shape->shape().size()
+                             << ".";
   }
   auto shapex_len = LongToSize(shapex_shape->shape()[0]);
   auto abstract_tensor = shapex->cast<abstract::AbstractTensorPtr>();
   auto shape_min_value = abstract_tensor->get_min_value();
   auto shape_max_value = abstract_tensor->get_max_value();
   if (shape_min_value == nullptr || shape_max_value == nullptr) {
-    MS_LOG(EXCEPTION) << "Max_value or min value of shapex can not be empty when shapex is not a constant.";
+    MS_LOG(EXCEPTION) << "For " << prim_name
+                      << ", Max_value or min value of shapex can not be empty when shapex is not a constant.";
   }
 
   auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);

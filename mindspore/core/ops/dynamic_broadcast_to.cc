@@ -40,7 +40,8 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
     y_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
     auto shape_value = y_shape->shape();
     if (shape_value.size() != 1) {
-      MS_EXCEPTION(TypeError) << "shape size error: " << shape_value.size();
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the shape size should be 1, but got "
+                              << shape_value.size();
     }
     std::vector<int64_t> output_shape;
     std::vector<int64_t> max_shape;

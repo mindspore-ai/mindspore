@@ -52,7 +52,8 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
       CheckAndConvertUtils::CheckInRange<int64_t>("axis_or_elememt", item, kIncludeBoth, {-len, len + 1}, op_name);
       auto idx = item >= 0 ? item : len + item;
       if (in_shape[LongToSize(idx)] != 1L) {
-        MS_EXCEPTION(ValueError) << "Cannot select an axis to squeeze out which has size not equal to one.";
+        MS_EXCEPTION(ValueError) << "For '" << op_name
+                                 << "', Cannot select an axis to squeeze out which has size not equal to one.";
       }
     }
     for (int64_t i = 0; i < len; i++) {

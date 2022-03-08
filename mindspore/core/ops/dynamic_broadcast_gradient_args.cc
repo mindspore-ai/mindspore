@@ -33,12 +33,12 @@ int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &p
     auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kShape];
     auto input_size = input_shape.size();
     if (input_size != 1) {
-      MS_EXCEPTION(TypeError) << prim_name << " input must be 1-D, but dims is " << input_size;
+      MS_EXCEPTION(TypeError) << "For " << prim_name << "', input must be 1-D, but dims is " << input_size;
     }
     if (input_shape[0] == abstract::Shape::SHP_ANY) {
       auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kMaxShape];
       if (max_shape.empty()) {
-        MS_LOG(EXCEPTION) << prim_name << " input shape is dynamic, but max shape is empty.";
+        MS_LOG(EXCEPTION) << "For '" << prim_name << "', input shape is dynamic, but max shape is empty.";
       }
       return max_shape[0];
     }
@@ -48,7 +48,7 @@ int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &p
     auto x_shape_data = x_shape->elements();
     return SizeToLong(x_shape_data.size());
   } else {
-    MS_EXCEPTION(TypeError) << prim_name << " input must be a tuple or Tensor.";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "',the input type must be a tuple or Tensor.";
   }
 }
 

@@ -40,7 +40,8 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
     for (size_t i = 0; i < input_x.size(); i++) {
       if (input_x[i] == -1) {
         if (i < outer_dim_offset) {
-          MS_EXCEPTION(ValueError) << " -1 in init shape is in an incompatible "
+          MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                   << "', -1 in init shape is in an incompatible "
                                       "location with given input tensor, -1 index in init shape: "
                                    << i << " but -1 can only be in index" << x_shape.size()
                                    << "onwards for this input.";

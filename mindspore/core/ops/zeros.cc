@@ -49,7 +49,10 @@ TypePtr ZerosInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   // check
   auto dtype_value = input_args[1]->BuildValue();
   if (!dtype_value->isa<Type>()) {
-    MS_EXCEPTION(TypeError) << "The dtype of Zeros is invalid!";
+    MS_EXCEPTION(TypeError)
+      << "For '" << prim_name
+      << "', the supported data type is ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16','uint32', "
+         "'uint64','float16', 'float32', 'float64'], but got the invalid dtype!";
   }
   auto output_type = dtype_value->cast<TypePtr>();
   const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,
