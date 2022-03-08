@@ -360,8 +360,8 @@ class Dataset:
         """
         # del all the SharedQueue when close the pool
         if hasattr(self, 'process_pool') and self.process_pool is not None:
-            self.process_pool.delete_shared_memory()
             self.process_pool.close_pool()
+            self.process_pool.delete_shared_memory()
         for child in self.children:
             child.close_pool()
 
@@ -2813,9 +2813,9 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
     def Terminate(self):
         logger.info("Terminating Python Multiprocessing pool for Op:" + str(self.op_id))
-        self.delete_shared_memory()
         self.close_pool()
         self.abort_watchdog()
+        self.delete_shared_memory()
         self.process_pool = None
 
     def GetPIDs(self):
