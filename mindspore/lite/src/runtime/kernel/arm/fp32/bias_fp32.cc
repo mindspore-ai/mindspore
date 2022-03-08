@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ int BiasCPUKernel::ReSize() {
 }
 
 int BiasCPUKernel::ChooseThreadCuttingstrategy() {
+  split_points_.clear();
   int64_t block_size = MSMAX(total_num_ / op_parameter_->thread_num_, kMinCostPerThread);
   int64_t remain_data = total_num_ - block_size * op_parameter_->thread_num_;
   int64_t split_point = 0;

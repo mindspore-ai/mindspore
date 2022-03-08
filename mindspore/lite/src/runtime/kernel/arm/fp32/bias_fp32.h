@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,7 @@ class BiasCPUKernel : public InnerKernel {
  public:
   BiasCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
-    bias_param_ = reinterpret_cast<ArithmeticParameter *>(parameter);
-  }
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~BiasCPUKernel() override = default;
 
   int Prepare() override;
@@ -37,7 +35,6 @@ class BiasCPUKernel : public InnerKernel {
 
  private:
   int ChooseThreadCuttingstrategy();
-  ArithmeticParameter *bias_param_;
   bool batch_priority_{false};
   int64_t inner_num_{0};
   int64_t outer_num_{0};
