@@ -974,7 +974,7 @@ void CheckInterpretNodeLineInfos() {
   }
   ss << "\n";
   // Print the codes run in JIT Fallback.
-  MS_LOG(WARNING) << ss.str();
+  MS_LOG(INFO) << ss.str();
   InterpretNodeRecorder::GetInstance().Clear();
 }
 
