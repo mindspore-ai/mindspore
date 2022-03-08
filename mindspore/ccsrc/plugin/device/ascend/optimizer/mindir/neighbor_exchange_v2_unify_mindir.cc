@@ -286,7 +286,10 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   std::vector<int64_t> recv_lens =
     common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_or_grad, kAttrRecvLens);
   std::string group = common::AnfAlgo::GetNodeAttr<std::string>(neighbor_exchange_v2_or_grad, kAttrGroup);
-
+  std::vector<uint32_t> group_rank_ids =
+    common::AnfAlgo::HasNodeAttr(kAttrGroupRankIds, neighbor_exchange_v2_or_grad)
+      ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(neighbor_exchange_v2_or_grad, kAttrGroupRankIds)
+      : std::vector<uint32_t>();
   // get split nodes output, split_outputs: [top_bottom, left_right, top_corner, bottom_corner]
   std::vector<std::vector<AnfNodePtr>> split_outputs;
   for (size_t i = 0; i < split_nodes.size(); ++i) {
@@ -350,7 +353,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   common::AnfAlgo::SetNodeAttr(kAttrRecvRankIds, MakeValue<std::vector<int64_t>>(real_recv_rank_ids), all_to_all_v);
   common::AnfAlgo::SetNodeAttr(kAttrRecvType, TypeIdToType(base_dtype), all_to_all_v);
   common::AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>(group), all_to_all_v);
-
+  common::AnfAlgo::SetNodeAttr(kAttrGroupRankIds, MakeValue<std::vector<uint32_t>>(group_rank_ids), all_to_all_v);
   // add depend for input & alltoallv in send_empty condition
   common::AnfAlgo::SetNodeAttr(kAttrNeedDropInput, MakeValue<bool>(need_drop_input), all_to_all_v);
   if (all_to_all_input_num == 0) {
