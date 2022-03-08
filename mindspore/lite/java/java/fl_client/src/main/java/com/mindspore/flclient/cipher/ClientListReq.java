@@ -242,7 +242,7 @@ public class ClientListReq {
             NewArray<byte[]> sSkVu = new NewArray<>();
             sSkVu.setSize(sSize);
             sSkVu.setArray(sSkUv);
-            NewArray bVu = new NewArray();
+            NewArray<byte[]> bVu = new NewArray<>();
             bVu.setSize(bSize);
             bVu.setArray(bUv);
             int sIndex = BaseUtil.byteArray2Integer(Arrays.copyOfRange(decryptShare, 4, 4 + sIndexLen));

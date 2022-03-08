@@ -106,7 +106,7 @@ public class UpdateModel {
         RequestUpdateModelBuilder builder = new RequestUpdateModelBuilder(localFLParameter.getEncryptLevel());
         boolean isPkiVerify = flParameter.isPkiVerify();
         Client client = ClientManager.getClient(flParameter.getFlName());
-        float uploadLoss = client.getUploadLoss();
+        float uploadLoss = client == null ? 0.0f : client.getUploadLoss();
         if (isPkiVerify) {
             Date date = new Date();
             long timestamp = date.getTime();
