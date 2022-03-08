@@ -196,8 +196,9 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
     (*ge_options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
   }
 
+  auto env_ge = common::GetEnv("MS_ENABLE_GE");
   auto training = common::GetEnv("MS_GE_TRAIN");
-  if (training == "1") {
+  if (env_ge == "1" && training == "1") {
     (*ge_options)["ge.graphRunMode"] = "1";
   }
 
@@ -379,8 +380,8 @@ struct DeviceTypeSetRegister {
   DeviceTypeSetRegister() {
     MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
 #if defined(ENABLE_D)
-      auto enable_ge = std::getenv("MS_ENABLE_GE");
-      if (enable_ge != nullptr && std::string(enable_ge) == "1") {
+      auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
+      if (enable_ge == "1") {
         device_type_seter.reset(new (std::nothrow) MsContext("ge", kAscendDevice));
       } else {
         device_type_seter.reset(new (std::nothrow) MsContext("ms", kAscendDevice));

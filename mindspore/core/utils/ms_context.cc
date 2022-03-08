@@ -119,12 +119,10 @@ std::shared_ptr<MsContext> MsContext::GetInstance() {
 
 bool MsContext::set_backend_policy(const std::string &policy) {
   auto policy_new = policy;
-#if defined(ENABLE_D)
-  auto enable_ge = std::getenv("MS_ENABLE_GE");
-  if (enable_ge != nullptr && std::string(enable_ge) == "1") {
+  auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
+  if (enable_ge == "1") {
     policy_new = "ge";
   }
-#endif
   if (policy_map_.find(policy_new) == policy_map_.end()) {
     MS_LOG(ERROR) << "invalid backend policy name: " << policy_new;
     return false;
