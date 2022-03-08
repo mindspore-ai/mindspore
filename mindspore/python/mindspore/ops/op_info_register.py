@@ -410,6 +410,13 @@ class AkgAscendRegOp(AkgRegOp):
         super(AkgAscendRegOp, self).__init__(op_name, "AiCore")
 
 
+class AkgCpuRegOp(AkgRegOp):
+    """Class for AkgCpu op info register"""
+
+    def __init__(self, op_name):
+        super(AkgCpuRegOp, self).__init__(op_name, "LLVM")
+
+
 class AiCPURegOp(CpuRegOp):
     r"""
     Class for AiCPU operator information register.

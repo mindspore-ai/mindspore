@@ -423,7 +423,8 @@ py::list FilterTensorArgs(const py::args &args, bool has_sens = false) {
   py::list only_tensors;
   size_t forward_args_size = has_sens ? size - 1 : size;
   for (size_t i = 0; i < forward_args_size; ++i) {
-    if (py::isinstance<tensor::Tensor>(args[i])) {
+    if (py::isinstance<tensor::Tensor>(args[i]) || py::isinstance<tensor::CSRTensor>(args[i]) ||
+        py::isinstance<tensor::COOTensor>(args[i])) {
       only_tensors.append(args[i]);
     }
   }
@@ -3054,8 +3055,11 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   top_cell()->set_k_pynative_cell_ptr(nullptr);
   BaseRef value = (*run)(arg_list);
   grad_is_running_ = false;
+  FuncGraphPtr fg = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto output_abs = fg->output()->abstract();
   MS_LOG(DEBUG) << "Eval run end " << value.ToString();
-  *ret = BaseRefToPyData(value);
+  *ret = BaseRefToPyData(value, output_abs);
   // Clear device memory resource of top cell when it has been ran.
   auto has_higher_order = std::any_of(top_cell_list_.begin(), top_cell_list_.end(),
                                       [](const TopCellInfoPtr &value) { return !value->is_topest(); });

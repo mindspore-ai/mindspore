@@ -2416,6 +2416,9 @@ class COOTensor(COOTensor_):
          [0, 0, 2, 0],
          [0, 0, 0, 0]]
 
+    Note:
+        This is an experimental feature and is subjected to change.
+
     Args:
         indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
             where N and ndims are the number of `values` and number of dimensions in
@@ -2433,7 +2436,7 @@ class COOTensor(COOTensor_):
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, COOTensor
-        >>> indices = Tensor([[0, 1], [1, 2]])
+        >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
         >>> values = Tensor([1, 2], dtype=ms.float32)
         >>> shape = (3, 4)
         >>> x = COOTensor(indices, values, shape)
@@ -2448,29 +2451,52 @@ class COOTensor(COOTensor_):
 
     def __init__(self, indices=None, values=None, shape=None, coo_tensor=None):
         "Init COOTensor"
+        self.init_finished = False
+        # Directly init a COOTensor from another COOTensor
         if indices is None and values is None and shape is None and coo_tensor is not None:
             if not isinstance(coo_tensor, (COOTensor, COOTensor_)):
                 raise TypeError("If only one input provided, it must be a COOTensor.")
             COOTensor_.__init__(self, coo_tensor)
+        # Init a COOTensor from indices, values and shape
         else:
             if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
                 raise TypeError("Inputs must follow: COOTensor(indices, values, shape).")
+            validator.check_coo_tensor_shape(indices.shape, values.shape, shape)
+            validator.check_coo_tensor_dtype(indices.dtype)
             COOTensor_.__init__(self, indices, values, shape)
+        self.init_finished = True
+
+    def __repr__(self):
+        """Avoid PyTest Segfault when COOTensor is not initialized."""
+        if self.init_finished:
+            return COOTensor_.__repr__(self)
+        return ''
 
     @property
     def indices(self):
+        """Return COOTensor's indices."""
         return Tensor(self._indices)
 
     @property
     def values(self):
+        """Return COOTensor's non-zero values."""
         return Tensor(self._values)
 
     @property
     def shape(self):
+        """Return COOTensor's shape."""
         return self._shape
 
     def to_csr(self):
-        "Converts COOTensor to CSRTensor."
+        """
+        Converts COOTensor to CSRTensor.
+
+        Returns:
+            CSRTensor.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+        """
         row_indices = self.indices[:, 0]
         col_indices = self.indices[:, 1]
         idx_dtype = self.indices.dtype
@@ -2483,8 +2509,17 @@ class COOTensor(COOTensor_):
         return CSRTensor(indptr, col_indices, values, self.shape)
 
     def to_dense(self):
+        """
+        Converts COOTensor to Dense Tensor.
+
+        Returns:
+            Tensor.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+        """
         zeros_tensor = tensor_operator_registry.get("zeros")(self.shape, self.values.dtype)
-        return tensor_operator_registry.get("tensor_scatter_update")(
+        return tensor_operator_registry.get("tensor_scatter_add")(
             zeros_tensor, self.indices, self.values)
 
     @property
@@ -2526,8 +2561,8 @@ class COOTensor(COOTensor_):
             >>> indices = Tensor([[0, 1], [1, 2]])
             >>> values = Tensor([1, 2], dtype=ms.float32)
             >>> shape = (3, 4)
-            >>> x = COOTensor(indices, values, shape)
-            >>> print(x.astype(ms.float64).dtype)
+            >>> coo_tensor = COOTensor(indices, values, shape)
+            >>> print(coo_tensor.astype(ms.float64).dtype)
             Float64
         """
         data = self.values.astype(dtype)
@@ -2548,9 +2583,6 @@ class CSRTensor(CSRTensor_):
     Constructs a sparse tensor in CSR (Compressed Sparse Row) format, with specified
     values indicated by `values` and row and column positions indicated by `indptr`
     and `indices`.
-
-    Alternatively, CSRTensor can be initialized by passing another CSRTensor as input.
-    Currently this constructor can only be supported in PyNative Mode.
 
     Note:
         This is an experimental feature and is subjected to change.
@@ -2576,13 +2608,11 @@ class CSRTensor(CSRTensor_):
         >>> import mindspore as ms
         >>> from mindspore import Tensor, CSRTensor
         >>> # initialize a csr_tensor with indptr, indices, values and shape
-        >>> indptr = Tensor([0, 1, 2])
-        >>> indices = Tensor([0, 1])
+        >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+        >>> indices = Tensor([0, 1], dtype=ms.int32)
         >>> values = Tensor([1, 2], dtype=ms.float32)
         >>> shape = (2, 4)
         >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
-        >>> # initialize a csr_tensor from another csr_tensor
-        >>> csr_tensor_2 = CSRTensor(csr_tensor=csr_tensor)
         >>> # access a data member of CSRTensor
         >>> print(indptr == csr_tensor.indptr)
         [ True  True  True]
@@ -2590,24 +2620,18 @@ class CSRTensor(CSRTensor_):
 
     def __init__(self, indptr=None, indices=None, values=None, shape=None, csr_tensor=None):
         self.init_finished = False
-        # Case 1: directly init a CSRTensor from another CSRTensor
+        # Directly init a CSRTensor from another CSRTensor
         if indptr is None and indices is None and values is None and shape is None:
             if not isinstance(csr_tensor, (CSRTensor, CSRTensor_)):
                 raise TypeError("If only one input provided, it must be a CSRTensor.")
             CSRTensor_.__init__(self, csr_tensor)
-        # Case 2: init a CSRTensor from indptr, indices, values and shape
+        # Init a CSRTensor from indptr, indices, values and shape
         else:
-            if (indptr is None or indices is None or values is None or shape is None):
-                raise TypeError("Inputs must follow: CSRTensor(indptr, indices, values, shape).")
             if not (isinstance(indptr, Tensor) and isinstance(indices, Tensor) \
                     and isinstance(values, Tensor) and isinstance(shape, tuple)):
                 raise TypeError("Inputs must follow: CSRTensor(tensor, tensor, tensor, tuple).")
-            if len(shape) != 2 or shape[0] + 1 != indptr.shape[0] or shape[1] <= 0:
-                raise ValueError("Shape length should be 2, shape[0] should equal to indptr.shape[0] - 1")
-            if indptr.dtype not in (mstype.int16, mstype.int32, mstype.int64):
-                raise TypeError("indptr must have integer data type.")
-            if indices.dtype not in (mstype.int16, mstype.int32, mstype.int64):
-                raise TypeError("indices must have integer data type.")
+            validator.check_csr_tensor_shape(indptr.shape, indices.shape, values.shape, shape)
+            validator.check_csr_tensor_dtype(indptr.dtype, indices.dtype)
             CSRTensor_.__init__(self, indptr, indices, values, shape)
         self.init_finished = True
 
@@ -2630,18 +2654,22 @@ class CSRTensor(CSRTensor_):
 
     @property
     def indptr(self):
+        """Return CSRTensor's row indices pointers."""
         return Tensor(self._indptr)
 
     @property
     def indices(self):
+        """Return CSRTensor's column indices."""
         return Tensor(self._indices)
 
     @property
     def values(self):
+        """Return CSRTensor's non-zero values."""
         return Tensor(self._values)
 
     @property
     def shape(self):
+        """Return CSRTensor's shape."""
         return self._shape
 
     @property
@@ -2700,7 +2728,7 @@ class CSRTensor(CSRTensor_):
             >>> values = Tensor([1, 2], dtype=ms.float32)
             >>> shape = (2, 4)
             >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
-            >>> print(x.astype(ms.float64).dtype)
+            >>> print(csr_tensor.astype(ms.float64).dtype)
             Float64
         """
         data = self.values.astype(dtype)
@@ -2717,7 +2745,7 @@ class CSRTensor(CSRTensor_):
             Tensor.
 
         Supported Platforms:
-            ``GPU``
+            ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor, CSRTensor
@@ -2745,7 +2773,7 @@ class CSRTensor(CSRTensor_):
             Tensor, the dtype is the same as `sparse_tensor.values`.
 
         Supported Platforms:
-            ``GPU``
+            ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor, CSRTensor
@@ -2762,7 +2790,15 @@ class CSRTensor(CSRTensor_):
         return tensor_operator_registry.get("csr_reduce_sum")(self, axis)
 
     def abs(self):
-        """Return absolute value element-wisely."""
+        """
+        Return absolute value element-wisely.
+
+        Returns:
+            CSRTensor, with all values being non-negative.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+        """
         data = self.values.abs()
         return CSRTensor(self.indptr, self.indices, data, self.shape)
 

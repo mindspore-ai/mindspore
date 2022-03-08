@@ -173,7 +173,7 @@ const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const An
     auto new_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), inputs[sparse_index], cons_node}, func_graph);
     new_node->set_abstract(node->abstract());
     return new_node;
-    // ComputeSparse node: SparseTensorDenseMatmul, CSRDenseMul, CSRReduceSum
+    // ComputeSparse node: SparseTensorDenseMatmul, CSRMul, CSRReduceSum
   } else if (sparse_op_set.find(prim_name) != sparse_op_set.end()) {
     const auto &inputs = cnode->inputs();
     std::vector<AnfNodePtr> new_inputs;

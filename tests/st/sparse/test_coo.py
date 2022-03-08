@@ -37,6 +37,7 @@ def compare_coo(coo1, coo2):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_make_coo():
     """
@@ -96,6 +97,7 @@ def test_coo_tensor_in_while():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_coo_method():
     """

@@ -859,6 +859,46 @@ class Validator:
     def check_type_support(dtype, device, supported_dtypes):
         return dtype in supported_dtypes or not context.get_context('device_target') == device
 
+    @staticmethod
+    def check_csr_tensor_shape(indptr_shp, indices_shp, values_shp, csr_shp):
+        """Checks input tensors' shapes for CSRTensor."""
+        if len(csr_shp) != 2:
+            raise ValueError("Currently only supports 2-dimensional csr tensor.")
+        if len(values_shp) != 1:
+            raise ValueError(f"Values must be a 1-dimensional tensor, but got a {len(values_shp)} dimension tensor.")
+        if len(indices_shp) != 1:
+            raise ValueError(f"Indices must be a 1-dimensional tensor, but got a {len(indices_shp)} dimension tensor.")
+        if len(indptr_shp) != 1:
+            raise ValueError(f"Indptr must be a 1-dimensional tensor, but got a {len(indptr_shp)} dimension tensor.")
+        if csr_shp[0] + 1 != indptr_shp[0]:
+            raise ValueError(f"Indptr must have length (1 + shape[0]), but got: {indptr_shp[0]}")
+
+    @staticmethod
+    def check_csr_tensor_dtype(indptr_dtype, indices_dtype):
+        """Checks input tensors' data types for CSRTensor."""
+        if indptr_dtype not in (mstype.int16, mstype.int32, mstype.int64):
+            raise TypeError("Indptr must have integer data type.")
+        if indices_dtype not in (mstype.int16, mstype.int32, mstype.int64):
+            raise TypeError("Indices must have integer data type.")
+
+    @staticmethod
+    def check_coo_tensor_shape(indices_shp, values_shp, coo_shp):
+        """Checks input tensors' shapes for COOTensor."""
+        if len(coo_shp) != 2:
+            raise ValueError("Currently only supports 2-dimensional coo tensor.")
+        if len(indices_shp) != 2:
+            raise ValueError(f"Indices must be a 2-dimensional tensor, but got a {len(indices_shp)} dimension tensor.")
+        if len(values_shp) != 1:
+            raise ValueError(f"Values must be a 1-dimensional tensor, but got a {len(values_shp)} dimension tensor.")
+        if indices_shp[0] != values_shp[0]:
+            raise ValueError(f"Indices.shape must be (N, 2), where N equals to number of nonzero values in coo tensor.")
+
+    @staticmethod
+    def check_coo_tensor_dtype(indices_dtype):
+        """Checks input tensors' data types for COOTensor."""
+        if indices_dtype not in (mstype.int16, mstype.int32, mstype.int64):
+            raise TypeError("Indices must have integer data type.")
+
 
 def check_input_format(input_param):
     """Judge input format."""

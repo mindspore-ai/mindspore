@@ -31,7 +31,7 @@ class CSRReduceSum(PrimitiveWithInfer):
         Tensor, the dtype is the same as `sparse_tensor.values`.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -79,7 +79,7 @@ class CSRMV(PrimitiveWithInfer):
         Tensor.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -115,7 +115,7 @@ class CSRMV(PrimitiveWithInfer):
 
 class CSRMul(PrimitiveWithInfer):
     """
-    Elemwise multiplication on a CSRTensor and a dense tensor.
+    Elemwise multiplication of a CSRTensor and a dense tensor.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -132,7 +132,7 @@ class CSRMul(PrimitiveWithInfer):
         Tensor, the dtype and shape is the same as `sparse_tensor.values`.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -183,7 +183,7 @@ class CSRGather(PrimitiveWithInfer):
     dimensions are the same as ``dense[2:]``.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.nn as nn
@@ -228,7 +228,7 @@ class CSR2COO(PrimitiveWithInfer):
         Tensor, the dtype is the same as `indptr` and has shape (`nnz`,).
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.nn as nn
@@ -268,7 +268,7 @@ class COO2CSR(PrimitiveWithInfer):
         Tensor, the dtype is the same as `row_indices` and has shape ('height' + 1,).
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.nn as nn
@@ -310,7 +310,7 @@ class CSRDiv(PrimitiveWithInfer):
         Tensor, the dtype and shape is the same as `sparse_tensor.values`.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

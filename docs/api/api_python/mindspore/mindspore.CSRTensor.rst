@@ -3,7 +3,11 @@ mindspore.CSRTensor
 
 .. py:class:: mindspore.CSRTensor(indptr=None, indices=None, values=None, shape=None)
 
-    用来表示某一张量在给定索引上非零元素的集合。
+    用来表示某一张量在给定索引上非零元素的集合，其中行索引由`indptr`表示，列索引由`indices`
+    表示，非零值由`values`表示。
+
+    .. note::
+        - 这是一个实验特性，在未来可能会发生API的变化。
 
     **参数：**
 
@@ -35,7 +39,7 @@ mindspore.CSRTensor
     .. py:method:: shape
         :property:
 
-        稀疏矩阵的稠密形状。
+        返回稀疏矩阵的稠密形状。
 
     .. py:method:: dtype
         :property:
