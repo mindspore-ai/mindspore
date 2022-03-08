@@ -40,8 +40,12 @@ Area::Area(size_t id, const PrimOpPtr &prim_op, bool is_output, const HashMap<No
     : hd_(new NodeHandle(this, prim_op)), unique_id_(id), is_output_(is_output), ops_(1, prim_op) {
   // link inputs of the handle node
   for (auto &inp : prim_op->inputs()) {
+    auto input_relation = GetRelation(prim_op, inp);
+    if (pattern() == NodePattern::ELEMWISE && input_relation == EdgeRelation::BROADCAST) {
+      hd_->compute_type_ = NodePattern::BROADCAST;
+    }
     if (auto inp_area_iter = node_area_map.find(inp); inp_area_iter != node_area_map.end()) {
-      (void)inputs_with_relation_.emplace_back(std::make_pair(inp_area_iter->second, GetRelation(prim_op, inp)));
+      (void)inputs_with_relation_.emplace_back(std::make_pair(inp_area_iter->second, input_relation));
     }
   }
   MakeUniqueAndSyncInputs();
