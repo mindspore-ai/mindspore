@@ -11,6 +11,30 @@ mindspore.common.initializer
 
     - **kwargs** (dict) – `Initializer` 的关键字参数。
 
+.. py:function:: mindspore.common.initializer.initializer(init, shape=None, dtype=mstype.float32)
+
+    创建并初始化一个Tensor。
+
+    **参数：**
+
+    - **init** (Union[Tensor, str, Initializer, numbers.Number]) – 初始化方式。
+
+      - **str** - `init` 是继承自 `Initializer` 的类的别名，实际使用时会调用相应的类。`init` 的值可以是"normal"、"ones"或"zeros"等。
+      - **Initializer** - `init` 是继承自 `Initializer` ，用于初始化Tensor的类。
+      - **numbers.Number** - 用于初始化Tensor的常量。
+
+    - **shape** (Union[[tuple, list, int]) - 被初始化的Tensor的shape，默认值为None。
+    - **dtype** (mindspore.dtype) – 被初始化的Tensor的数据类型，默认值为 `mindspore.float32` 。
+
+    **返回：**
+
+    Tensor。
+
+    **异常：**
+
+    - **TypeError** - 参数 `init` 的类型不正确。
+    - **ValueError** - 当 `init` 传入Tensor对象时， `init` 的shape与形参 `shape` 内的数值不一致。
+
 .. py:class:: mindspore.common.initializer.TruncatedNormal(sigma=0.01)
 
     生成一个服从截断正态（高斯）分布的随机数组用于初始化Tensor。
@@ -105,30 +129,6 @@ mindspore.common.initializer
 
 
 
-
-.. py:function:: mindspore.common.initializer.initializer(init, shape=None, dtype=mstype.float32)
-
-    创建并初始化一个Tensor。
-
-    **参数：**
-
-    - **init** (Union[Tensor, str, Initializer, numbers.Number]) – 初始化方式。
-
-      - **str** - `init` 是继承自 `Initializer` 的类的别名，实际使用时会调用相应的类。`init` 的值可以是"normal"、"ones"或"zeros"等。
-      - **Initializer** - `init` 是继承自 `Initializer` ，用于初始化Tensor的类。
-      - **numbers.Number** - 用于初始化Tensor的常量。
-
-    - **shape** (Union[[tuple, list, int]) - 被初始化的Tensor的shape，默认值为None。
-    - **dtype** (mindspore.dtype) – 被初始化的Tensor的数据类型，默认值为 `mindspore.float32` 。
-
-    **返回：**
-
-    Tensor。
-
-    **异常：**
-
-    - **TypeError** - 参数 `init` 的类型不正确。
-    - **ValueError** - 当 `init` 传入Tensor对象时， `init` 的shape与形参 `shape` 内的数值不一致。
 
 .. automodule:: mindspore.common.initializer
     :members:
