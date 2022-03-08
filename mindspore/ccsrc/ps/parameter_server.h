@@ -239,7 +239,7 @@ class ParameterServer {
   std::mutex access_weight_mutex_;
   std::unique_ptr<std::thread> thread_;
   std::unique_ptr<std::thread> persist_thread_;
-  std::shared_ptr<core::ServerNode> server_node_;
+  std::shared_ptr<core::PSServerNode> server_node_;
   std::map<Key, ParameterPtr> embedding_tables_;
 
   friend class ServerHandler;

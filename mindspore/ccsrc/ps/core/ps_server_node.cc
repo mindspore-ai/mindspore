@@ -19,6 +19,90 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+bool PSServerNode::Start(const uint32_t &timeout) {
+  MS_LOG(INFO) << "[Parameter Server start]: 1. Begin to start parameter server node!";
+  Initialize();
+  Register(client_to_scheduler_);
+  MS_LOG(INFO) << "[Parameter Server start]: 4. The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " successfully registered to the scheduler!";
+
+  StartHeartbeatTimer();
+  MS_LOG(INFO) << "[Parameter Server start]: 5. Server start heartbeat timer!";
+
+  if (!WaitForStart(timeout)) {
+    MS_LOG(ERROR) << "Parameter Start server node timeout!";
+    return false;
+  }
+  MsException::Instance().CheckException();
+  MS_LOG(INFO) << "[Parameter Server start]: 6. Successfully start server node!";
+  return true;
+}
+
+void PSServerNode::Initialize() {
+  config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
+  MS_EXCEPTION_IF_NULL(config_);
+  if (!config_->Initialize()) {
+    MS_LOG(INFO) << "The config file is empty, then init node by context.";
+    InitNodeNum();
+  } else {
+    if (!Recover()) {
+      MS_LOG(WARNING) << "Recover the server node is failed.";
+    }
+  }
+  InitServerHandler();
+  CreateTcpServer();
+  InitNodeInfo(NodeRole::SERVER);
+
+  MS_LOG(INFO) << "[Parameter Server start]: 2. Server node create tcp server successful!";
+
+  InitCommandHandler();
+  if (!InitClientToScheduler()) {
+    MS_LOG(EXCEPTION) << "Parameter Server node connect to scheduler timedout!";
+  }
+  InitClientToServer();
+  is_already_stopped_ = false;
+  MS_LOG(INFO) << "[Parameter Server start]: 3. Server node crete tcp client to scheduler successful!";
+}
+
+bool PSServerNode::Stop() {
+  MS_LOG(INFO) << "Stop parameter server node!";
+  MS_ERROR_IF_NULL_W_RET_VAL(client_to_scheduler_, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(server_, false);
+  if (!is_already_stopped_.load()) {
+    is_already_stopped_ = true;
+    is_finish_ = true;
+    client_to_scheduler_->Stop();
+    if (!connected_nodes_.empty()) {
+      for (auto &connected_node : connected_nodes_) {
+        connected_node.second->Stop();
+      }
+    }
+    server_->Stop();
+  }
+  return true;
+}
+
+bool PSServerNode::Finish(const uint32_t &timeout) {
+  if (is_already_finished_) {
+    MS_LOG(INFO) << "Parameter Server node already finish!";
+    return true;
+  }
+  is_already_finished_ = true;
+  if (is_already_stopped_) {
+    MS_LOG(INFO) << "The node has already stopped.";
+    return true;
+  }
+
+  MS_LOG(INFO) << "[Parameter Server finish]: 1. Begin to finish server node!";
+  bool res = Disconnect(client_to_scheduler_, timeout);
+  if (res) {
+    MS_LOG(INFO) << "[Parameter Server finish]: 2. Successfully finish server node!";
+  } else {
+    MS_LOG(WARNING) << "[Parameter Server finish]: 2. finish server node timeout!";
+  }
+  return res;
+}
+
 void PSServerNode::Register(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();

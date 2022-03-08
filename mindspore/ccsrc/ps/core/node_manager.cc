@@ -59,8 +59,8 @@ void NodeManager::ReAddNodeIfNotExists(const std::string &node_id, const std::st
     recovery_node_infos[node_id].ip_ = ip;
     recovery_node_infos[node_id].port_ = static_cast<uint16_t>(port);
     registered_nodes_info_[node_id] = recovery_node_infos[node_id];
-    MS_LOG(ERROR) << "The node id: " << node_id << " is recovery successful!"
-                  << ", ip: " << ip << ", port: " << port;
+    MS_LOG(INFO) << "The node id: " << node_id << " is recovery successful!"
+                 << ", ip: " << ip << ", port: " << port;
   }
 }
 
