@@ -275,7 +275,7 @@ tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
   MS_EXCEPTION_IF_NULL(v);
   // Currently we only deal with the scalar tuple
   if (!v->isa<Scalar>()) {
-    MS_LOG(WARNING) << "The value " << v << "of tuple is not a scalar";
+    MS_LOG(DEBUG) << "The value " << v << "of tuple is not a scalar";
     return nullptr;
   }
   ScalarPtr scalar = v->cast<ScalarPtr>();
