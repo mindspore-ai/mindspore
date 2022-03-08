@@ -71,6 +71,7 @@ if(ENABLE_MINDDATA)
             ./fl/*.cc
             ./distributed/persistent/*.cc
             ./distributed/rpc/tcp/*.cc
+            ./distributed/cluster/topology/*.cc
             ./cxx_api/*.cc
             ./tbe/*.cc
             ./mindapi/*.cc
@@ -183,6 +184,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/distributed/cluster/cluster_context.cc"
         "../../../mindspore/ccsrc/distributed/persistent/*.cc"
         "../../../mindspore/ccsrc/distributed/rpc/tcp/*.cc"
+        "../../../mindspore/ccsrc/distributed/cluster/topology/*.cc"
         "../../../mindspore/ccsrc/profiler/device/ascend/*.cc"
         "../../../mindspore/ccsrc/profiler/device/profiling.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.c"
