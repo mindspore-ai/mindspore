@@ -25,6 +25,7 @@ from .dump import set_dump
 from .parameter import Parameter, ParameterTuple
 from .seed import set_seed, get_seed
 from .tensor import Tensor, RowTensor, SparseTensor, COOTensor, CSRTensor
+from .variable import Variable
 
 # symbols from dtype
 __all__ = [
@@ -59,5 +60,6 @@ __all__.extend([
     "dtype", "_convert_data",
     "set_seed", "get_seed",  # random seed
     "set_dump",
-    "ms_memory_recycle"
+    "ms_memory_recycle",
+    "Variable"
 ])

@@ -802,6 +802,38 @@ void FlatValueTupleValue(const ValuePtrList &value, ValuePtrList *flatted_value)
   }
 }
 
+void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
+  if (utils::isa<ValueSequencePtr>(arg)) {
+    auto value_sequence = utils::cast<ValueSequencePtr>(arg);
+    MS_EXCEPTION_IF_NULL(value_sequence);
+    auto sequence_value = value_sequence->value();
+    for (auto &value : sequence_value) {
+      MS_EXCEPTION_IF_NULL(value);
+      if (value->isa<tensor::Tensor>()) {
+        (void)flatted_value->emplace_back(value);
+      } else {
+        FlattenValue(value, flatted_value);
+      }
+    }
+  } else if (utils::isa<ValueDictionaryPtr>(arg)) {
+    auto value_dict = utils::cast<ValueDictionaryPtr>(arg);
+    MS_EXCEPTION_IF_NULL(value_dict);
+    auto dict_value = value_dict->value();
+    for (auto &iter : dict_value) {
+      auto value = iter.second;
+      MS_EXCEPTION_IF_NULL(value);
+      if (value->isa<tensor::Tensor>()) {
+        (void)flatted_value->emplace_back(value);
+      } else {
+        FlattenValue(value, flatted_value);
+      }
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "The value input to flatten should only contains be sequence or dictionary, but it is "
+                      << arg.ToString();
+  }
+}
+
 void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
                      size_t index, std::vector<tensor::TensorPtr> *input_tensor) {
   const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
@@ -814,11 +846,8 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
     (void)input_tensor->emplace_back(nullptr);
     return;
   }
-  auto value_tuple = utils::cast<ValueTuplePtr>(args[position]);
-  MS_EXCEPTION_IF_NULL(value_tuple);
-  auto value_tuple_value = value_tuple->value();
   ValuePtrList flatted_value_tuple_value;
-  FlatValueTupleValue(value_tuple_value, &flatted_value_tuple_value);
+  FlattenValue(args[position], &flatted_value_tuple_value);
   if (index >= flatted_value_tuple_value.size()) {
     MS_LOG(EXCEPTION) << "Index out of flatted_value_tuple_value range, index value is " << index
                       << " and flatted_value_tuple_value size is " << flatted_value_tuple_value.size() << ".";

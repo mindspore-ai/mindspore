@@ -52,6 +52,14 @@ def TupleGetItem(x, index):
         x = x.asnumpy()
         y = x[index]
         return Tensor(y)
+
+    if isinstance(x, dict):
+        count = 0
+        for value in x.values():
+            if count == index:
+                return value
+            count = count + 1
+
     return x[index]
 
 
