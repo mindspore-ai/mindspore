@@ -52,35 +52,28 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
   }
   // try to open file
   std::string file_path_value = file_path.value();
-  {
-    std::lock_guard<std::mutex> lock(dump_csv_lock_);
-    if (file_.is_open()) {
-      return true;
-    }
-    bool first_time_opening = file_path_str_ != path;
-    ChangeFileMode(file_path_value, S_IWUSR);
-    if (first_time_opening) {
-      // remove any possible output from previous runs
-      file_.open(file_path_value, std::ios::out | std::ios::trunc | std::ios::binary);
-    } else {
-      file_.open(file_path_value, std::ios::out | std::ios::app | std::ios::binary);
-    }
-    if (!file_.is_open()) {
-      MS_LOG(WARNING) << "Open file " << file_path_value << " failed." << ErrnoToString(errno);
-      return false;
-    }
-    if (first_time_opening) {
-      file_ << header;
-      (void)file_.flush();
-      file_path_str_ = path;
-    }
-    MS_LOG(INFO) << "Opened file: " << file_path_value;
+  bool first_time_opening = file_path_str_ != path;
+  ChangeFileMode(file_path_value, S_IWUSR);
+  if (first_time_opening) {
+    // remove any possible output from previous runs
+    file_.open(file_path_value, std::ios::out | std::ios::trunc | std::ios::binary);
+  } else {
+    file_.open(file_path_value, std::ios::out | std::ios::app | std::ios::binary);
   }
+  if (!file_.is_open()) {
+    MS_LOG(WARNING) << "Open file " << file_path_value << " failed." << ErrnoToString(errno);
+    return false;
+  }
+  if (first_time_opening) {
+    file_ << header;
+    (void)file_.flush();
+    file_path_str_ = path;
+  }
+  MS_LOG(INFO) << "Opened file: " << file_path_value;
   return true;
 }
 
 void CsvWriter::CloseFile() noexcept {
-  std::lock_guard<std::mutex> lock(dump_csv_lock_);
   if (file_.is_open()) {
     file_.close();
     ChangeFileMode(file_path_str_, S_IRUSR);
@@ -189,7 +182,6 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   }
   shape << ")\"";
   CsvWriter &csv = CsvWriter::GetInstance();
-  csv.Lock();
   csv.WriteToCsv(op_type_);
   csv.WriteToCsv(op_name_);
   csv.WriteToCsv(task_id_);
@@ -216,7 +208,6 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   csv.WriteToCsv(stat.neg_inf_count);
   csv.WriteToCsv(stat.pos_inf_count);
   csv.WriteToCsv(stat.zero_count, true);
-  csv.Unlock();
   return true;
 }
 }  // namespace mindspore

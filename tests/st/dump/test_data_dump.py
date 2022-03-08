@@ -541,7 +541,8 @@ def test_stat_dump_nulls():
             assert output['Max Value'] == 'null'
             assert output['Avg Value'] == 'null'
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -573,7 +574,8 @@ def test_ascend_statistic_dump_kernel_by_kernel():
     run_saved_data_dump_test('test_async_dump', 'statistic')
     del os.environ['GRAPH_OP_RUN']
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -587,7 +589,8 @@ def test_ascend_tensor_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_saved_data_dump_test('test_async_dump', 'tensor')
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

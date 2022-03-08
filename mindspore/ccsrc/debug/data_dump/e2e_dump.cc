@@ -766,35 +766,46 @@ void E2eDump::DumpTensorToFile(const std::string &dump_path, const debugger::dum
   if (dump_tensor_vec.empty()) {
     return;
   }
-  auto default_num_workers = std::max<uint32_t>(1, std::thread::hardware_concurrency() / 4);
-  auto num_threads = std::min<uint32_t>(default_num_workers, dump_tensor_vec.size());
-  uint32_t task_size = dump_tensor_vec.size() / num_threads;
-  uint32_t remainder = dump_tensor_vec.size() % num_threads;
-  std::vector<std::thread> threads;
-  threads.reserve(num_threads);
-  MS_LOG(INFO) << "Number of threads used for A+M dump: " << num_threads;
-  for (size_t t = 0; t < threads.capacity(); t++) {
-    uint32_t start_idx = t * task_size;
-    uint32_t end_idx = start_idx + task_size - 1;
-    if (t == num_threads - 1) {
-      end_idx += remainder;
+  constexpr int kMaxTensorSize = 1048576;
+  if (offset <= kMaxTensorSize) {
+    // If the total tensor size is less than 1Mb, do it in single thread.
+    ConvertFormatForTensors(&dump_tensor_vec, 0, dump_tensor_vec.size() - 1);
+  } else {
+    auto default_num_workers = std::max<uint32_t>(1, std::thread::hardware_concurrency() / 4);
+    auto num_threads = std::min<uint32_t>(default_num_workers, dump_tensor_vec.size());
+    uint32_t task_size = dump_tensor_vec.size() / num_threads;
+    uint32_t remainder = dump_tensor_vec.size() % num_threads;
+    std::vector<std::thread> threads;
+    threads.reserve(num_threads);
+    MS_LOG(INFO) << "Number of threads used for A+M dump: " << num_threads;
+    for (size_t t = 0; t < threads.capacity(); t++) {
+      uint32_t start_idx = t * task_size;
+      uint32_t end_idx = start_idx + task_size - 1;
+      if (t == num_threads - 1) {
+        end_idx += remainder;
+      }
+      threads.emplace_back(std::thread(&E2eDump::ConvertFormatForTensors, &dump_tensor_vec, start_idx, end_idx));
     }
-    threads.emplace_back(std::thread(&E2eDump::ConvertFormatForTensors, std::ref(dump_tensor_vec), start_idx, end_idx));
+    for (auto &thd : threads) {
+      if (thd.joinable()) {
+        thd.join();
+      }
+    }
   }
-
-  for (size_t t = 0; t < threads.capacity(); t++) {
-    threads[t].join();
+  for (auto &dump_tensor_item : dump_tensor_vec) {
+    (void)DumpTensorStatsIfNeeded(dump_tensor_item);
   }
 }
 
-void E2eDump::ConvertFormatForTensors(const std::vector<dump_data_t> &dump_tensor_vec, uint32_t start_idx,
-                                      uint32_t end_idx) {
+void E2eDump::ConvertFormatForTensors(std::vector<dump_data_t> *dump_tensor_vec, uint32_t start_idx, uint32_t end_idx) {
   for (uint32_t idx = start_idx; idx <= end_idx; idx++) {
-    auto succ = ConvertFormatForTensorAndDump(dump_tensor_vec[idx]);
+    auto &dump_data_obj = dump_tensor_vec->at(idx);
+    auto succ = ConvertFormatForOneTensor(&dump_data_obj);
     if (!succ) {
-      MS_LOG(INFO) << "Failed to convert format for tensor " << dump_tensor_vec[idx].dump_file_path << "."
-                   << dump_tensor_vec[idx].in_out_str << "." << dump_tensor_vec[idx].slot;
+      MS_LOG(INFO) << "Failed to convert format for tensor " << dump_data_obj.dump_file_path << "."
+                   << dump_data_obj.in_out_str << "." << dump_data_obj.slot;
     }
+    (void)DumpTensorDataIfNeeded(dump_data_obj);
   }
 }
 
@@ -802,9 +813,35 @@ void E2eDump::ConvertFormatForTensors(const std::vector<dump_data_t> &dump_tenso
  * Feature group: Dump.
  * Target device group: Ascend.
  * Runtime category: Old runtime, MindRT.
+ * Description: It serves for A+M dump. Save tensor into dump path as configured.
+ */
+bool E2eDump::DumpTensorDataIfNeeded(const dump_data_t &dump_tensor_info) {
+  if (!DumpJsonParser::GetInstance().IsTensorDump()) {
+    return true;
+  }
+  // dump_path: dump_dir/op_type.op_name.task_id.stream_id.timestamp
+  std::ostringstream dump_path_ss;
+  dump_path_ss << dump_tensor_info.dump_file_path << "." << dump_tensor_info.in_out_str << "." << dump_tensor_info.slot
+               << "." << dump_tensor_info.format;
+  std::string dump_path_slot = dump_path_ss.str();
+  std::shared_ptr<tensor::Tensor> trans_buf = dump_tensor_info.trans_buf;
+  bool dump_succ = false;
+  if (trans_buf) {
+    dump_succ = DumpJsonParser::DumpToFile(dump_path_slot, trans_buf->data_c(), trans_buf->Size(),
+                                           dump_tensor_info.host_shape, dump_tensor_info.data_type);
+  } else {
+    dump_succ = DumpJsonParser::DumpToFile(dump_path_slot, dump_tensor_info.data_ptr, dump_tensor_info.data_size,
+                                           dump_tensor_info.host_shape, dump_tensor_info.data_type);
+  }
+  return dump_succ;
+}
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
  * Description: It serves for A+M dump. Save statistic of the tensor data into dump path as configured.
  */
-bool DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_info, char *data_ptr) {
+bool E2eDump::DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_info) {
   // dump_path: dump_dir/op_type.op_name.task_id.stream_id.timestamp
   if (!DumpJsonParser::GetInstance().IsStatisticDump()) {
     return true;
@@ -834,10 +871,16 @@ bool DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_info, char *data_ptr
     MS_LOG(ERROR) << "Data type of operator " << file_name << " is not supported by statistic dump";
     return false;
   }
+  std::shared_ptr<tensor::Tensor> trans_buf = dump_tensor_info.trans_buf;
+  if (trans_buf) {
+    data->SetByteSize(trans_buf->Size());
+    data->SetDataPtr(static_cast<char *>(trans_buf->data_c()));
+  } else {
+    data->SetByteSize(dump_tensor_info.data_size);
+    data->SetDataPtr(dump_tensor_info.data_ptr);
+  }
   data->SetType(dump_tensor_info.data_type);
-  data->SetByteSize(dump_tensor_info.data_size);
   data->SetShape(dump_tensor_info.host_shape);
-  data->SetDataPtr(data_ptr);
   return stat_dump.DumpTensorStatsToFile(dump_path.substr(0, pos), data);
 }
 
@@ -845,22 +888,16 @@ bool DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_info, char *data_ptr
  * Feature group: Dump.
  * Target device group: Ascend.
  * Runtime category: Old runtime, MindRT.
- * Description: It serves for A+M dump. Parse each attributes in Dumpdata proto object from device format to mindspore
- * supported format and save tensor data or statistic as configured.
+ * Description: It serves for A+M dump. Convert tensor from device format to host format if needed.
  */
-bool E2eDump::ConvertFormatForTensorAndDump(const dump_data_t &dump_tensor_info) {
-  // dump_path: dump_dir/op_type.op_name.task_id.stream_id.timestamp
-  std::ostringstream dump_path_ss;
-  dump_path_ss << dump_tensor_info.dump_file_path << "." << dump_tensor_info.in_out_str << "." << dump_tensor_info.slot
-               << ".";
-  std::string dump_path_slot = dump_path_ss.str();
+bool E2eDump::ConvertFormatForOneTensor(dump_data_t *dump_tensor_info) {
   bool trans_success = false;
-  auto trans_buf = std::vector<uint8_t>(dump_tensor_info.data_size);
+  auto trans_buf = std::make_shared<tensor::Tensor>(dump_tensor_info->data_type, dump_tensor_info->host_shape);
   // convert format to host format. It can be either NCHW or ND (non 4-dimemsions).
   const uint8_t kNumFourDim = 4;
   std::string host_format;
-  std::string device_format = dump_tensor_info.format;
-  if (dump_tensor_info.host_shape.size() == kNumFourDim) {
+  std::string device_format = dump_tensor_info->format;
+  if (dump_tensor_info->host_shape.size() == kNumFourDim) {
     host_format = kOpFormat_NCHW;
   } else {
     host_format = kOpFormat_ND;
@@ -869,43 +906,28 @@ bool E2eDump::ConvertFormatForTensorAndDump(const dump_data_t &dump_tensor_info)
     auto iter = kSuppTransFormatPair.find(std::make_pair(device_format, host_format));
     if (iter == kSuppTransFormatPair.end()) {
       MS_LOG(INFO) << "Do not support convert from format " << device_format << " to " << host_format << " for tensor "
-                   << dump_path_slot;
+                   << dump_tensor_info->dump_file_path << "." << dump_tensor_info->in_out_str << "."
+                   << dump_tensor_info->slot;
     } else {
-      const trans::FormatArgs format_args{dump_tensor_info.data_ptr,
-                                          dump_tensor_info.data_size,
+      const trans::FormatArgs format_args{dump_tensor_info->data_ptr,
+                                          dump_tensor_info->data_size,
                                           host_format,
                                           device_format,
-                                          dump_tensor_info.host_shape,
-                                          dump_tensor_info.device_shape,
-                                          dump_tensor_info.data_type};
-      auto group = dump_tensor_info.sub_format > 1 ? dump_tensor_info.sub_format : 1;
-      trans_success = trans::TransFormatFromDeviceToHost(format_args, trans_buf.data(), group);
+                                          dump_tensor_info->host_shape,
+                                          dump_tensor_info->device_shape,
+                                          dump_tensor_info->data_type};
+      auto group = dump_tensor_info->sub_format > 1 ? dump_tensor_info->sub_format : 1;
+      trans_success = trans::TransFormatFromDeviceToHost(format_args, trans_buf->data_c(), group);
       if (!trans_success) {
         MS_LOG(ERROR) << "Trans format failed.";
       }
     }
   }
-  // dump tensor data into npy file
-  bool dump_success = true;
   if (trans_success) {
-    dump_success = DumpTensorStatsIfNeeded(dump_tensor_info, reinterpret_cast<char *>(trans_buf.data()));
-    if (DumpJsonParser::GetInstance().IsTensorDump()) {
-      dump_path_slot += host_format;
-      dump_success = DumpJsonParser::DumpToFile(dump_path_slot, trans_buf.data(), dump_tensor_info.data_size,
-                                                dump_tensor_info.host_shape, dump_tensor_info.data_type) &&
-                     dump_success;
-    }
-  } else {
-    dump_success = DumpTensorStatsIfNeeded(dump_tensor_info, dump_tensor_info.data_ptr);
-
-    if (DumpJsonParser::GetInstance().IsTensorDump()) {
-      dump_path_slot += device_format;
-      dump_success = DumpJsonParser::DumpToFile(dump_path_slot, dump_tensor_info.data_ptr, dump_tensor_info.data_size,
-                                                dump_tensor_info.host_shape, dump_tensor_info.data_type) &&
-                     dump_success;
-    }
+    dump_tensor_info->format = host_format;
+    dump_tensor_info->trans_buf = trans_buf;
   }
-  return dump_success;
+  return trans_success;
 }
 
 uint64_t UnpackUint64Value(char *ptr) {
