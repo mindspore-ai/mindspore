@@ -103,7 +103,7 @@ def test_outermost_net_pass_parameter():
            "support bool, int, float, None, tensor, " \
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
            "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but the 1th arg type is <class 'mindspore.common.parameter.ParameterTensor'>, " \
+           "but the 1th arg type is <class 'mindspore.common.parameter.Parameter'>, " \
            "value is 'Parameter (name=weight, shape=(2, 2), dtype=Float32, requires_grad=True)'" \
            in str(err.value)
 
