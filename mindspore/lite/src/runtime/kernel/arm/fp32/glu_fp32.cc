@@ -16,12 +16,10 @@
 
 #include "src/runtime/kernel/arm/fp32/glu_fp32.h"
 #include <vector>
-#include "schema/model_generated.h"
-#include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/base/split_base.h"
-#include "src/runtime/kernel/arm/fp32/activation_fp32.h"
-#include "src/runtime/kernel/arm/fp32/arithmetic_fp32.h"
+#include "nnacl/fp32/activation_fp32.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

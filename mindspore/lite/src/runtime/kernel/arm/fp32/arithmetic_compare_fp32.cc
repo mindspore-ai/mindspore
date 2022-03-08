@@ -51,10 +51,10 @@ void ArithmeticCompareCPUKernel::InitRunFunction(int primitive_type) {
   }
 }
 
-int ArithmeticCompareCPUKernel::DoExecute(const void *input0, const void *input1, void *output, int size, bool is_opt) {
+int ArithmeticCompareCPUKernel::DoExecute(const void *input0, const void *input1, void *output, int64_t size) {
   int ret = RET_OK;
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-    if (is_opt) {
+    if (scalar_opt_) {
       CHECK_NULL_RETURN(opt_func_fp32_);
       ret = opt_func_fp32_(reinterpret_cast<const float *>(input0), reinterpret_cast<const float *>(input1),
                            reinterpret_cast<uint8_t *>(output), size, param_);
@@ -64,7 +64,7 @@ int ArithmeticCompareCPUKernel::DoExecute(const void *input0, const void *input1
                        reinterpret_cast<uint8_t *>(output), size);
     }
   } else if (in_tensors_[0]->data_type() == kNumberTypeInt || in_tensors_[0]->data_type() == kNumberTypeInt32) {
-    if (is_opt) {
+    if (scalar_opt_) {
       CHECK_NULL_RETURN(opt_func_int32_);
       ret = opt_func_int32_(reinterpret_cast<const int *>(input0), reinterpret_cast<const int *>(input1),
                             reinterpret_cast<uint8_t *>(output), size, param_);
@@ -76,60 +76,6 @@ int ArithmeticCompareCPUKernel::DoExecute(const void *input0, const void *input1
   } else {
     MS_LOG(ERROR) << "Error Operator type " << kNumberTypeInt32;
     return RET_ERROR;
-  }
-  return ret;
-}
-
-int ArithmeticCompareCPUKernel::CalcArithmeticByBatch(int task_id) {
-  if (break_pos_ > ARITHMETIC_SUPPORT_DIMS_NUM || param_->out_strides_[break_pos_ - 1] == 0) {
-    MS_LOG(ERROR) << "param_->out_strides_[break_pos_ - 1] is 0 or break_pos_ is > 10";
-    return RET_ERROR;
-  }
-
-  int batch_per_thread = UP_DIV(out_batch_, op_parameter_->thread_num_);
-  int start_batch = batch_per_thread * task_id;
-  int end_batch = MSMIN(start_batch + batch_per_thread, out_batch_);
-  int ret = RET_ERROR;
-  for (int i = start_batch; i < end_batch; i++) {
-    batch_a_ptr_ = static_cast<uint8_t *>(input0_ptr_) + a_offset_[i] * a_stride_size_ * data_type_len_;
-    batch_b_ptr_ = static_cast<uint8_t *>(input1_ptr_) + b_offset_[i] * b_stride_size_ * data_type_len_;
-    batch_c_ptr_ = static_cast<uint8_t *>(output_ptr_) + i * c_stride_size_ * sizeof(uint8_t);
-    if (batch_scalar_) {
-      ret = DoExecute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, true);
-    } else {
-      ret = DoExecute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, false);
-    }
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "failed to calculate.";
-      return RET_ERROR;
-    }
-  }
-  return ret;
-}
-
-int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
-  if (split_by_batch_) {
-    return CalcArithmeticByBatch(task_id);
-  }
-
-  int64_t element_num = out_tensors_[0]->ElementsNum();
-  auto ret = RET_ERROR;
-  int stride = UP_DIV(element_num, op_parameter_->thread_num_);
-  int count = MSMIN(stride, element_num - stride * task_id);
-  if (count <= 0) {
-    return RET_OK;
-  }
-  CHECK_LESS_RETURN(ARITHMETIC_SUPPORT_DIMS_NUM, param_->ndim_);
-  int in_offset = stride * task_id * data_type_len_;
-  int out_offset = stride * task_id * sizeof(uint8_t);
-  if (scalar_) {
-    if (param_->in_elements_num0_ == 1) {
-      ret = DoExecute(batch_a_ptr_, batch_b_ptr_ + in_offset, batch_c_ptr_ + out_offset, count, true);
-    } else {
-      ret = DoExecute(batch_a_ptr_ + in_offset, batch_b_ptr_, batch_c_ptr_ + out_offset, count, true);
-    }
-  } else {
-    ret = DoExecute(batch_a_ptr_ + in_offset, batch_b_ptr_ + in_offset, batch_c_ptr_ + out_offset, count, false);
   }
   return ret;
 }

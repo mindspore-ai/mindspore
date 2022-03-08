@@ -21,6 +21,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/int8/arithmetic.cl.inc"
+#include "nnacl/arithmetic.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -34,8 +35,12 @@ using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::EltwiseMode_MAXIMUM;
 using mindspore::schema::EltwiseMode_PROD;
 using mindspore::schema::EltwiseMode_SUM;
+using mindspore::schema::PrimitiveType_AddFusion;
 using mindspore::schema::PrimitiveType_BiasAdd;
+using mindspore::schema::PrimitiveType_DivFusion;
 using mindspore::schema::PrimitiveType_Eltwise;
+using mindspore::schema::PrimitiveType_MulFusion;
+using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::kernel {
 int ArithmeticInt8OpenCLKernel::CheckSpecs() {

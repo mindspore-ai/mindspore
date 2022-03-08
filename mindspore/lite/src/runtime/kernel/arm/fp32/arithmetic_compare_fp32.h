@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/fp32/arithmetic_fp32.h"
-#include "nnacl/fp32/arithmetic_compare_fp32.h"
 
 namespace mindspore::kernel {
 class ArithmeticCompareCPUKernel : public ArithmeticCPUKernel {
@@ -41,20 +40,15 @@ class ArithmeticCompareCPUKernel : public ArithmeticCPUKernel {
                                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : ArithmeticCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ArithmeticCompareCPUKernel() override = default;
-  int DoArithmetic(int task_id) override;
-
- protected:
-  void InitRunFunction(int primitive_type) override;
-  int DoExecute(const void *input0, const void *input1, void *output, int size, bool is_opt) override;
-  int CalcArithmeticByBatch(int task_id) override;
 
  private:
-  ArithmeticCompareFp32Func func_fp32_ = nullptr;
-  ArithmeticCompareIntFunc func_int32_ = nullptr;
-  ArithmeticOptCompareFp32Func opt_func_fp32_ = nullptr;
-  ArithmeticOptCompareIntFunc opt_func_int32_ = nullptr;
+  void InitRunFunction(int primitive_type) override;
+  int DoExecute(const void *input0, const void *input1, void *output, int64_t size) override;
+  ArithmeticCompareFp32Func func_fp32_{nullptr};
+  ArithmeticCompareIntFunc func_int32_{nullptr};
+  ArithmeticOptCompareFp32Func opt_func_fp32_{nullptr};
+  ArithmeticOptCompareIntFunc opt_func_int32_{nullptr};
 };
-int ArithmeticCompareRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_COMPARE_H_

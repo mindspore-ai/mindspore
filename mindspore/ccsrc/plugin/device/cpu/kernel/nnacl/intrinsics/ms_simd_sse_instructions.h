@@ -66,15 +66,15 @@
 #define MS_FLOOR128_F32 _mm_floor_ps
 #define MS_CEIL128_F32 _mm_ceil_ps
 #define MS_MULQ_F32(src1, src2) _mm_mul_ps(src1, src2)
-#define MS_MULQ_EPI32(src1, src2) _mm_mul_epi32(src1, src2)
+#define MS_MULQ_EPI32(src1, src2) _mm_mullo_epi32(src1, src2)
 #define MS_MIN128_F32 _mm_min_ps
 #define MS_MIN128_EPI32 _mm_min_epi32
 #define MS_MUL128_F32(src1, src2) _mm_mul_ps(src1, src2)
-#define MS_MUL128_EPI32(src1, src2) _mm_mul_epi32(src1, src2)
+#define MS_MUL128_EPI32(src1, src2) _mm_mullo_epi32(src1, src2)
 #define MS_DIVQ_F32(src1, src2) _mm_div_ps(src1, src2)
 #define MS_DIV128_F32(src1, src2) _mm_div_ps(src1, src2)
 #define MS_MULQ_N_F32(src1, src2) _mm_mul_ps(src1, _mm_set1_ps(src2))
-#define MS_MULQ_N_EPI32(src1, src2) _mm_mul_epi32(src1, _mm_set1_epi32(src2))
+#define MS_MULQ_N_EPI32(src1, src2) _mm_mullo_epi32(src1, _mm_set1_epi32(src2))
 #define MS_DIVQ_N_F32(src1, src2) _mm_div_ps(src1, _mm_set1_ps(src2))
 #define MS_SLLIQ_EPI32(src1, src2) _mm_slli_epi32(src1, src2)
 #define MS_CVTQPS_EPI32(src) _mm_cvttps_epi32(src)  // truncate float to int
