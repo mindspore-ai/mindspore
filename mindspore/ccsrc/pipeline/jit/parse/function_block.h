@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,28 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     auto values_pos_iter = local_py_params_values_.begin() + distance;
     MS_LOG(DEBUG) << "Update '" << name << "', " << (*values_pos_iter)->DebugString() << " -> " << node->DebugString();
     *values_pos_iter = node;
+  }
+
+  void UpdateLocalPyParam(const std::vector<AnfNodePtr> &keys, const std::vector<AnfNodePtr> &values) {
+    if (keys.size() != values.size()) {
+      MS_LOG(EXCEPTION) << "keys size should be equal to values size.";
+    }
+    for (size_t index = 0; index < keys.size(); ++index) {
+      auto iter = std::find(local_py_params_keys_.cbegin(), local_py_params_keys_.cend(), keys[index]);
+      if (iter == local_py_params_keys_.cend()) {
+        local_py_params_keys_.emplace_back(keys[index]);
+        local_py_params_values_.emplace_back(values[index]);
+        MS_LOG(DEBUG) << "Add '" << keys[index]->DebugString() << "', " << values[index]->DebugString();
+      } else {
+        auto distance = std::distance(local_py_params_keys_.cbegin(), iter);
+        auto values_pos_iter = local_py_params_values_.begin() + distance;
+        MS_LOG(DEBUG) << "Update '" << keys[index]->DebugString() << "', " << values[index]->DebugString();
+        *values_pos_iter = values[index];
+      }
+    }
+    if (local_py_params_keys_.size() != local_py_params_values_.size()) {
+      MS_LOG(EXCEPTION) << "local_py_params_keys_ size should be equal to local_py_params_values_ size.";
+    }
   }
 
  private:

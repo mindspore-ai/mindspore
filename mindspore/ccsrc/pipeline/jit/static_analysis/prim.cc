@@ -1698,17 +1698,53 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       return infer_result;
     }
 
+    auto cur_node = out_conf->node();
+    MS_EXCEPTION_IF_NULL(cur_node);
+    bool has_switch_cond_user = CheckSwitchCondUser(cur_node);
     ValuePtr converted_val = nullptr;
-    bool converted = parse::ConvertData(obj, &converted_val, true);
-    if (!converted) {
-      MS_LOG(EXCEPTION) << "Convert the python object failed";
+    if (has_switch_cond_user) {
+      // If the cond input in switch is InterpretedObject, need convert InterpretedObject to a ValuePtr object.
+      std::string obj_eval_res = obj.cast<py::str>();
+      if (obj_eval_res.find("True") != std::string::npos) {
+        converted_val = MakeValue<bool>(true);
+      } else {
+        converted_val = MakeValue<bool>(false);
+      }
+    } else {
+      // converted_val could be a InterpretedObject.
+      bool converted = parse::ConvertData(obj, &converted_val, true);
+      if (!converted) {
+        MS_LOG(EXCEPTION) << "Convert the python object failed";
+      }
     }
     MS_EXCEPTION_IF_NULL(converted_val);
-
     AbstractBasePtr res = ToAbstract(converted_val, AnalysisContext::DummyContext(), out_conf);
     auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_spec_list, infer_result);
     return infer_result;
+  }
+
+  bool CheckSwitchCondUser(const AnfNodePtr &node) {
+    auto fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    auto manager = fg->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    auto &node_users = manager->node_users();
+    auto iter = node_users.find(node);
+    if (iter == node_users.end()) {
+      return false;
+    }
+    auto &users = iter->second;
+    for (auto &user : users) {
+      auto &user_node = user.first;
+      auto user_cnode = user_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(user_cnode);
+      // The cond input in switch is current Interpret node.
+      if (IsPrimitiveCNode(user_node, prim::kPrimSwitch) && user_cnode->input(1) == node) {
+        return true;
+      }
+    }
+    return false;
   }
 
   py::tuple MakeParameters(const AbstractBasePtrList &args_spec_list) const {
