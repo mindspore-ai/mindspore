@@ -24,6 +24,7 @@
 #include "utils/ms_context.h"
 #include "include/common/utils/context/graph_kernel_flags.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
+#include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/split_umonad.h"
 #include "common/graph_kernel/substitute_dropout.h"
@@ -74,6 +75,67 @@ FuncGraphPtr PyExpander::CreateExpandFuncGraph(const CNodePtr &node) {
   return JsonDescToAnf(kernel_desc_str);
 }
 
+std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
+  std::vector<OpWithLevel> expand_ops_with_level = {
+    {kAllTarget, OpLevel_0, prim::kPrimAddN},
+    {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
+    {kAllTarget, OpLevel_0, prim::kPrimErfc},
+    {kAllTarget, OpLevel_1, prim::kPrimExpandDims},
+    {kAllTarget, OpLevel_0, prim::kPrimGeLU},
+    {kAllTarget, OpLevel_0, prim::kPrimGeLUGrad},
+    {kAllTarget, OpLevel_0, prim::kPrimSquare},
+    {kAllTarget, OpLevel_0, prim::kPrimTile},
+    {kAscendDevice, OpLevel_0, prim::kLambApplyOptimizerAssign},
+    {kAscendDevice, OpLevel_0, prim::kLambApplyWeightAssign},
+    {kAscendDevice, OpLevel_0, prim::kPrimClipByNormNoDivSum},
+    {kAscendDevice, OpLevel_0, prim::kPrimSqrtGrad},
+    {kAscendDevice, OpLevel_1, prim::kSoftmaxGradExt},
+    {kAscendDevice, OpLevel_0, prim::kFusedMulAdd},
+    {kGPUDevice, OpLevel_1, prim::kPrimBatchMatMul},
+    {kGPUDevice, OpLevel_0, prim::kPrimBiasAdd},
+    {kGPUDevice, OpLevel_1, prim::kPrimBiasAddGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimDropout},
+    {kGPUDevice, OpLevel_0, prim::kPrimDropoutGrad},
+    {kGPUDevice, OpLevel_1, prim::kPrimMaximumGrad},
+    {kGPUDevice, OpLevel_1, prim::kPrimMinimumGrad},
+    {kGPUDevice, OpLevel_1, prim::kPrimLayerNorm},
+    {kGPUDevice, OpLevel_1, prim::kPrimLayerNormGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimLogSoftmax},
+    {kGPUDevice, OpLevel_0, prim::kPrimLogSoftmaxGrad},
+    {kGPUDevice, OpLevel_1, prim::kPrimMatMul},
+    {kGPUDevice, OpLevel_1, prim::kPrimReduceMean},
+    {kGPUDevice, OpLevel_0, prim::kPrimRelu},
+    {kGPUDevice, OpLevel_0, prim::kPrimReluGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimSigmoid},
+    {kGPUDevice, OpLevel_0, prim::kPrimSigmoidGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimSigmoidCrossEntropyWithLogits},
+    {kGPUDevice, OpLevel_0, prim::kPrimSigmoidCrossEntropyWithLogitsGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimSlice},
+    {kGPUDevice, OpLevel_1, prim::kPrimSoftmax},
+    {kGPUDevice, OpLevel_1, prim::kPrimSoftmaxCrossEntropyWithLogits},
+    {kGPUDevice, OpLevel_0, prim::kPrimSquaredDifference},
+    {kGPUDevice, OpLevel_0, prim::kPrimSqueeze},
+    {kGPUDevice, OpLevel_0, prim::kPrimEqualCount},
+    {kGPUDevice, OpLevel_0, prim::kPrimSquareSumAll},
+    {kGPUDevice, OpLevel_0, prim::kPrimIdentityMath},
+    {kGPUDevice, OpLevel_0, prim::kPrimOnesLike},
+    {kGPUDevice, OpLevel_0, prim::kPrimStandardNormal},
+    {kCPUDevice, OpLevel_0, prim::kPrimOnesLike},
+    {kCPUDevice, OpLevel_0, prim::kPrimBiasAdd},
+    {kCPUDevice, OpLevel_1, prim::kPrimBiasAddGrad},
+    {kCPUDevice, OpLevel_0, prim::kPrimRelu},
+    {kCPUDevice, OpLevel_1, prim::kPrimMaximumGrad},
+    {kCPUDevice, OpLevel_1, prim::kPrimMinimumGrad},
+    {kCPUDevice, OpLevel_1, prim::kPrimAdam},
+    {kCPUDevice, OpLevel_1, prim::kPrimTanhGrad},
+    {kCPUDevice, OpLevel_1, prim::kPrimSoftplus},
+    {kCPUDevice, OpLevel_1, prim::kPrimSoftplusGrad},
+  };
+  const auto &flags = GraphKernelFlags::GetInstance();
+  return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
+                              flags.enable_expand_ops, flags.disable_expand_ops);
+}
+
 ExpanderPtr GraphKernelExpanderWithPy::GetExpander(const AnfNodePtr &node) {
   std::vector<std::pair<PrimitivePtr, ExpanderPtr>> expanders = {
     {prim::kPrimDropout, std::make_shared<DropoutExpander>()},
@@ -106,9 +168,7 @@ ExpanderPtr GraphKernelExpanderWithPy::GetExpander(const AnfNodePtr &node) {
     {prim::kPrimMinimumGrad, std::make_shared<PyExpander>()},
     {prim::kPrimOnesLike, std::make_shared<PyExpander>()},
     {prim::kPrimReduceMean, std::make_shared<PyExpander>()},
-    {prim::kPrimRelu, std::make_shared<PyExpander>()},
     {prim::kPrimReluGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimSigmoid, std::make_shared<PyExpander>()},
     {prim::kPrimSigmoidCrossEntropyWithLogits, std::make_shared<PyExpander>()},
     {prim::kPrimSigmoidCrossEntropyWithLogitsGrad, std::make_shared<PyExpander>()},
     {prim::kPrimSigmoidGrad, std::make_shared<PyExpander>()},
@@ -117,7 +177,6 @@ ExpanderPtr GraphKernelExpanderWithPy::GetExpander(const AnfNodePtr &node) {
     {prim::kPrimSoftmaxCrossEntropyWithLogits, std::make_shared<PyExpander>()},
     {prim::kSoftmaxGradExt, std::make_shared<PyExpander>()},
     {prim::kPrimSqrtGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimSquare, std::make_shared<PyExpander>()},
     {prim::kPrimSquaredDifference, std::make_shared<PyExpander>()},
     {prim::kSquareSumV1, std::make_shared<PyExpander>()},
     {prim::kPrimSquareSumAll, std::make_shared<PyExpander>()},

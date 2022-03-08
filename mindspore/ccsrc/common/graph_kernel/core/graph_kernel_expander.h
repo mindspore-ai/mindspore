@@ -46,6 +46,7 @@ class GraphKernelExpander : public opt::Pass {
 
  protected:
   virtual ExpanderPtr GetExpander(const AnfNodePtr &node);
+  virtual std::vector<PrimitivePtr> InitOpList() = 0;
   virtual bool DoExpand(const FuncGraphPtr &func_graph);
   virtual bool CanExpand(const CNodePtr &node) const {
     return std::any_of(expand_ops_.begin(), expand_ops_.end(),

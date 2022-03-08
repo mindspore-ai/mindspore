@@ -64,7 +64,7 @@ class LiteGraph::GraphBuilder {
   ~GraphBuilder() = default;
 
   // Create a parameter of graph
-  NodePtr Parameter(const NodeBase &baseinfo) {
+  NodePtr Parameter(const NodeBase &baseinfo) const {
     auto para = std::make_shared<ParamNode>(baseinfo);
     para->SetDebugName(graph_->ParamName());
     graph_->inputs_.push_back(para);
@@ -72,19 +72,20 @@ class LiteGraph::GraphBuilder {
   }
 
   // Create a const value node
-  NodePtr Value(const tensor::TensorPtr &data) { return std::make_shared<ConstTensorNode>(data); }
+  NodePtr Value(const tensor::TensorPtr &data) const { return std::make_shared<ConstTensorNode>(data); }
 
-  void SetOutputs(const NodePtrList &nodes) { graph_->output_->SetInputs(nodes); }
+  void SetOutputs(const NodePtrList &nodes) const { graph_->output_->SetInputs(nodes); }
 
   // Emit op, auto inferring the baseinfo of Node.
-  NodePtr Emit(const std::string &op, const NodePtrList &inputs, const DAttrs &attrs = {});
+  NodePtr Emit(const std::string &op, const NodePtrList &inputs, const DAttrs &attrs = {}) const;
 
   // Create op node with given baseinfo.
-  NodePtr Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs, const DAttrs &attrs = {});
-  LiteGraphPtr Get() { return graph_; }
+  NodePtr Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs,
+             const DAttrs &attrs = {}) const;
+  LiteGraphPtr Get() const { return graph_; }
 
  private:
-  PrimOpPtr CreateOp(const std::string &op);
+  PrimOpPtr CreateOp(const std::string &op) const;
   LiteGraphPtr graph_;
 };
 }  // namespace mindspore::graphkernel::inner
