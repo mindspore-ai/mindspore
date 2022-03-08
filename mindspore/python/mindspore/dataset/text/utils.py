@@ -141,7 +141,7 @@ class Vocab:
             >>> dataset = dataset.map(operations=text.Lookup(vocab, "<unk>"), input_columns=["text"])
         """
 
-        vocab = Vocab()
+        vocab = cls()
         vocab.c_vocab = dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
         return vocab
 
@@ -211,7 +211,7 @@ class Vocab:
             vocab_size = -1
         if special_tokens is None:
             special_tokens = []
-        vocab = Vocab()
+        vocab = cls()
         vocab.c_vocab = cde.Vocab.from_file(file_path, delimiter, vocab_size, special_tokens, special_first)
         return vocab
 
@@ -232,15 +232,18 @@ class Vocab:
             >>> vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
         """
 
-        vocab = Vocab()
+        vocab = cls()
         vocab.c_vocab = cde.Vocab.from_dict(word_dict)
         return vocab
 
 
-class SentencePieceVocab(cde.SentencePieceVocab):
+class SentencePieceVocab:
     """
     SentencePiece object that is used to do words segmentation.
     """
+
+    def __init__(self):
+        self.c_sentence_piece_vocab = None
 
     @classmethod
     @check_from_dataset_sentencepiece
@@ -278,8 +281,11 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             ...                                              SentencePieceModel.UNIGRAM, {})
         """
 
-        return dataset.build_sentencepiece_vocab(col_names, vocab_size, character_coverage,
-                                                 model_type, params)
+        sentence_piece_vocab = cls()
+        sentence_piece_vocab.c_sentence_piece_vocab = dataset.build_sentencepiece_vocab(col_names, vocab_size,
+                                                                                        character_coverage,
+                                                                                        model_type, params)
+        return sentence_piece_vocab
 
     @classmethod
     @check_from_file_sentencepiece
@@ -321,8 +327,11 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             ...                                           SentencePieceModel.UNIGRAM, {})
         """
 
-        return super().from_file(file_path, vocab_size, character_coverage,
-                                 DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
+        sentence_piece_vocab = cls()
+        sentence_piece_vocab.c_sentence_piece_vocab = \
+        cde.SentencePieceVocab.from_file(file_path, vocab_size, character_coverage,
+                                         DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
+        return sentence_piece_vocab
 
     @classmethod
     @check_save_model
@@ -342,7 +351,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             >>> text.SentencePieceVocab.save_model(vocab, "./", "m.model")
         """
 
-        super().save_model(vocab, path, filename)
+        cde.SentencePieceVocab.save_model(vocab.c_sentence_piece_vocab, path, filename)
 
 
 def to_str(array, encoding='utf8'):

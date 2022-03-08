@@ -179,15 +179,15 @@ Status BuildVocabOp::CollectorThread() {
                     });
 
   if (special_first_) {
-    for (const std::string &sp_tk : special_tokens_) vocab_->append_word(sp_tk);
+    for (const std::string &sp_tk : special_tokens_) vocab_->AppendWord(sp_tk);
   }
 
   for (int64_t i = 0; i < num_words; i++) {
-    vocab_->append_word(words[i]);
+    vocab_->AppendWord(words[i]);
   }
 
   if (!special_first_) {
-    for (const std::string &sp_tk : special_tokens_) vocab_->append_word(sp_tk);
+    for (const std::string &sp_tk : special_tokens_) vocab_->AppendWord(sp_tk);
   }
 
   RETURN_IF_NOT_OK(out_connector_->SendEOE());

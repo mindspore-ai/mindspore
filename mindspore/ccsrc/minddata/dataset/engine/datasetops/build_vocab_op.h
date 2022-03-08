@@ -25,7 +25,7 @@
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
-#include "minddata/dataset/text/vocab.h"
+#include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/util/status.h"
 
@@ -33,9 +33,9 @@ namespace mindspore {
 namespace dataset {
 class BuildVocabOp : public ParallelOp<TensorRow, TensorRow> {
  public:
-  BuildVocabOp(std::shared_ptr<Vocab> vocab, std::vector<std::string> col_names, std::pair<int64_t, int64_t> freq_range,
-               int64_t top_k, const std::vector<std::string> &tokens, bool prepend, int32_t num_workers,
-               int32_t op_connector_size);
+  BuildVocabOp(std::shared_ptr<dataset::Vocab> vocab, std::vector<std::string> col_names,
+               std::pair<int64_t, int64_t> freq_range, int64_t top_k, const std::vector<std::string> &tokens,
+               bool prepend, int32_t num_workers, int32_t op_connector_size);
 
   ~BuildVocabOp() = default;
 

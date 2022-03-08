@@ -20,7 +20,7 @@
 
 #include "common/common.h"
 #include "include/api/status.h"
-#include "minddata/dataset/text/vocab.h"
+#include "minddata/dataset/include/dataset/text.h"
 
 using mindspore::dataset::Tensor;
 using mindspore::dataset::Vocab;
@@ -47,7 +47,7 @@ TEST_F(MindDataTestVocab, TestVocabFromUnorderedMap) {
   std::vector<std::string> words = {"apple", "dog", "egg"};
   std::vector<int64_t> expected = {1, 3, -1};
   for (uint32_t i = 0; i < words.size(); ++i) {
-    int32_t x = vocab->Lookup(words[i]);
+    int32_t x = vocab->TokensToIds(words[i]);
     EXPECT_EQ(x, expected[i]);
   }
 }
@@ -65,7 +65,7 @@ TEST_F(MindDataTestVocab, TestVocabFromEmptyMap) {
   std::vector<std::string> words = {"apple", "dog", "egg"};
   std::vector<int64_t> expected = {-1, -1, -1};
   for (uint32_t i = 0; i < words.size(); ++i) {
-    int32_t x = vocab->Lookup(words[i]);
+    int32_t x = vocab->TokensToIds(words[i]);
     EXPECT_EQ(x, expected[i]);
   }
 }
@@ -96,7 +96,7 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorPrependSpTokens) {
   std::vector<std::string> words = {"apple", "banana", "fox"};
   std::vector<int64_t> expected = {1, 2, -1};
   for (uint32_t i = 0; i < words.size(); ++i) {
-    int32_t x = vocab->Lookup(words[i]);
+    int32_t x = vocab->TokensToIds(words[i]);
     EXPECT_EQ(x, expected[i]);
   }
 }
@@ -113,7 +113,7 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorAppendSpTokens) {
   std::vector<std::string> words = {"apple", "<unk>", "fox"};
   std::vector<int64_t> expected = {0, 5, -1};
   for (uint32_t i = 0; i < words.size(); ++i) {
-    int32_t x = vocab->Lookup(words[i]);
+    int32_t x = vocab->TokensToIds(words[i]);
     EXPECT_EQ(x, expected[i]);
   }
 }
@@ -131,7 +131,7 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorWithNoSpTokens) {
   std::vector<std::string> words = {"apple", "banana", "fox", "<pad>"};
   std::vector<int64_t> expected = {0, 1, -1, -1};
   for (uint32_t i = 0; i < words.size(); ++i) {
-    int32_t x = vocab->Lookup(words[i]);
+    int32_t x = vocab->TokensToIds(words[i]);
     EXPECT_EQ(x, expected[i]);
   }
 }
@@ -149,7 +149,7 @@ TEST_F(MindDataTestVocab, TestVocabFromEmptyVector) {
   std::vector<std::string> words = {"apple", "banana", "fox"};
   std::vector<int64_t> expected = {-1, -1, -1};
   for (uint32_t i = 0; i < words.size(); ++i) {
-    int32_t x = vocab->Lookup(words[i]);
+    int32_t x = vocab->TokensToIds(words[i]);
     EXPECT_EQ(x, expected[i]);
   }
 }
@@ -195,14 +195,14 @@ TEST_F(MindDataTestVocab, TestVocabFromFile) {
   // Build vocab from local file
   std::string vocab_dir = datasets_root_path_ + "/testVocab/vocab_list.txt";
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
-  Status s = Vocab::BuildFromFileCpp(vocab_dir, ",", -1, {"<pad>", "<unk>"}, true, &vocab);
+  Status s = Vocab::BuildFromFile(vocab_dir, ",", -1, {"<pad>", "<unk>"}, true, &vocab);
   EXPECT_EQ(s, Status::OK());
 
   // Look up specified words
   std::vector<std::string> words = {"not", "all"};
   std::vector<int64_t> expected = {2, 3};
   for (uint32_t i = 0; i < words.size(); ++i) {
-    int32_t x = vocab->Lookup(words[i]);
+    int32_t x = vocab->TokensToIds(words[i]);
     EXPECT_EQ(x, expected[i]);
   }
 }
@@ -212,7 +212,7 @@ TEST_F(MindDataTestVocab, TestVocabFromFileFail1) {
   // Build vocab from local file which is not exist
   std::string vocab_dir = datasets_root_path_ + "/testVocab/not_exist.txt";
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
-  Status s = Vocab::BuildFromFileCpp(vocab_dir, ",", -1, {}, true, &vocab);
+  Status s = Vocab::BuildFromFile(vocab_dir, ",", -1, {}, true, &vocab);
   EXPECT_NE(s, Status::OK());
 }
 
@@ -223,7 +223,7 @@ TEST_F(MindDataTestVocab, TestVocabFromFileFail2) {
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
 
   // Expected failure: vocab_size should be either -1 or positive integer
-  Status s = Vocab::BuildFromFileCpp(vocab_dir, ",", -2, {}, true, &vocab);
+  Status s = Vocab::BuildFromFile(vocab_dir, ",", -2, {}, true, &vocab);
   EXPECT_NE(s, Status::OK());
 }
 
@@ -234,7 +234,7 @@ TEST_F(MindDataTestVocab, TestVocabFromFileFail3) {
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
 
   // Expected failure: duplicate special token <unk>
-  Status s = Vocab::BuildFromFileCpp(vocab_dir, ",", -1, {"<unk>", "<unk>"}, true, &vocab);
+  Status s = Vocab::BuildFromFile(vocab_dir, ",", -1, {"<unk>", "<unk>"}, true, &vocab);
   EXPECT_NE(s, Status::OK());
 }
 
@@ -245,6 +245,6 @@ TEST_F(MindDataTestVocab, TestVocabFromFileFail4) {
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
 
   // Expected failure: special_tokens and word_list contain duplicate word
-  Status s = Vocab::BuildFromFileCpp(vocab_dir, ",", -1, {"home"}, true, &vocab);
+  Status s = Vocab::BuildFromFile(vocab_dir, ",", -1, {"home"}, true, &vocab);
   EXPECT_NE(s, Status::OK());
 }

@@ -19,12 +19,11 @@
 
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/text/char_n_gram.h"
 #include "minddata/dataset/text/fast_text.h"
 #include "minddata/dataset/text/glove.h"
-#include "minddata/dataset/text/sentence_piece_vocab.h"
 #include "minddata/dataset/text/vectors.h"
-#include "minddata/dataset/text/vocab.h"
 
 namespace mindspore {
 namespace dataset {
@@ -32,28 +31,29 @@ PYBIND_REGISTER(Vocab, 0, ([](const py::module *m) {
                   (void)py::class_<Vocab, std::shared_ptr<Vocab>>(*m, "Vocab")
                     .def(py::init<>())
                     .def_static("from_list",
-                                [](const py::list &words, const py::list &special_tokens, bool special_first) {
+                                [](const std::vector<std::string> &words,
+                                   const std::vector<std::string> &special_tokens, bool special_first) {
                                   std::shared_ptr<Vocab> v;
-                                  THROW_IF_ERROR(Vocab::BuildFromPyList(words, special_tokens, special_first, &v));
+                                  THROW_IF_ERROR(Vocab::BuildFromVector(words, special_tokens, special_first, &v));
                                   return v;
                                 })
                     .def_static(
                       "from_file",
                       [](const std::string &path, const std::string &dlm, int32_t vocab_size,
-                         const py::list &special_tokens, bool special_first) {
+                         const std::vector<std::string> &special_tokens, bool special_first) {
                         std::shared_ptr<Vocab> v;
                         THROW_IF_ERROR(Vocab::BuildFromFile(path, dlm, vocab_size, special_tokens, special_first, &v));
                         return v;
                       })
                     .def_static("from_dict",
-                                [](const py::dict &words) {
+                                [](const std::unordered_map<WordType, WordIdType> &words) {
                                   std::shared_ptr<Vocab> v;
-                                  THROW_IF_ERROR(Vocab::BuildFromPyDict(words, &v));
+                                  THROW_IF_ERROR(Vocab::BuildFromUnorderedMap(words, &v));
                                   return v;
                                 })
                     .def("tokens_to_ids",
                          [](Vocab &self, const std::vector<std::string> words) {
-                           auto ids = self.Lookup(words);
+                           auto ids = self.TokensToIds(words);
                            py::object ret;
                            if (ids.size() == 1) {
                              ret = py::int_(ids[0]);
@@ -65,7 +65,7 @@ PYBIND_REGISTER(Vocab, 0, ([](const py::module *m) {
                          })
                     .def("ids_to_tokens",
                          [](Vocab &self, const std::vector<int32_t> ids) {
-                           auto words = self.ReverseLookup(ids);
+                           auto words = self.IdsToTokens(ids);
                            py::object ret;
                            if (words.size() == 1) {
                              ret = py::str(words[0]);
@@ -75,31 +75,19 @@ PYBIND_REGISTER(Vocab, 0, ([](const py::module *m) {
                            }
                            return ret;
                          })
-                    .def("vocab", [](Vocab &self) { return self.vocab(); });
+                    .def("vocab", [](Vocab &self) { return self.GetVocab(); });
                 }));
 
 PYBIND_REGISTER(SentencePieceVocab, 0, ([](const py::module *m) {
                   (void)py::class_<SentencePieceVocab, std::shared_ptr<SentencePieceVocab>>(*m, "SentencePieceVocab")
                     .def(py::init<>())
                     .def_static("from_file",
-                                [](const py::list &paths, const int32_t vocab_size, const float character_coverage,
-                                   const SentencePieceModel model_type, const py::dict &params) {
+                                [](const std::vector<std::string> &paths, const int32_t vocab_size,
+                                   const float character_coverage, const SentencePieceModel model_type,
+                                   const std::unordered_map<std::string, std::string> &params) {
                                   std::shared_ptr<SentencePieceVocab> v;
-                                  std::vector<std::string> path_list;
-                                  for (auto path : paths) {
-                                    path_list.emplace_back(py::str(path));
-                                  }
-                                  std::unordered_map<std::string, std::string> param_map;
-                                  for (auto param : params) {
-                                    std::string key = py::reinterpret_borrow<py::str>(param.first);
-                                    if (key == "input" || key == "vocab_size" || key == "model_prefix" ||
-                                        key == "character_coverage" || key == "model_type") {
-                                      continue;
-                                    }
-                                    param_map[key] = py::reinterpret_borrow<py::str>(param.second);
-                                  }
                                   THROW_IF_ERROR(SentencePieceVocab::BuildFromFile(
-                                    path_list, vocab_size, character_coverage, model_type, param_map, &v));
+                                    paths, vocab_size, character_coverage, model_type, params, &v));
                                   return v;
                                 })
                     .def_static("save_model", [](const std::shared_ptr<SentencePieceVocab> *vocab, std::string path,

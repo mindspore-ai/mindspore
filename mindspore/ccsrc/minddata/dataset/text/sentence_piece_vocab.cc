@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/text/sentence_piece_vocab.h"
-
-#include <sentencepiece_trainer.h>
 #include <sentencepiece_processor.h>
+#include <sentencepiece_trainer.h>
+
 #include <fstream>
 
+#include "include/common/utils/utils.h"
+#include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/include/dataset/text.h"
+#include "minddata/dataset/util/path.h"
+#include "minddata/dataset/util/status.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
-#include "include/common/utils/utils.h"
-#include "minddata/dataset/util/path.h"
 
 namespace mindspore {
 namespace dataset {

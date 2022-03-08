@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/text/vocab.h"
-
-#include <fstream>
-#include <unordered_set>
-#include <unordered_map>
-#include <utility>
 #include <algorithm>
+#include <fstream>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
+#include "minddata/dataset/include/dataset/text.h"
+#include "minddata/dataset/util/status.h"
 #include "utils/file_utils.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
@@ -33,18 +33,18 @@ namespace mindspore {
 namespace dataset {
 Vocab::Vocab(std::unordered_map<WordType, WordIdType> word2id) { word2id_ = std::move(word2id); }
 
-WordIdType Vocab::Lookup(const WordType &word) const {
+WordIdType Vocab::TokensToIds(const WordType &word) const {
   auto itr = word2id_.find(word);
   return itr == word2id_.end() ? kNoTokenExists : itr->second;
 }
 
-std::vector<WordIdType> Vocab::Lookup(const std::vector<WordType> &words) const {
+std::vector<WordIdType> Vocab::TokensToIds(const std::vector<WordType> &words) const {
   std::vector<WordIdType> ids;
-  std::transform(words.begin(), words.end(), std::back_inserter(ids), [this](auto w) { return Lookup(w); });
+  std::transform(words.begin(), words.end(), std::back_inserter(ids), [this](auto w) { return TokensToIds(w); });
   return ids;
 }
 
-WordType Vocab::ReverseLookup(const WordIdType &id) {
+WordType Vocab::IdsToTokens(const WordIdType &id) {
   // lazy initialization, since I think it's not common use but waste memory
   if (id2word_.empty()) {
     for (const auto [word_, id_] : word2id_) {
@@ -55,7 +55,7 @@ WordType Vocab::ReverseLookup(const WordIdType &id) {
   return itr == id2word_.end() ? kNoIdExists : itr->second;
 }
 
-std::vector<WordType> Vocab::ReverseLookup(const std::vector<WordIdType> &ids) {
+std::vector<WordType> Vocab::IdsToTokens(const std::vector<WordIdType> &ids) {
   // lazy initialization, since I think it's not common use but waste memory
   if (id2word_.empty()) {
     for (const auto [word_, id_] : word2id_) {
@@ -63,50 +63,11 @@ std::vector<WordType> Vocab::ReverseLookup(const std::vector<WordIdType> &ids) {
     }
   }
   std::vector<WordType> words;
-  std::transform(ids.begin(), ids.end(), std::back_inserter(words), [this](auto i) { return ReverseLookup(i); });
+  std::transform(ids.begin(), ids.end(), std::back_inserter(words), [this](auto i) { return IdsToTokens(i); });
   return words;
 }
 
-#ifdef ENABLE_PYTHON
-Status Vocab::BuildFromPyList(const py::list &words, const py::list &special_tokens, bool prepend_special,
-                              std::shared_ptr<Vocab> *vocab) {
-  if (vocab == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromPyList: input vocab can not be null");
-  }
-  // check of duplication on both words and special_tokens will be performed in python
-  // special_tokens and words both need to be unique, and shouldn't overlap
-  std::unordered_map<WordType, WordIdType> word2id;
-  // if special is added in front, normal words id will start from number of special tokens
-  WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
-
-  for (auto word : words) {
-    word2id[py::str(word)] = word_id++;
-  }
-
-  word_id = prepend_special ? 0 : word2id.size();
-
-  for (auto special_token : special_tokens) {
-    word2id[py::str(special_token)] = word_id++;
-  }
-
-  *vocab = std::make_shared<Vocab>(std::move(word2id));
-  return Status::OK();
-}
-
-Status Vocab::BuildFromPyDict(const py::dict &words, std::shared_ptr<Vocab> *vocab) {
-  if (vocab == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromPyDict: input vocab can not be null");
-  }
-  std::unordered_map<WordType, WordIdType> word2id;
-  for (auto p : words) {
-    word2id[py::str(p.first)] = py::reinterpret_borrow<py::int_>(p.second);
-  }
-  *vocab = std::make_shared<Vocab>(std::move(word2id));
-  return Status::OK();
-}
-#endif
-
-void Vocab::append_word(const std::string &word) {
+void Vocab::AppendWord(const std::string &word) {
   if (word2id_.find(word) == word2id_.end()) {
     word2id_[word] = word2id_.size();
   }
@@ -161,11 +122,11 @@ Status Vocab::BuildFromVector(const std::vector<WordType> &words, const std::vec
   return Status::OK();
 }
 
-Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delimiter, int32_t vocab_size,
-                               const std::vector<WordType> &special_tokens, bool prepend_special,
-                               std::shared_ptr<Vocab> *vocab) {
+Status Vocab::BuildFromFile(const std::string &path, const std::string &delimiter, int32_t vocab_size,
+                            const std::vector<WordType> &special_tokens, bool prepend_special,
+                            std::shared_ptr<Vocab> *vocab) {
   if (vocab == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromFileCpp: input vocab can not be null");
+    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromFile: input vocab can not be null");
   }
   // Validate parameters
   auto realpath = FileUtils::GetRealPath(path.c_str());
@@ -221,56 +182,6 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
 
   for (auto special_token : special_tokens) {
     word2id[special_token] = word_id++;
-  }
-
-  *vocab = std::make_shared<Vocab>(std::move(word2id));
-  return Status::OK();
-}
-
-Status Vocab::BuildFromFile(const std::string &path, const std::string &delimiter, int32_t vocab_size,
-                            const py::list &special_tokens, bool prepend_special, std::shared_ptr<Vocab> *vocab) {
-  if (vocab == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromFile: input vocab can not be null");
-  }
-  // python validator checks special_tokens doesn't contain any duplicate words
-  std::unordered_set<std::string> specials;
-  // used to check that words in file don't contain any special token that already exists
-  for (auto word : special_tokens) {
-    specials.insert(py::str(word));
-  }
-  WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
-  std::unordered_map<WordType, WordIdType> word2id;
-
-  auto realpath = FileUtils::GetRealPath(path.c_str());
-  if (!realpath.has_value()) {
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);
-  }
-
-  std::fstream handle(realpath.value(), std::ios::in);
-  CHECK_FAIL_RETURN_UNEXPECTED(handle.good() && handle.is_open(), "from_file: fail to open:" + path);
-  std::string word;
-  while (std::getline(handle, word)) {
-    if (!delimiter.empty()) {
-      // if delimiter is not found, find_first_of would return std::string::npos which is -1
-      word = word.substr(0, word.find_first_of(delimiter));
-    }
-    if (word2id.find(word) != word2id.end()) {
-      handle.close();
-      RETURN_STATUS_UNEXPECTED("from_file: duplicate word:" + word + ".");
-    }
-    if (specials.find(word) != specials.end()) {
-      handle.close();
-      RETURN_STATUS_UNEXPECTED("from_file: special_tokens and word_list contain duplicate word:" + word);
-    }
-    word2id[word] = word_id++;
-    // break if enough row is read, if vocab_size is smaller than 0
-    if (word2id.size() == vocab_size) break;
-  }
-  handle.close();
-  word_id = prepend_special ? 0 : word2id.size();
-
-  for (auto special_token : special_tokens) {
-    word2id[py::str(special_token)] = word_id++;
   }
 
   *vocab = std::make_shared<Vocab>(std::move(word2id));

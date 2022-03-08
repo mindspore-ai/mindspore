@@ -23,7 +23,6 @@
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/include/dataset/transforms.h"
-#include "minddata/dataset/text/sentence_piece_vocab.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::SentencePieceModel;

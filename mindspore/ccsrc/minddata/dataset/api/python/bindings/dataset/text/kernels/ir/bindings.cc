@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/api/python/pybind_register.h"
+#include "minddata/dataset/include/dataset/text.h"
+#include "minddata/dataset/text/ir/kernels/text_ir.h"
+#include "minddata/dataset/text/vectors.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl_bind.h"
-#include "minddata/dataset/api/python/pybind_register.h"
-#include "minddata/dataset/text/ir/kernels/text_ir.h"
-#include "minddata/dataset/text/sentence_piece_vocab.h"
-#include "minddata/dataset/text/vectors.h"
-#include "minddata/dataset/text/vocab.h"
 
 namespace mindspore {
 namespace dataset {
