@@ -151,7 +151,7 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
       pooling_max_workspace_.erase(value);
     } else {
       const size_t workspace_size = GetSize(workspace_desc_);
-      unsigned char work_array[workspace_size] = {0};
+      unsigned char work_array[workspace_size];
       ComputeMaxValueIndex(inputs[0]->addr, inputs[1]->addr, work_array);
       SetArgumentHandle(DNNL_ARG_WORKSPACE, work_array);
       ExecutePrimitive();
