@@ -13,52 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback """
-import math
 import numpy as np
 from mindspore import ms_function, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
-
-
-def test_fallback_abs():
-    """
-    Feature: JIT Fallback
-    Description: Test abs() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = -1
-        return abs(x)
-    assert foo() == 1
-
-
-def test_fallback_all():
-    """
-    Feature: JIT Fallback
-    Description: Test all() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = (0, 1, 2, 3)
-        return all(x)
-    assert not foo()
-
-
-def test_fallback_any():
-    """
-    Feature: JIT Fallback
-    Description: Test any() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = (0, 1, 0, 0)
-        return any(x)
-    out = foo()
-    assert out
-
 
 def test_fallback_bin():
     """
@@ -71,20 +29,6 @@ def test_fallback_bin():
         x = bin(3)
         return x
     assert foo() == '0b11'
-
-
-def test_fallback_bool():
-    """
-    Feature: JIT Fallback
-    Description: Test bool() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = bool(1)
-        return x
-    assert foo()
-
 
 def test_fallback_chr():
     """
@@ -115,19 +59,6 @@ def test_fallback_complex():
     assert np.all(res.asnumpy() == expect_res)
 
 
-def test_fallback_dict():
-    """
-    Feature: JIT Fallback
-    Description: Test dict() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        dict_x = dict(a=1, b=2, c=3)
-        return dict_x
-    print(foo())
-
-
 def test_fallback_divmod():
     """
     Feature: JIT Fallback
@@ -139,21 +70,6 @@ def test_fallback_divmod():
         x = divmod(7, 2)
         return x
     assert foo() == (3, 1)
-
-
-def test_fallback_float():
-    """
-    Feature: JIT Fallback
-    Description: Test float() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = float(1)
-        return x
-
-    out = foo()
-    assert math.isclose(out, 1, abs_tol=1e-5)
 
 
 def test_fallback_hash():
@@ -180,20 +96,6 @@ def test_fallback_hex():
         x = hex(255)
         return x
     assert foo() == '0xff'
-
-
-def test_fallback_int():
-    """
-    Feature: JIT Fallback
-    Description: Test int() in graph mode.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = int(5.0)
-        return x
-    assert foo() == 5
-
 
 def test_fallback_oct():
     """
