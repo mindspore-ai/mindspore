@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/project_op.h"
-
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
 
@@ -73,5 +74,18 @@ Status ProjectNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNo
   *result = std::make_shared<ProjectNode>(ds, columns);
   return Status::OK();
 }
+
+// Visitor accepting method for IRNodePass
+Status ProjectNode::Accept(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<ProjectNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status ProjectNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<ProjectNode>(), modified);
+}
+
 }  // namespace dataset
 }  // namespace mindspore

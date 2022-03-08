@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,9 @@ class SkipNode : public DatasetNode {
                           std::shared_ptr<DatasetNode> *result);
 
   void SetFirstEpochOnly(bool flag) { first_epoch_only_ = flag; }
+
+  /// \brief Getter functions
+  const bool FirstEpochOnly() const { return first_epoch_only_; }
 
  private:
   int32_t skip_count_;

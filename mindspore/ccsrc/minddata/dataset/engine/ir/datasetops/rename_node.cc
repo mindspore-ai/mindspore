@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/rename_op.h"
-
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
 
@@ -80,6 +81,18 @@ Status RenameNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNod
   std::vector<std::string> output_columns = json_obj["output_columns"];
   *result = std::make_shared<RenameNode>(ds, input_columns, output_columns);
   return Status::OK();
+}
+
+// Visitor accepting method for IRNodePass
+Status RenameNode::Accept(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<RenameNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status RenameNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<RenameNode>(), modified);
 }
 
 }  // namespace dataset

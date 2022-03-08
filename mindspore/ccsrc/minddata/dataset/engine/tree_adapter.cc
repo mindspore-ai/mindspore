@@ -36,6 +36,7 @@
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
 #include "minddata/dataset/engine/opt/pre/input_validation_pass.h"
 #include "minddata/dataset/engine/opt/pre/node_removal_pass.h"
+#include "minddata/dataset/engine/opt/pre/skip_pushdown_pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -57,8 +58,11 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   MS_LOG(INFO) << "Running pre pass loops.";
   actions.emplace_back(std::make_unique<InputValidationPass>());
   actions.emplace_back(std::make_unique<CacheValidationPass>());
+  if (usage_ == kDeReset) {
+    actions.emplace_back(std::make_unique<AddSkipPass>());
+    actions.emplace_back(std::make_unique<SkipPushdownPass>());
+  }
   actions.emplace_back(std::make_unique<NodeRemovalPass>());
-  if (usage_ == kDeReset) actions.emplace_back(std::make_unique<AddSkipPass>());
   actions.emplace_back(std::make_unique<EpochCtrlPass>());
   if (usage_ == kDeGetter) actions.emplace_back(std::make_unique<GetterPass>());
 #ifndef ENABLE_ANDROID

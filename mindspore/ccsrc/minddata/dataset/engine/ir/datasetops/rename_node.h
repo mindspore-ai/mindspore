@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,18 @@ class RenameNode : public DatasetNode {
   /// \brief Node name getter
   /// \return Name of the current node
   std::string Name() const override { return kRenameNode; }
+
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status Accept(IRNodePass *const p, bool *const modified) override;
+
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
   /// \brief Print the description
   /// \param out - The output stream to write output to

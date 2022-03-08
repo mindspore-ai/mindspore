@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,40 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SEQUENTIAL_SAMPLER_IR_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SEQUENTIAL_SAMPLER_IR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SKIP_FIRST_EPOCH_SAMPLER_IR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SKIP_FIRST_EPOCH_SAMPLER_IR_H_
 
-#include <limits>
 #include <memory>
-#include <string>
-#include <utility>
-#include <vector>
 #include <nlohmann/json.hpp>
 
-#include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/sequential_sampler_ir.h"
 #include "include/api/status.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/mindrecord/include/shard_operator.h"
-#endif
 
 namespace mindspore {
 namespace dataset {
 // Internal Sampler class forward declaration
 class SamplerRT;
 
-class SequentialSamplerObj : public SamplerObj {
+class SkipFirstEpochSamplerObj : public SequentialSamplerObj {
  public:
-  SequentialSamplerObj(int64_t start_index, int64_t num_samples);
+  explicit SkipFirstEpochSamplerObj(int64_t start_index);
 
-  ~SequentialSamplerObj() override;
+  ~SkipFirstEpochSamplerObj() override;
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override;
-
-#ifndef ENABLE_ANDROID
-  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
-#endif
 
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
@@ -57,18 +46,11 @@ class SequentialSamplerObj : public SamplerObj {
 #ifndef ENABLE_ANDROID
   /// \brief Function for read sampler from JSON object
   /// \param[in] json_obj JSON object to be read
-  /// \param[in] num_samples number of sample in the sampler
   /// \param[out] sampler Sampler constructed from parameters in JSON object
   /// \return Status of the function
-  static Status from_json(nlohmann::json json_obj, int64_t num_samples, std::shared_ptr<SamplerObj> *sampler);
+  static Status from_json(nlohmann::json json_obj, std::shared_ptr<SamplerObj> *sampler);
 #endif
-
-  Status ValidateParams() override;
-
- protected:
-  int64_t start_index_;
-  int64_t num_samples_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SEQUENTIAL_SAMPLER_IR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SKIP_FIRST_EPOCH_SAMPLER_IR_H_
