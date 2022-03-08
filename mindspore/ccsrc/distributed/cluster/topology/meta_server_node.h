@@ -29,7 +29,7 @@ namespace topology {
 class MetaServerNode : public NodeBase {
  public:
   explicit MetaServerNode(const std::string &node_id) : NodeBase(node_id) {}
-  virtual ~MetaServerNode() = default;
+  ~MetaServerNode() override = default;
 
  private:
   // Process the received heartbeat message sent from compute graph nodes.

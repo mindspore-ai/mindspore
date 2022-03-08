@@ -28,7 +28,7 @@ namespace topology {
 class ComputeGraphNode : public NodeBase {
  public:
   explicit ComputeGraphNode(const std::string &node_id) : NodeBase(node_id) {}
-  virtual ~ComputeGraphNode() = default;
+  ~ComputeGraphNode() override = default;
 
  private:
   // Send the heartbeat message to the meta server node.
