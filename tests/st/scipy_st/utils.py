@@ -14,25 +14,43 @@
 # ============================================================================
 """utility functions for mindspore.scipy st tests"""
 from typing import List
-from functools import cmp_to_key
+from functools import cmp_to_key, partial
 
 import numpy as onp
+import scipy as osp
 import scipy.sparse.linalg
-from mindspore import Tensor
+from mindspore import Tensor, CSRTensor
 import mindspore.ops as ops
 import mindspore.numpy as mnp
 from mindspore.common import dtype as mstype
 
 
 def to_tensor(obj, dtype=None):
+    """
+    This function is used to initialize Tensor or CSRTensor.
+    'obj' can be three type:
+        1. tuple or list
+            Must be the format: (list, str), and str should be 'Tensor' or 'CSRTensor'.
+        2. numpy.ndarray
+        3. scipy.sparse.csr_matrix
+    """
+    if isinstance(obj, (tuple, list)):
+        obj, tensor_type = obj
+        if tensor_type == "Tensor":
+            obj = onp.array(obj)
+        elif tensor_type == "CSRTensor":
+            obj = osp.sparse.csr_matrix(obj)
+
     if dtype is None:
-        res = Tensor(obj)
-        if res.dtype == mnp.float64:
-            res = res.astype(mnp.float32)
-        if res.dtype == mnp.int64:
-            res = res.astype(mnp.int32)
+        dtype = obj.dtype
+
+    if isinstance(obj, onp.ndarray):
+        tensor_fn = partial(Tensor, input_data=obj.astype(dtype))
     else:
-        res = Tensor(obj, dtype)
+        tensor_fn = partial(CSRTensor, indptr=Tensor(obj.indptr), indices=Tensor(obj.indices),
+                            values=Tensor(obj.data.astype(dtype)), shape=obj.shape)
+
+    res = tensor_fn()
     return res
 
 
