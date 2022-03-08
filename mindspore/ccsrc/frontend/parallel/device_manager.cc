@@ -170,8 +170,7 @@ Status IsFeasibleDeiveListOneServer(const RankList &rank_list) {
   if (rank_list.size() == 4 && (rank_list[3] - rank_list[0] == 3) && (rank_list[0] == 0 || rank_list[3] == 7)) {
     return SUCCESS;
   }
-  if (rank_list.size() == 4 && (rank_list[3] % 2 == rank_list[2] % 2) && (rank_list[2] % 2 == rank_list[1] % 2) &&
-      (rank_list[1] % 2 == rank_list[0] % 2)) {
+  if (rank_list.size() == 4 && (rank_list[3] % 4 == rank_list[1] % 4) && (rank_list[2] % 4 == rank_list[0] % 4)) {
     return SUCCESS;
   }
   if (rank_list.size() == 2) {

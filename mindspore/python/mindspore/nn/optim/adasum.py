@@ -392,7 +392,16 @@ class AdaSumByGradWrapCell(Cell):
             requires only one input.
 
     Inputs:
-        - **grads** (Tuple(Tensor)) - Tuple of gradients.
+        - **grads** (Tuple(Tensor)) - Tuple of gradients, same with the input of passed optimizer.
+
+    Raises:
+        RuntimeError: If `parallel_mode` uses `stand_alone` mode, AdaSum only supports use in distributed scenarios.
+        RuntimeError: If the optimizer parallel is used when using AdaSum.
+        RuntimeError: If the pipeline parallel is used when using AdaSum.
+        RuntimeError: If `device_num` is not a power of 2, or less than 16.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> from mindspore import nn
@@ -436,7 +445,16 @@ class AdaSumByDeltaWeightWrapCell(Cell):
             requires only one input.
 
     Inputs:
-        - **grads** (Tuple(Tensor)) - Tuple of gradients.
+        - **grads** (Tuple(Tensor)) - Tuple of gradients, same with the input of passed optimizer.
+
+    Raises:
+        RuntimeError: If `parallel_mode` uses `stand_alone` mode, AdaSum only supports use in distributed scenarios.
+        RuntimeError: If the optimizer parallel is used when using AdaSum.
+        RuntimeError: If the pipeline parallel is used when using AdaSum.
+        RuntimeError: If `device_num` is not a power of 2, or less than 16.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> from mindspore import nn
