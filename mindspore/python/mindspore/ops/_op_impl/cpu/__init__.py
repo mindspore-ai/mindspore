@@ -74,3 +74,5 @@ from .pyfunc import _pyfunc_cpu
 from .buffer_append import _buffer_append_cpu
 from .buffer_get import _buffer_get_cpu
 from .buffer_sample import _buffer_sample_cpu
+from .priority_replay_buffer import _prb_push_op_cpu
+from .priority_replay_buffer import _prb_sample_op_cpu
