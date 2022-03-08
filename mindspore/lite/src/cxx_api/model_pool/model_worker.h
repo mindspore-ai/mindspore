@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_THREAD_H_
-#define MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_THREAD_H_
+#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_WORKER_H_
+#define MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_WORKER_H_
 #include <queue>
 #include <string>
 #include <mutex>
@@ -26,13 +26,12 @@
 #include "include/api/model.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
-class ModelThread {
+class ModelWorker {
  public:
-  ModelThread() = default;
+  ModelWorker() = default;
 
-  ~ModelThread() = default;
+  ~ModelWorker() = default;
 
-  // the model pool is initialized once and can always accept model run requests
   Status Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context, int node_id = -1);
 
   std::vector<MSTensor> GetInputs();
@@ -51,9 +50,7 @@ class ModelThread {
  private:
   std::shared_ptr<mindspore::Model> model_ = nullptr;
   std::mutex mtx_model_;
-
-  // num thread is configured according to the hardware
   bool need_copy_output_ = true;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_THREAD_H_
+#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_WORKER_H_

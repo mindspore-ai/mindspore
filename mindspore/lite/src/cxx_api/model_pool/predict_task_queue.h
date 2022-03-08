@@ -41,7 +41,7 @@ class PredictTaskQueue {
   ~PredictTaskQueue();
 
   void PushPredictTask(std::shared_ptr<PredictTask> task, int node_id);
-  void WaitUntilPredictActive(std::shared_ptr<PredictTask> task);
+  void WaitUntilPredictActive(const std::shared_ptr<PredictTask> &task);
   std::shared_ptr<PredictTask> GetPredictTask(int node_id);
   void ActiveTask();
   int GetTaskNum(int node_id);
@@ -50,7 +50,7 @@ class PredictTaskQueue {
   bool IsPredictTaskDone() { return predict_task_done_; }
   int GetWaitModelNum(int node_id) { return waite_worker_num_.at(node_id); }
   void DecreaseWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) -= num; }
-  void IncreaseeWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) += num; }
+  void IncreaseWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) += num; }
 
  private:
   PredictTaskQueue() = default;
