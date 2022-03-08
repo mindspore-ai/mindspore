@@ -75,7 +75,7 @@ class SchedulerNode : public Node {
   bool Stop() override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 
- private:
+ protected:
   void Initialize();
 
   void InitCommandHandler();
@@ -187,7 +187,7 @@ class SchedulerNode : public Node {
 
   bool CheckIfNodeDisconnected() const;
 
-  void RunRecovery();
+  virtual void RunRecovery();
 
   void BroadcastTimeoutEvent();
 

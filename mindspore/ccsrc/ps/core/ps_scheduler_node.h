@@ -31,6 +31,10 @@ class PSSchedulerNode : public SchedulerNode {
   PSSchedulerNode() = default;
   ~PSSchedulerNode() override = default;
 
+ protected:
+  // Override the scheduler node to remove the nofification from scheduler to other nodes.
+  void RunRecovery() override;
+
  private:
   // Determine whether the registration request of the node should be rejected, the registration of the
   // alive node should be rejected.
