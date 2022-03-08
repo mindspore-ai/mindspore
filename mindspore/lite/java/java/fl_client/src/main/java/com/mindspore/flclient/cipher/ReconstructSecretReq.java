@@ -28,6 +28,7 @@ import com.mindspore.flclient.FLParameter;
 import com.mindspore.flclient.LocalFLParameter;
 import com.mindspore.flclient.cipher.struct.DecryptShareSecrets;
 
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import mindspore.schema.ClientShare;
 import mindspore.schema.ReconstructSecret;
 import mindspore.schema.ResponseCode;
@@ -45,7 +46,7 @@ import java.util.logging.Logger;
  * @since 2021-8-27
  */
 public class ReconstructSecretReq {
-    private static final Logger LOGGER = Logger.getLogger(ReconstructSecretReq.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(ReconstructSecretReq.class.toString());
     private FLCommunication flCommunication;
     private String nextRequestTime;
     private FLParameter flParameter = FLParameter.getInstance();
@@ -79,15 +80,15 @@ public class ReconstructSecretReq {
         int time = builder.createString(dateTime);
         int shareSecretsSize = decryptShareSecretsList.size();
         if (shareSecretsSize <= 0) {
-            LOGGER.info(Common.addTag("[PairWiseMask] request failed: the decryptShareSecretsList is null, please " +
-                    "waite."));
+            LOGGER.info("[PairWiseMask] request failed: the decryptShareSecretsList is null, please " +
+                    "waite.");
             return FLClientStatus.FAILED;
         } else {
             int[] decryptShareList = new int[shareSecretsSize];
             for (int i = 0; i < shareSecretsSize; i++) {
                 DecryptShareSecrets decryptShareSecrets = decryptShareSecretsList.get(i);
                 if (decryptShareSecrets.getFlID() == null) {
-                    LOGGER.severe(Common.addTag("[PairWiseMask] get remote flID failed!"));
+                    LOGGER.severe("[PairWiseMask] get remote flID failed!");
                     return FLClientStatus.FAILED;
                 }
 
@@ -135,14 +136,14 @@ public class ReconstructSecretReq {
             try {
                 byte[] responseData = flCommunication.syncRequest(url + "/reconstructSecrets", msg);
                 if (!Common.isSeverReady(responseData)) {
-                    LOGGER.info(Common.addTag("[sendReconstructSecret] the server is not ready now, need wait some " +
-                            "time and request again"));
+                    LOGGER.info("[sendReconstructSecret] the server is not ready now, need wait some " +
+                            "time and request again");
                     nextRequestTime = Common.getNextReqTime();
                     retCode = ResponseCode.OutOfTime;
                     return FLClientStatus.RESTART;
                 }
                 if (Common.isSeverJobFinished(responseData)) {
-                    LOGGER.info(Common.addTag("[sendReconstructSecret] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist."));
+                    LOGGER.info("[sendReconstructSecret] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist.");
                     retCode = ResponseCode.SystemError;
                     return FLClientStatus.FAILED;
                 }
@@ -150,7 +151,7 @@ public class ReconstructSecretReq {
                 ReconstructSecret reconstructSecretRsp = ReconstructSecret.getRootAsReconstructSecret(buffer);
                 return judgeSendReconstructSecrets(reconstructSecretRsp);
             } catch (IOException ex) {
-                LOGGER.severe(Common.addTag("[PairWiseMask] un solved error code in reconstruct"));
+                LOGGER.severe("[PairWiseMask] un solved error code in reconstruct");
                 ex.printStackTrace();
                 return FLClientStatus.FAILED;
             }
@@ -159,27 +160,27 @@ public class ReconstructSecretReq {
 
     private FLClientStatus judgeSendReconstructSecrets(ReconstructSecret bufData) {
         retCode = bufData.retcode();
-        LOGGER.info(Common.addTag("[PairWiseMask] **************the response of SendReconstructSecrets**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
-        LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
-        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
-        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
+        LOGGER.info("[PairWiseMask] **************the response of SendReconstructSecrets**************");
+        LOGGER.info("[PairWiseMask] return code: " + retCode);
+        LOGGER.info("[PairWiseMask] reason: " + bufData.reason());
+        LOGGER.info("[PairWiseMask] current iteration in server: " + bufData.iteration());
+        LOGGER.info("[PairWiseMask] next request time: " + bufData.nextReqTime());
         switch (retCode) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info(Common.addTag("[PairWiseMask] ReconstructSecrets success"));
+                LOGGER.info("[PairWiseMask] ReconstructSecrets success");
                 return FLClientStatus.SUCCESS;
             case (ResponseCode.OutOfTime):
-                LOGGER.info(Common.addTag("[PairWiseMask] SendReconstructSecrets out of time: need wait and request " +
-                        "startFLJob again"));
+                LOGGER.info("[PairWiseMask] SendReconstructSecrets out of time: need wait and request " +
+                        "startFLJob again");
                 setNextRequestTime(bufData.nextReqTime());
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in SendReconstructSecrets"));
+                LOGGER.info("[PairWiseMask] catch SucNotMatch or SystemError in SendReconstructSecrets");
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReconstructSecret is " +
-                        "invalid: " + retCode));
+                LOGGER.severe("[PairWiseMask] the return <retCode> from server in ReconstructSecret is " +
+                        "invalid: " + retCode);
                 return FLClientStatus.FAILED;
         }
     }

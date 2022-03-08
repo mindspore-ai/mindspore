@@ -16,6 +16,7 @@
 
 package com.mindspore.flclient;
 
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.model.AlInferBert;
 import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
@@ -53,11 +54,6 @@ import static com.mindspore.flclient.LocalFLParameter.LENET;
  * @since 2021-06-30
  */
 public class Common {
-    /**
-     * Global logger title.
-     */
-    public static final String LOG_TITLE = "<FLClient> ";
-
     public static final String LOG_DEPRECATED = "This method will be deprecated in the next version, it is " +
             "recommended to " +
             "use the latest method according to the use cases in the official website tutorial";
@@ -90,7 +86,7 @@ public class Common {
      * use to stop job.
      */
     private static final Object STOP_OBJECT = new Object();
-    private static final Logger LOGGER = Logger.getLogger(Common.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(Common.class.toString());
     private static List<String> envTrustList = new ArrayList<>(Arrays.asList("x86", "android"));
     private static SecureRandom secureRandom;
     private static int iteration;
@@ -106,34 +102,34 @@ public class Common {
      */
     public static String generateUrl(boolean ifUseElb, int serverNum, String domainName) {
         if (serverNum <= 0) {
-            LOGGER.severe(Common.addTag("[generateUrl] the input argument <serverNum> is not valid: <= 0, it should " +
-                    "be > 0, please check!"));
+            LOGGER.severe("[generateUrl] the input argument <serverNum> is not valid: <= 0, it should " +
+                    "be > 0, please check!");
             throw new IllegalArgumentException();
         }
         String url;
         if ((domainName == null || domainName.isEmpty() || domainName.split("//").length < 2)) {
-            LOGGER.severe(Common.addTag("[generateUrl] the input argument <domainName> is null or not valid, it " +
-                    "should be like as https://...... or http://......  , please check!"));
+            LOGGER.severe("[generateUrl] the input argument <domainName> is null or not valid, it " +
+                    "should be like as https://...... or http://......  , please check!");
             throw new IllegalArgumentException();
         }
         if (ifUseElb) {
             if (domainName.split("//")[1].split(":").length < 2) {
-                LOGGER.severe(Common.addTag("[generateUrl] the format of <domainName> is not valid, it should be like" +
-                        " as https://127.0.0.1:6666 or http://127.0.0.1:6666 when set useElb to true, please check!"));
+                LOGGER.severe("[generateUrl] the format of <domainName> is not valid, it should be like" +
+                        " as https://127.0.0.1:6666 or http://127.0.0.1:6666 when set useElb to true, please check!");
                 throw new IllegalArgumentException();
             }
             String ip = domainName.split("//")[1].split(":")[0];
             int port = Integer.parseInt(domainName.split("//")[1].split(":")[1]);
             if (!Common.checkIP(ip)) {
-                LOGGER.severe(Common.addTag("[generateUrl] the <ip> split from domainName is not valid, domainName " +
+                LOGGER.severe("[generateUrl] the <ip> split from domainName is not valid, domainName " +
                         "should be like as https://127.0.0.1:6666 or http://127.0.0.1:6666 when set useElb to true, " +
-                        "please check!"));
+                        "please check!");
                 throw new IllegalArgumentException();
             }
             if (!Common.checkPort(port)) {
-                LOGGER.severe(Common.addTag("[generateUrl] the <port> split from domainName is not valid, domainName " +
+                LOGGER.severe("[generateUrl] the <port> split from domainName is not valid, domainName " +
                         "should be like as https://127.0.0.1:6666 or http://127.0.0.1:6666 when set useElb to true, " +
-                        "please check!"));
+                        "please check!");
                 throw new IllegalArgumentException();
             }
             String tag = domainName.split("//")[0] + "//";
@@ -157,7 +153,7 @@ public class Common {
         classifierWeightName.add("albert.pooler.bias");
         classifierWeightName.add("classifier.weight");
         classifierWeightName.add("classifier.bias");
-        LOGGER.info(addTag("classifierWeightName size: " + classifierWeightName.size()));
+        LOGGER.info("classifierWeightName size: " + classifierWeightName.size());
     }
 
     /**
@@ -184,7 +180,7 @@ public class Common {
         albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.ffn_output.bias");
         albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.full_layer_layer_norm.gamma");
         albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.full_layer_layer_norm.beta");
-        LOGGER.info(addTag("albertWeightName size: " + albertWeightName.size()));
+        LOGGER.info("albertWeightName size: " + albertWeightName.size());
     }
 
     /**
@@ -227,12 +223,12 @@ public class Common {
      */
     public static void sleep(long millis) {
         if (millis <= 0) {
-            LOGGER.severe(addTag("[sleep] the millis is not valid(<= 0), will not do any thing, and stop the task"));
+            LOGGER.severe("[sleep] the millis is not valid(<= 0), will not do any thing, and stop the task");
             throw new IllegalArgumentException();
         }
         if (millis > MAX_SLEEP_TIME) {
-            LOGGER.severe(addTag("[sleep] the sleep time: " + millis + " exceed MAX_SLEEP_TIME: " + MAX_SLEEP_TIME
-                    + "(unit: ms), will only sleep 30 minutes."));
+            LOGGER.severe("[sleep] the sleep time: " + millis + " exceed MAX_SLEEP_TIME: " + MAX_SLEEP_TIME
+                    + "(unit: ms), will only sleep 30 minutes.");
             millis = MAX_SLEEP_TIME;
         }
         try {
@@ -240,7 +236,7 @@ public class Common {
                 STOP_OBJECT.wait(millis);  // 1000 milliseconds is one second.
             }
         } catch (InterruptedException ex) {
-            LOGGER.severe(addTag("[sleep] catch InterruptedException: " + ex.getMessage()));
+            LOGGER.severe("[sleep] catch InterruptedException: " + ex.getMessage());
         }
     }
 
@@ -267,13 +263,13 @@ public class Common {
             waitTime = Long.valueOf(nextRequestTime) - currentTime;
         }
         if (waitTime <= 0L) {
-            LOGGER.severe(addTag("[getWaitTime] waitTime: " + waitTime + " is not valid (should be > 0), the reasons " +
-                    "may be: the nextRequestTime <= currentTime, or the nextRequestTime is null, will stop the task"));
+            LOGGER.severe("[getWaitTime] waitTime: " + waitTime + " is not valid (should be > 0), the reasons " +
+                    "may be: the nextRequestTime <= currentTime, or the nextRequestTime is null, will stop the task");
             throw new IllegalArgumentException();
         }
-        LOGGER.info(addTag("[getWaitTime] next request time stamp: " + nextRequestTime + " current time stamp: " +
-                currentTime));
-        LOGGER.info(addTag("[getWaitTime] waitTime: " + waitTime));
+        LOGGER.info("[getWaitTime] next request time stamp: " + nextRequestTime + " current time stamp: " +
+                currentTime);
+        LOGGER.info("[getWaitTime] waitTime: " + waitTime);
         return waitTime;
     }
 
@@ -286,7 +282,7 @@ public class Common {
     public static long startTime(String tag) {
         Date startDate = new Date();
         long startTime = startDate.getTime();
-        LOGGER.info(addTag("[start time] <" + tag + "> start time: " + startTime));
+        LOGGER.info("[start time] <" + tag + "> start time: " + startTime);
         return startTime;
     }
 
@@ -299,18 +295,8 @@ public class Common {
     public static void endTime(long start, String tag) {
         Date endDate = new Date();
         long endTime = endDate.getTime();
-        LOGGER.info(addTag("[end time] <" + tag + "> end time: " + endTime));
-        LOGGER.info(addTag("[interval time] <" + tag + "> interval time(ms): " + (endTime - start)));
-    }
-
-    /**
-     * Add specified tag to the message.
-     *
-     * @param message the message need to add tag.
-     * @return the message after adding tag.
-     */
-    public static String addTag(String message) {
-        return LOG_TITLE + message;
+        LOGGER.info("[end time] <" + tag + "> end time: " + endTime);
+        LOGGER.info("[interval time] <" + tag + "> interval time(ms): " + (endTime - start));
     }
 
     /**
@@ -321,20 +307,20 @@ public class Common {
      */
     public static boolean isSeverReady(byte[] message) {
         if (message == null) {
-            LOGGER.severe(Common.addTag("[isSeverReady] the input argument <message> is null, please check!"));
+            LOGGER.severe("[isSeverReady] the input argument <message> is null, please check!");
             throw new IllegalArgumentException();
         }
         String messageStr = new String(message);
         if (messageStr.contains(SAFE_MOD)) {
-            LOGGER.info(Common.addTag("[isSeverReady] " + SAFE_MOD + ", need wait some time and request again"));
+            LOGGER.info("[isSeverReady] " + SAFE_MOD + ", need wait some time and request again");
             if (messageStr.split(":").length == 2) {
                 iteration = Integer.parseInt(messageStr.split(":")[1]);
             } else {
-                LOGGER.info(Common.addTag("[isSeverReady] the server does not return the current iteration."));
+                LOGGER.info("[isSeverReady] the server does not return the current iteration.");
             }
             return false;
         } else if (messageStr.contains(NOT_READY)) {
-            LOGGER.info(Common.addTag("[isSeverReady] " + NOT_READY + ", need wait some time and request again"));
+            LOGGER.info("[isSeverReady] " + NOT_READY + ", need wait some time and request again");
             return false;
         } else {
             return true;
@@ -349,16 +335,16 @@ public class Common {
      */
     public static boolean isSeverJobFinished(byte[] message) {
         if (message == null) {
-            LOGGER.severe(Common.addTag("[isSeverJobFinished] the input argument <message> is null, please check!"));
+            LOGGER.severe("[isSeverJobFinished] the input argument <message> is null, please check!");
             throw new IllegalArgumentException();
         }
         String messageStr = new String(message);
         if (messageStr.contains(JOB_NOT_AVAILABLE)) {
-            LOGGER.info(Common.addTag("[isSeverJobFinished] " + JOB_NOT_AVAILABLE + ", will stop the task and exist"));
+            LOGGER.info("[isSeverJobFinished] " + JOB_NOT_AVAILABLE + ", will stop the task and exist");
             if (messageStr.split(":").length == 2) {
                 iteration = Integer.parseInt(messageStr.split(":")[1]);
             } else {
-                LOGGER.info(Common.addTag("[isSeverJobFinished] the server does not return the current iteration."));
+                LOGGER.info("[isSeverJobFinished] the server does not return the current iteration.");
             }
             return true;
         } else {
@@ -374,27 +360,27 @@ public class Common {
      */
     public static String getRealPath(String path) {
         if (path == null) {
-            LOGGER.severe(Common.addTag("[getRealPath] the input argument <path> is null, please check!"));
+            LOGGER.severe("[getRealPath] the input argument <path> is null, please check!");
             throw new IllegalArgumentException();
         }
-        LOGGER.info(addTag("[getRealPath] original path: " + path));
+        LOGGER.info("[getRealPath] original path: " + path);
         String[] paths = path.split(",");
         for (int i = 0; i < paths.length; i++) {
             if (paths[i] == null) {
-                LOGGER.severe(Common.addTag("[getRealPath] the paths[i] is null, please check"));
+                LOGGER.severe("[getRealPath] the paths[" + i + "] is null, please check");
                 throw new IllegalArgumentException();
             }
-            LOGGER.info(addTag("[getRealPath] original path " + i + ": " + paths[i]));
+            LOGGER.info("[getRealPath] original path: " + paths[i]);
             File file = new File(paths[i]);
             try {
                 paths[i] = file.getCanonicalPath();
             } catch (IOException e) {
-                LOGGER.severe(addTag("[getRealPath] catch IOException in file.getCanonicalPath(): " + e.getMessage()));
+                LOGGER.severe("[getRealPath] catch IOException in file.getCanonicalPath(): " + e.getMessage());
                 throw new IllegalArgumentException();
             }
         }
         String realPath = String.join(",", Arrays.asList(paths));
-        LOGGER.info(addTag("[getRealPath] real path: " + realPath));
+        LOGGER.info("[getRealPath] real path: " + realPath);
         return realPath;
     }
 
@@ -406,19 +392,19 @@ public class Common {
      */
     public static boolean checkPath(String path) {
         if (path == null) {
-            LOGGER.severe(Common.addTag("[checkPath] the input argument <path> is null, please check!"));
+            LOGGER.severe("[checkPath] the input argument <path> is null, please check!");
             return false;
         }
         String[] paths = path.split(",");
         for (int i = 0; i < paths.length; i++) {
             if (paths[i] == null) {
-                LOGGER.severe(Common.addTag("[checkPath] the paths[i] is null, please check"));
+                LOGGER.severe("[checkPath] the paths[i] is null, please check");
                 return false;
             }
-            LOGGER.info(addTag("[check path " + i + "] " + paths[i]));
+            LOGGER.info("[check path] path: " + paths[i]);
             File file = new File(paths[i]);
             if (!file.exists()) {
-                LOGGER.severe(Common.addTag("[checkPath] the path does not exist, please check"));
+                LOGGER.severe("[checkPath] the path does not exist, please check");
                 return false;
             }
         }
@@ -433,7 +419,7 @@ public class Common {
      */
     public static boolean checkIP(String ip) {
         if (ip == null) {
-            LOGGER.severe(Common.addTag("[checkIP] the input argument <ip> is null, please check!"));
+            LOGGER.severe("[checkIP] the input argument <ip> is null, please check!");
             throw new IllegalArgumentException();
         }
         String regex = "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])[.]" +
@@ -462,8 +448,8 @@ public class Common {
      */
     public static SecureRandom getSecureRandom() {
         if (secureRandom == null) {
-            LOGGER.severe(Common.addTag("[setSecureRandom] the parameter secureRandom is null, please set it before " +
-                    "use"));
+            LOGGER.severe("[setSecureRandom] the parameter secureRandom is null, please set it before " +
+                    "use");
             throw new IllegalArgumentException();
         }
         return secureRandom;
@@ -476,7 +462,7 @@ public class Common {
      */
     public static void setSecureRandom(SecureRandom secureRandom) {
         if (secureRandom == null) {
-            LOGGER.severe(Common.addTag("[setSecureRandom] the input parameter secureRandom is null, please check"));
+            LOGGER.severe("[setSecureRandom] the input parameter secureRandom is null, please check");
             throw new IllegalArgumentException();
         }
         Common.secureRandom = secureRandom;
@@ -489,7 +475,7 @@ public class Common {
      */
     public static SecureRandom getFastSecureRandom() {
         try {
-            LOGGER.info(Common.addTag("[getFastSecureRandom] start create fastSecureRandom"));
+            LOGGER.info("[getFastSecureRandom] start create fastSecureRandom");
             long start = System.currentTimeMillis();
             SecureRandom blockingRandom = SecureRandom.getInstanceStrong();
             boolean ifPredictionResistant = true;
@@ -502,11 +488,11 @@ public class Common {
                     .setEntropyBitsRequired(entropyBitsRequired)
                     .buildCTR(cipher, cipherLen, nonce, ifForceReseed);
             fastRandom.nextInt();
-            LOGGER.info(Common.addTag("[getFastSecureRandom] finish create fastSecureRandom"));
-            LOGGER.info(Common.addTag("[getFastSecureRandom] cost time: " + (System.currentTimeMillis() - start)));
+            LOGGER.info("[getFastSecureRandom] finish create fastSecureRandom");
+            LOGGER.info("[getFastSecureRandom] cost time: " + (System.currentTimeMillis() - start));
             return fastRandom;
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.severe(Common.addTag("catch NoSuchAlgorithmException: " + e.getMessage()));
+            LOGGER.severe("catch NoSuchAlgorithmException: " + e.getMessage());
             throw new IllegalArgumentException();
         }
     }
@@ -531,13 +517,13 @@ public class Common {
 
     public static void setIsHttps(String tag) {
         if ("https".equals(tag)) {
-            LOGGER.info(Common.addTag("conducting https communication"));
+            LOGGER.info("conducting https communication");
             Common.isHttps = true;
         } else if ("http".equals(tag)) {
-            LOGGER.info(Common.addTag("conducting http communication"));
+            LOGGER.info("conducting http communication");
             Common.isHttps = false;
         } else {
-            LOGGER.info(Common.addTag("The domain header set by the user is incorrect, please check"));
+            LOGGER.info("The domain header set by the user is incorrect, please check");
             throw new IllegalArgumentException();
         }
     }
@@ -555,13 +541,13 @@ public class Common {
             return deprecatedInitSession();
         }
         Status tag;
-        LOGGER.info(Common.addTag("==========Loading model, " + modelPath + " Create " +
-                " Session============="));
+        LOGGER.info("==========Loading model from path: " + modelPath + ", Create " +
+                " Session=============");
         Client client = ClientManager.getClient(flParameter.getFlName());
         tag = client.initSessionAndInputs(modelPath, localFLParameter.getMsConfig(), flParameter.getInputShape());
         if (!Status.SUCCESS.equals(tag)) {
-            LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
-                    "is -1"));
+            LOGGER.severe("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
+                    "is -1");
             return FLClientStatus.FAILED;
         }
         return FLClientStatus.SUCCESS;
@@ -575,7 +561,7 @@ public class Common {
         if (Common.checkFLName(flParameter.getFlName())) {
             deprecatedFreeSession();
         } else {
-            LOGGER.info(Common.addTag("===========free session============="));
+            LOGGER.info("===========free session=============");
             Client client = ClientManager.getClient(flParameter.getFlName());
             client.free();
         }
@@ -590,28 +576,28 @@ public class Common {
         FLParameter flParameter = FLParameter.getInstance();
         int tag = 0;
         if (flParameter.getFlName().equals(ALBERT)) {
-            LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
-                    "Train Session============="));
+            LOGGER.info("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
+                    "Train Session=============");
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             tag = alTrainBert.initSessionAndInputs(flParameter.getTrainModelPath(), true);
             if (tag == -1) {
-                LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
-                        "is -1"));
+                LOGGER.severe("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
+                        "is -1");
                 return FLClientStatus.FAILED;
             }
-            LOGGER.info(Common.addTag("==========Loading inference model, " + flParameter.getInferModelPath() + " " +
-                    "Create inference Session============="));
+            LOGGER.info("==========Loading inference model, " + flParameter.getInferModelPath() + " " +
+                    "Create inference Session=============");
             AlInferBert alInferBert = AlInferBert.getInstance();
             tag = alInferBert.initSessionAndInputs(flParameter.getInferModelPath(), false);
         } else if (flParameter.getFlName().equals(LENET)) {
-            LOGGER.info(Common.addTag("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
-                    "Train Session============="));
+            LOGGER.info("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
+                    "Train Session=============");
             TrainLenet trainLenet = TrainLenet.getInstance();
             tag = trainLenet.initSessionAndInputs(flParameter.getTrainModelPath(), true);
         }
         if (tag == -1) {
-            LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return is " +
-                    "-1"));
+            LOGGER.severe("[initSession] unsolved error code in <initSessionAndInputs>: the return is " +
+                    "-1");
             return FLClientStatus.FAILED;
         }
         return FLClientStatus.SUCCESS;
@@ -623,16 +609,16 @@ public class Common {
     private static void deprecatedFreeSession() {
         FLParameter flParameter = FLParameter.getInstance();
         if (flParameter.getFlName().equals(ALBERT)) {
-            LOGGER.info(Common.addTag("===========free train session============="));
+            LOGGER.info("===========free train session=============");
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             SessionUtil.free(alTrainBert.getTrainSession());
             if (!flParameter.getTestDataset().equals("null")) {
-                LOGGER.info(Common.addTag("===========free inference session============="));
+                LOGGER.info("===========free inference session=============");
                 AlInferBert alInferBert = AlInferBert.getInstance();
                 SessionUtil.free(alInferBert.getTrainSession());
             }
         } else if (flParameter.getFlName().equals(LENET)) {
-            LOGGER.info(Common.addTag("===========free session============="));
+            LOGGER.info("===========free session=============");
             TrainLenet trainLenet = TrainLenet.getInstance();
             SessionUtil.free(trainLenet.getTrainSession());
         }

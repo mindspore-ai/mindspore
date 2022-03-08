@@ -20,6 +20,7 @@ import com.google.flatbuffers.FlatBufferBuilder;
 
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.StartFLJob;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import mindspore.schema.CompressFeatureMap;
 import mindspore.schema.FeatureMap;
 import mindspore.schema.CompressType;
@@ -38,7 +39,7 @@ import static mindspore.schema.CompressType.QUANT;
  * @since 2021-12-21
  */
 public class DecodeExecutor {
-    private static final Logger LOGGER = Logger.getLogger(DecodeExecutor.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(DecodeExecutor.class.toString());
 
     private static volatile DecodeExecutor compressExecutor;
 
@@ -59,7 +60,7 @@ public class DecodeExecutor {
         if (!CompressMode.COMPRESS_TYPE_MAP.containsKey(compressType)) {
             return new ArrayList<>();
         }
-        LOGGER.info(Common.addTag("[deCompressWeight] create " + CompressType.name(compressType) + " feature map."));
+        LOGGER.info("[deCompressWeight] create " + CompressType.name(compressType) + " feature map.");
         int num_bits = CompressMode.COMPRESS_TYPE_MAP.get(compressType);
         if (compressType == QUANT) {
             return deCompressQuantMinMax(compressFeatureMapList, num_bits);

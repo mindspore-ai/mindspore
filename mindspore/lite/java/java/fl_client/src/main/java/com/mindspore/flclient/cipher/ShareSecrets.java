@@ -17,6 +17,7 @@
 package com.mindspore.flclient.cipher;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
  * @since 2021-06-30
  */
 public class ShareSecrets {
-    private static final Logger LOGGER = Logger.getLogger(ShareSecrets.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(ShareSecrets.class.toString());
 
     private BigInteger prime;
     private final int minNum;
@@ -43,15 +44,15 @@ public class ShareSecrets {
      */
     public ShareSecrets(final int minNum, final int totalNum) {
         if (minNum <= 0) {
-            LOGGER.severe(Common.addTag("the argument <k> is not valid: <= 0, it should be > 0"));
+            LOGGER.severe("the argument <k> is not valid: <= 0, it should be > 0");
             throw new IllegalArgumentException();
         }
         if (totalNum <= 0) {
-            LOGGER.severe(Common.addTag("the argument <n> is not valid: <= 0, it should be > 0"));
+            LOGGER.severe("the argument <n> is not valid: <= 0, it should be > 0");
             throw new IllegalArgumentException();
         }
         if (minNum > totalNum) {
-            LOGGER.severe(Common.addTag("the argument <k, n> is not valid: k > n, it should k <= n"));
+            LOGGER.severe("the argument <k, n> is not valid: k > n, it should k <= n");
             throw new IllegalArgumentException();
         }
         this.minNum = minNum;
@@ -68,11 +69,11 @@ public class ShareSecrets {
      */
     public SecretShares[] split(final byte[] bytes, byte[] primeByte) {
         if (bytes == null || bytes.length == 0) {
-            LOGGER.severe(Common.addTag("the input argument <bytes> is null"));
+            LOGGER.severe("the input argument <bytes> is null");
             return new SecretShares[0];
         }
         if (primeByte == null || primeByte.length == 0) {
-            LOGGER.severe(Common.addTag("the input argument <primeByte> is null"));
+            LOGGER.severe("the input argument <primeByte> is null");
             return new SecretShares[0];
         }
         BigInteger secret = BaseUtil.byteArray2BigInteger(bytes);
@@ -108,11 +109,11 @@ public class ShareSecrets {
      */
     public BigInteger combine(final SecretShares[] shares, final byte[] primeByte) {
         if (shares == null || shares.length == 0) {
-            LOGGER.severe(Common.addTag("the input argument <shares> is null"));
+            LOGGER.severe("the input argument <shares> is null");
             return BigInteger.ZERO;
         }
         if (primeByte == null || primeByte.length == 0) {
-            LOGGER.severe(Common.addTag("the input argument <primeByte> is null"));
+            LOGGER.severe("the input argument <primeByte> is null");
             return BigInteger.ZERO;
         }
         BigInteger primeNum = BaseUtil.byteArray2BigInteger(primeByte);

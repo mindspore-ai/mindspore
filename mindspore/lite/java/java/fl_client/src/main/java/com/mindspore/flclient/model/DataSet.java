@@ -17,6 +17,7 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public abstract class DataSet {
-    private static final Logger logger = Logger.getLogger(DataSet.class.toString());
+    private static final Logger logger = FLLoggerGenerater.getModelLogger(DataSet.class.toString());
 
     /**
      * dataset sample size.
@@ -80,7 +81,7 @@ public abstract class DataSet {
     public Status init(List<String> files) {
         Status status = dataPreprocess(files);
         if (status != Status.SUCCESS) {
-            logger.severe(Common.addTag("data preprocess failed"));
+            logger.severe("data preprocess failed");
             return status;
         }
         shuffle();
