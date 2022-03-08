@@ -5,6 +5,10 @@ mindspore.nn.ResizeBilinear
 
     使用双线性插值调整输入Tensor为指定的大小。
 
+    **参数：**
+
+    - **half_pixel_centers** (bool) - 是否几何中心对齐。如果设置为True, 那么`scale_factor`应该设置为False。默认值：False。
+
     **输入：**
 
     - **x** (Tensor) - ResizeBilinear的输入，四维的Tensor，其shape为 :math:`(batch, channels, height, width)` ，数据类型为float16或float32。

@@ -15,12 +15,14 @@
 import numpy as np
 import pytest
 import mindspore.context as context
+from mindspore import ops
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -29,6 +31,16 @@ class Net(nn.Cell):
 
     def construct(self, x):
         return self.unique(x)
+
+
+class NetFunc(nn.Cell):
+    def __init__(self):
+        super(NetFunc, self).__init__()
+        self.unique = ops.unique
+
+    def construct(self, x):
+        return self.unique(x)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -40,5 +52,43 @@ def test_unqiue():
     output = unique(x)
     expect1 = np.array([1, 2, 3])
     expect2 = np.array([0, 0, 1, 1, 2, 2])
+    assert (output[0].asnumpy() == expect1).all()
+    assert (output[1].asnumpy() == expect2).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_unqiue_func_1d():
+    """
+    Feature: Test unique function
+    Description: Input 1D Tensor
+    Expectation: Successful execution.
+    """
+    x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.int32)
+    unique = NetFunc()
+    output = unique(x)
+    expect1 = np.array([1, 2, 3])
+    expect2 = np.array([0, 0, 1, 1, 2, 2])
+    assert (output[0].asnumpy() == expect1).all()
+    assert (output[1].asnumpy() == expect2).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_unqiue_func_2d():
+    """
+    Feature: Test unique function
+    Description: Input 2D Tensor
+    Expectation: Successful execution.
+    """
+    x = Tensor(np.array([[1, 1, 2], [2, 3, 3]]), mstype.int32)
+    unique = NetFunc()
+    output = unique(x)
+    expect1 = np.array([1, 2, 3])
+    expect2 = np.array([[0, 0, 1], [1, 2, 2]])
     assert (output[0].asnumpy() == expect1).all()
     assert (output[1].asnumpy() == expect2).all()

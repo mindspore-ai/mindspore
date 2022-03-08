@@ -32,8 +32,8 @@ from mindspore._checkparam import Rel, Validator
 from ..cell import Cell
 from .activation import get_activation
 
-__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
-           'Tril', 'Triu', 'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Roll']
+__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
+           'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Roll']
 
 
 class L1Regularizer(Cell):
@@ -851,6 +851,10 @@ class ResizeBilinear(Cell):
     r"""
     Samples the input tensor to the given size or scale_factor by using bilinear interpolate.
 
+    Args:
+        half_pixel_centers (bool): Whether half pixel center. If set to True, `align_corners` should be False.
+            Default: False.
+
     Inputs:
         - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape
           :math:`(batch, channels, height, width)`, with data type of float16 or float32.
@@ -862,8 +866,6 @@ class ResizeBilinear(Cell):
         - **align_corners** (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
           aligns the 4 corners of images and resized images. If false, rescale by :math:`new\_height / height`.
           Default: False.
-        - **half_pixel_centers** (bool): Whether half pixel center. If set to True, `align_corners` should be False.
-                                 Default: False.
 
     Outputs:
         Resized tensor.
