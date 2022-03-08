@@ -28,7 +28,7 @@ class ActivationCPUKernel : public InnerKernel {
  public:
   ActivationCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx), thread_count_(op_parameter_->thread_num_) {
+      : InnerKernel(param, inputs, outputs, ctx) {
     type_ = (reinterpret_cast<ActivationParameter *>(param))->type_;
     alpha_ = (reinterpret_cast<ActivationParameter *>(param))->alpha_;
     min_val_ = (reinterpret_cast<ActivationParameter *>(param))->min_val_;
@@ -36,7 +36,7 @@ class ActivationCPUKernel : public InnerKernel {
   }
   ~ActivationCPUKernel() override = default;
 
-  int SetDtCostContext();
+  int SetThreadCostContext();
   int Prepare() override;
   int ReSize() override;
   int Run() override;
@@ -47,7 +47,6 @@ class ActivationCPUKernel : public InnerKernel {
   int DoActivationInt32(int task_id);
 
  private:
-  int thread_count_;
   int type_;
   float alpha_;
   float min_val_;
