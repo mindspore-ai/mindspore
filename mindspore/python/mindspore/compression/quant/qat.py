@@ -170,6 +170,9 @@ class QuantizationAwareTraining(Quantizer):
             scenario, and narrow_range will automatically match to False). Default: OptimizeOption.QAT.
         one_conv_fold (bool): Whether to use one conv bn fold ops for simulation inference operation. Default: True.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Raises:
         TypeError: If the element of `quant_delay` or `freeze_bn` is not int.
         TypeError: If `bn_fold`, `one_conv_fold` or the element of `per_channel`, `symmetric`, `narrow_range`
@@ -184,6 +187,7 @@ class QuantizationAwareTraining(Quantizer):
 
     Examples:
         >>> from mindspore.compression.quant import QuantizationAwareTraining
+        >>> from mindspore import nn
         >>> class LeNet5(nn.Cell):
         ...     def __init__(self, num_class=10, channel=1):
         ...         super(LeNet5, self).__init__()
