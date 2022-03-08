@@ -1139,8 +1139,8 @@ class BatchNorm(PrimitiveWithInfer):
         Tuple of 5 Tensors, the normalized inputs and the updated parameters.
 
         - **output_x** (Tensor) - The same type and shape as the input_x. The shape is :math:`(N, C)`.
-        - **updated_scale** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **updated_bias** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **batch_mean** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **batch_variance** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_1** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
 

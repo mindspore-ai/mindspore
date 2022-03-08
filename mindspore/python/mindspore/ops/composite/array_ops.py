@@ -62,7 +62,7 @@ def repeat_elements(x, rep, axis=0):
     Args:
         x (Tensor): The tensor to repeat values for. Must be of type: float16,
             float32, int8, uint8, int16, int32, or int64.
-        rep (int): The number of times to repeat, must be positive, required.
+        rep (int): The number of times to repeat, must be positive.
         axis (int): The axis along which to repeat, default 0.
 
     Outputs:
