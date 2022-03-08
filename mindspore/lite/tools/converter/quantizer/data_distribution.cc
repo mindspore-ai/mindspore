@@ -217,15 +217,12 @@ double DataDistribution::CalculateScaleAndZp(float min_value, float max_value) {
   }
   // Inputs are both negative and positive, real_min and real_max are slightly shifted to make the floating point zero
   // exactly representable. e.g. input range = [-5.1, 5.1] -> [-5.12, 5.08]
-  MS_ASSERT(quant_max_ - quant_min_ > 0);
-  auto range = encode_max_ - encode_min_;
-  if (max_value <= 0.0f) {
-    MS_LOG(INFO) << "The value is 0, so set to symmetry and the range to 0.01.";
-    const float zero_range = 0.01f;
-    range = zero_range;
-    symmetry_ = true;
-  }
 
+  // handle case where encode_min_ == encode_max_
+  float epsilon = 1e-5;
+  encode_max_ = std::max(encode_max_, encode_min_ + epsilon);
+  auto range = encode_max_ - encode_min_;
+  MS_ASSERT(quant_max_ - quant_min_ > 0);
   return range / (quant_max_ - quant_min_);
 }
 
