@@ -119,6 +119,12 @@ else
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
     fi
+
+    pytest -s $CURRPATH/rewrite/*.py
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
 fi
 
 RET=$?
