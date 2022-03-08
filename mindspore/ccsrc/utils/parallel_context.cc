@@ -270,12 +270,13 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
   if (init_param_shape_) {
     return;
   }
-  auto iter = param_shapes.find(param_node->name());
-  if (iter == param_shapes.end()) {
-    MS_LOG(WARNING) << "Can not found the shape for parameter " << param_node->name();
+  auto param_info = param_node->param_info();
+  if (!param_info) return;
+  auto shape = param_info->parameter_shape();
+  if (shape.empty()) {
+    MS_LOG(WARNING) << "The parameter " << param_node->name() << "'s parameter_shape in param_info is empty";
     return;
   }
-  auto shape = iter->second;
   std::shared_ptr<abstract::BaseShape> base_shape = std::make_shared<abstract::Shape>(shape);
   ptr->set_shape(base_shape);
   MS_LOG(INFO) << "The parameter name is " << param_node->name() << ", the shape is " << shape;

@@ -88,6 +88,9 @@ class ParamInfo {
     parallel_optimizer_comm_recompute_ = parallel_optimizer_comm_recompute;
   }
 
+  std::vector<int64_t> parameter_shape() const { return parameter_shape_; }
+  void set_parameter_shape(std::vector<int64_t> tensor_shape) { parameter_shape_ = tensor_shape; }
+
   bool cache_enable() const { return cache_enable_; }
   void set_cache_enable(bool cache_enable) { cache_enable_ = cache_enable; }
 
@@ -116,6 +119,7 @@ class ParamInfo {
   std::vector<int64_t> cache_shape_;
   ParameterPtr parameter_{nullptr};
   bool requires_aggr_{true};
+  std::vector<int64_t> parameter_shape_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PARAM_INFO_H_
