@@ -3,7 +3,7 @@ mindspore.ops.L2Loss
 
 .. py:class:: mindspore.ops.L2Loss()
 
-    用于计算L2范数，但不对结果进行开方操作。
+    用于计算L2范数的一半，但不对结果进行开方操作。
 
     把输入设为x，输出设为loss。
 
