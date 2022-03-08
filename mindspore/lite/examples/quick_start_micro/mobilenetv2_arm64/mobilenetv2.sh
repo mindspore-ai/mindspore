@@ -15,6 +15,15 @@
 # ============================================================================
 set -e
 
+usage()
+{
+  echo "Usage:"
+  echo "bash build.sh [-I arm64|arm32]"
+  echo "Options:"
+  echo "    -I download and build for arm64 or arm32, default arm64"
+}
+
+LITE_PLATFORM="arm64"
 GEN=OFF
 TARBALL=""
 while getopts 'r:g:' OPT
@@ -32,24 +41,26 @@ do
 done
 
 BASEPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-ROOT_DIR=${BASEPATH%%/mindspore/lite/examples/quick_start_micro/mnist_x86}
-DEMO_DIR=${ROOT_DIR}/mindspore/lite/examples/quick_start_micro/mnist_x86
+ROOT_DIR=${BASEPATH%%/mindspore/lite/examples/quick_start_micro/mobilenetv2_arm64}
+DEMO_DIR=${ROOT_DIR}/mindspore/lite/examples/quick_start_micro/mobilenetv2_arm64
 MODEL_DIR=${ROOT_DIR}/mindspore/lite/examples/quick_start_micro/models
 PKG_DIR=${ROOT_DIR}/mindspore/lite/examples/quick_start_micro/pkgs
 COFIG_FILE=${DEMO_DIR}/micro.cfg
-SOURCE_CODE_DIR=${ROOT_DIR}/mindspore/lite/examples/quick_start_micro/mnist_x86/source_code
+SOURCE_CODE_DIR=${ROOT_DIR}/mindspore/lite/examples/quick_start_micro/mobilenetv2_arm64/source_code
 echo "root dir is: ${ROOT_DIR}"
 echo "current dir is: ${BASEPATH}"
 echo "demo dir is: ${DEMO_DIR}"
 echo "model dir is: ${MODEL_DIR}"
 
-MODEL_NAME=mnist
-INPUT_BIN=${MODEL_DIR}/${MODEL_NAME}/mnist.tflite.ms.bin
-VALICATION_DATA=${MODEL_DIR}/${MODEL_NAME}/mnist.tflite.ms.out
-MODEL=${MODEL_DIR}/${MODEL_NAME}/mnist.tflite
+MODEL_NAME=mobilenetv2
+#INPUT_BIN=${MODEL_DIR}/${MODEL_NAME}/mobilenetv2.tflite.ms.bin
+#VALICATION_DATA=${MODEL_DIR}/${MODEL_NAME}/mobilenetv2.tflite.ms.out
+MODEL=${MODEL_DIR}/${MODEL_NAME}/mobilenet_v2_1.0_224.tflite
 MODEL_FILE=${MODEL_NAME}.tar.gz
 
-GetVersion() {
+echo "current dir is: ${BASEPATH}"
+
+get_version() {
     local VERSION_HEADER=${ROOT_DIR}/mindspore/lite/include/version.h
     local VERSION_MAJOR=$(grep "const int ms_version_major =" ${VERSION_HEADER} | tr -dc "[0-9]")
     local VERSION_MINOR=$(grep "const int ms_version_minor =" ${VERSION_HEADER} | tr -dc "[0-9]")
@@ -57,15 +68,36 @@ GetVersion() {
     VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
 }
 
+download_inference() {
+    if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
+        local ARM_NAME=aarch64
+        local DEVICE=cpu
+    else
+        local ARM_NAME=aarch32
+        local DEVICE=cpu
+    fi
+    rm -rf ${BASEPATH:?}/${MINDSPORE_FILE_NAME} || exit 1
+    MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-android-${ARM_NAME}"
+    local MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
+    local MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/android/${DEVICE}/${MINDSPORE_FILE}"
+
+    if [ ! -e ${PKG_DIR}/${MINDSPORE_FILE} ]; then
+      wget -c -O ${PKG_DIR}/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
+    fi
+
+    tar xzvf ${PKG_DIR}/${MINDSPORE_FILE} -C ${PKG_DIR} || exit 1
+    PKG_PATH=${PKG_DIR}/${MINDSPORE_FILE_NAME}
+}
+
 DownloadModel() {
     rm -rf ${MODEL_DIR:?}/${MODEL_NAME}
     mkdir -p ${MODEL_DIR}/${MODEL_NAME}
 
-    local MNIST_DOWNLOAD_URL=https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/${MODEL_FILE}
+    local DOWNLOAD_URL=https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/${MODEL_FILE}
 
     if [ ! -e ${MODEL_DIR}/${MODEL_FILE} ]; then
       echo "download models ..."
-      wget -c -O ${MODEL_DIR}/${MODEL_FILE} --no-check-certificate ${MNIST_DOWNLOAD_URL}
+      wget -c -O ${MODEL_DIR}/${MODEL_FILE} --no-check-certificate ${DOWNLOAD_URL}
     fi
     echo "unpack models ..."
     tar xzvf ${MODEL_DIR}/${MODEL_FILE} -C ${MODEL_DIR} || exit 1
@@ -77,7 +109,7 @@ CodeGeneration() {
     ${PKG_DIR}/${MINDSPORE_FILE_NAME}/tools/converter/converter/converter_lite --fmk=TFLITE --modelFile=${MODEL} --outputFile=${SOURCE_CODE_DIR} --configFile=${COFIG_FILE}
 }
 
-GetVersion
+get_version
 MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
 MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
 PKG_PATH=${PKG_DIR}/${MINDSPORE_FILE_NAME}
@@ -100,10 +132,23 @@ fi
 
 # 2. build benchmark
 mkdir -p ${SOURCE_CODE_DIR}/build && cd ${SOURCE_CODE_DIR}/build || exit 1
-cmake -DPKG_PATH=${PKG_PATH} ..
+download_inference
+if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
+    echo "making arm64"
+    cmake -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
+          -DANDROID_ABI="arm64-v8a" \
+          -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang" \
+          -DANDROID_NATIVE_API_LEVEL="19" \
+          -DPLATFORM_ARM64=ON \
+          -DPKG_PATH=${PKG_PATH} ..
+else
+    cmake -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
+          -DANDROID_ABI="armeabi-v7a" \
+          -DANDROID_TOOLCHAIN_NAME="clang" \
+          -DANDROID_NATIVE_API_LEVEL="19" \
+          -DPLATFORM_ARM32=ON \
+          -DPKG_PATH=${PKG_PATH} ..
+fi
 make
-
-# 3. run benchmark
-echo "net file: ${DEMO_DIR}/src/${MODEL_NAME}.bin"
-./benchmark ${INPUT_BIN} ../src/net.bin 1 ${VALICATION_DATA}
-
