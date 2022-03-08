@@ -77,8 +77,9 @@ class Parameter(Tensor_):
         compiling for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
         If there is an operator in the network that requires part of the inputs to be Parameter,
         then the Parameters as this part of the inputs are not allowed to be cast.
-        It is recommended to use the default value of `name` when initialize a parameter as one attribute of a cell,
-        otherwise, the parameter name may be different from expected.
+        Give each `Parameter` a unique name to facilitate subsequent operations and updates.
+        If there are two or more `Parameter` objects with the same name in a network,
+        will be prompted to set a unique name when defining.
 
     Args:
         default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
