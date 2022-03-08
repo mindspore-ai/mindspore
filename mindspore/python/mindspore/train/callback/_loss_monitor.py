@@ -15,8 +15,9 @@
 """LossMonitor Callback class."""
 
 import numpy as np
-from mindspore.common.tensor import Tensor
 
+from mindspore.common.tensor import Tensor
+from mindspore._checkparam import Validator
 from ._callback import Callback
 
 
@@ -55,12 +56,8 @@ class LossMonitor(Callback):
 
     def __init__(self, per_print_times=1, has_trained_epoch=0):
         super(LossMonitor, self).__init__()
-        if not isinstance(per_print_times, int) or per_print_times < 0:
-            raise ValueError("The argument 'per_print_times' must be int and >= 0, "
-                             "but got {}".format(per_print_times))
-        if not isinstance(has_trained_epoch, int) or has_trained_epoch < 0:
-            raise ValueError("The argument 'has_trained_epoch' must be int and >= 0, "
-                             "but got {}".format(has_trained_epoch))
+        Validator.check_non_negative_int(per_print_times)
+        Validator.check_non_negative_int(has_trained_epoch)
         self._per_print_times = per_print_times
         self._last_print_time = 0
         self._has_trained_epoch = has_trained_epoch

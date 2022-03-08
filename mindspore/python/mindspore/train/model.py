@@ -536,8 +536,8 @@ class Model:
             if not dataset_sink_mode:
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
             elif context.get_context("device_target") == "CPU":
-                logger.warning("The CPU cannot support dataset sink mode currently."
-                               "So the training process will be performed with dataset not sink.")
+                logger.info("The CPU cannot support dataset sink mode currently."
+                            "So the training process will be performed with dataset not sink.")
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
             else:
                 self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params, sink_size)
