@@ -39,20 +39,59 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 激活函数
 ^^^^^^^^^^
 
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
 
-   * - functional
-     - Description
-   * - mindspore.ops.tanh
-     - Refer to :class:`mindspore.ops.Tanh`.
-   
+    mindspore.ops.tanh
+
 数学运算算子
 ----------------
 
 逐元素运算
 ^^^^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.abs
+    mindspore.ops.acos
+    mindspore.ops.acosh
+    mindspore.ops.add
+    mindspore.ops.addn
+    mindspore.ops.asin
+    mindspore.ops.asinh
+    mindspore.ops.atan
+    mindspore.ops.atan2
+    mindspore.ops.atanh
+    mindspore.ops.bitwise_and
+    mindspore.ops.bitwise_or
+    mindspore.ops.bitwise_xor
+    mindspore.ops.cos
+    mindspore.ops.cosh
+    mindspore.ops.div
+    mindspore.ops.erf
+    mindspore.ops.erfc
+    mindspore.ops.exp
+    mindspore.ops.expm1
+    mindspore.ops.floor
+    mindspore.ops.floor_div
+    mindspore.ops.floor_mod
+    mindspore.ops.invert
+    mindspore.ops.log
+    mindspore.ops.logical_and
+    mindspore.ops.logical_not
+    mindspore.ops.logical_or
+    mindspore.ops.mul
+    mindspore.ops.neg
+    mindspore.ops.pow
+    mindspore.ops.sin
+    mindspore.ops.sinh
+    mindspore.ops.sub
+    mindspore.ops.tan
 
 .. list-table::
    :widths: 50 50
@@ -61,96 +100,38 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
    * - functional
      - Description
    * - mindspore.ops.absolute
-     - Refer to :class:`mindspore.ops.Abs`.
-   * - mindspore.ops.acos
-     - Refer to :class:`mindspore.ops.ACos`.
-   * - mindspore.ops.acosh
-     - Refer to :class:`mindspore.ops.Acosh`.
-   * - mindspore.ops.add
-     - Refer to :class:`mindspore.ops.Add`.
-   * - mindspore.ops.addn
-     - Refer to :class:`mindspore.ops.AddN`.
-   * - mindspore.ops.asin
-     - Refer to :class:`mindspore.ops.Asin`.
-   * - mindspore.ops.asinh
-     - Refer to :class:`mindspore.ops.Asinh`.
-   * - mindspore.ops.atan
-     - Refer to :class:`mindspore.ops.Atan`.
-   * - mindspore.ops.atan2
-     - Refer to :class:`mindspore.ops.Atan2`.
-   * - mindspore.ops.atanh
-     - Refer to :class:`mindspore.ops.Atanh`.
-   * - mindspore.ops.bitwise_and
-     - Refer to :class:`mindspore.ops.BitwiseAnd`.
-   * - mindspore.ops.bitwise_or
-     - Refer to :class:`mindspore.ops.BitwiseOr`.
-   * - mindspore.ops.bitwise_xor
-     - Refer to :class:`mindspore.ops.BitwiseXor`.  
-   * - mindspore.ops.cos
-     - Refer to :class:`mindspore.ops.Cos`.
-   * - mindspore.ops.cosh
-     - Refer to :class:`mindspore.ops.Cosh`.
-   * - mindspore.ops.div
-     - Refer to :class:`mindspore.ops.RealDiv`.
-   * - mindspore.ops.erf
-     - Refer to :class:`mindspore.ops.Erf`.
-   * - mindspore.ops.erfc
-     - Refer to :class:`mindspore.ops.Erfc`.
-   * - mindspore.ops.exp
-     - Refer to :class:`mindspore.ops.Exp`.
-   * - mindspore.ops.floor
-     - Refer to :class:`mindspore.ops.Floor`.
+     - `absolute` will be deprecated in the future. Please use `mindspore.ops.abs` instead.
    * - mindspore.ops.floordiv
-     - Refer to :class:`mindspore.ops.FloorDiv`.
+     - `floordiv` will be deprecated in the future. Please use `mindspore.ops.floor_div` instead.
    * - mindspore.ops.floormod
-     - Refer to :class:`mindspore.ops.FloorMod`.
-   * - mindspore.ops.log
-     - Refer to :class:`mindspore.ops.Log`.
-   * - mindspore.ops.logical_and
-     - Refer to :class:`mindspore.ops.LogicalAnd`.
-   * - mindspore.ops.logical_not
-     - Refer to :class:`mindspore.ops.LogicalNot`.
-   * - mindspore.ops.logical_or
-     - Refer to :class:`mindspore.ops.LogicalOr`.
-   * - mindspore.ops.invert
-     - Refer to :class:`mindspore.ops.Invert`.
-   * - mindspore.ops.mul
-     - Refer to :class:`mindspore.ops.Mul`.
+     - `floormod` will be deprecated in the future. Please use `mindspore.ops.floor_mod` instead.
    * - mindspore.ops.neg_tensor
-     - Refer to :class:`mindspore.ops.Neg`.
+     - `neg_tensor` will be deprecated in the future. Please use `mindspore.ops.neg` instead.
    * - mindspore.ops.pows
-     - Refer to :class:`mindspore.ops.Pow`.
-   * - mindspore.ops.sin
-     - Refer to :class:`mindspore.ops.Sin`.
-   * - mindspore.ops.sinh
-     - Refer to :class:`mindspore.ops.Sinh`.
+     - `pows` will be deprecated in the future. Please use `mindspore.ops.pow` instead.
    * - mindspore.ops.sqrt
      - Refer to :class:`mindspore.ops.Sqrt`.
    * - mindspore.ops.square
      - Refer to :class:`mindspore.ops.Square`.
-   * - mindspore.ops.sub
-     - Refer to :class:`mindspore.ops.Sub`.
-   * - mindspore.ops.tan
-     - Refer to :class:`mindspore.ops.Tan`.
    * - mindspore.ops.tensor_add
-     - Refer to :class:`mindspore.ops.Add`.
+     - `tensor_add` will be deprecated in the future. Please use `mindspore.ops.add` instead.
    * - mindspore.ops.tensor_div
-     - Refer to :class:`mindspore.ops.RealDiv`.
+     - `tensor_div` will be deprecated in the future. Please use `mindspore.ops.div` instead.
    * - mindspore.ops.tensor_exp
-     - Refer to :class:`mindspore.ops.Exp`.
+     - `tensor_exp` will be deprecated in the future. Please use `mindspore.ops.exp` instead.
    * - mindspore.ops.tensor_expm1
-     - Refer to :class:`mindspore.ops.Expm1`.
+     - `tensor_expm1` will be deprecated in the future. Please use `mindspore.ops.expm1` instead.
    * - mindspore.ops.tensor_floordiv
-     - Refer to :class:`mindspore.ops.FloorDiv`.
+     - `tensor_floordiv` will be deprecated in the future. Please use `mindspore.ops.floor_div` instead.
    * - mindspore.ops.tensor_mod
-     - Refer to :class:`mindspore.ops.FloorMod`.
+     - `tensor_mod` will be deprecated in the future. Please use `mindspore.ops.floor_mod` instead.
    * - mindspore.ops.tensor_mul
-     - Refer to :class:`mindspore.ops.Mul`.
+     - `tensor_mul` will be deprecated in the future. Please use `mindspore.ops.mul` instead.
    * - mindspore.ops.tensor_pow
-     - Refer to :class:`mindspore.ops.Pow`.
+     - `tensor_pow` will be deprecated in the future. Please use `mindspore.ops.pow` instead.
    * - mindspore.ops.tensor_sub
-     - Refer to :class:`mindspore.ops.Sub`.
-   
+     - `tensor_sub` will be deprecated in the future. Please use `mindspore.ops.sub` instead.
+
 Reduction算子
 ^^^^^^^^^^^^^
 
@@ -174,6 +155,23 @@ Reduction算子
 比较算子
 ^^^^^^^^^^^^^
 
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.equal
+    mindspore.ops.ge
+    mindspore.ops.gt
+    mindspore.ops.isfinite
+    mindspore.ops.isinstance
+    mindspore.ops.isnan
+    mindspore.ops.le
+    mindspore.ops.less
+    mindspore.ops.maximum
+    mindspore.ops.minimum
+    mindspore.ops.same_type_shape
+
 .. list-table::
    :widths: 50 50
    :header-rows: 1
@@ -182,40 +180,20 @@ Reduction算子
      - Description
    * - mindspore.ops.check_bprop
      - Refer to :class:`mindspore.ops.CheckBprop`.
-   * - mindspore.ops.equal
-     - Refer to :class:`mindspore.ops.Equal`.
-   * - mindspore.ops.ge
-     - Refer to :class:`mindspore.ops.GreaterEqual`.
-   * - mindspore.ops.gt
-     - Refer to :class:`mindspore.ops.Greater`.
-   * - mindspore.ops.le
-     - Refer to :class:`mindspore.ops.LessEqual`.
-   * - mindspore.ops.less
-     - Refer to :class:`mindspore.ops.Less`.
-   * - mindspore.ops.isfinite
-     - Refer to :class:`mindspore.ops.IsFinite`.
    * - mindspore.ops.isinstance\_
-     - Refer to :class:`mindspore.ops.IsInstance`.
-   * - mindspore.ops.isnan
-     - Refer to :class:`mindspore.ops.IsNan`.
+     - `isinstance_` will be deprecated in the future. Please use `mindspore.ops.isinstance` instead.
    * - mindspore.ops.issubclass\_
      - Refer to :class:`mindspore.ops.IsSubClass`.
-   * - mindspore.ops.maximum
-     - Refer to :class:`mindspore.ops.Maximum`.
-   * - mindspore.ops.minimum
-     - Refer to :class:`mindspore.ops.Minimum`.
    * - mindspore.ops.not_equal
-     - Refer to :class:`mindspore.ops.NotEqual`.
-   * - mindspore.ops.same_type_shape
-     - Refer to :class:`mindspore.ops.SameTypeShape`.
+     - `not_equal` will be deprecated in the future. Please use `mindspore.ops.ne` instead.
    * - mindspore.ops.tensor_ge
-     - Refer to :class:`mindspore.ops.GreaterEqual`.
+     - `tensor_ge` will be deprecated in the future. Please use `mindspore.ops.ge` instead.
    * - mindspore.ops.tensor_gt
-     - Refer to :class:`mindspore.ops.Greater`.
+     - `tensor_gt` will be deprecated in the future. Please use `mindspore.ops.gt` instead.
    * - mindspore.ops.tensor_le
-     - Refer to :class:`mindspore.ops.LessEqual`.
+     - `tensor_le` will be deprecated in the future. Please use `mindspore.ops.le` instead.
    * - mindspore.ops.tensor_lt
-     - Refer to :class:`mindspore.ops.Less`.
+     - `tensor_lt` will be deprecated in the future. Please use `mindspore.ops.less` instead.
    
 线性代数算子
 ^^^^^^^^^^^^^
@@ -233,20 +211,16 @@ Tensor操作算子
 Tensor创建
 ^^^^^^^^^^^^^
 
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
 
-   * - functional
-     - Description
-   * - mindspore.ops.eye
-     - Refer to :class:`mindspore.ops.Eye`.
-   * - mindspore.ops.fill
-     - Refer to :class:`mindspore.ops.Fill`.
-   * - mindspore.ops.ones_like
-     - Refer to :class:`mindspore.ops.OnesLike`.
-   * - mindspore.ops.zeros_like
-     - Refer to :class:`mindspore.ops.ZerosLike`.
+    mindspore.ops.eye
+    mindspore.ops.fill
+    mindspore.ops.ones
+    mindspore.ops.ones_like
+    mindspore.ops.zeros_like
 
 随机生成算子
 ^^^^^^^^^^^^^^^^
@@ -263,6 +237,25 @@ Tensor创建
 Array操作
 ^^^^^^^^^^^^^^^^
 
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.expand_dims
+    mindspore.ops.gather
+    mindspore.ops.gather_d
+    mindspore.ops.gather_nd
+    mindspore.ops.rank
+    mindspore.ops.reshape
+    mindspore.ops.scatter_nd
+    mindspore.ops.select
+    mindspore.ops.shape
+    mindspore.ops.size
+    mindspore.ops.tile
+    mindspore.ops.transpose
+    mindspore.ops.unique
+
 .. list-table::
    :widths: 50 50
    :header-rows: 1
@@ -277,24 +270,6 @@ Array操作
      - Refer to :class:`mindspore.ops.CumSum`.
    * - mindspore.ops.dtype
      - Refer to :class:`mindspore.ops.DType`.
-   * - mindspore.ops.expand_dims
-     - Refer to :class:`mindspore.ops.ExpandDims`.
-   * - mindspore.ops.gather
-     - Refer to :class:`mindspore.ops.Gather`.
-   * - mindspore.ops.gather_d
-     - Refer to :class:`mindspore.ops.GatherD`.
-   * - mindspore.ops.gather_nd
-     - Refer to :class:`mindspore.ops.GatherNd`.
-   * - mindspore.ops.rank
-     - Refer to :class:`mindspore.ops.Rank`.
-   * - mindspore.ops.reshape
-     - Refer to :class:`mindspore.ops.Reshape`.
-   * - mindspore.ops.scatter_nd
-     - Refer to :class:`mindspore.ops.ScatterNd`.
-   * - mindspore.ops.shape
-     - Refer to :class:`mindspore.ops.Shape`.
-   * - mindspore.ops.size
-     - Refer to :class:`mindspore.ops.Size`.
    * - mindspore.ops.sort
      - Refer to :class:`mindspore.ops.Sort`.
    * - mindspore.ops.squeeze
@@ -308,53 +283,39 @@ Array操作
    * - mindspore.ops.tensor_scatter_update
      - Refer to :class:`mindspore.ops.TensorScatterUpdate`.
    * - mindspore.ops.tensor_slice
-     - Refer to :class:`mindspore.ops.Slice`.
-   * - mindspore.ops.tile
-     - Refer to :class:`mindspore.ops.Tile`.
-   * - mindspore.ops.transpose
-     - Refer to :class:`mindspore.ops.Transpose`.
+     - `tensor_slice` will be deprecated in the future. Please use `mindspore.ops.slice` instead.
+
+类型转换
+^^^^^^^^^^^^^^^^
 
 .. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.select
-    mindspore.ops.unique
-
-类型转换
-^^^^^^^^^^^^^^^^
-
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
-
-   * - functional
-     - Description
-   * - mindspore.ops.scalar_cast
-     - Refer to :class:`mindspore.ops.ScalarCast`.
-   * - mindspore.ops.scalar_to_array
-     - Refer to :class:`mindspore.ops.ScalarToArray`.
-   * - mindspore.ops.scalar_to_tensor
-     - Refer to :class:`mindspore.ops.ScalarToTensor`.
-   * - mindspore.ops.tuple_to_array
-     - Refer to :class:`mindspore.ops.TupleToArray`.
+    mindspore.ops.scalar_cast
+    mindspore.ops.scalar_to_array
+    mindspore.ops.scalar_to_tensor
+    mindspore.ops.tuple_to_array
 
 Parameter操作算子
 --------------------
 
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.assign
+    mindspore.ops.assign_add
+    mindspore.ops.assign_sub
+
 .. list-table::
    :widths: 50 50
    :header-rows: 1
 
    * - functional
      - Description
-   * - mindspore.ops.assign
-     - Refer to :class:`mindspore.ops.Assign`.
-   * - mindspore.ops.assign_add
-     - Refer to :class:`mindspore.ops.AssignAdd`.
-   * - mindspore.ops.assign_sub
-     - Refer to :class:`mindspore.ops.AssignSub`.
    * - mindspore.ops.scatter_nd_update
      - Refer to :class:`mindspore.ops.ScatterNdUpdate`.
    * - mindspore.ops.scatter_update

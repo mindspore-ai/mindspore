@@ -26,10 +26,11 @@ from .vm_impl_registry import get_vm_impl_fn, vm_impl_registry
 from .op_info_register import op_info_register, custom_info_register, AkgGpuRegOp, AkgAscendRegOp, AiCPURegOp, \
     TBERegOp, CpuRegOp, CustomRegOp, DataType
 from .primitive import constexpr
-from . import composite, operations, functional
+from . import composite, operations, functional, function
 from . import signature
 from .composite import *
 from .operations import *
+from .function import *
 from .functional import *
 
 __primitive__ = [
@@ -44,3 +45,4 @@ __all__.extend(__primitive__)
 __all__.extend(composite.__all__)
 __all__.extend(operations.__all__)
 __all__.extend(functional.__all__)
+__all__.extend(function.__all__)

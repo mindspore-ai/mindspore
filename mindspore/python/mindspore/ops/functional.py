@@ -17,6 +17,8 @@
 
 """The names of functional part are summarized here."""
 
+import numpy as np
+
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import ms_function
 from mindspore.common import Tensor
@@ -26,9 +28,8 @@ from mindspore._checkparam import Rel
 from mindspore.nn.grad.cell_grad import _JvpInner
 from mindspore.nn.grad.cell_grad import _VjpInner
 from mindspore.ops import _constants
-from mindspore.ops.primitive import constexpr
-import numpy as np
-from .primitive import Primitive
+from mindspore.ops.function import *
+from mindspore.ops.primitive import constexpr, Primitive
 from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
@@ -44,113 +45,28 @@ isconstant.set_const_prim(True)
 
 issubclass_ = P.IsSubClass()
 isinstance_ = P.IsInstance()
-eye = P.Eye()
-fill = P.Fill()
-tile = P.Tile()
-size = P.Size()
-ones = P.Ones()
-ones_like = P.OnesLike()
-shape = P.Shape()
-dyn_shape = P.TensorShape()
-rank = P.Rank()
-reshape = P.Reshape()
 
 merge = P.Merge()
 geswitch = P.GeSwitch()
-addn = P.AddN()
-absolute = P.Abs()
-tensor_add = P.Add()
-add = tensor_add
-neg_tensor = P.Neg()
-tensor_lt = P.Less()
-less = tensor_lt
-tensor_le = P.LessEqual()
-le = tensor_le
-tensor_gt = P.Greater()
-gt = tensor_gt
-tensor_ge = P.GreaterEqual()
-ge = tensor_ge
-tensor_sub = P.Sub()
-sub = tensor_sub
-tensor_mul = P.Mul()
-mul = tensor_mul
-tensor_div = P.RealDiv()
-div = tensor_div
-tensor_floordiv = P.FloorDiv()
-floordiv = tensor_floordiv
-tensor_pow = P.Pow()
-pows = tensor_pow
-tensor_mod = P.FloorMod()
-floormod = tensor_mod
-tensor_exp = P.Exp()
-exp = tensor_exp
-tensor_expm1 = P.Expm1()
-tensor_slice = P.Slice()
 strided_slice = P.StridedSlice()
-same_type_shape = P.SameTypeShape()
 check_bprop = P.CheckBprop()
-equal = P.Equal()
-not_equal = P.NotEqual()
-isfinite = P.IsFinite()
-isnan = P.IsNan()
-assign_sub = P.AssignSub()
-assign_add = P.AssignAdd()
-assign = P.Assign()
 square = P.Square()
 sqrt = P.Sqrt()
-log = P.Log()
 reduce_sum = P.ReduceSum()
 reduce_max = P.ReduceMax()
 reduce_min = P.ReduceMin()
 reduce_mean = P.ReduceMean()
 reduce_prod = P.ReduceProd()
-tensor_slice = P.Slice()
-maximum = P.Maximum()
-minimum = P.Minimum()
-floor = P.Floor()
-logical_not = P.LogicalNot()
-logical_or = P.LogicalOr()
-logical_and = P.LogicalAnd()
-sin = P.Sin()
-cos = P.Cos()
-tan = P.Tan()
-asin = P.Asin()
-acos = P.ACos()
-atan = P.Atan()
-sinh = P.Sinh()
-cosh = P.Cosh()
-tanh = P.Tanh()
-asinh = P.Asinh()
-acosh = P.Acosh()
-atanh = P.Atanh()
-atan2 = P.Atan2()
-bitwise_and = P.BitwiseAnd()
-bitwise_or = P.BitwiseOr()
-bitwise_xor = P.BitwiseXor()
-invert = P.Invert()
-erf = P.Erf()
-erfc = P.Erfc()
 sort = P.Sort()
 tensor_range = P.Range()
-
-scalar_to_array = P.ScalarToArray()
-scalar_to_tensor = P.ScalarToTensor()
-tuple_to_array = P.TupleToArray()
-scalar_cast = P.ScalarCast()
 if not security.enable_security():
     print_ = P.Print()
-expand_dims = P.ExpandDims()
-transpose = P.Transpose()
 squeeze = P.Squeeze()
-scatter_nd = P.ScatterNd()
 scatter_nd_mul = P.ScatterNdMul()
 scatter_nd_sub = P.ScatterNdSub()
 scatter_nd_add = P.ScatterNdAdd()
 scatter_nd_max = P.ScatterNdMax()
 scatter_nd_min = P.ScatterNdMin()
-gather = P.Gather()
-gather_d = P.GatherD()
-gather_nd = P.GatherNd()
 scatter_update = P.ScatterUpdate()
 tensor_scatter_update = P.TensorScatterUpdate()
 tensor_scatter_min = P.TensorScatterMin()
@@ -223,7 +139,6 @@ def pack(x):
     print("WARNING: 'pack' is deprecated from version 1.1 and will be removed in a future version, use 'stack' instead"
           ".")
     return stack(x)
-
 
 partial = P.Partial()
 # depend: mount a node to another node

@@ -19,7 +19,6 @@ Primitive operator classes.
 A collection of operators to build neural networks or to compute functions.
 """
 
-from ..function.array_func import (unique)
 from . import _quant_ops
 from ._embedding_cache_ops import (CacheSwapTable, UpdateCache, MapCacheIdx, SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
@@ -128,7 +127,6 @@ from .sponge_update_ops import (ConstrainForceCycleWithVirial, RefreshUintCrd, L
                                 ConstrainForceVirial, ConstrainForce, Constrain)
 
 __all__ = [
-    'unique',
     'HSVToRGB',
     'CeLU',
     'Ger',

@@ -868,24 +868,9 @@ class Tanh(Primitive):
     r"""
     Tanh activation function.
 
-    Computes hyperbolic tangent of input element-wise. The Tanh function is defined as:
+    Computes hyperbolic tangent of input element-wise.
 
-    .. math::
-
-        tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
-
-    where :math:`x_i` is an element of the input Tensor.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.tanh` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``

@@ -28,15 +28,7 @@ class ScalarCast(PrimitiveWithInfer):
     """
     Casts the input scalar to another type.
 
-    Inputs:
-        - **input_x** (scalar) - The input scalar. Only constant value is allowed.
-        - **input_y** (mindspore.dtype) - The type to be cast. Only constant value is allowed.
-
-    Outputs:
-        Scalar. The type is the same as the python type corresponding to `input_y`.
-
-    Raises:
-        TypeError: If neither `input_x` nor `input_y` is a constant value.
+    Refer to :func:`mindspore.ops.scalar_cast` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

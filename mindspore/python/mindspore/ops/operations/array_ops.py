@@ -138,22 +138,7 @@ class ExpandDims(PrimitiveWithInfer):
     """
     Adds an additional dimension to `input_x` at the given axis.
 
-    Note:
-        If the specified axis is a negative number, the index is counted
-        backward from the end and starts at 1.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **axis** (int) - Specifies the dimension index at which to expand
-          the shape of `input_x`. The value of axis must be in the range
-          `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
-        value of `axis` is 0. It has the same data type as `input_x`.
-
-    Raises:
-        ValueError: If `axis` is not an int or not in the valid range.
+    Refer to :func:`mindspore.ops.expand_dims` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -229,17 +214,7 @@ class SameTypeShape(PrimitiveWithInfer):
     """
     Checks whether the data type and shape of two tensors are the same.
 
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **input_y** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`,
-        if data type and shape of `input_x` and `input_y` are the same.
-
-    Raises:
-        TypeError: If the data types of `input_x` and `input_y` are not the same.
-        ValueError: If the shapes of `input_x` and `input_y` are not the same.
+    Refer to :func:`mindspore.ops.same_type_shape` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -463,21 +438,7 @@ class Reshape(PrimitiveWithInfer):
     """
     Rearranges the input Tensor based on the given shape.
 
-    The 'input_shape' can only have one -1 at most, in which case it’s inferred from the remaining dimensions and
-    the number of elements in the input.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **input_shape** (tuple[int]) - The input tuple is constructed by multiple
-          integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-
-    Raises:
-        ValueError: Given a shape tuple, if it has several -1; or if the product
-            of its elements is less than or equal to 0 or cannot be divided by the product
-            of the input tensor shape; or if it does not match the input's array size.
+    Refer to :func:`mindspore.ops.reshape` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -631,19 +592,7 @@ class Shape(Primitive):
     """
     Returns the shape of the input tensor. And it used to be static shape.
 
-    static shape: A shape that can be obtained without running the graph. It is an inherent property of tensor and
-    may be unknown. The static shape information can be completed by artificial setting.
-    No matter what the input of the graph is, the static shape is not affected.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Outputs:
-        tuple[int], the output tuple is constructed by multiple integers,
-        :math:`(x_1, x_2, ..., x_R)`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.shape` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -665,14 +614,7 @@ class TensorShape(Primitive):
     """
     Returns the shape of the input tensor.
 
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Outputs:
-        Tensor[int], 1-dim Tensor of type int32
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.dyn_shape` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -770,27 +712,7 @@ class Transpose(Primitive):
     """
     Permutes the dimensions of the input tensor according to input permutation.
 
-    For a 1-D array this has no effect, as a transposed vector is simply the same vector.
-    To convert a 1-D array into a 2D column vector please refer the class: mindspore.ops.ExpandDims.
-    For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
-    their order indicates how the axes are permuted (see Examples).
-    If axes are not provided and a.shape = (i[0], i[1], ... i[n-2], i[n-1]),
-    then a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **input_perm** (tuple[int]) - The permutation to be converted. The elements in `input_perm` are composed of
-          the indexes of each dimension of `input_x`. The length of `input_perm` and the shape of `input_x` must be
-          the same. Only constant value is allowed. Must be in the range [0, rank(input_x)).
-
-    Outputs:
-        Tensor, the type of output tensor is the same as `input_x` and the shape of output tensor is decided by the
-        shape of `input_x` and the value of `input_perm`.
-
-    Raises:
-        TypeError: If `input_perm` is not a tuple.
-        ValueError: If length of shape of `input_x` is not equal to length of shape of `input_perm`.
-        ValueError: If the same element exists in `input_perm`.
+    Refer to :func:`mindspore.ops.transpose` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -886,28 +808,7 @@ class Gather(Primitive):
 
     where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
-    .. note::
-         1.The value of input_indices must be in the range of `[0, input_param.shape[axis])`, the result is undefined
-         out of range.
-
-         2.The data type of input_params cannot be
-         `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
-         platform currently.
-
-    Inputs:
-        - **input_params** (Tensor) - The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **input_indices** (Tensor) - Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-          Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
-        - **axis** (int) - Specifies the dimension index to gather indices.
-
-    Outputs:
-        Tensor, the shape of tensor is
-        :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If `input_params` is not a tensor.
-        TypeError: If `input_indices` is not a tensor of type int.
+    Refer to :func:`mindspore.ops.gather` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1205,17 +1106,7 @@ class Rank(PrimitiveWithInfer):
     """
     Returns the rank of a tensor.
 
-    Returns a 0-D int32 Tensor representing the rank of input; the rank of a tensor
-    is the number of indices required to uniquely select each element of the tensor.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
-
-    Outputs:
-        Tensor. 0-D int32 Tensor representing the rank of input, i.e., :math:`R`. The data type is an int.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.rank` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1286,16 +1177,7 @@ class Size(PrimitiveWithInfer):
     Returns a Scalar of type int that represents the size of the input Tensor and the total number of elements in the
     Tensor.
 
-    Inputs:
-        - **input_x** (Tensor) - Input parameters, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-
-    Outputs:
-        int. A scalar representing the elements' size of `input_x`, tensor is the number of elements
-        in a tensor, :math:`size=x_1*x_2*...x_R`. The data type is an int.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.size` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1563,18 +1445,7 @@ class Fill(PrimitiveWithInfer):
     """
     Create a Tensor of the specified shape and fill it with the specified value.
 
-    Inputs:
-        - **type** (mindspore.dtype) - The specified type of output tensor. The data type only supports
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
-        - **shape** (tuple[int]) - The specified shape of output tensor.
-        - **value** (Union(number.Number, bool)) - Value to fill the returned tensor.
-
-    Outputs:
-        Tensor.
-
-    Raises:
-        TypeError: If `shape` is not a tuple.
+    Refer to :func:`mindspore.ops.fill` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1635,16 +1506,7 @@ class Ones(Primitive):
     Creates a tensor with shape described by the first argument and
     fills it with value ones in type of the second argument.
 
-    Inputs:
-        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-          Only constant positive int is allowed.
-        - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
-
-    Outputs:
-        Tensor, has the same type and shape as input shape value.
-
-    Raises:
-        TypeError: If `shape` is neither tuple nor int.
+    Refer to :func:`mindspore.ops.ones` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1707,14 +1569,7 @@ class OnesLike(Primitive):
     """
     Returns a Tensor with a value of 1 and its shape and data type is the same as the input.
 
-    Inputs:
-        - **input_x** (Tensor) - Tensor of any dimension.
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x` but filled with ones.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.ones_like` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1769,19 +1624,7 @@ class TupleToArray(PrimitiveWithInfer):
     """
     Converts a tuple to a tensor.
 
-    If the type of the first number in the tuple is integer, the data type of the output tensor is int.
-    Otherwise, the data type of the output tensor is float.
-
-    Inputs:
-        - **input_x** (tuple) - A tuple of numbers. These numbers have the same type. Only constant value is allowed.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-
-    Outputs:
-        Tensor, if the input tuple contains `N` numbers, then the shape of the output tensor is (N,).
-
-    Raises:
-        TypeError: If `input_x` is not a tuple.
-        ValueError: If length of `input_x` is less than or equal to 0.
+    Refer to :func:`mindspore.ops.tuple_to_array` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1828,14 +1671,7 @@ class ScalarToArray(PrimitiveWithInfer):
     """
     Converts a scalar to a `Tensor`.
 
-    Inputs:
-        - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
-
-    Outputs:
-        Tensor. 0-D Tensor and the content is the input.
-
-    Raises:
-        TypeError: If `input_x` is neither int nor float.
+    Refer to :func:`mindspore.ops.scalar_to_array` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1869,16 +1705,7 @@ class ScalarToTensor(PrimitiveWithInfer):
     """
     Converts a scalar to a `Tensor`, and converts the data type to the specified type.
 
-    Inputs:
-        - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
-        - **dtype** (mindspore.dtype) - The target data type. Default: mindspore.float32. Only
-          constant value is allowed.
-
-    Outputs:
-        Tensor. 0-D Tensor and the content is the input.
-
-    Raises:
-        TypeError: If `input_x` is neither int nor float.
+    Refer to :func:`mindspore.ops.scalar_to_tensor` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2242,37 +2069,7 @@ class Tile(PrimitiveWithInfer):
     r"""
     Replicates an input tensor with given multiples times.
 
-    Creates a new tensor by replicating `input_x` `multiples` times. The i'th dimension of
-    output tensor has `input_x.shape[i] * multiples[i]` elements, and the values of `input_x`
-    are replicated `multiples[i]` times along the i'th dimension.
-
-    Note:
-        The length of `multiples` must be greater or equal to the length of dimension in `input_x`.
-
-    Inputs:
-        - **input_x** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_S)` .
-
-        - **multiples** (tuple[int]) - The parameter that specifies the number of replications,
-          the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-          The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
-          Only constant value is allowed.
-
-    Outputs:
-        Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
-        the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
-
-        - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
-          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
-        - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
-          lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
-          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-          :math:`(1*y_1, ..., x_S*y_R)`.
-
-    Raises:
-        TypeError: If `multiples` is not a tuple or its elements are not all int.
-        ValueError: If the elements of `multiples` are not all greater than 0.
-        ValueError: If the length of `multiples` are smaller than the length of dimension in `input_x`.
+    Refer to :func:`mindspore.ops.tile` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3180,26 +2977,7 @@ class Slice(PrimitiveWithInfer):
     """
     Slices a tensor in the specified shape.
 
-    Slice the tensor `input_x` in shape of `size` and starting at the location specified by `begin`,
-    The slice `begin` represents the offset in each dimension of `input_x`,
-    The slice `size` represents the size of the output tensor.
-
-    Note that `begin` is zero-based and `size` is one-based.
-
-    If `size[i]` is -1, all remaining elements in dimension i are included in the slice.
-    This is equivalent to setting :math:`size[i] = input_x.shape(i) - begin[i]`.
-
-    Inputs:
-        - **input_x** (Tensor): The target tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
-        - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
-
-    Outputs:
-        Tensor, the shape is : input `size`, the data type is the same as `input_x`.
-
-    Raises:
-        TypeError: If `begin` or `size` is neither tuple nor list.
+    Refer to :func:`mindspore.ops.slice` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4116,26 +3894,9 @@ class DiagPart(PrimitiveWithInfer):
 
 class Eye(PrimitiveWithInfer):
     """
-
     Creates a tensor with ones on the diagonal and zeros in the rest.
 
-    Note:
-        Combines ReverseV2 operator to get an anti-diagonal Tensor,
-        but ReverseV2 only supports Ascend and GPU platforms currently.
-
-    Inputs:
-        - **n** (int) - The number of rows of returned tensor. Constant value only.
-        - **m** (int) - The number of columns of returned tensor. Constant value only.
-        - **t** (mindspore.dtype) - MindSpore's dtype, The data type of the returned tensor.
-          The data type can be Number.
-
-    Outputs:
-        Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
-        the user's Inputs `n` and `m`. And the data type depends on Inputs `t`.
-
-    Raises:
-        TypeError: If `m` or `n` is not an int.
-        ValueError: If `m` or `n` is less than 1.
+    Refer to :func:`mindspore.ops.eye` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4173,39 +3934,12 @@ class ScatterNd(PrimitiveWithInfer):
     r"""
     Scatters a tensor into a new tensor depending on the specified indices.
 
-    Creates an empty tensor with the given `shape`, and set values by scattering the update tensor
-    depending on indices.
-
-    The empty tensor has rank P and `indices` has rank Q where `Q >= 2`.
-
-    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
-
-    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of the empty tensor.
-
-    `updates` is a tensor of rank `Q-1+P-N`. Its shape is: :math:`(i_0, i_1, ..., i_{Q-2}, shape_N, ..., shape_{P-1})`.
-
     The following figure shows the calculation process of inserting two slices in the first dimension of a rank-3
     with two matrices of new values:
 
     .. image:: ScatterNd.png
 
-    Inputs:
-        - **indices** (Tensor) - The index of scattering in the new tensor with int32 or int64 data type.
-          The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
-        - **updates** (Tensor) - The source Tensor to be scattered.
-          It has shape `indices_shape[:-1] + shape[indices_shape[-1]:]`.
-        - **shape** (tuple[int]) - Define the shape of the output tensor, has the same data type as indices.
-          The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and the length of 'shape' is greater than or equal to 2.
-          In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
-          And the value of any element in `shape` must be greater than or equal to 1.
-          In other words, :math:`x_1` >= 1, :math:`x_2` >= 1.
-
-    Outputs:
-        Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
-
-    Raises:
-        TypeError: If `shape` is not a tuple.
-        ValueError: If any element of `shape` is less than 1.
+    Refer to :func:`mindspore.ops.scatter_nd` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4345,27 +4079,7 @@ class GatherNd(Primitive):
     r"""
     Gathers slices from a tensor by indices.
 
-    Using given indices to gather slices from a tensor with a specified shape.
-
-    `indices` is an K-dimensional integer tensor. Supposes it as a (K-1)-dimensional tensor and each element of it
-    defines a slice of `input_x`:
-
-    .. math::
-        output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
-
-    The last dimension of `indices` can not more than the rank of `input_x`:
-    :math:`indices.shape[-1] <= input\_x.rank`.
-
-    Inputs:
-        - **input_x** (Tensor) - The target tensor to gather values.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index tensor, with int32 or int64 data type.
-
-    Outputs:
-        Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
-
-    Raises:
-        ValueError: If length of shape of `input_x` is less than the last dimension of `indices`.
+    Refer to :func:`mindspore.ops.gather_nd` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6684,33 +6398,7 @@ class GatherD(Primitive):
     """
     Gathers values along an axis specified by dim.
 
-    For a 3-D tensor, the output is:
-
-    .. code-block::
-
-        output[i][j][k] = x[index[i][j][k]][j][k]  # if dim == 0
-
-        output[i][j][k] = x[i][index[i][j][k]][k]  # if dim == 1
-
-        output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
-
-    If `x` is an n-D tensor with shape :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})` and `dim` = i,
-    the `index` must be an n-D tensor with shape :math:`(z_0, z_1, ..., y, ..., z_{n-1})`
-    where `y`>=1 and the output will have the same shape as `index`.
-
-    Inputs:
-        - **x** (Tensor) - The source tensor.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **dim** (int) - The axis along which to index. It must be int32 or int64. Only constant value is allowed.
-        - **index** (Tensor) - The indices of elements to gather. It can be one of the following data types:
-          int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`, has the same data type with `x`.
-
-    Raises:
-        TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
-        ValueError: If length of shape of `x` is not equal to length of shape of `index`.
+    Refer to :func:`mindspore.ops.gather_d` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
