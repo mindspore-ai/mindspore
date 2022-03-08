@@ -74,9 +74,7 @@ def get_bprop_cholesky(self):
         dout_middle = matrix_set_diag(dout_middle, middle_diag)
         dout_middle = _matrix_band_part(dout_middle, -1, 0)
         grad_a = matmul(matmul(_adjoint(l_inverse), dout_middle), l_inverse)
-        grad_a = _matrix_band_part(grad_a + _adjoint(grad_a), -1, 0)
-        middle_diag = 0.5 * grad_a.diagonal(0, -2, -1)
-        grad_a = matrix_set_diag(grad_a, middle_diag)
+        grad_a = 0.5 * (grad_a + _adjoint(grad_a))
         return (grad_a,)
 
     return bprop
