@@ -24,6 +24,7 @@
 #include <random>
 #include "kernel/kernel.h"
 #include "utils/log_adapter.h"
+#include "plugin/device/cpu/kernel/rl/fifo_replay_buffer.h"
 #include "plugin/device/cpu/kernel/rl/segment_tree.h"
 
 namespace mindspore {
@@ -77,7 +78,8 @@ class PriorityReplayBuffer {
   std::vector<size_t> schema_;
   std::default_random_engine random_engine_;
   std::uniform_real_distribution<float> dist_{0, 1};
-  std::unique_ptr<PriorityTree> tree_;
+  std::unique_ptr<FIFOReplayBuffer> fifo_replay_buffer_;
+  std::unique_ptr<PriorityTree> priority_tree_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -51,12 +51,16 @@ PriorityReplayBuffer::PriorityReplayBuffer(int seed, float alpha, float beta, si
                                            const std::vector<size_t> &schema)
     : alpha_(alpha), beta_(beta), capacity_(capacity), max_priority_(1.0), schema_(schema) {
   random_engine_.seed(seed);
-  tree_ = std::make_unique<PriorityTree>(capacity);
+  fifo_replay_buffer_ = std::make_unique<FIFOReplayBuffer>(capacity, schema);
+  priority_tree_ = std::make_unique<PriorityTree>(capacity);
 }
 
 bool PriorityReplayBuffer::Push(const std::vector<AddressPtr> &items) {
+  fifo_replay_buffer_->Push(items);
+  auto idx = fifo_replay_buffer_->head();
+
   // Set max priority for the newest item.
-  tree_->Insert(0, {max_priority_, max_priority_});
+  priority_tree_->Insert(idx, {max_priority_, max_priority_});
   return true;
 }
 
@@ -71,7 +75,7 @@ bool PriorityReplayBuffer::UpdatePriorities(const std::vector<size_t> &indices, 
       MS_LOG(WARNING) << "The priority is " << priority << ". It may lead to converge issue.";
       priority = kMinPriority;
     }
-    tree_->Insert(idx, {priority, priority});
+    priority_tree_->Insert(idx, {priority, priority});
 
     // Record max priority of transitions
     max_priority_ = std::max(max_priority_, priority);
@@ -83,10 +87,11 @@ bool PriorityReplayBuffer::UpdatePriorities(const std::vector<size_t> &indices, 
 std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<AddressPtr>>> PriorityReplayBuffer::Sample(
   size_t batch_size) {
   MS_EXCEPTION_IF_ZERO("batch size", batch_size);
-  const PriorityItem &root = tree_->Root();
+  const PriorityItem &root = priority_tree_->Root();
   float sum_priority = root.sum_priority;
   float min_priority = root.min_priority;
-  float max_weight = Weight(min_priority, sum_priority, 0);
+  float size = fifo_replay_buffer_->size();
+  float max_weight = Weight(min_priority, sum_priority, size);
   float segment_len = root.sum_priority / batch_size;
 
   std::vector<size_t> indices;
@@ -94,16 +99,17 @@ std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<Addr
   std::vector<std::vector<AddressPtr>> items;
   for (size_t i = 0; i < batch_size; i++) {
     float mass = (dist_(random_engine_) + i) * segment_len;
-    size_t idx = tree_->GetPrefixSumIdx(mass);
+    size_t idx = priority_tree_->GetPrefixSumIdx(mass);
 
     indices.emplace_back(idx);
-    float priority = tree_->GetByIndex(idx).sum_priority;
+    float priority = priority_tree_->GetByIndex(idx).sum_priority;
 
     if (max_weight <= 0.0f) {
       MS_LOG(WARNING) << "The max priority is " << max_weight << ". It may leads to converge issue.";
       max_weight = kMinPriority;
     }
-    weights.emplace_back(Weight(priority, sum_priority, 0) / max_weight);
+    weights.emplace_back(Weight(priority, sum_priority, size) / max_weight);
+    items.emplace_back(fifo_replay_buffer_->GetItem(idx));
   }
 
   return std::forward_as_tuple(indices, weights, items);
