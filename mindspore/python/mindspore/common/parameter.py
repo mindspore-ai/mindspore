@@ -216,7 +216,7 @@ class Parameter(Tensor_):
 
     @staticmethod
     def _get_base_class(input_class):
-        input_class_name = f'Parameter{input_class.__name__}'
+        input_class_name = Parameter.__name__
         if input_class_name in Parameter.__base_type__:
             new_type = Parameter.__base_type__[input_class_name]
         else:
