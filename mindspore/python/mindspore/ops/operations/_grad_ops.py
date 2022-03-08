@@ -17,6 +17,7 @@
 import math
 from functools import partial
 from mindspore._checkparam import _check_3d_int_or_tuple
+from .nn_ops import _check_positive_int_or_tuple, _update_attr_by_format
 from .. import signature as sig
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import Validator as validator, Rel
@@ -420,16 +421,19 @@ class Conv2DBackpropFilter(Primitive):
         else:
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
-        if isinstance(stride, tuple) and len(stride) == 4:
-            self.stride = (stride[2], stride[3])
-            self.add_prim_attr('stride', self.stride)
-        self.dilation = dilation
-        self.group = group
-        self.add_prim_attr('groups', group)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
         self.add_prim_attr('data_format', self.format)
+        self.stride = _check_positive_int_or_tuple('stride', stride, self.name, allow_four=True, ret_four=True)
+        self.stride = _update_attr_by_format(self.stride, self.format)
+        self.add_prim_attr('stride', self.stride)
+        self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
+        self.dilation = _update_attr_by_format(self.dilation, self.format)
+        self.add_prim_attr('dilation', self.dilation)
+        self.dilation = dilation
+        self.group = group
+        self.add_prim_attr('groups', group)
 
 
 class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):
@@ -826,12 +830,14 @@ class AvgPool3DGrad(Primitive):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pads=0, ceil_mode=False,
-                 count_include_pad=True, divisor_override=0, data_format="NCDHW"):
+                 count_include_pad=True, divisor_override=0, data_format="NCDHW", pad_mode="pad"):
         self.init_prim_io_names(inputs=['origin_input_shape', 'grads'], outputs=['output'])
-        self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name, allow_five=True, ret_five=True)
         self.add_prim_attr('kernel_size', self.kernel_size)
-        self.strides = _check_3d_int_or_tuple('strides', strides, self.name)
+        self.strides = _check_3d_int_or_tuple('strides', strides, self.name, allow_five=True, ret_five=True)
         self.add_prim_attr('strides', self.strides)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME', 'PAD'], 'pad_mode', self.name)
         validator.check_value_type('pads', pads, (int, tuple), self.name)
         if isinstance(pads, int):
             pads = (pads,) * 6

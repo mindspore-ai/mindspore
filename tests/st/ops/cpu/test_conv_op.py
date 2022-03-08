@@ -56,21 +56,12 @@ class NetConv2d(nn.Cell):
 def test_conv2d():
     conv2d = NetConv2d()
     output = conv2d()
-    print("================================")
-    #   expect output:
-    #   [[[[ 45.  48.  51.]
-    #      [ 54.  57.  60.]
-    #      [ 63.  66.  69.]]
-    #     [[126. 138. 150.]
-    #      [162. 174. 186.]
-    #      [198. 210. 222.]]]]
     expect = np.array([[[[45, 48, 51],
                          [54, 57, 60],
                          [63, 66, 69]],
                         [[126, 138, 150],
                          [162, 174, 186],
                          [198, 210, 222]]]]).astype(np.float32)
-    print(output)
     assert (output.asnumpy() == expect).all()
 
 
@@ -94,6 +85,9 @@ class NetConv(nn.Cell):
         return self.conv(self.x)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_conv():
     weight = np.array([[[[0.38968208, 0.14398979, 0.7962463],
                          [-2.1836321, -0.63823014, -0.50588065],
@@ -115,31 +109,26 @@ def test_conv():
                          [-1.1017276, -0.259478, 1.0311872],
                          [1.8387799, 0.16468556, 0.33392152],
                          [-1.8781787, 1.0158662, 1.6527579]],
-
                         [[0.45696944, -0.5652523, -1.5618048],
                          [-0.30304828, 0.1331878, -0.36955845],
                          [0.91655576, 0.66612357, 0.3068175],
                          [-0.45732066, 0.8923335, 1.0542952],
                          [-0.73519516, 1.0518405, -1.0273266]],
-
                         [[-0.79712886, -0.26814285, 0.12779616],
                          [1.0367643, -1.6180774, 0.42999932],
                          [-0.81818223, -0.81502074, 0.882194],
                          [0.53640485, 0.4178927, 1.6037121],
                          [0.9256354, -1.1006796, 0.16614541]]],
-
                        [[[-1.5216796, -1.2473261, 0.6549515],
                          [0.63627815, 0.7221449, 0.02977821],
                          [-0.61331123, -0.49451825, 0.33852202],
                          [1.4510741, -1.3818305, -0.791747],
                          [0.6989747, 0.49558765, 1.0813237]],
-
                         [[-0.03969796, 0.71586496, 0.8326594],
                          [-0.15443641, 1.0389746, -0.59301984],
                          [0.7197836, 0.03257621, 1.8398637],
                          [0.6111736, -0.16166899, -2.4869773],
                          [1.3066711, -1.8003578, 0.17412892]],
-
                         [[-0.31470737, -0.5938182, -1.1311078],
                          [-0.99081016, 0.4005125, 0.44154453],
                          [1.0876914, -2.5958562, -0.5914863],
@@ -149,12 +138,10 @@ def test_conv():
                     [0.04431088, -2.2886624],
                     [1.4832113, 1.240908],
                     [0.67040104, 0.15266363]],
-
                    [[0.44226435, 1.1461105],
                     [1.194218, 1.5547837],
                     [0.23152256, 1.5911953],
                     [0.11206784, 0.17978816]],
-
                    [[-0.57803905, 0.8039611],
                     [0.0823025, -0.6134477],
                     [-1.4171146, 1.6269946],
@@ -215,11 +202,6 @@ def test_conv3d():
     mode = 1
     pad_mode = "valid"
     pad = 0
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    net = NetConv3d(mode, pad_mode, pad)
-    output = net(x, w)
-    assert (output.asnumpy() == expect).all()
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     net = NetConv3d(mode, pad_mode, pad)
     output = net(x, w)
     assert (output.asnumpy() == expect).all()
@@ -229,7 +211,6 @@ def test_conv3d():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_conv3d_2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     x = Tensor(np.arange(1 * 3 * 3 * 3 * 3).reshape(1, 3, 3, 3, 3).astype(np.float32))
     w = Tensor(np.arange(4 * 3 * 2 * 2 * 2).reshape(4, 3, 2, 2, 2).astype(np.float32))
     expect = np.array([[[[[1647, 3258, 3345, 1650],
@@ -304,10 +285,10 @@ def test_conv3d_2():
     assert (output.asnumpy() == expect).all()
 
 
-class MSConv3dNet(nn.Cell):
+class Conv3dNet(nn.Cell):
     def __init__(self, in_channels, out_channels, kernel_size, pad_mode='pad', padding=0, stride=1, dilation=1,
                  has_bias=False, weight_init='normal'):
-        super(MSConv3dNet, self).__init__()
+        super(Conv3dNet, self).__init__()
         self.cv1 = nn.Conv3d(in_channels=in_channels,
                              out_channels=out_channels,
                              kernel_size=kernel_size,
@@ -325,9 +306,9 @@ class MSConv3dNet(nn.Cell):
         return x
 
 
-class MSGradNet(nn.Cell):
+class GradNet(nn.Cell):
     def __init__(self, network):
-        super(MSGradNet, self).__init__()
+        super(GradNet, self).__init__()
         self.grad = C.GradOperation(get_all=True, sens_param=True, get_by_list=True)
         self.network = network
         self.params = ParameterTuple(network.trainable_params())
@@ -336,3 +317,73 @@ class MSGradNet(nn.Cell):
         grad_op = self.grad(self.network, self.params)
         output = grad_op(x, dy)
         return output
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_conv3d_with_grad():
+    """
+    Feature: test conv3d op.
+    Description: including forward and backward.
+    Expectation: expect correct forward and backward result.
+    """
+    np_type = np.float32
+    x = Tensor(np.array([[[[[1.6924546, 0.05080776, -0.6369957],
+                            [0.19091548, 2.1002553, 0.12015896],
+                            [0.6172031, 0.30017033, -0.35224986]],
+                           [[-1.1425182, -0.34934273, -0.20889424],
+                            [0.5866232, 0.8389834, 0.9311021],
+                            [0.2855873, 0.8851412, -0.7543979]],
+                           [[1.2528682, 0.5129298, -0.29809284],
+                            [0.48851815, -0.07557172, 1.1316293],
+                            [1.5198169, 2.1855755, -1.3964963]]]]]).astype(np_type))
+    dy = Tensor(np.array([[[[[-1.4441139, -0.5044659],
+                             [0.16003707, 0.8761689]],
+                            [[0.31563494, -2.0222013],
+                             [-0.30620402, 0.8279746]]],
+                           [[[0.23009473, 0.7620112],
+                             [-0.22232814, -0.20075807]],
+                            [[0.18656139, 0.41005164],
+                             [0.19829972, 0.11900865]]]]]).astype(np_type))
+    w = Tensor(np.array([[[[[-0.9358, -0.2679],
+                            [0.5304, -0.6917]],
+                           [[-0.3968, -0.6872],
+                            [-0.8452, -0.6712]]]],
+                         [[[[-0.0127, -1.1173],
+                            [0.2344, 1.6598]],
+                           [[0.7420, -0.1918],
+                            [-0.8876, -0.7472]]]]]).astype(np_type))
+    net = Conv3dNet(in_channels=x.shape[1], out_channels=2, kernel_size=(2, 2, 2), weight_init=w)
+    actual_out = net(x)
+    expect_out = np.array([[[[[-3.3144155, 0.10207337],
+                              [-2.266387, -2.8092794]],
+                             [[-0.31821766, -0.51052636],
+                              [-4.127921, -1.700856]]],
+                            [[[1.524173, -0.2567379],
+                              [-2.346652, -0.4532562]],
+                             [[2.3889866, 1.6392273],
+                              [-2.0138235, -3.2652235]]]]]).astype(np_type)
+    assert np.allclose(actual_out.asnumpy(), expect_out)
+
+    grad_net = GradNet(net)
+    actual_grads = grad_net(x, dy)
+    expect_dx = np.array([[[[[1.3484796, 0.5921949, -0.71624875],
+                             [-0.8589629, 0.68001556, 1.6033065],
+                             [0.03276994, -0.06205562, -0.9392643]],
+                            [[0.44601417, 3.308012, 0.2841122],
+                             [1.2830329, -1.8175733, 0.93020254],
+                             [-0.05385402, 0.5043542, -0.81325763]],
+                            [[0.01318461, 0.85398096, 1.3110089],
+                             [-0.16372639, 0.9261035, 0.45910096],
+                             [0.0827928, -0.7480816, -0.6446598]]]]]).astype(np_type)
+    expect_dw = np.array([[[[[0.26185727, 1.515559],
+                             [-1.8394437, -5.867935]],
+                            [[1.8011744, 3.2847447],
+                             [1.2020903, -6.338352]]]],
+                          [[[[-0.17617291, -0.8384279],
+                             [2.0623026, 1.2028661]],
+                            [[-0.29600215, -0.5198703],
+                             [1.1547322, 1.5743471]]]]]).astype(np_type)
+    assert np.allclose(actual_grads[0][0].asnumpy(), expect_dx)
+    assert np.allclose(actual_grads[1][0].asnumpy(), expect_dw)

@@ -21,10 +21,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t SCALE_SHIFT_NUM = 2;
-constexpr size_t NC = 2;
-constexpr size_t NCHW = 4;
-
 class BatchNormGradCpuKernelMod : public MKLCpuKernelMod {
  public:
   BatchNormGradCpuKernelMod() = default;

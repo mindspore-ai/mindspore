@@ -19,6 +19,8 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_map>
+
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
@@ -34,18 +36,32 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+  void EliminateInvalidPadding(float *output);
+  void ReComputeDivisor(float *output);
+
+  static std::unordered_map<void *, std::vector<unsigned char>> pooling_max_workspace_;
+  dnnl::algorithm algorithm_{dnnl::algorithm::pooling_max};
+  bool ceil_mode_{false};
+  float divisor_override_{0.0};
+  std::vector<size_t> dst_shape_;
+  std::vector<float> padding_invalid_;
+  std::vector<float> kernel_;
 
  private:
+  void InitFields(const CNodePtr &kernel_node);
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+
   size_t workspace_size_{0};
 };
 
 MS_REG_CPU_KERNEL(MaxPool, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  PoolingCpuKernelMod);
+                  PoolingCpuKernelMod)
 MS_REG_CPU_KERNEL(MaxPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  PoolingCpuKernelMod);
+                  PoolingCpuKernelMod)
 MS_REG_CPU_KERNEL(AvgPool, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  PoolingCpuKernelMod);
+                  PoolingCpuKernelMod)
+MS_REG_CPU_KERNEL(AvgPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  PoolingCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

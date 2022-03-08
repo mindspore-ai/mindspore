@@ -52,7 +52,7 @@ std::set<string> kSkipOpNames = {
 
 // opname, input idx
 std::map<string, uint32_t> kAggregatesOpNames = {
-  {kConv2DBackpropInputOpName, 0}, {kmaxPoolGradOpName, 2}, {kBatchNormGradWithAddAndActivation, 0}};
+  {kConv2DBackpropInputOpName, 0}, {kMaxPoolGradOpName, 2}, {kBatchNormGradWithAddAndActivation, 0}};
 
 constexpr size_t inplace_node_size = 2;
 

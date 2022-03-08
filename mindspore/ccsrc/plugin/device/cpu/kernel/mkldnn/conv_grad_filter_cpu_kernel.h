@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_POOLING_AVG_GRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_POOLING_AVG_GRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_GRAD_FILTER_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_GRAD_FILTER_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
-#include <utility>
+
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class AvgPoolingGradCpuKernelMod : public MKLCpuKernelMod {
+class ConvGradFilterCpuKernelMod : public MKLCpuKernelMod {
  public:
-  AvgPoolingGradCpuKernelMod() = default;
-  ~AvgPoolingGradCpuKernelMod() override = default;
+  ConvGradFilterCpuKernelMod() = default;
+  ~ConvGradFilterCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -35,17 +35,20 @@ class AvgPoolingGradCpuKernelMod : public MKLCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  std::vector<size_t> kernel_size_;
+  size_t src_index_{0};
+  size_t diff_dst_index_{1};
 };
 
-MS_REG_CPU_KERNEL(AvgPoolGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  AvgPoolingGradCpuKernelMod);
+MS_REG_CPU_KERNEL(
+  Conv2DBackpropFilter,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ConvGradFilterCpuKernelMod)
+
+MS_REG_CPU_KERNEL(
+  Conv3DBackpropFilter,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ConvGradFilterCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_POOLING_AVG_GRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_GRAD_FILTER_CPU_KERNEL_H_

@@ -30,11 +30,7 @@ void Conv2DBackpropFilterFusion::Init(const int64_t out_channel, const std::vect
   set_pad_mode(pad_mode);
   set_pad_list(pad_list);
   set_mode(mode);
-  if (stride.size() == 4) {
-    set_stride({stride[2], stride[3]});
-  } else {
-    set_stride(stride);
-  }
+  set_stride(stride);
   set_dilation(dilation);
   set_group(group);
   set_format(format);

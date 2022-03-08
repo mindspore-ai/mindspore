@@ -30,23 +30,23 @@ constexpr size_t kAvgPool3DPadDims = 6;
 
 void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, std::vector<int64_t> *strides,
               int64_t *pad_mode, std::vector<int64_t> *pad_list, bool *ceil_mode, bool *count_include_pad) {
-  constexpr size_t kKernelDims = 3;
-  constexpr size_t kStridesDims = 3;
+  constexpr size_t kKernelDims = 5;
+  constexpr size_t kStridesDims = 5;
   MS_EXCEPTION_IF_NULL(primitive);
   // attr kernel size
   *kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   if (kernel_size->size() != kKernelDims) {
-    MS_LOG(EXCEPTION) << "kernel_size of AvgPool3D must be 3.";
+    MS_LOG(EXCEPTION) << "kernel_size of AvgPool3D must be 5.";
   }
   // attr strides
   *strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
   if (strides->size() != kStridesDims) {
-    MS_LOG(EXCEPTION) << "strides of AvgPool3D must be 3.";
+    MS_LOG(EXCEPTION) << "strides of AvgPool3D must be 5.";
   }
   if (std::any_of(strides->begin(), strides->end(), [](int64_t stride) { return stride <= 0; })) {
     MS_EXCEPTION(ValueError) << "invalid strides, strides must be all positive.";
   }
-  // sttr pad_list
+  // attr pad_list
   *pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPadList));
   // attr count include pad
   *count_include_pad = GetValue<bool>(primitive->GetAttr(kCountIncludePad));
@@ -142,12 +142,12 @@ abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std:
   auto in_d = in_shape[2];
   auto in_h = in_shape[3];
   auto in_w = in_shape[4];
-  auto kernel_d = kernel_size[0];
-  auto kernel_h = kernel_size[1];
-  auto kernel_w = kernel_size[2];
-  auto stride_d = strides[0];
-  auto stride_h = strides[1];
-  auto stride_w = strides[2];
+  auto kernel_d = kernel_size[2];
+  auto kernel_h = kernel_size[3];
+  auto kernel_w = kernel_size[4];
+  auto stride_d = strides[2];
+  auto stride_h = strides[3];
+  auto stride_w = strides[4];
   std::vector<int64_t> new_pad_list;
   GetPadsByPadding(in_d, in_h, in_w, kernel_d, kernel_h, kernel_w, stride_d, stride_h, stride_w, pad_mode, pad_list,
                    &new_pad_list);

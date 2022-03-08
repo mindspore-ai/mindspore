@@ -369,7 +369,8 @@ def get_bprop_avg_pool_3d_grad(self):
                                      ceil_mode=self.ceil_mode,
                                      count_include_pad=count_include_pad,
                                      divisor_override=self.divisor_override,
-                                     data_format=self.data_format)
+                                     data_format=self.data_format,
+                                     pad_mode=self.pad_mode)
 
     def bprop(x, out, dout):
         x_shape = F.shape(x)

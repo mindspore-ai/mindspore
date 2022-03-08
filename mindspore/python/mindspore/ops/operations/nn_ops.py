@@ -1750,7 +1750,7 @@ class MaxPool3D(PrimitiveWithInfer):
         ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float32)
@@ -1773,13 +1773,12 @@ class MaxPool3D(PrimitiveWithInfer):
             self.pad_mode = "CALCULATED"
         self.add_prim_attr("pad_mode", self.pad_mode)
         self.data_format = validator.check_string(data_format, ['NCDHW'], 'data_format', self.name)
-        self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name,
-                                                  allow_five=False, ret_five=True)
+        self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name, ret_five=True)
         self.add_prim_attr("kernel_size", self.kernel_size)
-        self.strides = _check_3d_int_or_tuple("strides", strides, self.name, allow_five=False, ret_five=True)
+        self.strides = _check_3d_int_or_tuple("strides", strides, self.name, ret_five=True)
         self.add_prim_attr("strides", self.strides)
         if ceil_mode is None:
-            self.ceil_mode = not self.pad_mode == "CALCULATED"
+            self.ceil_mode = False
         else:
             self.ceil_mode = validator.check_value_type('ceil_mode', ceil_mode, [bool], self.name)
             if self.pad_mode != "CALCULATED":
@@ -7575,7 +7574,7 @@ class AvgPool3D(Primitive):
         ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float16)
@@ -7591,11 +7590,11 @@ class AvgPool3D(Primitive):
                  count_include_pad=True, divisor_override=0, data_format="NCDHW"):
         """Initialize AvgPool3D"""
         self.init_prim_io_names(inputs=['input'], outputs=['output'])
-        self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name, ret_five=True)
         self.add_prim_attr('kernel_size', self.kernel_size)
-        self.strides = _check_3d_int_or_tuple('strides', strides, self.name)
-        validator.check_value_type('pad', pad, (int, tuple), self.name)
+        self.strides = _check_3d_int_or_tuple('strides', strides, self.name, ret_five=True)
         self.add_prim_attr('strides', self.strides)
+        validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:

@@ -101,6 +101,8 @@ inline float SizeToFloat(size_t v) { return static_cast<float>(v); }
 
 inline double LongToDouble(int64_t v) { return static_cast<double>(v); }
 
+inline double LongToFloat(int64_t v) { return static_cast<float>(v); }
+
 inline double FloatToDouble(float v) { return static_cast<double>(v); }
 
 inline uint32_t IntToUint(int32_t u) {

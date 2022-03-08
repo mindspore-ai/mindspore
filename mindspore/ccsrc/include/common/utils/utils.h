@@ -251,9 +251,13 @@ constexpr auto kGatherV2OpName = "Gather";
 constexpr auto kPaddingOpName = "Padding";
 constexpr auto kAvgPoolOpName = "AvgPool";
 constexpr auto kAvgPoolGradOpName = "AvgPoolGrad";
+constexpr auto kAvgPool3DOpName = "AvgPool3D";
+constexpr auto kAvgPool3DGradOpName = "AvgPool3DGrad";
 constexpr auto kAvgPoolGradVmOpName = "AvgPoolGradVm";
 constexpr auto kMaxPoolOpName = "MaxPool";
-constexpr auto kmaxPoolGradOpName = "MaxPoolGrad";
+constexpr auto kMaxPoolGradOpName = "MaxPoolGrad";
+constexpr auto kMaxPool3DOpName = "MaxPool3D";
+constexpr auto kMaxPool3DGradOpName = "MaxPool3DGrad";
 constexpr auto kMaxPoolWithArgmaxOpName = "MaxPoolWithArgmax";
 constexpr auto kMaxPoolGradWithArgmaxOpName = "MaxPoolGradWithArgmax";
 constexpr auto kTensorAddOpName = "Add";
@@ -819,13 +823,17 @@ static inline uint64_t GetCurrentUSec() {
     MS_LOG(INFO) << "[PROF]" << #stage << " costs " << (end_usec_##stage - start_usec_##stage) << " usec."; \
   } while (0)
 
-#define PROF_MULTI_DEFINE(stage)     \
-  static uint64_t total_##stage = 0; \
-  static uint64_t count_##stage = 0;
+#define PROF_MULTI_DEFINE(stage)       \
+  do {                                 \
+    static uint64_t total_##stage = 0; \
+    static uint64_t count_##stage = 0; \
+  } while (0)
 
 #define PROF_LOCAL_DEFINE(stage) \
-  uint64_t total_##stage = 0;    \
-  uint64_t count_##stage = 0;
+  do {                           \
+    uint64_t total_##stage = 0;  \
+    uint64_t count_##stage = 0;  \
+  } while (0)
 
 #define PROF_MULTI_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
 
