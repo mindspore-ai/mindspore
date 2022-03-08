@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 #include "common/common.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
+#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/distributed_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/pk_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/prebuilt_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/random_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/sequential_sampler_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/skip_first_epoch_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/subset_random_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/subset_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/weighted_random_sampler_ir.h"
-#include "minddata/dataset/core/tensor.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;
@@ -68,6 +70,11 @@ TEST_F(MindDataTestIrSampler, TestCalculateNumSamples) {
   sampl->SamplerBuild(&sampler_rt);
   EXPECT_EQ(sampler_rt->CalculateNumSamples(num_rows), 11);
 
+  sampl = std::make_shared<SkipFirstEpochSamplerObj>(0);
+  EXPECT_NE(sampl, nullptr);
+  sampl->SamplerBuild(&sampler_rt);
+  EXPECT_EQ(sampler_rt->CalculateNumSamples(num_rows), -1);
+
   // Testing chains
   // Parent and child have num_samples
   std::shared_ptr<SamplerObj> sampl1 = std::make_shared<WeightedRandomSamplerObj>(weights, 12);
@@ -107,6 +114,13 @@ TEST_F(MindDataTestIrSampler, TestCalculateNumSamples) {
   sampl6->SamplerBuild(&sampler_rt6);
   sampler_rt6->AddChild(sampler_rt5);
   EXPECT_EQ(sampler_rt6->CalculateNumSamples(num_rows), -1);
+
+  std::shared_ptr<SamplerObj> sampl7 = std::make_shared<SkipFirstEpochSamplerObj>(0);
+  EXPECT_NE(sampl7, nullptr);
+  std::shared_ptr<SamplerRT> sampler_rt7;
+  sampl7->SamplerBuild(&sampler_rt7);
+  sampler_rt7->AddChild(sampler_rt5);
+  EXPECT_EQ(sampler_rt7->CalculateNumSamples(num_rows), -1);
 }
 
 TEST_F(MindDataTestIrSampler, TestSamplersMoveParameters) {
@@ -121,4 +135,95 @@ TEST_F(MindDataTestIrSampler, TestSamplersMoveParameters) {
   std::shared_ptr<SamplerRT> sampler_rt2 = nullptr;
   sampl2->SamplerBuild(&sampler_rt2);
   EXPECT_NE(sampler_rt, nullptr);
+}
+
+/// Feature: MindData IR Sampler Support
+/// Description: Test MindData IR Sampler by Compile more than one epoch
+/// Expectation: Results are successfully outputted, first epoch has fewer rows.
+TEST_F(MindDataTestIrSampler, TestSkipFirstEpochSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestIrSampler-TestSkipFirstEpochSampler.";
+  std::string dataset_dir = "./data/dataset/testPK/data";
+  std::set<std::string> extensions = {};
+  std::shared_ptr<DatasetCache> cache = nullptr;
+  std::map<std::string, int32_t> class_indexing = {};
+  std::shared_ptr<SamplerObj> sampler = std::make_shared<SkipFirstEpochSamplerObj>(1);
+  std::shared_ptr<DatasetNode> ds =
+    std::make_shared<ImageFolderNode>(dataset_dir, false, sampler, false, extensions, class_indexing, cache);
+  auto ir_tree = std::make_shared<TreeAdapter>();
+  // Compile with more than one epoch
+  int32_t num_epoch = 3;
+  EXPECT_OK(ir_tree->Compile(ds, num_epoch, 0));
+
+  for (int i = 0; i < num_epoch; i++) {
+    TensorRow row;
+    ir_tree->GetNext(&row);
+    int count = 0;
+    while (row.size() != 0) {
+      ir_tree->GetNext(&row);
+      count++;
+    }
+    if (i == 0) {
+      EXPECT_EQ(count, 43);
+    } else {
+      EXPECT_EQ(count, 44);
+    }
+  }
+}
+
+/// Feature: MindData IR Sampler Support
+/// Description: Compare SequentialSampler and SkipFirstEpochSampler with More Than One Epoch
+/// Expectation: SequentialSampler and SkipFirstEpochSampler have similar output
+TEST_F(MindDataTestIrSampler, CompareSequentialSamplerAndSkipFirstEpochSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestIrSampler-CompareSequentialSamplerAndSkipFirstEpochSampler.";
+  std::string dataset_dir = "./data/dataset/testPK/data";
+  std::set<std::string> extensions = {};
+  std::shared_ptr<DatasetCache> cache = nullptr;
+  std::map<std::string, int32_t> class_indexing = {};
+  int32_t skip_num = 2;
+  std::shared_ptr<SamplerObj> sampler1 = std::make_shared<SequentialSamplerObj>(skip_num, 0);
+  std::shared_ptr<SamplerObj> sampler2 = std::make_shared<SkipFirstEpochSamplerObj>(skip_num);
+  std::shared_ptr<DatasetNode> ds1 =
+    std::make_shared<ImageFolderNode>(dataset_dir, false, sampler1, false, extensions, class_indexing, cache);
+  std::shared_ptr<DatasetNode> ds2 =
+    std::make_shared<ImageFolderNode>(dataset_dir, false, sampler2, false, extensions, class_indexing, cache);
+  auto ir_tree1 = std::make_shared<TreeAdapter>();
+  auto ir_tree2 = std::make_shared<TreeAdapter>();
+  // Compile with more than one epoch
+  int32_t num_epoch = 3;
+  EXPECT_OK(ir_tree1->Compile(ds1, num_epoch, 0));
+  EXPECT_OK(ir_tree2->Compile(ds2, num_epoch, 0));
+
+  for (int i = 0; i < num_epoch; i++) {
+    TensorRow row1;
+    TensorRow row2;
+    // only the first epoch has the same output
+    if (i != 0) {
+      // SkipFirstEpochSampler doesn't skip after the first epoch
+      for (int j = 0; j < skip_num; j++) {
+        EXPECT_OK(ir_tree2->GetNext(&row2));
+      }
+    }
+    EXPECT_OK(ir_tree1->GetNext(&row1));
+    EXPECT_OK(ir_tree2->GetNext(&row2));
+    EXPECT_EQ(row1.size(), row2.size());
+    while (row1.size() != 0 && row2.size() != 0) {
+      std::vector<std::shared_ptr<Tensor>> r1 = row1.getRow();
+      std::vector<std::shared_ptr<Tensor>> r2 = row2.getRow();
+      ASSERT_EQ(r1.size(), r2.size());
+      for (int i = 0; i < r1.size(); i++) {
+        nlohmann::json out_json1;
+        EXPECT_OK(r1[i]->to_json(&out_json1));
+        std::stringstream json_ss1;
+        json_ss1 << out_json1;
+
+        nlohmann::json out_json2;
+        EXPECT_OK(r2[i]->to_json(&out_json2));
+        std::stringstream json_ss2;
+        json_ss2 << out_json2;
+        EXPECT_EQ(json_ss1.str(), json_ss2.str());
+      }
+      EXPECT_OK(ir_tree1->GetNext(&row1));
+      EXPECT_OK(ir_tree2->GetNext(&row2));
+    }
+  }
 }

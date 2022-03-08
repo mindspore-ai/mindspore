@@ -21,6 +21,7 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/skip_first_epoch_sampler.h"
 #include "minddata/dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
@@ -100,4 +101,47 @@ TEST_F(MindDataTestStandAloneSampler, TestStandAoneSequentialSampler) {
   sampler->GetNextSample(&sample_row);
   tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label2));
+}
+
+/// Feature: MindData RT SkipFirstEpochSampler Support
+/// Description: Test MindData RT SkipFirstEpochSampler by Checking Sample Outputs
+/// Expectation: Results are successfully outputted.
+TEST_F(MindDataTestStandAloneSampler, TestStandAloneSkipFirstEpochSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestStandAloneSampler-TestStandAloneSkipFirstEpochSampler.";
+  std::vector<std::shared_ptr<Tensor>> row;
+  MockStorageOp mock(5);
+  uint64_t res[5] = {0, 1, 2, 3, 4};
+  std::shared_ptr<Tensor> label, label1, label2;
+  CreateINT64Tensor(&label, 5, reinterpret_cast<unsigned char *>(res));
+  CreateINT64Tensor(&label1, 3, reinterpret_cast<unsigned char *>(res));
+  CreateINT64Tensor(&label2, 2, reinterpret_cast<unsigned char *>(res + 3));
+  int64_t num_samples = 0;
+  int64_t start_index = 0;
+  std::shared_ptr<SamplerRT> sampler = std::make_shared<SkipFirstEpochSamplerRT>(start_index, num_samples, 3);
+
+  std::shared_ptr<Tensor> tensor;
+  TensorRow sample_row;
+  sampler->HandshakeRandomAccessOp(&mock);
+  sampler->GetNextSample(&sample_row);
+  tensor = sample_row[0];
+  EXPECT_TRUE((*tensor) == (*label1));
+
+  sampler->GetNextSample(&sample_row);
+  tensor = sample_row[0];
+  EXPECT_TRUE((*tensor) == (*label2));
+
+  // Test output after Reset
+  sampler->ResetSampler();
+  sampler->GetNextSample(&sample_row);
+  tensor = sample_row[0];
+  EXPECT_TRUE((*tensor) == (*label));
+
+  // Test different start index
+  start_index = 2;
+  CreateINT64Tensor(&label, 3, reinterpret_cast<unsigned char *>(res + 2));
+  sampler = std::make_shared<SkipFirstEpochSamplerRT>(start_index, num_samples, 3);
+  sampler->HandshakeRandomAccessOp(&mock);
+  sampler->GetNextSample(&sample_row);
+  tensor = sample_row[0];
+  EXPECT_TRUE((*tensor) == (*label));
 }

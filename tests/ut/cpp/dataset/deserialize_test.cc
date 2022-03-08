@@ -257,7 +257,6 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCSV) {
   std::vector<std::string> columns = {"col1", "col4", "col2"};
   std::vector<std::shared_ptr<CsvBase>> column_defaults = {};
   std::shared_ptr<DatasetCache> cache = nullptr;
-  std::shared_ptr<SamplerObj> sampler = std::make_shared<SequentialSamplerObj>(0, 10);
   std::shared_ptr<DatasetNode> ds = std::make_shared<CSVNode>(dataset_files, field_delim, column_defaults, column_names,
                                                               3, ShuffleMode::kGlobal, 1, 0, cache);
   ds = std::make_shared<ProjectNode>(ds, columns);
@@ -301,7 +300,10 @@ TEST_F(MindDataTestDeserialize, TestDeserializeImageFolder) {
 TEST_F(MindDataTestDeserialize, TestDeserializeManifest) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Manifest.";
   std::string data_file = "./data/dataset/testManifestData/cpp.json";
+  // Add SkipFirstEpochSampler to pipeline - for recovery test coverage, since users cannot add this sampler explicitly
   std::shared_ptr<SamplerObj> sampler = std::make_shared<SequentialSamplerObj>(0, 10);
+  std::shared_ptr<SamplerObj> child_sampler = std::make_shared<SkipFirstEpochSamplerObj>(0);
+  sampler->AddChildSampler(child_sampler);
   std::map<std::string, int32_t> class_indexing = {};
   std::shared_ptr<DatasetCache> cache = nullptr;
   std::shared_ptr<DatasetNode> ds =
