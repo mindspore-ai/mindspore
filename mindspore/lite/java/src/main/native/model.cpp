@@ -68,7 +68,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByGraph(JNIEnv 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv *env, jobject thiz,
                                                                           jobject model_buffer, jint model_type,
                                                                           jlong context_ptr, jcharArray key_str,
-                                                                          jstring dec_mod) {
+                                                                          jstring dec_mod, jstring cropto_lib_path) {
   if (model_buffer == nullptr) {
     MS_LOGE("Buffer from java is nullptr");
     return reinterpret_cast<jlong>(nullptr);
@@ -116,7 +116,8 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv
     }
     env->ReleaseCharArrayElements(key_str, key_array, JNI_ABORT);
     mindspore::Key dec_key{dec_key_data, key_len};
-    status = model->Build(model_buf, buffer_len, c_model_type, context, dec_key, c_dec_mod);
+    auto c_cropto_lib_path = env->GetStringUTFChars(cropto_lib_path, JNI_FALSE);
+    status = model->Build(model_buf, buffer_len, c_model_type, context, dec_key, c_dec_mod, c_cropto_lib_path);
   } else {
     status = model->Build(model_buf, buffer_len, c_model_type, context);
   }
@@ -130,7 +131,8 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *env, jobject thiz, jstring model_path,
                                                                         jint model_type, jlong context_ptr,
-                                                                        jcharArray key_str, jstring dec_mod) {
+                                                                        jcharArray key_str, jstring dec_mod,
+                                                                        jstring cropto_lib_path) {
   auto c_model_path = env->GetStringUTFChars(model_path, JNI_FALSE);
   mindspore::ModelType c_model_type;
   if (model_type >= static_cast<int>(mindspore::kMindIR) && model_type <= static_cast<int>(mindspore::kMindIR_Lite)) {
@@ -172,7 +174,8 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *
     }
     env->ReleaseCharArrayElements(key_str, key_array, JNI_ABORT);
     mindspore::Key dec_key{dec_key_data, key_len};
-    status = model->Build(c_model_path, c_model_type, context, dec_key, c_dec_mod);
+    auto c_cropto_lib_path = env->GetStringUTFChars(cropto_lib_path, JNI_FALSE);
+    status = model->Build(c_model_path, c_model_type, context, dec_key, c_dec_mod, c_cropto_lib_path);
   } else {
     status = model->Build(c_model_path, c_model_type, context);
   }

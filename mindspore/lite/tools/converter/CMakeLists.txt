@@ -1,7 +1,9 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
 add_definitions(-DUSE_GLOG)
 set(USE_GLOG on)
-
+if(MSLITE_ENABLE_MODEL_ENCRYPTION)
+    add_compile_definitions(ENABLE_OPENSSL)
+endif()
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 
 set(CCSRC_SRC
@@ -13,8 +15,8 @@ set(CCSRC_SRC
 include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 
 if(NOT WIN32 AND NOT MSLITE_ENABLE_ACL)
-    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -rdynamic -fvisibility=hidden")
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -rdynamic -fvisibility=hidden")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -rdynamic -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -fvisibility=hidden")
 endif()
 
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -50,11 +52,10 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_control_flow_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl/acl_pass.cc
-
         ${SRC_DIR}/common/quant_utils.cc
         ${SRC_DIR}/common/dynamic_library_loader.cc
         ${SRC_DIR}/train/train_populate_parameter.cc
-
+        ${SRC_DIR}/common/config_file.cc
         ../optimizer/*.cc
         )
 
@@ -76,16 +77,20 @@ add_subdirectory(micro/coder)
 
 if(MSLITE_ENABLE_ACL)
     set(MODE_ASCEND_ACL ON)
+    include_directories(${TOP_DIR}/graphengine/inc/external)
     include(${TOP_DIR}/cmake/dependency_graphengine.cmake)
     add_subdirectory(adapter/acl)
     link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 endif()
 
-set(API_SRC ${SRC_DIR}/cxx_api/context.cc)
-if(MSLITE_ENABLE_ACL)
-    list(APPEND API_SRC ${SRC_DIR}/cxx_api/kernel.cc)
-endif()
+file(GLOB CXX_API_SRCS
+        ${SRC_DIR}/cxx_api/*.cc
+        ${SRC_DIR}/cxx_api/model/*.cc
+        ${SRC_DIR}/cxx_api/graph/*.cc
+        ${SRC_DIR}/cxx_api/tensor/*.cc)
+
 set(LITE_SRC ${API_SRC}
+        ${CXX_API_SRCS}
         ${SRC_DIR}/ops/ops_def.cc
         ${SRC_DIR}/ops/ops_utils.cc
         ${SRC_DIR}/common/utils.cc
@@ -97,6 +102,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/common/log.cc
         ${SRC_DIR}/common/prim_util.cc
         ${SRC_DIR}/common/tensor_util.cc
+        ${SRC_DIR}/common/decrypt.cc
         ${SRC_DIR}/runtime/allocator.cc
         ${SRC_DIR}/runtime/inner_allocator.cc
         ${SRC_DIR}/runtime/runtime_allocator.cc

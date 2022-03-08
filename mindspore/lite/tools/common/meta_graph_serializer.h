@@ -21,12 +21,14 @@
 #include <string>
 #include "flatbuffers/flatbuffers.h"
 #include "schema/inner/model_generated.h"
+#include "utils/crypto.h"
 
 namespace mindspore::lite {
 class MetaGraphSerializer {
  public:
   // save serialized fb model
-  static int Save(const schema::MetaGraphT &graph, const std::string &output_path);
+  static int Save(const schema::MetaGraphT &graph, const std::string &output_path, const Byte *key = {},
+                  const size_t key_len = 0, const std::string &enc_mode = "");
 
  private:
   MetaGraphSerializer() = default;
@@ -41,9 +43,11 @@ class MetaGraphSerializer {
 
   bool ExtraAndSerializeModelWeight(const schema::MetaGraphT &graph);
 
-  bool SerializeModelAndUpdateWeight(const schema::MetaGraphT &meta_graphT);
+  bool SerializeModelAndUpdateWeight(const schema::MetaGraphT &meta_graphT, const Byte *key, const size_t key_len,
+                                     const std::string &enc_mode);
 
-  bool SerializeModel(const void *content, size_t size);
+  bool SerializeModel(const void *content, size_t size, const Byte *key, const size_t key_len,
+                      const std::string &enc_mode);
 
  private:
   int64_t cur_offset_ = 0;

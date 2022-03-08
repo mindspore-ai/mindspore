@@ -69,6 +69,7 @@ constexpr int kNumPrintMin = 5;
 constexpr const char *DELIM_COLON = ":";
 constexpr const char *DELIM_COMMA = ",";
 constexpr const char *DELIM_SLASH = "/";
+constexpr size_t kEncMaxLen = 16;
 
 extern const std::unordered_map<int, std::string> kTypeIdMap;
 extern const std::unordered_map<mindspore::Format, std::string> kTensorFormatMap;
@@ -139,6 +140,11 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::cosine_distance_threshold_, "cosineDistanceThreshold", "cosine distance threshold", -1.1);
     AddFlag(&BenchmarkFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
+    AddFlag(&BenchmarkFlags::decrypt_key_str_, "decryptKey",
+            "The key used to decrypt the file, expressed in hexadecimal characters. Only support AES-GCM and the key "
+            "length is 16.",
+            "");
+    AddFlag(&BenchmarkFlags::crypto_lib_path_, "cryptoLibPath", "Pass the crypto library path.", "");
     AddFlag(&BenchmarkFlags::enable_parallel_predict_, "enableParallelPredict", "Enable model parallel : true | false",
             false);
     AddFlag(&BenchmarkFlags::parallel_request_num_, "parallelRequestNum", "parallel request num of parallel predict",
@@ -192,6 +198,9 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::string perf_event_ = "CYCLE";
   bool dump_tensor_data_ = false;
   bool print_tensor_data_ = false;
+  std::string decrypt_key_str_;
+  std::string dec_mode_ = "AES-GCM";
+  std::string crypto_lib_path_;
 };
 
 class MS_API BenchmarkBase {

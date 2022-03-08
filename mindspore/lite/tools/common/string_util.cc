@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <regex>
 
 namespace mindspore {
 namespace lite {
@@ -125,6 +126,43 @@ bool ConvertDoubleVector(const std::string &str, std::vector<double> *value) {
     }
   }
   return true;
+}
+
+size_t Hex2ByteArray(const std::string &hex_str, unsigned char *byte_array, size_t max_len) {
+  std::regex r("[0-9a-fA-F]+");
+  if (!std::regex_match(hex_str, r)) {
+    MS_LOG(ERROR) << "Some characters of dec_key not in [0-9a-fA-F]";
+    return 0;
+  }
+  if (hex_str.size() % 2 == 1) {  // Mod 2 determines whether it is odd
+    MS_LOG(ERROR) << "the hexadecimal dec_key length must be even";
+    return 0;
+  }
+  size_t byte_len = hex_str.size() / 2;  // Two hexadecimal characters represent a byte
+  if (byte_len > max_len) {
+    MS_LOG(ERROR) << "the hexadecimal dec_key length exceeds the maximum limit: " << max_len;
+    return 0;
+  }
+  constexpr int32_t a_val = 10;  // The value of 'A' in hexadecimal is 10
+  constexpr size_t half_byte_offset = 4;
+  for (size_t i = 0; i < byte_len; ++i) {
+    size_t p = i * 2;  // The i-th byte is represented by the 2*i and 2*i+1 hexadecimal characters
+    if (hex_str[p] >= 'a' && hex_str[p] <= 'f') {
+      byte_array[i] = hex_str[p] - 'a' + a_val;
+    } else if (hex_str[p] >= 'A' && hex_str[p] <= 'F') {
+      byte_array[i] = hex_str[p] - 'A' + a_val;
+    } else {
+      byte_array[i] = hex_str[p] - '0';
+    }
+    if (hex_str[p + 1] >= 'a' && hex_str[p + 1] <= 'f') {
+      byte_array[i] = (byte_array[i] << half_byte_offset) | (hex_str[p + 1] - 'a' + a_val);
+    } else if (hex_str[p] >= 'A' && hex_str[p] <= 'F') {
+      byte_array[i] = (byte_array[i] << half_byte_offset) | (hex_str[p + 1] - 'A' + a_val);
+    } else {
+      byte_array[i] = (byte_array[i] << half_byte_offset) | (hex_str[p + 1] - '0');
+    }
+  }
+  return byte_len;
 }
 }  // namespace lite
 }  // namespace mindspore

@@ -698,7 +698,6 @@ int BenchmarkUnifiedApi::CompareDataGetTotalBiasAndSize(const std::string &name,
   *total_size += 1;
   return RET_OK;
 }
-
 int BenchmarkUnifiedApi::CompareDataGetTotalCosineDistanceAndSize(const std::string &name, mindspore::MSTensor *tensor,
                                                                   float *total_cosine_distance, int *total_size) {
   if (tensor == nullptr) {
@@ -1044,6 +1043,33 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
 }
 #endif
 
+int BenchmarkUnifiedApi::CompileGraph(ModelType model_type, const std::shared_ptr<Context> &context,
+                                      const std::string &model_name) {
+  Key dec_key;
+  if (!flags_->decrypt_key_str_.empty()) {
+    dec_key.len = lite::Hex2ByteArray(flags_->decrypt_key_str_, dec_key.key, kEncMaxLen);
+    if (dec_key.len == 0) {
+      MS_LOG(ERROR) << "dec_key.len == 0";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    flags_->decrypt_key_str_.clear();
+  }
+  Status ret;
+  if (flags_->crypto_lib_path_.empty()) {
+    ret = ms_model_.Build(flags_->model_file_, model_type, context);
+  } else {
+    ret =
+      ms_model_.Build(flags_->model_file_, model_type, context, dec_key, flags_->dec_mode_, flags_->crypto_lib_path_);
+  }
+  memset(dec_key.key, 0, kEncMaxLen);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "ms_model_.Build failed while running ", model_name.c_str();
+    std::cout << "ms_model_.Build failed while running ", model_name.c_str();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int BenchmarkUnifiedApi::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
 
@@ -1098,19 +1124,17 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   }
 #endif
 
-  auto ret = ms_model_.Build(flags_->model_file_, model_type, context);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "ms_model_.Build failed while running ", model_name.c_str();
-    std::cout << "ms_model_.Build failed while running ", model_name.c_str();
-    return RET_ERROR;
+  status = CompileGraph(model_type, context, model_name);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Compile graph failed.";
+    return status;
   }
-
   if (!flags_->resize_dims_.empty()) {
     std::vector<std::vector<int64_t>> resize_dims;
     (void)std::transform(flags_->resize_dims_.begin(), flags_->resize_dims_.end(), std::back_inserter(resize_dims),
                          [&](auto &shapes) { return this->ConverterToInt64Vector<int>(shapes); });
 
-    ret = ms_model_.Resize(ms_model_.GetInputs(), resize_dims);
+    auto ret = ms_model_.Resize(ms_model_.GetInputs(), resize_dims);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Input tensor resize failed.";
       std::cout << "Input tensor resize failed.";

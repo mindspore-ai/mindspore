@@ -30,10 +30,13 @@ namespace mindspore {
 namespace lite {
 int DynamicLibraryLoader::Open(const std::string &lib_path) {
   if (handler_ != nullptr) {
-    return RET_ERROR;
+    return RET_OK;
   }
   std::string real_path = RealPath(lib_path.c_str());
-
+  if (real_path.empty()) {
+    MS_LOG(ERROR) << "real_path is invalid.";
+    return RET_ERROR;
+  }
 #ifndef _WIN32
 #ifndef ENABLE_ARM
   handler_ = dlopen(real_path.c_str(), RTLD_LAZY | RTLD_DEEPBIND);
