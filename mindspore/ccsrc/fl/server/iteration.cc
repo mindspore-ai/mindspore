@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <numeric>
+#include <unordered_map>
 #include "fl/server/model_store.h"
 #include "fl/server/server.h"
 
@@ -293,6 +294,22 @@ bool Iteration::DisableServerInstance(std::string *result) {
   return true;
 }
 
+void Iteration::StartNewInstance() {
+  iteration_num_ = 1;
+  LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
+  is_instance_being_updated_ = false;
+  ModelStore::GetInstance().Reset();
+
+  // Update the hyper-parameters on server and reinitialize rounds.
+  UpdateHyperParams(new_instance_json_);
+  if (!ReInitRounds()) {
+    MS_LOG(ERROR) << "Reinitializing rounds failed.";
+  }
+
+  instance_state_ = InstanceState::kRunning;
+  MS_LOG(INFO) << "Process iteration new instance successful.";
+}
+
 bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string *result) {
   MS_ERROR_IF_NULL_W_RET_VAL(result, false);
   // Before new instance, we should judge whether this request should be handled.
@@ -314,7 +331,11 @@ bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string
   new_instance_json_ = new_instance_json;
   *result = "New FL-Server instance succeeded.";
 
-  MS_LOG(INFO) << "Process new instance success, cluster will start new job after this iteration end.";
+  if (instance_state_.load() == InstanceState::kFinish || instance_state_.load() == InstanceState::kDisable) {
+    StartNewInstance();
+  } else {
+    MS_LOG(INFO) << "Process new instance success, cluster will start new job after this iteration end.";
+  }
   return true;
 }
 
@@ -702,16 +723,7 @@ void Iteration::EndLastIter() {
   }
 
   if (is_instance_being_updated_) {
-    MS_LOG(INFO) << "Process iteration new instance.";
-    iteration_num_ = 1;
-    is_instance_being_updated_ = false;
-    ModelStore::GetInstance().Reset();
-
-    // Update the hyper-parameters on server and reinitialize rounds.
-    UpdateHyperParams(new_instance_json_);
-    if (!ReInitRounds()) {
-      MS_LOG(ERROR) << "Reinitializing rounds failed.";
-    }
+    StartNewInstance();
   } else {
     iteration_num_++;
   }
