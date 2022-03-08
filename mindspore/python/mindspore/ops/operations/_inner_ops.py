@@ -73,6 +73,7 @@ class ExtractImagePatches(PrimitiveWithInfer):
         _check_tuple_or_list("ksize", ksizes, self.name)
         _check_tuple_or_list("stride", strides, self.name)
         _check_tuple_or_list("rate", rates, self.name)
+        validator.check_value_type('padding', padding, [str], self.name)
         self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
         self.add_prim_attr("padding", self.padding)
         self.is_ge = context.get_context("enable_ge")
