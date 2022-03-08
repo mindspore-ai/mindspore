@@ -594,6 +594,207 @@ EvalResultPtr ShardEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList 
   return res;
 }
 
+namespace {
+AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_size) {
+  if (!orig_abs->isa<abstract::AbstractTensor>()) {
+    MS_LOG(EXCEPTION) << "ValueError: orig_abs should be AbstractTensor, but got a " << orig_abs->ToString() << ".";
+  }
+  ShapeVector orig_shape = dyn_cast<abstract::Shape>(orig_abs->BuildShape())->shape();
+  int shape_len = SizeToInt(orig_shape.size());
+  if (*axis < -shape_len || *axis >= shape_len) {
+    MS_LOG(EXCEPTION) << "ValueError: The axis: " << *axis << " in `in_axes` is out of bounds for array of dimension ["
+                      << -shape_len << "," << shape_len << ").";
+  }
+  *axis = *axis < 0 ? shape_len + *axis : *axis;
+  int64_t temp_axes_size = orig_shape[*axis];
+  if (*axis_size == -1) {
+    *axis_size = temp_axes_size;
+  } else if (*axis_size != temp_axes_size) {
+    MS_LOG(EXCEPTION) << "The `axes_size` of each argument in the scope of `vmap` should be equal, but got "
+                      << *axis_size << " and " << temp_axes_size << ".";
+  }
+  (void)orig_shape.erase(orig_shape.begin() + *axis);
+  BaseShapePtr new_shape = std::make_shared<abstract::Shape>(orig_shape);
+  AbstractBasePtr abs_clone = orig_abs->Clone()->Broaden();
+  abs_clone->set_shape(new_shape);
+  return abs_clone;
+}
+
+AbstractBasePtr GetLogicalViewAbs(const AbstractBasePtr &physical_view_abs, const ValuePtr &in_axes, int *axis_size) {
+  MS_EXCEPTION_IF_NULL(physical_view_abs);
+  MS_EXCEPTION_IF_NULL(in_axes);
+  auto physical_view_abs_sequence = dyn_cast<abstract::AbstractSequence>(physical_view_abs);
+  if (physical_view_abs_sequence != nullptr) {
+    AbstractBasePtrList abs_list = physical_view_abs_sequence->elements();
+    AbstractBasePtrList logical_view_abs_list;
+    auto in_axes_seq = dyn_cast<ValueSequeue>(in_axes);
+    int index = 0;
+    (void)std::transform(
+      abs_list.begin(), abs_list.end(), std::back_inserter(logical_view_abs_list),
+      [&axis_size, &index, &in_axes_seq, in_axes](const AbstractBasePtr &sub_abs) -> AbstractBasePtr {
+        ValuePtr sub_in_axes = in_axes;
+        if (in_axes->isa<ValueSequeue>()) {
+          sub_in_axes = (*in_axes_seq)[index];
+          index++;
+        }
+        return GetLogicalViewAbs(sub_abs, sub_in_axes, axis_size);
+      });
+    if (physical_view_abs->isa<AbstractList>()) {
+      return std::make_shared<AbstractList>(logical_view_abs_list);
+    }
+    return std::make_shared<AbstractTuple>(logical_view_abs_list);
+  }
+  ValuePtr in_axis = in_axes;
+  if (in_axis->isa<Int64Imm>()) {
+    int axis = dyn_cast<Int64Imm>(in_axis)->value();
+    auto logical_view_abs = ReduceDim(&axis, physical_view_abs, axis_size);
+    return logical_view_abs;
+  } else if (in_axis->isa<None>()) {
+    return physical_view_abs;
+  }
+  MS_LOG(EXCEPTION) << "The axis in vmap's `in_axes` should be a None or a scalar of type Int64Imm, but got a "
+                    << in_axis->ToString() << ".";
+  return nullptr;
+}
+
+AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_size) {
+  MS_EXCEPTION_IF_NULL(orig_abs);
+  AbstractBasePtr out_abs = nullptr;
+  ShapeVector orig_shape;
+  if (orig_abs->isa<abstract::AbstractTensor>()) {
+    orig_shape = dyn_cast<abstract::Shape>(orig_abs->BuildShape())->shape();
+  }
+  int shape_len = SizeToInt(orig_shape.size() + 1);
+  if (*axis < -shape_len || *axis >= shape_len) {
+    MS_LOG(EXCEPTION) << "ValueError: The axis: " << *axis << " in `out_axes` is out of bounds for array of dimension ["
+                      << -shape_len << "," << shape_len << ").";
+  }
+  *axis = *axis < 0 ? shape_len + *axis : *axis;
+  orig_shape.insert(orig_shape.begin() + *axis, axis_size);
+  BaseShapePtr new_shape = std::make_shared<abstract::Shape>(orig_shape);
+  if (orig_abs->isa<abstract::AbstractTensor>()) {
+    out_abs = orig_abs->Clone()->Broaden();
+    out_abs->set_shape(new_shape);
+  } else if (orig_abs->isa<AbstractScalar>()) {
+    out_abs = std::make_shared<abstract::AbstractTensor>(orig_abs, new_shape);
+  } else {
+    MS_LOG(EXCEPTION) << "The outputs of vmap's `fn` should be consisting of tensors or constants, but got "
+                      << orig_abs->ToString() << ".";
+    out_abs = nullptr;
+  }
+  return out_abs;
+}
+
+AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, const ValuePtr &out_axes, int axis_size) {
+  MS_EXCEPTION_IF_NULL(logical_view_abs);
+  auto logical_view_abs_sequence = dyn_cast<abstract::AbstractSequence>(logical_view_abs);
+  if (logical_view_abs_sequence != nullptr) {
+    AbstractBasePtrList logical_view_abs_list = logical_view_abs_sequence->elements();
+    AbstractBasePtrList physical_view_abs_list;
+    auto out_axes_seq = dyn_cast<ValueSequeue>(out_axes);
+    if (out_axes_seq != nullptr) {
+      if (logical_view_abs_list.size() != out_axes_seq->size()) {
+        MS_LOG(EXCEPTION) << "The size of vmap's `out_axes` should be equal to the number of results of `fn`: "
+                          << logical_view_abs_list.size() << ", but got size: " << out_axes_seq->size() << ".";
+      }
+    }
+    int index = 0;
+    (void)std::transform(
+      logical_view_abs_list.begin(), logical_view_abs_list.end(), std::back_inserter(physical_view_abs_list),
+      [&axis_size, &index, &out_axes_seq, out_axes](const AbstractBasePtr &arg_spec) -> AbstractBasePtr {
+        ValuePtr sub_out_axes = out_axes;
+        if (out_axes->isa<ValueSequeue>()) {
+          sub_out_axes = (*out_axes_seq)[index];
+          index++;
+        }
+        if (arg_spec->isa<AbstractSequence>()) {
+          return GetPhysicalViewAbs(arg_spec, sub_out_axes, axis_size);
+        }
+        if (sub_out_axes->isa<Int64Imm>()) {
+          int axis = dyn_cast<Int64Imm>(sub_out_axes)->value();
+          return ExtendDim(&axis, arg_spec, axis_size);
+        } else if (sub_out_axes->isa<None>()) {
+          return arg_spec;
+        }
+        MS_LOG(EXCEPTION) << "The axis in vmap's `out_axes` should be a None or a scalar of type Int64Imm, but got a "
+                          << sub_out_axes->ToString() << ".";
+        return nullptr;
+      });
+    if (logical_view_abs->isa<AbstractList>()) {
+      return std::make_shared<AbstractList>(physical_view_abs_list);
+    }
+    return std::make_shared<AbstractTuple>(physical_view_abs_list);
+  }
+
+  int axis = 0;
+  if (out_axes->isa<None>()) {
+    return logical_view_abs;
+  } else if (out_axes->isa<ValueSequeue>()) {
+    ValueSequeuePtr out_axes_seq = dyn_cast<ValueSequeue>(out_axes);
+    if (out_axes_seq->size() != 1) {
+      MS_LOG(EXCEPTION) << "The  size of vmap's `out_axes` should be equal to the result size: 1, but got size: "
+                        << out_axes_seq->size() << ".";
+    }
+    axis = dyn_cast<Int64Imm>((*out_axes_seq)[0])->value();
+  } else if (out_axes->isa<Int64Imm>()) {
+    axis = dyn_cast<Int64Imm>(out_axes)->value();
+  }
+  return ExtendDim(&axis, logical_view_abs, axis_size);
+}
+}  // namespace
+
+// According to the in_axes (e.g. (1,(None,3))), the abstraction of input parameters with the
+// physical view (e.g. (A,(B,C))) are converted into that with the logical view (e.g.(a,(b,c))),
+// more specific, the input `A` with shape (32, 16, 8) fitting the axis index `1` is converted in to
+// `a` with shape (32, 8). And then leverage the original graph to perform the evaluation.
+// Finally, the outputs with the logical view are converted back into the physical view in
+// combination with the out_axes. The inferring result is consistent with that after eliminating
+// the VmapOperator.
+EvalResultPtr VmapEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                 const AnfNodeConfigPtr &) {
+  AbstractBasePtrList args_spec_list;
+  int axis_size = -1;
+  int index = 0;
+  auto in_axes = in_axes_;
+  auto in_axes_seq = dyn_cast<ValueSequeue>(in_axes);
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+                       [&axis_size, &index, &in_axes_seq, in_axes](const ConfigPtr &conf) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(conf);
+                         AbstractBasePtr abs = conf->ObtainEvalResult()->abstract();
+                         // Drop the side effect tag parameters, because it has no mapping axis.
+                         // e.g. args=(A,(B,C),U), in_axes=(1,(None,3))
+                         if (abs->isa<AbstractMonad>()) {
+                           return abs;
+                         }
+                         ValuePtr sub_in_axes = in_axes;
+                         if (in_axes->isa<ValueSequeue>()) {
+                           sub_in_axes = (*in_axes_seq)[index];
+                           index++;
+                         }
+                         auto arg_abs = GetLogicalViewAbs(abs, sub_in_axes, &axis_size);
+                         return arg_abs;
+                       });
+  MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
+  auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
+  if (eval_result != nullptr) {
+    return eval_result;
+  }
+  ConfigPtrList virtual_conf_list;
+  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(virtual_conf_list),
+                       [](const AbstractBasePtr &arg) -> ConfigPtr { return std::make_shared<VirtualConfig>(arg); });
+
+  // Call the original evaluator, get the result: y = f(x)
+  EvalResultPtr result = evaluator_->Run(engine, virtual_conf_list, nullptr);
+  MS_EXCEPTION_IF_NULL(result);
+
+  AbstractBasePtr result_abs = result->abstract();
+  AbstractBasePtr after_vmap = GetPhysicalViewAbs(result_abs, out_axes_, axis_size);
+
+  auto res = std::make_shared<EvalResult>(after_vmap, std::make_shared<AttrValueMap>());
+  evaluator_cache_mgr_->SetValue(args_spec_list, res);
+  return res;
+}
+
 EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrList &args_spec_list,
                                      const AnfNodeConfigPtr &out_conf) {
   if (args_spec_list.size() != args_spec_list_.size()) {

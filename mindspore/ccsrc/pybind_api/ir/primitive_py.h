@@ -48,6 +48,7 @@ class PrimitivePy : public Primitive {
   ~PrimitivePy() override;
   MS_DECLARE_PARENT(PrimitivePy, Primitive);
   const bool parse_info_ = true;
+  py::function GetVmapRuleFunction(const bool is_side_effect = false, int axis_size = 0);
   py::function GetBpropFunction();
   void set_signatures(const std::vector<Signature> &signatures);
   const std::vector<Signature> &signatures() const { return signatures_; }

@@ -255,12 +255,12 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
   bool AddFuncGraphUsed(const FuncGraphPtr &fg, int count = 1);
   bool DropFuncGraphUsed(const FuncGraphPtr &fg);
 
-  // Get all value nodes in the inputs of J directly used by this func graph.
-  const mindspore::HashMap<AnfNodePtr, int> &j_value_nodes() const;
-  void CopyJValueNodes(const FuncGraphPtr &source);
-  void ClearJValueNodes();
-  void AddJValueNode(const AnfNodePtr &value_node, int count = 1);
-  void DropJValueNode(const AnfNodePtr &value_node);
+  // Get all value nodes in the inputs of MetaFgPrim directly used by this func graph.
+  const mindspore::HashMap<AnfNodePtr, int> &meta_fg_prim_value_nodes() const;
+  void CopyMetaFgPrimValueNodes(const FuncGraphPtr &source);
+  void ClearMetaFgPrimValueNodes();
+  void AddMetaFgPrimValueNode(const AnfNodePtr &value_node, int count = 1);
+  void DropMetaFgPrimValueNode(const AnfNodePtr &value_node);
 
   // Get all func graphs nested used by this func graph.
   const FuncGraphSet &func_graphs_used_total();
@@ -390,8 +390,8 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
   // All free variables of the function.
   AnfNodeCounterMap free_variables_;
 
-  // All value nodes calling J in the function.
-  mindspore::HashMap<AnfNodePtr, int> j_value_nodes_;
+  // All value nodes calling MetaFgPrim in the function.
+  mindspore::HashMap<AnfNodePtr, int> meta_fg_prim_value_nodes_;
 
   // All user value nodes of this func graph, recording by CNode and its input's index.
   CNodeIndexCounterMap func_graph_cnodes_index_;

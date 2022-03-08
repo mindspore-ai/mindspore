@@ -446,34 +446,36 @@ void FuncGraph::DropFuncGraphCNodeIndex(const CNodeIndexPairPtr &pair) {
   }
 }
 
-const mindspore::HashMap<AnfNodePtr, int> &FuncGraph::j_value_nodes() const { return j_value_nodes_; }
+const mindspore::HashMap<AnfNodePtr, int> &FuncGraph::meta_fg_prim_value_nodes() const {
+  return meta_fg_prim_value_nodes_;
+}
 
-void FuncGraph::CopyJValueNodes(const FuncGraphPtr &source) {
+void FuncGraph::CopyMetaFgPrimValueNodes(const FuncGraphPtr &source) {
   MS_EXCEPTION_IF_NULL(source);
-  auto &others = source->j_value_nodes();
+  auto &others = source->meta_fg_prim_value_nodes();
   for (const auto &other : others) {
-    AddJValueNode(other.first, other.second);
+    AddMetaFgPrimValueNode(other.first, other.second);
   }
 }
 
-void FuncGraph::ClearJValueNodes() { j_value_nodes_.clear(); }
+void FuncGraph::ClearMetaFgPrimValueNodes() { meta_fg_prim_value_nodes_.clear(); }
 
-void FuncGraph::AddJValueNode(const AnfNodePtr &value_node, int count) {
-  if (j_value_nodes_.count(value_node) == 0) {
-    j_value_nodes_[value_node] = count;
+void FuncGraph::AddMetaFgPrimValueNode(const AnfNodePtr &value_node, int count) {
+  if (meta_fg_prim_value_nodes_.count(value_node) == 0) {
+    meta_fg_prim_value_nodes_[value_node] = count;
   } else {
-    j_value_nodes_[value_node] += count;
+    meta_fg_prim_value_nodes_[value_node] += count;
   }
 }
 
-void FuncGraph::DropJValueNode(const AnfNodePtr &value_node) {
-  if (j_value_nodes_.count(value_node) != 0) {
-    if (j_value_nodes_[value_node] == 1) {
-      (void)j_value_nodes_.erase(value_node);
+void FuncGraph::DropMetaFgPrimValueNode(const AnfNodePtr &value_node) {
+  if (meta_fg_prim_value_nodes_.count(value_node) != 0) {
+    if (meta_fg_prim_value_nodes_[value_node] == 1) {
+      (void)meta_fg_prim_value_nodes_.erase(value_node);
     } else {
-      j_value_nodes_[value_node]--;
-      if (j_value_nodes_[value_node] < 0) {
-        MS_LOG(EXCEPTION) << "Count of J ValueNode '" << value_node->DebugString()
+      meta_fg_prim_value_nodes_[value_node]--;
+      if (meta_fg_prim_value_nodes_[value_node] < 0) {
+        MS_LOG(EXCEPTION) << "Count of MetaFgPrim ValueNode '" << value_node->DebugString()
                           << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
       }
     }
@@ -521,7 +523,7 @@ void FuncGraph::ClearAllManagerInfo() {
   ClearFuncGraphCNodesIndex();
   ClearFreeVariables();
   ClearFuncGraphsUsed();
-  ClearJValueNodes();
+  ClearMetaFgPrimValueNodes();
 }
 
 AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string &name) {

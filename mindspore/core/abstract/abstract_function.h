@@ -369,6 +369,46 @@ class MS_CORE_API ShardTransformedAbstractClosure final : public AbstractFuncAto
   AbstractFuncAtomPtr fn_;
 };
 
+/// \brief VmapTransformedAbstractClosure defines interface for abstract of Function
+/// transformed through the application of Vmap.
+class MS_CORE_API VmapTransformedAbstractClosure final : public AbstractFuncAtom {
+ public:
+  /// \brief Constructor of VmapTransformedAbstractClosure
+  ///
+  /// \param[in] fn The AbstractFuncAtom transformed through the application of Vmap.
+  explicit VmapTransformedAbstractClosure(const AbstractFuncAtomPtr &fn, const ValuePtr &in_axes,
+                                          const ValuePtr &out_axes)
+      : fn_(fn), in_axes_(in_axes), out_axes_(out_axes) {}
+
+  /// \brief Destructor of VmapTransformedAbstractClosure
+  ~VmapTransformedAbstractClosure() override = default;
+  MS_DECLARE_PARENT(VmapTransformedAbstractClosure, AbstractFuncAtom)
+
+  /// \brief Get the AbstractFuncAtom VmapTransformedAbstractClosure corresponding to.
+  ///
+  /// \return The AbstractFuncAtom VmapTransformedAbstractClosure corresponding to.
+  AbstractFuncAtomPtr fn() { return fn_; }
+
+  ValuePtr in_axes() { return in_axes_; }
+
+  ValuePtr out_axes() { return out_axes_; }
+
+  AbstractFunctionPtr Copy() const override {
+    return std::make_shared<VmapTransformedAbstractClosure>(fn_, in_axes_, out_axes_);
+  }
+
+  bool operator==(const AbstractFunction &other) const override;
+
+  std::size_t hash() const override;
+
+  std::string ToString() const override { return "Vmap(" + fn_->ToString() + ")"; }
+
+ private:
+  AbstractFuncAtomPtr fn_;
+  ValuePtr in_axes_;
+  ValuePtr out_axes_;
+};
+
 /// \brief VirtualAbstractClosure defines interface for function with an explicitly
 /// fixed type signature.
 class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {

@@ -311,6 +311,23 @@ std::size_t ShardTransformedAbstractClosure::hash() const {
   return hash_value;
 }
 
+bool VmapTransformedAbstractClosure::operator==(const AbstractFunction &other) const {
+  if (!other.isa<VmapTransformedAbstractClosure>()) {
+    return false;
+  }
+  auto other_transformed = static_cast<const VmapTransformedAbstractClosure *>(&other);
+  return fn_ == other_transformed->fn_ && in_axes_ == other_transformed->in_axes_ &&
+         out_axes_ == other_transformed->out_axes_;
+}
+
+std::size_t VmapTransformedAbstractClosure::hash() const {
+  MS_EXCEPTION_IF_NULL(fn_);
+  MS_EXCEPTION_IF_NULL(in_axes_);
+  MS_EXCEPTION_IF_NULL(out_axes_);
+  auto hash_value = hash_combine(tid(), fn_->hash());
+  return hash_value;
+}
+
 bool VirtualAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!other.isa<VirtualAbstractClosure>()) {
     return false;

@@ -127,6 +127,21 @@ void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
   set_has_signature(!signatures.empty());
 }
 
+py::function PrimitivePy::GetVmapRuleFunction(const bool is_side_effect, int axis_size) {
+  static const char *const get_vmap_rule_func_name = "get_vmap_rule";
+  if (py::hasattr(python_obj_, get_vmap_rule_func_name)) {
+    py::function fn = python_obj_.attr(get_vmap_rule_func_name)().cast<py::function>();
+    return fn;
+  } else {
+    auto fn = GetVmapRuleFunctionByObj(python_obj_, axis_size);
+    if (!fn || py::isinstance<py::none>(fn)) {
+      MS_LOG(DEBUG) << "Fail to find vmap rule function for " << this->name() << ", try to get the vmap general rule";
+      fn = GetVmapGeneralRuleByObj(python_obj_, is_side_effect, axis_size);
+    }
+    return fn;
+  }
+}
+
 py::function PrimitivePy::GetBpropFunction() {
   static const char *const get_bprop_func_name = "get_bprop";
   if (py::hasattr(python_obj_, get_bprop_func_name)) {

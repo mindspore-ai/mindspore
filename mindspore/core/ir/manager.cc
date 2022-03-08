@@ -224,7 +224,7 @@ void FuncGraphManager::Reset() {
   free_variables_total_ = std::make_shared<FVTotalComputer>(this);
   func_graphs_used_total_ = std::make_shared<FuncGraphsUsedTotalComputer>(this);
   recursive_ = std::make_shared<RecursiveComputer>(this);
-  j_total_ = std::make_shared<FuncGraphJTotalComputer>(this);
+  meta_fg_prim_total_ = std::make_shared<FuncGraphMetaFgPrimTotalComputer>(this);
 }
 
 void FuncGraphManager::Init() {
@@ -313,15 +313,16 @@ std::shared_ptr<std::list<FuncGraphPtr>> FuncGraphManager::recursive_graphs(cons
   }
 }
 
-bool FuncGraphManager::func_graph_j_total(const FuncGraphPtr &fg) const {
-  MS_EXCEPTION_IF_NULL(j_total_);
+// Check if the function graph embed with `MetaFGPrim`, which currently covers kPrimJ and kPrimVmap.
+bool FuncGraphManager::func_graph_meta_fg_prim_total(const FuncGraphPtr &fg) const {
+  MS_EXCEPTION_IF_NULL(meta_fg_prim_total_);
   MS_EXCEPTION_IF_NULL(fg);
-  j_total_->Recompute(fg);
-  if (j_total_->j_total_analysis().count(fg) == 0) {
+  meta_fg_prim_total_->Recompute(fg);
+  if (meta_fg_prim_total_->meta_fg_prim_total_analysis().count(fg) == 0) {
     MS_LOG(WARNING) << "This func graph is not in manager: " << fg->ToString();
     return false;
   }
-  return j_total_->j_total_analysis()[fg];
+  return meta_fg_prim_total_->meta_fg_prim_total_analysis()[fg];
 }
 
 // Add a func graph to this manager, optionally as a root func graph.
@@ -703,8 +704,8 @@ void FuncGraphManager::OnEdgeAdded(const AnfNodePtr &node, int index, const AnfN
         signals_->InvalidateComputer();
       }
     }
-    if (IsPrimitiveCNode(node, prim::kPrimJ)) {
-      fg->AddJValueNode(input);
+    if (IsPrimitiveCNode(node, prim::kPrimJ) || IsPrimitiveCNode(node, prim::kPrimVmap)) {
+      fg->AddMetaFgPrimValueNode(input);
     }
   } else if (fg != nullptr && fg != input->func_graph()) {
     if (fg->AddFreeVariable(input)) {
@@ -724,8 +725,8 @@ void FuncGraphManager::OnEdgeRemoved(const AnfNodePtr &node, int index, const An
         signals_->InvalidateComputer();
       }
     }
-    if (IsPrimitiveCNode(node, prim::kPrimJ)) {
-      fg->DropJValueNode(input);
+    if (IsPrimitiveCNode(node, prim::kPrimJ) || IsPrimitiveCNode(node, prim::kPrimVmap)) {
+      fg->DropMetaFgPrimValueNode(input);
     }
   } else if (fg != nullptr && fg != input->func_graph()) {
     if (fg->DropFreeVariable(input)) {
@@ -740,7 +741,7 @@ void FuncGraphManager::MoveAllNodes(const FuncGraphPtr &source, const FuncGraphP
   target->CopyFuncGraphCNodesIndex(source);
   target->CopyFreeVariables(source);
   target->CopyFuncGraphsUsed(source);
-  target->CopyJValueNodes(source);
+  target->CopyMetaFgPrimValueNodes(source);
   source->ClearAllManagerInfo();
   signals_->InvalidateComputer();
 }
@@ -1088,66 +1089,69 @@ void RecursiveComputer::CheckRecursiveGraphs(const FuncGraphPtr &fg, std::list<F
   }
 }
 
-bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr &fg, SeenNum seen_num) {
+bool FuncGraphMetaFgPrimTotalComputer::SeekMetaFgPrim(const FuncGraphPtr &fg, SeenNum seen_num) {
   MS_EXCEPTION_IF_NULL(fg);
   if (fg->seen_ == seen_num) {
     MS_LOG(DEBUG) << fg->ToString() << " had been checked";
     return false;
   }
 
-  // Check J FuncGraph input.
-  const auto &j_values = fg->j_value_nodes();
-  if (!j_values.empty()) {
-    auto contains_j = std::find_if(j_values.begin(), j_values.end(), [seen_num](const auto &iter) {
-      // Check g1->J(fg)->g2->g cycle.
-      if (IsValueNode<FuncGraph>(iter.first)) {
-        auto func_graph = GetValueNode<FuncGraphPtr>(iter.first);
-        return func_graph->seen_ != seen_num;
-      }
-      if (IsValueNode<Primitive>(iter.first)) {
-        // Exclude the primitive of J itself.
-        auto prim = GetValueNode<PrimitivePtr>(iter.first);
-        return prim->name() != prim::kPrimJ->name();
-      }
-      return false;
-    });
-    if (contains_j != j_values.end()) {
-      MS_LOG(DEBUG) << fg->ToString() << " contains J(" << contains_j->first->DebugString() << ")";
+  // Check MetaFgPrim (J/Vmap) FuncGraph input.
+  const auto &meta_fg_prim_values = fg->meta_fg_prim_value_nodes();
+  if (!meta_fg_prim_values.empty()) {
+    auto contains_meta_fg_prim =
+      std::find_if(meta_fg_prim_values.begin(), meta_fg_prim_values.end(), [seen_num](const auto &iter) {
+        // Check g1->MetaFgPrim(fg)->g2->g cycle.
+        if (IsValueNode<FuncGraph>(iter.first)) {
+          auto func_graph = GetValueNode<FuncGraphPtr>(iter.first);
+          return func_graph->seen_ != seen_num;
+        }
+        if (IsValueNode<Primitive>(iter.first)) {
+          // Exclude the primitive of MetaFgPrim (J/Vmap) itself.
+          auto prim = GetValueNode<PrimitivePtr>(iter.first);
+          return (prim->name() != prim::kPrimJ->name() && prim->name() != prim::kPrimVmap->name());
+        }
+        return false;
+      });
+    if (contains_meta_fg_prim != meta_fg_prim_values.end()) {
+      MS_LOG(DEBUG) << fg->ToString() << " contains MetaFgPrim(" << contains_meta_fg_prim->first->DebugString() << ")";
       return true;
     }
   }
 
-  // Check J CNode as FV.
+  // Check MetaFgPrim (J/Vmap) CNode as FV.
   const auto &fv_nodes = fg->free_variables();
   if (!fv_nodes.empty()) {
-    auto contains_j_cnode = std::find_if(fv_nodes.begin(), fv_nodes.end(), [seen_num](const auto &iter) {
-      // Check if the FV is a J call CNode.
-      if (IsPrimitiveCNode(iter.first, prim::kPrimJ)) {
+    auto contains_meta_fg_prim_cnode = std::find_if(fv_nodes.begin(), fv_nodes.end(), [seen_num](const auto &iter) {
+      // Check if the FV is a MetaFgPrim (J/Vmap) call CNode.
+      if (IsPrimitiveCNode(iter.first, prim::kPrimJ) || IsPrimitiveCNode(iter.first, prim::kPrimVmap)) {
         return true;
       }
       return false;
     });
-    if (contains_j_cnode != fv_nodes.end()) {
-      MS_LOG(DEBUG) << fg->ToString() << " contains FV J(" << contains_j_cnode->first->DebugString() << ")";
+    if (contains_meta_fg_prim_cnode != fv_nodes.end()) {
+      MS_LOG(DEBUG) << fg->ToString() << " contains FV MetaFgPrim (J/Vmap) ("
+                    << contains_meta_fg_prim_cnode->first->DebugString() << ")";
       return true;
     }
   }
 
-  // Check if func graphs used contains J(func_graph) or J(Primitive)
+  // Check if func graphs used contains J(func_graph), J(Primitive), Vmap(func_graph) or Vmap(Primitive)
   fg->seen_ = seen_num;
   for (auto &item : fg->func_graphs_used()) {
     auto used_g = item.first;
-    if (SeekJ(used_g, seen_num)) {
+    if (SeekMetaFgPrim(used_g, seen_num)) {
       MS_LOG(DEBUG) << fg->ToString() << " users func graph " << used_g->ToString()
-                    << " which contains J(func_graph) or J(Primitive)";
+                    << " which contains J(func_graph), J(Primitive), Vmap(func_graph) or Vmap(Primitive)";
       return true;
     }
   }
-  MS_LOG(DEBUG) << fg->ToString() << " doesn't contain J(func_graph) or J(Primitive)";
+  MS_LOG(DEBUG) << fg->ToString()
+                << " doesn't contain J(func_graph), J(Primitive), Vmap(func_graph) or Vmap(Primitive)";
   return false;
 }
 
-void FuncGraphJTotalComputer::RealRecompute(FuncGraphPtr fg) {
-  this->j_total_analysis_[fg] = SeekJ(fg, NewFgSeenGeneration());
+void FuncGraphMetaFgPrimTotalComputer::RealRecompute(FuncGraphPtr fg) {
+  this->meta_fg_prim_total_analysis_[fg] = SeekMetaFgPrim(fg, NewFgSeenGeneration());
 }
 }  // namespace mindspore

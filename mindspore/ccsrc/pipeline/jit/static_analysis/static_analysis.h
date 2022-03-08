@@ -325,6 +325,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<TypedPrimitiveAbstractClosure> &);
   EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<JTransformedAbstractClosure> &fn);
   EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<ShardTransformedAbstractClosure> &fn);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VmapTransformedAbstractClosure> &fn);
 
   FuncGraphManagerPtr func_graph_manager() { return func_graph_manager_; }
   const AnfNodeConfigMap &anfnode_config_map() const { return anfnode_config_map_; }

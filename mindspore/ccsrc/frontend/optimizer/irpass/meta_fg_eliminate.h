@@ -21,6 +21,7 @@
 #include <memory>
 #include "base/core_ops.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
+#include "frontend/optimizer/irpass/vmap_eliminate.h"
 #include "frontend/optimizer/irpass/meta_fg_prim_eliminate.h"
 
 namespace mindspore {
@@ -28,7 +29,14 @@ namespace opt {
 namespace irpass {
 class ExpandMetaFg {
  public:
-  ExpandMetaFg() { (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandJPrim>()); }
+  ExpandMetaFg() {
+    // Register derived class of `ExpandMetaFGPrim` to `ExpandMetaFg`, note that corresponding modifications
+    // need to be made in the `manager.cc` to support `ExpandMetaFGPrim::CheckIfEmbedMetaFGPrim`, analogous
+    // to the implementation of `kPrimVmap`.
+    (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandJPrim>());
+    (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandVmapPrim>());
+  }
+
   virtual ~ExpandMetaFg() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
 
