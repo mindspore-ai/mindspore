@@ -20,10 +20,12 @@ from ._callback import Callback
 
 class History(Callback):
     """
-    Records the first element of network outputs into a `History` object.
+    Records the network outputs information into a `History` object.
 
-    The first element of network outputs is the loss value if not
-    custimizing the train network or eval network.
+    The network outputs information will be the loss value if not custimizing the train network or eval network;
+    if the custimized network returns a `Tensor` or `numpy.ndarray`, the mean value of network output
+    will be recorded, if the custimized network returns a `tuple` or `list`, the first element of network
+    outputs will be recorded.
 
     Note:
         Normally used in `mindspore.Model.train`.
