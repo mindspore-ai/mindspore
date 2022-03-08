@@ -14,6 +14,7 @@ endif()
 
 if(BUILD_LITE)
     if(PLATFORM_ARM64 AND ANDROID_NDK_TOOLCHAIN_INCLUDED)
+        set(openssl_USE_STATIC_LIBS OFF)
         set(ANDROID_NDK_ROOT $ENV{ANDROID_NDK})
         set(PATH
             ${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin:
@@ -39,7 +40,7 @@ if(BUILD_LITE)
                 LIBS ssl crypto
                 URL ${REQ_URL}
                 MD5 ${MD5}
-                CONFIGURE_COMMAND ./Configure android-arm -D__ANDROID_API__=29 no-zlib
+                CONFIGURE_COMMAND ./Configure android-arm -D__ANDROID_API__=19 no-zlib
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
                 )
@@ -49,7 +50,7 @@ if(BUILD_LITE)
                 LIBS ssl crypto
                 URL ${REQ_URL}
                 MD5 ${MD5}
-                CONFIGURE_COMMAND ./config no-zlib no-shared
+                CONFIGURE_COMMAND ./config no-zlib
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
                 )
