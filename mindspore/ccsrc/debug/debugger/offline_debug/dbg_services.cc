@@ -17,9 +17,12 @@
 
 #include <algorithm>
 #include <chrono>
+#include <iomanip>
 #include "debug/utils.h"
 
 namespace mindspore {
+constexpr float ms_to_s = 1000.0;
+constexpr int precision = 2;
 DbgServices::DbgServices() { debug_services_ = std::make_shared<DebugServices>(); }
 
 DbgServices::DbgServices(const DbgServices &other) {
@@ -209,13 +212,23 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   std::vector<unsigned int> rank_id;
   std::vector<unsigned int> root_graph_id;
   std::vector<std::shared_ptr<TensorData>> tensor_list;
-  DebugServices::AsyncFilePool file_paths;
+  // a map with processed npy files, where key is the specific dump dir and value is a vector of DumpFileAttr.
+  DebugServices::ProcessedNPYFiles file_paths;
 
   const bool init_dbg_suspend = (iteration == UINT_MAX);
+  auto t1 = std::chrono::high_resolution_clock::now();
   tensor_list = debug_services_->ReadNeededDumpedTensors(iteration, &file_paths, error_on_no_value);
+  auto t2 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+  MS_LOG(INFO) << "ReadNeededDumpedTensors Took: " << std::fixed << std::setprecision(precision)
+               << (ms_double.count()) / ms_to_s << "s";
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                    file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id,
+                                    &file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id,
                                     error_on_no_value);
+  auto t3 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> ms_double2 = t3 - t1;
+  MS_LOG(INFO) << "Total checkwatchpoint + ReadDumpedTensor Took: " << std::fixed << std::setprecision(precision)
+               << (ms_double2.count()) / ms_to_s << "s";
   std::vector<watchpoint_hit_t> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     std::vector<DebugServices::parameter_t> &parameter = parameters[i];
@@ -286,14 +299,16 @@ std::vector<std::shared_ptr<TensorData>> DbgServices::ReadTensorsUtil(std::vecto
   (void)std::transform(info.begin(), info.end(), std::back_inserter(is_output), GetTensorIsOutput);
 
   MS_LOG(INFO) << "cpp before";
-  DebugServices::AsyncFilePool file_paths;
+  DebugServices::NPYFilePool file_paths;
   auto t1 = std::chrono::high_resolution_clock::now();
+  DebugServices::ProcessedNPYFiles processed_npy_files;
   // Convert the dumped data to npy format if it's async mode.
   if (!debug_services_->GetSyncMode()) {
     debug_services_->ConvertReadTensors(backend_name, slot, rank_id, iteration, root_graph_id, &file_paths);
+    processed_npy_files = debug_services_->ProcessNPYFilePool(file_paths);
   }
-  debug_services_->ReadDumpedTensor(backend_name, slot, rank_id, iteration, root_graph_id, is_output, file_paths,
-                                    &result_list);
+  debug_services_->ReadDumpedTensor(backend_name, slot, rank_id, iteration, root_graph_id, is_output,
+                                    &processed_npy_files, &result_list);
   for (auto result : result_list) {
     std::string output = "0";
     if (result->GetIsOutput()) {

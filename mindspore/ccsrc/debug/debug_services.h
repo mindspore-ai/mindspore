@@ -50,6 +50,7 @@ class DebugServices {
   DebugServices &operator=(const DebugServices &other);
 
   ~DebugServices() = default;
+  enum File_ATTR_MATCH { START_POS = 0, END_POS = 1, STR_POS = 2 };
 
   enum CONDITION_TYPE {
     HAS_NAN,
@@ -110,14 +111,47 @@ class DebugServices {
       hit = condition_check[inequality_type];
     }
   };
+  struct MappedFiles {
+    MappedFiles(std::vector<std::string> bin_files, std::map<std::string, std::vector<std::string>> npy_files)
+        : bin_files(bin_files), npy_files(npy_files) {}
+
+    MappedFiles() = default;
+    std::vector<std::string> bin_files;
+    // key is op_name and value is the vector of matched npy files to that op name.
+    std::map<std::string, std::vector<std::string>> npy_files;
+  };
+
+  struct DumpFileAttr {
+    std::string file_path;
+    // name_to_match is the op_name extracted from file name.
+    std::string name_to_match;
+    std::string time_stamp;
+    uint64_t slot = 0;
+    bool is_output{false};
+  };
+
+  struct ProtoDump {
+    bool operator==(ProtoDump obj) {
+      return (origin_node_name == obj.origin_node_name && dump_name == obj.dump_name && is_output == obj.is_output);
+    }
+    // name_to_match is the op_name between first and second dot in file_name
+    std::string origin_node_name;
+    std::string dump_name;
+    bool is_output{false};
+  };
 
   typedef std::vector<std::vector<int>> partitioned_numbers;
   typedef std::vector<std::vector<std::string>> partitioned_names;
   typedef std::vector<std::vector<std::vector<parameter_t>>> partitioned_parameters;
   typedef std::vector<std::vector<int32_t>> partitioned_error_code;
   typedef std::vector<std::vector<unsigned int>> partitioned_id;
-  typedef std::set<std::string> AsyncFilePool;
-  typedef std::map<std::string, std::vector<std::pair<std::string, std::string>>> DirMap;
+  typedef std::set<std::string> NPYFilePool;
+  typedef std::map<std::string, std::vector<std::tuple<std::string, std::string>>> DirMap;
+  // key is dump dir path and value is vector of bin files and map of npy files.
+  typedef std::map<std::string, DebugServices::MappedFiles> DumpFileMap;
+  typedef std::map<std::string, std::vector<DebugServices::DumpFileAttr>> ProcessedNPYFiles;
+  // bool shows if preprocess was successful, and DumpFileMap is preprocessed file result
+  typedef std::tuple<bool, DumpFileMap> AsyncPreProcessResult;
 
   struct watchpoint_t {
     unsigned int id;
@@ -268,8 +302,8 @@ class DebugServices {
   void CheckWatchpointsForTensor(partitioned_names *chunk_names, partitioned_names *chunk_slots,
                                  partitioned_numbers *chunk_conditions, partitioned_id *const chunk_watchpoint_id,
                                  partitioned_parameters *chunk_parameters, partitioned_error_code *chunk_error_codes,
-                                 const std::vector<std::string> &op_overflows, const AsyncFilePool &async_file_pool,
-                                 partitioned_numbers *chunk_exec_orders,
+                                 const std::vector<std::string> &op_overflows,
+                                 ProcessedNPYFiles *const processed_npy_files, partitioned_numbers *chunk_exec_orders,
                                  std::vector<std::shared_ptr<TensorData>> *tensor_list, int begin, int end,
                                  int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
                                  partitioned_id *chunk_device_id, partitioned_id *chunk_root_graph_id,
@@ -282,7 +316,7 @@ class DebugServices {
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *const watchpoint_id,
                         std::vector<std::vector<parameter_t>> *parameters, std::vector<int32_t> *error_code,
-                        const std::vector<std::string> &op_overflows, const AsyncFilePool &async_file_pool,
+                        const std::vector<std::string> &op_overflows, ProcessedNPYFiles *const processed_npy_files,
                         std::vector<std::shared_ptr<TensorData>> *tensor_list, bool init_dbg_suspend,
                         const bool step_end, const bool recheck, std::vector<unsigned int> *device_id = nullptr,
                         std::vector<unsigned int> *root_graph_id = nullptr, bool error_on_no_value = false);
@@ -331,18 +365,18 @@ class DebugServices {
   void ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
                         std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                         std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
-                        const AsyncFilePool &async_file_pool,
+                        ProcessedNPYFiles *const processed_npy_files,
                         std::vector<std::shared_ptr<TensorData>> *const result_list, bool *no_mem_to_read = nullptr);
 
-  void ProcessTensorDataSync(const std::vector<std::tuple<std::string, std::string>> &proto_to_dump,
-                             const std::string &specific_dump_dir, unsigned int iteration, unsigned int device_id,
+  void ProcessTensorDataSync(const std::vector<ProtoDump> &proto_to_dump, const std::string &specific_dump_dir,
+                             ProcessedNPYFiles processed_npy_files, unsigned int iteration, unsigned int device_id,
                              unsigned int root_graph_id, std::vector<std::shared_ptr<TensorData>> *const tensor_list,
                              bool error_on_no_value = false);
 
   void ReadFileAndAddToTensor(const bool found, const std::vector<std::string> &matched_paths,
-                              const std::string &backend_name, const unsigned int device_id,
-                              const unsigned int root_graph_id, const bool &is_output, size_t slot,
-                              bool *no_mem_to_read, unsigned int iteration,
+                              const std::vector<std::string> &matched_time_stamps, const std::string &backend_name,
+                              const unsigned int device_id, const unsigned int root_graph_id, bool is_output,
+                              size_t slot, bool *no_mem_to_read, unsigned int iteration,
                               std::vector<std::shared_ptr<TensorData>> *result_list);
 
   void ReadDumpedTensorSync(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
@@ -350,14 +384,14 @@ class DebugServices {
                             unsigned int iteration, unsigned int root_graph_id, const bool &is_output,
                             std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read);
 
-  void ReadDumpedTensorAsync(const std::string &specific_dump_dir, const std::string &prefix_dump_to_check,
-                             const std::string &slot_string_to_check, const std::string &backend_name, size_t slot,
-                             unsigned int device_id, unsigned int iteration, unsigned int root_graph_id,
-                             const bool &is_output, const AsyncFilePool &async_file_pool,
+  void ReadDumpedTensorUtils(const std::string &specific_dump_dir, const std::string &prefix_dump_to_check,
+                             const std::string &backend_name, size_t slot, unsigned int device_id,
+                             unsigned int iteration, unsigned int root_graph_id, bool is_output,
+                             const ProcessedNPYFiles &processed_npy_files,
                              std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read);
 
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,
-                                                                   AsyncFilePool *const async_file_pool,
+                                                                   ProcessedNPYFiles *const processed_npy_files,
                                                                    bool error_on_no_value = false);
 
   const void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
@@ -367,24 +401,31 @@ class DebugServices {
                          std::size_t *const size, std::vector<int64_t> *const shape,
                          std::vector<char> **const data_buffer, bool *no_mem_to_read);
 
-  void ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFilePool *const result_list);
+  AsyncPreProcessResult PreProcessDumpDirAsync(const std::string &specific_dump_dir);
+
+  DebugServices::NPYFilePool PreProcessDumpDirSync(const std::string &specific_dump_dir);
+
+  ProcessedNPYFiles ProcessNPYFilePool(const NPYFilePool &npy_file_pool);
+
+  void ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFilePool *const result_list);
 
   void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                  const std::string &dump_key, AsyncFilePool *const result_list);
+                                  const std::string &dump_key, NPYFilePool *const result_list);
 
   void ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                           std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
-                          std::vector<unsigned int> root_graph_id, AsyncFilePool *const result_list);
+                          std::vector<unsigned int> root_graph_id, NPYFilePool *const result_list);
 
-  void ConvertWatchPointNodes(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
-                              const std::string &specific_dump_dir, AsyncFilePool *const result_list);
+  void ConvertWatchPointNodes(const DumpFileMap &dump_dir_mapped_files, const std::vector<ProtoDump> &proto_dump,
+                              const std::string &specific_dump_dir, NPYFilePool *const result_list);
 
-  void ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
-                          DirMap *dir_to_files_map, AsyncFilePool *const result_list);
+  void ProcessConvertList(const DumpFileMap &dump_dir_mapped_files, const std::string &prefix_dump_file_name,
+                          const std::string &specific_dump_dir, DirMap *dir_to_files_map,
+                          NPYFilePool *const result_list);
 
-  void GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
-                              const std::string &specific_dump_dir, uint32_t iteration, uint32_t device_id,
-                              uint32_t root_graph_id, const AsyncFilePool &async_file_pool,
+  void GetTensorDataInfoAsync(const std::vector<ProtoDump> &proto_dump, const std::string &specific_dump_dir,
+                              uint32_t iteration, uint32_t device_id, uint32_t root_graph_id,
+                              const ProcessedNPYFiles &processed_async_files,
                               std::vector<std::shared_ptr<TensorData>> *const tensor_list);
 
   void SetGraphsHistory();
@@ -398,8 +439,6 @@ class DebugServices {
   std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> GetAllWpNodes();
 
   void ReadGraphRunIter(std::string file_path, std::tuple<uint32_t, uint32_t> rank_and_graph);
-
-  std::string GetStrippedFilename(const std::string &file_name);
 
   std::string IterationString(unsigned int iteration);
 #endif
@@ -488,6 +527,8 @@ class DebugServices {
   std::unordered_map<std::string, std::vector<std::string>> overflow_ops_;
   std::string net_name_;
   std::string dump_dir_;
+  // DumpFileMap for each specific dump dir (including rank, graph_id and iteration)
+  DumpFileMap dump_dir_mapped_files_;
   // store history of graphs that have been run (rank_id, graph_id)
   std::map<std::tuple<uint32_t, uint32_t>, std::vector<uint32_t>> graphs_run_history_;
   bool is_sync_mode_{false};
