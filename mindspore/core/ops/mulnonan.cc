@@ -68,7 +68,8 @@ TypePtr MulNoNanInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
         << type_x->ToString() << ", " << type_y->ToString() << "].";
     }
   }
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
+  return input_args[0]->BuildType();
 }
 }  // namespace
 
