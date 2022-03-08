@@ -37,7 +37,7 @@ ValuePtr DTypeInferValue(const PrimitivePtr &primitive, const std::vector<Abstra
   if (type->isa<TensorType>()) {
     const std::set<TypePtr> valid_types = {kTensorType};
     return CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, valid_types, op_name);
-  } else {
+  } else if (type->isa<CSRTensorType>() || type->isa<COOTensorType>()) {
     const std::set<TypePtr> valid_types = {kCSRTensorType, kCOOTensorType};
     return CheckAndConvertUtils::CheckSparseTensorTypeValid("input_x", type, valid_types, op_name);
   }

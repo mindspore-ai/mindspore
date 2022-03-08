@@ -1,12 +1,12 @@
 mindspore.COOTensor
 ===================
 
-.. py:class:: mindspore.COOTensor(indices=None, values=None, shape=None)
+.. py:class:: mindspore.COOTensor(indices=None, values=None, shape=None, coo_tensor=None)
 
     用来表示某一张量在给定索引上非零元素的集合，其中索引(indices)指示了每一个非零元素的位置。
 
     .. note::
-        - 这是一个实验特性，在未来可能会发生API的变化。
+        这是一个实验特性，在未来可能会发生API的变化。
 
     **参数：**
 
@@ -15,7 +15,7 @@ mindspore.COOTensor
     - **shape** (tuple(int)) - 形状为ndims的整数元组，用来指定稀疏矩阵的稠密形状。
     - **coo_tensor** (COOTensor) - COOTensor对象，用来初始化新的COOTensor。
 
-    **输出：**
+    **返回：**
 
     COOTensor，由 `indices` 、 `values` 和 `shape` 组成。
 
