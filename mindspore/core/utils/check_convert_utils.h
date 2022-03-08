@@ -147,8 +147,8 @@ class MS_CORE_API CheckAndConvertUtils {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
     }
     if (range.first >= range.second) {
-      MS_EXCEPTION(ArgumentError) << "the check range left must be smaller than right number bug got [ " << range.first
-                                  << "," << range.second;
+      MS_EXCEPTION(ArgumentError) << "The check range left must be smaller than right number but got left: "
+                                  << range.first << " and right: " << range.second << ".";
     }
     if (iter->second(arg_value, range)) {
       return;
