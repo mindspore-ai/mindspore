@@ -2181,11 +2181,11 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
       if (!IsPersistentDeviceTensor(input_node)) {
         continue;
       }
-      const auto &sub_front_node = FetchFrontNodeByBackendNode(input_node, graph);
-      // The sub front nodes share the device tensor store with the root front node.
-      auto front_node = sub_front_node;
-      if (graph_compiler_info.control_node_parser_ != nullptr) {
-        front_node = graph_compiler_info.control_node_parser_->FetchRootGraphFrontNodeBySubFrontNode(sub_front_node);
+      const auto &front_node = FetchFrontNodeByBackendNode(input_node, graph);
+      const auto &root_parameters = graph_compiler_info.origin_parameters_order_;
+      if (front_node == nullptr ||
+          find(root_parameters.begin(), root_parameters.end(), front_node) == root_parameters.end()) {
+        continue;
       }
       const auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
       MS_EXCEPTION_IF_NULL(front_node);
