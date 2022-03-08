@@ -72,6 +72,8 @@ class ModelImpl {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
                  const MSKernelCallBack &after);
 
+  Status Predict(const MSKernelCallBack &before, const MSKernelCallBack &after);
+
   lite::LiteSession *CreateLiteSession(lite::InnerContext *context);
 
   Status LoadConfig(const std::string &config_path);

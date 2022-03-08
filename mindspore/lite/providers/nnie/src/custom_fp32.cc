@@ -20,9 +20,6 @@
 #include "schema/model_generated.h"
 #include "include/registry/register_kernel.h"
 #include "include/errorcode.h"
-#include "src/nnie_manager.h"
-#include "src/nnie_print.h"
-#include "src/nnie_cfg_parser.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -30,29 +27,29 @@ using mindspore::schema::PrimitiveType_Custom;
 
 namespace mindspore {
 namespace nnie {
-bool CustomCPUKernel::load_model_ = false;
+static std::shared_ptr<Allocator> kCustomAllocator = std::make_shared<nnie::CustomAllocator>();
 
-int CustomCPUKernel::run_seg_ = 0;
-bool CustomCPUKernel::roi_used_ = false;
 int CustomCPUKernel::Prepare() {
-  if (!load_model_) {
-    Flags flags;
-    if (flags.Init(*this) != RET_OK) {
+  if ((manager_) == nullptr) {
+    LOGE("manager_ is nullptr.");
+    return RET_ERROR;
+  }
+  if (!manager_->GetLoadModel()) {
+    if (manager_->GetFlags()->Init(*this) != RET_OK) {
       LOGE("Nnie config init fail.");
       return RET_ERROR;
     }
-
-    if (nnie::NNIEManager::GetInstance()->CfgInit(flags.max_roi_num_, flags.time_step_, flags.core_ids_) != RET_OK) {
+    if (manager_->CfgInit(*manager_->GetFlags(), manager_->GetMaxSegId()) != RET_OK) {
       LOGE("Nnie init cfg fail.");
       return RET_ERROR;
     }
 
-    if (nnie::NNIEManager::GetInstance()->Init(reinterpret_cast<char *>(inputs_[inputs_.size() - 1].MutableData()),
-                                               static_cast<int>(inputs_[inputs_.size() - 1].ElementNum()), inputs_)) {
+    if (manager_->Init(reinterpret_cast<char *>(inputs_[inputs_.size() - 1].MutableData()),
+                       static_cast<int>(inputs_[inputs_.size() - 1].ElementNum()), inputs_)) {
       LOGI("Load WK Model Fail.");
       return RET_OK;
     }
-    load_model_ = true;
+    manager_->SetLoadModel(true);
   }
   outputs_shapes_.resize(outputs_.size());
   for (size_t i = 0; i < outputs_.size(); i++) {
@@ -62,38 +59,51 @@ int CustomCPUKernel::Prepare() {
 }
 
 int CustomCPUKernel::ReSize() {
-  if (load_model_) {
-    nnie::NNIEManager::GetInstance()->Release();
-    load_model_ = false;
+  if (manager_->GetLoadModel() && seg_id() == 0) {
+    manager_->Release(true);
+    manager_->SetLoadModel(false);
   }
 
   return Prepare();
 }
 
 int CustomCPUKernel::Execute() {
-  if (!load_model_) {
+  if (!manager_->GetLoadModel()) {
     LOGE("WK Model is not load.");
     return RET_ERROR;
   }
-  run_seg_ = seg_id_;
+  Flags *flags = manager_->GetFlags();
+  if (flags->keep_origin_output_) {
+    if (seg_id_ == 0) {
+      if (manager_->LoadInputs(&inputs_, kCustomAllocator) != RET_OK) {
+        LOGE("Unable to find the physical address corresponding to the input tensor.");
+        return RET_ERROR;
+      }
+    }
+    if (seg_id_ == manager_->GetMaxSegId()) {
+      if (manager_->LoadOutputs(&outputs_, kCustomAllocator) != RET_OK) {
+        LOGE("Unable to find the physical address corresponding to the output tensor.");
+        return RET_ERROR;
+      }
+    }
+  }
 
-  if (nnie::NNIEManager::GetInstance()->FillData(&inputs_, run_seg_) != RET_OK) {
+  if (manager_->FillData(&inputs_, seg_id_) != RET_OK) {
     LOGE("Fail Fill Data.");
     return RET_ERROR;
   }
 
-  if (nnie::NNIEManager::GetInstance()->Run(&outputs_, run_seg_, outputs_shapes_) != RET_OK) {
+  if (manager_->Run(&outputs_, seg_id_, outputs_shapes_) != RET_OK) {
     LOGE("Fail WK Run.");
     return RET_ERROR;
   }
-  run_seg_++;
   return RET_OK;
 }
 
 CustomCPUKernel::~CustomCPUKernel() {
-  if (load_model_) {
-    nnie::NNIEManager::GetInstance()->Release();
-    load_model_ = false;
+  if (manager_->GetLoadModel()) {
+    manager_->Release(false);
+    manager_->SetLoadModel(false);
   }
 }
 
@@ -159,7 +169,13 @@ std::shared_ptr<mindspore::kernel::Kernel> CustomCreateKernel(const std::vector<
       forward_bbox = true;
     }
   }
-  auto kernel = std::make_shared<CustomCPUKernel>(ndims, forward_bbox, inputs, outputs, primitive, ctx);
+  auto model_buf = static_cast<const void *>(inputs[inputs.size() - 1].Data().get());
+  auto manager = nnie::NNIEManager::GetInstance(model_buf);
+  if ((manager) == nullptr) {
+    LOGE("malloc NNIEManager failed.");
+    return nullptr;
+  }
+  auto kernel = std::make_shared<CustomCPUKernel>(manager, ndims, forward_bbox, inputs, outputs, primitive, ctx);
   if (kernel == nullptr) {
     LOGE("new custom kernel is nullptr");
     return nullptr;
