@@ -379,7 +379,8 @@ class _AutoParallelContext:
         ret = self._context_handle.set_strategy_search_mode(search_mode)
         if ret is False:
             raise ValueError("The context configuration parameter 'auto_parallel_search_mode' only support "
-                             "'recursive_programming' and 'dynamic_programming', but got the value : {}."
+                             "'recursive_programming', 'dynamic_programming' and 'sharding_propagation', "
+                             "but got the value: {}."
                              .format(search_mode))
 
     def get_strategy_search_mode(self):
@@ -401,7 +402,8 @@ class _AutoParallelContext:
         ret = self._context_handle.set_strategy_search_mode(search_mode)
         if ret is False:
             raise ValueError("The context configuration parameter 'search_mode' only support "
-                             "'recursive_programming' and 'dynamic_programming', but got the value : {}."
+                             "'recursive_programming', 'dynamic_programming' and 'sharding_propagation', "
+                             "but got the value: {}."
                              .format(search_mode))
 
     def get_auto_parallel_search_mode(self):
