@@ -29,8 +29,6 @@ reduce_mean_op_info = TBERegOp("ReduceMean") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("reduce") \
-    .dtype_format(DataType.I8_None, DataType.I8_None) \
-    .dtype_format(DataType.U8_None, DataType.U8_None) \
     .dtype_format(DataType.F16_None, DataType.F16_None) \
     .dtype_format(DataType.F32_None, DataType.F32_None) \
     .get_op_info()

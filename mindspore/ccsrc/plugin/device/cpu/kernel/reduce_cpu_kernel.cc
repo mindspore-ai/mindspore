@@ -99,6 +99,9 @@ void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
     if (kernel_name_ == prim::kPrimReduceProd->name()) {
       reduce_type_ = ReduceFuncType::kReduceProdType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out *= input[pos]; };
+    } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
+      reduce_type_ = ReduceFuncType::kReduceMeanType;
+      reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for complex.";
     }
@@ -174,7 +177,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
         reduce_func_(input_addr, i, output_addr);
       }
       if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-        *output_addr /= input_size;
+        *output_addr /= static_cast<float>(input_size);
       }
     } else {
       AccelerateLongVector(input_addr, output_addr, input_size);
@@ -207,7 +210,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
           for (size_t i = start; i < end; ++i) {
             (void)ReduceSumDim2Axis1(stride, input_addr + i * stride, output_addr + i);
             if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-              output_addr[i] /= stride;
+              output_addr[i] /= static_cast<float>(stride);
             }
           }
         };
@@ -232,7 +235,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
           iter.GenNextPos();
         }
         if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-          output_addr[i] /= stride;
+          output_addr[i] /= static_cast<float>(stride);
         }
       }
     };
@@ -266,7 +269,7 @@ void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr,
   };
   ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
   if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-    *output_addr /= input_size;
+    *output_addr /= static_cast<float>(input_size);
   }
 }
 template <typename T>
@@ -278,8 +281,18 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceF
   {prim::kPrimReduceMean->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeReduceFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), SpecializeReduceFunc<int16_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), SpecializeReduceFunc<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), SpecializeReduceFunc<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), SpecializeReduceFunc<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), SpecializeReduceFunc<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     SpecializeReduceFunc<complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     SpecializeReduceFunc<complex128>}}},
   {prim::kPrimReduceMax->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
