@@ -66,7 +66,7 @@ class RecvActor : public RpcActor {
 
   // The network address of this recv actor. It's generated automatically by rpc module.
   std::string ip_;
-  uint16_t port_;
+  uint32_t port_;
 
   std::unique_ptr<TCPServer> server_;
 

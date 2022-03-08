@@ -43,7 +43,8 @@ MS_REG_CPU_KERNEL(ApplyMomentum,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
+                    .AddOutputAttr(kNumberTypeFloat32)
+                    .AddOutInRef(0, 0),
                   ApplyMomentumCpuKernelMod);
 MS_REG_CPU_KERNEL(ApplyMomentum,
                   KernelAttr()
@@ -53,7 +54,8 @@ MS_REG_CPU_KERNEL(ApplyMomentum,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
+                    .AddOutputAttr(kNumberTypeFloat32)
+                    .AddOutInRef(0, 0),
                   ApplyMomentumCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
