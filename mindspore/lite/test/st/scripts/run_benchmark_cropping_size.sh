@@ -154,10 +154,11 @@ mkdir -p "${cropper_test_path}"
 # mkdir train
 x86_path=${release_path}/centos_x86
 arm64_path=${release_path}/android_aarch64/cropping
-file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
+cd ${x86_path} || exit 1
+file_name=$(ls ./*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
-
+cd -
 # Set models config filepath
 models_cropped_config=${basepath}/../config/models_cropping.cfg
 

@@ -128,10 +128,12 @@ echo ' ' > "${run_converter_log_file}"
 run_converter_result_file="${basepath}"/run_converter_result.txt
 echo ' ' > "${run_converter_result_file}"
 
-file_name=$(ls "${x86_path}"/*linux-x64.tar.gz)
+cd ${x86_path} || exit 1
+file_name=$(ls ./*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 ms_models_path=${basepath}/ms_models
+cd -
 
 Run_cropper
 Run_cropper_status=$?
