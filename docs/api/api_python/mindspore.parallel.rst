@@ -3,43 +3,6 @@
 
 并行相关功能的接口。
 
-.. py:function:: get_algo_parameters(attr_key)
-
-    获取算法参数配置属性。
-
-    .. note::
-        属性名称为必填项。此接口仅在AUTO_PARALLEL模式下工作。
-
-    **参数：**
-
-    - **attr_key** (str) - 属性的key。key包括"fully_use_devices"、"elementwise_op_strategy_follow"、"enable_algo_approxi"、"algo_approxi_epsilon"、"tensor_slice_align_enable”和"tensor_slice_align_size"。
-
-    **返回：**
-
-    根据key返回属性值。
-
-    **异常：**
-
-    ValueError：无法识别传入的关键字。
-    
-
-.. py:function:: reset_algo_parameters()
-
-    重置算法参数属性。
-
-    .. note::
-        此接口仅在AUTO_PARALLEL模式下工作。
-
-    重置后，属性值为：
-
-    - fully_use_devices：True
-    - elementwise_op_strategy_follow：False
-    - enable_algo_approxi：False
-    - algo_approxi_epsilon：0.1
-    - tensor_slice_align_enable：False
-    - tensor_slice_align_size：16
-    
-
 .. py:function:: set_algo_parameters(**kwargs)
 
     设置并行策略搜索算法中的参数。有关典型用法，请参见mindspore/tests/ut/python/parallel/test_auto_parallel_resnet.py。
@@ -59,3 +22,40 @@
     **异常：**
 
     - **ValueError** - 无法识别传入的关键字。
+
+
+.. py:function:: reset_algo_parameters()
+
+    重置算法参数属性。
+
+    .. note::
+        此接口仅在AUTO_PARALLEL模式下工作。
+
+    重置后，属性值为：
+
+    - fully_use_devices：True
+    - elementwise_op_strategy_follow：False
+    - enable_algo_approxi：False
+    - algo_approxi_epsilon：0.1
+    - tensor_slice_align_enable：False
+    - tensor_slice_align_size：16
+
+
+.. py:function:: get_algo_parameters(attr_key)
+
+    获取算法参数配置属性。
+
+    .. note::
+        属性名称为必填项。此接口仅在AUTO_PARALLEL模式下工作。
+
+    **参数：**
+
+    - **attr_key** (str) - 属性的key。key包括"fully_use_devices"、"elementwise_op_strategy_follow"、"enable_algo_approxi"、"algo_approxi_epsilon"、"tensor_slice_align_enable”和"tensor_slice_align_size"。
+
+    **返回：**
+
+    根据key返回属性值。
+
+    **异常：**
+
+    ValueError：无法识别传入的关键字。
