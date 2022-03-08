@@ -16,7 +16,8 @@
 from ... import nn, ms_function
 from ... import numpy as mnp
 from ...ops import functional as F
-from ...common import dtype as mstype
+from ...common import Tensor, dtype as mstype
+from ...ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
 from ..utils import _normalize_matvec, _to_tensor, _safe_normalize, _eps, _norm, _type_check, _value_check, \
@@ -322,6 +323,10 @@ class CG(nn.Cell):
 
         return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
 
+    def bprop(self, b, x0, tol, atol, maxiter, out, dout):
+        grad_b, _ = self.construct(dout[0], x0, tol, atol, maxiter)
+        return grad_b, zeros_like(x0), zeros_like(tol), zeros_like(atol), zeros_like(maxiter)
+
 
 class CGv2(nn.Cell):
     """
@@ -331,7 +336,7 @@ class CGv2(nn.Cell):
     def __init__(self):
         super(CGv2, self).__init__()
 
-    def construct(self, A, M, b, x0, tol, atol, maxiter):
+    def construct(self, A, b, x0, tol, atol, maxiter, M):
         # Constant tensor which avoids loop unrolling
         _INT_ZERO = _to_tensor(0)
 
@@ -360,6 +365,14 @@ class CGv2(nn.Cell):
             k += 1
 
         return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
+
+    def bprop(self, A, b, x0, tol, atol, maxiter, M, out, dout):
+        if not isinstance(M, Tensor):
+            M = lambda x: x
+        n = b.shape[0]
+        grad_b, _ = self.construct(A, dout[0], x0, tol, atol, maxiter, M)
+        grad_a = -1 * F.reshape(grad_b, (n, 1)) * F.reshape(out[0], (1, n))
+        return grad_a, grad_b, zeros_like(x0), zeros_like(tol), zeros_like(atol), zeros_like(maxiter), zeros_like(M)
 
 
 def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None):
@@ -455,7 +468,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
     if not _nullable_const(A):
         x, info = CG(A, M)(b, x0, tol, atol, maxiter)
     else:
-        x, info = CGv2()(A, M, b, x0, tol, atol, maxiter)
+        x, info = CGv2()(A, b, x0, tol, atol, maxiter, M)
     return x, info
 
 
