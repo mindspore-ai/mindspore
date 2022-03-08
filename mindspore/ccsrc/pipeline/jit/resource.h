@@ -93,7 +93,7 @@ class Resource : public ResourceBase {
 
   // Get the cached func_graph and parameters layout map.
   void GetCompileCacheResource(const py::list &compile_cache_dep_files, const py::dict &weights,
-                               const std::string &queue_name, size_t compile_cache_id);
+                               const std::string &queue_name, size_t compile_cache_id, bool *compile_cache_consistent);
   void CacheFuncGraph() const;
   bool EnableCompileCache() const { return compile_cache_manager_ != nullptr; }
 

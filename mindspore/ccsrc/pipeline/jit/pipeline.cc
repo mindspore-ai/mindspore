@@ -776,7 +776,7 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
   double t1 = GetTime();
 #endif
   static size_t idx = 0;
-  resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++);
+  resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++, &compile_cache_consistent_);
 #ifdef ENABLE_PROFILE
   double t2 = GetTime();
   MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
