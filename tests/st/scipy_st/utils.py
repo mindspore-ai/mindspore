@@ -129,8 +129,8 @@ def create_sym_pos_sparse_matrix(shape, dtype, indice_dtype=onp.int32):
     return scipy.sparse.csr_matrix((values, indices, indptr), shape=shape)
 
 
-def gradient_check(x, net, epsilon=1e-3, enumerate_fn=onp.ndenumerate):
-    # some utils
+def gradient_check(x, net, epsilon=1e-3, symmetric=False, enumerate_fn=onp.ndenumerate):
+    # Some utils
     def _tensor_to_numpy(arg: List[Tensor]) -> List[onp.ndarray]:
         return [_arg.asnumpy() for _arg in arg]
 
@@ -148,12 +148,12 @@ def gradient_check(x, net, epsilon=1e-3, enumerate_fn=onp.ndenumerate):
     if isinstance(x, Tensor):
         x = [x]
 
-    # using automatic differentiation to calculate gradient
+    # Using automatic differentiation to calculate gradient
     grad_net = ops.GradOperation(get_all=True)(net)
     x_grad = grad_net(*x)
     x_grad = _tensor_to_numpy(x_grad)
 
-    # using the definition of a derivative to calculate gradient
+    # Using the definition of a derivative to calculate gradient
     x = _tensor_to_numpy(x)
     x_grad_approx = [onp.zeros_like(_x) for _x in x_grad]
     for outer, _x in enumerate(x):
@@ -168,6 +168,8 @@ def gradient_check(x, net, epsilon=1e-3, enumerate_fn=onp.ndenumerate):
             x = _add_value(x, outer, inner, epsilon)
             x_grad_approx = _add_value(x_grad_approx, outer, inner, y_grad)
 
+    if symmetric:
+        x_grad_approx = [0.5 * (_x_grad + _x_grad.conj().T) for _x_grad in x_grad_approx]
     x_grad = _flatten(x_grad)
     x_grad_approx = _flatten(x_grad_approx)
     numerator = onp.linalg.norm(x_grad - x_grad_approx)

@@ -53,10 +53,10 @@ def test_cholesky_grad(shape, data_type):
     cholesky_net = CholeskyNet()
     a = create_sym_pos_matrix(shape, dtype)
     cholesky_net(Tensor(a))
-    assert gradient_check(Tensor(a), cholesky_net, epsilon) < error
+    assert gradient_check(Tensor(a), cholesky_net, epsilon, symmetric=True) < error
     context.set_context(mode=context.PYNATIVE_MODE)
     cholesky_net(Tensor(a))
-    assert gradient_check(Tensor(a), cholesky_net, epsilon) < error
+    assert gradient_check(Tensor(a), cholesky_net, epsilon, symmetric=True) < error
 
 
 @pytest.mark.level0
@@ -94,9 +94,9 @@ def test_cho_factor_grad(lower, shape, data_type):
 
     cho_factor_net = ChoFactorNet(lower)
     a = create_sym_pos_matrix(shape, dtype)
-    assert gradient_check(Tensor(a), cho_factor_net, epsilon, _enumerate_fn) < error
+    assert gradient_check(Tensor(a), cho_factor_net, epsilon, symmetric=True, enumerate_fn=_enumerate_fn) < error
     context.set_context(mode=context.PYNATIVE_MODE)
-    assert gradient_check(Tensor(a), cho_factor_net, epsilon, _enumerate_fn) < error
+    assert gradient_check(Tensor(a), cho_factor_net, epsilon, symmetric=True, enumerate_fn=_enumerate_fn) < error
 
 
 @pytest.mark.level0
