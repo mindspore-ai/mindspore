@@ -1283,7 +1283,7 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
         if (backend_node_with_context.first != nullptr) {
           CreateDeviceTensorForValueNode(input_with_index, backend_node_with_context.first,
                                          backend_node_with_context.second);
-          (void)front_value_nodes_.emplace(input_with_index, iter->second[i]);
+          (void)front_value_nodes_.emplace(input_with_index, backend_node_with_context.second);
         } else {
           CreateDeviceTensorForFrontNode(input_with_index, default_context);
           (void)front_value_nodes_.emplace(input_with_index, default_context);
