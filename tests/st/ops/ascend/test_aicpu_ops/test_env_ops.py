@@ -155,6 +155,8 @@ def test_reftoembed_with_two_weights():
             output = self.grad(self.network, self.params)(x)
             return output
 
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor([5], mstype.int32)
     expected_weight_grad = Tensor([15], mstype.int32)
     expected_bias_grad = Tensor([10], mstype.int32)
     net = Net()
