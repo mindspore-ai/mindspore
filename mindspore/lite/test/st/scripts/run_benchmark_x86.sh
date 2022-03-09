@@ -21,7 +21,7 @@ function Run_Converter() {
     if [[ $backend == "x86-all" || $backend == "x86_tflite" ]]; then
       while read line; do
           parallel_split_line_info=${line}
-          if [[ $parallel_split_line_info == \#* ]]; then
+          if [[ $parallel_split_line_info == \#* || $parallel_split_line_info == "" ]]; then
             continue
           fi
           model_name=`echo ${parallel_split_line_info}|awk -F ' ' '{print $1}'`
@@ -167,7 +167,7 @@ function Run_x86_parallel_split() {
         model_name=${line%;*}
         length=${#model_name}
         input_shapes=${line:length+1}
-        if [[ $model_name == \#* ]]; then
+        if [[ $model_name == \#* || $model_name == "" ]]; then
           continue
         fi
         echo ${model_name} >> "${run_x86_log_file}"
@@ -251,7 +251,7 @@ cd -
 
 # Set models config filepath
 config_folder="config_level0"
-if [[ ${level} = "level1" ]]; then
+if [[ ${level} == "level1" ]]; then
     config_folder="config_level1"
 fi
 models_tflite_parallel_split_config=${basepath}/../${config_folder}/models_parallel_split.cfg
@@ -320,6 +320,11 @@ else
     cat ${run_converter_log_file}
     Print_Converter_Result $run_converter_result_file
     exit 1
+fi
+# Empty config file is allowed, but warning message will be shown
+if [[ $(Exist_File_In_Path ${ms_models_path} ".ms") == "true" ]]; then
+  echo "No ms model found in ${ms_models_path}, please check if config file is empty!" >> ${run_converter_result_file}
+  exit 0
 fi
 
 # Write benchmark result to temp file

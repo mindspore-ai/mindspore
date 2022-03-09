@@ -235,7 +235,7 @@ ms_models_path=${basepath}/ms_models
 
 # Set models config filepath
 config_folder="config_level0"
-if [[ ${level} = "level1" ]]; then
+if [[ ${level} == "level1" ]]; then
     config_folder="config_level1"
 fi
 models_tensorrt_config=${basepath}/../../${config_folder}/models_tensorrt.cfg
@@ -262,6 +262,11 @@ else
     cat ${run_converter_log_file}
     Print_Converter_Result $run_converter_result_file
     exit 1
+fi
+# Empty config file is allowed, but warning message will be shown
+if [[ $(Exist_File_In_Path ${ms_models_path} ".ms") == "true" ]]; then
+  echo "No ms model found in ${ms_models_path}, please check if config file is empty!" >> ${run_converter_result_file}
+  exit 0
 fi
 
 ####################  run simple tensorrt models

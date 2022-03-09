@@ -353,6 +353,17 @@ function Run_Benchmark() {
   done
 }
 
+function Exist_File_In_Path() {
+# $1:Path; $2:FileName;
+  for file in $1/*; do
+    if [[ ${file} =~ $2 ]]; then
+      echo "true"
+      exit 0
+    fi
+  echo "false"
+  done
+}
+
 # Print start msg before run testcase
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""

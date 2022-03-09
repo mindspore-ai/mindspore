@@ -42,7 +42,7 @@ function Run_Converter_CI_MODELS() {
   models_3403_cfg=$2
   while read line; do
       dpico_line_info=${line}
-      if [[ $dpico_line_info == \#* ]]; then
+      if [[ $dpico_line_info == \#* || $dpico_line_info == "" ]]; then
         continue
       fi
       model_info=`echo ${dpico_line_info}|awk -F ' ' '{print $1}'`
@@ -86,7 +86,7 @@ function Run_Converter() {
     # Convert dpico models:
     while read line; do
         dpico_line_info=${line}
-        if [[ $dpico_line_info == \#* ]]; then
+        if [[ $dpico_line_info == \#* || $dpico_line_info == "" ]]; then
           continue
         fi
         model_location=`echo ${dpico_line_info}|awk -F ' ' '{print $1}'`
@@ -159,7 +159,7 @@ mkdir -p ${arm64_path}
 st_dir=${mindspore_top_dir}/mindspore/lite/test/st
 
 # Example:sh run_dpico_nets.sh r /home/temp_test -m /home/temp_test/models -e arm32_3403D -d 192.168.1.1
-while getopts "m:d:e:" opt; do
+while getopts "m:d:e:l:" opt; do
     case ${opt} in
         m)
             models_path=${OPTARG}
@@ -172,6 +172,10 @@ while getopts "m:d:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -224,9 +228,13 @@ else
 fi
 
 # Set filepath
-models_caffe_3403_config=${st_dir}/../config/models_caffe_3403.cfg
-models_onnx_3403_config=${st_dir}/../config/models_onnx_3403.cfg
-models_tf_3403_config=${st_dir}/../config/models_tf_3403.cfg
+config_folder="config_level0"
+if [[ ${level} == "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_caffe_3403_config=${st_dir}/../${config_folder}/models_caffe_3403.cfg
+models_onnx_3403_config=${st_dir}/../${config_folder}/models_onnx_3403.cfg
+models_tf_3403_config=${st_dir}/../${config_folder}/models_tf_3403.cfg
 run_benchmark_script=${st_dir}/scripts/dpico/run_benchmark_3403.sh
 
 # Set version

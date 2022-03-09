@@ -76,7 +76,7 @@ elif [[ ${backend} =~ "arm" ]]; then
 fi
 
 config_folder="config_level0"
-if [[ ${level} = "level1" ]]; then
+if [[ ${level} == "level1" ]]; then
     config_folder="config_level1"
 fi
 
