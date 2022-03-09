@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/composite/composite.h"
+#include "frontend/operator/composite/vmap.h"
 #include "frontend/operator/composite/map.h"
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
@@ -219,8 +220,9 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
     prim::GradOperationPtr grad_op = meta_func_graph->cast<prim::GradOperationPtr>();
     oss << "{get_all=" << grad_op->get_all_ << ", get_by_list=" << grad_op->get_by_list_
         << ", sens_param=" << grad_op->sens_param_ << "}";
-  } else if (Skip(meta_func_graph)) {
-    // Do nothing
+  } else if (meta_func_graph->isa<prim::VmapMatchOutAxis>() || meta_func_graph->isa<prim::VmapGeneralPreprocess>() ||
+             Skip(meta_func_graph)) {
+    // Do nothing.
   } else {
     MS_LOG(EXCEPTION) << "Unknown MetaFuncGraph type " << meta_func_graph->type_name();
   }

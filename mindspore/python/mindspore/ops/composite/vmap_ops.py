@@ -13,7 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-"""vmap impl."""
-from .vmap_base import get_vmap_rule, vmap_general_rule, vmap_monad_rule, _broadcast_by_axis, vmap_bind_all_none
+"""Vmap operations."""
+from ..._c_expression import VmapGeneralPreprocess_
 
-__all__ = ['get_vmap_rule', 'vmap_general_rule', 'vmap_monad_rule', '_broadcast_by_axis', 'vmap_bind_all_none']
+
+class _VmapGeneralPreprocess(VmapGeneralPreprocess_):
+    """
+    General preprocessing of VmapRules. If the source axes of all inputs are `None`,
+    means that vectorization is not performed, taking out the original input and call
+    the primitive directly.
+    """
+    def __init__(self):
+        VmapGeneralPreprocess_.__init__(self, "VmapGeneralPreprocess")

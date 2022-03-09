@@ -20,7 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from .._register_for_op import Registry
-from ..composite import HyperMap
+from ..composite import HyperMap, _VmapGeneralPreprocess
 from ..primitive import Primitive
 from ...common import Tensor
 
@@ -75,131 +75,16 @@ def _broadcast_by_axis(x, dst: int, axis_size: int):
     return P.BroadcastTo(target_shape)(x)
 
 
-def _vmap_general_preprocess(prim, *args):
-    """
-    General preprocessing of VmapRules. If the source axes of all inputs are `None`,
-    means that vectorization is not performed, taking out the original input and call
-    the primitive directly.
-    """
-
-    # Operators with indefinite inputs length, such as `AddN`, whose inputs is wrapped
-    # into a tuple. We need to process the internal elements separately and then re-wrap
-    # them into tuple. Handle case such as args:(((A, 0), (B, 1), (C, None)),). Which
-    # different from the case with single input parameter ((A, 0),).
-    wrapped_tuple = False
-    if len(args) == 1 and isinstance(args[0][-1], tuple):
-        wrapped_tuple = True
-        args = args[0]
-
-    is_all_none = True
-    vals = ()
-    for val_in in args:
-        val, dim = val_in
-        vals = vals + (val,)
-        if dim is not None:
-            is_all_none = False
-            break
-
-    if not is_all_none:
-        return is_all_none, None
-    # Handle case when all input's axes are `None`.
-    if wrapped_tuple:
-        outputs = prim(vals)
-    else:
-        outputs = prim(*vals)
+def vmap_bind_all_none(inputs):
     results = ()
-    if isinstance(outputs, tuple):
-        for res in outputs:
-            results = results + ((res, None),)
-        return is_all_none, results
-    return is_all_none, (outputs, None)
-
-
-def bind_in_axes(inputs, in_axes):
-    """ Bind the inputs with the corresponding in_axes. """
     if isinstance(inputs, tuple):
-        vals_in_tuple = ()
-        if not isinstance(in_axes, tuple):
-            in_axes = [in_axes] * len(inputs)
-        elif len(inputs) != len(in_axes):
-            _raise_value_error("The number of in_axes elements is inconsistent with the size of the inputs")
-
-        for each_input, dst in zip(inputs, in_axes):
-            if isinstance(each_input, tuple):
-                out = bind_in_axes(each_input, dst)
-                vals_in_tuple = vals_in_tuple + (out,)
-                continue
-            out = (each_input, dst)
-            vals_in_tuple = vals_in_tuple + (out,)
-        return vals_in_tuple
-    out = (inputs, in_axes)
-    return out
+        for res in inputs:
+            results = results + ((res, None),)
+        return results
+    return (inputs, None)
 
 
-def _match_out_axis_all_tuple(inputs, out_axes, axis_size):
-    """ Deal with the case of arguments all nested in tuple in `match_out_axis`. """
-    vals_out_tuple = ()
-    if not isinstance(out_axes, tuple):
-        out_axes = [out_axes] * len(inputs)
-    elif len(inputs) != len(out_axes):
-        _raise_value_error("The number of out_axes elements is inconsistent with "
-                           "the size of the outputs of vmap's fn.")
-
-    for each_input, dst in zip(inputs, out_axes):
-        if isinstance(each_input[0], tuple):
-            if isinstance(each_input[-1], tuple):
-                # Handle case such as inputs:(...,((y, 1), (z, None)), ...), out_axes:(..., (1, None), ...)
-                out = match_out_axis(each_input, dst, axis_size)
-                vals_out_tuple = vals_out_tuple + (out,)
-                continue
-            else:
-                # Handle case such as inputs:(...,((y, z), None), ...), out_axes:(..., (1, 0), ...)
-                sub_inputs = ()
-                dim = each_input[-1]
-                for i in each_input[0]:
-                    sub_inputs = sub_inputs + ((i, dim),)
-                out = match_out_axis(sub_inputs, dst, axis_size)
-                vals_out_tuple = vals_out_tuple + (out,)
-                continue
-        # Handle case such as inputs:(...,(x, None), ...), out_axes:(..., 1, ...)
-        val, src = each_input
-        if src is None and dst is not None:
-            out = _broadcast_by_axis(val, dst, axis_size)
-        elif src is not None and dst is None:
-            _raise_value_error("Data whose source axis is not `None` cannot be converted to "
-                               "the destination axis `None`")
-            out = val
-        elif src is None and dst is None:
-            out = val
-        else:
-            out = mnp.moveaxis(val, src, dst)
-        vals_out_tuple = vals_out_tuple + (out,)
-    return vals_out_tuple
-
-
-def match_out_axis(inputs, out_axes, axis_size):
-    """ Convert the outputs according to the out_axes to the specified physical perspective. """
-    if isinstance(inputs[0], tuple) and isinstance(inputs[-1], tuple):
-        # Handle case such as inputs:((x, 0), (y, None)), out_axes:(0, 1)
-        return _match_out_axis_all_tuple(inputs, out_axes, axis_size)
-
-    # Handle case such as inputs:((x, y), None), out_axes:(0, 1)
-    # Convert ((x, y), None) to ((x, None), (y, None)) first.
-    if isinstance(inputs[0], tuple) and not isinstance(inputs[-1], tuple):
-        sub_inputs = ()
-        dim = inputs[-1]
-        for i in inputs[0]:
-            sub_inputs = sub_inputs + ((i, dim),)
-        out = match_out_axis(sub_inputs, out_axes, axis_size)
-        return out
-
-    # Handle the most fundamental case, e.g. inputs:(x, None), out_axes: 1
-    val, src = inputs
-    if src is None:
-        out = _broadcast_by_axis(val, 0, axis_size)
-    else:
-        out = mnp.moveaxis(val, src, out_axes)
-    return out
+vmap_general_preprocess = _VmapGeneralPreprocess()
 
 
 def vmap_general_rule(prim, axis_size):
@@ -224,7 +109,7 @@ def vmap_general_rule(prim, axis_size):
     common_map = HyperMap()
 
     def loop_stack(*args):
-        is_all_none, result = _vmap_general_preprocess(prim, *args)
+        is_all_none, result = vmap_general_preprocess(prim, *args)
         if is_all_none:
             return result
 
@@ -356,7 +241,7 @@ def _handle_scalar_broadcasting(nd, x):
 def get_math_binary_op_vmap_rule(prim, axis_size):
     """VmapRule for binary operations, such as `Add` and `Sub`."""
     def vmap_rule(x_in, y_in):
-        is_all_none, result = _vmap_general_preprocess(prim, x_in, y_in)
+        is_all_none, result = vmap_general_preprocess(prim, x_in, y_in)
         if is_all_none:
             return result
 
@@ -383,7 +268,7 @@ def get_math_binary_op_vmap_rule(prim, axis_size):
 def get_transpose_vmap_rule(prim, axis_size):
     """VmapRule for `Transpose` operation."""
     def vmap_rule(x_in, perm_in):
-        is_all_none, result = _vmap_general_preprocess(prim, x_in, perm_in)
+        is_all_none, result = vmap_general_preprocess(prim, x_in, perm_in)
         if is_all_none:
             return result
 
@@ -409,7 +294,7 @@ def get_transpose_vmap_rule(prim, axis_size):
 def get_reshape_vmap_rule(prim, axis_size):
     """VmapRule for `Reshape` operation."""
     def vmap_rule(operand_in, shape_in):
-        is_all_none, result = _vmap_general_preprocess(prim, operand_in, shape_in)
+        is_all_none, result = vmap_general_preprocess(prim, operand_in, shape_in)
         if is_all_none:
             return result
 
@@ -433,7 +318,7 @@ def get_broadcast_to_vmap_rule(prim, axis_size):
     """VmapRule for `BroadcastTo` operation."""
     shape = prim.shape
     def vmap_rule(operand_in):
-        is_all_none, result = _vmap_general_preprocess(prim, operand_in)
+        is_all_none, result = vmap_general_preprocess(prim, operand_in)
         if is_all_none:
             return result
 
@@ -456,7 +341,7 @@ def get_reducer_vmap_rule(prim, axis_size):
     keep_dims = prim.keep_dims
     prim_name = prim.name
     def vmap_rule(operand_in, axis_in):
-        is_all_none, result = _vmap_general_preprocess(prim, operand_in, axis_in)
+        is_all_none, result = vmap_general_preprocess(prim, operand_in, axis_in)
         if is_all_none:
             return result
 

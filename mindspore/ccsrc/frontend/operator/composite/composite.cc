@@ -1,4 +1,3 @@
-
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
@@ -805,6 +804,7 @@ VmapOperation::VmapOperation(const std::string &name) : MetaFuncGraph(name) {
 FuncGraphPtr VmapOperation::GetVmap(const AnfNodePtr &vmap, const std::vector<AnfNodePtr> &forward_graph_params) {
   FuncGraphPtr vmap_child = std::make_shared<FuncGraph>();
   vmap_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  vmap_child->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, true);
 
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(vmap);

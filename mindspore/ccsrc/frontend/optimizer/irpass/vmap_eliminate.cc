@@ -17,6 +17,7 @@
 #include "frontend/optimizer/irpass/vmap_eliminate.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "frontend/operator/composite/vmap.h"
 
 namespace mindspore {
 namespace opt {
@@ -26,58 +27,92 @@ namespace internal {
 mindspore::HashSet<std::string> throughtout_op{prim::kPrimMakeTuple->name(), prim::kPrimMakeList->name(),
                                                prim::kPrimDepend->name(), prim::kPrimReturn->name(),
                                                prim::kPrimUpdateState->name()};
+CNodePtr BuildBindInAxisTupleInput(const AnfNodePtr &input, const ValuePtr &in_axis, FuncGraphPtr fg) {
+  auto input_abs_elements = dyn_cast<abstract::AbstractTuple>(input->abstract());
+  ValueSequencePtr in_axis_value_sequence = nullptr;
+  if (in_axis->isa<ValueSequence>()) {
+    in_axis_value_sequence = dyn_cast<ValueSequence>(in_axis);
+    if (input_abs_elements->size() != in_axis_value_sequence->size()) {
+      MS_LOG(EXCEPTION) << "The length of input and in_axis should be the same but got input length: "
+                        << input_abs_elements->size() << ", in_axis length: " << in_axis_value_sequence->size() << ".";
+    }
+  }
+  std::vector<AnfNodePtr> ret_inputs;
+  ret_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  for (unsigned int i = 0; i < input_abs_elements->size(); ++i) {
+    std::vector<AnfNodePtr> tuple_getitem_cnode_inputs;
+    tuple_getitem_cnode_inputs.emplace_back(NewValueNode(prim::kPrimTupleGetItem));
+    tuple_getitem_cnode_inputs.emplace_back(input);
+    tuple_getitem_cnode_inputs.emplace_back(NewValueNode(static_cast<int64_t>(i)));
+    auto tuple_getitem_cnode = fg->NewCNode(tuple_getitem_cnode_inputs);
+    auto input_abs_element = (*input_abs_elements)[i];
+    auto in_axis_value = in_axis_value_sequence == nullptr ? in_axis : (*in_axis_value_sequence)[i];
+    CNodePtr cur_make_tuple = nullptr;
+    if (input_abs_element->isa<abstract::AbstractTuple>()) {
+      cur_make_tuple = BuildBindInAxisTupleInput(tuple_getitem_cnode, in_axis_value, fg);
+    } else {
+      std::vector<AnfNodePtr> cur_make_tuple_inputs;
+      cur_make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+      cur_make_tuple_inputs.emplace_back(tuple_getitem_cnode);
+      cur_make_tuple_inputs.emplace_back(NewValueNode(in_axis_value));
+      cur_make_tuple = fg->NewCNode(cur_make_tuple_inputs);
+    }
+    ret_inputs.emplace_back(cur_make_tuple);
+  }
+  return fg->NewCNode(ret_inputs);
+}
 
 AnfNodePtr BindInAxis(const CNodePtr &vmap_app, const pipeline::ResourceBasePtr &resource, const ValuePtr &in_axes) {
   FuncGraphPtr vmap_fg = vmap_app->func_graph();
-  FuncGraphPtr bind_axes = nullptr;
-  py::function fn;
-  constexpr char get_fn[] = "bind_in_axes";
-  constexpr char module[] = "mindspore.ops._vmap";
-  fn = python_adapter::GetPyFn(module, get_fn);
-  bind_axes = parse::ParsePythonCode(fn);
-  MS_EXCEPTION_IF_NULL(bind_axes);
-  pipeline::ResourceBasePtr res = (resource != nullptr) ? resource : std::make_shared<pipeline::Resource>();
-  (void)parse::ResolveFuncGraph(bind_axes, res);
+  bool is_in_axes_value_sequence = in_axes->isa<ValueSequence>();
+  ValueSequencePtr in_axes_to_value_sequence = dyn_cast<ValueSequence>(in_axes);
 
-  std::vector<AnfNodePtr> inputs;
-  auto make_tuple = NewValueNode(prim::kPrimMakeTuple);
-  inputs.push_back(make_tuple);
-  int vmap_app_inputs_size = SizeToInt(vmap_app->size());
-  int monad_index = -1;
-  for (int i = 1; i < vmap_app_inputs_size; ++i) {
-    AnfNodePtr para_of_ori_graph = vmap_app->input(i);
-    // Drop the side effect tag parameters, because it has no mapping axis.
-    if (HasAbstractMonad(para_of_ori_graph)) {
-      monad_index = i;
-      break;
-    }
-    inputs.push_back(para_of_ori_graph);
+  auto inputs = vmap_app->inputs();
+  auto inputs_size = inputs.size();
+  if (inputs_size <= 0) {
+    MS_LOG(EXCEPTION) << "The inputs number of CNode: " << vmap_app->DebugString()
+                      << " should be positive but got : " << inputs_size << ".";
   }
-  auto inputs_node = vmap_fg->NewCNode(inputs);
-  auto bind_axes_node = vmap_fg->NewCNode({NewValueNode(bind_axes), inputs_node, NewValueNode(in_axes)});
 
-  std::vector<AnfNodePtr> bind_axes_vec;
-  bind_axes_vec.push_back(vmap_app->input(0));
-
-  int para_size = (monad_index != -1) ? monad_index - 1 : vmap_app_inputs_size - 1;
-
-  for (int64_t i = 0; i < para_size; ++i) {
-    std::vector<AnfNodePtr> each_arg;
-    auto get_item = NewValueNode(prim::kPrimTupleGetItem);
-    each_arg.push_back(get_item);
-    each_arg.push_back(bind_axes_node);
-    each_arg.push_back(NewValueNode(i));
-    auto each_arg_node = vmap_fg->NewCNode(each_arg);
-    bind_axes_vec.push_back(each_arg_node);
-  }
-  if (monad_index != -1) {
-    for (int i = monad_index; i < vmap_app_inputs_size; ++i) {
-      bind_axes_vec.push_back(vmap_app->input(i));
+  // Check the last two (if exists) is monad input.
+  int abstract_monad_count = 0;
+  constexpr size_t max_monad_input_num = 2;
+  if (HasAbstractMonad(inputs[inputs_size - 1])) {
+    abstract_monad_count++;
+    if (inputs_size >= max_monad_input_num && HasAbstractMonad(inputs[inputs_size - max_monad_input_num])) {
+      abstract_monad_count++;
     }
   }
 
-  auto bind_in_axes_node = vmap_fg->NewCNode(bind_axes_vec);
-  return bind_in_axes_node;
+  auto real_params_size = inputs_size - abstract_monad_count;
+  if (is_in_axes_value_sequence && real_params_size - 1 != in_axes_to_value_sequence->size()) {
+    MS_LOG(EXCEPTION) << "The length of vmap_app inputs (except primitive input and monad input) is: "
+                      << real_params_size - 1 << " and the length of in_axis is: " << in_axes_to_value_sequence->size()
+                      << ". These two numbers should be equal.";
+  }
+
+  std::vector<AnfNodePtr> outputs;
+  outputs.push_back(vmap_app->input(0));
+  for (unsigned int i = 1; i < real_params_size; ++i) {
+    auto input = inputs[i];
+    auto in_axis = is_in_axes_value_sequence ? (*in_axes_to_value_sequence)[i - 1] : in_axes;
+    auto input_abs = input->abstract();
+    CNodePtr cur_make_tuple_cnode = nullptr;
+    if (input_abs->isa<abstract::AbstractTuple>()) {
+      cur_make_tuple_cnode = BuildBindInAxisTupleInput(input, in_axis, vmap_fg);
+    } else {
+      cur_make_tuple_cnode = vmap_fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), input, NewValueNode(in_axis)});
+    }
+    outputs.emplace_back(cur_make_tuple_cnode);
+  }
+
+  if (abstract_monad_count == 1) {
+    outputs.emplace_back(inputs.back());
+  } else if (abstract_monad_count == max_monad_input_num) {
+    outputs.emplace_back(inputs[inputs_size - max_monad_input_num]);
+    outputs.emplace_back(inputs.back());
+  }
+  return vmap_fg->NewCNode(outputs);
 }
 
 int GetAxisSizeByAbs(const AbstractBasePtr &abs, const ValuePtr &in_axes) {
@@ -138,25 +173,15 @@ int GetAxisSize(const ValuePtr &in_axes, const CNodePtr &cnode) {
 AnfNodePtr MatchOutAxis(const AnfNodePtr &expanded_vmap_node, int parameters_size, int axis_size,
                         const pipeline::ResourceBasePtr &resource, const ValuePtr &out_axes) {
   FuncGraphPtr vmap_post_fg = std::make_shared<FuncGraph>();
-
-  FuncGraphPtr match_out_axis = nullptr;
-  py::function fn;
-  constexpr char get_fn[] = "match_out_axis";
-  constexpr char module[] = "mindspore.ops._vmap";
-  fn = python_adapter::GetPyFn(module, get_fn);
-  match_out_axis = parse::ParsePythonCode(fn);
-  MS_EXCEPTION_IF_NULL(match_out_axis);
-  pipeline::ResourceBasePtr res = (resource != nullptr) ? resource : std::make_shared<pipeline::Resource>();
-  (void)parse::ResolveFuncGraph(match_out_axis, res);
-
   std::vector<AnfNodePtr> exec_node;
   exec_node.push_back(expanded_vmap_node);
   for (int i = 0; i < parameters_size; ++i) {
     exec_node.push_back(vmap_post_fg->add_parameter());
   }
   auto vmap_outputs = vmap_post_fg->NewCNode(exec_node);
-  auto match_out_axis_app = vmap_post_fg->NewCNode({NewValueNode(match_out_axis), vmap_outputs, NewValueNode(out_axes),
-                                                    NewValueNode(static_cast<int64_t>(axis_size))});
+  auto match_out_axis_app =
+    vmap_post_fg->NewCNode({NewValueNode(std::make_shared<prim::VmapMatchOutAxis>("VmapMatchOutAxis")), vmap_outputs,
+                            NewValueNode(out_axes), NewValueNode(static_cast<int64_t>(axis_size))});
   vmap_post_fg->set_output(match_out_axis_app);
 
   return NewValueNode(vmap_post_fg);
