@@ -223,6 +223,7 @@ class KernelMod {
  protected:
   void InferShape();
   void GetDepndLists(const CNodePtr &cnode);
+  void UpdateOutputSizeList();
 
   std::string kernel_name_;
   std::string unique_name_;

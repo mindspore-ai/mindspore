@@ -101,6 +101,19 @@ void KernelMod::InferShape() {
   cnode->set_abstract(eval_result);
 }
 
+void KernelMod::UpdateOutputSizeList() {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  for (size_t i = 0; i < output_size_list_.size(); ++i) {
+    auto ori_output_size = output_size_list_[i];
+    auto real_output_size = AnfAlgo::GetOutputTensorMemSize(cnode, i);
+    if (ori_output_size != real_output_size) {
+      output_size_list_[i] = real_output_size;
+    }
+  }
+}
+
 bool KernelMod::InferShapeForDefiniteOutputNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimShape)) {

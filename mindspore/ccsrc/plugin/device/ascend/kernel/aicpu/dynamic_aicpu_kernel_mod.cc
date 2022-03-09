@@ -69,6 +69,10 @@ void DynamicAicpuOpKernelMod::InitOp() {
   if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
   }
+  // update output size after InferShape.
+  if (unknow_type_ != device::ascend::UnknowShapeOpType::DEPEND_COMPUTE) {
+    KernelMod::UpdateOutputSizeList();
+  }
 
   MS_LOG(INFO) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
