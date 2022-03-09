@@ -282,6 +282,12 @@ def dtype_to_pytype(type_):
     }[type_]
 
 
+def _issubclass_(type_, dtype):
+    if not isinstance(type_, typing.Type):
+        return False
+    return typing.is_subclass(type_, dtype)
+
+
 def issubclass_(type_, dtype):
     """
     Determine whether `type_` is a subclass of `dtype`.
@@ -294,6 +300,4 @@ def issubclass_(type_, dtype):
         bool, True or False.
     """
     logger.warning("'issubclass_' will be deprecated and removed in a future version.")
-    if not isinstance(type_, typing.Type):
-        return False
-    return typing.is_subclass(type_, dtype)
+    return _issubclass_(type_, dtype)

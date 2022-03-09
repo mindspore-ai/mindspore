@@ -392,7 +392,7 @@ class IsSubClass(PrimitiveWithInfer):
         validator.check_value_type("sub_type", sub_type_t, [mstype.Type], self.name)
         validator.check_value_type("type_", type_v, [mstype.Type], self.name)
 
-        value = mstype.issubclass_(sub_type_t, type_v)
+        value = mstype._issubclass_(sub_type_t, type_v)  # pylint: disable=W0212
 
         out = {'shape': (),
                'dtype': mstype.type_type,
@@ -439,7 +439,7 @@ class IsInstance(PrimitiveWithInfer):
         elif type_v == mstype.tuple_:
             value = isinstance(sub_type_t, tuple)
         else:
-            value = mstype.issubclass_(sub_type_t, type_v)
+            value = mstype._issubclass_(sub_type_t, type_v)  # pylint: disable=W0212
 
         out = {'shape': (),
                'dtype': mstype.type_type,
@@ -1675,7 +1675,7 @@ class InvertPermutation(PrimitiveWithInfer):
     def __infer__(self, x):
         x_shp = x['shape']
         x_value = x['value']
-        if mstype.issubclass_(x['dtype'], mstype.tensor):
+        if mstype._issubclass_(x['dtype'], mstype.tensor):  # pylint: disable=W0212
             raise ValueError(f"For \'{self.name}\', the value of 'input_x' must be non-Tensor, but got {x['dtype']}")
         if x_value is None:
             raise ValueError(f"For '{self.name}', the value of 'input_x' can not be None, but got {x_value}.")
