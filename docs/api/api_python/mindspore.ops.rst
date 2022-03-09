@@ -399,3 +399,14 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.DataType
     mindspore.ops.op_info_register
     mindspore.ops.TBERegOp
+
+自定义算子
+----------------
+
+.. mscnautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.Custom
+    mindspore.ops.ms_hybrid

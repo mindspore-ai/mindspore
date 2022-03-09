@@ -143,7 +143,7 @@ class Custom(ops.PrimitiveWithInfer):
             shape mechanic will be enabled.
 
         out_dtype (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]]): The output data type
-            infer function or the value of output data type of `func`.
+            infer function or the value of output data type of `func`. Default: None.
 
             If func has single output, then the value of output shape is a `mindspore.dtype`.
 
