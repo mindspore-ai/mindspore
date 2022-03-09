@@ -415,6 +415,29 @@ class ArgMinWithValueNet(nn.Cell):
         out = self.mul2(out, b)
         return out
 
+class ArgMaxNet(nn.Cell):
+    def __init__(self, strategy1, strategy2):
+        super(ArgMaxNet, self).__init__()
+        self.mul1 = P.Mul().shard(strategy1)
+        self.arg_max = P.Argmax(axis=-1).shard(strategy2)
+
+    def construct(self, x, y):
+        out = self.mul1(x, y)
+        out = self.arg_max(out)
+        return out
+
+
+class ArgMinNet(nn.Cell):
+    def __init__(self, strategy1, strategy2):
+        super(ArgMinNet, self).__init__()
+        self.mul1 = P.Mul().shard(strategy1)
+        self.arg_min = P.Argmin(axis=-1).shard(strategy2)
+
+    def construct(self, x, y):
+        out = self.mul1(x, y)
+        out = self.arg_min(out)
+        return out
+
 
 def gen_inputs_and_compile_net(net):
     x = Tensor(np.ones([128, 64, 64]), dtype=ms.float32)
@@ -512,6 +535,90 @@ def test_arg_min_with_value_mul_auto():
     net = GradWrap(NetWithLoss(ArgMinWithValueNet(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     gen_inputs_and_compile_net(net)
+
+
+def test_arg_max_semi_axis_parallel():
+    """
+    Feature: test Argmax semi parallel strategy
+    Description: partition the reduced axes
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((1, 4, 2), (1, 4, 2))
+    strategy2 = ((4, 1, 2),)
+    net = GradWrapNoBias(NetWithLossNoBias(ArgMaxNet(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    gen_inputs_and_compile_net_no_bias(net)
+
+
+def test_arg_max_mul_semi():
+    """
+    Feature: test Argmax model parallel strategy
+    Description: partition the non-reduced axes
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((1, 4, 2), (1, 4, 2))
+    strategy2 = ((4, 2, 1),)
+    net = GradWrapNoBias(NetWithLossNoBias(ArgMaxNet(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    gen_inputs_and_compile_net_no_bias(net)
+
+
+def test_arg_max_mul_auto():
+    """
+    Feature: test Argmax auto parallel strategy
+    Description: don't set the strategy
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = None
+    strategy2 = None
+    net = GradWrapNoBias(NetWithLossNoBias(ArgMaxNet(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    gen_inputs_and_compile_net_no_bias(net)
+
+
+def test_arg_min_semi_axis_parallel():
+    """
+    Feature: test Argmin semi parallel strategy
+    Description: partition the reduced axes
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((1, 4, 2), (1, 4, 2))
+    strategy2 = ((4, 1, 2),)
+    net = GradWrapNoBias(NetWithLossNoBias(ArgMinNet(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    gen_inputs_and_compile_net_no_bias(net)
+
+
+def test_arg_min_mul_semi():
+    """
+    Feature: test Argmin model parallel strategy
+    Description: partition the non-reduced axes
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((1, 4, 2), (1, 4, 2))
+    strategy2 = ((4, 2, 1),)
+    net = GradWrapNoBias(NetWithLossNoBias(ArgMinNet(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    gen_inputs_and_compile_net_no_bias(net)
+
+
+def test_arg_min_mul_auto():
+    """
+    Feature: test Argmin auto parallel strategy
+    Description: don't set the strategy
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = None
+    strategy2 = None
+    net = GradWrapNoBias(NetWithLossNoBias(ArgMinNet(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    gen_inputs_and_compile_net_no_bias(net)
 
 
 class ArgMinWithValueNet2(nn.Cell):
@@ -915,3 +1022,59 @@ def test_prod_mul_auto():
     net = GradWrapNoBias(NetWithLossNoBias(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     gen_inputs_and_compile_net_no_bias(net)
+
+
+def test_square_sum_all_mul():
+    """
+    Feature: test SquareSumAll model parallel strategy
+    Description: partition the reduced axes
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super(Net, self).__init__()
+            self.mul1 = P.Mul().shard(strategy1)
+            self.square_sum_all = P.SquareSumAll().shard(strategy2)
+
+        def construct(self, x, y):
+            out = self.mul1(x, y)
+            out = self.square_sum_all(out, out)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 8), (1, 1, 8))
+    strategy2 = ((2, 4, 1), (2, 4, 1))
+    net = Net(strategy1, strategy2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    compile_net_no_bias(net, x, y)
+
+
+def test_square_sum_all_mul2():
+    """
+    Feature: test SquareSumAll model parallel strategy
+    Description: partition the reduced axes
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, stra_mul, stra_prod):
+            super(Net, self).__init__()
+            self.mul = P.Mul().shard(stra_mul)
+            self.square_sum_all = P.SquareSumAll().shard(stra_prod)
+
+        def construct(self, x, y):
+            out = self.mul(x, y)
+            out = self.square_sum_all(out, out)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 8), (1, 1, 8))
+    strategy2 = ((8, 1, 1), (8, 1, 1))
+    net = Net(strategy1, strategy2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    compile_net_no_bias(net, x, y)

@@ -50,6 +50,7 @@ class UnsortedSegmentOpInfo : public OperatorInfo {
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;
 
  protected:
+  std::string reduce_method_;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override;
   Status InferMirrorOps() override;
@@ -65,15 +66,29 @@ class UnsortedSegmentSumInfo : public UnsortedSegmentOpInfo {
  public:
   UnsortedSegmentSumInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                          const PrimitiveAttrs &attrs)
-      : UnsortedSegmentOpInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<UnsortedSegmentSumCost>()) {}
+      : UnsortedSegmentOpInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<UnsortedSegmentSumCost>()) {
+    reduce_method_ = REDUCE_OP_SUM;
+  }
   ~UnsortedSegmentSumInfo() override = default;
+};
+
+class UnsortedSegmentProdInfo : public UnsortedSegmentOpInfo {
+ public:
+  UnsortedSegmentProdInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                          const PrimitiveAttrs &attrs)
+      : UnsortedSegmentOpInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<UnsortedSegmentProdCost>()) {
+    reduce_method_ = REDUCE_OP_PROD;
+  }
+  ~UnsortedSegmentProdInfo() override = default;
 };
 
 class UnsortedSegmentMinInfo : public UnsortedSegmentOpInfo {
  public:
   UnsortedSegmentMinInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                          const PrimitiveAttrs &attrs)
-      : UnsortedSegmentOpInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<UnsortedSegmentMinCost>()) {}
+      : UnsortedSegmentOpInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<UnsortedSegmentMinCost>()) {
+    reduce_method_ = REDUCE_OP_MIN;
+  }
   ~UnsortedSegmentMinInfo() override = default;
 
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
@@ -86,7 +101,9 @@ class UnsortedSegmentMaxInfo : public UnsortedSegmentOpInfo {
  public:
   UnsortedSegmentMaxInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                          const PrimitiveAttrs &attrs)
-      : UnsortedSegmentOpInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<UnsortedSegmentMaxCost>()) {}
+      : UnsortedSegmentOpInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<UnsortedSegmentMaxCost>()) {
+    reduce_method_ = REDUCE_OP_MAX;
+  }
   ~UnsortedSegmentMaxInfo() override = default;
 
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;

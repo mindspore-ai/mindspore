@@ -205,7 +205,7 @@ Status UnsortedSegmentOpInfo::InferForwardCommunication() {
     return SUCCESS;
   }
 
-  Operator op = CreateAllReduceOp(REDUCE_OP_SUM, group_list[0].name());
+  Operator op = CreateAllReduceOp(reduce_method_, group_list[0].name());
   forward_op_.push_back(op);
   MS_LOG(INFO) << name_ << " : The group name of forward communication is " << group_list[0].name();
   return SUCCESS;

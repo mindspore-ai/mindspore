@@ -753,6 +753,7 @@ class ReduceSumCost : public OperatorCost {
 };
 using ReduceMethodCost = ReduceSumCost;
 using ReduceProdCost = ReduceSumCost;
+using SquareSumAllCost = ReduceSumCost;
 
 class ReduceMeanCost : public ReduceSumCost {
  public:
@@ -784,6 +785,7 @@ class ArgMaxWithValueCost : public ReduceSumCost {
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 using ArgMinWithValueCost = ArgMaxWithValueCost;
+using ArgmaxCost = ArgMaxWithValueCost;
 
 class GetNextCost : public OperatorCost {
  public:
@@ -919,6 +921,7 @@ class UnsortedSegmentSumCost : public OperatorCost {
   // Taking account of input
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
+using UnsortedSegmentProdCost = UnsortedSegmentSumCost;
 
 class UnsortedSegmentMinCost : public OperatorCost {
  public:
