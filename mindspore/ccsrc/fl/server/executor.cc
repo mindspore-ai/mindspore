@@ -32,7 +32,8 @@ void Executor::Initialize(const FuncGraphPtr &func_graph, size_t aggregation_cou
   }
   aggregation_count_ = aggregation_count;
 
-  // Initialize each trainable parameter's aggregator, including memory register, aggregation algorithms and optimizers.
+  // Initialize each trainable parameter's aggregator, including memory register, aggregation algorithms and
+  // optimizers.
   bool ret = InitParamAggregator(func_graph);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Initializing parameter aggregators failed.";
@@ -274,7 +275,7 @@ bool Executor::InitParamAggregator(const FuncGraphPtr &func_graph) {
       MS_LOG(EXCEPTION) << "Initializing parameter aggregator for param_name " << param_name << " failed.";
       return false;
     }
-    MS_LOG(DEBUG) << "Initializing parameter aggregator for param_name " << param_name << " success.";
+    MS_LOG(INFO) << "Initializing parameter aggregator for param_name " << param_name << " success.";
   }
   return true;
 }

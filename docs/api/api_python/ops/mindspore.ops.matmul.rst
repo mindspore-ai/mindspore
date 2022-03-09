@@ -1,24 +1,32 @@
 mindspore.ops.matmul
 =====================
 
-.. py:function:: mindspore.ops.matmul(x1, x2, dtype=None)
+.. py:class:: mindspore.ops.MatMul(transpose_a=False, transpose_b=False)
 
-    计算两个数组的乘积。
+    将矩阵 `a` 和矩阵 `b` 相乘。
 
-    .. note::
-        不支持NumPy参数 `out` 、 `casting` 、 `order` 、 `subok` 、 `signature` 、 `extobj` 。在GPU上支持的数据类型为np.float16和np.float32。在CPU上支持的数据类型为np.float16和np.float32。
+    .. math::
+
+        (Output)_{i j}=\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\cdots+a_{i p} b_{p j}, p\in N
+
+    其中， :math:`i,j` 表示输出的第i行和第j列元素。
 
     **参数：**
 
-    - **x1** (Tensor) - 输入Tensor，不支持Scalar， `x1` 的最后一维度和 `x2` 的倒数第二维度相等，且 `x1` 和 `x2` 彼此支持广播。
-    - **x2** (Tensor) - 输入Tensor，不支持Scalar， `x1` 的最后一维度和 `x2` 的倒数第二维度相等，且 `x1` 和 `x2` 彼此支持广播。
-    - **dtype** (:class:mindspore.dtype, optional) - 指定输入Tensor的数据类型，默认：None。
+    - **transpose_a** (bool) - 如果为True，则在相乘之前转置 `a`。默认值：False。
+    - **transpose_b** (bool) - 如果为True，则在相乘之前转置 `b`。默认值：False。
+
+    **输入：**
+
+    - **a** (Tensor) - 要相乘的第一个Tensor。如果 `transpose_a` 为False，则该Tensor的shape为 :math:`(N, C)` ；否则，该Tensor的shape为 :math:`(C, N)` 。
+    - **b** (Tensor) - 要相乘的第二个Tensor。如果 `transpose_b` 为False，则该Tensor的shape为 :math:`(C, M)` ；否则，该Tensor的shape为 :math:`(M, C)` 。
 
     **输出：**
 
-    Tensor或Scalar，矩阵乘积的输入。当 `x1` 和 `x2` 为一维向量时，输入为Scalar。
+    Tensor，输出Tensor的shape为 :math:`(N, M)` 。
 
     **异常：**
 
-    - **ValueError** -  `x1` 的最后一维度和 `x2` 的倒数第二维度不相等，或者输入的是Scalar。
-    - **ValueError** - `x1` 和 `x2` 彼此不能广播。
+    - **TypeError** - `transpose_a` 或 `transpose_b` 不是bool。
+    - **ValueError** - 矩阵 `a` 的列不等于矩阵 `b` 的行。
+    - **ValueError** - `a` 或 `b` 的维度不等于2。

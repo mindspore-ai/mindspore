@@ -230,6 +230,9 @@ class PSContext {
   void set_global_iteration_time_window(const uint64_t &global_iteration_time_window);
   uint64_t global_iteration_time_window() const;
 
+  std::string checkpoint_dir() const;
+  void set_checkpoint_dir(const std::string &checkpoint_dir);
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -282,7 +285,8 @@ class PSContext {
         client_password_(""),
         server_password_(""),
         http_url_prefix_(""),
-        global_iteration_time_window_(21600000) {}
+        global_iteration_time_window_(3600000),
+        checkpoint_dir_("") {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -415,6 +419,8 @@ class PSContext {
 
   // The time window of startFLJob round in millisecond.
   uint64_t global_iteration_time_window_;
+  // directory of server checkpoint
+  std::string checkpoint_dir_;
 };
 }  // namespace ps
 }  // namespace mindspore

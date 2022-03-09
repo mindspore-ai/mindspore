@@ -242,24 +242,24 @@ constexpr auto kCtxGetKeysClientList = "get_keys_client_list";
 constexpr auto kCtxFedAvgTotalDataSize = "fed_avg_total_data_size";
 constexpr auto kCtxCipherPrimer = "cipher_primer";
 constexpr auto kCurrentIteration = "current_iteration";
+const char PYTHON_MOD_SERIALIZE_MODULE[] = "mindspore.train.serialization";
+const char PYTHON_MOD_SAFE_WEIGHT[] = "_save_weight";
 
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIME_MILLI \
   std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
 
 // This method returns the size in bytes of the given TypeId.
-inline size_t GetTypeIdByte(const TypeId &type) {
+inline std::string GetTypeIdByte(const TypeId &type) {
   switch (type) {
     case kNumberTypeFloat16:
-      return kNumberTypeFloat16Type;
-    case kNumberTypeUInt32:
+      return "Float16";
     case kNumberTypeFloat32:
-      return kNumberTypeFloat32Type;
-    case kNumberTypeUInt64:
-      return kNumberTypeUInt64Type;
+      return "Float32";
+    case kNumberTypeFloat64:
+      return "Float64";
     default:
       MS_LOG(EXCEPTION) << "TypeId " << type << " not supported.";
-      return 0;
   }
 }
 

@@ -19,16 +19,17 @@
 #include <string>
 #include <memory>
 #include "fl/server/executor.h"
+#include "pipeline/jit/parse/parse.h"
 
 namespace mindspore {
 namespace fl {
 namespace server {
-void ModelStore::Initialize(uint32_t max_count) {
+void ModelStore::Initialize(uint32_t rank_id, uint32_t max_count) {
   if (!Executor::GetInstance().initialized()) {
     MS_LOG(EXCEPTION) << "Server's executor must be initialized before model storage.";
     return;
   }
-
+  rank_id_ = rank_id;
   max_model_count_ = max_count;
   initial_model_ = AssignNewModelMemory();
   iteration_to_model_[kInitIterationNum] = initial_model_;
@@ -84,6 +85,7 @@ void ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
   }
   iteration_to_model_[iteration] = memory_register;
   OnIterationUpdate();
+  SaveCheckpoint(iteration, new_model);
   return;
 }
 
@@ -240,6 +242,41 @@ void ModelStore::OnIterationUpdate() {
   MS_LOG(INFO) << "Current model cache number: " << model_response_cache_.size()
                << ", total add and sub reference count: " << total_add_reference_count << ", "
                << total_sub_reference_count;
+}
+
+void ModelStore::SaveCheckpoint(size_t iteration, const std::map<std::string, AddressPtr> &model) {
+  if (rank_id_ != kLeaderServerRank) {
+    MS_LOG(INFO) << "Only leader server will save the weight.";
+    return;
+  }
+  std::unordered_map<std::string, Feature> &aggregation_feature_map =
+    LocalMetaStore::GetInstance().aggregation_feature_map();
+
+  namespace python_adapter = mindspore::python_adapter;
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_SERIALIZE_MODULE);
+
+  py::dict dict_data = py::dict();
+  for (const auto &weight : model) {
+    std::string weight_fullname = weight.first;
+    float *weight_data = reinterpret_cast<float *>(weight.second->addr);
+    size_t weight_data_size = weight.second->size / sizeof(float);
+    Feature aggregation_feature = aggregation_feature_map[weight_fullname];
+
+    std::vector<float> weight_data_vec(weight_data, weight_data + weight_data_size);
+
+    py::list data_list;
+    data_list.append(aggregation_feature.weight_type);
+    data_list.append(aggregation_feature.weight_shape);
+    data_list.append(weight_data_vec);
+    data_list.append(weight_data_size);
+    dict_data[py::str(weight_fullname)] = data_list;
+  }
+
+  std::string checkpoint_dir = ps::PSContext::instance()->checkpoint_dir();
+  std::string fl_name = ps::PSContext::instance()->fl_name();
+
+  python_adapter::CallPyModFn(mod, PYTHON_MOD_SAFE_WEIGHT, py::str(checkpoint_dir), py::str(fl_name),
+                              py::str(std::to_string(iteration)), dict_data);
 }
 }  // namespace server
 }  // namespace fl
