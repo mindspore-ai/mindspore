@@ -28,14 +28,11 @@
 #include "utils/ms_context.h"
 #include "utils/file_utils.h"
 #include "include/common/utils/context/graph_kernel_flags.h"
-#include "backend/common/pass/getitem_tuple.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
-using opt::GetitemTuple;
-
 std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
   std::vector<OpWithLevel> clusterable_ops_with_level = {
     // all target
@@ -405,8 +402,6 @@ void GraphKernelCluster::CreateFuncGraph(const FuncGraphPtr &func_graph, const s
   (void)std::transform(nodes_id.begin(), nodes_id.end(), std::back_inserter(old_nodes),
                        [this](size_t id) { return this->nodes_[id]; });
   auto new_node = ReplaceNodesWithGraphKernelNode(old_nodes, func_graph, "fusion");
-  std::shared_ptr<Pass> eliminate_getitem_pass = std::make_shared<GetitemTuple>();
-  (void)eliminate_getitem_pass->Run(GetCNodeFuncGraph(new_node));
   if (GraphKernelFlags::GetInstance().dump_as_text) {
     DumpClusterInfo(old_nodes, new_node);
   }

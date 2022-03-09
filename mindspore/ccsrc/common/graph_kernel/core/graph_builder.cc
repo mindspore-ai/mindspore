@@ -27,6 +27,7 @@
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
 #include "utils/ordered_set.h"
+#include "backend/common/pass/getitem_tuple.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 
@@ -83,7 +84,7 @@ bool InlineInnerFuncGraph(const FuncGraphPtr &fg) {
   return changed;
 }
 
-void EliminateMakeTuple(const FuncGraphPtr &fg) {
+void EliminateTupleOfTuple(const FuncGraphPtr &fg) {
   if (!IsPrimitiveCNode(fg->output(), prim::kPrimMakeTuple)) {
     return;
   }
@@ -259,15 +260,14 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNod
   AnfNodePtrList outputs;
   std::tie(fg, inputs, outputs) = BuildGraphFromNodes(nodes);
 
-  FuncGraphManagerPtr mng = fg->manager();
-  if (mng == nullptr) {
-    mng = Manage(fg, false);
-    fg->set_manager(mng);
-  }
+  FuncGraphManagerPtr mng = GkUtils::GetFuncGraphManager(fg);
+  MS_EXCEPTION_IF_NULL(mng);
 
   (void)InlineInnerFuncGraph(fg);
   // eliminate tuple of tuple, and set Abstract for output MakeTuple
-  EliminateMakeTuple(fg);
+  EliminateTupleOfTuple(fg);
+  // eliminate the inner MakeTuple-GetItem edges
+  (void)std::static_pointer_cast<opt::Pass>(std::make_shared<opt::GetitemTuple>())->Run(fg);
   (void)ConvertNonscalarTensorToParameter(fg, &inputs);
 
   return std::make_tuple(fg, inputs, outputs);
