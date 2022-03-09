@@ -18,6 +18,9 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_META_SERVER_NODE_H_
 
 #include <string>
+#include <memory>
+#include "distributed/cluster/topology/common.h"
+#include "distributed/rpc/tcp/tcp_server.h"
 #include "distributed/cluster/topology/node_base.h"
 
 namespace mindspore {
@@ -31,9 +34,27 @@ class MetaServerNode : public NodeBase {
   explicit MetaServerNode(const std::string &node_id) : NodeBase(node_id) {}
   ~MetaServerNode() override = default;
 
+  bool Initialize() override;
+  bool Finalize() override;
+
  private:
+  // Create and init the tcp server.
+  bool InitTCPServer();
+
+  // Handle the message received by the tcp server.
+  void HandleMessage(const std::shared_ptr<MessageBase> &message);
+
+  // Process the received register message sent from compute graph nodes.
+  void ProcessRegister();
+
   // Process the received heartbeat message sent from compute graph nodes.
   void ProcessHeartbeat();
+
+  // The meta server address used to manage the tcp server.
+  MetaServerAddress meta_server_addr_;
+
+  // The TCP server is used to process messages sent from compute graph nodes.
+  std::unique_ptr<rpc::TCPServer> tcp_server_;
 };
 }  // namespace topology
 }  // namespace cluster

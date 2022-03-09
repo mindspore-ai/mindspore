@@ -32,6 +32,12 @@ class NodeBase {
   explicit NodeBase(const std::string &node_id) : node_id_(node_id) {}
   virtual ~NodeBase() = default;
 
+  // Prepare the resources hold in this node.
+  virtual bool Initialize() = 0;
+
+  // Release the resources hold in this node.
+  virtual bool Finalize() = 0;
+
  protected:
   // Each node process has a unique node id which is immutable during the life cycle of this node.
   // The node id is used for identify authentication during networking and process recovery.

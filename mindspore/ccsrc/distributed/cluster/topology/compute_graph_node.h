@@ -18,6 +18,9 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_COMPUTE_GRAPH_NODE_H_
 
 #include <string>
+#include <memory>
+#include "distributed/cluster/topology/common.h"
+#include "distributed/rpc/tcp/tcp_client.h"
 #include "distributed/cluster/topology/node_base.h"
 
 namespace mindspore {
@@ -30,9 +33,21 @@ class ComputeGraphNode : public NodeBase {
   explicit ComputeGraphNode(const std::string &node_id) : NodeBase(node_id) {}
   ~ComputeGraphNode() override = default;
 
+  bool Initialize() override;
+  bool Finalize() override;
+
  private:
+  // Send the register message to the meta server node when this node process startup.
+  bool Register();
+
   // Send the heartbeat message to the meta server node.
   bool Heartbeat();
+
+  // The meta server address used to synchronize metadata with other compute graph nodes.
+  MetaServerAddress meta_server_addr_;
+
+  // The TCP client is used to send messages to meta server node.
+  std::unique_ptr<rpc::TCPClient> tcp_client_;
 };
 }  // namespace topology
 }  // namespace cluster
