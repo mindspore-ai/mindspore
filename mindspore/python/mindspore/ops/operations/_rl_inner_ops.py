@@ -306,3 +306,151 @@ class CudnnGRU(PrimitiveWithInfer):
         args = {'x': x_dtype, 'h': h_dtype, 'w': w_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32, mstype.float16), self.name)
         return x_dtype, x_dtype, x_dtype, x_dtype
+
+
+class PriorityReplayBufferCreate(PrimitiveWithInfer):
+    r"""
+    PriorityReplayBuffer is experience container used in Deep Q-Networks.
+    The algorithm is proposed in `Prioritized Experience Replay <https://arxiv.org/abs/1511.05952>`.
+    Same as the normal replay buffer, it lets the reinforcement learning agents remember and reuse experiences from the
+    past. Besides, it replays important transitions more frequently and improve sample effciency.
+
+    Args:
+        capcity (int64): Capacity of the buffer. It is recommended that set capacity to pow(2, N).
+        alpha (float): The parameter determines how much prioritization is used between [0, 1].
+        beta (float): The parameter determines how much compensations for non-uniform probabilities between [0, 1].
+        shapes (list[tuple[int]]): The dimensionality of the transition.
+        dtypes (list[:class:`mindspore.dtype`]): The type of the transition.
+        seed0 (int): Random seed0, must be non-negative. Default: 0.
+        seed1 (int): Random seed1, must be non-negative. Default: 0.
+
+    Outputs:
+        handle(Tensor): Handle of created priority replay buffer instance with dtype int64 and shape (1,).
+
+    Raises:
+        TypeError: The args not provided.
+
+    Supported Platforms:
+        ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, capacity, alpha, beta, shapes, dtypes, seed0, seed1):
+        """Initialize PriorityReplaBufferCreate."""
+        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
+        validator.check_float_range(alpha, 0.0, 1.0, Rel.INC_BOTH)
+        validator.check_float_range(beta, 0.0, 1.0, Rel.INC_BOTH)
+        validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
+        validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
+        validator.check_non_negative_int(seed0, "seed0", self.name)
+        validator.check_non_negative_int(seed1, "seed1", self.name)
+
+    def infer_shape(self):
+        return (1,)
+
+    def infer_dtype(self):
+        return mstype.int64
+
+
+class PriorityReplayBufferPush(PrimitiveWithInfer):
+    r"""
+    Push a transition to the priority replay buffer.
+
+    Args:
+        handle(Tensor): Priority replay buffer instance handle with dtype int64 and shape (1,).
+
+    Outputs:
+        handle(Tensor): Priority replay buffer instance handle with dtype int64 and shape (1,).
+
+    Raises:
+        TypeError: The priority replay buffer not created before.
+
+    Supported Platforms:
+        ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, handle):
+        """Initialize PriorityReplaBufferPush."""
+        validator.check_int(handle, 0, Rel.GE, "handle", self.name)
+
+    def infer_shape(self, *inputs):
+        return (1,)
+
+    def infer_dtype(self, *inputs):
+        return mstype.int64
+
+
+class PriorityReplayBufferSample(PrimitiveWithInfer):
+    r"""
+    Sample a transition to the priority replay buffer.
+
+    .. warning::
+            This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        handle(Tensor): Priority replay buffer instance handle with dtype int64 and shape (1,).
+        batch_size (int): The size of the sampled transitions.
+        shapes (list[tuple[int]]): The dimensionality of the transition.
+        dtypes (list[:class:`mindspore.dtype`]): The type of the transition.
+
+    Outputs:
+        tuple(Tensor): Transition with its indices and bias correction weights.
+
+    Raises:
+        TypeError: The priority replay buffer not created before.
+
+    Supported Platforms:
+        ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, handle, batch_size, shapes, dtypes):
+        """Initialize PriorityReplaBufferSample."""
+        validator.check_int(handle, 0, Rel.GE, "capacity", self.name)
+        validator.check_int(batch_size, 1, Rel.GE, "batch_size", self.name)
+        validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
+        validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
+
+    def infer_shape(self):
+        output_shape = [(self.batch_size,), (self.batch_size,)]
+        for shape in self.shapes:
+            output_shape.append((self.batch_size,) + shape)
+        # indices, weights, transitions
+        return tuple(output_shape)
+
+    def infer_dtype(self):
+        return (mstype.int64, mstype.float32) + self.dtypes
+
+
+class PriorityReplayBufferUpdate(PrimitiveWithInfer):
+    r"""
+    Update transition prorities.
+
+    Args:
+        handle(Tensor): Priority replay buffer instance handle with dtype int64 and shape (1,).
+
+    Inputs:
+        - **indices** (Tensor) - transition indices.
+        - **priorities** (Tensor) - Transition priorities.
+
+    Outputs:
+        Priority replay buffer instance handle with dtype int64 and shape (1,).
+
+    Raises:
+        TypeError: The priority replay buffer not created before.
+
+    Supported Platforms:
+        ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, handle):
+        """Initialize PriorityReplaBufferUpdate."""
+        validator.check_int(handle, 0, Rel.GE, "capacity", self.name)
+
+    def infer_shape(self, indices, priorities):
+        return (1,)
+
+    def infer_dtype(self, indices, priorities):
+        return mstype.int64
