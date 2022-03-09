@@ -57,7 +57,7 @@ bool IsVisible(FuncGraphPtr fg, const FuncGraphPtr &parent) {
 const StringImmPtr kDeadNode = std::make_shared<StringImm>(kDeadNodeName);
 const StringImmPtr kPolyNode = std::make_shared<StringImm>(kPolyNodeName);
 
-inline bool CanSpecializeValueNode(const AnfNodePtr &node) {
+bool CanSpecializeValueNode(const AnfNodePtr &node) {
   if (IsValueNode<MetaFuncGraph>(node) || IsValueNode<Primitive>(node)) {
     return true;
   }

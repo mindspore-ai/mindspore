@@ -191,8 +191,8 @@ void LogWriter::operator^(const LogStream &stream) const {
   throw std::runtime_error(oss.str());
 }
 
-static std::string GetEnv(const std::string &envvar) {
-  const char *value = ::getenv(envvar.c_str());
+static inline std::string GetEnv(const std::string &envvar) {
+  const char *value = std::getenv(envvar.c_str());
 
   if (value == nullptr) {
     return std::string();
@@ -483,8 +483,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
 
 std::string GetTimeString() {
   constexpr auto BUFLEN = 80;
-  char buf[BUFLEN];
-  (void)memset(buf, '\0', BUFLEN);
+  char buf[BUFLEN] = {'\0'};
 #if defined(_WIN32) || defined(_WIN64)
   time_t time_seconds = time(0);
   struct tm now_time;

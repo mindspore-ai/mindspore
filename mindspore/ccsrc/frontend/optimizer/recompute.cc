@@ -17,10 +17,9 @@
 #include "frontend/optimizer/recompute.h"
 #include <memory>
 #include <queue>
-#include <utility>
 #include <list>
 #include <vector>
-#include <algorithm>
+#include <string>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/func_graph.h"

@@ -226,12 +226,8 @@ class TensorDataImpl : public TensorData {
     return data_.get();
   }
 
-  bool equals(const TensorData &other) const override {
-    auto ptr = dynamic_cast<const TensorDataImpl<T> *>(&other);
-    if (ptr == nullptr) {
-      // Not same type, compare data byte by byte.
-      return TensorData::equals(other);
-    }
+  virtual bool equals(const TensorDataImpl<T> &other) const {
+    auto ptr = &other;
     if (ptr == this) {
       return true;
     }
@@ -240,6 +236,11 @@ class TensorDataImpl : public TensorData {
     }
     return (ndim_ == ptr->ndim_) && (data_size_ == ptr->data_size_) &&
            std::equal(data_.get(), data_.get() + data_size_, ptr->data_.get());
+  }
+
+  bool equals(const TensorData &other) const override {
+    // Not same type, compare data byte by byte.
+    return TensorData::equals(other);
   }
 
   std::string ToString(const TypeId type, const ShapeVector &shape, bool use_comma) const override {

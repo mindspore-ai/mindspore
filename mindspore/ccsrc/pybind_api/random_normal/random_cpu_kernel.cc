@@ -15,6 +15,7 @@
  */
 #include "pybind_api/random_normal/random_cpu_kernel.h"
 
+#include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ir/tensor.h"
 

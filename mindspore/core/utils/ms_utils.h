@@ -112,7 +112,7 @@ inline bool IsEqual(const std::shared_ptr<T> &a, const std::shared_ptr<T> &b) {
 }
 
 template <typename T>
-inline bool IsAttrsEqual(const T &a, const T &b) {
+bool IsAttrsEqual(const T &a, const T &b) {
   if (&a == &b) {
     return true;
   }

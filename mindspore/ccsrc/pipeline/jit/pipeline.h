@@ -138,7 +138,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   py::object GenerateArgumentsKey(const py::tuple &args, bool enable_tuple_broaden = false);
 
  private:
-  GraphExecutorPy();
+  GraphExecutorPy() = default;
   void GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
                      std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table);
   void GetGeBackendPolicy() const;

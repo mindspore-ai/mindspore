@@ -21,25 +21,18 @@
 
 namespace mindspore {
 namespace common {
-static inline errno_t huge_memcpy_s(uint8_t *destAddr, size_t destMaxLen, const uint8_t *srcAddr, size_t srcLen) {
-  MS_EXCEPTION_IF_NULL(destAddr);
-  MS_EXCEPTION_IF_NULL(srcAddr);
-  auto dest = destAddr;
-  auto src = srcAddr;
-  auto destMax = destMaxLen;
-  auto count = srcLen;
-
-  while (destMax > SECUREC_MEM_MAX_LEN && count > SECUREC_MEM_MAX_LEN) {
-    auto ret = memcpy_s(dest, SECUREC_MEM_MAX_LEN, src, SECUREC_MEM_MAX_LEN);
+static inline errno_t huge_memcpy(uint8_t *destAddr, size_t destMaxLen, const uint8_t *srcAddr, size_t srcLen) {
+  while (destMaxLen > SECUREC_MEM_MAX_LEN && srcLen > SECUREC_MEM_MAX_LEN) {
+    auto ret = memcpy_s(destAddr, SECUREC_MEM_MAX_LEN, srcAddr, SECUREC_MEM_MAX_LEN);
     if (ret != 0) {
       return ret;
     }
-    dest += SECUREC_MEM_MAX_LEN;
-    src += SECUREC_MEM_MAX_LEN;
-    destMax -= SECUREC_MEM_MAX_LEN;
-    count -= SECUREC_MEM_MAX_LEN;
+    destAddr += SECUREC_MEM_MAX_LEN;
+    srcAddr += SECUREC_MEM_MAX_LEN;
+    destMaxLen -= SECUREC_MEM_MAX_LEN;
+    srcLen -= SECUREC_MEM_MAX_LEN;
   }
-  return memcpy_s(dest, destMax, src, count);
+  return memcpy_s(destAddr, destMaxLen, srcAddr, srcLen);
 }
 }  // namespace common
 }  // namespace mindspore

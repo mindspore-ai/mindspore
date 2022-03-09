@@ -267,9 +267,9 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
     // tensor_list tensor
     if (data_type == kObjectTypeTensorType && tensor_info->Size() >= kTensorListMinSize) {
       data_info->data_.resize(tensor_info->Size() - offset);
-      if (EOK != common::huge_memcpy_s(data_info->data_.data(), data_info->data_.size(),
-                                       static_cast<uint8_t *>(tensor_info->data_c()) + offset,
-                                       tensor_info->Size() - offset)) {
+      if (EOK != common::huge_memcpy(data_info->data_.data(), data_info->data_.size(),
+                                     static_cast<uint8_t *>(tensor_info->data_c()) + offset,
+                                     tensor_info->Size() - offset)) {
         MS_LOG(ERROR) << "memcpy_s failed.";
         return RET_ERROR;
       }
@@ -278,9 +278,9 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
     if (data_type != kObjectTypeTensorType) {
       if (copy_data) {
         data_info->data_.resize(tensor_info->Size() - offset);
-        if (EOK != common::huge_memcpy_s(data_info->data_.data(), data_info->data_.size(),
-                                         static_cast<uint8_t *>(tensor_info->data_c()) + offset,
-                                         tensor_info->Size() - offset)) {
+        if (EOK != common::huge_memcpy(data_info->data_.data(), data_info->data_.size(),
+                                       static_cast<uint8_t *>(tensor_info->data_c()) + offset,
+                                       tensor_info->Size() - offset)) {
           MS_LOG(ERROR) << "memcpy_s failed.";
           return RET_ERROR;
         }

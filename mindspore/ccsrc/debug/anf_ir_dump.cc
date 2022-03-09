@@ -705,7 +705,7 @@ DumpConfig GetDumpConfig() {
     {kDumpConfigLineLevel0, kDumpConfigLineLevel1, kDumpConfigLineLevel2},
     {kDumpConfigDisableBackend},
     {kDumpConfigEnablePassIR}};
-  static DumpConfig dump_config;
+  static DumpConfig dump_config = DumpConfig();
   static bool parsed = false;
   if (parsed) {
     return dump_config;
@@ -740,7 +740,7 @@ DumpConfig GetDumpConfig() {
         (void)configs[i]->insert(substr);
         if (configs[i]->size() > 1) {
           std::ostringstream buffer;
-          std::for_each(configs[i]->begin(), configs[i]->end(), [&buffer](const std::string &config) {
+          (void)std::for_each(configs[i]->begin(), configs[i]->end(), [&buffer](const std::string &config) {
             buffer << "\n" << config;
           });
           MS_LOG(WARNING) << "Dump configs are conflict. Conflict configs: " << buffer.str() << "\n"
