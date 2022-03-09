@@ -572,30 +572,6 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment) {
 }
 
 namespace {
-ValuePtr GetControlOpInputFromMakeTuple(const std::shared_ptr<GraphCompiler> &graph_compiler,
-                                        const AnfNodePtr &front_cnode, const CNodePtr &backend_cnode,
-                                        const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
-                                        const std::map<AnfNodePtr, size_t> &parameter_index,
-                                        const std::vector<tensor::TensorPtr> &graph_inputs,
-                                        InputTensorInfo *input_tensor_info, size_t *input_index) {
-  MS_EXCEPTION_IF_NULL(graph_compiler);
-  MS_EXCEPTION_IF_NULL(front_cnode);
-  MS_EXCEPTION_IF_NULL(input_index);
-  MS_LOG(DEBUG) << "The input node of hook op: " << front_cnode->DebugString() << " is a make tuple node.";
-  auto make_tuple = front_cnode->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(make_tuple);
-  const auto output_size = make_tuple->size() - 1;
-  std::vector<ValuePtr> output_values;
-  for (size_t idx = 0; idx < output_size; ++idx) {
-    TensorPtr tensor = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index,
-                                                                     graph_inputs, input_tensor_info, *input_index);
-    MS_EXCEPTION_IF_NULL(tensor);
-    output_values.emplace_back(tensor);
-    ++(*input_index);
-  }
-  return std::make_shared<ValueTuple>(output_values);
-}
-
 void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, const CNodePtr &front_cnode,
                        const CNodePtr &backend_cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                        const std::map<AnfNodePtr, size_t> &parameter_index,
@@ -605,40 +581,60 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
   MS_EXCEPTION_IF_NULL(backend_cnode);
   MS_EXCEPTION_IF_NULL(graph_compiler);
   MS_EXCEPTION_IF_NULL(args);
-  size_t input_index = 0;
-  auto inputs = front_cnode->inputs();
-  for (size_t i = 1; i < inputs.size(); i++) {
-    const auto &input_node = inputs[i];
-    MS_EXCEPTION_IF_NULL(input_node);
-    if (IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
-      // Hook multi-input or multi-output.
-      args->emplace_back(GetControlOpInputFromMakeTuple(graph_compiler, input_node, backend_cnode, op_output_map,
-                                                        parameter_index, graph_inputs, input_tensor_info,
-                                                        &input_index));
-      continue;
+  size_t front_index = 0;     // Point to front end cnode
+  size_t back_index = 0;      // Point to backend end cnode
+  size_t args_tuple_num = 0;  // Record the input num of maketuple cnode
+  std::vector<ValuePtr> args_tuple;
+  auto front_size = front_cnode->inputs().size();
+  auto back_size = backend_cnode->inputs().size();
+  while (front_index + 1 < front_size && back_index + 1 < back_size) {
+    AnfNodePtr input_node = nullptr;
+    if (args_tuple_num) {
+      input_node = backend_cnode->input(back_index + 1);
+    } else {
+      input_node = front_cnode->input(front_index + 1);
+      if (IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
+        // Hook multi-input or multi-output.
+        MS_LOG(DEBUG) << "The input node of hook op: " << input_node->DebugString() << " is a make tuple node.";
+        auto make_tuple = input_node->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(make_tuple);
+        args_tuple_num = make_tuple->inputs().size() - 1;
+        continue;
+      }
     }
     // Hook single-input or single-output.
     auto real_input = common::AnfAlgo::VisitKernel(input_node, 0).first;
     MS_EXCEPTION_IF_NULL(real_input);
+    ValuePtr value = nullptr;
     if (!real_input->isa<ValueNode>()) {
-      auto tensor = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index,
-                                                                  graph_inputs, input_tensor_info, input_index);
-      MS_EXCEPTION_IF_NULL(tensor);
-      args->emplace_back(tensor);
-      ++input_index;
+      value = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index, graph_inputs,
+                                                            input_tensor_info, back_index);
+      MS_EXCEPTION_IF_NULL(value);
+      ++back_index;
     } else {
       const auto &value_node = real_input->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
-      const auto &value = value_node->value();
+      value = value_node->value();
       MS_EXCEPTION_IF_NULL(value);
-      args->emplace_back(value);
       if (value->isa<ValueSequence>()) {
         const auto &value_sequeue = value->cast<ValueSequencePtr>();
         MS_EXCEPTION_IF_NULL(value_sequeue);
-        input_index += value_sequeue->size();
+        back_index += value_sequeue->size();
       } else {
-        ++input_index;
+        ++back_index;
       }
+    }
+    if (args_tuple_num) {
+      args_tuple.emplace_back(value);
+      if (args_tuple.size() == args_tuple_num) {
+        value = std::make_shared<ValueTuple>(args_tuple);
+        args_tuple_num = 0;
+        args_tuple.clear();
+      }
+    }
+    if (!args_tuple_num) {
+      args->emplace_back(value);
+      front_index++;
     }
   }
 }

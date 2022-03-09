@@ -300,6 +300,12 @@ PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   auto manager = resource->manager();
   resource->set_func_graph(bprop_fg);
+  for (const auto &abs : abs_list_input) {
+    if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
+      auto fg_abs = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+      manager->AddFuncGraph(fg_abs->func_graph());
+    }
+  }
   manager->AddFuncGraph(bprop_fg);
   auto opt_bprop_fg = PrimBpOptPassStep2(irpass, resource);
   auto level_2_graph_info = std::make_shared<PrimBpropOptGraphLevel2Info>(opt_bprop_fg);
