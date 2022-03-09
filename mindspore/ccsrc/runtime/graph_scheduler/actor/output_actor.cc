@@ -149,8 +149,9 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   if (output_node_to_tensor_device_address_.count({output_node, output_index}) > 0) {
     tensor->set_device_address(output_node_to_tensor_device_address_[{output_node, output_index}]);
   } else {
-    auto tensor_device_address = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
-                                                                     device_tensor->format(), device_tensor->type_id());
+    auto tensor_device_address =
+      device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(), device_tensor->format(),
+                                          device_tensor->type_id(), device_tensor->host_shape());
     MS_EXCEPTION_IF_NULL(tensor_device_address);
     tensor->set_device_address(tensor_device_address);
     output_node_to_tensor_device_address_[{output_node, output_index}] = tensor_device_address;

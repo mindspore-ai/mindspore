@@ -49,8 +49,8 @@ class GPUDeviceContext : public DeviceContext {
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *const ptr) const override;
 
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                       TypeId type_id) const override;
+  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
+                                       const ShapeVector &shape = ShapeVector()) const override;
   DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kGPU; }
 
   // Optimize the kernel graph for graph mode.

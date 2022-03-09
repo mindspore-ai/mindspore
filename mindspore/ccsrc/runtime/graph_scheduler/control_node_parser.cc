@@ -283,7 +283,7 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   // Create device tensor.
   std::string output_format = AnfAlgo::GetOutputFormat(backend_node, 0);
   device::DeviceAddressPtr address =
-    device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id);
+    device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id, ShapeVector());
   MS_EXCEPTION_IF_NULL(address);
   MS_LOG(DEBUG) << "Create address for node:" << common::AnfAlgo::GetNodeDebugString(front_node) << " addr:" << address
                 << " size:" << tensor_size;
@@ -311,7 +311,8 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   size_t size = AnfAlgo::GetOutputTensorMemSize(node, 0);
 
   // Create device tensor.
-  device::DeviceAddressPtr address = device_context->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id);
+  device::DeviceAddressPtr address =
+    device_context->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector());
   MS_EXCEPTION_IF_NULL(address);
   MS_LOG(INFO) << "Create address for node that has no corresponding backend node:"
                << common::AnfAlgo::GetNodeDebugString(node) << " addr:" << address << " size:" << size

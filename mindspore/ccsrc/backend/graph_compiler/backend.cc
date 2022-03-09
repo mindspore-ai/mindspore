@@ -245,10 +245,10 @@ void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
         continue;
       }
       MS_EXCEPTION_IF_NULL(device_context);
-      auto new_device_address = device_context->CreateDeviceAddress(
-        nullptr, device_address->GetSize(), device_address->format(), device_address->type_id());
+      auto new_device_address =
+        device_context->CreateDeviceAddress(nullptr, device_address->GetSize(), device_address->format(),
+                                            device_address->type_id(), device_address->host_shape());
       MS_EXCEPTION_IF_NULL(new_device_address);
-      new_device_address->set_host_shape(device_address->host_shape());
       new_device_address->set_original_ref_count(device_address->original_ref_count());
       new_device_address->ResetRefCount();
       if (is_gradient_out) {

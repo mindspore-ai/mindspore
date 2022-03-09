@@ -86,7 +86,7 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     }
 
     auto format = kOpFormat_DEFAULT;
-    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type);
+    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type, ShapeVector());
     string input_tensor_name = input_kernel_name + ':' + "0";
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, PARAMETER_OUTPUT_INDEX);
     auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), format, int_shapes, type, 0, true,
@@ -122,7 +122,7 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
     }
 
     auto format = kOpFormat_DEFAULT;
-    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type);
+    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type, ShapeVector());
     string tensor_name = kernel_name + ':' + std::to_string(j);
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(cnode, j);
     auto ret =
