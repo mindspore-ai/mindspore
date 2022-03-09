@@ -154,7 +154,7 @@ def test_time_distributed_conv2d_no_reshape_axis():
     print("Conv2D layer with no reshape axis wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_time_distributed_maxpool2d_no_reshape_axis():
