@@ -188,7 +188,7 @@ function Run_Simulation() {
 basepath=$(pwd)
 echo ${basepath}
 
-while getopts "r:m:e:" opt; do
+while getopts "r:m:e:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -201,6 +201,10 @@ while getopts "r:m:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -241,8 +245,12 @@ version=${file_name_array[2]}
 cd -
 
 # Set filepath
-models_caffe_3403_config=${basepath}/../config/models_caffe_3403_simulation.cfg
-models_onnx_3403_config=${basepath}/../config/models_onnx_3403_simulation.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_caffe_3403_config=${basepath}/../${config_folder}/models_caffe_3403_simulation.cfg
+models_onnx_3403_config=${basepath}/../${config_folder}/models_onnx_3403_simulation.cfg
 
 # Set om generated path
 om_generated_path=${basepath}/om_generated

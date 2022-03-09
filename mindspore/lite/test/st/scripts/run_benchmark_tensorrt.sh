@@ -193,7 +193,7 @@ function Print_Benchmark_Result() {
 }
 
 # Example:sh run_benchmark_tensorrt.sh -r /home/temp_test -m /home/temp_test/models -e x86_gpu -d 192.168.1.1:0
-while getopts "r:m:d:e:" opt; do
+while getopts "r:m:d:e:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -211,6 +211,10 @@ while getopts "r:m:d:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${backend}"
+            ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -230,7 +234,11 @@ version=${file_name_array[2]}
 ms_models_path=${basepath}/ms_models
 
 # Set models config filepath
-models_tensorrt_config=${basepath}/../../config/models_tensorrt.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_tensorrt_config=${basepath}/../../${config_folder}/models_tensorrt.cfg
 echo ${models_tensorrt_config}
 
 # Write converter result to temp file

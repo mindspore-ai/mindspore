@@ -29,7 +29,7 @@ echo ' ' > ${run_ut_result_file}
 run_arm64_ut_log_file=${basepath}/run_gpu_ut_log.txt
 echo 'run arm64 ut logs: ' > ${run_arm64_ut_log_file}
 
-ut_arm64_config=${test_dir}/config/ut_arm64.cfg
+ut_arm64_config=${test_dir}/config_level0/ut_arm64.cfg
 
 function Run_arm64_ut() {
     cp -a ${test_dir}/build/lite-test ${ut_test_path}/lite-test || exit 1

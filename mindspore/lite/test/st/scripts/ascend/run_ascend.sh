@@ -9,7 +9,7 @@ function PrePareLocal() {
   cp ./scripts/base_functions.sh ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/run_converter_ascend.sh ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/run_benchmark_ascend.sh ${benchmark_test_path} || exit 1
-  cp ./../config/models_ascend.cfg ${benchmark_test_path} || exit 1
+  cp ./../${config_folder}/models_ascend.cfg ${benchmark_test_path} || exit 1
   cp ${release_path}/centos_x86/ascend/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
   echo "Copy file success"
 }
@@ -21,7 +21,7 @@ function PrePareRemote() {
   scp ./scripts/ascend/run_converter_ascend.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./scripts/ascend/run_benchmark_ascend.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./scripts/base_functions.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
-  scp ./../config/models_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  scp ./../${config_folder}/models_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ${release_path}/centos_x86/ascend/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   echo "Copy file success"
 }
@@ -41,7 +41,7 @@ function Run_Ascend() {
 }
 
 # Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -e Ascend310 -d 10.92.9.100:2
-while getopts "r:m:d:e:" opt; do
+while getopts "r:m:d:e:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -59,6 +59,10 @@ while getopts "r:m:d:e:" opt; do
             backend=${OPTARG}
             echo "backend is ${backend}"
             ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
+            ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -69,6 +73,11 @@ if [[ ${backend} =~ "x86" ]]; then
   arch="x64"
 elif [[ ${backend} =~ "arm" ]]; then
   arch="aarch64"
+fi
+
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
 fi
 
 user_name=${USER}

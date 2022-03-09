@@ -210,7 +210,7 @@ basepath=$(pwd)
 echo ${basepath}
 
 # Example:sh run_benchmark_x86.sh -r /home/temp_test -m /home/temp_test/models -e arm_cpu
-while getopts "r:m:e:p:" opt; do
+while getopts "r:m:e:p:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -227,6 +227,10 @@ while getopts "r:m:e:p:" opt; do
         p)
             x86_fail_not_return=${OPTARG}
             echo "x86_fail_not_return is ${OPTARG}"
+            ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -246,22 +250,26 @@ version=${file_name_array[2]}
 cd -
 
 # Set models config filepath
-models_tflite_parallel_split_config=${basepath}/../config/models_parallel_split.cfg
-models_tflite_config=${basepath}/../config/models_tflite.cfg
-models_tf_config=${basepath}/../config/models_tf.cfg
-models_caffe_config=${basepath}/../config/models_caffe.cfg
-models_tflite_awaretraining_config=${basepath}/../config/models_tflite_awaretraining.cfg
-models_posttraining_config=${basepath}/../config/models_posttraining.cfg
-models_onnx_config=${basepath}/../config/models_onnx.cfg
-models_mindspore_config=${basepath}/../config/models_mindspore.cfg
-#models_mindspore_train_config=${basepath}/../config/models_mindspore_train.cfg
-models_weightquant_0bit_config=${basepath}/../config/models_weightquant_0bit.cfg
-models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
-models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
-models_weightquant_8bit_config=${basepath}/../config/models_weightquant_8bit.cfg
-models_weightquant_0bit_auto_tune_config=${basepath}/../config/models_weightquant_0bit_auto_tune.cfg
-models_weightquant_8bit_debug_config=${basepath}/../config/models_weightquant_8bit_debug.cfg
-models_process_only_config=${basepath}/../config/models_process_only.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_tflite_parallel_split_config=${basepath}/../${config_folder}/models_parallel_split.cfg
+models_tflite_config=${basepath}/../${config_folder}/models_tflite.cfg
+models_tf_config=${basepath}/../${config_folder}/models_tf.cfg
+models_caffe_config=${basepath}/../${config_folder}/models_caffe.cfg
+models_tflite_awaretraining_config=${basepath}/../${config_folder}/models_tflite_awaretraining.cfg
+models_posttraining_config=${basepath}/../${config_folder}/models_posttraining.cfg
+models_onnx_config=${basepath}/../${config_folder}/models_onnx.cfg
+models_mindspore_config=${basepath}/../${config_folder}/models_mindspore.cfg
+#models_mindspore_train_config=${basepath}/../${config_folder}/models_mindspore_train.cfg
+models_weightquant_0bit_config=${basepath}/../${config_folder}/models_weightquant_0bit.cfg
+models_weightquant_7bit_config=${basepath}/../${config_folder}/models_weightquant_7bit.cfg
+models_weightquant_9bit_config=${basepath}/../${config_folder}/models_weightquant_9bit.cfg
+models_weightquant_8bit_config=${basepath}/../${config_folder}/models_weightquant_8bit.cfg
+models_weightquant_0bit_auto_tune_config=${basepath}/../${config_folder}/models_weightquant_0bit_auto_tune.cfg
+models_weightquant_8bit_debug_config=${basepath}/../${config_folder}/models_weightquant_8bit_debug.cfg
+models_process_only_config=${basepath}/../${config_folder}/models_process_only.cfg
 
 # Prepare the config file list
 x86_cfg_file_list=()

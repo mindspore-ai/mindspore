@@ -491,14 +491,18 @@ basepath=$(pwd)
 echo "base path is: ${basepath}"
 
 # Set models config filepath
-models_ms_train_config=${basepath}/../config/models_ms_train.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]];then
+    config_folder="config_level1"
+fi
+models_ms_train_config=${basepath}/..${config_folder}models_ms_train.cfg
 
 # Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
 epoch_num=1
 threads=2
 train_io_path=""
-while getopts "r:c:m:d:i:e:vt:q:D:M" opt; do
+while getopts "r:c:m:d:i:e:vt:q:D:M:l:" opt; do
     case ${opt} in
         r)
            release_path=${OPTARG}
@@ -540,6 +544,10 @@ while getopts "r:c:m:d:i:e:vt:q:D:M" opt; do
         t)
             epoch_num=${OPTARG}
             echo "train epoch num is ${epoch_num}"
+            ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
             ;;
         ?)
             echo "unknown para"
