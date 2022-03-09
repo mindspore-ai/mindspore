@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_SESSION_H_
 
 namespace mindspore::lite::micro {
-extern const char session_header[];
-extern const char session_source[];
+extern const char model_runtime_other_source[];
+extern const char model_runtime_init_source[];
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_SESSION_H_

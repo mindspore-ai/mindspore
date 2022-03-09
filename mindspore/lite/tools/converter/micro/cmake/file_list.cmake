@@ -27,12 +27,12 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/component/const_blocks/debug_utils.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/msession.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/mtensor.cc
-        ${MICRO_DIR}/coder/generator/component/const_blocks/mmodel.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/license.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/load_input.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/calib_output.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/thread_pool.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/benchmark.cc
+        ${MICRO_DIR}/coder/generator/component/const_blocks/mcontext.cc
         )
 
 set(CODER_OPCODERS_SRC

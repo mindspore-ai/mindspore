@@ -63,7 +63,7 @@ class Generator {
  private:
   int CodeSourceCMakeFile();
   int CodeStaticContent();
-  int CodeSessionImplement();
+  int CodeMSModelImplement();
 
   std::string cmake_file_name_{"net.cmake"};
 #ifdef _MSC_VER

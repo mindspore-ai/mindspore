@@ -39,6 +39,8 @@ constexpr auto kTensor = "tensor";
 constexpr auto kNameSpaceMindSpore = "namespace mindspore";
 constexpr auto kNameSpaceLite = "namespace lite";
 
+constexpr auto kAlignedString = "  ";
+
 constexpr auto kDebugUtils = "debug_utils.h";
 
 constexpr auto kThreadWrapper = "thread_wrapper.h";

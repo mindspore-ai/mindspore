@@ -25,97 +25,88 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite::micro {
-void CodeSessionCompileGraph(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator *config) {
-  auto array_tostring = [&ofs](const std::vector<int> &array, const std::string &name) {
-    size_t num = array.size();
-    ofs << "  Vector<int32_t> " << name << ";\n";
-    ofs << "  " << name << ".resize(" << num << ");\n";
-    for (size_t i = 0; i < num; ++i) {
-      ofs << "  " << name << "[" << i << "] = " << array[i] << ";\n";
+void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  auto array_tostring = [&ofs](Tensor *tensor, const std::string &prefix, size_t index) {
+    ofs << kAlignedString << prefix << "_tensors[" << index << "] = malloc(sizeof(MicroTensor));\n";
+    ofs << kAlignedString << prefix << "_tensors[" << index << "]->type = " << EnumNameMSDataType(tensor->data_type())
+        << ";\n";
+    ofs << kAlignedString << prefix << "_tensors[" << index << "]->format = kMSFormatNHWC;\n";
+    ofs << kAlignedString << prefix << "_tensors[" << index << "]->ndim = " << tensor->shape().size() << ";\n";
+    size_t shape_size = tensor->shape().size();
+    ofs << kAlignedString << prefix << "_tensors[" << index << "]->shape = "
+        << "malloc(" << shape_size << " * sizeof(int64_t));\n";
+    for (size_t i = 0; i < shape_size; i++) {
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->shape[" << i << "]= " << tensor->shape()[i]
+          << ";\n";
     }
+    ofs << kAlignedString << prefix << "_tensors[" << index << "]->name = \"" << tensor->tensor_name() << "\";\n";
+    ofs << kAlignedString << prefix << "_tensors[" << index << "]->data = NULL;\n";
   };
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   std::vector<Tensor *> outputs = ctx->graph_outputs();
+
   size_t inputs_size = inputs.size();
-  size_t outputs_size = outputs.size();
-  ofs << kNameSpaceMindSpore << " {\n";
-  ofs << kNameSpaceLite << " {\n";
-  ofs << "int LiteSession::CompileGraph(lite::Model *model) {\n";
-  ofs << "  inputs_.resize(" << inputs_size << ");\n";
+  ofs << "  MSTensorHandleArray model_inputs;\n";
+  ofs << "  model_inputs.handle_num = " << inputs_size << ";\n";
+  ofs << "  MicroTensor **input_tensors = malloc(" << inputs_size << " * sizeof(MicroTensor *));\n";
+  ofs << "  model_inputs.handle_list = (MSTensorHandle *)(input_tensors);\n";
+  ofs << "  micro_model->inputs = model_inputs;\n";
   for (size_t i = 0; i < inputs_size; ++i) {
     Tensor *input = inputs[i];
-    std::string shape_i = "in_shape_" + std::to_string(i);
-    array_tostring(input->shape(), shape_i);
-    ofs << "  inputs_[" << i << "] = new (std::nothrow) MTensor(String(\"" << input->tensor_name() << "\"), "
-        << EnumNameDataType(input->data_type()) << ", " << shape_i << ");\n";
-    ofs << "  MS_ERROR_IF_NULL(inputs_[" << i << "]);\n";
+    array_tostring(input, "input", i);
   }
-  ofs << "  outputs_.resize(" << outputs_size << ");\n";
+  size_t outputs_size = outputs.size();
+  ofs << "  MSTensorHandleArray model_outputs;\n";
+  ofs << "  model_outputs.handle_num = " << outputs_size << ";\n";
+  ofs << "  MicroTensor **output_tensors = malloc(" << outputs_size << " * sizeof(MicroTensor *));\n";
+  ofs << "  model_outputs.handle_list = (MSTensorHandle *)(output_tensors);\n";
+  ofs << "  micro_model->outputs = model_outputs;\n";
   for (size_t i = 0; i < outputs_size; ++i) {
     Tensor *output = outputs[i];
-    std::string shape_i = "out_shape_" + std::to_string(i);
-    array_tostring(output->shape(), shape_i);
-    ofs << "  outputs_[" << i << "] = new (std::nothrow) MTensor(String(\"" << output->tensor_name() << "\"), "
-        << EnumNameDataType(output->data_type()) << ", " << shape_i << ");\n";
-    ofs << "  MS_ERROR_IF_NULL(outputs_[" << i << "]);\n";
+    array_tostring(output, "output", i);
   }
-  if (config->target() != kARM32M) {
-    ofs << "  int ret = Init(model->buf, static_cast<MModel *>(model)->buf_size());\n"
-           "  return ret;\n"
-           "}\n\n";
-    return;
-  }
-  ofs << "  return RET_OK;\n";
+  ofs << "  return (MSModelHandle)micro_model;\n";
   ofs << "}\n\n";
 }
 
-void CodeCreateSessionImplement(std::ofstream &ofs, const Configurator *config) {
-  ofs << "session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {\n"
-         "  auto *session = new (std::nothrow) lite::LiteSession();\n"
-         "  MS_NULLPTR_IF_NULL(session);\n"
-         "  int ret = session->InitRuntimeBuffer();\n"
-         "  MS_NULLPTR_IF_ERROR(ret);\n";
-  if (config->support_parallel()) {
-    ofs << "  MS_NULLPTR_IF_NULL(context);\n"
-           "  ret = CreateThreadPool(context->thread_num_);\n"
-           "  MS_NULLPTR_IF_ERROR(ret);\n"
-           "  SetCoreAffinity(context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);\n";
+void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
+  ofs
+    << "MSStatus MSModelBuild(MSModelHandle model, const void *model_data, size_t data_size, MSModelType model_type,\n"
+       "                      const MSContextHandle model_context) {\n"
+       "  if (model_type != kMSModelTypeMindIR) {\n"
+       "    return kMSStatusLiteNotSupport;\n"
+       "  }\n";
+  ofs << "  int ret = RET_OK;\n";
+  if (config->target() != kARM32M) {
+    ofs << "  ret = Init((void*)model_data, data_size);\n";
   }
-  ofs << "  return session;\n"
-         "}\n\n";
-  ofs << "session::LiteSession *session::LiteSession::CreateSession(const char *model_buf, size_t size,\n"
-         "                                                          const lite::Context *context) {\n"
-         "  session::LiteSession *session = CreateSession(context);\n"
-         "  MS_NULLPTR_IF_NULL(session);\n"
-         "  lite::Model *model = lite::Model::Import(model_buf, size);\n"
-         "  int ret = session->CompileGraph(model);\n"
-         "  MS_NULLPTR_IF_ERROR(ret);\n"
-         "  delete model;\n"
-         "  return session;\n"
-         "}\n"
-         "}  // namespace mindspore\n\n";
+  if (config->support_parallel()) {
+    ofs << "  MicroContext *micro_context = (MicroContext *)model_context;\n"
+           "  if (micro_context == NULL) {\n"
+           "      return RET_ERROR;"
+           "  }\n"
+           "  ret = CreateThreadPool(micro_context->thread_num_);\n"
+           "  if(ret != RET_OK) {\n"
+           "     return ret;\n"
+           "  }\n"
+           "  ret = SetCoreAffinity(micro_context->affinity_mode);\n";
+  }
+  ofs << "  return ret;\n";
+  ofs << "}\n";
 }
 
-void CodeCreateSessionDestructor(std::ofstream &ofs, const Configurator *config) {
-  ofs << "LiteSession::~LiteSession() {\n"
-         "  FreeResource();\n"
-         "  if (runtime_buffer_ != nullptr) {\n"
-         "    free(runtime_buffer_);\n"
-         "    runtime_buffer_ = nullptr;\n"
-         "  }\n"
-         "  for (auto &input : inputs_) {\n"
-         "    if (input == nullptr) {\n"
-         "      continue;\n"
+void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
+  ofs << "void MSModelDestroy(MSModelHandle *model) {\n"
+         "  if (model) {\n"
+         "    MicroModel *micro_model = (MicroModel *)*model;\n"
+         "    if (micro_model->runtime_buffer) {\n"
+         "      free(micro_model->runtime_buffer);\n"
+         "      micro_model->runtime_buffer = NULL;\n"
          "    }\n"
-         "    delete input;\n"
-         "    input = nullptr;\n"
-         "  }\n"
-         "  for (auto &output : outputs_) {\n"
-         "    if (output == nullptr) {\n"
-         "      continue;\n"
-         "    }\n"
-         "    delete output;\n"
-         "    output = nullptr;\n"
+         "    MSTensorHandleArrayDestroy(micro_model->inputs);\n"
+         "    MSTensorHandleArrayDestroy(micro_model->outputs);\n"
+         "    free(*model);\n"
+         "    *model = NULL;\n"
          "  }\n";
   if (config->support_parallel()) {
     ofs << "  ClearThreadPool();\n";
