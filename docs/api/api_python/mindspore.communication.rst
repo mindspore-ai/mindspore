@@ -214,3 +214,11 @@ mindspore.communication
     - **TypeError** – 在参数 `group` 不是字符串时抛出。
     - **ValueError** – 在参数 `group` 是 `hccl_world_group` 或后台不可用时抛出。
     - **RuntimeError** – 在 `HCCL` 或 `NCCL` 服务不可用时抛出。
+    
+.. py:data:: mindspore.communication.HCCL_WORLD_COMM_GROUP
+
+    "hccl_world_group"字符串，指的是由HCCL创建的默认通信组。
+    
+.. py:data:: mindspore.communication.NCCL_WORLD_COMM_GROUP
+
+    "nccl_world_group"字符串，指的是由NCCL创建的默认通信组。
