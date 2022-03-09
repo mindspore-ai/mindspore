@@ -63,6 +63,28 @@ const std::vector<TypeId> &KernelBuildInfo::GetAllInputDeviceTypes() const { ret
 
 const std::vector<TypeId> &KernelBuildInfo::GetAllOutputDeviceTypes() const { return outputs_device_type_; }
 
+void KernelBuildInfo::SetOutputFormat(const std::string &format, size_t index) {
+  if (index >= outputs_format_.size()) {
+    MS_LOG(EXCEPTION) << "The index [" << index << "] is exceed the number of output";
+  }
+  outputs_format_[index] = format;
+}
+
+void KernelBuildInfo::SetOutputsFormat(const std::vector<std::string> &outputs_format) {
+  outputs_format_ = outputs_format;
+}
+
+void KernelBuildInfo::SetOutputDeviceType(const TypeId &output_device_type, size_t index) {
+  if (index >= outputs_device_type_.size()) {
+    MS_LOG(EXCEPTION) << "The index [" << index << "] is exceed the number of output";
+  }
+  outputs_device_type_[index] = output_device_type;
+}
+
+void KernelBuildInfo::SetOutputsDeviceType(const std::vector<TypeId> &outputs_device_type) {
+  outputs_device_type_ = outputs_device_type;
+}
+
 size_t KernelBuildInfo::GetInputNum() const { return inputs_format_.size(); }
 
 size_t KernelBuildInfo::GetOutputNum() const { return outputs_format_.size(); }

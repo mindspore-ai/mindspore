@@ -233,6 +233,80 @@ bool CheckExitActorInvalid(const ExitActorPtr &exit_actor) {
 }
 }  // namespace
 
+void ControlNodeScheduler::BuildDataSourceActorForControlNode(const GraphCompilerInfo &graph_compiler_info,
+                                                              const HostTensorQueuePtr &host_queue,
+                                                              const HostQueueDSActorPtr &host_queue_ds_actor,
+                                                              const AID &memory_manager_aid,
+                                                              std::vector<DataSourceActorPtr> *data_source_actors) {
+  HostQueueDSActorPtr control_node_ds_actor = host_queue_ds_actor;
+  const auto parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  // Initialize the parameter in the control node, first get all the front parameters in the control node, then find
+  // the corresponding backend parameter from the map, and insert it into the host data source actor.
+  const auto &control_node_parameters = parser->control_node_parameters();
+  for (const auto &parameter : control_node_parameters) {
+    if (IsPersistentDeviceTensor(parameter)) {
+      continue;
+    }
+    if (control_node_ds_actor == nullptr) {
+      auto actor_name = graph_compiler_info.name_ + kHostDSActorNameSuffix;
+      MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
+      control_node_ds_actor =
+        std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid, nullptr, nullptr, host_queue);
+      InsertActor(control_node_ds_actor.get());
+      (void)data_source_actors->emplace_back(control_node_ds_actor);
+    }
+
+    auto &node_map = control_node_ds_actor->data_node_position_map_;
+    if (node_map.find(parameter) != node_map.end()) {
+      continue;
+    }
+    const auto &backend_parameter_with_context =
+      parser->FetchBackendParameterWithContextByFrontParameter({parameter, 0});
+    const auto &backend_node = backend_parameter_with_context.first;
+    const auto &device_context = backend_parameter_with_context.second;
+    MS_EXCEPTION_IF_NULL(backend_node);
+    auto iter =
+      find(control_node_ds_actor->data_nodes_.begin(), control_node_ds_actor->data_nodes_.end(), backend_node);
+    if (iter != control_node_ds_actor->data_nodes_.end()) {
+      (void)node_map.emplace(parameter, iter - control_node_ds_actor->data_nodes_.begin());
+    } else {
+      if (parameter->kernel_info() == nullptr) {
+        // Create kernel info for control node parameters.
+        const auto &backend_kernel_info = static_cast<device::KernelInfo *>(backend_node->kernel_info());
+        MS_EXCEPTION_IF_NULL(backend_kernel_info);
+        const auto &backend_build_info = backend_kernel_info->GetMutableSelectKernelBuildInfo();
+        MS_EXCEPTION_IF_NULL(backend_build_info);
+
+        std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
+        builder->SetOutputsFormat(backend_build_info->GetAllOutputFormats());
+        builder->SetOutputsDeviceType(backend_build_info->GetAllOutputDeviceTypes());
+
+        auto kernel_info = std::make_shared<device::KernelInfo>();
+        kernel_info->set_select_kernel_build_info(builder->Build());
+        parameter->set_kernel_info(kernel_info);
+      }
+
+      // Create device tensor.
+      const auto &device_address = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
+      MS_EXCEPTION_IF_NULL(device_address);
+      auto new_address =
+        device_context->CreateDeviceAddress(nullptr, device_address->GetSize(), device_address->format(),
+                                            device_address->type_id(), device_address->host_shape());
+      MS_EXCEPTION_IF_NULL(new_address);
+      MS_LOG(INFO) << "Create new address for node that has no corresponding backend node:"
+                   << common::AnfAlgo::GetNodeDebugString(parameter) << " addr:" << new_address
+                   << " size:" << device_address->GetSize() << ", type id:" << device_address->type_id();
+      AnfAlgo::SetOutputAddr(new_address, 0, parameter.get());
+
+      (void)node_map.emplace(parameter, control_node_ds_actor->data_nodes_.size());
+      (void)control_node_ds_actor->data_nodes_.emplace_back(parameter);
+      (void)control_node_ds_actor->device_contexts_.emplace_back(device_context);
+    }
+  }
+}
+
 std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCompilerInfo &graph_compiler_info) {
   std::vector<GatherActorPtr> gather_actors;
   const auto &control_nodes = graph_compiler_info.control_nodes_;

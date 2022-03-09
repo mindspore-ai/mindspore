@@ -42,6 +42,11 @@ class ControlNodeScheduler {
   // Link control actors.
   void Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
 
+  void BuildDataSourceActorForControlNode(const GraphCompilerInfo &graph_compiler_info,
+                                          const HostTensorQueuePtr &host_queue,
+                                          const HostQueueDSActorPtr &host_queue_ds_actor, const AID &memory_manager_aid,
+                                          std::vector<DataSourceActorPtr> *data_source_actors);
+
   void Optimize(const ControlActorSet *control_actor_set);
 
   bool CheckActorValid(const ActorSet *actor_set) const;
