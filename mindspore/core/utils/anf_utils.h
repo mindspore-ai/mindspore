@@ -87,6 +87,7 @@ class MS_CORE_API AnfUtils {
   static bool IsCustomActorNode(const AnfNodePtr &node);
   static std::string GetCustomActorType(const AnfNodePtr &node);
   static std::string GetCustomActorName(const AnfNodePtr &node);
+  static CNodePtr GetCustomActorBaseNode(const AnfNodePtr &node);
   static bool GetCustomActorJustSyncFlag(const AnfNodePtr &node);
   static CustomActorCallback GetCustomFunc(const AnfNodePtr &node);
   static bool IsCutomActorNodeSame(const AnfNodePtr &node1, const AnfNodePtr &node2);
