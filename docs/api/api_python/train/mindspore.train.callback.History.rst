@@ -1,0 +1,24 @@
+.. py:class:: mindspore.train.callback.History()
+
+    将网络输出的相关信息记录到 `History` 对象中。
+
+    如果用户不自定义训练网络或评估网络，记录的内容将为损失值；如果用户自定义了训练网络/评估网络，如果定义的网络返回 `Tensor` 或 `numpy.ndarray`，则记录此返回值均值，如果返回 `tuple` 或 `list`，则记录第一个元素。
+
+    .. note::
+        通常使用在 `mindspore.Model.train` 中。
+
+    .. py:method:: begin(run_context)
+
+        训练开始时初始化History对象的epoch属性。
+
+        **参数：**
+
+        - **run_context** (RunContext) - 包含模型的一些基本信息。
+
+    .. py:method:: epoch_end(run_context)
+
+        epoch结束时记录网络输出的相关信息。
+
+        **参数：**
+
+        - **run_context** (RunContext) - 包含模型的一些基本信息。

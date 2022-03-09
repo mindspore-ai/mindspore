@@ -26,12 +26,12 @@ class LambdaCallback(Callback):
     Note that each stage of callbacks expects one positional arguments: `run_context`.
 
     Args:
-        epoch_begin: called at the beginning of every epoch.
-        epoch_end: called at the end of every epoch.
-        step_begin: called at the beginning of every batch.
-        step_end: called at the end of every batch.
-        begin: called at the beginning of model train/eval.
-        end: called at the end of model train/eval.
+        epoch_begin (Function): called at the beginning of every epoch.
+        epoch_end (Function): called at the end of every epoch.
+        step_begin (Function): called at the beginning of every batch.
+        step_end (Function): called at the end of every batch.
+        begin (Function): called at the beginning of model train/eval.
+        end (Function): called at the end of model train/eval.
 
     Example:
         >>> from mindspore import Model, nn

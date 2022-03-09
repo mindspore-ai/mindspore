@@ -940,7 +940,8 @@ class Model:
         if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Sink mode is currently not supported when evaluating with a GraphCell.")
 
-        if callbacks and (isinstance(callbacks, History) or any(isinstance(cb, History) for cb in callbacks)):
+        if (isinstance(callbacks, Callback) and isinstance(callbacks, History)) or \
+                (isinstance(callbacks, list) and any(isinstance(cb, History) for cb in callbacks)):
             logger.warning("History callback is recommended to be used in training process.")
 
         cb_params = _InternalCallbackParam()
