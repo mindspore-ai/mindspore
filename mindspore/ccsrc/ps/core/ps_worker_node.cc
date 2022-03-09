@@ -19,6 +19,91 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+bool PSWorkerNode::Start(const uint32_t &timeout) {
+  MS_LOG(INFO) << "[Worker start]: 1. Begin to start worker node!";
+  Initialize();
+  Register(client_to_scheduler_);
+  MS_LOG(INFO) << "[Worker start]: 4. The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " successfully registered to the scheduler!";
+
+  StartHeartbeatTimer();
+  MS_LOG(INFO) << "[Worker start]: 5. Worker start heartbeat timer!";
+
+  if (!WaitForStart(timeout)) {
+    MS_LOG(ERROR) << "Start Worker node timeout!";
+    return false;
+  }
+  MsException::Instance().CheckException();
+  MS_LOG(INFO) << "[Worker start]: 6. Successfully start worker node!";
+  return true;
+}
+
+bool PSWorkerNode::Stop() {
+  MS_ERROR_IF_NULL_W_RET_VAL(client_to_scheduler_, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(server_, false);
+  if (!is_already_stopped_.load()) {
+    MS_LOG(INFO) << "Stop worker node!";
+    is_ready_ = true;
+    is_finish_ = true;
+    client_to_scheduler_->Stop();
+    if (!connected_nodes_.empty()) {
+      for (auto &connected_node : connected_nodes_) {
+        connected_node.second->Stop();
+      }
+    }
+    server_->Stop();
+    is_already_stopped_ = true;
+  }
+  return true;
+}
+
+bool PSWorkerNode::Finish(const uint32_t &timeout) {
+  if (is_already_finished_) {
+    MS_LOG(INFO) << "Worker node already finish!";
+    return true;
+  }
+  MS_LOG(INFO) << "[Worker finish]: 1. Begin to finish worker node!";
+  is_already_finished_ = true;
+  if (is_already_stopped_) {
+    MS_LOG(INFO) << "The node is already stop.";
+    return true;
+  }
+  bool res = Disconnect(client_to_scheduler_, timeout);
+  if (res) {
+    MS_LOG(INFO) << "[Worker finish]: 2. Successfully finish worker node!";
+  } else {
+    MS_LOG(WARNING) << "[Worker finish]: 2. finish worker node timeout!";
+  }
+
+  return res;
+}
+
+void PSWorkerNode::Initialize() {
+  config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
+  MS_EXCEPTION_IF_NULL(config_);
+  if (!config_->Initialize()) {
+    MS_LOG(INFO) << "The config file is empty, then init node by context.";
+    InitNodeNum();
+  } else {
+    if (!Recover()) {
+      MS_LOG(WARNING) << "Recover the worker node is failed.";
+    }
+  }
+  InitServerHandler();
+  CreateTcpServer();
+  InitNodeInfo(NodeRole::WORKER);
+
+  MS_LOG(INFO) << "[Worker start]: 2. Worker node create tcp server successful!";
+
+  InitCommandHandler();
+  if (!InitClientToScheduler()) {
+    MS_LOG(EXCEPTION) << "Worker node connect to scheduler timeout!";
+  }
+  InitClientToServer();
+  is_already_stopped_ = false;
+  MS_LOG(INFO) << "[Worker start]: 3. Worker node crete tcp client to scheduler successful!";
+}
+
 void PSWorkerNode::Register(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();

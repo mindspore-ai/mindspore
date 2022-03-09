@@ -117,6 +117,9 @@ message HeartbeatMessage {
   // the current Node unique id:0,1,2...
   string node_id = 1;
   PersistentState persistent_state = 2;
+  bool has_address = 3;
+  string ip = 4;
+  uint32 port = 5;
 }
 
 enum NodeState {

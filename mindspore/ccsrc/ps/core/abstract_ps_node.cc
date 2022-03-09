@@ -51,6 +51,9 @@ bool AbstractPSNode::DoHeartbeat() {
   HeartbeatMessage heartbeat_message;
   heartbeat_message.set_node_id(node_info_.node_id_);
   heartbeat_message.set_persistent_state(PersistentState::NOT_ENABLE_PERSIST);
+  heartbeat_message.set_has_address(true);
+  heartbeat_message.set_ip(node_info_.ip_);
+  heartbeat_message.set_port(node_info_.port_);
 
   // The worker role does not support disaster recovery currently.
   if (EnableRecovery() && role() == NodeRole::SERVER) {
@@ -93,7 +96,10 @@ bool AbstractPSNode::InitClientToScheduler() {
       }
     });
   client_to_scheduler_->Init();
-  client_to_scheduler_->set_connected_callback([&]() { is_connected_to_scheduler_ = true; });
+  client_to_scheduler_->set_connected_callback([&]() {
+    is_connected_to_scheduler_ = true;
+    MS_LOG(WARNING) << "The connection to scheduler has be established.";
+  });
 
   client_to_scheduler_->set_disconnected_callback([&]() {
     is_connected_to_scheduler_ = false;
@@ -138,7 +144,7 @@ bool AbstractPSNode::HandleHeartbeatTimeout() {
 
     bool success = false;
     while (!success) {
-      MS_LOG(INFO) << "Trying to reconnect to the scheduler...";
+      MS_LOG(WARNING) << "Trying to reconnect to the scheduler...";
       success = InitClientToScheduler();
       if (success) {
         MS_LOG(INFO) << "Connection to the scheduler has been establised successfully.";
