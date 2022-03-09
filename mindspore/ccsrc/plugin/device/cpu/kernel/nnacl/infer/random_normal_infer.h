@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_RNADOM_PARAMETER_H_
-#define MINDSPORE_NNACL_RNADOM_PARAMETER_H_
+#ifndef MINDSPORE_NNACL_RANDOM_NORMAL_INFER_H
+#define MINDSPORE_NNACL_RANDOM_NORMAL_INFER_H
 
-#include "nnacl/op_base.h"
+#include "nnacl/infer/common_infer.h"
 
-typedef struct RandomParam {
-  OpParameter op_parameter_;
-  int seed_;
-  int seed2_;
-} RandomParam;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef struct RandomNormalParam {
-  OpParameter op_parameter_;
-  float seed_;
-  float mean_;
-  float scale_;
-} RandomNormalParam;
+int RandomNormalInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                           OpParameter *parameter);
 
-#endif  // MINDSPORE_NNACL_RNADOM_STANDARD_NORMAL_PARAMETER_H_
+#ifdef __cplusplus
+}
+#endif
+#endif  // MINDSPORE_NNACL_RANDOM_STANDARD_NORMAL_INFER_H
