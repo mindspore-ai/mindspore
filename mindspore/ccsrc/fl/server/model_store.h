@@ -21,9 +21,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "fl/server/common.h"
 #include "fl/server/memory_register.h"
 #include "fl/server/executor.h"
+#include "fl/server/local_meta_store.h"
 
 namespace mindspore {
 namespace fl {
@@ -44,7 +46,7 @@ class ModelStore {
   }
 
   // Initialize ModelStore with max count of models need to be stored.
-  void Initialize(uint32_t max_count = 3);
+  void Initialize(uint32_t rank_id, uint32_t max_count = 3);
 
   // Store the model of the given iteration. The model is acquired from Executor. If the current model count is already
   // max_model_count_, the earliest model will be replaced.
@@ -75,6 +77,8 @@ class ModelStore {
   ModelStore(const ModelStore &) = delete;
   ModelStore &operator=(const ModelStore &) = delete;
 
+  void SaveCheckpoint(size_t iteration, const std::map<std::string, AddressPtr> &model);
+
   // To store multiple models, new memory must assigned. The max memory size assigned for models is max_model_count_ *
   // model_size_.
   std::shared_ptr<MemoryRegister> AssignNewModelMemory();
@@ -91,6 +95,7 @@ class ModelStore {
   // The number of all models stored is max_model_count_.
   std::mutex model_mtx_;
   std::map<size_t, std::shared_ptr<MemoryRegister>> iteration_to_model_;
+  uint32_t rank_id_;
 
   struct HttpResponseModelCache {
     std::string round_name;  // startFlJob, getModel

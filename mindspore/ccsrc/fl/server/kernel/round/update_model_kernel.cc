@@ -32,6 +32,7 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
   InitClientVisitedNum();
+  InitClientUploadLoss();
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
@@ -195,6 +196,28 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     return ResultCode::kSuccessAndReturn;
   }
 
+  std::unordered_map<std::string, size_t> feature_map;
+  auto upload_feature_map = update_model_req->feature_map();
+  MS_ERROR_IF_NULL_W_RET_VAL(upload_feature_map, ResultCode::kSuccessAndReturn);
+  for (uint32_t i = 0; i < upload_feature_map->size(); i++) {
+    const auto &item = upload_feature_map->Get(i);
+    MS_ERROR_IF_NULL_W_RET_VAL(item, ResultCode::kSuccessAndReturn);
+    MS_ERROR_IF_NULL_W_RET_VAL(item->weight_fullname(), ResultCode::kSuccessAndReturn);
+    MS_ERROR_IF_NULL_W_RET_VAL(item->data(), ResultCode::kSuccessAndReturn);
+
+    std::string weight_full_name = item->weight_fullname()->str();
+    size_t weight_size = item->data()->size() * sizeof(float);
+    feature_map[weight_full_name] = weight_size;
+  }
+
+  if (!LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map)) {
+    auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
+    std::string reason = "Verify model feature map failed, retry later at time: " + std::to_string(next_req_time);
+    BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(next_req_time));
+    MS_LOG(WARNING) << reason;
+    return ResultCode::kSuccessAndReturn;
+  }
+
   std::string update_model_fl_id = update_model_req->fl_id()->str();
   MS_LOG(DEBUG) << "UpdateModel for fl id " << update_model_fl_id;
 
@@ -266,7 +289,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
     MS_LOG(WARNING) << reason;
     return update_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
-
+  UpdateClientUploadLoss(update_model_req->upload_loss());
   BuildUpdateModelRsp(fbb, schema::ResponseCode_SUCCEED, "success not ready",
                       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
   return ResultCode::kSuccess;

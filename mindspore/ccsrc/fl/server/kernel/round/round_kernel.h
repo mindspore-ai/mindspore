@@ -94,6 +94,12 @@ class RoundKernel {
 
   void InitClientVisitedNum();
 
+  void InitClientUploadLoss();
+
+  void UpdateClientUploadLoss(const float upload_loss);
+
+  float upload_loss() const;
+
  protected:
   // Send response to client, and the data can be released after the call.
   void SendResponseMsg(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len);
@@ -117,6 +123,8 @@ class RoundKernel {
 
   std::atomic<size_t> total_client_num_;
   std::atomic<size_t> accept_client_num_;
+
+  std::atomic<float> upload_loss_;
 };
 }  // namespace kernel
 }  // namespace server

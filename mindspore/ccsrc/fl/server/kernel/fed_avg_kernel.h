@@ -65,6 +65,11 @@ class FedAvgKernel : public AggregationKernelMod {
       std::accumulate(weight_shape.begin(), weight_shape.end(), sizeof(T), std::multiplies<size_t>());
     size_t new_weight_size = weight_size;
 
+    Feature feature;
+    feature.weight_shape = weight_shape;
+    feature.weight_size = weight_size;
+    feature.weight_type = GetTypeIdByte(kNumberTypeFloat32);
+
     input_size_list_.push_back(weight_size);
     input_size_list_.push_back(sizeof(size_t));
     input_size_list_.push_back(new_weight_size);
@@ -76,6 +81,7 @@ class FedAvgKernel : public AggregationKernelMod {
     MS_EXCEPTION_IF_NULL(weight_node);
     name_ = cnode_name + "." + weight_node->fullname_with_scope();
 
+    LocalMetaStore::GetInstance().put_aggregation_feature_map(weight_node->fullname_with_scope(), feature);
     MS_LOG(INFO) << "Aggregate Weight full name is " << weight_node->fullname_with_scope() << ", weight byte size is "
                  << weight_size;
     GenerateReuseKernelNodeInfo();

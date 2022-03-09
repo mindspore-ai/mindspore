@@ -132,9 +132,6 @@ class Iteration {
   // The round kernels whose Launch method has not returned yet.
   std::atomic_uint32_t running_round_num_;
 
-  // Update count with client visited num in round
-  void UpdateRoundClientNumMap(const std::string &name, const size_t num);
-
  private:
   Iteration()
       : running_round_num_(0),
@@ -220,6 +217,10 @@ class Iteration {
 
   void UpdateRoundClientNumMap(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg);
 
+  void UpdateRoundClientUploadLoss(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg);
+
+  void StartNewInstance();
+
   std::shared_ptr<ps::core::ServerNode> server_node_;
   std::shared_ptr<ps::core::TcpCommunicator> communicator_;
 
@@ -287,6 +288,8 @@ class Iteration {
 
   // The result for current iteration result.
   std::atomic<IterationResult> iteration_result_;
+
+  nlohmann::json new_instance_json_;
 };
 }  // namespace server
 }  // namespace fl

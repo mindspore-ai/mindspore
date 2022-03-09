@@ -40,6 +40,35 @@ const size_t LocalMetaStore::curr_iter_num() {
   std::unique_lock<std::mutex> lock(mtx_);
   return curr_iter_num_;
 }
+
+const void LocalMetaStore::put_aggregation_feature_map(const std::string &name, const Feature &feature) {
+  if (aggregation_feature_map_.count(name) > 0) {
+    MS_LOG(WARNING) << "Put feature " << name << " failed.";
+    return;
+  }
+  aggregation_feature_map_[name] = feature;
+}
+
+std::unordered_map<std::string, Feature> &LocalMetaStore::aggregation_feature_map() { return aggregation_feature_map_; }
+
+bool LocalMetaStore::verifyAggregationFeatureMap(const std::unordered_map<std::string, size_t> &model) {
+  // feature map size in Hybrid training is not equal with upload model size
+  if (model.size() > aggregation_feature_map_.size()) {
+    return false;
+  }
+
+  for (const auto &weight : model) {
+    std::string weight_name = weight.first;
+    size_t weight_size = weight.second;
+    if (aggregation_feature_map_.count(weight_name) == 0) {
+      return false;
+    }
+    if (weight_size != aggregation_feature_map_[weight_name].weight_size) {
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

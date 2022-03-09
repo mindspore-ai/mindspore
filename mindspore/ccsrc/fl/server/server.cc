@@ -28,6 +28,7 @@
 #include "fl/server/distributed_metadata_store.h"
 #include "fl/server/distributed_count_service.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace fl {
@@ -190,7 +191,10 @@ bool Server::InitCommunicatorWithWorker() {
     communicators_with_worker_.push_back(tcp_comm);
   }
   if (use_http_) {
-    auto http_comm = server_node_->GetOrCreateHttpComm(server_node_->BoundIp(), http_port_, task_executor_);
+    std::string server_ip = "";
+    std::string interface = "";
+    ps::core::CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
+    auto http_comm = server_node_->GetOrCreateHttpComm(server_ip, http_port_, task_executor_);
     MS_EXCEPTION_IF_NULL(http_comm);
     communicators_with_worker_.push_back(http_comm);
   }
@@ -402,7 +406,7 @@ void Server::InitExecutor() {
   // so the required_cnt of these kernels must be the same as executor_threshold_.
   MS_LOG(INFO) << "Required count for push-type and pull-type kernels is " << executor_threshold_;
   Executor::GetInstance().Initialize(func_graph, executor_threshold_);
-  ModelStore::GetInstance().Initialize();
+  ModelStore::GetInstance().Initialize(server_node_->rank_id());
   // init weight memory to 0 after get model
   Executor::GetInstance().ResetAggregationStatus();
   return;
@@ -457,6 +461,7 @@ void Server::StartCommunicator() {
   if (!communicator_with_server_->Start()) {
     MS_LOG(EXCEPTION) << "Starting communicator with server failed.";
   }
+
   DistributedMetadataStore::GetInstance().Initialize(server_node_);
   CollectiveOpsImpl::GetInstance().Initialize(server_node_);
   DistributedCountService::GetInstance().Initialize(server_node_, kLeaderServerRank);
