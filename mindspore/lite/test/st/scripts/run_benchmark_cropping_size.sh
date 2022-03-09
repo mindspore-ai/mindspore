@@ -35,7 +35,7 @@ function Run_cropping() {
     echo "start Run cropping ... "
     cd ${basepath} || exit 1
 
-    cropped_size_config="${basepath}"/../config/cropped_size.cfg
+    cropped_size_config="${basepath}"/../${config_folder}/cropped_size.cfg
 
     cd ${arm64_path} || exit 1
     tar -zxf mindspore-lite-${version}-android-aarch64.tar.gz || exit 1
@@ -123,7 +123,7 @@ echo ${basepath}
 #set -e
 
 # Example:sh run_benchmark_arm64.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:" opt; do
+while getopts "r:m:d:e:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -140,6 +140,10 @@ while getopts "r:m:d:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -159,7 +163,11 @@ IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
 # Set models config filepath
-models_cropped_config=${basepath}/../config/models_cropping.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_cropped_config=${basepath}/../${config_folder}/models_cropping.cfg
 
 ms_models_path=${basepath}/ms_models
 

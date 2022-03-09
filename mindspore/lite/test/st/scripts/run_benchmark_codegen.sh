@@ -253,7 +253,7 @@ basepath=$(pwd)
 echo ${basepath}
 
 # Example:sh run_benchmark_codegen.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:" opt; do
+while getopts "r:m:d:e:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -271,6 +271,10 @@ while getopts "r:m:d:e:" opt; do
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
             ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
+            ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -285,15 +289,19 @@ file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
 # Set model-list
-models_codegen_config=${basepath}/../config/models_codegen.cfg
-models_codegen_parallel_config=${basepath}/../config/models_codegen_parallel.cfg
+models_codegen_config=${basepath}/../${config_folder}/models_codegen.cfg
+models_codegen_parallel_config=${basepath}/../${config_folder}/models_codegen_parallel.cfg
 
 #micro config
-micro_x86_config=${basepath}/../config/micro/micro_x86.cfg
-micro_x86_parallel_config=${basepath}/../config/micro/micro_x86_parallel.cfg
-micro_arm64_config=${basepath}/../config/micro/micro_arm64.cfg
-micro_arm32A_config=${basepath}/../config/micro/micro_arm32A.cfg
+micro_x86_config=${basepath}/../${config_folder}/micro/micro_x86.cfg
+micro_x86_parallel_config=${basepath}/../${config_folder}/micro/micro_x86_parallel.cfg
+micro_arm64_config=${basepath}/../${config_folder}/micro/micro_arm64.cfg
+micro_arm32A_config=${basepath}/../${config_folder}/micro/micro_arm32A.cfg
 
 # Set models and build path
 build_path_x86=${basepath}/codegen_build_x86

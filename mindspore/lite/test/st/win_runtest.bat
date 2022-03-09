@@ -49,7 +49,7 @@ cd /d %DST_PACKAGE_PATH%\tools\converter\converter\
 SET TYPE_ID=''
 SET MODEL_NAME=''
 SET SUFFIX=''
-SET MODEL_CONFIG=%BASEPATH%\..\config\win_models.cfg
+SET MODEL_CONFIG=%BASEPATH%\..\config_lv0\win_models.cfg
 SET MODEL_PATH=%MODEL_PATH_BASE:"=%\models\hiai
 
 for /f "tokens=1-2 delims= " %%i in (%MODEL_CONFIG%) do (

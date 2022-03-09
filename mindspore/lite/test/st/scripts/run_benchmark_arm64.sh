@@ -43,7 +43,7 @@ echo ${basepath}
 #set -e
 
 # Example:sh run_benchmark_arm.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:p:" opt; do
+while getopts "r:m:d:e:p:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -65,6 +65,10 @@ while getopts "r:m:d:e:p:" opt; do
             arm64_fail_not_return=${OPTARG}
             echo "arm64_fail_not_return is ${OPTARG}"
             ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
+            ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -79,26 +83,30 @@ IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
 # Set models config filepath
-models_tflite_config=${basepath}/../config/models_tflite.cfg
-models_tf_config=${basepath}/../config/models_tf.cfg
-models_caffe_config=${basepath}/../config/models_caffe.cfg
-models_tflite_awaretraining_config=${basepath}/../config/models_tflite_awaretraining.cfg
-models_posttraining_config=${basepath}/../config/models_posttraining.cfg
-models_onnx_config=${basepath}/../config/models_onnx.cfg
-models_onnx_fp16_config=${basepath}/../config/models_onnx_fp16.cfg
-models_caffe_fp16_config=${basepath}/../config/models_caffe_fp16.cfg
-models_tflite_fp16_config=${basepath}/../config/models_tflite_fp16.cfg
-models_tf_fp16_config=${basepath}/../config/models_tf_fp16.cfg
-models_mindspore_config=${basepath}/../config/models_mindspore.cfg
-models_mindspore_fp16_config=${basepath}/../config/models_mindspore_fp16.cfg
-#models_mindspore_train_config=${basepath}/../config/models_mindspore_train.cfg
-models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
-models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
-models_weightquant_8bit_config=${basepath}/../config/models_weightquant_8bit.cfg
-models_dynamic_quant_config=${basepath}/../config/models_dynamic_quant.cfg
-models_compatibility_config=${basepath}/../config/models_compatibility.cfg
-models_process_only_config=${basepath}/../config/models_process_only.cfg
-models_process_only_fp16_config=${basepath}/../config/models_process_only_fp16.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_tflite_config=${basepath}/../${config_folder}/models_tflite.cfg
+models_tf_config=${basepath}/../${config_folder}/models_tf.cfg
+models_caffe_config=${basepath}/../${config_folder}/models_caffe.cfg
+models_tflite_awaretraining_config=${basepath}/../${config_folder}/models_tflite_awaretraining.cfg
+models_posttraining_config=${basepath}/../${config_folder}/models_posttraining.cfg
+models_onnx_config=${basepath}/../${config_folder}/models_onnx.cfg
+models_onnx_fp16_config=${basepath}/../${config_folder}/models_onnx_fp16.cfg
+models_caffe_fp16_config=${basepath}/../${config_folder}/models_caffe_fp16.cfg
+models_tflite_fp16_config=${basepath}/../${config_folder}/models_tflite_fp16.cfg
+models_tf_fp16_config=${basepath}/../${config_folder}/models_tf_fp16.cfg
+models_mindspore_config=${basepath}/../${config_folder}/models_mindspore.cfg
+models_mindspore_fp16_config=${basepath}/../${config_folder}/models_mindspore_fp16.cfg
+#models_mindspore_train_config=${basepath}/../${config_folder}/models_mindspore_train.cfg
+models_weightquant_7bit_config=${basepath}/../${config_folder}/models_weightquant_7bit.cfg
+models_weightquant_9bit_config=${basepath}/../${config_folder}/models_weightquant_9bit.cfg
+models_weightquant_8bit_config=${basepath}/../${config_folder}/models_weightquant_8bit.cfg
+models_dynamic_quant_config=${basepath}/../${config_folder}/models_dynamic_quant.cfg
+models_compatibility_config=${basepath}/../${config_folder}/models_compatibility.cfg
+models_process_only_config=${basepath}/../${config_folder}/models_process_only.cfg
+models_process_only_fp16_config=${basepath}/../${config_folder}/models_process_only_fp16.cfg
 
 # Prepare the config file list
 fp32_cfg_file_list=()

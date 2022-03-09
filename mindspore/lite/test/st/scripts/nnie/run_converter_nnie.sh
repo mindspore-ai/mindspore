@@ -79,7 +79,7 @@ echo ${basepath}
 #set -e
 
 # Example:sh run_nnie_nets.sh r /home/temp_test -m /home/temp_test/models -e arm32_3516D -d 192.168.1.1
-while getopts "r:m:d:e:" opt; do
+while getopts "r:m:d:e:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -96,6 +96,10 @@ while getopts "r:m:d:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -125,7 +129,11 @@ IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
 # Set models config filepath
-models_nnie_config=${basepath}/../config/models_nnie.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_nnie_config=${basepath}/../${config_folder}/models_nnie.cfg
 run_hi3516_script=${basepath}/scripts/nnie/run_benchmark_nnie.sh
 
 # Set ms models output path

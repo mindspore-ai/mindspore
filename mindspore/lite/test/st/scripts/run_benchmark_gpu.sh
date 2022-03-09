@@ -125,7 +125,7 @@ echo ${basepath}
 #set -e
 
 # Example:sh run_benchmark_gpu.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:p:" opt; do
+while getopts "r:m:d:e:p:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -147,6 +147,10 @@ while getopts "r:m:d:e:p:" opt; do
             gpu_fail_not_return=${OPTARG}
             echo "gpu_fail_not_return is ${OPTARG}"
             ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
+            ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -161,20 +165,24 @@ IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
 # Set models config filepath
-models_caffe_gpu_fp32_config=${basepath}/../config/models_caffe_gpu_fp32.cfg
-models_caffe_gpu_fp16_config=${basepath}/../config/models_caffe_gpu_fp16.cfg
-models_mindspore_gpu_fp32_config=${basepath}/../config/models_mindspore_gpu_fp32.cfg
-models_mindspore_gpu_fp16_config=${basepath}/../config/models_mindspore_gpu_fp16.cfg
-models_onnx_gpu_fp32_config=${basepath}/../config/models_onnx_gpu_fp32.cfg
-models_onnx_gpu_fp16_config=${basepath}/../config/models_onnx_gpu_fp16.cfg
-models_tf_gpu_fp32_config=${basepath}/../config/models_tf_gpu_fp32.cfg
-models_tf_gpu_fp16_config=${basepath}/../config/models_tf_gpu_fp16.cfg
-models_tflite_gpu_fp32_config=${basepath}/../config/models_tflite_gpu_fp32.cfg
-models_tflite_gpu_fp16_config=${basepath}/../config/models_tflite_gpu_fp16.cfg
-cropper_config=${basepath}/../config/models_cropper.cfg
-models_gpu_gl_texture_fp32_config=${basepath}/../config/models_gpu_gl_texture_fp32.cfg
-models_gpu_weightquant_config=${basepath}/../config/models_weightquant_8bit_gpu.cfg
-models_mindrt_parallel_config=${basepath}/../config/models_mindrt_parallel.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_caffe_gpu_fp32_config=${basepath}/../${config_folder}/models_caffe_gpu_fp32.cfg
+models_caffe_gpu_fp16_config=${basepath}/../${config_folder}/models_caffe_gpu_fp16.cfg
+models_mindspore_gpu_fp32_config=${basepath}/../${config_folder}/models_mindspore_gpu_fp32.cfg
+models_mindspore_gpu_fp16_config=${basepath}/../${config_folder}/models_mindspore_gpu_fp16.cfg
+models_onnx_gpu_fp32_config=${basepath}/../${config_folder}/models_onnx_gpu_fp32.cfg
+models_onnx_gpu_fp16_config=${basepath}/../${config_folder}/models_onnx_gpu_fp16.cfg
+models_tf_gpu_fp32_config=${basepath}/../${config_folder}/models_tf_gpu_fp32.cfg
+models_tf_gpu_fp16_config=${basepath}/../${config_folder}/models_tf_gpu_fp16.cfg
+models_tflite_gpu_fp32_config=${basepath}/../${config_folder}/models_tflite_gpu_fp32.cfg
+models_tflite_gpu_fp16_config=${basepath}/../${config_folder}/models_tflite_gpu_fp16.cfg
+cropper_config=${basepath}/../${config_folder}/models_cropper.cfg
+models_gpu_gl_texture_fp32_config=${basepath}/../${config_folder}/models_gpu_gl_texture_fp32.cfg
+models_gpu_weightquant_config=${basepath}/../${config_folder}/models_weightquant_8bit_gpu.cfg
+models_mindrt_parallel_config=${basepath}/../${config_folder}/models_mindrt_parallel.cfg
 
 ms_models_path=${basepath}/ms_models
 

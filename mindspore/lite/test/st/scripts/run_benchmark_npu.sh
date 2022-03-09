@@ -34,7 +34,7 @@ basepath=$(pwd)
 echo ${basepath}
 
 # Example:sh run_benchmark_npu.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:p:" opt; do
+while getopts "r:m:d:e:p:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -56,6 +56,10 @@ while getopts "r:m:d:e:p:" opt; do
             npu_fail_not_return=${OPTARG}
             echo "npu_fail_not_return is ${OPTARG}"
             ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
+            ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -70,10 +74,14 @@ IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
 # Set models config filepath
-models_npu_config=${basepath}/../config/models_npu.cfg
-models_npu_fp16_config=${basepath}/../config/models_npu_fp16.cfg
-models_npu_weightquant_config=${basepath}/../config/models_weightquant_8bit_npu.cfg
-models_kirin_posttraining_config=${basepath}/../config/models_kirin_posttraining.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_npu_config=${basepath}/../${config_folder}/models_npu.cfg
+models_npu_fp16_config=${basepath}/../${config_folder}/models_npu_fp16.cfg
+models_npu_weightquant_config=${basepath}/../${config_folder}/models_weightquant_8bit_npu.cfg
+models_kirin_posttraining_config=${basepath}/../${config_folder}/models_kirin_posttraining.cfg
 
 ms_models_path=${basepath}/ms_models
 

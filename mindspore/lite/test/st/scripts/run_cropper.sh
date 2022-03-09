@@ -92,7 +92,7 @@ basepath=$(pwd)
 echo "${basepath}"
 
 # Example:sh run_cropper_nets.sh -r /home/temp_test -d "8KE5T19620002408"
-while getopts "r:d:m:" opt; do
+while getopts "r:d:m:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -101,6 +101,10 @@ while getopts "r:d:m:" opt; do
         d)
             device_id=${OPTARG}
             echo "device_id is ${OPTARG}"
+            ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -117,7 +121,11 @@ echo ' ' > "${run_cropper_result}"
 run_cropper_log_file="${basepath}"/run_cropper_log.txt
 echo 'run cropper logs: ' > "${run_cropper_log_file}"
 
-cropper_config="${basepath}"/../config/models_cropper.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]];then
+    config_folder="config_level1"
+fi
+cropper_config="${basepath}"/../${config_folder}/models_cropper.cfg
 arm64_path=${release_path}/android_aarch64/npu
 x86_path=${release_path}/centos_x86
 

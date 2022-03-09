@@ -39,7 +39,7 @@ echo ${basepath}
 #set -e
 
 # Example:sh run_benchmark_arm.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:p:" opt; do
+while getopts "r:m:d:e:p:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -61,6 +61,10 @@ while getopts "r:m:d:e:p:" opt; do
             arm32_fail_not_return=${OPTARG}
             echo "arm32_fail_not_return is ${OPTARG}"
             ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
+            ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -75,8 +79,12 @@ IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
 # Set models config filepath
-models_arm32_config=${basepath}/../config/models_arm32.cfg
-models_arm32_fp16_config=${basepath}/../config/models_arm32_fp16.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_arm32_config=${basepath}/../${config_folder}/models_arm32.cfg
+models_arm32_fp16_config=${basepath}/../${config_folder}/models_arm32_fp16.cfg
 
 ms_models_path=${basepath}/ms_models
 

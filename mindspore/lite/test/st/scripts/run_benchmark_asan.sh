@@ -37,7 +37,7 @@ basepath=$(pwd)
 echo ${basepath}
 
 # Example:sh run_benchmark_x86.sh -r /home/temp_test -m /home/temp_test/models -e arm_cpu
-while getopts "r:m:e:" opt; do
+while getopts "r:m:e:l:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -50,6 +50,10 @@ while getopts "r:m:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        l)
+            level=${OPTARG}
+            echo "level is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
@@ -65,7 +69,11 @@ version=${file_name_array[2]}
 cd -
 
 # Set models config filepath
-models_asan_config=${basepath}/../config/models_asan.cfg
+config_folder="config_level0"
+if [[ ${level} = "level1" ]]; then
+    config_folder="config_level1"
+fi
+models_asan_config=${basepath}/../${config_folder}/models_asan.cfg
 
 ms_models_path=${basepath}/ms_models
 
