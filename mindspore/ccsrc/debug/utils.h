@@ -24,6 +24,8 @@ bool CheckStoull(uint64_t *const output_digit, const std::string &input_str);
 bool CheckStoul(size_t *const output_digit, const std::string &input_str);
 
 bool CheckStoi(int64_t *const output_digit, const std::string &input_str);
+
+void CheckStringMatch(size_t start, size_t end, std::string *matched_str, const std::string &input_str);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_UTILS_H

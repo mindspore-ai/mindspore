@@ -1296,10 +1296,10 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
   } else {
     tensor_list = debug_services_->GetNodeTensor(kernel);
   }
-  DebugServices::AsyncFilePool file_list;
+  DebugServices::ProcessedNPYFiles processed_npy_files;
   MS_LOG(INFO) << "checkwatchpoints call for step " << num_step_;
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                    file_list, &tensor_list, initial_suspend_, watchnode.empty(), recheck);
+                                    &processed_npy_files, &tensor_list, initial_suspend_, watchnode.empty(), recheck);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     WatchpointHit hit;
