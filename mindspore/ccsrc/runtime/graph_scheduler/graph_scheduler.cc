@@ -731,45 +731,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       }
     }
   }
-
-  const auto parser = graph_compiler_info.control_node_parser_;
-  MS_EXCEPTION_IF_NULL(parser);
-
-  // Initialize the parameter in the control node, first get all the front parameters in the control node, then find
-  // the corresponding backend parameter from the map, and insert it into the host data source actor.
-  const auto &control_node_parameters = parser->control_node_parameters();
-  for (const auto &parameter : control_node_parameters) {
-    if (IsPersistentDeviceTensor(parameter)) {
-      continue;
-    }
-    if (host_queue_ds_actor == nullptr) {
-      auto actor_name = graph_compiler_info.name_ + kHostDSActorNameSuffix;
-      MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
-      host_queue_ds_actor =
-        std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid_, nullptr, nullptr, host_queue);
-      InsertActor(host_queue_ds_actor.get());
-      (void)data_source_actors.emplace_back(host_queue_ds_actor);
-    }
-
-    auto &node_map = host_queue_ds_actor->data_node_position_map_;
-    if (node_map.find(parameter) != node_map.end()) {
-      continue;
-    }
-    const auto &backend_parameter_with_context =
-      parser->FetchBackendParameterWithContextByFrontParameter({parameter, 0});
-    const auto &backend_node = backend_parameter_with_context.first;
-    MS_EXCEPTION_IF_NULL(backend_node);
-    auto iter = find(host_queue_ds_actor->data_nodes_.begin(), host_queue_ds_actor->data_nodes_.end(), backend_node);
-    if (iter != host_queue_ds_actor->data_nodes_.end()) {
-      (void)node_map.emplace(parameter, iter - host_queue_ds_actor->data_nodes_.begin());
-    } else {
-      (void)node_map.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
-      (void)node_map.emplace(backend_node, host_queue_ds_actor->data_nodes_.size());
-      (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_node);
-      (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_parameter_with_context.second);
-    }
-  }
-
+  control_node_scheduler_.BuildDataSourceActorForControlNode(graph_compiler_info, host_queue, host_queue_ds_actor,
+                                                             memory_manager_aid_, &data_source_actors);
   return data_source_actors;
 }
 

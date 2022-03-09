@@ -85,6 +85,14 @@ class KernelBuildInfo {
 
   std::string core_type() const { return core_type_; }
 
+  void SetOutputFormat(const std::string &format, size_t index);
+
+  void SetOutputDeviceType(const TypeId &output_device_type, size_t index);
+
+  void SetOutputsFormat(const std::vector<std::string> &outputs_format);
+
+  void SetOutputsDeviceType(const std::vector<TypeId> &outputs_device_type);
+
   OpPattern op_pattern() const { return op_pattern_; }
 
   std::vector<nlohmann::json> output_data_desc() const { return output_data_desc_; }

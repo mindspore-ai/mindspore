@@ -299,18 +299,44 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &node = front_node_with_index.first;
 
-  TypeId type_id = common::AnfAlgo::GetOutputInferDataType(node, 0);
+  // Create kernel info for front node.
   if (node->kernel_info() == nullptr) {
     auto kernel_info = std::make_shared<device::KernelInfo>();
     std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
-    builder->SetOutputsFormat({kOpFormat_DEFAULT});
-    builder->SetOutputsDeviceType({type_id});
     kernel_info->set_select_kernel_build_info(builder->Build());
     node->set_kernel_info(kernel_info);
   }
-  size_t size = AnfAlgo::GetOutputTensorMemSize(node, 0);
+
+  // Set format.
+  const auto &kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  const auto &builder = kernel_info->GetMutableSelectKernelBuildInfo();
+  MS_EXCEPTION_IF_NULL(builder);
+
+  if (builder->GetAllOutputFormats().size() > front_node_with_index.second) {
+    builder->SetOutputFormat(kOpFormat_DEFAULT, front_node_with_index.second);
+  } else {
+    auto formats = builder->GetAllOutputFormats();
+    for (size_t i = 0; i <= front_node_with_index.second - builder->GetAllOutputFormats().size(); ++i) {
+      formats.emplace_back(kOpFormat_DEFAULT);
+    }
+    builder->SetOutputsFormat(formats);
+  }
+
+  // Set type.
+  TypeId type_id = common::AnfAlgo::GetOutputInferDataType(node, front_node_with_index.second);
+  if (builder->GetAllOutputDeviceTypes().size() > front_node_with_index.second) {
+    builder->SetOutputDeviceType(type_id, front_node_with_index.second);
+  } else {
+    auto types = builder->GetAllOutputDeviceTypes();
+    for (size_t i = 0; i <= front_node_with_index.second - builder->GetAllOutputDeviceTypes().size(); ++i) {
+      types.emplace_back(type_id);
+    }
+    builder->SetOutputsDeviceType(types);
+  }
 
   // Create device tensor.
+  size_t size = AnfAlgo::GetOutputTensorMemSize(node, front_node_with_index.second);
   device::DeviceAddressPtr address =
     device_context->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector());
   MS_EXCEPTION_IF_NULL(address);
