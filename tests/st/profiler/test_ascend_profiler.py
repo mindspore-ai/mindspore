@@ -52,3 +52,23 @@ def test_ascend_profiling():
         add(Tensor(x), Tensor(y))
         profiler.analyse()
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/Framework*")) == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_pynative_profiling():
+    """
+    Feature: Test the ascend pynative model profiling
+    Description: Generate the Net op timeline
+    Expectation: Timeline generated successfully
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        profiler = Profiler(output_path=tmpdir)
+        add = Net()
+        add(Tensor(x), Tensor(y))
+        profiler.analyse()
+        assert len(glob.glob(f"{tmpdir}/profiler*/output_timeline_data_*.txt")) == 1

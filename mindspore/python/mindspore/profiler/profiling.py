@@ -19,6 +19,7 @@ import time
 import json
 from enum import Enum
 
+from mindspore.nn.cell import Cell
 from mindspore import log as logger, context
 from mindspore.communication.management import GlobalComm, get_rank, get_group_size
 import mindspore._c_expression as c_expression
@@ -34,7 +35,7 @@ from mindspore.profiler.parser.aicpu_data_parser import DataPreProcessParser
 from mindspore.profiler.parser.framework_parser import FrameworkParser
 from mindspore.profiler.parser.hwts_log_parser import HWTSLogParser
 from mindspore.profiler.parser.integrator import Integrator
-from mindspore.profiler.parser.integrator import GpuTimelineGenerator, AscendTimelineGenerator, CpuTimelineGenerator
+from mindspore.profiler.parser.integrator import GpuTimelineGenerator, CpuTimelineGenerator, AscendTimelineGenerator
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
 from mindspore.profiler.parser.minddata_parser import MinddataParser
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
@@ -44,7 +45,7 @@ from mindspore.profiler.parser.minddata_pipeline_parser import \
 from mindspore.profiler.parser.optime_parser import OPComputeTimeParser
 from mindspore.profiler.parser.step_trace_parser import GpuStepTraceParser, AscendStepTraceParser
 from mindspore.profiler.parser.hccl_parser import HcclParser
-from mindspore.nn.cell import Cell
+from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
@@ -57,9 +58,6 @@ def deprecated(name, version):
 def _environment_check():
     if c_expression.security.enable_security():
         raise RuntimeError("Profiler is not supported if compiled with \'-s on\'")
-    if context.get_context("mode") == context.PYNATIVE_MODE:
-        raise RuntimeError("Profiler is not supported in pynative mode currently, "
-                           "and it is only supported in graph mode.")
 
 
 class ProfileOption(Enum):
@@ -140,6 +138,7 @@ class Profiler:
     _aicpu_op_output_filename_target = "output_data_preprocess_aicpu_"
     _has_analysed = False
     _has_initialized = False
+    _ascend_profiling_options = {}
 
     def __init__(self, **kwargs):
         if Profiler._has_initialized:
@@ -189,25 +188,13 @@ class Profiler:
             self._parse_parameter_for_ascend(**kwargs)
             os.environ['DEVICE_ID'] = self._dev_id
 
-            profiling_options = json.dumps(self._construct_profiling_options())
+            self._ascend_profiling_options = json.dumps(self._construct_profiling_options())
             # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
-            if len(profiling_options) > 2048:
+            if len(self._ascend_profiling_options) > 2048:
                 msg = f"For '{self.__class__.__name__}', the environment parameter length exceeds " \
                       f"the limit (2048), please input valid parameters."
                 logger.critical(msg)
                 raise ValueError(msg)
-            # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
-            self._ascend_profiler = c_expression.AscendProfiler.get_instance()
-            self._ascend_profiler.init(self._output_path, int(self._dev_id), profiling_options)
-            base_profiling_container_path = os.path.join(self._output_path, "container")
-            container_path = os.path.join(base_profiling_container_path, self._dev_id)
-            data_path = os.path.join(container_path, "data")
-            data_path = validate_and_normalize_path(data_path)
-            if not os.path.exists(data_path):
-                os.makedirs(data_path, exist_ok=True)
-
-            # add job id env through user input later
-            self._job_id_env = 0
 
         if self.start_profile:
             self.start()
@@ -316,6 +303,19 @@ class Profiler:
             self._ascend_analyse()
         logger.info("Profiling: all the data have been analyzed.")
 
+    def _ascend_pynative_analyse(self):
+        """Collect and analyse ascend pynative model performance data."""
+        op_intermediate_parser = OPIntermediateParser(self._output_path, self._rank_id)
+        op_intermediate_parser.parser_pynative_op_type()
+        op_intermediate_parser.parser_pynative_op_intermediate_detail()
+
+        timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
+                                                    self._rank_size)
+        timeline_analyser.init_pynative_timeline()
+        size_limit = 100 * 1024 * 1024  # 100MB
+        timeline_analyser.write_timeline(size_limit)
+        timeline_analyser.write_timeline_summary()
+
     def _ascend_analyse(self):
         """Collect and analyse ascend performance data."""
         self._rank_size = 1
@@ -330,14 +330,18 @@ class Profiler:
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
 
-        self._ascend_profiler.finalize()
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            self._ascend_pynative_analyse()
+        else:
+            self._ascend_graph_analyse()
 
-        job_id = self._get_profiling_job_id()
-        logger.info("Profiling: job id is %s ", job_id)
+    def _ascend_graph_op_analyse(self, source_path):
+        """
+        Ascend graph model hwts analyse.
 
-        self._check_output_path(output_path=self._output_path)
-
-        source_path = os.path.join(self._output_path, job_id)
+        Returns:
+            list[obj]: The list is: framework_parser, aicpu_data_parser, optime_parser, op_task_dict
+        """
         # parse hwts.log.data.45.dev file, and get task profiling data
         hwts_output_filename = self._hwts_output_filename_target + self._rank_id + ".txt"
         hwts_output_filename = os.path.join(self._output_path, hwts_output_filename)
@@ -353,8 +357,7 @@ class Profiler:
         framework_parser.parse()
         op_task_dict = framework_parser.to_task_id_full_op_name_dict()
         if not op_task_dict:
-            logger.error("Profiling: fail to parse framework files.")
-            return
+            raise RuntimeError('Profiling: fail to parse framework files.')
 
         # get op compute time from hwts data and framework data, write output_op_compute_time.txt
         opcompute_output_filename = self._opcompute_output_filename_target + self._rank_id + ".txt"
@@ -375,6 +378,10 @@ class Profiler:
         logger.info("Profiling: analyzing the data preprocess data.")
         aicpu_data_parser.execute()
 
+        return [framework_parser, aicpu_data_parser, optime_parser, op_task_dict]
+
+    def _ascend_graph_minddata_analyse(self, source_path):
+        """Analyse mindadata for ascend graph model."""
         # Parsing minddata AICPU profiling
         logger.info("Profiling: analyzing the minddata AICPU data.")
         MinddataParser.execute(source_path, self._output_path, self._rank_id)
@@ -394,6 +401,23 @@ class Profiler:
             md_analyzer.analyze()
         except ProfilerException as err:
             logger.warning(err.message)
+
+    def _ascend_graph_analyse(self):
+        """Ascend graph mode analyse."""
+        self._ascend_profiler.finalize()
+
+        job_id = self._get_profiling_job_id()
+        logger.info("Profiling: job id is %s ", job_id)
+
+        self._check_output_path(output_path=self._output_path)
+        source_path = os.path.join(self._output_path, job_id)
+        op_parser_obj = self._ascend_graph_op_analyse(source_path)
+        framework_parser = op_parser_obj[0]
+        aicpu_data_parser = op_parser_obj[1]
+        optime_parser = op_parser_obj[2]
+        op_task_dict = op_parser_obj[3]
+
+        self._ascend_graph_minddata_analyse(source_path)
 
         # analyse op compute time info
         try:
@@ -497,7 +521,7 @@ class Profiler:
             raise RuntimeError("The profiler has already started. Use profiler.start() only when start_profile value "
                                "is set to False.")
 
-        #No need to start anything if parse profiling data offline
+        # No need to start anything if parse profiling data offline
         if self._is_offline_parser():
             return
 
@@ -507,7 +531,33 @@ class Profiler:
         if self._device_target and self._device_target == "GPU":
             self._gpu_profiler.step_profiling_enable(True)
         elif self._device_target and self._device_target == "Ascend":
-            self._ascend_profiler.start()
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                self._ascend_pynative_start()
+            else:
+                self._ascend_graph_start()
+
+    def _ascend_pynative_start(self):
+        """Ascend pynative mode start profiling."""
+        pynative_profiler = c_expression.PynativeProfiler
+        self._pynative_profiler = pynative_profiler.get_instance()
+        self._pynative_profiler.init(self._output_path)
+
+    def _ascend_graph_start(self):
+        """Ascend graph mode start profiling."""
+        # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
+        self._ascend_profiler = c_expression.AscendProfiler.get_instance()
+        self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
+        base_profiling_container_path = os.path.join(self._output_path, "container")
+        container_path = os.path.join(base_profiling_container_path, self._dev_id)
+        data_path = os.path.join(container_path, "data")
+        data_path = validate_and_normalize_path(data_path)
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+
+        # add job id env through user input later
+        self._job_id_env = 0
+
+        self._ascend_profiler.start()
 
     def stop(self):
         """
@@ -544,7 +594,7 @@ class Profiler:
         else:
             raise RuntimeError("The profiler has not started, so can not stop.")
 
-        #No need to stop anything if parse profiling data offline
+        # No need to stop anything if parse profiling data offline
         if self._is_offline_parser():
             return
 
@@ -554,7 +604,11 @@ class Profiler:
         if self._device_target and self._device_target == "GPU":
             self._gpu_profiler.stop()
         elif self._device_target and self._device_target == "Ascend":
-            self._ascend_profiler.stop()
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                self._pynative_profiler.stop()
+            else:
+                self._ascend_profiler.stop()
+
             self._stop_time = int(time.time() * 10000000)
             logger.info("Profiling: stop time: %d", self._stop_time)
 

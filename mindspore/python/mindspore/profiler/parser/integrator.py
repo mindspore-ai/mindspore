@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException,
 from mindspore.profiler.common.util import query_latest_trace_time_file, to_int, to_millisecond
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 from mindspore.profiler.parser.container import TimelineContainer
+from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 
 SIZE_LIMIT_DEFAULT = 20 * 1024 * 1024  # 20MB
 
@@ -72,21 +73,26 @@ class Integrator:
         self._parse_aicpu_time()
 
     def get_aicore_data(self):
+        """Get ai core data."""
         self._aicore_data_load()
         return self._aicore_data
 
     def get_aicore_detail_data(self):
+        """Get ai core detail data."""
         self._aicore_detail_data_load()
         return self._aicore_detail_data
 
     def get_aicore_trace_data(self):
+        """Get ai core trace data."""
         self._aicore_trace_data_load()
         return self._aicore_trace_data
 
     def query_for_all_reduce(self):
+        """Query all reduce data."""
         return self._query_for_all_reduce()
 
     def query_and_sort_by_op_type(self, filter_condition, op_type_order):
+        """Query and sort by op type."""
         return self._query_and_sort_by_op_type(filter_condition, op_type_order)
 
     def _parse_aicore_type_time(self):
@@ -103,18 +109,19 @@ class Integrator:
         with open(framework_file, 'r') as src_file:
             csv_reader = csv.reader(src_file)
             _ = next(csv_reader)
-
             for row in csv_reader:
                 op_name_type_cache[row[3]] = row[5]
 
         op_type_time_cache = {}
         for full_op_name, op_time in self._op_time_cache.items():
             op_type = op_name_type_cache.get(full_op_name)
-            if op_type_time_cache.get(op_type) is None:
-                op_type_time_cache[op_type] = [op_time, 1]
+            op_type_time = op_type_time_cache.get(op_type)
+            if not op_type_time:
+                op_type_time = [op_time, 1]
+                op_type_time_cache[op_type] = op_type_time
             else:
-                op_type_time_cache[op_type][0] += op_time
-                op_type_time_cache[op_type][1] += 1
+                op_type_time[0] += op_time
+                op_type_time[1] += 1
 
         if self._total_time == 0:
             raise ValueError("The total time of operations can not be 0.")
@@ -529,6 +536,9 @@ class BaseTimelineGenerator:
     _SCOPE_NAME_TID = 100001
     _GPU_OP_TID = 100002
     _HOST_CPU_OP_TID = 100003
+    _SINGLE_TID = 0
+
+    _STEPS_SORT_INDEX = -1
 
     _map_tid_name_to_int = {
         "Steps": (-4, _STEPS_TID),
@@ -546,6 +556,11 @@ class BaseTimelineGenerator:
     _op_name_idx, _tid_idx, _start_time_idx, _duration_idx = 0, 1, 2, 3
     _max_scope_name_num = 0
     _host_cpu_op_label = 'HostCpuOps'
+
+    _device_id = 0
+    _profiling_dir = ""
+    _timeline_summary_filename = ""
+    _display_filename = ""
 
     def __init__(self):
         self._tid_dict = {
@@ -584,6 +599,10 @@ class BaseTimelineGenerator:
              "args": {"name": "Merged Communication Op"}},
             {"name": "thread_name", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._FREE_TIME_TID,
              "args": {"name": "Free Time"}},
+            {"name": "thread_name", "ph": "M", "pid": self._device_id, "tid": self._STEPS_TID,
+             "args": {"name": "Steps"}},
+            {"name": "thread_name", "ph": "M", "pid": self._device_id, "tid": self._SINGLE_TID,
+             "args": {"name": "Ops"}},
 
             {"name": "thread_sort_index", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._MERGED_COMPUTATION_TID,
              "args": {"sort_index": self._MERGED_COMPUTATION_TID}},
@@ -592,7 +611,9 @@ class BaseTimelineGenerator:
             {"name": "thread_sort_index", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._MERGED_COMMUNICATION_TID,
              "args": {"sort_index": self._MERGED_COMMUNICATION_TID}},
             {"name": "thread_sort_index", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._FREE_TIME_TID,
-             "args": {"sort_index": self._FREE_TIME_TID}}
+             "args": {"sort_index": self._FREE_TIME_TID}},
+            {"name": "thread_sort_index", "ph": "M", "pid": self._device_id, "tid": self._STEPS_TID,
+             "args": {"sort_index": self._STEPS_SORT_INDEX}},
         ]
 
     def _get_merged_time_list(self, time_list, get_interval_time=False, display_name="computation_op", factor=1):
@@ -844,6 +865,58 @@ class BaseTimelineGenerator:
                 step_num += 1
 
         return step_time_list
+
+    @staticmethod
+    def get_parallel_context():
+        """Get parallel context."""
+        try:
+            parallel_mode = get_auto_parallel_context("parallel_mode")
+            stage_num = get_auto_parallel_context("pipeline_stages")
+        except RuntimeError:
+            logger.warning("[profiler] the feature of cluster bottleneck analyse "
+                           "is not supported in offline parse mode.")
+            parallel_mode = "data_parallel"
+            stage_num = 1
+        if stage_num > 1:
+            parallel_mode = "pipeline-parallel"
+        elif parallel_mode != "data_parallel":
+            parallel_mode = "model-parallel"
+        else:
+            parallel_mode = "data-parallel"
+        return parallel_mode, stage_num
+
+    def _write_cluster_metrices(self, metrices, is_pipeline_parallel, device_target, dev_id):
+        """Write cluster metric."""
+        # Note that the feature of cluster bottleneck analyse is not supported in offline parse mode,
+        # due to that parallel context is not set.
+        parallel_mode, stage_num = BaseTimelineGenerator.get_parallel_context()
+
+        unit = 1 if device_target == "Ascend" else 1e3
+        time_decimal_digits = 4
+        cluster_analyse_file_path = os.path.join(
+            self._profiling_dir,
+            self._cluster_analyse_filename.format(parallel_mode, stage_num, self._rank_size, dev_id)
+        )
+        cluster_analyse_file_path = validate_and_normalize_path(cluster_analyse_file_path)
+
+        try:
+            with open(cluster_analyse_file_path, 'w') as file_handle:
+                csv_writer = csv.writer(file_handle)
+                if is_pipeline_parallel:
+                    header = ['computation_time', 'communication_alone_time', 'stage_time',
+                              'receive_alone_time', 'collective_communication_alone_time']
+                    zip_metrices = zip(metrices[0], metrices[1], metrices[2], metrices[3], metrices[4])
+                else:
+                    header = ['computation_time', 'communication_alone_time']
+                    zip_metrices = zip(metrices[0], metrices[1])
+                csv_writer.writerow(header)
+                for row_data in zip_metrices:
+                    row_data = [round(val / unit, time_decimal_digits) for val in row_data]
+                    csv_writer.writerow(row_data)
+            os.chmod(cluster_analyse_file_path, stat.S_IREAD | stat.S_IWRITE)
+        except (IOError, OSError) as err:
+            logger.warning(f'Failed to save {cluster_analyse_file_path}. {err}')
+            raise ProfilerIOException
 
 
 class GpuTimelineGenerator(BaseTimelineGenerator):
@@ -1243,7 +1316,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         if step_num > 1:
             for metric in metrices_per_step_list:
                 metric.append(sum(metric[1:]) / (step_num - 1))
-        self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel)
+        self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel, "Gpu", self._device_id)
 
         res_timeline = []
         res_timeline.extend(comm_not_overlapped_timeline)
@@ -1251,49 +1324,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         res_timeline.extend(comm_display_timeline)
         res_timeline.extend(free_timeline)
         return res_timeline
-
-    def _write_cluster_metrices(self, metrices, is_pipeline_parallel):
-        """Write cluster metric."""
-        # Note that the feature of cluster bottleneck analyse is not supported in offline parse mode,
-        # due to that parallel context is not set.
-        try:
-            parallel_mode = get_auto_parallel_context("parallel_mode")
-            stage_num = get_auto_parallel_context("pipeline_stages")
-        except RuntimeError:
-            logger.warning("[profiler] the feature of cluster bottleneck analyse "
-                           "is not supported in offline parse mode.")
-            parallel_mode = "data_parallel"
-            stage_num = 1
-        if stage_num > 1:
-            parallel_mode = "pipeline-parallel"
-        elif parallel_mode != "data_parallel":
-            parallel_mode = "model-parallel"
-        else:
-            parallel_mode = "data-parallel"
-
-        cluster_analyse_file_path = os.path.join(
-            self._profiling_dir,
-            self._cluster_analyse_filename.format(parallel_mode, stage_num, self._rank_size, self._device_id))
-        cluster_analyse_file_path = validate_and_normalize_path(cluster_analyse_file_path)
-
-        try:
-            with open(cluster_analyse_file_path, 'w') as file_handle:
-                csv_writer = csv.writer(file_handle)
-                if is_pipeline_parallel:
-                    header = ['computation_time', 'communication_alone_time', 'stage_time',
-                              'receive_alone_time', 'collective_communication_alone_time']
-                    zip_metrices = zip(metrices[0], metrices[1], metrices[2], metrices[3], metrices[4])
-                else:
-                    header = ['computation_time', 'communication_alone_time']
-                    zip_metrices = zip(metrices[0], metrices[1])
-                csv_writer.writerow(header)
-                for row_data in zip_metrices:
-                    row_data = [round(val / 1e3, 4) for val in row_data]
-                    csv_writer.writerow(row_data)
-            os.chmod(cluster_analyse_file_path, stat.S_IREAD | stat.S_IWRITE)
-        except (IOError, OSError) as err:
-            logger.warning(f'Failed to save {cluster_analyse_file_path}. {err}')
-            raise ProfilerIOException
 
     def _compute_time_inside_step(self, metric_timeline, step_time_list):
         """Compute per step time of metric_timeline."""
@@ -1379,33 +1409,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self._display_filename = self._display_filename.format(rank_id)
         self._timeline_summary_filename = self._timeline_summary_filename.format(rank_id)
 
-    def _load_timeline_data(self, all_reduce_names=None):
-        """Load timeline data from file."""
-        all_reduce_names = all_reduce_names or []
-        file_path = os.path.join(
-            self._profiling_dir,
-            self._output_timeline_data_file_path.format(self._rank_id)
-        )
-        file_path = validate_and_normalize_path(file_path)
-        if not os.path.exists(file_path):
-            logger.critical("Failed to find parsed timeline file.")
-            raise ProfilerFileNotFoundException('parsed timeline file')
-
-        timeline_list = []
-        try:
-            with open(file_path, 'r') as f_obj:
-                for line in f_obj:
-                    line_list = line.strip('\n').split(',')
-                    if line_list[0] == 'op_name' or line_list[0] in all_reduce_names:
-                        continue
-                    line_list[self._tid_idx] = f"Stream #{line_list[self._tid_idx]}"
-                    timeline_list.append(line_list)
-        except (IOError, OSError) as err:
-            logger.critical('Error occurred when read timeline intermediate file: %s', err)
-            raise ProfilerIOException()
-
-        return timeline_list
-
     def _parse_timeline_data(self, timeline, min_cycle_counter):
         """Parse timeline data."""
         # factor to convert the time unit from 1ms to 1us for timeline display
@@ -1436,6 +1439,34 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self._update_format_meta_data(timeline_dict)
         self._timeline_meta.append(timeline_dict)
 
+    @staticmethod
+    def _get_all_reduce_names(communication_info):
+        names = []
+        for info in communication_info:
+            # all_reduce_name format: stream_stream_id_stream_op_index_opname
+            all_reduce_name = info[0][info[0].rindex('_') + 1:]
+            if all_reduce_name not in names:
+                names.append(all_reduce_name)
+        return names
+
+    def _get_op_timeline(self, communication_info, source_path):
+        """get ai_core and cpu timeline."""
+        all_reduce_names = AscendTimelineGenerator._get_all_reduce_names(communication_info)
+        timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data(all_reduce_names)
+        for timeline in timeline_list:
+            timeline[self._tid_idx] = f"Stream #{timeline[self._tid_idx]}"
+
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._rank_size)
+        cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
+        if cpu_timeline_list:
+            self._clock_synchronize_to_device(cpu_timeline_list, source_path)
+            timeline_list.extend(cpu_timeline_list)
+        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
+        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
+        self._timeline_summary['op_exe_times'] = len(timeline_list)
+        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
+        return timeline_list
+
     def init_timeline(self, communication_info, framework_info, aicpu_info, min_cycle_counter, source_path):
         """
         Init timeline metadata, adding all collected info.
@@ -1451,23 +1482,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             min_cycle_counter = 0
 
         logger.info('Initiating timeline...')
-        all_reduce_names = []
-        for info in communication_info:
-            # stream_{stream_id}_{stream_op_index}_{opname}
-            all_reduce_name = info[0][info[0].rindex('_') + 1:]
-            if all_reduce_name not in all_reduce_names:
-                all_reduce_names.append(all_reduce_name)
-
-        timeline_list = self._load_timeline_data(all_reduce_names)
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._rank_size)
-        cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
-        if cpu_timeline_list:
-            self._clock_synchronize_to_device(cpu_timeline_list, source_path)
-            timeline_list.extend(cpu_timeline_list)
-        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
-        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
-        self._timeline_summary['op_exe_times'] = len(timeline_list)
-        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
+        timeline_list = []
+        op_timeline_list = self._get_op_timeline(communication_info, source_path)
+        timeline_list.extend(op_timeline_list)
 
         # Generate step time.
         self._set_step_start_and_end_op_name(timeline_list)
@@ -1571,14 +1588,15 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             op_type = framework_obj[1]
             op_full_name = framework_obj[4]
             op_info = framework_obj[5]
-            framework_info_dict[op_full_name] = {
+            framework_info = {
                 'name': op_name,
                 'args': {
                     'type': op_type,
                     'fullname': op_full_name
                 }
             }
-            framework_info_dict[op_full_name]['args'].update(op_info)
+            framework_info.get('args').update(op_info)
+            framework_info_dict[op_full_name] = framework_info
 
         # Insert framework info into timeline.
         for timeline_item in self._timeline_meta:
@@ -1616,136 +1634,91 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         communication time between stages slow down the training. The value of t3 indicates the degree
         that communication inside each stage slow down the training.
         """
-        step_num = len(step_info)
         is_pipeline_parallel = False
         comm_merged_timeline, _, comm_display_timeline = self._get_merged_time_list(
-            comm_info,
-            display_name="communication"
+            comm_info, display_name="communication"
         )
         aicore_timeline_interval, _, aicore_display_timeline = self._get_merged_time_list(
-            aicore_info,
-            get_interval_time=True
+            aicore_info, get_interval_time=True
         )
         # Consider if the overlap will be 0 or not.
         comm_not_overlapped_timeline = self._get_intersection_time(
-            aicore_timeline_interval,
-            comm_merged_timeline
+            aicore_timeline_interval, comm_merged_timeline
         )
 
         # Process receive part.
         all_timeline = aicore_info + comm_info
         all_timeline.sort(key=lambda x: float(x[self._start_time_idx]))
         receive_op_timeline, timeline_exclude_receive_op = self._produce_two_separated_timeline(
-            all_timeline,
-            "Receive-op"
+            all_timeline, "Receive-op"
         )
         if receive_op_timeline:
             is_pipeline_parallel = True
         receive_op_merged_timeline = self._get_merged_time_list(receive_op_timeline)[0]
         timeline_exclude_receive_op_interval = self._get_merged_time_list(
-            timeline_exclude_receive_op,
-            get_interval_time=True
+            timeline_exclude_receive_op, get_interval_time=True
         )[0]
         receive_op_not_overlapped_timeline = self._get_intersection_time(
-            timeline_exclude_receive_op_interval,
-            receive_op_merged_timeline
+            timeline_exclude_receive_op_interval, receive_op_merged_timeline
         )
 
         # Process collective communication part.
         collective_comm_timeline = self._produce_two_separated_timeline(
-            comm_info,
-            "Receive-op"
+            comm_info, "Receive-op"
         )[-1]
         collective_comm_merged_timeline = self._get_merged_time_list(collective_comm_timeline)[0]
         collective_comm_not_overlapped_timeline = self._get_intersection_time(
-            aicore_timeline_interval,
-            collective_comm_merged_timeline
+            aicore_timeline_interval, collective_comm_merged_timeline
         )
 
         # Generate free time that exclude computation and communication time.
         free_timeline = self._get_merged_time_list(
-            all_timeline,
-            get_interval_time=True,
-            display_name="free_time")[1]
+            all_timeline, get_interval_time=True, display_name="free_time"
+        )[1]
 
-        # Compute these five metrics mentioned above per step.
-        recieve_alone_time = self._compute_time_inside_step(receive_op_not_overlapped_timeline, step_info)
-        stage_time, computation_time = [], []
-        comm_alone_time = self._compute_time_inside_step(comm_not_overlapped_timeline, step_info)
-        collective_comm_alone_time = self._compute_time_inside_step(
-            collective_comm_not_overlapped_timeline,
-            step_info
-        )
-        for step in range(step_num):
-            try:
-                if is_pipeline_parallel:
-                    stage_time.append(step_info[step][self._duration_idx] - recieve_alone_time[step])
-                computation_time.append(step_info[step][self._duration_idx] - comm_alone_time[step])
-            except IndexError as e:
-                logger.error(e)
-        metrices_per_step_list = [computation_time, comm_alone_time, stage_time, recieve_alone_time, \
-                                  collective_comm_alone_time]
-        if step_num > 1:
-            for metric in metrices_per_step_list:
-                metric.append(sum(metric[1:]) / (step_num - 1))
-        self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel)
+        self._parse_cluster_metrices(step_info, receive_op_not_overlapped_timeline, comm_not_overlapped_timeline
+                                     , collective_comm_not_overlapped_timeline, is_pipeline_parallel)
 
         res_timeline = []
         res_timeline.extend(comm_not_overlapped_timeline)
         res_timeline.extend(aicore_display_timeline)
         res_timeline.extend(comm_display_timeline)
         res_timeline.extend(free_timeline)
+
         return res_timeline
 
-    def _write_cluster_metrices(self, metrices, is_pipeline_parallel):
-        """Write cluster metric."""
-        # Note that the feature of cluster bottleneck analyse is not supported in offline parse mode,
-        # due to that parallel context is not set.
-        try:
-            parallel_mode = get_auto_parallel_context("parallel_mode")
-            stage_num = get_auto_parallel_context("pipeline_stages")
-        except RuntimeError:
-            logger.warning("[profiler] the feature of cluster bottleneck analyse "
-                           "is not supported in offline parse mode.")
-            parallel_mode = "data_parallel"
-            stage_num = 1
-        if stage_num > 1:
-            parallel_mode = "pipeline-parallel"
-        elif parallel_mode != "data_parallel":
-            parallel_mode = "model-parallel"
-        else:
-            parallel_mode = "data-parallel"
-
-        cluster_analyse_file_path = os.path.join(
-            self._profiling_dir,
-            self._cluster_analyse_filename.format(parallel_mode, stage_num, self._rank_size, self._rank_id))
-        cluster_analyse_file_path = validate_and_normalize_path(cluster_analyse_file_path)
-
-        try:
-            with open(cluster_analyse_file_path, 'w') as file_handle:
-                csv_writer = csv.writer(file_handle)
+    def _parse_cluster_metrices(self, step_info, receive_op_not_overlapped_timeline, comm_not_overlapped_timeline
+                                , collective_comm_not_overlapped_timeline, is_pipeline_parallel):
+        """Write the cluster metrices"""
+        step_num = len(step_info)
+        # Compute these five metrics mentioned above per step.
+        recieve_alone_time = self._compute_time_inside_step(receive_op_not_overlapped_timeline, step_info)
+        stage_time, computation_time = [], []
+        comm_alone_time = self._compute_time_inside_step(comm_not_overlapped_timeline, step_info)
+        collective_comm_alone_time = self._compute_time_inside_step(
+            collective_comm_not_overlapped_timeline, step_info
+        )
+        for step in range(step_num):
+            try:
                 if is_pipeline_parallel:
-                    header = ['computation_time', 'communication_alone_time', 'stage_time',
-                              'receive_alone_time', 'collective_communication_alone_time']
-                    zip_metrices = zip(metrices[0], metrices[1], metrices[2], metrices[3], metrices[4])
-                else:
-                    header = ['computation_time', 'communication_alone_time']
-                    zip_metrices = zip(metrices[0], metrices[1])
-                csv_writer.writerow(header)
-                for row_data in zip_metrices:
-                    row_data = [round(val, 4) for val in row_data]
-                    csv_writer.writerow(row_data)
-            os.chmod(cluster_analyse_file_path, stat.S_IREAD | stat.S_IWRITE)
-        except (IOError, OSError) as err:
-            logger.warning(f'Failed to save {cluster_analyse_file_path}. {err}')
-            raise ProfilerIOException
+                    stage_time.append(step_info[step][self._duration_idx] - recieve_alone_time[step])
+                computation_time.append(step_info[step][self._duration_idx] - comm_alone_time[step])
+            except IndexError as err:
+                logger.error(err)
+        metrices_per_step_list = [computation_time, comm_alone_time, stage_time,
+                                  recieve_alone_time, collective_comm_alone_time]
+        if step_num > 1:
+            for metric in metrices_per_step_list:
+                metric.append(sum(metric[1:]) / (step_num - 1))
+        self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel, "Ascend", self._rank_id)
 
     def _compute_time_inside_step(self, metric_timeline, step_time_list):
         """Compute per step time of metric_timeline."""
         per_step_time_list = []
         step = 0
         cur_step_metric_time = 0
-        step_end_time = step_time_list[step][self._start_time_idx] + step_time_list[step][self._duration_idx]
+        step_end_time = step_time_list[step][self._start_time_idx] + \
+                        step_time_list[step][self._duration_idx]
         for time_item in metric_timeline:
             start_time = time_item[self._start_time_idx]
             if start_time > step_end_time:
@@ -1756,7 +1729,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                                    "find the data length is more than step count, "
                                    "maybe current graph has multi sub graph, skip the last data.")
                     break
-                step_end_time = step_time_list[step][self._start_time_idx] + step_time_list[step][self._duration_idx]
+                step_end_time = step_time_list[step][self._start_time_idx] + \
+                                step_time_list[step][self._duration_idx]
                 cur_step_metric_time = 0
             cur_step_metric_time += time_item[self._duration_idx]
         per_step_time_list.append(cur_step_metric_time)
@@ -1770,7 +1744,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         first_list_len = len(first_time_list)
         second_list_len = len(second_time_list)
         intersection_segment_display_list = []
-        while first_list_idx < first_list_len and second_list_idx < second_list_len:
+
+        while first_list_idx < first_list_len and \
+                second_list_idx < second_list_len:
             intersection_start = max(
                 first_time_list[first_list_idx][self._start_time_idx],
                 second_time_list[second_list_idx][self._start_time_idx]
@@ -1780,9 +1756,10 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 second_time_list[second_list_idx][self._duration_idx]
             )
             if intersection_start < intersection_end:
+                tid = self._tid_dict.get(display_name, [0, 0])
                 intersection_segment_display_list.append(
-                    [display_name, self._tid_dict[display_name][0],
-                     intersection_start, intersection_end - intersection_start, self._tid_dict[display_name][1]]
+                    [display_name, tid[0],
+                     intersection_start, intersection_end - intersection_start, tid[1]]
                 )
             if first_time_list[first_list_idx][self._duration_idx] >= \
                     second_time_list[second_list_idx][self._duration_idx]:
@@ -1791,6 +1768,80 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 first_list_idx += 1
 
         return intersection_segment_display_list
+
+    def init_pynative_timeline(self):
+        """Init timeline for pynative model."""
+        timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data()
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._rank_size)
+        cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
+        if cpu_timeline_list:
+            self._pynative_clock_synchronize(cpu_timeline_list)
+            timeline_list.extend(cpu_timeline_list)
+
+        self._timeline_summary['op_exe_times'] = len(timeline_list)
+        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
+        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
+
+        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
+        min_cycle_counter = float(timeline_list[0][self._start_time_idx])
+
+        step_timeline = self._pynative_get_step_timeline_list(timeline_list)
+        timeline_list.extend(step_timeline)
+
+        stream_count_dict = {}
+        max_scope_name_num = 0
+        for timeline in timeline_list:
+            self._parse_timeline_data(timeline, min_cycle_counter)
+            self._update_num_of_streams(timeline, stream_count_dict)
+            cur_scope_name_num = len(timeline[self._op_name_idx].split('/')) - 1
+            max_scope_name_num = max(cur_scope_name_num, max_scope_name_num)
+
+        self._timeline_summary['max_scope_name_num'] = max_scope_name_num
+        self._timeline_summary['num_of_streams'] = len(stream_count_dict)
+
+    def _pynative_get_step_timeline_list(self, timeline_list):
+        """Get step timeline list for pynative model."""
+        step_list = []
+        if 'GetNext' not in timeline_list[0][self._op_name_idx]:
+            return step_list
+        step = [-1, -1]
+        step_num = 0
+        tid = "Steps"
+        for timeline in timeline_list:
+            if 'GetNext' not in timeline[self._op_name_idx]:
+                continue
+            start_time = float(timeline[self._start_time_idx])
+            if step[0] == -1:
+                step[0] = start_time
+            else:
+                step[1] = start_time - step[0]
+                step_num = step_num + 1
+                step_list.append([str(step_num), tid, float(step[0]), step[1]])
+                step = [start_time, -1]
+        if step[0] != -1 and step[1] == -1:
+            step_num = step_num + 1
+            step_list.append([str(step_num), tid, float(step[0]),
+                              float(timeline_list[-1][self._start_time_idx]) - step[0]])
+        return step_list
+
+    def _pynative_clock_synchronize(self, timeline_list):
+        """Synchronize the timestamp from device to host."""
+        start_time_file_path = os.path.join(self._profiling_dir, f"start_time_{self._rank_id}.txt")
+        try:
+            with open(start_time_file_path) as f_obj:
+                lines = f_obj.readlines()
+                # lines[0] stores the host monotonic time of start training.
+                host_monotonic_start_time = int(lines[0].strip().split(':')[-1])
+                # lines[1] stores the gpu time of start training.
+                gpu_start_time = int(lines[1].strip().split(':')[-1])
+        except (IOError, OSError) as err:
+            logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
+            raise ProfilerIOException()
+        time_diff = gpu_start_time * 1000 - host_monotonic_start_time
+        for idx, time_item in enumerate(timeline_list):
+            timeline_list[idx][self._start_time_idx] = int(time_item[self._start_time_idx]) + time_diff
+            timeline_list[idx][self._start_time_idx] = timeline_list[idx][self._start_time_idx] / 1000000
+            timeline_list[idx][self._duration_idx] = timeline_list[idx][self._duration_idx] / 1000
 
 
 class CpuTimelineGenerator(GpuTimelineGenerator):
