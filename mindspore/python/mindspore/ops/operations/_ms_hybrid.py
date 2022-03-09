@@ -473,7 +473,7 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
     When a function written by the Hybrid DSL is decorated by ms_hybrid,
     it can be run as a usual Python function.
     Also, this function can be used in the api Custom and to create a Custom op, with func_type
-    "hybrid" or "py_func". Creating a custom op with mode "hybrid" by the Hybrid DSL function
+    "hybrid" or "pyfunc". Creating a custom op with mode "hybrid" by the Hybrid DSL function
     will enjoy the automatic dtype/shape infer for free.
 
     Args:
@@ -502,12 +502,13 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
         ... }
         >>> # Create the reg info json string.
         >>> op_gpu_info = CustomRegOp() \
-        ...    .input(0, "a") \
-        ...    .input(0, "b") \
-        ...    .output(0, "y") \
-        ...    .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None) \
-        ...    .target("GPU") \
-        ...    .get_op_info()
+        ...     .input(0, "a") \
+        ...     .input(0, "b") \
+        ...     .output(0, "y") \
+        ...     .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None) \
+        ...     .target("GPU") \
+        ...     .get_op_info()
+        >>>
         >>> # Create inputs for the custom op.
         >>> input_x = np.ones([4, 4]).astype(np.float32)
         >>> input_y = np.ones([4, 4]).astype(np.float32)
@@ -534,7 +535,7 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
         >>> # In this case, we will enjoy the automatic dtype/shape infer for free.
         >>> # The inputs should be mindspore tensors.
         >>> test_op_hybrid = ops.Custom(outer_product)
-        >>> output = test_op_akg(Tensor(input_x), Tensor(input_y))
+        >>> output = test_op_hybrid(Tensor(input_x), Tensor(input_y))
     """
     if compile_attrs is None:
         compile_attrs = {}

@@ -23,6 +23,9 @@ from mindspore.ops import ms_hybrid
 
 @ms_hybrid
 def dtype_and_cast_example(a, b):
+    """
+    test function for dtype and cast in Hybrid DSL
+    """
     d = allocate(a.shape, "float16")
     c = output_tensor(a.shape, "float16")
 
@@ -36,6 +39,9 @@ def dtype_and_cast_example(a, b):
 
 @ms_hybrid
 def allocate_and_math_intrin_example(a, b):
+    """
+    test function for allocate and math function in Hybrid DSL
+    """
     d = allocate(a.shape, a.dtype)
     c = output_tensor(a.shape, a.dtype)
 
@@ -48,6 +54,9 @@ def allocate_and_math_intrin_example(a, b):
 
 @ms_hybrid
 def grid_example(a, b):
+    """
+    test function for grid in Hybrid DSL
+    """
     c = output_tensor(a.shape, a.dtype)
 
     for arg in grid(a.shape):
@@ -68,6 +77,9 @@ class TestMsHybridDSL(Cell):
 
 
 def ms_hybrid_cast_with_infer():
+    """
+    test case Custom Op with functions written in Hybrid DSL and infer functions
+    """
     np.random.seed(10)
     input_x = np.random.normal(0, 1, [4, 4]).astype(np.float16)
     input_y = np.random.normal(0, 1, [4, 4]).astype(np.float16)
@@ -81,6 +93,9 @@ def ms_hybrid_cast_with_infer():
 
 
 def ms_hybrid_cast_without_infer():
+    """
+    test case Custom Op with functions written in Hybrid DSL and without infer functions
+    """
     np.random.seed(10)
     input_x = np.random.normal(0, 1, [4, 4]).astype(np.float16)
     input_y = np.random.normal(0, 1, [4, 4]).astype(np.float16)
@@ -94,6 +109,9 @@ def ms_hybrid_cast_without_infer():
 
 
 def ms_hybrid_cast_pyfunc():
+    """
+    test case Custom Op with functions written in Hybrid DSL and func_type pyfunc
+    """
     np.random.seed(10)
     input_x = np.random.normal(0, 1, [4, 4]).astype(np.float16)
     input_y = np.random.normal(0, 1, [4, 4]).astype(np.float16)
@@ -107,6 +125,9 @@ def ms_hybrid_cast_pyfunc():
 
 
 def ms_hybrid_allocate():
+    """
+    test case Custom Op with functions written in Hybrid DSL about math functions and allocate
+    """
     np.random.seed(10)
     input_x = np.random.normal(0, 1, [4, 4]).astype(np.float16)
     input_y = np.random.normal(0, 1, [4, 4]).astype(np.float16)
@@ -120,6 +141,9 @@ def ms_hybrid_allocate():
 
 
 def ms_hybrid_grid():
+    """
+    test case Custom Op with functions written in Hybrid DSL about grid
+    """
     np.random.seed(10)
     input_x = np.random.normal(0, 1, [4, 4]).astype(np.float16)
     input_y = np.random.normal(0, 1, [4, 4]).astype(np.float16)
@@ -143,10 +167,11 @@ def test_ms_hybrid_ascend_graph_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    ms_hybrid_cast_pyfunc()
     ms_hybrid_cast_with_infer()
     ms_hybrid_cast_without_infer()
-    ms_hybrid_cast_pyfunc()
     ms_hybrid_allocate()
+    ms_hybrid_grid()
 
 
 @ pytest.mark.level0
@@ -160,10 +185,11 @@ def test_ms_hybrid_ascend_pynative_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    ms_hybrid_cast_pyfunc()
     ms_hybrid_cast_with_infer()
     ms_hybrid_cast_without_infer()
-    ms_hybrid_cast_pyfunc()
     ms_hybrid_allocate()
+    ms_hybrid_grid()
 
 
 @ pytest.mark.level0
@@ -176,10 +202,11 @@ def test_ms_hybrid_gpu_graph_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    ms_hybrid_cast_pyfunc()
     ms_hybrid_cast_with_infer()
     ms_hybrid_cast_without_infer()
-    ms_hybrid_cast_pyfunc()
     ms_hybrid_allocate()
+    ms_hybrid_grid()
 
 
 @ pytest.mark.level0
@@ -192,7 +219,8 @@ def test_ms_hybrid_gpu_pynative_mode():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    ms_hybrid_cast_pyfunc()
     ms_hybrid_cast_with_infer()
     ms_hybrid_cast_without_infer()
-    ms_hybrid_cast_pyfunc()
     ms_hybrid_allocate()
+    ms_hybrid_grid()

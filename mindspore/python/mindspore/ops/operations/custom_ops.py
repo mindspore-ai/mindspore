@@ -445,7 +445,7 @@ class Custom(ops.PrimitiveWithInfer):
         """Update information of func"""
         if callable(self.func):
             # For the func_type other then hybrid, get the original function if func is decorated
-            if "__wrapped__" in self.func.__dict__ and not self._is_ms_hybrid:
+            if "__wrapped__" in self.func.__dict__ and not self.func_type in ["hybrid", "pyfunc"]:
                 self.func = self.func.__dict__["__wrapped__"]
             # func name
             self.func_name = self.func.__name__
