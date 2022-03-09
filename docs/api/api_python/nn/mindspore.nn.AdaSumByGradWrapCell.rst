@@ -27,7 +27,7 @@ mindspore.nn.AdaSumByGradWrapCell
 
     **输入：**
 
-    - **gradients** (tuple[Tensor]) - `params` 的梯度，形状（shape）与 `params` 相同，与所传优化器的输入一致。
+    - **grads** (tuple[Tensor]) - `params` 的梯度，形状（shape）与 `params` 相同，与所传优化器的输入一致。
 
     **异常：**
 
