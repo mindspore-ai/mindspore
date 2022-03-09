@@ -119,6 +119,65 @@ bool ParseMode(const std::string &mode, std::string *alg_mode, std::string *work
   return true;
 }
 
+int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std::string &work_mode, const Byte *key,
+                  int32_t key_len, const Byte *iv, int iv_len, bool is_encrypt) {
+  int32_t ret = 0;
+
+  if (work_mode == "GCM") {
+    if (is_encrypt) {
+      ret = EVP_EncryptInit_ex(ctx, funcPtr(), NULL, NULL, NULL);
+      if (ret != 1) {
+        MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
+        EVP_CIPHER_CTX_free(ctx);
+        return 1;
+      }
+      if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL) != 1) {
+        MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
+        EVP_CIPHER_CTX_free(ctx);
+        return 1;
+      }
+      ret = EVP_EncryptInit_ex(ctx, funcPtr(), NULL, key, iv);
+      if (ret != 1) {
+        MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
+        EVP_CIPHER_CTX_free(ctx);
+        return 1;
+      }
+    } else {
+      ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, NULL, NULL);
+      if (ret != 1) {
+        MS_LOG(ERROR) << "EVP_DecryptInit_ex failed";
+        EVP_CIPHER_CTX_free(ctx);
+        return 1;
+      }
+      if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL) != 1) {
+        MS_LOG(ERROR) << "EVP_DecryptInit_ex failed";
+        EVP_CIPHER_CTX_free(ctx);
+        return 1;
+      }
+      ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, key, iv);
+    }
+  } else if (work_mode == "CBC") {
+    if (is_encrypt) {
+      ret = EVP_EncryptInit_ex(ctx, funcPtr(), NULL, key, iv);
+    } else {
+      ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, key, iv);
+    }
+  }
+
+  if (ret != 1) {
+    MS_LOG(ERROR) << "EVP_EncryptInit_ex/EVP_DecryptInit_ex failed";
+    return 1;
+  }
+  if (work_mode == "CBC") {
+    ret = EVP_CIPHER_CTX_set_padding(ctx, 1);
+    if (ret != 1) {
+      MS_LOG(ERROR) << "EVP_CIPHER_CTX_set_padding failed";
+      return 1;
+    }
+  }
+  return 0;
+}
+
 EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &work_mode, const Byte *key, int32_t key_len, const Byte *iv,
                                 int iv_len, bool is_encrypt) {
   constexpr int32_t key_length_16 = 16;
@@ -160,51 +219,10 @@ EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &work_mode, const Byte *key, i
     return nullptr;
   }
 
-  int32_t ret = 0;
   auto ctx = EVP_CIPHER_CTX_new();
-  if (is_encrypt) {
-    ret = EVP_EncryptInit_ex(ctx, funcPtr(), NULL, NULL, NULL);
-    if (ret != 1) {
-      MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
-      EVP_CIPHER_CTX_free(ctx);
-      return nullptr;
-    }
-    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL) != 1) {
-      MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
-      EVP_CIPHER_CTX_free(ctx);
-      return nullptr;
-    }
-    ret = EVP_EncryptInit_ex(ctx, funcPtr(), NULL, key, iv);
-    if (ret != 1) {
-      MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
-      EVP_CIPHER_CTX_free(ctx);
-      return nullptr;
-    }
-  } else {
-    ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, NULL, NULL);
-    if (ret != 1) {
-      MS_LOG(ERROR) << "EVP_DecryptInit_ex failed";
-      EVP_CIPHER_CTX_free(ctx);
-      return nullptr;
-    }
-    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL) != 1) {
-      MS_LOG(ERROR) << "EVP_DecryptInit_ex failed";
-      EVP_CIPHER_CTX_free(ctx);
-      return nullptr;
-    }
-    ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, key, iv);
-  }
-
-  if (ret != 1) {
-    MS_LOG(ERROR) << "EVP_EncryptInit_ex failed";
+  if (InitCipherCtx(ctx, funcPtr, work_mode, key, key_len, iv, iv_len, is_encrypt) != 0) {
+    MS_LOG(ERROR) << "InitCipherCtx failed.";
     return nullptr;
-  }
-  if (work_mode == "CBC") {
-    ret = EVP_CIPHER_CTX_set_padding(ctx, 1);
-    if (ret != 1) {
-      MS_LOG(ERROR) << "EVP_CIPHER_CTX_set_padding failed";
-      return nullptr;
-    }
   }
   return ctx;
 }
@@ -249,9 +267,11 @@ bool BlockEncrypt(Byte *encrypt_data, size_t *encrypt_data_len, const std::vecto
   }
   cipher_len += flen;
 
-  if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, Byte16, tag) != 1) {
-    MS_LOG(ERROR) << "EVP_CIPHER_CTX_ctrl failed";
-    return false;
+  if (enc_mode == "AES-GCM") {
+    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, Byte16, tag) != 1) {
+      MS_LOG(ERROR) << "EVP_CIPHER_CTX_ctrl failed";
+      return false;
+    }
   }
 
   EVP_CIPHER_CTX_free(ctx);
@@ -320,9 +340,11 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
     return false;
   }
 
-  if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, Byte16, tag)) {
-    MS_LOG(ERROR) << "EVP_CIPHER_CTX_ctrl failed";
-    return false;
+  if (dec_mode == "AES-GCM") {
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, Byte16, tag)) {
+      MS_LOG(ERROR) << "EVP_CIPHER_CTX_ctrl failed";
+      return false;
+    }
   }
 
   int32_t mlen = 0;
@@ -370,12 +392,14 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
     }
     *encrypt_len += sizeof(int32_t);
 
-    capacity = std::min(encrypt_buf_len - *encrypt_len, SECUREC_MEM_MAX_LEN);  // avoid dest size over 2gb
-    ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, tag, Byte16);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+    if (enc_mode == "AES-GCM") {
+      capacity = std::min(encrypt_buf_len - *encrypt_len, SECUREC_MEM_MAX_LEN);  // avoid dest size over 2gb
+      ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, tag, Byte16);
+      if (ret != 0) {
+        MS_LOG(EXCEPTION) << "memcpy_s error, errorno " << ret;
+      }
+      *encrypt_len += Byte16;
     }
-    *encrypt_len += Byte16;
 
     capacity = std::min(encrypt_buf_len - *encrypt_len, SECUREC_MEM_MAX_LEN);
     ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, block_enc_buf.data(), block_enc_len);
@@ -418,8 +442,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
     }
 
     unsigned char tag[Byte16];
-    fid.read(reinterpret_cast<char *>(tag), Byte16);
-
+    if (dec_mode == "AES-GCM") {
+      fid.read(reinterpret_cast<char *>(tag), Byte16);
+    }
     fid.read(int_buf.data(), static_cast<int64_t>(sizeof(int32_t)));
     auto block_size = ByteToInt(reinterpret_cast<Byte *>(int_buf.data()), int_buf.size());
     if (block_size < 0) {
@@ -470,15 +495,17 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
       return nullptr;
     }
     unsigned char tag[Byte16];
-    if (offset + Byte16 > data_size) {
-      MS_LOG(ERROR) << "buffer is invalid.";
-      return nullptr;
+    if (dec_mode == "AES-GCM") {
+      if (offset + Byte16 > data_size) {
+        MS_LOG(ERROR) << "buffer is invalid.";
+        return nullptr;
+      }
+      auto ret = memcpy_s(tag, Byte16, model_data + offset, Byte16);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "memcpy_s failed " << ret;
+      }
+      offset += Byte16;
     }
-    auto ret = memcpy_s(tag, Byte16, model_data + offset, Byte16);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy_s failed " << ret;
-    }
-    offset += Byte16;
     if (offset + sizeof(int32_t) > data_size) {
       MS_LOG(ERROR) << "assign len is invalid.";
       return nullptr;
@@ -501,8 +528,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
       MS_LOG(ERROR) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
       return nullptr;
     }
-    ret = memcpy_s(decrypt_data.get() + *decrypt_len, data_size, decrypt_block_buf.data(),
-                   static_cast<size_t>(decrypt_block_len));
+    size_t capacity = std::min(data_size - *decrypt_len, SECUREC_MEM_MAX_LEN);
+    auto ret = memcpy_s(decrypt_data.get() + *decrypt_len, capacity, decrypt_block_buf.data(),
+                        static_cast<size_t>(decrypt_block_len));
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy_s failed " << ret;
     }
