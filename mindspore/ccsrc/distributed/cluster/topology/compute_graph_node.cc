@@ -16,6 +16,8 @@
 
 #include "utils/log_adapter.h"
 #include "distributed/cluster/topology/utils.h"
+#include "distributed/cluster/topology/common.h"
+#include "proto/topology.pb.h"
 #include "distributed/cluster/topology/compute_graph_node.h"
 
 namespace mindspore {
@@ -53,10 +55,31 @@ bool ComputeGraphNode::Register() {
   const auto &server_url = meta_server_addr_.GetUrl();
   RETURN_IF_FALSE_WITH_LOG(tcp_client_->Connect(server_url),
                            "Failed to connect to the meta server node url: " << server_url);
+  RegistrationMessage reg_msg;
+  reg_msg.set_node_id(node_id_);
+
+  std::string content = reg_msg.SerializeAsString();
+  auto message = CreateMessage(server_url, content);
+  MS_EXCEPTION_IF_NULL(message);
+
+  tcp_client_->Send(std::move(message));
   return true;
 }
 
-bool ComputeGraphNode::Heartbeat() { return true; }
+bool ComputeGraphNode::Heartbeat() {
+  MS_EXCEPTION_IF_NULL(tcp_client_);
+
+  HeartbeatMessage hb_msg;
+  hb_msg.set_node_id(node_id_);
+
+  const auto &server_url = meta_server_addr_.GetUrl();
+  std::string content = hb_msg.SerializeAsString();
+  auto message = CreateMessage(server_url, content);
+  MS_EXCEPTION_IF_NULL(message);
+
+  tcp_client_->Send(std::move(message));
+  return true;
+}
 }  // namespace topology
 }  // namespace cluster
 }  // namespace distributed

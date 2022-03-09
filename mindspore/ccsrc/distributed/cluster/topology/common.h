@@ -40,6 +40,9 @@ constexpr char kEnvNodeId[] = "MS_NODE_ID";
 
 // For port number conversion.
 static const int kDecimal = 10;
+
+// All kinds of messages sent between compute graph nodes and meta server node.
+enum class MessageName { kRegistration, kHeartbeat };
 }  // namespace topology
 }  // namespace cluster
 }  // namespace distributed
