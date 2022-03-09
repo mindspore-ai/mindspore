@@ -45,7 +45,7 @@ bool GetModelKernel::Launch(const uint8_t *req_data, size_t len,
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, reason.c_str(), reason.size());
+    SendResponseMsg(message, reason.c_str(), reason.size());
     return true;
   }
 
@@ -55,7 +55,7 @@ bool GetModelKernel::Launch(const uint8_t *req_data, size_t len,
     BuildGetModelRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num(), {},
                      "");
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -68,11 +68,10 @@ bool GetModelKernel::Launch(const uint8_t *req_data, size_t len,
   if (get_model_req == nullptr) {
     std::string reason = "Building flatbuffers schema failed for RequestGetModel.";
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, reason.c_str(), reason.size());
+    SendResponseMsg(message, reason.c_str(), reason.size());
     return true;
   }
-  GetModel(get_model_req, fbb);
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  GetModel(get_model_req, message);
   return true;
 }
 
@@ -83,7 +82,15 @@ bool GetModelKernel::Reset() {
   return true;
 }
 
-void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, const std::shared_ptr<FBBuilder> &fbb) {
+void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req,
+                              const std::shared_ptr<ps::core::MessageHandler> &message) {
+  std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
+  if (fbb == nullptr) {
+    std::string reason = "FBBuilder builder is nullptr.";
+    MS_LOG(ERROR) << reason;
+    SendResponseMsg(message, reason.c_str(), reason.size());
+    return;
+  }
   auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
   std::map<std::string, AddressPtr> feature_maps;
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
@@ -100,22 +107,32 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
     if (retry_count_.load() % kPrintGetModelForEveryRetryTime == 1) {
       MS_LOG(DEBUG) << reason;
     }
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return;
   }
-
+  IncreaseAcceptClientNum();
+  auto real_get_model_iter = get_model_iter;
   if (iter_to_model.count(get_model_iter) == 0) {
     // If the model of get_model_iter is not stored, return the latest version of model and current iteration number.
     MS_LOG(DEBUG) << "The iteration of GetModel request " << std::to_string(get_model_iter)
                   << " is invalid. Current iteration is " << std::to_string(current_iter);
-    feature_maps = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
-  } else {
-    feature_maps = ModelStore::GetInstance().GetModelByIterNum(get_model_iter);
+    real_get_model_iter = latest_iter_num;
   }
-  IncreaseAcceptClientNum();
+  auto cache = ModelStore::GetInstance().GetModelResponseCache(name_, current_iter, real_get_model_iter);
+  if (cache == nullptr) {
+    feature_maps = ModelStore::GetInstance().GetModelByIterNum(real_get_model_iter);
+    BuildGetModelRsp(fbb, schema::ResponseCode_SUCCEED, "Get model for iteration " + std::to_string(get_model_iter),
+                     current_iter, feature_maps, std::to_string(next_req_time));
+    cache = ModelStore::GetInstance().StoreModelResponseCache(name_, current_iter, real_get_model_iter,
+                                                              fbb->GetBufferPointer(), fbb->GetSize());
+    if (cache == nullptr) {
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
+      return;
+    }
+  }
+  SendResponseMsgInference(message, cache->data(), cache->size(), ModelStore::GetInstance().RelModelResponseCache);
   MS_LOG(DEBUG) << "GetModel last iteratin is valid or not: " << Iteration::GetInstance().is_last_iteration_valid()
                 << ", next request time is " << next_req_time << ", current iteration is " << current_iter;
-  BuildGetModelRsp(fbb, schema::ResponseCode_SUCCEED, "Get model for iteration " + std::to_string(get_model_iter),
-                   current_iter, feature_maps, std::to_string(next_req_time));
   return;
 }
 

@@ -112,7 +112,7 @@ bool GetKeysKernel::Launch(const uint8_t *req_data, size_t len,
     cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, iter_num,
                                  std::to_string(CURRENT_TIME_MILLI.count()), false);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::GetExchangeKeys *get_exchange_keys_req = flatbuffers::GetRoot<schema::GetExchangeKeys>(req_data);
@@ -121,7 +121,7 @@ bool GetKeysKernel::Launch(const uint8_t *req_data, size_t len,
     cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, iter_num,
                                  std::to_string(CURRENT_TIME_MILLI.count()), false);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -133,7 +133,7 @@ bool GetKeysKernel::Launch(const uint8_t *req_data, size_t len,
       cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, iter_num,
                                    std::to_string(CURRENT_TIME_MILLI.count()), false);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -142,7 +142,7 @@ bool GetKeysKernel::Launch(const uint8_t *req_data, size_t len,
       cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_OutOfTime, iter_num,
                                    std::to_string(CURRENT_TIME_MILLI.count()), false);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     MS_LOG(INFO) << "verify signature passed!";
@@ -154,20 +154,20 @@ bool GetKeysKernel::Launch(const uint8_t *req_data, size_t len,
                   << ". client request iteration is " << iter_client;
     cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_OutOfTime, iter_num,
                                  std::to_string(CURRENT_TIME_MILLI.count()), false);
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   response = cipher_key_->GetKeys(iter_num, std::to_string(CURRENT_TIME_MILLI.count()), get_exchange_keys_req, fbb);
   if (!response) {
     MS_LOG(WARNING) << "get public keys not ready.";
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   if (!CountForGetKeys(fbb, get_exchange_keys_req, iter_num)) {
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  GenerateOutput(message, fbb->GetCurrentBufferPointer(), fbb->GetSize());
+  SendResponseMsg(message, fbb->GetCurrentBufferPointer(), fbb->GetSize());
   return true;
 }
 

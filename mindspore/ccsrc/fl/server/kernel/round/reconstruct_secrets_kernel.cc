@@ -118,7 +118,7 @@ bool ReconstructSecretsKernel::Launch(const uint8_t *req_data, size_t len,
     cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_RequestError, reason, SizeToInt(iter_num),
                                                    std::to_string(CURRENT_TIME_MILLI.count()));
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::SendReconstructSecret *reconstruct_secret_req =
@@ -128,7 +128,7 @@ bool ReconstructSecretsKernel::Launch(const uint8_t *req_data, size_t len,
     cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_RequestError, reason, SizeToInt(iter_num),
                                                    std::to_string(CURRENT_TIME_MILLI.count()));
     MS_LOG(ERROR) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   // verify signature
@@ -139,7 +139,7 @@ bool ReconstructSecretsKernel::Launch(const uint8_t *req_data, size_t len,
       cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_RequestError, reason,
                                                      SizeToInt(iter_num), std::to_string(CURRENT_TIME_MILLI.count()));
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -148,7 +148,7 @@ bool ReconstructSecretsKernel::Launch(const uint8_t *req_data, size_t len,
       cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_OutOfTime, reason, SizeToInt(iter_num),
                                                      std::to_string(CURRENT_TIME_MILLI.count()));
       MS_LOG(ERROR) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     MS_LOG(INFO) << "verify signature passed!";
@@ -167,7 +167,7 @@ bool ReconstructSecretsKernel::Launch(const uint8_t *req_data, size_t len,
                                                      "Current amount for ReconstructSecretsKernel is enough.",
                                                      SizeToInt(iter_num), std::to_string(CURRENT_TIME_MILLI.count()));
     }
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -179,7 +179,7 @@ bool ReconstructSecretsKernel::Launch(const uint8_t *req_data, size_t len,
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
     MS_LOG(INFO) << "Current amount for ReconstructSecretsKernel is enough.";
   }
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
 
   MS_LOG(INFO) << "reconstruct_secrets_kernel success.";
   if (!response) {

@@ -20,6 +20,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+typedef void (*RefBufferRelCallback)(const void *data, size_t datalen, void *extra);
 // MessageHandler class is used to handle requests from clients and send response from server.
 // It's the base class of HttpMsgHandler and TcpMsgHandler.
 class MessageHandler {
@@ -34,6 +35,13 @@ class MessageHandler {
   virtual size_t len() const = 0;
 
   virtual bool SendResponse(const void *data, const size_t &len) = 0;
+  virtual bool SendResponseInference(const void *data, const size_t &len, RefBufferRelCallback cb) {
+    auto ret = SendResponse(data, len);
+    if (cb) {
+      cb(data, len, nullptr);
+    }
+    return ret;
+  }
 };
 }  // namespace core
 }  // namespace ps

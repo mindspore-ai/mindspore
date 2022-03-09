@@ -48,12 +48,12 @@ bool PullWeightKernel::Launch(const uint8_t *req_data, size_t len,
     std::string reason = "Building flatbuffers schema failed for RequestPullWeight";
     BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num(),
                        {});
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
 
   PullWeight(fbb, pull_weight_req);
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 

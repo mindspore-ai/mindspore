@@ -58,7 +58,7 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(WARNING) << reason;
-    GenerateOutput(message, reason.c_str(), reason.size());
+    SendResponseMsg(message, reason.c_str(), reason.size());
     return true;
   }
 
@@ -67,13 +67,13 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
     std::string reason = "The schema of RequestFLJob is invalid.";
     BuildStartFLJobRsp(fbb, schema::ResponseCode_RequestError, reason, false, "");
     MS_LOG(WARNING) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
   ResultCode result_code = ReachThresholdForStartFLJob(fbb);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
@@ -84,17 +84,17 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
       fbb, schema::ResponseCode_RequestError, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(WARNING) << reason;
-    GenerateOutput(message, reason.c_str(), reason.size());
+    SendResponseMsg(message, reason.c_str(), reason.size());
     return true;
   }
 
   if (ps::PSContext::instance()->pki_verify()) {
     if (!JudgeFLJobCert(fbb, start_fl_job_req)) {
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     if (!StoreKeyAttestation(fbb, start_fl_job_req)) {
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
   }
@@ -102,7 +102,7 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
   result_code = ReadyForStartFLJob(fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
   PBMetadata metadata;
@@ -113,19 +113,30 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return update_reason == kNetworkError ? false : true;
   }
 
-  StartFLJob(fbb, device_meta);
   // If calling ReportCount before ReadyForStartFLJob, the result will be inconsistent if the device is not selected.
   result_code = CountForStartFLJob(fbb, start_fl_job_req);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
   IncreaseAcceptClientNum();
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  auto curr_iter_num = LocalMetaStore::GetInstance().curr_iter_num();
+  auto last_iteration = curr_iter_num - 1;
+  auto cache = ModelStore::GetInstance().GetModelResponseCache(name_, curr_iter_num, last_iteration);
+  if (cache == nullptr) {
+    StartFLJob(fbb);
+    cache = ModelStore::GetInstance().StoreModelResponseCache(name_, curr_iter_num, last_iteration,
+                                                              fbb->GetBufferPointer(), fbb->GetSize());
+    if (cache == nullptr) {
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+  }
+  SendResponseMsgInference(message, cache->data(), cache->size(), ModelStore::GetInstance().RelModelResponseCache);
   return true;
 }
 
@@ -288,7 +299,7 @@ ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder>
   return ResultCode::kSuccess;
 }
 
-void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &) {
+void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb) {
   size_t last_iteration = LocalMetaStore::GetInstance().curr_iter_num() - 1;
   auto feature_maps = ModelStore::GetInstance().GetModelByIterNum(last_iteration);
   if (feature_maps.empty()) {

@@ -58,7 +58,7 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(WARNING) << reason;
-    GenerateOutput(message, reason.c_str(), reason.size());
+    SendResponseMsg(message, reason.c_str(), reason.size());
     return true;
   }
 
@@ -67,13 +67,13 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
     std::string reason = "The schema of RequestUpdateModel is invalid.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
     MS_LOG(WARNING) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
   ResultCode result_code = ReachThresholdForUpdateModel(fbb);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
@@ -82,7 +82,7 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
     std::string reason = "Building flatbuffers schema failed for RequestUpdateModel.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
     MS_LOG(WARNING) << reason;
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -93,7 +93,7 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
       std::string reason = "verify signature failed.";
       BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
       MS_LOG(WARNING) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -101,7 +101,7 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
       std::string reason = "verify signature timestamp failed.";
       BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, "");
       MS_LOG(WARNING) << reason;
-      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     MS_LOG(INFO) << "verify signature passed!";
@@ -110,25 +110,25 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
   result_code = VerifyUpdateModel(update_model_req, fbb, &device_meta);
   if (result_code != ResultCode::kSuccess) {
     MS_LOG(WARNING) << "Updating model failed.";
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
   result_code = CountForUpdateModel(fbb, update_model_req);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
   result_code = UpdateModel(update_model_req, fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
     MS_LOG(WARNING) << "Updating model failed.";
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
   std::string update_model_fl_id = update_model_req->fl_id()->str();
   IncreaseAcceptClientNum();
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
 
   result_code = CountForAggregation(update_model_fl_id);
   if (result_code != ResultCode::kSuccess) {
