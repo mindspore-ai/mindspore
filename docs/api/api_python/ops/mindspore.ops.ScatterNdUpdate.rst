@@ -5,7 +5,7 @@ mindspore.ops.ScatterNdUpdate
 
     使用给定值以及输入索引更新输入数据的值。
 
-    `input_x` 的rank为P，而`indices` 的rank为Q， `Q >= 2` 。
+    `input_x` 的rank为P，而 `indices` 的rank为Q， `Q >= 2` 。
 
     `indices` 的shape为 :math:`(i_0, i_1, ..., i_{Q-2}, N)` ， `N <= P` 。
 

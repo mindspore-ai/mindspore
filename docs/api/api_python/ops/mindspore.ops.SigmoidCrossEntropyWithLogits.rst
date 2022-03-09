@@ -9,7 +9,7 @@
 
     将输入 `logits` 设置为 :math:`X` ，输入 `label` 为 :math:`Y` ，输出为 :math:`loss` 。然后，
 
-     .. math::
+    .. math::
         \begin{array}{ll} \\
             p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
             loss_{ij} = -[Y_{ij} * ln(p_{ij}) + (1 - Y_{ij})ln(1 - p_{ij})]

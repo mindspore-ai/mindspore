@@ -11,7 +11,7 @@ mindspore.ops.ScatterNd
 
     `indices` 的shape为 :math:`(i_0, i_1, ..., i_{Q-2}, N)` ， `N <= P` 。
 
-    `indices` 的最后一个维度（长度为`N`）表示沿着空Tensor的 `N` 个维度进行切片。
+    `indices` 的最后一个维度（长度为 `N` ）表示沿着空Tensor的 `N` 个维度进行切片。
 
     `updates` 表示秩为 `Q-1+P-N` 的Tensor，shape为 :math:`(i_0, i_1, ..., i_{Q-2}, shape_N, ..., shape_{P-1})` 。
 
