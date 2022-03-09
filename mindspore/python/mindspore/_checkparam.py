@@ -480,7 +480,7 @@ class Validator:
         hit = False
         for template_type in template_types:
             if isinstance(template_type, mstype.Type):
-                if mstype.issubclass_(type_, template_type):
+                if mstype._issubclass_(type_, template_type): # pylint: disable=W0212
                     hit = True
                     break
             elif type_ is template_type:

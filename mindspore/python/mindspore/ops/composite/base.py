@@ -584,7 +584,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         for sigs, fn in self.entries:
             if len(sigs) != len(types):
                 continue
-            if any(not mstype.issubclass_(type_, sig) for sig, type_ in zip(sigs, types)):
+            if any(not mstype._issubclass_(type_, sig) for sig, type_ in zip(sigs, types)):  # pylint: disable=W0212
                 continue
             output = fn(*args)
             return output
