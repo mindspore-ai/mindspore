@@ -14,6 +14,7 @@
 # ==============================================================================
 import pytest
 import numpy as np
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
@@ -80,3 +81,115 @@ def test_target_update():
     tau_tensor = Tensor(np.array([tau], dtype=np.float32))
     ema_update = EmaUpdate(policy_net, target_net, tau_tensor, period=1)
     ema_update()
+
+
+class DenseNet(nn.Cell):
+    def __init__(self):
+        super(DenseNet, self).__init__()
+        self.fc1 = nn.Dense(16, 16)
+        self.fc2 = nn.Dense(16, 16)
+
+    def construct(self, x):
+        out = self.fc2(self.fc1(x))
+        return out
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_two_dense_net():
+    """
+    Feature: Check the name of parameter .
+    Description: Check the name of parameter in two network.
+    Expectation: No exception.
+    """
+    x = Tensor(np.random.randn(4, 16).astype(np.float32))
+    net = DenseNet()
+    res = net(x)
+    print("res:", res)
+
+
+class InnerNet(nn.Cell):
+    def __init__(self):
+        super(InnerNet, self).__init__()
+        self.param = Parameter(Tensor([1], ms.float32), name="name_a")
+
+    def construct(self, x):
+        return x + self.param
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_two_net():
+    """
+    Feature: Check the name of parameter .
+    Description: Check the name of parameter in two network.
+    Expectation: No exception.
+    """
+    net1 = InnerNet()
+    net2 = InnerNet()
+    res1 = net1(Tensor([1], ms.float32))
+    res2 = net2(Tensor([1], ms.float32))
+    print("res1:", res1)
+    print("res2:", res2)
+
+
+class OutNet_1(nn.Cell):
+    def __init__(self, net1, net2):
+        super(OutNet_1, self).__init__()
+        self.param1 = ParameterTuple(net1.get_parameters())
+        self.param2 = ParameterTuple(net2.get_parameters())
+
+    def construct(self, x):
+        return x + self.param1[0] + self.param2[0]
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_inner_out_net_1():
+    """
+    Feature: Check the name of parameter .
+    Description: Check the name of parameter in two network.
+    Expectation: No exception.
+    """
+    with pytest.raises(RuntimeError, match="its name 'name_a' already exists."):
+        net1 = InnerNet()
+        net2 = InnerNet()
+        out_net = OutNet_1(net1, net2)
+        res = out_net(Tensor([1], ms.float32))
+        print("res:", res)
+
+
+class OutNet_2(nn.Cell):
+    def __init__(self, net1, net2):
+        super(OutNet_2, self).__init__()
+        self.cell_list = nn.CellList()
+        self.cell_list.append(net1)
+        self.cell_list.append(net2)
+        self.param1 = ParameterTuple(self.cell_list[0].get_parameters())
+        self.param2 = ParameterTuple(self.cell_list[1].get_parameters())
+
+    def construct(self, x):
+        return x + self.param1[0] + self.param2[0]
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_inner_out_net_2():
+    """
+    Feature: Check the name of parameter .
+    Description: Check the name of parameter in two network.
+    Expectation: No exception.
+    """
+    net1 = InnerNet()
+    net2 = InnerNet()
+    out_net = OutNet_2(net1, net2)
+    res = out_net(Tensor([1], ms.float32))
+    print("res:", res)

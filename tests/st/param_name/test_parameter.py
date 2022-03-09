@@ -114,7 +114,7 @@ def test_parameter_2_2():
             self.res2 = self.res1[0] + self.param_a
 
         def construct(self):
-            return self.param_a + self.res1 + self.res2
+            return self.param_a + self.res1[0] + self.res2
 
     with pytest.raises(ValueError, match="its name 'name_a' already exists."):
         net = ParamNet()
@@ -293,7 +293,7 @@ def test_parameter_parameter_tuple_1():
     with pytest.raises(ValueError, match="its name 'name_a' already exists."):
         net = ParamNet()
         res = net()
-        assert res == 7
+        assert res == 11
 
 
 @pytest.mark.level1
