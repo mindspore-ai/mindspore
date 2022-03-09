@@ -29,7 +29,7 @@ function Run_Converter() {
     # Convert nnie models:
     while read line; do
         nnie_line_info=${line}
-        if [[ $nnie_line_info == \#* ]]; then
+        if [[ $nnie_line_info == \#* || $nnie_line_info == "" ]]; then
           continue
         fi
         model_location=`echo ${nnie_line_info}|awk -F ' ' '{print $1}'`
@@ -130,7 +130,7 @@ version=${file_name_array[2]}
 
 # Set models config filepath
 config_folder="config_level0"
-if [[ ${level} = "level1" ]]; then
+if [[ ${level} == "level1" ]]; then
     config_folder="config_level1"
 fi
 models_nnie_config=${basepath}/../${config_folder}/models_nnie.cfg
@@ -162,6 +162,11 @@ else
     cat ${run_converter_log_file}
     Print_Converter_Result
     exit 1
+fi
+
+if [[ $(Exist_File_In_Path ${ms_models_path} ".ms") == "true" ]]; then
+  echo "No ms model found in ${ms_models_path}, please check if config file is empty!" >> ${run_converter_result_file}
+  exit 0
 fi
 
 # Write benchmark result to temp file

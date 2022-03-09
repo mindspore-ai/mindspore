@@ -24,7 +24,7 @@ function Run_3403_Samples() {
     # Run dpico converted models:
     while read line; do
         model_pass=${line:0:1}
-        if [[ $model_pass == \# ]]; then
+        if [[ $model_pass == \#* || $model_pass == "" ]]; then
           continue
         fi
         dpico_line_info=${line}
@@ -81,7 +81,7 @@ function Run_3403_Gate() {
   # Run dpico converted models:
   while read line; do
       model_pass=${line:0:1}
-      if [[ $model_pass == \# ]]; then
+      if [[ $model_pass == \#* || $model_pass == "" ]]; then
         continue
       fi
       dpico_line_info=${line}

@@ -290,7 +290,7 @@ IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
 config_folder="config_level0"
-if [[ ${level} = "level1" ]]; then
+if [[ ${level} == "level1" ]]; then
     config_folder="config_level1"
 fi
 # Set model-list

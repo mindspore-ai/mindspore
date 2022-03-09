@@ -487,16 +487,6 @@ function Print_Result() {
     MS_PRINT_TESTCASE_END_MSG
 }
 
-basepath=$(pwd)
-echo "base path is: ${basepath}"
-
-# Set models config filepath
-config_folder="config_level0"
-if [[ ${level} = "level1" ]];then
-    config_folder="config_level1"
-fi
-models_ms_train_config=${basepath}/..${config_folder}models_ms_train.cfg
-
 # Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
 epoch_num=1
@@ -511,10 +501,6 @@ while getopts "r:c:m:d:i:e:vt:q:D:M:l:" opt; do
         m)
             models_path=${OPTARG}
             echo "models_path is ${OPTARG}"
-            ;;
-        c)
-           models_ms_train_config=${OPTARG}
-           echo  "models_ms_train_config ${models_ms_train_config}"
             ;;
         i)
             train_io_path=${OPTARG}
@@ -554,6 +540,16 @@ while getopts "r:c:m:d:i:e:vt:q:D:M:l:" opt; do
             exit 1;;
     esac
 done
+
+basepath=$(pwd)
+echo "base path is: ${basepath}"
+
+# Set models config filepath
+config_folder="config_level0"
+if [[ ${level} == "level1" ]];then
+    config_folder="config_level1"
+fi
+models_ms_train_config=${basepath}/../${config_folder}/models_ms_train.cfg
 
 if [[ $train_io_path == "" ]]; then
   echo "train_io path is empty"
@@ -624,6 +620,12 @@ else
     cat ${run_converter_log_file}
     Print_Result ${run_converter_result_file}
     exit 1
+fi
+
+# Empty config file is allowed, but warning message will be shown
+if [[ $(Exist_File_In_Path ${ms_models_path} ".ms") == "true" ]]; then
+  echo "No ms model found in ${ms_models_path}, please check if config file is empty!" >> ${run_converter_result_file}
+  exit 0
 fi
 
 # Write benchmark_train result to temp file

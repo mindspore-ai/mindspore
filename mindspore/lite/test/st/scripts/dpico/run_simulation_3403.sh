@@ -5,7 +5,7 @@ function Run_Convert_MODELS() {
   models_3403_cfg=$2
   while read line; do
       dpico_line_info=${line}
-      if [[ $dpico_line_info == \#* ]]; then
+      if [[ $dpico_line_info == \#* || $dpico_line_info == "" ]]; then
         continue
       fi
       model_location=`echo ${dpico_line_info}|awk -F ' ' '{print $1}'`
@@ -110,7 +110,7 @@ function Run_Func_Sim() {
   models_3403_cfg=$1
   while read line; do
       dpico_line_info=${line}
-      if [[ $dpico_line_info == \#* ]]; then
+      if [[ $dpico_line_info == \#* || $dpico_line_info == "" ]]; then
         continue
       fi
       model_info=`echo ${dpico_line_info}|awk -F ' ' '{print $2}'`
@@ -246,7 +246,7 @@ cd -
 
 # Set filepath
 config_folder="config_level0"
-if [[ ${level} = "level1" ]]; then
+if [[ ${level} == "level1" ]]; then
     config_folder="config_level1"
 fi
 models_caffe_3403_config=${basepath}/../${config_folder}/models_caffe_3403_simulation.cfg
