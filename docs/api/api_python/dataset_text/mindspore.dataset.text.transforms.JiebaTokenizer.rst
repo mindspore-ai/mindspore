@@ -28,15 +28,6 @@ mindspore.dataset.text.transforms.JiebaTokenizer
     - **TypeError** - 参数 `hmm_path` 和 `mp_path` 类型不为string。
     - **TypeError** - 参数 `with_offsets` 类型不为bool。
 
-    .. py:method:: add_word(word, freq=None)
-
-        将用户定义的词添加到 JiebaTokenizer 的字典中。
-
-        **参数：**
-
-        - **word** (str) - 要添加到 JiebaTokenizer 词典中的单词，注意通过此接口添加的单词不会被写入本地的模型文件中。
-        - **freq** (int，可选) - 要添加的单词的频率。频率越高，单词被分词的机会越大。默认值：None，使用默认频率。
-
     .. py:method:: add_dict(user_dict)
 
         将用户定义的词添加到 JiebaTokenizer 的字典中。
@@ -54,3 +45,12 @@ mindspore.dataset.text.transforms.JiebaTokenizer
 
           也可以通过Python dict加载，要求的 Python 字典格式为：{word1:freq1, word2:freq2,...}。
           只有用户提供的文件中有效的词对才会被添加到字典中，无的效输入行将被忽略，且不返回错误或警告状态。
+
+    .. py:method:: add_word(word, freq=None)
+
+        将用户定义的词添加到 JiebaTokenizer 的字典中。
+
+        **参数：**
+
+        - **word** (str) - 要添加到 JiebaTokenizer 词典中的单词，注意通过此接口添加的单词不会被写入本地的模型文件中。
+        - **freq** (int，可选) - 要添加的单词的频率。频率越高，单词被分词的机会越大。默认值：None，使用默认频率。

@@ -21,45 +21,85 @@ mindspore.CSRTensor
 
     CSRTensor，由 `indptr` 、 `indices` 、 `values` 和 `shape` 组成。
 
-    .. py:method:: indptr
-        :property:
+    .. py:method:: abs()
 
-        返回CSRTensor的行偏移量。
+        对所有非零元素取绝对值，并返回新的CSRTensor。
 
-    .. py:method:: indices
-        :property:
+        **返回：**
 
-        返回CSRTensor的列索引值。
+        CSRTensor。
 
-    .. py:method:: values
-        :property:
+    .. py:method:: astype(dtype)
 
-        返回CSRTensor的非零元素值。
+        返回指定数据类型的CSRTensor。
 
-    .. py:method:: shape
-        :property:
+        **参数：**
 
-        返回稀疏矩阵的稠密形状。
+        - **dytpe** (`mindspore.dtype`) - 指定数据类型。
+
+        **返回：**
+
+        CSRTensor。
 
     .. py:method:: dtype
         :property:
 
         返回稀疏矩阵非零元素值数据类型。
 
-    .. py:method:: size
+    .. py:method:: indices
         :property:
 
-        返回稀疏矩阵非零元素值数量。
+        返回CSRTensor的列索引值。
+
+    .. py:method:: indptr
+        :property:
+
+        返回CSRTensor的行偏移量。
 
     .. py:method:: itemsize
         :property:
 
         返回每个非零元素所占字节数。
 
+    .. py:method:: mv(dense_vector)
+
+        返回CSRTensor右乘稠密矩阵的矩阵乘法运算结果。
+        形状为 `[M, N]` 的CSRTensor，需要适配形状为 `[N, 1]` 的稠密向量，得到结果为 `[M, 1]` 的稠密向量。
+
+        **参数：**
+
+        - **dense_vector** (Tensor) - 形状为 `[N，1]` 的一维张量，其中N等于CSRTensor的列数。
+
+        **返回：**
+
+        Tensor。
+
     .. py:method:: ndim
         :property:
 
         稀疏矩阵的稠密维度。
+
+    .. py:method:: shape
+        :property:
+
+        返回稀疏矩阵的稠密形状。
+
+    .. py:method:: size
+        :property:
+
+        返回稀疏矩阵非零元素值数量。
+
+    .. py:method:: sum(axis)
+
+        对CSRTensor的某个轴求和。
+
+        **参数：**
+
+        - **axis** (int) - 求和轴。
+
+        **返回：**
+
+        Tensor。
 
     .. py:method:: to_coo()
 
@@ -85,47 +125,7 @@ mindspore.CSRTensor
 
         tuple(Tensor，Tensor, Tensor, tuple(int))
 
-    .. py:method:: abs()
+    .. py:method:: values
+        :property:
 
-        对所有非零元素取绝对值，并返回新的CSRTensor。
-
-        **返回：**
-
-        CSRTensor。
-
-    .. py:method:: astype(dtype)
-
-        返回指定数据类型的CSRTensor。
-
-        **参数：**
-
-        - **dytpe** (`mindspore.dtype`) - 指定数据类型。
-
-        **返回：**
-
-        CSRTensor。
-
-    .. py:method:: mv(dense_vector)
-
-        返回CSRTensor右乘稠密矩阵的矩阵乘法运算结果。
-        形状为 `[M, N]` 的CSRTensor，需要适配形状为 `[N, 1]` 的稠密向量，得到结果为 `[M, 1]` 的稠密向量。
-
-        **参数：**
-
-        - **dense_vector** (Tensor) - 形状为 `[N，1]` 的一维张量，其中N等于CSRTensor的列数。
-
-        **返回：**
-
-        Tensor。
-
-    .. py:method:: sum(axis)
-
-        对CSRTensor的某个轴求和。
-
-        **参数：**
-
-        - **axis** (int) - 求和轴。
-
-        **返回：**
-
-        Tensor。
+        返回CSRTensor的非零元素值。

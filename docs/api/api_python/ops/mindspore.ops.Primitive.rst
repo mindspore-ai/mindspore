@@ -18,14 +18,6 @@ mindspore.ops.Primitive
         - **name** (str) - 属性名称。
         - **value** (Any) - 属性值。
 
-    .. py:method:: del_prim_attr(name)
-
-        删除Primitive的属性。
-
-        **参数：**
-
-        - **name** (str) - 属性名称。
-
     .. py:method:: check_elim(*args)
 
         检查是否可以消除此Primitive。有需要的子类可以重写该方法。
@@ -37,6 +29,14 @@ mindspore.ops.Primitive
         **返回：**
 
         由两个元素组成的元组。第一个元素是指是否能在编译阶段计算Primitive，第二个元素是计算结果。
+
+    .. py:method:: del_prim_attr(name)
+
+        删除Primitive的属性。
+
+        **参数：**
+
+        - **name** (str) - 属性名称。
 
     .. py:method:: init_prim_io_names(inputs, outputs)
 

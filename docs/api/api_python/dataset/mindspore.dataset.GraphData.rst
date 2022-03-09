@@ -164,22 +164,6 @@ mindspore.dataset.GraphData
 
         **TypeError**：参数 `node_type` 的类型不为整型。
 
-    .. py:method:: get_edges_from_nodes(node_list)
-
-        从节点获取边。
-
-        **参数：**
-
-        - **node_list** (Union[list[tuple], numpy.ndarray]) - 含一个或多个图节点ID对的列表。
-
-        **返回：**
-
-        numpy.ndarray，含一个或多个边ID的数组。
-
-        **异常：**
-
-        **TypeError**：参数 `edge_list` 的类型不为列表或numpy.ndarray。
-
     .. py:method:: get_edge_feature(edge_list, feature_types)
 
         获取 `edge_list` 列表中边的特征，以 `feature_types` 类型返回。
@@ -198,6 +182,21 @@ mindspore.dataset.GraphData
         - **TypeError** - 参数 `edge_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
 
+    .. py:method:: get_edges_from_nodes(node_list)
+
+        从节点获取边。
+
+        **参数：**
+
+        - **node_list** (Union[list[tuple], numpy.ndarray]) - 含一个或多个图节点ID对的列表。
+
+        **返回：**
+
+        numpy.ndarray，含一个或多个边ID的数组。
+
+        **异常：**
+
+        **TypeError**：参数 `edge_list` 的类型不为列表或numpy.ndarray。
 
     .. py:method:: get_neg_sampled_neighbors(node_list, neg_neighbor_num, neg_neighbor_type)
 
@@ -219,22 +218,6 @@ mindspore.dataset.GraphData
         - **TypeError** - 参数 `neg_neighbor_num` 的类型不为整型。
         - **TypeError** - 参数 `neg_neighbor_type` 的类型不为整型。
 
-    .. py:method:: get_nodes_from_edges(edge_list)
-
-        从图中的边获取节点。
-
-        **参数：**
-
-        - **edge_list** (Union[list, numpy.ndarray]) - 包含边的列表。
-
-        **返回：**
-
-        numpy.ndarray，包含节点的数组。
-
-        **异常：**
-
-        **TypeError** 参数 `edge_list` 不为列表或ndarray。
-
     .. py:method:: get_node_feature(node_list, feature_types)
 
         获取 `node_list` 中节点的特征，以 `feature_types` 类型返回。
@@ -252,6 +235,23 @@ mindspore.dataset.GraphData
 
         - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
+
+
+    .. py:method:: get_nodes_from_edges(edge_list)
+
+        从图中的边获取节点。
+
+        **参数：**
+
+        - **edge_list** (Union[list, numpy.ndarray]) - 包含边的列表。
+
+        **返回：**
+
+        numpy.ndarray，包含节点的数组。
+
+        **异常：**
+
+        **TypeError** 参数 `edge_list` 不为列表或ndarray。
 
     .. py:method:: get_sampled_neighbors(node_list, neighbor_nums, neighbor_types, strategy=SamplingStrategy.RANDOM)
 
