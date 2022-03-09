@@ -71,7 +71,7 @@ std::string CNode::fullname_with_scope() {
   // cnode input 0 should be primitive ptr or funcgraph ptr
   auto value_ptr = input(0)->cast<ValueNodePtr>();
   if (value_ptr == nullptr) {
-    MS_LOG(WARNING) << "Input 0 of cnode is not a value node, its type is " << input(0)->type_name() << ".";
+    MS_LOG(DEBUG) << "Input 0 of cnode is not a value node, its type is " << input(0)->type_name() << ".";
     fullname_with_scope_ = id_generator::get_id(shared_from_base<CNode>());
     return fullname_with_scope_;
   }

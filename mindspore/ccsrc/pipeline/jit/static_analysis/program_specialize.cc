@@ -1065,8 +1065,8 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
       ConfigPtrList args_conf_list;
       (void)std::transform(broaded_argvals.cbegin(), broaded_argvals.cend(), std ::back_inserter(args_conf_list),
                            [](const AbstractBasePtr &v) -> ConfigPtr { return std::make_shared<VirtualConfig>(v); });
-      MS_LOG(WARNING) << "Cannot find joined argvals in cache, run with broaded argsvals: " << broaded_argvals.size()
-                      << ", " << ::mindspore::ToString(broaded_argvals);
+      MS_LOG(DEBUG) << "Cannot find joined argvals in cache, run with broaded argsvals: " << broaded_argvals.size()
+                    << ", " << ::mindspore::ToString(broaded_argvals);
       res = eval->SingleRun(engine_, args_conf_list, nullptr);
       MS_EXCEPTION_IF_NULL(res);
       real->SetValue(broaded_argvals, res);
