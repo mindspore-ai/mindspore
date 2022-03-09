@@ -36,10 +36,11 @@ PriorityItem PriorityTree::ReduceOp(const PriorityItem &lhs, const PriorityItem 
 size_t PriorityTree::GetPrefixSumIdx(float prefix_sum) {
   size_t idx = 1;
   while (idx < capacity_) {
-    if (prefix_sum <= buffer_[kNumSubnodes * idx].sum_priority) {
+    const auto &left_priority = buffer_[kNumSubnodes * idx].sum_priority;
+    if (prefix_sum <= left_priority) {
       idx = kNumSubnodes * idx;
     } else {
-      prefix_sum -= buffer_[kRightOffset * idx].sum_priority;
+      prefix_sum -= left_priority;
       idx = kNumSubnodes * idx + kRightOffset;
     }
   }
@@ -69,13 +70,13 @@ bool PriorityReplayBuffer::UpdatePriorities(const std::vector<size_t> &indices, 
     return false;
   }
 
-  for (size_t idx = 0; idx < indices.size(); idx++) {
-    float priority = pow(priorities[idx], alpha_);
+  for (size_t i = 0; i < indices.size(); i++) {
+    float priority = pow(priorities[i], alpha_);
     if (priority <= 0.0f) {
       MS_LOG(WARNING) << "The priority is " << priority << ". It may lead to converge issue.";
       priority = kMinPriority;
     }
-    priority_tree_->Insert(idx, {priority, priority});
+    priority_tree_->Insert(indices[i], {priority, priority});
 
     // Record max priority of transitions
     max_priority_ = std::max(max_priority_, priority);
