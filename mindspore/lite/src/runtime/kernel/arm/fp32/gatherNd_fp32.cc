@@ -88,8 +88,7 @@ int GatherNdCPUKernel::InitOffset() {
     MS_LOG(ERROR) << name() << " indices shape error!";
     return RET_ERROR;
   }
-  auto indices_ptr = reinterpret_cast<int *>(indices_tensor->data());
-  MS_CHECK_TRUE_MSG(indices_ptr != nullptr, RET_ERROR, "indices_ptr is nullptr.");
+
   area_ = 1;
   for (int i = idx_lastshape; i < in_rank; ++i) {
     area_ *= in_shape[i];
@@ -102,15 +101,30 @@ int GatherNdCPUKernel::InitOffset() {
 
   int idx_stride = idx_lastshape;
   (void)memset(in_offset_, 0, count_ * sizeof(int));
-  for (int j = 0; j < count_; ++j) {
-    for (int k = 0; k < idx_lastshape; ++k) {
-      if (indices_ptr[j * idx_stride + k] >= 0 && indices_ptr[j * idx_stride + k] < in_shape[k]) {
+
+  if (indices_tensor->data_type() == kNumberTypeInt || indices_tensor->data_type() == kNumberTypeInt32) {
+    auto indices_ptr = reinterpret_cast<int *>(indices_tensor->data());
+    CHECK_NULL_RETURN(indices_ptr);
+    for (int j = 0; j < count_; ++j) {
+      for (int k = 0; k < idx_lastshape; ++k) {
+        MS_CHECK_LT(indices_ptr[j * idx_stride + k], in_shape[k], RET_ERROR);
+        MS_CHECK_GE(indices_ptr[j * idx_stride + k], 0, RET_ERROR);
         in_offset_[j] += indices_ptr[j * idx_stride + k] * in_stride.at(k);
-      } else {
-        MS_LOG(ERROR) << name() << " indices value invalid!";
-        return RET_ERROR;
       }
     }
+  } else if (indices_tensor->data_type() == kNumberTypeInt64) {
+    auto indices_ptr = reinterpret_cast<int64_t *>(indices_tensor->data());
+    CHECK_NULL_RETURN(indices_ptr);
+    for (int j = 0; j < count_; ++j) {
+      for (int k = 0; k < idx_lastshape; ++k) {
+        MS_CHECK_LT(indices_ptr[j * idx_stride + k], in_shape[k], RET_ERROR);
+        MS_CHECK_GE(indices_ptr[j * idx_stride + k], 0, RET_ERROR);
+        in_offset_[j] += indices_ptr[j * idx_stride + k] * in_stride.at(k);
+      }
+    }
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type for indices tensor.";
+    return RET_ERROR;
   }
   return RET_OK;
 }
