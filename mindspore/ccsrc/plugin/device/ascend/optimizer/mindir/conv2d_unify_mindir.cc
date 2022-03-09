@@ -123,8 +123,19 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
                         << out_shape.size() << trace::DumpSourceLines(conv2d);
     }
     std::swap(out_shape[kDim0], out_shape[kDim1]);
-    auto shapes = {out_shape};
-    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, transpose.get());
+    if (AnfUtils::IsShapeDynamic(out_shape)) {
+      ShapeVector new_shape;
+      auto min_shape = common::AnfAlgo::GetOutputMinShape(input_node, 0);
+      auto max_shape = common::AnfAlgo::GetOutputMaxShape(input_node, 0);
+      std::swap(min_shape[kDim0], min_shape[kDim1]);
+      std::swap(max_shape[kDim0], max_shape[kDim1]);
+      std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(new_shape), SizeToLong);
+      common::AnfAlgo::SetOutputTypeAndDetailShape(
+        types, {std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape)}, transpose.get());
+    } else {
+      auto shapes = {out_shape};
+      common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, transpose.get());
+    }
   } else {
     transpose->set_abstract(conv2d->abstract());
   }
@@ -317,8 +328,19 @@ CNodePtr Conv2DBackpropFilterUnifyMindIR::CreateDepthwiseConv2DBackpropFilter(co
                       << out_shape.size() << trace::DumpSourceLines(conv2d_backfil);
   }
   std::swap(out_shape[0], out_shape[1]);
-  auto shapes = {out_shape};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, depth_conv_backfil.get());
+  if (AnfUtils::IsShapeDynamic(out_shape)) {
+    ShapeVector new_shape;
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(conv2d_backfil, 0);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(conv2d_backfil, 0);
+    std::swap(min_shape[0], min_shape[1]);
+    std::swap(max_shape[0], max_shape[1]);
+    std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(new_shape), SizeToLong);
+    common::AnfAlgo::SetOutputTypeAndDetailShape(
+      types, {std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape)}, depth_conv_backfil.get());
+  } else {
+    auto shapes = {out_shape};
+    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, depth_conv_backfil.get());
+  }
   return depth_conv_backfil;
 }
 

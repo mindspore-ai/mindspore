@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -35,9 +36,8 @@ class NeighborExchangeV2UnifyMindIR : public PatternProcessPass {
  private:
   std::vector<CNodePtr> CreateSplitNodes(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2,
                                          std::vector<int64_t> *split_num) const;
-  CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &concat_input,
-                            const std::vector<std::vector<size_t>> &output_shape,
-                            const std::vector<TypeId> &output_dtype, int64_t axis, int64_t input_nums) const;
+  CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &concat_input, int64_t axis,
+                            int64_t input_nums) const;
   CNodePtr CreateLeftRightConcat(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &all_to_all_v_outputs,
                                  const std::vector<int64_t> &recv_rank_ids, const std::vector<int64_t> &recv_lens,
                                  bool is_left) const;
@@ -63,7 +63,8 @@ class NeighborExchangeV2GradUnifyMindIR : public PatternProcessPass {
   std::vector<CNodePtr> CreateSplitNodesForGrad(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2_grad,
                                                 std::vector<int64_t> *split_num) const;
   CNodePtr CreatePadNode(const FuncGraphPtr &graph, const AnfNodePtr &input, const std::vector<int64_t> &begin,
-                         const std::vector<int64_t> &size, const std::vector<size_t> &shape, TypeId dtype) const;
+                         const std::vector<int64_t> &size,
+                         const std::pair<std::vector<size_t>, BaseShapePtr> &shape_info, TypeId dtype) const;
   CNodePtr CreateSplitGradNodes(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2_grad,
                                 const CNodePtr &all_to_all_v, const std::vector<CNodePtr> &split_nodes,
                                 const std::vector<int64_t> &split_num) const;

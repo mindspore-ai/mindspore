@@ -151,12 +151,12 @@ void CopyKernelInfo(AnfNodePtr src, AnfNodePtr dst) {
   AnfAlgo::SetSelectKernelBuildInfo(build_info, dst.get());
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(src);
   std::vector<TypeId> types;
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<BaseShapePtr> shapes;
   for (size_t i = 0; i < output_num; i++) {
     types.emplace_back(common::AnfAlgo::GetOutputInferDataType(src, i));
-    shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(src, i));
+    shapes.emplace_back(common::AnfAlgo::GetOutputDetailShape(src, i));
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, dst.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, dst.get());
 }
 
 void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, size_t cover_index, const FuncGraphPtr &graph) {

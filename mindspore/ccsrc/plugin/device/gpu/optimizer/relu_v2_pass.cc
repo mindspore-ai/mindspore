@@ -83,10 +83,11 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   auto element_num =
     std::accumulate(output_shape.begin(), output_shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
 
-  std::vector<size_t> mask_shape = {(element_num + kBitPerUInt - 1) / kBitPerUInt};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(relu, 0), mask_shape};
+  std::vector<int64_t> mask_shape = {SizeToLong((element_num + kBitPerUInt - 1) / kBitPerUInt)};
+  std::vector<BaseShapePtr> shapes = {common::AnfAlgo::GetOutputDetailShape(relu, 0),
+                                      std::make_shared<abstract::Shape>(mask_shape)};
   auto types = {common::AnfAlgo::GetOutputInferDataType(relu, 0), kNumberTypeUInt32};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, new_node.get());
 
   auto build_info = GenerateKernelBuildInfo(new_node);
   AnfAlgo::SetSelectKernelBuildInfo(build_info, new_node.get());
@@ -106,14 +107,14 @@ CNodePtr CreateReluGradV2(const FuncGraphPtr &graph, const CNodePtr &relu_grad, 
   new_node->set_abstract(relu_grad->abstract());
 
   std::vector<TypeId> types;
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<BaseShapePtr> shapes;
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(relu_grad);
   for (size_t i = 0; i < output_num; i++) {
     types.push_back(common::AnfAlgo::GetOutputInferDataType(relu_grad, i));
-    shapes.push_back(common::AnfAlgo::GetOutputInferShape(relu_grad, i));
+    shapes.push_back(common::AnfAlgo::GetOutputDetailShape(relu_grad, i));
   }
 
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, new_node.get());
   new_node->set_scope(relu_grad->scope());
 
   auto build_info = GenerateKernelBuildInfo(new_node);

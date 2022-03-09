@@ -27,21 +27,36 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
   size_t inputs_size = common::AnfAlgo::GetInputTensorNum(node);
   std::vector<AnfNodePtr> split_outputs;
   size_t rank_size_t = LongToSize(rank_size);
+  if (rank_size_t == 0) {
+    MS_LOG(EXCEPTION) << "The rank size can not be zero.";
+  }
   for (size_t i = 0; i < inputs_size; i++) {
     std::vector<AnfNodePtr> split_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
     split_inputs.push_back(common::AnfAlgo::GetInputNode(node, i));
     auto split = NewCNode(split_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(split);
     std::vector<TypeId> dtypes(rank_size, common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i));
-    std::vector<std::vector<size_t>> shapes;
+
     std::vector<int> size_splits;
+    std::vector<size_t> output_node_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, i);
+    output_node_shape[0] /= rank_size_t;
+    if (AnfUtils::IsShapeDynamic(output_node_shape)) {
+      auto min_shape = common::AnfAlgo::GetInputMinShape(node, i);
+      auto max_shape = common::AnfAlgo::GetInputMaxShape(node, i);
+      min_shape[0] /= rank_size_t;
+      max_shape[0] /= rank_size_t;
+      ShapeVector shape_tmp;
+      std::transform(output_node_shape.begin(), output_node_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
+      std::vector<BaseShapePtr> shapes(rank_size_t, std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape));
+      common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, split.get());
+    } else {
+      std::vector<std::vector<size_t>> shapes(rank_size_t, output_node_shape);
+      common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
+    }
+
     for (size_t j = 0; j < rank_size_t; j++) {
-      std::vector<size_t> output_node_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, i);
-      output_node_shape[0] /= rank_size_t;
-      shapes.push_back(output_node_shape);
       size_splits.push_back(output_node_shape[0]);
     }
-    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
     common::AnfAlgo::SetNodeAttr("split_dim", MakeValue(0L), split);
     common::AnfAlgo::SetNodeAttr("num_split", MakeValue(rank_size), split);
     common::AnfAlgo::SetNodeAttr("size_splits", MakeValue(size_splits), split);

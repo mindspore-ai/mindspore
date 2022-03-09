@@ -47,15 +47,15 @@ const AnfNodePtr ReplaceMomentumCastFusion::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(manager);
   manager->Replace(utils::cast<CNodePtr>(grad_cast), utils::cast<CNodePtr>(grad));
   std::vector<TypeId> outputs_type;
-  std::vector<std::vector<size_t>> outputs_shape;
+  std::vector<BaseShapePtr> outputs_shape;
   auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; i++) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(node, i));
+    outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(node, i));
   }
   outputs_type[kGradIndex] = common::AnfAlgo::GetPrevNodeOutputInferDataType(grad_cast, 0);
 
-  common::AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, node.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, node.get());
 
   return node;
 }

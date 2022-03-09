@@ -27,19 +27,19 @@ namespace {
 CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &input_node,
                      const bool fir_flag) {
   std::vector<AnfNodePtr> new_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
-  std::vector<size_t> shape;
+  BaseShapePtr shape;
   if (fir_flag) {
     new_cast_inputs.emplace_back(input_node->inputs()[kIndex1]);
-    shape = common::AnfAlgo::GetOutputInferShape(input_node->inputs()[kIndex1], 0);
+    shape = common::AnfAlgo::GetOutputDetailShape(input_node->inputs()[kIndex1], 0);
   } else {
     new_cast_inputs.emplace_back(input_node);
-    shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
+    shape = common::AnfAlgo::GetOutputDetailShape(input_node, 0);
   }
   CNodePtr new_cast = NewCNode(new_cast_inputs, func_graph);
   new_cast->set_scope(input_node->scope());
   new_cast->set_abstract(input_node->abstract());
   common::AnfAlgo::SetNodeAttr(kAttrDstType, MakeValue(static_cast<size_t>(dst_type)), new_cast);
-  common::AnfAlgo::SetOutputInferTypeAndShape({dst_type}, {shape}, new_cast.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({dst_type}, {shape}, new_cast.get());
   return new_cast;
 }
 }  // namespace
@@ -51,7 +51,7 @@ const BaseRef ReduceSumFission::DefinePattern() const {
 }
 
 CNodePtr AddReduceSumNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node, const bool &keep_dims,
-                          const std::vector<int64_t> &axis, const std::vector<size_t> &out_shape) {
+                          const std::vector<int64_t> &axis, const BaseShapePtr &out_shape) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_node);
   auto input_type = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
@@ -62,7 +62,7 @@ CNodePtr AddReduceSumNode(const FuncGraphPtr &func_graph, const CNodePtr &input_
   reduce_sum->set_scope(input_node->scope());
   common::AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(keep_dims), reduce_sum);
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), reduce_sum);
-  common::AnfAlgo::SetOutputInferTypeAndShape({input_type}, {out_shape}, reduce_sum.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({input_type}, {out_shape}, reduce_sum.get());
   return reduce_sum;
 }
 
@@ -74,7 +74,7 @@ const AnfNodePtr ReduceSumFission::Process(const FuncGraphPtr &graph, const AnfN
   auto cnode = node->cast<CNodePtr>();
   auto prim = common::AnfAlgo::GetCNodePrimitive(cnode);
   auto keep_dims = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrKeepDims);
-  auto out_shape = common::AnfAlgo::GetOutputInferShape(cnode, 0);
+  auto out_shape = common::AnfAlgo::GetOutputDetailShape(cnode, 0);
   std::vector<int64_t> inp_axis;
   auto axis_value = prim->GetAttr(kAttrAxis);
   MS_EXCEPTION_IF_NULL(axis_value);

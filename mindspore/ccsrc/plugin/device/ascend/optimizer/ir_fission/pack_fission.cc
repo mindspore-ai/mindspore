@@ -52,7 +52,7 @@ AnfNodePtr PackFission::CreateNewPack(const FuncGraphPtr &func_graph, const CNod
   std::vector<size_t> new_shape = output_shape;
   auto axis_l = LongToSize(axis);
   if (axis_l < new_shape.size()) {
-    new_shape[axis_l] = offset;
+    new_shape[axis_l] = static_cast<int64_t>(offset);
   }
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_pack_cnode, 0)},
                                               {new_shape}, new_pack.get());

@@ -96,13 +96,13 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   MS_EXCEPTION_IF_NULL(fused_batch_norm_grad_with_relu);
 
   std::vector<TypeId> outputs_type;
-  std::vector<std::vector<size_t>> outputs_shape;
+  std::vector<BaseShapePtr> outputs_shape;
   auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; i++) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(node, i));
+    outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(node, i));
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, fused_batch_norm_grad_with_relu.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, fused_batch_norm_grad_with_relu.get());
   common::AnfAlgo::CopyNodeAttrs(node, fused_batch_norm_grad_with_relu);
   device::gpu::SetKernelInfo(fused_batch_norm_grad_with_relu);
   return fused_batch_norm_grad_with_relu;

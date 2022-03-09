@@ -183,9 +183,9 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   std::tie(add0, add1) = GetAdd0Add1Nodes(real_div0, real_div1);
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0), common::AnfAlgo::GetOutputInferDataType(add0, 0),
                 common::AnfAlgo::GetOutputInferDataType(add1, 0), common::AnfAlgo::GetOutputInferDataType(add5, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0), common::AnfAlgo::GetOutputInferShape(add0, 0),
-                 common::AnfAlgo::GetOutputInferShape(add1, 0), common::AnfAlgo::GetOutputInferShape(add5, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0), common::AnfAlgo::GetOutputDetailShape(add0, 0),
+                 common::AnfAlgo::GetOutputDetailShape(add1, 0), common::AnfAlgo::GetOutputDetailShape(add5, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, fusion_node.get());
 
   std::vector<AnfNodePtr> fusion_node_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, fusion_node, kLambNextMVWithDecayV1OutputNum, &fusion_node_outputs);

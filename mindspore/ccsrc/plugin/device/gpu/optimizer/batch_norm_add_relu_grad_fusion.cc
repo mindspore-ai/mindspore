@@ -69,16 +69,16 @@ bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, s
 void SetShapeAndType(const CNodePtr &bn_add_relu_grad, const AnfNodePtr &bn_grad, const AnfNodePtr &relu_grad) {
   // set output shape and dtype
   std::vector<TypeId> outputs_type;
-  std::vector<std::vector<size_t>> outputs_shape;
+  std::vector<BaseShapePtr> outputs_shape;
   auto output_num = common::AnfAlgo::GetOutputTensorNum(bn_grad);
   for (size_t i = 0; i < output_num; ++i) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(bn_grad, i));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(bn_grad, i));
+    outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(bn_grad, i));
   }
 
   outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(relu_grad, 0));
-  outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(relu_grad, 0));
-  common::AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, bn_add_relu_grad.get());
+  outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(relu_grad, 0));
+  common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, bn_add_relu_grad.get());
 }
 
 void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const AnfNodePtr &relu_grad,

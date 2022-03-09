@@ -170,8 +170,8 @@ const AnfNodePtr AdamWeightDecayFusion::Process(const FuncGraphPtr &graph, const
   auto adam_weight_decay = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(adam_weight_decay);
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, adam_weight_decay.get());
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, adam_weight_decay.get());
   adam_weight_decay->set_scope(node->scope());
 
   auto build_info = GenerateKernelBuildInfo(adam_weight_decay);

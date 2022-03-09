@@ -88,14 +88,14 @@ const AnfNodePtr AddReluV2Fusion::Process(const FuncGraphPtr &graph, const AnfNo
   MS_EXCEPTION_IF_NULL(add_relu);
 
   std::vector<TypeId> types;
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<BaseShapePtr> shapes;
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; i++) {
     types.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
-    shapes.push_back(common::AnfAlgo::GetOutputInferShape(node, i));
+    shapes.push_back(common::AnfAlgo::GetOutputDetailShape(node, i));
   }
 
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, add_relu.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, add_relu.get());
   add_relu->set_scope(node->scope());
 
   auto build_info = GenerateKernelBuildInfo(add_relu);

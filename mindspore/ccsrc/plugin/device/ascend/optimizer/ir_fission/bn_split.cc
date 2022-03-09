@@ -204,8 +204,8 @@ AnfNodePtr InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &input, const 
   MS_EXCEPTION_IF_NULL(input);
   if (common::AnfAlgo::GetOutputInferDataType(input, 0) != dst_type) {
     AnfNodePtr cast = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kCastOpName)), input});
-    common::AnfAlgo::SetOutputInferTypeAndShape({dst_type}, {common::AnfAlgo::GetOutputInferShape(input, 0)},
-                                                cast.get());
+    common::AnfAlgo::SetOutputTypeAndDetailShape({dst_type}, {common::AnfAlgo::GetOutputDetailShape(input, 0)},
+                                                 cast.get());
     common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
     cast->set_scope(input->scope());
     return cast;

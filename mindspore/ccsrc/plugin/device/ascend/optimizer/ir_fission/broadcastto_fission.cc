@@ -27,19 +27,19 @@ namespace {
 CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &input_node,
                      const bool fir_flag) {
   std::vector<AnfNodePtr> new_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
-  std::vector<size_t> shape;
+  BaseShapePtr shape;
   if (fir_flag) {
     new_cast_inputs.emplace_back(input_node->inputs()[kIndex1]);
-    shape = common::AnfAlgo::GetOutputInferShape(input_node->inputs()[kIndex1], 0);
+    shape = common::AnfAlgo::GetOutputDetailShape(input_node->inputs()[kIndex1], 0);
   } else {
     new_cast_inputs.emplace_back(input_node);
-    shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
+    shape = common::AnfAlgo::GetOutputDetailShape(input_node, 0);
   }
   CNodePtr new_cast = NewCNode(new_cast_inputs, func_graph);
   new_cast->set_scope(input_node->scope());
   new_cast->set_abstract(input_node->abstract());
   common::AnfAlgo::SetNodeAttr(kAttrDstType, MakeValue(static_cast<size_t>(dst_type)), new_cast);
-  common::AnfAlgo::SetOutputInferTypeAndShape({dst_type}, {shape}, new_cast.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({dst_type}, {shape}, new_cast.get());
   return new_cast;
 }
 }  // namespace

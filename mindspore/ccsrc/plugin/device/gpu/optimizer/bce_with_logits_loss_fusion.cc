@@ -39,8 +39,8 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   MS_EXCEPTION_IF_NULL(new_cnode);
   auto predict_input = cnode->inputs()[1];
   auto new_node_dtype = {common::AnfAlgo::GetOutputInferDataType(predict_input, 0)};
-  auto new_node_shape = {common::AnfAlgo::GetOutputInferShape(predict_input, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(new_node_dtype, new_node_shape, new_cnode.get());
+  auto new_node_shape = {common::AnfAlgo::GetOutputDetailShape(predict_input, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(new_node_dtype, new_node_shape, new_cnode.get());
 
   // Add reduce node
   string reduction = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrReduction);
@@ -57,8 +57,8 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   auto reduce_node = func_graph->NewCNode(reduce_inputs);
   MS_EXCEPTION_IF_NULL(reduce_node);
   auto type = common::AnfAlgo::GetOutputInferDataType(node, 0);
-  auto shape = {common::AnfAlgo::GetOutputInferShape(node, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape({type}, shape, reduce_node.get());
+  auto shape = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape({type}, shape, reduce_node.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(std::vector<int64_t>{}), reduce_node);
   common::AnfAlgo::SetNodeAttr("keep_dims", MakeValue(false), reduce_node);
   reduce_node->set_scope(cnode->scope());

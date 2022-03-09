@@ -65,8 +65,8 @@ const AnfNodePtr ClipByNormNoDivSquareSumFusion::Process(const FuncGraphPtr &gra
   auto fusion_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(fusion_node);
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, fusion_node.get());
   fusion_node->set_scope(node->scope());
   return fusion_node;
 }

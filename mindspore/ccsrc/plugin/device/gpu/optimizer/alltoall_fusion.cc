@@ -69,8 +69,20 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) 
 
   // Set Split CNode outputs type and shape, and CNode attributes.
   std::vector<TypeId> dtypes(split_count, dtype);
-  std::vector<std::vector<size_t>> shapes(split_count, shape);
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
+  if (AnfUtils::IsShapeDynamic(shape)) {
+    ShapeVector shape_tmp;
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_input, 0);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_input, 0);
+    min_shape[LongToSize(split_dim)] /= split_count;
+    max_shape[LongToSize(split_dim)] /= split_count;
+    std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), SizeToLong);
+    std::vector<BaseShapePtr> shapes(split_count, std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape));
+    common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, split.get());
+  } else {
+    std::vector<std::vector<size_t>> shapes(split_count, shape);
+    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
+  }
+
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(split_dim), split);
   common::AnfAlgo::SetNodeAttr(kAttrOutputNum, MakeValue<int64_t>(split_count), split);
   return split;
@@ -95,11 +107,11 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_a
   MS_EXCEPTION_IF_NULL(all_to_all_v);
 
   // Prepare dtypes, shapes and ranks vectors.
-  auto single_shape = common::AnfAlgo::GetOutputInferShape(split_outputs[0], 0);
+  auto single_shape = common::AnfAlgo::GetOutputDetailShape(split_outputs[0], 0);
   auto single_type = common::AnfAlgo::GetOutputInferDataType(split_outputs[0], 0);
   std::vector<TypeId> dtypes(split_count, single_type);
-  std::vector<std::vector<size_t>> shapes(split_count, single_shape);
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, all_to_all_v.get());
+  std::vector<BaseShapePtr> shapes(split_count, single_shape);
+  common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, all_to_all_v.get());
   uint32_t rank_size = device::gpu::CollectiveInitializer::instance().GetGroupSize(group);
   std::vector<int64_t> rank_ids(rank_size, 0);
   for (uint32_t i = 0; i < rank_size; ++i) {
@@ -141,8 +153,20 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
 
   // Set Concat CNode outputs and  attributes.
   single_shape[LongToSize(concat_dim)] *= split_count;
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
-                                              {single_shape}, concat.get());
+  if (AnfUtils::IsShapeDynamic(single_shape)) {
+    ShapeVector shape_tmp;
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_v_outputs[0], 0);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_v_outputs[0], 0);
+    min_shape[LongToSize(concat_dim)] *= split_count;
+    max_shape[LongToSize(concat_dim)] *= split_count;
+    std::transform(single_shape.begin(), single_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
+    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
+                                                 {std::make_shared<abstract::Shape>(shape_tmp)}, concat.get());
+  } else {
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
+                                                {single_shape}, concat.get());
+  }
+
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(concat_dim), concat);
   common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(split_count), concat);
   std::vector<int64_t> dyn_input_size{split_count};

@@ -178,13 +178,13 @@ bool PrintReduceFusion::Run(const FuncGraphPtr &graph) {
     common::AnfAlgo::SetNodeAttr("value_type_pos", MakeValue<std::vector<int64_t>>(value_type_pos), print_fused);
     // set output type and shape
     std::vector<TypeId> types;
-    std::vector<std::vector<size_t>> shapes;
+    std::vector<BaseShapePtr> shapes;
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t i = 0; i < output_num; i++) {
       types.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, i));
-      shapes.push_back(common::AnfAlgo::GetOutputInferShape(cnode, i));
+      shapes.push_back(common::AnfAlgo::GetOutputDetailShape(cnode, i));
     }
-    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, print_fused.get());
+    common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, print_fused.get());
     // add build info
     auto build_info = GenerateKernelBuildInfo(print_fused);
     AnfAlgo::SetSelectKernelBuildInfo(build_info, print_fused.get());
