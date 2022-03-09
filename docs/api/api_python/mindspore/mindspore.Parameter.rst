@@ -13,7 +13,7 @@
     **参数：**
 
     - **default_input** (Union[Tensor, int, float, numpy.ndarray, list]) - 初始化参数的输入值。
-    - **name** (str) - 参数的名称。默认值：None。如果一个网络中存在两个及以上相同名称的`Parameter`对象，在定义时将提示设置一个特有的名称。
+    - **name** (str) - 参数的名称。默认值：None。如果一个网络中存在两个及以上相同名称的 `Parameter` 对象，在定义时将提示设置一个特有的名称。
     - **requires_grad** (bool) - 是否需要微分求梯度。默认值：True。
     - **layerwise_parallel** (bool) - 在数据/混合并行模式下，`layerwise_parallel` 配置为True时，参数广播和梯度聚合时会过滤掉该参数。默认值：False。
     - **parallel_optimizer** (bool) - 用于在 `semi_auto_parallel` 或 `auto_parallel` 并行模式下区分参数是否进行优化器切分。仅在 `mindspore.context.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值：True。
