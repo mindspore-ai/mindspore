@@ -75,6 +75,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/multi30k_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/omniglot_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/photo_tour_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/qmnist_node.h"
@@ -541,6 +542,18 @@ PYBIND_REGISTER(Multi30kNode, 2, ([](const py::module *m) {
                                                        toShuffleMode(shuffle), num_shards, shard_id, nullptr);
                       THROW_IF_ERROR(multi30k->ValidateParams());
                       return multi30k;
+                    }));
+                }));
+
+PYBIND_REGISTER(OmniglotNode, 2, ([](const py::module *m) {
+                  (void)py::class_<OmniglotNode, DatasetNode, std::shared_ptr<OmniglotNode>>(
+                    *m, "OmniglotNode", "to create an OmniglotNode")
+                    .def(py::init([](const std::string &dataset_dir, bool background, bool decode,
+                                     const py::handle &sampler) {
+                      auto omniglot =
+                        std::make_shared<OmniglotNode>(dataset_dir, background, decode, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(omniglot->ValidateParams());
+                      return omniglot;
                     }));
                 }));
 
