@@ -136,7 +136,7 @@ void Worker::Active(Task *task, int task_id) {
   {
     std::lock_guard<std::mutex> _l(mutex_);
     task_id_.store(task_id, std::memory_order_relaxed);
-    task_.store(task, std::memory_order_relaxed);
+    task_.store(task, std::memory_order_release);
     status_ = kThreadBusy;
   }
   cond_var_.notify_one();
