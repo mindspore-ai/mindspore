@@ -310,6 +310,7 @@ class Parser {
 
   // The func graphs to transform tail call ir to independent call ir.
   std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> parallel_call_graphs_;
+  std::set<FunctionBlockPtr> ignored_latter_call_graphs_;
 };
 
 // AST node type define code to ast

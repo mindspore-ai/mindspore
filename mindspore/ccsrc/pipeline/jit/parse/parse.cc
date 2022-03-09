@@ -1409,7 +1409,12 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   // If the return_ is set, it has its own continuation block
   if (true_end->func_graph()->get_return() == nullptr) {
     true_end->Jump(after_block, {});
-    true_branch_graphs.second = true_end;
+    if (ignored_latter_call_graphs_.find(true_end) == ignored_latter_call_graphs_.end()) {
+      true_branch_graphs.second = true_end;
+    } else {
+      MS_LOG(DEBUG) << "Ignore the true_end block for transform to parallem call, true_block: "
+                    << true_block->ToString() << ", true_end: " << true_end->ToString();
+    }
     MS_LOG(DEBUG) << "The true_end block jump to after, true_block: " << true_block->ToString()
                   << ", true_end: " << true_end->ToString();
   }
@@ -1422,13 +1427,24 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   // If the return_ is set, it has its own continuation block
   if (false_end->func_graph()->get_return() == nullptr) {
     false_end->Jump(after_block, {});
-    false_branch_graphs.second = false_end;
+    if (ignored_latter_call_graphs_.find(false_end) == ignored_latter_call_graphs_.end()) {
+      false_branch_graphs.second = false_end;
+    } else {
+      MS_LOG(DEBUG) << "Ignore the false_end block for transform to parallem call, false_block: "
+                    << false_block->ToString() << ", false_end: " << false_end->ToString();
+    }
     MS_LOG(DEBUG) << "The false_end block jump to after, false_block: " << false_block->ToString()
                   << ", false_end: " << false_end->ToString();
   }
   block->ConditionalJump(bool_node, true_block, false_block);
 
   // Record the former, middle, latter graphs info.
+  if (true_end->func_graph()->get_return() != nullptr || false_end->func_graph()->get_return() != nullptr) {
+    MS_LOG(DEBUG) << "True_end or false_end will not call after_block, true_block: " << true_block->ToString()
+                  << ", true_end: " << true_end->ToString() << ", false_block: " << false_block->ToString()
+                  << ", false_end: " << false_end->ToString() << ", after_block: " << after_block->ToString();
+    ignored_latter_call_graphs_.insert(after_block);
+  }
   if (true_branch_graphs.second != nullptr && false_branch_graphs.second != nullptr) {
     true_branch_graphs.first = block;
     parallel_call_graphs_.emplace_back(true_branch_graphs);
