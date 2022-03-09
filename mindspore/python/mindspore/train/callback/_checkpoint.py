@@ -168,10 +168,7 @@ class CheckpointConfig:
                 not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
             raise ValueError("The input arguments 'save_checkpoint_steps', 'save_checkpoint_seconds', "
                              "'keep_checkpoint_max' and 'keep_checkpoint_per_n_minutes' can't be all None or 0.")
-
-        if not isinstance(exception_save, bool):
-            raise TypeError(f"For 'CheckpointConfig', the argument 'exception_save' should be bool, "
-                            f"but got {str(type(exception_save))}.")
+        Validator.check_bool(exception_save)
         self.exception_save = exception_save
 
         self._save_checkpoint_steps = save_checkpoint_steps

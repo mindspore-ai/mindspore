@@ -16,6 +16,7 @@
 
 import time
 
+from mindspore._checkparam import Validator
 from ._callback import Callback
 
 
@@ -72,10 +73,7 @@ class TimeMonitor(Callback):
             batch_num = cb_params.batch_num
             if isinstance(batch_num, int) and batch_num > 0:
                 step_size = cb_params.batch_num
-
-        if not isinstance(step_size, int) or step_size < 1:
-            raise ValueError("For 'TimeMonitor', the argument 'data_size' must be positive integer, "
-                             "but got {}.".format(step_size))
+        Validator.check_positive_int(step_size)
 
         step_seconds = epoch_seconds / step_size
         print("epoch time: {:5.3f} ms, per step time: {:5.3f} ms".format(epoch_seconds, step_seconds), flush=True)
