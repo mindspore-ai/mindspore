@@ -32,15 +32,16 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
   auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto dim = GetValue<int64_t>(primitive->GetAttr("dim"));
   if (x1_shape.size() != x2_shape.size()) {
-    MS_EXCEPTION(ValueError) << "The shape of two inputs must have the same size.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of two inputs must have the same size.";
   }
   for (size_t i = 0; i < x1_shape.size(); ++i) {
     if (x1_shape[i] != x2_shape[i]) {
-      MS_EXCEPTION(ValueError) << "x1 and x2 must have the same shape.";
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', x1 and x2 must have the same shape.";
     }
   }
   if (x1_shape.size() <= 0 || x2_shape.size() <= 0) {
-    MS_EXCEPTION(ValueError) << "Inputs should not be a " << x1_shape.size() << " dimensional tensor.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', inputs should not be a " << x1_shape.size()
+                             << " dimensional tensor.";
   }
   int64_t default_dim = -65530;
   if (dim == default_dim) {
@@ -51,13 +52,15 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
         break;
       }
       if (i == x1_shape.size() - 1 && x1_shape[i] != dim_size_value) {
-        MS_EXCEPTION(ValueError) << "The size of inputs dim should be 3,but got " << x1_shape[i];
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The size of inputs dim should be 3, but got "
+                                 << x1_shape[i];
       }
     }
   }
   if ((dim < -static_cast<int64_t>(x1_shape.size()) || dim > static_cast<int64_t>(x1_shape.size()) - 1) &&
       dim != default_dim) {
-    MS_EXCEPTION(ValueError) << "dim should be between " << -static_cast<int64_t>(x1_shape.size()) << " and "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',dim should be between "
+                             << -static_cast<int64_t>(x1_shape.size()) << " and "
                              << static_cast<int64_t>(x1_shape.size()) - 1 << " ,but got " << dim;
   }
   if (dim < 0 && dim != default_dim) {
@@ -65,7 +68,8 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
   }
   int64_t dim_size = 3;
   if (x1_shape[dim] != dim_size && x2_shape[dim] != dim_size && dim != default_dim) {
-    MS_EXCEPTION(ValueError) << "The size of inputs dim should be 3,but got " << x1_shape[dim];
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The size of inputs dim should be 3,but got "
+                             << x1_shape[dim];
   }
   return std::make_shared<abstract::Shape>(x1_shape);
 }

@@ -127,7 +127,11 @@ ValuePtr NegInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
       break;
     }
     default: {
-      MS_EXCEPTION(TypeError) << "Neg unsupported data type: " << x_tensor->ToString();
+      MS_EXCEPTION(TypeError)
+        << "For '" << prim->name()
+        << "', the supported data type is ['int8', 'int16', 'int32', 'int64', 'uint8', "
+           "'uint16','uint32', 'uint64','float16', 'float32', 'float64', 'complex64', 'complex128'], but got "
+        << x_tensor->ToString();
     }
   }
   return result_tensor;

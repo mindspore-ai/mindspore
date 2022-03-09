@@ -50,9 +50,8 @@ static void seg_left_equation(const std::string &left_equation, const std::strin
       (*element_count)[char_to_index(label)] += 1;
     } else if (label == '.') {
       if (found_ell) {
-        MS_EXCEPTION(ValueError)
-          << "For " << prim_name
-          << ", each operand can contain contain only one ellipsis, but it has been found again.";
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', each operand can contain only one ellipsis, but it has been found again.";
       }
       if (idx + kEinsumEllLen - 1 >= left_equation.length() || left_equation[idx + 1] != label ||
           left_equation[idx + kEinsumEllLen - 1] != label) {

@@ -43,11 +43,13 @@ std::vector<int64_t> CheckAttrSize(const PrimitivePtr &primitive, const std::str
   try {
     auto attr = primitive->GetAttr(attr_name);
     if (attr->cast<ValueListPtr>() == nullptr) {
-      MS_EXCEPTION(TypeError);
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', Attr " << attr_name
+                              << " must be a list, but got nullptr";
     }
     attr_value = GetValue<std::vector<int64_t>>(attr);
   } catch (const std::exception &) {
-    MS_EXCEPTION(TypeError) << "Attr " << attr_name << " must be a list[int, int, ...].";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', Attr " << attr_name
+                            << " must be a list[int, int, ...].";
   }
 
   if (attr_value.size() != attr_size) {
@@ -58,41 +60,46 @@ std::vector<int64_t> CheckAttrSize(const PrimitivePtr &primitive, const std::str
   return attr_value;
 }
 
-void CheckRecvCorner(std::vector<int64_t> recv_rank_ids, int64_t idx1, int64_t idx2, int64_t idx_corner) {
+void CheckRecvCorner(const PrimitivePtr &primitive, std::vector<int64_t> recv_rank_ids, int64_t idx1, int64_t idx2,
+                     int64_t idx_corner) {
   if (recv_rank_ids[idx1] != kNeighborExchangeV2InvalidIds && recv_rank_ids[idx2] != kNeighborExchangeV2InvalidIds &&
       recv_rank_ids[idx_corner] == kNeighborExchangeV2InvalidIds) {
-    MS_EXCEPTION(ValueError) << "Invalid recv_rank_ids, as recv_rank_ids[" << idx1 << "] = " << recv_rank_ids[idx1]
-                             << ", recv_rank_ids[" << idx2 << "] = " << recv_rank_ids[idx2] << ", and recv_rank_ids["
-                             << idx_corner << "] = " << recv_rank_ids[idx_corner] << ".";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', recv_rank_ids is invalid, as recv_rank_ids[" << idx1
+                             << "] = " << recv_rank_ids[idx1] << ", recv_rank_ids[" << idx2
+                             << "] = " << recv_rank_ids[idx2] << ", and recv_rank_ids[" << idx_corner
+                             << "] = " << recv_rank_ids[idx_corner] << ".";
   }
   if ((recv_rank_ids[idx1] == kNeighborExchangeV2InvalidIds || recv_rank_ids[idx2] == kNeighborExchangeV2InvalidIds) &&
       recv_rank_ids[idx_corner] != kNeighborExchangeV2InvalidIds) {
-    MS_EXCEPTION(ValueError) << "Invalid recv_rank_ids, as recv_rank_ids[" << idx1 << "] = " << recv_rank_ids[idx1]
-                             << ", recv_rank_ids[" << idx2 << "] = " << recv_rank_ids[idx2] << ", and recv_rank_ids["
-                             << idx_corner << "] = " << recv_rank_ids[idx_corner] << ".";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', recv_rank_ids is invalid, as recv_rank_ids[" << idx1
+                             << "] = " << recv_rank_ids[idx1] << ", recv_rank_ids[" << idx2
+                             << "] = " << recv_rank_ids[idx2] << ", and recv_rank_ids[" << idx_corner
+                             << "] = " << recv_rank_ids[idx_corner] << ".";
   }
 }
 
-void CheckIdsValue(std::vector<int64_t> rank_ids) {
+void CheckIdsValue(const PrimitivePtr &primitive, std::vector<int64_t> rank_ids) {
   // check repeat & invalid value
   std::set<int64_t> ids_count;
   for (auto id : rank_ids) {
     if (id < 0 && id != kNeighborExchangeV2InvalidIds) {
-      MS_EXCEPTION(ValueError) << "Invalid send_rank_ids or recv_rank_ids: " << id
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', Invalid send_rank_ids or recv_rank_ids: " << id
                                << ", all the rank id should be >= 0 or -1.";
     }
     if (ids_count.find(id) != ids_count.end() && id != -1) {
-      MS_EXCEPTION(ValueError) << "Invalid send_rank_ids or recv_rank_ids: " << id << ", it repeated.";
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', Invalid send_rank_ids or recv_rank_ids: " << id
+                               << ", it repeated.";
     }
     ids_count.insert(id);
   }
 }
 
-void CheckLensValue(std::vector<int64_t> lens) {
+void CheckLensValue(const PrimitivePtr &primitive, std::vector<int64_t> lens) {
   // check len <0
   for (auto len : lens) {
     if (len < 0) {
-      MS_EXCEPTION(ValueError) << "Invalid send_lens or recv_lens: " << len << ", the lens should be >=0.";
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', send_lens or recv_lens should be >=0, but got invalid len:" << len << ".";
     }
   }
 }
@@ -114,17 +121,17 @@ void NeighborExchangeV2Check(const PrimitivePtr &primitive, const std::vector<Ab
   auto recv_lens = CheckAttrSize(primitive, kNeighborExchangeV2RecvLens, kLensSize);
 
   // check rank_ids value
-  CheckIdsValue(send_rank_ids);
-  CheckIdsValue(recv_rank_ids);
+  CheckIdsValue(primitive, send_rank_ids);
+  CheckIdsValue(primitive, recv_rank_ids);
   // check lens value
-  CheckLensValue(send_lens);
-  CheckLensValue(recv_lens);
+  CheckLensValue(primitive, send_lens);
+  CheckLensValue(primitive, recv_lens);
 
   // check recv rankids invalid cond
-  CheckRecvCorner(recv_rank_ids, kNeighborExchangeV2Idx0, kNeighborExchangeV2Idx2, kNeighborExchangeV2Idx1);
-  CheckRecvCorner(recv_rank_ids, kNeighborExchangeV2Idx2, kNeighborExchangeV2Idx4, kNeighborExchangeV2Idx3);
-  CheckRecvCorner(recv_rank_ids, kNeighborExchangeV2Idx4, kNeighborExchangeV2Idx6, kNeighborExchangeV2Idx5);
-  CheckRecvCorner(recv_rank_ids, kNeighborExchangeV2Idx6, kNeighborExchangeV2Idx0, kNeighborExchangeV2Idx7);
+  CheckRecvCorner(primitive, recv_rank_ids, kNeighborExchangeV2Idx0, kNeighborExchangeV2Idx2, kNeighborExchangeV2Idx1);
+  CheckRecvCorner(primitive, recv_rank_ids, kNeighborExchangeV2Idx2, kNeighborExchangeV2Idx4, kNeighborExchangeV2Idx3);
+  CheckRecvCorner(primitive, recv_rank_ids, kNeighborExchangeV2Idx4, kNeighborExchangeV2Idx6, kNeighborExchangeV2Idx5);
+  CheckRecvCorner(primitive, recv_rank_ids, kNeighborExchangeV2Idx6, kNeighborExchangeV2Idx0, kNeighborExchangeV2Idx7);
 
   // check data_format is NCHW
   constexpr auto kDataFormat = "format";
@@ -134,10 +141,10 @@ void NeighborExchangeV2Check(const PrimitivePtr &primitive, const std::vector<Ab
     MS_EXCEPTION_IF_NULL(format_attr);
     format = GetValue<std::string>(format_attr);
   } catch (const std::exception &) {
-    MS_EXCEPTION(TypeError) << "Attr " << kDataFormat << " should be a str.";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', Attr " << kDataFormat << " should be a str.";
   }
   if (format != "NCHW") {
-    MS_EXCEPTION(ValueError) << "Attr data_format only support NCHW now.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', Attr data_format only support NCHW now.";
   }
 
   // check if send_lens > input_lens
@@ -145,24 +152,25 @@ void NeighborExchangeV2Check(const PrimitivePtr &primitive, const std::vector<Ab
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   constexpr size_t kInputSize = 4;
   if (input_shape.size() != kInputSize) {
-    MS_EXCEPTION(ValueError) << "Input size is not 4, only support NCHW now.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', input size should be 4, but got " << input_shape.size()
+                             << ", and only support NCHW now.";
   }
   constexpr size_t kHDim = 2;
   constexpr size_t kWDim = 3;
   if (send_lens[kNeighborExchangeV2Idx0] > input_shape[kHDim]) {
-    MS_EXCEPTION(ValueError) << "Attr send_lens[0]: " << send_lens[kNeighborExchangeV2Idx0]
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', Attr send_lens[0]: " << send_lens[kNeighborExchangeV2Idx0]
                              << " is larger than input size in H dim: " << input_shape[kHDim] << ".";
   }
   if (send_lens[kNeighborExchangeV2Idx1] > input_shape[kHDim]) {
-    MS_EXCEPTION(ValueError) << "Attr send_lens[1]: " << send_lens[kNeighborExchangeV2Idx1]
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', Attr send_lens[1]: " << send_lens[kNeighborExchangeV2Idx1]
                              << " is larger than input size in H dim: " << input_shape[kHDim] << ".";
   }
   if (send_lens[kNeighborExchangeV2Idx2] > input_shape[kWDim]) {
-    MS_EXCEPTION(ValueError) << "Attr send_lens[2]: " << send_lens[kNeighborExchangeV2Idx2]
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', Attr send_lens[2]: " << send_lens[kNeighborExchangeV2Idx2]
                              << " is larger than input size in W dim: " << input_shape[kWDim] << ".";
   }
   if (send_lens[kNeighborExchangeV2Idx3] > input_shape[kWDim]) {
-    MS_EXCEPTION(ValueError) << "Attr send_lens[3]: " << send_lens[kNeighborExchangeV2Idx3]
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', Attr send_lens[3]: " << send_lens[kNeighborExchangeV2Idx3]
                              << " is larger than input size in W dim: " << input_shape[kWDim] << ".";
   }
 
@@ -173,7 +181,7 @@ void NeighborExchangeV2Check(const PrimitivePtr &primitive, const std::vector<Ab
     MS_EXCEPTION_IF_NULL(group_attr);
     (void)GetValue<std::string>(group_attr);
   } catch (const std::exception &) {
-    MS_EXCEPTION(TypeError) << "Attr " << kGroup << " should be a str.";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', Attr " << kGroup << " should be a str.";
   }
 }
 

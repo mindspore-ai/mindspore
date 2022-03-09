@@ -23,7 +23,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-std::vector<int64_t> GetInferShape(const std::vector<int64_t> &input_shape, const std::vector<int64_t> &multiples_v) {
+std::vector<int64_t> GetInferShape(const PrimitivePtr &prim, const std::vector<int64_t> &input_shape,
+                                   const std::vector<int64_t> &multiples_v) {
   int64_t len_sub = SizeToLong(multiples_v.size() - input_shape.size());
   std::vector<int64_t> infer_shape = input_shape;
   std::vector<int64_t> multiples_w;
@@ -37,7 +38,8 @@ std::vector<int64_t> GetInferShape(const std::vector<int64_t> &input_shape, cons
     multiples_w = multiples_v;
   }
   if (len_sub < 0) {
-    MS_EXCEPTION(ValueError) << "the length of multiples can not be smaller than the"
+    MS_EXCEPTION(ValueError) << "For '" << prim->name()
+                             << "', the length of multiples can not be smaller than the"
                                 "length of dimension in input_x";
   }
   for (size_t i = 0; i < multiples_w.size(); i++) {
@@ -75,12 +77,12 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
     }
   }
 
-  auto infer_shape = GetInferShape(input_shape, multiples_v);
+  auto infer_shape = GetInferShape(primitive, input_shape, multiples_v);
   if (max_shape.empty() && min_shape.empty()) {
     return std::make_shared<abstract::Shape>(infer_shape);
   }
-  auto infer_shape_min = GetInferShape(min_shape, multiples_v);
-  auto infer_shape_max = GetInferShape(max_shape, multiples_v);
+  auto infer_shape_min = GetInferShape(primitive, min_shape, multiples_v);
+  auto infer_shape_max = GetInferShape(primitive, max_shape, multiples_v);
   return std::make_shared<abstract::Shape>(infer_shape, infer_shape_min, infer_shape_max);
 }
 

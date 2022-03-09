@@ -118,7 +118,10 @@ ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
       break;
     }
     default: {
-      MS_EXCEPTION(TypeError) << "Complex unsupported data type: " << real_tensor->ToString();
+      MS_EXCEPTION(TypeError)
+        << "For '" << prim->name()
+        << "', the supported data type is in the list: ['kNumberTypeFloat32', 'kNumberTypeFloat64'], but got "
+        << real_tensor->ToString() << ".";
     }
   }
   return result_tensor;

@@ -27,12 +27,14 @@
 namespace mindspore {
 namespace ops {
 namespace {
-std::vector<int64_t> ReLUV2GetOutputMaskShape(const std::vector<int64_t> &input_shape,
+std::vector<int64_t> ReLUV2GetOutputMaskShape(const PrimitivePtr &prim, const std::vector<int64_t> &input_shape,
                                               const std::shared_ptr<Type> &x_dtype) {
   std::vector<int64_t> mask_shape;
   if (input_shape.size() != 4) {
-    MS_EXCEPTION(ValueError) << "The `input_x` should be a 4-D tensor,but got a " + std::to_string(input_shape.size()) +
-                                  "-D tensor whose shape is " + std::to_string(input_shape.size());
+    MS_EXCEPTION(ValueError) << "For '" << prim->name()
+                             << "', The `input_x` should be a 4-D tensor,but got a " +
+                                  std::to_string(input_shape.size()) + "-D tensor whose shape is " +
+                                  std::to_string(input_shape.size());
   }
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (i == 1) {
@@ -71,7 +73,7 @@ abstract::TupleShapePtr ReLUV2InferShape(const PrimitivePtr &primitive,
   auto input_type = x_type_tmp->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(input_type);
   auto x_dtype = input_type->element();
-  auto mask_shape = ReLUV2GetOutputMaskShape(input_shape, x_dtype);
+  auto mask_shape = ReLUV2GetOutputMaskShape(primitive, input_shape, x_dtype);
   abstract::ShapePtr inputs_shape;
   abstract::ShapePtr masks_shape;
   if (min_shape.empty() || max_shape.empty()) {
@@ -79,8 +81,8 @@ abstract::TupleShapePtr ReLUV2InferShape(const PrimitivePtr &primitive,
     masks_shape = std::make_shared<abstract::Shape>(mask_shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{inputs_shape, masks_shape});
   }
-  auto min_mask_shape = ReLUV2GetOutputMaskShape(min_shape, x_dtype);
-  auto max_mask_shape = ReLUV2GetOutputMaskShape(max_shape, x_dtype);
+  auto min_mask_shape = ReLUV2GetOutputMaskShape(primitive, min_shape, x_dtype);
+  auto max_mask_shape = ReLUV2GetOutputMaskShape(primitive, max_shape, x_dtype);
   inputs_shape = std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
   masks_shape = std::make_shared<abstract::Shape>(mask_shape, min_mask_shape, max_mask_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{inputs_shape, masks_shape});

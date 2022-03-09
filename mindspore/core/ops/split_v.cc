@@ -55,7 +55,8 @@ abstract::TupleShapePtr SplitVInferShape(const PrimitivePtr &primitive,
     (void)size_splits.erase(default_idx);
     auto excessive_default_idx = std::find(size_splits.begin(), size_splits.end(), -1);
     if (excessive_default_idx != size_splits.end()) {
-      MS_EXCEPTION(ValueError) << "Got more than one default value -1 in size_splits.";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', size_splits default value can contain one -1,but got  more than one -1.";
     } else {
       int64_t sum_of_size_splits = 0;
       for (int64_t i = 0; i < num_split - 1; i++) {

@@ -26,20 +26,21 @@ abstract::ShapePtr GridSampler3DInferShape(const PrimitivePtr &primitive,
   auto grid_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   const size_t kFive = 5;
   if (input_x_shape.size() != kFive) {
-    MS_EXCEPTION(ValueError) << "Input_x must be a 5-dimensional tensor, but got "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', Input_x must be a 5-dimensional tensor, but got "
                              << std::to_string(input_x_shape.size()) << "-dimensional tensor.";
   }
   if (grid_shape.size() != kFive) {
-    MS_EXCEPTION(ValueError) << "Grid must be a 5-dimensional tensor, but got " << std::to_string(grid_shape.size())
-                             << "-dimensional tensor.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', Grid must be a 5-dimensional tensor, but got "
+                             << std::to_string(grid_shape.size()) << "-dimensional tensor.";
   }
   if (input_x_shape[kInputIndex0] != grid_shape[kInputIndex0]) {
-    MS_EXCEPTION(ValueError) << "The shape of grid is " << input_args[kInputIndex1]->BuildShape()->ToString()
-                             << " , but the shape of input_x is " << input_args[kInputIndex0]->BuildShape()->ToString()
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of grid is "
+                             << input_args[kInputIndex1]->BuildShape()->ToString() << " , but the shape of input_x is "
+                             << input_args[kInputIndex0]->BuildShape()->ToString()
                              << " . The first dimension of grid and input_x must be equal.";
   }
   if (grid_shape[kInputIndex4] != kInputIndex3) {
-    MS_EXCEPTION(ValueError) << "The last dimension of grid must be 3, but got "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The last dimension of grid must be 3, but got "
                              << std::to_string(grid_shape[kInputIndex4]);
   }
   std::vector<int64_t> output_shape = {input_x_shape[kInputIndex0], input_x_shape[kInputIndex1],

@@ -33,7 +33,9 @@ abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vec
   auto x_size = x_shape.size();
   auto y_size = y_shape.size();
   if (x_size != y_size) {
-    MS_EXCEPTION(ValueError) << "For Cdist, rank of input_x and input_y should be equal.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', rank of input_x and input_y should be equal, but got rank of input_x: " << x_size
+                             << ", rank of input_y: " << y_size << ".";
   }
   CheckAndConvertUtils::CheckInRange("input_x dim", x_size, kIncludeBoth, {2, 3}, "Cdist");
   int64_t dim_R = y_shape[y_size - 2];

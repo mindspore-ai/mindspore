@@ -125,7 +125,8 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     auto shape = shape_base->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->shape().size() != 1) {
-      MS_EXCEPTION(TypeError) << "Input `shape` must be a 1-D Tensor.";
+      MS_EXCEPTION(TypeError) << "For '" << op_name << "', Input `shape` must be a 1-D Tensor, but got "
+                              << shape->shape().size() << ".";
     }
     size_t shape_rank = LongToSize(shape->shape()[0]);
 

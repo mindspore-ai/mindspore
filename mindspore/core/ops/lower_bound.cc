@@ -24,14 +24,17 @@ abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   size_t size_exp = 2;
   if (x_shape.size() != size_exp) {
-    MS_EXCEPTION(ValueError) << "The rank of sorted_x need to be equal to 2, but got " << values_shape.size();
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', The rank of sorted_x need to be equal to 2, but got " << values_shape.size();
   }
   if (values_shape.size() != size_exp) {
-    MS_EXCEPTION(ValueError) << "The rank of values need to be equal to 2, but got " << values_shape.size();
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The rank of values need to be equal to 2, but got "
+                             << values_shape.size();
   }
   if (x_shape[0] != values_shape[0]) {
-    MS_EXCEPTION(ValueError) << "The shape of values is " << input_args[1]->BuildShape()->ToString()
-                             << ", but the shape of sorted_x is " << input_args[0]->BuildShape()->ToString()
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of values is "
+                             << input_args[1]->BuildShape()->ToString() << ", but the shape of sorted_x is "
+                             << input_args[0]->BuildShape()->ToString()
                              << ". The first dimension of the shape of sorted_x must be equal to that of values.";
   }
   return std::make_shared<abstract::Shape>(values_shape);
@@ -50,7 +53,8 @@ TypePtr LowerBoundInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto out_type_id = out_type->type_id();
   MS_EXCEPTION_IF_NULL(out_type);
   if (out_type_id != kInt32->type_id() && out_type_id != kInt64->type_id()) {
-    MS_EXCEPTION(TypeError) << "out_type must be int32 or int64.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', out_type must be int32 or int64, but got "
+                            << out_type;
   }
   return out_type;
 }

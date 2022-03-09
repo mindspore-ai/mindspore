@@ -171,7 +171,8 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
     }
     if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
       if ((-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
-        MS_EXCEPTION(ValueError) << "when shrink axis, the stride cannot be negative number";
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                 << "', when shrink axis, the stride cannot be negative number";
       }
       j += 1;
       i += 1;
@@ -228,7 +229,8 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
       }
       if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
         if (!(-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
-          MS_EXCEPTION(ValueError) << "when shrink axis, the stride cannot be negative number";
+          MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                   << "', when shrink axis, the stride cannot be negative number";
         }
         j += 1;
         i += 1;
@@ -305,7 +307,8 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
       is_dynamic = true;
       auto slice_shape = CheckAndConvertUtils::GetTensorInputShape("StridedSlice", {input_arg}, 0);
       if (slice_shape->shape().size() != 1) {
-        MS_EXCEPTION(ValueError) << "For StridedSliceGrad, " << arg_name << " must be 1-D.";
+        MS_EXCEPTION(ValueError) << "For 'StridedSlice', " << arg_name << " must be 1-D, but got"
+                                 << slice_shape->shape().size() << "-D.";
       }
       *slice_len = LongToSize(slice_shape->shape()[0]);
     }
@@ -334,7 +337,9 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   bool x_is_dyn =
     std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::SHP_ANY; });
   if (x_is_dyn && (min_shape.size() == 0 || max_shape.size() == 0)) {
-    MS_EXCEPTION(ValueError) << "Input x dynamic shape is currently not supported without giving the min and max shape";
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', Input x dynamic shape is currently not supported without giving the min and max shape";
   }
   ShapeVector begin_v;
   ShapeVector end_v;

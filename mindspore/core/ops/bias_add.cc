@@ -58,13 +58,16 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   if (data_format == Format::NCDHW && input_shape.size() != 5 && is_ascend) {
-    MS_EXCEPTION(ValueError) << "NCDHW format only support 5-dims input in Ascend target.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', NCDHW format only support 5-dims input in Ascend target, but got " << data_format
+                             << ".";
   }
   auto x_channel = data_format == Format::NHWC ? input_shape[input_shape.size() - 1] : input_shape[1];
   bool x_not_dyn = std::all_of(input_shape.begin(), input_shape.end(),
                                [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
   if (x_not_dyn && bias_shape[0] != x_channel) {
-    MS_EXCEPTION(ValueError) << "BiasAdd shape error, data format is " << data_format
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', bias_shape[0] should be equal to x_channel, but got data format: " << data_format
                              << ", got bias_shape[0]: " << bias_shape[0] << ", x_channel: " << x_channel << ".";
   }
   CheckAndConvertUtils::CheckMinMaxShape(input_shape, &min_shape, &max_shape);
