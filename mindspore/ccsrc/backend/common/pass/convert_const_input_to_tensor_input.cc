@@ -44,7 +44,7 @@ AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePt
     MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple";
   }
   if (tensor_ptr == nullptr) {
-    MS_LOG(WARNING) << "Create tensor failed";
+    MS_LOG(DEBUG) << "Create tensor failed";
     return nullptr;
   }
   auto tensor_input = std::make_shared<ValueNode>(tensor_ptr);
