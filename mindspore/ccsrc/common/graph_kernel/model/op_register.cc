@@ -108,6 +108,7 @@ OP_REGISTER("PadAkg", PadAkgOp);
 OP_REGISTER("UnPadAkg", UnPadAkgOp);
 OP_REGISTER("BatchMatMul", OpaqueOp);
 OP_REGISTER("CumSum", OpaqueOp);
+OP_REGISTER("OneHot", OpaqueOp);
 OP_REGISTER("StridedSlice", OpaqueOp);
 OP_REGISTER("TensorScatterAdd", OpaqueOp);
 OP_REGISTER("Gather", OpaqueOp);

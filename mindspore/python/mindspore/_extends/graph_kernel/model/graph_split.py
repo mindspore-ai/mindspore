@@ -979,7 +979,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                     return [a], False
             return None
 
-        def _broadcast_opaque(dom):
+        def _broadcast_tot(dom):
             """Fuse rule for TensorScatterAdd and UnsortedSegmentSum."""
             def _same_input(op1, op2):
                 return bool(set(op1.inputs.copy()) & set(op2.inputs.copy()))
@@ -1003,6 +1003,21 @@ class GraphSplitGpu(GraphSplitByPattern):
                         any([op.output in fuse_tensor for op in a.ops]):
                     return [a], True
             return None
+
+        def _broadcast_onehot(dom, fwd=True):
+            """Fuse rule for OneHot."""
+            if dom.dom_op().prim != "OneHot":
+                return None
+
+            fused = []
+            neighbours = dom.in_relations.items() if fwd else dom.out_relations.items()
+            for a, _ in neighbours:
+                if a.pattern <= PrimLib.BROADCAST:
+                    if (fwd and a.check_acyclic(dom) and len(a.out_relations) == 1 and not a.is_output) or \
+                            (not fwd and dom.check_acyclic(a)):
+                        fused.append(a)
+
+            return fused, fwd
 
         def _h_broadcast(dom, a):
             if dom.pattern > PrimLib.BROADCAST:
@@ -1038,7 +1053,9 @@ class GraphSplitGpu(GraphSplitByPattern):
                 changed = self.fuse(_broadcast_depth) or changed
                 changed = self.fuse(_broadcast_width) or changed
                 changed = self.fuse(_strided_slice) or changed
-                changed = self.fuse(_broadcast_opaque) or changed
+                changed = self.fuse(partial(_broadcast_onehot, fwd=True)) or changed
+                changed = self.fuse(partial(_broadcast_onehot, fwd=False)) or changed
+                changed = self.fuse(_broadcast_tot) or changed
                 changed = self.fuse(partial(_gather_output, reduce_fusion=False)) or changed
                 changed = self.fuse(partial(_gather_output, reduce_fusion=True)) or changed
                 changed = self.fuse(_reduce_output) or changed

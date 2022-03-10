@@ -231,6 +231,7 @@ class PrimLib:
         'GatherNd': Prim(OPAQUE),
         'UnsortedSegmentSum': Prim(OPAQUE),
         'StandardNormal': Prim(OPAQUE),
+        'OneHot': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)
