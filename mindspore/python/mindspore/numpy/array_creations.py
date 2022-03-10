@@ -21,6 +21,7 @@ import numpy as onp
 from .. import context
 from ..common import Tensor
 from ..common import dtype as mstype
+from ..common.seed import get_seed
 from ..ops import operations as P
 from ..ops import functional as F
 from ..ops.primitive import constexpr
@@ -38,7 +39,7 @@ from .utils_const import _raise_value_error, _empty, _max, _min, \
     _tuple_setitem
 from .array_ops import ravel, concatenate, broadcast_arrays, reshape, broadcast_to, flip, \
     apply_along_axis, where, moveaxis
-from .dtypes import nan, pi
+from .dtypes import nan, pi, dtype_map
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32
@@ -377,6 +378,198 @@ def full(shape, fill_value, dtype=None):
         return broadcast_to(fill_value, shape)
     # if shape contains zero, use c.Tensor()
     return _convert_64_to_32(empty_compile(dtype, shape))
+
+
+def _generate_shapes(shape):
+    """Generate shapes for randn and rand."""
+    if not shape:
+        size = (1,)
+    elif len(shape) == 1:
+        if isinstance(shape[0], int):
+            size = shape
+        elif isinstance(shape[0], list):
+            size = tuple(shape[0])
+        elif isinstance(shape[0], tuple):
+            size = shape[0]
+        else:
+            raise TypeError("If the length of the argument 'shape' is 1, the type of the argument 'shape' must be "
+                            "one of ['int', 'list', 'tuple'], but got {}.".format(type(shape[0])))
+    else:
+        for index, value in enumerate(shape):
+            if not isinstance(value, int):
+                raise TypeError("If the length of the argument 'shape' is > 1, the type of the argument 'shape' must "
+                                "all be int, but got {} at index {}.".format(type(value), index))
+        size = shape
+    return size
+
+
+def _check_rand_type(dtype):
+    """Check type for randn and rand"""
+    type_list = ['float', 'float16', 'float32', 'float64']
+    if isinstance(dtype, str):
+        if dtype not in type_list:
+            raise ValueError("If the argument 'dtype' is str, it must be one of {}, but got {}."
+                             .format(type_list, dtype))
+        try:
+            dtype = dtype_map[dtype]
+        except KeyError:
+            raise KeyError("Unsupported dtype {}.".format(dtype))
+    elif dtype not in (mstype.float64, mstype.float32, mstype.float16):
+        raise ValueError("The argument 'dtype' must be 'mindspore.float64', 'mindspore.float32' or "
+                         "'mindspore.float16', but got {}.".format(dtype))
+
+
+def randn(*shape, dtype=mstype.float32):
+    """
+    Returns a new Tensor with given shape and dtype, filled with a sample (or samples)
+    from the standard normal distribution.
+
+    Args:
+        *shape (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g.,
+            :math:`(2, 3)` or :math:`2`.
+        dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, it must
+            be float type. Default is :class:`mindspore.float32`.
+
+    Returns:
+        Tensor, with the designated shape and dtype, filled with a sample (or samples)
+            from the "standard normal" distribution.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If `dtype` is not float type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> from mindspore import set_seed
+        >>> set_seed(1)
+        >>> print(np.randn((2,3)))
+        [[ 0.30639967 -0.42438635 -0.20454668]
+        [-0.4287376   1.3054721   0.64747655]]
+    """
+    _check_rand_type(dtype)
+    size = _generate_shapes(shape)
+    seed = get_seed()
+    if seed is not None:
+        stdnormal = P.StandardNormal(seed=seed)
+    else:
+        stdnormal = P.StandardNormal()
+    return stdnormal(size).astype(dtype)
+
+
+def rand(*shape, dtype=mstype.float32):
+    """
+    Returns a new Tensor with given shape and dtype, filled with random numbers from the
+    uniform distribution on the interval :math:`[0, 1)`.
+
+    Args:
+        *shape (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g.,
+            :math:`(2, 3)` or :math:`2`.
+        dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, it must
+            be float type. Default is :class:`mindspore.float32`.
+
+    Returns:
+        Tensor, with the designated shape and dtype, filled with random numbers from the
+    uniform distribution on the interval :math:`[0, 1)`.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If `dtype` is not float type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> from mindspore import set_seed
+        >>> set_seed(1)
+        >>> print(np.rand((2,3)))
+        [[4.1702199e-01 9.9718481e-01 7.2032452e-01]
+        [9.3255734e-01 1.1438108e-04 1.2812445e-01]]
+    """
+    _check_rand_type(dtype)
+    size = _generate_shapes(shape)
+    seed = get_seed()
+    if seed is not None:
+        uniformreal = P.UniformReal(seed=seed)
+    else:
+        uniformreal = P.UniformReal()
+    return uniformreal(size).astype(dtype)
+
+
+def randint(minval, maxval=None, shape=None, dtype=mstype.int32):
+    """
+    Return random integers from minval (inclusive) to maxval (exclusive). Return random integers from the
+    discrete uniform distribution of the specified dtype in the “half-open” interval :math:`[minval, maxval)`.
+    If maxval is None (the default), then results are from [0, maxval).
+
+    Args:
+        minval(Union[int]): Start value of interval. The interval includes this value. When `maxval`
+            is :class:`None`, `minval` must be greater than 0. When `maxval` is not :class:`None`,
+            `minval` must be less than `maxval`.
+        maxval(Union[int], optional): End value of interval. The interval does not include this value.
+        shape (Union[int, tuple(int)]): Shape of the new tensor, e.g., :math:`(2, 3)` or :math:`2`.
+        dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, it must
+            be int type. Default is :class:`mindspore.int32`.
+
+    Returns:
+        Tensor, with the designated shape and dtype, filled with random integers from minval (inclusive)
+        to maxval (exclusive).
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If input arguments have values not specified above.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> from mindspore import set_seed
+        >>> set_seed(1)
+        >>> print(np.randint(1, 10, (2,3)))
+        [[4 9 7]
+        [9 1 2]]
+    """
+    if not isinstance(minval, int):
+        raise TypeError("For mindspore.numpy.randint, the type of the argument 'minval' must be int, "
+                        "but got {}.".format(type(minval)))
+    if maxval is None:
+        if minval <= 0:
+            raise ValueError("For mindspore.numpy.randint, the argument 'minval' must be > 0 when the argument "
+                             "'maxval' is None, but got {}.".format(minval))
+        maxval = minval
+        minval = 0
+    else:
+        if not isinstance(maxval, int):
+            raise TypeError("For mindspore.numpy.randint, the type of the argument 'maxval' must be int, "
+                            "but got {}.".format(type(maxval)))
+        if minval >= maxval:
+            raise ValueError("For mindspore.numpy.randint, the value of 'minval' must be greater than the value of "
+                             "'maxval', but got 'minval': {} and 'maxval': {}.".format(minval, maxval))
+    if isinstance(dtype, str):
+        if dtype not in ('int', 'int8', 'int16', 'int32', 'int64'):
+            raise ValueError("For 'mindspore.numpy.randint', if the argument 'dtype' is str, it must be one of "
+                             "['int', 'int8', 'int16', 'int32', 'int64'], but got {}.".format(dtype))
+        try:
+            dtype = dtype_map[dtype]
+        except KeyError:
+            raise KeyError("Unsupported dtype {}.".format(dtype))
+    elif dtype not in (mstype.int64, mstype.int32, mstype.int16, mstype.int8):
+        raise ValueError("For 'mindspore.numpy.randint', the argument 'dtype' must be 'mindspore.int64', "
+                         "'mindspore.int32', 'mindspore.int16' or 'mindspore.int8', but got {}.".format(dtype))
+    if shape is None:
+        shape = (1,)
+    else:
+        shape = _check_shape(shape)
+    seed = get_seed()
+    if seed is not None:
+        uniformint = P.UniformInt(seed=seed)
+    else:
+        uniformint = P.UniformInt()
+    return uniformint(shape, Tensor(minval, mstype.int32), Tensor(maxval, mstype.int32)).astype(dtype)
 
 
 def arange(start, stop=None, step=None, dtype=None):

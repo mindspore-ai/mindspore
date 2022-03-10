@@ -27,6 +27,7 @@ from mindspore.nn.grad.cell_grad import _JvpInner
 from mindspore.nn.grad.cell_grad import _VjpInner
 from mindspore.ops import _constants
 from mindspore.ops.primitive import constexpr
+import numpy as np
 from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
@@ -394,6 +395,71 @@ def vjp(fn, inputs, v):
 shard_fn = Shard()
 def shard(fn, in_axes, out_axes, device="Ascend", level=0):
     return shard_fn(fn, in_axes, out_axes, device, level)
+
+
+def arange(start=0, stop=None, step=1, rtype=None):
+    """
+    Returns evenly spaced values within a given interval.
+
+    Args:
+        start(Union[int, float]): Start value of interval. The interval includes this value. When
+            `stop` is None, `start` must be greater than 0, and the interval is :math:`[0, start)`.
+            When `stop` is not None, `start` must be less than `stop`.
+        stop(Union[int, float], optional): End value of interval. The interval does not
+            include this value. Default is None.
+        step(Union[int, float], optional): Spacing between values. For any output
+            `out`, this is the distance between two adjacent values, :math:`out[i+1] - out[i]`.
+            The default step size is 1. If `step` is specified as a position argument,
+            `start` must also be given.
+        rtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor type.
+            If rtype is None, the data type of the new tensor will be inferred from start,
+            stop and step. Default is None.
+
+    Returns:
+        Tensor with evenly spaced values.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If input arguments have values not specified above.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.ops as ops
+        >>> print(ops.arange(0, 5, 1))
+        [0 1 2 3 4]
+        >>> print(ops.arange(3))
+        [0 1 2]
+        >>> print(ops.arange(start=0, stop=3))
+        [0 1 2]
+        >>> print(ops.arange(0, stop=3, step=0.5))
+        [0.  0.5 1.  1.5 2.  2.5]
+    """
+    if stop is None:
+        start, stop = 0, start
+
+    arg_map = {"start": start, "stop": stop, "step": step}
+    for arg in arg_map:
+        try:
+            arg_value = arg_map[arg]
+        except KeyError:
+            raise KeyError("Unsupported key {}, the key must be one of ['start', 'stop', 'step'].".format(arg_value))
+        if not isinstance(arg_value, int) and not isinstance(arg_value, float):
+            raise TypeError("For mindspore.ops.range, the argument '{}' must be int or float, but got {}."
+                            .format(arg, type(arg_value)))
+    if start >= stop:
+        raise ValueError("For mindspore.ops.range, the argument 'start' must be < 'stop', but got 'start': {}, "
+                         "'stop': {}.".format(start, stop))
+
+    if rtype is None:
+        data = np.arange(start, stop, step)
+        if data.dtype == int:
+            rtype = mstype.int32
+        else:
+            rtype = mstype.float32
+    return Tensor(np.arange(start, stop, step), dtype=rtype)
+
 
 def narrow(inputs, axis, start, length):
     """

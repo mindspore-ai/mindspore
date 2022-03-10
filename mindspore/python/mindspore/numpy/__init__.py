@@ -34,7 +34,7 @@ from .array_ops import (transpose, expand_dims, squeeze, rollaxis, swapaxes, res
                         rot90, select, array_split, choose, size, array_str, apply_along_axis,
                         piecewise, unravel_index, apply_over_axes)
 from .array_creations import copy_ as copy
-from .array_creations import (array, asarray, asfarray, ones, zeros, full, arange,
+from .array_creations import (array, asarray, asfarray, ones, zeros, full, randn, rand, randint, arange,
                               linspace, logspace, eye, identity, empty, empty_like,
                               ones_like, zeros_like, full_like, diagonal, tril, triu,
                               tri, trace, meshgrid, mgrid, ogrid, diagflat,
@@ -83,10 +83,10 @@ array_ops_module = ['transpose', 'expand_dims', 'squeeze', 'rollaxis', 'swapaxes
                     'repeat', 'rot90', 'select', 'array_split', 'choose', 'size', 'array_str',
                     'apply_along_axis', 'piecewise', 'unravel_index', 'apply_over_axes']
 
-array_creations_module = ['array', 'asarray', 'asfarray', 'ones', 'zeros', 'full', 'arange',
-                          'linspace', 'logspace', 'eye', 'identity', 'empty', 'empty_like',
-                          'ones_like', 'zeros_like', 'full_like', 'diagonal', 'tril', 'triu',
-                          'tri', 'trace', 'meshgrid', 'mgrid', 'ogrid', 'diagflat', 'diag',
+array_creations_module = ['array', 'asarray', 'asfarray', 'ones', 'zeros', 'full', 'randn', 'rand',
+                          'randint', 'arange', 'linspace', 'logspace', 'eye', 'identity', 'empty',
+                          'empty_like', 'ones_like', 'zeros_like', 'full_like', 'diagonal', 'tril',
+                          'triu', 'tri', 'trace', 'meshgrid', 'mgrid', 'ogrid', 'diagflat', 'diag',
                           'diag_indices', 'ix_', 'indices', 'geomspace', 'vander', 'hamming',
                           'hanning', 'bartlett', 'blackman', 'triu_indices', 'tril_indices',
                           'triu_indices_from', 'tril_indices_from', 'histogram_bin_edges', 'pad']

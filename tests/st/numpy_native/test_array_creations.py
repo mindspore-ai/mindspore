@@ -17,7 +17,10 @@
 import pytest
 import numpy as onp
 import mindspore.numpy as mnp
+import mindspore.ops.functional as F
 from mindspore import context
+from mindspore import set_seed
+from mindspore.common import dtype as mstype
 
 from .utils import rand_int, rand_bool, match_array, match_res, match_meta, \
     match_all_arrays, run_multi_test, to_tensor
@@ -892,6 +895,126 @@ def test_histogram_bin_edges():
     match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, onp.arange(5))
     match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, bins=(1, 2, 3), range=None, error=3)
     match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, bins=10, range=(2, 20), error=3)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_randn():
+    """
+    Feature: Numpy method randn.
+    Description: Test numpy method randn.
+    Expectation: No exception.
+    """
+    set_seed(1)
+    t1 = mnp.randn(1, 2, 3)
+    t2 = mnp.randn(1, 2, 3)
+    assert (t1.asnumpy() == t2.asnumpy()).all()
+
+    with pytest.raises(ValueError):
+        mnp.randn(dtype="int32")
+    with pytest.raises(ValueError):
+        mnp.randn(dtype=mstype.int32)
+    with pytest.raises(TypeError):
+        mnp.randn({1})
+    with pytest.raises(TypeError):
+        mnp.randn(1, 1.2, 2)
+
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_rand():
+    """
+    Feature: Numpy method rand.
+    Description: Test numpy method rand.
+    Expectation: No exception.
+    """
+    set_seed(1)
+    t1 = mnp.rand(1, 2, 3)
+    t2 = mnp.rand(1, 2, 3)
+    assert (t1.asnumpy() == t2.asnumpy()).all()
+
+    with pytest.raises(ValueError):
+        mnp.rand(dtype="int32")
+    with pytest.raises(ValueError):
+        mnp.rand(dtype=mstype.int32)
+    with pytest.raises(TypeError):
+        mnp.rand({1})
+    with pytest.raises(TypeError):
+        mnp.rand(1, 1.2, 2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_randint():
+    """
+    Feature: Numpy method randint.
+    Description: Test numpy method randint.
+    Expectation: No exception.
+    """
+    set_seed(1)
+    t1 = mnp.randint(1, 5, 3)
+    t2 = mnp.randint(1, 5, 3)
+    assert (t1.asnumpy() == t2.asnumpy()).all()
+
+    with pytest.raises(TypeError):
+        mnp.randint(1.2)
+    with pytest.raises(ValueError):
+        mnp.randint(0)
+    with pytest.raises(TypeError):
+        mnp.randint(1, 1.2)
+    with pytest.raises(ValueError):
+        mnp.randint(2, 1)
+    with pytest.raises(ValueError):
+        mnp.randint(1, dtype="float")
+    with pytest.raises(ValueError):
+        mnp.randint(1, dtype=mstype.float32)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_ops_arange():
+    """
+    Feature: Ops function arange.
+    Description: Test ops function arange.
+    Expectation: No exception.
+    """
+    actual = onp.arange(5)
+    expected = F.arange(5).asnumpy()
+    match_array(actual, expected)
+
+    actual = onp.arange(0, 5)
+    expected = F.arange(0, 5).asnumpy()
+    match_array(actual, expected)
+
+    actual = onp.arange(5, step=0.2)
+    expected = F.arange(5, step=0.2).asnumpy()
+    match_array(actual, expected)
+
+    actual = onp.arange(0.1, 0.9)
+    expected = F.arange(0.1, 0.9).asnumpy()
+    match_array(actual, expected)
+
+    with pytest.raises(TypeError):
+        F.arange([1])
+    with pytest.raises(ValueError):
+        F.arange(10, 1)
 
 
 @pytest.mark.level1
