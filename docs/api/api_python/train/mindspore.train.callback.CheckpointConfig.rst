@@ -95,15 +95,6 @@
 
         Int: 每隔多少分钟保存一个checkpoint文件。
 
-    .. py:method:: saved_network
-        :property:
-
-        获取需要保存的网络。
-
-        **返回：**
-
-        Cell: 需要保存的网络。
-
     .. py:method:: save_checkpoint_seconds
         :property:
 
@@ -121,3 +112,12 @@
         **返回：**
 
         Int: 每隔多少个step保存一次checkpoint文件。
+
+    .. py:method:: saved_network
+        :property:
+
+        获取需要保存的网络。
+
+        **返回：**
+
+        Cell: 需要保存的网络。
