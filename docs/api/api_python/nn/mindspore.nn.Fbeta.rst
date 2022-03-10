@@ -19,7 +19,7 @@ mindspore.nn.Fbeta
 
         内部评估结果清零。
 
-    .. py:method::eval(average=False)
+    .. py:method:: eval(average=False)
 
         计算fbeta结果。
 

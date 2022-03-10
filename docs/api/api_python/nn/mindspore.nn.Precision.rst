@@ -1,7 +1,7 @@
 mindspore.nn.Precision
 ======================
 
-.. py:class::  mindspore.nn.Precision(eval_type='classification')
+.. py:class:: mindspore.nn.Precision(eval_type='classification')
 
     计算数据分类的精度，包括单标签场景和多标签场景。
 
