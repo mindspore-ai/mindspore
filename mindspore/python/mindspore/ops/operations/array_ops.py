@@ -355,6 +355,20 @@ class Cast(PrimitiveWithInfer):
         if 'min_shape' in x and 'max_shape' in x:
             out['min_shape'] = x['min_shape']
             out['max_shape'] = x['max_shape']
+        if 'min_value' in x and 'max_value' in x:
+            np_dst_type = mstype.dtype_to_nptype(dst_type)
+            if isinstance(x['min_value'], (int, float, tuple, list)):
+                min_value = Tensor(np.array(x['min_value']).astype(np_dst_type))
+            else:
+                min_value = Tensor(x['min_value'].asnumpy().astype(np_dst_type))
+            min_value = tuple(min_value.asnumpy())
+            if isinstance(x['max_value'], (int, float, tuple, list)):
+                max_value = Tensor(np.array(x['max_value']).astype(np_dst_type))
+            else:
+                max_value = Tensor(x['max_value'].asnumpy().astype(np_dst_type))
+            max_value = tuple(max_value.asnumpy())
+            out['min_value'] = min_value
+            out['max_value'] = max_value
         return out
 
 
@@ -892,7 +906,8 @@ class Gather(Primitive):
         >>> output = ops.Gather()(input_params, input_indices, axis)
         >>> print(output)
         [1. 3. 5. 3. 7.]
-        >>> # case2: input_indices is a Tensor with shape (2, 2). When the input_params has one dimension, the output shape is equal to the input_indices shape.
+        >>> # case2: input_indices is a Tensor with shape (2, 2). When the input_params has one dimension,
+        the output shape is equal to the input_indices shape.
         >>> input_indices = Tensor(np.array([[0, 2], [2, 6]]), mindspore.int32)
         >>> axis = 0
         >>> output = ops.Gather()(input_params, input_indices, axis)
@@ -2043,29 +2058,19 @@ class Tile(PrimitiveWithInfer):
             return (True, base_tensor)
         return (False, None)
 
-    def __infer__(self, x, multiples):
-        multiples_v = multiples['value']
-        if multiples_v is None:
-            if len(multiples['shape']) != 1:
-                raise ValueError(f'For \'{self.name}\' the dim of multiples must be 1.')
-            rank = max(len(x['shape']), multiples['shape'][0])
-            out_shape = [-1] * rank
-            # tile can't infer min/max shape if multiples_v is None
-            return {'shape': out_shape,
-                    'dtype': x['dtype'],
-                    'value': None,
-                    'min_shape': [1] * rank,
-                    'max_shape': [1] * rank
-                    }
-
+    def _get_shape_and_range(self, x, multiples):
+        """calculate tile shape and value"""
         x_shp = x['shape']
-        validator.check_value_type(
-            "multiples", multiples_v, [tuple], self.name)
-        for i, multiple in enumerate(multiples_v):
-            validator.check_positive_int(
-                multiple, "multiples[%d]" % i, self.name)
-        validator.check_value_type(
-            "x[\'dtype\']", x["dtype"], mstype.tensor_type, self.name)
+        multiples_v = multiples['value']
+        value = None
+        if multiples_v is None:
+            multiples_v = multiples['min_value']
+        if 'max_shape' in x and 'min_shape' in x:
+            max_shape = x['max_shape']
+            min_shape = x['min_shape']
+        else:
+            max_shape = list(x_shp)
+            min_shape = list(x_shp)
         len_sub = len(multiples_v) - len(x_shp)
         multiples_w = None
         if len_sub == 0:
@@ -2073,19 +2078,85 @@ class Tile(PrimitiveWithInfer):
         if len_sub > 0:
             for i in range(0, len_sub):
                 x_shp.insert(0, 1)
+                min_shape.insert(0, 1)
+                max_shape.insert(0, 1)
             multiples_w = multiples_v
         elif len_sub < 0:
             raise ValueError(f"For '{self.name}', the length of 'multiples' can not be smaller than "
                              f"the dimension of 'input_x', but got length of 'multiples': {len(multiples_v)} "
                              f"and dimension of 'input_x': {len(x_shp)}.")
-        for i, a in enumerate(multiples_w):
-            x_shp[i] *= a
-        value = None
-        if x['value'] is not None:
-            value = Tensor(np.tile(x['value'].asnumpy(), multiples_w))
-        return {'shape': x_shp,
+        if 'max_value' in multiples and 'min_value' in multiples:
+            multiples_v_max = multiples['max_value']
+            multiples_v_min = multiples['min_value']
+            i = 0
+            for a, b in zip(multiples_v_min, multiples_v_max):
+                if isinstance(a, (Tensor_, Tensor)):
+                    a = a.asnumpy()
+                if isinstance(b, (Tensor_, Tensor)):
+                    b = b.asnumpy()
+                x_shp[i] *= a
+                if a != b:
+                    x_shp[i] = -1
+                min_shape[i] *= a
+                max_shape[i] *= b
+                i += 1
+        else:
+            for i, a in enumerate(multiples_w):
+                x_shp[i] *= a
+                max_shape[i] *= a
+                min_shape[i] *= a
+            if x['value'] is not None:
+                value = Tensor(np.tile(x['value'].asnumpy(), multiples_w))
+        out_shape = {
+            'shape': x_shp,
+            'max_shape': max_shape,
+            'min_shape': min_shape
+        }
+        return out_shape, value
+
+    def __infer__(self, x, multiples):
+        multiples_v = multiples['value']
+        if multiples_v is None:
+            if 'max_value' not in multiples or 'min_value' not in multiples:
+                if len(multiples['shape']) != 1:
+                    raise ValueError(f'For \'{self.name}\', the dim of multiples must be 1.')
+                rank = max(len(x['shape']), multiples['shape'][0])
+                out_shape = [-1] * rank
+                return {
+                    'shape': out_shape,
+                    'dtype': x['dtype'],
+                    'value': None,
+                    'max_shape': [1] * rank,
+                    'min_shape': [1] * rank
+                }
+            out_shape, value = self._get_shape_and_range(x, multiples)
+            max_shape = out_shape.get('max_shape', None)
+            min_shape = out_shape.get('min_shape', None)
+            shape = out_shape.get('shape', None)
+            return {
+                'shape': shape,
                 'dtype': x['dtype'],
-                'value': value}
+                'value': value,
+                'max_shape': max_shape,
+                'min_shape': min_shape
+            }
+
+        validator.check_value_type(
+            "multiples", multiples_v, [tuple], self.name)
+        for i, multiple in enumerate(multiples_v):
+            validator.check_positive_int(
+                multiple, "multiples[%d]" % i, self.name)
+        validator.check_value_type(
+            "x[\'dtype\']", x["dtype"], mstype.tensor_type, self.name)
+        out_shp, value = self._get_shape_and_range(x, multiples)
+        shp = out_shp.get('shape', None)
+        out = {'shape': shp,
+               'dtype': x['dtype'],
+               'value': value}
+        if 'max_shape' in x and 'min_shape' in x:
+            out['max_shape'] = out_shp.get('max_shape', None)
+            out['min_shape'] = out_shp.get('min_shape', None)
+        return out
 
 
 class UnsortedSegmentSum(PrimitiveWithInfer):
@@ -4098,6 +4169,28 @@ class TensorScatterUpdate(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
+
+    def _infer_min_max_value(self, input_x_value, indices_value, updates_value):
+        """TensorScatterUpdate infer min max value"""
+        if isinstance(input_x_value, tuple):
+            input_x_value = list(input_x_value)
+        if isinstance(input_x_value, (Tensor, Tensor_)):
+            input_x_value = input_x_value.asnumpy()
+        indices = indices_value.asnumpy()
+        input_x = np.array(input_x_value)
+        updates = np.array(updates_value)
+        for i, indice in enumerate(indices):
+            input_x[indice] = updates[i]
+        output = tuple(input_x.tolist())
+        return output
+
+    def infer_min_value(self, input_x_value, indices_value, updates_value):
+        """TensorScatterUpdate infer min value"""
+        return self._infer_min_max_value(input_x_value, indices_value, updates_value)
+
+    def infer_max_value(self, input_x_value, indices_value, updates_value):
+        """TensorScatterUpdate infer max value"""
+        return self._infer_min_max_value(input_x_value, indices_value, updates_value)
 
     def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:

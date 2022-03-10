@@ -576,7 +576,6 @@ class PrimitiveWithInfer(Primitive):
         # in non-graph_mode, it is not necessary to infer min/max shape
         if not is_graph_mode:
             return out
-
         # output does not contain dynamic shape, no need to calculate min/max shape
         def has_dynamic_shape(shp):
             if isinstance(shp, int):
@@ -585,6 +584,27 @@ class PrimitiveWithInfer(Primitive):
                 return any(has_dynamic_shape(e) for e in shp)
             return False
 
+        # calculate min/max value for output
+        def get_specified_value(elems, attr):
+            has_specified_value = False
+            ret_vals = []
+            for elem in elems:
+                if attr in elem:
+                    has_specified_value = True
+                    ret_vals.append(elem[attr])
+                else:
+                    ret_vals.append(elem['value'])
+            return has_specified_value, tuple(ret_vals)
+
+        has_min_value, min_values = get_specified_value(args, 'min_value')
+        has_max_value, max_values = get_specified_value(args, 'max_value')
+        if has_min_value and has_max_value:
+            if hasattr(self, 'infer_min_value'):
+                fn_infer_min_value = getattr(self, 'infer_min_value')
+                out['min_value'] = fn_infer_min_value(*min_values)
+            if hasattr(self, 'infer_max_value'):
+                fn_infer_max_value = getattr(self, 'infer_max_value')
+                out['max_value'] = fn_infer_max_value(*max_values)
         if not has_dynamic_shape(out['shape']):
             return out
 
