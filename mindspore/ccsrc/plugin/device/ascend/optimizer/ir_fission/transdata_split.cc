@@ -19,10 +19,34 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr size_t kNchwDimNum = 4;
+constexpr size_t kDimC = 1;
+
 const std::set<std::pair<string, string>> invalid_formats_pair = {
   {kOpFormat_C1HWNCoC0, kOpFormat_NCHW},          {kOpFormat_NCHW, kOpFormat_C1HWNCoC0},
   {kOpFormat_C1HWNCoC0, kOpFormat_DEFAULT},       {kOpFormat_DEFAULT, kOpFormat_FRACTAL_ZN_LSTM},
   {kOpFormat_FRACTAL_ZN_LSTM, kOpFormat_DEFAULT}, {kOpFormat_DEFAULT, kOpFormat_C1HWNCoC0}};
+
+bool IsDepthwiseCase(const CNodePtr &node, const std::string &input_format, const std::string &output_format) {
+  MS_EXCEPTION_IF_NULL(node);
+  abstract::BaseShapePtr base_shape;
+  if (input_format == kOpFormat_FRAC_Z && output_format == kOpFormat_DEFAULT) {
+    base_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(node, 0);
+  } else if (input_format == kOpFormat_DEFAULT && output_format == kOpFormat_FRAC_Z) {
+    base_shape = common::AnfAlgo::GetOutputDetailShape(node, 0);
+  } else {
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (base_shape->isa<abstract::Shape>()) {
+    auto shape_ptr = base_shape->cast<abstract::ShapePtr>();
+    auto shape_vec = shape_ptr->shape();
+    return shape_vec.size() == kNchwDimNum && shape_vec[kDimC] == 1;
+  }
+  return false;
+}
+}  // namespace
 
 const AnfNodePtr TransDataSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                          const EquivPtr &) const {
@@ -45,7 +69,8 @@ bool TransDataSplit::IsFormatInvaild(const AnfNodePtr &node) const {
   auto output_format = AnfAlgo::GetOutputFormat(node, 0);
   auto format_pair = std::make_pair(input_format, output_format);
 
-  return invalid_formats_pair.find(format_pair) != invalid_formats_pair.end();
+  return invalid_formats_pair.find(format_pair) != invalid_formats_pair.end() ||
+         IsDepthwiseCase(cnode, input_format, output_format);
 }
 
 const BaseRef TransDataSplit::DefinePattern() const {
