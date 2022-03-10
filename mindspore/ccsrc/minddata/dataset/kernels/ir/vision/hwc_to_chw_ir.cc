@@ -17,16 +17,13 @@
 
 #include "minddata/dataset/kernels/ir/vision/hwc_to_chw_ir.h"
 
-#ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
-#endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
 
 namespace mindspore {
 namespace dataset {
 namespace vision {
-#ifndef ENABLE_ANDROID
 // HwcToChwOperation
 HwcToChwOperation::~HwcToChwOperation() = default;
 
@@ -40,7 +37,6 @@ Status HwcToChwOperation::from_json(nlohmann::json op_params, std::shared_ptr<Te
   *operation = std::make_shared<vision::HwcToChwOperation>();
   return Status::OK();
 }
-#endif
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

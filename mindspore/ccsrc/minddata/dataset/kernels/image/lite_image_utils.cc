@@ -820,5 +820,33 @@ Status ValidateImageRank(const std::string &op_name, int32_t rank) {
   }
   return Status::OK();
 }
+
+Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
+  try {
+    if (input->Rank() <= 3) {
+      int output_height = input->shape()[0];
+      int output_width = input->shape()[1];
+      int output_channel = input->shape()[2];
+      LiteMat lite_mat_hwc(input->shape()[1], input->shape()[0], input->shape()[2],
+                           const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                           GetLiteCVDataType(input->type()));
+      LiteMat lite_mat_chw;
+      std::shared_ptr<Tensor> output_tensor;
+      TensorShape new_shape = TensorShape({output_channel, output_height, output_width});
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
+      uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+      lite_mat_chw.Init(output_height, output_channel, output_width, reinterpret_cast<void *>(buffer),
+                        GetLiteCVDataType(input->type()));
+      bool ret = HWC2CHW(lite_mat_hwc, lite_mat_chw);
+      CHECK_FAIL_RETURN_UNEXPECTED(ret, "HwcToChw: HwcToChw failed.");
+      *output = output_tensor;
+    } else {
+      RETURN_STATUS_UNEXPECTED("HwcToChw: input image is not in shape of <H,W,C> or <H,W>");
+    }
+  } catch (const std::exception &e) {
+    RETURN_STATUS_UNEXPECTED("HwcToChw: " + std::string(e.what()));
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

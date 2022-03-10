@@ -331,28 +331,6 @@ class MS_API HorizontalFlip final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
-/// \brief Transpose the input image; shape (H, W, C) to shape (C, H, W).
-class MS_API HWC2CHW final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \par Example
-  /// \code
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({std::make_shared<vision::Decode>(),
-  ///                             std::make_shared<vision::HWC2CHW>()}, // operations
-  ///                            {"image"});                            // input columns
-  /// \endcode
-  HWC2CHW();
-
-  /// \brief Destructor.
-  ~HWC2CHW() = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-};
-
 /// \brief Apply invert on the input image in RGB mode.
 class MS_API Invert final : public TensorTransform {
  public:

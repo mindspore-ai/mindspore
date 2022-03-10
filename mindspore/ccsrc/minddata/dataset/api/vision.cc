@@ -388,12 +388,14 @@ std::shared_ptr<TensorOperation> GaussianBlur::Parse() {
 HorizontalFlip::HorizontalFlip() = default;
 
 std::shared_ptr<TensorOperation> HorizontalFlip::Parse() { return std::make_shared<HorizontalFlipOperation>(); }
+#endif  // not ENABLE_ANDROID
 
 // HwcToChw Transform Operation.
 HWC2CHW::HWC2CHW() = default;
 
 std::shared_ptr<TensorOperation> HWC2CHW::Parse() { return std::make_shared<HwcToChwOperation>(); }
 
+#ifndef ENABLE_ANDROID
 // Invert Transform Operation.
 Invert::Invert() = default;
 

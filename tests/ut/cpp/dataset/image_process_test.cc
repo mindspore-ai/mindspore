@@ -42,6 +42,31 @@ void CompareMat(cv::Mat cv_mat, LiteMat lite_mat) {
   ASSERT_TRUE(cv_c == lite_c);
 }
 
+template <typename T>
+bool compare_mat(LiteMat &expect_value, LiteMat &calculate_value) {
+  int rows = expect_value.height_;
+  int cols = expect_value.width_;
+  int stride = rows * cols;
+  for (int i = 0; i < stride; i++) {
+    for (int j = 0; j < expect_value.channel_; j++) {
+      T value = reinterpret_cast<T *>(calculate_value.data_ptr_)[i * calculate_value.channel_ + j];
+      T value_expect = reinterpret_cast<T *>(expect_value.data_ptr_)[i * expect_value.channel_ + j];
+      if (value != value_expect) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool compare_mat_shape(LiteMat &src, LiteMat &calculate_value) {
+  if (calculate_value.width_ != src.height_ || calculate_value.height_ != src.channel_ ||
+      calculate_value.channel_ != src.width_) {
+    return false;
+  }
+  return true;
+}
+
 void Lite3CImageProcess(LiteMat &lite_mat_bgr, LiteMat &lite_norm_mat_cut) {
   bool ret;
   LiteMat lite_mat_resize;
@@ -1950,4 +1975,54 @@ TEST_F(MindDataImageProcess, testResizePreserveARWithFillervFail) {
   int w3 = 1000;
   bool ret3 = ResizePreserveARWithFiller(lite_mat_rgb3, lite_mat_resize3, h3, w3, &ratioShiftWShiftH3, &invM3, 0);
   ASSERT_TRUE(ret3 == false);
+}
+
+/// Feature: Test HWCTOCHW Operation successfully.
+/// Description: The input is a three-dimensional int array.
+/// Expectation: success and The final result should be consistent with expect_value_arr.
+TEST_F(MindDataImageProcess, TestHWCTOCHW) {
+  std::vector<int32_t> a = {1, 2, 3, 4, 5, 6};
+  LiteMat src(1, 2, 3, a.data(), LDataType(LDataType::INT32));
+  LiteMat dst;
+  std::vector<int32_t> expect_value_arr = {1, 4, 2, 5, 3, 6};
+  LiteMat expect_value(2, 3, 1, expect_value_arr.data(), LDataType(LDataType::INT32));
+  HWC2CHW(src, dst);
+
+  bool res = compare_mat<int32_t>(expect_value, dst);
+  ASSERT_TRUE(res == true);
+
+  bool ret = compare_mat_shape(src, expect_value);
+  ASSERT_TRUE(ret == true);
+}
+
+/// Feature: Test HWCTOCHW Operation successfully.
+/// Description: The input is a three channel picture.
+/// Expectation: success and The final result should be consistent with expect_value.
+TEST_F(MindDataImageProcess, TestHWCTOCHWImage) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Mat image_resize;
+  cv::resize(image, image_resize, cv::Size(10, 10));
+  cv::Mat rgb_mat;
+  cv::cvtColor(image_resize, rgb_mat, CV_BGR2RGB);
+
+  // Implements hwc conversion chw by opencv
+  std::vector<uint8_t> dst_data;
+  std::vector<cv::Mat> bgrChannels(3);
+  cv::split(rgb_mat, bgrChannels);
+  for (auto i = 0; i < bgrChannels.size(); i++) {
+    std::vector<uint8_t> data = std::vector<uint8_t>(bgrChannels[i].reshape(1, 1));
+    dst_data.insert(dst_data.end(), data.begin(), data.end());
+  }
+
+  // HWC2CHW operation implementation.
+  LiteMat expect_value(rgb_mat.rows, rgb_mat.channels(), rgb_mat.cols, dst_data.data(), LDataType(LDataType::UINT8));
+  LiteMat src(rgb_mat.cols, rgb_mat.rows, rgb_mat.channels(), rgb_mat.data, LDataType(LDataType::UINT8));
+  LiteMat dst;
+  HWC2CHW(src, dst);
+  bool res = compare_mat<uint8_t>(expect_value, dst);
+  ASSERT_TRUE(res == true);
+
+  bool ret = compare_mat_shape(src, expect_value);
+  ASSERT_TRUE(ret == true);
 }

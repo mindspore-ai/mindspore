@@ -218,6 +218,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/kernels/image/crop_op.cc
         ${MINDDATA_DIR}/kernels/image/decode_op.cc
         ${MINDDATA_DIR}/kernels/image/gaussian_blur_op.cc
+        ${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc
         ${MINDDATA_DIR}/kernels/image/normalize_op.cc
         ${MINDDATA_DIR}/kernels/image/resize_op.cc
         ${MINDDATA_DIR}/kernels/image/resize_preserve_ar_op.cc
@@ -364,6 +365,7 @@ elseif(MSLITE_MINDDATA_IMPLEMENT STREQUAL "wrapper")
             ${MINDDATA_DIR}/kernels/image/lite_image_utils.cc
             ${MINDDATA_DIR}/kernels/image/center_crop_op.cc
             ${MINDDATA_DIR}/kernels/image/crop_op.cc
+            ${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc
             ${MINDDATA_DIR}/kernels/image/normalize_op.cc
             ${MINDDATA_DIR}/kernels/image/resize_op.cc
             ${MINDDATA_DIR}/kernels/image/resize_preserve_ar_op.cc
