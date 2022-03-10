@@ -14,7 +14,7 @@ function Run_Export(){
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
         model_name=${line_array[0]}
-        if [[ $model_name == \#* ]]; then
+        if [[ $model_name == \#* || $model_name == "" ]]; then
           continue
         fi
         echo ${model_name}'_train_export.py' >> "${export_log_file}"
@@ -50,12 +50,12 @@ function Run_Converter() {
     # Convert mindspore train models:
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
+        if [[ ${line_array[0]} == \#* || ${line_array[0]} == "" ]]; then
+          continue
+        fi
         local model_prefix=${line_array[0]}_train
         parse_line convert
         if [[ "$?" == "1" ]]; then continue; fi
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
         if [[ "${enable_transfer}" == "1" ]]; then
             model_prefix="${line_array[0]}_head"
             model_name=${line_array[0]}'_head'
@@ -99,7 +99,7 @@ function should_run_example() {
   while read line; do
     LFS=" " read -r -a line_array <<< ${line}
     model_name=${line_array[0]}
-    if [[ $model_name == \#* ]]; then
+    if [[ $model_name == \#* || $model_name == "" ]]; then
       continue
     fi
     if [[ $model_name == "$1" ]]; then
@@ -194,15 +194,14 @@ function Run_x86() {
     # Run mindspore converted train models:
     local fail=0
     while read line; do
-        
         LFS=" " read -r -a line_array <<< ${line}
+        if [[ ${line_array[0]} == \#* || ${line_array[0]} == "" ]]; then
+          continue
+        fi
         local model_prefix=${line_array[0]}
         local log_suffix="_train"
         parse_line x86
         if [[ "$?" == "1" ]]; then continue; fi
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
         local model_file="${ms_models_path}/${model_name}.ms"
         local bb_model_file=""
         local export_file="${ms_models_path}/${model_name}_tod"
@@ -319,14 +318,14 @@ function Run_arm() {
     while read line; do
         local line_array
         LFS=" " read -r -a line_array <<< ${line}
+        if [[ ${line_array[0]} == \#* || ${line_array[0]} == "" ]]; then
+          continue
+        fi
         local model_prefix=${line_array[0]}
         local run_result=""
         local log_suffix="_train"
         parse_line $1
         if [[ "$?" == "1" ]]; then continue; fi
-        if [[ $model_name == \#* ]]; then
-            continue
-        fi
         local export_file="${tmp_dir}/${model_name}_tod"
         local inference_file="${tmp_dir}/${model_name}_infer"
         local model_file="${model_name}.ms"

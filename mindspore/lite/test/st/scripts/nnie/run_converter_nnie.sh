@@ -1,4 +1,5 @@
 #!/bin/bash
+source ./scripts/base_functions.sh
 
 # Run converter for NNIE models on x86 platform:
 function Run_Converter() {
@@ -107,20 +108,6 @@ while getopts "r:m:d:e:l:" opt; do
     esac
 done
 
-# Print start msg after run testcase
-function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-}
-
-function Print_Converter_Result() {
-    MS_PRINT_TESTCASE_END_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-15s %-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
-    done < ${run_converter_result_file}
-    MS_PRINT_TESTCASE_END_MSG
-}
-
 x86_path=${release_path}/centos_x86
 arm32_path=${release_path}/linux_aarch32
 
@@ -156,11 +143,11 @@ wait ${Run_converter_PID}
 Run_converter_status=$?
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter for NNIE models success"
-    Print_Converter_Result
+    Print_Converter_Result ${run_converter_result_file}
 else
     echo "Run converter for NNIE models failed"
     cat ${run_converter_log_file}
-    Print_Converter_Result
+    Print_Converter_Result ${run_converter_result_file}
     exit 1
 fi
 
