@@ -23,5 +23,5 @@ mindspore.ops.ReLU
 
     **异常：**
 
-    - **iTypeError** - `input_x` 的数据类型不是Number。
-    - **iTypeError** - `input_x` 不是Tensor。
+    - **TypeError** - `input_x` 的数据类型不是Number。
+    - **TypeError** - `input_x` 不是Tensor。

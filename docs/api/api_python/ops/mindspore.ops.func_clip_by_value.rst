@@ -1,7 +1,7 @@
 ﻿mindspore.ops.clip_by_value
 ============================
 
-.. py:function:: mindspore.ops.clip_by_value(x, clip_value_min, clip_value_max)
+.. py:function:: mindspore.ops.clip_by_value(x, clip_value_min=None, clip_value_max=None)
 
     将输入Tensor值裁剪到指定的最小值和最大值之间。
 

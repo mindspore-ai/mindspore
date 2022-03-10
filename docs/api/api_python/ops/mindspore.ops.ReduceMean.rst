@@ -28,6 +28,6 @@ mindspore.ops.ReduceMean
 
     **异常：**
 
-    - ** TypeError** - `keep_dims` 不是bool。
-    - ** TypeError** - `x` 不是Tensor。
-    - ** ValueError** - `axis` 不是int、tuple或list。
+    - **TypeError** - `keep_dims` 不是bool。
+    - **TypeError** - `x` 不是Tensor。
+    - **ValueError** - `axis` 不是int、tuple或list。

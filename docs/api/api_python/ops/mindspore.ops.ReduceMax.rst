@@ -9,7 +9,7 @@ mindspore.ops.ReduceMax
 
     **参数：**
 
-    - **keep_dims (bool)** - 如果为True，则保留计算的维度，长度为1。如果为False，则不保留计算维度。默认值：False，输出结果会降低维度。
+    - **keep_dims** (bool) - 如果为True，则保留计算的维度，长度为1。如果为False，则不保留计算维度。默认值：False，输出结果会降低维度。
 
     **输入：**
 
