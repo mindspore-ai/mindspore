@@ -41,7 +41,7 @@ option(MSLITE_ENABLE_RUNTIME_GLOG "enable runtime glog" off)
 option(MSLITE_ENABLE_COVERAGE "enable code coverage" off)
 option(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL "enable sharing memory with OpenGL" off)
 option(MSLITE_ENABLE_SERVER_INFERENCE "enable inference on server" off)
-option(MSLITE_ENABLE_CMSIS "enable CMSIS" off)
+option(MSLITE_ENABLE_CMSIS "enable CMSIS" on)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
