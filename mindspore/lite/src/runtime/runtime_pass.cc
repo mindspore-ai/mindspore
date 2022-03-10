@@ -141,6 +141,10 @@ bool RuntimePassValid(kernel::SubGraphKernel *subgraph) {
     return false;
   }
 
+#if !defined(ENABLE_ARM64) && !defined(ENABLE_AVX)
+  return false;
+#endif
+
   auto kernels = subgraph->nodes();
 
   for (auto kernel : kernels) {

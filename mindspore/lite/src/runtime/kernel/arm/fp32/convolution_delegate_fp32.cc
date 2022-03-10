@@ -170,6 +170,32 @@ int ConvolutionDelegateCPUKernel::SetInputOutputShapeInfo() {
   return RET_OK;
 }
 
+kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NC4KernelSelect() {
+  /* runtime c4 pass
+   * arm64: conv1x1 convComm support nc4
+   * Avx: convComm support nc4
+   * */
+#ifdef ENABLE_ARM64
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+    auto kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(
+      op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
+      origin_weight_, origin_bias_);
+    return kernel;
+  }
+#endif
+
+#if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
+  auto kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
+    op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
+    origin_weight_, origin_bias_);
+  return kernel;
+#endif
+
+  MS_LOG(ERROR) << "Not valid for c4 runtime pass. " << name_;
+  return nullptr;
+}
+
 bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_param) {
   if (conv_param->input_channel_ / op_parameter_->thread_num_ <= 64 &&
       conv_param->input_h_ >= conv_param->thread_num_ &&
@@ -181,7 +207,7 @@ bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_p
   }
 }
 
-kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
+kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() {
   kernel::InnerKernel *kernel = nullptr;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
@@ -225,6 +251,16 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
         origin_weight_, origin_bias_);
 #endif
     }
+  }
+  return kernel;
+}
+
+kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
+  kernel::InnerKernel *kernel = nullptr;
+  if (out_tensors().front()->format() == NC4HW4) {
+    kernel = CpuConvFp32NC4KernelSelect();
+  } else {
+    kernel = CpuConvFp32NHWCKernelSelect();
   }
 
   if (kernel != nullptr) {

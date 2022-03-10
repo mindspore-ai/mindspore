@@ -154,20 +154,15 @@ int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
   }
   CHECK_NULL_RETURN(out_tensors()[0]);
   auto bias = (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float *>(bias_data_) + thread_stride_ * task_id;
-#ifdef ENABLE_ARM64
-  // only ARM64 has the implementation for NC4HW4 for now
   if (out_tensors()[0]->format() == NC4HW4) {
     MatMulOpt(pack_input_, reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
               output_ptr_ + task_id * thread_stride_ * matmul_param_->row_, bias, matmul_param_->act_type_,
               matmul_param_->deep_, matmul_param_->row_, cur_oc, matmul_param_->row_, OutType_NC4HW4);
   } else {
-#endif
     MatMulOpt(pack_input_, reinterpret_cast<float *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
               output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
               matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
-#ifdef ENABLE_ARM64
   }
-#endif
   return RET_OK;
 }
 
@@ -201,22 +196,17 @@ int Convolution1x1CPUKernel::DoConv1x1Hw(int task_id) {
   for (int i = 0; i < cur_hw_; i += row_tile_) {
     int cur_rows = (cur_hw_ - i >= row_tile_) ? row_tile_ : (cur_hw_ - i);
     PackMatmulInput(cur_intput, thread_pack_input, cur_rows, matmul_param_->deep_);
-#ifdef ENABLE_ARM64
-    // only ARM64 has the implementation for NC4HW4 for now
     if (out_tensors()[0]->format() == NC4HW4) {
       MatMulOpt(thread_pack_input, reinterpret_cast<float *>(packed_weight_), cur_output,
                 reinterpret_cast<float *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_, cur_rows,
                 matmul_param_->col_, matmul_param_->row_, OutType_NC4HW4);
       cur_output += row_tile_ * MSMIN(matmul_param_->col_, C4NUM);
     } else {
-#endif
       MatMulOpt(thread_pack_input, reinterpret_cast<float *>(packed_weight_), cur_output,
                 reinterpret_cast<float *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_, cur_rows,
                 matmul_param_->col_, matmul_param_->col_, OutType_Nhwc);
       cur_output += row_tile_ * matmul_param_->col_;
-#ifdef ENABLE_ARM64
     }
-#endif
     cur_intput += row_tile_ * matmul_param_->deep_;
   }
 
