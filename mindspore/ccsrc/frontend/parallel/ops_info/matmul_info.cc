@@ -488,6 +488,9 @@ Status MatMulBase::GenerateStrategiesNotPower2(int64_t stage_id, size_t dev_num_
       continue;
     }
   }
+  if (strategy_cost_.empty()) {
+    MS_LOG(EXCEPTION) << "No available strategy.";
+  }
   return SUCCESS;
 }
 
@@ -522,6 +525,9 @@ Status MatMulBase::GenerateStrategies(int64_t stage_id) {
         MS_LOG(WARNING) << name_ << " : Calculating cost for strategy failed.";
         continue;
       }
+    }
+    if (strategy_cost_.empty()) {
+      MS_LOG(EXCEPTION) << "No available strategy.";
     }
     return SUCCESS;
   }
