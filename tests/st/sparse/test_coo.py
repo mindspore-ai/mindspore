@@ -14,6 +14,7 @@
 # ============================================================================
 """smoke tests for COO operations"""
 
+import platform
 import pytest
 import numpy as np
 
@@ -24,6 +25,8 @@ from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE)
 
+def get_platform():
+    return platform.system().lower()
 
 def compare_coo(coo1, coo2):
     assert isinstance(coo1, COOTensor)
@@ -105,6 +108,8 @@ def test_coo_method():
     Description: Test coo_tensor.to_csr(), coo_tensor.to_dense().
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     class COOToCSRNet(nn.Cell):
         def construct(self, coo_tensor):
             return coo_tensor.to_csr()
@@ -134,6 +139,7 @@ def test_coo_method():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dtype_coo_tensor():
     """
@@ -141,6 +147,8 @@ def test_dtype_coo_tensor():
     Description: Test: F.dtype(x), x.dtype.
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     indices = Tensor([[0, 1], [1, 2]])
     values = Tensor([1, 2], dtype=mstype.float32)
     shape = (3, 4)
@@ -170,6 +178,8 @@ def test_coo_attr():
     Description: Test COOTensor.indices, COOTensor.values, COOTensor.shape.
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     indices = Tensor([[0, 1], [1, 2]])
     values = Tensor([1, 2], dtype=mstype.float32)
     shape = (3, 4)

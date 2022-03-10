@@ -15,6 +15,7 @@
 """smoke tests for CSR operations"""
 
 import os
+import platform
 import pytest
 import numpy as np
 
@@ -35,6 +36,8 @@ def compare_csr(csr1, csr2):
     assert (csr1.values.asnumpy() == csr2.values.asnumpy()).all()
     assert csr1.shape == csr2.shape
 
+def get_platform():
+    return platform.system().lower()
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -48,6 +51,8 @@ def test_make_csr():
     Description: Test CSRTensor(indptr, indices, values, shape) and CSRTensor(CSRTensor)
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     indptr = Tensor([0, 1, 2])
     indices = Tensor([0, 1])
     values = Tensor([1, 2], dtype=mstype.float32)
@@ -75,6 +80,8 @@ def test_csr_attr():
     Description: Test CSRTensor.indptr, CSRTensor.indices, CSRTensor.values, CSRTensor.shape.
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     indptr = Tensor([0, 1, 2])
     indices = Tensor([0, 1])
     values = Tensor([1, 2], dtype=mstype.float32)
@@ -261,6 +268,8 @@ def test_csr_ops():
     Description: Test CSRReduceSum, CSRMul, CSRMV.
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     csr_reducesum = _csr_ops.CSRReduceSum()
     csrmv = _csr_ops.CSRMV()
 
@@ -319,6 +328,8 @@ def test_csrtensor_export_and_import_mindir():
     Description: Test export and load.
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     class TestCSRTensor(nn.Cell):
         def __init__(self, shape):
             super(TestCSRTensor, self).__init__()
@@ -421,6 +432,8 @@ def test_isinstance_csr_tensor():
     Description: Test: isinstance(x, CSRTensor).
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     indptr = Tensor([0, 1, 2])
     indices = Tensor([0, 1])
     values = Tensor([2, 1], dtype=mstype.float32)
@@ -457,6 +470,8 @@ def test_dtype_csr_tensor():
     Description: Test: F.dtype(x).
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     indptr = Tensor([0, 1, 2])
     indices = Tensor([0, 1])
     values = Tensor([2, 1], dtype=mstype.float32)
@@ -485,6 +500,8 @@ def test_csr_bprop():
     Description: Test CSRReduceSum, CSRMul, CSRMV, CSRTensor.to_coo(), CSRTensor.to_dense().
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     csr_reduce_sum = _csr_ops.CSRReduceSum()
     csrmv = _csr_ops.CSRMV()
     grad_op = ops.GradOperation(get_all=True)
@@ -558,6 +575,8 @@ def test_csr_method():
     Description: Test csr_tensor.to_coo(), csr_tensor.to_dense().
     Expectation: Success.
     """
+    if get_platform() != "linux":
+        return
     class CSRToCOONet(nn.Cell):
         def construct(self, csr_tensor):
             return csr_tensor.to_coo()

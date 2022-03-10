@@ -2532,7 +2532,7 @@ class COOTensor(COOTensor_):
             Tensor.
 
         Supported Platforms:
-            ``GPU`` ``CPU``
+            ``GPU``
         """
         zeros_tensor = tensor_operator_registry.get("zeros")(self.shape, self.values.dtype)
         return tensor_operator_registry.get("tensor_scatter_add")(
@@ -2574,7 +2574,7 @@ class COOTensor(COOTensor_):
         Examples:
             >>> import mindspore as ms
             >>> from mindspore import Tensor, COOTensor
-            >>> indices = Tensor([[0, 1], [1, 2]])
+            >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
             >>> values = Tensor([1, 2], dtype=ms.float32)
             >>> shape = (3, 4)
             >>> coo_tensor = COOTensor(indices, values, shape)
@@ -2713,7 +2713,15 @@ class CSRTensor(CSRTensor_):
         return self.indptr, self.indices, self.values, self.shape
 
     def to_coo(self):
-        """Return a COOTensor."""
+        """
+        Converts CSRTensor to COOTensor.
+
+        Returns:
+            COOTensor.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+        """
         row_indices = tensor_operator_registry.get("csr2coo")(self.indptr, self.values.shape[0])
         coo_indices = tensor_operator_registry.get("stack")(1)((row_indices, self.indices))
         return COOTensor(coo_indices, self.values, self.shape)
@@ -2726,7 +2734,7 @@ class CSRTensor(CSRTensor_):
             Tensor.
 
         Supported Platforms:
-            ``GPU`` ``CPU``
+            ``GPU``
         """
         coo_tensor = self.to_coo()
         return coo_tensor.to_dense()
@@ -2747,8 +2755,8 @@ class CSRTensor(CSRTensor_):
         Examples:
             >>> import mindspore as ms
             >>> from mindspore import Tensor, CSRTensor
-            >>> indptr = Tensor([0, 1, 2])
-            >>> indices = Tensor([0, 1])
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
             >>> values = Tensor([1, 2], dtype=ms.float32)
             >>> shape = (2, 4)
             >>> csr_tensor = CSRTensor(indptr, indices, values, shape)
@@ -2774,8 +2782,8 @@ class CSRTensor(CSRTensor_):
         Examples:
             >>> from mindspore import Tensor, CSRTensor
             >>> from mindspore import dtype as mstype
-            >>> indptr = Tensor([0, 1, 2])
-            >>> indices = Tensor([0, 1])
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
             >>> values = Tensor([2, 1], dtype=mstype.float32)
             >>> dense_shape = (2, 4)
             >>> csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
@@ -2802,8 +2810,8 @@ class CSRTensor(CSRTensor_):
         Examples:
             >>> from mindspore import Tensor, CSRTensor
             >>> from mindspore import dtype as mstype
-            >>> indptr = Tensor([0, 1, 2])
-            >>> indices = Tensor([0, 1])
+            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
+            >>> indices = Tensor([0, 1], dtype=ms.int32)
             >>> values = Tensor([2, 1], dtype=mstype.float32)
             >>> dense_shape = (2, 4)
             >>> csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
