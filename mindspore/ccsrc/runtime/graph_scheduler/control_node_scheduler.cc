@@ -647,6 +647,45 @@ void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerIn
   LinkControlArrowForKernelActor(actor_set, graph_compiler_info);
 
   LinkControlArrowForLoopCountActor(actor_set, graph_compiler_info);
+
+  LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
+}
+
+void ControlNodeScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
+                                                          const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  for (auto &custom_actor : actor_set->custom_actors_) {
+    MS_EXCEPTION_IF_NULL(custom_actor);
+    const auto &kernel = custom_actor->kernel().lock();
+    MS_EXCEPTION_IF_NULL(kernel);
+    const auto &graph = kernel->func_graph();
+    MS_EXCEPTION_IF_NULL(graph);
+    if (custom_actor->output_data_arrows().empty() && custom_actor->output_control_arrows().empty()) {
+      const auto &actor_name = graph->ToString() + kExitActorNameSuffix;
+      auto actor = FetchActor(actor_name);
+      MS_EXCEPTION_IF_NULL(actor);
+      LinkControlArrow(custom_actor.get(), actor);
+    }
+    if (custom_actor->input_control_arrow_aids().empty() && custom_actor->input_data_arrow_aids().empty()) {
+      const auto &kernel_graph = dynamic_cast<KernelGraph *>(graph.get());
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      AbstractActor *from_actor = nullptr;
+      if (parser->IsCallInputKernelGraph(kernel_graph)) {
+        const auto &actor_name = kernel_graph->ToString() + kStackActorNameSuffix;
+        from_actor = FetchActor(actor_name);
+      } else {
+        const auto &func_graph = parser->FetchFuncGraphByKernelGraph(kernel_graph);
+        MS_EXCEPTION_IF_NULL(func_graph);
+        const auto &actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
+        from_actor = FetchActor(actor_name);
+      }
+      MS_EXCEPTION_IF_NULL(from_actor);
+      LinkControlArrow(from_actor, custom_actor.get());
+    }
+  }
 }
 
 void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_set) {
@@ -1555,6 +1594,21 @@ void ControlNodeScheduler::AddFormalParameterDeviceTensor(ControlActor *const fr
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(input_node);
   MS_EXCEPTION_IF_NULL(graph);
+
+  // Collect backend parameters with dynamic shapes.
+  auto base_shape = input_node->Shape();
+  if (input_node->isa<Parameter>() && base_shape != nullptr && base_shape->isa<abstract::Shape>()) {
+    if (AnfUtils::IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
+      if (from_index >= from_actor->backend_parameters_.size()) {
+        MS_LOG(EXCEPTION) << "Invalid from index:" << from_index << " for actor:" << from_actor->GetAID()
+                          << " vector size:" << from_actor->backend_parameters_.size();
+      }
+      MS_LOG(INFO) << "Add dynamic shape backend parameter:" << input_node->DebugString() << " index:" << from_index
+                   << " for actor:" << from_actor->GetAID();
+      from_actor->backend_parameters_[from_index].emplace_back(input_node);
+    }
+  }
+
   if (!HasAbstractRef(input_node)) {
     return;
   }

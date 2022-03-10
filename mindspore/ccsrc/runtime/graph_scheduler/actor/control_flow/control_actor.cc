@@ -26,6 +26,7 @@ ControlActor::ControlActor(const std::string &name, KernelTransformType type, co
     (void)input_partials_.emplace_back(std::make_shared<OpPartial>());
   }
   input_device_tensors_.resize(parameters.size());
+  backend_parameters_.resize(parameters.size());
 }
 
 void ControlActor::Init() {
@@ -111,6 +112,7 @@ void ControlActor::Run(OpContext<DeviceTensor> *const context) {
     SendMemoryFreeReq(context);
 
     EraseInput(context);
+    UpdateDynamicShapeInParameter();
     SendOutput(context);
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
@@ -433,6 +435,22 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
     MS_EXCEPTION_IF_NULL(output_partial->func_graph_);
     ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial,
                           IntToSize(partial_arrow->to_input_index_), context);
+  }
+}
+
+void ControlActor::UpdateDynamicShapeInParameter() {
+  for (size_t i = 0; i < backend_parameters_.size(); ++i) {
+    if (backend_parameters_[i].empty() || input_device_tensors_[i] == nullptr) {
+      continue;
+    }
+
+    auto shape = input_device_tensors_[i]->host_shape();
+    std::vector<size_t> shape_tmp;
+    std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), IntToSize);
+
+    for (const auto &parameter : backend_parameters_[i]) {
+      common::AnfAlgo::SetOutputInferTypeAndShape({input_device_tensors_[i]->type_id()}, {shape_tmp}, parameter.get());
+    }
   }
 }
 }  // namespace runtime

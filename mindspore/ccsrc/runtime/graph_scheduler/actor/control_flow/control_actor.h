@@ -99,6 +99,9 @@ class ControlActor : public MemoryAwareActor {
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
   void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
                         const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) override;
+
+  // Update the dynamic shape in backend parameters.
+  void UpdateDynamicShapeInParameter();
   void SendOutput(OpContext<DeviceTensor> *const context) override;
   void EraseInput(const OpContext<DeviceTensor> *context) override;
 
@@ -158,6 +161,10 @@ class ControlActor : public MemoryAwareActor {
   // formal parameter. Used to update the ptr of device tensors when receive the real parameters for ref nodes.
   std::map<size_t, std::set<DeviceTensorPtr>> ref_formal_parameter_device_tensors_;
   std::map<size_t, std::set<DeviceTensorPtr>> ref_node_formal_parameter_device_tensors_;
+
+  // Backend parameters in the kernel graph.In the dynamic shape, when parameters are passed between the kernel
+  // graphs, the shape in the backend parameters needs to be updated.
+  std::vector<std::vector<AnfNodePtr>> backend_parameters_;
 
   // local node for control actor, such as return node for exit actor, switch node for switch actor.
   AnfNodePtr node_;

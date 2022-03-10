@@ -171,14 +171,23 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       continue;
     }
     MS_EXCEPTION_IF_NULL(device_contexts_[i]);
+
+    auto host_shape = input_device_tensor->host_shape();
+    if (common::AnfAlgo::IsDynamicShape(node_with_index.first)) {
+      // If there is a dynamic shape, the shape in the kernel should be used.
+      MS_LOG(DEBUG) << "Update dynamic shape in kernel output:" << node_with_index.first->DebugString()
+                    << " for actor:" << GetAID();
+      auto shape_tmp = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
+      host_shape.clear();
+      std::transform(shape_tmp.begin(), shape_tmp.end(), std::back_inserter(host_shape), IntToSize);
+    }
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
     auto new_device_tensor =
       device_contexts_[i]->CreateDeviceAddress(nullptr, input_device_tensor->GetSize(), input_device_tensor->format(),
-                                               input_device_tensor->type_id(), input_device_tensor->host_shape());
+                                               input_device_tensor->type_id(), host_shape);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
     (void)created_device_tensors_.emplace_back(new_device_tensor);
     (void)new_device_tensors.emplace_back(new_device_tensor.get());
-
     new_device_tensor->SetNodeIndex(node_with_index.first, node_with_index.second);
     new_device_tensor->set_from_persistent_mem(input_device_tensor->from_persistent_mem());
     // The device address which is created by actor uses the dynamic ref count.

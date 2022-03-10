@@ -76,10 +76,6 @@ class StackActor : public ControlActor {
   size_t input_stack_data_num_{0};
   size_t input_stack_partials_num_{0};
   size_t input_stack_controls_num_{0};
-  // The backend parameter is used to save the backend node corresponding to the device tensor in the stack.
-  // When these device tensors are used as output, they need to be placed in the node of the result arrow,
-  // so these nodes need to be saved.
-  std::vector<KernelWithIndex> backend_parameters_;
 };
 
 using StackActorPtr = std::shared_ptr<StackActor>;

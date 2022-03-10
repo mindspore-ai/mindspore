@@ -1585,6 +1585,14 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
       no_depend_custom_actors.erase(std::dynamic_pointer_cast<CustomActor>(to_iter->second));
     }
   }
+
+  // In control flow, no input actors should be linked to entrance actors.
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+  if (parser->IsInited()) {
+    return;
+  }
+
   for (const auto &custom_actor : no_depend_custom_actors) {
     auto kernel = custom_actor->kernel().lock();
     MS_EXCEPTION_IF_NULL(kernel);

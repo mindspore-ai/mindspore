@@ -78,6 +78,7 @@ void EntranceActor::Run(OpContext<DeviceTensor> *const context) {
   SendMemoryFreeReq(context);
 
   EraseInput(context);
+  UpdateDynamicShapeInParameter();
   SendOutput(context);
 }
 
