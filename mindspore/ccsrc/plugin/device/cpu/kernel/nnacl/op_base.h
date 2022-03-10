@@ -531,15 +531,6 @@ typedef struct QuantMulArg {
   int right_shift_;
 } QuantMulArg;
 
-#ifdef SERVER_INFERENCE
-typedef struct ThreadCostContext {
-  int64_t total_unit_num_;
-  int64_t per_unit_load_num_;
-  int64_t per_unit_store_num_;
-  float per_unit_compute_cost_;
-} ThreadCostContext;
-#endif
-
 typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
 typedef enum PadMode { Pad_pad, Pad_same, Pad_valid } PadMode;
 typedef enum RoundingMode { Rounding_No, Rounding_Away_from_zero, Rounding_Up } RoundingMode;

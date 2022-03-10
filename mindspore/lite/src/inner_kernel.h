@@ -32,6 +32,10 @@
 #include "include/api/context.h"
 #include "include/api/kernel.h"
 
+#ifdef SERVER_INFERENCE
+#include "src/thread_cost_model.h"
+#endif
+
 namespace mindspore::kernel {
 class InnerKernel : public Kernel {
  public:
@@ -54,6 +58,13 @@ class InnerKernel : public Kernel {
       op_parameter_ = nullptr;
       FreeWorkspace();
     }
+
+#ifdef SERVER_INFERENCE
+    if (thread_cost_context_ != nullptr) {
+      free(thread_cost_context_);
+      thread_cost_context_ = nullptr;
+    }
+#endif
   }
 
   int Execute() override;
@@ -197,7 +208,7 @@ class InnerKernel : public Kernel {
 
   int thread_num_ = 1;
 #ifdef SERVER_INFERENCE
-  std::unique_ptr<ThreadCostContext> thread_cost_context = nullptr;
+  lite::ThreadCostContext *thread_cost_context_ = nullptr;
 #endif
 };
 }  // namespace mindspore::kernel

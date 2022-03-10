@@ -29,7 +29,7 @@ struct TYPE_FUNC_INFO {
 };
 
 #ifdef SERVER_INFERENCE
-const std::map<int, float> dt_arithmetic_self_cost_map_ = {
+const std::map<int, float> arithmetic_self_compute_cost_map_ = {
   // {schema::PrimitiveType_Abs, 0.5f},
   // {schema::PrimitiveType_Cos, 1.0f},
   // {schema::PrimitiveType_Log, 1.0f},
@@ -49,12 +49,17 @@ const std::map<int, float> dt_arithmetic_self_cost_map_ = {
 }  // namespace
 
 #ifdef SERVER_INFERENCE
-int ArithmeticSelfCPUKernel::SetThreadCostContext() {
-  if (thread_cost_context == nullptr && dt_arithmetic_self_cost_map_.count(type_) > 0) {
-    thread_cost_context = std::make_unique<ThreadCostContext>();
-    thread_cost_context->per_unit_load_num_ = 1;
-    thread_cost_context->per_unit_store_num_ = 1;
-    thread_cost_context->per_unit_compute_cost_ = dt_arithmetic_self_cost_map_.at(type_);
+int ArithmeticSelfCPUKernel::UpdateThreadNumPass() {
+  if (thread_cost_context_ == nullptr && arithmetic_self_compute_cost_map_.count(type_) > 0) {
+    thread_cost_context_ = new lite::ThreadCostContext();
+    thread_cost_context_->per_unit_load_num_ = 1;
+    thread_cost_context_->per_unit_store_num_ = 1;
+    thread_cost_context_->per_unit_compute_cost_ = arithmetic_self_compute_cost_map_.at(type_);
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
   }
   return RET_OK;
 }
@@ -94,12 +99,6 @@ int ArithmeticSelfCPUKernel::Prepare() {
   CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
   CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
 
-#ifdef SERVER_INFERENCE
-  if (SetThreadCostContext() != RET_OK) {
-    return RET_ERROR;
-  }
-#endif
-
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -108,9 +107,8 @@ int ArithmeticSelfCPUKernel::Prepare() {
 
 int ArithmeticSelfCPUKernel::ReSize() {
 #ifdef SERVER_INFERENCE
-  if (thread_cost_context != nullptr) {
-    thread_cost_context->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
-    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context.get(), op_parameter_->thread_num_);
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
   }
 #endif
   return RET_OK;

@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_Eltwise;
 namespace mindspore::kernel {
 namespace {
 #ifdef SERVER_INFERENCE
-const std::map<std::pair<int, int>, float> dt_arithmetic_cost_map_ = {
+const std::map<std::pair<int, int>, float> arithmetic_compute_cost_map_ = {
   // {{PrimitiveType_MulFusion, schema::ActivationType_RELU}, 1.0f},
   // {{PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 1.0f},
   // {{PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION}, 1.0f},
@@ -60,13 +60,18 @@ const std::map<std::pair<int, int>, float> dt_arithmetic_cost_map_ = {
 }  // namespace
 
 #ifdef SERVER_INFERENCE
-int ArithmeticCPUKernel::SetThreadCostContext() {
+int ArithmeticCPUKernel::UpdateThreadNumPass() {
   std::pair<int, int> fusion_type = std::make_pair(param_->op_parameter_.type_, param_->activation_type_);
-  if (dt_arithmetic_cost_map_.count(fusion_type) > 0) {
-    thread_cost_context = std::make_unique<ThreadCostContext>();
-    thread_cost_context->per_unit_load_num_ = 1;
-    thread_cost_context->per_unit_store_num_ = 1;
-    thread_cost_context->per_unit_compute_cost_ = dt_arithmetic_cost_map_.at(fusion_type);
+  if (thread_cost_context_ == nullptr && arithmetic_compute_cost_map_.count(fusion_type) > 0) {
+    thread_cost_context_ = new lite::ThreadCostContext();
+    thread_cost_context_->per_unit_load_num_ = 1;
+    thread_cost_context_->per_unit_store_num_ = 1;
+    thread_cost_context_->per_unit_compute_cost_ = arithmetic_compute_cost_map_.at(fusion_type);
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
   }
   return RET_OK;
 }
@@ -75,12 +80,6 @@ int ArithmeticCPUKernel::SetThreadCostContext() {
 int ArithmeticCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-
-#ifdef SERVER_INFERENCE
-  if (SetThreadCostContext() != RET_OK) {
-    return RET_ERROR;
-  }
-#endif
 
   auto primitive_type = param_->op_parameter_.type_;
   if (primitive_type == schema::PrimitiveType_Eltwise) {
@@ -113,11 +112,11 @@ bool ArithmeticCPUKernel::IsScalarClac() {
 }
 int ArithmeticCPUKernel::ReSize() {
 #ifdef SERVER_INFERENCE
-  if (thread_cost_context != nullptr) {
-    thread_cost_context->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
-    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context.get(), op_parameter_->thread_num_);
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
   }
 #endif
+
   CalcMultiplesAndStrides(param_);
   scalar_ = IsScalarClac();
   int ret = RET_OK;

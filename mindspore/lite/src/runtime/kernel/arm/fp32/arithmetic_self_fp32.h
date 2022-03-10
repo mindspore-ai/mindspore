@@ -49,7 +49,7 @@ class ArithmeticSelfCPUKernel : public InnerKernel {
   }
   ~ArithmeticSelfCPUKernel() override = default;
 
-  int SetThreadCostContext();
+  int UpdateThreadNumPass();
   int Prepare() override;
   int ReSize() override;
   int Run() override;
