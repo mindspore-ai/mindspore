@@ -2814,36 +2814,3 @@ def check_multi30k_dataset(method):
         return method(self, *args, **kwargs)
 
     return new_method
-
-def check_obsminddataset(method):
-    """A wrapper that wraps a parameter checker around the original Dataset(OBSMindDataset)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        _, param_dict = parse_user_args(method, *args, **kwargs)
-
-        nreq_param_int = ['num_shards', 'shard_id']
-        nreq_param_list = ['columns_list']
-        nreq_param_bool = ['shard_equal_rows']
-        nreq_param_str = ['server', 'ak', 'sk', 'sync_obs_path']
-
-        dataset_files = param_dict.get('dataset_files')
-        type_check(dataset_files, (list,), "dataset files")
-        for dataset_file in dataset_files:
-            if not isinstance(dataset_file, str):
-                raise TypeError("Item of dataset files is not of type [{}], but got {}.".format(type(''),
-                                                                                                type(dataset_file)))
-        validate_dataset_param_value(nreq_param_int, param_dict, int)
-        validate_dataset_param_value(nreq_param_list, param_dict, list)
-        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
-        validate_dataset_param_value(nreq_param_str, param_dict, str)
-
-        server = param_dict.get('server')
-        if not server.startswith(('http://', 'https://')):
-            raise ValueError("server should be a str that starts with http:// or https://, but got {}.".format(server))
-
-        check_sampler_shuffle_shard_options(param_dict)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
