@@ -35,6 +35,13 @@ void CommOpAttrs(const FuncGraphPtr &graph) {
   std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto primitive = GetCNodePrimitive(node);
+    if (primitive == nullptr) {
+      continue;
+    }
     if (!common::AnfAlgo::IsCommunicationOp(node)) {
       continue;
     }
