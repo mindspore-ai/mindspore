@@ -68,6 +68,8 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
 
   int SetInputOutputShapeInfo();
   kernel::InnerKernel *CpuConvFp32KernelSelect();
+  kernel::InnerKernel *CpuConvFp32NC4KernelSelect();
+  kernel::InnerKernel *CpuConvFp32NHWCKernelSelect();
   bool CheckAvxUseSWConv(const ConvParameter *conv_param);
   // If inferShape process can't complete in Init part, initialization of weight and bis will be implemented in runtime
   // via Resize() API. However,data of const tensor(weight and bias) doesn't exist anymore in runtime stage.Thus,
