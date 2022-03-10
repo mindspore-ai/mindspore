@@ -24,6 +24,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "runtime/pynative/op_runtime_info.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "frontend/operator/ops.h"
 #include "ir/value.h"
@@ -219,7 +220,7 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
     auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {
       MS_EXCEPTION_IF_NULL(node);
-      auto runtime_info = node->user_data<session::OpRuntimeInfo>();
+      auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
       MS_EXCEPTION_IF_NULL(runtime_info);
       auto const &output_format = runtime_info->output_format(i);
       auto output_type = runtime_info->output_type(i);
@@ -252,7 +253,7 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
         AnfAlgo::SetOutputAddr(output_address, index, item.get());
         continue;
       }
-      auto op_runtime_info = item->user_data<session::OpRuntimeInfo>();
+      auto op_runtime_info = item->user_data<runtime::OpRuntimeInfo>();
       MS_EXCEPTION_IF_NULL(op_runtime_info);
       TypeId output_type_id = op_runtime_info->output_type(index);
       auto output_tensor_size = op_runtime_info->output_tensor_size(index);

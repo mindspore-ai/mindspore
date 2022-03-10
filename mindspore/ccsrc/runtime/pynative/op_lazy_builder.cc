@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/op_builder/op_lazy_builder.h"
+#include "runtime/pynative/op_lazy_builder.h"
 
 namespace mindspore::runtime {
 void OpLazyBuilder::Register(const std::function<void()> &callback) {

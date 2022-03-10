@@ -44,6 +44,7 @@
 #include "include/common/utils/context/graph_kernel_flags.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/config_manager.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -899,52 +900,8 @@ KernelGraphPtr AscendSession::PreBuildOp(const OpRunInfo &op_run_info,
   opt::RunOpAscendBackendIRFusionOptimization(graph);
   SelectKernel(graph);
   RunOpHardwareOptimize(graph);
-  CacheCNodeOutputInfo(*graph);
+  runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);
   return graph;
-}
-
-void AscendSession::CacheCNodeOutputInfo(const KernelGraph &graph) const {
-  auto &nodes = graph.execution_order();
-  for (auto const &node : nodes) {
-    std::vector<std::string> formats;
-    std::vector<TypeId> types;
-    std::vector<size_t> tensor_sizes;
-    auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
-    for (size_t i = 0; i < output_num; ++i) {
-      std::string output_format = AnfAlgo::GetOutputFormat(node, i);
-      auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
-      auto tensor_size = AnfAlgo::GetOutputTensorMemSize(node, i);
-      formats.emplace_back(output_format);
-      types.emplace_back(output_type);
-      tensor_sizes.emplace_back(tensor_size);
-    }
-    MS_EXCEPTION_IF_NULL(node);
-    node->set_user_data<OpRuntimeInfo>(std::make_shared<OpRuntimeInfo>(formats, types, tensor_sizes));
-  }
-
-  auto &inputs = graph.inputs();
-  for (const auto &input : inputs) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (!input->isa<Parameter>()) {
-      continue;
-    }
-    std::vector<std::string> formats;
-    std::vector<TypeId> types;
-    std::vector<size_t> tensor_sizes;
-    auto output_size = common::AnfAlgo::GetOutputTensorNum(input);
-    for (size_t index = 0; index < output_size; index++) {
-      auto format = AnfAlgo::GetOutputFormat(input, index);
-      auto type_id = AnfAlgo::GetOutputDeviceDataType(input, index);
-      if (type_id == kTypeUnknown) {
-        type_id = common::AnfAlgo::GetOutputInferDataType(input, index);
-      }
-      auto tensor_size = AnfAlgo::GetOutputTensorMemSize(input, index);
-      formats.emplace_back(format);
-      types.emplace_back(type_id);
-      tensor_sizes.emplace_back(tensor_size);
-    }
-    input->set_user_data<OpRuntimeInfo>(std::make_shared<OpRuntimeInfo>(formats, types, tensor_sizes));
-  }
 }
 
 void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<AnfNodePtr, size_t> &parameter_index,

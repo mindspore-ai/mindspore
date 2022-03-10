@@ -55,7 +55,7 @@
 #endif
 #include "backend/common/session/session_factory.h"
 #include "backend/common/session/pynative_task_manager.h"
-#include "runtime/op_builder/op_lazy_builder.h"
+#include "runtime/pynative/op_lazy_builder.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
 #include "debug/debugger/proto_exporter.h"

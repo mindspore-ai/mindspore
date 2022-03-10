@@ -20,9 +20,10 @@
 #include <utility>
 #include <algorithm>
 #include "runtime/graph_scheduler/graph_scheduler.h"
-#include "runtime/op_builder/op_lazy_builder.h"
+#include "runtime/pynative/op_lazy_builder.h"
 #include "runtime/device/device_address.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/context/graph_kernel_flags.h"
 #include "utils/ms_context.h"
@@ -556,7 +557,6 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
 
   UpdateRefCountForGraphOutput(outputs_with_index);
   AnfAlgo::UpdateGraphValidRefPair(graph);
-
   return graph->graph_id();
 }
 
@@ -574,6 +574,8 @@ void GraphCompiler::BuildSingleOpGraphs(const std::vector<KernelGraphPtr> &graph
   for (const auto &graph : graphs) {
     device_context->PreprocessBeforeRunSingleOpGraph(graph);
     CreateKernelWorkspaceDeviceAddress(device_context, graph);
+    // Need to execute after PreprocessBeforeRunSingleOpGraph
+    runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);
   }
 }
 

@@ -38,7 +38,13 @@
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
 namespace mindspore {
 // brief mindspore::tensor namespace
-enum TensorSyncStatus { kNoNeedSync, kNeedSyncHostToDevice, kNeedSyncDeviceToHost, kNeedSyncDeviceToHostImmediately };
+enum TensorSyncStatus {
+  kNoNeedSync,
+  kNeedSyncHostToDevice,
+  kNeedSyncHostToDeviceImmediately,
+  kNeedSyncDeviceToHost,
+  kNeedSyncDeviceToHostImmediately
+};
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
 // Tensor data interface.
@@ -511,6 +517,11 @@ class MS_CORE_API Tensor final : public MetaTensor {
   ///
   /// \return Ture if sync_status_ is kNeedSyncHostToDevice.
   bool NeedSyncHostToDevice() const { return sync_status_ == kNeedSyncHostToDevice; }
+
+  /// \brief Check the value of sync_status_.
+  ///
+  /// \return Ture if sync_status_ is kNeedSyncHostToDeviceImmediately.
+  bool NeedSyncHostToDeviceImmediately() const { return sync_status_ == kNeedSyncHostToDeviceImmediately; }
 
   /// \brief Check if this Tensor is the output of graph.
   ///
