@@ -30,7 +30,7 @@ mindspore.nn.Adam
 
       .. include:: mindspore.nn.optim_group_param.rst
       .. include:: mindspore.nn.optim_group_lr.rst
-      .. include:: mindspore.nn.optim_group_weight_decay.rst
+      .. include:: mindspore.nn.optim_group_dynamic_weight_decay.rst
       .. include:: mindspore.nn.optim_group_gc.rst
       .. include:: mindspore.nn.optim_group_order.rst
 
@@ -43,8 +43,10 @@ mindspore.nn.Adam
     - **eps** (float) - 将添加到分母中，以提高数值稳定性。必须大于0。默认值：1e-8。
     - **use_locking** (bool) - 是否对参数更新加锁保护。如果为True，则 `w` 、`m` 和 `v` 的tensor更新将受到锁的保护。如果为False，则结果不可预测。默认值：False。
     - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。如果为True，使用NAG更新梯度。如果为False，则在不使用NAG的情况下更新梯度。默认值：False。
-    - **weight_decay** (float) - 权重衰减（L2 penalty）。必须大于等于0。默认值：0.0。
+    - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
 
+      .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
+    
     .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
     **输入：**

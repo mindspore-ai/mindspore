@@ -1,0 +1,3 @@
+- **float**: 固定值，必须大于或者等于0。
+- **int**: 固定值，必须大于或者等于0，会被转换成float。
+- **Cell**: 动态weight decay。在训练过程中，优化器会使用步数（step）作为输入，调用该Cell实例来计算当前weight decay值。

@@ -52,7 +52,7 @@ mindspore.nn.RMSProp
 
       .. include:: mindspore.nn.optim_group_param.rst
       .. include:: mindspore.nn.optim_group_lr.rst
-      .. include:: mindspore.nn.optim_group_weight_decay.rst
+      .. include:: mindspore.nn.optim_group_dynamic_weight_decay.rst
       .. include:: mindspore.nn.optim_group_gc.rst
       .. include:: mindspore.nn.optim_group_order.rst
 
@@ -68,7 +68,9 @@ mindspore.nn.RMSProp
 
     .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
-    - **weight_decay** (Union[float, int]) - 权重衰减（L2 penalty）。必须大于等于0。默认值：0.0。
+    - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
+    
+      .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
 
     **输入：**
 
