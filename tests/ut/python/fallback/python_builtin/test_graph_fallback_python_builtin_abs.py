@@ -82,7 +82,6 @@ def test_fallback_abs_numpy():
     assert np.all(foo().asnumpy() == abs(np.array([-1, 2, -3])))
 
 
-@pytest.mark.skip("Not Supported yet need to convert C++ Tensor To python")
 def test_fallback_abs_cell_construct_tensor():
     """
     Feature: JIT Fallback

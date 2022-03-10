@@ -14,7 +14,6 @@
 # ============================================================================
 """ test graph fallback """
 import numpy as np
-import pytest
 
 from mindspore import ms_function, context, Tensor
 
@@ -87,11 +86,10 @@ def test_fallback_all_tensor():
     assert (not x) and y
 
 
-@pytest.mark.skip("Not support yet should convert C++ Tensor to python")
 def test_fallback_all_tensor_construct():
     """
     Feature: JIT Fallback
-    Description: Test all(numpy.array) in graph mode
+    Description: Test all(Tensor) in graph mode
     Expectation: No exception
     """
 
@@ -102,7 +100,7 @@ def test_fallback_all_tensor_construct():
         return all(x), all(y)
 
     x, y = foo()
-    assert (not x) and not y
+    assert (not x) and y
 
 
 def test_fallback_any_tuple():
@@ -171,7 +169,6 @@ def test_fallback_any_tensor():
     assert (not x) and y
 
 
-@pytest.mark.skip("Not support yet should convert C++ Tensor to python")
 def test_fallback_any_tensor_construct():
     """
     Feature: JIT Fallback
@@ -186,4 +183,4 @@ def test_fallback_any_tensor_construct():
         return any(x), any(y)
 
     x, y = foo()
-    assert (not x) and not y
+    assert (not x) and y

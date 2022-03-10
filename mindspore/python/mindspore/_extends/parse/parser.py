@@ -31,7 +31,7 @@ from mindspore import Tensor
 from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
-from mindspore.common.api import _MindsporeFunctionExecutor
+from mindspore.common.api import _MindsporeFunctionExecutor, _convert_data
 from mindspore.common.dtype import pytype_to_dtype
 from .namespace import CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
@@ -559,6 +559,7 @@ def eval_script(exp_str, params):
     global_params = params[0]
     local_params = params[1]
     try:
+        local_params = _convert_data(local_params)
         obj = eval(exp_str, global_params, local_params)
     except Exception as e:
         error_info = f"When eval '{exp_str}' by using Fallback feature, an error occurred: " + str(e) + \

@@ -14,7 +14,7 @@
 # ============================================================================
 """Top-level reference to dtype of common module."""
 from . import dtype
-from .api import ms_function, ms_memory_recycle
+from .api import ms_function, ms_memory_recycle, _convert_data
 from .dtype import Type, int8, byte, int16, short, int32, intc, int64, intp, \
     uint8, ubyte, uint16, ushort, uint32, uintc, uint64, uintp, float16, half, \
     float32, single, float64, double, bool_, float_, list_, tuple_, int_, \
@@ -53,10 +53,10 @@ __all__ = [
 ]
 
 __all__.extend([
-    "Tensor", "RowTensor", "SparseTensor", "COOTensor", "CSRTensor", # tensor
+    "Tensor", "RowTensor", "SparseTensor", "COOTensor", "CSRTensor",  # tensor
     'ms_function',  # api
     'Parameter', 'ParameterTuple',  # parameter
-    "dtype",
+    "dtype", "_convert_data",
     "set_seed", "get_seed",  # random seed
     "set_dump",
     "ms_memory_recycle"
