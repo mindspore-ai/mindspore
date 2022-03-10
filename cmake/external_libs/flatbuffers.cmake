@@ -10,13 +10,30 @@ endif()
 if(WIN32)
     set(flatbuffers_USE_STATIC_LIBS ON)
 endif()
+set(ENABLE_GITEE_EULER OFF)
+if(ENABLE_GITEE_EULER)
+    set(GIT_REPOSITORY "https://gitee.com/src-openeuler/flatbuffers.git")
+    set(GIT_TAG "openEuler-22.03-LTS")
+    set(MD5 "f1c724296be49a29ded69278a9a770c7")
+    set(FLATBUFFER_SRC "${TOP_DIR}/mindspore/lite/build/_deps/flatbuffers-src")
+    set(FLATBUFFER_DIR "${FLATBUFFER_SRC}/flatbuffers-2.0.0")
+    __download_pkg_with_git(flatbuffers ${GIT_REPOSITORY} ${GIT_TAG} ${MD5})
+    execute_process(COMMAND tar -xf ${FLATBUFFER_SRC}/v2.0.0.tar.gz WORKING_DIRECTORY ${FLATBUFFER_SRC})
 
+    foreach(_SUBMODULE_FILE ${PKG_SUBMODULES})
+        STRING(REGEX REPLACE "(.+)_(.+)" "\\1" _SUBMODEPATH ${_SUBMODULE_FILE})
+        STRING(REGEX REPLACE "(.+)/(.+)" "\\2" _SUBMODENAME ${_SUBMODEPATH})
+        file(GLOB ${pkg_name}_INSTALL_SUBMODULE ${_SUBMODULE_FILE}/*)
+        file(COPY ${${pkg_name}_INSTALL_SUBMODULE} DESTINATION ${${pkg_name}_SOURCE_DIR}/3rdparty/${_SUBMODENAME})
+    endforeach()
+else()
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/flatbuffers/repository/archive/v2.0.0.tar.gz")
     set(MD5 "5c23d17c0486b81d4c11907e8f7bf36b")
 else()
     set(REQ_URL "https://github.com/google/flatbuffers/archive/v2.0.0.tar.gz")
     set(MD5 "a27992324c3cbf86dd888268a23d17bd")
+endif()
 endif()
 
 if(APPLE)
@@ -37,6 +54,7 @@ else()
             EXE flatc
             URL ${REQ_URL}
             MD5 ${MD5}
+            DIR ${FLATBUFFER_DIR}
             CMAKE_OPTION -DCMAKE_C_COMPILER=${FLATC_GCC_COMPILER} -DCMAKE_CXX_COMPILER=${FLATC_GXX_COMPILER}
             -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release)
 endif()
