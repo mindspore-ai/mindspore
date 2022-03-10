@@ -43,7 +43,7 @@ from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.math_ops import RaggedRange
-from mindspore.ops.operations.nn_ops import FractionalMaxPool
+from mindspore.ops.operations.nn_ops import FractionalMaxPool, DataFormatVecPermute
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
@@ -2253,6 +2253,11 @@ test_case_nn_ops = [
         'desc_const': [4],
         'desc_inputs': [[3, 2, 1, 3], Tensor(np.array([0, 1, 0]).astype(np.int32))],
         'desc_bprop': [[4, 2, 1, 3]]}),
+    ('DataFormatVecPermute', {
+        'block': DataFormatVecPermute(),
+        'desc_const': [Tensor(np.array([1, 2, 3, 4]).astype(np.int32))],
+        'desc_inputs': [],
+        'skip': ['backward']}),
     ('DropoutGenMask', {
         'block': P.DropoutGenMask(),
         'desc_const': [(2, 2), Tensor(0.5, mstype.float32)],

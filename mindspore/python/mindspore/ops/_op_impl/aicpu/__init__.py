@@ -34,6 +34,7 @@ from .unique_with_pad import _unique_with_pad_aicpu
 from .add_n import _add_n_aicpu
 from .sub_and_filter import _sub_and_filter_aicpu
 from .pad_and_shift import _pad_and_shift_aicpu
+from .data_format_vec_permute import _data_format_vec_permute_aicpu
 from .dropout_genmask import _dropout_genmask_aicpu
 from .dropout_genmask_v3 import _dropout_genmask_v3_aicpu
 from .dropout2d import _dropout2d_aicpu

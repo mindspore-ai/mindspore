@@ -1340,6 +1340,55 @@ class Conv2D(Primitive):
         self.add_prim_attr('groups', self.group)
 
 
+class DataFormatVecPermute(Primitive):
+    r"""
+    Permute input tensor from src_format to dst_format.
+
+    Args:
+        src_format (str): An optional value for source data format. The format can be 'NHWC' and 'NCHW'.
+            Default: 'NHWC'.
+        dst_format (str): An optional value for destination data format. The format can be 'NHWC' and 'NCHW'.
+            Default: 'NCHW'.
+
+    Inputs:
+        - **input_x** (Tensor) - A Tensor of shape (4, ) or (4, 2) in source data format. Only supports int32 and int64.
+
+    Outputs:
+        Tensor, has the same data type and shape as the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is neither int32 nor int64.
+        ValueError: If `src_format` or `dst_format` is not a str in ['NHWC', 'NCHW'].
+        ValueError: If input_x shape is not (4, ) or (4, 2).
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> class Net(nn.Cell):
+        ...     def __init__(self, src_format="NHWC", dst_format="NCHW"):
+        ...         super().__init__()
+        ...         self.op = P.DataFormatVecPermute(src_format, dst_format)
+        ...     def construct(self, x):
+        ...         return self.op(x)
+        ...
+        >>> net = Net()
+        >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
+        >>> output = net(x)
+        >>> print(output)
+        [1 4 2 3]
+    """
+
+    @prim_attr_register
+    def __init__(self, src_format='NHWC', dst_format='NCHW'):
+        """Initialize DataFormatVecPermute."""
+        valid_values = ['NHWC', 'NCHW']
+        self.src_format = validator.check_string(src_format, valid_values, "src_format", self.name)
+        self.dst_format = validator.check_string(dst_format, valid_values, "dst_format", self.name)
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+
+
 class DepthwiseConv2dNative(PrimitiveWithInfer):
     r"""
     DepthwiseConv2dNative will be deprecated in the future. Please use :class:`mindspore.nn.Conv2d` instead.
