@@ -30,7 +30,10 @@ import mindspore._c_dataengine as cde
 from mindspore import log as logger
 from .datasets import UnionBaseDataset, SourceDataset, MappableDataset, Shuffle, Schema, \
     shuffle_to_shuffle_mode, shuffle_to_bool
-from .validators import check_minddataset, check_tfrecorddataset, check_csvdataset
+from .datasets_user_defined import GeneratorDataset
+from .obs.obs_mindrecord_dataset import MindRecordFromOBS
+from .validators import check_csvdataset, check_minddataset, check_tfrecorddataset, check_obsminddataset
+
 
 from ..core.validator_helpers import replace_none
 from . import samplers
@@ -324,3 +327,88 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         schema = self.schema.cpp_schema if isinstance(self.schema, Schema) else self.schema
         return cde.TFRecordNode(self.dataset_files, schema, self.columns_list, self.num_samples, self.shuffle_flag,
                                 self.num_shards, self.shard_id, self.shard_equal_rows)
+
+
+class OBSMindDataset(GeneratorDataset):
+    """
+
+    A source dataset that reads and parses MindRecord dataset which stored in OBS.
+
+    The columns of generated dataset depend on the source MindRecord files.
+
+    Args:
+
+        dataset_files (list[str]): List of files in OBS to be read and file path is in
+            the format of s3://.
+        server (str): Endpoint for accessing OBS. For example: <https://your-endpoint:9000>.
+        ak (str): Access key ID of OBS.
+        sk (str): Secret key ID of OBS.
+        sync_obs_path (str): OBS dir path used for synchronization, users need to
+            create it on OBS in advance. Path is in the format of s3://.
+        column_list (list[str], optional): List of columns to be read (default=None, read all columns).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None).
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        shard_equal_rows (bool, optional): Get equal rows for all shards(default=True). If shard_equal_rows
+            is false, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
+            When the number of samples of per MindRecord file are not equal, it is suggested to set to true.
+            This argument should only be specified when num_shards is also specified.
+
+    Raises:
+        RuntimeError: If `sync_obs_path` do not exist.
+        ValueError: If `column_list` is invalid.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+
+    Note:
+        - It's necessary to create a synchronization directory on OBS in
+          advance which be defined by parameter: `sync_obs_path` .
+        - If training is offline(no cloud), it's recommended to set the
+          environment variable `BATCH_JOB_ID`.
+        - In distributed training, if there are multiple nodes(servers), all 8
+          devices must be used in each node(server). If there is only one
+          node(server), there is no such restriction.
+
+    Examples:
+        >>> dataset_obs_dir = ["s3://path/to/obs_dataset_file_1", "s3://path/to/obs_dataset_file_2"]
+        >>> sync_obs_dir = "s3://sync-dir"
+        >>> dataset = ds.MindDataset(dataset_obs_dir, "https://your-endpoint:9000", "AK of OBS", "SK of OBS",
+        ...                          sync_obs_dir, shuffle=True, num_shards=num_shards, shard_id=shard_id)
+
+    """
+
+    @check_obsminddataset
+    def __init__(self, dataset_files, server, ak, sk, sync_obs_path,
+                 column_list=None,
+                 shuffle=Shuffle.GLOBAL,
+                 num_shards=None,
+                 shard_id=None,
+                 shard_equal_rows=True):
+
+        from .obs.config_loader import config
+        config.AK = ak
+        config.SK = sk
+        config.SERVER = server
+        config.SYNC_OBS_PATH = sync_obs_path
+        dataset = MindRecordFromOBS(dataset_files, column_list, shuffle, num_shards, shard_id,
+                                    shard_equal_rows, config.DATASET_LOCAL_PATH)
+        if not column_list:
+            column_list = dataset.get_col_names()
+        else:
+            full_column_list = dataset.get_col_names()
+            if not set(column_list).issubset(full_column_list):
+                raise ValueError("columns_list: {} can not found in MindRecord fields: {}".format(column_list,
+                                                                                                  full_column_list))
+        super().__init__(source=dataset, column_names=column_list, num_shards=None, shard_id=None, shuffle=False)
