@@ -4,6 +4,9 @@
 .. py:class:: mindspore.ops.Sqrt
 
     计算输入Tensor的平方根。
+	
+    .. note::
+        当输入数据存在一些负数，则返回负数位置上为NaN的Tensor。
 
     .. math::
         out_{i} =  \sqrt{x_{i}}

@@ -16,6 +16,9 @@ mindspore.ops.HyperMap
 
     - **args** (Tuple[sequence]) -  如果 `ops` 不是None，则所有入参都应该是具有相同长度的序列，并且序列的每一行都是运算的输入。如果 `ops` 是None，则第一个入参是运算，其余都是输入。
 
+    .. note::
+        对于算子的输入，输入数量应该等于输入 `ops` 的数量。
+
     **输出：**
 
     序列或嵌套序列，执行函数如 `operation(args[0][i], args[1][i])` 之后输出的序列。

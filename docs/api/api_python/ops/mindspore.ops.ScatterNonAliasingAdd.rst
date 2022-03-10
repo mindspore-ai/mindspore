@@ -22,3 +22,4 @@
     - **TypeError** - `indices` 的数据类型不是int32。
     - **TypeError** - `input_x` 的数据类型不是float16、float32或int32。
     - **ValueError** - `updates` 的shape不是 `indices_shape[:-1] + x_shape[indices_shape[-1]:]` 。
+    - **RuntimeError** - 当 `input_x` 和 `updates` 类型不一致，需要进行类型转换时，如果 `updates` 不支持转成参数 `input_x` 需要的数据类型，就会报错。
