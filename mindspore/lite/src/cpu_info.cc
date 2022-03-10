@@ -20,8 +20,10 @@
 #include "src/common/log_adapter.h"
 #include "nnacl/nnacl_utils.h"
 #if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && !defined(MS_COMPILE_IOS)
+#ifndef __APPLE__
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
+#endif
 #endif
 #ifdef MS_COMPILE_IOS
 #include <mach/mach.h>
@@ -199,6 +201,9 @@ bool CpuInfo::ArmIsSupportFp16() {
   } else {
     MS_LOG(DEBUG) << "Hw cap NOT support FP16, hwcap: 0x" << hwcap;
   }
+#endif
+#if defined ENABLE_FP16 && defined __ARM_NEON && defined __APPLE__
+  fp16_flag_ = true;
 #endif
   return fp16_flag_;
 #endif

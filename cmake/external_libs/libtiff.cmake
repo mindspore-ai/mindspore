@@ -11,9 +11,8 @@ else()
     if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(tiff_CFLAGS "${tiff_CFLAGS} -Wno-int-to-pointer-cast -Wno-implicit-fallthrough -Wno-pointer-to-int-cast")
     endif()
+    set(tiff_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 endif()
-
-set(tiff_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/libtiff/repository/archive/v4.2.0.tar.gz")

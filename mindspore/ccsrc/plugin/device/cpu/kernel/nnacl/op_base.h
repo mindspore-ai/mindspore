@@ -51,6 +51,10 @@
 
 #define FP16_DATA_TYPE_LEN 2
 
+#if defined ENABLE_FP16 && (defined __APPLE__ || defined __GNUC__)
+typedef __fp16 float16_t;
+#endif
+
 #define MSMIN(x, y) ((x) < (y) ? (x) : (y))
 #define MSMAX(x, y) ((x) > (y) ? (x) : (y))
 #define MSCEIL(x) (int)((x) + (((x) - (int)(x)) > 0 ? 1 : 0))

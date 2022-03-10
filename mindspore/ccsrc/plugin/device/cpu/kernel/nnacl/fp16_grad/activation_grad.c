@@ -131,7 +131,7 @@ int EluFp16Grad(const float16_t *src0, const float16_t *src1, int length, float1
     uint16x4_t mask_4 = vcgt_f16(src1_4, zero_4);
     float32x4_t tmp;
     simd_exp128(vcvt_f32_f16(src1_4), (float *)&tmp);
-    uint16x4_t expm1_4 = vsub_f16(vcvt_f16_f32(tmp), one_4);
+    float16x4_t expm1_4 = vsub_f16(vcvt_f16_f32(tmp), one_4);
     float16x4_t dst_4 = vbsl_f16(mask_4, src0_4, vmul_f16(alpha_4, vmul_f16(expm1_4, src0_4)));
     vst1_f16(dst + i, dst_4);
   }
