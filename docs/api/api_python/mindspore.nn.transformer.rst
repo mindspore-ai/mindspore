@@ -15,7 +15,7 @@ mindspore.nn.transformer
 .. include:: transformer/mindspore.nn.transformer.Transformer.rst
 .. include:: transformer/mindspore.nn.transformer.TransformerOpParallelConfig.rst
 .. include:: transformer/mindspore.nn.transformer.EmbeddingOpParallelConfig.rst
-.. include:: transformer/mindspore.nn.Ttransformer.ransformerRecomputeConfig.rst
+.. include:: transformer/mindspore.nn.transformer.TransformerRecomputeConfig.rst
 .. include:: transformer/mindspore.nn.transformer.CrossEntropyLoss.rst
 .. include:: transformer/mindspore.nn.transformer.OpParallelConfig.rst
 .. include:: transformer/mindspore.nn.transformer.FixedSparseAttention.rst
