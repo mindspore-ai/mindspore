@@ -309,6 +309,12 @@ class Profiler:
         op_intermediate_parser.parser_pynative_op_type()
         op_intermediate_parser.parser_pynative_op_intermediate_detail()
 
+        job_id = self._get_profiling_job_id()
+        logger.info("Profiling: job id is %s ", job_id)
+        self._check_output_path(output_path=self._output_path)
+        source_path = os.path.join(self._output_path, job_id)
+        MinddataParser.execute(source_path, self._output_path, self._rank_id)
+
         timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
                                                     self._rank_size)
         timeline_analyser.init_pynative_timeline()
@@ -542,6 +548,10 @@ class Profiler:
         self._pynative_profiler = pynative_profiler.get_instance()
         self._pynative_profiler.init(self._output_path)
 
+        self._ascend_profiler = c_expression.AscendProfiler.get_instance()
+        self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
+        self._ascend_profiler.start()
+
     def _ascend_graph_start(self):
         """Ascend graph mode start profiling."""
         # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
@@ -606,8 +616,7 @@ class Profiler:
         elif self._device_target and self._device_target == "Ascend":
             if context.get_context("mode") == context.PYNATIVE_MODE:
                 self._pynative_profiler.stop()
-            else:
-                self._ascend_profiler.stop()
+            self._ascend_profiler.stop()
 
             self._stop_time = int(time.time() * 10000000)
             logger.info("Profiling: stop time: %d", self._stop_time)
