@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ class SequentialSamplerRT : public SamplerRT {
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
 
- private:
+ protected:
   int64_t current_id_;   // The id sequencer.  Each new id increments from this
   int64_t start_index_;  // The starting id.  current_id_ begins from here.
   int64_t id_count_;     // An internal counter that tracks how many ids have been produced

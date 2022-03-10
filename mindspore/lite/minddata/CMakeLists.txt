@@ -153,6 +153,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/random_sampler_ir.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/samplers_ir.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/sequential_sampler_ir.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/skip_first_epoch_sampler_ir.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/subset_random_sampler_ir.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/subset_sampler_ir.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/weighted_random_sampler_ir.cc
@@ -179,6 +180,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/opt/pre/node_removal_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/epoch_ctrl_pass.cc
         ${MINDDATA_DIR}/engine/opt/pre/deep_copy_pass.cc
+        ${MINDDATA_DIR}/engine/opt/pre/skip_pushdown_pass.cc
         ${MINDDATA_DIR}/engine/opt/post/auto_worker_pass.cc
         ${MINDDATA_DIR}/engine/opt/pass.cc
         ${MINDDATA_DIR}/engine/perf/auto_tune.cc
@@ -193,6 +195,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/pk_sampler.cc
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/random_sampler.cc
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/sequential_sampler.cc
+        ${MINDDATA_DIR}/engine/datasetops/source/sampler/skip_first_epoch_sampler.cc
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/subset_random_sampler.cc
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/weighted_random_sampler.cc
         ${MINDDATA_DIR}/engine/runtime_context.cc

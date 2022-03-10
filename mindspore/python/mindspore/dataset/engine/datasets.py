@@ -80,7 +80,6 @@ except ModuleNotFoundError:
 if platform.system().lower() == "darwin" and multiprocessing.get_start_method() != "fork":
     multiprocessing.set_start_method("fork", True)
 
-
 OffloadToManualOffloadMode = {
     None: cde.ManualOffloadMode.UNSPECIFIED,
     False: cde.ManualOffloadMode.DISABLED,
@@ -120,7 +119,7 @@ def _reset_training_dataset(step):
     """
     dataset = _get_training_dataset()
     if dataset is not None:
-        dataset.reset(step)
+        dataset._reset(step)  # pylint: disable=W0212
     else:
         raise RuntimeError("Training dataset is not set.")
 
@@ -3528,7 +3527,7 @@ class _ToDevice:
     def send(self):
         self._to_device.Send()
 
-    def reset(self, step):
+    def _reset(self, step):
         self._to_device.Reset(step)
 
     def stop_send(self):
@@ -3638,10 +3637,10 @@ class TransferDataset(Dataset):
         if self._to_device is not None:
             self._to_device.continue_send()
 
-    def reset(self, step):
+    def _reset(self, step):
         if self._to_device is not None:
             logger.info("Reset the dataset pipeline to step " + str(step))
-            self._to_device.reset(step)
+            self._to_device._reset(step)  # pylint: disable=W0212
 
     def get_data_info(self):
         """

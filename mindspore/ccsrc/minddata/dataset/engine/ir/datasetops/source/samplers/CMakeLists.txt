@@ -8,6 +8,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SRC_FILES
         random_sampler_ir.cc
         samplers_ir.cc
         sequential_sampler_ir.cc
+        skip_first_epoch_sampler_ir.cc
         subset_random_sampler_ir.cc
         subset_sampler_ir.cc
         weighted_random_sampler_ir.cc

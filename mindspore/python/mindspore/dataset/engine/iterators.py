@@ -178,7 +178,7 @@ class Iterator:
             self._getters()
         return self._col_names
 
-    def reset(self, step):
+    def _reset(self, step):
         """
         Reset the iterator to the given step number.
 
