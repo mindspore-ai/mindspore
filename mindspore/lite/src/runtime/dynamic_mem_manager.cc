@@ -18,7 +18,6 @@
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #include "src/common/common.h"
-#include "src/runtime/numa_adapter.h"
 
 using mindspore::numa::NUMAAdapter;
 
@@ -49,7 +48,7 @@ void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_s
   int64_t left = 0;
   if (node_id >= 0) {
     // allocate memory from numa node
-    MemoryInfo mem_info = NUMAAdapter::GetInstance()->GetNodeSize(node_id);
+    MemoryInfo mem_info = numa_instance_->GetNodeSize(node_id);
     free_count = mem_info.free;
   } else {
     free_count = lite::GetFreeMemory();
@@ -75,7 +74,7 @@ void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_s
   data = _aligned_malloc(allocate_tmp_size, kMemAlginSize);
 #else
   if (node_id >= 0) {
-    data = NUMAAdapter::GetInstance()->Malloc(node_id, static_cast<size_t>(allocate_tmp_size));
+    data = numa_instance_->Malloc(node_id, static_cast<size_t>(allocate_tmp_size));
   } else {
     auto ret = posix_memalign(&data, kMemAlginSize, static_cast<size_t>(allocate_tmp_size));
     if (MS_UNLIKELY(ret != 0)) {
@@ -230,9 +229,10 @@ void MemOperator::EraseFreeBlock(const int64_t index) {
 }
 
 MemOperator::MemOperator(int node_id) {
-  if (node_id >= 0 && NUMAAdapter::GetInstance()->Available()) {
+  numa_instance_ = NUMAAdapter::GetInstance();
+  if (node_id >= 0 && numa_instance_->Available()) {
     node_id_ = node_id;
-    auto mem_info = NUMAAdapter::GetInstance()->GetNodeSize(node_id_);
+    auto mem_info = numa_instance_->GetNodeSize(node_id_);
     if (mem_info.total <= 0) {
       return;
     }
@@ -262,7 +262,7 @@ MemOperator::~MemOperator() {
     _aligned_free(data.first);
 #else
     if (node_id_ >= 0) {
-      NUMAAdapter::GetInstance()->Free(data.first, data.second);
+      numa_instance_->Free(data.first, data.second);
     } else {
       free(data.first);
     }

@@ -23,6 +23,7 @@
 #include <map>
 #include <unordered_map>
 #include <deque>
+#include "src/runtime/numa_adapter.h"
 
 namespace mindspore {
 struct Block {
@@ -39,7 +40,7 @@ struct Block {
 class MemOperator {
  public:
   explicit MemOperator(int node_id);
-  virtual ~MemOperator();
+  ~MemOperator();
 
   void *Malloc(size_t size);
   void Free(void *ptr);
@@ -62,6 +63,7 @@ class MemOperator {
   // all data blocks
   size_t block_count_ = 0;
   int64_t garbage_block_;
+  std::shared_ptr<numa::NUMAAdapter> numa_instance_ = nullptr;
   std::mutex mutex_;
   std::vector<Block> blocks_;
   // key: data size, value: Block index
