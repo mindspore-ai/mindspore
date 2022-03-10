@@ -336,7 +336,8 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
     // Prepare the data of device tensor store(value nodes of graph).
     for (const auto &value_node : graph->graph_value_nodes()) {
       if (AnfAlgo::OutputAddrExist(value_node, 0)) {
-        PrepareDataForValueNode(value_node, device_context, context);
+        const auto &front_node = FetchFrontNodeByBackendNode(value_node, graph);
+        PrepareDataForValueNode(value_node, front_node, device_context, context);
       }
     }
 
@@ -347,7 +348,7 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
       const auto &input_node = input_nodes[j];
       const auto &input_tensor = tensors[j];
       MS_EXCEPTION_IF_NULL(input_node);
-      const auto front_node = FetchFrontNodeByBackendNode(input_node, graph);
+      const auto &front_node = FetchFrontNodeByBackendNode(input_node, graph);
       if (IsPersistentDeviceTensor(input_node) && parser->IsRootGraphPersistentDeviceTensor(front_node)) {
         PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context, context);
       }
@@ -489,7 +490,7 @@ void DataPrepareActor::PrepareDataForStepMode(const std::vector<std::vector<Tens
 
 //  The branch processing of PrepareDataForValueNode that value type is tensor.
 void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value,
-                                                     const DeviceContext *device_context,
+                                                     const AnfNodePtr &front_node, const DeviceContext *device_context,
                                                      OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node_value);
@@ -516,6 +517,7 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
     UpdateRefCount(device_tensor.get(), true);
 
     SyncTensorData(tensor, device_tensor, node, device_context, context, real_strategy_);
+    CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
   }
 }
 
@@ -578,9 +580,11 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
 }
 
 // Prepare the device data for persistent device tensor of value node.
-void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const DeviceContext *device_context,
+void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const AnfNodePtr &front_node,
+                                               const DeviceContext *device_context,
                                                OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(front_node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
   auto &node_value = node->value();
@@ -588,7 +592,7 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const D
 
   if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
     //  The branch processing that value type is tensor.
-    PrepareDataForValueNodeTensor(node, node_value, device_context, context);
+    PrepareDataForValueNodeTensor(node, node_value, front_node, device_context, context);
   } else if (node_value->isa<StringImm>()) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, 0, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
@@ -612,10 +616,13 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const D
       std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
     }
+    CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
+  } else {
+    MS_LOG(WARNING) << "Not support the value type: " << node->fullname_with_scope();
   }
 }
 
-void DataPrepareActor::CopyDataFromHostToOtherDevice(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,
+void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,
                                                      const device::DeviceAddressPtr &host_tensor_address,
                                                      const DeviceContext *device_context,
                                                      OpContext<DeviceTensor> *context) const {
@@ -724,7 +731,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   }
 
   // Allocate another device memory and copy data from host tensor to another device(if exist).
-  CopyDataFromHostToOtherDevice(front_node, backend_node, host_tensor_address, device_context, context);
+  CopyDataFromDeviceTensorStore(front_node, backend_node, host_tensor_address, device_context, context);
 }
 
 void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeParserPtr &control_node_parser,

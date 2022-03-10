@@ -2013,18 +2013,15 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       } else if (IsPersistentDeviceTensor(input_node)) {
         front_node = FetchFrontNodeByBackendNode(input_node, graph);
       }
-      if (front_node == nullptr || (!parser->IsRootGraphPersistentDeviceTensor(front_node))) {
+      // The front node may be value node in the heterogeneous scene, needs to handle.
+      if ((front_node == nullptr) ||
+          (front_node->isa<Parameter>() && !parser->IsRootGraphPersistentDeviceTensor(front_node))) {
         continue;
       }
 
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
-      if (IsPersistentDeviceTensor(input_node)) {
-        device_tensor->SetNodeIndex(input_node, 0);
-        AddDeviceTensorStore(front_node.get(), device_tensor);
-      }
-
-      if (device_tensor->is_ptr_persisted()) {
+      if (IsPersistentDeviceTensor(input_node) || device_tensor->is_ptr_persisted()) {
         device_tensor->SetNodeIndex(input_node, 0);
         AddDeviceTensorStore(front_node.get(), device_tensor);
       }
