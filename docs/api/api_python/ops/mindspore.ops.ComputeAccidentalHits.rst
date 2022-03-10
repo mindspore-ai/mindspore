@@ -14,7 +14,7 @@
     **输入：**
 
     - **true_classes** (Tensor) - 目标类。数据类型为int32或int64，shape为 :math:`(batch\_size, num\_true)` 。
-    - **sampled_candidates** (Tensor) - 指定算子的候选采样结果，代表训练样本的类型。其数据类型为int32或int64，shape为 :math: `(num\_sampled, )` 。
+    - **sampled_candidates** (Tensor) - 指定算子的候选采样结果，代表训练样本的类型。其数据类型为int32或int64，shape为 :math:`(num\_sampled, )` 。
 
     **输出：**
 

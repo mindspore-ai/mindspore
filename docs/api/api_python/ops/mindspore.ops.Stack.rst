@@ -24,4 +24,4 @@
     **异常：**
 
     - **TypeError** - `input_x` 中元素的数据类型不相同。
-    - **ValueError** - `input_x` 的长度不大于1，或axis不在[-(R+1),R+1)范围中，或 input_x` 中元素的shape不相同。
+    - **ValueError** - `input_x` 的长度不大于1，或axis不在[-(R+1),R+1)范围中，或 `input_x` 中元素的shape不相同。

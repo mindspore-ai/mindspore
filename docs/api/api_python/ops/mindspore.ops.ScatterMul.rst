@@ -1,5 +1,5 @@
-
 mindspore.ops.ScatterMul
+=========================
 
 .. py:class:: mindspore.ops.ScatterMul(use_locking=False)
 
@@ -21,7 +21,6 @@ mindspore.ops.ScatterMul
     - **input_x** (Parameter) - ScatterMul的输入，任意维度的Parameter。
     - **indices** (Tensor) - 指定相乘操作的索引，数据类型必须为mindspore.int32。
     - **updates** (Tensor) - 指定与 `input_x` 相乘的Tensor，数据类型与 `input_x` 相同，shape为 `indices_shape + x_shape[1:]` 。
-          
 
     **输出：**
 

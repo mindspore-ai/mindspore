@@ -33,4 +33,4 @@ mindspore.ops.ScatterAdd
 
     - **TypeError** - `use_locking` 不是bool。
     - **TypeError** - `indices` 不是int32。
-    - **ValueError ** - `updates` 的shape不等于 `indices_shape + x_shape[1:]` 。
+    - **ValueError** - `updates` 的shape不等于 `indices_shape + x_shape[1:]` 。

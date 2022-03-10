@@ -50,7 +50,7 @@ mindspore.ops.BatchNorm
     - **batch_variance** (Tensor) - 输入的方差，shape为 :math:`(C,)` 的一维Tensor。
     - **reserve_space_1** (Tensor) - 需要计算梯度时，被重新使用的均值，shape为 :math:`(C,)` 的一维Tensor。
     - **reserve_space_2** (Tensor) - 需要计算梯度时，被重新使用的方差，shape为 :math:`(C,)` 的一维Tensor。
-，
+
     **异常：**
 
     - **TypeError：** `is_training` 不是bool。

@@ -3,7 +3,7 @@ mindspore.ops.Custom
 
 .. py:class:: mindspore.ops.Custom(exclusive=False, reverse=False)
 
-    `Custom`算子是MindSpore自定义算子的统一接口。用户可以利用该接口自行定义MindSpore内置算子库尚未包含的算子。
+    `Custom` 算子是MindSpore自定义算子的统一接口。用户可以利用该接口自行定义MindSpore内置算子库尚未包含的算子。
     根据输入函数的不用，你可以创建多个自定义算子，并且把它们用在神经网络中。
     关于自定义算子的详细说明和介绍，包括参数的正确书写，见编程指南 https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_operator_custom.html 。
 
@@ -28,6 +28,6 @@ mindspore.ops.Custom
 
     **异常：**
 
-    - **TypeError** - 如果输入`func`不合法，或者`func`对应的注册信息类型不对。
-    - **ValueError** - `func_type`的值不在列表内。
+    - **TypeError** - 如果输入 `func` 不合法，或者 `func` 对应的注册信息类型不对。
+    - **ValueError** - `func_type` 的值不在列表内。
     - **ValueError** - 算子注册信息不合法，包括支持平台不匹配，算子输入和属性与函数不匹配。

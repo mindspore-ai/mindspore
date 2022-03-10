@@ -410,6 +410,7 @@ distributed_training_ascend.html#id12>`_ 。
     :template: classtemplate.rst
 
     mindspore.ops.Custom
+    mindspore.ops.ms_hybrid
 
 其他算子
 ^^^^^^^^^^^^^^^

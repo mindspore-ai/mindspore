@@ -13,7 +13,7 @@ mindspore.ops.AvgPool
 
     .. warning::
         - 支持全局池化。
-        - 在Ascend上，"kernel_size"的高度和权重取值为[1, 255]范围内的正整数。 :math: ksize_H * ksize_W < 256。
+        - 在Ascend上，"kernel_size"的高度和权重取值为[1, 255]范围内的正整数。 :math:`ksize_H * ksize_W < 256` 。
         - 由于指令限制，"strides_h"和"strides_w"的取值为[1, 63]范围内的正整数。
 
     **参数：**
