@@ -55,7 +55,7 @@ bool IsCipherFile(const std::string &file_path) {
   fid.read(int_buf.data(), static_cast<int64_t>(sizeof(int32_t)));
   fid.close();
   auto flag = ByteToInt(reinterpret_cast<Byte *>(int_buf.data()), int_buf.size());
-  return static_cast<unsigned int>(flag) == MAGIC_NUM;
+  return static_cast<unsigned int>(flag) == GCM_MAGIC_NUM || static_cast<unsigned int>(flag) == CBC_MAGIC_NUM;
 }
 
 bool IsCipherFile(const Byte *model_data) {
@@ -63,7 +63,7 @@ bool IsCipherFile(const Byte *model_data) {
   std::vector<Byte> int_buf;
   int_buf.assign(model_data, model_data + sizeof(int32_t));
   auto flag = ByteToInt(int_buf.data(), int_buf.size());
-  return static_cast<unsigned int>(flag) == MAGIC_NUM;
+  return static_cast<unsigned int>(flag) == GCM_MAGIC_NUM || static_cast<unsigned int>(flag) == CBC_MAGIC_NUM;
 }
 #ifndef ENABLE_OPENSSL
 std::unique_ptr<Byte[]> Encrypt(size_t *, const Byte *, size_t, const Byte *, size_t, const std::string &) {
@@ -363,7 +363,10 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
                                 size_t key_len, const std::string &enc_mode) {
   MS_EXCEPTION_IF_NULL(plain_data);
   MS_EXCEPTION_IF_NULL(key);
-
+  if (enc_mode != "AES-GCM" && enc_mode != "AES-CBC") {
+    MS_LOG(ERROR) << "mode only support AES-GCM|AES-CBC.";
+    return nullptr;
+  }
   size_t block_enc_buf_len = MAX_BLOCK_SIZE + RESERVED_BYTE_PER_BLOCK;
   size_t encrypt_buf_len = plain_len + ((plain_len + MAX_BLOCK_SIZE) / MAX_BLOCK_SIZE) * RESERVED_BYTE_PER_BLOCK;
   std::vector<Byte> int_buf(sizeof(int32_t));
@@ -383,8 +386,11 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
       MS_LOG(ERROR) << "Failed to encrypt data, please check if enc_key or enc_mode is valid.";
       return nullptr;
     }
-
-    IntToByte(&int_buf, static_cast<int32_t>(MAGIC_NUM));
+    if (enc_mode == "AES-GCM") {
+      IntToByte(&int_buf, static_cast<int32_t>(GCM_MAGIC_NUM));
+    } else {
+      IntToByte(&int_buf, static_cast<int32_t>(CBC_MAGIC_NUM));
+    }
     size_t capacity = std::min(encrypt_buf_len - *encrypt_len, SECUREC_MEM_MAX_LEN);  // avoid dest size over 2gb
     auto ret = memcpy_s(encrypt_data.get() + *encrypt_len, capacity, int_buf.data(), sizeof(int32_t));
     if (ret != 0) {
@@ -415,7 +421,10 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
 std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_data_path, const Byte *key,
                                 size_t key_len, const std::string &dec_mode) {
   MS_EXCEPTION_IF_NULL(key);
-
+  if (dec_mode != "AES-GCM" && dec_mode != "AES-CBC") {
+    MS_LOG(ERROR) << "mode only support AES-GCM|AES-CBC.";
+    return nullptr;
+  }
   std::ifstream fid(encrypt_data_path, std::ios::in | std::ios::binary);
   if (!fid) {
     MS_LOG(ERROR) << "Open file '" << encrypt_data_path << "' failed, please check the correct of the file.";
@@ -435,9 +444,12 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
   *decrypt_len = 0;
   while (static_cast<size_t>(fid.tellg()) < file_size) {
     fid.read(int_buf.data(), static_cast<int32_t>(sizeof(int32_t)));
-    auto cipher_flag = ByteToInt(reinterpret_cast<Byte *>(int_buf.data()), int_buf.size());
-    if (static_cast<unsigned int>(cipher_flag) != MAGIC_NUM) {
-      MS_LOG(ERROR) << "File \"" << encrypt_data_path << "\" is not an encrypted file and cannot be decrypted";
+    auto cipher_flag = static_cast<unsigned int>(ByteToInt(reinterpret_cast<Byte *>(int_buf.data()), int_buf.size()));
+    if (dec_mode == "AES-GCM" && cipher_flag != GCM_MAGIC_NUM) {
+      MS_LOG(ERROR) << "File \"" << encrypt_data_path << "\" is not an encrypted AES-GCM file and cannot be decrypted";
+      return nullptr;
+    } else if (dec_mode == "AES-CBC" && cipher_flag != CBC_MAGIC_NUM) {
+      MS_LOG(ERROR) << "File \"" << encrypt_data_path << "\" is not an encrypted AES-CBC file and cannot be decrypted";
       return nullptr;
     }
 
@@ -473,7 +485,10 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
                                 size_t key_len, const std::string &dec_mode) {
   MS_EXCEPTION_IF_NULL(model_data);
   MS_EXCEPTION_IF_NULL(key);
-
+  if (dec_mode != "AES-GCM" && dec_mode != "AES-CBC") {
+    MS_LOG(ERROR) << "mode only support AES-GCM|AES-CBC.";
+    return nullptr;
+  }
   std::vector<char> block_buf;
   std::vector<char> int_buf(sizeof(int32_t));
   std::vector<Byte> decrypt_block_buf(MAX_BLOCK_SIZE);
@@ -489,9 +504,12 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
     }
     int_buf.assign(model_data + offset, model_data + offset + sizeof(int32_t));
     offset += int_buf.size();
-    auto cipher_flag = ByteToInt(reinterpret_cast<Byte *>(int_buf.data()), int_buf.size());
-    if (static_cast<unsigned int>(cipher_flag) != MAGIC_NUM) {
-      MS_LOG(ERROR) << "model_data is not encrypted and therefore cannot be decrypted.";
+    auto cipher_flag = static_cast<unsigned int>(ByteToInt(reinterpret_cast<Byte *>(int_buf.data()), int_buf.size()));
+    if (dec_mode == "AES-GCM" && cipher_flag != GCM_MAGIC_NUM) {
+      MS_LOG(ERROR) << "model_data is not encrypted AES-GCM and therefore cannot be decrypted.";
+      return nullptr;
+    } else if (dec_mode == "AES-CBC" && cipher_flag != CBC_MAGIC_NUM) {
+      MS_LOG(ERROR) << "model_data is not encrypted AES-CBC and therefore cannot be decrypted.";
       return nullptr;
     }
     unsigned char tag[Byte16];
