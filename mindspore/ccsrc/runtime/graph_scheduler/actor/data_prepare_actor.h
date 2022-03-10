@@ -84,10 +84,10 @@ class DataPrepareActor : public DebugAwareActor {
   void PrepareDataForWeightNode(const AnfNodePtr &backend_node, const AnfNodePtr &front_node, const TensorPtr &tensor,
                                 const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
   // Prepare the device data for persistent device tensor of value node.
-  void PrepareDataForValueNode(const ValueNodePtr &node, const DeviceContext *device_context,
-                               OpContext<DeviceTensor> *const context);
+  void PrepareDataForValueNode(const ValueNodePtr &node, const AnfNodePtr &front_node,
+                               const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
   //  The branch processing of PrepareDataForValueNode that value type is tensor.
-  void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value,
+  void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value, const AnfNodePtr &front_node,
                                      const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
 
   // The data prepare in the control flow scene.
@@ -102,8 +102,8 @@ class DataPrepareActor : public DebugAwareActor {
   void PrepareDataForControlValueNode(const KernelWithIndex &node_with_index, const DeviceContext *device_context,
                                       OpContext<DeviceTensor> *const context);
 
-  // Extract this function in order to reduce the cyclomatic complexity
-  void CopyDataFromHostToOtherDevice(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,
+  // The device tensor stores may exist the two device tensors and need copy data in the heterogeneous scene.
+  void CopyDataFromDeviceTensorStore(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,
                                      const device::DeviceAddressPtr &host_tensor_address,
                                      const DeviceContext *device_context, OpContext<DeviceTensor> *context) const;
 
