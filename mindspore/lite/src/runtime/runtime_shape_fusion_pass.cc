@@ -379,13 +379,11 @@ int ShapeFusionPass::GetFusionMatrixFromConstantTensor(const lite::Tensor *tenso
       if (value.size() == shape.at(0)) {
         std::transform(value.begin(), value.end(), std::back_inserter(shape_matrix), [&shape](int ele) {
           std::vector<float> row_vec(shape.at(1), static_cast<float>(ele));
-          row_vec.at(row_vec.size() - 1) = 0;
           return row_vec;
         });
       } else {
         MS_CHECK_TRUE_RET(value.size() == 1, RET_ERROR);
         std::vector<float> row_vec(shape.at(1), static_cast<float>(value.at(0)));
-        row_vec.at(row_vec.size() - 1) = 0;
         shape_matrix = std::vector<std::vector<float>>(shape.at(0), row_vec);
       }
     } break;
