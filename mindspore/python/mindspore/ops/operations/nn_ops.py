@@ -9370,6 +9370,73 @@ class ApplyKerasMomentum(Primitive):
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
 
 
+class MultilabelMarginLoss(Primitive):
+    r"""
+    MultilabelMarginLoss operation.
+
+    Creates a criterion that optimizes a multi-class multi-classification
+    hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
+    and output :math:`y` (which is a 2D `Tensor` of target class indices).
+    For each sample in the mini-batch:
+
+    .. math::
+        \text{loss}(x, y) = \sum_{ij}\frac{\max(0, 1 - (x[y[j]] - x[i]))}{\text{x.size}(0)}
+
+    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`, \
+    :math:`y \in \left\{0, \; \cdots , \; \text{y.size}(0) - 1\right\}`, \
+    :math:`0 \leq y[j] \leq \text{x.size}(0)-1`, \
+    and :math:`i \neq y[j]` for all :math:`i` and :math:`j`.
+
+    :math:`y` and :math:`x` must have the same size.
+
+    The criterion only considers a contiguous block of non-negative targets that
+    starts at the front.
+
+    This allows for different samples to have variable amounts of target classes.
+
+    Args:
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
+          is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
+        - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
+          label targets padded by -1.
+
+    Outputs:
+        - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
+          is :math:`(N)`. Otherwise, a scalar value will be returned.
+        - **is_target** (Tensor) - Output tensor for backward input, with the same shape as `target`,
+          data type must be int32.
+
+    Raises:
+        TypeError: If `x` or `target` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `target` is not int32.
+        ValueError: If length of shape of `x` is neither 1 nor 2.
+        ValueError: If shape of `x` is not the same as `target`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+       >>> loss = ops.MultilabelMarginLoss()
+       >>> x = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)
+       >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
+       >>> output = loss(x, target)
+       >>> print(output)
+       (Tensor(shape=[], dtype=Float32, value= 0.325), Tensor(shape=[2, 4], dtype=Int32, value=
+       [[1, 1, 1, 1], [0, 0, 1, 1]]))
+    """
+
+    @prim_attr_register
+    def __init__(self, reduction='mean'):
+        """Initialize MultilabelMarginLoss"""
+        self.init_prim_io_names(inputs=['x', 'target'], outputs=['y', 'is_target'])
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+
+
 class ApplyAdamWithAmsgrad(Primitive):
     r"""
     Update var according to the Adam algorithm.

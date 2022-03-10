@@ -204,6 +204,8 @@ constexpr auto kMultiMarginLoss = "MultiMarginLoss";
 constexpr auto kMultiMarginLossGrad = "MultiMarginLossGrad";
 constexpr auto kLayerNorm = "LayerNorm";
 constexpr auto kLayerNormGrad = "LayerNormGrad";
+constexpr auto kMultilabelMarginLoss = "MultilabelMarginLoss";
+constexpr auto kMultilabelMarginLossGrad = "MultilabelMarginLossGrad";
 constexpr auto kPadV3 = "PadV3";
 constexpr auto kPadV3Grad = "PadV3Grad";
 constexpr auto kMirrorPadGrad = "MirrorPadGrad";
@@ -613,6 +615,8 @@ GVAR_DEF(PrimitivePtr, kPrimMultiMarginLoss, std::make_shared<Primitive>(kMultiM
 GVAR_DEF(PrimitivePtr, kPrimMultiMarginLossGrad, std::make_shared<Primitive>(kMultiMarginLossGrad));
 GVAR_DEF(PrimitivePtr, kPrimConv2D, std::make_shared<Primitive>("Conv2D"));
 GVAR_DEF(PrimitivePtr, kPrimConv3D, std::make_shared<Primitive>("Conv3D"));
+GVAR_DEF(PrimitivePtr, kPrimMultilabelMarginLoss, std::make_shared<Primitive>(kMultilabelMarginLoss));
+GVAR_DEF(PrimitivePtr, kPrimMultilabelMarginLossGrad, std::make_shared<Primitive>(kMultilabelMarginLossGrad));
 GVAR_DEF(PrimitivePtr, kPrimCTCLossV2, std::make_shared<Primitive>("CTCLossV2"));
 GVAR_DEF(PrimitivePtr, kPrimCTCLossV2Grad, std::make_shared<Primitive>("CTCLossV2Grad"));
 GVAR_DEF(PrimitivePtr, kPrimCTCLoss, std::make_shared<Primitive>(kCTCLoss));

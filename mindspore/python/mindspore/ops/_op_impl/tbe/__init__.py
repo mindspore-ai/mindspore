@@ -588,8 +588,10 @@ from .hshrink_grad import _hshrink_grad_tbe
 from .new_im2col import _new_im2col_tbe
 from .trunc import _trunc_tbe
 from .extract_volume_patches import _extract_volume_patches_tbe
+from .multilabel_margin_loss import _multilabel_margin_loss_tbe
 from .round_ds import _round_ds_tbe
 from .is_close import _is_close_tbe
+from .multilabel_margin_loss import _multilabel_margin_loss_tbe
 from .apply_adam_with_amsgrad import _apply_adam_with_amsgrad_tbe
 from .apply_adam_with_amsgrad_ds import _apply_adam_with_amsgrad_ds_tbe
 from .expm1_ds import _expm1_ds_tbe

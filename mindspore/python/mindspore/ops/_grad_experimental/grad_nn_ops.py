@@ -92,6 +92,18 @@ def get_bprop_hshrink(self):
     return bprop
 
 
+@bprop_getters.register(P.MultilabelMarginLoss)
+def get_bprop_multilabel_margin_loss(self):
+    """Grad definition for `MultilabelMarginLoss` operation."""
+    input_grad = G.MultilabelMarginLossGrad(reduction=self.reduction)
+
+    def bprop(x, target, out, dout):
+        dx = input_grad(dout[0], x, target, out[1])
+        return dx, zeros_like(target)
+
+    return bprop
+
+
 @bprop_getters.register(P.CeLU)
 def get_bprop_celu(self):
     """Grad definition for `CeLU` operation."""

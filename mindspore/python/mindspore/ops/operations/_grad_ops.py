@@ -2533,6 +2533,47 @@ class CdistGrad(Primitive):
         self.init_prim_io_names(inputs=['grad', 'input_x', 'input_y', 'cdist'], outputs=['output'])
 
 
+class MultilabelMarginLossGrad(Primitive):
+    """
+    Compute the gradients of MultilabelMarginLoss operation.
+
+    Args:
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **y_grad** (Tensor) - The gradients of loss to output of MultilabelMarginLoss function, with
+          the same shape and data type as forward output `y`.
+        - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
+          is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
+        - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
+          label targets padded by -1.
+        - **is_target** (Tensor) - Forward output tensor for backward input, with the same shape and
+          data type as `target`.
+
+    Outputs:
+        The shape of output :math:`(C)` or :math:`(N, C)`, with the same shape and data type as `x`.
+
+    Raises:
+        TypeError: If `x` or `target` or `y_grad` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `target` is not int32.
+        TypeError: If dtype of `y_grad` is not the same as `x`.
+        ValueError: If length of shape of `x` is neither 1 nor 2.
+        ValueError: If shape of `x` is not the same as `target`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If shape of `y_grad` is not the same as forward output `y`.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, reduction="mean"):
+        """Initialize MultilabelMarginLossGrad"""
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.init_prim_io_names(inputs=['y_grad', 'x', 'target', 'is_target'], outputs=['x_grad'])
+
+
 class HShrinkGrad(Primitive):
     """
     Computes gradients for HShrinkGrad operation.
