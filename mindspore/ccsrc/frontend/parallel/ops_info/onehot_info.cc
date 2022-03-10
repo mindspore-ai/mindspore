@@ -183,7 +183,7 @@ Status OneHotInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto mul1 = gen_g.PushBack({gen_g.NewOpInst(MUL), floor_div, CreateInt32Tensor(classes_each_device_)});
   auto sub1 = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), mul1});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), floor_div, CreateInt32Tensor(mod_rank_)});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreatTypeInt(32)});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreateTypeInt(32)});
   auto mul2 = gen_g.PushBack({gen_g.NewOpInst(MUL), sub1, cast});
   auto tensor_add = gen_g.PushBack({gen_g.NewOpInst(ADD), mul2, CreateInt32Tensor(1)});
   auto mul3 = gen_g.PushBack({gen_g.NewOpInst(MUL), cast, tensor_add});

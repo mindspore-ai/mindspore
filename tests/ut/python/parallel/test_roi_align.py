@@ -117,8 +117,10 @@ def test_roi_align_layout():
 
     # check sub_graph
     sub_graph = {
+        'TensorScatterUpdate-0': ['rois', 'Stack-0', 'Minimum-0'],
+        'Equal-0': ['Sub-0', 'Minimum-0'],
         'ROIAlign-0': ['features', 'TensorScatterUpdate-0'],
-        'MaskedFill-0': ['ROIAlign-0', 'ExpandDims-2', 0.0],
-        'AllReduce-0': ['MaskedFill-0']
+        'Mul-0': ['ROIAlign-0', 'ExpandDims-2'],
+        'AllReduce-0': ['Mul-0']
     }
     assert validator.check_graph_structure(sub_graph)
