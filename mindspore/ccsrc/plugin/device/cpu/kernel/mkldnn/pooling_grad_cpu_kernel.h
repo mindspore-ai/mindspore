@@ -75,15 +75,16 @@ class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
 
  private:
   void InitFields(const CNodePtr &kernel_node);
-  void ComputeMaxValueIndex(void *src, void *dst, unsigned char *work_array) const;
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+  void ComputeMaxValueIndex(void *src, void *dst, void *work_array) const;
 
   dnnl::memory::desc src_desc_{};
   dnnl::memory::desc dst_desc_{};
   dnnl::memory::desc workspace_desc_{};
   dnnl::pooling_forward::primitive_desc forward_prim_desc_{};
   size_t grad_index_{0};
-
   std::string kernel_type_{kUnknown};
+  size_t workspace_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

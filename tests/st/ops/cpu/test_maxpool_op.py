@@ -72,14 +72,14 @@ def test_maxpool2d_valid():
 
     maxpool_grad = MaxPoolGrad(maxpool)
     sens = Tensor(np.arange(1, 10).reshape(actual_output.shape).astype(np.float32))
-    expect_grads = maxpool_grad(x, sens)
+    actual_grad = maxpool_grad(x, sens)
     expect_dx = np.array([[[[1, 0, 0, 0, 3, 0],
                             [0, 0, 0, 2, 0, 0],
                             [0, 0, 5, 0, 0, 0],
                             [0, 4, 0, 0, 0, 6],
                             [7, 0, 0, 0, 0, 9],
                             [0, 0, 8, 0, 0, 0]]]]).astype(np.float32)
-    assert (expect_grads[0].asnumpy() == expect_dx).all()
+    assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
 @pytest.mark.level0
@@ -106,14 +106,14 @@ def test_maxpool2d_same():
 
     maxpool_grad = MaxPoolGrad(maxpool)
     sens = Tensor(np.arange(1, 10).reshape(actual_output.shape).astype(np.float32))
-    expect_grads = maxpool_grad(x, sens)
+    actual_grad = maxpool_grad(x, sens)
     expect_dx = np.array([[[[0, 0, 0, 0, 3, 0],
                             [0, 0, 0, 0, 0, 0],
                             [0, 0, 3, 0, 0, 0],
                             [0, 0, 0, 0, 0, 0],
                             [0, 0, 4, 0, 5, 6],
                             [0, 0, 7, 0, 8, 9]]]]).astype(np.float32)
-    assert (expect_grads[0].asnumpy() == expect_dx).all()
+    assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
 @pytest.mark.level0
@@ -139,7 +139,7 @@ def test_maxpool3d_1():
 
     maxpool_grad = MaxPoolGrad(maxpool)
     sens = actual_output + 1
-    expect_grads = maxpool_grad(x, sens)
+    actual_grad = maxpool_grad(x, sens)
     expect_dx = np.array([[[[[0, 0, 0, 0],
                              [0, 0, 0, 0],
                              [0, 0, 0, 0]],
@@ -158,7 +158,7 @@ def test_maxpool3d_1():
                             [[0, 0, 0, 0],
                              [0, 0, 67, 68],
                              [0, 0, 71, 72]]]]]).astype(np.float32)
-    assert (expect_grads[0].asnumpy() == expect_dx).all()
+    assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
 @pytest.mark.level0
@@ -184,7 +184,7 @@ def test_maxpool3d_2():
 
     maxpool_grad = MaxPoolGrad(maxpool)
     sens = actual_output + 1
-    expect_grads = maxpool_grad(x, sens)
+    actual_grad = maxpool_grad(x, sens)
     expect_dx = np.array([[[[[0, 0, 0, 0],
                              [0, 0, 0, 0],
                              [0, 0, 0, 0]],
@@ -203,7 +203,7 @@ def test_maxpool3d_2():
                             [[0, 0, 0, 0],
                              [0, 66, 67, 68],
                              [0, 70, 71, 72]]]]]).astype(np.float32)
-    assert (expect_grads[0].asnumpy() == expect_dx).all()
+    assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
 @pytest.mark.level0
@@ -226,7 +226,7 @@ def test_maxpool3d_3():
 
     maxpool_grad = MaxPoolGrad(maxpool)
     sens = actual_output + 1
-    expect_grads = maxpool_grad(x, sens)
+    actual_grad = maxpool_grad(x, sens)
     expect_dx = np.array([[[[[0, 0, 0, 0],
                              [0, 0, 0, 0],
                              [0, 0, 0, 0]],
@@ -245,7 +245,7 @@ def test_maxpool3d_3():
                             [[0, 0, 0, 0],
                              [0, 66, 0, 0],
                              [0, 0, 0, 0]]]]]).astype(np.float32)
-    assert (expect_grads[0].asnumpy() == expect_dx).all()
+    assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
 @pytest.mark.level0
@@ -283,7 +283,7 @@ def test_maxpool3d_4():
 
     maxpool_grad = MaxPoolGrad(maxpool)
     sens = actual_output + 1
-    expect_grads = maxpool_grad(x, sens)
+    actual_grad = maxpool_grad(x, sens)
     expect_dx = np.array([[[[[0, 0, 0, 0],
                              [0, 0, 0, 0],
                              [0, 0, 0, 0]],
@@ -302,4 +302,4 @@ def test_maxpool3d_4():
                             [[0, 0, 0, 0],
                              [0, 132, 134, 272],
                              [0, 280, 284, 576]]]]]).astype(np.float32)
-    assert (expect_grads[0].asnumpy() == expect_dx).all()
+    assert (actual_grad[0].asnumpy() == expect_dx).all()

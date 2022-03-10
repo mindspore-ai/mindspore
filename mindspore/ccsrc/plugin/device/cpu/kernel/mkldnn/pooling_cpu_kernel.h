@@ -27,6 +27,8 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kUnkown = "Unknown";
+constexpr size_t kPoolingDilation = 1;
+
 class PoolingCpuKernelMod : public MKLCpuKernelMod {
  public:
   PoolingCpuKernelMod() = default;
@@ -42,10 +44,9 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   void EliminateInvalidPadding(float *output);
   void ReComputeDivisor(float *output);
 
-  static std::unordered_map<void *, std::vector<unsigned char>> pooling_max_workspace_;
   dnnl::algorithm algorithm_{dnnl::algorithm::pooling_max};
   bool ceil_mode_{false};
-  float divisor_override_{0.0};
+  float divisor_override_{0.f};
   std::vector<size_t> dst_shape_;
   std::vector<float> padding_invalid_;
   std::vector<float> kernel_;
@@ -54,9 +55,6 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
 
  private:
   void InitFields(const CNodePtr &kernel_node);
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
-
-  size_t workspace_size_{0};
   std::string kernel_type_{kUnkown};
 };
 }  // namespace kernel
