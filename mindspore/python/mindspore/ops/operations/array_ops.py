@@ -4132,8 +4132,8 @@ class TensorScatterAdd(PrimitiveWithInfer):
     Creates a new tensor by adding the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are given for the same
     index, the updated result will be the sum of all values. This operation is almost
-    equivalent to using ScatterNdAdd, except that the updates are applied on `Tensor`
-    instead of `Parameter`.
+    equivalent to using ScatterNdAdd, except that the updates are applied on output `Tensor`
+    instead of input `Parameter`.
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
@@ -6629,7 +6629,8 @@ class TensorScatterSub(PrimitiveWithInfer):
     Creates a new tensor by subtracting the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
     index, the result of the update will be to subtract these values respectively. This operation is almost
-    equivalent to using ScatterNdSub, except that the updates are applied on `Tensor` instead of `Parameter`.
+    equivalent to using ScatterNdSub, except that the updates are applied on output `Tensor`
+    instead of input `Parameter`.
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
