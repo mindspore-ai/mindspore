@@ -1,7 +1,7 @@
 mindspore.ops.batch_dot
 =======================
 
-.. py:function:: mindspore.ops.batch_dot(x1, x2, axes=None, prim_name=None)
+.. py:function:: mindspore.ops.batch_dot(x1, x2, axes=None)
 
     当输入的两个Tensor是批量数据时，对其进行批量点积操作。
 
@@ -13,7 +13,6 @@ mindspore.ops.batch_dot
     - **x1** (Tensor) - 第一个输入Tensor，数据类型为float32且 `x1` 的秩必须大于或等于2。
     - **x2** (Tensor) - 第二个输入Tensor，数据类型为float32。 `x2` 的数据类型应与 `x1` 相同，`x2` 的秩必须大于或等于2。
     - **axes** (Union[int, tuple(int), list(int)]) - 指定为单值或长度为2的tuple和list，分别指定 `a` 和 `b` 的维度。如果传递了单个值 `N`，则自动从输入 `a` 的shape中获取最后N个维度，从输入 `b` 的shape中获取最后N个维度，分别作为每个维度的轴。默认值：None。
-    - **prim_name** (Union[str,None]) - 指定算子名。默认值：None。
 
     **输出：**
 

@@ -30,4 +30,4 @@ mindspore.ops.ReduceMax
 
     - **TypeError** - `keep_dims` 不是bool。
     - **TypeError** - `x` 不是tensor。
-    - **ValueError** - `axis` 不是int、tuple或list。
+    - **TypeError** - `axis` 不是int、tuple或list。

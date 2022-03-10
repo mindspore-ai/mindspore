@@ -30,3 +30,4 @@
 
     - **TypeError** - `use_locking` 不是bool。
     - **TypeError** - `indices` 不是int32。
+    - **RuntimeError** - 当 `input_x` 和 `updates` 类型不一致，需要进行类型转换时，如果 `updates` 不支持转成参数 `input_x` 需要的数据类型，就会报错。
