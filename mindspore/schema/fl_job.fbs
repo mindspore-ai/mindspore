@@ -92,6 +92,8 @@ table RequestUpdateModel{
   timestamp:string;
   signature:[ubyte];
   upload_loss:float;
+  sign:int;
+  index_array:[int];
 }
 
 table ResponseUpdateModel{

@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.security.SecureRandom;
 
 import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 import static com.mindspore.flclient.LocalFLParameter.LENET;
@@ -211,6 +212,8 @@ public class UpdateModel {
         private int idOffset = 0;
         private int timestampOffset = 0;
         private int signDataOffset = 0;
+        private int sign = 0;
+        private int indexArrayOffset = 0;
         private int iteration = 0;
         private EncryptLevel encryptLevel = EncryptLevel.NOT_ENCRYPT;
         private float uploadLossOffset = 0.0f;
@@ -291,6 +294,8 @@ public class UpdateModel {
             } else {
                 trainedMap = getFeatureMap();
             }
+            long startTime;
+            long endTime;
             switch (encryptLevel) {
                 case PW_ENCRYPT:
                     int[] fmOffsetsPW = secureProtocol.pwMaskModel(builder, trainDataSize, trainedMap);
@@ -303,6 +308,7 @@ public class UpdateModel {
                     LOGGER.info(Common.addTag("[Encrypt] pairwise mask model ok!"));
                     return this;
                 case DP_ENCRYPT:
+                    startTime = System.currentTimeMillis();
                     int[] fmOffsetsDP = secureProtocol.dpMaskModel(builder, trainDataSize, trainedMap);
                     if (fmOffsetsDP == null || fmOffsetsDP.length == 0) {
                         LOGGER.severe("[Encrypt] the return fmOffsetsDP from <secureProtocol.dpMaskModel> is " +
@@ -313,21 +319,44 @@ public class UpdateModel {
                     }
                     this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsDP);
                     LOGGER.info(Common.addTag("[Encrypt] DP mask model ok!"));
+                    endTime = System.currentTimeMillis();
+                    LOGGER.info(Common.addTag("dp time is：" + (endTime - startTime) + "ms"));
                     return this;
                 case SIGNDS:
-                    int[] fmOffsetsSignDS = secureProtocol.signDSModel(builder, trainDataSize, trainedMap);
-                    if (fmOffsetsSignDS == null || fmOffsetsSignDS.length == 0) {
+                    startTime = System.currentTimeMillis();
+                    // signds alg return indexArray, and package indexArray into flatbuffer.
+                    SecureRandom secureRandom = Common.getSecureRandom();
+                    boolean signBool = secureRandom.nextBoolean();
+                    this.sign = signBool ? 1 : -1;
+                    int[] indexArray = secureProtocol.signDSModel(trainedMap, signBool);
+                    if (indexArray == null || indexArray.length == 0) {
                         LOGGER.severe("[Encrypt] the return fmOffsetsSignDS from <secureProtocol.signDSModel> is " +
                                 "null, please check");
                         retCode = ResponseCode.RequestError;
                         status = FLClientStatus.FAILED;
                         throw new IllegalArgumentException();
                     }
-                    this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsSignDS);
+                    this.indexArrayOffset = RequestUpdateModel.createIndexArrayVector(builder, indexArray);
+
+                    // only package featureName into flatbuffer.
+                    int compFeatureSize = updateFeatureName.size();
+                    int[] fmOffsetsSignds = new int[compFeatureSize];
+                    for (int i = 0; i < compFeatureSize; i++) {
+                        String key = updateFeatureName.get(i);
+                        float[] data = new float[0];
+                        int featureName = builder.createString(key);
+                        int weight = FeatureMap.createDataVector(builder, data);
+                        int featureMap = FeatureMap.createFeatureMap(builder, featureName, weight);
+                        fmOffsetsSignds[i] = featureMap;
+                    }
+                    this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsSignds);
                     LOGGER.info(Common.addTag("[Encrypt] SignDS mask model ok!"));
+                    endTime = System.currentTimeMillis();
+                    LOGGER.info(Common.addTag("signds time is：" + (endTime - startTime) + "ms"));
                     return this;
                 case NOT_ENCRYPT:
                 default:
+                    startTime = System.currentTimeMillis();
                     int featureSize = updateFeatureName.size();
                     int[] fmOffsets = new int[featureSize];
                     for (int i = 0; i < featureSize; i++) {
@@ -344,6 +373,8 @@ public class UpdateModel {
                         fmOffsets[i] = featureMap;
                     }
                     this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsets);
+                    endTime = System.currentTimeMillis();
+                    LOGGER.info(Common.addTag("not encrypt time is：" + (endTime - startTime) + "ms"));
                     return this;
             }
         }
@@ -389,6 +420,8 @@ public class UpdateModel {
             RequestUpdateModel.addFeatureMap(builder, this.fmOffset);
             RequestUpdateModel.addSignature(builder, this.signDataOffset);
             RequestUpdateModel.addUploadLoss(builder, this.uploadLossOffset);
+            RequestUpdateModel.addSign(builder, this.sign);
+            RequestUpdateModel.addIndexArray(builder, this.indexArrayOffset);
             int root = RequestUpdateModel.endRequestUpdateModel(builder);
             builder.finish(root);
             return builder.sizedByteArray();

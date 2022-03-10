@@ -210,7 +210,14 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     feature_map[weight_full_name] = weight_size;
   }
 
-  if (!LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map)) {
+  bool verifyFeatureMapIsSuccess;
+  if (ps::PSContext::instance()->encrypt_type() == ps::kDSEncryptType && update_model_req->sign() != 0) {
+    MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->index_array(), ResultCode::kSuccessAndReturn);
+    verifyFeatureMapIsSuccess = VerifySignDSFeatureMap(feature_map, update_model_req);
+  } else {
+    verifyFeatureMapIsSuccess = LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map);
+  }
+  if (!verifyFeatureMapIsSuccess) {
     auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
     std::string reason = "Verify model feature map failed, retry later at time: " + std::to_string(next_req_time);
     BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(next_req_time));
@@ -249,13 +256,42 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
   return ResultCode::kSuccess;
 }
 
+bool UpdateModelKernel::VerifySignDSFeatureMap(const std::unordered_map<std::string, size_t> &model,
+                                               const schema::RequestUpdateModel *update_model_req) {
+  auto &aggregation_feature_map_ = LocalMetaStore::GetInstance().aggregation_feature_map();
+  if (model.size() > aggregation_feature_map_.size()) {
+    return false;
+  }
+  auto index_array = update_model_req->index_array();
+  size_t index_array_size = index_array->size();
+  size_t array_size_upper = 100;
+  if (index_array_size == 0 || index_array_size > array_size_upper) {
+    return false;
+  }
+  for (const auto &weight : model) {
+    std::string weight_name = weight.first;
+    if (aggregation_feature_map_.count(weight_name) == 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
 ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_model_req,
                                           const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta) {
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, ResultCode::kSuccessAndReturn);
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->fl_id(), ResultCode::kSuccessAndReturn);
   std::string update_model_fl_id = update_model_req->fl_id()->str();
   size_t data_size = device_meta.data_size();
-  const auto &feature_map = ParseFeatureMap(update_model_req);
+
+  std::map<std::string, std::vector<float>> weight_map;
+  std::map<std::string, UploadData> feature_map;
+  if (ps::PSContext::instance()->encrypt_type() == ps::kDSEncryptType) {
+    feature_map = ParseSignDSFeatureMap(update_model_req, data_size, &weight_map);
+  } else {
+    feature_map = ParseFeatureMap(update_model_req);
+  }
+
   if (feature_map.empty()) {
     std::string reason = "Feature map is empty.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
@@ -307,6 +343,58 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseFeatureMap(
     size_t weight_size = fbs_feature_map->Get(i)->data()->size() * sizeof(float);
     UploadData upload_data;
     upload_data[kNewWeight].addr = weight_data;
+    upload_data[kNewWeight].size = weight_size;
+    feature_map[weight_full_name] = upload_data;
+  }
+  return feature_map;
+}
+
+std::map<std::string, UploadData> UpdateModelKernel::ParseSignDSFeatureMap(
+  const schema::RequestUpdateModel *update_model_req, size_t data_size,
+  std::map<std::string, std::vector<float>> *weight_map) {
+  auto fbs_feature_map = update_model_req->feature_map();
+  std::map<std::string, UploadData> feature_map;
+  auto sign = update_model_req->sign();
+  if (sign == 0) {
+    for (uint32_t i = 0; i < fbs_feature_map->size(); i++) {
+      std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
+      float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());
+      size_t weight_size = fbs_feature_map->Get(i)->data()->size() * sizeof(float);
+      UploadData upload_data;
+      upload_data[kNewWeight].addr = weight_data;
+      upload_data[kNewWeight].size = weight_size;
+      feature_map[weight_full_name] = upload_data;
+    }
+    return feature_map;
+  }
+
+  const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
+  size_t latest_iter_num = iter_to_model.rbegin()->first;
+  std::map<std::string, AddressPtr> feature_maps_store = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
+  auto index_array = update_model_req->index_array();
+  size_t index_store = 0;
+  size_t index_array_j = 0;
+  float signds_grad = sign * ps::PSContext::instance()->sign_global_lr();
+  for (size_t i = 0; i < fbs_feature_map->size(); i++) {
+    std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
+    AddressPtr iter_feature_map_data_ptr = feature_maps_store[weight_full_name];
+    size_t iter_feature_num = iter_feature_map_data_ptr->size / sizeof(float);
+    auto &weight_item = (*weight_map)[weight_full_name];
+    weight_item.resize(iter_feature_num);
+    float *iter_feature_map_data = reinterpret_cast<float *>(iter_feature_map_data_ptr->addr);
+    for (size_t j = 0; j < iter_feature_num; j++) {
+      float reconstruct_weight = iter_feature_map_data[j];
+      if (index_array_j < index_array->size() && index_store == static_cast<size_t>(index_array->Get(index_array_j))) {
+        reconstruct_weight += signds_grad;
+        index_array_j++;
+      }
+      reconstruct_weight *= data_size;
+      index_store++;
+      weight_item[j] = reconstruct_weight;
+    }
+    size_t weight_size = iter_feature_num * sizeof(float);
+    UploadData upload_data;
+    upload_data[kNewWeight].addr = weight_item.data();
     upload_data[kNewWeight].size = weight_size;
     feature_map[weight_full_name] = upload_data;
   }
