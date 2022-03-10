@@ -22,7 +22,7 @@ from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
 from ..utils import _normalize_matvec, _to_tensor, _safe_normalize, _eps, _norm, _type_check, _value_check, \
     _sparse_check
-from ..utils_const import _raise_value_error, _raise_type_error, _nullable_const
+from ..utils_const import _raise_value_error, _raise_type_error, is_within_graph
 
 
 def gram_schmidt(Q, q):
@@ -367,9 +367,9 @@ class CGv2(nn.Cell):
         return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
 
     def bprop(self, A, b, x0, tol, atol, maxiter, M, out, dout):
-        if not isinstance(M, Tensor):
-            M = lambda x: x
         n = b.shape[0]
+        if not isinstance(M, Tensor):
+            M = F.eye(n, n, b.dtype)
         grad_b, _ = self.construct(A, dout[0], x0, tol, atol, maxiter, M)
         grad_a = -1 * F.reshape(grad_b, (n, 1)) * F.reshape(out[0], (1, n))
         return grad_a, grad_b, zeros_like(x0), zeros_like(tol), zeros_like(atol), zeros_like(maxiter), zeros_like(M)
@@ -465,7 +465,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
     _value_check(func_name, callback, None, 'callback', op='is', fmt='todo')
     A, M, b, x0 = _sparse_check(func_name, A, M, b, x0)
 
-    if not _nullable_const(A):
+    if not is_within_graph(A):
         x, info = CG(A, M)(b, x0, tol, atol, maxiter)
     else:
         x, info = CGv2()(A, b, x0, tol, atol, maxiter, M)

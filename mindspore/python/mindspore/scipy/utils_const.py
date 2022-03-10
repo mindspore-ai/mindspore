@@ -15,6 +15,7 @@
 """internal graph-compatible utility functions"""
 from types import FunctionType
 from collections.abc import Iterable
+from .. import context
 from ..ops.primitive import constexpr
 from ..common import Tensor, CSRTensor
 from ..common import dtype as mstype
@@ -27,12 +28,13 @@ def _callable_const(x):
 
 
 @constexpr
-def _nullable_const(x):
+def is_within_graph(x):
     """
     Returns true if x is None. It's aim to check whether the call is within MindSpore graph.
     Because in graph mode, x should be None in constexpr when x is a variable of MindSpore.
+    Note that always return true if the call is in pynative mode.
     """
-    return x is None
+    return context.get_context("mode") == context.PYNATIVE_MODE or x is None
 
 
 @constexpr

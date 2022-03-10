@@ -188,10 +188,11 @@ def test_cg_against_scipy_sparse(dtype, tol, shape, preconditioner, maxiter):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('tensor_type, dtype, tol', [('CSRTensor', onp.float32, 1e-5), ('CSRTensor', onp.float32, 1e-5),
-                                                     ('Tensor', onp.float64, 1e-8)])
+@pytest.mark.parametrize('tensor_type, dtype, tol', [('Tensor', onp.float32, 1e-5), ('Tensor', onp.float64, 1e-8),
+                                                     ('CSRTensor', onp.float32, 1e-5)])
 @pytest.mark.parametrize('a, b, grad_a, grad_b', [
     ([[1.96822833, 0.82204467, 1.03749232, 0.88915326, 0.44986806, 1.11167143],
       [0.82204467, 2.25216591, 1.40235719, 0.70838919, 0.81377919, 1.06000368],
@@ -223,10 +224,80 @@ def test_cg_against_scipy_sparse(dtype, tol, shape, preconditioner, maxiter):
 def test_cg_grad(tensor_type, dtype, tol, a, b, grad_a, grad_b):
     """
     Feature: ALL TO ALL
-    Description: test cases for grad implementation of cg in graph mode(currently)
+    Description: test cases for grad implementation of cg in graph mode
     Expectation: the result match expectation
     """
     context.set_context(mode=context.GRAPH_MODE)
+
+    a = to_tensor((a, tensor_type), dtype)
+    b = Tensor(onp.array(b, dtype=dtype))
+    expect_grad_a = onp.array(grad_a, dtype=dtype)
+    expect_grad_b = onp.array(grad_b, dtype=dtype)
+    kw = {"atol": tol, "rtol": tol}
+
+    # Function
+    grad_net = ops.GradOperation(get_all=True)(msp.sparse.linalg.cg)
+    grad_a, grad_b = grad_net(a, b)[:2]
+    onp.testing.assert_allclose(expect_grad_a, grad_a.asnumpy(), **kw)
+    onp.testing.assert_allclose(expect_grad_b, grad_b.asnumpy(), **kw)
+
+    # Cell
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.sum = ops.ReduceSum()
+            self.cg = msp.sparse.linalg.cg
+
+        def construct(self, a, b):
+            x, _ = self.cg(a, b)
+            return self.sum(x)
+
+    grad_net = ops.GradOperation(get_all=True)(Net())
+    grad_a, grad_b = grad_net(a, b)[:2]
+    onp.testing.assert_allclose(expect_grad_a, grad_a.asnumpy(), **kw)
+    onp.testing.assert_allclose(expect_grad_b, grad_b.asnumpy(), **kw)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('tensor_type, dtype, tol', [('Tensor', onp.float32, 1e-5), ('Tensor', onp.float64, 1e-8)])
+@pytest.mark.parametrize('a, b, grad_a, grad_b', [
+    ([[1.96822833, 0.82204467, 1.03749232, 0.88915326, 0.44986806, 1.11167143],
+      [0.82204467, 2.25216591, 1.40235719, 0.70838919, 0.81377919, 1.06000368],
+      [1.03749232, 1.40235719, 2.90618746, 0.7126087, 0.81029544, 1.28673025],
+      [0.88915326, 0.70838919, 0.7126087, 2.17515263, 0.40443765, 1.02082996],
+      [0.44986806, 0.81377919, 0.81029544, 0.40443765, 1.60570668, 0.62292701],
+      [1.11167143, 1.06000368, 1.28673025, 1.02082996, 0.62292701, 2.30795277]],
+     [0.79363745, 0.58000418, 0.1622986, 0.70075235, 0.96455108, 0.50000836],
+     [[-0.07867674, -0.01521201, 0.06394698, -0.03854052, -0.13523701, 0.01326866],
+      [-0.03508505, -0.00678363, 0.02851647, -0.01718673, -0.06030749, 0.00591702],
+      [-0.00586019, -0.00113306, 0.00476305, -0.00287067, -0.01007304, 0.00098831],
+      [-0.07704304, -0.01489613, 0.06261914, -0.03774023, -0.13242886, 0.01299314],
+      [-0.14497008, -0.02802971, 0.11782896, -0.07101491, -0.24918826, 0.02444888],
+      [-0.01868565, -0.00361284, 0.01518735, -0.00915334, -0.03211867, 0.00315129]],
+     [0.22853142, 0.10191113, 0.01702201, 0.22378603, 0.42109291, 0.054276]),
+    ([[1.85910724, 0.73233206, 0.65960803, 1.03821349, 0.55277616],
+      [0.73233206, 1.69548841, 0.59992146, 1.01518264, 0.50824059],
+      [0.65960803, 0.59992146, 1.98169091, 1.45565213, 0.47901749],
+      [1.03821349, 1.01518264, 1.45565213, 3.3133049, 0.75598147],
+      [0.55277616, 0.50824059, 0.47901749, 0.75598147, 1.46831254]],
+     [0.59674531, 0.226012, 0.10694568, 0.22030621, 0.34982629],
+     [[-0.07498642, 0.00167461, 0.01353184, 0.01008293, -0.03770084],
+      [-0.09940184, 0.00221986, 0.01793778, 0.01336592, -0.04997616],
+      [-0.09572781, 0.00213781, 0.01727477, 0.01287189, -0.04812897],
+      [0.03135044, -0.00070012, -0.00565741, -0.00421549, 0.01576203],
+      [-0.14053766, 0.00313851, 0.02536103, 0.01889718, -0.07065797]],
+     [0.23398106, 0.31016481, 0.29870068, -0.09782316, 0.43852141]),
+])
+def test_cg_grad_pynative(tensor_type, dtype, tol, a, b, grad_a, grad_b):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for grad implementation of cg in pynative mode
+    Expectation: the result match expectation
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
 
     a = to_tensor((a, tensor_type), dtype)
     b = Tensor(onp.array(b, dtype=dtype))
