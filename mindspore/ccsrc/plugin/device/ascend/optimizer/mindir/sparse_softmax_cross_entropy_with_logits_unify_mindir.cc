@@ -104,7 +104,19 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   one_hot_node->set_scope(sparse_softmax_node->scope());
   std::vector<size_t> labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
   labels_shape.emplace_back(depth);
-  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {labels_shape}, one_hot_node.get());
+  if (AnfUtils::IsShapeDynamic(labels_shape)) {
+    auto kernel_info = common::AnfAlgo::GetPrevNodeOutput(sparse_softmax_node, 1);
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(kernel_info.first, kernel_info.second);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(kernel_info.first, kernel_info.second);
+    std::vector<int64_t> shape_tmp;
+    std::transform(labels_shape.begin(), labels_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
+    min_shape.emplace_back(depth);
+    max_shape.emplace_back(depth);
+    common::AnfAlgo::SetOutputTypeAndDetailShape(
+      {kNumberTypeFloat32}, {std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape)}, one_hot_node.get());
+  } else {
+    common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {labels_shape}, one_hot_node.get());
+  }
   if (is_convert_const_to_attr) {
     common::AnfAlgo::SetNodeAttr(kAttrDepth, MakeValue(depth), one_hot_node);
   }
@@ -131,10 +143,20 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
     MS_LOG(EXCEPTION) << "One_hot output's shape is empty." << trace::DumpSourceLines(one_hot_node);
   }
 
-  auto shapes = {loss_shape, common::AnfAlgo::GetOutputInferShape(one_hot_node, 0)};
   auto data_types = common::AnfAlgo::GetOutputInferDataType(one_hot_node, 0);
   auto types = {data_types, data_types};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, softmax_node.get());
+  if (AnfUtils::IsShapeDynamic(labels_shape)) {
+    ShapeVector shape_tmp = {static_cast<int64_t>(labels_shape[0])};
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(one_hot_node, 0);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(one_hot_node, 0);
+    std::vector<BaseShapePtr> shapes = {
+      std::make_shared<abstract::Shape>(shape_tmp, ShapeVector(min_shape[0]), ShapeVector(max_shape[0])),
+      common::AnfAlgo::GetOutputDetailShape(one_hot_node, 0)};
+    common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, softmax_node.get());
+  } else {
+    auto shapes = {loss_shape, labels_shape};
+    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, softmax_node.get());
+  }
   return softmax_node;
 }
 
@@ -223,8 +245,21 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
   expand_dims_node->set_scope(real_div_node->scope());
   std::vector<size_t> y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0);
   y_shape.emplace_back(1);
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
-                                              expand_dims_node.get());
+  if (AnfUtils::IsShapeDynamic(y_shape)) {
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
+    min_shape.emplace_back(1);
+    max_shape.emplace_back(1);
+    std::vector<int64_t> shape_tmp;
+    std::transform(y_shape.begin(), y_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
+    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)},
+                                                 {std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape)},
+                                                 expand_dims_node.get());
+  } else {
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
+                                                expand_dims_node.get());
+  }
+
   return expand_dims_node;
 }
 
@@ -247,8 +282,20 @@ CNodePtr CreateExpandDimsPynative(const FuncGraphPtr &graph, const CNodePtr &rea
   expand_dims_node->set_scope(real_div_node->scope());
   std::vector<size_t> y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0);
   y_shape.emplace_back(1);
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
-                                              expand_dims_node.get());
+  if (AnfUtils::IsShapeDynamic(y_shape)) {
+    auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
+    min_shape.emplace_back(1);
+    max_shape.emplace_back(1);
+    std::vector<int64_t> shape_tmp;
+    std::transform(y_shape.begin(), y_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
+    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)},
+                                                 {std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape)},
+                                                 expand_dims_node.get());
+  } else {
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
+                                                expand_dims_node.get());
+  }
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), expand_dims_node);
   return expand_dims_node;
 }
@@ -290,8 +337,9 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   auto tile_node = pass.NewCNode(tile_inputs, graph);
   MS_EXCEPTION_IF_NULL(tile_node);
   tile_node->set_scope(mul_node->scope());
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1)},
-                                              {labels_shape}, tile_node.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1)},
+                                               {common::AnfAlgo::GetPrevNodeOutputDetailShape(sparse_softmax_node, 1)},
+                                               tile_node.get());
   if (is_convert_const_to_attr) {
     common::AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiples), tile_node);
   }

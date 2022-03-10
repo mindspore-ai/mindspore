@@ -112,7 +112,16 @@ CNodePtr InsertCastForGraphKernel(const FuncGraphPtr &func_graph, const CNodePtr
       MS_EXCEPTION_IF_NULL(cast);
       cast->set_scope(cnode->scope());
       ShapeVector out_shape = GetShape(cur_input);
-      auto abs_shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(out_shape));
+      BaseShapePtr abs_shape_ptr = nullptr;
+      auto is_dynamic = std::any_of(out_shape.begin(), out_shape.end(), [](int64_t s) { return s < 0; });
+      if (is_dynamic) {
+        auto max_shape = common::AnfAlgo::GetOutputMaxShape(in_node, in_index);
+        auto min_shape = common::AnfAlgo::GetOutputMinShape(in_node, in_index);
+        abs_shape_ptr = std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
+      } else {
+        abs_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
+      }
+
       auto abstract =
         std::make_shared<abstract::AbstractTensor>(TypeIdToType(TypeId::kNumberTypeFloat16), abs_shape_ptr);
       cast->set_abstract(abstract);

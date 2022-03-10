@@ -160,9 +160,9 @@ AnfNodePtr CreateTupleGetItem(const AnfNodePtr &buffer_fusion_kernel, session::K
   tuple_getitem_inputs_list.push_back(idx);
   auto tuple_item = kernel_graph->NewCNode(tuple_getitem_inputs_list);
   MS_EXCEPTION_IF_NULL(tuple_item);
-  common::AnfAlgo::SetOutputInferTypeAndShape(
+  common::AnfAlgo::SetOutputTypeAndDetailShape(
     {common::AnfAlgo::GetOutputInferDataType(buffer_fusion_kernel, output_index)},
-    {common::AnfAlgo::GetOutputInferShape(buffer_fusion_kernel, output_index)}, tuple_item.get());
+    {common::AnfAlgo::GetOutputDetailShape(buffer_fusion_kernel, output_index)}, tuple_item.get());
   return tuple_item;
 }
 
@@ -517,19 +517,19 @@ bool UbPatternFusion::ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionIn
   AnfAlgo::SetSelectKernelBuildInfo(buffer_fusion_info.kernel_build_info, buffer_fusion.get());
   // Set abstract of fusion_op node
   std::vector<TypeId> types;
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<BaseShapePtr> shapes;
   for (const auto &out_node : buffer_fusion_info.outputs_list) {
     size_t out_num = common::AnfAlgo::GetOutputTensorNum(out_node);
     for (size_t idx = 0; idx < out_num; ++idx) {
       (void)types.emplace_back(common::AnfAlgo::GetOutputInferDataType(out_node, idx));
-      (void)shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(out_node, idx));
+      (void)shapes.emplace_back(common::AnfAlgo::GetOutputDetailShape(out_node, idx));
     }
   }
   if (types.empty() || shapes.empty()) {
     MS_LOG(WARNING) << "The outputs_list of buffer_fusion_info is empty.";
     return false;
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, buffer_fusion.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, buffer_fusion.get());
   common::AnfAlgo::SetNodeAttr(kAttrIsUBFusionOp, MakeValue(true), buffer_fusion);
   SetFusionOpRefInfos(kernel_graph, buffer_fusion_info.outputs_list, buffer_fusion);
   ReplaceOldNode(buffer_fusion_infos, fusion_id, buffer_fusion, kernel_graph);

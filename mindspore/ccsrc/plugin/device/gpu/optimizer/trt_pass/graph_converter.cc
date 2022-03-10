@@ -36,13 +36,13 @@ namespace opt {
 namespace {
 void CopyGraphOutputTypeAndShape(const std::vector<session::KernelWithIndex> &graph_outputs, CNodePtr trt_node) {
   std::vector<TypeId> types;
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<BaseShapePtr> shapes;
   for (const auto &item : graph_outputs) {
     types.push_back(common::AnfAlgo::GetOutputInferDataType(item.first, item.second));
-    shapes.push_back(common::AnfAlgo::GetOutputInferShape(item.first, item.second));
+    shapes.push_back(common::AnfAlgo::GetOutputDetailShape(item.first, item.second));
   }
 
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, trt_node.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, trt_node.get());
   return;
 }
 

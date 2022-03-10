@@ -113,8 +113,8 @@ CNodePtr ConfusionMulGradFusion::CreateFusionNode(const FuncGraphPtr &graph, con
   common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, reduce_sum, fusion_node);
   auto types = {common::AnfAlgo::GetOutputInferDataType(mul0, 0),
                 common::AnfAlgo::GetOutputInferDataType(reduce_sum, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(mul0, 0), common::AnfAlgo::GetOutputInferShape(reduce_sum, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(mul0, 0), common::AnfAlgo::GetOutputDetailShape(reduce_sum, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, fusion_node.get());
   return fusion_node;
 }
 

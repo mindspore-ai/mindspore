@@ -309,9 +309,9 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(add1);
   auto types = {common::AnfAlgo::GetOutputInferDataType(add1, 0), common::AnfAlgo::GetOutputInferDataType(add0, 0),
                 common::AnfAlgo::GetOutputInferDataType(sub0, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(add1, 0), common::AnfAlgo::GetOutputInferShape(add0, 0),
-                 common::AnfAlgo::GetOutputInferShape(sub0, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(add1, 0), common::AnfAlgo::GetOutputDetailShape(add0, 0),
+                 common::AnfAlgo::GetOutputDetailShape(sub0, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, fusion_node.get());
 
   std::vector<AnfNodePtr> fusion_node_outputs;
   CreateMultipleOutputsOfAnfNode(graph, fusion_node, kAdamApplyOneWithDecayOutputNum, &fusion_node_outputs);

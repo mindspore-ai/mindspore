@@ -47,10 +47,22 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
     auto origin_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 1);
     auto origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
     auto dst_shape = {origin_shape[1], origin_shape[0]};
+    auto is_dynamic = AnfUtils::IsShapeDynamic(dst_shape);
+
     transpose_inputs.push_back(common::AnfAlgo::GetInputNode(cnode, 1));
     CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
     MS_EXCEPTION_IF_NULL(transpose);
-    common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {dst_shape}, transpose.get());
+    if (is_dynamic) {
+      auto shape = {SizeToLong(origin_shape[1]), SizeToLong(origin_shape[0])};
+      auto max_shape = common::AnfAlgo::GetInputMaxShape(cnode, 1);
+      auto min_shape = common::AnfAlgo::GetInputMinShape(cnode, 1);
+      auto shape_tmp1 = {min_shape[1], min_shape[0]};
+      auto shape_tmp2 = {max_shape[1], max_shape[0]};
+      BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, shape_tmp1, shape_tmp2);
+      common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {base_shape}, transpose.get());
+    } else {
+      common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {dst_shape}, transpose.get());
+    }
     common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
     common::AnfAlgo::SetNodeInput(cnode, transpose, 1);
     if (kernel_graph == nullptr) {
@@ -66,11 +78,21 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
       auto origin_shape = common::AnfAlgo::GetOutputInferShape(cnode, output_idx);
       if (origin_shape.size() > 1 && output_idx == 0) {
         auto dtype = common::AnfAlgo::GetOutputInferDataType(cnode, output_idx);
-        auto dst_shape = {origin_shape[0], origin_shape[1]};
         transpose_inputs.push_back(tuple_getitem);
         CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
         MS_EXCEPTION_IF_NULL(transpose);
-        common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {dst_shape}, transpose.get());
+        if (AnfUtils::IsShapeDynamic(origin_shape)) {
+          auto dst_shape = {SizeToLong(origin_shape[0]), SizeToLong(origin_shape[1])};
+          auto min_shape = common::AnfAlgo::GetOutputMinShape(cnode, output_idx);
+          auto max_shape = common::AnfAlgo::GetOutputMaxShape(cnode, output_idx);
+          auto shape_tmp1 = {min_shape[0], min_shape[1]};
+          auto shape_tmp2 = {max_shape[0], max_shape[1]};
+          BaseShapePtr base_shape = std::make_shared<abstract::Shape>(dst_shape, shape_tmp1, shape_tmp2);
+          common::AnfAlgo::SetOutputTypeAndDetailShape({dtype}, {base_shape}, transpose.get());
+        } else {
+          auto dst_shape = {origin_shape[0], origin_shape[1]};
+          common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {dst_shape}, transpose.get());
+        }
         common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
         make_tuple_inputs.push_back(transpose);
       } else {

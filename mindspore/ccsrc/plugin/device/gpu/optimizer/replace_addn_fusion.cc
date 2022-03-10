@@ -43,10 +43,10 @@ const AnfNodePtr ReplaceAddNFusion::Process(const FuncGraphPtr &graph, const Anf
     auto add_new = graph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(add_new);
     std::vector<TypeId> outputs_type;
-    std::vector<std::vector<size_t>> outputs_shape;
+    std::vector<BaseShapePtr> outputs_shape;
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(A, 0));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(A, 0));
-    common::AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, add_new.get());
+    outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(A, 0));
+    common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, add_new.get());
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     manager->Replace(utils::cast<CNodePtr>(node), utils::cast<CNodePtr>(add_new));

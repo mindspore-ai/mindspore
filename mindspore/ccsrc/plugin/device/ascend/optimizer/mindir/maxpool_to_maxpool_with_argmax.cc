@@ -63,9 +63,9 @@ CNodePtr MaxPool2MaxPoolWithArgmax::CreateMaxPoolWithArgmax(const FuncGraphPtr &
   // MaxPoolWithArgmax's second output is argmax, whose datatype is uint16 and with same shape as first output
   TypeId argmax_dtype = kNumberTypeUInt16;
   auto types = {common::AnfAlgo::GetOutputInferDataType(maxpool, 0), argmax_dtype};
-  auto out_shape = common::AnfAlgo::GetOutputInferShape(maxpool, 0);
-  auto shapes = {out_shape, out_shape};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, maxpool_argmax.get());
+  auto out_shape = common::AnfAlgo::GetOutputDetailShape(maxpool, 0);
+  std::vector<BaseShapePtr> shapes = {out_shape, out_shape};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, maxpool_argmax.get());
   return maxpool_argmax;
 }
 

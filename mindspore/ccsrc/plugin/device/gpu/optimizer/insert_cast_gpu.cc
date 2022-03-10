@@ -37,8 +37,8 @@ void InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i, con
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i)};
   auto cast = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cast);
-  auto cast_shape = {common::AnfAlgo::GetPrevNodeOutputInferShape(node, i)};
-  common::AnfAlgo::SetOutputInferTypeAndShape({cast_type}, cast_shape, cast.get());
+  auto cast_shape = {common::AnfAlgo::GetPrevNodeOutputDetailShape(node, i)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape({cast_type}, cast_shape, cast.get());
   FuncGraphManagerPtr manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->SetEdge(node, i + 1, cast);
@@ -107,12 +107,12 @@ bool InsertCastGPU::Run(const FuncGraphPtr &graph) {
 
     if (IsCasted) {
       auto output_types = std::vector<TypeId>(output_num, kNumberTypeFloat32);
-      std::vector<std::vector<size_t>> output_shapes;
+      std::vector<BaseShapePtr> output_shapes;
       for (size_t output_index = 0; output_index < output_num; ++output_index) {
-        std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(node, output_index);
+        auto shape = common::AnfAlgo::GetOutputDetailShape(node, output_index);
         (void)output_shapes.emplace_back(shape);
       }
-      common::AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, node.get());
+      common::AnfAlgo::SetOutputTypeAndDetailShape(output_types, output_shapes, node.get());
     }
   }
   return true;

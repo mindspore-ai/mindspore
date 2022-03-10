@@ -60,8 +60,8 @@ CNodePtr SquareSumFusion::GenerateSquareSumV1(const FuncGraphPtr &graph, const C
   MS_EXCEPTION_IF_NULL(kernel_info);
   square_sumv1->set_kernel_info(kernel_info);
   auto types = {common::AnfAlgo::GetOutputInferDataType(sum, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(sum, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sumv1.get());
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(sum, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, square_sumv1.get());
   square_sumv1->set_scope(sum->scope());
   common::AnfAlgo::CopyNodeAttr(kAttrAxis, sum, square_sumv1);
   common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum, square_sumv1);
@@ -82,8 +82,8 @@ CNodePtr SquareSumFusion::GenerateSquareSumV2(const FuncGraphPtr &graph, const C
   auto square_sumv2 = NewCNode(square_sumv2_inputs, graph);
   MS_EXCEPTION_IF_NULL(square_sumv2);
   auto types = {common::AnfAlgo::GetOutputInferDataType(sum, 0), common::AnfAlgo::GetOutputInferDataType(square, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(sum, 0), common::AnfAlgo::GetOutputInferShape(square, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sumv2.get());
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(sum, 0), common::AnfAlgo::GetOutputDetailShape(square, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, square_sumv2.get());
   square_sumv2->set_scope(sum->scope());
   common::AnfAlgo::CopyNodeAttr(kAttrAxis, sum, square_sumv2);
   common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum, square_sumv2);

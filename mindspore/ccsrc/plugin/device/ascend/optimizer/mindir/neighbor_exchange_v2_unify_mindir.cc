@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <utility>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
@@ -61,9 +62,12 @@ bool IsBottom(const std::vector<int64_t> &send_rank_ids) {
 // cal split attrs size_splits, shapes and num_split
 int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first, const bool is_last,
                       const size_t split_dim, const std::vector<int64_t> &send_lens, std::vector<int64_t> *size_splits,
-                      std::vector<std::vector<size_t>> *shapes) {
+                      std::vector<std::vector<size_t>> *shapes, std::vector<int64_t> *min_shape,
+                      std::vector<int64_t> *max_shape, bool is_dynamic) {
   MS_EXCEPTION_IF_NULL(size_splits);
   MS_EXCEPTION_IF_NULL(shapes);
+  MS_EXCEPTION_IF_NULL(max_shape);
+  MS_EXCEPTION_IF_NULL(min_shape);
   if (SizeToLong(base_shape.size()) != kShapeSize) {
     MS_LOG(EXCEPTION) << "Wrong base_shape size: " << base_shape.size() << ", it should be equal to 4.";
   }
@@ -84,6 +88,8 @@ int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first
     split_middle_size -= first_size;
     shape_tmp[split_dim] = static_cast<size_t>(first_size);
     shapes->push_back(shape_tmp);
+    (*min_shape)[split_dim] = (is_dynamic) ? first_size : (*min_shape)[split_dim];
+    (*max_shape)[split_dim] = (is_dynamic) ? first_size : (*max_shape)[split_dim];
   }
   if (is_last) {
     // middle
@@ -92,6 +98,8 @@ int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first
       ++num_split;
       size_splits->push_back(split_middle_size);
       shape_tmp[split_dim] = static_cast<size_t>(split_middle_size);
+      (*min_shape)[split_dim] = (is_dynamic) ? split_middle_size : (*min_shape)[split_dim];
+      (*max_shape)[split_dim] = (is_dynamic) ? split_middle_size : (*max_shape)[split_dim];
       shapes->push_back(shape_tmp);
     }
     // last
@@ -103,6 +111,8 @@ int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first
     ++num_split;
     size_splits->push_back(split_middle_size);
     shape_tmp[split_dim] = static_cast<size_t>(split_middle_size);
+    (*min_shape)[split_dim] = (is_dynamic) ? split_middle_size : (*min_shape)[split_dim];
+    (*max_shape)[split_dim] = (is_dynamic) ? split_middle_size : (*max_shape)[split_dim];
     shapes->push_back(shape_tmp);
   }
   return num_split;
@@ -110,7 +120,8 @@ int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first
 
 CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &split_input,
                          const std::vector<size_t> &base_shape, bool is_first, bool is_last, size_t split_dim,
-                         const std::vector<int64_t> &send_lens, TypeId input_dtype, int64_t *num_split,
+                         const std::vector<int64_t> &send_lens, TypeId input_dtype,
+                         std::pair<ShapeVector, ShapeVector> *shape_pair, int64_t *num_split,
                          const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(num_split);
@@ -122,10 +133,23 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr
   MS_EXCEPTION_IF_NULL(split_v);
   std::vector<int64_t> size_splits = {};
   std::vector<std::vector<size_t>> shapes = {};
-  *num_split = CalSplitAttrs(base_shape, is_first, is_last, split_dim, send_lens, &size_splits, &shapes);
+  auto is_dynamic = AnfUtils::IsShapeDynamic(base_shape);
+  *num_split = CalSplitAttrs(base_shape, is_first, is_last, split_dim, send_lens, &size_splits, &shapes,
+                             &shape_pair->first, &shape_pair->first, is_dynamic);
 
   std::vector<TypeId> dtypes(*num_split, input_dtype);
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
+  if (is_dynamic) {
+    std::vector<BaseShapePtr> shapes_ptr;
+    for (const auto &shape : shapes) {
+      ShapeVector shape_tmp;
+      std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), SizeToLong);
+      BaseShapePtr shape_ptr = std::make_shared<abstract::Shape>(shape_tmp, shape_pair->first, shape_pair->second);
+      shapes_ptr.push_back(shape_ptr);
+    }
+    common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes_ptr, split_v.get());
+  } else {
+    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
+  }
   common::AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue<int64_t>(split_dim), split_v);
   common::AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue<int64_t>(*num_split), split_v);
   common::AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue<std::vector<int64_t>>(size_splits), split_v);
@@ -404,6 +428,10 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
 
   auto dtype = common::AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_input, 0);
   auto shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
+  auto is_dynamic = AnfUtils::IsShapeDynamic(shape);
+  auto max_shape = common::AnfAlgo::GetOutputMaxShape(neighbor_exchange_v2_input, 0);
+  auto min_shape = common::AnfAlgo::GetOutputMinShape(neighbor_exchange_v2_input, 0);
+  auto shape_pair = std::make_pair(min_shape, max_shape);
   if (SizeToLong(shape.size()) != kShapeSize) {  // only support NCHW now
     MS_LOG(EXCEPTION) << "Invalid shape size " << shape.size() << ", only support NCHW input now!"
                       << trace::DumpSourceLines(neighbor_exchange_v2);
@@ -425,7 +453,7 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
                                              neighbor_exchange_v2_input};
 
       split_v = CreateSplitNode(graph, split_input, shape, splitvs_is_first[i], !splitvs_is_first[i], splitvs_dim[i],
-                                send_lens, dtype, &num_split, *this);
+                                send_lens, dtype, &shape_pair, &num_split, *this);
     }
     (void)split_nodes.emplace_back(split_v);
     split_num->push_back(num_split);
@@ -461,13 +489,17 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
       if (corner_splitvs_is_input_top[i]) {
         (void)split_input.insert(split_input.end(), split_outputs_top.begin(), split_outputs_top.begin() + 1);
         shape_tmp[kHDim] = send_lens[0];
+        min_shape[kHDim] = (is_dynamic) ? send_lens[0] : min_shape[kHDim];
+        max_shape[kHDim] = (is_dynamic) ? send_lens[0] : max_shape[kHDim];
       } else {
         (void)split_input.insert(split_input.end(), split_outputs_bottom.end() - 1, split_outputs_bottom.end());
         shape_tmp[kHDim] = send_lens[1];
+        min_shape[kHDim] = (is_dynamic) ? send_lens[1] : min_shape[kHDim];
+        max_shape[kHDim] = (is_dynamic) ? send_lens[1] : max_shape[kHDim];
       }
-
+      auto pair_tmp = std::make_pair(min_shape, max_shape);
       split_v = CreateSplitNode(graph, split_input, shape_tmp, corner_splitvs_is_first[i], !corner_splitvs_is_first[i],
-                                kWDim, send_lens, dtype, &num_split, *this);
+                                kWDim, send_lens, dtype, &pair_tmp, &num_split, *this);
     }
     (void)split_nodes.emplace_back(split_v);
     split_num->push_back(num_split);
@@ -477,14 +509,11 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
 }
 
 CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph,
-                                                         const std::vector<AnfNodePtr> &concat_input,
-                                                         const std::vector<std::vector<size_t>> &output_shape,
-                                                         const std::vector<TypeId> &output_dtype, int64_t axis,
+                                                         const std::vector<AnfNodePtr> &concat_input, int64_t axis,
                                                          int64_t input_nums) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto concat = NewCNode(concat_input, graph);
   MS_EXCEPTION_IF_NULL(concat);
-  common::AnfAlgo::SetOutputInferTypeAndShape(output_dtype, output_shape, concat.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(axis), concat);
   common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(input_nums), concat);
   std::vector<int64_t> dyn_input_size_empty{input_nums};
@@ -507,14 +536,23 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateLeftRightConcat(const FuncGraphPtr
 
   auto single_shape =
     common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
+  auto max_shape =
+    common::AnfAlgo::GetOutputMaxShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
+  auto min_shape =
+    common::AnfAlgo::GetOutputMinShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
 
+  auto is_dynamic = AnfUtils::IsShapeDynamic(single_shape);
   if (recv_rank_ids[first_ids] != kInvalidId) {
     ++input_num;
     single_shape[kDim2] += static_cast<size_t>(recv_lens[0]);  // H in NCHW
+    max_shape[kDim2] += (is_dynamic) ? recv_lens[0] : 0;
+    min_shape[kDim2] += (is_dynamic) ? recv_lens[0] : 0;
   }
   if (recv_rank_ids[last_ids] != kInvalidId) {
     ++input_num;
     single_shape[kDim2] += static_cast<size_t>(recv_lens[1]);  // H in NCHW
+    max_shape[kDim2] += (is_dynamic) ? recv_lens[1] : 0;
+    min_shape[kDim2] += (is_dynamic) ? recv_lens[1] : 0;
   }
   if (is_left) {
     (void)concat_input.insert(concat_input.end(), all_to_all_v_outputs.rbegin(),
@@ -526,8 +564,15 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateLeftRightConcat(const FuncGraphPtr
 
   std::vector<TypeId> concat_output_dtype = {
     common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0)};
-  auto concat = CreateConcatNode(graph, concat_input, {single_shape}, concat_output_dtype, kHDim, input_num);
-
+  auto concat = CreateConcatNode(graph, concat_input, kHDim, input_num);
+  if (is_dynamic) {
+    ShapeVector shape;
+    std::transform(single_shape.begin(), single_shape.end(), std::back_inserter(shape), SizeToLong);
+    BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+    common::AnfAlgo::SetOutputTypeAndDetailShape(concat_output_dtype, {base_shape}, concat.get());
+  } else {
+    common::AnfAlgo::SetOutputInferTypeAndShape(concat_output_dtype, {single_shape}, concat.get());
+  }
   return concat;
 }
 
@@ -538,6 +583,9 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
   int64_t input_num_all = 0;
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
   auto single_shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
+  auto max_shape = common::AnfAlgo::GetOutputMaxShape(neighbor_exchange_v2_input, 0);
+  auto min_shape = common::AnfAlgo::GetOutputMinShape(neighbor_exchange_v2_input, 0);
+  auto is_dynamic = AnfUtils::IsShapeDynamic(single_shape);
   size_t first_idx = concat_dim == kWDim ? 6 : 0;
   size_t last_idx = concat_dim == kWDim ? 2 : 4;
   size_t first_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim2]) : static_cast<size_t>(recv_lens[0]);
@@ -554,6 +602,8 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
 
     ++input_num_all;
     single_shape[concat_dim] += first_len;
+    max_shape[concat_dim] += (is_dynamic) ? first_len : 0;
+    min_shape[concat_dim] += (is_dynamic) ? first_len : 0;
   }
 
   concat_input_all.push_back(neighbor_exchange_v2_input);
@@ -571,11 +621,20 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
 
     ++input_num_all;
     single_shape[concat_dim] += last_len;
+    max_shape[concat_dim] += (is_dynamic) ? last_len : 0;
+    min_shape[concat_dim] += (is_dynamic) ? last_len : 0;
   }
 
   std::vector<TypeId> concat_output_dtype = {common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)};
-  auto concat_all =
-    CreateConcatNode(graph, concat_input_all, {single_shape}, concat_output_dtype, concat_dim, input_num_all);
+  auto concat_all = CreateConcatNode(graph, concat_input_all, concat_dim, input_num_all);
+  if (is_dynamic) {
+    ShapeVector shape;
+    std::transform(single_shape.begin(), single_shape.end(), std::back_inserter(shape), SizeToLong);
+    BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+    common::AnfAlgo::SetOutputTypeAndDetailShape(concat_output_dtype, {base_shape}, concat_all.get());
+  } else {
+    common::AnfAlgo::SetOutputInferTypeAndShape(concat_output_dtype, {single_shape}, concat_all.get());
+  }
   return concat_all;
 }
 
@@ -687,8 +746,8 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
   }
 
   std::vector<TypeId> concat_right_output_dtype = {common::AnfAlgo::GetOutputInferDataType(concat_input_all[1], 0)};
-  auto concat_all =
-    CreateConcatNode(graph, concat_input_all, {shape_all}, concat_right_output_dtype, kWDim, input_nums_all);
+  auto concat_all = CreateConcatNode(graph, concat_input_all, kWDim, input_nums_all);
+  common::AnfAlgo::SetOutputInferTypeAndShape(concat_right_output_dtype, {shape_all}, concat_all.get());
   return concat_all;
 }
 
@@ -713,6 +772,10 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
   auto neighbor_exchange_v2_grad_input = neighbor_exchange_v2_grad->input(kNeighborExchangeV2InputIdx);
   auto dtype = common::AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_grad_input, 0);
   auto shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_grad_input, 0);
+  auto is_dynamic = AnfUtils::IsShapeDynamic(shape);
+  auto max_shape = common::AnfAlgo::GetOutputMaxShape(neighbor_exchange_v2_grad_input, 0);
+  auto min_shape = common::AnfAlgo::GetOutputMinShape(neighbor_exchange_v2_grad_input, 0);
+
   if (SizeToLong(shape.size()) != kShapeSize) {
     MS_LOG(EXCEPTION) << "Invalid shape size " << shape.size() << ", only support NCHW input now!"
                       << trace::DumpSourceLines(neighbor_exchange_v2_grad);
@@ -727,8 +790,9 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
   if (is_top || is_bottom) {
     std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name())),
                                            neighbor_exchange_v2_grad_input};
-    split_v_top_bottom =
-      CreateSplitNode(graph, split_input, shape, is_top, is_bottom, kHDim, send_lens, dtype, &num_split_h, *this);
+    auto pair_tmp = std::make_pair(max_shape, min_shape);
+    split_v_top_bottom = CreateSplitNode(graph, split_input, shape, is_top, is_bottom, kHDim, send_lens, dtype,
+                                         &pair_tmp, &num_split_h, *this);
   }
   (void)split_nodes.emplace_back(split_v_top_bottom);
   split_num->push_back(num_split_h);
@@ -767,8 +831,11 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
       int64_t num_split_w = 0;
       std::vector<size_t> base_shape(shape);
       base_shape[kHDim] = static_cast<size_t>(size_split_h[i]);
+      min_shape[kHDim] = (is_dynamic) ? size_split_h[i] : min_shape[kHDim];
+      max_shape[kHDim] = (is_dynamic) ? size_split_h[i] : max_shape[kHDim];
+      auto pair_tmp = std::make_pair(min_shape, max_shape);
       auto split_v_left_right = CreateSplitNode(graph, split_input, base_shape, is_left, is_right, kWDim, send_lens,
-                                                dtype, &num_split_w, *this);
+                                                dtype, &pair_tmp, &num_split_w, *this);
       (void)split_nodes.emplace_back(split_v_left_right);
       split_num->push_back(num_split_w);
     }
@@ -788,19 +855,22 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
   return split_nodes;
 }
 
-CNodePtr NeighborExchangeV2GradUnifyMindIR::CreatePadNode(const FuncGraphPtr &graph, const AnfNodePtr &input,
-                                                          const std::vector<int64_t> &begin,
-                                                          const std::vector<int64_t> &size,
-                                                          const std::vector<size_t> &shape, TypeId dtype) const {
+CNodePtr NeighborExchangeV2GradUnifyMindIR::CreatePadNode(
+  const FuncGraphPtr &graph, const AnfNodePtr &input, const std::vector<int64_t> &begin,
+  const std::vector<int64_t> &size, const std::pair<std::vector<size_t>, BaseShapePtr> &shape_info,
+  TypeId dtype) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input);
+  auto shape = shape_info.first;
+  auto shape_base = shape_info.second;
+  MS_EXCEPTION_IF_NULL(shape_base);
   std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadOpName)), input};
   auto pad = NewCNode(pad_inputs, graph);
   std::vector<std::vector<int64_t>> paddings;
   for (size_t i = 0; i < shape.size(); ++i) {
     (void)paddings.emplace_back(std::vector<int64_t>{begin[i], static_cast<int64_t>(shape[i]) - begin[i] - size[i]});
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape}, pad.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({dtype}, {shape_base}, pad.get());
   common::AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), pad);
   common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(std::vector<std::string>{"x"}), pad);
   return pad;
@@ -824,6 +894,7 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
   auto centerx = GetCenter(graph, neighbor_exchange_v2_grad, split_nodes, split_num, send_rank_ids);
   auto centerx_dtype = common::AnfAlgo::GetOutputInferDataType(centerx, 0);
   auto centerx_shape = common::AnfAlgo::GetOutputInferShape(centerx, 0);
+  auto base_shape = common::AnfAlgo::GetOutputDetailShape(centerx, 0);
   // empty
   int64_t all_to_all_output_num =
     std::count_if(recv_rank_ids.begin(), recv_rank_ids.end(), [](int64_t ids) { return ids != kInvalidId; });
@@ -872,8 +943,9 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
   size_t output_index = 0;
   for (size_t i = 0; i < recv_rank_ids.size(); ++i) {
     if (recv_rank_ids[i] != kInvalidId) {
+      auto shape_info = std::make_pair(centerx_shape, base_shape);
       auto pad =
-        CreatePadNode(graph, all_to_all_v_outputs[output_index], begins[i], sizes[i], centerx_shape, centerx_dtype);
+        CreatePadNode(graph, all_to_all_v_outputs[output_index], begins[i], sizes[i], shape_info, centerx_dtype);
       ++output_index;
       (void)pad_nodes.emplace_back(pad);
     }
@@ -894,7 +966,7 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
   }
   auto addn = NewCNode(addn_inputs, graph);
   MS_EXCEPTION_IF_NULL(addn);
-  common::AnfAlgo::SetOutputInferTypeAndShape({centerx_dtype}, {centerx_shape}, addn.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({centerx_dtype}, {base_shape}, addn.get());
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue<std::vector<int64_t>>({pad_num}), addn);
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(pad_num), addn);
   MS_LOG(DEBUG) << "Create splitvs grad nodes success.";

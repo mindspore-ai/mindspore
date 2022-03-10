@@ -93,9 +93,9 @@ const AnfNodePtr BNReduceGradConv2dBackpropFilterFusion::Process(const FuncGraph
   MS_EXCEPTION_IF_NULL(fused_dbn_dw);
   auto types = {common::AnfAlgo::GetOutputInferDataType(bnreduce_grad, 0),
                 common::AnfAlgo::GetOutputInferDataType(conv_back_filter, 0)};
-  auto shapes = {common::AnfAlgo::GetOutputInferShape(bnreduce_grad, 0),
-                 common::AnfAlgo::GetOutputInferShape(conv_back_filter, 0)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fused_dbn_dw.get());
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bnreduce_grad, 0),
+                 common::AnfAlgo::GetOutputDetailShape(conv_back_filter, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, fused_dbn_dw.get());
   fused_dbn_dw->set_scope(bnreduce_grad->scope());
   common::AnfAlgo::CopyNodeAttr(kAttrFilterSizes, conv_back_filter, fused_dbn_dw);
   common::AnfAlgo::CopyNodeAttr(kAttrStride, conv_back_filter, fused_dbn_dw);

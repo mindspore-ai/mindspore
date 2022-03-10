@@ -102,7 +102,8 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   // 3.Set the output info of transpose.
   auto transpose_type = {common::AnfAlgo::GetPrevNodeOutputInferDataType(used_node, used_node_index)};
   auto transpose_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(used_node, used_node_index);
-  common::AnfAlgo::SetOutputInferTypeAndShape(transpose_type, {transpose_shape}, transpose_op.get());
+  auto base_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(used_node, used_node_index);
+  common::AnfAlgo::SetOutputTypeAndDetailShape(transpose_type, {base_shape}, transpose_op.get());
   if (is_fake) {
     std::vector<int64_t> shape;
     std::transform(transpose_shape.begin(), transpose_shape.end(), std::back_inserter(shape), SizeToLong);

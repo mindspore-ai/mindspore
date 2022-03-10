@@ -63,8 +63,8 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   auto transpose_op = graph->NewCNode(transpose_input);
   // 3.Set the output info of transpose.
   auto transpose_type = {common::AnfAlgo::GetPrevNodeOutputInferDataType(used_node, used_node_index)};
-  auto transpose_shape = {common::AnfAlgo::GetPrevNodeOutputInferShape(used_node, used_node_index)};
-  common::AnfAlgo::SetOutputInferTypeAndShape(transpose_type, transpose_shape, transpose_op.get());
+  auto transpose_shape = {common::AnfAlgo::GetPrevNodeOutputDetailShape(used_node, used_node_index)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(transpose_type, transpose_shape, transpose_op.get());
   common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(transpose_perm), transpose_op);
   // 4. Set the new edge of transpose op.
   FuncGraphManagerPtr manager = graph->manager();
