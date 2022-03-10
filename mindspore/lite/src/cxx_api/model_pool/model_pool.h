@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H
-#define MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H
+#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_
+#define MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_
 #include <vector>
 #include <memory>
 #include <utility>
@@ -66,7 +66,7 @@ class ModelPool {
                          std::vector<std::vector<MSTensor>> *new_outputs);
   void GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num);
 
-  std::vector<std::thread> model_thread_vec_;
+  std::vector<std::thread> model_worker_vec_;
   std::vector<MSTensor> model_inputs_;
   std::vector<MSTensor> model_outputs_;
   char *graph_buf_ = nullptr;
@@ -78,4 +78,4 @@ class ModelPool {
   bool use_numa_bind_mode_ = false;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H
+#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_

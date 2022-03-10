@@ -297,7 +297,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "InitWeightManagerByBuf failed.";
     return kLiteError;
   }
-  std::shared_ptr<ModelThread> model_thread = nullptr;
+  std::shared_ptr<ModelWorker> model_worker = nullptr;
   for (size_t i = 0; i < workers_num_; i++) {
     int numa_node_id = 0;
     if (use_numa_bind_mode_ && GetCoreNum() / model_pool_context[i]->GetThreadNum() < numa_node_num_) {
@@ -307,18 +307,22 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     } else {
       numa_node_id = 0;
     }
-    model_thread = std::make_shared<ModelThread>();
-    auto status = model_thread->Init(graph_buf_, size, model_pool_context[i], numa_node_id);
+    model_worker = std::make_shared<ModelWorker>();
+    if (model_worker == nullptr) {
+      MS_LOG(ERROR) << "model worker is nullptr.";
+      return kLiteError;
+    }
+    auto status = model_worker->Init(graph_buf_, size, model_pool_context[i], numa_node_id);
     if (status != kSuccess) {
       MS_LOG(ERROR) << " model thread init failed.";
       return kLiteError;
     }
-    PredictTaskQueue::GetInstance()->IncreaseeWaitModelNum(1, numa_node_id);
-    model_thread_vec_.push_back(std::thread(&ModelThread::Run, model_thread, numa_node_id));
+    PredictTaskQueue::GetInstance()->IncreaseWaitModelNum(1, numa_node_id);
+    model_worker_vec_.push_back(std::thread(&ModelWorker::Run, model_worker, numa_node_id));
   }
-  if (model_thread != nullptr) {
-    model_inputs_ = model_thread->GetInputs();
-    model_outputs_ = model_thread->GetOutputs();
+  if (model_worker != nullptr) {
+    model_inputs_ = model_worker->GetInputs();
+    model_outputs_ = model_worker->GetOutputs();
   }
   return kSuccess;
 }
@@ -548,14 +552,14 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       MS_LOG(ERROR) << "free split tensor failed.";
       return kLiteError;
     }
-    PredictTaskQueue::GetInstance()->IncreaseeWaitModelNum(batch_split_num, max_wait_worker_node_id);
+    PredictTaskQueue::GetInstance()->IncreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
   } else {
     PredictTaskQueue::GetInstance()->DecreaseWaitModelNum(1, max_wait_worker_node_id);
     auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
     PredictTaskQueue::GetInstance()->PushPredictTask(predict_task, max_wait_worker_node_id);
     mtx_split_task_.unlock();
     PredictTaskQueue::GetInstance()->WaitUntilPredictActive(predict_task);
-    PredictTaskQueue::GetInstance()->IncreaseeWaitModelNum(1, max_wait_worker_node_id);
+    PredictTaskQueue::GetInstance()->IncreaseWaitModelNum(1, max_wait_worker_node_id);
   }
   return kSuccess;
 }
@@ -565,7 +569,7 @@ ModelPool::~ModelPool() {
     delete[] graph_buf_;
     graph_buf_ = nullptr;
   }
-  for (auto &th : model_thread_vec_) {
+  for (auto &th : model_worker_vec_) {
     if (th.joinable()) {
       th.join();
     }

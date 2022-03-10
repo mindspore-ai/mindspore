@@ -18,7 +18,7 @@
 #include "src/common/utils.h"
 #include "src/common/common.h"
 namespace mindspore {
-void ModelThread::Run(int node_id) {
+void ModelWorker::Run(int node_id) {
   while (!PredictTaskQueue::GetInstance()->IsPredictTaskDone()) {
     auto task = PredictTaskQueue::GetInstance()->GetPredictTask(node_id);
     if (task == nullptr) {
@@ -59,10 +59,10 @@ void ModelThread::Run(int node_id) {
   }
 }
 
-Status ModelThread::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
+Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
                          int node_id) {
   model_ = std::make_shared<Model>();
-  mindspore::ModelType model_type = kMindIR;
+  mindspore::ModelType model_type = kMindIR_Lite;
   if (node_id != -1) {
     model_->UpdateConfig(lite::kConfigServerInference, {lite::kConfigNUMANodeId, std::to_string(node_id)});
   }
@@ -74,25 +74,25 @@ Status ModelThread::Init(const char *model_buf, size_t size, const std::shared_p
   return kSuccess;
 }
 
-std::vector<MSTensor> ModelThread::GetInputs() {
+std::vector<MSTensor> ModelWorker::GetInputs() {
   if (model_ == nullptr) {
-    MS_LOG(ERROR) << "model is nullptr in ModelThread.";
+    MS_LOG(ERROR) << "model is nullptr in model worker.";
     return {};
   }
   auto inputs = model_->GetInputs();
   return inputs;
 }
 
-std::vector<MSTensor> ModelThread::GetOutputs() {
+std::vector<MSTensor> ModelWorker::GetOutputs() {
   if (model_ == nullptr) {
-    MS_LOG(ERROR) << "model is nullptr in ModelThread.";
+    MS_LOG(ERROR) << "model is nullptr in model worker.";
     return {};
   }
   auto outputs = model_->GetOutputs();
   return outputs;
 }
 
-std::pair<std::vector<std::vector<int64_t>>, bool> ModelThread::GetModelResize(
+std::pair<std::vector<std::vector<int64_t>>, bool> ModelWorker::GetModelResize(
   const std::vector<MSTensor> &model_inputs, const std::vector<MSTensor> &inputs) {
   std::unique_lock<std::mutex> model_lock(mtx_model_);
   std::vector<std::vector<int64_t>> dims;
@@ -108,9 +108,8 @@ std::pair<std::vector<std::vector<int64_t>>, bool> ModelThread::GetModelResize(
   return std::make_pair(dims, need_resize);
 }
 
-Status ModelThread::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                             const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  // model
   auto model_input = model_->GetInputs();
   if (model_input.size() != inputs.size()) {
     MS_LOG(ERROR) << "model input size is: " << model_input.size() << ", but get input size is: " << inputs.size();

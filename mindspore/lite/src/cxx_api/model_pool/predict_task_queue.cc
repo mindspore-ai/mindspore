@@ -26,7 +26,7 @@ void PredictTaskQueue::SetTaskQueueNum(int num) {
   waite_worker_num_.resize(num, 0);
 }
 
-void PredictTaskQueue::WaitUntilPredictActive(std::shared_ptr<PredictTask> task) {
+void PredictTaskQueue::WaitUntilPredictActive(const std::shared_ptr<PredictTask> &task) {
   std::unique_lock<std::mutex> result_lock(mtx_predict_task_);
   while (!task->ready) {
     task_pop_cond_.wait(result_lock);
