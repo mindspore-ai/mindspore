@@ -1854,8 +1854,8 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         tensor.
 
         - index (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
-        output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
-        :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+          output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
+          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
         - output_x (Tensor) - The maximum value of input tensor, with the same shape as index.
 
     Raises:
@@ -1916,15 +1916,15 @@ class ArgMinWithValue(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)`.
+          :math:`(x_1, x_2, ..., x_N)` .
 
     Outputs:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
         tensor.
 
         - index (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
-        output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
-        :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+          output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
+          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
         - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
 
     Raises:
@@ -1977,7 +1977,7 @@ class Tile(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_S)`.
+          :math:`(x_1, x_2, ..., x_S)` .
 
         - **multiples** (tuple[int]) - The parameter that specifies the number of replications,
           the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.

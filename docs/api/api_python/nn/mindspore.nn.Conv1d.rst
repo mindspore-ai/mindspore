@@ -42,7 +42,7 @@ mindspore.nn.Conv1d
 
     **输出：**
     
-    Tensor，shape为:math:`(N, C_{out}, L_{out})`。
+    Tensor，shape为 :math:`(N, C_{out}, L_{out})` 。
 
     pad_mode为"same"时：
 

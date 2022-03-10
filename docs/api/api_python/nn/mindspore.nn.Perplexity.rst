@@ -35,7 +35,7 @@ mindspore.nn.Perplexity
 
         **参数：**
 
-        - **inputs** - 输入 `preds` 和 `labels` 。 `preds` 和 `labels` 是Tensor、list或numpy.ndarray。 `preds` 是预测值， `labels` 是数据的标签。 `preds` 和 `labels` 的shape都是:math:`(N, C)`。
+        - **inputs** - 输入 `preds` 和 `labels` 。 `preds` 和 `labels` 是Tensor、list或numpy.ndarray。 `preds` 是预测值， `labels` 是数据的标签。 `preds` 和 `labels` 的shape都是 :math:`(N, C)` 。
 
         **异常：**
 

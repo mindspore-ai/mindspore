@@ -17,7 +17,7 @@ mindspore.ops.ScatterNd
 
     在秩为3的第一个维度中插入两个新值矩阵的计算过程如下图所示：
 
-    .. image:: api_img/ScatterNd.png
+    .. image:: ScatterNd.png
 
     **输入：**
 

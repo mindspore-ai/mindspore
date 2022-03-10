@@ -29,6 +29,10 @@ mindspore.train.callback
 
 .. include:: train/mindspore.train.callback.SummaryLandscape.rst
 
+.. include:: train/mindspore.train.callback.History.rst
+
+.. include:: train/mindspore.train.callback.LambdaCallback.rst
+
 .. automodule:: mindspore.train.callback
     :exclude-members: FederatedLearningManager
     :members:
