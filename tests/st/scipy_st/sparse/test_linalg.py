@@ -21,9 +21,8 @@ import mindspore.ops as ops
 import mindspore.nn as nn
 import mindspore.scipy as msp
 from mindspore import context
-from mindspore.common import Tensor, CSRTensor
-from tests.st.scipy_st.utils import create_sym_pos_matrix, create_full_rank_matrix, create_sym_pos_sparse_matrix, \
-    to_tensor
+from mindspore.common import Tensor
+from tests.st.scipy_st.utils import create_sym_pos_matrix, create_full_rank_matrix, to_tensor
 
 
 def _fetch_preconditioner(preconditioner, A):
@@ -48,14 +47,15 @@ def _fetch_preconditioner(preconditioner, A):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype, tol', [(onp.float32, 1e-5), (onp.float64, 1e-12)])
-@pytest.mark.parametrize('shape', [(4, 4), (7, 7)])
+@pytest.mark.parametrize('tensor_type, dtype, tol', [('Tensor', onp.float32, 1e-5), ('Tensor', onp.float64, 1e-12),
+                                                     ('CSRTensor', onp.float32, 1e-5)])
+@pytest.mark.parametrize('shape', [(7, 7)])
 @pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
-@pytest.mark.parametrize('maxiter', [1, 3])
-def test_cg_against_scipy(dtype, tol, shape, preconditioner, maxiter):
+@pytest.mark.parametrize('maxiter', [3, None])
+def test_cg_against_scipy(tensor_type, dtype, tol, shape, preconditioner, maxiter):
     """
     Feature: ALL TO ALL
-    Description: test cases for cg
+    Description: test cases for cg using function way in pynative/graph mode
     Expectation: the result match scipy
     """
     onp.random.seed(0)
@@ -64,9 +64,9 @@ def test_cg_against_scipy(dtype, tol, shape, preconditioner, maxiter):
     m = _fetch_preconditioner(preconditioner, a)
     osp_res = scipy.sparse.linalg.cg(a, b, M=m, maxiter=maxiter, atol=tol, tol=tol)
 
-    a = Tensor(a)
+    a = to_tensor((a, tensor_type))
     b = Tensor(b)
-    m = Tensor(m) if m is not None else m
+    m = to_tensor((m, tensor_type)) if m is not None else m
 
     # using PYNATIVE MODE
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -117,17 +117,17 @@ def test_cg_against_numpy(dtype, shape):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype, tol', [(onp.float32, 1e-5), (onp.float64, 1e-12)])
+@pytest.mark.parametrize('tensor_type, dtype, tol', [('Tensor', onp.float32, 1e-5), ('Tensor', onp.float64, 1e-12),
+                                                     ('CSRTensor', onp.float32, 1e-5)])
 @pytest.mark.parametrize('shape', [(7, 7)])
 @pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
-@pytest.mark.parametrize('maxiter', [3])
-def test_cg_against_scipy_graph(dtype, tol, shape, preconditioner, maxiter):
+@pytest.mark.parametrize('maxiter', [3, None])
+def test_cg_against_scipy_graph(tensor_type, dtype, tol, shape, preconditioner, maxiter):
     """
     Feature: ALL TO ALL
-    Description: test cases for cg within Cell object
+    Description: test cases for cg within Cell object in pynative/graph mode
     Expectation: the result match scipy
     """
-    context.set_context(mode=context.GRAPH_MODE)
 
     class Net(nn.Cell):
         def construct(self, a, b, m, maxiter, tol):
@@ -139,52 +139,23 @@ def test_cg_against_scipy_graph(dtype, tol, shape, preconditioner, maxiter):
     m = _fetch_preconditioner(preconditioner, a)
     osp_res = scipy.sparse.linalg.cg(a, b, M=m, maxiter=maxiter, atol=tol, tol=tol)
 
-    a = Tensor(a)
+    a = to_tensor((a, tensor_type))
     b = Tensor(b)
-    m = Tensor(m) if m is not None else m
-    msp_res = Net()(a, b, m, maxiter, tol)
+    m = to_tensor((m, tensor_type)) if m is not None else m
 
-    kw = {"atol": tol, "rtol": tol}
-    onp.testing.assert_allclose(osp_res[0], msp_res[0].asnumpy(), **kw)
-    assert osp_res[1] == msp_res[1].asnumpy().item()
+    # using PYNATIVE MODE
+    context.set_context(mode=context.PYNATIVE_MODE)
+    msp_res_dyn = Net()(a, b, m, maxiter, tol)
 
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype, tol', [(onp.float32, 1e-5)])
-@pytest.mark.parametrize('shape', [(7, 7)])
-@pytest.mark.parametrize('preconditioner', [None, 'identity', 'random'])
-@pytest.mark.parametrize('maxiter', [3])
-def test_cg_against_scipy_sparse(dtype, tol, shape, preconditioner, maxiter):
-    """
-    Feature: ALL TO ALL
-    Description: test cases of CSRTensor for cg
-    Expectation: the result match scipy.
-    """
+    # using GRAPH MODE
     context.set_context(mode=context.GRAPH_MODE)
-
-    class Net(nn.Cell):
-        def construct(self, a, b, m, maxiter, tol):
-            return msp.sparse.linalg.cg(a, b, M=m, maxiter=maxiter, atol=tol, tol=tol)
-
-    onp.random.seed(0)
-
-    # scipy
-    a = create_sym_pos_sparse_matrix(shape, dtype)
-    b = onp.random.random(shape[:1]).astype(dtype)
-    m = _fetch_preconditioner(preconditioner, a)
-    osp_res = scipy.sparse.linalg.cg(a, b, M=m, maxiter=maxiter, atol=tol, tol=tol)
-
-    # mindspore
-    a = CSRTensor(Tensor(a.indptr), Tensor(a.indices), Tensor(a.data), shape)
-    b = Tensor(b)
-    m = Tensor(m) if m is not None else m
-    msp_res = Net()(a, b, m, maxiter, tol)
+    msp_res_sta = Net()(a, b, m, maxiter, tol)
 
     kw = {"atol": tol, "rtol": tol}
-    onp.testing.assert_allclose(osp_res[0], msp_res[0].asnumpy(), **kw)
-    assert osp_res[1] == msp_res[1].asnumpy().item()
+    onp.testing.assert_allclose(osp_res[0], msp_res_dyn[0].asnumpy(), **kw)
+    onp.testing.assert_allclose(osp_res[0], msp_res_sta[0].asnumpy(), **kw)
+    assert osp_res[1] == msp_res_dyn[1].asnumpy().item()
+    assert osp_res[1] == msp_res_sta[1].asnumpy().item()
 
 
 @pytest.mark.level0

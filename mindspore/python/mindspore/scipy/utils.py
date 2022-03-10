@@ -164,30 +164,36 @@ def _sparse_check(func_name, a, m, b, x0):
     _mstype_check(func_name, x0, mstype.tensor_type, 'x0')
 
     # Checking shape and dtype
-    if b.ndim != 1 or (b.ndim == 2 and b.shape[1] != 1):
+    if (b.ndim != 1 and b.ndim != 2) or (b.ndim == 2 and b.shape[1] != 1):
         _raise_value_error(
-            "For: '", func_name, "', the shape of b should be like (N,) or (N, 1), bug got ", b.shape, ".")
+            "For: '", func_name, "', the shape of 'b' should be like (N,) or (N, 1), bug got ", b.shape, ".")
+    if (x0.ndim != 1 and x0.ndim != 2) or (x0.ndim == 2 and x0.shape[1] != 1):
+        _raise_value_error(
+            "For: '", func_name, "', the shape of 'x0' should be like (N,) or (N, 1), bug got ", x0.shape, ".")
     _dtype_check(func_name, b, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b')
-    _super_check((b.dtype, x0.dtype), (func_name, 'b', 'x0', 'data type'), '==', 'match', None, True)
-    _super_check((b.shape, x0.shape), (func_name, 'b', 'x0', 'shape'), '==', 'match', None, True)
+    _dtype_check(func_name, x0, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'x0')
 
     def _check(arg, arg_name):
         if _callable_const(F.typeof(arg)):
             return arg
 
-        _solve_check(func_name, arg, b, arg_name, 'b', True)
         if isinstance(arg, CSRTensor):
             _dtype_check(func_name, arg.indptr, [mstype.int32], arg_name)
             _dtype_check(func_name, arg.indices, [mstype.int32], arg_name)
             _dtype_check(func_name, arg.values, [mstype.float32], arg_name)
         else:
             _dtype_check(func_name, arg, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], arg_name)
-            if F.dtype(arg) in (mstype.int32, mstype.int64):
-                arg = F.cast(arg, mstype.float64)
+
+        _solve_check(func_name, arg, b, arg_name, 'b', True)
+        _solve_check(func_name, arg, x0, arg_name, 'x0', True)
+        if isinstance(arg, Tensor) and F.dtype(arg) in (mstype.int32, mstype.int64):
+            arg = F.cast(arg, mstype.float64)
         return arg
 
     a = _check(a, 'A')
     m = _check(m, 'M')
+    b = b.ravel()
+    x0 = x0.ravel()
     if F.dtype(b) in (mstype.int32, mstype.int64):
         b = F.cast(b, mstype.float64)
         x0 = F.cast(x0, mstype.float64)

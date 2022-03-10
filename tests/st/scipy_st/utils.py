@@ -14,18 +14,17 @@
 # ============================================================================
 """utility functions for mindspore.scipy st tests"""
 from typing import List
-from functools import cmp_to_key, partial
+from functools import cmp_to_key
 
 import numpy as onp
 import scipy as osp
-import scipy.sparse.linalg
 from mindspore import Tensor, CSRTensor
 import mindspore.ops as ops
 import mindspore.numpy as mnp
 from mindspore.common import dtype as mstype
 
 
-def to_tensor(obj, dtype=None):
+def to_tensor(obj, dtype=None, indice_dtype=onp.int32):
     """
     This function is used to initialize Tensor or CSRTensor.
     'obj' can be three type:
@@ -45,13 +44,14 @@ def to_tensor(obj, dtype=None):
         dtype = obj.dtype
 
     if isinstance(obj, onp.ndarray):
-        tensor_fn = partial(Tensor, input_data=obj.astype(dtype))
-    else:
-        tensor_fn = partial(CSRTensor, indptr=Tensor(obj.indptr), indices=Tensor(obj.indices),
-                            values=Tensor(obj.data.astype(dtype)), shape=obj.shape)
+        obj = Tensor(obj.astype(dtype))
+    elif isinstance(obj, osp.sparse.csr_matrix):
+        obj = CSRTensor(indptr=Tensor(obj.indptr.astype(indice_dtype)),
+                        indices=Tensor(obj.indices.astype(indice_dtype)),
+                        values=Tensor(obj.data.astype(dtype)),
+                        shape=obj.shape)
 
-    res = tensor_fn()
-    return res
+    return obj
 
 
 def match_array(actual, expected, error=0, err_msg=''):
@@ -115,18 +115,6 @@ def create_sym_pos_matrix(shape, dtype):
     n = shape[-1]
     x = onp.random.random(shape)
     return (onp.matmul(x, x.T) + onp.eye(n)).astype(dtype)
-
-
-def create_sym_pos_sparse_matrix(shape, dtype, indice_dtype=onp.int32):
-    if len(shape) != 2 or shape[0] != shape[1]:
-        raise ValueError(
-            'Symmetric positive definite matrix must be a square matrix, but has shape: ', shape)
-
-    n = shape[-1]
-    indptr = onp.arange(n + 1).astype(indice_dtype)
-    indices = onp.arange(n).astype(indice_dtype)
-    values = onp.random.random(n).astype(dtype)
-    return scipy.sparse.csr_matrix((values, indices, indptr), shape=shape)
 
 
 def gradient_check(x, net, epsilon=1e-3, symmetric=False, enumerate_fn=onp.ndenumerate):
