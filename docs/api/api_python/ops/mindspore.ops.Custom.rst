@@ -1,7 +1,7 @@
 mindspore.ops.Custom
 =====================
 
-.. py:class:: mindspore.ops.Custom(exclusive=False, reverse=False)
+.. py:class:: mindspore.ops.Custom(func, bprop=None, out_dtype=None, func_type="hybrid", out_shape=None, reg_info=None)
 
     `Custom` 算子是MindSpore自定义算子的统一接口。用户可以利用该接口自行定义MindSpore内置算子库尚未包含的算子。
     根据输入函数的不用，你可以创建多个自定义算子，并且把它们用在神经网络中。

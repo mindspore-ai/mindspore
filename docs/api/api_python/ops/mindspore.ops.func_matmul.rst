@@ -14,7 +14,7 @@ mindspore.ops.matmul
     - **x2** (Tensor) - 输入Tensor，不支持Scalar， `x1` 的最后一维度和 `x2` 的倒数第二维度相等，且 `x1` 和 `x2` 彼此支持广播。
     - **dtype** (:class:mindspore.dtype, optional) - 指定输入Tensor的数据类型，默认：None。
 
-    **输出：**
+    **返回：**
 
     Tensor或Scalar，矩阵乘积的输入。当 `x1` 和 `x2` 为一维向量时，输入为Scalar。
 

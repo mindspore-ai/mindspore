@@ -1,7 +1,7 @@
 mindspore.ops.OneHot
 ====================
 
-.. py:class:: mindspore.ops.OneHot(axis=-1))
+.. py:class:: mindspore.ops.OneHot(axis=-1)
 
     返回一个one-hot类型的Tensor。
 
