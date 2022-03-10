@@ -38,8 +38,7 @@
 #include "minddata/dataset/util/status.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/cache/dataset_cache_impl.h"
-#include "minddata/dataset/text/sentence_piece_vocab.h"
-#include "minddata/dataset/text/vocab.h"
+#include "minddata/dataset/include/dataset/text.h"
 #endif
 
 // Sampler headers (in alphabetical order)

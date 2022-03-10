@@ -23,7 +23,6 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/include/dataset/constants.h"
-#include "minddata/dataset/text/sentence_piece_vocab.h"
 #include "minddata/dataset/util/path.h"
 
 // IR non-leaf nodes

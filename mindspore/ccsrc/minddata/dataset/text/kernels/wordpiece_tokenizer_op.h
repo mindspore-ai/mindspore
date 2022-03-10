@@ -23,9 +23,9 @@
 #include "cppjieba/Unicode.hpp"
 
 #include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/text/kernels/tokenizer_op.h"
-#include "minddata/dataset/text/vocab.h"
 #include "minddata/dataset/util/status.h"
 
 using cppjieba::DecodeRunesInString;

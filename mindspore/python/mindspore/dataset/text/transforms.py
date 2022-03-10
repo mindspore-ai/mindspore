@@ -47,7 +47,7 @@ import numpy as np
 import mindspore._c_dataengine as cde
 from mindspore.common import dtype as mstype
 
-from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType
+from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType, SentencePieceVocab
 from .validators import check_lookup, check_jieba_add_dict, check_to_vectors, \
     check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer, \
     check_wordpiece_tokenizer, check_regex_replace, check_regex_tokenizer, check_basic_tokenizer, check_ngram, \
@@ -386,6 +386,7 @@ class SentencePieceTokenizer(TextTensorOperation):
         self.out_type = out_type
 
     def parse(self):
+        self.mode = self.mode.c_sentence_piece_vocab if isinstance(self.mode, SentencePieceVocab) else self.mode
         return cde.SentencePieceTokenizerOperation(self.mode, DE_C_INTER_SENTENCEPIECE_OUTTYPE[self.out_type])
 
 

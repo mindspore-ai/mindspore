@@ -22,7 +22,6 @@
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/include/dataset/transforms.h"
-#include "minddata/dataset/text/vocab.h"
 
 using namespace mindspore::dataset;
 using mindspore::Status;
@@ -42,7 +41,7 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
   } while (false)
 
 /// Feature: C++ text.Vocab class.
-/// Description: test Lookup() ReverseLookup() methods of text::Vocab.
+/// Description: test TokensToIds() IdsToTokens() methods of text::Vocab.
 /// Expectation: success.
 TEST_F(MindDataTestPipeline, TestVocabLookupAndReverseLookup) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupAndReverseLookup.";
@@ -53,30 +52,30 @@ TEST_F(MindDataTestPipeline, TestVocabLookupAndReverseLookup) {
   EXPECT_EQ(s, Status::OK());
 
   // lookup, convert token to id
-  auto single_index = vocab->Lookup("home");
+  auto single_index = vocab->TokensToIds("home");
   EXPECT_EQ(single_index, 2);
-  single_index = vocab->Lookup("hello");
+  single_index = vocab->TokensToIds("hello");
   EXPECT_EQ(single_index, -1);
 
   // lookup multiple tokens
-  auto multi_indexs = vocab->Lookup(std::vector<std::string>{"<pad>", "behind"});
+  auto multi_indexs = vocab->TokensToIds(std::vector<std::string>{"<pad>", "behind"});
   std::vector<int32_t> expected_multi_indexs = {0, 4};
   EXPECT_EQ(multi_indexs, expected_multi_indexs);
-  multi_indexs = vocab->Lookup(std::vector<std::string>{"<pad>", "apple"});
+  multi_indexs = vocab->TokensToIds(std::vector<std::string>{"<pad>", "apple"});
   expected_multi_indexs = {0, -1};
   EXPECT_EQ(multi_indexs, expected_multi_indexs);
 
   // reverse lookup, convert id to token
-  auto single_word = vocab->ReverseLookup(2);
+  auto single_word = vocab->IdsToTokens(2);
   EXPECT_EQ(single_word, "home");
-  single_word = vocab->ReverseLookup(-1);
+  single_word = vocab->IdsToTokens(-1);
   EXPECT_EQ(single_word, "");
 
   // reverse lookup multiple ids
-  auto multi_words = vocab->ReverseLookup(std::vector<int32_t>{0, 4});
+  auto multi_words = vocab->IdsToTokens(std::vector<int32_t>{0, 4});
   std::vector<std::string> expected_multi_words = {"<pad>", "behind"};
   EXPECT_EQ(multi_words, expected_multi_words);
-  multi_words = vocab->ReverseLookup(std::vector<int32_t>{0, 99});
+  multi_words = vocab->IdsToTokens(std::vector<int32_t>{0, 99});
   expected_multi_words = {"<pad>", ""};
   EXPECT_EQ(multi_words, expected_multi_words);
 }
@@ -330,7 +329,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
   EXPECT_NE(vocab, nullptr);
 
   // Check if vocab has words or not
-  int32_t home_index = vocab->Lookup("home");
+  int32_t home_index = vocab->TokensToIds("home");
   EXPECT_EQ(home_index, 4);
 
   // Create Lookup operation on ds
@@ -386,7 +385,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
   EXPECT_NE(vocab, nullptr);
 
   // Check if vocab has words or not
-  int32_t home_index = vocab->Lookup("home");
+  int32_t home_index = vocab->TokensToIds("home");
   EXPECT_EQ(home_index, 2);
 
   // Create Lookup operation on ds
@@ -509,7 +508,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
   EXPECT_NE(vocab, nullptr);
 
   // Check if vocab has words or not
-  int32_t home_index = vocab->Lookup("home");
+  int32_t home_index = vocab->TokensToIds("home");
   EXPECT_EQ(home_index, 2);
 
   // Create Lookup operation on ds

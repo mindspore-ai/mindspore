@@ -28,9 +28,9 @@
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
+#include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/queue.h"
-#include "minddata/dataset/text/sentence_piece_vocab.h"
 #include "pybind11/pybind11.h"
 
 namespace mindspore {
@@ -54,7 +54,7 @@ class BuildSentencePieceVocabOp : public PipelineOp {
     BuildSentencePieceVocabOp *s_p_vocab_ptr_;
   };
 
-  BuildSentencePieceVocabOp(std::shared_ptr<SentencePieceVocab> vocab, std::vector<std::string> col_names,
+  BuildSentencePieceVocabOp(std::shared_ptr<dataset::SentencePieceVocab> vocab, std::vector<std::string> col_names,
                             int32_t vocab_size, float character_coverage, SentencePieceModel model_type,
                             const std::unordered_map<std::string, std::string> &params, int32_t op_conn_size);
 

@@ -30,7 +30,7 @@ Status LookupOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   std::vector<WordIdType> word_ids;
   word_ids.reserve(input->Size());
   for (auto itr = input->begin<std::string_view>(); itr != input->end<std::string_view>(); ++itr) {
-    WordIdType word_id = vocab_->Lookup(std::string(*itr));
+    WordIdType word_id = vocab_->TokensToIds(std::string(*itr));
     word_ids.emplace_back(word_id == Vocab::kNoTokenExists ? default_id_ : word_id);
     CHECK_FAIL_RETURN_UNEXPECTED(word_ids.back() != Vocab::kNoTokenExists,
                                  "Lookup: invalid data, token: \"" + std::string(*itr) +

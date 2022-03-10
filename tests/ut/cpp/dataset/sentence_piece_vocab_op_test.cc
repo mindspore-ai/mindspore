@@ -19,7 +19,7 @@
 #include "common/common.h"
 #include "minddata/dataset/engine/datasetops/build_sentence_piece_vocab_op.h"
 #include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
-#include "minddata/dataset/text/sentence_piece_vocab.h"
+#include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"

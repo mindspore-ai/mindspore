@@ -24,7 +24,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/tree_adapter.h"
-#include "minddata/dataset/text/vocab.h"
+#include "minddata/dataset/include/dataset/text.h"
 
 namespace mindspore::dataset {
 // Forward declare

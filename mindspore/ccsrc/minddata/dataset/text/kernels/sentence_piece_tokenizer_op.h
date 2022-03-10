@@ -24,10 +24,10 @@
 #include <memory>
 
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/text/sentence_piece_vocab.h"
 
 namespace mindspore {
 namespace dataset {

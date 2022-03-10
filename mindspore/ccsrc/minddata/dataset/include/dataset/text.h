@@ -20,6 +20,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -30,10 +31,204 @@
 
 namespace mindspore {
 namespace dataset {
-class SentencePieceVocab;
 class TensorOperation;
 class Vectors;
-class Vocab;
+
+using WordIdType = int32_t;
+using WordType = std::string;
+
+/// \brief Vocab object that is used to save pairs of words and ids.
+/// \note It contains a map that maps each word(str) to an id(int) or reverse.
+class Vocab {
+ public:
+  /// \brief Build a vocab from an unordered_map. IDs should be no duplicate and continuous.
+  /// \param[in] words An unordered_map containing word id pair.
+  /// \param[out] vocab A vocab object.
+  /// \return Status code.
+  /// \par Example
+  /// \code
+  ///     // Build a map
+  ///     std::unordered_map<std::string, int32_t> dict;
+  ///     dict["banana"] = 0;
+  ///     dict["apple"] = 1;
+  ///     dict["cat"] = 2;
+  ///     dict["dog"] = 3;
+  ///     // Build vocab from map
+  ///     std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  ///     Status s = Vocab::BuildFromUnorderedMap(dict, &vocab);
+  /// \endcode
+  static Status BuildFromUnorderedMap(const std::unordered_map<WordType, WordIdType> &words,
+                                      std::shared_ptr<Vocab> *vocab);
+
+  /// \brief Build a vocab from a c++ vector. id no duplicate and continuous.
+  /// \param[in] words A vector of string containing words.
+  /// \param[in] special_tokens A vector of string containing special tokens.
+  /// \param[in] prepend_special Whether the special_tokens will be prepended/appended to vocab.
+  /// \param[out] vocab A vocab object.
+  /// \return Status code.
+  /// \par Example
+  /// \code
+  ///     // Build vocab from a vector of words, special tokens are prepended to vocab
+  ///     std::vector<std::string> list = {"apple", "banana", "cat", "dog", "egg"};
+  ///     std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  ///     Status s = Vocab::BuildFromVector(list, {"<unk>"}, true, &vocab);
+  /// \endcode
+  static Status BuildFromVector(const std::vector<WordType> &words, const std::vector<WordType> &special_tokens,
+                                bool prepend_special, std::shared_ptr<Vocab> *vocab);
+
+  /// \brief Build a vocab from vocab file, IDs will be automatically assigned.
+  /// \param[in] path Path to vocab file, each line in file is assumed as a word (including space).
+  /// \param[in] delimiter Delimiter to break each line, characters after the delimiter will be deprecated.
+  /// \param[in] vocab_size Number of lines to be read from file.
+  /// \param[in] special_tokens A vector of string containing special tokens.
+  /// \param[in] prepend_special Whether the special_tokens will be prepended/appended to vocab.
+  /// \param[out] vocab A vocab object.
+  /// \return Status code.
+  /// \par Example
+  /// \code
+  ///     // Build vocab from local file
+  ///     std::string vocab_dir = datasets_root_path_ + "/testVocab/vocab_list.txt";
+  ///     std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  ///     Status s = Vocab::BuildFromFile(vocab_dir, ",", -1, {"<pad>", "<unk>"}, true, &vocab);
+  /// \endcode
+  static Status BuildFromFile(const std::string &path, const std::string &delimiter, int32_t vocab_size,
+                              const std::vector<WordType> &special_tokens, bool prepend_special,
+                              std::shared_ptr<Vocab> *vocab);
+
+  /// Lookup the id of a word, if the word doesn't exist in vocab, return -1.
+  /// \param word Word to be looked up.
+  /// \return ID of the word in the vocab.
+  /// \par Example
+  /// \code
+  ///     // lookup, convert token to id
+  ///     auto single_index = vocab->TokensToIds("home");
+  ///     single_index = vocab->TokensToIds("hello");
+  /// \endcode
+  WordIdType TokensToIds(const WordType &word) const;
+
+  /// Lookup the id of a word, if the word doesn't exist in vocab, return -1.
+  /// \param words Words to be looked up.
+  /// \return ID of the word in the vocab.
+  /// \par Example
+  /// \code
+  ///     // lookup multiple tokens
+  ///     auto multi_indexs = vocab->TokensToIds(std::vector<std::string>{"<pad>", "behind"});
+  ///     std::vector<int32_t> expected_multi_indexs = {0, 4};
+  ///     multi_indexs = vocab->TokensToIds(std::vector<std::string>{"<pad>", "apple"});
+  ///     expected_multi_indexs = {0, -1};
+  /// \endcode
+  std::vector<WordIdType> TokensToIds(const std::vector<WordType> &words) const;
+
+  /// Lookup the word of an ID, if ID doesn't exist in vocab, return empty string.
+  /// \param id ID to be looked up.
+  /// \return Indicates the word corresponding to the ID.
+  /// \par Example
+  /// \code
+  ///     // reverse lookup, convert id to token
+  ///     auto single_word = vocab->IdsToTokens(2);
+  ///     single_word = vocab->IdsToTokens(-1);
+  /// \endcode
+  WordType IdsToTokens(const WordIdType &id);
+
+  /// Lookup the word of an ID, if ID doesn't exist in vocab, return empty string.
+  /// \param ids ID to be looked up.
+  /// \return Indicates the word corresponding to the ID.
+  /// \par Example
+  /// \code
+  ///     // reverse lookup multiple ids
+  ///     auto multi_words = vocab->IdsToTokens(std::vector<int32_t>{0, 4});
+  ///     std::vector<std::string> expected_multi_words = {"<pad>", "behind"};
+  ///     multi_words = vocab->IdsToTokens(std::vector<int32_t>{0, 99});
+  ///     expected_multi_words = {"<pad>", ""};
+  /// \endcode
+  std::vector<WordType> IdsToTokens(const std::vector<WordIdType> &ids);
+
+  /// Constructor, shouldn't be called directly, can't be private due to std::make_unique().
+  /// \param map Sanitized word2id map.
+  explicit Vocab(std::unordered_map<WordType, WordIdType> map);
+
+  /// \brief Add one word to vocab, increment it's index automatically.
+  /// \param word Word to be added, word will skip if word already exists.
+  void AppendWord(const std::string &word);
+
+  /// \brief Return a read-only vocab in unordered_map type.
+  /// \return A unordered_map of word2id.
+  const std::unordered_map<WordType, WordIdType> &GetVocab() { return word2id_; }
+
+  /// \brief Constructor.
+  Vocab() = default;
+
+  /// \brief Destructor.
+  ~Vocab() = default;
+
+  static const WordIdType kNoTokenExists;
+  static const WordType kNoIdExists;
+
+ private:
+  std::unordered_map<WordType, WordIdType> word2id_;
+  std::unordered_map<WordIdType, WordType> id2word_;
+};
+
+/// \brief SentencePiece object that is used to do words segmentation.
+class SentencePieceVocab {
+ public:
+  /// \brief Build a SentencePiece object from a file.
+  /// \param[in] path_list Path to the file which contains the SentencePiece list.
+  /// \param[in] vocab_size Vocabulary size.
+  /// \param[in] character_coverage Amount of characters covered by the model, good defaults are: 0.9995 for
+  ///              languages with rich character set like Japanese or Chinese and 1.0 for other languages with small
+  ///              character set.
+  /// \param[in] model_type It can be any of [SentencePieceModel.UNIGRAM, SentencePieceModel.BPE,
+  ///              SentencePieceModel.CHAR, SentencePieceModel.WORD], default is SentencePieceModel.UNIGRAM. The input
+  ///              sentence must be pre-tokenized when using SentencePieceModel.WORD type.
+  ///              - SentencePieceModel.UNIGRAM, Unigram Language Model means the next word in the sentence is assumed
+  ///                to be independent of the previous words generated by the model.
+  ///              - SentencePieceModel.BPE, refers to byte pair encoding algorithm, which replaces the most frequent
+  ///                pair of bytes in a sentence with a single, unused byte.
+  ///              - SentencePieceModel.CHAR, refers to char based sentencePiece Model type.
+  ///              - SentencePieceModel.WORD, refers to word based sentencePiece Model type.
+  /// \param[in] params A dictionary with no incoming parameters(The parameters are derived from SentencePiece library).
+  /// \return SentencePieceVocab, vocab built from the file.
+  /// \par Example
+  /// \code
+  ///     std::string dataset_path;
+  ///     dataset_path = datasets_root_path_ + "/test_sentencepiece/botchan.txt";
+  ///     std::vector<std::string> path_list;
+  ///     path_list.emplace_back(dataset_path);
+  ///     std::unordered_map<std::string, std::string> param_map;
+  ///     std::shared_ptr<SentencePieceVocab> spm = std::make_unique<SentencePieceVocab>();
+  ///     Status rc = SentencePieceVocab::BuildFromFile(path_list, 5000, 0.9995,
+  ///                                                   SentencePieceModel::kUnigram, param_map, &spm);
+  /// \endcode
+  static Status BuildFromFile(const std::vector<std::string> &path_list, const int32_t vocab_size,
+                              const float character_coverage, const SentencePieceModel model_type,
+                              const std::unordered_map<std::string, std::string> &params,
+                              std::shared_ptr<SentencePieceVocab> *vocab);
+
+  /// \brief Save the SentencePiece model into given file path.
+  /// \param[in] vocab A SentencePiece object to be saved.
+  /// \param[in] path Path to store the model.
+  /// \param[in] filename The save name of model file.
+  /// \par Example
+  /// \code
+  ///     // Save vocab model to local
+  ///     vocab->SaveModel(&vocab, datasets_root_path_ + "/test_sentencepiece", "m.model");
+  /// \endcode
+  static Status SaveModel(const std::shared_ptr<SentencePieceVocab> *vocab, std::string path, std::string filename);
+
+  /// \brief Constructor.
+  SentencePieceVocab();
+
+  /// \brief Destructor.
+  ~SentencePieceVocab() = default;
+
+  const std::string &model_proto();
+
+  void set_model_proto(const std::string model_proto);
+
+ private:
+  std::string model_proto_;
+};
 
 // Transform operations for text
 namespace text {
@@ -414,7 +609,7 @@ class MS_API NormalizeUTF8 final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] normalize_form Valid values can be any of [NormalizeForm::kNone,NormalizeForm::kNfc,
   ///   NormalizeForm::kNfkc, NormalizeForm::kNfd, NormalizeForm::kNfkd](default=NormalizeForm::kNfkc).
-  ///   See http://unicode.org/reports/tr15/ for details.
+  ///   See <http://unicode.org/reports/tr15/> for details.
   ///   - NormalizeForm.kNone, remain the input string tensor unchanged.
   ///   - NormalizeForm.kNfc, normalizes with Normalization Form C.
   ///   - NormalizeForm.kNfkc, normalizes with Normalization Form KC.

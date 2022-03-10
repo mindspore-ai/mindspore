@@ -27,7 +27,6 @@
 #include "minddata/dataset/text/fast_text.h"
 #include "minddata/dataset/text/glove.h"
 #include "minddata/dataset/text/vectors.h"
-#include "minddata/dataset/text/vocab.h"
 
 using namespace mindspore::dataset;
 using mindspore::Status;
@@ -797,7 +796,7 @@ TEST_F(MindDataTestPipeline, TestFilterWikipediaXMLSuccess) {
   // Iterate the dataset and get each row
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
-  std::vector<std::string> expected = {"welcome to beijing","",""};
+  std::vector<std::string> expected = {"welcome to beijing", "", ""};
 
   uint64_t i = 0;
 
@@ -806,7 +805,7 @@ TEST_F(MindDataTestPipeline, TestFilterWikipediaXMLSuccess) {
     std::shared_ptr<Tensor> de_expected_tensor;
     ASSERT_OK(Tensor::CreateScalar(expected[i], &de_expected_tensor));
     mindspore::MSTensor ms_expected_tensor =
-    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
@@ -1709,8 +1708,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail1) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number =
-    std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt8);
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt8);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1760,7 +1758,8 @@ TEST_F(MindDataTestPipeline, TestToNumberFail2) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeFloat16);
+  std::shared_ptr<TensorTransform> to_number =
+    std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeFloat16);
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -2143,8 +2142,7 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess1) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   std::vector<std::vector<std::string>> expected = {
-    {"&-This", "This-is", "is-a", "a-text", "text-file.", "file.-&", "&-&-This", "&-This-is", "This-is-a",
-     "is-a-text",
+    {"&-This", "This-is", "is-a", "a-text", "text-file.", "file.-&", "&-&-This", "&-This-is", "This-is-a", "is-a-text",
      "a-text-file.", "text-file.-&", "file.-&-&"},
     {"&-Be", "Be-happy", "happy-every", "every-day.", "day.-&", "&-&-Be", "&-Be-happy", "Be-happy-every",
      "happy-every-day.", "every-day.-&", "day.-&-&"},
@@ -4371,8 +4369,7 @@ TEST_F(MindDataTestPipeline, TestGloVeDefaultParam) {
   Status s = GloVe::BuildFromFile(&glove, vectors_dir);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<TensorTransform> lookup =
-    std::make_shared<text::ToVectors>(glove);
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(glove);
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -4388,14 +4385,13 @@ TEST_F(MindDataTestPipeline, TestGloVeDefaultParam) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  std::vector<std::vector<float>> expected = {
-      {0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
-      {0, 0, 0, 0, 0, 0},
-      {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
-      {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
-      {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
-      {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
-      {0, 0, 0, 0, 0, 0}};
+  std::vector<std::vector<float>> expected = {{0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
+                                              {0, 0, 0, 0, 0, 0},
+                                              {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
+                                              {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
+                                              {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
+                                              {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
+                                              {0, 0, 0, 0, 0, 0}};
   while (row.size() != 0) {
     auto ind = row["text"];
     MS_LOG(INFO) << ind.Shape();
@@ -4434,8 +4430,7 @@ TEST_F(MindDataTestPipeline, TestGloVeAllBuildfromfileParams) {
   Status s = GloVe::BuildFromFile(&glove, vectors_dir, 100);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<TensorTransform> lookup =
-    std::make_shared<text::ToVectors>(glove);
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(glove);
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -4451,14 +4446,13 @@ TEST_F(MindDataTestPipeline, TestGloVeAllBuildfromfileParams) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  std::vector<std::vector<float>> expected = {
-      {0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
-      {0, 0, 0, 0, 0, 0},
-      {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
-      {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
-      {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
-      {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
-      {0, 0, 0, 0, 0, 0}};
+  std::vector<std::vector<float>> expected = {{0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
+                                              {0, 0, 0, 0, 0, 0},
+                                              {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
+                                              {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
+                                              {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
+                                              {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
+                                              {0, 0, 0, 0, 0, 0}};
   while (row.size() != 0) {
     auto ind = row["text"];
     MS_LOG(INFO) << ind.Shape();
@@ -4498,8 +4492,7 @@ TEST_F(MindDataTestPipeline, TestGloVeUnknownInit) {
   EXPECT_EQ(s, Status::OK());
 
   std::vector<float> unknown_init = {-1, -1, -1, -1, -1, -1};
-  std::shared_ptr<TensorTransform> lookup =
-    std::make_shared<text::ToVectors>(glove, unknown_init);
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(glove, unknown_init);
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -4515,14 +4508,13 @@ TEST_F(MindDataTestPipeline, TestGloVeUnknownInit) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  std::vector<std::vector<float>> expected = {
-      {0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
-      {-1, -1, -1, -1, -1, -1},
-      {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
-      {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
-      {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
-      {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
-      {-1, -1, -1, -1, -1, -1}};
+  std::vector<std::vector<float>> expected = {{0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
+                                              {-1, -1, -1, -1, -1, -1},
+                                              {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
+                                              {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
+                                              {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
+                                              {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
+                                              {-1, -1, -1, -1, -1, -1}};
   while (row.size() != 0) {
     auto ind = row["text"];
     MS_LOG(INFO) << ind.Shape();
@@ -4562,8 +4554,7 @@ TEST_F(MindDataTestPipeline, TestGloVeAllParams) {
   EXPECT_EQ(s, Status::OK());
 
   std::vector<float> unknown_init = {-1, -1, -1, -1, -1, -1};
-  std::shared_ptr<TensorTransform> lookup =
-    std::make_shared<text::ToVectors>(glove, unknown_init, true);
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::ToVectors>(glove, unknown_init, true);
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -4579,14 +4570,13 @@ TEST_F(MindDataTestPipeline, TestGloVeAllParams) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  std::vector<std::vector<float>> expected = {
-      {0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
-      {-1, -1, -1, -1, -1, -1},
-      {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
-      {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
-      {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
-      {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
-      {-1, -1, -1, -1, -1, -1}};
+  std::vector<std::vector<float>> expected = {{0.418, 0.24968, -0.41242, 0.1217, 0.34527, -0.04445718411},
+                                              {-1, -1, -1, -1, -1, -1},
+                                              {0.15164, 0.30177, -0.16763, 0.17684, 0.31719, 0.33973},
+                                              {0.70853, 0.57088, -0.4716, 0.18048, 0.54449, 0.72603},
+                                              {0.68047, -0.039263, 0.30186, -0.17792, 0.42962, 0.032246},
+                                              {0.26818, 0.14346, -0.27877, 0.016257, 0.11384, 0.69923},
+                                              {-1, -1, -1, -1, -1, -1}};
   while (row.size() != 0) {
     auto ind = row["text"];
     MS_LOG(INFO) << ind.Shape();
@@ -4748,13 +4738,13 @@ TEST_F(MindDataTestPipeline, TestCharNGramDefaultParam) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  std::vector<std::vector<float>> expected = {{0,0,0,0,0},
-                                              {0,0,0,0,0},
-                                              {0.117336,0.362446,-0.983326,0.939264,-0.05648},
-                                              {0.657201,2.11761,-1.59276,0.432072,1.21395},
-                                              {0,0,0,0,0},
-                                              {-2.26956,0.288491,-0.740001,0.661703,0.147355},
-                                              {0,0,0,0,0}};
+  std::vector<std::vector<float>> expected = {{0, 0, 0, 0, 0},
+                                              {0, 0, 0, 0, 0},
+                                              {0.117336, 0.362446, -0.983326, 0.939264, -0.05648},
+                                              {0.657201, 2.11761, -1.59276, 0.432072, 1.21395},
+                                              {0, 0, 0, 0, 0},
+                                              {-2.26956, 0.288491, -0.740001, 0.661703, 0.147355},
+                                              {0, 0, 0, 0, 0}};
   while (row.size() != 0) {
     auto ind = row["text"];
     MS_LOG(INFO) << ind.Shape();
@@ -4810,13 +4800,13 @@ TEST_F(MindDataTestPipeline, TestCharNGramAllBuildfromfileParams) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  std::vector<std::vector<float>> expected = {{0,0,0,0,0},
-                                              {0,0,0,0,0},
-                                              {-0.155665,0.664073,-0.538499,1.22657,-0.2162},
-                                              {0.657201,2.11761,-1.59276,0.432072,1.21395},
-                                              {0,0,0,0,0},
-                                              {-2.26956,0.288491,-0.740001,0.661703,0.147355},
-                                              {0,0,0,0,0}};
+  std::vector<std::vector<float>> expected = {{0, 0, 0, 0, 0},
+                                              {0, 0, 0, 0, 0},
+                                              {-0.155665, 0.664073, -0.538499, 1.22657, -0.2162},
+                                              {0.657201, 2.11761, -1.59276, 0.432072, 1.21395},
+                                              {0, 0, 0, 0, 0},
+                                              {-2.26956, 0.288491, -0.740001, 0.661703, 0.147355},
+                                              {0, 0, 0, 0, 0}};
   while (row.size() != 0) {
     auto ind = row["text"];
     MS_LOG(INFO) << ind.Shape();
@@ -4873,13 +4863,13 @@ TEST_F(MindDataTestPipeline, TestCharNGramUnknownInit) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  std::vector<std::vector<float>> expected = {{-1,-1,-1,-1,-1},
-                                              {-1,-1,-1,-1,-1},
-                                              {-0.155665,0.664073,-0.538499,1.22657,-0.2162},
-                                              {0.657201,2.11761,-1.59276,0.432072,1.21395},
-                                              {-1,-1,-1,-1,-1},
-                                              {-2.26956,0.288491,-0.740001,0.661703,0.147355},
-                                              {-1,-1,-1,-1,-1}};
+  std::vector<std::vector<float>> expected = {{-1, -1, -1, -1, -1},
+                                              {-1, -1, -1, -1, -1},
+                                              {-0.155665, 0.664073, -0.538499, 1.22657, -0.2162},
+                                              {0.657201, 2.11761, -1.59276, 0.432072, 1.21395},
+                                              {-1, -1, -1, -1, -1},
+                                              {-2.26956, 0.288491, -0.740001, 0.661703, 0.147355},
+                                              {-1, -1, -1, -1, -1}};
   while (row.size() != 0) {
     auto ind = row["text"];
     MS_LOG(INFO) << ind.Shape();
@@ -4936,13 +4926,13 @@ TEST_F(MindDataTestPipeline, TestCharNGramAllParams) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   uint64_t i = 0;
-  std::vector<std::vector<float>> expected = {{-1,-1,-1,-1,-1},
-                                              {-1,-1,-1,-1,-1},
-                                              {0.117336,0.362446,-0.983326,0.939264,-0.05648},
-                                              {0.657201,2.11761,-1.59276,0.432072,1.21395},
-                                              {-1,-1,-1,-1,-1},
-                                              {-2.26956,0.288491,-0.740001,0.661703,0.147355},
-                                              {-1,-1,-1,-1,-1}};
+  std::vector<std::vector<float>> expected = {{-1, -1, -1, -1, -1},
+                                              {-1, -1, -1, -1, -1},
+                                              {0.117336, 0.362446, -0.983326, 0.939264, -0.05648},
+                                              {0.657201, 2.11761, -1.59276, 0.432072, 1.21395},
+                                              {-1, -1, -1, -1, -1},
+                                              {-2.26956, 0.288491, -0.740001, 0.661703, 0.147355},
+                                              {-1, -1, -1, -1, -1}};
   while (row.size() != 0) {
     auto ind = row["text"];
     MS_LOG(INFO) << ind.Shape();

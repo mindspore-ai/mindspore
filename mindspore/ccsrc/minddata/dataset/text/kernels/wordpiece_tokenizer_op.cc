@@ -46,7 +46,7 @@ Status WordpieceTokenizerOp::LookupWord(const std::string &input_token, const Ru
     if (start > 0) {
       word = suffix_indicator_ + word;
     }
-    if (vocab_->Lookup(word) != Vocab::kNoTokenExists) {
+    if (vocab_->TokensToIds(word) != Vocab::kNoTokenExists) {
       *out_found = true;
       break;
     }
