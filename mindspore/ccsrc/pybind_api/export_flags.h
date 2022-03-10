@@ -22,6 +22,7 @@ namespace mindspore {
 extern const char PYTHON_PRIMITIVE_FLAG[];
 extern const char PYTHON_CELL_AS_LIST[];
 extern const char PYTHON_DATACLASS_FIELDS[];
+extern const char PYTHON_MS_CLASS[];
 extern const char PYTHON_CLASS_MEMBER_NAMESPACE[];
 }  // namespace mindspore
 

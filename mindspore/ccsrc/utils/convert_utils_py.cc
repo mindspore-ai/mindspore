@@ -220,6 +220,12 @@ static ValueNameToConverterVector value_name_to_converter = {
      auto class_type = value->cast<parse::ClassTypePtr>();
      return class_type->obj();
    }},
+  // parse::MsClassObject
+  {parse::MsClassObject::kTypeId,
+   [](const ValuePtr &value) -> py::object {
+     auto ms_class_object = value->cast<parse::MsClassObjectPtr>();
+     return ms_class_object->obj();
+   }},
   // parse::InterpretedObject
   {parse::InterpretedObject::kTypeId,
    [](const ValuePtr &value) -> py::object {

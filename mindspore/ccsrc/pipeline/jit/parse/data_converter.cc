@@ -253,6 +253,15 @@ ValuePtr ConvertDataClass(const py::object &obj) {
   return converted;
 }
 
+ValuePtr ConvertMsClass(const py::object &obj) {
+  MS_LOG(DEBUG) << "Converting ms class";
+  // Convert class instance decorated with ms_class.
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+  py::object name = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MS_CLASS_NAME, obj);
+  auto cls_name = py::cast<std::string>(name);
+  return std::make_shared<MsClassObject>(obj, cls_name);
+}
+
 ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
   MS_LOG(DEBUG) << "Converting primitive object" << use_signature;
 
@@ -502,6 +511,7 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
     std::make_shared<ByTypeDataConverter<py::ellipsis>>(kEllipsis),
     std::make_shared<ByTypeDataConverter<py::module>>(ConvertModuleNameSpace),
     std::make_shared<ByAttrDataConverter>(PYTHON_DATACLASS_FIELDS, ConvertDataClass),
+    std::make_shared<ByAttrDataConverter>(PYTHON_MS_CLASS, ConvertMsClass),
     std::make_shared<ByTypeDataConverter<Type>>(ObjCast<TypePtr>),
     std::make_shared<ByTypeDataConverter<UMonad>>(ObjCast<UMonadPtr>),
     std::make_shared<ByTypeDataConverter<IOMonad>>(ObjCast<IOMonadPtr>),

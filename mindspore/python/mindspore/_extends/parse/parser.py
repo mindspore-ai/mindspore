@@ -410,6 +410,30 @@ def get_dataclass_methods(cls):
     return methods
 
 
+def get_ms_class_name(cls):
+    """Get the name of the class instance decorated by ms_class."""
+    # Check if cls is nn.Cell.
+    if isinstance(cls, nn.Cell):
+        raise TypeError(f"ms_class is used for user-defined classes and cannot be used for nn.Cell: {cls}.")
+    if isinstance(cls, type):
+        name = cls.__name__
+    else:
+        name = cls.__class__.__name__
+    # Get the name of cls.
+    cls_name = cls.__module__ + '.' + name
+    return cls_name
+
+
+def get_ms_class_attr(cls, name: str):
+    """Get attribute or method of ms_class obj."""
+    # Don't take into account python magic methods and private variables.
+    if name.startswith('_'):
+        raise AttributeError(f"{name} is a private variable or magic method, which is not supported.")
+    if not hasattr(cls, name):
+        raise AttributeError(f"{cls} has no attribute: {name}.")
+    return getattr(cls, name)
+
+
 def convert_to_ms_tensor(data):
     """Convert C++ tensor to mindspore tensor."""
     return Tensor(data)
@@ -562,8 +586,8 @@ def eval_script(exp_str, params):
         local_params = _convert_data(local_params)
         obj = eval(exp_str, global_params, local_params)
     except Exception as e:
-        error_info = f"When eval '{exp_str}' by using Fallback feature, an error occurred: " + str(e) + \
-            ". You can try to turn off the Fallback feature by 'export MS_DEV_ENABLE_FALLBACK=0'."
+        error_info = f"When eval '{exp_str}' by using JIT Fallback feature, an error occurred: " + str(e) + \
+            ". You can try to turn off JIT Fallback feature by 'export MS_DEV_ENABLE_FALLBACK=0'."
         logger.error(error_info)
         raise e
 
