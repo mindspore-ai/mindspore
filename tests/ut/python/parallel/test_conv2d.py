@@ -100,6 +100,21 @@ def test_conv2d_pad_mode():
     compile_net(net, _x3)
 
 
+def test_conv2d_valid_mode_output_shape_cannot_div_by_strategy():
+    """
+    Feature: test conv2d valid mode, and output shape can not div by strategy
+    Description: shard w
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 1),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="valid", stride=4,
+              strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _x3)
+
+
 def test_conv2d_data_parallel_invalid_stride():
     """
     Feature: test conv2d invalid stride
