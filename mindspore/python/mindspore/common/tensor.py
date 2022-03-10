@@ -14,17 +14,18 @@
 # ============================================================================
 """Tensor implementation."""
 import numbers
+
 import numpy as np
+from mindspore.communication.management import get_rank, get_group_size
 
 from mindspore import log as logger
-from mindspore.communication.management import get_rank, get_group_size
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
-from .._c_expression import Tensor as Tensor_
-from .._c_expression import CSRTensor as CSRTensor_
 from .._c_expression import COOTensor as COOTensor_
-from .._checkparam import Validator as validator
+from .._c_expression import CSRTensor as CSRTensor_
+from .._c_expression import Tensor as Tensor_
 from .._checkparam import Rel
+from .._checkparam import Validator as validator
 
 __all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
@@ -221,6 +222,21 @@ class Tensor(Tensor_):
             return bool(data[0])
         raise ValueError("The truth value of an array with several elements is ambiguous.")
 
+    def _convert_scalar_(self, data, func, message):
+        if data.shape == ():
+            return func(data)
+        if data.shape == (1,):
+            return func(data[0])
+        raise ValueError(message)
+
+    def __int__(self):
+        data = self.asnumpy()
+        return self._convert_scalar_(data, int, "only one element tensors can be converted to Python scalars")
+
+    def __float__(self):
+        data = self.asnumpy()
+        return self._convert_scalar_(data, float, "only one element tensors can be converted to Python scalars")
+
     def __index__(self):
         data = self.asnumpy()
         if not (data.dtype == "int8"
@@ -229,14 +245,14 @@ class Tensor(Tensor_):
                 or data.dtype == "int64"
                 or data.dtype == "bool"):
             raise ValueError("Only integer tensors of a single element can be converted to an index.")
-        if data.shape == ():
-            return int(data)
-        if data.shape == (1,):
-            return int(data[0])
-        raise ValueError("Only integer tensors of a single element can be converted to an index.")
+        return self._convert_scalar_(data, int,
+                                     "Only integer tensors of a single element can be converted to an index.")
 
     def __pos__(self):
         return self
+
+    def __abs__(self):
+        return Tensor(abs(self.asnumpy()))
 
     def __add__(self, other):
         return tensor_operator_registry.get('__add__')(self, other)
@@ -825,7 +841,7 @@ class Tensor(Tensor_):
         if order == 'C':
             return reshape_op(self, (-1,))
 
-        perm = tuple(range(self.ndim-1, -1, -1))
+        perm = tuple(range(self.ndim - 1, -1, -1))
         return reshape_op(trans_op(self, perm), (-1,))
 
     def narrow(self, axis, start, length):
@@ -902,11 +918,11 @@ class Tensor(Tensor_):
 
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
-            new_perm = perm[0:axis1] + perm[axis2:axis2+1] + \
-                perm[axis1+1:axis2] + perm[axis1:axis1+1] + perm[axis2+1:]
+            new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
-            new_perm = perm[0:axis1] + perm[axis2:axis2+1] + \
-                perm[axis1+1:axis2] + perm[axis1:axis1+1]
+            new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 
@@ -1723,11 +1739,11 @@ class Tensor(Tensor_):
             e = e.astype(mstype.float32)
             if offset > 0:
                 e_left = tensor_operator_registry.get('fill')(dtype, (n, offset), 0)
-                e_right = e[..., 0:m-offset:1]
+                e_right = e[..., 0:m - offset:1]
                 e = tensor_operator_registry.get('concatenate')(1)((e_left, e_right)).astype(dtype)
             elif offset < 0:
                 e_upper = tensor_operator_registry.get('fill')(dtype, (-offset, m), 0)
-                e_lower = e[0:n+offset:1, ...]
+                e_lower = e[0:n + offset:1, ...]
                 e = tensor_operator_registry.get('concatenate')(0)((e_upper, e_lower)).astype(dtype)
         e = tensor_operator_registry.get('broadcast_to')(shape)(e)
 
@@ -1735,7 +1751,7 @@ class Tensor(Tensor_):
         res = tensor_operator_registry.get('reduce_sum')(prod.astype(mstype.float32), -1)
 
         begin = ()
-        for i in range(ndim-2):
+        for i in range(ndim - 2):
             begin += (0,)
         last_dim_begin = max(0, -offset)
         begin += (last_dim_begin,)
@@ -1986,7 +2002,7 @@ class Tensor(Tensor_):
 
         sort_range = tuple(range(validator.get_log2_size(tensor_operator_registry.get('shape_mul')(a.shape) + 1)))
         for _ in sort_range:
-            mid = (i - -j)//2
+            mid = (i - -j) // 2
             mask = less_op(v, tensor_operator_registry.get('gather_nd')(a, mid.reshape(mid.shape + (1,))))
             i = tensor_operator_registry.get('select')(mask, i, mid)
             j = tensor_operator_registry.get('select')(mask, mid, j)
