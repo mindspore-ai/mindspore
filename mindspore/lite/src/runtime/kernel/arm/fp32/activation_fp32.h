@@ -36,7 +36,10 @@ class ActivationCPUKernel : public InnerKernel {
   }
   ~ActivationCPUKernel() override = default;
 
+#ifdef SERVER_INFERENCE
   int UpdateThreadNumPass();
+#endif
+
   int Prepare() override;
   int ReSize() override;
   int Run() override;

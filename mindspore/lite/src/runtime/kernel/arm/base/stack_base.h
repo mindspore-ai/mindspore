@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class StackBaseCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
   int StackExecute(int task_id);
+#ifdef SERVER_INFERENCE
+  int UpdateThreadNumPass();
+#endif
 
  protected:
   StackParameter *stack_param_ = nullptr;
@@ -42,7 +45,6 @@ class StackBaseCPUKernel : public InnerKernel {
   size_t data_type_size_ = 0;
   size_t copy_size_ = 0;
   int outer_size_ = 1;
-  int num_threads_ = 1;
   void **all_inputs_ = nullptr;
 };
 }  // namespace mindspore::kernel

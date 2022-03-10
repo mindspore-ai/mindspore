@@ -36,9 +36,9 @@ namespace mindspore::kernel {
 namespace {
 #ifdef SERVER_INFERENCE
 const std::map<int, float> activation_compute_cost_map_ = {
-  {schema::ActivationType_RELU, 1.806f},
-  {schema::ActivationType_RELU6, 1.806f},
-  {schema::ActivationType_LEAKY_RELU, 1.806f},
+  {schema::ActivationType_RELU, 1.806f},        // dataNum about 100k
+  {schema::ActivationType_RELU6, 1.806f},       // dataNum about 100k
+  {schema::ActivationType_LEAKY_RELU, 1.806f},  // dataNum about 100k
   // {schema::ActivationType_SIGMOID, 10.0f}, {schema::ActivationType_TANH, 10.0f},
   // {schema::ActivationType_SWISH, 1.0f}, {schema::ActivationType_HSWISH, 1.0f},
   // {schema::ActivationType_HSIGMOID, 1.0f}, {schema::ActivationType_HARD_TANH, 1.0f},
@@ -50,14 +50,16 @@ const std::map<int, float> activation_compute_cost_map_ = {
 #ifdef SERVER_INFERENCE
 int ActivationCPUKernel::UpdateThreadNumPass() {
   if (thread_cost_context_ == nullptr && activation_compute_cost_map_.count(type_) > 0) {
-    thread_cost_context_ = new lite::ThreadCostContext();
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
+    CHECK_NULL_RETURN(thread_cost_context_);
+
     thread_cost_context_->per_unit_load_num_ = 1;
     thread_cost_context_->per_unit_store_num_ = 1;
     thread_cost_context_->per_unit_compute_cost_ = activation_compute_cost_map_.at(type_);
   }
 
   if (thread_cost_context_ != nullptr) {
-    thread_cost_context_->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
     thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
   }
   return RET_OK;

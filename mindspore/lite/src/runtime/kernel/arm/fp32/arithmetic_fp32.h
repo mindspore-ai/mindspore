@@ -117,7 +117,9 @@ class ArithmeticCPUKernel : public InnerKernel {
   int BiasCalc(int task_id);
   void FreeConstTileBuff();
   bool IsBiasCalc() const;
+#ifdef SERVER_INFERENCE
   int UpdateThreadNumPass();
+#endif
   ArithmeticRun arithmetic_run_ = nullptr;
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;
   ArithmeticIntRun arithmetic_run_int_ = nullptr;

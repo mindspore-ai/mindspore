@@ -27,17 +27,17 @@ namespace mindspore::kernel {
 namespace {
 #ifdef SERVER_INFERENCE
 const std::map<std::pair<int, int>, float> arithmetic_compute_cost_map_ = {
-  // {{PrimitiveType_MulFusion, schema::ActivationType_RELU}, 1.0f},
-  // {{PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 1.0f},
-  // {{PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  {{PrimitiveType_MulFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
+  {{PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
+  {{PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},  // dataNum about 130k
 
-  {{PrimitiveType_AddFusion, schema::ActivationType_RELU}, 1.806f},
-  {{PrimitiveType_AddFusion, schema::ActivationType_RELU6}, 1.806f},
-  {{PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},
+  {{PrimitiveType_AddFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
+  {{PrimitiveType_AddFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
+  {{PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},  // dataNum about 130k
 
-  {{PrimitiveType_SubFusion, schema::ActivationType_RELU}, 1.806f},
-  {{PrimitiveType_SubFusion, schema::ActivationType_RELU6}, 1.806f},
-  {{PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},
+  {{PrimitiveType_SubFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
+  {{PrimitiveType_SubFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
+  {{PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},  // dataNum about 130k
 
   // {{PrimitiveType_DivFusion, schema::ActivationType_RELU}, 1.0f},
   // {{PrimitiveType_DivFusion, schema::ActivationType_RELU6}, 1.0f},
@@ -63,14 +63,16 @@ const std::map<std::pair<int, int>, float> arithmetic_compute_cost_map_ = {
 int ArithmeticCPUKernel::UpdateThreadNumPass() {
   std::pair<int, int> fusion_type = std::make_pair(param_->op_parameter_.type_, param_->activation_type_);
   if (thread_cost_context_ == nullptr && arithmetic_compute_cost_map_.count(fusion_type) > 0) {
-    thread_cost_context_ = new lite::ThreadCostContext();
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
+    CHECK_NULL_RETURN(thread_cost_context_);
+
     thread_cost_context_->per_unit_load_num_ = 1;
     thread_cost_context_->per_unit_store_num_ = 1;
     thread_cost_context_->per_unit_compute_cost_ = arithmetic_compute_cost_map_.at(fusion_type);
   }
 
   if (thread_cost_context_ != nullptr) {
-    thread_cost_context_->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
     thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
   }
   return RET_OK;

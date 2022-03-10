@@ -37,7 +37,9 @@ class SoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
   int ReSize() override;
   int Run() override;
   int DoSoftmaxLastAxis(int task_id);
+#ifdef SERVER_INFERENCE
   int UpdateThreadNumPass();
+#endif
 
  private:
   float *sum_data_ = nullptr;
