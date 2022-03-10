@@ -23,7 +23,7 @@
 
         表示该参数是否开启缓存功能。
 
-    .. py:method::  cache_shape
+    .. py:method:: cache_shape
         :property:
 
         如果使用缓存，则返回对应参数的缓存shape。
