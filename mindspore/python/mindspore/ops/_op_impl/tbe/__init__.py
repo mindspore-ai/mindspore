@@ -319,6 +319,7 @@ from .resize_nearest_neighbor_grad_ds import _resize_nearest_neighbor_grad_ds_tb
 from .pad_d import _pad_d_tbe
 from .pad_d_ds import _pad_d_ds_tbe
 from .arg_max_with_value import _arg_max_with_value_tbe
+from .arg_max_with_value_ds import _arg_max_with_value_ds_tbe
 from .arg_min_with_value import _arg_min_with_value_tbe
 from .smooth_l1_loss import _smooth_l1_loss_tbe
 from .smooth_l1_loss_ds import _smooth_l1_loss_ds_tbe

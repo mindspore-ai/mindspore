@@ -25,6 +25,7 @@ from ...common.tensor import Tensor
 from ...common._decorator import deprecated
 from .._utils import get_broadcast_shape
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
+from ..._c_expression import Tensor as Tensor_
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
@@ -234,6 +235,27 @@ class Add(_MathBinaryOp):
         >>> print(output.dtype)
         Float32
     """
+    def _add_infer_special_value(self, a, b):
+        """Add infer min max value"""
+        if a is not None and b is not None:
+            if isinstance(a, (Tensor, Tensor_)):
+                a = a.asnumpy()
+            if isinstance(b, (Tensor, Tensor_)):
+                b = b.asnumpy()
+            a = np.array(a)
+            b = np.array(b)
+            out = a + b
+            out = tuple(out.tolist())
+            return out
+        return None
+
+    def infer_min_value(self, x, y):
+        """Add infer min value"""
+        return _add_infer_special_value(x, y)
+
+    def infer_max_value(self, x, y):
+        """Add infer min value"""
+        return _add_infer_special_value(x, y)
 
     def infer_value(self, x, y):
         if x is not None and y is not None:
@@ -1915,6 +1937,27 @@ class Mul(_MathBinaryOp):
         >>> print(output)
         [ 4. 10. 18.]
     """
+    def _infer_min_max_value(self, x, y):
+        """Mul infer min max value"""
+        if x is not None and y is not None:
+            if isinstance(x, (Tensor, Tensor_)):
+                x = x.asnumpy()
+            if isinstance(y, (Tensor, Tensor_)):
+                y = y.asnumpy()
+            x = np.array(x)
+            y = np.array(y)
+            out = x * y
+            out = tuple(out.tolist())
+            return out
+        return None
+
+    def infer_min_value(self, x, y):
+        """Mul infer min value"""
+        return self._infer_min_max_value(x, y)
+
+    def infer_max_value(self, x, y):
+        """Mul infer max value"""
+        return self._infer_min_max_value(x, y)
 
     def infer_dtype(self, x_dtype, y_dtype):
         mul_valid_type = mstype.number_type + (mstype.bool_,)
@@ -2829,6 +2872,27 @@ class Div(_MathBinaryOp):
         >>> print(output.dtype)
         Float32
     """
+    def _div_infer_special_value(self, x, y):
+        """Div infer min max value"""
+        if x is not None and y is not None:
+            if isinstance(x, (Tensor, Tensor_)):
+                x = x.asnumpy()
+            if isinstance(y, (Tensor, Tensor_)):
+                y = y.asnumpy()
+            x = np.array(x)
+            y = np.array(y)
+            out = x / y
+            out = tuple(out.tolist())
+            return out
+        return None
+
+    def infer_min_value(self, x, y):
+        """Div infer min value"""
+        return _div_infer_special_value(x, y)
+
+    def infer_max_value(self, x, y):
+        """Div infer max value"""
+        return _div_infer_special_value(x, y)
 
     def infer_value(self, x, y):
         if x is not None and y is not None:
