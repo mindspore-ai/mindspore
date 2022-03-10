@@ -334,6 +334,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.arange
     mindspore.ops.batch_dot
     mindspore.ops.clip_by_global_norm
     mindspore.ops.clip_by_value
