@@ -257,12 +257,12 @@ void AscendGraphOptimization::SelectKernel(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     if (raise_precision_count_ > 0) {
-      MS_LOG(WARNING) << "There are " << raise_precision_count_
-                      << " node/nodes used raise precision to selected the kernel!";
+      MS_LOG(INFO) << "There are " << raise_precision_count_
+                   << " node/nodes used raise precision to selected the kernel!";
     }
     if (reduce_precision_count_ > 0) {
-      MS_LOG(WARNING) << "There are " << reduce_precision_count_
-                      << " node/nodes used reduce precision to selected the kernel!";
+      MS_LOG(INFO) << "There are " << reduce_precision_count_
+                   << " node/nodes used reduce precision to selected the kernel!";
     }
   }
   PROF_END(select_kernel);
