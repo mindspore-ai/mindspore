@@ -130,7 +130,8 @@ bool CheckReadData(const CNodePtr &cnode) {
     if (dump_json_parser.NeedDump(kernel_name)) {
       read_data = true;
     }
-  } else if (debugger->debugger_enabled()) {
+  }
+  if (debugger->debugger_enabled()) {
     read_data = debugger->ReadNodeDataRequired(cnode);
   }
   return read_data;
