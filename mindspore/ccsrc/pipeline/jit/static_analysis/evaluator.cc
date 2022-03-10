@@ -787,6 +787,9 @@ EvalResultPtr VmapEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &
   EvalResultPtr result = evaluator_->Run(engine, virtual_conf_list, nullptr);
   MS_EXCEPTION_IF_NULL(result);
 
+  // If the primal func graph's output is sequence, set its elements use flags all true.
+  SetSequenceElementsUseFlagsRecursively(result->abstract(), true);
+
   AbstractBasePtr result_abs = result->abstract();
   AbstractBasePtr after_vmap = GetPhysicalViewAbs(result_abs, out_axes_, axis_size);
 
