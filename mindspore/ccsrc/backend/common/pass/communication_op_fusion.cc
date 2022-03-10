@@ -35,6 +35,7 @@ namespace {
 constexpr auto kAttrDefaultGroup = "default_group";
 constexpr auto kAttrDefaultOp = "default_op";
 constexpr size_t kAlignSize = 2 << 9;
+constexpr int64_t DEFAULT_THRESHOLD_MB_TO_BYTE = 262144;
 
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &communication_op_info, size_t start_index,
                                                    size_t end_index) {
@@ -190,9 +191,52 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
     }
     segment_index->push_back(communication_op_node_size - 1);
   }
-
+  auto parallel_mode = parallel_context->parallel_mode();
+  if (parallel_mode == parallel::kDataParallel && op_name_ == kAllReduceOpName) {
+    auto threshold = parallel_context->fusion_threshold_mb();
+    GetAllReduceSplitSegment(communication_op_info.communication_op_nodes, threshold, &segments, segment_index);
+  }
   *segment_num = segments;
   return CheckSegments(segments, communication_op_node_size, segment_index);
+}
+
+void CommunicationOpFusion::GetAllReduceSplitSegment(const std::vector<CNodePtr> &nodes, int64_t threshold,
+                                                     size_t *segment, std::vector<size_t> *segment_index) const {
+  MS_EXCEPTION_IF_NULL(segment);
+  MS_EXCEPTION_IF_NULL(segment_index);
+  if (threshold <= 0) {
+    MS_LOG(WARNING) << "Split threshold must be larger than 0, but got " << threshold;
+    return;
+  }
+  threshold *= DEFAULT_THRESHOLD_MB_TO_BYTE;
+  std::vector<size_t> real_segment_index;
+  size_t start_index = 0;
+  size_t segment_num = 0;
+  for (size_t i = 0; i < segment_index->size(); i++) {
+    auto index = segment_index->at(i);
+    if (index >= nodes.size()) {
+      MS_LOG(WARNING) << "split index is greater than or equal to total gradient's number " << nodes.size();
+      continue;
+    }
+    size_t accumulate = 0;
+    for (size_t j = start_index; j <= index; j++) {
+      auto tensor_size = AnfAlgo::GetOutputTensorMemSize(nodes[j], 0);
+      if (accumulate + tensor_size > LongToSize(threshold)) {
+        real_segment_index.push_back(j);
+        segment_num++;
+        accumulate = 0;
+      } else {
+        accumulate += tensor_size;
+      }
+    }
+    if (accumulate != 0) {
+      real_segment_index.push_back(index);
+      segment_num++;
+    }
+    start_index = index + 1;
+  }
+  *segment_index = std::move(real_segment_index);
+  *segment = segment_num;
 }
 
 // Hard coded Load(%paraxxx, cnode()) to Load(%paraxxx, U) to prevent

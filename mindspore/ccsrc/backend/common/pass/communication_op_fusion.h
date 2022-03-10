@@ -42,6 +42,8 @@ class CommunicationOpFusion : public Pass {
  private:
   bool DoFusion(const FuncGraphPtr &func_graph, const CommunicationOpInfo &communication_op_info, size_t segment_num,
                 const std::vector<size_t> &segment_index) const;
+  void GetAllReduceSplitSegment(const std::vector<CNodePtr> &nodes, int64_t threshold, size_t *segment,
+                                std::vector<size_t> *segment_index) const;
   AnfNodePtr CreateFusedCommunicationOp(const FuncGraphPtr &func_graph,
                                         const CommunicationOpInfo &communication_op_info, size_t start_index,
                                         size_t end_index) const;
