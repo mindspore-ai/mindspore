@@ -46,7 +46,7 @@ constexpr size_t k2DDilationSize = 4;
 constexpr size_t kHeight2DDilationIndex = 2;
 constexpr size_t kWidth2DDilationIndex = 3;
 
-template <typename T>
+template <typename T, typename S = int64_t>
 class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
  public:
   ConvGradFilterBkwGpuKernelMod()

@@ -27,7 +27,8 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
+constexpr int DynamicInputNum = 4;
+template <typename T, typename S = int64_t>
 class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceGpuCommon {
  public:
   StridedSliceGpuKernelMod() = default;
@@ -48,6 +49,10 @@ class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceG
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num == DynamicInputNum) {
+      is_dynamic_attr_ = true;
+    }
     input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     kernel_node_ = kernel_node;
     null_output_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
@@ -59,10 +64,24 @@ class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceG
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be greater than " << MAX_DIMS
                         << ", but got " << input_shape_.size();
     }
-
-    CollectInfo(kernel_node);
+    if (!is_dynamic_attr_) {
+      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_);
+      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_);
+      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_);
+    }
+    CollectInfo(kernel_node, is_dynamic_attr_);
     InitSizeLists();
     return true;
+  }
+  void ResetResource() noexcept override {
+    ResetSizeLists();
+    begin_.clear();
+    end_.clear();
+    strides_.clear();
+    input_shape_.clear();
+    output_shape_.clear();
+    is_null_input_ = false;
+    is_dynamic_attr_ = false;
   }
 
  protected:
@@ -79,6 +98,12 @@ class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceG
     }
     output_size_list_.push_back(size1);
   }
+  bool is_null_input_{false};
+  bool is_dynamic_attr_{false};
+  bool get_dynamic_attr_value_{false};
+  static constexpr size_t kBeginIndex_{1};
+  static constexpr size_t kEndIndex_{2};
+  static constexpr size_t kStrideIndex_{3};
 };
 }  // namespace kernel
 }  // namespace mindspore

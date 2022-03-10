@@ -73,6 +73,17 @@ class DropoutGradBwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    is_null_input_ = false;
+    kernel_name_ = "DropoutGrad";
+    num_count_ = 0;
+    keep_prob_ = 0.0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
  protected:
   void InitResource() override { cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle(); }
   void InitSizeLists() override {

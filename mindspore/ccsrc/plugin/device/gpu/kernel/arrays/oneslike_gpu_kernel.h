@@ -25,7 +25,7 @@ namespace kernel {
 template <typename T>
 class OnesLikeGpuKernelMod : public NativeGpuKernelMod {
  public:
-  OnesLikeGpuKernelMod() : input_size_(0), output_size_(0), is_null_input_(false) { ResetResource(); }
+  OnesLikeGpuKernelMod() : input_size_(0), output_size_(0), is_null_input_(false) {}
   ~OnesLikeGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,

@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class LayerNormGpuKernelMod : public NativeGpuKernelMod {
  public:
-  LayerNormGpuKernelMod() : input_row_(1), input_col_(1), param_dim_(1), is_null_input_(false) { ResetResource(); }
+  LayerNormGpuKernelMod() : input_row_(1), input_col_(1), param_dim_(1), is_null_input_(false) {}
   ~LayerNormGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,

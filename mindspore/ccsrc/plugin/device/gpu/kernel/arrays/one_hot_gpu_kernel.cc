@@ -47,5 +47,70 @@ MS_REG_GPU_KERNEL_TWO(OneHot,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
                       OneHotFwdGpuKernelMod, half, int64_t)
+// dynamic shape
+MS_REG_GPU_KERNEL_TWO(OneHot,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      OneHotFwdGpuKernelMod, float, int)
+MS_REG_GPU_KERNEL_TWO(OneHot,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      OneHotFwdGpuKernelMod, half, int)
+MS_REG_GPU_KERNEL_THREE(OneHot,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeInt64)
+                          .AddInputAttr(kNumberTypeInt32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        OneHotFwdGpuKernelMod, float, int64_t, int)
+MS_REG_GPU_KERNEL_THREE(OneHot,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeInt64)
+                          .AddInputAttr(kNumberTypeInt32)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddOutputAttr(kNumberTypeFloat16),
+                        OneHotFwdGpuKernelMod, half, int64_t, int)
+MS_REG_GPU_KERNEL_THREE(OneHot,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeInt32)
+                          .AddInputAttr(kNumberTypeInt64)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddInputAttr(kNumberTypeFloat32)
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        OneHotFwdGpuKernelMod, float, int, int64_t)
+MS_REG_GPU_KERNEL_THREE(OneHot,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeInt32)
+                          .AddInputAttr(kNumberTypeInt64)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddInputAttr(kNumberTypeFloat16)
+                          .AddOutputAttr(kNumberTypeFloat16),
+                        OneHotFwdGpuKernelMod, half, int, int64_t)
+MS_REG_GPU_KERNEL_TWO(OneHot,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      OneHotFwdGpuKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(OneHot,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      OneHotFwdGpuKernelMod, half, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

@@ -109,6 +109,18 @@ class LayerNormGradGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    input_row_ = 1;
+    input_col_ = 1;
+    param_dim_ = 1;
+    input_size_ = 1;
+    is_null_input_ = false;
+    epsilon_ = 1e-12;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
  protected:
   void InitSizeLists() override {
     input_size_ = input_row_ * input_col_ * sizeof(T);
