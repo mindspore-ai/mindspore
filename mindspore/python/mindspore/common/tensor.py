@@ -2563,7 +2563,7 @@ class COOTensor(COOTensor_):
         Return a copy of the COOTensor, cast its values to a specified type.
 
         Args:
-            dtype (class:`mindspore.dtype`): Designated tensor dtype.
+            dtype (:class:`mindspore.dtype`): Designated tensor dtype.
 
         Returns:
             COOTensor.
@@ -2719,7 +2719,15 @@ class CSRTensor(CSRTensor_):
         return COOTensor(coo_indices, self.values, self.shape)
 
     def to_dense(self):
-        """Return a dense Tensor."""
+        """
+        Converts CSRTensor to Dense Tensor.
+
+        Returns:
+            Tensor.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+        """
         coo_tensor = self.to_coo()
         return coo_tensor.to_dense()
 
@@ -2728,7 +2736,7 @@ class CSRTensor(CSRTensor_):
         Return a copy of the CSRTensor, cast its values to a specified type.
 
         Args:
-            dtype (class:`mindspore.dtype`): Designated tensor dtype.
+            dtype (:class:`mindspore.dtype`): Designated tensor dtype.
 
         Returns:
             CSRTensor.
