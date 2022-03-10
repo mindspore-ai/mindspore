@@ -55,20 +55,16 @@ class AbstractMutexManager {
 };
 
 struct CustomActorInfo {
-  CustomActorInfo(AnfUtils::CustomActorCallback func, const std::string &base_node_name, const std::string &type_name,
+  CustomActorInfo(AnfUtils::CustomActorCallback func, const std::string &type_name, const CNodePtr &cnode,
                   bool is_fake = false, bool is_just_sync = false)
-      : actor_func(func),
-        base_node_name(base_node_name),
-        type_name(type_name),
-        is_fake(is_fake),
-        is_just_sync(is_just_sync) {}
+      : actor_func(func), type_name(type_name), base_cnode_ptr_(cnode), is_fake(is_fake), is_just_sync(is_just_sync) {}
   ~CustomActorInfo() = default;
 
   // Key for user data.
   constexpr static char key[] = "CustomActor";
   AnfUtils::CustomActorCallback actor_func = {};
-  std::string base_node_name;
   std::string type_name;
+  CNodeWeakPtr base_cnode_ptr_;
   bool is_fake{false};       // For infer
   bool is_just_sync{false};  // For update
 };
@@ -474,8 +470,21 @@ std::string AnfUtils::GetCustomActorName(const AnfNodePtr &node) {
 
   auto actor_info = node->user_data<CustomActorInfo>();
   MS_EXCEPTION_IF_NULL(actor_info);
-  std::string actor_name = actor_info->type_name + "_of_" + actor_info->base_node_name;
+  auto base_node = actor_info->base_cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(base_node);
+  std::string actor_name = actor_info->type_name + "_of_" + base_node->fullname_with_scope();
   return actor_name;
+}
+
+CNodePtr AnfUtils::GetCustomActorBaseNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsCustomActorNode(node)) {
+    MS_LOG(EXCEPTION) << node->fullname_with_scope() << " is not a custom actor node!";
+  }
+
+  auto actor_info = node->user_data<CustomActorInfo>();
+  MS_EXCEPTION_IF_NULL(actor_info);
+  return actor_info->base_cnode_ptr_.lock();
 }
 
 bool AnfUtils::GetCustomActorJustSyncFlag(const AnfNodePtr &node) {
@@ -501,21 +510,20 @@ AnfUtils::CustomActorCallback AnfUtils::GetCustomFunc(const AnfNodePtr &node) {
 
 AnfNodePtr AnfUtils::NewInitActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode) {
   MS_EXCEPTION_IF_NULL(base_cnode);
-  auto actor_info = std::make_shared<CustomActorInfo>(f, base_cnode->fullname_with_scope(), kInit);
+  auto actor_info = std::make_shared<CustomActorInfo>(f, kInit, base_cnode);
   return NewCustomActorNode(actor_info, base_cnode->func_graph());
 }
 
 AnfNodePtr AnfUtils::NewInferActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode, bool is_fake) {
   MS_EXCEPTION_IF_NULL(base_cnode);
-  auto actor_info = std::make_shared<CustomActorInfo>(f, base_cnode->fullname_with_scope(), kInfer, is_fake);
+  auto actor_info = std::make_shared<CustomActorInfo>(f, kInfer, base_cnode, is_fake);
   return NewCustomActorNode(actor_info, base_cnode->func_graph());
 }
 
 AnfNodePtr AnfUtils::NewUpdateActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode,
                                         bool is_just_sync) {
   MS_EXCEPTION_IF_NULL(base_cnode);
-  auto actor_info =
-    std::make_shared<CustomActorInfo>(f, base_cnode->fullname_with_scope(), kUpdate, false, is_just_sync);
+  auto actor_info = std::make_shared<CustomActorInfo>(f, kUpdate, base_cnode, false, is_just_sync);
   return NewCustomActorNode(actor_info, base_cnode->func_graph());
 }
 }  // namespace mindspore

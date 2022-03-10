@@ -1521,7 +1521,7 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   // prepare for kernel => actor map
   HashMap<AnfNodePtr, AbstractActorPtr> kernel_to_actors = {};
-  HashSet<AbstractActorPtr> no_depend_custom_actors = {};
+  HashSet<CustomActorPtr> no_depend_custom_actors = {};
   for (const auto &actor : actor_set->custom_actors_) {
     MS_EXCEPTION_IF_NULL(actor);
     auto kernel = actor->kernel().lock();
@@ -1585,8 +1585,24 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
       no_depend_custom_actors.erase(std::dynamic_pointer_cast<CustomActor>(to_iter->second));
     }
   }
-
   for (const auto &custom_actor : no_depend_custom_actors) {
+    auto kernel = custom_actor->kernel().lock();
+    MS_EXCEPTION_IF_NULL(kernel);
+    auto base_node = AnfUtils::GetCustomActorBaseNode(kernel);
+    MS_EXCEPTION_IF_NULL(base_node);
+    auto dynamic_shape_depends = abstract::GetDependsFormMap(base_node);
+    for (auto iter = dynamic_shape_depends.begin(); iter != dynamic_shape_depends.end(); ++iter) {
+      auto input_node = common::AnfAlgo::GetInputNode(base_node, *iter);
+      KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+      auto graph = FetchKernelGraph(from_kernel_with_output_idx.first);
+      auto kernel_type =
+        FetchKernelTransformType(from_kernel_with_output_idx.first, graph, graph_compiler_info.origin_parameters_order_,
+                                 graph_compiler_info.strategy_);
+      auto from_actor = FetchActor(kernel_type, graph_compiler_info.name_, from_kernel_with_output_idx.first, graph);
+      AddDataArrow(from_actor, custom_actor.get(), from_kernel_with_output_idx.first,
+                   from_kernel_with_output_idx.second, *iter);
+    }
+
     AddControlArrow(actor_set->data_prepare_actor_.get(), custom_actor.get());
   }
 }
