@@ -35,7 +35,3 @@ mindspore.nn.LayerNorm
     - **TypeError** - `normalized_shape` 既不是列表也不是元组。
     - **TypeError** - `begin_norm_axis` 或 `begin_params_axis` 不是整数。
     - **TypeError** - `epsilon` 不是float。
-
-    .. py:method:: extend_repr()
-
-        实例对象显示为字符串。
