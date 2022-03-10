@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_EXPERIMENT_CONV_FP32_AVX512_H_
-#define MINDSPORE_NNACL_EXPERIMENT_CONV_FP32_AVX512_H_
-#include "nnacl/kernel.h"
 
-int conv2d_prepare_fp32_nchwx_avx512(struct KernelBase *self);
-int conv2d_release_fp32_nchwx_avx512(struct KernelBase *self);
-int conv2d_compute_fp32_nchwx_avx512(struct KernelBase *self);
-int conv2d_infershape_fp32_nchwx_avx512(struct KernelBase *self);
-int conv2d_resize_fp32_nchwx_avx512(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[],
-                                    size_t outsize);
+#include "nnacl/experimental/fp16_funcs.h"
+
+void InitFp16Funcs(CoreFuncs *funcs_) {
+#ifdef ENABLE_ARM64
+  funcs_->pack = C8NUM;
+  funcs_->byte = sizeof(float16_t);
 #endif
+}

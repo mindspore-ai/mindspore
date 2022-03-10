@@ -115,6 +115,8 @@ struct InnerContext : public Context {
 
   int CreateThreadPool();
 
+  void InitExperimentExecEnv();
+
   bool device_and_pkg_support_fp16_ = false;
 
 #ifdef BFC_MEMORY

@@ -17,16 +17,19 @@
 #define MINDSPORE_NNACL_KERNEL_H_
 #include "nnacl/op_base.h"
 #include "nnacl/infer/common_infer.h"
+#include "nnacl/experimental/core_funcs.h"
 
 typedef struct ExecEnv {
-  void *(*alloc)(size_t sz);
-  void (*free)(void *ptr);
+  void *allocator;
+  void *threadPool;
+  void *(*alloc)(void *allocator, size_t sz);
+  void (*free)(void *allocator, void *ptr);
   int threadNum;
-  void (*parallelLaunch)(void *task, void *param, int taskNr);
+  int (*parallelLaunch)(void *threadPool, void *task, void *param, int taskNr);
 } ExecEnv;
 
 typedef struct KernelBase {
-  int (*prepare)(struct KernelBase *self, ExecEnv *env);  // prepare, e.g. pack weight
+  int (*prepare)(struct KernelBase *self);  // prepare, e.g. pack weight
   int (*release)(struct KernelBase *self);
   int (*compute)(struct KernelBase *self);
   int (*inferShape)(struct KernelBase *self);
@@ -40,17 +43,26 @@ typedef struct KernelBase {
   size_t outsize;
   ExecEnv *env;
   bool inferShape_;
+  CoreFuncs *funcs;
 } KernelBase;
 
-KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
-typedef KernelBase *(*KernelCreator)(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
-void RegKernelCreator(int opType, int dataType, KernelCreator func);
-
 #ifdef _MSC_VER
-#define REG_KERNEL_CREATOR(op, op_type, data_type, func)
+#define REG_KERNEL_CREATOR(op_type, data_type, func)
 #else
-#define REG_KERNEL_CREATOR(op, op_type, data_type, func) \
-  __attribute__((constructor(102))) void Reg##op##Creator() { RegKernelCreator(op_type, data_type, func); }
+#define REG_KERNEL_CREATOR(op, data_type, func) \
+  __attribute__((constructor(102))) void Reg##op##data_type##Creator() { RegKernelCreator(op, data_type, func); }
 #endif
 
+typedef KernelBase *(*KernelCreator)(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+void RegKernelCreator(int opType, int dataType, KernelCreator func);
+CoreFuncs *GetCoreFuncs(bool use_fp16);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+ExecEnv *GetExecEnv(void);
+#ifdef __cplusplus
+}
+#endif
 #endif

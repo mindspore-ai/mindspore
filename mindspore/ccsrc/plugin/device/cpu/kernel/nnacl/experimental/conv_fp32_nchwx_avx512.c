@@ -23,9 +23,9 @@ static const int UNIT_LEN = 512;  // register length
 
 static const int UNIT_NR = 512 / sizeof(float);
 static const int TILE_ROW;
-int conv2d_prepare_fp32_nchwx_avx512(struct KernelBase *self, ExecEnv *env) {
+int conv2d_prepare_fp32_nchwx_avx512(struct KernelBase *self) {
   KConv2d *conv = (KConv2d *)self;
-  self->env = env;
+  self->env = GetExecEnv();
 
   int rowIndex = 0;
   TensorC *weight = self->in[kWeightIndex];
@@ -113,8 +113,8 @@ int conv2d_compute_fp32_nchwx_avx512(struct KernelBase *self) {
 
   // im2col + pack to z-N-Z order
   int unitOffset = 0;
-  int unitChNr = in->data_shape_[1];
-  int interval = in->data_shape_[1] * UNIT_LEN;
+  int unitChNr = in->shape_[1];
+  int interval = in->shape_[1] * UNIT_LEN;
 #ifdef VECTORIZE_OPTIMIZE
 // use AVX2 instruction to optimize matrix transpose
 #else
@@ -219,18 +219,15 @@ int conv2d_resize_fp32_nchwx_avx512(struct KernelBase *self, TensorC *inputs[], 
   int kw = weight->shape_[kNCHW_W];
 
   self->inferShape(self);
-  out->data_format_ = Format_NC16HW16;
-  out->data_shape_[0] = out->shape_[0];
-  out->data_shape_[1] = UP_ROUND_DIV(out->shape_[1], 16);
-  out->data_shape_[2] = out->shape_[2];
-  out->data_shape_[3] = out->shape_[3];
-  out->data_shape_[4] = 16;
-  out->data_shape_size_ = 5;
+  out->format_ = Format_NC16HW16;
+  out->shape_[1] = UP_ROUND_DIV(out->shape_[1], C16NUM);
+  out->shape_[4] = 16;
+  out->shape_size_ = 5;
 
   if (conv->im2colBuf) {
     free(conv->im2colBuf);
   }
-  int ci = in->data_shape_[1] * in->data_shape_[4];
+  int ci = in->shape_[1] * in->shape_[4];
   int lmw = ci * kw * kh;                                 // left matrix width
   int lmh = out->shape_[kNCHW_H] * out->shape_[kNCHW_W];  // left matrix height
 

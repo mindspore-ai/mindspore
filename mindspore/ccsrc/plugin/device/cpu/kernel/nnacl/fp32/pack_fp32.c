@@ -384,6 +384,29 @@ void PackNC4HW4ToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int
   }
 }
 
+void UnPackC4Uint(const void *src, void *dst, size_t plane, size_t channel) {
+  const float *fp32_src = (const float *)src;
+  float *fp32_dst = (float *)dst;
+  for (size_t c = 0; c < channel; c++) {
+    size_t c_div = c / C4NUM;
+    size_t c_mod = c % C4NUM;
+    for (size_t p = 0; p < plane; p++) {
+      int src_offset = c_div * plane * C4NUM + plane * C4NUM + c_mod;
+      int dst_offset = p * channel + c;
+      fp32_dst[dst_offset] = fp32_src[src_offset];
+    }
+  }
+}
+
+void PackNC4HW4ToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel) {
+  int c4 = UP_ROUND(channel, C4NUM);
+  for (int b = 0; b < batch; b++) {
+    int src_offset = b * plane * c4;
+    int dst_offset = b * plane * channel;
+    UnPackC4Uint((const float *)src + src_offset, (float *)dst + dst_offset, plane, channel);
+  }
+}
+
 void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
@@ -409,41 +432,6 @@ void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int 
       for (int i = 0; i < res_c; i++) {
         int src_res_c_offset = src_kernel_offset + (c4 - 1) * C4NUM * plane + i;
         int dst_res_c_offset = dst_kernel_offset + (c4 - 1) * C4NUM + i;
-        ((float *)dst + dst_res_c_offset)[0] = ((float *)src + src_res_c_offset)[0];
-      }
-    }
-  }
-}
-
-void PackNC8HW8ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel) {
-  int c8 = UP_DIV(channel, C8NUM);
-  for (int b = 0; b < batch; b++) {
-    int src_offset = b * plane * c8 * C8NUM;
-    int dst_offset = b * plane * channel;
-    for (int k = 0; k < plane; k++) {
-      int src_kernel_offset = src_offset + k * C8NUM;
-      int dst_kernel_offset = dst_offset + k * channel;
-      for (int c = 0; c < c8 - 1; c++) {
-        int src_c_offset = src_kernel_offset + c * plane * C8NUM;
-        int dst_c_offset = dst_kernel_offset + c * C8NUM;
-#ifdef ENABLE_AVX
-        MS_ST256_F32((float *)dst + dst_c_offset, MS_LD256_F32((float *)src + src_c_offset));
-#else
-        ((float *)dst + dst_c_offset)[0] = ((float *)src + src_c_offset)[0];
-        ((float *)dst + dst_c_offset)[1] = ((float *)src + src_c_offset)[1];
-        ((float *)dst + dst_c_offset)[2] = ((float *)src + src_c_offset)[2];
-        ((float *)dst + dst_c_offset)[3] = ((float *)src + src_c_offset)[3];
-        ((float *)dst + dst_c_offset)[4] = ((float *)src + src_c_offset)[4];
-        ((float *)dst + dst_c_offset)[5] = ((float *)src + src_c_offset)[5];
-        ((float *)dst + dst_c_offset)[6] = ((float *)src + src_c_offset)[6];
-        ((float *)dst + dst_c_offset)[7] = ((float *)src + src_c_offset)[7];
-#endif
-      }
-      // res part
-      int res_c = channel - (c8 - 1) * C8NUM;
-      for (int i = 0; i < res_c; i++) {
-        int src_res_c_offset = src_kernel_offset + (c8 - 1) * C8NUM * plane + i;
-        int dst_res_c_offset = dst_kernel_offset + (c8 - 1) * C8NUM + i;
         ((float *)dst + dst_res_c_offset)[0] = ((float *)src + src_res_c_offset)[0];
       }
     }
