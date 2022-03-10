@@ -37,7 +37,7 @@ LiteMat::LiteMat() {
   data_type_ = LDataType::UINT8;
   ref_count_ = nullptr;
   setSteps(0, 0, 0);
-  release_flag = false;
+  release_flag_ = false;
 }
 
 LiteMat::LiteMat(int width, LDataType data_type) {
@@ -52,7 +52,7 @@ LiteMat::LiteMat(int width, LDataType data_type) {
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
-  release_flag = false;
+  release_flag_ = false;
   Init(width, data_type);
 }
 
@@ -68,7 +68,7 @@ LiteMat::LiteMat(int width, int height, LDataType data_type) {
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
-  release_flag = false;
+  release_flag_ = false;
   Init(width, height, data_type);
 }
 
@@ -84,7 +84,7 @@ LiteMat::LiteMat(int width, int height, void *p_data, LDataType data_type) {
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
-  release_flag = false;
+  release_flag_ = false;
   Init(width, height, p_data, data_type);
 }
 
@@ -100,7 +100,7 @@ LiteMat::LiteMat(int width, int height, int channel, LDataType data_type) {
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
-  release_flag = false;
+  release_flag_ = false;
   Init(width, height, channel, data_type);
 }
 
@@ -116,7 +116,7 @@ LiteMat::LiteMat(int width, int height, int channel, void *p_data, LDataType dat
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
-  release_flag = false;
+  release_flag_ = false;
   Init(width, height, channel, p_data, data_type);
 }
 
@@ -139,7 +139,7 @@ LiteMat::LiteMat(const LiteMat &m) {
   data_type_ = m.data_type_;
   ref_count_ = m.ref_count_;
   size_ = m.size_;
-  release_flag = m.release_flag;
+  release_flag_ = m.release_flag_;
   setSteps(m.steps_[0], m.steps_[1], m.steps_[2]);
   if (ref_count_) {
     addRef(ref_count_, 1);
@@ -173,6 +173,7 @@ LiteMat &LiteMat::operator=(const LiteMat &m) {
   ref_count_ = m.ref_count_;
   setSteps(m.steps_[0], m.steps_[1], m.steps_[2]);
   size_ = m.size_;
+  release_flag_ = m.release_flag_;
   return *this;
 }
 
@@ -310,7 +311,7 @@ void *LiteMat::AlignMalloc(unsigned int size) {
   }
   void *p_raw = reinterpret_cast<void *>(malloc(size + length));
   if (p_raw) {
-    release_flag = true;
+    release_flag_ = true;
     void **p_algin = reinterpret_cast<void **>(((size_t)(p_raw) + length) & ~(ALIGN - 1));
     p_algin[-1] = p_raw;
     return p_algin;
@@ -319,10 +320,10 @@ void *LiteMat::AlignMalloc(unsigned int size) {
 }
 
 void LiteMat::AlignFree(void *ptr) {
-  if (release_flag) {
+  if (release_flag_) {
     (void)free(reinterpret_cast<void **>(ptr)[-1]);
     ptr = nullptr;
-    release_flag = false;
+    release_flag_ = false;
   }
 }
 

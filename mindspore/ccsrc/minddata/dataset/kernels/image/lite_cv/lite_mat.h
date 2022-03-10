@@ -373,7 +373,7 @@ class LiteMat {
   LDataType data_type_;
   int *ref_count_;
   size_t steps_[MAX_DIMS];
-  bool release_flag;
+  bool release_flag_;
 };
 
 /// \brief Given image A and image B and calculate the difference of them (A - B).
