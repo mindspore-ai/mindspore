@@ -15,7 +15,6 @@
 """ test graph fallback """
 import math
 import numpy as np
-import pytest
 
 from mindspore import ms_function, Tensor
 
@@ -120,7 +119,6 @@ def test_fallback_bool_tensor():
     assert x and not y
 
 
-@pytest.mark.skip("Not support yet should convert C++ Tensor to Python")
 def test_fallback_bool_tensor_construct():
     """
     Feature : JIT Fallback
@@ -207,7 +205,6 @@ def test_fallback_float_tensor():
     assert math.isclose(foo(), 1.5, abs_tol=1e-5)
 
 
-@pytest.mark.skip("Not supported need to convert C++ Tensor to py")
 def test_fallback_float_tensor_construct():
     """
     Feature : JIT Fallback
