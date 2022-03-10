@@ -289,8 +289,6 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
 
   std::size_t hash() const override { return std::hash<const FuncGraph *>{}(this); }
 
-  void DumpFuncGraph(const std::string &path = "./func_graph.dot");
-
   bool operator==(const Value &other) const override {
     if (other.isa<FuncGraph>()) {
       return &other == this;
@@ -342,7 +340,6 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
 
   bool stub() const { return stub_; }
   void set_stub(bool stub) { stub_ = stub; }
-  static void set_drawer(const Drawer &drawer) { drawer_ = drawer; }
   std::shared_ptr<bool> switch_input() const { return switch_input_; }
   void set_switch_input(const std::shared_ptr<bool> &switch_input) { switch_input_ = switch_input; }
   std::shared_ptr<bool> switch_layer_input() const { return switch_layer_input_; }
@@ -437,7 +434,6 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
   // CNode order which relates to origin code order.
   OrderedSet<CNodePtr> order_;
   bool stub_;
-  static Drawer drawer_;
   // Design switch_input and switch_layer_input as a ptr to
   // share between derived backpropagator and cloned graphs.
   std::shared_ptr<bool> switch_input_;

@@ -26,6 +26,7 @@
 #include "base/core_ops.h"
 #include "mindspore/core/utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
+#include "debug/draw.h"
 
 namespace mindspore {
 namespace parallel {
@@ -220,7 +221,7 @@ void GraphSplitter::DumpDistributedGraph(const InterProcessOpEdgesInfo &comm_edg
     func_graph_->manager()->SetEdge(user_node, user_node_index, recv_node);
   }
   MS_LOG(INFO) << "Cut graph without eliminating nodes.";
-  func_graph_->DumpFuncGraph("./single_node_graph.dot");
+  draw::Draw("single_node_graph.dot", func_graph_);
 }
 
 OperatorLabel GraphSplitter::GetSplitLabel(const AnfNodePtr &node) {

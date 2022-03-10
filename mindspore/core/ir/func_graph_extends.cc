@@ -73,12 +73,6 @@ void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
   input0->set_abstract(f);
 }
 
-void FuncGraph::DumpFuncGraph(const std::string &path) {
-  if (drawer_) {
-    drawer_(path + ".dot", shared_from_base<FuncGraph>());
-  }
-}
-
 void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph, int variable_args_count,
                                   int pos_args_input_count, std::vector<AnfNodePtr> *specialized_parameter_list,
                                   mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
