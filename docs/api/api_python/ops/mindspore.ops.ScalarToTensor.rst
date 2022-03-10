@@ -1,4 +1,4 @@
- mindspore.ops.ScalarToTensor
+mindspore.ops.ScalarToTensor
 ==============================
 
 .. py:class:: mindspore.ops.ScalarToTensor
