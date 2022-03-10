@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.scipy as msp
 from mindspore import context
 from mindspore.common import Tensor
-from tests.st.scipy_st.utils import create_sym_pos_matrix, create_full_rank_matrix, to_tensor
+from tests.st.scipy_st.utils import create_sym_pos_matrix, create_full_rank_matrix, to_tensor, to_ndarray
 
 
 def _fetch_preconditioner(preconditioner, A):
@@ -209,8 +209,8 @@ def test_cg_grad(tensor_type, dtype, tol, a, b, grad_a, grad_b):
     # Function
     grad_net = ops.GradOperation(get_all=True)(msp.sparse.linalg.cg)
     grad_a, grad_b = grad_net(a, b)[:2]
-    onp.testing.assert_allclose(expect_grad_a, grad_a.asnumpy(), **kw)
-    onp.testing.assert_allclose(expect_grad_b, grad_b.asnumpy(), **kw)
+    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), **kw)
+    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), **kw)
 
     # Cell
     class Net(nn.Cell):
@@ -225,8 +225,8 @@ def test_cg_grad(tensor_type, dtype, tol, a, b, grad_a, grad_b):
 
     grad_net = ops.GradOperation(get_all=True)(Net())
     grad_a, grad_b = grad_net(a, b)[:2]
-    onp.testing.assert_allclose(expect_grad_a, grad_a.asnumpy(), **kw)
-    onp.testing.assert_allclose(expect_grad_b, grad_b.asnumpy(), **kw)
+    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), **kw)
+    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), **kw)
 
 
 @pytest.mark.level0
@@ -279,8 +279,8 @@ def test_cg_grad_pynative(tensor_type, dtype, tol, a, b, grad_a, grad_b):
     # Function
     grad_net = ops.GradOperation(get_all=True)(msp.sparse.linalg.cg)
     grad_a, grad_b = grad_net(a, b)[:2]
-    onp.testing.assert_allclose(expect_grad_a, grad_a.asnumpy(), **kw)
-    onp.testing.assert_allclose(expect_grad_b, grad_b.asnumpy(), **kw)
+    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), **kw)
+    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), **kw)
 
     # Cell
     class Net(nn.Cell):
@@ -295,8 +295,8 @@ def test_cg_grad_pynative(tensor_type, dtype, tol, a, b, grad_a, grad_b):
 
     grad_net = ops.GradOperation(get_all=True)(Net())
     grad_a, grad_b = grad_net(a, b)[:2]
-    onp.testing.assert_allclose(expect_grad_a, grad_a.asnumpy(), **kw)
-    onp.testing.assert_allclose(expect_grad_b, grad_b.asnumpy(), **kw)
+    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), **kw)
+    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), **kw)
 
 
 @pytest.mark.level0

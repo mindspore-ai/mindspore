@@ -17,7 +17,7 @@ from typing import List
 from functools import cmp_to_key
 
 import numpy as onp
-import scipy as osp
+import scipy.sparse.linalg
 from mindspore import Tensor, CSRTensor
 import mindspore.ops as ops
 import mindspore.numpy as mnp
@@ -38,19 +38,32 @@ def to_tensor(obj, dtype=None, indice_dtype=onp.int32):
         if tensor_type == "Tensor":
             obj = onp.array(obj)
         elif tensor_type == "CSRTensor":
-            obj = osp.sparse.csr_matrix(obj)
+            obj = scipy.sparse.csr_matrix(obj)
 
     if dtype is None:
         dtype = obj.dtype
 
     if isinstance(obj, onp.ndarray):
         obj = Tensor(obj.astype(dtype))
-    elif isinstance(obj, osp.sparse.csr_matrix):
+    elif isinstance(obj, scipy.sparse.csr_matrix):
         obj = CSRTensor(indptr=Tensor(obj.indptr.astype(indice_dtype)),
                         indices=Tensor(obj.indices.astype(indice_dtype)),
                         values=Tensor(obj.data.astype(dtype)),
                         shape=obj.shape)
 
+    return obj
+
+
+def to_ndarray(obj, dtype=None):
+    if isinstance(obj, Tensor):
+        obj = obj.asnumpy()
+    elif isinstance(obj, CSRTensor):
+        obj = scipy.sparse.csr_matrix((obj.values.asnumpy(), obj.indices.asnumpy(), obj.indptr.asnumpy()),
+                                      shape=obj.shape)
+        obj = obj.toarray()
+
+    if dtype is not None:
+        obj = obj.astype(dtype)
     return obj
 
 
