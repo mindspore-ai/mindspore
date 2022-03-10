@@ -19,8 +19,8 @@ from .api import _pynative_executor
 
 class HookHandle:
     r"""
-    It is the return object of Cell forward pre hook function, forward hook function and backward hook function.
-    It corresponds to the cell hook function and is used to remove the cell hook function by calling 'remove()'.
+    It is the return object of forward pre hook function, forward hook function and backward hook function of Cell
+    object. It corresponds to the cell hook function and is used to remove the cell hook function by calling 'remove()'.
 
     Note:
         It is only supported in pynative mode and works when registering or removing hook function for Cell object.
@@ -29,11 +29,8 @@ class HookHandle:
         hook_cell (Cell): The Cell object with hook function registered on. Default value: None.
         hook_key (int): The key of cell hook function in dict. It is generated during cell hook function registration.
                         Default value: -1.
-        hook_type (str): The type of cell hook function: 'forward_pre_hook', 'forward_hook' or 'cell_backward_hook'.
+        hook_type (str): The type of cell hook function: '_forward_pre_hook', '_forward_hook' or '_cell_backward_hook'.
                          Default value: "".
-
-    Returns:
-        None.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -49,8 +46,8 @@ class HookHandle:
     def remove(self):
         """
         Remove the cell hook function, which corresponds to this 'HookHandle' object.
-        In order to prevent running failed when switching to graph mode, it is not recommended to write in the
-        construct.
+        In order to prevent running failed when switching to graph mode, it is not recommended to call the `remove()`
+        function in the construct function of Cell object.
 
         Args:
             None.
@@ -95,14 +92,14 @@ class HookHandle:
         """
         if self._hook_cell is not None:
             hook_cell = self._hook_cell()
-            if self._hook_type == "forward_pre_hook" and self._hook_key in hook_cell.forward_pre_hook:
-                del hook_cell.forward_pre_hook[self._hook_key]
+            if self._hook_type == "_forward_pre_hook" and self._hook_key in hook_cell._forward_pre_hook:
+                del hook_cell._forward_pre_hook[self._hook_key]
                 _pynative_executor.set_hook_changed(hook_cell)
-            elif self._hook_type == "forward_hook" and self._hook_key in hook_cell.forward_hook:
-                del hook_cell.forward_hook[self._hook_key]
+            elif self._hook_type == "_forward_hook" and self._hook_key in hook_cell._forward_hook:
+                del hook_cell._forward_hook[self._hook_key]
                 _pynative_executor.set_hook_changed(hook_cell)
-            elif self._hook_type == "cell_backward_hook":
-                hook_cell.cell_backward_hook.remove_backward_hook(self._hook_key)
+            elif self._hook_type == "_cell_backward_hook":
+                hook_cell._cell_backward_hook.remove_backward_hook(self._hook_key)
 
     def __del__(self):
         self._hook_cell = None
