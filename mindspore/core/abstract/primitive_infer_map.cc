@@ -67,6 +67,7 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   static const auto &kSlice = prim::kPrimSlice->name();
   static const auto &kSliceGrad = prim::kPrimSliceGrad->name();
   static const auto &kReshape = prim::kPrimReshape->name();
+  static const auto &kFillV2 = prim::kPrimFillV2->name();
   // Common dynamic shape depends.
   static const PrimShapeDependMap dynamic_shape_depends{{kUnsortedSegmentSum, ShapeSet{2}},
                                                         {kUnsortedSegmentMin, ShapeSet{2}},
@@ -84,6 +85,7 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
                                                         {kReshape, ShapeSet{1}},
                                                         {kSlice, ShapeSet{1, 2}},
                                                         {kSliceGrad, ShapeSet{2, 3}},
+                                                        {kFillV2, ShapeSet{0}},
                                                         {kDynamicBroadcastTo, ShapeSet{1}},
                                                         {kReduceSum, ShapeSet{1}}};
 

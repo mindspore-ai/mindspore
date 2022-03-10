@@ -23,7 +23,7 @@ from ..function.array_func import (unique)
 from . import _quant_ops
 from ._embedding_cache_ops import (CacheSwapTable, UpdateCache, MapCacheIdx, SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
-from ._inner_ops import (MatmulDDS, DSDMatmul, NonZero)
+from ._inner_ops import (FillV2, MatmulDDS, DSDMatmul, NonZero)
 from ._quant_ops import *
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
@@ -172,6 +172,7 @@ __all__ = [
     'Conv3D',
     'Conv2DTranspose',
     'Conv3DTranspose',
+    'FillV2',
     'Flatten',
     'MaxPoolWithArgmax',
     'BNTrainingReduce',

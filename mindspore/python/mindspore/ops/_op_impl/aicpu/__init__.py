@@ -45,6 +45,7 @@ from .is_finite import _is_finite_aicpu
 from .is_inf import _is_inf_aicpu
 from .is_nan import _is_nan_aicpu
 from .reshape import _reshape_aicpu
+from .fill_v2 import _fill_v2_aicpu
 from .flatten import _flatten_aicpu
 from .sin import _sin_aicpu
 from .cos import _cos_aicpu
