@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,21 +29,6 @@ void SetAttrForSplitVNode(const AnfNodePtr &splitv, const std::vector<int64_t> &
   AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue(num_split), splitv);
 }
 
-size_t GetSmallSplitSize(const AnfNodePtr &split_node, int64_t split_dim, int64_t num_split) {
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(split_node, 0);
-  if (split_dim < 0) {
-    split_dim += SizeToLong(input_shape.size());
-  }
-  if (LongToSize(split_dim) >= input_shape.size()) {
-    MS_LOG(EXCEPTION) << "The split_dim value should be less than the shape size of input 0."
-                      << trace::DumpSourceLines(split_node);
-  }
-  if (num_split == 0) {
-    MS_LOG(EXCEPTION) << "Divisor 'num_split' should not be 0." << trace::DumpSourceLines(split_node);
-  }
-  return input_shape[LongToSize(split_dim)] / LongToSize(num_split);
-}
-
 void AddNewOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &new_splitv, int64_t outputs_num,
                    std::vector<AnfNodePtr> *inputs) {
   MS_EXCEPTION_IF_NULL(inputs);
@@ -63,8 +48,8 @@ AnfNodePtr CreateTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &
   return tuple_getitem;
 }
 
-void CreateOutputShapeAndTypeId(const CNodePtr &origin_cnode, int64_t split_dim, int64_t split_size, int64_t num_split,
-                                std::vector<TypeId> *new_type_ids,
+void CreateOutputShapeAndTypeId(const CNodePtr &origin_cnode, int64_t split_dim,
+                                const std::vector<int64_t> &size_splits_new, std::vector<TypeId> *new_type_ids,
                                 std::vector<std::vector<size_t>> *new_output_shapes) {
   MS_EXCEPTION_IF_NULL(new_type_ids);
   MS_EXCEPTION_IF_NULL(new_output_shapes);
@@ -72,10 +57,14 @@ void CreateOutputShapeAndTypeId(const CNodePtr &origin_cnode, int64_t split_dim,
   if (split_dim < 0) {
     split_dim += SizeToLong(output_shape.size());
   }
-  output_shape[LongToSize(split_dim)] = LongToSize(split_size);
+  size_t split_dim_unsigned = LongToSize(split_dim);
+  if (split_dim_unsigned >= output_shape.size()) {
+    MS_LOG(EXCEPTION) << "Error split dim: " << split_dim << trace::DumpSourceLines(origin_cnode);
+  }
   TypeId type_id = AnfAlgo::GetOutputInferDataType(origin_cnode, 0);
-  for (int64_t i = 0; i < num_split; ++i) {
+  for (size_t i = 0; i < size_splits_new.size(); ++i) {
     new_type_ids->emplace_back(type_id);
+    output_shape[split_dim_unsigned] = LongToSize(size_splits_new[i]);
     new_output_shapes->emplace_back(output_shape);
   }
 }
@@ -127,54 +116,60 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
   MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr base_splitv = CreateBaseSplitVNode(func_graph, cnode);
 
-  // Create new size_splits for "size_splits" attr of each new Splitv node which has full inputs.
-  auto small_split_size = SizeToLong(GetSmallSplitSize(cnode, split_dim, num_split));
-  std::vector<int64_t> size_splits_new(divisor, small_split_size);
-  // Create new output shape and new output type id for each new Splitv node which has full inputs.
-  std::vector<TypeId> new_type_ids;
-  std::vector<std::vector<size_t>> new_output_shapes;
-  CreateOutputShapeAndTypeId(cnode, split_dim, small_split_size, divisor, &new_type_ids, &new_output_shapes);
+  auto size_splits = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrSizeSplits);
+  if (size_splits.size() != LongToSize(num_split)) {
+    MS_LOG(EXCEPTION) << "The size of size_splits should be equal to num_split[" << num_split << "], but got "
+                      << size_splits.size() << ", node: " << cnode->fullname_with_scope()
+                      << trace::DumpSourceLines(cnode);
+  }
 
   // Create make_tuple input to create a make_tuple for replacing the old Split node.
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   // Start to divide the outputs of Split.
   std::vector<int64_t> size_splits_base;
   std::vector<AnfNodePtr> base_splitv_outputs;
-  const auto base_split_size = divisor * small_split_size;
   int64_t nodes_num = 0;
   int64_t cur_output_index = 0;
   while (num_split - cur_output_index > divisor) {
     auto tuple_getitem = CreateTupleGetItem(func_graph, base_splitv, nodes_num);
     base_splitv_outputs.push_back(tuple_getitem);
     CNodePtr new_splitv = CreateSplitVNode(func_graph, tuple_getitem);
+    std::vector<int64_t> size_splits_new(size_splits.begin() + nodes_num * divisor,
+                                         size_splits.begin() + (nodes_num + 1) * divisor);
     SetAttrForSplitVNode(new_splitv, size_splits_new, split_dim, divisor);
+    // Create new output shape and new output type id for each new Splitv node which has full inputs.
+    std::vector<TypeId> new_type_ids;
+    std::vector<std::vector<size_t>> new_output_shapes;
+    CreateOutputShapeAndTypeId(cnode, split_dim, size_splits_new, &new_type_ids, &new_output_shapes);
     AnfAlgo::SetOutputInferTypeAndShape(new_type_ids, new_output_shapes, new_splitv.get());
     AddNewOutputs(func_graph, new_splitv, divisor, &make_tuple_inputs);
     cur_output_index += divisor;
-    size_splits_base.emplace_back(base_split_size);
+    int64_t split_size = std::accumulate(size_splits_new.begin(), size_splits_new.end(), int64_t(0));
+    size_splits_base.emplace_back(split_size);
     nodes_num++;
   }
+  // create last splitv or getitem when last_node_num_split == 1
   if (cur_output_index < num_split) {
     auto last_node_num_split = num_split - cur_output_index;
     if (last_node_num_split > 1) {
       auto tuple_getitem = CreateTupleGetItem(func_graph, base_splitv, nodes_num);
       base_splitv_outputs.push_back(tuple_getitem);
       CNodePtr new_splitv = CreateSplitVNode(func_graph, tuple_getitem);
-      std::vector<int64_t> size_splits_new_last(last_node_num_split, small_split_size);
+      std::vector<int64_t> size_splits_new_last(size_splits.begin() + nodes_num * divisor, size_splits.end());
       SetAttrForSplitVNode(new_splitv, size_splits_new_last, split_dim, last_node_num_split);
       // Create new output shape and new output type id for the last Splitv node
       std::vector<TypeId> last_new_type_ids;
       std::vector<std::vector<size_t>> last_new_output_shapes;
-      CreateOutputShapeAndTypeId(cnode, split_dim, small_split_size, last_node_num_split, &last_new_type_ids,
-                                 &last_new_output_shapes);
+      CreateOutputShapeAndTypeId(cnode, split_dim, size_splits_new_last, &last_new_type_ids, &last_new_output_shapes);
       AnfAlgo::SetOutputInferTypeAndShape(last_new_type_ids, last_new_output_shapes, new_splitv.get());
       AddNewOutputs(func_graph, new_splitv, last_node_num_split, &make_tuple_inputs);
-      size_splits_base.emplace_back(last_node_num_split * small_split_size);
+      int64_t last_split_size = std::accumulate(size_splits_new_last.begin(), size_splits_new_last.end(), int64_t(0));
+      size_splits_base.emplace_back(last_split_size);
     } else {
       auto tuple_getitem = CreateTupleGetItem(func_graph, base_splitv, nodes_num);
       base_splitv_outputs.push_back(tuple_getitem);
       make_tuple_inputs.emplace_back(tuple_getitem);
-      size_splits_base.emplace_back(small_split_size);
+      size_splits_base.emplace_back(size_splits[size_splits.size() - 1]);
     }
     nodes_num++;
   }
