@@ -231,11 +231,11 @@ class Tensor(Tensor_):
 
     def __int__(self):
         data = self.asnumpy()
-        return self._convert_scalar_(data, int, "only one element tensors can be converted to Python scalars")
+        return self._convert_scalar_(data, int, "Only one element tensors can be converted to Python scalars")
 
     def __float__(self):
         data = self.asnumpy()
-        return self._convert_scalar_(data, float, "only one element tensors can be converted to Python scalars")
+        return self._convert_scalar_(data, float, "Only one element tensors can be converted to Python scalars")
 
     def __index__(self):
         data = self.asnumpy()

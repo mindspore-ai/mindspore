@@ -145,7 +145,16 @@ def get_bprop_shape(self):
 
 @bprop_getters.register(P.DynamicShape)
 def get_bprop_dynamicshape(self):
-    """Generate bprop for Shape"""
+    """Generate bprop for DynamicShape"""
+
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
+
+    return bprop
+
+@bprop_getters.register(P.TensorShape)
+def get_bprop_tensorshape(self):
+    """Generate bprop for TensorShape"""
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
