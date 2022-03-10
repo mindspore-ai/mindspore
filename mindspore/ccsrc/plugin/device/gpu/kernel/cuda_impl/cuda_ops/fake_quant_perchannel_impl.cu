@@ -41,7 +41,7 @@ __global__ void NudgeMinMaxPerChannel(float *input_min, float *input_max, const 
 
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < channel_num; i += blockDim.x * gridDim.x) {
     if (symmetric) {
-      input_max[i] = abs(input_min[0]) < input_max[i] ? input_max[i] : -input_min[i];
+      input_max[i] = abs(input_min[i]) < input_max[i] ? input_max[i] : -input_min[i];
       input_min[i] = abs(input_min[i]) < input_max[i] ? -input_max[i] : input_min[i];
     }
     if ((quant_max - quant_min) == 0 || (input_max[i] - input_min[i]) == 0) {
