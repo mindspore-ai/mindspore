@@ -235,8 +235,8 @@ class Add(_MathBinaryOp):
         >>> print(output.dtype)
         Float32
     """
-    def _add_infer_special_value(self, a, b):
-        """Add infer min max value"""
+    def _infer_specified_add_value(self, a, b):
+        """Calculate min/max value for output for Add op"""
         if a is not None and b is not None:
             if isinstance(a, (Tensor, Tensor_)):
                 a = a.asnumpy()
@@ -249,13 +249,13 @@ class Add(_MathBinaryOp):
             return out
         return None
 
-    def infer_min_value(self, x, y):
-        """Add infer min value"""
-        return _add_infer_special_value(x, y)
+    def _infer_min_value(self, x, y):
+        """Calculate min value for output for Add op"""
+        return self._infer_specified_add_value(x, y)
 
-    def infer_max_value(self, x, y):
-        """Add infer min value"""
-        return _add_infer_special_value(x, y)
+    def _infer_max_value(self, x, y):
+        """Calculate max value for output for Add op"""
+        return self._infer_specified_add_value(x, y)
 
     def infer_value(self, x, y):
         if x is not None and y is not None:
@@ -1937,8 +1937,8 @@ class Mul(_MathBinaryOp):
         >>> print(output)
         [ 4. 10. 18.]
     """
-    def _infer_min_max_value(self, x, y):
-        """Mul infer min max value"""
+    def _infer_specified_mul_value(self, x, y):
+        """Calculate min/max value for output of Mul op"""
         if x is not None and y is not None:
             if isinstance(x, (Tensor, Tensor_)):
                 x = x.asnumpy()
@@ -1951,13 +1951,13 @@ class Mul(_MathBinaryOp):
             return out
         return None
 
-    def infer_min_value(self, x, y):
-        """Mul infer min value"""
-        return self._infer_min_max_value(x, y)
+    def _infer_min_value(self, x, y):
+        """Calculate min value for output for Mul op"""
+        return self._infer_specified_mul_value(x, y)
 
-    def infer_max_value(self, x, y):
-        """Mul infer max value"""
-        return self._infer_min_max_value(x, y)
+    def _infer_max_value(self, x, y):
+        """Calculate max value for output for Mul op"""
+        return self._infer_specified_mul_value(x, y)
 
     def infer_dtype(self, x_dtype, y_dtype):
         mul_valid_type = mstype.number_type + (mstype.bool_,)
@@ -2872,8 +2872,9 @@ class Div(_MathBinaryOp):
         >>> print(output.dtype)
         Float32
     """
-    def _div_infer_special_value(self, x, y):
-        """Div infer min max value"""
+
+    def _infer_specified_div_value(self, x, y):
+        """Calculate min/max value for output of Div op"""
         if x is not None and y is not None:
             if isinstance(x, (Tensor, Tensor_)):
                 x = x.asnumpy()
@@ -2886,13 +2887,13 @@ class Div(_MathBinaryOp):
             return out
         return None
 
-    def infer_min_value(self, x, y):
-        """Div infer min value"""
-        return _div_infer_special_value(x, y)
+    def _infer_min_value(self, x, y):
+        """Calculate min value for output for Div op"""
+        return self._infer_specified_div_value(x, y)
 
-    def infer_max_value(self, x, y):
-        """Div infer max value"""
-        return _div_infer_special_value(x, y)
+    def _infer_max_value(self, x, y):
+        """Calculate max value for output for Div op"""
+        return self._infer_specified_div_value(x, y)
 
     def infer_value(self, x, y):
         if x is not None and y is not None:

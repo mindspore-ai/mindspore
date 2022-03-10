@@ -599,11 +599,11 @@ class PrimitiveWithInfer(Primitive):
         has_min_value, min_values = get_specified_value(args, 'min_value')
         has_max_value, max_values = get_specified_value(args, 'max_value')
         if has_min_value and has_max_value:
-            if hasattr(self, 'infer_min_value'):
-                fn_infer_min_value = getattr(self, 'infer_min_value')
+            if hasattr(self, '_infer_min_value'):
+                fn_infer_min_value = getattr(self, '_infer_min_value')
                 out['min_value'] = fn_infer_min_value(*min_values)
-            if hasattr(self, 'infer_max_value'):
-                fn_infer_max_value = getattr(self, 'infer_max_value')
+            if hasattr(self, '_infer_max_value'):
+                fn_infer_max_value = getattr(self, '_infer_max_value')
                 out['max_value'] = fn_infer_max_value(*max_values)
         if not has_dynamic_shape(out['shape']):
             return out

@@ -521,7 +521,7 @@ class Reshape(PrimitiveWithInfer):
             if len(min_shape) != shape_rank or len(max_shape) != shape_rank:
                 raise RuntimeError("The primitive[Reshape]'s input[shape] min or max value not math the shape rank.")
             for i in range(shape_rank):
-                if min_shape[i] == max_shape[i] and min_shape[i] != 1:
+                if min_shape[i] == max_shape[i]:
                     out_shape[i] = min_shape[i]
         elif is_shape_unknown(x_shp) and "max_shape" in x:
             # when dynamic memory allocation is supported, max_shape can be left out
@@ -529,9 +529,57 @@ class Reshape(PrimitiveWithInfer):
             max_shape = [int(np.prod(x["max_shape"]))] * shape_rank
         return out_shape, min_shape, max_shape
 
+    def _update_shape_range(self, out, x, shape_v, neg_index, dim_prod):
+        """ update min and max shape of output when input shape is dynamic"""
+        x_min_shape = x['shape']
+        x_max_shape = x['shape']
+        if 'max_shape' in x:
+            x_max_shape = x['max_shape']
+        if 'min_shape' in x:
+            x_min_shape = x['min_shape']
+        max_arr_prod = np.prod(x_max_shape)
+        min_arr_prod = np.prod(x_min_shape)
+        max_shape = list(shape_v)
+        min_shape = list(shape_v)
+        if neg_index != -1:
+            max_shape[neg_index] = int(max_arr_prod / dim_prod)
+            min_shape[neg_index] = int(min_arr_prod / dim_prod)
+        out['max_shape'] = tuple(max_shape)
+        out['min_shape'] = tuple(min_shape)
+        return out
+
+    def _update_shape_and_value(self, out, x, shape_v, dim_prod, neg_index):
+        """ update shape, value and min / max value of output when input shape is known"""
+        x_shp = x['shape']
+        if dim_prod <= 0:
+            raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
+                             f"the value of 'input_shape' is {shape_v}. "
+                             f"The product of 'input_shape' should > 0, but got {dim_prod}.")
+        arr_prod = np.prod(x_shp)
+        if neg_index != -1:
+            shape_v[neg_index] = int(arr_prod / dim_prod)
+            dim_prod *= shape_v[neg_index]
+        if dim_prod != arr_prod:
+            raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
+                             f"the value of 'input_shape' value is {shape_v}. "
+                             f"The product of the shape of 'input_x' should be equal to that of 'input_shape', "
+                             f"but got {arr_prod} and {dim_prod}.")
+        out['shape'] = tuple(shape_v)
+
+        if x['value'] is not None:
+            out['value'] = Tensor(x['value'].asnumpy().reshape(shape_v))
+
+        if ('min_value' in x and 'max_value' in x):
+            ret_min_value = np.array(x['min_value']).reshape(shape_v)
+            ret_max_value = np.array(x['max_value']).reshape(shape_v)
+            ret_min_value = tuple(ret_min_value.tolist())
+            ret_max_value = tuple(ret_max_value.tolist())
+            out['min_value'] = ret_min_value
+            out['max_value'] = ret_max_value
+        return out
+
     def __infer__(self, x, shape):
         shape_v = shape['value']
-        x_shp = x['shape']
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         # for shape is not constant
         if shape_v is None:
@@ -569,50 +617,14 @@ class Reshape(PrimitiveWithInfer):
             else:
                 dim_prod *= shp_i
 
-        if is_shape_unknown(x_shp):
-            if 'max_shape' in x:
-                x_max_shape = x['max_shape']
-            else:
-                x_max_shape = x['shape']
-            if 'min_shape' in x:
-                x_min_shape = x['min_shape']
-            else:
-                x_min_shape = x['shape']
-            max_arr_prod = np.prod(x_max_shape)
-            min_arr_prod = np.prod(x_min_shape)
-            max_shape = list(shape_v)
-            min_shape = list(shape_v)
-            if neg_index != -1:
-                max_shape[neg_index] = int(max_arr_prod / dim_prod)
-                min_shape[neg_index] = int(min_arr_prod / dim_prod)
+        out = {'shape': shape_v,
+               'dtype': x['dtype'],
+               'value': None}
 
-            out = {'shape': shape_v,
-                   'dtype': x['dtype'],
-                   'value': None,
-                   'max_shape': tuple(max_shape),
-                   'min_shape': tuple(min_shape)}
+        if is_shape_unknown(x['shape']):
+            out = self._update_shape_range(out, x, shape_v, neg_index, dim_prod)
         else:
-            arr_prod = np.prod(x_shp)
-            if dim_prod <= 0:
-                raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
-                                 f"the value of 'input_shape' is {shape_v}. "
-                                 f"The product of 'input_shape' should > 0, but got {dim_prod}.")
-            if neg_index != -1:
-                shape_v[neg_index] = int(arr_prod / dim_prod)
-                dim_prod *= shape_v[neg_index]
-            if dim_prod != arr_prod:
-                raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
-                                 f"the value of 'input_shape' value is {shape_v}. "
-                                 f"The product of the shape of 'input_x' should be equal to product of 'input_shape', "
-                                 f"but product of the shape of 'input_x' is {arr_prod}, "
-                                 f"product of 'input_shape' is {dim_prod}.")
-            value = None
-            if x['value'] is not None:
-                value = Tensor(x['value'].asnumpy().reshape(shape_v))
-
-            out = {'shape': tuple(shape_v),
-                   'dtype': x['dtype'],
-                   'value': value}
+            out = self._update_shape_and_value(out, x, shape_v, dim_prod, neg_index)
         return out
 
 
@@ -1352,20 +1364,32 @@ class Fill(PrimitiveWithInfer):
     def __infer__(self, dtype, dims, x):
         validator.check_value_type("shape", dims['value'], [tuple], self.name)
         validator.check_value_type("value", x['value'], [numbers.Number, bool], self.name)
-        for i, item in enumerate(dims['value']):
-            validator.check_positive_int(item, f'dims[{i}]', self.name)
         valid_dtypes = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                         mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
                         mstype.float16, mstype.float32, mstype.float64, mstype.complex64,
                         mstype.complex128]
         validator.check_types_same_and_valid({"value": dtype['value']}, valid_dtypes, self.name)
         x_nptype = mstype.dtype_to_nptype(dtype['value'])
-        ret = np.full(dims['value'], x['value'], x_nptype)
-        out = {
-            'value': Tensor(ret),
-            'shape': dims['value'],
-            'dtype': x['dtype'],
-        }
+        if -1 not in dims['value']:
+            for i, item in enumerate(dims['value']):
+                validator.check_positive_int(item, f'dims[{i}]', self.name)
+            ret = np.full(dims['value'], x['value'], x_nptype)
+            out = {
+                'value': Tensor(ret),
+                'shape': dims['value'],
+                'dtype': x['dtype'],
+            }
+        else:
+            out = {
+                'value': None,
+                'shape': dims['value'],
+                'dtype': x['dtype'],
+            }
+            if ('min_value' in dims and 'max_value' in dims):
+                min_ret_shape = dims['min_shape']
+                max_ret_shape = dims['max_shape']
+                out['min_shape'] = min_ret_shape
+                out['max_shape'] = max_ret_shape
         return out
 
 
@@ -2800,6 +2824,22 @@ class Stack(PrimitiveWithInfer):
         out = {'shape': all_shape,
                'dtype': x_type[0],
                'value': infered_value}
+        if ('min_value' in value and 'max_value' in value):
+            min_value_array = []
+            max_value_array = []
+            infered_min_value = None
+            infered_max_value = None
+            for i in range(len(value['min_value'])):
+                cur_min_value = value['min_value'][i]
+                cur_max_value = value['max_value'][i]
+                min_value_array.append(np.array(cur_min_value))
+                max_value_array.append(np.array(cur_max_value))
+            infered_min_value = np.stack(min_value_array, axis=self.axis)
+            infered_max_value = np.stack(max_value_array, axis=self.axis)
+            infered_min_value = tuple(infered_min_value.tolist())
+            infered_max_value = tuple(infered_max_value.tolist())
+            out['min_value'] = infered_min_value
+            out['max_value'] = infered_max_value
         return out
 
 
@@ -4170,8 +4210,8 @@ class TensorScatterUpdate(PrimitiveWithInfer):
     def __init__(self):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
-    def _infer_min_max_value(self, input_x_value, indices_value, updates_value):
-        """TensorScatterUpdate infer min max value"""
+    def _infer_specified_value(self, input_x_value, indices_value, updates_value):
+        """Calculate min/max value for output of TensorScatterUpdate op"""
         if isinstance(input_x_value, tuple):
             input_x_value = list(input_x_value)
         if isinstance(input_x_value, (Tensor, Tensor_)):
@@ -4184,13 +4224,11 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         output = tuple(input_x.tolist())
         return output
 
-    def infer_min_value(self, input_x_value, indices_value, updates_value):
-        """TensorScatterUpdate infer min value"""
-        return self._infer_min_max_value(input_x_value, indices_value, updates_value)
+    def _infer_min_value(self, input_x_value, indices_value, updates_value):
+        return self._infer_specified_value(input_x_value, indices_value, updates_value)
 
-    def infer_max_value(self, input_x_value, indices_value, updates_value):
-        """TensorScatterUpdate infer max value"""
-        return self._infer_min_max_value(input_x_value, indices_value, updates_value)
+    def _infer_max_value(self, input_x_value, indices_value, updates_value):
+        return self._infer_specified_value(input_x_value, indices_value, updates_value)
 
     def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
