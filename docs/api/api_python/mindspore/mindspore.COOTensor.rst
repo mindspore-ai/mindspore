@@ -19,30 +19,35 @@ mindspore.COOTensor
 
     COOTensor，由 `indices` 、 `values` 和 `shape` 组成。
 
-    .. py:method:: indices
-        :property:
+    .. py:method:: abs()
 
-        返回COOTensor的索引值。
+        对所有非零元素取绝对值，并返回新的COOTensor。
 
-    .. py:method:: values
-        :property:
+        **返回：**
 
-        返回COOTensor的非零元素值。
+        CSRTensor。
 
-    .. py:method:: shape
-        :property:
+    .. py:method:: astype(dtype)
 
-        返回稀疏矩阵的稠密形状。
+        返回指定数据类型的COOTensor。
+
+        **参数：**
+
+        - **dytpe** (`mindspore.dtype`) - 指定数据类型。
+
+        **返回：**
+
+        COOTensor。
 
     .. py:method:: dtype
         :property:
 
         返回稀疏矩阵非零元素值数据类型。
 
-    .. py:method:: size
+    .. py:method:: indices
         :property:
 
-        返回稀疏矩阵非零元素值数量。
+        返回COOTensor的索引值。
 
     .. py:method:: itemsize
         :property:
@@ -53,6 +58,16 @@ mindspore.COOTensor
         :property:
 
         返回稀疏矩阵的稠密维度。
+
+    .. py:method:: shape
+        :property:
+
+        返回稀疏矩阵的稠密形状。
+
+    .. py:method:: size
+        :property:
+
+        返回稀疏矩阵非零元素值数量。
 
     .. py:method:: to_csr()
 
@@ -78,22 +93,7 @@ mindspore.COOTensor
 
         tuple(Tensor, Tensor, tuple(int))
 
-    .. py:method:: abs()
+    .. py:method:: values
+        :property:
 
-        对所有非零元素取绝对值，并返回新的COOTensor。
-
-        **返回：**
-
-        CSRTensor。
-
-    .. py:method:: astype(dtype)
-
-        返回指定数据类型的COOTensor。
-
-        **参数：**
-
-        - **dytpe** (`mindspore.dtype`) - 指定数据类型。
-
-        **返回：**
-
-        COOTensor。
+        返回COOTensor的非零元素值。
