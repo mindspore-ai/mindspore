@@ -278,17 +278,20 @@ class RandomSharpness(nn.Cell):
 
         self.cast = P.Cast()
         self.shape = P.Shape()
+        self.ones = P.Ones()
         self.reshape = P.Reshape()
         self.expand_dims = P.ExpandDims()
         self.mul = P.Mul()
         self.transpose = P.Transpose()
+
+        self.check_rand = Tensor(self.degree_min == self.degree_max)
 
         self.weight = np.array([[1, 1, 1], [1, 5, 1], [1, 1, 1]])/13.0
         self.weight = np.repeat(self.weight[np.newaxis, :, :], 3, axis=0)
         self.weight = np.repeat(self.weight[np.newaxis, :, :], 3, axis=0)
         self.weight = Tensor(self.weight, mstype.float32)
 
-        self.filter = P.Conv2D(out_channel=3, kernel_size=(3, 3), pad_mode='same')
+        self.filter = P.Conv2D(out_channel=3, kernel_size=(3, 3), pad_mode='pad', pad=1)
 
     def construct(self, x):
 
@@ -299,6 +302,8 @@ class RandomSharpness(nn.Cell):
 
         degree_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
         degree_rand_factor = self.degree_min + (self.degree_max - self.degree_min)*degree_rand_factor
+        degree_factor = self.degree_min * self.ones((bs, 1), mstype.float32)
+        degree_rand_factor = (self.check_rand * degree_factor) + (~self.check_rand * degree_rand_factor)
         degree_rand_factor = self.reshape(C.repeat_elements(degree_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
         x_sharp = self.filter(self.transpose(x, (0, 3, 1, 2)), self.weight)

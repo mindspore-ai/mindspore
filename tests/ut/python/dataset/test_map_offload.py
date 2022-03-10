@@ -339,6 +339,32 @@ def test_offload_dim_check():
             continue
 
 
+def test_offload_random_sharpness_op():
+    """
+    Feature: test map offload RandomSharpness op.
+    Description: Input is image dataset.
+    Expectation: Output should be same with activated or deactivated offload for RandomSharpness op.
+    """
+
+    # Dataset with offload activated.
+    dataset_0 = ds.ImageFolderDataset(DATA_DIR)
+    dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image")
+    dataset_0 = dataset_0.map(operations=[C.RandomSharpness(degrees=[1.0, 1.0])], input_columns="image", offload=True)
+    dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
+    dataset_0 = dataset_0.batch(8, drop_remainder=True)
+
+    # Dataset with offload not activated.
+    dataset_1 = ds.ImageFolderDataset(DATA_DIR)
+    dataset_1 = dataset_1.map(operations=[C.Decode()], input_columns="image")
+    dataset_1 = dataset_1.map(operations=[C.RandomSharpness(degrees=[1.0, 1.0])], input_columns="image")
+    dataset_1 = dataset_1.map(operations=[C.HWC2CHW()], input_columns="image")
+    dataset_1 = dataset_1.batch(8, drop_remainder=True)
+
+    for (img_0, _), (img_1, _) in zip(dataset_0.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                                      dataset_1.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+        np.testing.assert_almost_equal(img_0, img_1, decimal=6)
+
+
 if __name__ == "__main__":
     test_offload()
     test_auto_offload()
@@ -353,3 +379,4 @@ if __name__ == "__main__":
     test_offload_different_column_end_of_pipeline()
     test_offload_not_end_of_pipeline()
     test_offload_dim_check()
+    test_offload_random_sharpness_op()
