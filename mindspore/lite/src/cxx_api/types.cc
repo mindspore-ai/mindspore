@@ -72,7 +72,7 @@ MSTensor::MSTensor(std::nullptr_t) : impl_(nullptr) {}
 MSTensor::MSTensor(const std::shared_ptr<Impl> &impl) : impl_(impl) {}
 MSTensor::MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                    const void *data, size_t data_len)
-    : impl_(Impl::CreateTensorImpl(CharToString(name), type, shape, data, data_len)) {}
+    : impl_(Impl::CreateTensorImplByDeepCopy(CharToString(name), type, shape, data, data_len)) {}
 MSTensor::~MSTensor() = default;
 
 bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }

@@ -41,6 +41,8 @@ class MS_API MSTensor {
   /// \return Pointer to an instance of MindSpore Lite MSTensor.
   static MSTensor *CreateTensor(const String &name, TypeId type, const Vector<int> &shape, const void *data,
                                 size_t data_len);
+  static MSTensor *CreateTensorByDeepCopy(const String &name, TypeId type, const Vector<int> &shape, const void *data,
+                                          size_t data_len);
 
   /// \brief Set memory allocator for current MSTensor.
   ///

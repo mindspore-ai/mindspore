@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "securec/include/securec.h"
 #include "include/ms_tensor.h"
 #include "src/tensor.h"
 
@@ -58,6 +59,51 @@ tensor::MSTensor *tensor::MSTensor::CreateTensor(const std::string &name, TypeId
     return nullptr;
   }
   tensor->set_data(const_cast<void *>(data));
+  tensor->set_shape(shape);
+  tensor->set_tensor_name(name);
+  tensor->set_data_type(type);
+  return tensor;
+}
+
+tensor::MSTensor *tensor::MSTensor::CreateTensorByDeepCopy(const std::string &name, TypeId type,
+                                                           const std::vector<int> &shape, const void *data,
+                                                           size_t data_len) {
+  auto tensor = new (std::nothrow) lite::Tensor();
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Failed to allocate tensor.";
+    return nullptr;
+  }
+
+  auto data_type_size = lite::DataTypeSize(type);
+  if (data_type_size == 0) {
+    MS_LOG(ERROR) << "not support create this type: " << type;
+    delete tensor;
+    return nullptr;
+  }
+
+  if (data_len < 0 || data_len > MAX_MALLOC_SIZE) {
+    MS_LOG(ERROR) << "data length is invalid.";
+    delete tensor;
+    return nullptr;
+  } else if (data_len == 0 && data != nullptr) {
+    MS_LOG(ERROR) << "data length and data are not match.";
+    delete tensor;
+    return nullptr;
+  } else if (data_len == 0 && data == nullptr) {
+    tensor->set_data(const_cast<void *>(data));
+  } else {
+    void *new_data = malloc(data_len);
+    if (new_data == nullptr) {
+      MS_LOG(ERROR) << "Failed to malloc data.";
+      delete tensor;
+      return nullptr;
+    }
+    if (data != nullptr) {
+      (void)memcpy(new_data, data, data_len);
+    }
+    tensor->set_data(const_cast<void *>(new_data));
+  }
+
   tensor->set_shape(shape);
   tensor->set_tensor_name(name);
   tensor->set_data_type(type);

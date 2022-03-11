@@ -61,6 +61,9 @@ class MSTensor::Impl {
   static std::shared_ptr<Impl> MS_API CreateTensorImpl(const std::string &name, enum DataType type,
                                                        const std::vector<int64_t> &shape, const void *data,
                                                        size_t data_len);
+  static std::shared_ptr<Impl> MS_API CreateTensorImplByDeepCopy(const std::string &name, enum DataType type,
+                                                                 const std::vector<int64_t> &shape, const void *data,
+                                                                 size_t data_len);
 
 #ifndef STRING_KERNEL_CLIP
   static std::shared_ptr<Impl> MS_API StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str);
