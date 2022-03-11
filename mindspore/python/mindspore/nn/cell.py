@@ -1554,7 +1554,7 @@ class Cell(Cell_):
 
     def _run_forward_pre_hook(self, inputs):
         """
-        Running forward pre hook function registered on cell object.
+        Running forward pre hook function registered on Cell object.
 
         Args:
             inputs: The input objects of cell object.
@@ -1577,17 +1577,20 @@ class Cell(Cell_):
 
     def register_forward_pre_hook(self, hook_fn):
         """
-        Register forward pre hook function for cell object. Note that this function is only supported in pynative mode.
+        Register forward pre hook function for Cell object.
 
         Note:
+            - The `register_forward_pre_hook(hook_fn)` does not work in graph mode or ms_function.
             - 'hook_fn' must be defined as the following code.
-              `cell_id` is the information of registered cell object, including name and ID. `inputs` is the forward
-              input objects passed to the cell. The 'hook_fn' can modify the forward input objects by returning new
+              `cell_id` is the information of registered Cell object, including name and ID. `inputs` is the forward
+              input objects passed to the Cell. The 'hook_fn' can modify the forward input objects by returning new
               forward input objects.
             - It should have the following signature:
               hook_fn(cell_id, inputs) -> new input objects or none.
-            - In order to prevent running failed when switching to graph mode, it is not recommended to write in the
-              construct.
+            - In order to prevent running failed when switching to graph mode, it is not recommended to write it in the
+              `construct` function of Cell object. In the pynative mode, if the `register_forward_pre_hook` function is
+              called in the `construct` function of the Cell object, a hook function will be added at each run time of
+              Cell object.
 
         Args:
             hook_fn (function): Python function. Forward pre hook function.
@@ -1653,11 +1656,11 @@ class Cell(Cell_):
 
     def _run_forward_hook(self, inputs, output):
         """
-        Running forward hook function registered on cell object.
+        Running forward hook function registered on Cell object.
 
         Args:
-            inputs: The input objects of cell object.
-            output: The output object of cell object.
+            inputs: The input objects of Cell object.
+            output: The output object of Cell object.
 
         Returns:
             - **output** - New output object or none.
@@ -1674,17 +1677,20 @@ class Cell(Cell_):
 
     def register_forward_hook(self, hook_fn):
         """
-        Set the cell forward hook function. Note that this function is only supported in pynative mode.
+        Set the Cell forward hook function.
 
         Note:
+            - The `register_forward_hook(hook_fn)` does not work in graph mode or ms_function.
             - 'hook_fn' must be defined as the following code.
-              `cell_id` is the information of registered cell object, including name and ID. `inputs` is the forward
-              input objects passed to the cell. `output` is the forward output object of the cell. The 'hook_fn' can
+              `cell_id` is the information of registered Cell object, including name and ID. `inputs` is the forward
+              input objects passed to the Cell. `output` is the forward output object of the Cell. The 'hook_fn' can
               modify the forward output object by returning new forward output object.
             - It should have the following signature:
               hook_fn(cell_id, inputs, output) -> new output object or none.
-            - In order to prevent running failed when switching to graph mode, it is not recommended to write in the
-              construct.
+            - In order to prevent running failed when switching to graph mode, it is not recommended to write it in the
+              `construct` function of Cell object. In the pynative mode, if the `register_forward_hook` function is
+              called in the `construct` function of the Cell object, a hook function will be added at each run time of
+              Cell object.
 
         Args:
             hook_fn (function): Python function. Forward hook function.
@@ -1755,10 +1761,10 @@ class Cell(Cell_):
         Backward hook construct method to replace original construct method.
 
         Args:
-            inputs: The input objects of cell object.
+            inputs: The input objects of Cell object.
 
         Returns:
-            - **outputs** - The output objects of cell object.
+            - **outputs** - The output objects of Cell object.
 
         Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1776,17 +1782,20 @@ class Cell(Cell_):
 
     def register_backward_hook(self, hook_fn):
         """
-        Register the backward hook function. Note that this function is only supported in pynative mode.
+        Register the backward hook function.
 
         Note:
+            - The `register_backward_hook(hook_fn)` does not work in graph mode or ms_function.
             - The 'hook_fn' must be defined as the following code.
-              `cell_id` is the information of registered cell, including name and ID. `grad_input` is the gradient
-              passed to the cell. `grad_output` is the gradient computed and passed to the next cell or primitive,
-              which may be modified by returning a new output gradient.
+              `cell_id` is the information of registered Cell object, including name and ID. `grad_input` is the
+              gradient passed to the Cell. `grad_output` is the gradient computed and passed to the next Cell or
+              primitive, which may be modified by returning a new output gradient.
             - The 'hook_fn' should have the following signature:
               hook_fn(cell_id, grad_input, grad_output) -> New output gradient or none.
             - The 'hook_fn' is executed in the python environment. In order to prevent running failed when switching to
-              graph mode, it is not recommended to write in the construct.
+              graph mode, it is not recommended to write it in the `construct` function of Cell object. In the pynative
+              mode, if the `register_backward_hook` function is called in the `construct` function of the Cell object,
+              a hook function will be added at each run time of Cell object.
 
         Args:
             hook_fn (function): Python function. Backward hook function.
