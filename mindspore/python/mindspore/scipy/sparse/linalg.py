@@ -16,7 +16,7 @@
 from ... import nn, ms_function
 from ... import numpy as mnp
 from ...ops import functional as F
-from ...common import Tensor, dtype as mstype
+from ...common import Tensor, CSRTensor, dtype as mstype
 from ...ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
@@ -367,11 +367,17 @@ class CGv2(nn.Cell):
         return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
 
     def bprop(self, A, b, x0, tol, atol, maxiter, M, out, dout):
+        """Grad definition for `CGv2` Cell."""
         n = b.shape[0]
-        if not isinstance(M, Tensor):
+        if not isinstance(M, (Tensor, CSRTensor)):
             M = F.eye(n, n, b.dtype)
         grad_b, _ = self.construct(A, dout[0], x0, tol, atol, maxiter, M)
-        grad_a = -1 * F.reshape(grad_b, (n, 1)) * F.reshape(out[0], (1, n))
+        if isinstance(A, CSRTensor):
+            grad_a_dense = -1 * F.reshape(grad_b, (n, 1)) * F.reshape(out[0], (1, n))
+            values = F.csr_gather(A.indptr, A.indices, grad_a_dense, A.shape)
+            grad_a = CSRTensor(A.indptr, A.indices, values, A.shape)
+        else:
+            grad_a = -1 * F.reshape(grad_b, (n, 1)) * F.reshape(out[0], (1, n))
         return grad_a, grad_b, zeros_like(x0), zeros_like(tol), zeros_like(atol), zeros_like(maxiter), zeros_like(M)
 
 
