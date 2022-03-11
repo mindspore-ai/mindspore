@@ -45,28 +45,6 @@ using DeviceAddressPtr = device::DeviceAddressPtr;
 using Address = kernel::Address;
 using AddressPtr = kernel::AddressPtr;
 
-class OpRuntimeInfo {
- public:
-  OpRuntimeInfo(std::vector<std::string> output_format, std::vector<TypeId> output_type,
-                std::vector<size_t> output_tensor_size)
-      : output_format_(std::move(output_format)),
-        output_type_(std::move(output_type)),
-        output_tensor_size_(std::move(output_tensor_size)) {}
-  ~OpRuntimeInfo() = default;
-
-  // Key for user data.
-  constexpr static char key[] = "OpRuntimeInfo";
-
-  std::string output_format(size_t index) const;
-  TypeId output_type(size_t index) const;
-  size_t output_tensor_size(size_t index) const;
-
- private:
-  std::vector<std::string> output_format_;
-  std::vector<TypeId> output_type_;
-  std::vector<size_t> output_tensor_size_;
-};
-
 class AnfRuntimeAlgorithm {
  public:
   static AnfNodePtr MakeMonadValueNode(const KernelGraphPtr &kg);

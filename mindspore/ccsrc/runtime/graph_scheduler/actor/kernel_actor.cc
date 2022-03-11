@@ -399,9 +399,10 @@ void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context
     auto output_address = output_addresses[i].get();
     MS_EXCEPTION_IF_NULL(output_address);
     if (output_size_list[i] != output_address->GetSize()) {
-      // The size of output address may be changed in dynamic shape scenario.
-      // If the format of the DeviceAddress is different, then the size is originally different.
-      // Such as NCHW(1,1,1,3) and NC1HWC0(1,1,1,1,16). So we don't need to update the size.
+      // 1. The size of output address may be changed in dynamic shape scenario.
+      // 2. If the format of the DeviceAddress is different, then the size is originally different.
+      //    Such as NCHW(1,1,1,3) and NC1HWC0(1,1,1,1,16). So we don't need to update the size.
+      // 3. For example, we need to call cudnnGetRNNTrainingReserveSize to get real output size in LstmGpuKernelMod!
       if (AnfAlgo::GetOutputFormat(kernel_, i) == output_address->format()) {
         output_address->SetSize(output_size_list[i]);
       }

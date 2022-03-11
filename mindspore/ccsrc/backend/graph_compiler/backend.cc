@@ -22,7 +22,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "backend/graph_compiler/transform.h"
 #include "backend/common/session/session_factory.h"
-#include "runtime/op_builder/op_lazy_builder.h"
+#include "runtime/pynative/op_lazy_builder.h"
 #include "backend/common/optimizer/helper.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/action.h"
@@ -36,6 +36,7 @@
 #include "utils/ms_utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
+#include "runtime/pynative/run_op_helper.h"
 #include "include/common/utils/scoped_long_running.h"
 #ifdef ENABLE_D
 #include "include/common/utils/callbacks_ge.h"
@@ -135,6 +136,22 @@ VectorRef MsBackend::MsSimuRunGraph(const GraphId &g) {
 }
 
 namespace {
+std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const OpRunInfo &op_run_info) {
+  std::vector<tensor::TensorPtr> tensors_without_value_node;
+  const auto &input_tensors = op_run_info.input_tensors;
+  const auto &tensors_mask = op_run_info.tensor_mask;
+  if (input_tensors.size() != tensors_mask.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
+                      << tensors_mask.size();
+  }
+  for (size_t index = 0; index < tensors_mask.size(); ++index) {
+    if (tensors_mask.at(index) != kValueNodeTensorMask) {
+      (void)tensors_without_value_node.emplace_back(input_tensors.at(index));
+    }
+  }
+  return tensors_without_value_node;
+}
+
 void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs) {
   MS_EXCEPTION_IF_NULL(inputs);
   if (utils::isa<tensor::TensorPtr>(arg)) {
@@ -232,10 +249,24 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
   return tensor;
 }
 
+device::DeviceAddressPtr CloneEmptyDeviceAddress(const device::DeviceAddressPtr &old_device_address,
+                                                 const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(old_device_address);
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto new_device_address =
+    device_context->CreateDeviceAddress(nullptr, old_device_address->GetSize(), old_device_address->format(),
+                                        old_device_address->type_id(), old_device_address->host_shape());
+  MS_EXCEPTION_IF_NULL(new_device_address);
+  new_device_address->set_original_ref_count(old_device_address->original_ref_count());
+  new_device_address->ResetRefCount();
+  return new_device_address;
+}
+
 void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context, bool is_gradient_out) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &node : graph->execution_order()) {
     auto output_address_num = AnfAlgo::GetOutputAddressNum(node);
+    // Clear old output device address of kernel
     for (size_t i = 0; i < output_address_num; ++i) {
       if (!AnfAlgo::OutputAddrExist(node, i, false)) {
         continue;
@@ -245,26 +276,40 @@ void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
         continue;
       }
       MS_EXCEPTION_IF_NULL(device_context);
-      auto new_device_address =
-        device_context->CreateDeviceAddress(nullptr, device_address->GetSize(), device_address->format(),
-                                            device_address->type_id(), device_address->host_shape());
-      MS_EXCEPTION_IF_NULL(new_device_address);
-      new_device_address->set_original_ref_count(device_address->original_ref_count());
-      new_device_address->ResetRefCount();
+      auto new_device_address = CloneEmptyDeviceAddress(device_address, device_context);
       if (is_gradient_out) {
         new_device_address->set_from_persistent_mem(true);
       }
       AnfAlgo::SetOutputAddr(new_device_address, i, node.get());
     }
+
+    // Clear old workspace device address of kernel
+    auto kernel_mod = AnfAlgo::GetKernelMod(node);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    auto workspace_lists = kernel_mod->GetWorkspaceSizeList();
+    for (size_t i = 0; i < workspace_lists.size(); ++i) {
+      if (!AnfAlgo::WorkspaceAddrExist(node, i)) {
+        continue;
+      }
+      const auto &device_address = AnfAlgo::GetMutableWorkspaceAddr(node, i);
+      auto new_device_address = CloneEmptyDeviceAddress(device_address, device_context);
+      AnfAlgo::SetWorkspaceAddr(new_device_address, i, node.get());
+    }
   }
 }
 
-void UpdateInputDeviceAddress(const KernelGraphPtr &graph) {
+void ClearInputDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
   for (const auto &node : graph->input_nodes()) {
     MS_EXCEPTION_IF_NULL(node);
-    if (node->isa<Parameter>() && (!common::AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
-      AnfAlgo::SetOutputAddr(nullptr, 0, node.get());
+    if (node->isa<Parameter>()) {
+      auto device_address = AnfAlgo::GetMutableOutputAddr(node, 0, false);
+      if (device_address == nullptr) {
+        continue;
+      }
+      auto new_device_address = CloneEmptyDeviceAddress(device_address, device_context);
+      AnfAlgo::SetOutputAddr(new_device_address, 0, node.get());
     }
   }
 }
@@ -1329,11 +1374,11 @@ void MindRTBackend::LazyExecuteTaskCallback() {
       auto &op_run_task = op_run_tasks.front();
       const auto &context = op_run_task->context();
       ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
-      RunSingleOpGraph(context->graph(), context->op_run_info(), context->graph_compiler_info());
+      auto tensor_without_value_mask = GetTensorWithoutValueMask(context->op_run_info());
+      runtime::RunSingleOpGraph(context->graph(), tensor_without_value_mask, context->device_context(),
+                                context->op_run_info().is_dynamic_shape);
       ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info().is_gradient_out);
-
-      UpdateInputDeviceAddress(context->graph());
-
+      ClearInputDeviceAddress(context->graph(), context->device_context());
       op_lazy_builder.PopOpRunTask();
     }
 
@@ -1377,6 +1422,9 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
 
   bool lazy_build_disabled = NeedDisableLazyBuild(graph_compiler_info->need_erase_,
                                                   (single_op_cache_hit && op_lazy_builder.QueueEmpty()), *op_run_info);
+
+  auto tensor_without_value_mask = GetTensorWithoutValueMask(*op_run_info);
+
   if (lazy_build_disabled) {
     if (!op_lazy_builder.QueueEmpty()) {
       op_lazy_builder.ExecuteRemainingTasks();
@@ -1384,10 +1432,12 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
     if (!single_op_cache_hit) {
       CompileSingleOpGraph(graph, device_context, graph_compiler_info);
     }
-    RunSingleOpGraph(graph, *op_run_info, graph_compiler_info);
+
+    runtime::UpdateDeviceAddress(graph, tensor_without_value_mask, device_context);
+    runtime::RunSingleOpGraph(graph, tensor_without_value_mask, device_context, op_run_info->is_dynamic_shape);
     UpdateOutput(output_nodes, outputs);
     ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
-    UpdateInputDeviceAddress(graph);
+    ClearInputDeviceAddress(graph, device_context);
     if (op_run_info->is_dynamic_shape) {
       UpdateOutputAbstract(graph, op_run_info);
     }
@@ -1395,6 +1445,7 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
       EraseSingleOpCache(graph_compiler_info->name_, graph);
     }
   } else {
+    runtime::UpdateDeviceAddress(graph, tensor_without_value_mask, device_context);
     UpdateOutput(output_nodes, outputs);
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);

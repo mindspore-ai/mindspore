@@ -1155,27 +1155,6 @@ void AnfRuntimeAlgorithm::CacheAddrForAtomicClean(const AnfNodePtr &node, kernel
   kernel_mod->set_inputs_addr(kernel_inputs);
 }
 
-std::string OpRuntimeInfo::output_format(size_t index) const {
-  if (index >= output_format_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid index:" << index << " total output_format:" << output_format_.size();
-  }
-  return output_format_[index];
-}
-
-TypeId OpRuntimeInfo::output_type(size_t index) const {
-  if (index >= output_type_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid index:" << index << " total output_type:" << output_type_.size();
-  }
-  return output_type_[index];
-}
-
-size_t OpRuntimeInfo::output_tensor_size(size_t index) const {
-  if (index >= output_tensor_size_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid index::" << index << " total output_tensor_size:" << output_tensor_size_.size();
-  }
-  return output_tensor_size_[index];
-}
-
 void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   const auto &origin_ref_map = graph->GetRefMap();

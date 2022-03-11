@@ -33,7 +33,7 @@
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
-#include "runtime/op_builder/op_lazy_builder.h"
+#include "runtime/pynative/op_lazy_builder.h"
 
 namespace mindspore {
 namespace compile {
