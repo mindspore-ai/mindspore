@@ -304,7 +304,11 @@ py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &output) 
   if (utils::isa<VectorRef>(value)) {
     MS_LOG(DEBUG) << "BaseRefToPyData, value is tuple: " << value.ToString();
     auto vec_ref = utils::cast<VectorRef>(value);
-    ret = VectorRefToPyData(vec_ref, output);
+    if (output != nullptr) {
+      ret = VectorRefToPyData(vec_ref, output);
+    } else {
+      ret = VectorRefToPyData(vec_ref);
+    }
   } else {
     ret = BaseRefToPyData(value);
   }
