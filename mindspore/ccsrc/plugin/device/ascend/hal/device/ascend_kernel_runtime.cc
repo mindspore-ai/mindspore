@@ -498,7 +498,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph &graph) {
   }
   // Graph may have no compute node, such TensorAddGrad.
   if (task_info_list.empty()) {
-    MS_LOG(WARNING) << "Graph " << graph.graph_id() << " have no compute node";
+    MS_LOG(INFO) << "Graph " << graph.graph_id() << " have no compute node";
     return true;
   }
   AscendStreamAssign &assign_instance = AscendStreamAssign::GetInstance();
@@ -532,7 +532,7 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph &graph) {
 
   MS_LOG(INFO) << "LoadTask start. GraphId:" << graph.graph_id();
   if (GraphWithEmptyTaskList(graph)) {
-    MS_LOG(WARNING) << "LoadTask end, task list is empty";
+    MS_LOG(INFO) << "LoadTask end, task list is empty";
     return true;
   }
 
