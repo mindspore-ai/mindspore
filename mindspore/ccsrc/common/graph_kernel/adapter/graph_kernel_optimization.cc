@@ -162,12 +162,13 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   // Auto recompute according to local memory burst.
   auto recompute_lv = GetPassLevelByFlag(flags.recompute_increment_threshold > 0 || flags.recompute_peak_threshold > 0);
   pm->AddPass(std::make_shared<GraphKernelRecompute>(), recompute_lv);
-  pm->AddPass(std::make_shared<ExtendOutputForUpdateState>(), recompute_lv);
-  pm->AddPass(std::make_shared<MergeOutputForUpdateState>(), recompute_lv);
 
   // Replace Assign with InplaceAssign, and replace original output with overridden parameters
   pm->AddPass(std::make_shared<OptimizeAssign>(), OptLevel_2);
-  pm->AddPass(std::make_shared<EliminateRedundantOutput>(), OptLevel_2);
+
+  pm->AddPass(std::make_shared<ExtendOutputForUpdateState>(), std::min(recompute_lv, OptLevel_2));
+  pm->AddPass(std::make_shared<MergeOutputForUpdateState>(), std::min(recompute_lv, OptLevel_2));
+  pm->AddPass(std::make_shared<EliminateRedundantOutput>(), std::min(recompute_lv, OptLevel_2));
 
   // Enable atomic add
   pm->AddPass(std::make_shared<AtomicCleanInsertter>(), OptLevel_2, is_gpu || is_ascend);

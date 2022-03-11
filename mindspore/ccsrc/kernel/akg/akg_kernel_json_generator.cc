@@ -1057,16 +1057,19 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
 
 void ComputeCapability::GetComputeCapability() {
 #ifdef ENABLE_GPU
+  if (Callback::Instance()->GetTargetFromContext() != kGPUDevice) {
+    this->compute_capability_ = "Unknown";
+  }
   int a, b;
   auto ret = cuDeviceGetAttribute(&a, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
-  if (ret != CUDA_SUCCESS && Callback::Instance()->GetTargetFromContext() == kGPUDevice) {
+  if (ret != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(ret, &msg);
     MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, error message: " << msg;
     return;
   }
   ret = cuDeviceGetAttribute(&b, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
-  if (ret != CUDA_SUCCESS && Callback::Instance()->GetTargetFromContext() == kGPUDevice) {
+  if (ret != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(ret, &msg);
     MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR fail, error message: " << msg;
@@ -1076,6 +1079,5 @@ void ComputeCapability::GetComputeCapability() {
 #else
   this->compute_capability_ = "Unknown";
 #endif
-  return;
 }
 }  // namespace mindspore::graphkernel
