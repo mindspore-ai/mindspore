@@ -33,7 +33,7 @@
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
-#include "runtime/pynative/op_lazy_builder.h"
+#include "runtime/pynative/op_task.h"
 
 namespace mindspore {
 namespace compile {
@@ -119,9 +119,9 @@ class MindRTBackend : public Backend {
 #endif
 
   // Execute all tasks in queue when lazy build is enabled in PyNative mode.
-  void SyncLazyTasks() const;
+  void WaitTaskFinish() const;
   // Clear resource when python exit.
-  void ClearOpBuilderResource() const;
+  void ClearOpExecutorResource() const;
   // Get the device target.
   std::string GetDeviceTarget() { return device_name_; }
   // Sync default stream in PyNative mode.
@@ -140,8 +140,8 @@ class MindRTBackend : public Backend {
   void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
                             GraphCompilerInfo *graph_compiler_info) const;
 
-  // Get saved OpBuildTask in OpLazyBuilder and build all the kernels together in PyNative mode.
-  void CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpTask>> &build_tasks);
+  // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
+  void CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks);
 
   // Restore the outputs tuple by the origin funcGraph output node and output tensors.
   void ConstructOutputs(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
@@ -162,16 +162,20 @@ class MindRTBackend : public Backend {
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
   void EraseSingleOpCache(const ActorInfo &actor_info, const KernelGraphPtr &graph);
 
-  // Run op immediately when the single_op_cache hit and the queue of OpLazyBuilder is empty in PyNative mode.
+  // Run op immediately when the single_op_cache hit and the queue of OpExecutor is empty in PyNative mode.
   void RunSingleOpGraph(const KernelGraphPtr &graph, const OpRunInfo &op_run_info,
                         const GraphCompilerInfo *graph_compiler_info);
 
-  // Execute OpBuildTask and OpRunTask when the OpLazyBuilder queue is full in PyNative mode.
-  void LazyExecuteTaskCallback();
+  // Execute OpBuildTask and OpRunTask when the OpExecutor queue is full in PyNative mode.
+  void BatchBuildCallback();
 
-  // Run op immediately or save OpBuildTask and OpRunTask in OpLazyBuilder.
-  void RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *graph_compiler_info, OpRunInfo *op_run_info,
-                     VectorRef *outputs);
+  // Run op or dispatch  build task and run task.
+  void RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph_compiler_info, OpRunInfo *op_run_info,
+                 VectorRef *outputs);
+
+  // Dispatch task and execute the task in another thread.
+  void DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, GraphCompilerInfo *graph_compiler_info,
+                      OpRunInfo *op_run_info);
 
   // Split complete kernel graph to single op graph in PyNative back
   // propagation, then compile and run single op graph.
@@ -181,6 +185,8 @@ class MindRTBackend : public Backend {
   void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs);
 
   void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
+
+  void OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context);
 
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to

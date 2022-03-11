@@ -667,9 +667,8 @@ std::string Tensor::ToStringRepr() const {
 }
 
 void Tensor::data_sync(bool need_wait) const {
-  ExecuteLazyTask();
-
   if (need_wait) {
+    ExecuteLazyTask();
     Wait();
   }
   if (device_sync_ == nullptr) {

@@ -58,6 +58,7 @@
 #include "backend/common/session/session_factory.h"
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "backend/common/optimizer/helper.h"
+#include "runtime/pynative/op_executor.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "backend/graph_compiler/transform.h"
 
@@ -828,7 +829,7 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
     }
     for (auto &item : kMindRtBackends) {
       MS_EXCEPTION_IF_NULL(item.second);
-      item.second->SyncLazyTasks();
+      item.second->WaitTaskFinish();
     }
     // Replace data in device address when run in CPU device.
     if (pre_tensor->device_address() != nullptr) {
@@ -3437,9 +3438,10 @@ void PynativeExecutor::ClearGrad(const py::object &cell, const py::args &args) {
 void PynativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear all res";
   session::PynativeTaskManager::GetInstance().Reset();
+  runtime::OpExecutor::GetInstance().Reset();
   for (auto &item : kMindRtBackends) {
     MS_EXCEPTION_IF_NULL(item.second);
-    item.second->ClearOpBuilderResource();
+    item.second->ClearOpExecutorResource();
   }
   SetLazyBuild(false);
   cell_depth_ = 0;
@@ -3540,7 +3542,7 @@ void PynativeExecutor::ExecuteLazyTask() {
   session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   for (auto &item : kMindRtBackends) {
     MS_EXCEPTION_IF_NULL(item.second);
-    item.second->SyncLazyTasks();
+    item.second->WaitTaskFinish();
   }
 }
 

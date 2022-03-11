@@ -20,7 +20,7 @@
 #include <utility>
 #include <algorithm>
 #include "runtime/graph_scheduler/graph_scheduler.h"
-#include "runtime/pynative/op_lazy_builder.h"
+#include "runtime/pynative/op_executor.h"
 #include "runtime/device/device_address.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/pynative/op_runtime_info.h"
@@ -521,8 +521,8 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
                                     const DeviceContext *device_context) {
   // Check if the graph cache exists.
   auto iter = run_op_graphs_.find(op_run_info.graph_info);
-  auto &op_lazy_builder = runtime::OpLazyBuilder::GetInstance();
-  if (iter != run_op_graphs_.end() && op_lazy_builder.QueueEmpty()) {
+  auto &op_executor = runtime::OpExecutor::GetInstance();
+  if (iter != run_op_graphs_.end() && op_executor.BuildQueueEmpty()) {
     const auto &graph = iter->second;
     MS_EXCEPTION_IF_NULL(graph);
     *single_op_cache_hit = true;
