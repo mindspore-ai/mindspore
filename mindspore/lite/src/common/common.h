@@ -21,7 +21,13 @@
 
 namespace mindspore {
 namespace lite {
-#define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#ifndef MS_UNLIKELY
+#if defined(__x86_64__) || defined(__amd64__) || defined(_M_IX86) || defined(_M_X64)
+#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define MS_UNLIKELY(x) x
+#endif
+#endif
 
 enum NCHW_SHAPE { NCHW_N = 0, NCHW_C = 1, NCHW_H = 2, NCHW_W = 3 };
 enum NHWC_SHAPE { NHWC_N = 0, NHWC_H = 1, NHWC_W = 2, NHWC_C = 3 };

@@ -203,7 +203,7 @@ int Scheduler::HandleBuildinCpuKernelWeight(const kernel::SubGraphType belong_su
   return RET_OK;
 }
 
-int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
+int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> &&dst_kernels) {
   if (is_train_session_) {
     return RET_OK;
   }
@@ -422,7 +422,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 #endif
 
-  ret = InitKernels(*dst_kernels);
+  ret = InitKernels(std::move(*dst_kernels));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitKernels failed.";
     return ret;
@@ -1558,7 +1558,7 @@ kernel::LiteKernel *FindAllSubGraphKernels(const std::vector<kernel::LiteKernel 
 }
 }  // namespace
 
-int Scheduler::ConstructNormalSubGraphs(const std::vector<kernel::LiteKernel *> src_kernel,
+int Scheduler::ConstructNormalSubGraphs(const std::vector<kernel::LiteKernel *> &src_kernel,
                                         std::vector<kernel::LiteKernel *> *dst_kernel,
                                         std::map<const kernel::LiteKernel *, bool> *is_kernel_finish) {
   if (src_kernel.empty()) {

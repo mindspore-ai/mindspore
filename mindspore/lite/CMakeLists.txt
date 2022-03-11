@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(Lite)
 
 set(BUILD_LITE "on")
+add_compile_definitions(BUILD_LITE)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/secure_option.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/compile_link_option.cmake)
