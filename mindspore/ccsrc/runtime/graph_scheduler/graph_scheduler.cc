@@ -1506,11 +1506,14 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
     LinkControlArrowForDataPrepareActor(actor_set->data_prepare_actor_.get(), actor_set,
                                         graph_compiler_info.control_node_parser_);
   }
-  // Link control arrows for custom actor
+
+  // Link control arrows for custom actor.
   LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
 
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set,
                                     graph_compiler_info.control_node_parser_);
+
+  LinkControlArrowForOutputActor(actor_set->output_actor_.get(), actor_set);
 }
 
 void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
@@ -1730,6 +1733,20 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   // Loop count actor --> data prepare actor.
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   loop_count_actor->data_prepare_aid_ = actor_set->data_prepare_actor_->GetAID();
+  actor_set->data_prepare_actor_->input_controls_num_++;
+  (void)actor_set->data_prepare_actor_->input_control_arrow_aids_.emplace_back(loop_count_actor->GetAID());
+}
+
+void GraphScheduler::LinkControlArrowForOutputActor(OutputActor *output_actor, const ActorSet *actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  // There is no output actor in step mode.
+  if (output_actor == nullptr) {
+    return;
+  }
+
+  // Output actor --> data prepare actor.
+  // The output actor needs to free the output memory in the running and needs this control arrow.
+  AddControlArrow(output_actor, actor_set->data_prepare_actor_.get());
 }
 
 void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
