@@ -572,6 +572,27 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   return res;
 }
 
+EvalResultPtr TaylorEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                   const AnfNodeConfigPtr &) {
+  AbstractBasePtrList args_spec_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+                       [](const ConfigPtr &conf) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(conf);
+                         return conf->ObtainEvalResult()->abstract();
+                       });
+  MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
+  auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
+  if (eval_result != nullptr) {
+    return eval_result;
+  }
+
+  // Call the original evaluator, get the result: y = f(x)
+  EvalResultPtr result = evaluator_->Run(engine, args_conf_list, nullptr);
+  MS_EXCEPTION_IF_NULL(result);
+  evaluator_cache_mgr_->SetValue(args_spec_list, result);
+  return result;
+}
+
 EvalResultPtr ShardEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                   const AnfNodeConfigPtr &) {
   AbstractBasePtrList args_spec_list;

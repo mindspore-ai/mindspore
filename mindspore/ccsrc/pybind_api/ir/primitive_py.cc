@@ -151,6 +151,18 @@ py::function PrimitivePy::GetBpropFunction() {
     auto fn = GetBpropFunctionByObj(python_obj_);
     return fn;
   }
+  auto fn = GetBpropFunctionByObj(python_obj_);
+  return fn;
+}
+
+py::function PrimitivePy::GetTaylorRuleFunction() {
+  static const char *const get_taylor_rule_func_name = "get_taylor_rule";
+  if (py::hasattr(python_obj_, get_taylor_rule_func_name)) {
+    py::function fn = python_obj_.attr(get_taylor_rule_func_name)().cast<py::function>();
+    return fn;
+  }
+  auto fn = GetTaylorRuleFunctionByObj(python_obj_);
+  return fn;
 }
 
 py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args, const std::string &bprop_cls_name) {

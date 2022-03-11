@@ -38,6 +38,11 @@ class MultipleInputsOutputNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vjp_single_input_graph():
+    """
+    Features: Function vjp
+    Description: Test vjp with single input, single output and default v in graph mode.
+    Expectation: No exception.
+    """
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     net = SingleInputNet()
@@ -53,6 +58,11 @@ def test_vjp_single_input_graph():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vjp_multiple_inputs_default_v_graph():
+    """
+    Features: Function vjp
+    Description: Test vjp with single input, single output and default v in graph mode.
+    Expectation: No exception.
+    """
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
@@ -140,8 +150,8 @@ def test_vjp_construct_single_input_single_output_default_v_graph():
             net_out, vjp_out = vjp(self.net, inputs, vectors)
             return net_out, vjp_out
 
-    test_net = Net(SingleInputNet())
-    primal, grad = test_net(x, v)
+    test_net_graph = Net(SingleInputNet())
+    primal, grad = test_net_graph(x, v)
     expect_primal = Tensor(np.array([[1, 8], [27, 64]]).astype(np.float32))
     expect_grad = Tensor(np.array([[3, 12], [27, 48]]).astype(np.float32))
     assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())

@@ -21,7 +21,7 @@ Pre-defined combination of operators.
 
 
 from .base import GradOperation, _Grad, HyperMap, Map, MultitypeFuncGraph, add_flags, \
-                  core, env_get, tail, zip_operation, Shard, _Vmap
+                  core, env_get, tail, zip_operation, Shard, _Vmap, _TaylorOperation
 from .clip_ops import clip_by_value, clip_by_global_norm
 from .multitype_ops.add_impl import hyper_add
 from .multitype_ops.ones_like_impl import ones_like

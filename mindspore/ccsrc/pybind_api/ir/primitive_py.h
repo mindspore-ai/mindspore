@@ -50,6 +50,7 @@ class PrimitivePy : public Primitive {
   const bool parse_info_ = true;
   py::function GetVmapRuleFunction(const bool is_side_effect = false, int axis_size = 0);
   py::function GetBpropFunction();
+  py::function GetTaylorRuleFunction();
   void set_signatures(const std::vector<Signature> &signatures);
   const std::vector<Signature> &signatures() const { return signatures_; }
   const std::map<int, py::function> &backward_hook_fn() const { return backward_hook_fn_; }

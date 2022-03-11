@@ -41,6 +41,18 @@ py::function GetBpropFunction(const std::string &name) {
   return fn;
 }
 
+py::function GetTaylorRuleFunctionByObj(const py::object &obj) {
+  static const std::string get_taylor_fprop_fn = "get_taylor_fprop_fn";
+  static const std::string ad_module = "mindspore.ops._grad";
+  py::function fn = python_adapter::GetPyFn(ad_module, get_taylor_fprop_fn)(obj);
+  return fn;
+}
+
+py::function GetTaylorRuleFunction(const std::string &name) {
+  auto fn = GetTaylorRuleFunctionByObj(py::str(name));
+  return fn;
+}
+
 py::function GetComputeFunction(const std::string &name) {
   static const std::string module = "mindspore._extends.builtin_operations";
   py::module mod = py::module::import(common::SafeCStr(module));

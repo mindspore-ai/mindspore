@@ -738,6 +738,25 @@ AbstractBasePtr InferImplJ(const AnalysisEnginePtr &, const PrimitivePtr &primit
   return AbstractFunction::MakeAbstractFunction(jv);
 }
 
+AbstractBasePtr InferImplTaylor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const AbstractBasePtrList &args_spec_list) {
+  // args: An object of AbstractFunction.
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  MS_LOG(DEBUG) << "evaluate Taylor: " << args_spec_list[0]->ToString();
+
+  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  MS_EXCEPTION_IF_NULL(x);
+
+  AbstractFuncAtomPtrList taylor_v;
+  auto build_taylor_v = [&taylor_v](const AbstractFuncAtomPtr &func) {
+    auto taylor_closure = std::make_shared<TaylorTransformedAbstractClosure>(func);
+    taylor_v.push_back(taylor_closure);
+  };
+  x->Visit(build_taylor_v);
+
+  return AbstractFunction::MakeAbstractFunction(taylor_v);
+}
+
 AbstractBasePtr InferImplShard(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_spec_list) {
   // Inputs: func, in_axes, out_axes, device, level.
@@ -846,6 +865,7 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringConcat, prim::kPrimStringConcat, InferI
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(DictLen, prim::kPrimDictLen, InferImplDictLen, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(FakeBprop, prim::kPrimFakeBprop, InferImplFakeBprop, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(J, prim::kPrimJ, InferImplJ, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Taylor, prim::kPrimTaylor, InferImplTaylor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Vmap, prim::kPrimVmap, InferImplVmap, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGradientArgs,

@@ -30,6 +30,10 @@ COMMON_EXPORT py::function GetBpropFunctionByObj(const py::object &obj);
 
 COMMON_EXPORT py::function GetBpropFunction(const std::string &name);
 
+COMMON_EXPORT py::function GetTaylorRuleFunctionByObj(const py::object &obj);
+
+COMMON_EXPORT py::function GetTaylorRuleFunction(const std::string &name);
+
 COMMON_EXPORT py::function GetComputeFunction(const std::string &name);
 
 COMMON_EXPORT BaseRef RunComputeFunction(const PrimitivePtr &prim, const VectorRef &args);

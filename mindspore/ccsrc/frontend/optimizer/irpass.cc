@@ -21,6 +21,7 @@
 #include "frontend/optimizer/irpass/convert.h"
 #include "frontend/optimizer/irpass/environ_eliminate.h"
 #include "frontend/optimizer/irpass/grad_var_prepare.h"
+#include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/inline.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/load_eliminate.h"

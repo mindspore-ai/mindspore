@@ -501,6 +501,14 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<VmapTransfor
   return vmap_evaluator;
 }
 
+EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<TaylorTransformedAbstractClosure> &func) {
+  MS_EXCEPTION_IF_NULL(func);
+  AbstractFunctionPtr func_orig = func->fn();
+  EvaluatorPtr evaluator_orig = GetEvaluatorFor(func_orig);
+  auto taylorevaluator = std::make_shared<TaylorEvaluator>(evaluator_orig, func_orig);
+  return taylorevaluator;
+}
+
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<ShardTransformedAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
   AbstractFunctionPtr func_orig = func->fn();
@@ -548,6 +556,8 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const AbstractFunctionPtr &func) {
     return _GetEvaluatorFor(func->cast<std::shared_ptr<JTransformedAbstractClosure>>());
   } else if (func->isa<VmapTransformedAbstractClosure>()) {
     return _GetEvaluatorFor(func->cast<std::shared_ptr<VmapTransformedAbstractClosure>>());
+  } else if (func->isa<TaylorTransformedAbstractClosure>()) {
+    return _GetEvaluatorFor(func->cast<std::shared_ptr<TaylorTransformedAbstractClosure>>());
   } else if (func->isa<ShardTransformedAbstractClosure>()) {
     return _GetEvaluatorFor(func->cast<std::shared_ptr<ShardTransformedAbstractClosure>>());
   } else if (func->isa<VirtualAbstractClosure>()) {

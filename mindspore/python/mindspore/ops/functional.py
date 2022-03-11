@@ -32,7 +32,7 @@ from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
-from .composite import _Grad, Shard, _Vmap
+from .composite import _Grad, Shard, _Vmap, _TaylorOperation
 from .._c_expression import security
 
 typeof = Primitive('typeof')
@@ -48,6 +48,7 @@ eye = P.Eye()
 fill = P.Fill()
 tile = P.Tile()
 size = P.Size()
+ones = P.Ones()
 ones_like = P.OnesLike()
 shape = P.Shape()
 dyn_shape = P.TensorShape()
@@ -284,6 +285,187 @@ def grad(fn, grad_position=0, sens_param=False):
     if sens_param:
         return grad_by_position_with_sens(fn, None, grad_position)
     return grad_by_position(fn, None, grad_position)
+
+@constexpr
+def _trans_jet_inputs(primals_item, series_item):
+    """Trans inputs of jet"""
+    value_type = [mstype.int32, mstype.int64, mstype.float32, mstype.float64]
+    if not dtype(primals_item) in value_type or dtype(primals_item) != dtype(series_item):
+        raise TypeError(f"For `F.jet`, the elements' types of primals and series should be the same and belong to "
+                        f"`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got"
+                        f" {dtype(primals_item).__name__} and {dtype(series_item).__name__}.")
+    if dtype(primals_item) in [mstype.int32, mstype.int64]:
+        return cast(primals_item, mstype.float64), cast(series_item, mstype.float64)
+    return primals_item, series_item
+
+@constexpr
+def _check_jet_inputs(primals, series):
+    """Check inputs of jet"""
+    if not isinstance(primals, type(series)) or not isinstance(primals, (Tensor, tuple)):
+        raise TypeError(f"For 'F.jet', the 'primals' and `series` should be both Tensor or tuple, "
+                        f"but got {type(primals).__name__} and {type(series).__name__}.")
+    if isinstance(primals, Tensor):
+        if primals.shape != series.shape[1:]:
+            raise ValueError("The shape of each element should be the same as the primals.")
+        return _trans_jet_inputs(primals, series)
+    if isinstance(primals, tuple):
+        if len(primals) != len(series):
+            raise ValueError("The lengths of primals and series should be the same.")
+        check_primals = []
+        check_series = []
+        for i, j in zip(primals, series):
+            trans_primals_item, trans_series_item = _trans_jet_inputs(i, j)
+            check_primals.append(trans_primals_item)
+            check_series.append(trans_series_item)
+    return check_primals, check_series
+
+_taylor = _TaylorOperation()
+
+def jet(fn, primals, series):
+    """
+    This function is designed to calculate the higher order differentiation of given composite function. To figure out
+    first to `n`-th order differentiations, original inputs and first to `n`-th order derivative of original inputs
+    must be provided together. Generally, it is recommended to set the values of given first order derivative to 1,
+    while the other to 0.
+
+    Args:
+        fn (Union(Cell, function)): Function to do TaylorOperation.
+        primals (Union(Tensor, Tuple of Tensors)): The inputs to `fn`.
+        series (Union(Tensor, Tuple of Tensors)): If tuple, the length and type of series should be the same as inputs.
+            For each Tensor, the length of first dimension `i` represents the `1` to `i+1`-th order of derivative of
+            output with respect to the inputs will be figured out.
+
+    Returns:
+        Tuple, tuple of out_primals and out_series.
+
+        - **out_primals** (Tensors or List of Tensors) - The output of `fn(primals)`.
+        - **out_series** (Tensors or List of Tensors) - The `1` to `i+1`-th order of derivative of output with respect
+            to the inputs.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> import mindspore.context as context
+        >>> import mindspore.ops as P
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.functional import jet
+        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.sin = P.Sin()
+        ...         self.exp = P.Exp()
+        ...     def construct(self, x):
+        ...         out1 = self.sin(x)
+        ...         out2 = self.exp(out1)
+        ...         return out2
+        >>> primals = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> series = Tensor(np.array([[[1, 1], [1, 1]], [[0, 0], [0, 0]], [[0, 0], [0, 0]]]).astype(np.float32))
+        >>> net = Net()
+        >>> out_primals, out_series = jet(net, primals, series)
+        >>> print(out_primals, out_series)
+    """
+    primals, series = _check_jet_inputs(primals, series)
+    derivative_fn = _taylor(fn)
+    concat_op = P.Concat()
+    if isinstance(primals, list) and list_len(primals) > 1:
+        inputs = list(map(lambda x, y: concat_op(((expand_dims(x, 0), y))), primals, series))
+        outputs = derivative_fn(*inputs)
+    else:
+        inputs = concat_op((expand_dims(primals, 0), series))
+        outputs = derivative_fn(inputs)
+    if isinstance(outputs, list) and list_len(outputs) > 1:
+        out_primals = [element[0] for element in outputs]
+        out_series = [element[1:] for element in outputs]
+    else:
+        out_primals = outputs[0]
+        out_series = outputs[1:]
+    return out_primals, out_series
+
+
+@constexpr
+def _trans_derivative_inputs(primals_item):
+    """Trans inputs of derivative"""
+    value_type = [mstype.int32, mstype.int64, mstype.float32, mstype.float64]
+    if not dtype(primals_item) in value_type:
+        raise TypeError(f"For `F.derivative`, the elements of primals should belong to "
+                        f"`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got"
+                        f" {dtype(primals_item).__name__}.")
+    if dtype(primals_item) in [mstype.int32, mstype.int64]:
+        return cast(primals_item, mstype.float64)
+    return primals_item
+
+
+def derivative(fn, primals, order):
+    """
+    This function is designed to calculate the higher order differentiation of given composite function. To figure out
+    `order`-th order differentiations, original inputs and order must be provided together. In particular, the value of
+    input first order derivative is set to 1, while the other to 0.
+
+    Args:
+        fn (Union(Cell, function)): Function to do TaylorOperation.
+        primals (Union(Tensor, Tuple of Tensors)): The inputs to `fn`.
+        order (int): For each Tensor, the `order`-th order of derivative of output with respect to the inputs will be
+            figured out.
+
+    Returns:
+        Tuple, tuple of out_primals and out_series.
+
+        - **out_primals** (Tensors or List of Tensors) - The output of `fn(primals)`.
+        - **out_series** (Tensors or List of Tensors) - The `order`-th order of derivative of output with respect
+            to the inputs.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> import mindspore.context as context
+        >>> import mindspore.ops as P
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.functional import derivative
+        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.sin = P.Sin()
+        ...         self.exp = P.Exp()
+        ...     def construct(self, x):
+        ...         out1 = self.sin(x)
+        ...         out2 = self.exp(out1)
+        ...         return out2
+        >>> primals = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> order = 3
+        >>> net = Net()
+        >>> out_primals, out_series = derivative(net, primals, order)
+        >>> print(out_primals, out_series)
+    """
+    derivative_fn = _taylor(fn)
+    concat_op = P.Concat()
+    series_one = 1
+    if isinstance(primals, tuple):
+        trans_primals = [_trans_derivative_inputs(item) for item in primals]
+        inputs = list(map(lambda x: concat_op((expand_dims(x, 0), ones((1,) + x.shape, dtype(x)))), trans_primals))
+        if order > 1:
+            inputs = list(map(lambda x: concat_op((x, zeros((order - 1,) + x[0].shape, dtype(x)))), inputs))
+        outputs = derivative_fn(*inputs)
+    else:
+        primals = _trans_derivative_inputs(primals)
+        series = zeros((order,) + primals.shape, dtype(primals))
+        series[0] = series_one
+        inputs = concat_op((expand_dims(primals, 0), series))
+        outputs = derivative_fn(inputs)
+    if isinstance(outputs, tuple) and tuple_len(outputs) > 1:
+        out_primals = [element[0] for element in outputs]
+        out_series = [element[-1] for element in outputs]
+    else:
+        out_primals = outputs[0]
+        out_series = outputs[-1]
+    return out_primals, out_series
 
 
 def jvp(fn, inputs, v):

@@ -171,6 +171,7 @@ constexpr auto kCSRDiv = "CSRDiv";
 // Meta Function Graph
 constexpr auto kJ = "J";
 constexpr auto kVmap = "Vmap";
+constexpr auto kTaylor = "Taylor";
 
 // Others
 constexpr auto kMakeTuple = "MakeTuple";
@@ -828,6 +829,7 @@ GVAR_DEF(PrimitivePtr, kPrimStateSetItem, std::make_shared<Primitive>("state_set
 GVAR_DEF(PrimitivePtr, kPrimJ, std::make_shared<Primitive>(kJ, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimVmap, std::make_shared<Primitive>(kVmap, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimShard, std::make_shared<Primitive>("Shard", kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimTaylor, std::make_shared<Primitive>(kTaylor));
 
 // Used to build graph which have keyword arguments
 GVAR_DEF(PrimitivePtr, kPrimExtractKeywordArg, std::make_shared<Primitive>("extract_keyword_arg"));

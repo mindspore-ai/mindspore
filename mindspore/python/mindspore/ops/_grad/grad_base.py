@@ -37,8 +37,28 @@ class BpropRegistry(Registry):
         return deco
 
 
+class TaylorFpropRegistry(Registry):
+    """Registry class for registry functions for taylor grad on Primitive or string."""
+
+    def register(self, prim):
+        """register the function."""
+
+        def deco(fn):
+            """Decorate the function."""
+            if isinstance(prim, str):
+                self[prim] = fn
+            elif issubclass(prim, Primitive):
+                self[id(prim)] = fn
+                self[prim.__name__] = fn
+            return fn
+
+        return deco
+
+
 bprop_getters = BpropRegistry()
 bprops = BpropRegistry()
+taylor_fprop_getters = TaylorFpropRegistry()
+taylor_fprops = TaylorFpropRegistry()
 
 
 def get_bprop_fn(prim):
@@ -47,3 +67,11 @@ def get_bprop_fn(prim):
     if out:
         return out(prim)
     return bprops.get(prim, None)
+
+
+def get_taylor_fprop_fn(prim):
+    """get taylor function by primitive obj or prim name for c++"""
+    out = taylor_fprop_getters.get(prim, None)
+    if out:
+        return out(prim)
+    return taylor_fprops.get(prim, None)
