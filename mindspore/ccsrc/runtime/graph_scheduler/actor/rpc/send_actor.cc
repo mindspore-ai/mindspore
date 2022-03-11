@@ -69,7 +69,7 @@ void SendActor::SendOutput(OpContext<DeviceTensor> *const context) {
     std::string peer_server_url = peer.second;
     auto message = BuildRpcMessage(send_output, peer_server_url);
     MS_ERROR_IF_NULL_WO_RET_VAL(message);
-    client_->Send(std::move(message));
+    client_->SendAsync(std::move(message));
   }
 }
 

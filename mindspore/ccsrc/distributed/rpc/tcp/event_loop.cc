@@ -129,7 +129,7 @@ void EventLoop::ReleaseResource() {
   }
 }
 
-int EventLoop::AddTask(std::function<void()> &&task) {
+int EventLoop::AddTask(std::function<int()> &&task) {
   // put func to the queue
   task_queue_mutex_.lock();
   (void)task_queue_.emplace(std::move(task));

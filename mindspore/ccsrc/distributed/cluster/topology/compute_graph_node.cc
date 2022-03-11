@@ -62,7 +62,7 @@ bool ComputeGraphNode::Register() {
   auto message = CreateMessage(server_url, content);
   MS_EXCEPTION_IF_NULL(message);
 
-  tcp_client_->Send(std::move(message));
+  tcp_client_->SendSync(std::move(message));
   return true;
 }
 
@@ -77,7 +77,7 @@ bool ComputeGraphNode::Heartbeat() {
   auto message = CreateMessage(server_url, content);
   MS_EXCEPTION_IF_NULL(message);
 
-  tcp_client_->Send(std::move(message));
+  tcp_client_->SendSync(std::move(message));
   return true;
 }
 }  // namespace topology

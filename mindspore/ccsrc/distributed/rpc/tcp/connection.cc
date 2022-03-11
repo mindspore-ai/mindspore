@@ -326,12 +326,9 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
   if (msg->type == MessageBase::Type::KMSG) {
     if (!isHttpKmsg) {
       send_to = msg->to;
-      send_from = msg->from.Name() + "@" + advertiseUrl;
+      send_from = msg->from;
 
-      send_msg_header.name_len = htonl(static_cast<uint32_t>(msg->name.size()));
-      send_msg_header.to_len = htonl(static_cast<uint32_t>(send_to.size()));
-      send_msg_header.from_len = htonl(static_cast<uint32_t>(send_from.size()));
-      send_msg_header.body_len = htonl(static_cast<uint32_t>(msg->body.size()));
+      FillMessageHeader(*msg, &send_msg_header);
 
       send_io_vec[index].iov_base = &send_msg_header;
       send_io_vec[index].iov_len = sizeof(send_msg_header);
@@ -431,7 +428,6 @@ int Connection::AddConnnectEventHandler() {
 }
 
 bool Connection::ParseMessage() {
-  std::string magic_id = "";
   int retval = 0;
   uint32_t recvLen = 0;
   char *recvBuf = nullptr;
@@ -454,7 +450,7 @@ bool Connection::ParseMessage() {
 
       if (strncmp(recv_msg_header.magic, RPC_MAGICID, sizeof(RPC_MAGICID) - 1) != 0) {
         MS_LOG(ERROR) << "Failed to check magicid, RPC_MAGICID: " << RPC_MAGICID
-                      << ", recv magic_id: " << magic_id.c_str();
+                      << ", recv magic_id: " << recv_msg_header.magic;
         state = ConnectionState::kDisconnecting;
         return false;
       }

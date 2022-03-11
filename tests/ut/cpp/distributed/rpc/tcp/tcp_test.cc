@@ -26,6 +26,7 @@
 #define private public
 #include "distributed/rpc/tcp/tcp_server.h"
 #include "distributed/rpc/tcp/tcp_client.h"
+#include "distributed/rpc/tcp/constants.h"
 #include "common/common_test.h"
 
 namespace mindspore {
@@ -165,7 +166,7 @@ TEST_F(TCPTest, SendOneMessage) {
 
   // Send the message.
   client->Connect(server_url);
-  client->Send(std::move(message));
+  client->SendAsync(std::move(message));
 
   // Wait timeout: 5s
   WaitForDataMsg(1, 5);
@@ -182,7 +183,7 @@ TEST_F(TCPTest, SendOneMessage) {
 /// Feature: test sending two message continuously.
 /// Description: start a socket server and send two normal message to it.
 /// Expectation: the server received the two messages sented from client.
-TEST_F(TCPTest, sendTwoMessages) {
+TEST_F(TCPTest, SendTwoMessages) {
   Init();
 
   // Start the tcp server.
@@ -205,8 +206,8 @@ TEST_F(TCPTest, sendTwoMessages) {
 
   // Send messages.
   client->Connect(server_url);
-  client->Send(std::move(message1));
-  client->Send(std::move(message2));
+  client->SendAsync(std::move(message1));
+  client->SendAsync(std::move(message2));
 
   // Wait timeout: 5s
   WaitForDataMsg(2, 5);
@@ -228,6 +229,45 @@ TEST_F(TCPTest, StartServerWithRandomPort) {
 
   auto port = server->GetPort();
   EXPECT_LT(0, port);
+  server->Finalize();
+}
+
+/// Feature: test send the message synchronously.
+/// Description: start a socket server and send the message synchronously.
+/// Expectation: the number of bytes sent could be got synchronously.
+TEST_F(TCPTest, SendSyncMessage) {
+  Init();
+
+  // Start the tcp server.
+  auto server_url = "127.0.0.1:8081";
+  std::unique_ptr<TCPServer> server = std::make_unique<TCPServer>();
+  bool ret = server->Initialize(server_url);
+  ASSERT_TRUE(ret);
+
+  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> void { IncrDataMsgNum(1); });
+
+  // Start the tcp client.
+  auto client_url = "127.0.0.1:1234";
+  std::unique_ptr<TCPClient> client = std::make_unique<TCPClient>();
+  ret = client->Initialize();
+  ASSERT_TRUE(ret);
+
+  // Create the message.
+  auto message = CreateMessage(server_url, client_url);
+  auto msg_size = GetMessageSize(*message);
+
+  // Send the message.
+  client->Connect(server_url);
+  auto bytes_num = client->SendSync(std::move(message));
+
+  EXPECT_EQ(msg_size, bytes_num);
+
+  WaitForDataMsg(1, 5);
+  EXPECT_EQ(1, GetDataMsgNum());
+
+  // Destroy
+  client->Disconnect(server_url);
+  client->Finalize();
   server->Finalize();
 }
 }  // namespace rpc

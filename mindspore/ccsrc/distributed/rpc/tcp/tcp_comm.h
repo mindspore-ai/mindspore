@@ -34,7 +34,7 @@ namespace rpc {
 void OnAccept(int server, uint32_t events, void *arg);
 
 // Send messages buffered in the connection.
-void DoSend(Connection *conn);
+int DoSend(Connection *conn);
 
 void DoDisconnect(int fd, Connection *conn, uint32_t error, int soError);
 
@@ -65,7 +65,8 @@ class TCPComm {
   void Disconnect(const std::string &dst_url);
 
   // Send the message from the source to the destination.
-  int Send(MessageBase *msg);
+  // The flag sync means if the message is sent directly or added to the task queue.
+  int Send(MessageBase *msg, bool sync = false);
 
   // Set the message processing handler.
   void SetMessageHandler(MessageHandler handler);
@@ -115,7 +116,7 @@ class TCPComm {
   std::shared_ptr<std::mutex> conn_mutex_;
 
   friend void OnAccept(int server, uint32_t events, void *arg);
-  friend void DoSend(Connection *conn);
+  friend int DoSend(Connection *conn);
   friend int DoConnect(const std::string &to, Connection *conn, ConnectionCallBack event_callback,
                        ConnectionCallBack write_callback, ConnectionCallBack read_callback);
 };

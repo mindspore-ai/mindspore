@@ -31,27 +31,6 @@ namespace mindspore {
 namespace distributed {
 namespace rpc {
 /*
- * The MessageHeader contains the stats info about the message body.
- */
-struct MessageHeader {
-  MessageHeader() {
-    for (unsigned int i = 0; i < BUSMAGIC_LEN; ++i) {
-      if (i < sizeof(RPC_MAGICID) - 1) {
-        magic[i] = RPC_MAGICID[i];
-      } else {
-        magic[i] = '\0';
-      }
-    }
-  }
-
-  char magic[BUSMAGIC_LEN];
-  uint32_t name_len{0};
-  uint32_t to_len{0};
-  uint32_t from_len{0};
-  uint32_t body_len{0};
-};
-
-/*
  * The SendMetrics is responsible for collecting metrics when sending data through a connection.
  */
 struct SendMetrics {
