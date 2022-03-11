@@ -18,25 +18,26 @@ set -e
 usage()
 {
   echo "Usage:"
-  echo "bash build.sh [-I arm64|arm32]"
+  echo "bash mobilenetv2.sh -r path-to-{mindspore-lite-version-linux-x64.tar.gz}"
   echo "Options:"
-  echo "    -I download and build for arm64 or arm32, default arm64"
+  echo "-r : specific path to mindspore-lite-version-linux-x64.tar.gz"
 }
 
+nargs=$#
+if [ $nargs -eq 0 ] ; then
+    usage 
+    exit 1 
+fi
+
 LITE_PLATFORM="arm64"
-GEN=OFF
-TARBALL=""
-while getopts 'r:g:' OPT
+while getopts 'r:' OPT
 do
     case "${OPT}" in
-        g)
-            GEN=$OPTARG
-            ;;
         r)
             TARBALL=$OPTARG
             ;;
         ?)
-            echo "Usage: add -g on , -r specific release.tar.gz"
+            echo "Usage: -r specific release.tar.gz"
     esac
 done
 
@@ -47,14 +48,8 @@ MODEL_DIR=${ROOT_DIR}/mindspore/lite/examples/quick_start_micro/models
 PKG_DIR=${ROOT_DIR}/mindspore/lite/examples/quick_start_micro/pkgs
 COFIG_FILE=${DEMO_DIR}/micro.cfg
 SOURCE_CODE_DIR=${ROOT_DIR}/mindspore/lite/examples/quick_start_micro/mobilenetv2_arm64/source_code
-echo "root dir is: ${ROOT_DIR}"
-echo "current dir is: ${BASEPATH}"
-echo "demo dir is: ${DEMO_DIR}"
-echo "model dir is: ${MODEL_DIR}"
 
 MODEL_NAME=mobilenetv2
-#INPUT_BIN=${MODEL_DIR}/${MODEL_NAME}/mobilenetv2.tflite.ms.bin
-#VALICATION_DATA=${MODEL_DIR}/${MODEL_NAME}/mobilenetv2.tflite.ms.out
 MODEL=${MODEL_DIR}/${MODEL_NAME}/mobilenet_v2_1.0_224.tflite
 MODEL_FILE=${MODEL_NAME}.tar.gz
 
@@ -123,12 +118,10 @@ if [ -n "$TARBALL" ]; then
 fi
 
 # 1. code-generation
-if [[ "${GEN}" == "ON" ]] || [[ "${GEN}" == "on" ]]; then
-    echo "downloading ${MODEL_FILE}!"
-    DownloadModel
-    echo "micro code-generation"
-    CodeGeneration
-fi
+echo "downloading ${MODEL_FILE}!"
+DownloadModel
+echo "micro code-generation"
+CodeGeneration
 
 # 2. build benchmark
 mkdir -p ${SOURCE_CODE_DIR}/build && cd ${SOURCE_CODE_DIR}/build || exit 1
