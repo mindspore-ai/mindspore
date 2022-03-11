@@ -695,6 +695,12 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   ///
   /// \param[in] elements A list of abstracts.
   /// \param[in] sequence_nodes The nodes of tuple/list, usually are MakeTuple/MakeList CNodes or tuple/list ValueNodes.
+  explicit AbstractSequence(AbstractBasePtrList &&elements, const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes);
+
+  /// \brief Constructor of AbstractSequence.
+  ///
+  /// \param[in] elements A list of abstracts.
+  /// \param[in] sequence_nodes The nodes of tuple/list, usually are MakeTuple/MakeList CNodes or tuple/list ValueNodes.
   explicit AbstractSequence(const AbstractBasePtrList &elements,
                             const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes);
 
@@ -824,6 +830,14 @@ class MS_CORE_API AbstractTuple final : public AbstractSequence {
   ///
   /// \param[in] elements A list of abstracts.
   /// \param[in] tuple_node The nodes of tuple, usually are MakeTuple CNodes or tuple ValueNodes.
+  explicit AbstractTuple(AbstractBasePtrList &&elements,
+                         const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
+      : AbstractSequence(std::move(elements), tuple_nodes) {}
+
+  /// \brief Constructor of AbstractTuple.
+  ///
+  /// \param[in] elements A list of abstracts.
+  /// \param[in] tuple_node The nodes of tuple, usually are MakeTuple CNodes or tuple ValueNodes.
   explicit AbstractTuple(const AbstractBasePtrList &elements,
                          const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
       : AbstractSequence(elements, tuple_nodes) {}
@@ -875,6 +889,13 @@ using AbstractTuplePtr = std::shared_ptr<AbstractTuple>;
 /// \brief Class AbstractList describes a list.
 class MS_CORE_API AbstractList final : public AbstractSequence {
  public:
+  /// \brief Constructor of AbstractList.
+  ///
+  /// \param[in] elements A list of abstracts.
+  /// \param[in] list_node The nodes of list, usually are MakeList CNodes or list ValueNodes.
+  explicit AbstractList(AbstractBasePtrList &&elements, const std::shared_ptr<AnfNodeWeakPtrList> &list_nodes = nullptr)
+      : AbstractSequence(std::move(elements), list_nodes) {}
+
   /// \brief Constructor of AbstractList.
   ///
   /// \param[in] elements A list of abstracts.

@@ -21,7 +21,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 
+#include "base/base.h"
+#include "ir/manager.h"
 #include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -92,6 +95,20 @@ class SubstitutionList {
   // a flag to mark this list of Substitution can only be executed only once
   bool is_once_{false};
   bool global_sensitive_{false};
+};
+
+// SimpleRewriter simply rewrites a graph according to the node rewriter defined by derived class.
+class SimpleRewriter {
+ public:
+  SimpleRewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
+      : root_graph_(root_graph), manager_(manager) {}
+  virtual ~SimpleRewriter() = default;
+  bool Run();
+
+ protected:
+  virtual AnfNodePtr NodeRewrite(const AnfNodePtr &node) = 0;
+  FuncGraphPtr root_graph_;
+  FuncGraphManagerPtr manager_;
 };
 }  // namespace opt
 }  // namespace mindspore
