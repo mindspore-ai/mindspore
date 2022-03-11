@@ -320,7 +320,7 @@ public class UpdateModel {
                     this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsDP);
                     LOGGER.info(Common.addTag("[Encrypt] DP mask model ok!"));
                     endTime = System.currentTimeMillis();
-                    LOGGER.info(Common.addTag("dp time is：" + (endTime - startTime) + "ms"));
+                    LOGGER.info(Common.addTag("[Encrypt] dp time is: " + (endTime - startTime) + "ms"));
                     return this;
                 case SIGNDS:
                     startTime = System.currentTimeMillis();
@@ -352,7 +352,7 @@ public class UpdateModel {
                     this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsSignds);
                     LOGGER.info(Common.addTag("[Encrypt] SignDS mask model ok!"));
                     endTime = System.currentTimeMillis();
-                    LOGGER.info(Common.addTag("signds time is：" + (endTime - startTime) + "ms"));
+                    LOGGER.info(Common.addTag("[Encrypt] signds time is: " + (endTime - startTime) + "ms"));
                     return this;
                 case NOT_ENCRYPT:
                 default:
@@ -374,7 +374,7 @@ public class UpdateModel {
                     }
                     this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsets);
                     endTime = System.currentTimeMillis();
-                    LOGGER.info(Common.addTag("not encrypt time is：" + (endTime - startTime) + "ms"));
+                    LOGGER.info(Common.addTag("[Encrypt] not encrypt time is: " + (endTime - startTime) + "ms"));
                     return this;
             }
         }
