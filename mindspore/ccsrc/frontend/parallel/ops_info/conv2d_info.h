@@ -53,6 +53,8 @@ class Conv2DInfo : public OperatorInfo {
   void InferAdjacentRankInfo();
   std::vector<int64_t> GetAdjacentRankIdsAndBiases(int64_t rank_id, const std::string &dimension);
   void InferOverlapSize();
+  void CheckHDimensionOverlapSizeNonNegative();
+  void CheckWDimensionOverlapSizeNonNegative();
   void CheckOverlapSizeNonNegative();
   void InferOverlapSizeForHDim();
   void InferOverlapSizeForWDim();
