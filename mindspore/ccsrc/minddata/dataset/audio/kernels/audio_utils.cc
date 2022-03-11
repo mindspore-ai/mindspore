@@ -640,7 +640,7 @@ Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 }
 
 Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
-  if (input->type().value() >= DataType::DE_INT8 && input->type().value() <= DataType::DE_FLOAT16) {
+  if (input->type().value() >= DataType::DE_BOOL && input->type().value() <= DataType::DE_FLOAT16) {
     // convert the data type to float
     std::shared_ptr<Tensor> input_tensor;
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
