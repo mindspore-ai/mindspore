@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/optimizer/enhancer/split_inputs_for_reduce_scatter.h"
+#include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 

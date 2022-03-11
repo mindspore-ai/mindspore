@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

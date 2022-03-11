@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/mindir/all_to_all_unify_mindir.h"
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "utils/trace_base.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

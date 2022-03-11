@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/enhancer/concat_outputs_for_all_gather.h"
 #include <utility>
+#include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 

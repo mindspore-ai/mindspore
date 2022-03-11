@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_fission.h"
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"

@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <algorithm>
 
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
