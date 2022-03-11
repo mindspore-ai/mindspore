@@ -74,6 +74,20 @@ bool KernelAdjust::NeedLoopSink() {
           context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) && ConfigManager::GetInstance().iter_num() > 1);
 }
 
+CNodePtr CreateEventApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id,
+                                std::vector<AnfNodePtr> input_list) {
+  MS_EXCEPTION_IF_NULL(graph_ptr);
+  CNodePtr event_node_ptr = graph_ptr->NewCNode(input_list);
+  MS_EXCEPTION_IF_NULL(event_node_ptr);
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
+  selected_kernel_builder.SetKernelType(KernelType::RT_KERNEL);
+  AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), event_node_ptr.get());
+  common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), event_node_ptr);
+  auto abstract_none = std::make_shared<abstract::AbstractNone>();
+  event_node_ptr->set_abstract(abstract_none);
+  return event_node_ptr;
+}
+
 CNodePtr KernelAdjust::CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,
                                              uint32_t event_id) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
@@ -81,17 +95,7 @@ CNodePtr KernelAdjust::CreateSendApplyKernel(const std::shared_ptr<session::Kern
   MS_EXCEPTION_IF_NULL(send_op);
   auto send_apply = std::make_shared<ValueNode>(send_op);
   MS_EXCEPTION_IF_NULL(send_apply);
-  std::vector<AnfNodePtr> send_input_list = {send_apply};
-  CNodePtr send_node_ptr = graph_ptr->NewCNode(send_input_list);
-  MS_EXCEPTION_IF_NULL(send_node_ptr);
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
-  selected_kernel_builder.SetKernelType(KernelType::RT_KERNEL);
-  AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), send_node_ptr.get());
-  common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), send_node_ptr);
-  auto abstract_none = std::make_shared<abstract::AbstractNone>();
-  MS_EXCEPTION_IF_NULL(abstract_none);
-  send_node_ptr->set_abstract(abstract_none);
-  return send_node_ptr;
+  return CreateEventApplyKernel(graph_ptr, event_id, {send_apply});
 }
 
 CNodePtr KernelAdjust::CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,
@@ -101,41 +105,22 @@ CNodePtr KernelAdjust::CreateRecvApplyKernel(const std::shared_ptr<session::Kern
   MS_EXCEPTION_IF_NULL(recv_op);
   auto recv_apply = std::make_shared<ValueNode>(recv_op);
   MS_EXCEPTION_IF_NULL(recv_apply);
-  std::vector<AnfNodePtr> recv_input_list = {recv_apply};
-  CNodePtr recv_node_ptr = graph_ptr->NewCNode(recv_input_list);
-  MS_EXCEPTION_IF_NULL(recv_node_ptr);
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
-  selected_kernel_builder.SetKernelType(KernelType::RT_KERNEL);
-  AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), recv_node_ptr.get());
-  common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), recv_node_ptr);
-  auto abstract_none = std::make_shared<abstract::AbstractNone>();
-  MS_EXCEPTION_IF_NULL(abstract_none);
-  recv_node_ptr->set_abstract(abstract_none);
-  return recv_node_ptr;
+  return CreateEventApplyKernel(graph_ptr, event_id, {recv_apply});
 }
 
 bool KernelAdjust::ExistGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   const std::vector<CNodePtr> &cnode_list = kernel_graph_ptr->execution_order();
-  for (const auto &cnode : cnode_list) {
-    if (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(cnode_list.begin(), cnode_list.end(),
+                     [](const CNodePtr &cnode) { return common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName; });
 }
 
 bool KernelAdjust::ExistIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   const auto &exe_orders = kernel_graph_ptr->execution_order();
-  for (const auto &node : exe_orders) {
-    if (AnfAlgo::IsIndependentNode(node) && AnfAlgo::GetGraphId(node.get()) == kernel_graph_ptr->graph_id()) {
-      MS_LOG(INFO) << "graph exit independent node";
-      return true;
-    }
-  }
-
-  return false;
+  return std::any_of(exe_orders.begin(), exe_orders.end(), [&kernel_graph_ptr](const CNodePtr &node) {
+    return AnfAlgo::IsIndependentNode(node) && AnfAlgo::GetGraphId(node.get()) == kernel_graph_ptr->graph_id();
+  });
 }
 
 void KernelAdjust::InsertIndepentParallel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
