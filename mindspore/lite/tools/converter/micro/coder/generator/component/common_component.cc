@@ -179,7 +179,7 @@ void CodeInputImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
       << "    return RET_ERROR;\n"
          "  }\n";
   for (size_t i = 0; i < size; ++i) {
-    ofs << "\t" << ctx->input_name() << i << " = inputs[" << i << "];\n";
+    ofs << "\t" << ctx->input_name() << i << " = (unsigned char *)inputs[" << i << "];\n";
   }
   ofs << "  return RET_OK;\n}\n";
 }
@@ -251,7 +251,7 @@ void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
   ofs << "  if (buffer == NULL) {\n"
          "    return RET_ERROR;\n"
          "  }\n";
-  ofs << "  " << ctx->buffer_name() << " = buffer;\n"
+  ofs << "  " << ctx->buffer_name() << " = (unsigned char *)buffer;\n"
       << "  return RET_OK;\n"
          "}\n";
 }
