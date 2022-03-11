@@ -2235,7 +2235,7 @@ class NLLLoss(PrimitiveWithInfer):
                     and `weight` should be equal to each other.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> logits = Tensor(np.array([[0.5488135, 0.71518934],

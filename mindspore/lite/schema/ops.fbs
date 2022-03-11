@@ -224,6 +224,8 @@ union PrimitiveType {
     LSTMGradData,
     LSTMGradWeight,
     RandomNormal,
+    NLLLoss,
+    NLLLossGrad,
 }
 
 table Abs {
@@ -1255,4 +1257,12 @@ table RandomNormal {
     seed: float;
     mean: float;
     scale: float;
+}
+
+table NLLLoss {
+    reduction: Reduction;
+}
+
+table NLLLossGrad {
+    reduction: Reduction;
 }

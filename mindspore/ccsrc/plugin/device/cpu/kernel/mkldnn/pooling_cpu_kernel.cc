@@ -28,7 +28,7 @@ constexpr size_t kPoolingInputsNum = 1;
 constexpr size_t kPoolingOutputsNum = 1;
 }  // namespace
 
-void PoolingCpuKernelMod::InitFields(const CNodePtr &kernel_node) {
+void PoolingCpuKernelMod::InitPoolingFields(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
@@ -51,7 +51,7 @@ void PoolingCpuKernelMod::InitFields(const CNodePtr &kernel_node) {
 
 void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  InitFields(kernel_node);
+  InitPoolingFields(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   const size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {

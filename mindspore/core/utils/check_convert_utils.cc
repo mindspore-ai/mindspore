@@ -137,6 +137,7 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"BinaryCrossEntropy", ReductionMap},
   {"BinaryCrossEntropyGrad", ReductionMap},
   {"NLLLoss", ReductionMap},
+  {"NLLLossGrad", ReductionMap},
   {"DepthToSpace", DataFormatMap},
   {"Pooling", DataFormatMap},
   {"Deconvolution", DataFormatMap},

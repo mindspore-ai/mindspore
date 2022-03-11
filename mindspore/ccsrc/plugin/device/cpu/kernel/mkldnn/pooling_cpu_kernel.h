@@ -54,7 +54,7 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void InitFields(const CNodePtr &kernel_node);
+  void InitPoolingFields(const CNodePtr &kernel_node);
   std::string kernel_type_{kUnkown};
 };
 }  // namespace kernel

@@ -31,17 +31,6 @@ constexpr size_t kStridedSliceDynamicInputsNum = 4;
 constexpr size_t kStridedSliceOutputsNum = 1;
 }  // namespace
 
-enum PosType { kBegin, kEnd };
-
-int NormalizePos(int pos, int dim_len, PosType pos_type) {
-  if (pos >= 0) {
-    int max_pos = pos_type == kBegin ? dim_len - 1 : dim_len;
-    return std::min(pos, max_pos);
-  }
-  int min_pos = pos_type == kBegin ? 0 : -1;
-  return std::max(pos + dim_len, min_pos);
-}
-
 void StridedSliceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
