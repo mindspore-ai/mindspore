@@ -41,9 +41,8 @@ int QuantDTypeCastCoder::DoCode(CoderContext *const context) {
     MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
     return RET_ERROR;
   }
-  auto quant_arg = (!output_tensor_->quant_params().empty() && output_tensor_->quant_params().at(0).inited)
-                     ? output_tensor_->quant_params().at(0)
-                     : input_tensor_->quant_params().at(0);
+  auto quant_arg = (output_tensor_->quant_params().empty()) ? input_tensor_->quant_params().at(0)
+                                                            : output_tensor_->quant_params().at(0);
   int num_unit_thread = input_tensor_->ElementsNum();
 
   Collect(context,
