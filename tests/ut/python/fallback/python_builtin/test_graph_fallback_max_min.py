@@ -103,6 +103,20 @@ def test_fallback_max_with_one_input_numpy_array():
     assert out == 3
 
 
+def test_fallback_max_with_one_input_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test max() in graph mode with one input tensor.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = max(Tensor([1, 2, 3]))
+        return x
+    out = foo()
+    assert out == 3
+
+
 def test_fallback_max_with_two_inputs_list():
     """
     Feature: JIT Fallback

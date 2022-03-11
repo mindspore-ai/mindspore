@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test graph fallback buildin python function round"""
+""" test graph fallback buildin python function sum"""
 import pytest
-from mindspore import ms_function, context
+import numpy as np
+from mindspore import ms_function, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
-def test_fallback_round_with_x_list_n_default():
+def test_fallback_sum_with_x_list_n_default():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x list and input n default.
@@ -32,7 +33,7 @@ def test_fallback_round_with_x_list_n_default():
     assert out == 6
 
 
-def test_fallback_round_with_x_tuple_n_default():
+def test_fallback_sum_with_x_tuple_n_default():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x tuple and input n default.
@@ -46,7 +47,7 @@ def test_fallback_round_with_x_tuple_n_default():
     assert out == 6
 
 
-def test_fallback_round_with_x_dict_n_default():
+def test_fallback_sum_with_x_dict_n_default():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x dict and input n default.
@@ -60,7 +61,63 @@ def test_fallback_round_with_x_dict_n_default():
     assert out == 6
 
 
-def test_fallback_round_with_x_list_n_not_default():
+def test_fallback_sum_with_x_numpy_array_n_default():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode with input x numpy array and input n default.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = sum(np.array([1, 2, 3]))
+        return Tensor(x)
+    out = foo()
+    assert out.asnumpy() == 6
+
+
+def test_fallback_sum_with_x_tensor_n_default():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode with input x tensor and input n default.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = sum(Tensor([1, 2, 3]))
+        return x
+    out = foo()
+    assert out.asnumpy() == 6
+
+
+def test_fallback_sum_with_x_tensor_n_default_2():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode with input x tensor and input n default.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = sum(Tensor([[1, 1], [2, 2]]))
+        return x
+    out = foo()
+    assert np.allclose(out.asnumpy(), np.array([3, 3]))
+
+
+def test_fallback_sum_with_x_numpy_array_n_default_2():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode with input x numpy array and input n default.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = sum(np.array([[1, 1], [2, 2]]))
+        return Tensor(x)
+    out = foo()
+    assert np.allclose(out.asnumpy(), np.array([3, 3]))
+
+
+def test_fallback_sum_with_x_list_n_not_default():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x list and input n not default.
@@ -74,7 +131,21 @@ def test_fallback_round_with_x_list_n_not_default():
     assert out == 16
 
 
-def test_fallback_round_with_x_tuple_n_not_default():
+def test_fallback_sum_with_x_tensor_n_not_default():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode with input x tensor and input n not default.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = sum(Tensor([1, 2, 3]), 10)
+        return x
+    out = foo()
+    assert out == 16
+
+
+def test_fallback_sum_with_x_tuple_n_not_default():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x tuple and input n not default.
@@ -88,7 +159,7 @@ def test_fallback_round_with_x_tuple_n_not_default():
     assert out == 16
 
 
-def test_fallback_round_with_x_dict_n_not_default():
+def test_fallback_sum_with_x_dict_n_not_default():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x dict and input n not default.
@@ -102,7 +173,21 @@ def test_fallback_round_with_x_dict_n_not_default():
     assert out == 16
 
 
-def test_fallback_round_with_x_not_iterable():
+def test_fallback_sum_with_x_numpy_array_n_not_default():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode with input x numpy array and input n default.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = sum(np.array([[1, 1], [2, 2]]), 5)
+        return Tensor(x)
+    out = foo()
+    assert np.allclose(out.asnumpy(), np.array([8, 8]))
+
+
+def test_fallback_sum_with_x_not_iterable():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x not iterable.
