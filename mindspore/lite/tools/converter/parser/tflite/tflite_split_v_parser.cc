@@ -50,17 +50,17 @@ ops::PrimitiveC *TfliteSplitVParser::Parse(const std::unique_ptr<tflite::Operato
     return nullptr;
   }
   auto tensor_shape = tensor->shape;
-  const auto &axis_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(2));
-  if (axis_tensor == nullptr) {
-    MS_LOG(ERROR) << "axis_tensor is null";
+  std::vector<int64_t> axes;
+  auto ret = GetTfliteData(tflite_op->inputs.at(2), tflite_subgraph->tensors, tflite_model->buffers, &axes);
+  if (ret != RET_OK && ret != RET_NO_CHANGE) {
+    MS_LOG(ERROR) << "get axes value failed.";
     return nullptr;
   }
-  auto &axis_buf_data = tflite_model->buffers.at(axis_tensor->buffer);
-  if (axis_buf_data == nullptr) {
-    MS_LOG(ERROR) << "buf_data is null";
+  if (axes.size() < 1) {
+    MS_LOG(ERROR) << "invalid axes param";
     return nullptr;
   }
-  auto axis = *(reinterpret_cast<int32_t *>(axis_buf_data->data.data()));
+  auto axis = axes[0];
   if (axis < 0) {
     axis += tensor_shape.size();
   }

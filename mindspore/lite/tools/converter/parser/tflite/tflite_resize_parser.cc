@@ -76,24 +76,16 @@ ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::Operato
     return nullptr;
   }
 
-  auto tfliteResizeTensorIndex = tflite_op->inputs[1];
-  const auto &shape_tensor = tflite_subgraph->tensors[tfliteResizeTensorIndex];
-  if (shape_tensor == nullptr) {
-    MS_LOG(ERROR) << "shape_tensor is null";
+  std::vector<int64_t> dims;
+  auto ret = GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, &dims);
+  if (ret != RET_OK && ret != RET_NO_CHANGE) {
+    MS_LOG(ERROR) << "get axes value failed.";
     return nullptr;
   }
-  auto resizeTensorBufferIndex = shape_tensor->buffer;
-  const auto &buff = tflite_model->buffers.at(resizeTensorBufferIndex);
-  if (buff == nullptr) {
-    MS_LOG(ERROR) << "buff_data is null";
-    return nullptr;
-  }
-  auto buffData = reinterpret_cast<int32_t *>(buff->data.data());
-  if (buffData != nullptr) {
-    auto height = buffData[0];
-    auto width = buffData[1];
-    prim->set_new_width(width);
-    prim->set_new_height(height);
+
+  if (dims.size() > 1) {
+    prim->set_new_height(dims.at(0));
+    prim->set_new_width(dims.at(1));
   }
 
   return prim.release();
