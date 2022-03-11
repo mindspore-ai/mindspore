@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.scipy as msp
 from mindspore import context
 from mindspore.common import Tensor
-from tests.st.scipy_st.utils import create_sym_pos_matrix, create_full_rank_matrix, to_tensor, to_ndarray
+from tests.st.scipy_st.utils import create_sym_pos_matrix, create_full_rank_matrix, to_tensor, to_ndarray, get_platform
 
 
 def _fetch_preconditioner(preconditioner, A):
@@ -58,6 +58,8 @@ def test_cg_against_scipy(tensor_type, dtype, tol, shape, preconditioner, maxite
     Description: test cases for cg using function way in pynative/graph mode
     Expectation: the result match scipy
     """
+    if tensor_type == "CSRTensor" and get_platform() != "linux":
+        return
     onp.random.seed(0)
     a = create_sym_pos_matrix(shape, dtype)
     b = onp.random.random(shape[:1]).astype(dtype)
@@ -128,6 +130,8 @@ def test_cg_against_scipy_graph(tensor_type, dtype, tol, shape, preconditioner, 
     Description: test cases for cg within Cell object in pynative/graph mode
     Expectation: the result match scipy
     """
+    if tensor_type == "CSRTensor" and get_platform() != "linux":
+        return
 
     class Net(nn.Cell):
         def construct(self, a, b, m, maxiter, tol):
@@ -198,6 +202,8 @@ def test_cg_grad(tensor_type, dtype, tol, a, b, grad_a, grad_b):
     Description: test cases for grad implementation of cg in graph mode
     Expectation: the result match expectation
     """
+    if tensor_type == "CSRTensor" and get_platform() != "linux":
+        return
     context.set_context(mode=context.GRAPH_MODE)
 
     a = to_tensor((a, tensor_type), dtype)
