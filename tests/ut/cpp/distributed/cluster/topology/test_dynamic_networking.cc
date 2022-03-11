@@ -40,10 +40,10 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
   common::SetEnv(kEnvMetaServerPort, server_port.c_str());
 
-  MetaServerNode msn("master");
+  MetaServerNode msn("meta_server_node");
   ASSERT_TRUE(msn.Initialize());
 
-  ComputeGraphNode cgn("worker");
+  ComputeGraphNode cgn("compute_graph_node");
   ASSERT_TRUE(cgn.Initialize());
 
   cgn.Finalize();

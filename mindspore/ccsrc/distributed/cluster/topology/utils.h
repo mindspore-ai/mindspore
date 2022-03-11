@@ -17,8 +17,11 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_UTILS_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_UTILS_H_
 
+#include <string>
+#include <memory>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "actor/msg.h"
 #include "distributed/cluster/topology/common.h"
 
 namespace mindspore {
@@ -52,6 +55,16 @@ static bool FillMetaServerAddress(struct MetaServerAddress *address) {
   address->ip = ip;
   address->port = port;
   return true;
+}
+
+__attribute__((unused)) static std::unique_ptr<MessageBase> CreateMessage(const std::string &dest_url,
+                                                                          const std::string &content) {
+  std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
+  message->name = std::to_string(static_cast<int>(MessageName::kRegistration));
+  message->from = AID("", "");
+  message->to = AID("", dest_url);
+  message->body = content;
+  return message;
 }
 }  // namespace topology
 }  // namespace cluster
