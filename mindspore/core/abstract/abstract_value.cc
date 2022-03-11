@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,56 +30,50 @@
 namespace mindspore {
 namespace abstract {
 using mindspore::common::IsEqual;
+AbstractBase::TraceNodeProvider AbstractBase::trace_node_provider_ = nullptr;
 
-AnfNodePtr GetTraceNode(const AbstractBasePtr &abs) {
+std::string JoinSupplementaryInfo(const AbstractBasePtr &abstract1, const AbstractBasePtr &abstract2) {
+  std::ostringstream oss;
+  oss << "\nFor more details, please refer to the FAQ at https://www.mindspore.cn.\n"
+      << "This: " << abstract1->ToString() << ", other: " << abstract2->ToString();
+  // Get trace info of node.
   AnfNodePtr node = nullptr;
-  if (mindspore::abstract::AbstractBase::trace_node_provider_ != nullptr) {
-    mindspore::abstract::AbstractBase::trace_node_provider_(&node);
+  if (AbstractBase::trace_node_provider_ != nullptr) {
+    AbstractBase::trace_node_provider_(&node);
   }
-  return node;
+  if (node != nullptr) {
+    oss << ". Please check the node: " << node->DebugString() << trace::DumpSourceLines(node);
+  }
+  return oss.str();
 }
 
 inline void AbstractTypeJoinLogging(const AbstractBasePtr &abstract1, const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
   oss << "Type Join Failed: abstract type " << abstract1->type_name() << " cannot join with " << abstract2->type_name()
-      << ". For more details, please refer to the FAQ at https://www.mindspore.cn. "
-      << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
-  auto node = GetTraceNode(abstract1);
-  if (node != nullptr) {
-    oss << ". Please check the node " << node->DebugString() << trace::DumpSourceLines(node);
-  }
+      << ".";
+  oss << JoinSupplementaryInfo(abstract1, abstract2);
   MS_EXCEPTION(TypeError) << oss.str();
 }
 
 inline void TypeJoinLogging(const TypePtr &type1, const TypePtr &type2, const AbstractBasePtr &abstract1,
                             const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
-  oss << "Type Join Failed: dtype1 = " << type1->ToString() << ", dtype2 = " << type2->ToString()
-      << ". For more details, please refer to the FAQ at https://www.mindspore.cn. "
-      << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
-  auto node = GetTraceNode(abstract1);
-  if (node != nullptr) {
-    oss << ". Please check the node " << node->DebugString() << trace::DumpSourceLines(node);
-  }
+  oss << "Type Join Failed: dtype1 = " << type1->ToString() << ", dtype2 = " << type2->ToString() << ".";
+  oss << JoinSupplementaryInfo(abstract1, abstract2);
   MS_EXCEPTION(TypeError) << oss.str();
 }
 
 inline void ShapeJoinLogging(const BaseShapePtr &shape1, const BaseShapePtr &shape2, const AbstractBasePtr &abstract1,
                              const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
-  oss << "Shape Join Failed: shape1 = " << shape1->ToString() << ", shape2 = " << shape2->ToString()
-      << ". For more details, please refer to the FAQ at https://www.mindspore.cn. "
-      << "this: " << abstract1->ToString() << ", other: " << abstract2->ToString();
-  auto node = GetTraceNode(abstract1);
-  if (node != nullptr) {
-    oss << ". Please check the node " << node->DebugString() << trace::DumpSourceLines(node);
-  }
+  oss << "Shape Join Failed: shape1 = " << shape1->ToString() << ", shape2 = " << shape2->ToString() << ".";
+  oss << JoinSupplementaryInfo(abstract1, abstract2);
   MS_EXCEPTION(ValueError) << oss.str();
 }
 
 std::string ExtractLoggingInfo(const std::string &info) {
   // Extract log information based on the keyword "Type Join Failed" or "Shape Join Failed"
-  std::regex e("(Type Join Failed|Shape Join Failed).*?\\.");
+  std::regex e("(Type Join Failed|Shape Join Failed).*?\n.*?(https://www.mindspore.cn)");
   std::smatch result;
   bool found = std::regex_search(info, result, e);
   if (found) {
@@ -91,8 +85,6 @@ std::string ExtractLoggingInfo(const std::string &info) {
 static inline bool IsUndeterminedType(const TypePtr &type) {
   return (type != nullptr) && (type->type_id() == kObjectTypeUndeterminedType);
 }
-
-AbstractBase::TraceNodeProvider AbstractBase::trace_node_provider_ = nullptr;
 
 bool AbstractBase::operator==(const AbstractBase &other) const {
   if (this == &other) {
