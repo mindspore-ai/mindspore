@@ -76,8 +76,6 @@ class ArgMaxWithValueInfo : public ReduceMethod {
 
   ~ArgMaxWithValueInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
-
  protected:
   std::vector<int64_t> reduce_dim() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -166,6 +164,63 @@ class ReduceAllInfo : public ReduceAnyInfo {
   }
 
   ~ReduceAllInfo() override = default;
+};
+
+class ArgmaxInfo : public ReduceMethod {
+ public:
+  ArgmaxInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArgmaxCost>()) {
+    reduce_method_ = REDUCE_OP_MAX;
+  }
+
+  ~ArgmaxInfo() override = default;
+
+ protected:
+  std::vector<int64_t> reduce_dim() override;
+  Status GetAttrs() override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferMirrorOps() override;
+};
+
+class ArgminInfo : public ArgmaxInfo {
+ public:
+  ArgminInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : ArgmaxInfo(name, inputs_shape, outputs_shape, attrs) {
+    reduce_method_ = REDUCE_OP_MIN;
+  }
+
+  ~ArgminInfo() override = default;
+};
+
+class SquareSumAllInfo : public ReduceMethod {
+ public:
+  SquareSumAllInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                   const PrimitiveAttrs &attrs)
+      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<SquareSumAllCost>()) {
+    reduce_method_ = REDUCE_OP_SUM;
+  }
+  ~SquareSumAllInfo() override = default;
+
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
+
+ protected:
+  std::vector<int64_t> reduce_dim() override;
+  Status GetAttrs() override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferDevMatrixShape() override;
+  Status InferTensorMap() override;
+  Status InferTensorInfo() override;
+  Status InferForwardCommunication() override { return SUCCESS; }
+  Status InferMirrorOps() override;
+  Status InferAsLossDivisor() override;
+
+ private:
+  Status InferGroup();
+  Status ComputeReplaceGraph(const CNodePtr &cnode);
+
+  std::vector<Group> group_;
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -217,6 +217,10 @@ REGISTER(CropAndResizeInfo);
 REGISTER(ROIAlignInfo);
 REGISTER(ReduceProdInfo);
 REGISTER(ReduceAllInfo);
+REGISTER(ArgmaxInfo);
+REGISTER(ArgminInfo);
+REGISTER(UnsortedSegmentProdInfo);
+REGISTER(SquareSumAllInfo);
 }  // namespace parallel
 }  // namespace mindspore
 
