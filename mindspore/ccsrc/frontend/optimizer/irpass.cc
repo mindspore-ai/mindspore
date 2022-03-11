@@ -46,6 +46,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass/row_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
+#include "frontend/optimizer/irpass/stack_unstack_eliminate.h"
 #include "frontend/optimizer/irpass/switch_or_switch_layer_defer_inline.h"
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 #include "frontend/optimizer/irpass/recompute_prepare.h"
@@ -96,6 +97,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem, prim::kPrimListSetItem});
   make_slice_get_slice_eliminator_ = MakeSubstitution(std::make_shared<MakeSliceSliceGetItemEliminator>(),
                                                       "make_slice_get_slice_eliminator", {prim::kPrimSliceGetItem});
+  stack_unstack_eliminate_ =
+    MakeSubstitution(std::make_shared<StackUnstackEliminator>(), "stack_unstack_eliminate", prim::kPrimUnstack);
   tile_eliminate_ = MakeSubstitution(std::make_shared<TileEliminater>(), "tile_eliminate", prim::kPrimTile);
   cast_eliminate_ = MakeSubstitution(std::make_shared<CastEliminater>(), "cast_eliminate", prim::kPrimCast);
   reshape_eliminate_ = MakeSubstitution(std::make_shared<ReshapeEliminater>(), "reshape_eliminate", prim::kPrimReshape);

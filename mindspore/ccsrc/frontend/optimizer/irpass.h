@@ -48,6 +48,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr tuple_list_convert_item_index_to_positive_;
   SubstitutionPtr make_slice_get_slice_eliminator_;
 
+  SubstitutionPtr stack_unstack_eliminate_;
   SubstitutionPtr tile_eliminate_;
   SubstitutionPtr cast_eliminate_;
   SubstitutionPtr reshape_eliminate_;
