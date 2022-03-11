@@ -151,6 +151,26 @@ void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr>
   }
 }
 
+void CheckObjFiles(const std::string &dir_path, const std::vector<std::string> &json_list) {
+  constexpr size_t try_times = 10;
+  constexpr size_t wait_us = 100000;
+  for (auto const json_name : json_list) {
+    auto file_name = dir_path + "/" + json_name + ".json";
+    bool exist = false;
+    for (size_t i = 0; i < try_times; ++i) {
+      std::ifstream f(file_name.c_str());
+      if (f.good()) {
+        exist = true;
+        break;
+      }
+      usleep(wait_us);
+    }
+    if (!exist) {
+      MS_LOG(EXCEPTION) << "akg file " << json_name << ".json not exist!";
+    }
+  }
+}
+
 bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
   auto dir_path = FileUtils::CreateNotExistDirs(std::string("./kernel_meta"));
   if (!dir_path.has_value()) {
@@ -186,7 +206,8 @@ bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
   }
   auto res = CompileJsonsInList(dir_path.value(), json_list);
   if (res) {
-    auto cmd = "g++ -fPIC -shared " + kernels_name + " -o " + dir_path.value() + "/akgkernels.so";
+    CheckObjFiles(dir_path.value(), json_list);
+    auto cmd = "g++ -fPIC -shared -o" + dir_path.value() + "/akgkernels.so " + kernels_name;
     if (system(cmd.c_str()) == 0) {
       return true;
     }

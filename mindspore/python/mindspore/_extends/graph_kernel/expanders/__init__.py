@@ -42,9 +42,7 @@ from .maximum_grad import MaximumGrad
 from .minimum_grad import MinimumGrad
 from .oneslike import OnesLike
 from .reduce_mean import ReduceMean
-from .relu import ReLU
 from .relu_grad import ReluGrad
-from .sigmoid import Sigmoid
 from .sigmoid_cross_entropy_with_logits import SigmoidCrossEntropyWithLogits
 from .sigmoid_cross_entropy_with_logits_grad import SigmoidCrossEntropyWithLogitsGrad
 from .sigmoid_grad import SigmoidGrad
@@ -53,7 +51,6 @@ from .softmax import Softmax
 from .softmax_cross_entropy_with_logits import SoftmaxCrossEntropyWithLogits
 from .softmax_grad_ext import SoftmaxGradExt
 from .sqrt_grad import SqrtGrad
-from .square import Square
 from .squared_difference import SquaredDifference
 from .square_sum_v1 import SquareSumV1
 from .square_sum_all import SquareSumAll

@@ -41,6 +41,7 @@ class GraphKernelExpanderWithPy : public GraphKernelExpander {
   ~GraphKernelExpanderWithPy() override = default;
 
  protected:
+  std::vector<PrimitivePtr> InitOpList() override;
   ExpanderPtr GetExpander(const AnfNodePtr &node) override;
 };
 

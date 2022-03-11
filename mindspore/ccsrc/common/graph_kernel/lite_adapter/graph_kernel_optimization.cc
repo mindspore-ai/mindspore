@@ -23,13 +23,13 @@
 #include "include/common/utils/context/graph_kernel_flags.h"
 #include "backend/common/pass/getitem_tuple.h"
 #include "common/graph_kernel/core/graph_kernel_cluster.h"
-#include "common/graph_kernel/core/graph_kernel_expander.h"
 #include "common/graph_kernel/core/graph_kernel_splitter.h"
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/core/shape_ops_splitter.h"
 #include "common/graph_kernel/core/update_state_formatter.h"
 #include "common/graph_kernel/lite_adapter/build_kernel.h"
 #include "common/graph_kernel/lite_adapter/convert_const_input_to_attr.h"
+#include "common/graph_kernel/lite_adapter/graph_kernel_expander_lite.h"
 #include "common/graph_kernel/lite_adapter/graph_kernel_pass_manager.h"
 
 namespace mindspore::graphkernel {
@@ -39,7 +39,7 @@ using opt::GraphOptimizer;
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "cluster");
   // Expand complex basic kernels to composite kernels
-  pm->AddPass(std::make_shared<GraphKernelExpander>(), OptLevel_1);
+  pm->AddPass(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
 
   // Cluster basic kernels and composite kernels
   pm->AddPass(std::make_shared<GraphKernelCluster>(), OptLevel_1);
@@ -73,7 +73,7 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
 }
 
 PassManagerPtr GraphKernelOptimizer::PostProcess() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(1, "postprocess");
+  auto pm = std::make_shared<GraphKernelPassManager>(2, "postprocess");
   // build akg and replace graph kernel nodes
   pm->AddPass(std::make_shared<KernelBuilder>(), OptLevel_1);
   return pm;

@@ -31,69 +31,6 @@
 #include "common/graph_kernel/expanders/expander_factory.h"
 
 namespace mindspore::graphkernel {
-namespace {
-std::vector<PrimitivePtr> GetExpandOps() {
-  std::vector<OpWithLevel> expand_ops_with_level = {
-    {kAllTarget, OpLevel_0, prim::kPrimAddN},
-    {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
-    {kAllTarget, OpLevel_0, prim::kPrimErfc},
-    {kAllTarget, OpLevel_1, prim::kPrimExpandDims},
-    {kAllTarget, OpLevel_0, prim::kPrimGeLU},
-    {kAllTarget, OpLevel_0, prim::kPrimGeLUGrad},
-    {kAllTarget, OpLevel_0, prim::kPrimSquare},
-    {kAllTarget, OpLevel_0, prim::kPrimTile},
-    {kAscendDevice, OpLevel_0, prim::kLambApplyOptimizerAssign},
-    {kAscendDevice, OpLevel_0, prim::kLambApplyWeightAssign},
-    {kAscendDevice, OpLevel_0, prim::kPrimClipByNormNoDivSum},
-    {kAscendDevice, OpLevel_0, prim::kPrimSqrtGrad},
-    {kAscendDevice, OpLevel_1, prim::kSoftmaxGradExt},
-    {kAscendDevice, OpLevel_0, prim::kFusedMulAdd},
-    {kGPUDevice, OpLevel_1, prim::kPrimBatchMatMul},
-    {kGPUDevice, OpLevel_0, prim::kPrimBiasAdd},
-    {kGPUDevice, OpLevel_1, prim::kPrimBiasAddGrad},
-    {kGPUDevice, OpLevel_0, prim::kPrimDropout},
-    {kGPUDevice, OpLevel_0, prim::kPrimDropoutGrad},
-    {kGPUDevice, OpLevel_1, prim::kPrimMaximumGrad},
-    {kGPUDevice, OpLevel_1, prim::kPrimMinimumGrad},
-    {kGPUDevice, OpLevel_1, prim::kPrimLayerNorm},
-    {kGPUDevice, OpLevel_1, prim::kPrimLayerNormGrad},
-    {kGPUDevice, OpLevel_0, prim::kPrimLogSoftmax},
-    {kGPUDevice, OpLevel_0, prim::kPrimLogSoftmaxGrad},
-    {kGPUDevice, OpLevel_1, prim::kPrimMatMul},
-    {kGPUDevice, OpLevel_1, prim::kPrimReduceMean},
-    {kGPUDevice, OpLevel_0, prim::kPrimRelu},
-    {kGPUDevice, OpLevel_0, prim::kPrimReluGrad},
-    {kGPUDevice, OpLevel_0, prim::kPrimSigmoid},
-    {kGPUDevice, OpLevel_0, prim::kPrimSigmoidGrad},
-    {kGPUDevice, OpLevel_0, prim::kPrimSigmoidCrossEntropyWithLogits},
-    {kGPUDevice, OpLevel_0, prim::kPrimSigmoidCrossEntropyWithLogitsGrad},
-    {kGPUDevice, OpLevel_0, prim::kPrimSlice},
-    {kGPUDevice, OpLevel_1, prim::kPrimSoftmax},
-    {kGPUDevice, OpLevel_1, prim::kPrimSoftmaxCrossEntropyWithLogits},
-    {kGPUDevice, OpLevel_0, prim::kPrimSquaredDifference},
-    {kGPUDevice, OpLevel_0, prim::kPrimSqueeze},
-    {kGPUDevice, OpLevel_0, prim::kPrimEqualCount},
-    {kGPUDevice, OpLevel_0, prim::kPrimSquareSumAll},
-    {kGPUDevice, OpLevel_0, prim::kPrimIdentityMath},
-    {kGPUDevice, OpLevel_0, prim::kPrimOnesLike},
-    {kGPUDevice, OpLevel_0, prim::kPrimStandardNormal},
-    {kCPUDevice, OpLevel_0, prim::kPrimOnesLike},
-    {kCPUDevice, OpLevel_0, prim::kPrimBiasAdd},
-    {kCPUDevice, OpLevel_1, prim::kPrimBiasAddGrad},
-    {kCPUDevice, OpLevel_0, prim::kPrimRelu},
-    {kCPUDevice, OpLevel_1, prim::kPrimMaximumGrad},
-    {kCPUDevice, OpLevel_1, prim::kPrimMinimumGrad},
-    {kCPUDevice, OpLevel_1, prim::kPrimAdam},
-    {kCPUDevice, OpLevel_1, prim::kPrimTanhGrad},
-    {kCPUDevice, OpLevel_1, prim::kPrimSoftplus},
-    {kCPUDevice, OpLevel_1, prim::kPrimSoftplusGrad},
-  };
-  const auto &flags = GraphKernelFlags::GetInstance();
-  return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
-                              flags.enable_expand_ops, flags.disable_expand_ops);
-}
-}  // namespace
-
 FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
   auto expander_ptr = expanders::OpExpanderFactory::Instance().GetExpander(AnfUtils::GetCNodeName(node));
   if (expander_ptr == nullptr) {
@@ -178,7 +115,7 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
 }
 
 bool GraphKernelExpander::Run(const FuncGraphPtr &func_graph) {
-  expand_ops_ = GetExpandOps();
+  expand_ops_ = InitOpList();
   return DoExpand(func_graph);
 }
 }  // namespace mindspore::graphkernel

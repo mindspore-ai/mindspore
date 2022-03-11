@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_UTILS_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_UTILS_H_
+#ifndef MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_EXPANDERS_UTILS_H_
+#define MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_EXPANDERS_UTILS_H_
 
 #include <string>
 #include <memory>
@@ -24,6 +24,7 @@
 #include "common/graph_kernel/model/node.h"
 
 namespace mindspore::graphkernel::expanders {
+using inner::NodePtr;
 using inner::NodePtrList;
 using BaseInfoList = std::vector<inner::NodeBase>;
 class Validator;
@@ -32,6 +33,11 @@ class OpDesc {
  public:
   inner::LiteGraphPtr Run(const BaseInfoList &inputs, const BaseInfoList &outputs, const inner::DAttrs &attrs,
                           const std::string &processor);
+  const std::string &Op() const { return op_; }
+  const BaseInfoList &InputsInfo() const { return inputs_info_; }
+  const BaseInfoList &OuputsInfo() const { return outputs_info_; }
+  inner::DAttrs Attrs() const { return attrs_; }
+  const std::string &Processor() const { return processor_; }
   virtual ~OpDesc() = default;
 
  protected:
@@ -48,9 +54,6 @@ class OpDesc {
   std::vector<std::unique_ptr<Validator>> validators_;
 
   friend class OpExpanderFactory;
-  friend class CheckAllFormatsSame;
-  friend class CheckAttr;
-  friend class SupportFormat;
 };
 
 class Validator {
@@ -61,11 +64,12 @@ class Validator {
 class CheckAllFormatsSame : public Validator {
  public:
   bool Check(const OpDesc &e) override {
-    if (e.inputs_info_.empty()) return true;
-    const auto &fmt_0 = e.inputs_info_[0].format;
-    for (size_t i = 1; i < e.inputs_info_.size(); i++) {
-      if (e.inputs_info_[i].format != fmt_0) {
-        MS_LOG(INFO) << "Unmatched format for op " << e.op_;
+    const auto &inputs_info = e.InputsInfo();
+    if (inputs_info.empty()) return true;
+    const auto &fmt_0 = inputs_info[0].format;
+    for (size_t i = 1; i < inputs_info.size(); i++) {
+      if (inputs_info[i].format != fmt_0) {
+        MS_LOG(INFO) << "Unmatched format for op " << e.Op();
         return false;
       }
     }
@@ -79,8 +83,8 @@ class CheckAttr : public Validator {
   ~CheckAttr() = default;
   bool Check(const OpDesc &e) override {
     for (auto &a : attrs_) {
-      if (e.attrs_.count(a) == 0) {
-        MS_LOG(INFO) << "attr " << a << " does not exist. op " << e.op_;
+      if (e.Attrs().count(a) == 0) {
+        MS_LOG(INFO) << "attr " << a << " does not exist. op " << e.Op();
         return false;
       }
     }
@@ -96,12 +100,12 @@ class SupportFormat : public Validator {
   void AddFormat(std::initializer_list<std::string> l) { formats_.emplace_back(l); }
   bool Check(const OpDesc &e) override {
     for (auto &formats : formats_) {
-      if (formats.size() != e.inputs_info_.size()) {
+      if (formats.size() != e.InputsInfo().size()) {
         continue;
       }
       bool match = true;
       for (size_t i = 0; i < formats.size(); i++) {
-        if (e.inputs_info_[i].format != formats[i]) {
+        if (e.InputsInfo()[i].format != formats[i]) {
           match = false;
           break;
         }
@@ -110,7 +114,7 @@ class SupportFormat : public Validator {
         return true;
       }
     }
-    MS_LOG(INFO) << "unsupported format for op " << e.op_;
+    MS_LOG(INFO) << "unsupported format for op " << e.Op();
     return false;
   }
 
@@ -120,5 +124,7 @@ class SupportFormat : public Validator {
 
 std::vector<int64_t> GetAxisList(const ValuePtr &value);
 ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis);
+NodePtr ReluExpand(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs);
+NodePtr SigmoidExpand(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs);
 }  // namespace mindspore::graphkernel::expanders
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_UTILS_H_
+#endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_EXPANDERS_UTILS_H_
