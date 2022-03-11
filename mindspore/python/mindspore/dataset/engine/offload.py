@@ -32,11 +32,10 @@ def check_add_offload_sink_mode(dataset, dataset_helper, network):
     if hasattr(dataset, '__no_send__'):
         # Dataset was not sent to device. Skip adding offload.
         return network
-    offload_model = dataset.__transfer_dataset__.get_offload_model()
-    # See if the offload pass identified any operations to be offloaded
-    if offload_model.transform_list != []:
-        check_concat_zip_dataset(dataset.__transfer_dataset__)
-        network = ApplyPreTransform(offload_model, network)
+    # We don't use dataset.__transfer_dataset__ because there will be a device_queue rdr warning log
+    iterator = dataset.create_tuple_iterator(num_epochs=1)
+    if iterator.offload_model is not None:
+        network = ApplyPreTransform(iterator.offload_model, network)
     return network
 
 
