@@ -166,10 +166,12 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
                << ", args_size:" << args_.length();
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime();
-  if (rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(node_so_.c_str()),
-                                reinterpret_cast<const void *>(node_name_.c_str()), 1,
-                                reinterpret_cast<const void *>(args_.data()), static_cast<uint32_t>(args_.length()),
-                                nullptr, stream_, flag) != RT_ERROR_NONE) {
+  rtArgsEx_t argsInfo = {};
+  argsInfo.args = args_.data();
+  argsInfo.argsSize = static_cast<uint32_t>(args_.length());
+  if (rtCpuKernelLaunchWithFlagV2(reinterpret_cast<const void *>(node_so_.c_str()),
+                                  reinterpret_cast<const void *>(node_name_.c_str()), 1, &argsInfo, nullptr, stream_,
+                                  flag) != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Aicpu op launch failed!";
 
     return false;

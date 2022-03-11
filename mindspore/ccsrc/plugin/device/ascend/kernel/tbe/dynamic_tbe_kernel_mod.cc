@@ -302,10 +302,13 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     const auto kernel_info = node_info + "/" + std::to_string(tiling_key_);
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime();
-    auto ret = rtKernelLaunchWithHandle(handle_, dev_func.c_str(), block_dim_, runtimeargs.data(), args_size, l2ctrl,
-                                        stream_ptr, kernel_info.c_str());
+    rtArgsEx_t args_info = {};
+    args_info.args = runtimeargs.data();
+    args_info.argsSize = args_size;
+    auto ret = rtKernelLaunchWithHandleV2(handle_, dev_func.c_str(), block_dim_, &args_info, l2ctrl, stream_ptr,
+                                          kernel_info.c_str());
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call runtime rtKernelLaunchWithHandle error. Node info: " << node_info;
+      MS_LOG(ERROR) << "Call runtime rtKernelLaunchWithHandleV2 error. Node info: " << node_info;
       return false;
     }
   } else {

@@ -57,11 +57,14 @@ void AiCpuDynamicKernel::Execute() {
   if (cust_kernel_) {
     flag = RT_KERNEL_CUSTOM_AICPU;
   }
-  auto ret = rtCpuKernelLaunchWithFlag(
-    reinterpret_cast<const void *>(so_name_.c_str()), reinterpret_cast<const void *>(kernel_name_.c_str()), 1,
-    reinterpret_cast<const void *>(args_.data()), SizeToUint(args_.size()), nullptr, stream_, flag);
+  rtArgsEx_t argsInfo = {};
+  argsInfo.args = args_.data();
+  argsInfo.argsSize = SizeToUint(args_.size());
+  auto ret = rtCpuKernelLaunchWithFlagV2(reinterpret_cast<const void *>(so_name_.c_str()),
+                                         reinterpret_cast<const void *>(kernel_name_.c_str()), 1, &argsInfo, nullptr,
+                                         stream_, flag);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rtCpuKernelLaunchWithFlag Failed";
+    MS_LOG(EXCEPTION) << "Call rtCpuKernelLaunchWithFlagV2 Failed";
   }
 }
 
