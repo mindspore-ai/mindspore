@@ -17,10 +17,12 @@
 #include "minddata/dataset/engine/opt/pre/add_skip_pass.h"
 
 #include <algorithm>
+#include <string>
 
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -73,7 +75,7 @@ Status AddSkipPass::InjectionFinder::VisitAfter(std::shared_ptr<TransferNode> no
 Status AddSkipPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
   RETURN_UNEXPECTED_IF_NULL(root_ir);
   RETURN_UNEXPECTED_IF_NULL(modified);
-  MS_LOG(INFO) << "Pre pass: Injection pass started.";
+  MS_LOG(INFO) << "Pre pass: AddSkipPass started.";
 
   // First, run the finder to perform any injection info before we can go ahead to drive the op injection work.
   // The finder can make updates to the AddSkipPass object.
@@ -89,6 +91,15 @@ Status AddSkipPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const 
   CHECK_FAIL_RETURN_UNEXPECTED(dataset_size > 0, "Cannot reset the pipeline, dataset size is undefined");
   int32_t num_epochs = finder.GetNumEpochs();
   int64_t step = finder.GetStep();
+  CHECK_FAIL_RETURN_UNEXPECTED(step >= 0,
+                               "Cannot reset the pipeline, reset step must be >= 0. step: " + std::to_string(step));
+  if (step >= dataset_size * num_epochs) {
+    std::string err_msg = "Cannot reset the pipeline, reset step must be less than dataset_size * num_epochs. step: " +
+                          std::to_string(step) + ", dataset_size: " + std::to_string(dataset_size) +
+                          ", num_epochs: " + std::to_string(num_epochs);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
   int32_t new_num_epochs = num_epochs - static_cast<int32_t>(step / dataset_size);
   int64_t skip_num = step % dataset_size;
 
@@ -98,7 +109,7 @@ Status AddSkipPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const 
   skip_node->SetFirstEpochOnly(true);
   RETURN_IF_NOT_OK(node->InsertAbove(skip_node));
 
-  MS_LOG(INFO) << "Pre pass: Injection pass complete.";
+  MS_LOG(INFO) << "Pre pass: AddSkipPass complete.";
   return Status::OK();
 }
 }  // namespace dataset
