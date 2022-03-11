@@ -62,7 +62,7 @@ class AscendDeviceAddress : public DeviceAddress {
 #ifdef ENABLE_DEBUGGER
   bool LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                      const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
-                     uint32_t root_graph_id = 0) const override;
+                     uint32_t root_graph_id = 0, bool force_update = 0) const override;
 #endif
 
  private:
