@@ -42,8 +42,6 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
 std::string CreateInstanceName(const CNodePtr &node, size_t index);
 TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info);
 AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager);
-AnfNodePtr MatchPattern(const AnfNodePtr &node, const NodeUsersMap &user_map,
-                        const std::vector<std::pair<const std::string, int64_t>> &match_pattern);
 
 // for specific scenarios
 RankList FindCommonMirrorGroup(const FuncGraphPtr &root);
