@@ -481,6 +481,7 @@ if(ENABLE_GPU)
     if(ENABLE_MPI)
         set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
         set_target_properties(nvidia_collective PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
+        set_target_properties(gpu_collective PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
     endif()
 endif()
 
