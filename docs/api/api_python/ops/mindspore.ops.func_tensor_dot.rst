@@ -11,7 +11,7 @@
 
     axes = 0为外积。axes = 1为普通矩阵乘法（输入是2维的）。axes = 1与axes = ((1,),(0,)相同，其中 `a` 和 `b` 都是2维的。axes = 2与axes = ((1,2),(0,1))相同，其中 `a` 和 `b` 都是3维的。
 
-    **输入：**
+    **参数：**
 
     - **x1** (Tensor) - tensor_dot的第一个输入Tensor，其数据类型为float16或float32。
     - **x2** (Tensor) - tensor_dot的第二个输入Tensor，其数据类型为float16或float32。

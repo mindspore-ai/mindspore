@@ -5,7 +5,7 @@ mindspore.ops.dot
 
     两个Tensor之间的点积。
 
-    **输入：**
+    **参数：**
 
     - **x1** (Tensor) - 第一个输入的Tensor，数据类型为float16或float32，秩必须大于或等于2。
     - **x2** (Tensor) - 第二个输入的Tensor，数据类型为float16或float32，秩必须大于或等于2。
