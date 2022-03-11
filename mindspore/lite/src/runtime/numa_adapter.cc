@@ -23,6 +23,7 @@ namespace numa {
 namespace {
 static constexpr int kSuccess = 0;
 static constexpr int kBitsPerByte = 8;
+static constexpr auto kBitsPerMask = static_cast<int>(sizeof(uint64_t) * kBitsPerByte);
 }  // namespace
 
 NUMAAdapter::NUMAAdapter() {
@@ -185,7 +186,6 @@ std::vector<int> NUMAAdapter::GetCPUList(int node_id) {
       break;
     }
     auto mask = *(maskp);
-    static constexpr auto kBitsPerMask = static_cast<int>(sizeof(decltype(mask)) * kBitsPerByte);
     int step = static_cast<int>(maskp_index * kBitsPerMask);
     for (int i = 0; i < kBitsPerMask; ++i) {
       if (mask & 1) {
@@ -219,6 +219,7 @@ NUMAAdapter::~NUMAAdapter() {
     return;
   }
   (void)dlclose(handle_);
+  handle_ = nullptr;
 }
 }  // namespace numa
 }  // namespace mindspore

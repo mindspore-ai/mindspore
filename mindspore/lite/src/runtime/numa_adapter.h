@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <vector>
+#include <memory>
 
 namespace mindspore {
 namespace numa {
@@ -49,11 +50,12 @@ struct MemoryInfo {
 
 class NUMAAdapter {
  public:
-  static NUMAAdapter *GetInstance() {
-    static NUMAAdapter instance;
-    return &instance;
+  static std::shared_ptr<NUMAAdapter> GetInstance() {
+    static std::shared_ptr<NUMAAdapter> instance = std::make_shared<NUMAAdapter>();
+    return instance;
   }
 
+  NUMAAdapter();
   ~NUMAAdapter();
   inline bool Available() const { return available_; }
   void Bind(int node_id);
@@ -65,8 +67,6 @@ class NUMAAdapter {
   MemoryInfo GetNodeSize(int node_id);
 
  private:
-  NUMAAdapter();
-
   void *handle_;  // numa.so handle
   bool available_ = false;
   NUMAInterface numa_interfaces_;
