@@ -32,7 +32,8 @@ abstract::ShapePtr HSigmoidInferShape(const PrimitivePtr &primitive, const std::
 
 TypePtr HSigmoidInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
+    MS_LOG(EXCEPTION) << "For '" << prim->name()
+                      << "', the input args userd for infer shape and type, can not be a nullptr.";
   }
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32};

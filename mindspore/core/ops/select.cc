@@ -59,9 +59,12 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std
     }
   }
   if (error_flag) {
-    MS_LOG(ERROR) << " cond shape :" << input_args[kSelectCondIndex]->BuildShape()->ToString();
-    MS_LOG(ERROR) << " x shape :" << input_args[kSelectXIndex]->BuildShape()->ToString();
-    MS_LOG(ERROR) << " y shape :" << input_args[kSelectYIndex]->BuildShape()->ToString();
+    MS_LOG(ERROR) << "For '" << primitive->name()
+                  << "', cond shape :" << input_args[kSelectCondIndex]->BuildShape()->ToString();
+    MS_LOG(ERROR) << "For '" << primitive->name()
+                  << "', x shape :" << input_args[kSelectXIndex]->BuildShape()->ToString();
+    MS_LOG(ERROR) << "For '" << primitive->name()
+                  << "', y shape :" << input_args[kSelectYIndex]->BuildShape()->ToString();
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of cond, x and y should be the same.";
   }
   return input_args[1]->BuildShape();
@@ -76,8 +79,9 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   (void)CheckAndConvertUtils::CheckSubClass("y_type", y_type, {kTensorType}, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("cond", cond_type, {kBool}, prim_name);
   if (*x_type != *y_type) {
-    MS_EXCEPTION(TypeError) << prim_name << "'s the x_type " << x_type->ToString() << " must be the same as y_type "
-                            << y_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', the x_type must equal to y_type, but got x_type: " << x_type->ToString()
+                            << " and y_type: " << y_type->ToString();
   }
   return x_type;
 }
@@ -91,8 +95,9 @@ AbstractBasePtr SelectInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return abstract::MakeAbstract(shape, type);
 }
 
-void SelectInnerInferValue(const tensor::TensorPtr &cond_tensor, const tensor::TensorPtr &x_tensor,
-                           const tensor::TensorPtr &y_tensor, const tensor::TensorPtr &result_tensor) {
+void SelectInnerInferValue(const PrimitivePtr &prim, const tensor::TensorPtr &cond_tensor,
+                           const tensor::TensorPtr &x_tensor, const tensor::TensorPtr &y_tensor,
+                           const tensor::TensorPtr &result_tensor) {
   bool *cond_data = reinterpret_cast<bool *>(cond_tensor->data_c());
   auto data_size = cond_tensor->DataSize();
   auto type_id = x_tensor->data_type();
@@ -158,7 +163,10 @@ void SelectInnerInferValue(const tensor::TensorPtr &cond_tensor, const tensor::T
       break;
     }
     default: {
-      MS_EXCEPTION(TypeError) << "Select not supported type " << result_tensor->type()->ToString();
+      MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                              << "', the supported data type is ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', "
+                                 "'uint16','uint32', 'uint64','float16', 'float32', 'float64'], but got "
+                              << result_tensor->type()->ToString();
     }
   }
 }
@@ -182,7 +190,7 @@ ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
   MS_EXCEPTION_IF_NULL(conds);
   auto type_id = x_tensor->data_type();
   auto result_tensor = std::make_shared<tensor::Tensor>(type_id, result_shape->shape());
-  SelectInnerInferValue(cond_tensor, x_tensor, y_tensor, result_tensor);
+  SelectInnerInferValue(prim, cond_tensor, x_tensor, y_tensor, result_tensor);
   return result_tensor;
 }
 }  // namespace

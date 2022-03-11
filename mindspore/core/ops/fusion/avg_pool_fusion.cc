@@ -92,7 +92,7 @@ abstract::ShapePtr AvgPoolFusionInferShape(const PrimitivePtr &primitive,
     out_shape = {batch, out_h, out_w, channel};
   }
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
-    MS_LOG(EXCEPTION) << "Kernel size is not valid.";
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', Kernel size should be positive, but got not valid.";
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }

@@ -28,11 +28,12 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t BNTrainingReduceGetAndCheckFormat(const ValuePtr &value) {
+int64_t BNTrainingReduceGetAndCheckFormat(const PrimitivePtr &primitive, const ValuePtr &value) {
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
   if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
-    MS_LOG(EXCEPTION) << "data format is invalid, only support NCHW, NHWC and NCDHW";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', data format is invalid, only support NCHW, NHWC and NCDHW.";
   }
   return data_format;
 }
@@ -47,7 +48,7 @@ abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive
   (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(shape.size()), kEqual, kInputDim, primitive->name());
   auto data_format_ptr = primitive->GetAttr("format");
   MS_EXCEPTION_IF_NULL(data_format_ptr);
-  int64_t data_format = BNTrainingReduceGetAndCheckFormat(data_format_ptr);
+  int64_t data_format = BNTrainingReduceGetAndCheckFormat(primitive, data_format_ptr);
   size_t c_axis = kInputIndex1;
   if (data_format == Format::NHWC) {
     c_axis = kInputIndex3;

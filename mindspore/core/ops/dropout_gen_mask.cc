@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 const int64_t kDropoutGenMaskMaskConvertLen = 128;
-ShapeVector CalDynamicOutputShape(const ValuePtrList value_list) {
+ShapeVector CalDynamicOutputShape(const PrimitivePtr &primitive, const ValuePtrList value_list) {
   int64_t count = 1;
   size_t x_rank = value_list.size();
   for (std::size_t i = 0; i < x_rank; ++i) {
@@ -47,7 +47,7 @@ ShapeVector CalDynamicOutputShape(const ValuePtrList value_list) {
     }
 
     if (std::numeric_limits<int64_t>::max() / count / value < 1) {
-      MS_LOG(EXCEPTION) << "integer multiply integer overflow";
+      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', integer multiply integer overflow.";
     }
     count = count * value;
   }
@@ -63,7 +63,7 @@ ShapeVector CalDynamicOutputShape(const ValuePtrList value_list) {
   return shape;
 }
 
-ShapeVector CalOutputShape(const AbstractBasePtrList shape_list) {
+ShapeVector CalOutputShape(const PrimitivePtr &primitive, const AbstractBasePtrList shape_list) {
   int64_t count = 1;
   size_t x_rank = shape_list.size();
   for (std::size_t i = 0; i < x_rank; ++i) {
@@ -73,16 +73,17 @@ ShapeVector CalOutputShape(const AbstractBasePtrList shape_list) {
     if (value_track->isa<Int64Imm>()) {
       value = GetValue<int64_t>(value_track);
     } else {
-      MS_LOG(EXCEPTION) << "DropoutGenMask input x_shape elements is not int64 or int32, but "
-                        << value_track->ToString() << ".";
+      MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                        << "', input x_shape elements should be int64 or int32, but got " << value_track->ToString()
+                        << ".";
     }
 
     if (value <= 0) {
-      MS_LOG(EXCEPTION) << "DropOutGenMask product of value should be > 0";
+      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', product of value should be > 0, but got " << value;
     }
 
     if (std::numeric_limits<int64_t>::max() / count / value < 1) {
-      MS_LOG(EXCEPTION) << "integer multiply integer overflow";
+      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', integer multiply integer overflow.";
     }
     count = count * value;
   }
@@ -115,7 +116,7 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
       std::vector<ValuePtr> value_elements;
       std::transform(mask_shape.begin(), mask_shape.end(), std::back_inserter(value_elements),
                      [](int64_t elem) { return MakeValue(elem); });
-      out_shape = CalDynamicOutputShape(value_elements);
+      out_shape = CalDynamicOutputShape(primitive, value_elements);
       return std::make_shared<abstract::Shape>(out_shape);
     }
     auto shape_abstract = dyn_cast<abstract::AbstractTensor>(shape_args);
@@ -140,10 +141,11 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     auto min_value = shape_min->isa<ValueList>() ? shape_min->cast<ValueListPtr>()->value()
                                                  : shape_min->cast<ValueTuplePtr>()->value();
     if (max_value.size() != shape_rank || min_value.size() != shape_rank) {
-      MS_LOG(EXCEPTION) << "The size of max_value or min_value is not equal to the shape rank.";
+      MS_LOG(EXCEPTION) << "For '" << op_name
+                        << "', The size of max_value or min_value is not equal to the shape rank.";
     }
-    ShapeVector out_min_shape = CalDynamicOutputShape(min_value);
-    ShapeVector out_max_shape = CalDynamicOutputShape(max_value);
+    ShapeVector out_min_shape = CalDynamicOutputShape(primitive, min_value);
+    ShapeVector out_max_shape = CalDynamicOutputShape(primitive, max_value);
     ShapeVector any_shape{abstract::Shape::SHP_ANY};
 
     return std::make_shared<abstract::Shape>(any_shape, out_min_shape, out_max_shape);
@@ -151,7 +153,7 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
 
   auto x_shape = dyn_cast<abstract::AbstractTuple>(shape_args);
   auto x_shape_data = x_shape->elements();
-  out_shape = CalOutputShape(x_shape_data);
+  out_shape = CalOutputShape(primitive, x_shape_data);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 TypePtr DropoutGenMaskInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

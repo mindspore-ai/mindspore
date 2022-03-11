@@ -41,7 +41,8 @@ abstract::ShapePtr CTCLossV2GradInferShape(const PrimitivePtr &primitive,
   auto log_probs_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto log_probs_shape = log_probs_shape_map[kShape];
   if (log_probs_shape.size() != kLenLogProbs) {
-    MS_LOG(EXCEPTION) << "Input log_probs's dims must be 3, but got :" << log_probs_shape.size();
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', Input log_probs's dims must be 3, but got :" << log_probs_shape.size();
   }
   int64_t T = log_probs_shape[0];
   int64_t N = log_probs_shape[1];

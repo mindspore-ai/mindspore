@@ -60,7 +60,9 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
     auto axis = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
     axis_val = GetValue<int64_t>(axis->BuildValue());
   } else {
-    MS_LOG(EXCEPTION) << "Invalid abstract type:" << input_args[kInputIndex2]->type_name();
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', the third input type should be tensor or scalar, but got invalid abstract type:"
+                      << input_args[kInputIndex2]->type_name();
   }
   auto params_shp = params->shape()->shape();
   auto indices_shp = indices->shape()->shape();

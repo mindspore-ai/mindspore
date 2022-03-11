@@ -50,7 +50,8 @@ abstract::ShapePtr SpaceToBatchInferShape(const PrimitivePtr &primitive,
 
 TypePtr SpaceToBatchInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
+    MS_LOG(EXCEPTION) << "For '" << prim->name()
+                      << ", the input args userd for infer shape and type, can not be a nullptr.";
   }
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());

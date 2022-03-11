@@ -43,7 +43,8 @@ abstract::ShapePtr ReLU6InferShape(const PrimitivePtr &primitive, const std::vec
 TypePtr ReLU6InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
+    MS_LOG(EXCEPTION) << "For '" << prim->name()
+                      << ", the input args userd for infer shape and type, can not be a nullptr.";
   }
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());

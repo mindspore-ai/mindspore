@@ -88,7 +88,8 @@ AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
           std::max(static_cast<int64_t>(std::ceil(static_cast<float>(limit - start) / delta)), static_cast<int64_t>(0));
       } break;
       default: {
-        MS_LOG(EXCEPTION) << "Range has unsupported dataType: " << dtype;
+        MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                          << "', the supported dataType is ['int32', 'float32'], but got " << dtype;
       }
     }
   } else {

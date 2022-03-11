@@ -55,7 +55,9 @@ AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
     auto float_value = GetValue<float>(x_value);
     SetTensorData(tensor->data_c(), float_value, mem_size);
   } else {
-    MS_LOG(ERROR) << " Fill not supported to flod the constant type " << input_args[kInputIndex2]->ToString();
+    MS_LOG(ERROR) << "For '" << prim_name
+                  << "', value's supported constant type is ['int', 'float', 'float64'], but got "
+                  << input_args[kInputIndex2]->ToString() << ".";
   }
   abs->set_value(tensor);
   return abs;

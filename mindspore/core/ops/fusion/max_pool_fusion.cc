@@ -89,7 +89,7 @@ abstract::ShapePtr MaxPoolFusionInferShape(const PrimitivePtr &primitive,
     out_shape = {batch, out_h, out_w, channel};
   }
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
-    MS_LOG(EXCEPTION) << "Kernel size is invalid.";
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', Kernel size must be positive, but got invalid.";
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
