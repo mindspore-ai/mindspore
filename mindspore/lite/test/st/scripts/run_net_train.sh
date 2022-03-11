@@ -556,22 +556,28 @@ echo $train_io_path
 datasets_path=${models_path}/../datasets/
 
 arm64_path=${release_path}/android_aarch64/npu
-file=$(ls ${arm64_path}/*android-aarch64.tar.gz)
+cd ${arm64_path} || exit 1
+file=$(ls ./*android-aarch64.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version_arm64=${file_name_array[2]}
+cd -
 
 arm32_path=${release_path}/android_aarch32/npu
-file=$(ls ${arm32_path}/*android-aarch32.tar.gz)
+cd ${arm32_path} || exit 1
+file=$(ls ./*android-aarch32.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version_arm32=${file_name_array[2]}
+cd -
 
 x86_path=${release_path}/centos_x86
-file=$(ls ${x86_path}/*linux-x64.tar.gz)
+cd ${x86_path} || exit 1
+file=$(ls ./*linux-x64.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
+cd -
 
 ms_models_path=${basepath}/ms_models_train
 

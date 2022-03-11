@@ -32,18 +32,17 @@ ops::PrimitiveC *TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_out_max_value(false);
   prim->set_top_k(1);
 
-  MS_CHECK_TRUE_MSG(tflite_op->inputs.size() >= kInputSize1, nullptr, "argmax input size should be greater than 1.");
-  const auto &axis_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[1]);
-  MS_CHECK_TRUE_MSG(axis_tensor != nullptr, nullptr, "axis_tensor is nullptr");
-  const auto &buf_data = tflite_model->buffers.at(axis_tensor->buffer);
-  MS_CHECK_TRUE_MSG(buf_data != nullptr, nullptr, "the buf data is nullptr");
-  auto data_ptr = buf_data->data.data();
-  if (data_ptr == nullptr) {
-    MS_LOG(ERROR) << "the data is null";
+  std::vector<int64_t> axes;
+  auto ret = GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, &axes);
+  if (ret != RET_OK && ret != RET_NO_CHANGE) {
+    MS_LOG(ERROR) << "get axes value failed.";
     return nullptr;
   }
-  prim->set_axis(*(static_cast<int64_t *>(static_cast<void *>(data_ptr))));
-
+  if (axes.size() < 1) {
+    MS_LOG(ERROR) << "invalid axes param";
+    return nullptr;
+  }
+  prim->set_axis(axes.at(0));
   return prim.release();
 }
 
