@@ -144,7 +144,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       if (used_node_list != nullptr && used_node_list->empty()) {
         used_node_list = GetNodeUserList(func_graph, cnode);
       }
-      for (size_t j = 0; j < used_node_list->size(); j++) {
+      for (size_t j = 0; j < used_node_list->size(); ++j) {
         auto used_node = used_node_list->at(j).first;
         if (!used_node->isa<CNode>()) {
           continue;
@@ -158,7 +158,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
 void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const AnfNodePtr &func_output) {
   MS_EXCEPTION_IF_NULL(cnode);
   size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
-  for (size_t i = 0; i < output_num; i++) {
+  for (size_t i = 0; i < output_num; ++i) {
     auto infer_type = AnfAlgo::GetOutputInferDataType(cnode, i);
     auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, i);
     const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, i);
@@ -168,26 +168,32 @@ void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &cn
       continue;
     }
     if (infer_type != device_type) {
-      auto input_num = AnfAlgo::GetInputTensorNum(func_output);
-      for (size_t j = 0; j < input_num; j++) {
-        auto input_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(func_output), j);
-        if (IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
-          MS_LOG(WARNING) << "Cast type conversion doesn't support nested MakeTuple!";
-          continue;
+      auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, cnode, i);
+      for (size_t j = 0; j < used_node_list->size(); ++j) {
+        auto used_node = used_node_list->at(j).first;
+        auto used_node_index = static_cast<size_t>(used_node_list->at(j).second - 1);
+        if (used_node != func_output) {
+          if (!AnfAlgo::CheckPrimitiveType(used_node, prim::kPrimTupleGetItem)) {
+            continue;
+          }
+          auto get_item_used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, used_node, 0);
+          auto result = std::find_if(get_item_used_node_list->begin(), get_item_used_node_list->end(),
+                                     [&used_node_index, &func_output](const auto &node_with_index) {
+                                       used_node_index = static_cast<size_t>(node_with_index.second - 1);
+                                       return node_with_index.first == func_output;
+                                     });
+          if (result == get_item_used_node_list->end()) {
+            continue;
+          }
         }
-        auto kernel_with_index = AnfAlgo::VisitKernel(func_output, j);
-        auto real_node = kernel_with_index.first;
-        if (real_node != cnode) {
-          continue;
-        }
-        auto cur_input = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(func_output), j);
+        auto cur_input = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(func_output), used_node_index);
         const abstract::BaseShapePtr origin_shape =
-          AnfAlgo::GetPrevNodeOutputDetailShape(utils::cast<CNodePtr>(func_output), j);
+          AnfAlgo::GetPrevNodeOutputDetailShape(utils::cast<CNodePtr>(func_output), used_node_index);
         auto cast =
           AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, device_type, infer_type, origin_shape, infer_type);
         MS_EXCEPTION_IF_NULL(cast);
         cast->set_scope(func_output->scope());
-        utils::cast<CNodePtr>(func_output)->set_input(j + 1, cast);
+        utils::cast<CNodePtr>(func_output)->set_input(used_node_index + 1, cast);
         auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(func_graph);
         if (kernel_graph != nullptr) {
           MS_LOG(INFO) << "Replace internal output from:" << cnode->DebugString() << " to:" << cast->DebugString()
