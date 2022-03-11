@@ -47,7 +47,7 @@ int InstanceNormCPUKernel::ReSize() {
 
 int InstanceNormCPUKernel::DoInstanceNorm(int task_id) const {
   int ret = 0;
-  if (in_tensors_[0]->format() == NC4HW4) {  // arm64 x86-avx x86-sse x86
+  if (input_pack_to_nc4hw4_) {  // arm64 x86-avx x86-sse x86
 #ifdef ENABLE_AVX
     ret = InstanceNormNC8HW8(tmp_src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
 #else
@@ -90,6 +90,7 @@ int InstanceNormCPUKernel::Run() {
     CHECK_NULL_RETURN(tmp_src_data_);
     PackNHWCToNC4HW4NotAlignedFp32(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
 #endif
+    input_pack_to_nc4hw4_ = true;
   } else if (in_tensors_[0]->format() == NHWC) {
     tmp_src_data_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(in_tensors_[0]->Size()));
     CHECK_NULL_RETURN(tmp_src_data_);
@@ -98,7 +99,7 @@ int InstanceNormCPUKernel::Run() {
 #else
     PackNHWCToNC4HW4NotAlignedFp32(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
 #endif
-    in_tensors_[0]->set_format(NC4HW4);
+    input_pack_to_nc4hw4_ = true;
   } else {
     tmp_src_data_ = src_data_;
   }

@@ -51,6 +51,7 @@ class InstanceNormFp16CPUKernel : public InnerKernel {
   float16_t *tmp_src_data_ = nullptr;
   float16_t *gamma_data_ = nullptr;
   float16_t *beta_data_ = nullptr;
+  bool input_pack_to_nc8hw8_ = false;
 };
 }  // namespace mindspore::kernel
 
