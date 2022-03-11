@@ -16,9 +16,17 @@
 
 package com.mindspore.config;
 
+import com.mindspore.lite.NativeLibrary;
+
 public class MSContext {
     static {
-        System.loadLibrary("mindspore-lite-jni");
+        try {
+            NativeLibrary.load();
+        } catch (Exception e) {
+            System.err.println("Failed to load MindSporLite native library.");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private long msContextPtr;
