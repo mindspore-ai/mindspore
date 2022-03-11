@@ -307,7 +307,7 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
   AnfNodePtr resolved_node = nullptr;
   bool success = ResolveObjectToNode(node->func_graph(), obj, &resolved_node);
   if (!success) {
-    MS_LOG(EXCEPTION) << "Parse Resolve covert failed NodeInfo.";
+    MS_LOG(EXCEPTION) << "Parse Resolve covert failed.";
   }
   if (IsValueNode<FuncGraph>(resolved_node)) {
     auto new_fg = GetValueNode<FuncGraphPtr>(resolved_node);
@@ -463,6 +463,40 @@ bool IsResolveNodeWithGetItem(const AnfNodePtr &node) {
     return symbol->symbol() == getitem_symbol;
   }
   return false;
+}
+
+bool IsGetItemCNode(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  constexpr size_t getitem_inputs_size = 3;
+  if (cnode->size() != getitem_inputs_size) {
+    return false;
+  }
+  constexpr auto prim_index = 0;
+  return IsResolveNodeWithGetItem(cnode->input(prim_index));
+}
+
+AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const MsClassObjectPtr &ms_class,
+                                  const std::string &attr, const AnfNodePtr &node) {
+  // Get attribute or method from ms_class obj.
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(DEBUG) << "Resolve ms_class obj (" << ms_class->name() << ") with attr " << attr << ".";
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
+
+  py::object cls_obj = ms_class->obj();
+  if (!py::hasattr(cls_obj, attr.c_str())) {
+    MS_LOG(EXCEPTION) << ms_class->name() << " has not attribute: " << attr << ".";
+  }
+
+  const std::string fn = PYTHON_MOD_GET_MS_CLASS_ATTR;
+  const std::string module = "mindspore._extends.parse.parser";
+  py::object attr_obj = python_adapter::GetPyFn(module, fn)(cls_obj, attr);
+  AnfNodePtr res_node = ResolveObjectAndAddToManager(manager, attr_obj, node);
+  TraceManager::ClearParseOrResolveDebugInfo();
+  return res_node;
 }
 
 namespace {

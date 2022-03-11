@@ -19,5 +19,6 @@ namespace mindspore {
 const char PYTHON_PRIMITIVE_FLAG[] = "__primitive_flag__";
 const char PYTHON_CELL_AS_LIST[] = "__cell_as_list__";
 const char PYTHON_DATACLASS_FIELDS[] = "__dataclass_fields__";
+const char PYTHON_MS_CLASS[] = "__ms_class__";
 const char PYTHON_CLASS_MEMBER_NAMESPACE[] = "__class_member_namespace__";
 }  // namespace mindspore

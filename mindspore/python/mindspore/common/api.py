@@ -20,6 +20,7 @@ import sys
 import os
 import time
 import ast
+import inspect
 import importlib
 from collections import OrderedDict
 from functools import wraps
@@ -439,11 +440,63 @@ def ms_function(fn=None, obj=None, input_signature=None):
         return wrap_mindspore(fn)
     return wrap_mindspore
 
+
+def ms_class(cls):
+    """
+    Class decorator for user-defined classes.
+
+    This allows MindSpore to identify user-defined classes and thus obtain their attributes and methods.
+
+    Args:
+        cls (Class): User-defined class.
+
+    Returns:
+        Class with __ms_class__ attribute.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.nn as nn
+        >>> from mindspore import ms_class
+        ...
+        >>> @ms_class
+        >>> class UserDefinedNet:
+        ...     def __init__(self):
+        ...         self.value = 10
+        ...
+        ...     def func(self, x):
+        ...         return 2 * x
+        ...
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.net = UserDefinedNet()
+        ...
+        ...     def construct(self, x):
+        ...         out = self.net.value + self.net.func(x)
+        ...         return out
+        ...
+        >>> net = Net()
+        >>> out = net(5)
+        >>> print(out)
+        20
+    """
+
+    # Check if cls is of type class.
+    if not inspect.isclass(cls):
+        raise TypeError(f'Decorator ms_class can only be used for class type, but got {cls}.')
+    logger.info(f'Found ms_class: {cls}.')
+    setattr(cls, '__ms_class__', True)
+    return cls
+
+
 def is_pynative_parallel():
     run_mode = context.get_context('mode')
     parallel_mode = context.get_auto_parallel_context('parallel_mode')
     return run_mode == context.PYNATIVE_MODE and parallel_mode in (
         context.ParallelMode.SEMI_AUTO_PARALLEL, context.ParallelMode.AUTO_PARALLEL)
+
 
 def _get_auto_split_param_names(parameter_layout_dict):
     auto_split_param_names = []
@@ -899,4 +952,4 @@ def ms_memory_recycle():
 _cell_graph_executor = _CellGraphExecutor()
 _pynative_executor = _PynativeExecutor()
 
-__all__ = ['ms_function', 'ms_memory_recycle']
+__all__ = ['ms_function', 'ms_memory_recycle', 'ms_class']

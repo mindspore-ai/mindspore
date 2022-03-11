@@ -131,6 +131,18 @@ class InterpretedObject final : public PyObjectWrapper {
 };
 using InterpretedObjectPtr = std::shared_ptr<InterpretedObject>;
 
+class MsClassObject final : public PyObjectWrapper {
+ public:
+  explicit MsClassObject(const py::object &obj, const std::string &name = "ms class")
+      : PyObjectWrapper(obj, "MsClassObject: \'" + name + "\'") {}
+  ~MsClassObject() override = default;
+  MS_DECLARE_PARENT(MsClassObject, PyObjectWrapper);
+  abstract::AbstractBasePtr ToAbstract() override {
+    return std::make_shared<abstract::AbstractScalar>(shared_from_base<MsClassObject>(), std::make_shared<External>());
+  }
+};
+using MsClassObjectPtr = std::shared_ptr<MsClassObject>;
+
 // ClassObject class wrappers dataclass
 class ClassObject final : public PyObjectWrapper {
  public:
@@ -168,8 +180,11 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
 AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
                                    const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
                                    const CNodePtr &operand_cnode);
-// Check if node is resolve node with getitem.
-bool IsResolveNodeWithGetItem(const AnfNodePtr &node);
+AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const MsClassObjectPtr &ms_class,
+                                  const std::string &attr, const AnfNodePtr &node);
+
+// Check if node is cnode with getitem.
+bool IsGetItemCNode(const AnfNodePtr &node);
 
 // Resolve one graph which normally is the root graph. FuncGraph shall be managed by res->manager().
 bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &res, bool use_profile = true);
