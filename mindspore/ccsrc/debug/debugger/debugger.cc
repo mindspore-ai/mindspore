@@ -1465,7 +1465,8 @@ void Debugger::LoadSingleParameterMindRT(const AnfNodePtr &node) {
     debug_services_->MoveTensorCurrentToPrev(tensor_name);
   }
   // Keep_prev is True for parameters.
-  bool ret = device_addr->LoadMemToHost(tensor_name, 0, format, int_shapes, type, 0, true, root_graph_id);
+  // force update for parameters.
+  bool ret = device_addr->LoadMemToHost(tensor_name, 0, format, int_shapes, type, 0, true, root_graph_id, true);
 
   if (!ret) {
     MS_LOG(ERROR) << "LoadMemToHost:"

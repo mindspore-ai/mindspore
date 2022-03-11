@@ -141,7 +141,7 @@ class DeviceAddress : public mindspore::DeviceSync {
 #ifdef ENABLE_DEBUGGER
   virtual bool LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                              const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
-                             uint32_t root_graph_id = 0) const {
+                             uint32_t root_graph_id = 0, bool force_update = 0) const {
     return true;
   }
 #endif

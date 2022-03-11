@@ -179,14 +179,14 @@ GPUDeviceAddress::~GPUDeviceAddress() { ClearDeviceMemory(); }
 #ifdef ENABLE_DEBUGGER
 bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                                      const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
-                                     uint32_t root_graph_id) const {
+                                     uint32_t root_graph_id, bool force_update) const {
   bool ret = false;
   if (size_ == 0) {
     return true;
   }
 
   MS_EXCEPTION_IF_NULL(Debugger::GetInstance());
-  if (Debugger::GetInstance()->TensorExistsInCurrent(tensor_name)) {
+  if (Debugger::GetInstance()->TensorExistsInCurrent(tensor_name) && !force_update) {
     MS_LOG(INFO) << tensor_name << " already loaded for this step so not loading it again.";
     return true;
   }

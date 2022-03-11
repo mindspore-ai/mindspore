@@ -637,11 +637,11 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
 #ifdef ENABLE_DEBUGGER
 bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &,
                                         const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
-                                        uint32_t root_graph_id) const {
+                                        uint32_t root_graph_id, bool force_update) const {
   bool ret = false;
   auto debugger = Debugger::GetInstance();
   MS_EXCEPTION_IF_NULL(debugger);
-  if (debugger->TensorExistsInCurrent(tensor_name)) {
+  if (debugger->TensorExistsInCurrent(tensor_name) && !force_update) {
     MS_LOG(INFO) << tensor_name << " already loaded for this step so not loading it again.";
     return true;
   }
