@@ -33,7 +33,7 @@ mindspore.COOTensor
 
         **参数：**
 
-        - **dytpe** (`mindspore.dtype`) - 指定数据类型。
+        - **dtype** (`mindspore.dtype`) - 指定数据类型。
 
         **返回：**
 

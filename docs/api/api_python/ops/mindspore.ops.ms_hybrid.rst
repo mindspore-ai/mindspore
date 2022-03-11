@@ -14,6 +14,6 @@ mindspore.ops.ms_hybrid
     - **reg_info** (tuple[str, dict]) - 算子注册信息。默认值：None。
     - **compile_attrs** (Dict) - 算子编译信息。默认值：None。
 
-    **输出：**
+    **返回：**
 
     Function，如果 `fn` 不是None，那么返回一个用Hybrid DSL写的可执行函数；如果 `fn` 是None，则返回一个装饰器，该装饰器只有 `fn` 一个参数。

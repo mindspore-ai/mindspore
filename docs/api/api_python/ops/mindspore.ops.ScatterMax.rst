@@ -28,7 +28,7 @@ mindspore.ops.ScatterMax
 
     Tensor，更新后的 `input_x`，shape和类型与 `input_x` 相同。
 
-    异常：
+    **异常：**
 
     - **TypeError** - `use_locking` 不是bool。
     - **TypeError** - `indices` 不是int32。

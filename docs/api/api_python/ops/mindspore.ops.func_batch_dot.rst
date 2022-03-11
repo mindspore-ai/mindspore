@@ -8,7 +8,7 @@ mindspore.ops.batch_dot
     .. math::
         output = x1[batch, :]* x2[batch, :]
 
-    **输入：**
+    **参数：**
 
     - **x1** (Tensor) - 第一个输入Tensor，数据类型为float32且 `x1` 的秩必须大于或等于2。
     - **x2** (Tensor) - 第二个输入Tensor，数据类型为float32。 `x2` 的数据类型应与 `x1` 相同，`x2` 的秩必须大于或等于2。
