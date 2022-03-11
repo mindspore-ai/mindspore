@@ -37,7 +37,8 @@ std::string GetOpPythonPath(const OperatorName &op_name);
 // Init python operator Instance
 ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name);
 
-AnfNodePtr CreatTypeInt(int64_t value);
+AnfNodePtr CreateTypeInt(int64_t nbits);
+AnfNodePtr CreateTypeFloat(int64_t nbits);
 AnfNodePtr CreatInt64Imm(int64_t value);
 AnfNodePtr CreateFP32Imm(float value);
 AnfNodePtr CreateInt32Tensor(int64_t value);

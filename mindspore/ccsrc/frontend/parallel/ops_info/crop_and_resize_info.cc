@@ -147,18 +147,19 @@ Status CropAndResizeInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(bias_)});
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
-  auto not_equal = gen_g.PushBack({gen_g.NewOpInst(NOT_EQUAL), minimum, sub});
+  auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), minimum, sub});
+  auto cast_equal = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreateTypeFloat(32)});
   auto crop_and_resize = gen_g.PushBack({gen_g.NewOpInst(CROP_AND_RESIZE), gen_g.virtual_input_node(),
                                          gen_g.virtual_input_node(), minimum, gen_g.virtual_input_node()});
-  auto expand_dims_0 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), not_equal, CreatInt64Imm(-1)});
+  auto expand_dims_0 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), cast_equal, CreatInt64Imm(-1)});
   auto expand_dims_1 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), expand_dims_0, CreatInt64Imm(-1)});
   auto expand_dims_2 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), expand_dims_1, CreatInt64Imm(-1)});
-  auto masked_fill = gen_g.PushBack({gen_g.NewOpInst(MASKED_FILL), crop_and_resize, expand_dims_2, CreateFP32Imm(0.0)});
+  auto mul = gen_g.PushBack({gen_g.NewOpInst(MUL), crop_and_resize, expand_dims_2});
 
   Attr attr_op = std::make_pair(OP, MakeValue(REDUCE_OP_SUM));
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_.name()));
   OperatorAttrs attrs = {attr_op, attr_group};
-  AnfNodePtr reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs), masked_fill});
+  AnfNodePtr reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs), mul});
 
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub, 3), std::make_pair(crop_and_resize, 1),
                                                              std::make_pair(crop_and_resize, 2),
@@ -220,8 +221,11 @@ std::vector<StrategyPtr> CropAndResizeInfo::GenerateOpStrategies(int64_t stage_i
 }
 
 Status CropAndResizeInfo::InferMirrorOps() {
-  if (OperatorInfo::InferMirrorOps() == FAILED) {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
     return FAILED;
+  }
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
   }
 
   OperatorVector op_for_crop_size;

@@ -91,8 +91,13 @@ AnfNodePtr CreateInt32Tensor(int64_t value) {
   return anf_node_ptr;
 }
 
-AnfNodePtr CreatTypeInt(int64_t value) {
-  ValuePtr value_ptr = MakeValue(std::make_shared<Int>(value));
+AnfNodePtr CreateTypeInt(int64_t nbits) {
+  ValuePtr value_ptr = MakeValue(std::make_shared<Int>(nbits));
+  return ValuePtrToAnfNodePtr(value_ptr);
+}
+
+AnfNodePtr CreateTypeFloat(int64_t nbits) {
+  ValuePtr value_ptr = MakeValue(std::make_shared<Float>(nbits));
   return ValuePtrToAnfNodePtr(value_ptr);
 }
 

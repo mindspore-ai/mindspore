@@ -158,10 +158,10 @@ Status ROIAlignInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
                                        std::make_pair(SHRINK_AXIS_MASK, MakeValue(2))};
   auto strided_slice = gen_g.PushBack(
     {gen_g.NewOpInst(STRIDEDSLICE, strided_slice_attrs), gen_g.virtual_input_node(), begin, end, strides});
-  auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
-  auto cast_bias = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(bias_), dtype});
+  auto dtype_rois = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
+  auto cast_bias = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(bias_), dtype_rois});
   auto cast_slice_max_index =
-    gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(features_slice_size_ - 1), dtype});
+    gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(features_slice_size_ - 1), dtype_rois});
   auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), strided_slice, cast_bias});
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, cast_slice_max_index});
@@ -173,19 +173,21 @@ Status ROIAlignInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     gen_g.PushBack({gen_g.NewOpInst(TENSOR_SCATTER_UPDATE), gen_g.virtual_input_node(), stack, minimum});
   auto roi_align =
     gen_g.PushBack({gen_g.NewOpInst(ROI_ALIGN, roi_align_attrs), gen_g.virtual_input_node(), tensor_scatter_update});
-  auto not_equal = gen_g.PushBack({gen_g.NewOpInst(NOT_EQUAL), strided_slice, minimum});
-  auto expand_dims_0 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), not_equal, CreatInt64Imm(-1)});
+  auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
+  auto dtype_features = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
+  auto cast_equal = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_features});
+  auto expand_dims_0 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), cast_equal, CreatInt64Imm(-1)});
   auto expand_dims_1 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), expand_dims_0, CreatInt64Imm(-1)});
   auto expand_dims_2 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), expand_dims_1, CreatInt64Imm(-1)});
-  auto masked_fill = gen_g.PushBack({gen_g.NewOpInst(MASKED_FILL), roi_align, expand_dims_2, CreateFP32Imm(0.0)});
+  auto mul = gen_g.PushBack({gen_g.NewOpInst(MUL), roi_align, expand_dims_2});
   Attr attr_reduce_op = std::make_pair(OP, MakeValue(REDUCE_OP_SUM));
   Attr attr_reduce_group = std::make_pair(GROUP, MakeValue(group_.name()));
   OperatorAttrs attrs_reduce = {attr_reduce_op, attr_reduce_group};
-  AnfNodePtr reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs_reduce), masked_fill});
+  AnfNodePtr reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs_reduce), mul});
 
   std::vector<std::pair<AnfNodePtr, int64_t>> inputs_nodes = {
-    std::make_pair(strided_slice, 2), std::make_pair(dtype, 2), std::make_pair(tensor_scatter_update, 2),
-    std::make_pair(roi_align, 1)};
+    std::make_pair(strided_slice, 2), std::make_pair(dtype_rois, 2), std::make_pair(tensor_scatter_update, 2),
+    std::make_pair(roi_align, 1), std::make_pair(dtype_features, 1)};
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(inputs_nodes, reduce_op));
   return SUCCESS;
