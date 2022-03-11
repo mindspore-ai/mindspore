@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback buildin python function type"""
 import numpy as np
-from mindspore import ms_function, context
+from mindspore import ms_function, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -100,3 +100,17 @@ def test_fallback_type_with_input_numpy_array():
         return x
     out = foo()
     assert str(out) == "<class 'numpy.ndarray'>"
+
+
+def test_fallback_type_with_input_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test type() in graph mode with tensor input.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = type(Tensor([1, 2, 3]))
+        return x
+    out = foo()
+    assert str(out) == "<class 'mindspore.common.tensor.Tensor'>"
