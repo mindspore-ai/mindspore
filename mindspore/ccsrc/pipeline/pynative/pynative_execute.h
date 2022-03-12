@@ -80,6 +80,7 @@ class TopCellInfo {
   void set_is_dynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
   bool hook_changed() const { return hook_changed_; }
   void set_hook_changed(bool hook_changed) { hook_changed_ = hook_changed; }
+  void set_sub_cell_hook_changed(const std::string &sub_cell) { sub_cell_hook_changed_.emplace(sub_cell); }
   bool vm_compiled() const { return vm_compiled_; }
   void set_vm_compiled(bool vm_compiled) { vm_compiled_ = vm_compiled; }
   bool ms_function_flag() const { return ms_function_flag_; }
@@ -104,6 +105,7 @@ class TopCellInfo {
   mindspore::HashSet<std::string> &sub_cell_list() { return sub_cell_list_; }
   std::set<std::string> &forward_op_output_id() { return forward_op_output_id_; }
   bool IsSubCell(const std::string &cell_id) const;
+  void CheckSubCellHookChanged();
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
   OpInfoWithTensorId &op_info_with_tensor_id() { return op_info_with_tensor_id_; }
   TensorIdWithTensorObject &tensor_id_with_tensor_object() { return tensor_id_with_tensor_object_; }
@@ -143,6 +145,9 @@ class TopCellInfo {
   std::string grad_operation_;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   mindspore::HashSet<std::string> sub_cell_list_;
+  // Record `register hook` or `remove hook` function has been called by sub cell
+  // The record range between the begin and end of top cell.
+  mindspore::HashSet<std::string> sub_cell_hook_changed_;
   // Record forward output tensor id
   std::set<std::string> forward_op_output_id_;
   OpInfoWithTensorId op_info_with_tensor_id_;

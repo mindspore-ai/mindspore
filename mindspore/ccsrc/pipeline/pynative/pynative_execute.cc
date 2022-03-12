@@ -950,6 +950,19 @@ bool TopCellInfo::IsSubCell(const std::string &cell_id) const {
   return false;
 }
 
+void TopCellInfo::CheckSubCellHookChanged() {
+  if (!hook_changed_) {
+    for (const auto &sub_cell : sub_cell_list_) {
+      const auto sub_cell_id = sub_cell.substr(0, sub_cell.find('_'));
+      if (sub_cell_hook_changed_.find(sub_cell_id) != sub_cell_hook_changed_.end()) {
+        hook_changed_ = true;
+        break;
+      }
+    }
+  }
+  sub_cell_hook_changed_.clear();
+}
+
 void TopCellInfo::ClearDeviceMemory() {
   MS_LOG(DEBUG) << "Clear device memory in value nodes of bprop graph, top cell: " << cell_id_;
   auto ms_context = MsContext::GetInstance();
@@ -1737,6 +1750,9 @@ void GradExecutor::SetHookChanged(const py::object &cell) {
         top_cell->set_hook_changed(true);
       }
     }
+  }
+  if (need_construct_graph() && top_cell_ != nullptr) {
+    top_cell_->set_sub_cell_hook_changed(cell_id);
   }
 }
 
@@ -2591,6 +2607,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     if (!cell_stack_.empty()) {
       (void)GetObjNode(out, GetId(out));
     }
+    top_cell()->CheckSubCellHookChanged();
     CheckNeedCompileGraph();
   }
 }
@@ -2965,7 +2982,7 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
     auto find_top_cell = GetTopCell(check_already_run_cell_id);
     if (find_top_cell != nullptr) {
       MS_LOG(DEBUG) << "Find already run top cell";
-      forward_run = find_top_cell->forward_already_run() && !find_top_cell->hook_changed();
+      forward_run = find_top_cell->forward_already_run();
       auto curr_top_cell = top_cell();
       set_top_cell(find_top_cell);
       bool input_args_changed =
