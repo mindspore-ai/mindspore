@@ -247,7 +247,8 @@ class Primitive(Primitive_):
             return super().get_attr_dict()[item]
         if item in self.attrs:
             return self.attrs[item]
-        raise AttributeError(item)
+        err_msg = "'{prim}' object has no attribute '{attr}'".format(prim=self.name, attr=item)
+        raise AttributeError(err_msg)
 
     def check_elim(self, *args):
         """

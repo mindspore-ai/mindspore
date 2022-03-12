@@ -20,11 +20,12 @@ import numpy as np
 from mindspore.common import Tensor
 from .. import signature as sig
 from ..operations.math_ops import _infer_shape_reduce
-from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive
+from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, _run_op
 from ... import context
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
+from ...common.parameter import Parameter
 from ...communication.management import GlobalComm
 
 
@@ -1763,6 +1764,14 @@ class CellBackwardHook(PrimitiveWithInfer):
         self.cell_id = cell_id
         self.add_prim_attr("cell_id", cell_id)
         self.init_attrs["cell_id"] = cell_id
+
+    def __call__(self, args):
+        if not isinstance(args, tuple):
+            args = (args,)
+        for arg in args:
+            if isinstance(arg, Parameter) and arg.has_init:
+                arg.init_data()
+        return _run_op(self, self.name, args)
 
     def infer_shape(self, *inputs_shape):
         if len(inputs_shape) == 1:
