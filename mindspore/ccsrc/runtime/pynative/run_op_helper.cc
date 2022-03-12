@@ -55,6 +55,25 @@ void UpdateInputTensorFromDevice(const std::vector<AnfNodePtr> &input_nodes,
   MS_LOG(DEBUG) << "End";
 }
 
+void UpdateParameterShapeFromInputTensor(const AnfNodePtr &input_node, const tensor::TensorPtr &input_tensor) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (input_tensor == nullptr || !input_node->isa<Parameter>()) {
+    return;
+  }
+
+  auto input_param = input_node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(input_param);
+  if (!input_param->has_dynamic_shape()) {
+    return;
+  }
+
+  auto shape = input_tensor->shape();
+  std::vector<size_t> shape_tmp;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), IntToSize);
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
+                                              input_node.get());
+}
+
 void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
                                   const std::vector<tensor::TensorPtr> &input_tensors,
                                   const device::DeviceContext *device_context) {
@@ -70,6 +89,8 @@ void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
     MS_EXCEPTION_IF_NULL(input_tensor);
     auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
     auto node_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
+
+    UpdateParameterShapeFromInputTensor(input_node, input_tensor);
 
     MS_EXCEPTION_IF_NULL(node_address);
     if (tensor_address == nullptr) {
@@ -333,35 +354,11 @@ kernel::AddressPtrList CreateKernelOutputAddress(const std::shared_ptr<OpRuntime
   return outputs;
 }
 
-void MallocForKernel(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(device_context);
-  CopyValueNodeDataToDevice(graph, device_context);
-
-  const auto &execution_order = graph->execution_order();
-  for (const auto &node : execution_order) {
-    MS_EXCEPTION_IF_NULL(node);
-    const auto &runtime_info = node->user_data<runtime::OpRuntimeInfo>();
-    MS_EXCEPTION_IF_NULL(runtime_info);
-
-    if (!MallocForKernelInput(runtime_info, device_context)) {
-      MS_LOG(EXCEPTION) << "Malloc for kernel input failed, node:" << node->fullname_with_scope();
-    }
-
-    if (!MallocForKernelWorkspace(runtime_info, device_context)) {
-      MS_LOG(EXCEPTION) << "Malloc for kernel workspace failed, node:" << node->fullname_with_scope();
-    }
-
-    if (!MallocForKernelOutput(runtime_info, node, device_context)) {
-      MS_LOG(EXCEPTION) << "Malloc for kernel output failed, node:" << node->fullname_with_scope();
-    }
-  }
-}
-
 // Host to Device or Device to Host
 void CopyDataToDevice(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
                       const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
+  CopyValueNodeDataToDevice(graph, device_context);
   CopyParameterDataToDevice(graph->input_nodes(), input_tensors, device_context);
 }
 
@@ -377,14 +374,27 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     MS_EXCEPTION_IF_NULL(node);
     auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
     MS_EXCEPTION_IF_NULL(runtime_info);
+
+    if (!MallocForKernelInput(runtime_info, device_context)) {
+      MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
+    }
     auto inputs = CreateKernelInputAddress(runtime_info);
 
     if (is_dynamic_shape) {
       device_context->UpdateDynamicShape(node);
     }
 
+    if (!MallocForKernelWorkspace(runtime_info, device_context)) {
+      MS_LOG(EXCEPTION) << "Malloc for kernel workspace failed, Memory isn't enough, node:"
+                        << node->fullname_with_scope();
+    }
     auto workspaces = CreateKernelWorkspaceAddress(runtime_info);
+
+    if (!MallocForKernelOutput(runtime_info, node, device_context)) {
+      MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
+    }
     auto outputs = CreateKernelOutputAddress(runtime_info);
+
     device_context->LaunchKernel(node, inputs, workspaces, outputs, is_dynamic_shape);
 
     if (is_dynamic_shape) {
@@ -433,7 +443,6 @@ void UpdateDeviceAddress(const KernelGraphPtr &graph, const std::vector<tensor::
 void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
                       const device::DeviceContext *device_context, bool is_dynamic_shape) {
   WaitCommunicationFinish(input_tensors);
-  MallocForKernel(graph, device_context);
   CopyDataToDevice(graph, input_tensors, device_context);
   LaunchKernels(graph, device_context, is_dynamic_shape);
   ReleaseKernelResource(graph);
