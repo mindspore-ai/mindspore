@@ -47,12 +47,12 @@ def unique(x):
 
     Returns:
         Tuple, containing Tensor objects `(y, idx), `y` is a tensor with the
-        same type as `input_x`, and contains the unique elements in `x`, sorted in
-        ascending order. `idx` is a tensor containing indices of elements in
-        the input corresponding to the output tensor, have the same shape with `input_x`.
+        same type as `x`, and contains the unique elements in `x`.
+        `idx` is a tensor containing indices of elements in
+        the input corresponding to the output tensor, have the same shape with `x`.
 
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
+    Raises:x
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -62,8 +62,8 @@ def unique(x):
         >>> import numpy as np
         >>> from mindspore import Tensor, nn
         >>> from mindspore import ops
-        >>> input_x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
-        >>> output = ops.unique(input_x)
+        >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
+        >>> output = ops.unique(x)
         >>> print(output)
         (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 1]))
         >>> y = output[0]
@@ -72,21 +72,6 @@ def unique(x):
         >>> idx = output[1]
         >>> print(idx)
         [0 1 2 1]
-        >>> # As can be seen from the above, y and idx shape
-        >>> # note that for GPU, this operator must be wrapped inside a model, and executed in graph mode.
-        >>> class UniqueNet(nn.Cell):
-        ...     def __init__(self):
-        ...         super(UniqueNet, self).__init__()
-        ...
-        ...     def construct(self, x):
-        ...         output, indices = ops.unique(x)
-        ...         return output, indices
-        ...
-        >>> input_x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
-        >>> net = UniqueNet()
-        >>> output = net(input_x)
-        >>> print(output)
-        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 1]))
     """
 
     unique_op = P.Unique()

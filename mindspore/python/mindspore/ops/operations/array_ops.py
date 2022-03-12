@@ -818,8 +818,8 @@ class Unique(Primitive):
 
     Outputs:
         Tuple, containing Tensor objects (`y`, `idx`), `y` is a tensor with the
-        same type as `input_x`, and contains the unique elements in `x`, sorted in
-        ascending order. `idx` is a tensor containing indices of elements in
+        same type as `input_x`, and contains the unique elements in `x`.
+        `idx` is a tensor containing indices of elements in
         the input corresponding to the output tensor.
 
     Raises:
