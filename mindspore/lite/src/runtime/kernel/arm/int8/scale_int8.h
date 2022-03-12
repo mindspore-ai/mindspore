@@ -50,7 +50,6 @@ class ScaleInt8CPUKernel : public InnerKernel {
   const lite::InnerContext *ctx_ = nullptr;
   ScaleParameter *scale_param_ = nullptr;
   ArithmeticParameter *tile_para = nullptr;
-  std::vector<int> second_in_shape_;
   int thread_count_ = 1;
   int64_t elements_num_ = 0;
   int64_t count_unit_ = 0;
