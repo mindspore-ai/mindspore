@@ -43,6 +43,8 @@ class CipherInit {
             size_t cipher_get_clientlist_cnt, size_t cipher_push_list_sign_cnt, size_t cipher_get_list_sign_cnt,
             size_t cipher_clients_threshold_for_reconstruct);
 
+  bool ReInitForScaling();
+
   // Get public params. which is given to start fl job thread.
   CipherPublicPara *GetPublicParams() { return &publicparam_; }
 
@@ -72,6 +74,8 @@ class CipherInit {
 
   // Check whether the parameters are valid.
   bool Check_Parames();
+
+  std::string new_prime_;
 };
 }  // namespace armour
 }  // namespace mindspore
