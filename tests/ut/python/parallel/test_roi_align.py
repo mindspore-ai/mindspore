@@ -104,7 +104,7 @@ def test_roi_align_layout():
 
     validator = ParallelValidator(net, phase)
     # check layout
-    features_expect_layout = ([4, 2], [1, -1, -1, -1], [8, 3, 256, 256], 0, True, '')
+    features_expect_layout = ([8], [0, -1, -1, -1], [4, 3, 256, 256], 0, True, '')
     assert validator.check_parameter_layout('features', features_expect_layout)
 
     # check attrs
@@ -112,14 +112,14 @@ def test_roi_align_layout():
     assert validator.check_node_attrs('ROIAlign-0', roi_expect_attrs)
 
     # check inputs
-    roi_expect_inputs = ['features', 'TensorScatterUpdate-0']
+    roi_expect_inputs = ['Reshape-1', 'TensorScatterUpdate-0']
     assert validator.check_node_inputs('ROIAlign-0', roi_expect_inputs)
 
     # check sub_graph
     sub_graph = {
-        'TensorScatterUpdate-0': ['rois', 'Stack-0', 'Minimum-0'],
+        'TensorScatterUpdate-0': ['Reshape-3', 'Stack-0', 'Minimum-0'],
         'Equal-0': ['Sub-0', 'Minimum-0'],
-        'ROIAlign-0': ['features', 'TensorScatterUpdate-0'],
+        'ROIAlign-0': ['Reshape-1', 'TensorScatterUpdate-0'],
         'Mul-0': ['ROIAlign-0', 'ExpandDims-2'],
         'AllReduce-0': ['Mul-0']
     }

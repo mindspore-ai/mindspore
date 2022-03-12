@@ -79,7 +79,7 @@ def test_two_bn():
 
     _cell_graph_executor.compile(net, x, phase='train')
     strategies = _cell_graph_executor._get_shard_strategy(net)
-    assert len(strategies) == 4
+    assert len(strategies) == 5
 
     for (k, v) in strategies.items():
         if re.search('BatchNorm-op', k) is not None:

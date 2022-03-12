@@ -82,6 +82,7 @@ def test_two_matmul_transpose():
     print(strategies)
     expected_strategies = {'Default/network-Net/Transpose-op0': [[1, 16]],
                            'Default/network-Net/Transpose-op1': [[16, 1]],
-                           'Default/network-Net/MatMul-op3': [[16, 1], [1, 1]],
-                           'Default/network-Net/MatMul-op2': [[16, 1], [1, 1]]}
+                           'Default/network-Net/MatMul-op4': [[16, 1], [1, 1]],
+                           'Default/network-Net/MatMul-op2': [[16, 1], [1, 1]],
+                           'Default/_VirtualDataset-op3': [[16, 1], [16, 1], [16, 1]]}
     assert strategies == expected_strategies

@@ -81,9 +81,11 @@ def test_auto_parallel_arithmetic():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
-            assert v == [[2, 4], [2, 4]]
+            assert v == [[8, 1], [8, 1]]
         elif re.search('MatMul-op', k) is not None:
-            assert v == [[2, 1], [1, 4]]
+            assert v == [[8, 1], [1, 1]]
+        elif re.search('_VirtualDataset-op', k) is not None:
+            assert v == [[8, 1], [8, 1], [8, 1]]
 
 
 def test_auto_parallel_arithmetic_broadcast_both():
@@ -98,6 +100,7 @@ def test_auto_parallel_arithmetic_broadcast_both():
             out = self.floordiv(out, b)
             return out
 
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = NetWithLoss(Net())
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
@@ -139,9 +142,11 @@ def test_auto_parallel_arithmetic_broadcast_right():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
-            assert v == [[4, 2], [2]]
+            assert v == [[8, 1], [1]]
         elif re.search('MatMul-op', k) is not None:
-            assert v == [[4, 1], [1, 2]]
+            assert v == [[8, 1], [1, 1]]
+        elif re.search('_VirtualDataset-op', k) is not None:
+            assert v == [[8, 1], [8, 1], [8]]
 
 
 def test_auto_parallel_arithmetic_broadcast_left():
@@ -168,6 +173,8 @@ def test_auto_parallel_arithmetic_broadcast_left():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
-            assert v == [[4, 2], [1, 4, 2]]
+            assert v == [[1, 1], [8, 1, 1]]
         elif re.search('MatMul-op', k) is not None:
-            assert v == [[4, 1], [1, 2]]
+            assert v == [[8, 1], [1, 1]]
+        elif re.search('_VirtualDataset-op', k) is not None:
+            assert v == [[8, 1], [8, 1], [8, 1, 1]]
