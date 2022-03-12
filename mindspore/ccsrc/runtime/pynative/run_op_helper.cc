@@ -75,6 +75,7 @@ void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
     if (tensor_address == nullptr) {
       input_tensor->set_device_address(node_address);
       input_tensor->set_sync_status(kNeedSyncHostToDeviceImmediately);
+      node_address->set_from_persistent_mem(input_tensor->is_parameter());
     }
 
     // The DeviceType and format of DeviceAddress is always the same after UpdateInputTensor
@@ -392,6 +393,29 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
   }
   MS_LOG(DEBUG) << "End";
 }
+
+void WaitCommunicationFinish(const std::vector<tensor::TensorPtr> &input_tensors) {
+  for (auto &input_tensor : input_tensors) {
+    MS_EXCEPTION_IF_NULL(input_tensor);
+    if (input_tensor->NeedWaitDevice()) {
+      input_tensor->WaitDevice();
+    }
+  }
+}
+
+void ReleaseKernelResource(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &kernels = graph->execution_order();
+  for (const auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (kOpCacheBlackList.find(common::AnfAlgo::GetCNodeName(kernel)) != kOpCacheBlackList.end()) {
+      auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+      if (kernel_mod) {
+        kernel_mod->ReleaseResource();
+      }
+    }
+  }
+}
 }  // namespace
 
 // Determine the address of the graph and do not change the address in subsequent executions
@@ -408,8 +432,10 @@ void UpdateDeviceAddress(const KernelGraphPtr &graph, const std::vector<tensor::
 
 void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
                       const device::DeviceContext *device_context, bool is_dynamic_shape) {
+  WaitCommunicationFinish(input_tensors);
   MallocForKernel(graph, device_context);
   CopyDataToDevice(graph, input_tensors, device_context);
   LaunchKernels(graph, device_context, is_dynamic_shape);
+  ReleaseKernelResource(graph);
 }
 }  // namespace mindspore::runtime
