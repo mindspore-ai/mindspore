@@ -180,6 +180,8 @@ class MindRTBackend : public Backend {
 
   void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs);
 
+  void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
+
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
   // the corresponding device_context.

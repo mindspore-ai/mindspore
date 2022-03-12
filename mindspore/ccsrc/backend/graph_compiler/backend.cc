@@ -1314,6 +1314,10 @@ void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph, const OpRunInf
     }
   }
 
+  ReleaseForwardOutput(input_tensors);
+}
+
+void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors) {
   // Update forward op output ref counts, release it
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1377,6 +1381,7 @@ void MindRTBackend::LazyExecuteTaskCallback() {
       auto tensor_without_value_mask = GetTensorWithoutValueMask(context->op_run_info());
       runtime::RunSingleOpGraph(context->graph(), tensor_without_value_mask, context->device_context(),
                                 context->op_run_info().is_dynamic_shape);
+      ReleaseForwardOutput(context->op_run_info().input_tensors);
       ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info().is_gradient_out);
       ClearInputDeviceAddress(context->graph(), context->device_context());
       op_lazy_builder.PopOpRunTask();
@@ -1435,6 +1440,7 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
 
     runtime::UpdateDeviceAddress(graph, tensor_without_value_mask, device_context);
     runtime::RunSingleOpGraph(graph, tensor_without_value_mask, device_context, op_run_info->is_dynamic_shape);
+    ReleaseForwardOutput(op_run_info->input_tensors);
     UpdateOutput(output_nodes, outputs);
     ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
     ClearInputDeviceAddress(graph, device_context);
