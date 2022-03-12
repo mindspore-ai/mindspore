@@ -1607,8 +1607,11 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
         FetchKernelTransformType(from_kernel_with_output_idx.first, graph, graph_compiler_info.origin_parameters_order_,
                                  graph_compiler_info.strategy_);
       auto from_actor = FetchActor(kernel_type, graph_compiler_info.name_, from_kernel_with_output_idx.first, graph);
-      AddDataArrow(from_actor, custom_actor.get(), from_kernel_with_output_idx.first,
-                   from_kernel_with_output_idx.second, *iter);
+      // The input_node maybe a data(Tensor) and the from_actor is nullptr
+      if (from_actor != nullptr) {
+        AddDataArrow(from_actor, custom_actor.get(), from_kernel_with_output_idx.first,
+                     from_kernel_with_output_idx.second, *iter);
+      }
     }
 
     AddControlArrow(actor_set->data_prepare_actor_.get(), custom_actor.get());
