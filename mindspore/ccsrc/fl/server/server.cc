@@ -20,6 +20,7 @@
 #include <csignal>
 #ifdef ENABLE_ARMOUR
 #include "fl/armour/secure_protocol/secret_sharing.h"
+#include "fl/armour/cipher/cipher_init.h"
 #endif
 #include "fl/server/round.h"
 #include "fl/server/model_store.h"
@@ -537,6 +538,11 @@ void Server::ProcessAfterScalingOut() {
   if (!Executor::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "Executor reinitializing failed.";
   }
+#ifdef ENABLE_ARMOUR
+  if (!armour::CipherInit::GetInstance().ReInitForScaling()) {
+    MS_LOG(WARNING) << "CipherInit reinitializing failed.";
+  }
+#endif
   std::this_thread::sleep_for(std::chrono::milliseconds(kServerSleepTimeForNetworking));
   safemode_ = false;
 }
@@ -565,6 +571,11 @@ void Server::ProcessAfterScalingIn() {
   if (!Executor::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "Executor reinitializing failed.";
   }
+#ifdef ENABLE_ARMOUR
+  if (!armour::CipherInit::GetInstance().ReInitForScaling()) {
+    MS_LOG(WARNING) << "CipherInit reinitializing failed.";
+  }
+#endif
   std::this_thread::sleep_for(std::chrono::milliseconds(kServerSleepTimeForNetworking));
   safemode_ = false;
 }
