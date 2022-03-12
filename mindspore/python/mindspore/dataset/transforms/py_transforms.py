@@ -260,7 +260,7 @@ class RandomApply(PyTensorOperation):
         ValueError: If `transforms` is empty.
         TypeError: If elements of `transforms` are neither Python callable objects nor data
             processing operations in py_transforms.
-        TypeError: If `prob` is not of type bool.
+        TypeError: If `prob` is not of type float.
         ValueError: If `prob` is not in range [0.0, 1.0].
 
     Supported Platforms:

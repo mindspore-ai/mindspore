@@ -80,18 +80,37 @@ class MS_API Slice {
  public:
   /// \brief Constructor, with start, stop and step default to 0.
   Slice() : start_(0), stop_(0), step_(0) {}
+
   /// \brief Constructor.
   /// \param[in] start Starting integer specifying where to start the slicing.
   /// \param[in] stop Ending integer specifying where to stop the slicing.
   /// \param[in] step An integer specifying the step of the slicing.
+  /// \par Example
+  /// \code
+  ///     /* Slice dimension from 2 to 10 with step 2. */
+  ///     Slice(0, 10, 2);
+  /// \endcode
   Slice(dsize_t start, dsize_t stop, dsize_t step) : start_(start), stop_(stop), step_(step) {}
+
   /// \brief Constructor, with step=1
   /// \param[in] start Starting integer specifying where to start the slicing.
   /// \param[in] stop Ending integer specifying where to stop the slicing.
+  /// \par Example
+  /// \code
+  ///     /* Slice dimension from 5 to 10 with step 1. */
+  ///     Slice(5, 10);
+  /// \endcode
   Slice(dsize_t start, dsize_t stop) : start_(start), stop_(stop), step_(1) {}
+
   /// \brief Constructor, with start=0 and step=1
   /// \param[in] stop Ending integer specifying where to stop the slicing.
+  /// \par Example
+  /// \code
+  ///     /* Slice dimension from 0 to 5 with step 1. */
+  ///     Slice(5);
+  /// \endcode
   explicit Slice(dsize_t stop) : start_(0), stop_(stop), step_(1) {}
+
   Slice(Slice const &slice) = default;
 
   ~Slice() = default;
@@ -106,12 +125,29 @@ class MS_API Slice {
 class MS_API SliceOption {
  public:
   /// \param[in] all Slice the whole dimension
+  /// \par Example
+  /// \code
+  ///     /* Slice all the data. */
+  ///     SliceOption slice_option = SliceOption(True);
+  /// \endcode
   explicit SliceOption(bool all) : all_(all) {}
 
   /// \param[in] indices Slice these indices along the dimension. Negative indices are supported.
+  /// \par Example
+  /// \code
+  ///     /* Slice the given dimensions. */
+  ///     std::vector<int64_t> indices = {0, 3, 6, 7};
+  ///     SliceOption slice_option = SliceOption(indices);
+  /// \endcode
   explicit SliceOption(const std::vector<dsize_t> &indices) : indices_(indices) {}
 
   /// \param[in] slice Slice the generated indices from the slice object along the dimension.
+  /// \par Example
+  /// \code
+  ///     /* Slice dimension from 2 to 10 with step 2. */
+  ///     SliceOption slice_option = SliceOption(Slice(0, 10, 2));
+  ///     transforms::Slice slice_op = transforms::Slice({slice_option});
+  /// \endcode
   explicit SliceOption(const Slice &slice) : slice_(slice) {}
 
   SliceOption(SliceOption const &slice) = default;

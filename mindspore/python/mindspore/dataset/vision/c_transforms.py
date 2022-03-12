@@ -210,8 +210,8 @@ class AutoAugment(ImageTensorOperation):
             (default=0).
 
     Raises:
-        TypeError: If `policy` is of type AutoAugmentPolicy.
-        TypeError: If `interpolation` not of type Inter.
+        TypeError: If `policy` is not of type AutoAugmentPolicy.
+        TypeError: If `interpolation` is not of type Inter.
         TypeError: If `fill_value` is not an integer or a tuple of length 3.
         RuntimeError: If given tensor shape is not <H, W, C>.
 

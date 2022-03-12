@@ -137,6 +137,7 @@ int32_t MS_API get_callback_timeout();
 /// \return The config file is loaded successfully or not.
 /// \note The reason for using this API is that std::string will be constrained by the
 ///    compiler option '_GLIBCXX_USE_CXX11_ABI' while char is free of this restriction.
+///    Check API `mindspore::dataset::config::load(const std::string &file)` and find more usage.
 bool MS_API load(const std::vector<char> &file);
 
 /// \brief A function to load the configuration from a file.
