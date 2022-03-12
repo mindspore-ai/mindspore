@@ -31,7 +31,8 @@ using ModelPoolContex = std::vector<std::shared_ptr<Context>>;
 
 class ModelPool {
  public:
-  static ModelPool *GetInstance();
+  ModelPool() = default;
+
   ~ModelPool();
 
   Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
@@ -44,8 +45,6 @@ class ModelPool {
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
  private:
-  ModelPool() = default;
-
   ModelPoolContex CreateModelContext(const std::shared_ptr<RunnerConfig> &runner_config);
   std::shared_ptr<Context> InitContext(const std::shared_ptr<RunnerConfig> &runner_config);
 
@@ -67,6 +66,7 @@ class ModelPool {
   void GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num);
 
   std::vector<std::thread> model_worker_vec_;
+  std::vector<std::shared_ptr<ModelWorker>> model_workers_;
   std::vector<MSTensor> model_inputs_;
   std::vector<MSTensor> model_outputs_;
   char *graph_buf_ = nullptr;
@@ -76,6 +76,8 @@ class ModelPool {
   int numa_node_num_ = 1;
   int used_numa_node_num_ = 0;
   bool use_numa_bind_mode_ = false;
+  bool use_gpu_ = false;
+  std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_

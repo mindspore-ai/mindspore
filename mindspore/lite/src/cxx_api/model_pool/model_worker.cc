@@ -18,9 +18,9 @@
 #include "src/common/utils.h"
 #include "src/common/common.h"
 namespace mindspore {
-void ModelWorker::Run(int node_id) {
-  while (!PredictTaskQueue::GetInstance()->IsPredictTaskDone()) {
-    auto task = PredictTaskQueue::GetInstance()->GetPredictTask(node_id);
+void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue) {
+  while (!predict_task_queue->IsPredictTaskDone()) {
+    auto task = predict_task_queue->GetPredictTask(node_id);
     if (task == nullptr) {
       break;
     }
@@ -32,7 +32,7 @@ void ModelWorker::Run(int node_id) {
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model predict failed.";
       task->ready = true;
-      PredictTaskQueue::GetInstance()->ActiveTask();
+      predict_task_queue->ActiveTask();
       continue;
     }
     if (need_copy_output_) {
@@ -45,7 +45,7 @@ void ModelWorker::Run(int node_id) {
         if (copy_tensor == nullptr) {
           MS_LOG(ERROR) << "model thread copy output tensor failed.";
           task->ready = true;
-          PredictTaskQueue::GetInstance()->ActiveTask();
+          predict_task_queue->ActiveTask();
           continue;
         }
         new_outputs.push_back(*copy_tensor);
@@ -55,7 +55,7 @@ void ModelWorker::Run(int node_id) {
       outputs->insert(outputs->end(), new_outputs.begin(), new_outputs.end());
     }
     task->ready = true;
-    PredictTaskQueue::GetInstance()->ActiveTask();
+    predict_task_queue->ActiveTask();
   }
 }
 

@@ -41,7 +41,7 @@ class ModelWorker {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
-  void Run(int node_id);
+  void Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue);
 
  private:
   std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,

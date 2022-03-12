@@ -16,7 +16,7 @@
 
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
-PredictTaskQueue::~PredictTaskQueue() {
+void PredictTaskQueue::SetPredictTaskDone() {
   predict_task_done_ = true;
   task_push_cond_.notify_all();
 }
@@ -35,11 +35,6 @@ void PredictTaskQueue::WaitUntilPredictActive(const std::shared_ptr<PredictTask>
 }
 
 void PredictTaskQueue::ActiveTask() { task_pop_cond_.notify_all(); }
-
-PredictTaskQueue *PredictTaskQueue::GetInstance() {
-  static PredictTaskQueue instance;
-  return &instance;
-}
 
 void PredictTaskQueue::PushPredictTask(std::shared_ptr<PredictTask> task, int node_id) {
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
