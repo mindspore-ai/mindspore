@@ -197,6 +197,7 @@ constexpr auto kGatherDGradV2 = "GatherDGradV2";
 constexpr auto kSparseTensorToCSRSparseMatrix = "SparseTensorToCSRSparseMatrix";
 constexpr auto kSparseSplit = "SparseSplit";
 constexpr auto kReverseV2 = "ReverseV2";
+constexpr auto kSparseSparseMinimum = "SparseSparseMinimum";
 
 // NN
 constexpr auto kApplyAddSign = "ApplyAddSign";
@@ -572,6 +573,7 @@ GVAR_DEF(PrimitivePtr, kPrimSegmentSum, std::make_shared<Primitive>(kSegmentSum)
 GVAR_DEF(PrimitivePtr, kPrimAffineGrid, std::make_shared<Primitive>(kAffineGrid));
 GVAR_DEF(PrimitivePtr, kPrimSegmentMean, std::make_shared<Primitive>(kSegmentMean));
 GVAR_DEF(PrimitivePtr, kPrimSegmentProd, std::make_shared<Primitive>(kSegmentProd));
+GVAR_DEF(PrimitivePtr, kPrimSparseSparseMinimum, std::make_shared<Primitive>(kSparseSparseMinimum));
 
 // image
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));
