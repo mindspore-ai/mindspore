@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,9 @@ class StridedSliceCPUKernel : public InnerKernel {
   int NormalRun();
   int FastRun();
   int FastRunImpl(int task_id);
+#ifdef SERVER_INFERENCE
+  int UpdateThreadNumPass();
+#endif
 
  private:
   StridedSliceParameter *param_ = nullptr;

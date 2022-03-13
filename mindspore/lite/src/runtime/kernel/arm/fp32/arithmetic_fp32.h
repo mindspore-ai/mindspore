@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_FP32_H_
 
 #include <vector>
+#include <map>
+#include <memory>
+#include <utility>
 #include "src/inner_kernel.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 
@@ -98,6 +101,9 @@ class ArithmeticCPUKernel : public InnerKernel {
   int BiasCalc(int task_id);
   void FreeConstTileBuff();
   bool IsBiasCalc() const;
+#ifdef SERVER_INFERENCE
+  int UpdateThreadNumPass();
+#endif
   ArithmeticRun arithmetic_run_ = nullptr;
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;
   ArithmeticIntRun arithmetic_run_int_ = nullptr;

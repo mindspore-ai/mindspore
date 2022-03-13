@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,25 @@ static inline int GetOuterSize(const std::vector<int> &in_shape, int axis) {
   return outer_size;
 }
 
+#ifdef SERVER_INFERENCE
+int StackBaseCPUKernel::UpdateThreadNumPass() {
+  if (thread_cost_context_ == nullptr) {
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
+    CHECK_NULL_RETURN(thread_cost_context_);
+
+    thread_cost_context_->per_unit_load_num_ = copy_size_;
+    thread_cost_context_->per_unit_store_num_ = copy_size_;
+    thread_cost_context_->per_unit_compute_cost_ = 9.286;  // 9.286 : stack per unit compute cost, dataNum about 12k
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+  }
+  return RET_OK;
+}
+#endif
+
 int StackBaseCPUKernel::ReSize() {
   CHECK_NULL_RETURN(in_tensors_.front());
   auto input0_shape = in_tensors_.front()->shape();
@@ -68,6 +87,16 @@ int StackBaseCPUKernel::ReSize() {
     copy_size_ = GetCopyNum(input0_shape, axis_, input0_shape.size()) * data_type_size_;
     outer_size_ = GetOuterSize(input0_shape, axis_);
   }
+
+#ifdef SERVER_INFERENCE
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
+  }
+  thread_num_ = MSMIN(outer_size_, thread_num_);
+#else
+  thread_num_ = MSMIN(UP_DIV(outer_size_, kStackStep), op_parameter_->thread_num_);
+#endif
+
   return RET_OK;
 }
 
@@ -87,8 +116,8 @@ int StackBaseCPUKernel::StackExecute(int task_id) {
   if (output_data == nullptr) {
     return RET_NULL_PTR;
   }
-  MS_CHECK_TRUE_RET(num_threads_ != 0, RET_ERROR);
-  auto step = UP_DIV(outer_size_, num_threads_);
+  MS_CHECK_TRUE_RET(thread_num_ != 0, RET_ERROR);
+  auto step = UP_DIV(outer_size_, thread_num_);
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(task_id, step), RET_ERROR);
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
@@ -125,8 +154,8 @@ int StackBaseCPUKernel::Run() {
   }
   // run stack
   CHECK_NULL_RETURN(out_tensors_.at(0));
-  num_threads_ = MSMIN(UP_DIV(outer_size_, kStackStep), op_parameter_->thread_num_);
-  auto ret = ParallelLaunch(this->ms_context_, StackRun, this, num_threads_);
+
+  auto ret = ParallelLaunch(this->ms_context_, StackRun, this, thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";
     return RET_ERROR;

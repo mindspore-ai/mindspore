@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ class SoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
   int ReSize() override;
   int Run() override;
   int DoSoftmaxLastAxis(int task_id);
+#ifdef SERVER_INFERENCE
+  int UpdateThreadNumPass();
+#endif
 
  private:
   float *sum_data_ = nullptr;
