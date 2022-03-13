@@ -630,7 +630,7 @@ Status BatchOp::AddNewWorkers(int32_t num_new_workers) {
   RETURN_IF_NOT_OK(ParallelOp::AddNewWorkers(num_new_workers));
   if (python_mp_ != nullptr) {
     CHECK_FAIL_RETURN_UNEXPECTED(num_new_workers > 0, "Number of workers added should be greater than 0.");
-    python_mp_->AddNewWorkers(num_new_workers);
+    python_mp_->add_new_workers(num_new_workers);
   }
   return Status::OK();
 }
@@ -639,7 +639,7 @@ Status BatchOp::RemoveWorkers(int32_t num_workers) {
   RETURN_IF_NOT_OK(ParallelOp::RemoveWorkers(num_workers));
   if (python_mp_ != nullptr) {
     CHECK_FAIL_RETURN_UNEXPECTED(num_workers > 0, "Number of workers removed should be greater than 0.");
-    python_mp_->RemoveWorkers(num_workers);
+    python_mp_->remove_workers(num_workers);
   }
   return Status::OK();
 }
@@ -652,14 +652,14 @@ Status BatchOp::Launch() {
   // Launch Python multiprocessing. This will create the MP pool and shared memory if needed.
   if (python_mp_) {
     MS_LOG(DEBUG) << "Launch Python Multiprocessing for BatchOp:" << id();
-    python_mp_->Launch(id());
+    python_mp_->launch(id());
   }
   return DatasetOp::Launch();
 }
 
 std::vector<int32_t> BatchOp::GetMPWorkerPIDs() const {
   if (python_mp_ != nullptr) {
-    return python_mp_->GetPIDs();
+    return python_mp_->get_pids();
   }
   return DatasetOp::GetMPWorkerPIDs();
 }
