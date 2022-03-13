@@ -41,6 +41,7 @@ option(MSLITE_ENABLE_RUNTIME_GLOG "enable runtime glog" off)
 option(MSLITE_ENABLE_COVERAGE "enable code coverage" off)
 option(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL "enable sharing memory with OpenGL" off)
 option(MSLITE_ENABLE_SERVER_INFERENCE "enable inference on server" off)
+option(MSLITE_ENABLE_CMSIS "enable CMSIS" on)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -397,7 +398,9 @@ if(NOT MSVC)
 endif()
 
 if(PLATFORM_ARM64)
-    if(TARGET_HIMIX100 OR TARGET_MIX210 OR MACHINE_LINUX_ARM64)
+    if(APPLE)
+        set(RUNTIME_COMPONENT_NAME "macos-aarch64")
+    elseif(TARGET_HIMIX100 OR TARGET_MIX210 OR MACHINE_LINUX_ARM64)
         set(RUNTIME_COMPONENT_NAME "linux-aarch64")
     else()
         set(RUNTIME_COMPONENT_NAME "android-aarch64")

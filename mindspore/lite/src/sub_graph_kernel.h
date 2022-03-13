@@ -28,7 +28,7 @@
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "src/cpu_info.h"
-#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
+#if defined(ENABLE_FP16)
 #include "nnacl/constant_of_shape_parameter.h"
 #endif
 
@@ -150,7 +150,7 @@ class CpuFp32SubGraph : public CpuSubGraph {
   ~CpuFp32SubGraph() override = default;
 };
 
-#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
+#if defined(ENABLE_FP16)
 class CpuFp16SubGraph : public CpuSubGraph {
  public:
   CpuFp16SubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,

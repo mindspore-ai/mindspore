@@ -13,15 +13,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 else()
     set(jpeg_turbo_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC \
         -D_FORTIFY_SOURCE=2 -O2")
+    set(jpeg_turbo_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack,-s")
 endif()
-
-set(jpeg_turbo_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack,-s")
-
 
 set(jpeg_turbo_USE_STATIC_LIBS ON)
 set(JPEG_TURBO_PATCHE ${CMAKE_SOURCE_DIR}/third_party/patch/jpeg_turbo/jpeg_turbo.patch001)
 set(CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DCMAKE_SKIP_RPATH=TRUE -DWITH_SIMD=ON)
-if(BUILD_LITE)
+if(BUILD_LITE AND ANDROID_NDK_TOOLCHAIN_INCLUDED AND NOT APPLE)
     set(jpeg_turbo_USE_STATIC_LIBS OFF)
     set(JPEG_TURBO_PATCHE ${TOP_DIR}/third_party/patch/jpeg_turbo/jpeg_turbo.patch001)
     if(PLATFORM_ARM64)
@@ -41,6 +39,10 @@ if(BUILD_LITE)
                           -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
     endif()
 
+endif()
+
+if(APPLE)
+set(JPEG_TURBO_PATCHE "")
 endif()
 
 mindspore_add_pkg(jpeg_turbo

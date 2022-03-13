@@ -92,11 +92,11 @@ void AvgPoolingFp16Grad(const float16_t *input_ptr, float16_t *output_ptr, int c
 }
 
 #ifdef ENABLE_NEON
-static int32x4_t MaxIndex(float16x4_t in, float16x4_t *max, uint32x4_t index, uint32x4_t prev_index) {
+static uint32x4_t MaxIndex(float16x4_t in, float16x4_t *max, uint32x4_t index, uint32x4_t prev_index) {
   uint16x4_t res = vcgt_f16(in, *max);
   int16x4_t tmp = vreinterpret_s16_u16(res);
   uint32x4_t res_tmp = vreinterpretq_u32_s32(vmovl_s16(tmp));
-  int32x4_t m_index = vbslq_s32(res_tmp, index, prev_index);
+  uint32x4_t m_index = vbslq_u32(res_tmp, index, prev_index);
   *max = vbsl_f16(res, in, *max);
   return m_index;
 }
@@ -138,7 +138,7 @@ void MaxPoolingFp16Grad(const float16_t *input_ptr, const float16_t *dy_ptr, flo
 #else
           float16_t delta[4] = {dyPtr[idx], dyPtr[idx + 1], dyPtr[idx + 2], dyPtr[idx + 3]};
           float16_t max_val[4] = {-FLT16_MAX, -FLT16_MAX, -FLT16_MAX, -FLT16_MAX};
-          uint max_idx[4] = {0};
+          uint32_t max_idx[4] = {0};
 #endif
           for (int kh = kh_s; kh < kh_e; kh++) {
             int xh = yh * stride_h + kh - pad_h;

@@ -774,7 +774,7 @@ struct UniqueOpHashMap<float16> {
 
 #else
 struct gn_hash {
-  size_t operator()(const float16 &f) const { return static_cast<std::size_t>(f); }
+  size_t operator()(const float16 &f) const { return static_cast<std::size_t>((float)f); }
 };
 
 template <>

@@ -13,10 +13,11 @@ set(CCSRC_SRC
         )
 
 include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
+include_directories(${CMAKE_BINARY_DIR})
 
-if(NOT WIN32 AND NOT MSLITE_ENABLE_ACL)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -rdynamic -fvisibility=hidden")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -fvisibility=hidden")
+if(NOT WIN32 AND NOT MSLITE_ENABLE_ACL AND NOT APPLE)
+    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -rdynamic -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -rdynamic -fvisibility=hidden")
 endif()
 
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -259,6 +260,15 @@ if(MSLITE_ENABLE_ACL)
     target_link_libraries(converter_lite PRIVATE
             lite_acl_mid
             ascend_kernel_mid)
+endif()
+
+if(PLATFORM_ARM)
+    if(PLATFORM_ARM64 AND NOT TARGET_HIMIX AND NOT MACHINE_LINUX_ARM64)
+        target_link_libraries(converter_lite PRIVATE cpu_opt_kernel_mid nnacl_optimize_mid)
+    endif()
+    if(MSLITE_ENABLE_FP16)
+        target_link_libraries(converter_lite PRIVATE cpu_fp16_kernel_mid nnacl_fp16_mid)
+    endif()
 endif()
 
 if(NOT MSVC)

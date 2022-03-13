@@ -17,10 +17,13 @@ include_directories(${TOP_DIR}/)
 include_directories(${TOP_DIR}/mindspore/core/)
 include_directories(${NNACL_DIR}/../)
 include_directories(${LITE_DIR})
+#include_directories("${MICRO_DIR}/coder")
 
 #include coder
 if(NOT MSVC)
+    if(MSLITE_ENABLE_CMSIS)
     include(${TOP_DIR}/cmake/external_libs/cmsis.cmake)
+    endif()
     include(${MICRO_DIR}/cmake/package_wrapper.cmake)
     add_subdirectory(wrapper)
 endif()

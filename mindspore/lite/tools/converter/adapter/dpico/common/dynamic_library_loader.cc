@@ -35,7 +35,7 @@ int DynamicLibraryLoader::Open(const std::string &lib_path) {
   std::string real_path = RealPath(lib_path.c_str());
 
 #ifndef _WIN32
-#ifndef ENABLE_ARM
+#if !defined ENABLE_ARM && !defined __APPLE__
   handler_ = dlopen(real_path.c_str(), RTLD_LAZY | RTLD_DEEPBIND);
 #else
   handler_ = dlopen(real_path.c_str(), RTLD_LAZY);

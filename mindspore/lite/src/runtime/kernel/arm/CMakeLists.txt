@@ -2,7 +2,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
 
 file(GLOB KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/base/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/base/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/fp32/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/fp32/*.h
     )
 if(NOT MSLITE_ENABLE_RUNTIME_PASS)
   list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp32/shape_fusion_fp32.cc)
@@ -10,6 +12,7 @@ endif()
 if(MSLITE_ENABLE_INT8)
     file(GLOB INT8_KERNEL_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.h
             )
     set(KERNEL_SRC
             ${KERNEL_SRC}
@@ -57,14 +60,15 @@ endif()
 
 add_library(cpu_kernel_mid OBJECT ${KERNEL_SRC})
 add_dependencies(cpu_kernel_mid fbs_src)
-if(PLATFORM_ARM)
+if(PLATFORM_ARM OR PLATFORM_ARM64)
     if(MSLITE_ENABLE_FP16)
-        file(GLOB FP16_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp16/*.cc)
+        file(GLOB FP16_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp16/*.cc ${CMAKE_CURRENT_SOURCE_DIR}/fp16/*.h)
         if(SUPPORT_TRAIN)
             file(GLOB FP16_KERNEL_TRAIN_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp16_grad/*.cc)
             set(FP16_KERNEL_SRC ${FP16_KERNEL_SRC} ${FP16_KERNEL_TRAIN_SRC})
         endif()
         add_library(cpu_fp16_kernel_mid OBJECT ${FP16_KERNEL_SRC})
+        set_target_properties(cpu_fp16_kernel_mid PROPERTIES LINKER_LANGUAGE CXX)
         add_dependencies(cpu_fp16_kernel_mid fbs_src)
     endif()
     file(GLOB OPT_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/int8/opt_op_handler.cc)

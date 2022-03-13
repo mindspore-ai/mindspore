@@ -25,6 +25,11 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 
+#ifdef __APPLE__
+typedef mode_t _mode_t;
+typedef mode_t __mode_t;
+#endif
+
 namespace mindspore::lite::micro {
 #if defined(_WIN32) || defined(_WIN64)
 #ifdef _MSC_VER
