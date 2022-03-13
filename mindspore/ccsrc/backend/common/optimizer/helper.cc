@@ -827,6 +827,14 @@ AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node) {
   return res;
 }
 
+int64_t GetGetitemIndex(const AnfNodePtr &getitem) {
+  if (!getitem->isa<CNode>() || IsPrimitive(getitem, prim::kPrimTupleGetItem)) {
+    MS_LOG(EXCEPTION) << "Expect TupleGetItem, but got " << getitem->DebugString();
+  }
+  auto vnode = GetValueNode(getitem->cast<CNodePtr>()->input(kInputNodeOutputIndexInTupleGetItem));
+  return GetValue<int64_t>(vnode);
+}
+
 bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2) {
   MS_EXCEPTION_IF_NULL(n1);
   MS_EXCEPTION_IF_NULL(n2);

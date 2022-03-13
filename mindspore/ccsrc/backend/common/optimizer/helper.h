@@ -208,6 +208,9 @@ bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &va
 // Get anf_node from equiv by var_node
 AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node);
 
+// Get tuple getitem's index
+int64_t GetGetitemIndex(const AnfNodePtr &getitem);
+
 // Compare tuple getitem's index, return bool[n1's index < n2's index]
 bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2);
 
