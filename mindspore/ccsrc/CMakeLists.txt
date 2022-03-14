@@ -233,7 +233,7 @@ list(APPEND MINDSPORE_PROTO_LIST ${CORE_PROTO_SRC})
 
 if(MINDSPORE_PROTO_LIST)
     add_library(proto_input STATIC ${MINDSPORE_PROTO_LIST})
-    set_target_properties(proto_input PROPERTIES COMPILE_FLAGS "-Wno-unused-variable")
+    set_target_properties(proto_input PROPERTIES COMPILE_FLAGS "-Wno-unused-variable -Wno-array-bounds")
 endif()
 
 ## make sub objects
