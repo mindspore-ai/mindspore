@@ -19,8 +19,7 @@
 #include <string>
 #include <memory>
 #include "fl/server/executor.h"
-#include "pipeline/jit/parse/parse.h"
-#include "include/common/utils/python_adapter.h"
+#include "pipeline/jit/parse/python_adapter.h"
 
 namespace mindspore {
 namespace fl {
