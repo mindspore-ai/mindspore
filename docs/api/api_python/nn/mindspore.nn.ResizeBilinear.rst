@@ -28,7 +28,7 @@ mindspore.nn.ResizeBilinear
     - **TypeError** - `scale_factor` 既不是int也不是None。
     - **TypeError** - `align_corners` 不是bool。
     - **TypeError** - `half_pixel_centers` 不是bool。
-    - **TypeError** - `align_corners` 和 `half_pixel_centers` 都为bool。
+    - **TypeError** - `align_corners` 和 `half_pixel_centers` 都为True。
     - **TypeError** - `half_pixel_centers` 为True，且device_target不为Ascend。
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
     - **ValueError** - `size` 和 `scale_factor` 都为None或都不为None。
