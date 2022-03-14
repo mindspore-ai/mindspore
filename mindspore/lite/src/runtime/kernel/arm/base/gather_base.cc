@@ -21,7 +21,9 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+#ifdef SERVER_INFERENCE
 constexpr int kMinCostPerThread = 16384;
+#endif
 int GatherRun(const void *cdata, int task_id, float, float) {
   auto gather_kernel = reinterpret_cast<const GatherBaseCPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
@@ -134,6 +136,8 @@ int GatherBaseCPUKernel::ChooseThreadCuttingstrategy() {
   if (outer_size_ == 0 || indices_size_ == 0 || byte_inner_size_ == 0) {
     return RET_OK;
   }
+  int64_t block_size = 1;
+#ifdef SERVER_INFERENCE
   auto all_bytes = static_cast<int64_t>(out_tensors_.front()->Size());
   if (all_bytes <= static_cast<int64_t>(kMinCostPerThread)) {
     block_boundary_infos_.emplace_back(BlockBoundaryInfo{0, 0, outer_size_, 0});
@@ -144,8 +148,17 @@ int GatherBaseCPUKernel::ChooseThreadCuttingstrategy() {
   if (byte_inner_size_ < kMinCostPerThread) {
     min_block_per_unit = UP_DIV(kMinCostPerThread, byte_inner_size_);
   }
-  auto block_size = std::max(min_block_per_unit, total_block / op_parameter_->thread_num_);
-  auto remain_block = total_block - block_size * op_parameter_->thread_num_;
+  block_size = std::max(min_block_per_unit, total_block / op_parameter_->thread_num_);
+  thread_num_ = MSMIN(UP_DIV(total_block, block_size), op_parameter_->thread_num_);
+#else
+  auto total_block = outer_size_ * indices_size_;
+  thread_num_ = op_parameter_->thread_num_;
+#endif
+  if (thread_num_ < 1) {
+    thread_num_ = 1;
+  }
+  block_size = total_block / thread_num_;
+  auto remain_block = total_block - block_size * thread_num_;
   int64_t start = 0;
   while (start < total_block) {
     BlockBoundaryInfo block_boundary_info{};
