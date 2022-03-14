@@ -2106,7 +2106,6 @@ class Sqrt(PrimitiveWithCheck):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        ValueError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
