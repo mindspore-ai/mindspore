@@ -28,9 +28,16 @@
 #include "base/base.h"
 #include "ir/func_graph.h"
 #include "distributed/constants.h"
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#include "distributed/cluster/cluster_context.h"
+#else
+#include "distributed/cluster/dummy_cluster_context.h"
+#endif
 
 namespace mindspore {
 namespace parallel {
+using distributed::cluster::ClusterContext;
+
 // The distributed label of the operators(kernel) used to split graph with send/recv nodes.
 struct OperatorLabel {
   uint32_t rank_id;
@@ -41,6 +48,9 @@ struct OperatorLabel {
   bool operator!=(const OperatorLabel &label) const;
   std::string to_string() const;
 };
+
+// The map of all nodes in the graph to their distributed split label.
+using NodeLabels = std::map<AnfNodePtr, OperatorLabel>;
 
 // The judging functions for different modes because the logic will change under different execution modes. If labels
 // are not matched, the send and recv nodes should be inserted.
@@ -83,6 +93,21 @@ using InterProcessOpEdgesInfo = std::map<InterProcessOpEdge, InterProcessOpPair>
 
 constexpr char kAttrUpdateParameter[] = "update_parameter";
 constexpr char kAttrParameterInputIndex[] = "parameter_input_index";
+constexpr char kAttrGradientInputIndex[] = "gradient_input_index";
+
+// Node which is not physically on this process should be created for splitting graph implementation. This could be
+// considered as a virtual node which will be elimimated after splitting graph. For example, for server in PS mode, some
+// virtual nodes which are launched on the workers should be created as gradient accumulation nodes' inputs:
+// VirtualNode  VirtualNode  RealBackwardNode
+//      |            |               |
+//      |            |               |
+//      |            |               |
+//       \           |               /
+//        \          |              /
+//         \         |             /
+//          \        |            /
+//         GradientAccumulationNode
+constexpr char kVirtualNode[] = "VirtualNode";
 
 // The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the
 // cluster.
@@ -164,9 +189,62 @@ class GraphSplitter {
   OperatorLabel default_label_;
 
   // The map of all nodes in the graph to their distributed split label.
-  std::map<AnfNodePtr, OperatorLabel> node_labels_;
+  NodeLabels node_labels_;
 };
 using GraphSplitterPtr = std::shared_ptr<GraphSplitter>;
+
+// Base class for different execution modes. It builds distributed graphs, optimize execution performance, etc.
+class DistributedExecutionMode {
+ public:
+  // Pass the dyed graph, node labels, process's role and rank id to construct execution mode.
+  explicit DistributedExecutionMode(const FuncGraphPtr &func_graph, uint32_t rank_id, const std::string &role)
+      : func_graph_(func_graph), rank_id_(rank_id), role_(role) {}
+  virtual ~DistributedExecutionMode() = default;
+
+  // Prebuild the distributed graph to prepare for splitting graph. For example,adding extra accumulation nodes, replace
+  // gradient input of optimizer nodes, dying new created nodes so that common split implementation could applied.
+  // Input 'node_labels' represents node labels of the origin graph. This method could modify this map.
+  virtual void PreBuildDistributedGraph(NodeLabels *node_labels) {}
+
+  // Postbuild the distributed graph after splitting graph. For example, adding extra edges to the split graph.
+  // Input 'node_labels' represents node labels of the split graph.
+  // Input 'comm_edges' represents the inter-process edges generated after splitting the graph.
+  virtual void PostBuildDistributedGraph(const NodeLabels &node_labels, const InterProcessOpEdgesInfo &comm_edges) {}
+
+ protected:
+  FuncGraphPtr func_graph_;
+
+  // Rank id and node role of this process. They are used to dye graph with different labels, help build split graph,
+  // etc.
+  uint32_t rank_id_;
+  std::string role_;
+};
+
+// Gradient accumulation node is needed when the worker number is equal to or greater than 2.
+constexpr uint32_t kMinGradAccumWorkerNum = 2;
+
+// The execution of Parameter Server mode.
+class ParameterServerMode : public DistributedExecutionMode {
+ public:
+  explicit ParameterServerMode(const FuncGraphPtr &func_graph, uint32_t rank_id, const std::string &role)
+      : DistributedExecutionMode(func_graph, rank_id, role) {}
+  ~ParameterServerMode() = default;
+
+  void PreBuildDistributedGraph(NodeLabels *node_labels) override;
+  void PostBuildDistributedGraph(const NodeLabels &node_labels, const InterProcessOpEdgesInfo &comm_edges) override;
+
+ private:
+  // Filter out all optimizer nodes which are set on parameter server from the graph.
+  std::vector<CNodePtr> FilterServerAwareOptimizerList(const std::vector<AnfNodePtr> &nodes);
+
+  // Create node with multiple inputs whose number is the worker number in PS mode.
+  // 'node_name' represents the name of the node to be created.
+  // 'real_input' represents the input which is already in the func_graph_. Other inputs will be created as this input.
+  // 'index_of_real_input': the input index of 'real_input' of this new created node: 'node_name'.
+  // 'worker_num': the worker number in this PS cluster.
+  CNodePtr CreateNodeForMultipleWorker(NodeLabels *node_labels, const std::string &node_name,
+                                       const AnfNodePtr &real_input, size_t index_of_real_input, uint32_t worker_num);
+};
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -348,6 +348,7 @@ constexpr auto kEnvironCreateOpName = "EnvironCreate";
 constexpr auto kEnvironSetOpName = "EnvironSet";
 constexpr auto kEnvironGetOpName = "EnvironGet";
 constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
+constexpr auto kUpdateStateOpName = "UpdateState";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
