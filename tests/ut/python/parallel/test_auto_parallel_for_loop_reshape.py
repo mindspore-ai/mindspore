@@ -133,5 +133,5 @@ def test_auto_parallel():
     net.set_train()
     _cell_graph_executor.compile(net, _x, phase='train')
     num_ops = _cell_graph_executor._get_num_parallel_ops(net)
-    expected_num = 16
+    expected_num = 17
     assert num_ops == expected_num

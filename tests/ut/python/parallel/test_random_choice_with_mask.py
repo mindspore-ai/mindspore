@@ -52,6 +52,7 @@ def test_auto_parallel_random_choice_with_mask():
     Expectation: compile success
     """
     context.set_context(device_target="GPU")
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net = Net()
     compile_net(net, _input_x)

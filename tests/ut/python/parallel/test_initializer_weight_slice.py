@@ -42,6 +42,7 @@ def check_initializer_weight_slice(init_name="Uniform"):
         rank_save = hccl.rank_id
         hccl.rank_id = rank
         context.reset_auto_parallel_context()
+        context.set_auto_parallel_context(dataset_strategy="full_batch")
         context.set_auto_parallel_context(device_num=8, global_rank=0)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
         strategy1 = ((2, 1), (4, 1))
@@ -121,6 +122,7 @@ def test_check_initializer_weight_slice_seed(init_name="Uniform"):
         rank_save = hccl.rank_id
         hccl.rank_id = rank
         context.reset_auto_parallel_context()
+        context.set_auto_parallel_context(dataset_strategy="full_batch")
         context.set_auto_parallel_context(device_num=8, global_rank=0)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
         strategy1 = ((2, 1), (4, 1))

@@ -133,5 +133,5 @@ def test_double_subgraphs():
     net.set_train()
     _cell_graph_executor.compile(net, x, phase='train')
     num_ops = _cell_graph_executor._get_num_parallel_ops(net)
-    expected_num = 9
+    expected_num = 10
     assert expected_num == num_ops

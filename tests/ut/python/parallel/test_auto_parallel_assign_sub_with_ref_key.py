@@ -52,6 +52,7 @@ class GradWrap(nn.Cell):
 
 def test_auto_parallel_assign_sub_with_ref_key():
     size = 8
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=size, global_rank=0)
 
     x = Tensor(np.random.rand(4, 4, 32, 64), dtype=ms.float32)
@@ -66,6 +67,6 @@ def test_auto_parallel_assign_sub_with_ref_key():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('PReLU-op', k) is not None:
-            assert v == [[1, 1, 1, 8], [1]]
+            assert v == [[1, 1, 1, 1], [1]]
         elif re.search('ReLU-op', k) is not None:
             assert v == [[1]]

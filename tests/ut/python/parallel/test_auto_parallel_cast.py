@@ -84,7 +84,8 @@ def test_double_star_graph():
     net.set_train()
     _cell_graph_executor.compile(net, x, y, z, w, phase='train')
     strategies = _cell_graph_executor._get_shard_strategy(net)
-    expected_strategies = {'Default/network-Net/MatMul-op2': [[8, 1], [1, 1]],
-                           'Default/network-Net/MatMul-op4': [[1, 1], [1, 8]],
-                           'Default/network-Net/MatMul-op0': [[1, 8], [8, 1]]}
+    expected_strategies = {'Default/network-Net/MatMul-op2': [[1, 8], [8, 1]],
+                           'Default/network-Net/MatMul-op5': [[8, 1], [1, 1]],
+                           'Default/network-Net/MatMul-op0': [[8, 1], [1, 1]],
+                           'Default/_VirtualDataset-op3': [[8, 1], [8, 1], [8, 1], [8, 1]]}
     assert strategies == expected_strategies

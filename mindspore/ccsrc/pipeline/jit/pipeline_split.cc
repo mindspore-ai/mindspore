@@ -139,9 +139,6 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
     }
     auto expect_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     FuncGraphPtr fun_graph = nullptr;
-    if (!root->has_flag(mindspore::parallel::kTraining)) {
-      graph_sets.insert(root);
-    }
     if (expect_prim->name() == mindspore::parallel::J || expect_prim->name() == mindspore::parallel::SHARD) {
       if (IsValueNode<FuncGraph>(cnode->inputs()[1])) {
         fun_graph = GetValueNode<FuncGraphPtr>(cnode->inputs()[1]);
@@ -151,6 +148,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
       graph_sets.insert(fun_graph);
     }
   }
+  graph_sets.insert(root);
   return graph_sets;
 }
 
@@ -172,6 +170,9 @@ static void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<Anf
       for (auto node_user : node_users) {
         auto cnode = node_user.first->cast<CNodePtr>();
         for (size_t input_index = 1; input_index < cnode->inputs().size(); input_index++) {
+          if (!IsValueNode<Primitive>(cnode->inputs()[0])) {
+            continue;
+          }
           bool is_node_input_flag = !(IsValueNode<mindspore::tensor::Tensor>(cnode->inputs()[input_index]) ||
                                       IsValueNode<ValueList>(cnode->inputs()[input_index]) ||
                                       IsValueNode<ValueTuple>(cnode->inputs()[input_index]));

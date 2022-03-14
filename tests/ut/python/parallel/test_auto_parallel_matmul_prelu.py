@@ -64,6 +64,7 @@ def test_matmul_prelu():
             return out
 
     size = 16
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([16, 3, 128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([16, 3, 128, 32]), dtype=ms.float32)
