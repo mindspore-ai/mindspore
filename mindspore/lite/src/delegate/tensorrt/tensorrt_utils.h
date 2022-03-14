@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
+#include "src/delegate/tensorrt/cuda_impl/cublas_utils.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "schema/ops_generated.h"
 #include "nnacl/pack.h"
@@ -63,6 +64,8 @@ std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims);
 std::vector<int64_t> NHWC2NCHW(std::vector<int64_t> nhwc_shape);
 
 nvinfer1::DataType ConvertDataType(DataType type_id);
+
+cudaDataType_t ConvertDataType(nvinfer1::DataType type_id);
 
 nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input);
 

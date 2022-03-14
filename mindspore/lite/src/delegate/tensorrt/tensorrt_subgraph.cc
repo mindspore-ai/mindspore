@@ -166,6 +166,7 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
   if (device_info_->GetEnableFP16() && runtime_->GetBuilder()->platformHasFastFp16()) {
     MS_LOG(INFO) << "set fp16 flag successfully for tensorrt.";
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
+    runtime_->SetRuntimePrecisionMode(RuntimePrecisionMode_FP16);
   }
 
   // set int8
