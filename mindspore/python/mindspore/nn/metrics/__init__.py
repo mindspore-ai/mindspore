@@ -99,6 +99,9 @@ def names():
 
     Returns:
         List, the name list of metric methods.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return sorted(__factory__.keys())
 
@@ -115,6 +118,9 @@ def get_metric_fn(name, *args, **kwargs):
 
     Returns:
         Metric object, class instance of the metric method.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import nn

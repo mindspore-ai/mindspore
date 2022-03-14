@@ -183,6 +183,21 @@
 
         - **RuntimeError** – 如果参数不属于任何stage。
 
+    .. py:method:: init_parameters_data(auto_parallel_mode=False)
+
+        初始化并替换Cell中所有的parameter的值。
+
+        .. note::
+            在调用`init_parameters_data`后，`trainable_params()` 或其他相似的接口可能返回不同的参数对象，不要保存这些结果。
+
+        **参数：**
+
+        - **auto_parallel_mode** (bool) – 是否在自动并行模式下执行。 默认值：False。
+
+        **返回：**
+
+        Dict[Parameter, Parameter], 返回一个原始参数和替换参数的字典。
+
     .. py:method:: insert_child_to_cell(child_name, child_cell)
 
         将一个给定名称的子Cell添加到当前Cell。
@@ -369,6 +384,22 @@
 
         这个接口通常不需要显式调用。
 
+    .. py:method:: run_construct(self, cast_inputs, kwargs)
+
+        运行construct方法。
+
+        .. note::
+            此函数将会在未来版本中弃用，不推荐使用此函数。
+
+        **参数：**
+
+        - **cast_inputs** (tuple) – 输入的Cell对象。
+        - **kwargs** (dict) – 关键字参数。
+
+        **返回：**
+
+        Cell的输出。
+
     .. py:method:: set_auto_parallel()
 
         将Cell设置为自动并行模式。
@@ -386,6 +417,14 @@
         - **fusion_type** (int) – Parameter的 `comm_fusion` 属性的设置值。
         - **recurse** (bool) – 是否递归地设置子Cell的可训练参数。默认值：True。
 
+    .. py:method:: set_broadcast_flag(mode=True)
+
+        设置该Cell的参数广播模式。
+
+        **参数：**
+
+        - **mode** (bool) – 指定当前模式是否进行参数广播。默认值：True。
+
     .. py:method:: set_data_parallel()
 
         递归设置该Cell中的所有算子的并行策略为数据并行。
@@ -397,7 +436,7 @@
         指定输入/输出Tensor的分布策略，其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 in_axes/out_axes需要为元组类型，
         其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： `mindspore.ops.Primitive.shard` 的描述，也可以设置为None，会默认以数据并行执行。
         其余算子的并行策略由输入输出指定的策略推导得到。
-        
+
         .. note:: 需设置为PyNative模式，并且全自动并行(AUTO_PARALLEL)，同时设置 `set_auto_parallel_context` 中的搜索模式(search mode)为"sharding_propagation"，或半自动并行（SEMI_AUTO_PARALLEL)。
 
         **参数：**
