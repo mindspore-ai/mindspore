@@ -197,7 +197,12 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
     Clips tensor values by the ratio of the sum of their norms.
 
     Note:
-        Input 'x' should be a tuple or list of tensors. Otherwise, it will raise an error.
+        Input `x` should be a tuple or list of tensors. Otherwise, it will raise an error.
+
+    Note:
+        On the SEMI_AUTO_PARALLEL mode or AUTO_PARALLEL mode, if the input `x` is the gradient,
+        the gradient norm values on all devices will be automatically aggregated by allreduce inserted after the local
+        square sum of the gradients.
 
     Args:
         x (Union(tuple[Tensor], list[Tensor])): Input data to clip.
