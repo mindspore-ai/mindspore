@@ -6308,7 +6308,7 @@ class GatherD(Primitive):
         self.init_prim_io_names(inputs=['x', 'dim', 'index'], outputs=['output'])
 
 
-class Identity(PrimitiveWithInfer):
+class Identity(Primitive):
     """
     Returns a Tensor with the same shape and contents as input.
 
@@ -6338,14 +6338,6 @@ class Identity(PrimitiveWithInfer):
     def __init__(self):
         """Initialize identity"""
         self.add_prim_attr('side_effect_propagate', 1)
-
-    def __infer__(self, x):
-        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid('x', x['dtype'], mstype.number_type + (mstype.bool_,), self.name)
-        out = {'shape': x['shape'],
-               'dtype': x['dtype'],
-               'value': None}
-        return out
 
 
 class Range(PrimitiveWithCheck):
