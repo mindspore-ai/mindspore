@@ -24,7 +24,7 @@ def set_dump(target, enabled=True):
     Enable or disable dump for the target and its contents.
 
     Target should be an instance of `Cell <https://www.mindspore.cn/docs/api/en/master/api_python/nn/
-    mindspore.nn.Cell.html#mindspore.nn.Cell>`_ or `Primitive<https://www.mindspore.cn/docs/api/en/master/
+    mindspore.nn.Cell.html#mindspore.nn.Cell>`_ or `Primitive <https://www.mindspore.cn/docs/api/en/master/
     api_python/ops/mindspore.ops.Primitive.html#mindspore.ops.Primitive>`_ . Please note that this API takes
     effect only when Asynchronous Dump is enabled and the dump_mode field in dump config file is 2. See the
     `dump document <https://mindspore.cn/docs/programming_guide/en/master/dump_in_graph_mode.html>`_
