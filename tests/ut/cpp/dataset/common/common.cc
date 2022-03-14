@@ -150,3 +150,42 @@ std::shared_ptr<mindspore::dataset::ExecutionTree> DatasetOpTesting::Build(
 #endif
 #endif
 }  // namespace UT
+
+namespace mindspore {
+namespace dataset {
+MSTensorVec Predicate1(MSTensorVec in) {
+  // Return true if input is equal to 3
+  uint64_t input_value;
+  TensorRow input = VecToRow(in);
+  (void)input.at(0)->GetItemAt(&input_value, {0});
+  bool result = (input_value == 3);
+
+  // Convert from boolean to TensorRow
+  TensorRow output;
+  std::shared_ptr<Tensor> out;
+  (void)Tensor::CreateEmpty(TensorShape({}), DataType(DataType::Type::DE_BOOL), &out);
+  (void)out->SetItemAt({}, result);
+  output.push_back(out);
+
+  return RowToVec(output);
+}
+
+MSTensorVec Predicate2(MSTensorVec in) {
+  // Return true if label is more than 1
+  // The index of label in input is 1
+  uint64_t input_value;
+  TensorRow input = VecToRow(in);
+  (void)input.at(1)->GetItemAt(&input_value, {0});
+  bool result = (input_value > 1);
+
+  // Convert from boolean to TensorRow
+  TensorRow output;
+  std::shared_ptr<Tensor> out;
+  (void)Tensor::CreateEmpty(TensorShape({}), DataType(mindspore::dataset::DataType::Type::DE_BOOL), &out);
+  (void)out->SetItemAt({}, result);
+  output.push_back(out);
+
+  return RowToVec(output);
+}
+}  // namespace dataset
+}  // namespace mindspore
