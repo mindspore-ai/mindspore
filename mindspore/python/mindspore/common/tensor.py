@@ -2585,11 +2585,27 @@ class COOTensor(COOTensor_):
         return COOTensor(self.indices, data, self.shape)
 
     def to_tuple(self):
-        """Return indices, values and shape as a tuple."""
+        """
+        Return indices, values and shape as a tuple.
+
+        Returns:
+            Tuple.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+        """
         return self.indices, self.values, self.shape
 
     def abs(self):
-        """Return absolute value element-wisely."""
+        """
+        Return absolute value element-wisely.
+
+        Returns:
+            COOTensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+        """
         data = self.values.abs()
         return COOTensor(self.indices, data, self.shape)
 
@@ -2709,7 +2725,15 @@ class CSRTensor(CSRTensor_):
         return len(self.shape)
 
     def to_tuple(self):
-        """Return indptr, indices, values and shape as a tuple."""
+        """
+        Return indptr, indices, values and shape as a tuple.
+
+        Returns:
+            Tuple.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+        """
         return self.indptr, self.indices, self.values, self.shape
 
     def to_coo(self):
