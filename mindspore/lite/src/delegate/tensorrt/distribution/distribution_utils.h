@@ -25,7 +25,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::lite {
-ncclDataType_t ConvertDataType(nvinfer1::DataType type_id);
+ncclDataType_t ConvertNCCLDataType(nvinfer1::DataType type_id);
 
 ncclRedOp_t ConvertNCCLReduceMode(schema::ReduceMode mode);
 }  // namespace mindspore::lite

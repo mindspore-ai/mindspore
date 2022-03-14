@@ -33,9 +33,9 @@ class ActivationTensorRT : public TensorRTOp {
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  static nvinfer1::IActivationLayer *AddActivation(nvinfer1::INetworkDefinition *network,
-                                                   schema::ActivationType activation_type, float alpha, float min_value,
-                                                   float max_value, nvinfer1::ITensor *trt_in_tensor);
+  static nvinfer1::ILayer *AddActivation(nvinfer1::INetworkDefinition *network, schema::ActivationType activation_type,
+                                         float alpha, float min_value, float max_value,
+                                         nvinfer1::ITensor *trt_in_tensor);
 
  private:
   nvinfer1::ActivationType action_code_;

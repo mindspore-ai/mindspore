@@ -38,7 +38,7 @@ int DistributionCollective::ReduceScatterWrapper(const void *input_addr, void *o
                                                  cudaStream_t stream, const std::string &group) {
   int rank_id = GetRankID();
   MS_LOG(DEBUG) << "ReduceScatter on rank: " << rank_id;
-  ncclResult_t ret = ReduceScatter(input_addr, output_addr, count, ConvertDataType(data_type),
+  ncclResult_t ret = ReduceScatter(input_addr, output_addr, count, ConvertNCCLDataType(data_type),
                                    ConvertNCCLReduceMode(reduce_type), stream, group);
   if (ret != ncclSuccess) {
     MS_LOG(ERROR) << "ReduceScatter failed: " << static_cast<int>(ret);
@@ -57,7 +57,7 @@ int DistributionCollective::AllGatherWrapper(const void *input_addr, void *outpu
                                              const std::string &group_name) {
   int rank_id = GetRankID();
   MS_LOG(DEBUG) << "AllGather on rank: " << rank_id;
-  ncclResult_t ret = AllGather(input_addr, output_addr, count, ConvertDataType(data_type), stream, group_name);
+  ncclResult_t ret = AllGather(input_addr, output_addr, count, ConvertNCCLDataType(data_type), stream, group_name);
   if (ret != ncclSuccess) {
     MS_LOG(ERROR) << "AllGather failed: " << static_cast<int>(ret);
     return RET_ERROR;
