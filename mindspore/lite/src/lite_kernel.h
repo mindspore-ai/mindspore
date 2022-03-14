@@ -220,7 +220,7 @@ class LiteKernel {
     } else {
       std::vector<MSTensor> tensors_in;
       std::transform(in_tensors.begin(), in_tensors.end(), std::back_inserter(tensors_in), [](lite::Tensor *tensor) {
-        auto impl = std::make_shared<mindspore::MSTensor::Impl>(tensor);
+        auto impl = std::make_shared<mindspore::LiteTensorImpl>(tensor);
         return mindspore::MSTensor(impl);
       });
       kernel_->set_inputs(tensors_in);
@@ -233,7 +233,7 @@ class LiteKernel {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensor(in_tensor, index);
     } else {
       MS_ASSERT(index < kernel_->inputs().size());
-      auto impl = std::make_shared<mindspore::MSTensor::Impl>(in_tensor);
+      auto impl = std::make_shared<mindspore::LiteTensorImpl>(in_tensor);
       auto tensor_in = mindspore::MSTensor(impl);
       kernel_->set_input(tensor_in, index);
     }
@@ -246,7 +246,7 @@ class LiteKernel {
     } else {
       std::vector<MSTensor> tensors_out;
       std::transform(out_tensors.begin(), out_tensors.end(), std::back_inserter(tensors_out), [](lite::Tensor *tensor) {
-        auto impl = std::make_shared<mindspore::MSTensor::Impl>(tensor);
+        auto impl = std::make_shared<mindspore::LiteTensorImpl>(tensor);
         return mindspore::MSTensor(impl);
       });
       kernel_->set_outputs(tensors_out);
@@ -259,7 +259,7 @@ class LiteKernel {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_out_tensor(out_tensor, index);
     } else {
       MS_ASSERT(index < kernel_->outputs().size());
-      auto impl = std::make_shared<mindspore::MSTensor::Impl>(out_tensor);
+      auto impl = std::make_shared<mindspore::LiteTensorImpl>(out_tensor);
       auto tensor_out = mindspore::MSTensor(impl);
       kernel_->set_output(tensor_out, index);
     }
@@ -272,10 +272,15 @@ class LiteKernel {
     } else {
       auto &ms_tensors = kernel_->inputs();
       mutable_in_tensors_.resize(ms_tensors.size());
-      (void)std::transform(
-        ms_tensors.begin(), ms_tensors.end(), mutable_in_tensors_.begin(),
-        [](const mindspore::MSTensor &tensor) { return static_cast<lite::Tensor *>(tensor.impl()->lite_tensor()); });
-
+      (void)std::transform(ms_tensors.begin(), ms_tensors.end(), mutable_in_tensors_.begin(),
+                           [](const mindspore::MSTensor &tensor) {
+                             if (tensor.impl() == nullptr) {
+                               MS_LOG(ERROR) << "Tensor " << tensor.Name() << " is nullptr.";
+                               return static_cast<lite::Tensor *>(nullptr);
+                             }
+                             auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(tensor.impl());
+                             return static_cast<lite::Tensor *>(lite_impl->lite_tensor());
+                           });
       return mutable_in_tensors_;
     }
   }
@@ -287,9 +292,15 @@ class LiteKernel {
     } else {
       auto &ms_tensors = kernel_->outputs();
       mutable_out_tensors_.resize(ms_tensors.size());
-      (void)std::transform(
-        ms_tensors.begin(), ms_tensors.end(), mutable_out_tensors_.begin(),
-        [](const mindspore::MSTensor &tensor) { return static_cast<lite::Tensor *>(tensor.impl()->lite_tensor()); });
+      (void)std::transform(ms_tensors.begin(), ms_tensors.end(), mutable_out_tensors_.begin(),
+                           [](const mindspore::MSTensor &tensor) {
+                             if (tensor.impl() == nullptr) {
+                               MS_LOG(ERROR) << "Tensor " << tensor.Name() << " is nullptr.";
+                               return static_cast<lite::Tensor *>(nullptr);
+                             }
+                             auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(tensor.impl());
+                             return static_cast<lite::Tensor *>(lite_impl->lite_tensor());
+                           });
       return mutable_out_tensors_;
     }
   }

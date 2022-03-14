@@ -325,7 +325,7 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
   }
   res.resize(inputs.size());
   for (size_t i = 0; i < inputs.size(); i++) {
-    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(inputs[i]));
+    auto impl = std::make_shared<LiteTensorImpl>(inputs[i]);
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
@@ -363,7 +363,7 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
   }
   res.resize(names.size());
   for (size_t i = 0; i < names.size(); i++) {
-    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(outputs[names[i]]));
+    auto impl = std::make_shared<LiteTensorImpl>(outputs[names[i]]);
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
@@ -406,11 +406,16 @@ Status ModelImpl::ApplyGradients(const std::vector<MSTensor> &gradients) {
   inner_gradients.resize(gradients.size());
   for (size_t i = 0; i < gradients.size(); i++) {
     auto gradient = gradients[i];
-    if (gradient.impl_ == nullptr || gradient.impl_->lite_tensor() == nullptr) {
+    if (gradient.impl_ == nullptr) {
       MS_LOG(ERROR) << "gradient tensor " << gradient.Name() << " is null.";
       return kLiteInputTensorError;
     }
-    inner_gradients[i] = gradient.impl_->lite_tensor();
+    auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(gradient.impl_);
+    if (lite_impl == nullptr || lite_impl->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "gradient tensor " << gradient.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_gradients[i] = lite_impl->lite_tensor();
   }
   auto ret = session_->ApplyGradients(inner_gradients);
   return static_cast<StatusCode>(ret);
@@ -444,11 +449,16 @@ Status ModelImpl::UpdateFeatureMaps(const std::vector<MSTensor> &new_weights) {
   inner_weights.resize(new_weights.size());
   for (size_t i = 0; i < new_weights.size(); i++) {
     auto new_weight = new_weights[i];
-    if (new_weight.impl_ == nullptr || new_weight.impl_->lite_tensor() == nullptr) {
-      MS_LOG(ERROR) << "gradient tensor " << new_weight.Name() << " is null.";
+    if (new_weight.impl_ == nullptr) {
+      MS_LOG(ERROR) << "weight tensor " << new_weight.Name() << " is null.";
       return kLiteInputTensorError;
     }
-    inner_weights[i] = new_weight.impl_->lite_tensor();
+    auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(new_weight.impl_);
+    if (lite_impl == nullptr || lite_impl->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "weight tensor " << new_weight.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_weights[i] = lite_impl->lite_tensor();
   }
   auto ret = session_->UpdateFeatureMaps(inner_weights);
   return static_cast<StatusCode>(ret);
@@ -482,11 +492,16 @@ Status ModelImpl::SetOptimizerParams(const std::vector<MSTensor> &params) {
   inner_params.resize(params.size());
   for (size_t i = 0; i < params.size(); i++) {
     auto param = params[i];
-    if (param.impl_ == nullptr || param.impl_->lite_tensor() == nullptr) {
+    if (param.impl_ == nullptr) {
       MS_LOG(ERROR) << "Param tensor " << param.Name() << " is null.";
       return kLiteInputTensorError;
     }
-    inner_params[i] = param.impl_->lite_tensor();
+    auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(param.impl_);
+    if (lite_impl == nullptr || lite_impl->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "Param tensor " << param.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_params[i] = lite_impl->lite_tensor();
   }
   auto ret = session_->SetOptimizerParams(inner_params);
   return static_cast<StatusCode>(ret);
@@ -502,7 +517,7 @@ MSTensor ModelImpl::GetInputByTensorName(const std::string &name) {
     MS_LOG(ERROR) << "Model does not contains tensor " << name << " .";
     return MSTensor(nullptr);
   }
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(res));
+  auto impl = std::make_shared<LiteTensorImpl>(res);
   if (impl == nullptr || impl->lite_tensor() == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed.";
     return MSTensor(nullptr);
@@ -530,7 +545,7 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
     MS_LOG(ERROR) << "Model does not contains tensor " << name << " .";
     return MSTensor(nullptr);
   }
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(res));
+  auto impl = std::make_shared<LiteTensorImpl>(res);
   if (impl == nullptr || impl->lite_tensor() == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed.";
     return MSTensor(nullptr);
@@ -553,7 +568,7 @@ std::vector<MSTensor> ModelImpl::GetOutputsByNodeName(const std::string &name) {
   }
   res.resize(outputs.size());
   for (size_t i = 0; i < outputs.size(); i++) {
-    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(outputs[i]));
+    auto impl = std::make_shared<LiteTensorImpl>(outputs[i]);
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
@@ -617,11 +632,16 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
   truncated_shape.resize(inputs.size());
   for (size_t i = 0; i < inputs.size(); i++) {
     auto input = inputs[i];
-    if (input.impl_ == nullptr || input.impl_->lite_tensor() == nullptr) {
+    if (input.impl_ == nullptr) {
       MS_LOG(ERROR) << "Input tensor " << input.Name() << " is null.";
       return kLiteInputTensorError;
     }
-    inner_input[i] = input.impl_->lite_tensor();
+    auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(input.impl_);
+    if (lite_impl == nullptr || lite_impl->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "Input tensor " << input.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_input[i] = lite_impl->lite_tensor();
     std::vector<int32_t> shape = TruncateShape(dims[i], inner_input[i]->data_type(), inner_input[i]->Size(), false);
     if (shape.empty() && !(dims[i].empty())) {
       MS_LOG(ERROR) << "Input dims[" << i << "] is invalid.";
@@ -646,11 +666,16 @@ Status ModelImpl::UpdateWeights(const std::vector<MSTensor> &new_weights) {
   inner_weights.resize(new_weights.size());
   for (size_t i = 0; i < new_weights.size(); i++) {
     auto weight = new_weights[i];
-    if (weight.impl_ == nullptr || weight.impl_->lite_tensor() == nullptr) {
-      MS_LOG(ERROR) << "Input tensor " << weight.Name() << " is null.";
+    if (weight.impl_ == nullptr) {
+      MS_LOG(ERROR) << "Weight tensor " << weight.Name() << " is null.";
       return kLiteInputTensorError;
     }
-    inner_weights[i] = weight.impl_->lite_tensor();
+    auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(weight.impl_);
+    if (lite_impl == nullptr || lite_impl->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "Weight tensor " << weight.Name() << " is null.";
+      return kLiteInputTensorError;
+    }
+    inner_weights[i] = lite_impl->lite_tensor();
   }
   auto ret = session_->UpdateWeights(inner_weights);
   return static_cast<StatusCode>(ret);

@@ -34,23 +34,23 @@ class ModelC {
 
   Status Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context);
   Status Build(const std::string &model_path, ModelType model_type, const ContextC *model_context);
-  Status Resize(const std::vector<MSTensor::Impl *> &inputs, const std::vector<std::vector<int64_t>> &shapes);
+  Status Resize(const std::vector<LiteTensorImpl *> &inputs, const std::vector<std::vector<int64_t>> &shapes);
 
   Status Predict(const MSTensorHandle *inputs, size_t input_num, MSTensorHandle **outputs, size_t *output_num,
                  const MSKernelCallBackC &before, const MSKernelCallBackC &after);
 
-  MSTensor::Impl **GetInputs(size_t *input_num);
-  MSTensor::Impl **GetOutputs(size_t *output_num);
+  LiteTensorImpl **GetInputs(size_t *input_num);
+  LiteTensorImpl **GetOutputs(size_t *output_num);
 
  private:
   std::shared_ptr<lite::LiteSession> session_ = nullptr;
   std::shared_ptr<const ContextC> context_ = nullptr;
-  std::map<mindspore::tensor::MSTensor *, MSTensor::Impl *> tensor_map_;
-  std::vector<MSTensor::Impl *> inputs_;
-  std::vector<MSTensor::Impl *> outputs_;
+  std::map<mindspore::tensor::MSTensor *, LiteTensorImpl *> tensor_map_;
+  std::vector<LiteTensorImpl *> inputs_;
+  std::vector<LiteTensorImpl *> outputs_;
   Status RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC &after);
   void ResetTensorData(std::vector<void *> old_data, std::vector<tensor::MSTensor *> tensors);
-  MSTensor::Impl *TensorToTensorImpl(mindspore::tensor::MSTensor *tensor);
+  LiteTensorImpl *TensorToTensorImpl(mindspore::tensor::MSTensor *tensor);
 };
 
 Status ModelC::Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context) {
@@ -91,7 +91,7 @@ Status ModelC::Build(const std::string &model_path, ModelType model_type, const 
   return static_cast<StatusCode>(ret);
 }
 
-Status ModelC::Resize(const std::vector<MSTensor::Impl *> &inputs, const std::vector<std::vector<int64_t>> &shapes) {
+Status ModelC::Resize(const std::vector<LiteTensorImpl *> &inputs, const std::vector<std::vector<int64_t>> &shapes) {
   std::vector<tensor::MSTensor *> inner_input;
   size_t input_num = inputs.size();
   for (size_t i = 0; i < input_num; i++) {
@@ -136,7 +136,7 @@ Status ModelC::Predict(const MSTensorHandle *inputs, size_t input_num, MSTensorH
   std::vector<void *> old_data;
   for (size_t i = 0; i < input_num; i++) {
     auto real_input = model_inputs[i];
-    auto user_input = static_cast<mindspore::MSTensor::Impl *>(inputs[i]);
+    auto user_input = static_cast<LiteTensorImpl *>(inputs[i]);
     if (user_input->DataType() != static_cast<DataType>(real_input->data_type())) {
       ResetTensorData(old_data, model_inputs);
       MS_LOG(ERROR) << "DataType does not match, input:" << user_input->Name()
@@ -184,8 +184,8 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
     before_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                            const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
                            const CallBackParam &call_param) {
-      std::vector<mindspore::MSTensor::Impl> inputs_impl;
-      std::vector<mindspore::MSTensor::Impl> outputs_impl;
+      std::vector<LiteTensorImpl> inputs_impl;
+      std::vector<LiteTensorImpl> outputs_impl;
       std::vector<MSTensorHandle> op_inputs;
       std::vector<MSTensorHandle> op_outputs;
       size_t op_input_num = before_inputs.size();
@@ -209,8 +209,8 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
     after_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
                           const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
                           const CallBackParam &call_param) {
-      std::vector<mindspore::MSTensor::Impl> inputs_impl;
-      std::vector<mindspore::MSTensor::Impl> outputs_impl;
+      std::vector<LiteTensorImpl> inputs_impl;
+      std::vector<LiteTensorImpl> outputs_impl;
       std::vector<MSTensorHandle> op_inputs;
       std::vector<MSTensorHandle> op_outputs;
       size_t op_input_num = after_inputs.size();
@@ -234,13 +234,13 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
   return static_cast<StatusCode>(ret);
 }
 
-MSTensor::Impl *ModelC::TensorToTensorImpl(mindspore::tensor::MSTensor *tensor) {
-  MSTensor::Impl *impl = nullptr;
+LiteTensorImpl *ModelC::TensorToTensorImpl(mindspore::tensor::MSTensor *tensor) {
+  LiteTensorImpl *impl = nullptr;
   auto iter = tensor_map_.find(tensor);
   if (iter != tensor_map_.end()) {
     impl = iter->second;
   } else {
-    impl = new (std::nothrow) MSTensor::Impl(tensor);
+    impl = new (std::nothrow) LiteTensorImpl(tensor);
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return nullptr;
@@ -250,7 +250,7 @@ MSTensor::Impl *ModelC::TensorToTensorImpl(mindspore::tensor::MSTensor *tensor) 
   return impl;
 }
 
-MSTensor::Impl **ModelC::GetInputs(size_t *input_num) {
+LiteTensorImpl **ModelC::GetInputs(size_t *input_num) {
   if (session_ == nullptr || input_num == nullptr) {
     MS_LOG(ERROR) << "Session is null.";
     return nullptr;
@@ -266,7 +266,7 @@ MSTensor::Impl **ModelC::GetInputs(size_t *input_num) {
   return inputs_.data();
 }
 
-MSTensor::Impl **ModelC::GetOutputs(size_t *output_num) {
+LiteTensorImpl **ModelC::GetOutputs(size_t *output_num) {
   if (session_ == nullptr || output_num == nullptr) {
     MS_LOG(ERROR) << "Session is null.";
     return nullptr;
@@ -345,9 +345,9 @@ MSStatus MSModelResize(MSModelHandle model, const MSTensorHandleArray inputs, MS
     MS_LOG(ERROR) << "param is nullptr.";
     return kMSStatusLiteNullptr;
   }
-  std::vector<mindspore::MSTensor::Impl *> vec_inputs;
+  std::vector<mindspore::LiteTensorImpl *> vec_inputs;
   std::transform(inputs.handle_list, inputs.handle_list + inputs.handle_num, std::back_inserter(vec_inputs),
-                 [](MSTensorHandle value) { return static_cast<mindspore::MSTensor::Impl *>(value); });
+                 [](MSTensorHandle value) { return static_cast<mindspore::LiteTensorImpl *>(value); });
   std::vector<std::vector<int64_t>> vec_dims;
   for (size_t i = 0; i < shape_info_num; i++) {
     std::vector<int64_t> shape(shape_infos[i].shape, shape_infos[i].shape + shape_infos[i].shape_num);
