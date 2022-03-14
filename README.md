@@ -48,15 +48,14 @@ For more details please check out our [Architecture Guide](https://www.mindspore
 
 ### Automatic Differentiation
 
-There are currently three automatic differentiation techniques in mainstream deep learning frameworks:
+Currently, there are two automatic differentiation techniques in mainstream deep learning frameworks:
 
-- **Conversion based on static compute graph**: Convert the network into a static data flow graph at compile time, then turn the chain rule into a data flow graph to implement automatic differentiation.
-- **Conversion based on dynamic compute graph**: Record the operation trajectory of the network during forward execution in an operator overloaded manner, then apply the chain rule to the dynamically generated data flow graph to implement automatic differentiation.
-- **Conversion based on source code**: This technology is evolving from the functional programming framework and performs automatic differential transformation on the intermediate expression (the expression form of the program during the compilation process) in the form of just-in-time compilation (JIT), supporting complex control flow scenarios, higher-order functions and closures.
+- **Operator Overloading (OO)**: Overloading the basic operators of the programming language to encapsulate their gradient rules. Record the operation trajectory of the network during forward execution in an operator overloaded manner, then apply the chain rule to the dynamically generated data flow graph to implement automatic differentiation.
+- **Source Transformation (ST)**: This technology is evolving from the functional programming framework and performs automatic differential transformation on the intermediate expression (the expression form of the program during the compilation process) in the form of just-in-time compilation (JIT), supporting complex control flow scenarios, higher-order functions and closures.
 
-TensorFlow adopted static calculation diagrams in the early days, whereas PyTorch used dynamic calculation diagrams. Static maps can utilize static compilation technology to optimize network performance, however, building a network or debugging it is very complicated. The use of dynamic graphics is very convenient, but it is difficult to achieve extreme optimization in performance.
+PyTorch used OO. Compared to ST, OO generates gradient graph in runtime, so it does not need to take function call and control flow into consideration, which makes it easier to develop. However, OO can not perform gradient graph optimization in compilation time and the control flow has to be unfolded in runtime, so it is difficult to achieve extreme optimization in performance.
 
-But MindSpore finds another way, automatic differentiation based on source code conversion. On the one hand, it supports automatic differentiation of automatic control flow, so it is quite convenient to build models like PyTorch. On the other hand, MindSpore can perform static compilation optimization on neural networks to achieve great performance.
+MindSpore implemented automatic differentiation based on ST. On the one hand, it supports automatic differentiation of automatic control flow, so it is quite convenient to build models like PyTorch. On the other hand, MindSpore can perform static compilation optimization on neural networks to achieve great performance.
 
 <img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
 
