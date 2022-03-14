@@ -16,12 +16,19 @@
 
 package com.mindspore;
 
+import com.mindspore.lite.NativeLibrary;
+
 import java.nio.ByteBuffer;
-import java.util.List;
 
 public class MSTensor {
     static {
-        System.loadLibrary("mindspore-lite-jni");
+        try {
+            NativeLibrary.load();
+        } catch (Exception e) {
+            System.err.println("Failed to load MindSporLite native library.");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private long tensorPtr;

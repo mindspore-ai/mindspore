@@ -16,6 +16,8 @@
 
 package com.mindspore.lite.config;
 
+import com.mindspore.lite.NativeLibrary;
+
 /**
  * MSConfig is defined for holding environment variables during runtime.
  *
@@ -23,7 +25,13 @@ package com.mindspore.lite.config;
  */
 public class MSConfig {
     static {
-        System.loadLibrary("mindspore-lite-jni");
+        try {
+            NativeLibrary.load();
+        } catch (Exception e) {
+            System.err.println("Failed to load MindSporLite native library.");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private long msConfigPtr;
