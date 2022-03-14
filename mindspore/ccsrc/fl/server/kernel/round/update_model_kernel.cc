@@ -356,15 +356,7 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseSignDSFeatureMap(
   std::map<std::string, UploadData> feature_map;
   auto sign = update_model_req->sign();
   if (sign == 0) {
-    for (uint32_t i = 0; i < fbs_feature_map->size(); i++) {
-      std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
-      float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());
-      size_t weight_size = fbs_feature_map->Get(i)->data()->size() * sizeof(float);
-      UploadData upload_data;
-      upload_data[kNewWeight].addr = weight_data;
-      upload_data[kNewWeight].size = weight_size;
-      feature_map[weight_full_name] = upload_data;
-    }
+    feature_map = ParseFeatureMap(update_model_req);
     return feature_map;
   }
 
