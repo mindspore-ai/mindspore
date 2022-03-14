@@ -74,6 +74,7 @@ void ParallelContext::Reset() {
   parallel_optimizer_threshold_ = -1;
   sharding_propagation_ = false;
   dataset_strategy_.clear();
+  dp_fusion_threshold_mb_ = kDataParallelFusionThreshold;
   fusion_threshold_mb_ = kFusionThreshold;
   allgather_fusion_threshold_mb_ = kFusionThreshold;
   reducescatter_fusion_threshold_mb_ = kFusionThreshold;
@@ -88,6 +89,7 @@ void ParallelContext::set_device_num(int64_t device_num) {
 
 void ParallelContext::set_fusion_threshold_mb(int64_t fusion_threshold) {
   fusion_threshold_mb_ = fusion_threshold;
+  dp_fusion_threshold_mb_ = fusion_threshold;
   fusion_threshold_is_set_ = true;
   enable_all_reduce_fusion_ = true;
 }

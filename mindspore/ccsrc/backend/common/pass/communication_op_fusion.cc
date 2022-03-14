@@ -35,7 +35,7 @@ namespace {
 constexpr auto kAttrDefaultGroup = "default_group";
 constexpr auto kAttrDefaultOp = "default_op";
 constexpr size_t kAlignSize = 2 << 9;
-constexpr int64_t DEFAULT_THRESHOLD_MB_TO_BYTE = 262144;
+constexpr int64_t kDefaultThresholdMb2Byte = 262144;
 
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &communication_op_info, size_t start_index,
                                                    size_t end_index) {
@@ -120,13 +120,9 @@ void CheckInputs(const std::vector<AnfNodePtr> &fusion_inputs) {
   }
 }
 
-bool CheckSegments(size_t segments, size_t communication_op_node_size, const std::vector<size_t> *segment_index) {
+bool CheckSegments(size_t communication_op_node_size, const std::vector<size_t> *segment_index) {
   MS_EXCEPTION_IF_NULL(segment_index);
-  if (segments >= communication_op_node_size) {
-    MS_LOG(INFO) << "fusion not changed: segment_num=" << segments
-                 << ", communication_op_node_size=" << communication_op_node_size;
-    return false;
-  }
+  auto segments = segment_index->size();
   if (segment_index->at(segments - 1) != communication_op_node_size - 1) {
     MS_LOG(EXCEPTION) << "the last segment index is invalid.";
   }
@@ -140,15 +136,13 @@ bool CheckSegments(size_t segments, size_t communication_op_node_size, const std
 }
 }  // namespace
 
-bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communication_op_info, size_t *segment_num,
+bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communication_op_info,
                                              std::vector<size_t> *segment_index, const std::string &group) const {
-  MS_EXCEPTION_IF_NULL(segment_num);
   MS_EXCEPTION_IF_NULL(segment_index);
   size_t communication_op_node_size = communication_op_info.communication_op_nodes.size();
   MS_LOG(INFO) << "graph " << op_name_ << " node size " << communication_op_node_size;
 
   if (op_name_ == kHcomSendOpName || op_name_ == kReceiveOpName) {
-    *segment_num = 1;
     if (communication_op_node_size == 0) {
       return false;
     }
@@ -163,7 +157,6 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
     split_indices = parallel_context->GetAllReduceFusionSplitIndices(group);
   }
 
-  size_t segments = 0;
   if (!split_indices.empty()) {
     uint32_t last_index = 0;
     for (size_t i = 0; i < split_indices.size(); ++i) {
@@ -178,52 +171,44 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
       }
       segment_index->push_back(index);
       last_index = index;
-      segments++;
     }
     if (last_index != communication_op_node_size - 1) {
       segment_index->push_back(communication_op_node_size - 1);
-      segments++;
     }
   } else {
-    segments = groups_;
-    for (size_t i = 0; i < segments - 1; ++i) {
-      segment_index->push_back((i + 1) * (communication_op_node_size / segments) - 1);
+    for (size_t i = 0; i < groups_ - 1; ++i) {
+      segment_index->push_back((i + 1) * (communication_op_node_size / groups_) - 1);
     }
     segment_index->push_back(communication_op_node_size - 1);
   }
   auto parallel_mode = parallel_context->parallel_mode();
   if (parallel_mode == parallel::kDataParallel && op_name_ == kAllReduceOpName) {
-    auto threshold = parallel_context->fusion_threshold_mb();
-    GetAllReduceSplitSegment(communication_op_info.communication_op_nodes, threshold, &segments, segment_index);
+    auto threshold = parallel_context->dp_fusion_threshold_mb();
+    GetAllReduceSplitSegment(communication_op_info.communication_op_nodes, threshold, segment_index);
   }
-  *segment_num = segments;
-  return CheckSegments(segments, communication_op_node_size, segment_index);
+  return CheckSegments(communication_op_node_size, segment_index);
 }
 
 void CommunicationOpFusion::GetAllReduceSplitSegment(const std::vector<CNodePtr> &nodes, int64_t threshold,
-                                                     size_t *segment, std::vector<size_t> *segment_index) const {
-  MS_EXCEPTION_IF_NULL(segment);
+                                                     std::vector<size_t> *segment_index) const {
   MS_EXCEPTION_IF_NULL(segment_index);
   if (threshold <= 0) {
-    MS_LOG(WARNING) << "Split threshold must be larger than 0, but got " << threshold;
+    MS_LOG(WARNING) << "Split threshold is " << threshold << ". AllReduce nodes will take default fusion strategy.";
     return;
   }
-  threshold *= DEFAULT_THRESHOLD_MB_TO_BYTE;
+  threshold *= kDefaultThresholdMb2Byte;
   std::vector<size_t> real_segment_index;
   size_t start_index = 0;
-  size_t segment_num = 0;
-  for (size_t i = 0; i < segment_index->size(); i++) {
-    auto index = segment_index->at(i);
+  for (auto index : *segment_index) {
     if (index >= nodes.size()) {
       MS_LOG(WARNING) << "split index is greater than or equal to total gradient's number " << nodes.size();
       continue;
     }
     size_t accumulate = 0;
-    for (size_t j = start_index; j <= index; j++) {
+    for (size_t j = start_index; j <= index; ++j) {
       auto tensor_size = AnfAlgo::GetOutputTensorMemSize(nodes[j], 0);
       if (accumulate + tensor_size > LongToSize(threshold)) {
         real_segment_index.push_back(j);
-        segment_num++;
         accumulate = 0;
       } else {
         accumulate += tensor_size;
@@ -231,12 +216,10 @@ void CommunicationOpFusion::GetAllReduceSplitSegment(const std::vector<CNodePtr>
     }
     if (accumulate != 0) {
       real_segment_index.push_back(index);
-      segment_num++;
     }
     start_index = index + 1;
   }
   *segment_index = std::move(real_segment_index);
-  *segment = segment_num;
 }
 
 // Hard coded Load(%paraxxx, cnode()) to Load(%paraxxx, U) to prevent
@@ -446,13 +429,13 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
 }
 
 bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const CommunicationOpInfo &communication_op_info,
-                                     size_t segment_num, const std::vector<size_t> &segment_index) const {
+                                     const std::vector<size_t> &segment_index) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   bool changed = false;
   size_t start_index = 0;
-  for (size_t segment_idx = 0; segment_idx < segment_num; ++segment_idx) {
+  for (size_t segment_idx = 0; segment_idx < segment_index.size(); ++segment_idx) {
     size_t end_index = segment_index.at(segment_idx);
     if (end_index - start_index < 1) {
       start_index = end_index + 1;
@@ -534,10 +517,9 @@ bool CommunicationOpFusion::Run(const FuncGraphPtr &func_graph) {
                                 common::AnfAlgo::GetNodeAttr<int64_t>(b, kAttrIndex);
                        });
     }
-    size_t segment_num = 0;
     std::vector<size_t> segment_index;
-    if (GetSplitSegments(it.second, &segment_num, &segment_index, it.first)) {
-      if (DoFusion(func_graph, it.second, segment_num, segment_index)) {
+    if (GetSplitSegments(it.second, &segment_index, it.first)) {
+      if (DoFusion(func_graph, it.second, segment_index)) {
         changed = true;
       }
     }

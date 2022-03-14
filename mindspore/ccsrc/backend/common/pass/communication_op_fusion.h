@@ -40,15 +40,15 @@ class CommunicationOpFusion : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  bool DoFusion(const FuncGraphPtr &func_graph, const CommunicationOpInfo &communication_op_info, size_t segment_num,
+  bool DoFusion(const FuncGraphPtr &func_graph, const CommunicationOpInfo &communication_op_info,
                 const std::vector<size_t> &segment_index) const;
-  void GetAllReduceSplitSegment(const std::vector<CNodePtr> &nodes, int64_t threshold, size_t *segment,
+  void GetAllReduceSplitSegment(const std::vector<CNodePtr> &nodes, int64_t threshold,
                                 std::vector<size_t> *segment_index) const;
   AnfNodePtr CreateFusedCommunicationOp(const FuncGraphPtr &func_graph,
                                         const CommunicationOpInfo &communication_op_info, size_t start_index,
                                         size_t end_index) const;
-  bool GetSplitSegments(const CommunicationOpInfo &communication_op_info, size_t *segment_num,
-                        std::vector<size_t> *segment_index, const std::string &group) const;
+  bool GetSplitSegments(const CommunicationOpInfo &communication_op_info, std::vector<size_t> *segment_index,
+                        const std::string &group) const;
   std::string op_name_;
   size_t groups_ = 1;
 };
