@@ -76,6 +76,7 @@ int TopKCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TopKFusion, LiteKernelCreator<TopKCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TopKFusion, LiteKernelCreator<TopKCPUKernel>)
 #ifdef ENABLE_FP16
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_TopKFusion, LiteKernelCreator<TopKCPUKernel>)
 #endif

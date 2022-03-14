@@ -105,20 +105,22 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     }
     auto cnode = node->cast<CNodePtr>();
     if (!opt::CheckPrimitiveType(cnode, prim::kPrimConv2D) &&
-        !opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
+        !opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) &&
+        !opt::CheckPrimitiveType(cnode, prim::kPrimConv2DTranspose) &&
+        !opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
       continue;
     }
-    auto conv2d_node = GetValueNode<std::shared_ptr<mindspore::ops::Conv2D>>(cnode->input(0));
-    MS_CHECK_TRUE_MSG(conv2d_node != nullptr, false, "conv2d is nullptr.");
-    MS_CHECK_TRUE_MSG(conv2d_node->GetAttr(ops::kOriginalFormat) != nullptr, false, "The format of conv2d is nullptr.");
+    auto conv2d_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_CHECK_TRUE_MSG(conv2d_prim != nullptr, false, "conv2d is nullptr.");
+    MS_CHECK_TRUE_MSG(conv2d_prim->GetAttr(ops::kOriginalFormat) != nullptr, false, "The format of conv2d is nullptr.");
     std::vector<int64_t> axis;
-    switch (Format(GetValue<int64_t>(conv2d_node->GetAttr(ops::kOriginalFormat)))) {
+    switch (Format(GetValue<int64_t>(conv2d_prim->GetAttr(ops::kOriginalFormat)))) {
       case mindspore::Format::NWC:
-        (void)conv2d_node->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NHWC));
+        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NHWC));
         axis = {1};
         break;
       case mindspore::Format::NCW:
-        (void)conv2d_node->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NCHW));
+        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NCHW));
         axis = {2};
         break;
       default:
@@ -132,13 +134,10 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     auto squeeze = NewSqueezeOpNode(func_graph, cnode, axis);
     MS_CHECK_TRUE_MSG(squeeze != nullptr, false, "New squeeze node failed.");
     (void)manager->Replace(cnode, squeeze);
-    auto conv_cnode = cnode->cast<CNodePtr>();
-    MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
-    auto weight_node = conv_cnode->input(kConvWeightIndex);
+
+    MS_ASSERT(cnode->inputs().size() > kConvWeightIndex);
+    auto weight_node = cnode->input(kConvWeightIndex);
     MS_ASSERT(weight_node != nullptr);
-    auto prim = GetValueNode<PrimitivePtr>(conv_cnode->input(0));
-    MS_ASSERT(prim != nullptr);
-    schema::Format schema_format = schema::Format::Format_KCHW;
     // expand weight tensor to 4 dimensions.
     auto weight_tensor = opt::GetTensorInfo(weight_node);
     if (weight_tensor == nullptr) {
@@ -146,11 +145,14 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
       auto unsqueeze_weight =
         NewUnsqueezeOpNode(func_graph, weight_node, axis, cnode->fullname_with_scope() + "_unsqueeze_weight");
       MS_CHECK_TRUE_MSG(unsqueeze_weight != nullptr, false, "New unsqueeze node failed.");
-      (void)manager->Replace(input_node, unsqueeze_weight);
-      return true;
+      (void)manager->SetEdge(cnode, THIRD_INPUT, unsqueeze_weight);
     } else {
+      schema::Format schema_format = schema::Format::Format_KCHW;
       auto status = ExpandFilterShape(weight_node, schema_format);
-      MS_CHECK_TRUE_MSG(status == RET_OK, false, "Expand filter shape failed.");
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Expand filter shape failed.";
+        return false;
+      }
     }
   }
   return true;
