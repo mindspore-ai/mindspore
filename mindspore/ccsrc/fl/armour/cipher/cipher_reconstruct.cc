@@ -170,10 +170,10 @@ bool CipherReconStruct::ReconstructSecretsGenNoise(const std::vector<string> &cl
     return false;
   }
 
-  MS_LOG(ERROR) << "recombined shares";
+  MS_LOG(INFO) << "recombined shares";
   for (auto iter = reconstruct_secret_list.begin(); iter != reconstruct_secret_list.end(); ++iter) {
-    MS_LOG(ERROR) << "fl_id: " << iter->first;
-    MS_LOG(ERROR) << "share size: " << iter->second.size();
+    MS_LOG(INFO) << "fl_id: " << iter->first;
+    MS_LOG(INFO) << "share size: " << iter->second.size();
   }
   std::vector<Share *> shares_tmp;
   if (!MallocShares(&shares_tmp, (SizeToInt)(cipher_init_->secrets_minnums_))) {
