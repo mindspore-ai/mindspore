@@ -86,12 +86,12 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
 #endif
 
   uint8_t *alloc_address = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
-  if (alloc_address == nullptr) {
-    MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
-                      << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
+  if (alloc_address != nullptr) {
+    // create protect area [kMemAlignSize -- data -- kMemAlignSize] for communication node memory
+    return communication_mem ? alloc_address + kMemAlignSize : alloc_address;
   }
-  // create protect area [kMemAlignSize -- data -- kMemAlignSize] for communication node memory
-  return communication_mem ? alloc_address + kMemAlignSize : alloc_address;
+  MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
+                    << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
 }
 
 uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_mem) {
@@ -124,11 +124,11 @@ void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph &grap
 uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
   auto align_size = GetCommunicationAlignSize(size);
   uint8_t *base_ptr = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
-  if (base_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
-                      << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
+  if (base_ptr != nullptr) {
+    return base_ptr + kMemAlignSize;
   }
-  return base_ptr + kMemAlignSize;
+  MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
+                    << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
 }
 
 bool AscendMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,

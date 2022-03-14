@@ -1142,9 +1142,10 @@ void AscendStreamAssign::InsertStreamActiveForIndependent(const NotNull<KernelGr
   }
   std::set<uint32_t> independent_streams;
   for (const auto &item : independent_graph_map_) {
-    if (item.first == root_graph_id) {
-      independent_streams = item.second;
+    if (item.first != root_graph_id) {
+      continue;
     }
+    independent_streams = item.second;
   }
 
   // Root graph independent stream size is not more than one, no need insert active
@@ -1625,11 +1626,13 @@ std::vector<std::pair<uint32_t, vector<size_t>>> AscendStreamAssign::GetStreamID
 
     bool exit = false;
     for (auto &item : stream_indices) {
-      if (item.first == cur_stream_id) {
-        item.second.emplace_back(i);
-        exit = true;
-        break;
+      if (item.first != cur_stream_id) {
+        continue;
       }
+
+      item.second.emplace_back(i);
+      exit = true;
+      break;
     }
     if (!exit) {
       stream_indices.emplace_back(std::make_pair(cur_stream_id, std::vector<size_t>{i}));
@@ -1796,9 +1799,8 @@ void AscendStreamAssign::InsertEventForIndependentParallel(const NotNull<KernelG
   for (const auto &cnode : cnodes) {
     auto result_recv = cnode_recv_map.find(cnode);
     if (result_recv != cnode_recv_map.end()) {
-      for (const auto &recv : result_recv->second) {
-        new_cnodes.push_back(recv);
-      }
+      const std::vector<CNodePtr> &result_recv_vec = result_recv->second;
+      new_cnodes.insert(new_cnodes.end(), result_recv_vec.begin(), result_recv_vec.end());
     }
     new_cnodes.push_back(cnode);
     auto result_send = cnode_send_map.find(cnode);
@@ -2209,9 +2211,8 @@ bool AscendStreamAssign::IsHcom(const CNodePtr &apply_kernel) {
 
 void AscendStreamAssign::GetHcomStreams(std::vector<uint32_t> *streams) {
   MS_EXCEPTION_IF_NULL(streams);
-  for (const auto &item : hcom_stream_map_) {
-    streams->emplace_back(item.first);
-  }
+  std::transform(hcom_stream_map_.begin(), hcom_stream_map_.end(), std::back_inserter(*streams),
+                 [](const std::pair<uint32_t, uint32_t> &item) { return item.first; });
 }
 
 void AscendStreamAssign::Reset() {
