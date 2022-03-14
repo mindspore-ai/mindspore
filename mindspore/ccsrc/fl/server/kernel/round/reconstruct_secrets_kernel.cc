@@ -25,7 +25,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-void ReconstructSecretsKernel::InitKernel(size_t) {
+void ReconstructSecretsKernel::InitKernel(size_t required_cnt) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
@@ -41,7 +41,7 @@ void ReconstructSecretsKernel::InitKernel(size_t) {
   name_unmask_ = "UnMaskKernel";
   MS_LOG(INFO) << "ReconstructSecretsKernel Init, ITERATION NUMBER IS : "
                << LocalMetaStore::GetInstance().curr_iter_num();
-  DistributedCountService::GetInstance().RegisterCounter(name_unmask_, ps::PSContext::instance()->initial_server_num(),
+  DistributedCountService::GetInstance().RegisterCounter(name_unmask_, required_cnt,
                                                          {first_cnt_handler, last_cnt_handler});
 }
 

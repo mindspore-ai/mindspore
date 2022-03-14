@@ -60,7 +60,10 @@ bool PushWeightKernel::Launch(const uint8_t *req_data, size_t len,
 
   ResultCode result_code = PushWeight(fbb, push_weight_req);
   SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
-  return ConvertResultCode(result_code);
+  if (result_code != ResultCode::kSuccess) {
+    return false;
+  }
+  return true;
 }
 
 bool PushWeightKernel::Reset() {
@@ -79,8 +82,8 @@ void PushWeightKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageH
 
 ResultCode PushWeightKernel::PushWeight(const std::shared_ptr<FBBuilder> &fbb,
                                         const schema::RequestPushWeight *push_weight_req) {
-  MS_ERROR_IF_NULL_W_RET_VAL(fbb, ResultCode::kSuccessAndReturn);
-  MS_ERROR_IF_NULL_W_RET_VAL(push_weight_req, ResultCode::kSuccessAndReturn);
+  MS_ERROR_IF_NULL_W_RET_VAL(fbb, ResultCode::kFail);
+  MS_ERROR_IF_NULL_W_RET_VAL(push_weight_req, ResultCode::kFail);
   size_t iteration = IntToSize(push_weight_req->iteration());
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
   if (iteration != current_iter) {
@@ -88,7 +91,7 @@ ResultCode PushWeightKernel::PushWeight(const std::shared_ptr<FBBuilder> &fbb,
                          ", current iteration:" + std::to_string(current_iter);
     BuildPushWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter);
     MS_LOG(WARNING) << reason;
-    return ResultCode::kSuccessAndReturn;
+    return ResultCode::kFail;
   }
 
   std::map<std::string, Address> upload_feature_map = ParseFeatureMap(push_weight_req);
@@ -96,14 +99,14 @@ ResultCode PushWeightKernel::PushWeight(const std::shared_ptr<FBBuilder> &fbb,
     std::string reason = "PushWeight feature_map is empty.";
     BuildPushWeightRsp(fbb, schema::ResponseCode_RequestError, reason, current_iter);
     MS_LOG(ERROR) << reason;
-    return ResultCode::kSuccessAndReturn;
+    return ResultCode::kFail;
   }
 
   if (!executor_->HandlePushWeight(upload_feature_map)) {
     std::string reason = "Pushing weight failed.";
     BuildPushWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter);
     MS_LOG(ERROR) << reason;
-    return ResultCode::kSuccessAndReturn;
+    return ResultCode::kFail;
   }
   MS_LOG(INFO) << "Pushing weight for iteration " << current_iter << " succeeds.";
 
@@ -112,7 +115,7 @@ ResultCode PushWeightKernel::PushWeight(const std::shared_ptr<FBBuilder> &fbb,
     std::string reason = "Count for push weight request failed.";
     BuildPushWeightRsp(fbb, schema::ResponseCode_SystemError, reason, current_iter);
     MS_LOG(ERROR) << reason;
-    return count_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
+    return ResultCode::kFail;
   }
   BuildPushWeightRsp(fbb, schema::ResponseCode_SUCCEED, "PushWeight succeed.", current_iter);
   return ResultCode::kSuccess;
