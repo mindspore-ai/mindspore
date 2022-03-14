@@ -30,6 +30,8 @@ constexpr size_t kInputNum = 2;
 constexpr size_t kInputIndex1st = 1;
 constexpr size_t kInputIndex2nd = 2;
 constexpr size_t kInputIndex3rd = 3;
+constexpr size_t kDimMin = 2;
+constexpr size_t kDimMax = 4;
 constexpr size_t kDimNeedPadBatch = 3;
 constexpr size_t kDimNeedPadBatchAndChannel = 2;
 constexpr size_t kInputXDimLowerLimit = 4;
@@ -100,6 +102,11 @@ class MirrorPadFwdGpuKernelMod : public NativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
+    if (input_shape.size() < kDimMin || input_shape.size() > kDimMax) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input_x should be in [2, 4], but "
+                        << "got the " << input_shape.size();
+    }
+
     // shape adjustment -> from 2d/3d to 4d to standardize
     if (input_shape.size() == kDimNeedPadBatch) {
       auto it = input_shape.begin();
@@ -107,10 +114,6 @@ class MirrorPadFwdGpuKernelMod : public NativeGpuKernelMod {
     } else if (input_shape.size() == kDimNeedPadBatchAndChannel) {
       auto it = input_shape.begin();
       (void)input_shape.insert(it, 2, 1);  // channel padding
-    }
-    if (input_shape.size() < kInputXDimLowerLimit) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input_x cannot be less than 4, but "
-                        << "got the " << input_shape.size();
     }
 
     for (auto in_shape : input_shape) {
