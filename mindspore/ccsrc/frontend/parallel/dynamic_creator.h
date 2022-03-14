@@ -221,6 +221,28 @@ REGISTER(ArgmaxInfo);
 REGISTER(ArgminInfo);
 REGISTER(UnsortedSegmentProdInfo);
 REGISTER(SquareSumAllInfo);
+REGISTER(AddNInfo);
+REGISTER(BitwiseAndInfo);
+REGISTER(BitwiseOrInfo);
+REGISTER(BitwiseXorInfo);
+REGISTER(CumProdInfo);
+REGISTER(HShrinkInfo);
+REGISTER(HSigmoidInfo);
+REGISTER(IsFiniteInfo);
+REGISTER(MishInfo);
+REGISTER(MulNoNanInfo);
+REGISTER(RintInfo);
+REGISTER(SeLUInfo);
+REGISTER(SoftShrinkInfo);
+REGISTER(TruncateDivInfo);
+REGISTER(TruncateModInfo);
+REGISTER(XdivyInfo);
+REGISTER(XlogyInfo);
+REGISTER(InplaceAddInfo);
+REGISTER(InplaceSubInfo);
+REGISTER(CdistInfo);
+REGISTER(L2LossInfo);
+REGISTER(LerpInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -191,6 +191,8 @@ using ResizeBilinearCost = CastCost;
 using BoundingBoxEncodeCost = CastCost;
 using IOUCost = CastCost;
 using RandomChoicWithMaskCost = CastCost;
+using IsFiniteCost = CastCost;
+using RintCost = CastCost;
 
 class SqrtCost : public CastCost {
  public:
@@ -211,6 +213,11 @@ using AsinhCost = SqrtCost;
 using AcoshCost = SqrtCost;
 using ReLUV2Cost = SqrtCost;
 using TopKCost = SqrtCost;
+using HShrinkCost = SqrtCost;
+using HSigmoidCost = SqrtCost;
+using MishCost = SqrtCost;
+using SeLUCost = SqrtCost;
+using SoftShrinkCost = SqrtCost;
 
 class ReLU6Cost : public CastCost {
  public:
@@ -240,6 +247,7 @@ using ErfCost = ReLU6Cost;
 using ErfcCost = ReLU6Cost;
 using ActivationInfoCost = ReLU6Cost;
 using SelectCost = ReLU6Cost;
+using XlogyCost = ReLU6Cost;
 
 class TransposeCost : public CastCost {
  public:
@@ -288,6 +296,9 @@ class SoftmaxCost : public OperatorCost {
   // Not Taking account of input
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
+
+using CumSumCost = SoftmaxCost;
+using CumProdCost = SoftmaxCost;
 
 class TileCost : public SoftmaxCost {
  public:
@@ -619,6 +630,11 @@ using GreaterEqualCost = SubCost;
 using LessCost = SubCost;
 using LessEqualCost = SubCost;
 using GatherNdCost = SubCost;
+using BitwiseAndCost = SubCost;
+using BitwiseOrCost = SubCost;
+using BitwiseXorCost = SubCost;
+using AddNCost = SubCost;
+using InplaceAddCost = SubCost;
 
 class MulCost : public SubCost {
  public:
@@ -628,7 +644,9 @@ class MulCost : public SubCost {
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 
+using MulNoNanCost = MulCost;
 using GatherDCost = MulCost;
+using LerpCost = MulCost;
 
 class DivCost : public SubCost {
  public:
@@ -640,6 +658,9 @@ class DivCost : public SubCost {
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 using ReadDivCost = DivCost;
+using TruncateDivCost = DivCost;
+using XdivyCost = DivCost;
+using CdistCost = DivCost;
 
 class ModCost : public SubCost {
  public:
@@ -649,6 +670,7 @@ class ModCost : public SubCost {
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 using FloorModCost = ModCost;
+using TruncateModCost = ModCost;
 
 class PowCost : public SubCost {
  public:
@@ -702,6 +724,7 @@ class MaximumCost : public SubCost {
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 using MinimumCost = MaximumCost;
+using CumminCost = MaximumCost;
 
 class SliceCost : public CastCost {
  public:
@@ -754,6 +777,7 @@ class ReduceSumCost : public OperatorCost {
 using ReduceMethodCost = ReduceSumCost;
 using ReduceProdCost = ReduceSumCost;
 using SquareSumAllCost = ReduceSumCost;
+using L2LossCost = ReduceSumCost;
 
 class ReduceMeanCost : public ReduceSumCost {
  public:

@@ -111,5 +111,12 @@ Status BoundingBoxEncodeInfo::PrepareStrategy(int64_t stage_id, int64_t split_nu
   (*sp) = std::make_shared<Strategy>(stage_id, strategies);
   return SUCCESS;
 }
+
+void BoundingBoxEncodeInfo::ReComputeBatchSplitFlagList() {
+  auto anchor_box_shape = inputs_shape_.at(0);
+  auto gt_box_shape = inputs_shape_.at(1);
+  anchor_box_shape[0] == 1 ? split_flag_list_[0] = false : split_flag_list_[0] = true;
+  gt_box_shape[0] == 1 ? split_flag_list_[1] = false : split_flag_list_[1] = true;
+}
 }  // namespace parallel
 }  // namespace mindspore

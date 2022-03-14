@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,50 +14,45 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RANDOM_CHOICE_WITH_MASK_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RANDOM_CHOICE_WITH_MASK_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_INPLACE_ADD_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_INPLACE_ADD_INFO_H_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
+#include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
-#include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "frontend/parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {
-class RandomChoiceWithMaskInfo : public OperatorInfo {
+class InplaceAddInfo : public OperatorInfo {
  public:
-  RandomChoiceWithMaskInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                           const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<RandomChoicWithMaskCost>()),
-        seed_(0),
-        seed2_(0) {}
-  ~RandomChoiceWithMaskInfo() = default;
-  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
-  Status InitForCostModel(const StrategyPtr &strategy, const StrategyPtr &out_strategy) override;
+  InplaceAddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<InplaceAddCost>()) {}
+  ~InplaceAddInfo() override = default;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
-  void ReplaceNodeInputOrAttrs() override;
   void ReComputeBatchSplitFlagList() override;
 
  protected:
-  Status GetAttrs() override;
+  Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferForwardCommunication() override { return SUCCESS; }
-  Status InferAsLossDivisor() override;
+};
 
- private:
-  void CheckGPUBackend();
-
-  int64_t seed_;
-  int64_t seed2_;
-  static int64_t SEED_NUM;
+class InplaceSubInfo : public InplaceAddInfo {
+ public:
+  InplaceSubInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
+      : InplaceAddInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~InplaceSubInfo() = default;
 };
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RANDOM_CHOICE_WITH_MASK_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_INPLACE_ADD_INFO_H_

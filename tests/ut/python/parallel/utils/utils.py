@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from mindspore import context
+from mindspore.nn import Cell
 from mindspore.common.api import _cell_graph_executor
 
 
@@ -115,3 +118,11 @@ class ParallelValidator:
         if graph_name not in self._graph_info_dict.keys():
             raise ValueError("{} is not exist".format(graph_name))
         return self._graph_info_dict[graph_name]
+
+
+def compile_net(net: Cell, *inputs, auto_parallel_mode=False):
+    net.set_auto_parallel()
+    net.set_train()
+    phase, _ = _cell_graph_executor.compile(net, *inputs, auto_parallel_mode=auto_parallel_mode)
+    context.reset_auto_parallel_context()
+    return phase

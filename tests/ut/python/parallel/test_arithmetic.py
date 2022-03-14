@@ -884,3 +884,229 @@ def test_assign():
     net = SubGradWrap(SubNetWithLoss(Net()))
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     compile_sub_net(net, x)
+
+
+def test_matmul_bitwise_and_broadcast():
+    """
+    Feature: distribute operator BitwiseAnd in auto parallel.
+    Description: mul-BitwiseAnd net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.bitwise_and = P.BitwiseAnd().shard(strategy1)
+            self.matmul = P.MatMul().shard(strategy2)
+
+
+        def construct(self, x, y, z):
+            out = self.bitwise_and(x, y)
+            out = self.matmul(out, z)
+
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 1), (1, 4))
+    strategy2 = ((1, 4), (4, 2))
+    net = Net(strategy1, strategy2)
+
+    x = Tensor(np.ones([64, 1]), dtype=ms.int32)
+    y = Tensor(np.ones([1, 64]), dtype=ms.int32)
+    z = Tensor(np.ones([64, 32]), dtype=ms.int32)
+    compile_net(net, x, y, z)
+
+
+def test_matmul_bitwise_or_broadcast():
+    """
+    Feature: distribute operator BitwiseOr in auto parallel.
+    Description: mul-BitwiseOr net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.bitwise_or = P.BitwiseOr().shard(strategy1)
+            self.matmul = P.MatMul().shard(strategy2)
+
+        def construct(self, x, y, z):
+            out = self.bitwise_or(x, y)
+            out = self.matmul(out, z)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 1), (1, 4))
+    strategy2 = ((1, 4), (4, 2))
+    net = Net(strategy1, strategy2)
+
+    x = Tensor(np.ones([64, 1]), dtype=ms.int32)
+    y = Tensor(np.ones([1, 64]), dtype=ms.int32)
+    z = Tensor(np.ones([64, 32]), dtype=ms.int32)
+    compile_net(net, x, y, z)
+
+
+def test_matmul_bitwise_xor_broadcast():
+    """
+    Feature: distribute operator BitwiseXor in auto parallel.
+    Description: mul-BitwiseXor net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.bitwise_xor = P.BitwiseXor().shard(strategy1)
+            self.matmul = P.MatMul().shard(strategy2)
+
+        def construct(self, x, y, z):
+            out = self.bitwise_xor(x, y)
+            out = self.matmul(out, z)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 1), (1, 4))
+    strategy2 = ((1, 4), (4, 2))
+    net = Net(strategy1, strategy2)
+
+    x = Tensor(np.ones([64, 1]), dtype=ms.int32)
+    y = Tensor(np.ones([1, 64]), dtype=ms.int32)
+    z = Tensor(np.ones([64, 32]), dtype=ms.int32)
+    compile_net(net, x, y, z)
+
+
+def test_matmul_mul_no_nan_broadcast():
+    """
+    Feature: distribute operator MulNoNan in auto parallel.
+    Description: mul-MulNoNan net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+            self.mul_no_nan = P.MulNoNan().shard(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul_no_nan(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 4), (4, 1))
+    strategy2 = ((4, 1), (1, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 1]), dtype=ms.float32)
+    b = Tensor(np.ones([1, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_truncate_div_broadcast():
+    """
+    Feature: distribute operator TruncateDiv in auto parallel.
+    Description: mul-TruncateDiv net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+            self.truncate_div = P.TruncateDiv().shard(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.truncate_div(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 4), (4, 1))
+    strategy2 = ((4, 1), (1, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 1]), dtype=ms.float32)
+    b = Tensor(np.ones([1, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_truncate_mod_broadcast():
+    """
+    Feature: distribute operator TruncateMod in auto parallel.
+    Description: mul-TruncateMod net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+            self.truncate_mod = P.TruncateMod().shard(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.truncate_mod(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 4), (4, 1))
+    strategy2 = ((4, 1), (1, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 1]), dtype=ms.float32)
+    b = Tensor(np.ones([1, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_xdivy_broadcast():
+    """
+    Feature: distribute operator Xdivy in auto parallel.
+    Description: mul-Xdivy net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+            self.xdivy = P.Xdivy().shard(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.xdivy(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 4), (4, 1))
+    strategy2 = ((4, 1), (1, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 1]), dtype=ms.float32)
+    b = Tensor(np.ones([1, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_xlogy_broadcast():
+    """
+    Feature: distribute operator Xlogy in auto parallel.
+    Description: mul-Xlogy net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+            self.xlogy = P.Xlogy().shard(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.xlogy(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 4), (4, 1))
+    strategy2 = ((4, 1), (1, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 1]), dtype=ms.float32)
+    b = Tensor(np.ones([1, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)

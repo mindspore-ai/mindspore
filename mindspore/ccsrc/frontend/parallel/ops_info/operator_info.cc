@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 #include "ir/dtype.h"
 #include "ir/tensor.h"
@@ -1412,6 +1413,68 @@ Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &in
       }
     }
   }
+  return SUCCESS;
+}
+
+// 'splittable_inputs' has the same dimensions as 'inputs_shape_'. '0' in 'splittable_inputs' means that
+// the corresponding dimension is unsplittable, otherwise means that the corresponding dimension is splittable.
+// In particular, if the same dimensions exist in 'splittable_inputs',
+// the corresponding dimensions in the strategy are the same.
+// 'sp' is the result of partitions.
+Status GenerateStrategiesForDependentInputs(int64_t stage_id, const Shapes &inputs_shape,
+                                            const Shapes &splittable_inputs, std::vector<StrategyPtr> *sp) {
+  if (inputs_shape.size() != splittable_inputs.size()) {
+    MS_LOG(EXCEPTION) << "Size of inputs_shape and splittable_inputs are not equal.";
+  }
+
+  std::unordered_map<int64_t, int64_t> mp;
+  for (size_t i = 0; i < inputs_shape.size(); ++i) {
+    auto input_shape = inputs_shape[i];
+    auto splittable_input = splittable_inputs[i];
+    for (size_t j = 0; j < input_shape.size(); ++j) {
+      int64_t indice = splittable_input[j];
+      int64_t shape = input_shape[j];
+      if (splittable_input[j] == 0) {
+        continue;
+      }
+      if (mp.find(indice) == mp.end()) {
+        mp[indice] = shape;
+      } else {
+        mp[indice] = std::gcd(mp[indice], shape);
+      }
+    }
+  }
+
+  std::unordered_map<int64_t, size_t> indices_mp;
+  Shape tmp_input_shape;
+  Shapes tmp_splittable_inputs = {Shape(mp.size(), 1)};
+
+  for (const auto &item : mp) {
+    indices_mp[item.first] = tmp_input_shape.size();
+    tmp_input_shape.push_back(item.second);
+  }
+  Shapes tmp_inputs_shape = {tmp_input_shape};
+  std::vector<StrategyPtr> tmp_sp_vector;
+  if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, tmp_splittable_inputs, &tmp_sp_vector) !=
+      SUCCESS) {
+    return FAILED;
+  }
+
+  std::transform(tmp_sp_vector.begin(), tmp_sp_vector.end(), std::back_inserter(*sp),
+                 [stage_id, &indices_mp, &splittable_inputs](const StrategyPtr &sp) {
+                   auto tmp_strategy = sp->GetInputDim().at(0);
+                   Strategys strategies(splittable_inputs);
+                   for (size_t i = 0; i < strategies.size(); ++i) {
+                     for (size_t j = 0; j < strategies[i].size(); ++j) {
+                       if (splittable_inputs[i][j] == 0) {
+                         strategies[i][j] = 1;
+                       } else {
+                         strategies[i][j] = tmp_strategy[indices_mp[splittable_inputs[i][j]]];
+                       }
+                     }
+                   }
+                   return std::make_shared<Strategy>(stage_id, strategies);
+                 });
   return SUCCESS;
 }
 

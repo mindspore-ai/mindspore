@@ -45,7 +45,7 @@ class ArithmeticBase : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Shapes InferExpendShape();
+  Shapes InferExpandShape();
 };
 
 class SubInfo : public ArithmeticBase {
@@ -178,6 +178,90 @@ class LogicalOrInfo : public ArithmeticBase {
                 const PrimitiveAttrs &attrs)
       : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<LogicalOrCost>()) {}
   ~LogicalOrInfo() override = default;
+};
+
+class BitwiseAndInfo : public ArithmeticBase {
+ public:
+  BitwiseAndInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<BitwiseAndCost>()) {}
+  ~BitwiseAndInfo() override = default;
+};
+
+class BitwiseOrInfo : public ArithmeticBase {
+ public:
+  BitwiseOrInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<BitwiseOrCost>()) {}
+  ~BitwiseOrInfo() override = default;
+};
+
+class BitwiseXorInfo : public ArithmeticBase {
+ public:
+  BitwiseXorInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<BitwiseXorCost>()) {}
+  ~BitwiseXorInfo() override = default;
+};
+
+class MulNoNanInfo : public ArithmeticBase {
+ public:
+  MulNoNanInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<MulNoNanCost>()) {}
+  ~MulNoNanInfo() = default;
+};
+
+class TruncateDivInfo : public ArithmeticBase {
+ public:
+  TruncateDivInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<TruncateDivCost>()) {}
+  ~TruncateDivInfo() = default;
+};
+
+class TruncateModInfo : public ArithmeticBase {
+ public:
+  TruncateModInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<TruncateModCost>()) {}
+  ~TruncateModInfo() = default;
+};
+
+class XdivyInfo : public ArithmeticBase {
+ public:
+  XdivyInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+            const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<XdivyCost>()) {}
+  ~XdivyInfo() = default;
+};
+
+class XlogyInfo : public ArithmeticBase {
+ public:
+  XlogyInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+            const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<XlogyCost>()) {}
+  ~XlogyInfo() = default;
+};
+
+class LerpInfo : public ArithmeticBase {
+ public:
+  LerpInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<LerpCost>()) {}
+  ~LerpInfo() = default;
+
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  void ReComputeBatchSplitFlagList() override;
+
+ protected:
+  Status GetAttrs() override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferDevMatrixShape() override;
+  Status InferTensorMap() override;
+
+ private:
+  size_t inputs_size_;
 };
 }  // namespace parallel
 }  // namespace mindspore

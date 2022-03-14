@@ -117,5 +117,7 @@ Status RandomChoiceWithMaskInfo::InitForCostModel(const StrategyPtr &strategy, c
   CheckGPUBackend();
   return OperatorInfo::InitForCostModel(strategy, out_strategy);
 }
+
+void RandomChoiceWithMaskInfo::ReComputeBatchSplitFlagList() { split_flag_list_[0] = false; }
 }  // namespace parallel
 }  // namespace mindspore

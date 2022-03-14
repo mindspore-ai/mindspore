@@ -356,6 +356,9 @@ Status GenerateStrategiesForIndependentInputsBase(int64_t stage_id, size_t dev_n
 // generate strategies for that all inputs' dimensions are independent, such as: ([a, b, c, d])
 Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &inputs_shape,
                                               const Shapes &splittable_inputs, std::vector<StrategyPtr> *sp_vector);
+// generate strategies for that inputs' dimension maybe dependent
+Status GenerateStrategiesForDependentInputs(int64_t stage_id, const Shapes &inputs_shape,
+                                            const Shapes &splittable_inputs, std::vector<StrategyPtr> *sp);
 // generate strategies for that have two inputs, and input0 or input1 maybe broadcast,
 // and the corresponding dimensions that are not broadcast are all relevant dimensions
 // such as: ([a, b, c, d], [a, b, c, d]) or ([b, c, d], [a, b, c, d]) or ([1, c, d], [a, b, c, d])
