@@ -30,11 +30,13 @@ abstract::ShapePtr TensorListFromTensorInferShape(const PrimitivePtr &primitive,
 
   auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (input0_shape.size() < 1) {
-    MS_LOG(ERROR) << "input0_shape.size():" << input0_shape.size() << " must be greater than 0!";
+    MS_LOG(ERROR) << "For '" << op_name << "', input[0] shape size must be greater than 0, but got "
+                  << input0_shape.size() << ".";
   }
   int64_t dim0 = input0_shape[0];
   if (dim0 < 0) {
-    MS_LOG(ERROR) << "input[0] dim0:" << dim0 << " must be greater than or equal to 0!";
+    MS_LOG(ERROR) << "For '" << op_name << "', input[0] dim must be greater than or equal to 0, but got " << dim0
+                  << ".";
   }
   std::vector<int64_t> infer_shape = {1, dim0};
   return std::make_shared<abstract::Shape>(infer_shape);

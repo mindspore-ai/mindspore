@@ -55,7 +55,9 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
   auto size_v = input_values[1];
   auto rank = input_shape.size();
   if (begin_v.size() != rank || size_v.size() != rank) {
-    MS_LOG(EXCEPTION) << "For Slice, the shape of input|begin|size must be equal.";
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', the shape of input|begin|size must be equal, but got input shape: " << rank
+                      << ", begin shape: " << begin_v.size() << ", size shape: " << size_v.size();
   }
 
   for (size_t i = 0; i < size_v.size(); ++i) {

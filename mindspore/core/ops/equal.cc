@@ -37,7 +37,8 @@ AbstractBasePtr EqualInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
     MS_EXCEPTION_IF_NULL(item);
   }
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
+    MS_LOG(EXCEPTION) << "For '" << op_name
+                      << "', the input args userd for infer shape and type, can not be a nullptr.";
   }
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());

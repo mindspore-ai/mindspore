@@ -58,7 +58,8 @@ AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const Pr
       out_shape.push_back(input0[0] * input0[1]);
       break;
     default:
-      MS_LOG(ERROR) << "Unsupported LshProjectionType: " << (int64_t)LshProjectionType(attr_value);
+      MS_LOG(ERROR) << "For '" << op_name << "', type: " << (int64_t)LshProjectionType(attr_value)
+                    << " is unsupported.";
   }
   return std::make_shared<abstract::AbstractTensor>(kInt32, out_shape);
 }

@@ -32,7 +32,8 @@ abstract::ShapePtr PadInferShape(const PrimitivePtr &primitive, const std::vecto
   for (int64_t i = 0; i < size; i++) {
     for (int64_t j = 0; j < 2; j++) {
       if (paddings_attr[LongToSize(i)][LongToSize(j)] < 0) {
-        MS_LOG_ERROR << "All elements of paddings must be >= 0.";
+        MS_LOG_ERROR << "For '" << prim_name << "', All elements of paddings must be >= 0, but got "
+                     << paddings_attr[LongToSize(i)][LongToSize(j)];
       }
     }
   }

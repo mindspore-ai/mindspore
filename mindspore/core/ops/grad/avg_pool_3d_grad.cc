@@ -39,7 +39,7 @@ abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
   if (input_args[0]->isa<abstract::AbstractTuple>()) {  // origin_size is tuple
     origin_input_size = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
   } else {
-    MS_LOG(EXCEPTION) << "origin_input_size must be a tuple for" << op_name;
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', the first input data size must be a tuple.";
   }
   return std::make_shared<abstract::Shape>(origin_input_size);
 }

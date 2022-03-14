@@ -119,14 +119,15 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
     out_shape = {batch, out_h, out_w, channel};
   }
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
-    MS_LOG(EXCEPTION) << "Kernel size is not valid.";
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', Kernel size must be positive, but it's " << kernel_size << ".";
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr MaxPoolInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
+    MS_LOG(EXCEPTION) << "For '" << prim->name()
+                      << "', the input args userd for infer shape and type, can not be a nullptr.";
   }
   auto name = prim->name();
   MS_LOG(DEBUG) << "Infer data type for : " << name;
@@ -134,7 +135,7 @@ TypePtr MaxPoolInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   MS_EXCEPTION_IF_NULL(input_type);
   auto input_tensor_type = input_type->cast<TensorTypePtr>();
   if (input_tensor_type == nullptr) {
-    MS_LOG_EXCEPTION << "The maxpool's input must be a tensor but got " << input_type->ToString();
+    MS_LOG_EXCEPTION << "For '" << name << "', the input must be a tensor but got " << input_type->ToString();
   }
   return input_tensor_type->element();
 }

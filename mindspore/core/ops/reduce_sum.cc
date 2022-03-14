@@ -23,10 +23,11 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t InferImplReduceFuncCheckAxis(const int64_t &axis, const size_t dim) {
+int64_t InferImplReduceFuncCheckAxis(const PrimitivePtr &prim, const int64_t &axis, const size_t dim) {
   int64_t dim_ = static_cast<int64_t>(dim);
   if (axis < -dim_ || axis >= dim_) {
-    MS_LOG(EXCEPTION) << "axis should be in [" << -dim_ << ", " << dim_ << "). But got axis = " << axis;
+    MS_LOG(EXCEPTION) << "For '" << prim->name() << "', axis should be in [" << -dim_ << ", " << dim_
+                      << "). But got axis = " << axis;
   }
   int64_t ret_axis = axis;
   if (axis >= -dim_ && axis < 0) {
@@ -35,8 +36,8 @@ int64_t InferImplReduceFuncCheckAxis(const int64_t &axis, const size_t dim) {
   return ret_axis;
 }
 
-void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape, const ValuePtr &axis,
-                                 bool keep_dims_value) {
+void InferImplReduceFuncCalShape(const PrimitivePtr &primitive, ShapeVector *shape, const ShapeVector &x_shape,
+                                 const ValuePtr &axis, bool keep_dims_value) {
   if (axis->isa<ValueTuple>() || axis->isa<ValueList>()) {
     auto axis_ptr_list =
       axis->isa<ValueTuple>() ? axis->cast<ValueTuplePtr>()->value() : axis->cast<ValueListPtr>()->value();
@@ -48,14 +49,14 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
       ValuePtrList::iterator it;
       if (keep_dims_value) {
         for (it = axis_items.begin(); it != axis_items.end(); ++it) {
-          auto axis_value = InferImplReduceFuncCheckAxis(GetValue<int64_t>(*it), x_shape.size());
+          auto axis_value = InferImplReduceFuncCheckAxis(primitive, GetValue<int64_t>(*it), x_shape.size());
           shape->at(LongToSize(axis_value)) = 1;
         }
       } else {
         std::vector<int64_t> axis_value_list;
         for (it = axis_items.begin(); it != axis_items.end(); ++it) {
           auto axis_value = GetValue<int64_t>(*it);
-          auto axis_positive_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
+          auto axis_positive_value = InferImplReduceFuncCheckAxis(primitive, axis_value, x_shape.size());
           axis_value_list.push_back(axis_positive_value);
         }
         std::sort(axis_value_list.begin(), axis_value_list.end());
@@ -68,14 +69,14 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
   } else if (axis->isa<Int32Imm>() || axis->isa<Int64Imm>()) {
     (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
     int64_t axis_value = GetValue<int64_t>(axis);
-    axis_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
+    axis_value = InferImplReduceFuncCheckAxis(primitive, axis_value, x_shape.size());
     if (keep_dims_value) {
       shape->at(axis_value) = 1;
     } else {
       (void)shape->erase(shape->begin() + axis_value);
     }
   } else {
-    MS_LOG(EXCEPTION) << "Axis should be one of types: [int/tuple/list].";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', Axis should be one of types: [int/tuple/list].";
   }
   return;
 }
@@ -89,7 +90,7 @@ abstract::ShapePtr ReduceSumInferShape(const PrimitivePtr &primitive, const std:
   auto keep_dimis_value_ptr = primitive->GetAttr(kKeepDims);
   MS_EXCEPTION_IF_NULL(keep_dimis_value_ptr);
   if (!keep_dimis_value_ptr->isa<BoolImm>()) {
-    MS_LOG(EXCEPTION) << "Keep_dims should be Bool.";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', keep_dims should be Bool.";
   }
   bool keep_dims = GetValue<bool>(keep_dimis_value_ptr);
   ShapeVector out_shape = {};
@@ -160,13 +161,13 @@ abstract::ShapePtr ReduceSumInferShape(const PrimitivePtr &primitive, const std:
     } else {
       axis_value = axis_ptr;
     }
-    InferImplReduceFuncCalShape(&out_shape, input_shape, axis_value, keep_dims);
+    InferImplReduceFuncCalShape(primitive, &out_shape, input_shape, axis_value, keep_dims);
 
     if (!input_min_shape.empty() && !input_max_shape.empty()) {
       ShapeVector shape_min = {};
       ShapeVector shape_max = {};
-      InferImplReduceFuncCalShape(&shape_min, input_min_shape, axis_value, keep_dims);
-      InferImplReduceFuncCalShape(&shape_max, input_max_shape, axis_value, keep_dims);
+      InferImplReduceFuncCalShape(primitive, &shape_min, input_min_shape, axis_value, keep_dims);
+      InferImplReduceFuncCalShape(primitive, &shape_max, input_max_shape, axis_value, keep_dims);
       return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
     }
     return std::make_shared<abstract::Shape>(out_shape);

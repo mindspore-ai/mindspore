@@ -44,7 +44,7 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   }
   for (size_t i = 0; i < x_shape.size(); ++i) {
     if (SizeToLong(i) == dim_v) continue;
-    MS_LOG(INFO) << "Check " << i << "th x shape";
+    MS_LOG(INFO) << "For '" << prim_name << "', it's now being check " << i << "th x shape.";
     CheckAndConvertUtils::Check("x shape", x_shape[i], kEqual, index_shape[i], prim_name);
   }
   return std::make_shared<abstract::Shape>(index_shape);

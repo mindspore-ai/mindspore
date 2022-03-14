@@ -25,7 +25,7 @@ abstract::ShapePtr SigmoidCrossEntropyWithLogitsInferShape(const PrimitivePtr &p
                                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  MS_LOG(INFO) << "Do infer shape for op " << op_name;
+  MS_LOG(INFO) << "For '" << op_name << "', it's now doing infer shape.";
   const int64_t kInputNum = 2;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
   auto logits_shape = input_args[0]->BuildShape();
@@ -35,8 +35,10 @@ abstract::ShapePtr SigmoidCrossEntropyWithLogitsInferShape(const PrimitivePtr &p
   // logits and label must have the same shape when is not dynamic
   if (!logits_shape_ptr->IsDynamic() && !label_shape_ptr->IsDynamic()) {
     if (*logits_shape != *label_shape) {
-      MS_EXCEPTION(ValueError) << op_name << " evaluator arg label shape " << label_shape->ToString()
-                               << " are not consistent with logits shape " << logits_shape->ToString();
+      MS_EXCEPTION(ValueError)
+        << "For " << op_name
+        << ", evaluator arg label shape should be consistent with logits shape, but got label shape: "
+        << label_shape->ToString() << ", logits shape: " << logits_shape->ToString();
     }
   }
   auto logits_element = logits_shape->cast<abstract::ShapePtr>();

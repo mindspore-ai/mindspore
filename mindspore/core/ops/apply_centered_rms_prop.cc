@@ -25,7 +25,7 @@ abstract::ShapePtr ApplyCenteredRMSPropInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  MS_LOG(INFO) << "Do infer shape for op " << op_name;
+  MS_LOG(INFO) << "For '" << op_name << "', it's now doing infer shape.";
   const int64_t kInputNum = 9;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
   auto var_shape = input_args[0]->BuildShape();

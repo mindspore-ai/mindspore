@@ -55,10 +55,10 @@ AbstractBasePtr TensorListStackInfer(const abstract::AnalysisEnginePtr &, const 
   auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   int64_t num = std::accumulate(input0_shape.begin(), input0_shape.end(), 1LL, std::multiplies<int64_t>());
   if (num == 0) {
-    MS_LOG(ERROR) << "Try to stack a empty tensorlist!";
+    MS_LOG(ERROR) << "For '" << primitive->name() << "', Try to stack a empty tensorlist!";
   }
   if (input_args[1]->BuildShape() == nullptr) {
-    MS_LOG(ERROR) << "ele_shape->data_c() is nullptr";
+    MS_LOG(ERROR) << "For '" << primitive->name() << "', the seceond input data shape is nullptr";
   }
   auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   (void)input1_shape.insert(input1_shape.begin(), 1);

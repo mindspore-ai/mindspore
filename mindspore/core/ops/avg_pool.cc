@@ -99,10 +99,10 @@ abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive, const std::v
   (void)CheckAndConvertUtils::CheckInteger("kernel size", SizeToLong(kernel_size.size()), kEqual, attr_size, op_name);
   (void)CheckAndConvertUtils::CheckInteger("strides size", SizeToLong(strides.size()), kEqual, attr_size, op_name);
   if (std::any_of(strides.begin(), strides.end(), [](int64_t stride) { return stride <= 0; })) {
-    MS_LOG(EXCEPTION) << "Strides is not valid, strides must be positive.";
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', strides must be positive, but it's " << strides << ".";
   }
   if (std::any_of(kernel_size.begin(), kernel_size.end(), [](int64_t size) { return size <= 0; })) {
-    MS_LOG(EXCEPTION) << "Kernel size is not valid, kernel size must be positive.";
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', Kernel size must be positive, but it's " << kernel_size << ".";
   }
   auto kernel_h = kernel_size[2];
   auto kernel_w = kernel_size[3];

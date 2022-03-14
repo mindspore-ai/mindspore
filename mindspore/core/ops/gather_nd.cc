@@ -71,9 +71,10 @@ abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::
   return std::make_shared<abstract::Shape>(output_shape, min_output_shape, max_output_shape);
 }
 
-TypePtr GatherNdInferType(const std::vector<AbstractBasePtr> &input_args) {
+TypePtr GatherNdInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', the input args userd for infer shape and type, can not be a nullptr.";
   }
   std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
   auto x_type = input_args[kInputIndex0]->BuildType();
@@ -89,7 +90,7 @@ AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const Primiti
   const int64_t kInputNum = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
                                            prim_name);
-  auto infer_type = GatherNdInferType(input_args);
+  auto infer_type = GatherNdInferType(primitive, input_args);
   auto infer_shape = GatherNdInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }

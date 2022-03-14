@@ -63,7 +63,8 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
                                              SizeToLong(element0_shape.size()), prim_name);
     for (size_t j = 0; j < element0_rank; ++j) {
       if (j != axis && elementi_shape[j] != element0_shape[j]) {
-        MS_LOG(EXCEPTION) << "element " << i << " shape in input can not concat with first element.";
+        MS_LOG(EXCEPTION) << "For '" << prim_name << "', element " << i
+                          << " shape in input should concat with first element, but it can not.";
       }
     }
     all_shp = all_shp == -1 || elementi_shape[axis] == -1 ? -1 : all_shp + elementi_shape[axis];

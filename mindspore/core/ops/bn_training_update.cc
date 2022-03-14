@@ -28,11 +28,12 @@ namespace ops {
 namespace {
 constexpr auto kBNTrainingUpdateInputNum = 7;
 
-int64_t BNTrainingUpdateGetAndCheckFormat(const ValuePtr &value) {
+int64_t BNTrainingUpdateGetAndCheckFormat(const PrimitivePtr &primitive, const ValuePtr &value) {
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
   if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
-    MS_LOG(EXCEPTION) << "data format is invalid, only support NCHW, NHWC and NCDHW";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', data format is invalid, only support NCHW, NHWC and NCDHW.";
   }
   return data_format;
 }
@@ -52,7 +53,7 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
   auto variance_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
   auto data_format_ptr = primitive->GetAttr("format");
   MS_EXCEPTION_IF_NULL(data_format_ptr);
-  int64_t data_format = BNTrainingUpdateGetAndCheckFormat(data_format_ptr);
+  int64_t data_format = BNTrainingUpdateGetAndCheckFormat(primitive, data_format_ptr);
   size_t c_axis = kInputIndex1;
   if (data_format == Format::NHWC) {
     c_axis = kInputIndex3;
