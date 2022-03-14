@@ -32,9 +32,9 @@ int ElementAddRelu(const float *in0, const float *in1, float *out, int size);
 int ElementAddRelu6(const float *in0, const float *in1, float *out, int size);
 int ElementAddInt(const int *in0, const int *in1, int *out, int size);
 int ElementOptAdd(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
-int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 int ElementOptAddRelu(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
 int ElementOptAddRelu6(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
+int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 int BroadcastAdd(const float *in0, const float *in1, float *tile_in0, float *tile_in1, float *out, int size,
                  ArithmeticParameter *param);
 

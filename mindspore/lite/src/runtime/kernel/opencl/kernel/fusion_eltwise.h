@@ -31,70 +31,69 @@
 
 using mindspore::schema::ActivationType;
 using mindspore::schema::PrimitiveType;
-using mindspore::schema::PrimitiveType_MAX;
 
 namespace mindspore::kernel {
 constexpr schema::PrimitiveType PrimitiveType_FusionEltwise = static_cast<schema::PrimitiveType>(-100);
 
 enum EltwiseOperator {
   // Arithmetic Primitive
-  Operator_Mul = PrimitiveType_MulFusion,
-  Operator_Add = PrimitiveType_AddFusion,
-  Operator_Sub = PrimitiveType_SubFusion,
-  Operator_Div = PrimitiveType_DivFusion,
-  Operator_LogicalAnd = PrimitiveType_LogicalAnd,
-  Operator_LogicalOr = PrimitiveType_LogicalOr,
-  Operator_Maximum = PrimitiveType_Maximum,
-  Operator_Minimum = PrimitiveType_Minimum,
-  Operator_FloorDiv = PrimitiveType_FloorDiv,
-  Operator_FloorMod = PrimitiveType_FloorMod,
-  Operator_SquaredDifference = PrimitiveType_SquaredDifference,
-  Operator_Equal = PrimitiveType_Equal,
-  Operator_NotEqual = PrimitiveType_NotEqual,
-  Operator_Less = PrimitiveType_Less,
-  Operator_LessEqual = PrimitiveType_LessEqual,
-  Operator_Greater = PrimitiveType_Greater,
-  Operator_GreaterEqual = PrimitiveType_GreaterEqual,
-  Operator_Eltwise = PrimitiveType_Eltwise,
+  Operator_Mul = schema::PrimitiveType_MulFusion,
+  Operator_Add = schema::PrimitiveType_AddFusion,
+  Operator_Sub = schema::PrimitiveType_SubFusion,
+  Operator_Div = schema::PrimitiveType_DivFusion,
+  Operator_LogicalAnd = schema::PrimitiveType_LogicalAnd,
+  Operator_LogicalOr = schema::PrimitiveType_LogicalOr,
+  Operator_Maximum = schema::PrimitiveType_Maximum,
+  Operator_Minimum = schema::PrimitiveType_Minimum,
+  Operator_FloorDiv = schema::PrimitiveType_FloorDiv,
+  Operator_FloorMod = schema::PrimitiveType_FloorMod,
+  Operator_SquaredDifference = schema::PrimitiveType_SquaredDifference,
+  Operator_Equal = schema::PrimitiveType_Equal,
+  Operator_NotEqual = schema::PrimitiveType_NotEqual,
+  Operator_Less = schema::PrimitiveType_Less,
+  Operator_LessEqual = schema::PrimitiveType_LessEqual,
+  Operator_Greater = schema::PrimitiveType_Greater,
+  Operator_GreaterEqual = schema::PrimitiveType_GreaterEqual,
+  Operator_Eltwise = schema::PrimitiveType_Eltwise,
 
   // ArithmeticSelf Primitive
-  Operator_Abs = PrimitiveType_Abs,
-  Operator_Ceil = PrimitiveType_Ceil,
-  Operator_Cos = PrimitiveType_Cos,
-  Operator_Exp = PrimitiveType_ExpFusion,
-  Operator_Floor = PrimitiveType_Floor,
-  Operator_Log = PrimitiveType_Log,
-  Operator_LogicalNot = PrimitiveType_LogicalNot,
-  Operator_Round = PrimitiveType_Round,
-  Operator_Rsqrt = PrimitiveType_Rsqrt,
-  Operator_Sin = PrimitiveType_Sin,
-  Operator_Neg = PrimitiveType_Neg,
-  Operator_Sqrt = PrimitiveType_Sqrt,
-  Operator_Square = PrimitiveType_Square,
+  Operator_Abs = schema::PrimitiveType_Abs,
+  Operator_Ceil = schema::PrimitiveType_Ceil,
+  Operator_Cos = schema::PrimitiveType_Cos,
+  Operator_Exp = schema::PrimitiveType_ExpFusion,
+  Operator_Floor = schema::PrimitiveType_Floor,
+  Operator_Log = schema::PrimitiveType_Log,
+  Operator_LogicalNot = schema::PrimitiveType_LogicalNot,
+  Operator_Round = schema::PrimitiveType_Round,
+  Operator_Rsqrt = schema::PrimitiveType_Rsqrt,
+  Operator_Sin = schema::PrimitiveType_Sin,
+  Operator_Neg = schema::PrimitiveType_Neg,
+  Operator_Sqrt = schema::PrimitiveType_Sqrt,
+  Operator_Square = schema::PrimitiveType_Square,
 
   // Other Primitive
   Operator_Scale = schema::PrimitiveType_ScaleFusion,
 
   // Activation
-  Operator_Act_NO_ACTIVATION = schema::ActivationType_NO_ACTIVATION + PrimitiveType_MAX,
-  Operator_Act_RELU = schema::ActivationType_RELU + PrimitiveType_MAX,
-  Operator_Act_SIGMOID = schema::ActivationType_SIGMOID + PrimitiveType_MAX,
-  Operator_Act_RELU6 = schema::ActivationType_RELU6 + PrimitiveType_MAX,
-  Operator_Act_ELU = schema::ActivationType_ELU + PrimitiveType_MAX,
-  Operator_Act_LEAKY_RELU = schema::ActivationType_LEAKY_RELU + PrimitiveType_MAX,
-  Operator_Act_ABS = schema::ActivationType_ABS + PrimitiveType_MAX,
-  Operator_Act_RELU1 = schema::ActivationType_RELU1 + PrimitiveType_MAX,
-  Operator_Act_SOFTSIGN = schema::ActivationType_SOFTSIGN + PrimitiveType_MAX,
-  Operator_Act_SOFTPLUS = schema::ActivationType_SOFTPLUS + PrimitiveType_MAX,
-  Operator_Act_TANH = schema::ActivationType_TANH + PrimitiveType_MAX,
-  Operator_Act_SELU = schema::ActivationType_SELU + PrimitiveType_MAX,
-  Operator_Act_HSWISH = schema::ActivationType_HSWISH + PrimitiveType_MAX,
-  Operator_Act_HSIGMOID = schema::ActivationType_HSIGMOID + PrimitiveType_MAX,
-  Operator_Act_THRESHOLDRELU = schema::ActivationType_THRESHOLDRELU + PrimitiveType_MAX,
-  Operator_Act_LINEAR = schema::ActivationType_LINEAR + PrimitiveType_MAX,
-  Operator_Act_HARD_TANH = schema::ActivationType_HARD_TANH + PrimitiveType_MAX,
-  Operator_Act_SIGN = schema::ActivationType_SIGN + PrimitiveType_MAX,
-  Operator_Act_SWISH = schema::ActivationType_SWISH + PrimitiveType_MAX,
+  Operator_Act_NO_ACTIVATION = schema::ActivationType_NO_ACTIVATION + schema::PrimitiveType_MAX,
+  Operator_Act_RELU = schema::ActivationType_RELU + schema::PrimitiveType_MAX,
+  Operator_Act_SIGMOID = schema::ActivationType_SIGMOID + schema::PrimitiveType_MAX,
+  Operator_Act_RELU6 = schema::ActivationType_RELU6 + schema::PrimitiveType_MAX,
+  Operator_Act_ELU = schema::ActivationType_ELU + schema::PrimitiveType_MAX,
+  Operator_Act_LEAKY_RELU = schema::ActivationType_LEAKY_RELU + schema::PrimitiveType_MAX,
+  Operator_Act_ABS = schema::ActivationType_ABS + schema::PrimitiveType_MAX,
+  Operator_Act_RELU1 = schema::ActivationType_RELU1 + schema::PrimitiveType_MAX,
+  Operator_Act_SOFTSIGN = schema::ActivationType_SOFTSIGN + schema::PrimitiveType_MAX,
+  Operator_Act_SOFTPLUS = schema::ActivationType_SOFTPLUS + schema::PrimitiveType_MAX,
+  Operator_Act_TANH = schema::ActivationType_TANH + schema::PrimitiveType_MAX,
+  Operator_Act_SELU = schema::ActivationType_SELU + schema::PrimitiveType_MAX,
+  Operator_Act_HSWISH = schema::ActivationType_HSWISH + schema::PrimitiveType_MAX,
+  Operator_Act_HSIGMOID = schema::ActivationType_HSIGMOID + schema::PrimitiveType_MAX,
+  Operator_Act_THRESHOLDRELU = schema::ActivationType_THRESHOLDRELU + schema::PrimitiveType_MAX,
+  Operator_Act_LINEAR = schema::ActivationType_LINEAR + schema::PrimitiveType_MAX,
+  Operator_Act_HARD_TANH = schema::ActivationType_HARD_TANH + schema::PrimitiveType_MAX,
+  Operator_Act_SIGN = schema::ActivationType_SIGN + schema::PrimitiveType_MAX,
+  Operator_Act_SWISH = schema::ActivationType_SWISH + schema::PrimitiveType_MAX,
 };
 
 struct FusionEltwiseParameter {
@@ -140,7 +139,7 @@ struct FusionEltwiseParameter {
 };
 
 constexpr EltwiseOperator Activation2Operator(ActivationType act_type) {
-  return static_cast<EltwiseOperator>(act_type + PrimitiveType_MAX);
+  return static_cast<EltwiseOperator>(act_type + schema::PrimitiveType_MAX);
 }
 
 FusionEltwiseParameter *CreateFusionEltwiseParameter(

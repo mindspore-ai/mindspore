@@ -83,15 +83,15 @@ int BiasCPUKernel::ChooseThreadCuttingstrategy() {
   int64_t block_size = 1;
 #ifdef SERVER_INFERENCE
   block_size = MSMAX(total_num_ / op_parameter_->thread_num_, kMinCostPerThread);
-  int thread_num = UP_DIV(total_num_, block_size);
+  thread_num_ = UP_DIV(total_num_, block_size);
 #else
-  int thread_num = op_parameter_->thread_num_;
+  thread_num_ = op_parameter_->thread_num_;
 #endif
-  if (thread_num < 1) {
-    thread_num = 1;
+  if (thread_num_ < 1) {
+    thread_num_ = 1;
   }
-  block_size = total_num_ / thread_num;
-  int64_t remain_data = total_num_ - block_size * thread_num;
+  block_size = total_num_ / thread_num_;
+  int64_t remain_data = total_num_ - block_size * thread_num_;
   int64_t split_point = 0;
   while (split_point < total_num_) {
     split_points_.push_back(split_point);

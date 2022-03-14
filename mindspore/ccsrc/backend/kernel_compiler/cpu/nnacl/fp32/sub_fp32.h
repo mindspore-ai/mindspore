@@ -32,9 +32,9 @@ int ElementSubInt(const int *in0, const int *in1, int *out, int size);
 int ElementSubRelu(const float *in0, const float *in1, float *out, int size);
 int ElementSubRelu6(const float *in0, const float *in1, float *out, int size);
 int ElementOptSub(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
+int ElementOptSubInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 int ElementOptSubRelu(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
 int ElementOptSubRelu6(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
-int ElementOptSubInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 
 #ifdef __cplusplus
 }

@@ -21,28 +21,53 @@
 #include <arm_neon.h>
 #endif
 #include "nnacl/op_base.h"
+#include "nnacl/base/arithmetic_base.h"
 #include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 int ElementEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
+int ElementOptEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                        const ArithmeticParameter *param);
 int ElementEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
+int ElementOptEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                         const ArithmeticParameter *param);
 
 int ElementNotEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
+int ElementOptNotEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                           const ArithmeticParameter *param);
 int ElementNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
+int ElementOptNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                            const ArithmeticParameter *param);
 
 int ElementLessFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
+int ElementOptLessFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                       const ArithmeticParameter *param);
 int ElementLessInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
+int ElementOptLessInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                        const ArithmeticParameter *param);
 
 int ElementLessEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
+int ElementOptLessEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                            const ArithmeticParameter *param);
 int ElementLessEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
+int ElementOptLessEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                             const ArithmeticParameter *param);
 
 int ElementGreaterFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
+int ElementOptGreaterFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                          const ArithmeticParameter *param);
 int ElementGreaterInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
+int ElementOptGreaterInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                           const ArithmeticParameter *param);
 
 int ElementGreaterEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size);
+int ElementOptGreaterEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                               const ArithmeticParameter *param);
 int ElementGreaterEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size);
+int ElementOptGreaterEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                                const ArithmeticParameter *param);
 #ifdef __cplusplus
 }
 #endif

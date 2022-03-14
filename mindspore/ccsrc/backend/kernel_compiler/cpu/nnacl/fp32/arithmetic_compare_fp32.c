@@ -26,10 +26,42 @@ int ElementEqualFp32(const float *input0, const float *input1, uint8_t *output, 
   return NNACL_OK;
 }
 
+int ElementOptEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                        const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] == input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] == input1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input0[i] == input1[i];
   }
+  return NNACL_OK;
+}
+
+int ElementOptEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                         const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] == input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] == input1[0];
+    }
+  }
+
   return NNACL_OK;
 }
 
@@ -41,10 +73,43 @@ int ElementNotEqualFp32(const float *input0, const float *input1, uint8_t *outpu
   return NNACL_OK;
 }
 
+// not equal
+int ElementOptNotEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                           const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] != input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] != input1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input0[i] != input1[i];
   }
+  return NNACL_OK;
+}
+
+int ElementOptNotEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                            const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] != input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] != input1[0];
+    }
+  }
+
   return NNACL_OK;
 }
 
@@ -56,10 +121,42 @@ int ElementLessFp32(const float *input0, const float *input1, uint8_t *output, i
   return NNACL_OK;
 }
 
+int ElementOptLessFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                       const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] < input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] < input1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementLessInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input0[i] < input1[i];
   }
+  return NNACL_OK;
+}
+
+int ElementOptLessInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                        const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] < input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] < input1[0];
+    }
+  }
+
   return NNACL_OK;
 }
 
@@ -71,10 +168,42 @@ int ElementLessEqualFp32(const float *input0, const float *input1, uint8_t *outp
   return NNACL_OK;
 }
 
+int ElementOptLessEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                            const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] <= input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] <= input1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementLessEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input0[i] <= input1[i];
   }
+  return NNACL_OK;
+}
+
+int ElementOptLessEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                             const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] <= input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] <= input1[0];
+    }
+  }
+
   return NNACL_OK;
 }
 
@@ -86,6 +215,22 @@ int ElementGreaterFp32(const float *input0, const float *input1, uint8_t *output
   return NNACL_OK;
 }
 
+int ElementOptGreaterFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                          const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] > input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] > input1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementGreaterInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input0[i] > input1[i];
@@ -93,6 +238,21 @@ int ElementGreaterInt32(const int32_t *input0, const int32_t *input1, uint8_t *o
   return NNACL_OK;
 }
 
+int ElementOptGreaterInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                           const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] > input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] > input1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
 // greater equal
 int ElementGreaterEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
@@ -101,9 +261,41 @@ int ElementGreaterEqualFp32(const float *input0, const float *input1, uint8_t *o
   return NNACL_OK;
 }
 
+int ElementOptGreaterEqualFp32(const float *input0, const float *input1, uint8_t *output, int element_size,
+                               const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] >= input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] >= input1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementGreaterEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input0[i] >= input1[i];
   }
+  return NNACL_OK;
+}
+
+int ElementOptGreaterEqualInt32(const int32_t *input0, const int32_t *input1, uint8_t *output, int element_size,
+                                const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < element_size; i++) {
+      output[i] = input0[0] >= input1[i];
+    }
+  } else {
+    for (; i < element_size; i++) {
+      output[i] = input0[i] >= input1[0];
+    }
+  }
+
   return NNACL_OK;
 }

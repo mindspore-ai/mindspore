@@ -57,10 +57,10 @@
 #define MS_FLOOR512_F32 _mm512_floor_ps
 #define MS_CEIL512_F32 _mm512_ceil_ps
 #define MS_MUL512_F32(src1, src2) _mm512_mul_ps(src1, src2)
-#define MS_MUL512_EPI32(src1, src2) _mm512_mul_epi32(src1, src2)
+#define MS_MUL512_EPI32(src1, src2) _mm512_mullo_epi32(src1, src2)
 #define MS_DIV512_F32(src1, src2) _mm512_div_ps(src1, src2)
 #define MS_MUL512_N_F32(src1, src2) _mm512_mul_ps(src1, _mm512_set1_ps(src2))
-#define MS_MUL512_N_EPI32(src1, src2) _mm512_mul_epi32(src1, _mm512_set1_epi32(src2))
+#define MS_MUL512_N_EPI32(src1, src2) _mm512_mullo_epi32(src1, _mm512_set1_epi32(src2))
 #define MS_DIV512_N_F32(src1, src2) _mm512_div_ps(src1, _mm512_set1_ps(src2))
 #define MS_SLLI512_EPI32(src1, src2) _mm512_slli_epi32(src1, src2)
 #define MS_CVT512PS_EPI32(src) _mm512_cvttps_epi32(src)
