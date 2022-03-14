@@ -28,7 +28,11 @@ namespace py = pybind11;
 namespace mindspore {
 class GilScopedLongRunningHook : public ScopedLongRunningHook {
  public:
-  void Enter() override { release_ = std::make_unique<py::gil_scoped_release>(); }
+  void Enter() override {
+    if (PyGILState_Check() != 0) {
+      release_ = std::make_unique<py::gil_scoped_release>();
+    }
+  }
   void Leave() override { release_ = nullptr; }
 
  private:
