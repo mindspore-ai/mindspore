@@ -28,6 +28,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
+#ifdef SERVER_INFERENCE
+constexpr int kMinCostPerThread = 1 << 16;
+#endif
 int BiasAddRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<BiasCPUKernel *>(cdata);
@@ -72,38 +75,42 @@ int BiasCPUKernel::ReSize() {
   }
   MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(inner_num_, outer_num_), RET_ERROR, "mul overflow.");
   total_num_ = inner_num_ * outer_num_;
-  GetThreadSegmentInfos();
-  return RET_OK;
+  return ChooseThreadCuttingstrategy();
 }
 
-void BiasCPUKernel::GetThreadSegmentInfos() {
-  split_start_points_ = std::vector<int64_t>(op_parameter_->thread_num_, 0);
-  split_end_points_ = std::vector<int64_t>(op_parameter_->thread_num_, 0);
-  int64_t step = MSMAX(total_num_ / op_parameter_->thread_num_, C128NUM);
-  int64_t remain_data = MSMAX(total_num_ - step * op_parameter_->thread_num_, 0);
-  for (int i = 0; i < op_parameter_->thread_num_; ++i) {
-    if (i == 0) {
-      split_end_points_[i] = MSMIN(step, total_num_) + (i < remain_data ? 1 : 0);
-      continue;
-    }
-    split_start_points_[i] = split_end_points_[i - 1];
-    if (split_start_points_[i] >= total_num_) {
-      split_start_points_[i] = 0;
-      break;
-    }
-    split_end_points_[i] =
-      split_start_points_[i] + MSMIN(step, total_num_ - split_start_points_[i]) + (i < remain_data ? 1 : 0);
+int BiasCPUKernel::ChooseThreadCuttingstrategy() {
+  split_points_.clear();
+  int64_t block_size = 1;
+#ifdef SERVER_INFERENCE
+  block_size = MSMAX(total_num_ / op_parameter_->thread_num_, kMinCostPerThread);
+  int thread_num = UP_DIV(total_num_, block_size);
+#else
+  int thread_num = op_parameter_->thread_num_;
+#endif
+  if (thread_num < 1) {
+    thread_num = 1;
   }
-  MS_ASSERT(inner_num_ != 0);
-  if (inner_num_ >= C64NUM && step / inner_num_ >= C6NUM) {
+  block_size = total_num_ / thread_num;
+  int64_t remain_data = total_num_ - block_size * thread_num;
+  int64_t split_point = 0;
+  while (split_point < total_num_) {
+    split_points_.push_back(split_point);
+    split_point += block_size;
+    if (remain_data > 0) {
+      ++split_point;
+      --remain_data;
+    }
+  }
+  if (inner_num_ >= C64NUM && block_size / inner_num_ >= C6NUM) {
     batch_priority_ = true;
   } else {
     batch_priority_ = false;
   }
+  return RET_OK;
 }
 
 int BiasCPUKernel::Run() {
-  auto ret = ParallelLaunch(this->ms_context_, BiasAddRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, BiasAddRun, this, split_points_.size());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BiasAddRun error error_code[" << ret << "]";
   }
@@ -114,11 +121,12 @@ int BiasCPUKernel::DoExecute(int task_id) {
   auto input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto bias = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto output = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  if (split_start_points_[task_id] == split_end_points_[task_id]) {
-    return lite::RET_OK;
+  int64_t block_start = split_points_[task_id];
+  int64_t block_end = total_num_;
+  if (static_cast<size_t>(task_id + 1) < split_points_.size()) {
+    block_end = split_points_[task_id + 1];
   }
-  BiasAddOpt(input, bias, output, split_start_points_[task_id], split_end_points_[task_id], inner_num_,
-             batch_priority_);
+  BiasAddOpt(input, bias, output, block_start, block_end, inner_num_, batch_priority_);
   return lite::RET_OK;
 }
 
