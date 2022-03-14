@@ -286,6 +286,7 @@ def grad(fn, grad_position=0, sens_param=False):
         return grad_by_position_with_sens(fn, None, grad_position)
     return grad_by_position(fn, None, grad_position)
 
+
 @constexpr
 def _trans_jet_inputs(primals_item, series_item):
     """Trans inputs of jet"""
@@ -297,6 +298,7 @@ def _trans_jet_inputs(primals_item, series_item):
     if dtype(primals_item) in [mstype.int32, mstype.int64]:
         return cast(primals_item, mstype.float64), cast(series_item, mstype.float64)
     return primals_item, series_item
+
 
 @constexpr
 def _check_jet_inputs(primals, series):
@@ -319,7 +321,9 @@ def _check_jet_inputs(primals, series):
             check_series.append(trans_series_item)
     return check_primals, check_series
 
+
 _taylor = _TaylorOperation()
+
 
 def jet(fn, primals, series):
     """

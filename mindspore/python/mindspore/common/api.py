@@ -523,6 +523,7 @@ class _PynativeExecutor:
         return self._executor.check_run(grad, obj, *args, *(kwargs.values()))
 
     def set_grad_position(self, grad, grad_position):
+        """Set position of grad"""
         return self._executor.set_grad_position(grad, grad_position)
 
     def grad(self, grad, obj, weights, grad_position, *args, **kwargs):
