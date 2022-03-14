@@ -44,6 +44,7 @@ def _approx_sq_grad(exp_avg_sq_row, exp_avg_sq_col):
     return P.Mul()(r_factor, c_factor)
 
 
+reduce_mean_keep_alive = P.ReduceMean().add_prim_attr("keep_alive", True)
 _adafactor_opt = C.MultitypeFuncGraph("adafactor_opt")
 
 
@@ -78,13 +79,13 @@ def _run_opt_with_one_number(eps, clip_threshold, beta1, beta2t, weight_decay, s
     if factored:
         exp_avg_sq_row_update = F.cast(exp_avg_sq_row, grad_dtype)
         exp_avg_sq_row_update = P.Mul()(exp_avg_sq_row_update, beta2t)
-        update_mean = P.ReduceMean()(update, -1) * (1.0 - beta2t)
+        update_mean = reduce_mean_keep_alive(update, -1) * (1.0 - beta2t)
         exp_avg_sq_row_update = P.Add()(exp_avg_sq_row_update, update_mean)
         exp_avg_sq_row_update = F.assign(exp_avg_sq_row, F.cast(exp_avg_sq_row_update, F.dtype(exp_avg_sq_row)))
 
         exp_avg_sq_col_update = F.cast(exp_avg_sq_col, grad_dtype)
         exp_avg_sq_col_update = P.Mul()(exp_avg_sq_col_update, beta2t)
-        update_mean = P.ReduceMean()(update, -2) * (1.0 - beta2t)
+        update_mean = reduce_mean_keep_alive(update, -2) * (1.0 - beta2t)
         exp_avg_sq_col_update = P.Add()(exp_avg_sq_col_update, update_mean)
         exp_avg_sq_col_update = F.assign(exp_avg_sq_col, F.cast(exp_avg_sq_col_update, F.dtype(exp_avg_sq_col)))
 
