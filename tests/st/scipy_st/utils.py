@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """utility functions for mindspore.scipy st tests"""
+import platform
 from typing import List
 from functools import cmp_to_key
 
@@ -213,3 +214,7 @@ def compare_eigen_decomposition(src_res, tgt_res, compute_v, rtol, atol):
         phases = onp.sum(sv.conj() * mv, -2, keepdims=True)
         sv = phases / onp.abs(phases) * sv
         assert onp.allclose(sv, mv, rtol=rtol, atol=atol)
+
+
+def get_platform():
+    return platform.system().lower()

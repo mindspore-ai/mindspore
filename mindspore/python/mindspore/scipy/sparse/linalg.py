@@ -367,7 +367,11 @@ class CGv2(nn.Cell):
         return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
 
     def bprop(self, A, b, x0, tol, atol, maxiter, M, out, dout):
-        """Grad definition for `CGv2` Cell."""
+        """
+        Derivatives of `cg` are implemented via implicit differentiation with
+        another `cg` solve, rather than by differentiating *through* the solver.
+        They will be accurate only if both solves converge.
+        """
         n = b.shape[0]
         if not isinstance(M, (Tensor, CSRTensor)):
             M = F.eye(n, n, b.dtype)
