@@ -17,6 +17,7 @@
 package com.mindspore;
 
 import com.mindspore.config.RunnerConfig;
+import com.mindspore.lite.NativeLibrary;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,13 @@ import java.util.List;
  */
 public class ModelParallelRunner {
     static {
-        System.loadLibrary("mindspore-lite-jni");
+        try {
+            NativeLibrary.load();
+        } catch (Exception e) {
+            System.err.println("Failed to load MindSporLite native library.");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private long modelParallelRunnerPtr;

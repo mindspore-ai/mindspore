@@ -16,9 +16,9 @@
 
 package com.mindspore;
 
-import com.mindspore.config.ModelType;
 import com.mindspore.config.MSContext;
 import com.mindspore.config.TrainCfg;
+import com.mindspore.lite.NativeLibrary;
 
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
@@ -26,7 +26,13 @@ import java.util.List;
 
 public class Model {
     static {
-        System.loadLibrary("mindspore-lite-jni");
+        try {
+            NativeLibrary.load();
+        } catch (Exception e) {
+            System.err.println("Failed to load MindSporLite native library.");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private long modelPtr = 0;
