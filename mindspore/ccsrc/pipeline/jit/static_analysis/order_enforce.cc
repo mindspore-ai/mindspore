@@ -200,6 +200,30 @@ class OrderEnforcer {
     return IsPrimitiveCNode(node, prim::kPrimExpandDims) || IsPrimitiveCNode(node, prim::kPrimBatchNormGrad);
   }
 
+  // Gets primitive if the node is a primitive value node.
+  PrimitivePtr GetPrimitive(const AnfNodePtr &node) {
+    PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
+    auto do_sig = dyn_cast<mindspore::prim::DoSignaturePrimitive>(prim);
+    if (do_sig) {
+      auto val = do_sig->function();
+      return dyn_cast<Primitive>(val);
+    }
+    return prim;
+  }
+
+  bool IsSpecialParallelPrimitive(const AnfNodePtr &node) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto prim = GetPrimitive(cnode->input(0));
+    if (prim == nullptr) {
+      return false;
+    }
+    if (prim->HasAttr(GRAPH_FLAG_ORDER_ENFORCE_SKIP)) {
+      return true;
+    }
+    return false;
+  }
+
   void HandleSideEffectNode(const CNodePtr &cnode, const CNodePtr &update_state) {
     MS_EXCEPTION_IF_NULL(cnode);
     // Find refs from the cnode inputs.
@@ -221,6 +245,9 @@ class OrderEnforcer {
           if (IsSpecialPrimitive(load_user)) {
             auto special_real_users = FindNodeUsers(load_user);
             real_users.insert(special_real_users.begin(), special_real_users.end());
+          } else if (IsSpecialParallelPrimitive(load_user)) {
+            auto parallel__users = FindParallelNodeUsers(load_user);
+            real_users.insert(parallel__users.begin(), parallel__users.end());
           } else {
             (void)real_users.insert(load_user);
           }
@@ -332,6 +359,27 @@ class OrderEnforcer {
       auto &user_node = user.first;
       if (pred == nullptr || pred(user_node)) {
         (void)users.emplace(user_node);
+      }
+    }
+    return users;
+  }
+
+  // Find real user nodes for the given parallel nodes.
+  mindspore::HashSet<AnfNodePtr> FindParallelNodeUsers(const AnfNodePtr &node) {
+    auto &node_users = manager_->node_users();
+    auto iter = node_users.find(node);
+    if (iter == node_users.end()) {
+      return {};
+    }
+    mindspore::HashSet<AnfNodePtr> users;
+    for (auto &user : iter->second) {
+      auto &user_node = user.first;
+      if (!IsSpecialParallelPrimitive(user_node)) {
+        (void)users.emplace(user_node);
+      } else {
+        mindspore::HashSet<AnfNodePtr> real_users;
+        real_users = FindParallelNodeUsers(user_node);
+        users.insert(real_users.begin(), real_users.end());
       }
     }
     return users;
