@@ -288,6 +288,9 @@ class Iteration {
   std::atomic<IterationResult> iteration_result_;
 
   nlohmann::json new_instance_json_;
+
+  // mutex for iter move to next, avoid core dump
+  std::mutex iter_move_mtx_;
 };
 }  // namespace server
 }  // namespace fl

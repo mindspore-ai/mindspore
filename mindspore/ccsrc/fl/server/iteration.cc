@@ -411,6 +411,7 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
     return;
   }
 
+  std::unique_lock<std::mutex> lock(iter_move_mtx_);
   NotifyLeaderMoveToNextIterRequest notify_leader_to_next_iter_req;
   (void)notify_leader_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &rank = notify_leader_to_next_iter_req.rank();

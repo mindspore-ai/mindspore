@@ -95,6 +95,13 @@ bool WorkerNode::Finish(const uint32_t &timeout) {
     MS_LOG(INFO) << "The node is already stop.";
     return true;
   }
+
+  if (!is_connected_to_scheduler_) {
+    MS_LOG(INFO) << "[Worker finish]: Not connect to scheduler, no need to disconnect!";
+    return true;
+  }
+  client_to_scheduler_->set_disconnected();
+
   bool res = Disconnect(client_to_scheduler_, timeout);
   if (res) {
     MS_LOG(INFO) << "[Worker finish]: 2. Successfully finish worker node!";
