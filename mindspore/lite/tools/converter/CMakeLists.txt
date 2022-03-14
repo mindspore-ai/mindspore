@@ -14,15 +14,9 @@ set(CCSRC_SRC
 
 include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 
-if(NOT WIN32 AND NOT MSLITE_ENABLE_ACL)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -rdynamic -fvisibility=hidden")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -fvisibility=hidden")
-endif()
-
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/converter_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter_flags.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/anf_transform.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graphdef_transform.cc
