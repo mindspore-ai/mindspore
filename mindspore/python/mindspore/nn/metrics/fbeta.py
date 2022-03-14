@@ -143,6 +143,9 @@ class F1(Fbeta):
     .. math::
         F_1=\frac{2\cdot true\_positive}{2\cdot true\_positive + false\_negative + false\_positive}
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import nn, Tensor

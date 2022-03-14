@@ -55,6 +55,9 @@ def rearrange_inputs(func):
 
     Returns:
         Callable, used to exchange metadata between functions.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     @functools.wraps(func)
     def wrapper(self, *inputs):
@@ -74,6 +77,9 @@ class Metric(metaclass=ABCMeta):
 
     Never use this class directly, but instantiate one of its subclasses instead. For examples,
     :class:`mindspore.nn.MAE`, :class:`mindspore.nn.Recall` etc.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     def __init__(self):
         self._indexes = None

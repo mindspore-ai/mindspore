@@ -79,6 +79,13 @@
         - **ValueError** - `layout` 长度小于6。
         - **TypeError** - `layout` 不是元组。
 
+    .. py:method:: inited_param
+        :property:
+
+        用于调用 `init_data` 后，获取当前的Parameter。
+
+        如果 `self` 是没有数据的Parameter，则默认返回为None；在调用 `init_data` 方法对Parameter初始化数据后，当前Parameter会被记录在此属性中。
+
     .. py:method:: layerwise_parallel
         :property:
 
