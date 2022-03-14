@@ -26,6 +26,7 @@ struct RunnerConfig {
   std::shared_ptr<Context> context = nullptr;
   int workers_num = 0;
 };
+class ModelPool;
 
 /// \brief The ModelParallelRunner class is used to define a MindSpore ModelParallelRunner, facilitating Model
 /// management.
@@ -62,6 +63,9 @@ class MS_API ModelParallelRunner {
   /// \return Status.
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
+ private:
+  std::shared_ptr<ModelPool> model_pool_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_PARALLEL_RUNNER_H

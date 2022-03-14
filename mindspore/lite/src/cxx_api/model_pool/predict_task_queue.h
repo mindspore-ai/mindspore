@@ -37,8 +37,8 @@ struct PredictTask {
 
 class PredictTaskQueue {
  public:
-  static PredictTaskQueue *GetInstance();
-  ~PredictTaskQueue();
+  PredictTaskQueue() = default;
+  ~PredictTaskQueue() = default;
 
   void PushPredictTask(std::shared_ptr<PredictTask> task, int node_id);
   void WaitUntilPredictActive(const std::shared_ptr<PredictTask> &task);
@@ -47,13 +47,13 @@ class PredictTaskQueue {
   int GetTaskNum(int node_id);
   void SetTaskQueueNum(int num);
 
-  bool IsPredictTaskDone() { return predict_task_done_; }
-  int GetWaitModelNum(int node_id) { return waite_worker_num_.at(node_id); }
+  bool IsPredictTaskDone() const { return predict_task_done_; }
+  void SetPredictTaskDone();
+  int GetWaitModelNum(int node_id) const { return waite_worker_num_.at(node_id); }
   void DecreaseWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) -= num; }
   void IncreaseWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) += num; }
 
  private:
-  PredictTaskQueue() = default;
   std::vector<std::queue<std::shared_ptr<PredictTask>>> predict_task_;
   std::vector<int> waite_worker_num_;
   std::mutex mtx_predict_task_;
