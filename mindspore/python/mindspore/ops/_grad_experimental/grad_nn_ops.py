@@ -16,6 +16,7 @@
 
 """Define the grad rules of neural network related operations."""
 from mindspore import Tensor
+from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from .._grad.grad_base import bprop_getters
@@ -197,5 +198,16 @@ def get_bprop_max_pool_v1_grad(self):
     def bprop(x, out, dout):
         dx = maxpool_grad_v1(x, out, dout)
         return (dx,)
+    return bprop
+
+
+@bprop_getters.register(GridSampler2D)
+def get_bprop_grid_sampler_2d(self):
+    """Grad definition for `GridSampler2D` operation."""
+    grad = G.GridSampler2DGrad(self.interpolation_mode, self.padding_mode, self.align_corners)
+
+    def bprop(input_x, grid, out, dout):
+        dx, dgrid = grad(dout, input_x, grid)
+        return dx, dgrid
 
     return bprop

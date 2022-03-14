@@ -178,6 +178,8 @@ constexpr auto kGridSampler3D = "GridSampler3D";
 constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
 constexpr auto kMish = "Mish";
 constexpr auto kLRN = "LRN";
+constexpr auto kGridSampler2D = "GridSampler2D";
+constexpr auto kGridSampler2DGrad = "GridSampler2DGrad";
 
 // CSRTensor
 constexpr auto kMakeCSRTensor = "MakeCSRTensor";
@@ -636,6 +638,8 @@ GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPool3DGradWithFixedKsize,
 GVAR_DEF(PrimitivePtr, kPrimFractionalAvgPool, std::make_shared<Primitive>("FractionalAvgPool"));
 GVAR_DEF(PrimitivePtr, kPrimFractionalAvgPoolGrad, std::make_shared<Primitive>("FractionalAvgPoolGrad"));
 GVAR_DEF(PrimitivePtr, kPrimNthElement, std::make_shared<Primitive>("NthElement"));
+GVAR_DEF(PrimitivePtr, kPrimGridSampler2D, std::make_shared<Primitive>(kGridSampler2D));
+GVAR_DEF(PrimitivePtr, kPrimGridSampler2DGrad, std::make_shared<Primitive>(kGridSampler2DGrad));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));
