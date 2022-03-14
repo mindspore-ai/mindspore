@@ -26,6 +26,7 @@ struct RunnerConfig {
   std::shared_ptr<Context> context = nullptr;
   int workers_num = 0;
 };
+class ModelPool;
 
 /// \brief The ModelParallelRunner class is used to define a MindSpore ModelParallelRunner, facilitating Model
 /// management.
@@ -38,12 +39,9 @@ class MS_API ModelParallelRunner {
   ///
   /// \param[in] model_path Define the model path.
   /// \param[in] runner_config Define the config used to store options during model pool init.
-  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16, 24, or 32.
-  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM, AES-CBC.
   ///
   /// \return Status.
-  Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr,
-              const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
+  Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
 
   /// \brief Obtains all input tensors information of the model.
   ///
@@ -65,6 +63,9 @@ class MS_API ModelParallelRunner {
   /// \return Status.
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
+ private:
+  std::shared_ptr<ModelPool> model_pool_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_PARALLEL_RUNNER_H

@@ -37,23 +37,25 @@ struct PredictTask {
 
 class PredictTaskQueue {
  public:
-  static PredictTaskQueue *GetInstance();
-  ~PredictTaskQueue();
+  PredictTaskQueue() = default;
+  ~PredictTaskQueue() = default;
 
-  void PushPredictTask(std::shared_ptr<PredictTask> task);
-  void WaitUntilPredictActive(std::shared_ptr<PredictTask> task);
-  std::shared_ptr<PredictTask> GetPredictTask();
+  void PushPredictTask(std::shared_ptr<PredictTask> task, int node_id);
+  void WaitUntilPredictActive(const std::shared_ptr<PredictTask> &task);
+  std::shared_ptr<PredictTask> GetPredictTask(int node_id);
   void ActiveTask();
-  bool IsPredictTaskDone() { return predict_task_done_; }
-  int GetTaskNum();
-  int GetWaitModelNum() { return waite_model_num_; }
-  void DecreaseWaitModelNum(int num) { waite_model_num_ -= num; }
+  int GetTaskNum(int node_id);
+  void SetTaskQueueNum(int num);
+
+  bool IsPredictTaskDone() const { return predict_task_done_; }
+  void SetPredictTaskDone();
+  int GetWaitModelNum(int node_id) const { return waite_worker_num_.at(node_id); }
+  void DecreaseWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) -= num; }
+  void IncreaseWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) += num; }
 
  private:
-  PredictTaskQueue() = default;
-  std::queue<std::shared_ptr<PredictTask>> predict_task_;
-  int waite_model_num_ = 0;
-
+  std::vector<std::queue<std::shared_ptr<PredictTask>>> predict_task_;
+  std::vector<int> waite_worker_num_;
   std::mutex mtx_predict_task_;
   std::condition_variable task_pop_cond_;
   std::condition_variable task_push_cond_;

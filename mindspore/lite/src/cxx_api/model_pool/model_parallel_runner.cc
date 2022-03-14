@@ -18,9 +18,13 @@
 #include "src/common/log.h"
 
 namespace mindspore {
-Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config,
-                                 const Key &dec_key, const std::string &dec_mode) {
-  auto status = ModelPool::GetInstance()->Init(model_path, runner_config, dec_key, dec_mode);
+Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
+  model_pool_ = std::make_shared<ModelPool>();
+  if (model_pool_ == nullptr) {
+    MS_LOG(ERROR) << "model pool is nullptr.";
+    return kLiteNullptr;
+  }
+  auto status = model_pool_->Init(model_path, runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner init failed.";
     return kLiteError;
@@ -28,15 +32,9 @@ Status ModelParallelRunner::Init(const std::string &model_path, const std::share
   return status;
 }
 
-std::vector<MSTensor> ModelParallelRunner::GetInputs() {
-  auto inputs = ModelPool::GetInstance()->GetInputs();
-  return inputs;
-}
+std::vector<MSTensor> ModelParallelRunner::GetInputs() { return model_pool_->GetInputs(); }
 
-std::vector<MSTensor> ModelParallelRunner::GetOutputs() {
-  auto outputs = ModelPool::GetInstance()->GetOutputs();
-  return outputs;
-}
+std::vector<MSTensor> ModelParallelRunner::GetOutputs() { return model_pool_->GetOutputs(); }
 
 Status ModelParallelRunner::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                                     const MSKernelCallBack &before, const MSKernelCallBack &after) {
@@ -44,7 +42,7 @@ Status ModelParallelRunner::Predict(const std::vector<MSTensor> &inputs, std::ve
     MS_LOG(ERROR) << "predict output is nullptr.";
     return kLiteNullptr;
   }
-  auto status = ModelPool::GetInstance()->Predict(inputs, outputs, before, after);
+  auto status = model_pool_->Predict(inputs, outputs, before, after);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner predict failed.";
     return kLiteError;
