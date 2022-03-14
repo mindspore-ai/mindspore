@@ -366,9 +366,9 @@ class Concatenate(TensorOperation):
         append (numpy.array, optional): NumPy array to be appended to the already concatenated tensors (Default=None).
 
     Raises:
-        TypeError: If `axis` is of type int.
-        TypeError: If `prepend` not of type numpy.ndarray.
-        TypeError: If `append` not of type numpy.ndarray.
+        TypeError: If `axis` is not of type int.
+        TypeError: If `prepend` is not of type numpy.ndarray.
+        TypeError: If `append` is not of type numpy.ndarray.
 
     Supported Platforms:
         ``CPU``
@@ -520,7 +520,7 @@ class RandomApply(TensorOperation):
         ValueError: If `transforms` is empty.
         TypeError: If elements of `transforms` are neither Python callable objects nor data
             processing operations in c_transforms.
-        TypeError: If `prob` is not of type bool.
+        TypeError: If `prob` is not of type float.
         ValueError: If `prob` is not in range [0.0, 1.0].
 
     Supported Platforms:
@@ -591,9 +591,9 @@ class Plugin(TensorOperation):
         user_args (str, optional): Serialized args to pass to the plugin. Only needed if "func_name" requires one.
 
     Raises:
-        TypeError: If `lib_path` is of type string.
-        TypeError: If `func_name` not of type string.
-        TypeError: If `user_args` not of type string.
+        TypeError: If `lib_path` is not of type string.
+        TypeError: If `func_name` is not of type string.
+        TypeError: If `user_args` is not of type string.
 
     Supported Platforms:
         ``CPU``

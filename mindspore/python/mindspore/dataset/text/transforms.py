@@ -944,7 +944,7 @@ if platform.system().lower() != 'windows':
         Raises:
             TypeError: If `pattern` is not of type string.
             TypeError: If `replace` is not of type string.
-            TypeError: If `replace_all` not of type bool.
+            TypeError: If `replace_all` is not of type bool.
 
         Supported Platforms:
             ``CPU``
@@ -986,7 +986,7 @@ if platform.system().lower() != 'windows':
         Raises:
             TypeError: If `delim_pattern` is not of type string.
             TypeError: If `keep_delim_pattern` is not of type string.
-            TypeError: If `with_offsets` not of type bool.
+            TypeError: If `with_offsets` is not of type bool.
 
         Supported Platforms:
             ``CPU``

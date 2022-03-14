@@ -983,12 +983,21 @@ class MS_API ZipDataset : public Dataset {
 /// \param[in] schema_file Path of schema file.
 /// \note The reason for using this API is that std::string will be constrained by the
 ///    compiler option '_GLIBCXX_USE_CXX11_ABI' while char is free of this restriction.
+///    Check API `mindspore::dataset::Schema` and find more usage.
 /// \return Shared pointer to the current schema.
 std::shared_ptr<SchemaObj> MS_API SchemaCharIF(const std::vector<char> &schema_file);
 
 /// \brief Function to create a SchemaObj.
 /// \param[in] schema_file Path of schema file.
 /// \return Shared pointer to the current schema.
+/// \par Example
+/// \code
+///      /* Define a schema to make RandomDataset generate specific data. */
+///      std::shared_ptr<SchemaObj> schema = Schema();
+///      schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
+///      schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
+///      std::shared_ptr<Dataset> ds = RandomData(50, schema);
+/// \endcode
 inline std::shared_ptr<SchemaObj> MS_API Schema(const std::string &schema_file = "") {
   return SchemaCharIF(StringToChar(schema_file));
 }
@@ -6160,6 +6169,7 @@ inline std::shared_ptr<YesNoDataset> MS_API YesNo(const std::string &dataset_dir
 /// \brief Function to create a cache to be attached to a dataset.
 /// \note The reason for providing this API is that std::string will be constrained by the
 ///    compiler option '_GLIBCXX_USE_CXX11_ABI' while char is free of this restriction.
+///    Check API `mindspore::dataset::CreateDatasetCache` and find more usage.
 /// \param[in] id A user assigned session id for the current pipeline.
 /// \param[in] mem_sz Size of the memory set aside for the row caching (default=0 which means unlimited,
 ///     note that it might bring in the risk of running out of memory on the machine).
