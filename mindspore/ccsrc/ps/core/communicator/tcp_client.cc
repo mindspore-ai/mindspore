@@ -43,8 +43,8 @@ TcpClient::TcpClient(const std::string &address, std::uint16_t port, NodeRole pe
       server_address_(std::move(address)),
       server_port_(port),
       peer_role_(peer_role),
-      is_stop_(true),
-      is_connected_(false) {
+      disconnected_(false),
+      connected_(false) {
   message_handler_.SetCallback(
     [this](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
       if (message_callback_) {
@@ -86,16 +86,16 @@ std::string TcpClient::PeerRoleName() const {
 bool TcpClient::WaitConnected(const uint32_t &connected_timeout) {
   std::unique_lock<std::mutex> lock(connection_mutex_);
   bool res = connection_cond_.wait_for(lock, std::chrono::seconds(connected_timeout),
-                                       [this] { return this->is_connected_.load(); });
+                                       [this] { return this->connected_.load(); });
   return res;
 }
 
 void TcpClient::Init() {
-  std::lock_guard<std::mutex> lock(connection_mutex_);
-  if (buffer_event_) {
-    bufferevent_free(buffer_event_);
-    buffer_event_ = nullptr;
+  if (disconnected_) {
+    return;
   }
+
+  std::lock_guard<std::mutex> lock(connection_mutex_);
   if (!CommUtil::CheckIp(server_address_)) {
     MS_LOG(EXCEPTION) << "The tcp client ip:" << server_address_ << " is illegal!";
   }
@@ -117,10 +117,10 @@ void TcpClient::Init() {
   sin.sin_addr.s_addr = inet_addr(server_address_.c_str());
   sin.sin_port = htons(server_port_);
 
-  if (!PSContext::instance()->enable_ssl()) {
+  if (!PSContext::instance()->enable_ssl() && buffer_event_ == nullptr) {
     MS_LOG(INFO) << "SSL is disable.";
     buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
-  } else {
+  } else if (buffer_event_ == nullptr) {
     if (!EstablishSSL()) {
       MS_LOG(WARNING) << "Establish SSL failed.";
       return;
@@ -228,7 +228,7 @@ void TcpClient::TimerCallback(evutil_socket_t, int16_t, void *arg) {
 void TcpClient::NotifyConnected() {
   MS_LOG(INFO) << "Client connected to the server! Peer " << PeerRoleName() << " ip: " << server_address_
                << ", port: " << server_port_;
-  is_connected_ = true;
+  connected_ = true;
   connection_cond_.notify_all();
 }
 

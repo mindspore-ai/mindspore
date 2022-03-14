@@ -72,6 +72,7 @@ class TcpClient {
   bool SendMessage(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size);
   void set_timer_callback(const OnTimer &timer);
   const event_base &eventbase() const;
+  void set_disconnected() { disconnected_ = true; }
 
  protected:
   static void SetTcpNoDelay(const evutil_socket_t &fd);
@@ -109,8 +110,8 @@ class TcpClient {
   std::string server_address_;
   std::uint16_t server_port_;
   NodeRole peer_role_;
-  std::atomic<bool> is_stop_;
-  std::atomic<bool> is_connected_;
+  std::atomic<bool> disconnected_;
+  std::atomic<bool> connected_;
   // The Configuration file
   Configuration *config_;
 };

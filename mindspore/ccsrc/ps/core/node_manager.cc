@@ -38,10 +38,10 @@ uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message
     registered_nodes_info_[node_id].is_alive = true;
     registered_nodes_info_[node_id].ip_ = new_ip;
     registered_nodes_info_[node_id].port_ = static_cast<uint16_t>(new_port);
-    MS_LOG(INFO) << "The node id: " << node_id << " is already assigned!"
-                 << ", ip: " << register_message.ip() << ", port: " << register_message.port()
-                 << ", rank id: " << rank_id << ", alive: " << registered_nodes_info_[node_id].is_alive
-                 << ", the node_role:" << CommUtil::NodeRoleToString(registered_nodes_info_[node_id].node_role_);
+    MS_LOG(WARNING) << "The node id: " << node_id << " is already assigned!"
+                    << ", ip: " << register_message.ip() << ", port: " << register_message.port()
+                    << ", rank id: " << rank_id << ", alive: " << registered_nodes_info_[node_id].is_alive
+                    << ", the node_role:" << CommUtil::NodeRoleToString(registered_nodes_info_[node_id].node_role_);
     return rank_id;
   }
   // This is for scheduler recovery
