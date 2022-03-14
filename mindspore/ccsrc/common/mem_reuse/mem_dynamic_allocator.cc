@@ -75,11 +75,13 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(size_t
   MS_EXCEPTION_IF_NULL(mem_block);
   const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
   if (iter == mem_block->block_all_mem_buf_map_.end()) {
+    DumpDynamicMemPoolDebugInfo();
     MS_LOG(EXCEPTION) << "Can't find the device address[" << device_addr << "].";
   }
   auto mem_buf = iter->second;
   MS_EXCEPTION_IF_NULL(mem_buf);
   if (mem_buf->size_ < total_size) {
+    DumpDynamicMemPoolDebugInfo();
     MS_LOG(EXCEPTION) << "The size of membuf is less than total_size.";
   }
   auto rest_size = mem_buf->size_ - total_size;
@@ -118,6 +120,7 @@ DeviceMemPtr DynamicMemPoolBestFit::FindIdleMemBuf(size_t size, bool from_persis
     auto mem_buf = iter->second;
     MS_EXCEPTION_IF_NULL(mem_buf);
     if (mem_buf->status_ != kMemBufIdle) {
+      DumpDynamicMemPoolDebugInfo();
       MS_LOG(EXCEPTION) << "Find the mem_buf is not idle, alloc_size[" << size << "] mem_buf_size[" << mem_buf->size_
                         << "] mem_buf_address[" << mem_buf->device_addr_ << "].";
     }
@@ -264,6 +267,7 @@ void DynamicMemPoolBestFit::SplitMemBuf(size_t size, const DynamicMemBufPtr &mem
   MS_EXCEPTION_IF_NULL(mem_block);
   // Divide new memory buf
   if (mem_buf->size_ < size) {
+    DumpDynamicMemPoolDebugInfo();
     MS_LOG(EXCEPTION) << "The size of membuf is less than size.";
   }
   size_t newbuf_size = mem_buf->size_ - size;
@@ -326,15 +330,18 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
   MS_EXCEPTION_IF_NULL(device_addr);
   const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
   if (iter == mem_block->block_all_mem_buf_map_.end()) {
+    DumpDynamicMemPoolDebugInfo();
     MS_LOG(EXCEPTION) << "Can't find the device address[" << device_addr << "].";
   }
   auto mem_buf = iter->second;
   MS_EXCEPTION_IF_NULL(mem_buf);
   if (mem_buf->status_ != kMemBufUsed) {
+    DumpDynamicMemPoolDebugInfo();
     MS_LOG(EXCEPTION) << "Find the mem_buf is not used, mem_buf_address[" << mem_buf->device_addr_ << "].";
   }
   mem_buf->status_ = kMemBufIdle;
   if (mem_mng->mps_.total_used_mem_size_ < mem_buf->size_) {
+    DumpDynamicMemPoolDebugInfo();
     MS_LOG(EXCEPTION) << "The total used mem size is less than the size of membuf.";
   }
   mem_mng->mps_.total_used_mem_size_ -= mem_buf->size_;
@@ -426,7 +433,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
           << " idle size:" << idle_size;
     }
     // Dump all the memory buf info
-    MS_LOG(WARNING) << mem_type << " pool info: block size " << mem_mng->unit_size_ << ", block counts "
+    MS_LOG(WARNING) << mem_type << " pool info: block unit size " << mem_mng->unit_size_ << ", block counts "
                     << mem_mng->mem_block_list_.size() << buf.str() << ". Total allocated mem "
                     << mem_mng->mps_.total_mem_size_ << ", peak used mem " << mem_mng->mps_.used_mem_peak_size_
                     << ", in used mem " << mem_mng->mps_.total_used_mem_size_ << ", total idle mem "
@@ -459,9 +466,8 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
         } else {
           total_used_mem += mem_buf->size_;
         }
-        auto user_name = (mem_buf->status_ == kMemBufUsed) ? ("] name[" + mem_buf->allocator_name_ + "].") : "].";
         MS_LOG(INFO) << "  MemBuf info: address[" << mem_buf->device_addr_ << "] size[" << mem_buf->size_ << "] status["
-                     << kBufStatusString.at(mem_buf->status_) << user_name;
+                     << kBufStatusString.at(mem_buf->status_) << "] name[" << mem_buf->allocator_name_ << "].";
       }
     }
     // Dump all the idle memory buf info.
