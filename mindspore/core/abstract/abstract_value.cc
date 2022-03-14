@@ -20,6 +20,7 @@
 
 #include <regex>
 #include <algorithm>
+#include <utility>
 
 #include "utils/hash_map.h"
 #include "utils/ms_utils.h"
@@ -401,6 +402,14 @@ AnfNodeWeakPtrList SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtr
   return sequence_nodes;
 }
 }  // namespace
+
+AbstractSequence::AbstractSequence(AbstractBasePtrList &&elements,
+                                   const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes)
+    : elements_(std::move(elements)), sequence_nodes_(sequence_nodes) {
+  if (sequence_nodes != nullptr) {
+    CheckSequenceNodesValid(*sequence_nodes);
+  }
+}
 
 AbstractSequence::AbstractSequence(const AbstractBasePtrList &elements,
                                    const std::shared_ptr<AnfNodeWeakPtrList> &sequence_nodes)

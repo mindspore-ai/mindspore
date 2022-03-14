@@ -19,6 +19,7 @@
 #include <deque>
 #include <memory>
 #include <algorithm>
+#include <utility>
 
 #include "utils/hash_map.h"
 #include "ir/anf.h"
@@ -352,6 +353,44 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
     changes = ApplySubstitutionsToIR(optimizer, func_graph);
   }
   return changes;
+}
+
+bool SimpleRewriter::Run() {
+  bool changed = false;
+  auto seen = NewSeenGeneration();
+  std::deque<AnfNodePtr> todo;
+  auto add_todo = [&seen, &todo](const AnfNodePtr &node) {
+    if (node != nullptr && node->seen_ != seen) {
+      (void)todo.emplace_back(node);
+    }
+  };
+  (void)todo.emplace_back(root_graph_->output());
+  auto &all_nodes = manager_->all_nodes();
+  while (!todo.empty()) {
+    AnfNodePtr node = std::move(todo.front());
+    todo.pop_front();
+    if (node == nullptr || node->seen_ == seen || !all_nodes.contains(node)) {
+      continue;
+    }
+    node->seen_ = seen;
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode != nullptr) {
+      for (auto &input : cnode->inputs()) {
+        add_todo(input);
+      }
+    } else {
+      auto fg = GetValueNode<FuncGraphPtr>(node);
+      if (fg != nullptr) {
+        add_todo(fg->output());
+      }
+    }
+    auto new_node = NodeRewrite(node);
+    if (new_node != nullptr) {
+      manager_->Replace(node, new_node);
+      changed = true;
+    }
+  }
+  return changed;
 }
 }  // namespace opt
 }  // namespace mindspore
