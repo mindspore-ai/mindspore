@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 #include "common/graph_kernel/tsa_atomic_add_to_first_tensor.h"
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 #include "base/core_ops.h"
@@ -153,29 +152,12 @@ void TsaAtomicAddToFirstTensor::ChangeKernelBuildInfo(
   auto kernel_info = static_cast<device::KernelInfo *>(composite_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const auto &origin_kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+  MS_EXCEPTION_IF_NULL(origin_kernel_build_info);
   auto origin_inputs_format = origin_kernel_build_info->GetAllInputFormats();
-  auto origin_outputs_format = origin_kernel_build_info->GetAllOutputFormats();
   auto origin_inputs_type = origin_kernel_build_info->GetAllInputDeviceTypes();
-  auto origin_outputs_type = origin_kernel_build_info->GetAllOutputDeviceTypes();
-  auto origin_processor = origin_kernel_build_info->processor();
 
   std::vector<std::string> &modified_inputs_format = origin_inputs_format;
   std::vector<TypeId> &modified_inputs_type = origin_inputs_type;
-  std::vector<std::string> new_outputs_format;
-  std::vector<TypeId> new_outputs_type;
-
-  std::set<size_t> reduce_real_indices;
-  for (auto &info : outer_infos) {
-    (void)reduce_real_indices.insert(std::get<0>(info).reduce_real_output_index);
-  }
-
-  for (size_t i = 0; i < origin_outputs_format.size(); ++i) {
-    if (std::get<0>(outer_infos[0]).real_output_num > 1 && reduce_real_indices.count(i) > 0) {
-      continue;
-    }
-    new_outputs_format.push_back(origin_outputs_format[i]);
-    new_outputs_type.push_back(origin_outputs_type[i]);
-  }
 
   for (const auto &outer_info : outer_infos) {
     auto &modified_input = std::get<1>(outer_info);
@@ -187,15 +169,9 @@ void TsaAtomicAddToFirstTensor::ChangeKernelBuildInfo(
       AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
   }
 
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder new_info_builder;
-  new_info_builder.SetInputsFormat(modified_inputs_format);
-  new_info_builder.SetInputsDeviceType(modified_inputs_type);
-  new_info_builder.SetOutputsFormat(new_outputs_format);
-  new_info_builder.SetOutputsDeviceType(new_outputs_type);
-  new_info_builder.SetProcessor(origin_processor);
-  new_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  new_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
-  auto new_selected_info = new_info_builder.Build();
+  auto new_selected_info = BuildSelectKernelBuildInfo(
+    modified_inputs_format, modified_inputs_type, origin_kernel_build_info->GetAllOutputFormats(),
+    origin_kernel_build_info->GetAllOutputDeviceTypes(), origin_kernel_build_info->processor());
   AnfAlgo::SetSelectKernelBuildInfo(new_selected_info, composite_node.get());
 }
 
@@ -219,8 +195,6 @@ void TsaAtomicAddToFirstTensor::ProcessOriginalCNode(
   }
 
   CreateInplaceAssignNodeAndCorrectReturn(sub_graph, parameters_infos);
-
-  CorrectAbstract(composite_node, info_and_tsa_outers);
   ChangeKernelBuildInfo(composite_node, outer_nodes);
 
   auto old_graph_name = GetValue<std::string>(sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
@@ -236,7 +210,7 @@ void TsaAtomicAddToFirstTensor::ProcessTsa(const KernelGraphPtr &main_graph, con
   auto origin_composite_node = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(origin_composite_node);
 
-  // Create identity node.  // Create broadcst node.
+  // Create identity node.
   std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> info_and_outer_nodes_with_index;
   std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> info_and_outer_nodes;
   for (auto atomic_add_info : atomic_add_infos) {
@@ -245,15 +219,12 @@ void TsaAtomicAddToFirstTensor::ProcessTsa(const KernelGraphPtr &main_graph, con
     (void)info_and_outer_nodes.emplace_back(atomic_add_info, outer.first);
   }
 
-  // Insert extra input(broadcast node output) to composite node, and make origin TensorScatterAdd inplaceassign to it.
-  // Note: if it's single output, this will increase total memory because of a fake out.
+  // Insert extra input(broadcast node output) to composite node, and make origin TensorScatterAdd inplace-assign to it.
+  // Note: InplaceAssign outputs will increase total memory because of fake out.
   ProcessOriginalCNode(origin_composite_node, info_and_outer_nodes_with_index);
 
-  // Insert update_state_node to keep execution order.
-  auto update_state_node = InsertUpdateState(main_graph, origin_composite_node);
-
-  // Replace origin ReduceSum's user with atomic clean output
-  ProcessOriginCNodeUser(main_graph, origin_composite_node, info_and_outer_nodes, update_state_node, mng);
+  // Insert UpdateState + Load before origin TensorScatterAdd's user to keep execution order.
+  ProcessOriginCNodeUser(main_graph, origin_composite_node, info_and_outer_nodes, mng);
   std::stringstream ss;
   ss << "Target node: " << origin_composite_node->fullname_with_scope() << ", outer nodes: ";
   for (auto iter : info_and_outer_nodes) {
