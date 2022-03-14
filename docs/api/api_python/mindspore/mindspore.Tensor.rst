@@ -225,6 +225,20 @@ mindspore.Tensor
 
         维度与输入张量的相同的Tensor。输出张量的维度必须遵守广播规则。广播规则指输出张量的维度需要扩展为输入张量的维度，如果目标张量的维度大于输入张量的维度，则不满足广播规则。
 
+    .. py:method:: expand_dims(axis):
+
+        沿指定轴扩展Tensor维度。
+
+        **参数：**
+            - **axis** (int) - 扩展维度指定的轴。
+
+        **返回：**
+            Tensor, 指定轴上扩展的维度为1。
+
+        **异常：**
+            - **TypeError** - axis不是int类型。
+            - **ValueError** - axis的取值不在[-self.ndim - 1, self.ndim + 1)。
+
     .. py:method:: fill(value)
 
         用标量值填充数组。
@@ -343,6 +357,22 @@ mindspore.Tensor
 
         返回一个Tensor元素的长度（以字节为单位）。
 
+    .. py:method:: masked_fill(mask, value)
+
+        根据mask矩阵，将值为True对应位置填充为value值。mask矩阵的shape必须与原Tensor相同。
+
+        **参数：**
+            - **mask** (Tensor[bool]) - mask矩阵，值为bool类型的Tensor。
+            - **value** (Union[int, float]) - 填充值，可以为int或float类型。
+
+        **返回：**
+            Tensor, shape和dtype与原Tensor相同。
+
+        **异常：**
+            - **TypeError** - mask不是Tensor。
+            - **TypeError** - mask不是bool类型的Tensor。
+            - **TypeError** - value不是int或float类型。
+
     .. py:method:: max(axis=None, keepdims=False, initial=None, where=True)
 
         返回Tensor的最大值或轴方向上的最大值。
@@ -393,6 +423,26 @@ mindspore.Tensor
         **异常：**
 
         - **TypeError** - 参数具有前面未指定的类型。
+
+    .. py:method:: narrow(axis, start, length):
+
+        沿指定轴，指定起始位置获取指定长度的Tensor。
+
+        **参数：**
+            - **axis** (int) - 指定的轴。
+            - **start** (int) - 指定的起始位置。
+            - **length** (int) - 指定的长度。
+
+        **返回：**
+            Tensor。
+
+        **异常：**
+            - **TypeError** - axis不是int类型。
+            - **TypeError** - start不是int类型。
+            - **TypeError** - length不是int类型。
+            - **ValueError** - axis超出Tensor的维度范围。
+            - **ValueError** - start超出Tensor的维度范围。
+            - **ValueError** - start+length超出Tensor的维度范围。
 
     .. py:method:: nbytes
         :property:
