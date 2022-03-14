@@ -564,9 +564,9 @@ int LiteSession::IsolateOutputTensor() {
     if (src_tensor->IsGraphInput()) {
       continue;
     }
-    Tensor *new_tensor =
-      new Tensor(src_tensor->data_type(), src_tensor->shape(), src_tensor->format(), Category::GRAPH_OUTPUT);
-    if (new_tensor == nullptr) {
+    Tensor *new_tensor = new (std::nothrow)
+      Tensor(src_tensor->data_type(), src_tensor->shape(), src_tensor->format(), Category::GRAPH_OUTPUT);
+    if (MS_UNLIKELY(new_tensor == nullptr)) {
       MS_LOG(ERROR) << "duplicate new output failed.";
       return RET_NULL_PTR;
     }
@@ -590,12 +590,14 @@ int LiteSession::IsolateOutputTensor() {
     /* set new tensor for calculate */
     for (auto subgraph : kernels_) {
       /* subgraph input and output */
-      for (size_t i = 0; i < subgraph->in_tensors().size(); i++) {
+      auto in_size = subgraph->in_tensors().size();
+      for (size_t i = 0; i < in_size; ++i) {
         if (subgraph->in_tensors()[i] == src_tensor) {
           subgraph->set_in_tensor(new_tensor, i);
         }
       }
-      for (size_t i = 0; i < subgraph->out_tensors().size(); i++) {
+      auto out_size = subgraph->out_tensors().size();
+      for (size_t i = 0; i < out_size; ++i) {
         if (subgraph->out_tensors()[i] == src_tensor) {
           subgraph->set_out_tensor(new_tensor, i);
         }
@@ -607,14 +609,18 @@ int LiteSession::IsolateOutputTensor() {
 #endif
       /* node input and output */
       auto nodes = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
-      for (size_t i = 0; i < nodes.size(); i++) {
+      auto nodes_size = nodes.size();
+      for (size_t i = 0; i < nodes_size; ++i) {
         auto node = nodes[i];
-        for (size_t j = 0; j < node->out_tensors().size(); j++) {
+        out_size = node->out_tensors().size();
+        for (size_t j = 0; j < out_size; ++j) {
           if (node->out_tensors()[j] == src_tensor) {
             node->set_out_tensor(new_tensor, j);
+            break;
           }
         }
-        for (size_t j = 0; j < node->in_tensors().size(); j++) {
+        in_size = node->in_tensors().size();
+        for (size_t j = 0; j < in_size; ++j) {
           if (node->in_tensors()[j] == src_tensor) {
             node->set_in_tensor(new_tensor, j);
           }
@@ -906,11 +912,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     return ret;
   }
   MS_ASSERT(this->context_ != nullptr);
-  if (before == nullptr && after == nullptr) {
-    ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_);
-  } else {
-    ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, before, after);
-  }
+  ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, before, after);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunGraph failed : " << ret;
   }
@@ -1236,7 +1238,7 @@ void LiteSession::ResetInputsShape(const std::vector<std::vector<int>> &dims) {
 }
 
 int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels,
-                               const std::unordered_map<Tensor *, Tensor *> isolate_input_map) {
+                               const std::unordered_map<Tensor *, Tensor *> &isolate_input_map) {
   for (auto kernel : kernels) {
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "input kernel is nullptr!";

@@ -23,6 +23,7 @@ namespace numa {
 namespace {
 static constexpr int kSuccess = 0;
 static constexpr int kBitsPerByte = 8;
+static constexpr auto kBitsPerMask = static_cast<int>(sizeof(uint64_t) * kBitsPerByte);
 }  // namespace
 
 NUMAAdapter::NUMAAdapter() {
@@ -34,7 +35,7 @@ NUMAAdapter::NUMAAdapter() {
   }
 
   numa_interfaces_.numa_available = reinterpret_cast<int (*)(void)>(dlsym(handle_, "numa_available"));
-  if (UNLIKELY(numa_interfaces_.numa_available == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_available == nullptr)) {
     MS_LOG(ERROR) << "numa_available not found!";
   }
   if (numa_interfaces_.numa_available() < 0) {
@@ -46,64 +47,64 @@ NUMAAdapter::NUMAAdapter() {
   available_ = true;
   numa_interfaces_.numa_num_configured_nodes =
     reinterpret_cast<int (*)(void)>(dlsym(handle_, "numa_num_configured_nodes"));
-  if (UNLIKELY(numa_interfaces_.numa_num_configured_nodes == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_num_configured_nodes == nullptr)) {
     MS_LOG(ERROR) << "numa_num_configured_nodes not found!";
     available_ = false;
   }
   numa_interfaces_.numa_num_task_cpus = reinterpret_cast<int (*)(void)>(dlsym(handle_, "numa_num_task_cpus"));
-  if (UNLIKELY(numa_interfaces_.numa_num_task_cpus == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_num_task_cpus == nullptr)) {
     MS_LOG(ERROR) << "numa_num_task_cpus not found!";
     available_ = false;
   }
   numa_interfaces_.numa_node_to_cpus =
     reinterpret_cast<int (*)(int node, struct bitmask *mask)>(dlsym(handle_, "numa_node_to_cpus"));
-  if (UNLIKELY(numa_interfaces_.numa_node_to_cpus == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_node_to_cpus == nullptr)) {
     MS_LOG(ERROR) << "numa_node_to_cpus not found!";
     available_ = false;
   }
   numa_interfaces_.numa_allocate_nodemask =
     reinterpret_cast<struct bitmask *(*)(void)>(dlsym(handle_, "numa_allocate_nodemask"));
-  if (UNLIKELY(numa_interfaces_.numa_allocate_nodemask == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_allocate_nodemask == nullptr)) {
     MS_LOG(ERROR) << "numa_allocate_nodemask not found!";
     available_ = false;
   }
   numa_interfaces_.numa_bitmask_clearall =
     reinterpret_cast<struct bitmask *(*)(struct bitmask *)>(dlsym(handle_, "numa_bitmask_clearall"));
-  if (UNLIKELY(numa_interfaces_.numa_bitmask_clearall == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_bitmask_clearall == nullptr)) {
     MS_LOG(ERROR) << "numa_bitmask_clearall not found!";
     available_ = false;
   }
   numa_interfaces_.numa_bitmask_setbit =
     reinterpret_cast<struct bitmask *(*)(struct bitmask *, unsigned int)>(dlsym(handle_, "numa_bitmask_setbit"));
-  if (UNLIKELY(numa_interfaces_.numa_bitmask_setbit == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_bitmask_setbit == nullptr)) {
     MS_LOG(ERROR) << "numa_bitmask_setbit not found!";
     available_ = false;
   }
   numa_interfaces_.numa_bind = reinterpret_cast<void (*)(struct bitmask *)>(dlsym(handle_, "numa_bind"));
-  if (UNLIKELY(numa_interfaces_.numa_bind == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_bind == nullptr)) {
     MS_LOG(ERROR) << "numa_bind not found!";
     available_ = false;
   }
   numa_interfaces_.numa_bitmask_free =
     reinterpret_cast<void (*)(struct bitmask *)>(dlsym(handle_, "numa_bitmask_free"));
-  if (UNLIKELY(numa_interfaces_.numa_bitmask_free == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_bitmask_free == nullptr)) {
     MS_LOG(ERROR) << "numa_bitmask_free not found!";
     available_ = false;
   }
   numa_interfaces_.numa_alloc_onnode =
     reinterpret_cast<void *(*)(size_t size, int node)>(dlsym(handle_, "numa_alloc_onnode"));
-  if (UNLIKELY(numa_interfaces_.numa_alloc_onnode == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_alloc_onnode == nullptr)) {
     MS_LOG(ERROR) << "numa_bitmask_free not found!";
     available_ = false;
   }
   numa_interfaces_.numa_node_size64 =
     reinterpret_cast<int64_t (*)(int node, int64_t *freep)>(dlsym(handle_, "numa_node_size64"));
-  if (UNLIKELY(numa_interfaces_.numa_node_size64 == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_node_size64 == nullptr)) {
     MS_LOG(ERROR) << "numa_node_size64 not found!";
     available_ = false;
   }
   numa_interfaces_.numa_free = reinterpret_cast<void (*)(void *start, size_t size)>(dlsym(handle_, "numa_free"));
-  if (UNLIKELY(numa_interfaces_.numa_free == nullptr)) {
+  if (MS_UNLIKELY(numa_interfaces_.numa_free == nullptr)) {
     MS_LOG(ERROR) << "numa_free not found!";
     available_ = false;
   }
@@ -119,7 +120,7 @@ void NUMAAdapter::Bind(int node_id) {
     return;
   }
   auto bitmask = numa_interfaces_.numa_allocate_nodemask();
-  if (UNLIKELY(bitmask == nullptr)) {
+  if (MS_UNLIKELY(bitmask == nullptr)) {
     MS_LOG(ERROR) << "bind numa_node " << node_id << " failed!";
     return;
   }
@@ -172,7 +173,7 @@ std::vector<int> NUMAAdapter::GetCPUList(int node_id) {
     return cpu_list;
   }
   int cpu_num = numa_interfaces_.numa_num_task_cpus();
-  if (UNLIKELY(cpu_num < 0)) {
+  if (MS_UNLIKELY(cpu_num < 0)) {
     MS_LOG(ERROR) << "numa_num_task_cpus return " << cpu_num;
     return cpu_list;
   }
@@ -180,12 +181,11 @@ std::vector<int> NUMAAdapter::GetCPUList(int node_id) {
   int maskp_index = 0;
   auto maskp = nodemask->maskp;
   do {
-    if (UNLIKELY(maskp == nullptr)) {
+    if (MS_UNLIKELY(maskp == nullptr)) {
       MS_LOG(ERROR) << "maskp is nullptr!";
       break;
     }
     auto mask = *(maskp);
-    static constexpr auto kBitsPerMask = static_cast<int>(sizeof(decltype(mask)) * kBitsPerByte);
     int step = static_cast<int>(maskp_index * kBitsPerMask);
     for (int i = 0; i < kBitsPerMask; ++i) {
       if (mask & 1) {
@@ -219,6 +219,7 @@ NUMAAdapter::~NUMAAdapter() {
     return;
   }
   (void)dlclose(handle_);
+  handle_ = nullptr;
 }
 }  // namespace numa
 }  // namespace mindspore

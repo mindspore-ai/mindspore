@@ -93,7 +93,7 @@ class Scheduler {
   int FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                          const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel);
 
-  int InitKernels(std::vector<kernel::LiteKernel *> dst_kernels);
+  int InitKernels(std::vector<kernel::LiteKernel *> &&dst_kernels);
   kernel::LiteKernel *SchedulePartialToKernel(const lite::Model::Node *src_node);
   // schedule a partial node to a subgraph_kernel
   std::vector<kernel::LiteKernel *> ScheduleSubGraphToSubGraphKernels(const int &subgraph_index);
@@ -106,7 +106,7 @@ class Scheduler {
                                 std::vector<lite::Tensor *> *in_tensors, std::vector<lite::Tensor *> *out_tensors,
                                 TypeId prefer_data_type = kTypeUnknown);
   // vector<LiteKernel/SubGraphKernel> --> vector<SubGraphKernel>
-  int ConstructNormalSubGraphs(const std::vector<kernel::LiteKernel *> src_kernel,
+  int ConstructNormalSubGraphs(const std::vector<kernel::LiteKernel *> &src_kernel,
                                std::vector<kernel::LiteKernel *> *dst_kernel,
                                std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);
 
