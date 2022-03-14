@@ -22,7 +22,11 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#ifdef ENABLE_CLOUD_AND_LITE
+#include "proto/lite/caffe.pb.h"
+#else
 #include "proto/caffe.pb.h"
+#endif
 #include "include/errorcode.h"
 
 namespace mindspore {

@@ -28,7 +28,7 @@
 #include "cxx_api/model/acl/acl_model_options.h"
 
 namespace mindspore {
-class ModelConverter {
+class MS_API ModelConverter {
  public:
   ModelConverter() : options_() {}
   ~ModelConverter() = default;

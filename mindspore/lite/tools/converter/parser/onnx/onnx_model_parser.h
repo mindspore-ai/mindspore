@@ -30,7 +30,11 @@
 #include "include/registry/model_parser.h"
 #include "include/registry/model_parser_registry.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
+#ifdef ENABLE_CLOUD_AND_LITE
+#include "proto/lite/onnx.pb.h"
+#else
 #include "proto/onnx.pb.h"
+#endif
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {

@@ -22,7 +22,11 @@
 #include <map>
 #include <memory>
 #include "tools/converter/parser/tf/tf_util.h"
+#ifdef ENABLE_CLOUD_AND_LITE
+#include "proto/lite/graph.pb.h"
+#else
 #include "proto/graph.pb.h"
+#endif
 #include "ops/primitive_c.h"
 #include "mindspore/core/utils/check_convert_utils.h"
 #include "nnacl/op_base.h"

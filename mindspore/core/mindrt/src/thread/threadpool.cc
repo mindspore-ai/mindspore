@@ -227,6 +227,10 @@ int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_li
   return THREAD_OK;
 }
 
+int ThreadPool::ParallelLaunch(const TaskFunc &func, Content content, int task_num) const {
+  return ParallelLaunch(std::function<int(void *, int, float, float)>(func), content, task_num);
+}
+
 int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) const {
   // if single thread, run master thread
   if (task_num <= 1) {

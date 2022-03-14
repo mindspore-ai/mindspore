@@ -20,7 +20,11 @@
 #include <string>
 #include <unordered_map>
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
+#ifdef ENABLE_CLOUD_AND_LITE
+#include "proto/lite/caffe.pb.h"
+#else
 #include "proto/caffe.pb.h"
+#endif
 
 namespace mindspore::lite {
 class CaffeNodeParserRegistry {
