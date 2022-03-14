@@ -16,15 +16,24 @@
 
 package com.mindspore.config;
 
+import com.mindspore.lite.NativeLibrary;
+
 public class TrainCfg {
+    // depend "mindspore-lite-train-jni"
     static {
-        System.loadLibrary("mindspore-lite-train-jni");
+        try {
+            System.loadLibrary("mindspore-lite-train-jni");
+        } catch (Exception e) {
+            System.err.println("Failed to load MindSporLite native library.");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private long trainCfgPtr;
 
     /**
-     *  Construct function.
+     * Construct function.
      */
     public TrainCfg() {
         this.trainCfgPtr = 0;
@@ -63,7 +72,7 @@ public class TrainCfg {
      * Add mix precision config to train config.
      *
      * @param dynamicLossScale if dynamic or fix loss scale factor.
-     * @param lossScale loss scale factor.
+     * @param lossScale        loss scale factor.
      * @param thresholdIterNum a threshold for modifying loss scale when dynamic loss scale is enabled.
      * @return add status.
      */

@@ -16,9 +16,17 @@
 
 package com.mindspore;
 
+import com.mindspore.lite.NativeLibrary;
+
 public class Graph {
     static {
-        System.loadLibrary("mindspore-lite-jni");
+        try {
+            NativeLibrary.load();
+        } catch (Exception e) {
+            System.err.println("Failed to load MindSporLite native library.");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private long graphPtr;
@@ -37,7 +45,7 @@ public class Graph {
      * @return load status.
      */
     public boolean load(String file) {
-        if(file == null) {
+        if (file == null) {
             return false;
         }
         this.graphPtr = loadModel(file);
