@@ -43,7 +43,7 @@ to_array = P.TupleToArray()
 real_div = P.RealDiv()
 
 
-def dyn_binop_grad_common(x, y, dx, dy):
+def dyn_binop_grad_common(x, y, dx, dy, shift=0):
     """
     Common grad definition for binary operations when the input is dynamic shape.
 
@@ -51,7 +51,12 @@ def dyn_binop_grad_common(x, y, dx, dy):
     """
     shape_of_x = dyn_shape_op(x)
     shape_of_y = dyn_shape_op(y)
-    rx, ry = DynamicBroadcastGradientArgs()(shape_of_x, shape_of_y)
+    broadcast_shape_of_x = shape_of_x
+    broadcast_shape_of_y = shape_of_y
+    if shift != 0:
+        broadcast_shape_of_x = shape_of_x[:-shift]
+        broadcast_shape_of_y = shape_of_y[:-shift]
+    rx, ry = DynamicBroadcastGradientArgs()(broadcast_shape_of_x, broadcast_shape_of_y)
     dx = reduce_sum(dx, rx)
     dy = reduce_sum(dy, ry)
     reduce_dx = reshape(dx, shape_of_x)
@@ -87,7 +92,7 @@ def binop_grad_common(x, y, dx, dy, shift=0):
     # if input shape is the same as dout shape, do not need to reduce
     reduce_dx = dx
     reduce_dy = dy
-    if not (is_shape_unknown(shape_of_x) or is_shape_unknown(shape_of_y)):
+    if not (is_shape_unknown(broadcast_shape_of_x) or is_shape_unknown(broadcast_shape_of_y)):
         rx = broadcast_gradient_args(broadcast_shape_of_x, broadcast_shape_of_y)
         if rx[0]:
             # if dx is scalar whose shape is (), do not need reduce
@@ -108,7 +113,7 @@ def binop_grad_common(x, y, dx, dy, shift=0):
             reduce_dy = reduce_sum_with_cast(dy, ())
         return reduce_dx, reduce_dy
 
-    return dyn_binop_grad_common(x, y, dx, dy)
+    return dyn_binop_grad_common(x, y, dx, dy, shift)
 
 
 def _dyn_reduced_shape(input_shape, axis):

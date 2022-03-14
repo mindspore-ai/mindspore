@@ -208,6 +208,8 @@ def get_bprop_squeeze(self):
 
     def bprop(x, out, dout):
         shapex = shape_op(x)
+        if is_shape_unknown(shapex):
+            shapex = dyn_shape_op(x)
         return (reshape(dout, shapex),)
 
     return bprop
