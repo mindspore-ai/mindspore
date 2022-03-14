@@ -54,6 +54,7 @@ constexpr char kFusionAuto[] = "auto";
 constexpr char kFusionSize[] = "size";
 constexpr char kFusionIndex[] = "index";
 constexpr int64_t kFusionThreshold = 64;
+constexpr int64_t kDataParallelFusionThreshold = 0;
 
 class COMMON_EXPORT ParallelContext {
  public:
@@ -82,6 +83,8 @@ class COMMON_EXPORT ParallelContext {
 
   void set_fusion_threshold_mb(int64_t fusion_threshold);
   int64_t fusion_threshold_mb() const { return fusion_threshold_mb_; }
+
+  int64_t dp_fusion_threshold_mb() const { return dp_fusion_threshold_mb_; }
 
   void set_allgather_fusion_threshold_mb(int64_t allgather_fusion_threshold);
   int64_t allgather_fusion_threshold_mb() const { return allgather_fusion_threshold_mb_; }
@@ -185,6 +188,7 @@ class COMMON_EXPORT ParallelContext {
   bool gradient_fp32_sync_;
   bool loss_repeated_mean_;
   int64_t device_num_;
+  int64_t dp_fusion_threshold_mb_;
   int64_t fusion_threshold_mb_;
   int64_t allgather_fusion_threshold_mb_;
   int64_t reducescatter_fusion_threshold_mb_;  // reducescatter
