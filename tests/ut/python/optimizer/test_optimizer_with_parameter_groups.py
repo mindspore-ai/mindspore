@@ -204,10 +204,10 @@ def test_weight_decay():
     for weight_decay, decay_flags, param, order_param in zip(
             opt.weight_decay, opt.decay_flags, opt.parameters, net.trainable_params()):
         if 'conv' in param.name:
-            assert weight_decay == conv_weight_decay
+            assert abs(weight_decay.asnumpy() - conv_weight_decay) < 1.e-6
             assert decay_flags is True
         else:
-            assert weight_decay == default_weight_decay
+            assert abs(weight_decay.asnumpy() - default_weight_decay) < 1.e-6
             assert decay_flags is False
 
         assert param.name == order_param.name
@@ -305,15 +305,15 @@ def test_order_params_1():
             opt.weight_decay, opt.decay_flags, opt.learning_rate, opt.parameters, bias_params+conv_params):
         if 'conv' in param.name:
             assert np.all(lr.data.asnumpy() == Tensor(0.1, mstype.float32).asnumpy())
-            assert weight_decay == 0.01
+            assert abs(weight_decay.asnumpy() - 0.01) < 1.e-6
             assert decay_flags is True
         elif 'bias' in param.name:
             assert np.all(lr.data.asnumpy() == Tensor(0.01, mstype.float32).asnumpy())
-            assert weight_decay == 0.0
+            assert abs(weight_decay.asnumpy()) < 1.e-6
             assert decay_flags is False
         else:
             assert np.all(lr.data.asnumpy() == Tensor(0.1, mstype.float32).asnumpy())
-            assert weight_decay == 0.0
+            assert abs(weight_decay.asnumpy()) < 1.e-6
             assert decay_flags is False
 
         assert param.name == order_param.name
@@ -344,15 +344,15 @@ def test_order_params_2():
             opt.weight_decay, opt.decay_flags, all_lr, opt.parameters, fc1_params+conv_params):
         if 'conv' in param.name:
             assert np.all(lr.data.asnumpy() == Tensor(np.array([default_lr] * 3), mstype.float32).asnumpy())
-            assert weight_decay == conv_weight_decay
+            assert abs(weight_decay.asnumpy() - conv_weight_decay) < 1.e-6
             assert decay_flags is True
         elif 'fc1' in param.name:
             assert np.all(lr.data.asnumpy() == Tensor(fc1_lr, mstype.float32).asnumpy())
-            assert weight_decay == default_wd
+            assert abs(weight_decay.asnumpy() - default_wd) < 1.e-6
             assert decay_flags is False
         else:
             assert np.all(lr.data.asnumpy() == Tensor(np.array([default_lr] * 3), mstype.float32).asnumpy())
-            assert weight_decay == default_wd
+            assert abs(weight_decay.asnumpy() - default_wd) < 1.e-6
             assert decay_flags is False
 
         assert param.name == order_param.name

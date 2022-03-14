@@ -16,11 +16,9 @@
 import numpy as np
 from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.common.initializer import initializer
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
-from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
@@ -34,7 +32,7 @@ num_one = Tensor(np.ones([1]), mstype.float32)
 _lamb_opt = C.MultitypeFuncGraph("lamb_opt")
 
 
-@_lamb_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
+@_lamb_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                     "Tensor", "Bool", "Bool")
 def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v, gradient, decay_flag, optim_filter):
     """
@@ -82,9 +80,9 @@ def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v
         next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(num_one, mstype.float32) - beta2, op_square(gradient_fp32))
 
         next_mm = next_m / (op_cast(num_one, mstype.float32)
-                            - op_pow(beta1, op_cast(global_step + num_one, mstype.float32)))
+                            - op_pow(beta1, op_cast(global_step, mstype.float32)))
         next_vv = next_v / (op_cast(num_one, mstype.float32) -
-                            op_pow(beta2, op_cast(global_step + num_one, mstype.float32)))
+                            op_pow(beta2, op_cast(global_step, mstype.float32)))
         w_norm = op_norm(param_fp32)
         g_norm = op_norm(gradient_fp32)
 
@@ -116,7 +114,7 @@ def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v
 _lamb_opt_ascend = C.MultitypeFuncGraph("lamb_opt_ascend")
 
 
-@_lamb_opt_ascend.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
+@_lamb_opt_ascend.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                            "Tensor", "Bool", "Bool")
 def _update_run_op_ascend(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v, gradient, decay_flag,
                           optim_filter):
@@ -148,7 +146,7 @@ def _update_run_op_ascend(beta1, beta2, eps, global_step, lr, weight_decay, para
 
         param_fp32 = op_cast(param, mstype.float32)
         gradient_fp32 = op_cast(gradient, mstype.float32)
-        new_global_step = op_cast(global_step + num_one, mstype.float32)
+        new_global_step = op_cast(global_step, mstype.float32)
         weight_decay_flag = op_cast(decay_flag, mstype.float32)
 
         update, _, _ = op_lamb_apply_optimizer_assign(gradient_fp32, v, m, param_fp32,
@@ -219,7 +217,11 @@ class Lamb(Optimizer):
               If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the optimizer will be used.
+              will be used. If not, the `weight_decay` in the optimizer will be used. It should be noted that weight
+              decay can be a constant value or a Cell. It is a Cell only when dynamic weight decay is applied. Dynamic
+              weight decay is similar to dynamic learning rate, users need to customize a weight decay schedule only
+              with global step as input, and during training, the optimizer calls the instance of WeightDecaySchedule
+              to get the weight decay value of current step.
 
             - grad_centralization: Optional. Must be Boolean. If "grad_centralization" is in the keys, the set value
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
@@ -251,7 +253,15 @@ class Lamb(Optimizer):
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0. Should be equal to or greater than 0.
+
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+
+            - float: The fixed weight decay value. Must be equal to or greater than 0.
+
+            - int: The fixed weight decay value. Must be equal to or greater than 0. It will be converted to float.
+
+            - Cell: Weight decay is dynamic. During training, the optimizer calls the instance of
+              the Cell with step as the input to get the weight decay value of current step.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -310,13 +320,10 @@ class Lamb(Optimizer):
         self.params = self.parameters
         self.moments1 = self.params.clone(prefix="lamb_m", init='zeros')
         self.moments2 = self.params.clone(prefix="lamb_v", init='zeros')
-
-        if not self.dynamic_lr:
-            self.global_step = Parameter(initializer(0, [1]), name='global_step')
-            self.assignadd = P.AssignAdd()
         self.device_ascend = context.get_context("device_target") == "Ascend"
 
     def construct(self, gradients):
+        weight_decay = self.get_weight_decay()
         lr = self.get_lr()
         lamb_opt = _lamb_opt_ascend if self.device_ascend else _lamb_opt
         gradients = self.gradients_centralization(gradients)
@@ -324,23 +331,20 @@ class Lamb(Optimizer):
             if self.is_group_lr:
                 optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
                                                         self.global_step),
-                                              lr, self.weight_decay, self.params, self.moments1, self.moments2,
+                                              lr, weight_decay, self.params, self.moments1, self.moments2,
                                               gradients, self.decay_flags, self.optim_filter)
             else:
                 optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
                                                         self.global_step, lr),
-                                              self.weight_decay, self.params, self.moments1, self.moments2,
+                                              weight_decay, self.params, self.moments1, self.moments2,
                                               gradients, self.decay_flags, self.optim_filter)
         else:
             optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
-                                                    self.global_step, lr, self.weight_decay),
+                                                    self.global_step, lr, weight_decay),
                                           self.params, self.moments1, self.moments2, gradients,
                                           self.decay_flags, self.optim_filter)
 
         if self.use_parallel:
             optim_result = F.depend(optim_result, self.broadcast_params(optim_result))
-
-        if not self.dynamic_lr:
-            optim_result = F.depend(optim_result, self.assignadd(self.global_step, 1))
 
         return optim_result

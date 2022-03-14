@@ -24,14 +24,14 @@ from .optimizer import opt_init_args_register
 _lars_opt = C.MultitypeFuncGraph("lars_opt")
 
 
-@_lars_opt.register("Function", "Tensor", "Number", "Tensor", "Tensor", "Bool", "Bool")
-def _tensor_run_opt(lars, learning_rate, weight_decay, gradient, weight, decay_flag, lars_flag):
+@_lars_opt.register("Function", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+def _tensor_run_opt(lars, loss_scale, learning_rate, weight_decay, gradient, weight, decay_flag, lars_flag):
     """Apply lars optimizer to the weight parameter."""
     if lars_flag:
         op_reduce_sum = P.SquareSumAll()
         w_square_sum, grad_square_sum = op_reduce_sum(weight, gradient)
         if decay_flag:
-            grad_t = lars(weight, gradient, w_square_sum, grad_square_sum, weight_decay, learning_rate)
+            grad_t = lars(weight, gradient, w_square_sum, grad_square_sum, weight_decay / loss_scale, learning_rate)
         else:
             num_zero = 0.0
             grad_t = lars(weight, gradient, w_square_sum, grad_square_sum, num_zero, learning_rate)
@@ -109,6 +109,10 @@ class LARS(Optimizer):
         super(LARS, self).__init__(0.0, [Parameter(Tensor(0.0), name="fake_param")])
         _check_param_value(optimizer, epsilon, coefficient, use_clip, self.cls_name)
         self.opt = optimizer
+        self.dynamic_decay_flags = optimizer.dynamic_decay_flags
+        self.dynamic_weight_decay = optimizer.dynamic_weight_decay
+        self.weight_decay = optimizer.weight_decay
+        self.global_step = optimizer.global_step
         self.parameters = optimizer.parameters
         self.use_clip = use_clip
         self.lars_flag = tuple(lars_filter(x) for x in self.parameters)
@@ -119,24 +123,22 @@ class LARS(Optimizer):
         self.need_scale = optimizer.need_scale
         self.lars = P.LARSUpdate(epsilon, coefficient, use_clip)
         self.cast = P.Cast()
+        self.loss_scale = optimizer.loss_scale
 
         if use_clip:
             self.is_group_lr = optimizer.is_group_lr
             self.dynamic_lr = optimizer.dynamic_lr
             self.origin_learning_rate = optimizer.learning_rate
-            self.global_step = optimizer.global_step
             if self.is_group_lr and self.dynamic_lr:
                 raise ValueError("For 'LARS', if the argument 'use_clip' is set to True, then the dynamic "
                                  "learning rate and group learning rate cannot both be true.")
 
         if self.is_group:
-            self.weight_decay = tuple(map(lambda x: x / optimizer.loss_scale, optimizer.weight_decay))
-            optimizer.weight_decay = tuple(map(lambda x: 0.0, optimizer.weight_decay))
+            optimizer.dynamic_decay_flags = tuple(map(lambda x: False, self.dynamic_decay_flags))
         else:
-            self.weight_decay = optimizer.weight_decay / optimizer.loss_scale
-            optimizer.weight_decay = 0.0
-
+            optimizer.dynamic_decay_flags = False
         optimizer.decay_flags = tuple(map(lambda x: False, self.decay_flags))
+        optimizer.dynamic_weight_decay = False
         optimizer.reciprocal_scale = 1.0
         optimizer.exec_weight_decay = False
 
@@ -160,20 +162,20 @@ class LARS(Optimizer):
             lr = self._get_lr()
         else:
             lr = self.learning_rate
+        weight_decay = self.get_weight_decay()
 
         if self.need_scale:
             gradients = self.hyper_map(F.partial(_grad_scale, self.reciprocal_scale), gradients)
 
         if self.is_group:
             if self.is_group_lr:
-                gradients = self.hyper_map(F.partial(_lars_opt, self.lars), lr, self.weight_decay,
+                gradients = self.hyper_map(F.partial(_lars_opt, self.lars, self.loss_scale), lr, weight_decay,
                                            gradients, params, self.decay_flags, self.lars_flag)
             else:
-                gradients = self.hyper_map(F.partial(_lars_opt, self.lars, lr), self.weight_decay,
+                gradients = self.hyper_map(F.partial(_lars_opt, self.lars, self.loss_scale, lr), weight_decay,
                                            gradients, params, self.decay_flags, self.lars_flag)
         else:
-            gradients = self.hyper_map(F.partial(_lars_opt, self.lars, lr, self.weight_decay),
+            gradients = self.hyper_map(F.partial(_lars_opt, self.lars, self.loss_scale, lr, weight_decay),
                                        gradients, params, self.decay_flags, self.lars_flag)
         success = self.opt(gradients)
-
         return success

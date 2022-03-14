@@ -140,15 +140,15 @@ class Optimizer(Cell):
         validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
         validator.check_positive_float(loss_scale, "loss_scale", self.cls_name)
         self.loss_scale = loss_scale
-
+        self.dynamic_weight_decay = False
         weight_decay = self._preprocess_weight_decay(weight_decay)
         self.grad_centralization = False
 
         self._unique = True
         self._target = context.get_context("device_target")
         self.dynamic_lr = False
-        self.assignadd = None
-        self.global_step = None
+        self.assignadd = P.AssignAdd()
+        self.global_step = Parameter(initializer(0, [1], mindspore.int32), name='global_step')
         self.is_group = False
         self.is_group_lr = False
         self.is_group_params_ordered = False
@@ -161,11 +161,10 @@ class Optimizer(Cell):
             self.group_grad_centralization = []
             self._init_group_params(parameters, learning_rate, weight_decay, self.grad_centralization)
 
-        # The final value of dynamic_lr can be determined after the process of parse_single_lr and init_group_params
-        if self.dynamic_lr:
-            self.assignadd = P.AssignAdd()
-            self.global_step = Parameter(initializer(0, [1], mindspore.int32), name='global_step')
+        self._init_opt_attrs(learning_rate, parameters, weight_decay)
 
+    def _init_opt_attrs(self, learning_rate, parameters, weight_decay):
+        """initialize optimizer attributions"""
         if self.is_group_lr:
             self.learning_rate = CellList(self.group_lr, auto_prefix=False) if self.dynamic_lr \
                 else ParameterTuple(self.group_lr)
@@ -174,19 +173,21 @@ class Optimizer(Cell):
 
         if self.is_group:
             self.parameters = ParameterTuple(self.group_params)
-            self.weight_decay = tuple(self.group_weight_decay)
-            self.weight_decay_tensor_tuple = tuple(Tensor(x, mstype.float32) for x in self.group_weight_decay)
-            decay_filter = lambda x: x > 0
-            self.decay_flags = tuple(decay_filter(x) for x in self.weight_decay)
+            decay_filter = lambda x: isinstance(x, Cell) or x > 0
+            dynamic_decay_filter = lambda x: isinstance(x, Cell)
+            self.decay_flags = tuple(decay_filter(x) for x in self.group_weight_decay)
+            self.dynamic_decay_flags = tuple(dynamic_decay_filter(x) for x in self.group_weight_decay)
+            self.weight_decay = tuple(x if flag else Tensor(x, mstype.float32)
+                                      for x, flag in zip(self.group_weight_decay, self.dynamic_decay_flags))
             self.exec_weight_decay = any(self.decay_flags)
             self.grad_centralization_flags = tuple(self.group_grad_centralization)
         else:
             self.parameters = ParameterTuple(parameters)
-            self.weight_decay = weight_decay * loss_scale
-            self.weight_decay_tensor = Tensor(self.weight_decay, mstype.float32)
             decay_filter = lambda x: 'beta' not in x.name and 'gamma' not in x.name
             self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
-            self.exec_weight_decay = self.weight_decay > 0
+            self.dynamic_decay_flags = isinstance(weight_decay, Cell)
+            self.exec_weight_decay = isinstance(weight_decay, Cell) or weight_decay > 0
+            self.weight_decay = Tensor(weight_decay, mstype.float32) if not self.dynamic_decay_flags else weight_decay
         # when a parameter has been unique, there is no need do another unique in optimizer.
         for param in self.parameters:
             if param.unique:
@@ -196,8 +197,8 @@ class Optimizer(Cell):
         self.ps_parameters = tuple(ps_filter(x) for x in self.parameters)
         cache_filter = lambda x: x.cache_enable
         self.cache_enable = tuple(cache_filter(x) for x in self.parameters)
-        self.reciprocal_scale = Tensor(1.0 / loss_scale, mstype.float32)
-        self.need_scale = loss_scale != 1.0
+        self.reciprocal_scale = Tensor(1.0 / self.loss_scale, mstype.float32)
+        self.need_scale = self.loss_scale != 1.0
         self.global_step_increase_tensor = Tensor(1, mstype.int32)
         self.param_length = len(self.parameters)
         self.map_ = C.Map()
@@ -316,12 +317,11 @@ class Optimizer(Cell):
         """
         if self.exec_weight_decay:
             params = self.parameters
+            weight_decay = self.get_weight_decay()
             if self.is_group:
-                gradients = self.map_(F.partial(_apply_decay), self.weight_decay_tensor_tuple, self.decay_flags,
-                                      params, gradients)
+                gradients = self.map_(F.partial(_apply_decay), weight_decay, self.decay_flags, params, gradients)
             else:
-                gradients = self.map_(F.partial(_apply_decay, self.weight_decay_tensor), self.decay_flags,
-                                      params, gradients)
+                gradients = self.map_(F.partial(_apply_decay, weight_decay), self.decay_flags, params, gradients)
 
         return gradients
 
@@ -370,12 +370,19 @@ class Optimizer(Cell):
         return gradients
 
     def _preprocess_weight_decay(self, weight_decay):
-        """Check weight decay, and convert int to float."""
+        """preprocess weight decay"""
         if isinstance(weight_decay, (float, int)):
             weight_decay = float(weight_decay)
             validator.check_non_negative_float(weight_decay, "weight_decay", self.cls_name)
-            return weight_decay
-        raise TypeError("Weight decay should be int or float.")
+            weight_decay = weight_decay * self.loss_scale
+        elif isinstance(weight_decay, Cell):
+            self.dynamic_weight_decay = True
+            weight_decay = _WrappedWeightDecay(weight_decay, self.loss_scale)
+        elif isinstance(weight_decay, Tensor):
+            weight_decay = weight_decay
+        else:
+            raise TypeError("Weight decay should be int, float or Cell.")
+        return weight_decay
 
     def _preprocess_grad_centralization(self, grad_centralization):
         if not isinstance(grad_centralization, bool):
@@ -513,10 +520,9 @@ class Optimizer(Cell):
                 lr = default_lr
 
             if 'weight_decay' in group_param.keys():
-                cur_weight_decay = self._preprocess_weight_decay(group_param['weight_decay'])
-                weight_decay_ = cur_weight_decay * self.loss_scale
+                weight_decay_ = self._preprocess_weight_decay(group_param['weight_decay'])
             else:
-                weight_decay_ = weight_decay * self.loss_scale
+                weight_decay_ = self._preprocess_weight_decay(weight_decay)
 
             if 'grad_centralization' in group_param.keys():
                 self.grad_centralization = self._preprocess_grad_centralization(group_param['grad_centralization'])
@@ -575,6 +581,27 @@ class Optimizer(Cell):
         self.group_weight_decay = ordered_weight_decay
         self.group_grad_centralization = ordered_grad_centralization
 
+
+    def get_weight_decay(self):
+        """
+        The optimizer calls this interface to get the weight decay value for the current step.
+        User-defined optimizers based on :class:`mindspore.nn.Optimizer` can also call this interface
+        before updating the parameters.
+
+        Returns:
+            float, the weight decay value of current step.
+        """
+        if self.dynamic_weight_decay:
+            if self.is_group:
+                weight_decay = ()
+                for weight_decay_, flag_ in zip(self.weight_decay, self.dynamic_decay_flags):
+                    current_weight_decay = weight_decay_(self.global_step) if flag_ else weight_decay_
+                    weight_decay += (current_weight_decay,)
+                return weight_decay
+            return self.weight_decay(self.global_step)
+        return self.weight_decay
+
+
     def get_lr(self):
         """
         The optimizer calls this interface to get the learning rate for the current step. User-defined optimizers based
@@ -592,9 +619,9 @@ class Optimizer(Cell):
                     lr += (current_dynamic_lr,)
             else:
                 lr = self.learning_rate(self.global_step)
-
-            self.assignadd(self.global_step, self.global_step_increase_tensor)
+        self.assignadd(self.global_step, self.global_step_increase_tensor)
         return lr
+
 
     def get_lr_parameter(self, param):
         """
@@ -835,3 +862,14 @@ class _IteratorLearningRate(LearningRateSchedule):
 
     def construct(self, global_step):
         return self.gather(self.learning_rate, global_step, 0)
+
+
+class _WrappedWeightDecay(Cell):
+    """Inner api, a combination of dynamic or non-dynamic weight decay"""
+    def __init__(self, weight_decay, loss_scale=1.0):
+        super(_WrappedWeightDecay, self).__init__()
+        self.weight_decay = weight_decay
+        self.loss_scale = Tensor(loss_scale, mstype.float32)
+
+    def construct(self, global_step):
+        return self.weight_decay(global_step) * self.loss_scale

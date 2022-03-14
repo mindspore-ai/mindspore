@@ -77,7 +77,11 @@ class Momentum(Optimizer):
               If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the optimizer will be used.
+              will be used. If not, the `weight_decay` in the optimizer will be used. It should be noted that weight
+              decay can be a constant value or a Cell. It is a Cell only when dynamic weight decay is applied. Dynamic
+              weight decay is similar to dynamic learning rate, users need to customize a weight decay schedule only
+              with global step as input, and during training, the optimizer calls the instance of WeightDecaySchedule
+              to get the weight decay value of current step.
 
             - grad_centralization: Optional. Must be Boolean. If "grad_centralization" is in the keys, the set value
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
@@ -105,7 +109,16 @@ class Momentum(Optimizer):
 
         momentum (float): Hyperparameter of type float, means momentum for the moving average.
             It must be at least 0.0.
-        weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0.0. Default: 0.0.
+
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+
+            - float: The fixed weight decay value. Must be equal to or greater than 0.
+
+            - int: The fixed weight decay value. Must be equal to or greater than 0. It will be converted to float.
+
+            - Cell: Weight decay is dynamic. During training, the optimizer calls the instance of
+              the Cell with step as the input to get the weight decay value of current step.
+
         loss_scale (float): A floating point value for the loss scale. It must be greater than 0.0. In general, use the
             default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
             `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in

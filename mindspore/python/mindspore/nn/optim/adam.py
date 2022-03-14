@@ -32,7 +32,7 @@ _scaler_one = Tensor(1, mstype.int32)
 _scaler_ten = Tensor(10, mstype.float32)
 
 
-@_adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
+@_adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                     "Tensor", "Bool", "Bool")
 def _update_run_op(beta1, beta2, eps, lr, weight_decay, param, m, v, gradient, decay_flag, optim_filter):
     """
@@ -231,7 +231,11 @@ class Adam(Optimizer):
               If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the optimizer will be used.
+              will be used. If not, the `weight_decay` in the optimizer will be used. It should be noted that weight
+              decay can be a constant value or a Cell. It is a Cell only when dynamic weight decay is applied. Dynamic
+              weight decay is similar to dynamic learning rate, users need to customize a weight decay schedule only
+              with global step as input, and during training, the optimizer calls the instance of WeightDecaySchedule
+              to get the weight decay value of current step.
 
             - grad_centralization: Optional. Must be Boolean. If "grad_centralization" is in the keys, the set value
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
@@ -269,7 +273,16 @@ class Adam(Optimizer):
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If true, update the gradients using NAG.
             If false, update the gradients without using NAG. Default: False.
-        weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
+
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+
+            - float: The fixed weight decay value. Must be equal to or greater than 0.
+
+            - int: The fixed weight decay value. Must be equal to or greater than 0. It will be converted to float.
+
+            - Cell: Weight decay is dynamic. During training, the optimizer calls the instance of
+              the Cell with step as the input to get the weight decay value of current step.
+
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. In general, use the
             default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
             `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
@@ -427,7 +440,11 @@ class AdamWeightDecay(Optimizer):
               If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the optimizer will be used.
+              will be used. If not, the `weight_decay` in the optimizer will be used. It should be noted that weight
+              decay can be a constant value or a Cell. It is a Cell only when dynamic weight decay is applied. Dynamic
+              weight decay is similar to dynamic learning rate, users need to customize a weight decay schedule only
+              with global step as input, and during training, the optimizer calls the instance of WeightDecaySchedule
+              to get the weight decay value of current step.
 
             - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
@@ -455,7 +472,15 @@ class AdamWeightDecay(Optimizer):
             Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Default: 1e-6.
             Should be greater than 0.
-        weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
+
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+
+            - float: The fixed weight decay value. Must be equal to or greater than 0.
+
+            - int: The fixed weight decay value. Must be equal to or greater than 0. It will be converted to float.
+
+            - Cell: Weight decay is dynamic. During training, the optimizer calls the instance of
+              the Cell with step as the input to get the weight decay value of current step.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -506,23 +531,24 @@ class AdamWeightDecay(Optimizer):
         self.moments2 = self.parameters.clone(prefix="adam_v", init='zeros')
 
     def construct(self, gradients):
+        weight_decay = self.get_weight_decay()
         lr = self.get_lr()
         if self.is_group:
             if self.is_group_lr:
                 optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
-                                              lr, self.weight_decay, self.parameters, self.moments1,
+                                              lr, weight_decay, self.parameters, self.moments1,
                                               self.moments2, gradients, self.decay_flags, self.optim_filter)
             else:
                 optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
-                                              self.weight_decay, self.parameters, self.moments1, self.moments2,
+                                              weight_decay, self.parameters, self.moments1, self.moments2,
                                               gradients, self.decay_flags, self.optim_filter)
         else:
-            optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr,
-                                                    self.weight_decay),
+            optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr, weight_decay),
                                           self.parameters, self.moments1, self.moments2,
                                           gradients, self.decay_flags, self.optim_filter)
         if self.use_parallel:
             self.broadcast_params(optim_result)
+
         return optim_result
 
 
@@ -569,7 +595,11 @@ class AdamOffload(Optimizer):
               If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the optimizer will be used.
+              will be used. If not, the `weight_decay` in the optimizer will be used. It should be noted that weight
+              decay can be a constant value or a Cell. It is a Cell only when dynamic weight decay is applied. Dynamic
+              weight decay is similar to dynamic learning rate, users need to customize a weight decay schedule only
+              with global step as input, and during training, the optimizer calls the instance of WeightDecaySchedule
+              to get the weight decay value of current step.
 
             - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
@@ -603,7 +633,16 @@ class AdamOffload(Optimizer):
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If true, update the gradients using NAG.
             If false, update the gradients without using NAG. Default: False.
-        weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
+
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+
+            - float: The fixed weight decay value. Must be equal to or greater than 0.
+
+            - int: The fixed weight decay value. Must be equal to or greater than 0. It will be converted to float.
+
+            - Cell: Weight decay is dynamic. During training, the optimizer calls the instance of
+              the Cell with step as the input to get the weight decay value of current step.
+
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. In general, use the
             default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
             `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in

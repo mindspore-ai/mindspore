@@ -14,10 +14,8 @@
 # ============================================================================
 """rprop"""
 from mindspore import ops
-from mindspore.ops import functional as F, operations as P
+from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
-from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
@@ -63,7 +61,11 @@ class Rprop(Optimizer):
               If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
             - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the optimizer will be used.
+              will be used. If not, the `weight_decay` in the optimizer will be used. It should be noted that weight
+              decay can be a constant value or a Cell. It is a Cell only when dynamic weight decay is applied. Dynamic
+              weight decay is similar to dynamic learning rate, users need to customize a weight decay schedule only
+              with global step as input, and during training, the optimizer calls the instance of WeightDecaySchedule
+              to get the weight decay value of current step.
 
             - grad_centralization: Optional. Must be Boolean. If "grad_centralization" is in the keys, the set value
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
@@ -92,7 +94,14 @@ class Rprop(Optimizer):
         etas (tuple[float, float]): The factor of multiplicative increasing or
             descreasing(etaminus, etaplus).
         step_sizes(tuple[float, float]): The allowed minimal and maximal step size(min_step_sizes, max_step_size).
-        weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
+        weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
+
+            - float: The fixed weight decay value. Must be equal to or greater than 0.
+
+            - int: The fixed weight decay value. Must be equal to or greater than 0. It will be converted to float.
+
+            - Cell: Weight decay is dynamic. During training, the optimizer calls the instance of
+              the Cell with step as the input to get the weight decay value of current step.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -169,7 +178,6 @@ class Rprop(Optimizer):
         self.step_size_min, self.step_size_max = step_sizes
         self.prev = self.parameters.clone(prefix="prev", init='zeros')
         self.step_size = self.parameters.clone(prefix="step_size", init='zeros')
-        self.step = Parameter(Tensor(0., dtype=mstype.float32), name='step')
 
         self.fill = P.Fill()
         self.sign = P.Sign()
@@ -190,7 +198,7 @@ class Rprop(Optimizer):
                                                                    self.prev, self.step_size)):
             lr = lrs[index] if self.is_group_lr else lrs
 
-            if self.step == 0.:
+            if self.global_step == 1:
                 step_size_fp32 = self.ones_like(step_size) * lr
             else:
                 step_size_fp32 = self.cast(step_size, mstype.float32)
@@ -212,7 +220,5 @@ class Rprop(Optimizer):
             self.assign(param, self.cast(next_param, param.dtype))
             self.assign(prev, self.cast(gradient_update, prev.dtype))
             self.assign(step_size, self.cast(step_size_fp32, step_size.dtype))
-
-        success = F.depend(success, self.assignadd(self.step, 1.))
 
         return success
