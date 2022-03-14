@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_RPC_TCP_CONSTANTS_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_RPC_TCP_CONSTANTS_H_
 
+#include <arpa/inet.h>
 #include <string>
 #include <csignal>
 #include <queue>
@@ -84,6 +85,45 @@ constexpr int IP_LEN_MAX = 128;
 
 // Kill the process for safe exiting.
 inline void KillProcess(const std::string &ret) { raise(SIGKILL); }
+
+/*
+ * The MessageHeader contains the stats info about the message body.
+ */
+struct MessageHeader {
+  MessageHeader() {
+    for (unsigned int i = 0; i < BUSMAGIC_LEN; ++i) {
+      if (i < sizeof(RPC_MAGICID) - 1) {
+        magic[i] = RPC_MAGICID[i];
+      } else {
+        magic[i] = '\0';
+      }
+    }
+  }
+
+  char magic[BUSMAGIC_LEN];
+  uint32_t name_len{0};
+  uint32_t to_len{0};
+  uint32_t from_len{0};
+  uint32_t body_len{0};
+};
+
+// Fill the message header using the given message.
+__attribute__((unused)) static void FillMessageHeader(const MessageBase &message, MessageHeader *header) {
+  std::string send_to = message.to;
+  std::string send_from = message.from;
+  header->name_len = htonl(static_cast<uint32_t>(message.name.size()));
+  header->to_len = htonl(static_cast<uint32_t>(send_to.size()));
+  header->from_len = htonl(static_cast<uint32_t>(send_from.size()));
+  header->body_len = htonl(static_cast<uint32_t>(message.body.size()));
+}
+
+// Compute and return the byte size of the whole message.
+__attribute__((unused)) static size_t GetMessageSize(const MessageBase &message) {
+  std::string send_to = message.to;
+  std::string send_from = message.from;
+  size_t size = message.name.size() + send_to.size() + send_from.size() + message.body.size() + sizeof(MessageHeader);
+  return size;
+}
 
 #define RPC_ASSERT(expression)                                                                       \
   do {                                                                                               \

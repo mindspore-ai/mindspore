@@ -41,8 +41,11 @@ class TCPClient {
   // Disconnect from the specified server.
   bool Disconnect(const std::string &dst_url, size_t timeout_in_sec = 5);
 
-  // Send the message from the source to the destination.
-  int Send(std::unique_ptr<MessageBase> &&msg);
+  // Send the message from the source to the destination synchronously and return the byte size by this method call.
+  int SendSync(std::unique_ptr<MessageBase> &&msg);
+
+  // Send the message from the source to the destination asynchronously.
+  void SendAsync(std::unique_ptr<MessageBase> &&msg);
 
  private:
   // The basic TCP communication component used by the client.

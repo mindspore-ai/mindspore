@@ -69,11 +69,13 @@ bool TCPClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
   return rt;
 }
 
-int TCPClient::Send(std::unique_ptr<MessageBase> &&msg) {
+int TCPClient::SendSync(std::unique_ptr<MessageBase> &&msg) {
   int rt = -1;
-  rt = tcp_comm_->Send(msg.release());
+  rt = tcp_comm_->Send(msg.release(), true);
   return rt;
 }
+
+void TCPClient::SendAsync(std::unique_ptr<MessageBase> &&msg) { (void)tcp_comm_->Send(msg.release(), false); }
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore

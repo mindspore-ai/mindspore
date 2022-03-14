@@ -130,7 +130,8 @@ void OnAccept(int server, uint32_t events, void *arg) {
   }
 }
 
-void DoSend(Connection *conn) {
+int DoSend(Connection *conn) {
+  int total_send_bytes = 0;
   while (!conn->send_message_queue.empty() || conn->total_send_len != 0) {
     if (conn->total_send_len == 0) {
       conn->FillSendMessage(conn->send_message_queue.front(), conn->source, false);
@@ -139,6 +140,7 @@ void DoSend(Connection *conn) {
 
     int sendLen = conn->socket_operation->SendMessage(conn, &conn->send_kernel_msg, &conn->total_send_len);
     if (sendLen > 0) {
+      total_send_bytes += sendLen;
       if (conn->total_send_len == 0) {
         // update metrics
         conn->send_metrics->UpdateError(false);
@@ -158,6 +160,7 @@ void DoSend(Connection *conn) {
       break;
     }
   }
+  return total_send_bytes;
 }
 
 TCPComm::~TCPComm() {
@@ -354,8 +357,8 @@ void TCPComm::DropMessage(MessageBase *msg) {
   ptr = nullptr;
 }
 
-int TCPComm::Send(MessageBase *msg) {
-  return send_event_loop_->AddTask([msg, this] {
+int TCPComm::Send(MessageBase *msg, bool sync) {
+  auto task = [msg, this] {
     std::lock_guard<std::mutex> lock(*conn_mutex_);
     // Search connection by the target address
     Connection *conn = conn_pool_->FindConnection(msg->to.Url());
@@ -363,7 +366,8 @@ int TCPComm::Send(MessageBase *msg) {
       MS_LOG(ERROR) << "Can not found remote link and send fail name: " << msg->name.c_str()
                     << ", from: " << msg->from.Url().c_str() << ", to: " << msg->to.Url().c_str();
       DropMessage(msg);
-      return;
+      int error_no = -1;
+      return error_no;
     }
 
     if (conn->send_message_queue.size() >= SENDMSG_QUEUELEN) {
@@ -371,7 +375,8 @@ int TCPComm::Send(MessageBase *msg) {
                       << ") and the name of dropped message is: " << msg->name.c_str() << ", fd: " << conn->socket_fd
                       << ", to: " << conn->destination.c_str();
       DropMessage(msg);
-      return;
+      int error_no = -1;
+      return error_no;
     }
 
     if (conn->state != ConnectionState::kConnected) {
@@ -379,7 +384,8 @@ int TCPComm::Send(MessageBase *msg) {
                       << " and the name of dropped message is: " << msg->name.c_str() << ", fd: " << conn->socket_fd
                       << ", to: " << conn->destination.c_str();
       DropMessage(msg);
-      return;
+      int error_no = -1;
+      return error_no;
     }
 
     if (conn->total_send_len == 0) {
@@ -387,8 +393,13 @@ int TCPComm::Send(MessageBase *msg) {
     } else {
       (void)conn->send_message_queue.emplace(msg);
     }
-    DoSend(conn);
-  });
+    return DoSend(conn);
+  };
+  if (sync) {
+    return task();
+  } else {
+    return send_event_loop_->AddTask(task);
+  }
 }
 
 void TCPComm::Connect(const std::string &dst_url) {
@@ -403,7 +414,7 @@ void TCPComm::Connect(const std::string &dst_url) {
       conn = new (std::nothrow) Connection();
       if (conn == nullptr) {
         MS_LOG(ERROR) << "Failed to create new connection and link fail destination: " << dst_url;
-        return;
+        return false;
       }
       conn->source = url_;
       conn->destination = dst_url;
@@ -418,12 +429,12 @@ void TCPComm::Connect(const std::string &dst_url) {
       SocketAddress addr;
       if (!SocketOperation::GetSockAddr(dst_url, &addr)) {
         MS_LOG(ERROR) << "Failed to get socket address to dest url " << dst_url;
-        return;
+        return false;
       }
       int sock_fd = SocketOperation::CreateSocket(addr.sa.sa_family);
       if (sock_fd < 0) {
         MS_LOG(ERROR) << "Failed to create client tcp socket to dest url " << dst_url;
-        return;
+        return false;
       }
 
       conn->socket_fd = sock_fd;
@@ -439,12 +450,13 @@ void TCPComm::Connect(const std::string &dst_url) {
           conn->socket_operation = nullptr;
         }
         delete conn;
-        return;
+        return false;
       }
       conn_pool_->AddConnection(conn);
     }
     conn_pool_->AddConnInfo(conn->socket_fd, dst_url, nullptr);
     MS_LOG(INFO) << "Connected to destination: " << dst_url;
+    return true;
   });
 }
 
@@ -460,6 +472,7 @@ void TCPComm::Disconnect(const std::string &dst_url) {
   (void)recv_event_loop_->AddTask([dst_url, this] {
     std::lock_guard<std::mutex> lock(*conn_mutex_);
     conn_pool_->DeleteConnection(dst_url);
+    return true;
   });
 }
 
