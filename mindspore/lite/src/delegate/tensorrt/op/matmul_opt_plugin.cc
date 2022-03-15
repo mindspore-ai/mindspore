@@ -38,17 +38,16 @@ int MatmulOptPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const 
   CUBLAS_CHECK(cublasSetStream(cublas_handle_, stream));
   const nvinfer1::PluginTensorDesc desc_a = inputDesc[0];
   const nvinfer1::PluginTensorDesc desc_b = inputDesc[1];
+  const nvinfer1::PluginTensorDesc desc_c = outputDesc[0];
   // a: m * k, b: k * n, c: m * n
-  int m = a_trans_ ? desc_a.dims.d[1] : desc_a.dims.d[0];
-  int k = a_trans_ ? desc_a.dims.d[0] : desc_a.dims.d[1];
-  int n = b_trans_ ? desc_b.dims.d[0] : desc_b.dims.d[1];
+  int m = desc_c.dims.d[0];
+  int n = desc_c.dims.d[1];
+  int k = b_trans_ ? desc_b.dims.d[1] : desc_b.dims.d[0];
   const int mm_params[]{m, n, k};
   const int trans_params[]{n, m};
   if (desc_a.type == nvinfer1::DataType::kFLOAT && desc_b.type == nvinfer1::DataType::kFLOAT) {
-    CublasMM1Batch(inputs[0], inputs[1], c_addr_trans_, mm_params, operations_, data_types_, type_compute_,
+    CublasMM1Batch(inputs[0], inputs[1], outputs[0], mm_params, operations_, data_types_, type_compute_,
                    cublas_handle_);
-    Cublas2DTranspose(static_cast<const float *>(c_addr_trans_), static_cast<float *>(outputs[0]), trans_params,
-                      cublas_handle_);
   } else {
     MS_LOG(ERROR) << layer_name_ << " input datatype needs check a: " << static_cast<int>(desc_a.type)
                   << ", b: " << static_cast<int>(desc_a.type);
@@ -84,17 +83,8 @@ bool MatmulOptPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginT
 void MatmulOptPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
                                       const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {
   bias_index_ = (nbInputs == INPUT_SIZE3) ? kBiasIndex : -1;
-  if (a_addr_trans_ == nullptr) {
-    CUDA_CHECK_VOID(cudaMalloc(&a_addr_trans_, GetDimsVolume(in[0].max) * sizeof(float)));
-  }
-  if (b_addr_trans_ == nullptr) {
-    CUDA_CHECK_VOID(cudaMalloc(&b_addr_trans_, GetDimsVolume(in[1].max) * sizeof(float)));
-  }
-  if (c_addr_trans_ == nullptr) {
-    CUDA_CHECK_VOID(cudaMalloc(&c_addr_trans_, GetDimsVolume(out[0].max) * sizeof(float)));
-  }
-  operations_[0] = a_trans_ ? CUBLAS_OP_N : CUBLAS_OP_T;
-  operations_[1] = b_trans_ ? CUBLAS_OP_N : CUBLAS_OP_T;
+  operations_[0] = a_trans_ ? CUBLAS_OP_T : CUBLAS_OP_N;
+  operations_[1] = b_trans_ ? CUBLAS_OP_T : CUBLAS_OP_N;
   data_types_[0] = ConvertDataType(in[0].desc.type);            // input a
   data_types_[1] = ConvertDataType(in[1].desc.type);            // input b
   data_types_[kBiasIndex] = ConvertDataType(out[0].desc.type);  // output c
@@ -125,17 +115,7 @@ int MatmulOptPlugin::initialize() noexcept {
   }
 }
 
-void MatmulOptPlugin::FreeCudaDeviceMemory(void **addr) {
-  if (addr != nullptr) {
-    CUDA_CHECK_VOID(cudaFree(*addr));
-    addr = nullptr;
-  }
-}
-
 void MatmulOptPlugin::terminate() noexcept {
-  FreeCudaDeviceMemory(&a_addr_trans_);
-  FreeCudaDeviceMemory(&b_addr_trans_);
-  FreeCudaDeviceMemory(&c_addr_trans_);
   if (cublas_handle_ != nullptr) {
     auto cublas_ret = cublasDestroy(cublas_handle_);
     if (cublas_ret != CUBLAS_STATUS_SUCCESS) {
