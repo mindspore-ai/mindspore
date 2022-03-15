@@ -1353,7 +1353,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> 
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
   runtime::RunSingleOpGraph(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
-                            context->device_context(), context->op_run_info().is_dynamic_shape);
+                            context->device_context());
   ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info().is_gradient_out);
   ClearInputDeviceAddress(context->graph(), context->device_context());
   // Reset PyNative infer flag.
@@ -1473,7 +1473,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph
   }
   auto tensors_without_value_mask = GetTensorWithoutValueMask(*op_run_info);
   runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
-  runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context, op_run_info->is_dynamic_shape);
+  runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context);
   ReleaseForwardOutput(op_run_info->input_tensors);
   UpdateOutput(output_nodes, outputs);
   ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
