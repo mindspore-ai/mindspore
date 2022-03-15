@@ -18,7 +18,7 @@
 """Basic composite operations."""
 from functools import partial
 from types import FunctionType
-
+import mindspore as ms
 from mindspore import context
 from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
@@ -368,12 +368,15 @@ class GradOperation(GradOperation_):
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
         #   In PYNATIVE_MODE calling Grad from ms_function, use the out layer after_grad do grad in GRAPH_MODE.
         if context.get_context("mode") == context.GRAPH_MODE:
+            dynamic_shape_inputs = None
+            if isinstance(fn, ms.nn.Cell):
+                dynamic_shape_inputs = fn.get_inputs()
             if self.get_by_list:
-                @ms_function
+                @ms_function(input_signature=dynamic_shape_inputs)
                 def after_grad(*args):
                     return grad_(fn, weights)(*args)
             else:
-                @ms_function
+                @ms_function(input_signature=dynamic_shape_inputs)
                 def after_grad(*args):
                     return grad_(fn)(*args)
         elif self.pynative_:
@@ -461,17 +464,20 @@ class _Grad(GradOperation_):
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
         #   In PYNATIVE_MODE calling Grad from ms_function, use the out layer after_grad do grad in GRAPH_MODE.
         if context.get_context("mode") == context.GRAPH_MODE:
+            dynamic_shape_inputs = None
+            if isinstance(fn, ms.nn.Cell):
+                dynamic_shape_inputs = fn.get_inputs()
             if self.get_by_position:
-                @ms_function
+                @ms_function(input_signature=dynamic_shape_inputs)
                 def after_grad(*args):
                     return grad_(fn, weights, grad_position)(*args)
             else:
                 if self.get_by_list:
-                    @ms_function
+                    @ms_function(input_signature=dynamic_shape_inputs)
                     def after_grad(*args):
                         return grad_(fn, weights)(*args)
                 else:
-                    @ms_function
+                    @ms_function(input_signature=dynamic_shape_inputs)
                     def after_grad(*args):
                         return grad_(fn)(*args)
         elif self.pynative_:

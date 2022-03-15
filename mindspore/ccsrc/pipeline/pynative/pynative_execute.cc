@@ -2072,7 +2072,7 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
     MS_EXCEPTION_IF_NULL(value_node);
     TensorValueToTensor(value_node->value(), &tensors_in_bprop_graph);
   }
-
+  // Check exception case.
   auto &tensor_id_with_tensor_object = top_cell()->tensor_id_with_tensor_object();
   if (!tensor_id_with_tensor_object.empty()) {
     MS_LOG(EXCEPTION) << "When compile a top graph, the tensor_id_with_tensor_object map should be empty. Top cell: "
