@@ -93,6 +93,9 @@ public class ModelParallelRunner {
      * @return init status.
      */
     public boolean predict(List<MSTensor> inputs, List<MSTensor> outputs) {
+        if (inputs == null || outputs == null || inputs.size() == 0) {
+            return false;
+        }
         long[] inputsPtrArray = new long[inputs.size()];
         for (int i = 0; i < inputs.size(); i++) {
             inputsPtrArray[i] = inputs.get(i).getMSTensorPtr();
