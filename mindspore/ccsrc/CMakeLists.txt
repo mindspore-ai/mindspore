@@ -258,6 +258,7 @@ set(SUB_COMP
         runtime/device
         runtime/graph_scheduler
         runtime/hardware
+        runtime/recovery
         runtime/pynative
         plugin/device/ascend/hal/device
         plugin/device/ascend/hal/hardware
