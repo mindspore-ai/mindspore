@@ -176,6 +176,7 @@ class GraphScheduler {
                                            const ControlNodeParserPtr &parser);
   void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
                                          const ControlNodeParserPtr &parser);
+  void LinkControlArrowForOutputActor(OutputActor *output_actor, const ActorSet *actor_set);
 
   // 3. The processing of linking output result arrows.
   void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);

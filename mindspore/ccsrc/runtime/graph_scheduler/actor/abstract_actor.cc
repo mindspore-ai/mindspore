@@ -82,7 +82,7 @@ bool AbstractActor::CheckRunningCondition(const OpContext<DeviceTensor> *context
 
 void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-  if (input_datas_num_ != 0) {
+  if ((input_datas_num_ != 0) && (!input_op_datas_.empty())) {
     auto ret = input_op_datas_.erase(context->sequential_num_);
     if (ret == 0) {
       std::string error_info = "Erase input data failed: " + GetAID().Name();
@@ -92,7 +92,7 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
     }
   }
 
-  if (input_controls_num_ != 0) {
+  if ((input_controls_num_ != 0) && (!input_op_controls_.empty())) {
     auto ret = input_op_controls_.erase(context->sequential_num_);
     if (ret == 0) {
       std::string error_info = "Erase input controls failed: " + GetAID().Name();

@@ -191,7 +191,7 @@ void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_c
   UpdateRefCount(device_tensor.get(), is_max_ref_count);
 }
 
-void FreeMemoryInner(DeviceTensor *const device_tensor, const DeviceContext *device_context) {
+void FreeMemory(DeviceTensor *const device_tensor, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_tensor);
   // The device context may be not accurate in the control flow scene, so need fetch by device name and device id.
   if ((device_context == nullptr) || (device_context->GetDeviceAddressType() != device_tensor->DeviceType())) {
@@ -213,7 +213,7 @@ void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext
     device_tensor->DecreaseRefCount();
     if (device_tensor->ref_count() == 0) {
       if (device_tensor->GetPtr() != nullptr) {
-        FreeMemoryInner(device_tensor, device_context);
+        FreeMemory(device_tensor, device_context);
       }
       device_tensor->ResetRefCount();
     }
@@ -222,7 +222,7 @@ void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext
     device_tensor->DecreaseDynamicRefCount(op_name);
     if ((device_tensor->dynamic_ref_count() == 0) && (device_tensor->GetPtr() != nullptr)) {
       MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr();
-      FreeMemoryInner(device_tensor, device_context);
+      FreeMemory(device_tensor, device_context);
     }
   }
 }

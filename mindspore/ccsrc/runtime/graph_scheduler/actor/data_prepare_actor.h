@@ -67,6 +67,9 @@ class DataPrepareActor : public DebugAwareActor {
 
  protected:
   void Init() override;
+  void Run(OpContext<DeviceTensor> *const context) override {
+    PrepareData({}, context, GraphExecutionStrategy::kPipeline);
+  }
 
  private:
   friend class GraphScheduler;

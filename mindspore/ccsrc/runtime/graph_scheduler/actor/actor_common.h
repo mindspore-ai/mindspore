@@ -221,6 +221,7 @@ void UpdateRefCount(DeviceTensor *const device_tensor, bool is_max_ref_count = f
 void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_count = false);
 void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
                           const std::string &op_name);
+void FreeMemory(DeviceTensor *const device_tensor, const DeviceContext *device_context);
 
 // Get front node by backend node.
 AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph);

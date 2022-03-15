@@ -20,6 +20,38 @@
 
 namespace mindspore {
 namespace runtime {
+bool IsOutputAddressPersisted(const DeviceTensor *output_device_tensor, const AnfNodePtr &output_node) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  MS_EXCEPTION_IF_NULL(output_device_tensor);
+  // The persisted address can't be replaced.
+  if (output_device_tensor->is_ptr_persisted()) {
+    return true;
+  }
+
+  if (output_node->isa<ValueNode>()) {
+    return true;
+  }
+
+  // In the input as output scenario, the output device tensor may come from the input tensor and can't be replaced.
+  // But in the dynamic shape scenario, need to free the old memory and alloc new memory using the new shape size.
+  if (output_node->isa<Parameter>() && !(output_node->cast<ParameterPtr>()->has_dynamic_shape())) {
+    return true;
+  }
+
+  return false;
+}
+
+void UpdateOutputTensorShape(const std::vector<TensorPtr> &output_tensors,
+                             const std::vector<KernelWithIndex> &output_nodes) {
+  for (size_t i = 0; i < output_tensors.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(output_tensors[i]);
+    auto shape = common::AnfAlgo::GetOutputInferShape(output_nodes[i].first, output_nodes[i].second);
+    std::vector<int64_t> temp_shape;
+    (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
+    output_tensors[i]->set_shape(temp_shape);
+  }
+}
+
 void OutputActor::Init() {
   // Check device contexts number.
   if (device_contexts_.size() != output_nodes_.size()) {
@@ -28,6 +60,10 @@ void OutputActor::Init() {
   // Check outputs number.
   if (output_nodes_.size() != outputs_.size()) {
     MS_LOG(EXCEPTION) << "The outputs number is wrong.";
+  }
+  // Check output device tensors number.
+  if (outputs_.size() != output_device_tensors_.size()) {
+    MS_LOG(EXCEPTION) << "The output device tensors number is wrong.";
   }
 
   // Set the number of actor running dependent messages.
@@ -38,6 +74,7 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
   MS_EXCEPTION_IF_NULL(context);
 
   ++current_count_;
+  // The last loop.
   if (loop_count_ == current_count_) {
     if (current_outputs_num_ + device_tensor_store_keys_.size() != outputs_num_) {
       std::string error_info = "The outputs num is wrong, the total outputs num: " + std::to_string(outputs_num_) +
@@ -61,25 +98,32 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
       output_device_tensors_[device_tensor_store_key.first] = device_tensor.get();
     }
 
-    // For dynamic_shape, UpdateOp maybe run after RunOpData, so it's needed to update shape of output tensor here
-    // Check outputs number.
-    if (output_nodes_.size() != outputs_.size()) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The outputs number is wrong.");
-    }
-    // Update output tensor's shape
-    for (size_t i = 0; i < outputs_.size(); ++i) {
-      auto shape = common::AnfAlgo::GetOutputInferShape(output_nodes_[i].first, output_nodes_[i].second);
-      std::vector<int64_t> temp_shape;
-      (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
-      if (outputs_[i] == nullptr) {
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The outputs_[i] is nullptr.");
-      }
-      outputs_[i]->set_shape(temp_shape);
-    }
+    // For dynamic_shape, UpdateOp maybe run after RunOpData, so it's needed to update shape of output tensor here.
+    UpdateOutputTensorShape(outputs_, output_nodes_);
 
     current_outputs_num_ = 0;
     current_count_ = 0;
     SET_OPCONTEXT_SUCCESS_RET((*context));
+  }
+
+  // The output device memory will be taken over by tensor in the last loop, otherwise needs to free the memory.
+  // 1.Avoid the memory leak when memory used by dynamic ref count in the control flow scene.
+  // 2.Alloc the new memory in the next step using the new shape size in the dynamic shape scene.
+  for (size_t i = 0; i < output_nodes_.size(); ++i) {
+    auto &output_node = output_nodes_[i].first;
+    auto &output_device_tensor = output_device_tensors_[i];
+    if ((output_node == nullptr) || (output_device_tensor == nullptr)) {
+      return;
+    }
+    if (!IsOutputAddressPersisted(output_device_tensor, output_node)) {
+      FreeMemory(output_device_tensor, device_contexts_[i]);
+    }
+  }
+
+  // Send control arrow to trigger next step running.
+  auto from_aid = const_cast<AID *>(&GetAID());
+  for (auto &output_control : output_control_arrows_) {
+    ActorDispatcher::Send(output_control, &OpActor::RunOpControl, from_aid, context);
   }
 }
 
@@ -92,16 +136,17 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   if (output_position >= outputs_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
   }
+  // Save the output nodes and output device tensors.
+  auto node_with_index = input_data->data_->GetNodeIndex();
+  MS_EXCEPTION_IF_NULL(node_with_index.first);
+  output_nodes_[output_position] = node_with_index;
+  output_device_tensors_[output_position] = input_data->data_;
 
   // Collect the output result in the last loop which is represented by "loop_count_ - current_count_ == 1".
   if (loop_count_ - current_count_ != 1) {
-    // The output device memory will be taken over by tensor in the last loop, otherwise needs to free the memory in
-    // the no last loop to avoid the memory leak when memory used by dynamic ref count.
-    FreeMemoryByRefCount(input_data->data_, device_contexts_[output_position], GetAID().Name());
     return;
   }
 
-  auto node_with_index = input_data->data_->GetNodeIndex();
   auto tensor = CreateOutputTensor(node_with_index.first, node_with_index.second, output_position);
   if (tensor == nullptr) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Create output tensor failed.");
@@ -109,10 +154,6 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   tensor->set_need_release_device_mem(true);
   outputs_[output_position] = tensor;
   current_outputs_num_++;
-
-  // Save the output nodes to clear the device tensor in the running end.
-  output_nodes_[output_position] = node_with_index;
-  output_device_tensors_[output_position] = input_data->data_;
 }
 
 TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
@@ -193,9 +234,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
     }
 
     // If the output node whose output address ptr can't be changed, then alloc the new device memory and copy the data:
-    // 1.In the input as output scenario, the output device tensor may come from the input tensor and can't be replaced.
-    // 2.The persisted address can't be replaced.
-    if (output_node->isa<ValueNode>() || output_node->isa<Parameter>() || device_tensor->is_ptr_persisted()) {
+    if (IsOutputAddressPersisted(device_tensor, output_node)) {
       auto device_context = device_contexts_[i];
       MS_EXCEPTION_IF_NULL(device_context);
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name());
