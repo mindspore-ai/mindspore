@@ -177,10 +177,10 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
     (void)ret.emplace_back(cnode->input(index + 1), index);
     auto output = GetOutputItem(manager, cnode, groups, index);
     if (output != nullptr) {
-      std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                     [](KernelWithIndex node_index) {
-                       return KernelWithIndex{node_index.first, node_index.second - 1};
-                     });
+      (void)std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
+                           [](KernelWithIndex node_index) {
+                             return KernelWithIndex{node_index.first, node_index.second - 1};
+                           });
     }
   } else {
     ret = GetCNodeNeighborFraczNodes(manager, cnode, index, groups);

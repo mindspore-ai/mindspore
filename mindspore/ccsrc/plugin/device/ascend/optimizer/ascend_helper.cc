@@ -43,8 +43,8 @@ AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &i
                              const KernelSelectPtr &kernel_select, const std::vector<size_t> &dst_shape) {
   std::vector<AnfNodePtr> trans_inputs;
   auto prim = std::make_shared<Primitive>(prim::kPrimReshape->name());
-  trans_inputs.emplace_back(NewValueNode(prim));
-  trans_inputs.emplace_back(input_node);
+  (void)trans_inputs.emplace_back(NewValueNode(prim));
+  (void)trans_inputs.emplace_back(input_node);
   auto reshape = NewCNode(trans_inputs, func_graph, {orig_node});
   MS_EXCEPTION_IF_NULL(reshape);
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {dst_shape},
