@@ -108,8 +108,17 @@ bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph) {
   return false;
 }
 
+bool IsCustomActor(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return AnfUtils::IsCustomActorNode(node);
+}
+
 bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(node);
+  if (IsCustomActor(node)) {
+    return false;
+  }
+
   if (!AnfUtils::IsRealCNodeKernel(node)) {
     return false;
   }
@@ -282,6 +291,8 @@ KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const Kerne
     type = KernelTransformType::kDeviceDataSourceActor;
   } else if (IsHostQueueDSActor(node, kernel_graph, host_parameters, strategy)) {
     type = KernelTransformType::kHostDataSourceActor;
+  } else if (IsCustomActor(node)) {
+    type = KernelTransformType::kCustomActor;
   } else if (IsKernelActor(node, strategy)) {
     type = KernelTransformType::kKernelActor;
   } else if (IsInternalParameter(node, kernel_graph)) {
@@ -319,6 +330,10 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
       break;
     case KernelTransformType::kHostDataSourceActor:
       actor_name = actor_set_name + kHostDSActorNameSuffix;
+      break;
+    case KernelTransformType::kCustomActor:
+      MS_EXCEPTION_IF_NULL(node);
+      actor_name = AnfUtils::GetCustomActorName(node);
       break;
     case KernelTransformType::kKernelActor:
       MS_EXCEPTION_IF_NULL(node);

@@ -1534,38 +1534,9 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
 
 void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
                                                     const GraphCompilerInfo &graph_compiler_info) {
-  constexpr size_t kDependFromIdx = 2;
-  constexpr size_t kDependToIdx = 1;
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
-  // prepare for kernel => actor map
-  HashMap<AnfNodePtr, AbstractActorPtr> kernel_to_actors = {};
-  HashSet<CustomActorPtr> no_depend_custom_actors = {};
-  for (const auto &actor : actor_set->custom_actors_) {
-    MS_EXCEPTION_IF_NULL(actor);
-    auto kernel = actor->kernel().lock();
-    MS_EXCEPTION_IF_NULL(kernel);
-    kernel_to_actors.emplace(kernel, actor);
-    no_depend_custom_actors.insert(actor);
-  }
-  for (const auto &actor : actor_set->kernel_actors_) {
-    MS_EXCEPTION_IF_NULL(actor);
-    auto kernel = actor->kernel();
-    MS_EXCEPTION_IF_NULL(kernel);
-    kernel_to_actors.emplace(kernel, actor);
-  }
-  for (const auto &actor : actor_set->data_source_actors_) {
-    MS_EXCEPTION_IF_NULL(actor);
-    auto device_data_source_actor = dynamic_cast<DeviceQueueDataSourceActor *>(actor.get());
-    if (device_data_source_actor != nullptr) {
-      auto kernel = device_data_source_actor->data_kernel();
-      MS_EXCEPTION_IF_NULL(kernel);
-      if (common::AnfAlgo::GetCNodeName(kernel) == kGetNextOpName) {
-        kernel_to_actors.emplace(kernel, actor);
-      }
-    }
-  }
-  // find depend(custom, custom)
+  // Link depend(custom, custom) or depend(custom, kernel) or depend(internal parameter, custom).
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
     MS_EXCEPTION_IF_NULL(graph);
@@ -1580,28 +1551,36 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
       }
       auto depend_cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(depend_cnode);
-      MS_EXCEPTION_IF_CHECK_FAIL(depend_cnode->size() > kDependFromIdx,
-                                 "depend node " + depend_cnode->DebugString() + " input size " +
-                                   std::to_string(depend_cnode->size()) + " is invalid.");
-      MS_EXCEPTION_IF_NULL(depend_cnode->input(kDependFromIdx));
-      MS_EXCEPTION_IF_NULL(depend_cnode->input(kDependToIdx));
-      auto from_node = depend_cnode->input(kDependFromIdx);
-      auto to_node = depend_cnode->input(kDependToIdx);
+      auto from_node = depend_cnode->input(kDependAttachNodeIndex);
+      auto to_node = depend_cnode->input(kRealInputIndexInDepend);
+      MS_EXCEPTION_IF_NULL(from_node);
+      MS_EXCEPTION_IF_NULL(to_node);
       if (!AnfUtils::IsCustomActorNode(from_node) && !AnfUtils::IsCustomActorNode(to_node)) {
         continue;
       }
-      auto from_iter = kernel_to_actors.find(from_node);
-      if (from_iter == kernel_to_actors.end()) {
-        MS_LOG(INFO) << from_node->fullname_with_scope() << " is a CNode but cannot find Actor.";
-        continue;
+
+      AbstractActor *from_actor = nullptr;
+      // InternalParameter --> CustomActor.
+      if (IsInternalParameter(from_node, graph)) {
+        auto front_output_with_index = graph->GetFrontNodeByInternalParameter(from_node);
+        auto front_output_node = front_output_with_index.first;
+        MS_EXCEPTION_IF_NULL(front_output_node);
+        if (IsSwitchActor(front_output_node) || (graph_output_to_actor_.count(front_output_with_index) == 0)) {
+          continue;
+        }
+        from_actor = graph_output_to_actor_[front_output_with_index].first;
+      } else {
+        auto from_kernel_type = FetchKernelTransformType(from_node, graph, graph_compiler_info.origin_parameters_order_,
+                                                         graph_compiler_info.strategy_);
+        from_actor = FetchActor(from_kernel_type, graph_compiler_info.name_, from_node, graph);
       }
-      auto to_iter = kernel_to_actors.find(to_node);
-      if (to_iter == kernel_to_actors.end()) {
-        MS_LOG(INFO) << to_node->fullname_with_scope() << " is a CNode but cannot find Actor.";
-        continue;
-      }
-      AddControlArrow(from_iter->second.get(), to_iter->second.get());
-      no_depend_custom_actors.erase(std::dynamic_pointer_cast<CustomActor>(to_iter->second));
+      MS_EXCEPTION_IF_NULL(from_actor);
+
+      auto to_kernel_type = FetchKernelTransformType(to_node, graph, graph_compiler_info.origin_parameters_order_,
+                                                     graph_compiler_info.strategy_);
+      auto to_actor = FetchActor(to_kernel_type, graph_compiler_info.name_, to_node, graph);
+      MS_EXCEPTION_IF_NULL(to_actor);
+      AddControlArrow(from_actor, to_actor);
     }
   }
 
@@ -1612,7 +1591,12 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
     return;
   }
 
-  for (const auto &custom_actor : no_depend_custom_actors) {
+  // Handle the no input custom actor.
+  for (const auto &custom_actor : actor_set->custom_actors_) {
+    MS_EXCEPTION_IF_NULL(custom_actor);
+    if (custom_actor->input_controls_num_ > 0) {
+      continue;
+    }
     auto kernel = custom_actor->kernel().lock();
     MS_EXCEPTION_IF_NULL(kernel);
     auto base_node = AnfUtils::GetCustomActorBaseNode(kernel);

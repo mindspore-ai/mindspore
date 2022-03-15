@@ -198,6 +198,8 @@ bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph = nu
                         const std::vector<AnfNodePtr> &host_parameters = {},
                         GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
+bool IsCustomActor(const AnfNodePtr &node);
+
 bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
 bool IsSwitchActor(const AnfNodePtr &node);

@@ -122,7 +122,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   int32_t dynamic_ref_count() const { return dynamic_ref_count_; }
   void IncreaseDynamicRefCount(const std::string &op_object) {
     if (dynamic_ref_count_ < INT32_MAX) {
-      ++dynamic_ref_count_;
+      (void)++dynamic_ref_count_;
       MS_LOG(DEBUG) << op_object << " increases dynamic ref count to:" << dynamic_ref_count_ << " for ptr:" << ptr_;
     }
   }
@@ -130,7 +130,7 @@ class DeviceAddress : public mindspore::DeviceSync {
     if (dynamic_ref_count_ <= 0) {
       MS_LOG(EXCEPTION) << "The dynamic reference count is invalid value:" << dynamic_ref_count_;
     }
-    --dynamic_ref_count_;
+    (void)--dynamic_ref_count_;
     MS_LOG(DEBUG) << op_object << " decreases dynamic ref count to:" << dynamic_ref_count_ << " for ptr:" << ptr_;
   }
 
