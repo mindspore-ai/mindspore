@@ -249,6 +249,12 @@ bool AscendKernelRuntime::NeedDestroyHccl() {
 #ifndef ENABLE_SECURITY
 void AsyncDataDumpUninit() {
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
+#if ENABLE_D
+    // When it is A+M dump mode, wait until file save is finished.
+    if (DumpJsonParser::GetInstance().FileFormatIsNpy()) {
+      Debugger::GetInstance()->WaitForWriteFileFinished();
+    }
+#endif
     if (AdxDataDumpServerUnInit() != 0) {
       MS_LOG(ERROR) << "Adx data dump server uninit failed";
     }
