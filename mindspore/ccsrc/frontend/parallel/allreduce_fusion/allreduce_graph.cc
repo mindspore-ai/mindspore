@@ -167,7 +167,7 @@ void AllreduceGraph::PrintArnodeSet() const {
 void AllreduceGraph::SortArnode() {
   arnode_vec_.clear();
   for (auto &node : arnode_set_) {
-    arnode_vec_.emplace_back(*node);
+    (void)arnode_vec_.emplace_back(*node);
   }
   std::sort(arnode_vec_.begin(), arnode_vec_.end(), std::greater<>());
 }

@@ -57,8 +57,8 @@ class CostGraph {
            std::map<OperatorInfoPtr, bool> *);
   // the edge is in the form: u --> v
   void AddEdge(OperatorInfoPtr u_node, OperatorInfoPtr v_node, const EdgePtr &edge);
-  std::vector<std::shared_ptr<Edge>> GetOriginalPrevEdges(OperatorInfoPtr v_node) { return in_edges_[v_node]; }
-  std::vector<std::shared_ptr<Edge>> GetOriginalNextEdges(OperatorInfoPtr u_node) { return out_edges_[u_node]; }
+  std::vector<std::shared_ptr<Edge>> GetOriginalPrevEdges(const OperatorInfoPtr &v_node) { return in_edges_[v_node]; }
+  std::vector<std::shared_ptr<Edge>> GetOriginalNextEdges(const OperatorInfoPtr &u_node) { return out_edges_[u_node]; }
   // An edge is uniquely identified by its name, and its output index and input index.
   bool IsEdgeInCostGraph(const std::string &, size_t, size_t);
 

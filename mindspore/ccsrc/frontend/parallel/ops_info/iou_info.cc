@@ -40,8 +40,7 @@ Status IOUInfo::InferDevMatrixShape() {
   int64_t dev0 = strategise[1][0];
 
   dev_matrix_shape_.clear();
-  dev_matrix_shape_.push_back(dev1);
-  dev_matrix_shape_.push_back(dev0);
+  dev_matrix_shape_ = {dev1, dev0};
   MS_LOG(INFO) << name_ << ": The dev matrix is " << ShapeToString(dev_matrix_shape_);
   return SUCCESS;
 }
@@ -50,9 +49,9 @@ Status IOUInfo::InferTensorMap() {
   inputs_tensor_map_.clear();
   outputs_tensor_map_.clear();
 
-  inputs_tensor_map_.emplace_back(TensorMap({1, -1}));
-  inputs_tensor_map_.emplace_back(TensorMap({0, -1}));
-  outputs_tensor_map_.emplace_back(TensorMap({0, 1}));
+  (void)inputs_tensor_map_.emplace_back(TensorMap({1, -1}));
+  (void)inputs_tensor_map_.emplace_back(TensorMap({0, -1}));
+  (void)outputs_tensor_map_.emplace_back(TensorMap({0, 1}));
   return SUCCESS;
 }
 

@@ -114,7 +114,6 @@ class OperatorCost {
   // in the inference phase.
   int64_t is_outputs_critical_ = -1;
 };
-using OperatorCostPtr = std::shared_ptr<OperatorCost>;
 
 class MatMulCost : public OperatorCost {
  public:
@@ -1016,13 +1015,11 @@ class UniformCandidateSamplerCost : public OperatorCost {
                      int64_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
-  double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                            int64_t stage_id) const override {
-    return 0;
+  double GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const override {
+    return 0.0;
   }
-  double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                             int64_t stage_id) const override {
-    return 0;
+  double GetBackwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const override {
+    return 0.0;
   }
   double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                             int64_t stage_id) const override {
@@ -1030,7 +1027,7 @@ class UniformCandidateSamplerCost : public OperatorCost {
   }
   double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                    int64_t stage_id) const override;
-  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
                                     int64_t) const override {
     return 0.0;
   }
@@ -1106,12 +1103,10 @@ class MatmulDDSCost : public OperatorCost {
                      int64_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
-  double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                            int64_t stage_id) const override {
+  double GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const override {
     return 0.0;
   };
-  double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                             int64_t stage_id) const override {
+  double GetBackwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const override {
     return 0.0;
   };
 
@@ -1122,8 +1117,8 @@ class MatmulDDSCost : public OperatorCost {
   }
   double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                    int64_t stage_id) const override;
-  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                                    int64_t stage_id) const override {
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                    int64_t) const override {
     return 0.0;
   };
   // Not taking account of output
@@ -1143,17 +1138,17 @@ class CropAndResizeCost : public OperatorCost {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                            int64_t stage_id) const override;
+                            int64_t) const override;
   double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                              int64_t stage_id) const override;
   double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                             int64_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
-  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                                   int64_t stage_id) const override;
-  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                                    int64_t stage_id) const override;
+  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                   int64_t) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                    int64_t) const override;
   // Taking account for input
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
   // Not taking account of output
@@ -1179,17 +1174,17 @@ class ROIAlignCost : public CropAndResizeCost {
   ~ROIAlignCost() override = default;
 
   double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                            int64_t stage_id) const override;
-  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                                   int64_t stage_id) const override;
-  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                                    int64_t stage_id) const override;
+                            int64_t) const override;
+  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                   int64_t) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &outputs,
+                                    int64_t) const override;
   // Taking account for input
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
   // Taking account of output
   void CalculateOutputInMemory() override;
 
-  void set_pooled_shape(Shape pooled_shape) { pooled_shape_ = pooled_shape; }
+  void set_pooled_shape(const Shape &pooled_shape) { pooled_shape_ = pooled_shape; }
 
  protected:
   Shape pooled_shape_;

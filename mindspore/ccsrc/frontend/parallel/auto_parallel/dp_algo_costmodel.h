@@ -44,6 +44,7 @@ namespace parallel {
 struct Elimination : public Base {
   enum EliminationType { OPERA, EDGE, MERGE, CONTRACT, SOURCE, TRIANGLE, STAR };
   Elimination(EdgePtr n_edge, EliminationType ty) : new_edge_(std::move(n_edge)), type_(ty) {}
+  ~Elimination() override = default;
 
   EdgePtr new_edge_;
   EliminationType type_;
@@ -56,6 +57,7 @@ struct OpElimination : public Elimination {
         left_edge_(std::move(l_edge)),
         op_(std::move(op_info)),
         right_edge_(std::move(r_edge)) {}
+  ~OpElimination() override = default;
 
   EdgePtr left_edge_;
   OperatorInfoPtr op_;
@@ -67,6 +69,7 @@ struct OpElimination : public Elimination {
 struct EdgeElimination : public Elimination {
   EdgeElimination(const EdgePtr &n_edge, std::vector<EdgePtr> eds)
       : Elimination(n_edge, Elimination::EliminationType::EDGE), edges_(std::move(eds)) {}
+  ~EdgeElimination() override = default;
 
   std::vector<EdgePtr> edges_;
   MS_DECLARE_PARENT(EdgeElimination, Elimination);
@@ -79,6 +82,7 @@ struct MergeElimination : public Elimination {
         merged_node_(std::move(u_info)),
         dir_edge_(std::move(merged_target_edge)),
         target_node_(std::move(v_info)) {}
+  ~MergeElimination() override = default;
 
   OperatorInfoPtr merged_node_;
   EdgePtr dir_edge_;
@@ -93,6 +97,7 @@ struct ContractElimination : public Elimination {
         contracted_node_(std::move(con_info)),
         dir_edge_(std::move(tar_con_edge)),
         target_node_(std::move(tar_info)) {}
+  ~ContractElimination() override = default;
 
   OperatorInfoPtr contracted_node_;
   EdgePtr dir_edge_;
@@ -111,6 +116,8 @@ struct SourceElimination : public Elimination {
         secondary_source_(std::move(s_source)),
         secondary_succ_edges_(std::move(s_succ_edges)),
         secondary_new_succ_edges_(std::move(s_new_succ_edges)) {}
+  ~SourceElimination() override = default;
+
   OperatorInfoPtr primary_source_;
   std::vector<EdgePtr> primary_succ_edges_;
   std::vector<EdgePtr> primary_new_succ_edges_;
@@ -130,6 +137,7 @@ struct TriangleElimination : public Elimination {
         left_node_(std::move(l_node)),
         right_edge_(std::move(r_edge)),
         right_node_(std::move(r_node)) {}
+  ~TriangleElimination() override = default;
 
   OperatorInfoPtr eliminated_node_;
   EdgePtr left_edge_;
@@ -146,6 +154,7 @@ struct StarElimination : public Elimination {
         eliminated_node_(std::move(elimi_node)),
         succ_edges_(std::move(s_edges)),
         succ_ops_(std::move(s_ops)) {}
+  ~StarElimination() override = default;
 
   OperatorInfoPtr eliminated_node_;
   std::vector<EdgePtr> succ_edges_;

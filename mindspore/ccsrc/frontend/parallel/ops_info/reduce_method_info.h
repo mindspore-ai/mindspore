@@ -33,7 +33,7 @@ namespace parallel {
 class ReduceMethod : public OperatorInfo {
  public:
   ReduceMethod(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-               const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+               const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost) {}
   ~ReduceMethod() override = default;
 
@@ -130,7 +130,7 @@ class ReduceAnyInfo : public ReduceMethod {
 
  protected:
   Status InferForwardCommunication() override;
-  ForwardOp CreateForwardOp(const std::vector<Group> &forward_group);
+  ForwardOp CreateForwardOp(const std::vector<Group> &forward_group) const;
 };
 
 class ReduceMinInfo : public ReduceMethod {

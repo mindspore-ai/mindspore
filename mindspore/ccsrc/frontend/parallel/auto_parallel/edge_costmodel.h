@@ -95,7 +95,7 @@ class Edge {
   StrategyPtr GetNextOpStrategyByReshapeSWCIndex(int64_t swc_index);
   bool CheckStrategyConsistency(StrategyPtr, StrategyPtr);
 
-  void SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &);
+  void SetCostMapAndInputOutput(const std::map<CostPtrKey, CostPtrList> &);
   // For two operators u--->v, given the output tensor layout of u,
   // and the input tensor layout of v, return the redistribution cost,
   // and the op_list to carry out the redistribution.
@@ -185,7 +185,7 @@ class Edge {
   int64_t is_output_critical_ = 0;
 
   // Returns whether two double variable are equal.
-  bool IsDoubleEqual(double x, double y) { return std::abs(x - y) < EPS; }
+  bool IsDoubleEqual(double x, double y) const { return std::abs(x - y) < EPS; }
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -72,7 +72,7 @@ void GraphSplitter::DyeGraph() {
   MS_EXCEPTION_IF_NULL(func_graph_);
 
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
-  (void)std::for_each(all_nodes.begin(), all_nodes.end(), [this](AnfNodePtr &node) {
+  (void)std::for_each(all_nodes.begin(), all_nodes.end(), [this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     // Mark all nodes with original label at the beginning.
     node_labels_[node] = default_label_;
@@ -320,8 +320,8 @@ CNodePtr GraphSplitter::GenerateRecvNode(const AnfNodePtr &input, const AnfNodeP
     if (input->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrUpdateParameter, input->cast<CNodePtr>()) &&
         common::AnfAlgo::HasNodeAttr(kAttrParameterInputIndex, input->cast<CNodePtr>())) {
       int64_t parameter_index = common::AnfAlgo::GetNodeAttr<int64_t>(input, kAttrParameterInputIndex);
-      auto kernel_with_index =
-        common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(input->cast<CNodePtr>(), parameter_index), 0);
+      auto kernel_with_index = common::AnfAlgo::VisitKernel(
+        common::AnfAlgo::GetInputNode(input->cast<CNodePtr>(), LongToSize(parameter_index)), 0);
       auto param_node = kernel_with_index.first;
       recv_inputs.push_back(param_node);
       recv_node_abs = param_node->abstract();

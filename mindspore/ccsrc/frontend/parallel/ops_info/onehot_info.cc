@@ -53,7 +53,8 @@ Status OneHotInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, {outputs_shape_.at(0), inputs_shape_.at(1), inputs_shape_.at(2)}) != SUCCESS) {
     return FAILED;
   }
-  auto stra = strategy->GetInputDim().at(0);
+  auto strategies = strategy->GetInputDim();
+  auto stra = strategies.at(0);
   bool invalid = false;
   for (size_t i = 1; i < stra.size(); ++i) {
     if (stra.at(i) != 1) {

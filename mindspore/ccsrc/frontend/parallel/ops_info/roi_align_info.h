@@ -50,11 +50,11 @@ class ROIAlignInfo : public OperatorInfo {
   Status InferBias();
   Status InferGroup();
   Status ComputeReplaceGraph(const CNodePtr &cnode);
-  std::vector<int64_t> CreateRangeVector(int64_t upper_bound);
+  std::vector<int64_t> CreateRangeVector(int64_t upper_bound) const;
 
-  int64_t features_slice_size_;
-  int64_t rois_slice_size_;
-  int64_t bias_;
+  int64_t features_slice_size_ = 0;
+  int64_t rois_slice_size_ = 0;
+  int64_t bias_ = 0;
   Group group_;
   OperatorAttrs roi_align_attrs;
 };

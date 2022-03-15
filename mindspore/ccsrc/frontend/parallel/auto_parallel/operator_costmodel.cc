@@ -1802,7 +1802,7 @@ void MatmulDDSCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
 }
 
 double CropAndResizeCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
-                                             const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+                                             const std::vector<TensorInfo> &outputs, int64_t) const {
   double result = 0.0;
   if (outputs_type_lengths_.size() != outputs.size()) {
     MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for CropAndResize cost.";
@@ -1821,8 +1821,8 @@ double CropAndResizeCost::GetForwardCommCost(const std::vector<TensorInfo> &inpu
   return result;
 }
 
-double CropAndResizeCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs,
-                                              const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+double CropAndResizeCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                              int64_t stage_id) const {
   double result = 0.0;
   CheckGlobalDeviceManager();
   MS_EXCEPTION_IF_NULL(g_device_manager);
@@ -1847,7 +1847,7 @@ double CropAndResizeCost::GetBackwardCommCost(const std::vector<TensorInfo> &inp
 }
 
 double CropAndResizeCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                                    const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+                                                    const std::vector<TensorInfo> &, int64_t) const {
   if (inputs_type_lengths_.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for CropAndResize cost.";
   }
@@ -1872,8 +1872,8 @@ double CropAndResizeCost::GetForwardComputationCost(const std::vector<TensorInfo
   return result;
 }
 
-double CropAndResizeCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                                     const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+double CropAndResizeCost::GetBackwardComputationCost(const std::vector<TensorInfo> &,
+                                                     const std::vector<TensorInfo> &outputs, int64_t) const {
   Shape output0_slice_shape = outputs[0].slice_shape();
   double result = 0.0;
   // don't split batch
@@ -1910,7 +1910,7 @@ void CropAndResizeCost::CalculateInputsInMemory(const std::map<size_t, bool> &pr
 }
 
 double ROIAlignCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                                        int64_t stage_id) const {
+                                        int64_t) const {
   double result = 0.0;
   if (outputs_type_lengths_.size() != outputs.size()) {
     MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for CropAndResize cost.";
@@ -1929,8 +1929,8 @@ double ROIAlignCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, c
   return result;
 }
 
-double ROIAlignCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                               const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+double ROIAlignCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                               int64_t) const {
   if (inputs_type_lengths_.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for CropAndResize cost.";
   }
@@ -1951,8 +1951,8 @@ double ROIAlignCost::GetForwardComputationCost(const std::vector<TensorInfo> &in
   return result;
 }
 
-double ROIAlignCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                                const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+double ROIAlignCost::GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &outputs,
+                                                int64_t) const {
   Shape output0_slice_shape = outputs[0].slice_shape();
   double result = 0.0;
   // don't split batch

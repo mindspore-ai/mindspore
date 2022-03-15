@@ -32,7 +32,7 @@ namespace parallel {
 class ActivationBase : public OperatorInfo {
  public:
   ActivationBase(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                 const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+                 const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, cost) {}
   ~ActivationBase() override = default;
 
@@ -46,7 +46,7 @@ class ActivationBase : public OperatorInfo {
 class Activation : public ActivationBase {
  public:
   Activation(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-             const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+             const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
       : ActivationBase(name, inputs_shape, outputs_shape, attrs, cost) {}
   ~Activation() override = default;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
@@ -70,7 +70,7 @@ class ActivationInfo : public Activation {
 class ActivationOther : public Activation {
  public:
   ActivationOther(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                  const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+                  const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
       : Activation(name, inputs_shape, outputs_shape, attrs, cost) {}
   ~ActivationOther() override = default;
 
@@ -294,8 +294,8 @@ class DropoutInfo : public ActivationOther {
  private:
   int64_t seed0_ = 0;
   int64_t seed1_ = 0;
-  int64_t get_seed() {
-    static int64_t SEED_NUM;
+  int64_t get_seed() const {
+    static int64_t SEED_NUM = 0;
     return ++SEED_NUM;
   }
 };

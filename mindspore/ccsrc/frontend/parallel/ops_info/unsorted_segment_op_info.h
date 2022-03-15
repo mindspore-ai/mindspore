@@ -41,7 +41,7 @@ constexpr size_t UNSORTEDSEGMENTOP_OUTPUTS_SIZE = 1;
 class UnsortedSegmentOpInfo : public OperatorInfo {
  public:
   UnsortedSegmentOpInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                        const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+                        const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost) {}
   ~UnsortedSegmentOpInfo() override = default;
 
@@ -57,9 +57,6 @@ class UnsortedSegmentOpInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetAttrs() override;
-
- private:
-  Status ComputeReplaceGraph(const CNodePtr &cnode);
 };
 
 class UnsortedSegmentSumInfo : public UnsortedSegmentOpInfo {
@@ -92,11 +89,12 @@ class UnsortedSegmentMinInfo : public UnsortedSegmentOpInfo {
   ~UnsortedSegmentMinInfo() override = default;
 
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
-  Status InferForwardCommunication() override { return SUCCESS; }
 
  protected:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
+  Status InferForwardCommunication() override { return SUCCESS; }
 };
+
 class UnsortedSegmentMaxInfo : public UnsortedSegmentOpInfo {
  public:
   UnsortedSegmentMaxInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
@@ -107,12 +105,11 @@ class UnsortedSegmentMaxInfo : public UnsortedSegmentOpInfo {
   ~UnsortedSegmentMaxInfo() override = default;
 
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
-  Status InferForwardCommunication() override { return SUCCESS; }
 
  protected:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
+  Status InferForwardCommunication() override { return SUCCESS; }
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_UNSORTEDSEGMENTOP_INFO_H_

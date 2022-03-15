@@ -157,9 +157,9 @@ Status UnsortedSegmentOpInfo::InferTensorMap() {
     return FAILED;
   }
 
-  inputs_tensor_map_.emplace_back(std::move(tensor_map_in));
-  inputs_tensor_map_.emplace_back(std::move(tensor_map_in_index));
-  outputs_tensor_map_.emplace_back(std::move(tensor_map_out));
+  (void)inputs_tensor_map_.emplace_back(std::move(tensor_map_in));
+  (void)inputs_tensor_map_.emplace_back(std::move(tensor_map_in_index));
+  (void)outputs_tensor_map_.emplace_back(std::move(tensor_map_out));
   return SUCCESS;
 }
 
@@ -242,7 +242,8 @@ std::shared_ptr<Strategys> UnsortedSegmentOpInfo::GenerateBatchStrategies() {
 // a special case is when the shape input equals the shape of ids, we regard it as column slice,
 // thus there is no need for repalce graphs
 ReplaceGraphPtr UnsortedSegmentMinInfo::replace_graph(const CNodePtr &cnode) {
-  auto input_id_strategy = strategy_->GetInputDim().at(1);
+  auto strategies = strategy_->GetInputDim();
+  auto input_id_strategy = strategies.at(1);
   // 1. the two input shapes are same, and the strategy is not all ones
   if (std::any_of(input_id_strategy.begin(), input_id_strategy.end(), [](const int64_t &shard) { return shard > 1; })) {
     if (ComputeReplaceGraph(cnode) != SUCCESS) {
@@ -277,7 +278,8 @@ Status UnsortedSegmentMinInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 // The UnsortedSegmentMaxInfo is almost same with UnsortedSegmentMinInfo
 // Except the reduceMin op in the ComputeReplaceGraph is replaced with reduceMax op
 ReplaceGraphPtr UnsortedSegmentMaxInfo::replace_graph(const CNodePtr &cnode) {
-  auto input_id_strategy = strategy_->GetInputDim().at(1);
+  auto strategies = strategy_->GetInputDim();
+  auto input_id_strategy = strategies.at(1);
   // 1. the two input shapes are same, and the strategy is not all ones
   if (std::any_of(input_id_strategy.begin(), input_id_strategy.end(), [](const int64_t &shard) { return shard > 1; })) {
     if (ComputeReplaceGraph(cnode) != SUCCESS) {

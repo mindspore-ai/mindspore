@@ -35,11 +35,11 @@ Status Edge::InitEdgeCost() {
 
   for (auto &swc : prev_op_->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(swc);
-    pre_op_output_.emplace_back(std::make_pair(swc->strategy_ptr, swc->outputs_ptr));
+    (void)pre_op_output_.emplace_back(std::make_pair(swc->strategy_ptr, swc->outputs_ptr));
   }
   for (auto &swc : next_op_->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(swc);
-    next_op_input_.emplace_back(std::make_pair(swc->strategy_ptr, swc->inputs_ptr));
+    (void)next_op_input_.emplace_back(std::make_pair(swc->strategy_ptr, swc->inputs_ptr));
   }
   if (is_identity_edge) {
     for (auto &target_output : pre_op_output_) {
@@ -256,7 +256,7 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
           communication_without_para + gamma * (communication - communication_without_para);
         cost->memory_with_reuse_ = memory_cost;
         cost->communication_forward_ = communication_forward;
-        ret_cost_list->emplace_back(std::move(cost));
+        (void)ret_cost_list->emplace_back(std::move(cost));
       }
     }
   }
@@ -565,15 +565,15 @@ bool Edge::CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra
   return true;
 }
 
-void Edge::SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &cost_map) {
+void Edge::SetCostMapAndInputOutput(const std::map<CostPtrKey, CostPtrList> &cost_map) {
   cost_map_ = cost_map;
   pre_op_output_.clear();
   next_op_input_.clear();
 
   for (auto &key_value : cost_map_) {
     auto &key_pair = key_value.first;
-    pre_op_output_.emplace_back(std::pair<StrategyPtr, std::vector<TensorInfo>>(key_pair.first, {}));
-    next_op_input_.emplace_back(std::pair<StrategyPtr, std::vector<TensorInfo>>(key_pair.second, {}));
+    (void)pre_op_output_.emplace_back(std::pair<StrategyPtr, std::vector<TensorInfo>>(key_pair.first, {}));
+    (void)next_op_input_.emplace_back(std::pair<StrategyPtr, std::vector<TensorInfo>>(key_pair.second, {}));
   }
 }
 

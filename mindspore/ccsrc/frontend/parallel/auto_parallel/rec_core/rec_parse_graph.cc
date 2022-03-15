@@ -196,7 +196,8 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
     auto it = find(incoming_outputs->begin(), incoming_outputs->end(), node_index);
     if (it != incoming_outputs->end()) {
       it = incoming_outputs->erase(it);
-      incoming_outputs->insert(it, graph->nodes[node_index].node_out.begin(), graph->nodes[node_index].node_out.end());
+      (void)incoming_outputs->insert(it, graph->nodes[node_index].node_out.begin(),
+                                     graph->nodes[node_index].node_out.end());
     }
   }
 
@@ -205,8 +206,8 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
     auto it = find(aux_incoming_outputs->begin(), aux_incoming_outputs->end(), node_index);
     if (it != aux_incoming_outputs->end()) {
       it = aux_incoming_outputs->erase(it);
-      aux_incoming_outputs->insert(it, graph->nodes[node_index].node_out.begin(),
-                                   graph->nodes[node_index].node_out.end());
+      (void)aux_incoming_outputs->insert(it, graph->nodes[node_index].node_out.begin(),
+                                         graph->nodes[node_index].node_out.end());
     }
   }
 
@@ -225,7 +226,7 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
             graph->nodes[node_index].node_in_aux[j]);
         }
       } else {
-        outgoing_inputs->erase(it);
+        (void)outgoing_inputs->erase(it);
       }
     }
   }

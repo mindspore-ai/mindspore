@@ -27,8 +27,9 @@ class Executor {
  public:
   Executor(const std::string &device_name, uint32_t device_id) : device_name_(device_name), device_id_(device_id) {}
   ~Executor() = default;
-  bool CreateCommGroup(const std::string &group_name, std::vector<uint32_t> ranks) const { return true; }
-  bool DestroyCommGroup(const std::string &group_name) const { return true; }
+
+  bool CreateCommGroup(const std::string &, const std::vector<uint32_t> &) const { return true; }
+  bool DestroyCommGroup(const std::string &) const { return true; }
 
  private:
   std::string device_name_;

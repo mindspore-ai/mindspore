@@ -251,7 +251,7 @@ void TensorDotInfo::InferTensorMapAxesTuple(size_t size, const TensorMap &input_
 
     if (!found) {
       input_b_tensor_map.push_back(tmp_b_map_index.front());
-      tmp_b_map_index.erase(tmp_b_map_index.begin());
+      (void)tmp_b_map_index.erase(tmp_b_map_index.begin());
     } else {
       input_b_tensor_map.push_back(input_a_tensor_map[relevant_a_index]);
     }

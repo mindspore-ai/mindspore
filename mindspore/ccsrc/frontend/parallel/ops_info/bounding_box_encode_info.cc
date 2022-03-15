@@ -59,9 +59,9 @@ Status BoundingBoxEncodeInfo::InferTensorMap() {
   inputs_tensor_map_.clear();
   outputs_tensor_map_.clear();
 
-  inputs_tensor_map_.emplace_back(TensorMap({0, -1}));
-  inputs_tensor_map_.emplace_back(TensorMap({0, -1}));
-  outputs_tensor_map_.emplace_back(TensorMap({0, -1}));
+  (void)inputs_tensor_map_.emplace_back(TensorMap({0, -1}));
+  (void)inputs_tensor_map_.emplace_back(TensorMap({0, -1}));
+  (void)outputs_tensor_map_.emplace_back(TensorMap({0, -1}));
   return SUCCESS;
 }
 

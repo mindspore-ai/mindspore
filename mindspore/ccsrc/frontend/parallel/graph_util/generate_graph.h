@@ -48,7 +48,7 @@ std::string HashInstanceName(const std::string &name);
 
 class GenerateGraph {
  public:
-  explicit GenerateGraph(mindspore::HashMap<std::string, ValuePtr> origin_attrs)
+  explicit GenerateGraph(const mindspore::HashMap<std::string, ValuePtr> &origin_attrs)
       : name_idx_(0), origin_attrs_(origin_attrs) {}
   Status Init(const CNodePtr &cnode);
   ~GenerateGraph() = default;

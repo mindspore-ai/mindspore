@@ -26,7 +26,7 @@ Status AllreduceNode::AddNext(const AllreduceNodePtr &next_node) {
     MS_LOG(ERROR) << "next_node is nullptr!";
     return FAILED;
   }
-  next_.emplace_back(next_node);
+  (void)next_.emplace_back(next_node);
   return SUCCESS;
 }
 
@@ -39,7 +39,7 @@ Status AllreduceNode::AddPrev(const AllreduceNodePtr &prev_node, double dist, do
     MS_LOG(ERROR) << "dist must be positive! dist: " << dist;
     return FAILED;
   }
-  prev_.emplace_back(prev_node);
+  (void)prev_.emplace_back(prev_node);
   double add_dist = prev_node->depend_feat_size() + dist;
   depend_feat_size_ += add_dist;
   if (depend_feat_size_ > *max) {
