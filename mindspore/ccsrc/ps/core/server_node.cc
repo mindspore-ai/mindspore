@@ -94,6 +94,12 @@ bool ServerNode::Finish(const uint32_t &timeout) {
     return true;
   }
 
+  if (!is_connected_to_scheduler_) {
+    MS_LOG(INFO) << "[Server finish]: Not connect to scheduler, no need to disconnect!";
+    return true;
+  }
+  client_to_scheduler_->set_disconnected();
+
   MS_LOG(INFO) << "[Server finish]: 1. Begin to finish server node!";
   bool res = Disconnect(client_to_scheduler_, timeout);
   if (res) {
