@@ -113,6 +113,14 @@ class NativeGpuKernelMod : public GpuKernelMod {
     return reinterpret_cast<T *>(addr_list[index]->addr);
   }
 
+  std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs) {
+    std::vector<void *> out_ptrs;
+    for (auto &cur_addr : input_ptrs) {
+      out_ptrs.emplace_back(cur_addr->addr);
+    }
+    return out_ptrs;
+  }
+
   template <typename T>
   inline T *GetPossiblyNullDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
     if (index >= addr_list.size()) {
