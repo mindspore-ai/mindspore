@@ -34,12 +34,12 @@ namespace mindspore {
 namespace dataset {
 class PythonMultiprocessingRuntime {
  public:
-  virtual void Launch(int32_t id) = 0;
-  virtual void Terminate() = 0;
-  virtual bool IsMPEnabled() = 0;
-  virtual void AddNewWorkers(int32_t num_new_workers) = 0;
-  virtual void RemoveWorkers(int32_t num_removed_workers) = 0;
-  virtual std::vector<int32_t> GetPIDs() = 0;
+  virtual void launch(int32_t id) = 0;
+  virtual void terminate() = 0;
+  virtual bool is_mp_enabled() = 0;
+  virtual void add_new_workers(int32_t num_new_workers) = 0;
+  virtual void remove_workers(int32_t num_removed_workers) = 0;
+  virtual std::vector<int32_t> get_pids() = 0;
   virtual ~PythonMultiprocessingRuntime() {}
 };
 
@@ -51,19 +51,19 @@ class PyPythonMultiprocessingRuntime : public PythonMultiprocessingRuntime {
   //  Trampoline (need one for each virtual function)
   //  PYBIND11_OVERLOAD_PURE(void,                         /* Return type */
   //                        PythonMultiprocessingRuntime,  /* Parent class */
-  //                        Launch                         /* Name of function in C++ (must match Python name) */
+  //                        launch                         /* Name of function in C++ (must match Python name) */
 
-  void Launch(int32_t id) override { PYBIND11_OVERLOAD_PURE(void, PythonMultiprocessingRuntime, Launch, id); }
-  void Terminate() override { PYBIND11_OVERLOAD_PURE(void, PythonMultiprocessingRuntime, Terminate); }
-  bool IsMPEnabled() override { PYBIND11_OVERLOAD_PURE(bool, PythonMultiprocessingRuntime, IsMPEnabled); }
-  void AddNewWorkers(int32_t num_workers) override {
-    PYBIND11_OVERLOAD_PURE(void, PythonMultiprocessingRuntime, AddNewWorkers, num_workers);
+  void launch(int32_t id) override { PYBIND11_OVERLOAD_PURE(void, PythonMultiprocessingRuntime, launch, id); }
+  void terminate() override { PYBIND11_OVERLOAD_PURE(void, PythonMultiprocessingRuntime, terminate); }
+  bool is_mp_enabled() override { PYBIND11_OVERLOAD_PURE(bool, PythonMultiprocessingRuntime, is_mp_enabled); }
+  void add_new_workers(int32_t num_workers) override {
+    PYBIND11_OVERLOAD_PURE(void, PythonMultiprocessingRuntime, add_new_workers, num_workers);
   }
-  void RemoveWorkers(int32_t num_workers) override {
-    PYBIND11_OVERLOAD_PURE(void, PythonMultiprocessingRuntime, RemoveWorkers, num_workers);
+  void remove_workers(int32_t num_workers) override {
+    PYBIND11_OVERLOAD_PURE(void, PythonMultiprocessingRuntime, remove_workers, num_workers);
   }
-  std::vector<int32_t> GetPIDs() override {
-    PYBIND11_OVERLOAD_PURE(std::vector<int32_t>, PythonMultiprocessingRuntime, GetPIDs);
+  std::vector<int32_t> get_pids() override {
+    PYBIND11_OVERLOAD_PURE(std::vector<int32_t>, PythonMultiprocessingRuntime, get_pids);
   }
 };
 #endif

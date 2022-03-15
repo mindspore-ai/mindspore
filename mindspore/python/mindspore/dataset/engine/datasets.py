@@ -31,6 +31,8 @@ import json
 import os
 import signal
 import stat
+
+import gc
 import time
 import uuid
 import multiprocessing
@@ -1680,7 +1682,6 @@ class Dataset:
 
         logger.warning("Calculating dynamic shape of input data, this will take a few minutes...")
         # Assume data1 shape is dynamic, data2 shape is fix
-        # {"data1": [batch_size, None, feat_len], "data2": [batch_size, feat_len]}
         dynamic_columns = self.dynamic_setting[1]
         # ["data1", "data2"]
         dataset_columns = self.get_col_names()
@@ -2774,7 +2775,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.ppid = os.getpid()
         self.hook = None
 
-    def Launch(self, op_id=-1):
+    def launch(self, op_id=-1):
         self.op_id = op_id
         logger.info("Launching new Python Multiprocessing pool for Op:" + str(self.op_id))
         self.create_pool()
@@ -2791,6 +2792,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         if self.process_pool is not None:
             raise Exception("Pool was already created, close it first.")
 
+        # Let gc collect unrefrenced memory to avoid child processes in the pool to do it
+        gc.collect()
         # Construct python multiprocessing pool.
         # The _pyfunc_worker_init is used to pass lambda function to subprocesses.
         self.process_pool = multiprocessing.Pool(processes=self.num_parallel_workers,
@@ -2810,36 +2813,36 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         if sys.version_info >= (3, 8):
             atexit.register(self.process_pool.close)
 
-    def Terminate(self):
+    def terminate(self):
         logger.info("Terminating Python Multiprocessing pool for Op:" + str(self.op_id))
         self.close_pool()
         self.abort_watchdog()
         self.delete_shared_memory()
         self.process_pool = None
 
-    def GetPIDs(self):
+    def get_pids(self):
         # obtain process IDs from multiprocessing.pool
         return [w.pid for w in self.workers]
 
-    def AddNewWorkers(self, num_new_workers):
+    def add_new_workers(self, num_new_workers):
         logger.info(
             "Increasing num_parallel_workers of Python Multiprocessing pool for Op:" + str(self.op_id) +
             ", old num_workers=" + str(self.num_parallel_workers) + " new num_workers" + str(self.num_parallel_workers +
                                                                                              num_new_workers) + ".")
-        self.Terminate()
+        self.terminate()
         self.num_parallel_workers += num_new_workers
-        self.Launch(self.op_id)
+        self.launch(self.op_id)
 
-    def RemoveWorkers(self, num_removed_workers):
+    def remove_workers(self, num_removed_workers):
         logger.info(
             "Decreasing num_parallel_workers of Python Multiprocessing pool for Op:" + str(self.op_id) +
             ", old num_workers=" + str(self.num_parallel_workers) + " new num_workers" + str(self.num_parallel_workers -
                                                                                              num_removed_workers) + ".")
-        self.Terminate()
+        self.terminate()
         self.num_parallel_workers -= num_removed_workers
-        self.Launch(self.op_id)
+        self.launch(self.op_id)
 
-    def IsMPEnabled(self):
+    def is_mp_enabled(self):
         return self.process_pool is not None
 
     def create_shared_memory(self):
@@ -2878,7 +2881,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         Collect the PIDs of the children processes.
         """
         self.workers = [w for w in self.process_pool._pool]  # pylint: disable=W0212
-        pids = self.GetPIDs()
+        pids = self.get_pids()
         logger.info("Op: " + str(self.op_id) + " Python multiprocessing pool workers' PIDs: " + str(pids))
 
     def execute(self, py_callable, idx, *args):
@@ -3135,7 +3138,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
     def __del__(self):
         # Cleanup when the iter had been deleted from ITERATORS_LIST
-        self.Terminate()
+        self.terminate()
 
 
 class MapDataset(UnionBaseDataset):

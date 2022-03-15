@@ -210,12 +210,12 @@ PYBIND_REGISTER(PythonMultiprocessingRuntime, 1, ([](const py::module *m) {
                                    std::shared_ptr<PythonMultiprocessingRuntime>>(
                     *m, "PythonMultiprocessingRuntime", "to create a PythonMultiprocessingRuntime")
                     .def(py::init<>())
-                    .def("Launch", &PythonMultiprocessingRuntime::Launch)
-                    .def("Terminate", &PythonMultiprocessingRuntime::Terminate)
-                    .def("IsMPEnabled", &PythonMultiprocessingRuntime::IsMPEnabled)
-                    .def("AddNewWorkers", &PythonMultiprocessingRuntime::AddNewWorkers)
-                    .def("RemoveWorkers", &PythonMultiprocessingRuntime::RemoveWorkers)
-                    .def("GetPIDs", &PythonMultiprocessingRuntime::GetPIDs);
+                    .def("launch", &PythonMultiprocessingRuntime::launch)
+                    .def("terminate", &PythonMultiprocessingRuntime::terminate)
+                    .def("is_mp_enabled", &PythonMultiprocessingRuntime::is_mp_enabled)
+                    .def("add_new_workers", &PythonMultiprocessingRuntime::add_new_workers)
+                    .def("remove_workers", &PythonMultiprocessingRuntime::remove_workers)
+                    .def("get_pids", &PythonMultiprocessingRuntime::get_pids);
                 }));
 
 PYBIND_REGISTER(ProjectNode, 2, ([](const py::module *m) {
