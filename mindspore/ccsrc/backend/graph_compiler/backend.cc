@@ -1354,6 +1354,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> 
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
   runtime::RunSingleOpGraph(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
                             context->device_context());
+  ReleaseForwardOutput(context->op_run_info().input_tensors);
   ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info().is_gradient_out);
   ClearInputDeviceAddress(context->graph(), context->device_context());
   // Reset PyNative infer flag.

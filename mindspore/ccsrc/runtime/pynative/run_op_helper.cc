@@ -25,6 +25,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/pynative/op_runtime_info.h"
+#include "runtime/pynative/op_executor.h"
 
 namespace mindspore::runtime {
 namespace {
@@ -97,6 +98,7 @@ void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
     if (tensor_address == nullptr) {
       input_tensor->set_device_address(node_address);
       input_tensor->set_sync_status(kNeedSyncHostToDeviceImmediately);
+      input_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
       node_address->set_from_persistent_mem(input_tensor->is_parameter());
     }
 
