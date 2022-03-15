@@ -29,7 +29,9 @@ using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
 namespace {
+#ifndef SERVER_INFERENCE
 constexpr int kStackStep = 64;
+#endif
 }  // namespace
 
 static inline int GetCopyNum(const std::vector<int> &in_shape, int axis, int n_dim) {

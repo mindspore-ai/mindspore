@@ -171,10 +171,12 @@ int ConcatBaseCPUKernel::ChooseThreadCuttingStrategy() {
   block_boundary_infos_.clear();
   MS_CHECK_TRUE_MSG(op_parameter_->thread_num_ > 0, RET_ERROR, "available thread is 0.");
   auto all_bytes = static_cast<int64_t>(out_tensors_.front()->Size());
-  int64_t thread_count = std::max(
-    static_cast<int64_t>(1), std::min(all_bytes / kMinCostPerThread, static_cast<int64_t>(op_parameter_->thread_num_)));
-  int64_t block_size = all_bytes / thread_count;
-  int64_t remain_byte = all_bytes - block_size * thread_count;
+  thread_num_ = std::min(all_bytes / kMinCostPerThread, static_cast<int64_t>(op_parameter_->thread_num_));
+  if (thread_num_ < 1) {
+    thread_num_ = 1;
+  }
+  int64_t block_size = all_bytes / thread_num_;
+  int64_t remain_byte = all_bytes - block_size * thread_num_;
   std::vector<int64_t> pre_sum;
   int64_t init_sum = 0;
   MS_CHECK_TRUE_MSG(!inner_sizes_.empty(), RET_ERROR, "er-size is invalid.");

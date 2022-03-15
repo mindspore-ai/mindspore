@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/arm/fp32/addn_fp32.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/arithmetic_fp32.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

@@ -54,10 +54,10 @@
 #define MS_FLOOR256_F32 _mm256_floor_ps
 #define MS_CEIL256_F32 _mm256_ceil_ps
 #define MS_MUL256_F32(src1, src2) _mm256_mul_ps(src1, src2)
-#define MS_MUL256_EPI32(src1, src2) _mm256_mul_epi32(src1, src2)
+#define MS_MUL256_EPI32(src1, src2) _mm256_mullo_epi32(src1, src2)
 #define MS_DIV256_F32(src1, src2) _mm256_div_ps(src1, src2)
 #define MS_MUL256_N_F32(src1, src2) _mm256_mul_ps(src1, _mm256_set1_ps(src2))
-#define MS_MUL256_N_EPI32(src1, src2) _mm256_mul_epi32(src1, _mm256_set1_epi32(src2))
+#define MS_MUL256_N_EPI32(src1, src2) _mm256_mullo_epi32(src1, _mm256_set1_epi32(src2))
 #define MS_DIV256_N_F32(src1, src2) _mm256_div_ps(src1, _mm256_set1_ps(src2))
 #define MS_SLLI256_EPI32(src1, src2) _mm256_slli_epi32(src1, src2)
 #define MS_CVT256PS_EPI32(src) _mm256_cvttps_epi32(src)

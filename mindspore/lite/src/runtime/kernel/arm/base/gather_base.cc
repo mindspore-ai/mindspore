@@ -149,16 +149,16 @@ int GatherBaseCPUKernel::ChooseThreadCuttingstrategy() {
     min_block_per_unit = UP_DIV(kMinCostPerThread, byte_inner_size_);
   }
   block_size = std::max(min_block_per_unit, total_block / op_parameter_->thread_num_);
-  int thread_num = MSMIN(UP_DIV(total_block, block_size), op_parameter_->thread_num_);
+  thread_num_ = MSMIN(UP_DIV(total_block, block_size), op_parameter_->thread_num_);
 #else
   auto total_block = outer_size_ * indices_size_;
-  int thread_num = op_parameter_->thread_num_;
+  thread_num_ = op_parameter_->thread_num_;
 #endif
-  if (thread_num < 1) {
-    thread_num = 1;
+  if (thread_num_ < 1) {
+    thread_num_ = 1;
   }
-  block_size = total_block / thread_num;
-  auto remain_block = total_block - block_size * thread_num;
+  block_size = total_block / thread_num_;
+  auto remain_block = total_block - block_size * thread_num_;
   int64_t start = 0;
   while (start < total_block) {
     BlockBoundaryInfo block_boundary_info{};

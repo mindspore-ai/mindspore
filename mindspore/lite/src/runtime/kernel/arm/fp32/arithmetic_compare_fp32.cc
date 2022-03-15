@@ -28,85 +28,56 @@ using mindspore::schema::PrimitiveType_LessEqual;
 using mindspore::schema::PrimitiveType_NotEqual;
 
 namespace mindspore::kernel {
-int ArithmeticCompareCPUKernel::BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count,
-                                             int out_thread_stride) {
-  if (dim > break_pos_) {
-    if (in_tensors_[0]->data_type() == kNumberTypeInt || in_tensors_[0]->data_type() == kNumberTypeInt32) {
-      return func_int32_(reinterpret_cast<int *>(input0) + out_thread_stride,
-                         reinterpret_cast<int *>(input1) + out_thread_stride,
-                         reinterpret_cast<uint8_t *>(output) + out_thread_stride, out_count);
-    }
-    return func_fp32_(reinterpret_cast<float *>(input0) + out_thread_stride,
-                      reinterpret_cast<float *>(input1) + out_thread_stride,
-                      reinterpret_cast<uint8_t *>(output) + out_thread_stride, out_count);
-  }
-  for (int i = 0; i < param_->out_shape_[dim]; ++i) {
-    int pos0_ = param_->in_shape0_[dim] == 1 ? 0 : i;
-    int pos1_ = param_->in_shape1_[dim] == 1 ? 0 : i;
-    int error_code;
-    if (in_tensors_[0]->data_type() == kNumberTypeInt || in_tensors_[0]->data_type() == kNumberTypeInt32) {
-      error_code = BroadcastRun(reinterpret_cast<int *>(input0) + pos0_ * param_->in_strides0_[dim],
-                                reinterpret_cast<int *>(input1) + pos1_ * param_->in_strides1_[dim],
-                                reinterpret_cast<uint8_t *>(output) + i * param_->out_strides_[dim], dim + 1, out_count,
-                                out_thread_stride);
-    } else {
-      error_code = BroadcastRun(reinterpret_cast<float *>(input0) + pos0_ * param_->in_strides0_[dim],
-                                reinterpret_cast<float *>(input1) + pos1_ * param_->in_strides1_[dim],
-                                reinterpret_cast<uint8_t *>(output) + i * param_->out_strides_[dim], dim + 1, out_count,
-                                out_thread_stride);
-    }
-    if (error_code != RET_OK) {
-      return error_code;
+void ArithmeticCompareCPUKernel::InitRunFunction(int primitive_type) {
+  ARITHMETIC_COMEPARE_FUNC_INFO_FP32 fun_table[] = {
+    {PrimitiveType_Equal, ElementEqualFp32, ElementEqualInt32, ElementOptEqualFp32, ElementOptEqualInt32},
+    {PrimitiveType_NotEqual, ElementNotEqualFp32, ElementNotEqualInt32, ElementOptNotEqualFp32,
+     ElementOptNotEqualInt32},
+    {PrimitiveType_Less, ElementLessFp32, ElementLessInt32, ElementOptLessFp32, ElementOptLessInt32},
+    {PrimitiveType_LessEqual, ElementLessEqualFp32, ElementLessEqualInt32, ElementOptLessEqualFp32,
+     ElementOptLessEqualInt32},
+    {PrimitiveType_Greater, ElementGreaterFp32, ElementGreaterInt32, ElementOptGreaterFp32, ElementOptGreaterInt32},
+    {PrimitiveType_GreaterEqual, ElementGreaterEqualFp32, ElementGreaterEqualInt32, ElementOptGreaterEqualFp32,
+     ElementOptGreaterEqualInt32}};
+  size_t length = sizeof(fun_table) / sizeof(ARITHMETIC_COMEPARE_FUNC_INFO_FP32);
+  for (size_t i = 0; i < length; i++) {
+    if (fun_table[i].primitive_type_ == primitive_type) {
+      func_fp32_ = fun_table[i].func_;
+      func_int32_ = fun_table[i].int_func_;
+      opt_func_fp32_ = fun_table[i].opt_func_;
+      opt_func_int32_ = fun_table[i].opt_int_func_;
+      return;
     }
   }
-  return RET_OK;
 }
 
-int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
-  auto element_num = out_tensors_[0]->ElementsNum();
-
-  MS_ASSERT(op_parameter_->thread_num_ != 0);
-  int stride = UP_DIV(element_num, op_parameter_->thread_num_);
-  int count = MSMIN(stride, element_num - stride * task_id);
-  if (count <= 0) {
-    return RET_OK;
-  }
-
-  if (func_fp32_ == nullptr) {
-    MS_LOG(ERROR) << "func_fp32_ function is nullptr!";
+int ArithmeticCompareCPUKernel::DoExecute(const void *input0, const void *input1, void *output, int64_t size) {
+  int ret = RET_OK;
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+    if (scalar_opt_) {
+      CHECK_NULL_RETURN(opt_func_fp32_);
+      ret = opt_func_fp32_(reinterpret_cast<const float *>(input0), reinterpret_cast<const float *>(input1),
+                           reinterpret_cast<uint8_t *>(output), size, param_);
+    } else {
+      CHECK_NULL_RETURN(func_fp32_);
+      ret = func_fp32_(reinterpret_cast<const float *>(input0), reinterpret_cast<const float *>(input1),
+                       reinterpret_cast<uint8_t *>(output), size);
+    }
+  } else if (in_tensors_[0]->data_type() == kNumberTypeInt || in_tensors_[0]->data_type() == kNumberTypeInt32) {
+    if (scalar_opt_) {
+      CHECK_NULL_RETURN(opt_func_int32_);
+      ret = opt_func_int32_(reinterpret_cast<const int *>(input0), reinterpret_cast<const int *>(input1),
+                            reinterpret_cast<uint8_t *>(output), size, param_);
+    } else {
+      CHECK_NULL_RETURN(func_int32_);
+      ret = func_int32_(reinterpret_cast<const int *>(input0), reinterpret_cast<const int *>(input1),
+                        reinterpret_cast<uint8_t *>(output), size);
+    }
+  } else {
+    MS_LOG(ERROR) << "Error Operator type " << kNumberTypeInt32;
     return RET_ERROR;
   }
-
-  int error_code;
-  if (param_->broadcasting_) {  // need broadcast
-    stride = UP_DIV(outside_, op_parameter_->thread_num_);
-    int out_count = MSMIN(stride, outside_ - stride * task_id);
-    int out_thread_stride = stride * task_id;
-    if (out_count <= 0) {
-      return RET_OK;
-    }
-    if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-      error_code = BroadcastRun(reinterpret_cast<float *>(input0_ptr_), reinterpret_cast<float *>(input1_ptr_),
-                                reinterpret_cast<uint8_t *>(out_tensors_[0]->data()), 0, out_count, out_thread_stride);
-    } else {
-      error_code = BroadcastRun(reinterpret_cast<int *>(input0_ptr_), reinterpret_cast<int *>(input1_ptr_),
-                                reinterpret_cast<uint8_t *>(out_tensors_[0]->data()), 0, out_count, out_thread_stride);
-    }
-  } else {  // no broadcast, neither is scalar, two same shape
-    if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-      error_code = func_fp32_(reinterpret_cast<float *>(input0_ptr_) + stride * task_id,
-                              reinterpret_cast<float *>(input1_ptr_) + stride * task_id,
-                              reinterpret_cast<uint8_t *>(out_tensors_[0]->data()) + stride * task_id, count);
-    } else {
-      error_code = func_int32_(reinterpret_cast<int *>(input0_ptr_) + stride * task_id,
-                               reinterpret_cast<int *>(input1_ptr_) + stride * task_id,
-                               reinterpret_cast<uint8_t *>(out_tensors_[0]->data()) + stride * task_id, count);
-    }
-  }
-  if (error_code != RET_OK) {
-    return RET_ERROR;
-  }
-  return RET_OK;
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Equal, LiteKernelCreator<ArithmeticCompareCPUKernel>)

@@ -37,31 +37,44 @@ void TileDimensionsFp32(const float *data0, const float *data1, float *tile_data
                         ArithmeticParameter *param);
 /* logical and */
 int ElementLogicalAnd(const float *in0, const float *in1, float *out, int size);
+int ElementOptLogicalAnd(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
 int ElementLogicalAndInt(const int *in0, const int *in1, int *out, int size);
+int ElementOptLogicalAndInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 int ElementLogicalAndBool(const bool *in0, const bool *in1, bool *out, int size);
+int ElementOptLogicalAndBool(const bool *in0, const bool *in1, bool *out, int size, const ArithmeticParameter *param);
 
 /* logical or */
 int ElementLogicalOr(const float *in0, const float *in1, float *out, int size);
+int ElementOptLogicalOr(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
 int ElementLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size);
+int ElementOptLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size, const ArithmeticParameter *param);
 
 /* max min */
 int ElementMaximum(const float *in0, const float *in1, float *out, int size);
+int ElementOptMaximum(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
 int ElementMinimum(const float *in0, const float *in1, float *out, int size);
+int ElementOptMinimum(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
 int ElementMaximumInt(const int *in0, const int *in1, int *out, int size);
-int ElementMinimumInt(const int *input0, const int *input1, int *output, const int element_size);
+int ElementOptMaximumInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
+int ElementMinimumInt(const int *input0, const int *input1, int *output, int size);
+int ElementOptMinimumInt(const int *input0, const int *input1, int *output, int size, const ArithmeticParameter *param);
 
 /* floor div */
 int ElementFloorDiv(const float *in0, const float *in1, float *out, int size);
+int ElementOptFloorDiv(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
 int ElementFloorDivInt(const int *in0, const int *in1, int *out, int size);
+int ElementOptFloorDivInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 
 /* floor mod */
 int ElementFloorMod(const float *in0, const float *in1, float *out, int size);
+int ElementOptFloorMod(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
 int ElementFloorModInt(const int *in0, const int *in1, int *out, int size);
+int ElementOptFloorModInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 
 /* mod */
 int ElementMod(const float *in0, const float *in1, float *out, int size);
-int ElementModInt(const int *in0, const int *in1, int *out, int size);
 int ElementOptMod(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
+int ElementModInt(const int *in0, const int *in1, int *out, int size);
 int ElementOptModInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 
 #ifdef __cplusplus
