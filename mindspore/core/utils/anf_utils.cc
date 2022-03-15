@@ -424,6 +424,17 @@ bool AnfUtils::GetDumpFlag(const AnfNodePtr &node) {
   return false;
 }
 
+bool AnfUtils::HasDumpFlag(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return false;
+  }
+  auto prim = GetCNodePrimitive(node);
+  if (prim != nullptr) {
+    return prim->HasAttr(kAttrDump);
+  }
+  return false;
+}
+
 bool AnfUtils::IsCustomActorNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return node->has_user_data<CustomActorInfo>();

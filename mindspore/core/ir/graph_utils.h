@@ -26,6 +26,7 @@
 #include <set>
 #include <string>
 #include <functional>
+#include <deque>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
@@ -41,6 +42,7 @@ enum IncludeType { FOLLOW, NOFOLLOW, EXCLUDE };
 
 using IncludeFunc = std::function<IncludeType(const AnfNodePtr &)>;
 using FilterFunc = std::function<bool(const AnfNodePtr &)>;
+using GraphFilterFunc = std::function<bool(const FuncGraphPtr &)>;
 using SuccFunc = std::function<std::vector<AnfNodePtr>(AnfNodePtr)>;
 using SearchFunc = std::function<std::vector<AnfNodePtr>(const AnfNodePtr &, const IncludeFunc &)>;
 using MatchFunc = std::function<bool(const CNodePtr &)>;
@@ -50,6 +52,7 @@ std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node);
 MS_CORE_API std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node);
 MS_CORE_API std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node);
 std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node);
+MS_CORE_API std::vector<AnfNodePtr> SuccWithFilter(const GraphFilterFunc &graph_filter, const AnfNodePtr &node);
 
 MS_CORE_API const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node);
 

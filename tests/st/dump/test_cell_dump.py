@@ -22,7 +22,7 @@ import glob
 from enum import Enum
 import numpy as np
 import pytest
-from mindspore import Tensor, set_dump
+from mindspore import Tensor, set_dump, ops
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 from mindspore.nn import Dense
@@ -33,10 +33,12 @@ from mindspore.nn import WithLossCell
 from dump_test_utils import generate_cell_dump_json, check_dump_structure
 from tests.security_utils import security_off_wrap
 
+
 class IsDump(Enum):
     SET_DUMP_TRUE = 1
     SET_DUMP_FALSE = 2
     SET_NONE = 3
+
 
 class ReluReduceMeanDenseRelu(Cell):
     def __init__(self, kernel, bias, in_channel, num_class):
@@ -101,12 +103,18 @@ def test_ascend_cell_dump():
         check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
 
         # make sure 2 relu dump files are generated with correct name prefix
-        assert len(os.listdir(dump_file_path)) == 2
+        assert len(os.listdir(dump_file_path)) == 3
         relu_file_name = "ReLU.Default_network-WithLossCell__backbone-ReluReduceMeanDenseRelu_ReLU-op*.*.*.*"
         relu_file1 = glob.glob(os.path.join(dump_file_path, relu_file_name))[0]
         relu_file2 = glob.glob(os.path.join(dump_file_path, relu_file_name))[1]
         assert relu_file1
         assert relu_file2
+
+        # make sure 1 ReluGrad dump files are generated with correct name prefix
+        relu_grad_file_name = "ReluGrad.Gradients_Default_network-WithLossCell__backbone" \
+                              "-ReluReduceMeanDenseRelu_gradReLU_ReluGrad-op*.*.*.*"
+        relu_grad_file1 = glob.glob(os.path.join(dump_file_path, relu_grad_file_name))[0]
+        assert relu_grad_file1
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
@@ -170,6 +178,7 @@ def test_ascend_cell_empty_dump():
         assert not os.path.exists(dump_file_path)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -202,4 +211,49 @@ def test_ascend_cell_dump_set_enable_false():
         mean_file_name = "ReduceMean.Default_network-WithLossCell__backbone-ReluReduceMeanDenseRelu_ReduceMean-*.*.*.*"
         mean_file = glob.glob(os.path.join(dump_file_path, mean_file_name))[0]
         assert mean_file
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+class OperateSymbolNet(Cell):
+    def construct(self, x):
+        x = ops.Add()(x, 1)
+        x = x - 1
+        x = x / 1
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_cell_dump_with_operate_symbol():
+    """
+    Feature: Cell Dump
+    Description: Test cell dump
+    Expectation: Operators which is expressed by symbol will be dumped
+    """
+    if sys.platform != 'linux':
+        return
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'cell_dump')
+        dump_config_path = os.path.join(tmp_dir, 'cell_dump.json')
+        generate_cell_dump_json(dump_path, dump_config_path, 'test_async_dump', 2)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+
+        net = OperateSymbolNet()
+        x = Tensor(np.ones((1000,)).astype(np.float32))
+        set_dump(net)
+        net(x)
+
+        dump_file_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
+        for _ in range(5):
+            if not os.path.exists(dump_file_path):
+                time.sleep(1)
+        check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
+
+        # make sure directory has dumped files with enabled=True
+        assert len(os.listdir(dump_file_path)) == 3
         del os.environ['MINDSPORE_DUMP_CONFIG']

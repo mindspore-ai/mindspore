@@ -586,9 +586,9 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, OrderedMap<A
   DumpKernelInfo(node, gsub);
 
   if (dump_full_name) {
-    gsub->buffer << "      : # fullname_with_scope: (" << node->fullname_with_scope() << ")" << std::endl;
+    gsub->buffer << "      # fullname_with_scope: (" << node->fullname_with_scope() << ")" << std::endl;
   } else {
-    gsub->buffer << "      : # scope: (" << node->scope()->name() << ")" << std::endl;
+    gsub->buffer << "      # scope: (" << node->scope()->name() << ")" << std::endl;
   }
 
   // Print debug info
