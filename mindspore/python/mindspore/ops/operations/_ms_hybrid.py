@@ -501,12 +501,12 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
         ...     "test3": 12,
         ... }
         >>> # Create the reg info json string.
-        >>> op_gpu_info = CustomRegOp() \
-        ...     .input(0, "a") \
-        ...     .input(0, "b") \
-        ...     .output(0, "y") \
-        ...     .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None) \
-        ...     .target("GPU") \
+        >>> op_gpu_info = CustomRegOp() \\
+        ...     .input(0, "a") \\
+        ...     .input(0, "b") \\
+        ...     .output(0, "y") \\
+        ...     .dtype_format(DataType.F32_None, DataType.F32_None, DataType.F32_None) \\
+        ...     .target("GPU") \\
         ...     .get_op_info()
         >>>
         >>> # Create inputs for the custom op.
