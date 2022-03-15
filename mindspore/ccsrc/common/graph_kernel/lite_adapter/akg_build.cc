@@ -104,12 +104,16 @@ bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::stri
       exit(1);
     }
   } else {
+    bool all_process_pass{true};
     for (size_t j = 0; j < PROCESS_LIMIT; ++j) {
       int status = 0;
       waitpid(child_process[j], &status, 0);
       // kill child process of child process if overtime
       kill(-child_process[j], SIGTERM);
-      return RetStatus(status);
+      all_process_pass = RetStatus(status) && all_process_pass;
+    }
+    if (all_process_pass) {
+      return true;
     }
   }
   return false;
