@@ -59,6 +59,7 @@
 #include "backend/common/session/executor_manager.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "runtime/pynative/op_executor.h"
 
 #ifndef ENABLE_SECURITY
 #ifdef ENABLE_D
@@ -1588,6 +1589,7 @@ void MemoryRecycle() {
 
 void ClearResAtexit() {
   MS_LOG(INFO) << "Pipeline clear all resource";
+  runtime::OpExecutor::GetInstance().WorkerJoin();
   // When the python process exits, the kernels on the device may not have finished executing.
   device::KernelRuntimeManager::Instance().WaitTaskFinishOnDevice();
   device::DeviceContextManager::GetInstance().WaitTaskFinishOnDevice();

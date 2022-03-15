@@ -1107,6 +1107,18 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
   if (copy_kind != RT_MEMCPY_HOST_TO_DEVICE_EX && copy_kind != RT_MEMCPY_DEVICE_TO_DEVICE) {
     MS_LOG(EXCEPTION) << "Memory copy async not support cache host buffer in kind: " << kind;
   }
+  if (dst == nullptr) {
+    MS_LOG(ERROR) << "rtMemcpyAsync dst ptr is null, copy kind:" << kind;
+    return false;
+  }
+  if (src == nullptr) {
+    MS_LOG(ERROR) << "rtMemcpyAsync src ptr is null, copy kind:" << kind;
+    return false;
+  }
+  if (size == 0) {
+    MS_LOG(ERROR) << "rtMemcpyAsync size is 0, copy kind:" << kind;
+    return false;
+  }
   if (RT_ERROR_NONE != rtMemcpyAsync(dst, size, src, size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
     MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
     return false;

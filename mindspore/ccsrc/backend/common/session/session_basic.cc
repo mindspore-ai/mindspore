@@ -55,7 +55,7 @@
 #endif
 #include "backend/common/session/session_factory.h"
 #include "backend/common/session/pynative_task_manager.h"
-#include "runtime/pynative/op_lazy_builder.h"
+#include "runtime/pynative/op_executor.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
 #include "debug/debugger/proto_exporter.h"
@@ -2770,8 +2770,8 @@ void SessionBasic::AddGradAddrToBucket(const GraphId &graph_id, const std::vecto
     auto &free_bucket = bucket_list[free_bucket_index];
     free_bucket->AddGradTensor(tensor);
     if (free_bucket->full()) {
-      // Delete this when session is moved to MindRT.
-      runtime::OpLazyBuilder::GetInstance().ExecuteRemainingTasks();
+      // AllReduce need to wait for the kernel execution of bprop to complete.
+      runtime::OpExecutor::GetInstance().Wait();
       MS_LOG(INFO) << "bucket is full";
       free_bucket->Launch();
       free_bucket_index = ++free_bucket_iter->second;

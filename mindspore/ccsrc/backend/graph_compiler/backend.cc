@@ -22,7 +22,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "backend/graph_compiler/transform.h"
 #include "backend/common/session/session_factory.h"
-#include "runtime/pynative/op_lazy_builder.h"
+#include "runtime/pynative/op_executor.h"
 #include "backend/common/optimizer/helper.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/action.h"
@@ -372,18 +372,6 @@ bool EnablePyNativeSyncRunning() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-}
-
-bool NeedDisableLazyBuild(bool need_erase, bool cache_hit, const OpRunInfo &op_run_info) {
-  // Disable lazy build when:
-  // 1. Execute Dynamic shape operator. The output shape depends on the calculation result of the operator.
-  // 2. Cache hit and there are no tasks in Queue. For example Non-first iteration.
-  // 3. Not in nn.Cell construct.
-  // 4. Operator to process dataset.
-  // 5. Graph mode.
-  // 6. set PYNATIVE_SYNCHRONIZE in context.
-  return need_erase || cache_hit || !op_run_info.lazy_build || OpInBlackList(op_run_info) ||
-         GetExecutionMode() == kGraphMode || EnablePyNativeSyncRunning();
 }
 }  // namespace
 
@@ -873,10 +861,10 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
 
 void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
                                        const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
-  SyncLazyTasks();
+  WaitTaskFinish();
   MS_EXCEPTION_IF_NULL(graph_compiler_);
-  auto &op_lazy_builder = runtime::OpLazyBuilder::GetInstance();
-  op_lazy_builder.Register([this]() { LazyExecuteTaskCallback(); });
+  auto &op_executor = runtime::OpExecutor::GetInstance();
+  op_executor.Register([this]() { BatchBuildCallback(); });
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
     const auto &graph = graphs[graph_index];
     MS_EXCEPTION_IF_NULL(graph);
@@ -910,11 +898,11 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
 
         RunOp(&op_run_info, &op_outputs);
       } else {
-        SyncLazyTasks();
+        WaitTaskFinish();
         RunControlOperator(graph_compiler_, graph, kernel, op_output_map, parameter_index, inputs[graph_index],
                            &input_tensor_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
-        SyncLazyTasks();
+        WaitTaskFinish();
       }
 
       graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &op_output_map);
@@ -927,7 +915,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
         graph_compiler_->AddGradAddrToBucket(graph->graph_id(), graph_output_info.graph_output_tensors);
       }
     }
-    SyncLazyTasks();
+    WaitTaskFinish();
     // Clear bucket resources every step
     if (graph->is_bprop()) {
       graph_compiler_->ClearAllBucket(graph->graph_id());
@@ -961,7 +949,8 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   const auto &graph_compiler_info = *(graph_iter->second);
   const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
 
-  SyncLazyTasks();
+  // For pynative and graph mix execution.
+  WaitTaskFinish();
 
   // Transform args to input tensors.
   // Input tensors of the graph.
@@ -1163,9 +1152,9 @@ void MindRTBackend::SetDebuggerInit() {
 }
 #endif
 
-void MindRTBackend::SyncLazyTasks() const { runtime::OpLazyBuilder::GetInstance().ExecuteRemainingTasks(); }
+void MindRTBackend::WaitTaskFinish() const { runtime::OpExecutor::GetInstance().Wait(); }
 
-void MindRTBackend::ClearOpBuilderResource() const { runtime::OpLazyBuilder::GetInstance().Reset(); }
+void MindRTBackend::ClearOpExecutorResource() const { runtime::OpExecutor::GetInstance().Reset(); }
 
 void MindRTBackend::SyncStream() {
   const auto &device_context =
@@ -1326,7 +1315,7 @@ void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_ten
   }
 }
 
-void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpTask>> &build_tasks) {
+void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks) {
   if (build_tasks.empty()) {
     return;
   }
@@ -1357,9 +1346,24 @@ void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runt
   }
 }
 
-void MindRTBackend::LazyExecuteTaskCallback() {
-  auto &op_lazy_builder = runtime::OpLazyBuilder::GetInstance();
-  if (op_lazy_builder.QueueEmpty()) {
+void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context) {
+  MS_LOG(DEBUG) << "OpRunCallback start";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
+  runtime::RunSingleOpGraph(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
+                            context->device_context(), context->op_run_info().is_dynamic_shape);
+  ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info().is_gradient_out);
+  ClearInputDeviceAddress(context->graph(), context->device_context());
+  // Reset PyNative infer flag.
+  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
+  MS_LOG(DEBUG) << "OpRunCallback end";
+}
+
+void MindRTBackend::BatchBuildCallback() {
+  auto &op_executor = runtime::OpExecutor::GetInstance();
+  if (op_executor.BuildQueueEmpty()) {
     return;
   }
 
@@ -1369,50 +1373,76 @@ void MindRTBackend::LazyExecuteTaskCallback() {
     MS_EXCEPTION_IF_NULL(ms_context);
     auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
 
-    CompileSingleOpGraphs(op_lazy_builder.GetOpBuildTasks());
-    op_lazy_builder.ClearOpBuildTasks();
-
-    // Run op one by one
-    auto &op_run_tasks = op_lazy_builder.GetOpRunTasks();
-    while (!op_run_tasks.empty()) {
-      auto &op_run_task = op_run_tasks.front();
-      const auto &context = op_run_task->context();
-      ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
-      auto tensor_without_value_mask = GetTensorWithoutValueMask(context->op_run_info());
-      runtime::RunSingleOpGraph(context->graph(), tensor_without_value_mask, context->device_context(),
-                                context->op_run_info().is_dynamic_shape);
-      ReleaseForwardOutput(context->op_run_info().input_tensors);
-      ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info().is_gradient_out);
-      ClearInputDeviceAddress(context->graph(), context->device_context());
-      op_lazy_builder.PopOpRunTask();
-    }
+    CompileSingleOpGraphs(op_executor.GetOpBuildTasks());
+    op_executor.ClearOpBuildTasks();
 
     ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
     MS_LOG(DEBUG) << "End";
   } catch (const py::type_error &ex) {
-    op_lazy_builder.Reset();
+    op_executor.Reset();
     throw py::type_error(ex);
   } catch (const py::value_error &ex) {
-    op_lazy_builder.Reset();
+    op_executor.Reset();
     throw py::value_error(ex);
   } catch (const py::index_error &ex) {
-    op_lazy_builder.Reset();
+    op_executor.Reset();
     throw py::index_error(ex);
   } catch (const py::name_error &ex) {
-    op_lazy_builder.Reset();
+    op_executor.Reset();
     throw py::name_error(ex);
   } catch (const std::exception &ex) {
-    op_lazy_builder.Reset();
+    op_executor.Reset();
     throw(std::runtime_error(ex.what()));
   } catch (...) {
-    op_lazy_builder.Reset();
+    op_executor.Reset();
     std::string exName(abi::__cxa_current_exception_type()->name());
     MS_LOG(EXCEPTION) << "Error occurred when execute task in queue. Exception name: " << exName;
   }
 }
 
-void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *graph_compiler_info,
-                                  OpRunInfo *op_run_info, VectorRef *outputs) {
+void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, GraphCompilerInfo *graph_compiler_info,
+                                   OpRunInfo *op_run_info) {
+  MS_EXCEPTION_IF_NULL(graph_compiler_info);
+  // Fetch outputs.
+  if (graph_compiler_info->graphs_.empty()) {
+    MS_LOG(EXCEPTION) << "No graph found, op:" << graph_compiler_info->name_;
+  }
+  const auto &graph = graph_compiler_info->graphs_.front();
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &output_nodes = graph_compiler_->GetGraphOutputNodes(graph->graph_id());
+
+  runtime::UpdateDeviceAddress(graph, GetTensorWithoutValueMask(*op_run_info),
+                               graph_compiler_info->device_contexts_.front());
+  UpdateOutput(output_nodes, outputs);
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
+  auto run_op_context = std::make_shared<runtime::OpTaskContext>(
+    graph_compiler_info, graph, output_nodes, *op_run_info, graph_compiler_info->device_contexts_.front(), infer_flag);
+
+  // Save build task and run task.
+  std::promise<bool> promise;
+  auto future = promise.get_future();
+
+  auto &op_executor = runtime::OpExecutor::GetInstance();
+  if (!single_op_cache_hit) {
+    op_executor.PushOpBuildTask(std::make_shared<runtime::OpBuildTask>(run_op_context, std::move(promise)));
+  } else {
+    promise.set_value(true);
+  }
+  op_executor.PushOpRunTask(std::make_shared<runtime::OpRunTask>(
+    run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallback(ctx); },
+    std::move(future)));
+
+  op_executor.Register([this]() { BatchBuildCallback(); });
+  if (op_executor.BuildQueueFull()) {
+    WaitTaskFinish();
+  }
+}
+
+void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph_compiler_info, OpRunInfo *op_run_info,
+                              VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
   // Fetch outputs.
@@ -1423,51 +1453,36 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
   MS_EXCEPTION_IF_NULL(outputs);
 
   auto device_context = graph_compiler_info->device_contexts_.front();
-  auto &op_lazy_builder = runtime::OpLazyBuilder::GetInstance();
+  auto &op_executor = runtime::OpExecutor::GetInstance();
 
-  bool lazy_build_disabled = NeedDisableLazyBuild(graph_compiler_info->need_erase_,
-                                                  (single_op_cache_hit && op_lazy_builder.QueueEmpty()), *op_run_info);
+  bool async_exec_disabled = graph_compiler_info->need_erase_ || !op_run_info->lazy_build ||
+                             OpInBlackList(*op_run_info) || GetExecutionMode() == kGraphMode ||
+                             EnablePyNativeSyncRunning();
+  if (!async_exec_disabled) {
+    MS_LOG(DEBUG) << "Async exec enabled, op:" << op_run_info->op_name;
+    DispatchOpTask(single_op_cache_hit, outputs, graph_compiler_info, op_run_info);
+    return;
+  }
 
-  auto tensor_without_value_mask = GetTensorWithoutValueMask(*op_run_info);
-
-  if (lazy_build_disabled) {
-    if (!op_lazy_builder.QueueEmpty()) {
-      op_lazy_builder.ExecuteRemainingTasks();
-    }
-    if (!single_op_cache_hit) {
-      CompileSingleOpGraph(graph, device_context, graph_compiler_info);
-    }
-
-    runtime::UpdateDeviceAddress(graph, tensor_without_value_mask, device_context);
-    runtime::RunSingleOpGraph(graph, tensor_without_value_mask, device_context, op_run_info->is_dynamic_shape);
-    ReleaseForwardOutput(op_run_info->input_tensors);
-    UpdateOutput(output_nodes, outputs);
-    ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
-    ClearInputDeviceAddress(graph, device_context);
-    if (op_run_info->is_dynamic_shape) {
-      UpdateOutputAbstract(graph, op_run_info);
-    }
-    if (graph_compiler_info->need_erase_) {
-      EraseSingleOpCache(graph_compiler_info->name_, graph);
-    }
-  } else {
-    runtime::UpdateDeviceAddress(graph, tensor_without_value_mask, device_context);
-    UpdateOutput(output_nodes, outputs);
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-    auto run_op_context =
-      std::make_shared<runtime::OpLazyBuilderContext>(graph_compiler_info, graph, output_nodes, *op_run_info,
-                                                      graph_compiler_info->device_contexts_.front(), infer_flag);
-    if (!single_op_cache_hit) {
-      op_lazy_builder.PushOpBuildTask(std::make_shared<runtime::OpBuildTask>(run_op_context));
-    }
-    op_lazy_builder.PushOpRunTask(std::make_shared<runtime::OpRunTask>(run_op_context));
-    // Callbacks need to be re-registered in heterogeneous scenarios.
-    op_lazy_builder.Register([this]() { LazyExecuteTaskCallback(); });
-    if (op_lazy_builder.QueueFull()) {
-      op_lazy_builder.ExecuteRemainingTasks();
-    }
+  MS_LOG(DEBUG) << "Async exec disabled, op:" << op_run_info->op_name;
+  if (!op_executor.BuildQueueEmpty()) {
+    WaitTaskFinish();
+  }
+  if (!single_op_cache_hit) {
+    CompileSingleOpGraph(graph, device_context, graph_compiler_info);
+  }
+  auto tensors_without_value_mask = GetTensorWithoutValueMask(*op_run_info);
+  runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
+  runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context, op_run_info->is_dynamic_shape);
+  ReleaseForwardOutput(op_run_info->input_tensors);
+  UpdateOutput(output_nodes, outputs);
+  ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
+  ClearInputDeviceAddress(graph, device_context);
+  if (op_run_info->is_dynamic_shape) {
+    UpdateOutputAbstract(graph, op_run_info);
+  }
+  if (graph_compiler_info->need_erase_) {
+    EraseSingleOpCache(graph_compiler_info->name_, graph);
   }
 }
 
@@ -1483,6 +1498,10 @@ void MindRTBackend::RunOp(OpRunInfo *op_run_info, VectorRef *outputs) {
   bool single_op_cache_hit = true;
   auto graph_id = graph_compiler_->CompileGraph(*op_run_info, &single_op_cache_hit, device_context);
   std::string actor_info = std::to_string(graph_id) + "_" + op_run_info->op_name;
+  if (runtime::OpExecutor::GetInstance().ActorInQueue(actor_info)) {
+    WaitTaskFinish();
+  }
+
   GraphCompilerInfo *graph_compiler_info_ptr;
   if (single_op_cache_hit) {
     auto iter = actor_to_graph_compiler_info_.find(actor_info);
@@ -1506,7 +1525,7 @@ void MindRTBackend::RunOp(OpRunInfo *op_run_info, VectorRef *outputs) {
     }
   }
 
-  RunOpInternal(single_op_cache_hit, graph_compiler_info_ptr, op_run_info, outputs);
+  RunOpImpl(single_op_cache_hit, graph_compiler_info_ptr, op_run_info, outputs);
 }
 
 void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
@@ -1532,7 +1551,7 @@ void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &ou
     }
     auto output_tensor = CreateOutputTensor(item_with_index.first, item_with_index.second);
     MS_EXCEPTION_IF_NULL(output_tensor);
-    output_tensor->set_lazy_callback([]() { runtime::OpLazyBuilder::GetInstance().ExecuteRemainingTasks(); });
+    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
     outputs->emplace_back(output_tensor);
   }
 }
