@@ -141,7 +141,6 @@ class Optimizer(Cell):
         validator.check_positive_float(loss_scale, "loss_scale", self.cls_name)
         self.loss_scale = loss_scale
         self.dynamic_weight_decay = False
-        weight_decay = self._preprocess_weight_decay(weight_decay)
         self.grad_centralization = False
 
         self._unique = True
@@ -165,6 +164,7 @@ class Optimizer(Cell):
 
     def _init_opt_attrs(self, learning_rate, parameters, weight_decay):
         """initialize optimizer attributions"""
+        weight_decay = self._preprocess_weight_decay(weight_decay)
         if self.is_group_lr:
             self.learning_rate = CellList(self.group_lr, auto_prefix=False) if self.dynamic_lr \
                 else ParameterTuple(self.group_lr)
@@ -378,8 +378,6 @@ class Optimizer(Cell):
         elif isinstance(weight_decay, Cell):
             self.dynamic_weight_decay = True
             weight_decay = _WrappedWeightDecay(weight_decay, self.loss_scale)
-        elif isinstance(weight_decay, Tensor):
-            weight_decay = weight_decay
         else:
             raise TypeError("Weight decay should be int, float or Cell.")
         return weight_decay
