@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ class MindDataTestNormalizeOP : public UT::CVOP::CVOpCommon {
   MindDataTestNormalizeOP() : CVOpCommon() {}
 };
 
+/// Feature: Normalize op
+/// Description: Test input parameters at Runtime level
+/// Expectation: Results are successfully outputted.
 TEST_F(MindDataTestNormalizeOP, TestOp) {
   MS_LOG(INFO) << "Doing TestNormalizeOp::TestOp2.";
   std::shared_ptr<Tensor> output_tensor;
@@ -39,7 +42,7 @@ TEST_F(MindDataTestNormalizeOP, TestOp) {
   std::vector<float> std = {70.0, 68.0, 71.0};
 
   // Normalize Op
-  std::unique_ptr<NormalizeOp> op(new NormalizeOp(mean, std));
+  std::unique_ptr<NormalizeOp> op = std::make_unique<NormalizeOp>(mean, std, true);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

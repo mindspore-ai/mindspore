@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,9 +45,10 @@ class CutOutOp : public TensorOp {
   // @param fill_r R value for the color to fill patch with
   // @param fill_g G value for the color to fill patch with
   // @param fill_b B value for the color to fill patch with
+  // @param is_hwc Check if input is HWC/CHW format
   // @note maybe using unsigned long int isn't the best here according to our coding rules
   CutOutOp(int32_t box_height, int32_t box_width, int32_t num_patches, bool random_color = kDefRandomColor,
-           uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
+           uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB, bool is_hwc = true);
 
   ~CutOutOp() override = default;
 
@@ -72,6 +73,7 @@ class CutOutOp : public TensorOp {
   uint8_t fill_r_;
   uint8_t fill_g_;
   uint8_t fill_b_;
+  bool is_hwc_;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -57,6 +57,7 @@ from mindspore.dataset.engine.offload import GetOffloadModel
 
 import mindspore.dataset.transforms.c_transforms as c_transforms
 import mindspore.dataset.transforms.py_transforms as py_transforms
+import mindspore.dataset.transforms as transforms
 from mindspore.dataset.text.utils import SentencePieceModel, DE_C_INTER_SENTENCEPIECE_MODE
 from mindspore.parallel._utils import _get_device_num
 
@@ -73,7 +74,7 @@ from ..core.config import get_callback_timeout, _init_device_info, get_enable_sh
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
-from ..transforms.py_transforms_util import FuncWrapper
+from ..transforms.py_transforms_util import FuncWrapper, Implementation
 
 try:
     context = import_module("mindspore.context")
@@ -2028,7 +2029,7 @@ class TextBaseDataset(Dataset):
             >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
         """
         if not isinstance(model_type, SentencePieceModel):
-            raise TypeError("Argument model_type with value {0} is not of type SentencePieceModel, but got {1}."\
+            raise TypeError("Argument model_type with value {0} is not of type SentencePieceModel, but got {1}." \
                             .format(model_type, type(model_type)))
         model_type = DE_C_INTER_SENTENCEPIECE_MODE[model_type]
         vocab = cde.SentencePieceVocab()
@@ -3214,7 +3215,7 @@ class MapDataset(UnionBaseDataset):
                 raise ValueError("Parameter operations's element of method map should be a python function or "
                                  "class method which should be callable, but got: {}. It doesn't need parentheses "
                                  "for python function or class method.".format(op))
-        self.operations = py_transforms.Compose.reduce(self.operations)
+
         self.input_columns = to_list(input_columns)
         self.output_columns = to_list(output_columns)
         self.column_order = replace_none(column_order, [])
@@ -3236,24 +3237,72 @@ class MapDataset(UnionBaseDataset):
         self.offload = offload
 
     def parse(self, children=None):
-        operations = []
-        for op in self.operations:
-            if op and getattr(op, 'parse', None):
-                operations.append(op.parse())
-            else:
-                operations.append(op)
+        operations = self.__decompose_callable_operations()
+
+        count_old_transforms = sum(
+            [1 if "c_transforms" in str(op) or ("py_transforms" in str(op) and not isinstance(op, FuncWrapper))
+             else 0 for op in operations])
+        count_new_transforms = sum([1 if hasattr(op, "implementation") and not isinstance(op, FuncWrapper)
+                                    else 0 for op in operations])
+        count_pyfunc = sum([1 if isinstance(op, FuncWrapper) else 0 for op in operations])
+        if count_new_transforms + count_pyfunc == len(operations):
+            prev_op = None
+            for op in operations:
+                if op.implementation is None:
+                    if prev_op and prev_op.implementation == Implementation.PY:
+                        op.implementation = Implementation.PY
+                    else:
+                        op.implementation = Implementation.C
+                prev_op = op
+            operations = transforms.transforms.Compose.reduce(operations)
+        elif count_old_transforms + count_pyfunc == len(operations):
+            operations = transforms.py_transforms.Compose.reduce(operations)
+        else:
+            raise RuntimeError("Mixing old and new transforms is not allowed.")
+
+        self.operations = self.__process_final_operations(operations)
+        self.prepare_multiprocessing()
 
         callbacks = [cb.create_runtime_obj() for cb in self.callbacks]
-        return cde.MapNode(children[0], operations, self.input_columns, self.output_columns, self.column_order,
+        return cde.MapNode(children[0], self.operations, self.input_columns, self.output_columns, self.column_order,
                            callbacks, self.max_rowsize, OffloadToManualOffloadMode.get(self.offload), self.process_pool)
 
     def __deepcopy__(self, memodict):
         return self.__safe_deepcopy__(memodict, exclude=("operations", "callbacks", "__transfer_dataset__"))
 
+    @staticmethod
+    def __operation_valid_for_multiprocessing(op):
+        if callable(op) and str(op).find("c_transform") < 0:
+            return True
+        return False
+
+    @staticmethod
+    def __process_final_operations(operations):
+        """
+        Build final list of operations
+        """
+        operations_fin = []
+        for op in operations:
+            if hasattr(op, "implementation"):
+                if op.implementation == Implementation.C and not isinstance(op, FuncWrapper):
+                    operations_fin.append(op.parse())
+                elif op.implementation == Implementation.PY:
+                    operations_fin.append(op)
+                elif isinstance(op, FuncWrapper):
+                    operations_fin.append(op)
+                else:
+                    raise RuntimeError("Wrong implementation")
+            else:
+                if op and getattr(op, 'parse', None):
+                    operations_fin.append(op.parse())
+                else:
+                    operations_fin.append(op)
+        return operations_fin
+
     # Iterator bootstrap will be called on iterator construction.
     # A deep copy of Dataset object is created prior of iterator_bootstrap.
     # This method will create per iterator process pool and bind pyfunc execution to the pool.
-    def iterator_bootstrap(self):
+    def prepare_multiprocessing(self):
         """
         Per iterator bootstrap callback.
         """
@@ -3287,11 +3336,19 @@ class MapDataset(UnionBaseDataset):
                         iter_specific_operations.append(op)
                 self.operations = iter_specific_operations
 
-    @staticmethod
-    def __operation_valid_for_multiprocessing(op):
-        if callable(op) and str(op).find("c_transform") < 0:
-            return True
-        return False
+    def __decompose_callable_operations(self):
+        """
+        Decompose operations and build list of old legacy ops which are callable
+        """
+        decomposed_operations = transforms.transforms.Compose.decompose(self.operations)
+        operations = []
+        for op in decomposed_operations:
+            if callable(op) and not hasattr(op, "implementation") and str(op).find(
+                    "c_transform") < 0 and not isinstance(op, c_transforms.TensorOperation) and \
+                    not isinstance(op, py_transforms.PyTensorOperation):
+                op = transforms.py_transforms_util.FuncWrapper(op)
+            operations.append(op)
+        return operations
 
 
 class FilterDataset(UnionBaseDataset):

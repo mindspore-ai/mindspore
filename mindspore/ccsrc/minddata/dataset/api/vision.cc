@@ -276,7 +276,7 @@ struct CutOut::Data {
 CutOut::CutOut(int32_t length, int32_t num_patches) : data_(std::make_shared<Data>(length, num_patches)) {}
 
 std::shared_ptr<TensorOperation> CutOut::Parse() {
-  return std::make_shared<CutOutOperation>(data_->length_, data_->num_patches_);
+  return std::make_shared<CutOutOperation>(data_->length_, data_->num_patches_, true);
 }
 #endif  // not ENABLE_ANDROID
 
@@ -423,7 +423,7 @@ Normalize::Normalize(const std::vector<float> &mean, const std::vector<float> &s
     : data_(std::make_shared<Data>(mean, std)) {}
 
 std::shared_ptr<TensorOperation> Normalize::Parse() {
-  return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_);
+  return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_, true);
 }
 
 std::shared_ptr<TensorOperation> Normalize::Parse(const MapTargetDevice &env) {
@@ -432,7 +432,7 @@ std::shared_ptr<TensorOperation> Normalize::Parse(const MapTargetDevice &env) {
     return std::make_shared<DvppNormalizeOperation>(data_->mean_, data_->std_);
 #endif  // ENABLE_ACL
   } else if (env == MapTargetDevice::kCpu) {
-    return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_);
+    return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_, true);
   }
   MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
   return nullptr;
@@ -453,7 +453,7 @@ NormalizePad::NormalizePad(const std::vector<float> &mean, const std::vector<flo
     : data_(std::make_shared<Data>(mean, std, CharToString(dtype))) {}
 
 std::shared_ptr<TensorOperation> NormalizePad::Parse() {
-  return std::make_shared<NormalizePadOperation>(data_->mean_, data_->std_, data_->dtype_);
+  return std::make_shared<NormalizePadOperation>(data_->mean_, data_->std_, data_->dtype_, true);
 }
 
 // Pad Transform Operation.

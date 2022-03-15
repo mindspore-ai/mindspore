@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ namespace mindspore {
 namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
-CutOutOperation::CutOutOperation(int32_t length, int32_t num_patches) : length_(length), num_patches_(num_patches) {}
+CutOutOperation::CutOutOperation(int32_t length, int32_t num_patches, bool is_hwc)
+    : length_(length), num_patches_(num_patches), is_hwc_(is_hwc) {}
 
 CutOutOperation::~CutOutOperation() = default;
 
@@ -41,7 +42,8 @@ Status CutOutOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> CutOutOperation::Build() {
-  std::shared_ptr<CutOutOp> tensor_op = std::make_shared<CutOutOp>(length_, length_, num_patches_, false, 0, 0, 0);
+  std::shared_ptr<CutOutOp> tensor_op =
+    std::make_shared<CutOutOp>(length_, length_, num_patches_, false, 0, 0, 0, is_hwc_);
   return tensor_op;
 }
 
@@ -49,6 +51,7 @@ Status CutOutOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["length"] = length_;
   args["num_patches"] = num_patches_;
+  args["is_hwc"] = is_hwc_;
   *out_json = args;
   return Status::OK();
 }
@@ -56,9 +59,11 @@ Status CutOutOperation::to_json(nlohmann::json *out_json) {
 Status CutOutOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "length", kCutOutOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_patches", kCutOutOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "is_hwc", kCutOutOperation));
   int32_t length = op_params["length"];
   int32_t num_patches = op_params["num_patches"];
-  *operation = std::make_shared<vision::CutOutOperation>(length, num_patches);
+  bool is_hwc = op_params["is_hwc"];
+  *operation = std::make_shared<vision::CutOutOperation>(length, num_patches, is_hwc);
   return Status::OK();
 }
 

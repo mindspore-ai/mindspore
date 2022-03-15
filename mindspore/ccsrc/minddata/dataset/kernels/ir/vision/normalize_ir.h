@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ constexpr char kNormalizeOperation[] = "Normalize";
 
 class NormalizeOperation : public TensorOperation {
  public:
-  NormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std);
+  NormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc);
 
   ~NormalizeOperation();
 
@@ -54,6 +54,7 @@ class NormalizeOperation : public TensorOperation {
  private:
   std::vector<float> mean_;
   std::vector<float> std_;
+  bool is_hwc_;
 };
 
 }  // namespace vision

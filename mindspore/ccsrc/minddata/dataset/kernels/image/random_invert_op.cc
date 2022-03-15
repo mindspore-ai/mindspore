@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,11 @@ Status RandomInvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   if (input->Rank() != DEFAULT_IMAGE_RANK) {
     RETURN_STATUS_UNEXPECTED("RandomInvert: image shape is not <H,W,C>, got rank: " + std::to_string(input->Rank()));
   }
-  if (input->shape()[CHANNEL_INDEX] != DEFAULT_IMAGE_CHANNELS) {
+  if (input->shape()[CHANNEL_INDEX_HWC] != DEFAULT_IMAGE_CHANNELS) {
     RETURN_STATUS_UNEXPECTED(
       "RandomInvert: image shape is incorrect, expected num of channels is 3, "
       "but got:" +
-      std::to_string(input->shape()[CHANNEL_INDEX]));
+      std::to_string(input->shape()[CHANNEL_INDEX_HWC]));
   }
   CHECK_FAIL_RETURN_UNEXPECTED(input->type().AsCVType() != kCVInvalidType,
                                "RandomInvert: Cannot convert from OpenCV type, unknown CV type. Currently "

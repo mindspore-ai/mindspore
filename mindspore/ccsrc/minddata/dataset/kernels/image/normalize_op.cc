@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@
 
 namespace mindspore {
 namespace dataset {
-NormalizeOp::NormalizeOp(const std::vector<float> &mean, const std::vector<float> &std) : mean_(mean), std_(std) {
+NormalizeOp::NormalizeOp(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc)
+    : mean_(mean), std_(std), is_hwc_(is_hwc) {
   // pre-calculate normalized mean to be used later in each Compute
   for (int64_t i = 0; i < mean.size(); i++) {
     mean_[i] = mean_[i] / std_[i];
@@ -37,7 +38,11 @@ NormalizeOp::NormalizeOp(const std::vector<float> &mean, const std::vector<float
 Status NormalizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // Doing the Normalization
+#ifndef ENABLE_ANDROID
+  return Normalize(input, output, mean_, std_, is_hwc_);
+#else
   return Normalize(input, output, mean_, std_);
+#endif
 }
 
 void NormalizeOp::Print(std::ostream &out) const {
@@ -49,6 +54,7 @@ void NormalizeOp::Print(std::ostream &out) const {
   for (const auto &s : std_) {
     out << s << ", ";
   }
+  out << "}" << std::endl << "is_hwc: " << is_hwc_;
   out << "}" << std::endl;
 }
 }  // namespace dataset

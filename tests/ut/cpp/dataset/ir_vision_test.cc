@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,12 +144,12 @@ TEST_F(MindDataTestIRVision, TestCutOutFail1) {
 
   // Create object for the tensor op
   // Invalid negative length
-  std::shared_ptr<TensorOperation> cutout_op = std::make_shared<vision::CutOutOperation>(-10, 1);
+  std::shared_ptr<TensorOperation> cutout_op = std::make_shared<vision::CutOutOperation>(-10, 1, true);
   rc = cutout_op->ValidateParams();
   EXPECT_ERROR(rc);
 
   // Invalid negative number of patches
-  cutout_op = std::make_shared<vision::CutOutOperation>(10, -1);
+  cutout_op = std::make_shared<vision::CutOutOperation>(10, -1, true);
   rc = cutout_op->ValidateParams();
   EXPECT_ERROR(rc);
 }
@@ -161,79 +161,108 @@ TEST_F(MindDataTestIRVision, TestCutOutFail2) {
 
   // Create object for the tensor op
   // Invalid zero length
-  std::shared_ptr<TensorOperation> cutout_op = std::make_shared<vision::CutOutOperation>(0, 1);
+  std::shared_ptr<TensorOperation> cutout_op = std::make_shared<vision::CutOutOperation>(0, 1, true);
   rc = cutout_op->ValidateParams();
   EXPECT_ERROR(rc);
 
   // Invalid zero number of patches
-  cutout_op = std::make_shared<vision::CutOutOperation>(10, 0);
+  cutout_op = std::make_shared<vision::CutOutOperation>(10, 0, true);
   rc = cutout_op->ValidateParams();
   EXPECT_ERROR(rc);
 }
 
+/// Feature: Normalize op
+/// Description: test invalid input parameters at IR level
+/// Expectation: throw correct error and message
 TEST_F(MindDataTestIRVision, TestNormalizeFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestNormalizeFail with invalid parameters.";
 
   Status rc;
+  std::vector<float> mean;
+  std::vector<float> std;
 
   // std value 0.0 out of range
-  std::shared_ptr<TensorOperation> normalize1(new vision::NormalizeOperation({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0}));
+  mean = {121.0, 115.0, 100.0};
+  std = {0.0, 68.0, 71.0};
+  std::shared_ptr<TensorOperation> normalize1 = std::make_shared<vision::NormalizeOperation>(mean, std, true);
   rc = normalize1->ValidateParams();
   EXPECT_ERROR(rc);
 
   // std value 256.0 out of range
-  std::shared_ptr<TensorOperation> normalize2(
-    new vision::NormalizeOperation({121.0, 10.0, 100.0}, {256.0, 68.0, 71.0}));
+  mean = {121.0, 115.0, 100.0};
+  std = {256.0, 68.0, 71.0};
+  std::shared_ptr<TensorOperation> normalize2 = std::make_shared<vision::NormalizeOperation>(mean, std, true);
   rc = normalize2->ValidateParams();
   EXPECT_ERROR(rc);
 
   // mean value 256.0 out of range
-  std::shared_ptr<TensorOperation> normalize3(new vision::NormalizeOperation({256.0, 0.0, 100.0}, {70.0, 68.0, 71.0}));
+  mean = {256.0, 0.0, 100.0};
+  std = {70.0, 68.0, 71.0};
+  std::shared_ptr<TensorOperation> normalize3 = std::make_shared<vision::NormalizeOperation>(mean, std, true);
   rc = normalize3->ValidateParams();
   EXPECT_ERROR(rc);
 
   // mean value 0.0 out of range
-  std::shared_ptr<TensorOperation> normalize4(new vision::NormalizeOperation({-1.0, 0.0, 100.0}, {70.0, 68.0, 71.0}));
+  mean = {-1.0, 0.0, 100.0};
+  std = {70.0, 68.0, 71.0};
+  std::shared_ptr<TensorOperation> normalize4 = std::make_shared<vision::NormalizeOperation>(mean, std, true);
   rc = normalize4->ValidateParams();
   EXPECT_ERROR(rc);
 
   // normalize with 2 values (not 3 values) for mean
-  std::shared_ptr<TensorOperation> normalize5(new vision::NormalizeOperation({121.0, 115.0}, {70.0, 68.0, 71.0}));
+  mean = {121.0, 115.0};
+  std = {70.0, 68.0, 71.0};
+  std::shared_ptr<TensorOperation> normalize5 = std::make_shared<vision::NormalizeOperation>(mean, std, true);
   rc = normalize5->ValidateParams();
   EXPECT_ERROR(rc);
 
   // normalize with 2 values (not 3 values) for standard deviation
-  std::shared_ptr<TensorOperation> normalize6(new vision::NormalizeOperation({121.0, 115.0, 100.0}, {68.0, 71.0}));
+  mean = {121.0, 115.0, 100.0};
+  std = {68.0, 71.0};
+  std::shared_ptr<TensorOperation> normalize6 = std::make_shared<vision::NormalizeOperation>(mean, std, true);
   rc = normalize6->ValidateParams();
   EXPECT_ERROR(rc);
 }
 
+/// Feature: NormalizePad op
+/// Description: test invalid input parameters at IR level
+/// Expectation: throw correct error and message
 TEST_F(MindDataTestIRVision, TestNormalizePadFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestNormalizePadFail with invalid parameters.";
 
   Status rc;
+  std::vector<float> mean;
+  std::vector<float> std;
 
   // std value at 0.0
-  std::shared_ptr<TensorOperation> normalizepad1(
-    new vision::NormalizePadOperation({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0}, "float32"));
+  mean = {121.0, 115.0, 100.0};
+  std = {0.0, 68.0, 71.0};
+  std::shared_ptr<TensorOperation> normalizepad1 =
+    std::make_shared<vision::NormalizePadOperation>(mean, std, "float32", true);
   rc = normalizepad1->ValidateParams();
   EXPECT_ERROR(rc);
 
   // normalizepad with 2 values (not 3 values) for mean
-  std::shared_ptr<TensorOperation> normalizepad2(
-    new vision::NormalizePadOperation({121.0, 115.0}, {70.0, 68.0, 71.0}, "float32"));
+  mean = {121.0, 115.0};
+  std = {70.0, 68.0, 71.0};
+  std::shared_ptr<TensorOperation> normalizepad2 =
+    std::make_shared<vision::NormalizePadOperation>(mean, std, "float32", true);
   rc = normalizepad2->ValidateParams();
   EXPECT_ERROR(rc);
 
   // normalizepad with 2 values (not 3 values) for standard deviation
-  std::shared_ptr<TensorOperation> normalizepad3(
-    new vision::NormalizePadOperation({121.0, 115.0, 100.0}, {68.0, 71.0}, "float32"));
+  mean = {121.0, 115.0, 100.0};
+  std = {68.0, 71.0};
+  std::shared_ptr<TensorOperation> normalizepad3 =
+    std::make_shared<vision::NormalizePadOperation>(mean, std, "float32", true);
   rc = normalizepad3->ValidateParams();
   EXPECT_ERROR(rc);
 
   // normalizepad with invalid dtype
-  std::shared_ptr<TensorOperation> normalizepad4(
-    new vision::NormalizePadOperation({121.0, 115.0, 100.0}, {68.0, 71.0, 71.0}, "123"));
+  mean = {121.0, 115.0, 100.0};
+  std = {68.0, 71.0, 71.0};
+  std::shared_ptr<TensorOperation> normalizepad4 =
+    std::make_shared<vision::NormalizePadOperation>(mean, std, "123", true);
   rc = normalizepad4->ValidateParams();
   EXPECT_ERROR(rc);
 }

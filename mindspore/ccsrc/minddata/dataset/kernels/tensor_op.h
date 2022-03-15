@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,7 @@ constexpr char kSoftDvppDecodeRandomCropResizeJpegOp[] = "SoftDvppDecodeRandomCr
 constexpr char kSoftDvppDecodeReiszeJpegOp[] = "SoftDvppDecodeReiszeJpegOp";
 constexpr char kSolarizeOp[] = "SolarizeOp";
 constexpr char kSwapRedBlueOp[] = "SwapRedBlueOp";
+constexpr char kToTensorOp[] = "ToTensorOp";
 constexpr char kUniformAugOp[] = "UniformAugOp";
 constexpr char kVerticalFlipOp[] = "VerticalFlipOp";
 

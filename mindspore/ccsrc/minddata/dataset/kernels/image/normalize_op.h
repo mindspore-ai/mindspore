@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 class NormalizeOp : public TensorOp {
  public:
-  NormalizeOp(const std::vector<float> &mean, const std::vector<float> &std);
+  NormalizeOp(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc);
 
   ~NormalizeOp() override = default;
 
@@ -41,6 +41,7 @@ class NormalizeOp : public TensorOp {
  private:
   std::vector<float> mean_;
   std::vector<float> std_;
+  bool is_hwc_;
 };
 }  // namespace dataset
 }  // namespace mindspore

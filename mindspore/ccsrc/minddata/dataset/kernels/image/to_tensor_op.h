@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_NORMALIZE_PAD_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_NORMALIZE_PAD_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_TO_TENSOR_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_TO_TENSOR_OP_H_
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -25,26 +26,22 @@
 
 namespace mindspore {
 namespace dataset {
-class NormalizePadOp : public TensorOp {
+class ToTensorOp : public TensorOp {
  public:
-  NormalizePadOp(float mean_r, float mean_g, float mean_b, float std_r, float std_g, float std_b,
-                 std::string dtype = "float32", bool is_hwc = true);
+  explicit ToTensorOp(const DataType &data_type) : data_type_(data_type) {}
 
-  ~NormalizePadOp() override = default;
+  explicit ToTensorOp(const std::string &data_type) { data_type_ = DataType(data_type); }
 
-  void Print(std::ostream &out) const override;
+  ~ToTensorOp() override = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
-  std::string Name() const override { return kNormalizePadOp; }
+  std::string Name() const override { return kToTensorOp; }
 
  private:
-  std::shared_ptr<Tensor> mean_;
-  std::shared_ptr<Tensor> std_;
-  std::string dtype_;
-  bool is_hwc_;
+  DataType data_type_;
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_NORMALIZE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_TO_TENSOR_OP_H_

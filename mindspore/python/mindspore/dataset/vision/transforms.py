@@ -13,10 +13,18 @@
 # limitations under the License.
 # ==============================================================================
 """
-The module vision.c_transforms is inherited from _c_dataengine
-and is implemented based on OpenCV in C++. It's a high performance module to
-process images. Users can apply suitable augmentations on image data
+The module vision.transforms provides many kinds of image augmentation methods
+and image-related conversion methods
+(e.g. including with PIL.Image.Image and numpy.ndarray).
+to perform various computer vision tasks.
+Users can apply suitable augmentations on image data
 to improve their training models.
+Users can also self-define their own augmentation methods with Python Pillow (PIL)
+
+For the different methods in this module, implementation is based in C++ and/or Python.
+The C++ implementation is inherited from mindspore._c_dataengine, provides high performance
+and is mainly based on OpenCV.
+The Python implementation is mainly based on PIL.
 
 .. Note::
     A constructor's arguments for every class in this module must be saved into the
@@ -29,13 +37,13 @@ Examples:
     >>> image_folder_dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
     ...                                              num_parallel_workers=8)
     >>> # create a list of transformations to be applied to the image data
-    >>> transforms_list = [c_vision.Decode(),
-    ...                    c_vision.Resize((256, 256), interpolation=Inter.LINEAR),
-    ...                    c_vision.RandomCrop(200, padding_mode=Border.EDGE),
-    ...                    c_vision.RandomRotation((0, 15)),
-    ...                    c_vision.Normalize((100, 115.0, 121.0), (71.0, 68.0, 70.0)),
-    ...                    c_vision.HWC2CHW()]
-    >>> onehot_op = c_transforms.OneHot(num_classes=10)
+    >>> transforms_list = [vision.Decode(),
+    ...                    vision.Resize((256, 256), interpolation=Inter.LINEAR),
+    ...                    vision.RandomCrop(200, padding_mode=Border.EDGE),
+    ...                    vision.RandomRotation((0, 15)),
+    ...                    vision.Normalize((100, 115.0, 121.0), (71.0, 68.0, 70.0)),
+    ...                    vision.HWC2CHW()]
+    >>> onehot_op = data_transforms.OneHot(num_classes=10)
     >>> # apply the transformation to the dataset through data1.map()
     >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
     ...                                                 input_columns="image")
@@ -43,112 +51,30 @@ Examples:
     ...                                                 input_columns="label")
 """
 import numbers
+import random
 import numpy as np
-from PIL import Image
+
 import mindspore._c_dataengine as cde
-
-from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
-from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, \
-    check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
-    check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, check_alpha, \
-    check_uniform_augment_cpp, check_convert_color, check_random_resize_crop, check_random_auto_contrast, \
+from . import py_transforms_util as util
+from .py_transforms_util import is_pil
+from .utils import Border, Inter, parse_padding
+from .utils import ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
+from .validators import check_adjust_gamma, check_alpha, check_auto_contrast, check_center_crop, check_cutout_new, \
+    check_five_crop, check_hsv_to_rgb, check_linear_transform, check_mix_up, check_normalize, \
+    check_normalizepad, check_num_channels, check_pad, check_positive_degrees, check_prob, check_random_affine, \
+    check_random_color_adjust, check_random_crop, check_random_erasing, check_random_perspective, \
+    check_random_resize_crop, check_random_rotation, check_resize_interpolation, check_rgb_to_hsv, \
+    check_ten_crop, check_crop, check_mix_up_batch_c, check_range, \
+    check_resize, check_rescale, check_uniform_augment_cpp, check_convert_color, check_random_auto_contrast, \
     check_random_adjust_sharpness, check_auto_augment, \
-    check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
-    check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
-    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
+    check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_random_solarize, \
+    check_soft_dvpp_decode_random_crop_resize_jpeg, FLOAT_MAX_INTEGER, \
+    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches
+from ..transforms.py_transforms_util import Implementation
+from ..transforms.transforms import TensorOperation, PyTensorOperation, CompoundOperation, TypeCast
 
 
-class ImageTensorOperation():
-    """
-    Base class of Image Tensor Ops
-    """
-
-    def __call__(self, *input_tensor_list):
-        for tensor in input_tensor_list:
-            if not isinstance(tensor, (np.ndarray, Image.Image)):
-                raise TypeError(
-                    "Input should be NumPy or PIL image, got {}.".format(type(tensor)))
-        tensor_row = []
-        for tensor in input_tensor_list:
-            try:
-                tensor_row.append(cde.Tensor(np.asarray(tensor)))
-            except RuntimeError:
-                raise TypeError("Invalid user input. Got {}: {}, cannot be converted into tensor." \
-                                .format(type(tensor), tensor))
-        callable_op = cde.Execute(self.parse())
-        output_tensor_list = callable_op(tensor_row)
-        for i, element in enumerate(output_tensor_list):
-            arr = element.as_array()
-            if arr.dtype.char == 'S':
-                output_tensor_list[i] = np.char.decode(arr)
-            else:
-                output_tensor_list[i] = arr
-        return output_tensor_list[0] if len(output_tensor_list) == 1 else tuple(output_tensor_list)
-
-    def parse(self):
-        # Note: subclasses must implement `def parse(self)` so do not make ImageTensorOperation's parse a staticmethod.
-        raise NotImplementedError("ImageTensorOperation has to implement parse() method.")
-
-
-DE_C_AUTO_AUGMENT_POLICY = {AutoAugmentPolicy.IMAGENET: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_IMAGENET,
-                            AutoAugmentPolicy.CIFAR10: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_CIFAR10,
-                            AutoAugmentPolicy.SVHN: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_SVHN}
-
-DE_C_BORDER_TYPE = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
-                    Border.EDGE: cde.BorderType.DE_BORDER_EDGE,
-                    Border.REFLECT: cde.BorderType.DE_BORDER_REFLECT,
-                    Border.SYMMETRIC: cde.BorderType.DE_BORDER_SYMMETRIC}
-
-DE_C_IMAGE_BATCH_FORMAT = {ImageBatchFormat.NHWC: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NHWC,
-                           ImageBatchFormat.NCHW: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NCHW}
-
-DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
-                   Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
-                   Inter.CUBIC: cde.InterpolationMode.DE_INTER_CUBIC,
-                   Inter.AREA: cde.InterpolationMode.DE_INTER_AREA,
-                   Inter.PILCUBIC: cde.InterpolationMode.DE_INTER_PILCUBIC}
-
-DE_C_SLICE_MODE = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
-                   SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
-
-DE_C_CONVERT_COLOR_MODE = {ConvertMode.COLOR_BGR2BGRA: cde.ConvertMode.DE_COLOR_BGR2BGRA,
-                           ConvertMode.COLOR_RGB2RGBA: cde.ConvertMode.DE_COLOR_RGB2RGBA,
-                           ConvertMode.COLOR_BGRA2BGR: cde.ConvertMode.DE_COLOR_BGRA2BGR,
-                           ConvertMode.COLOR_RGBA2RGB: cde.ConvertMode.DE_COLOR_RGBA2RGB,
-                           ConvertMode.COLOR_BGR2RGBA: cde.ConvertMode.DE_COLOR_BGR2RGBA,
-                           ConvertMode.COLOR_RGB2BGRA: cde.ConvertMode.DE_COLOR_RGB2BGRA,
-                           ConvertMode.COLOR_RGBA2BGR: cde.ConvertMode.DE_COLOR_RGBA2BGR,
-                           ConvertMode.COLOR_BGRA2RGB: cde.ConvertMode.DE_COLOR_BGRA2RGB,
-                           ConvertMode.COLOR_BGR2RGB: cde.ConvertMode.DE_COLOR_BGR2RGB,
-                           ConvertMode.COLOR_RGB2BGR: cde.ConvertMode.DE_COLOR_RGB2BGR,
-                           ConvertMode.COLOR_BGRA2RGBA: cde.ConvertMode.DE_COLOR_BGRA2RGBA,
-                           ConvertMode.COLOR_RGBA2BGRA: cde.ConvertMode.DE_COLOR_RGBA2BGRA,
-                           ConvertMode.COLOR_BGR2GRAY: cde.ConvertMode.DE_COLOR_BGR2GRAY,
-                           ConvertMode.COLOR_RGB2GRAY: cde.ConvertMode.DE_COLOR_RGB2GRAY,
-                           ConvertMode.COLOR_GRAY2BGR: cde.ConvertMode.DE_COLOR_GRAY2BGR,
-                           ConvertMode.COLOR_GRAY2RGB: cde.ConvertMode.DE_COLOR_GRAY2RGB,
-                           ConvertMode.COLOR_GRAY2BGRA: cde.ConvertMode.DE_COLOR_GRAY2BGRA,
-                           ConvertMode.COLOR_GRAY2RGBA: cde.ConvertMode.DE_COLOR_GRAY2RGBA,
-                           ConvertMode.COLOR_BGRA2GRAY: cde.ConvertMode.DE_COLOR_BGRA2GRAY,
-                           ConvertMode.COLOR_RGBA2GRAY: cde.ConvertMode.DE_COLOR_RGBA2GRAY,
-                           }
-
-
-def parse_padding(padding):
-    """ Parses and prepares the padding tuple"""
-
-    if isinstance(padding, numbers.Number):
-        padding = [padding] * 4
-    if len(padding) == 2:
-        left = top = padding[0]
-        right = bottom = padding[1]
-        padding = (left, top, right, bottom,)
-    if isinstance(padding, list):
-        padding = tuple(padding)
-    return padding
-
-
-class AdjustGamma(ImageTensorOperation):
+class AdjustGamma(TensorOperation, PyTensorOperation):
     r"""
     Apply gamma correction on input image. Input image is expected to be in [..., H, W, C] or [H, W] format.
     .. math::
@@ -175,21 +101,35 @@ class AdjustGamma(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.AdjustGamma(gamma=10.0, gain=1.0)]
+        >>> transforms_list = [vision.Decode(), vision.AdjustGamma(gamma=10.0, gain=1.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_adjust_gamma
     def __init__(self, gamma, gain=1):
+        super(AdjustGamma, self).__init__()
         self.gamma = gamma
         self.gain = gain
+        self.random = False
 
     def parse(self):
         return cde.AdjustGammaOperation(self.gamma, self.gain)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class AutoAugment(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be gamma adjusted.
+
+        Returns:
+            PIL Image, gamma adjusted image.
+        """
+        return util.adjust_gamma(img, self.gamma, self.gain)
+
+
+class AutoAugment(TensorOperation):
     """
     Apply AutoAugment data augmentation method based on
     `AutoAugment: Learning Augmentation Strategies from Data <https://arxiv.org/pdf/1805.09501.pdf>`_.
@@ -234,27 +174,30 @@ class AutoAugment(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import AutoAugmentPolicy, Inter
-        >>> transforms_list = [c_vision.Decode(), c_vision.AutoAugment(policy=AutoAugmentPolicy.IMAGENET,
-        ...                                                            interpolation=Inter.NEAREST,
-        ...                                                            fill_value=0)]
+
+        >>> transforms_list = [vision.Decode(), vision.AutoAugment(policy=AutoAugmentPolicy.IMAGENET,
+        ...                                                        interpolation=Inter.NEAREST,
+        ...                                                        fill_value=0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_auto_augment
     def __init__(self, policy=AutoAugmentPolicy.IMAGENET, interpolation=Inter.NEAREST, fill_value=0):
+        super().__init__()
         self.policy = policy
         self.interpolation = interpolation
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         self.fill_value = fill_value
+        self.implementation = Implementation.C
 
     def parse(self):
-        return cde.AutoAugmentOperation(DE_C_AUTO_AUGMENT_POLICY[self.policy], DE_C_INTER_MODE[self.interpolation],
+        return cde.AutoAugmentOperation(AutoAugmentPolicy.to_c_type(self.policy), Inter.to_c_type(self.interpolation),
                                         self.fill_value)
 
 
-class AutoContrast(ImageTensorOperation):
+class AutoContrast(TensorOperation, PyTensorOperation):
     """
     Apply automatic contrast on input image. This operator calculates histogram of image, reassign cutoff percent
     of the lightest pixels from histogram to 255, and reassign cutoff percent of the darkest pixels from histogram to 0.
@@ -276,25 +219,39 @@ class AutoContrast(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.AutoContrast(cutoff=10.0, ignore=[10, 20])]
+        >>> transforms_list = [vision.Decode(), vision.AutoContrast(cutoff=10.0, ignore=[10, 20])]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_auto_contrast
     def __init__(self, cutoff=0.0, ignore=None):
+        super().__init__()
         if ignore is None:
             ignore = []
         if isinstance(ignore, int):
             ignore = [ignore]
         self.cutoff = cutoff
         self.ignore = ignore
+        self.random = False
 
     def parse(self):
         return cde.AutoContrastOperation(self.cutoff, self.ignore)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class BoundingBoxAugment(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be automatically contrasted.
+
+        Returns:
+            PIL Image, automatically contrasted image.
+        """
+        return util.auto_contrast(img, self.cutoff, self.ignore)
+
+
+class BoundingBoxAugment(TensorOperation):
     """
     Apply a given image processing operation on a random selection of bounding box regions of a given image.
 
@@ -302,13 +259,12 @@ class BoundingBoxAugment(ImageTensorOperation):
         transform (TensorOperation): C++ transformation operation to be applied on random selection
             of bounding box regions of a given image.
         ratio (float, optional): Ratio of bounding boxes to apply augmentation on.
-            Range: [0.0, 1.0] (default=0.3).
+            Range: [0, 1] (default=0.3).
 
     Raises:
-        TypeError: If `transform` is not an image processing operation
-            in :class:`mindspore.dataset.vision.c_transforms`.
+        TypeError: If `transform` is an image processing operation in :class:`mindspore.dataset.vision.transforms`.
         TypeError: If `ratio` is not of type float.
-        ValueError: If `ratio` is not in range [0.0, 1.0].
+        ValueError: If `ratio` is not in range [0, 1].
         RuntimeError: If given bounding box is invalid.
 
     Supported Platforms:
@@ -316,7 +272,7 @@ class BoundingBoxAugment(ImageTensorOperation):
 
     Examples:
         >>> # set bounding box operation with ratio of 1 to apply rotation on all bounding boxes
-        >>> bbox_aug_op = c_vision.BoundingBoxAugment(c_vision.RandomRotation(90), 1)
+        >>> bbox_aug_op = vision.BoundingBoxAugment(vision.RandomRotation(90), 1)
         >>> # map to apply ops
         >>> image_folder_dataset = image_folder_dataset.map(operations=[bbox_aug_op],
         ...                                                 input_columns=["image", "bbox"],
@@ -326,8 +282,10 @@ class BoundingBoxAugment(ImageTensorOperation):
 
     @check_bounding_box_augment_cpp
     def __init__(self, transform, ratio=0.3):
+        super().__init__()
         self.ratio = ratio
         self.transform = transform
+        self.implementation = Implementation.C
 
     def parse(self):
         if self.transform and getattr(self.transform, 'parse', None):
@@ -337,7 +295,7 @@ class BoundingBoxAugment(ImageTensorOperation):
         return cde.BoundingBoxAugmentOperation(transform, self.ratio)
 
 
-class CenterCrop(ImageTensorOperation):
+class CenterCrop(TensorOperation, PyTensorOperation):
     """
     Crop the input image at the center to the given size. If input image size is smaller than output size,
     input image will be padded with 0 before cropping.
@@ -345,11 +303,11 @@ class CenterCrop(ImageTensorOperation):
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+            If size is a sequence of length 2, it should be (height, width).
             The size value(s) must be larger than 0.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence.
+        TypeError: If `size` is not of type integer or sequence.
         ValueError: If `size` is less than or equal to 0.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -358,26 +316,40 @@ class CenterCrop(ImageTensorOperation):
 
     Examples:
         >>> # crop image to a square
-        >>> transforms_list1 = [c_vision.Decode(), c_vision.CenterCrop(50)]
+        >>> transforms_list1 = [vision.Decode(), vision.CenterCrop(50)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
         >>> # crop image to portrait style
-        >>> transforms_list2 = [c_vision.Decode(), c_vision.CenterCrop((60, 40))]
+        >>> transforms_list2 = [vision.Decode(), vision.CenterCrop((60, 40))]
         >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
         ...                                                     input_columns=["image"])
     """
 
     @check_center_crop
     def __init__(self, size):
+        super().__init__()
         if isinstance(size, int):
             size = (size, size)
         self.size = size
+        self.random = False
 
     def parse(self):
         return cde.CenterCropOperation(self.size)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class ConvertColor(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be center cropped.
+
+        Returns:
+            PIL Image, cropped image.
+        """
+        return util.center_crop(img, self.size)
+
+
+class ConvertColor(TensorOperation):
     """
     Change the color space of the image.
 
@@ -425,7 +397,7 @@ class ConvertColor(ImageTensorOperation):
             - ConvertMode.COLOR_RGBA2GRAY, Convert RGBA image to GRAY image.
 
     Raises:
-        TypeError: If `convert_mode` is not of type :class:`mindspore.dataset.vision.c_transforms.ConvertMode`.
+        TypeError: If `convert_mode` is not of type :class:`mindspore.dataset.vision.transforms.ConvertMode`.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -434,24 +406,26 @@ class ConvertColor(ImageTensorOperation):
     Examples:
         >>> import mindspore.dataset.vision.utils as mode
         >>> # Convert RGB images to GRAY images
-        >>> convert_op = c_vision.ConvertColor(mode.ConvertMode.COLOR_RGB2GRAY)
+        >>> convert_op = vision.ConvertColor(mode.ConvertMode.COLOR_RGB2GRAY)
         >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
         ...                                                 input_columns=["image"])
         >>> # Convert RGB images to BGR images
-        >>> convert_op = c_vision.ConvertColor(mode.ConvertMode.COLOR_RGB2BGR)
+        >>> convert_op = vision.ConvertColor(mode.ConvertMode.COLOR_RGB2BGR)
         >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=convert_op,
         ...                                                     input_columns=["image"])
     """
 
     @check_convert_color
     def __init__(self, convert_mode):
+        super().__init__()
         self.convert_mode = convert_mode
+        self.implementation = Implementation.C
 
     def parse(self):
-        return cde.ConvertColorOperation(DE_C_CONVERT_COLOR_MODE[self.convert_mode])
+        return cde.ConvertColorOperation(ConvertMode.to_c_type(self.convert_mode))
 
 
-class Crop(ImageTensorOperation):
+class Crop(TensorOperation):
     """
     Crop the input image at a specific location.
 
@@ -460,12 +434,12 @@ class Crop(ImageTensorOperation):
             values, in the form of (top, left).
         size (Union[int, sequence]): The output size of the cropped image.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+            If size is a sequence of length 2, it should be (height, width).
             The size value(s) must be larger than 0.
 
     Raises:
         TypeError: If `coordinates` is not of type sequence.
-        TypeError: If `size` is not of type int or sequence.
+        TypeError: If `size` is not of type integer or sequence.
         ValueError: If `coordinates` is less than 0.
         ValueError: If `size` is less than or equal to 0.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
@@ -474,8 +448,8 @@ class Crop(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> decode_op = c_vision.Decode()
-        >>> crop_op = c_vision.Crop((0, 0), 32)
+        >>> decode_op = vision.Decode()
+        >>> crop_op = vision.Crop((0, 0), 32)
         >>> transforms_list = [decode_op, crop_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -483,16 +457,18 @@ class Crop(ImageTensorOperation):
 
     @check_crop
     def __init__(self, coordinates, size):
+        super().__init__()
         if isinstance(size, int):
             size = (size, size)
         self.coordinates = coordinates
         self.size = size
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.CropOperation(self.coordinates, self.size)
 
 
-class CutMixBatch(ImageTensorOperation):
+class CutMixBatch(TensorOperation):
     """
     Apply CutMix transformation on input batch of images and labels.
     Note that you need to make labels into one-hot format and batched before calling this operator.
@@ -516,10 +492,10 @@ class CutMixBatch(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import ImageBatchFormat
-        >>> onehot_op = c_transforms.OneHot(num_classes=10)
+        >>> onehot_op = data_transforms.OneHot(num_classes=10)
         >>> image_folder_dataset= image_folder_dataset.map(operations=onehot_op,
         ...                                                input_columns=["label"])
-        >>> cutmix_batch_op = c_vision.CutMixBatch(ImageBatchFormat.NHWC, 1.0, 0.5)
+        >>> cutmix_batch_op = vision.CutMixBatch(ImageBatchFormat.NHWC, 1.0, 0.5)
         >>> image_folder_dataset = image_folder_dataset.batch(5)
         >>> image_folder_dataset = image_folder_dataset.map(operations=cutmix_batch_op,
         ...                                                 input_columns=["image", "label"])
@@ -527,70 +503,81 @@ class CutMixBatch(ImageTensorOperation):
 
     @check_cut_mix_batch_c
     def __init__(self, image_batch_format, alpha=1.0, prob=1.0):
+        super().__init__()
         self.image_batch_format = image_batch_format.value
         self.alpha = alpha
         self.prob = prob
+        self.implementation = Implementation.C
 
     def parse(self):
-        return cde.CutMixBatchOperation(DE_C_IMAGE_BATCH_FORMAT[self.image_batch_format], self.alpha, self.prob)
+        return cde.CutMixBatchOperation(ImageBatchFormat.to_c_type(self.image_batch_format), self.alpha, self.prob)
 
 
-class CutOut(ImageTensorOperation):
+class CutOut(TensorOperation):
     """
     Randomly cut (mask) out a given number of square patches from the input image array.
 
     Args:
         length (int): The side length of each square patch, must be larger than 0.
         num_patches (int, optional): Number of patches to be cut out of an image, must be larger than 0. (default=1).
+        is_hwc (bool): Whether the input image is in HWC format. True - HWC format, False - CHW format. Default: True.
 
     Raises:
-        TypeError: If `length` is not of type int.
-        TypeError: If `num_patches` is not of type int.
+        TypeError: If `length` is not of type integer.
+        TypeError: If `num_patches` is not of type integer.
         ValueError: If `length` is less than or equal 0.
         ValueError: If `num_patches` is less than or equal 0.
-        RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.CutOut(80, num_patches=10)]
+        >>> transforms_list = [vision.Decode(), vision.CutOut(80, num_patches=10)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
-    @check_cutout
-    def __init__(self, length, num_patches=1):
+    @check_cutout_new
+    def __init__(self, length, num_patches=1, is_hwc=True):
+        super().__init__()
         self.length = length
         self.num_patches = num_patches
+        self.is_hwc = is_hwc
+        self.random = False
+        self.implementation = Implementation.C
 
     def parse(self):
-        return cde.CutOutOperation(self.length, self.num_patches, True)
+        return cde.CutOutOperation(self.length, self.num_patches, self.is_hwc)
 
 
-class Decode(ImageTensorOperation):
+class Decode(TensorOperation, PyTensorOperation):
     """
-    Decode the input image.
+    Decode the input image in RGB mode.
 
     Args:
-        rgb (bool, optional): Mode of decoding input image (default=True).
-            If True means format of decoded image is RGB else BGR (deprecated).
+        to_pil (bool, optional): decode to PIL Image (default=False).
 
     Raises:
-        RuntimeError: If `rgb` is False, since this option is deprecated.
         RuntimeError: If given tensor is not a 1D sequence.
+        ValueError: If the input is not raw image bytes.
+        ValueError: If the input image is already decoded.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomHorizontalFlip()]
+        >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
-    def __init__(self, rgb=True):
-        self.rgb = rgb
+    def __init__(self, to_pil=False):
+        super().__init__()
+        self.to_pil = to_pil
+        if to_pil:
+            self.implementation = Implementation.PY
+        else:
+            self.implementation = Implementation.C
 
     def __call__(self, img):
         """
@@ -600,8 +587,11 @@ class Decode(ImageTensorOperation):
             img (NumPy): Image to be decoded.
 
         Returns:
-            img (NumPy), Decoded image.
+            img (NumPy, PIL Image), Decoded image.
         """
+        if self.implementation == Implementation.PY:
+            return util.decode(img)
+
         if isinstance(img, bytes):
             img = np.frombuffer(img, np.uint8)
         elif not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
@@ -610,10 +600,10 @@ class Decode(ImageTensorOperation):
         return super().__call__(img)
 
     def parse(self):
-        return cde.DecodeOperation(self.rgb)
+        return cde.DecodeOperation(True)
 
 
-class Equalize(ImageTensorOperation):
+class Equalize(TensorOperation, PyTensorOperation):
     """
     Apply histogram equalization on input image.
 
@@ -624,16 +614,82 @@ class Equalize(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.Equalize()]
+        >>> transforms_list = [vision.Decode(), vision.Equalize()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
+    def __init__(self):
+        super().__init__()
+        self.random = False
+
     def parse(self):
         return cde.EqualizeOperation()
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class GaussianBlur(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be equalized.
+
+        Returns:
+            PIL Image, equalized image.
+        """
+
+        return util.equalize(img)
+
+
+class FiveCrop(PyTensorOperation):
+    """
+    Crop the given image into one central crop and four corners.
+
+    Args:
+        size (Union[int, sequence]): The size of the cropped image.
+            If a single integer is provided, a square of size (size, size) will be cropped with this value.
+            If a sequence of length 2 is provided, an image of size (height, width) will be cropped.
+
+    Raises:
+        TypeError: If `size` is not of type integer or sequence of integer.
+        ValueError: If `size` is not positive.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> transforms_list = Compose([vision.Decode(to_pil=True),
+        ...                            vision.FiveCrop(size=200),
+        ...                            # 4D stack of 5 images
+        ...                            lambda *images: numpy.stack([vision.ToTensor()(image) for image in images])])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_five_crop
+    def __init__(self, size):
+        super().__init__()
+        self.size = size
+        self.random = False
+        self.implementation = Implementation.PY
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be cropped.
+
+        Returns:
+            tuple, a tuple of five PIL Image in order of top_left, top_right, bottom_left, bottom_right, center.
+        """
+        return util.five_crop(img, self.size)
+
+
+class GaussianBlur(TensorOperation):
     """
     Blur input image with the specified Gaussian kernel.
 
@@ -657,13 +713,14 @@ class GaussianBlur(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.GaussianBlur(3, 3)]
+        >>> transforms_list = [vision.Decode(to_pil=True)), vision.GaussianBlur(3, 3)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_gaussian_blur
     def __init__(self, kernel_size, sigma=None):
+        super().__init__()
         if isinstance(kernel_size, int):
             kernel_size = (kernel_size,)
         if sigma is None:
@@ -672,12 +729,59 @@ class GaussianBlur(ImageTensorOperation):
             sigma = (float(sigma),)
         self.kernel_size = kernel_size
         self.sigma = sigma
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.GaussianBlurOperation(self.kernel_size, self.sigma)
 
 
-class HorizontalFlip(ImageTensorOperation):
+class Grayscale(PyTensorOperation):
+    """
+    Convert the input PIL Image to grayscale.
+
+    Args:
+        num_output_channels (int): The number of channels desired for the output image, must be 1 or 3.
+            If 3 is provided, the returned image will have 3 identical RGB channels. Default: 1.
+
+    Raises:
+        TypeError: If `num_output_channels` is not of type integer.
+        ValueError: If `num_output_channels` is not 1 or 3.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.Grayscale(3),
+        ...                            vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_num_channels
+    def __init__(self, num_output_channels=1):
+        super().__init__()
+        self.num_output_channels = num_output_channels
+        self.random = False
+        self.implementation = Implementation.PY
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be converted to grayscale.
+
+        Returns:
+            PIL Image, converted grayscale image.
+        """
+        return util.grayscale(img, num_output_channels=self.num_output_channels)
+
+
+class HorizontalFlip(TensorOperation):
     """
     Flip the input image horizontally.
 
@@ -688,42 +792,102 @@ class HorizontalFlip(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.HorizontalFlip()]
+        >>> transforms_list = [vision.Decode(to_pil=True)), vision.HorizontalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
+    def __init__(self):
+        super().__init__()
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.HorizontalFlipOperation()
 
 
-class HWC2CHW(ImageTensorOperation):
+class HsvToRgb(PyTensorOperation):
     """
-    Transpose the input image from shape <H, W, C> to shape <C, H, W>. The input image should be 3 channels image.
+    Convert the input numpy.ndarray images from HSV to RGB.
 
-    Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
+    Args:
+        is_hwc (bool): If True, means the input image is in shape of (H, W, C) or (N, H, W, C).
+            Otherwise, it is in shape of (C, H, W) or (N, C, H, W). Default: False.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.CenterCrop(20),
+        ...                            vision.ToTensor(),
+        ...                            vision.HsvToRgb()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_hsv_to_rgb
+    def __init__(self, is_hwc=False):
+        super().__init__()
+        self.is_hwc = is_hwc
+        self.random = False
+        self.implementation = Implementation.PY
+
+    def __call__(self, hsv_imgs):
+        """
+        Call method.
+
+        Args:
+            hsv_imgs (numpy.ndarray): HSV images to be converted.
+
+        Returns:
+            numpy.ndarray, converted RGB images.
+        """
+        return util.hsv_to_rgbs(hsv_imgs, self.is_hwc)
+
+
+class HWC2CHW(TensorOperation, PyTensorOperation):
+    """
+    Transpose the input image from shape (H, W, C) to shape (C, H, W). The input image should be 3 channels image.
 
     Raises:
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(),
-        ...                    c_vision.RandomHorizontalFlip(0.75),
-        ...                    c_vision.RandomCrop(512),
-        ...                    c_vision.HWC2CHW()]
+        >>> transforms_list = [vision.Decode(),
+        ...                    vision.RandomHorizontalFlip(0.75),
+        ...                    vision.RandomCrop(512),
+        ...                    vision.HWC2CHW()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
+    def __init__(self):
+        super().__init__()
+        self.random = False
+
     def parse(self):
         return cde.HwcToChwOperation()
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class Invert(ImageTensorOperation):
+        Args:
+            img (numpy.ndarray): numpy.ndarray of shape (H, W, C) to be transposed.
+
+        Returns:
+            numpy.ndarray, transposed numpy.ndarray of shape (C, H, W).
+        """
+        return util.hwc_to_chw(img)
+
+
+class Invert(TensorOperation, PyTensorOperation):
     """
     Apply invert on input image in RGB mode. This operator will reassign every pixel to (255 - pixel).
 
@@ -734,16 +898,152 @@ class Invert(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.Invert()]
+        >>> transforms_list = [vision.Decode(), vision.Invert()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
+    def __init__(self):
+        super().__init__()
+        self.random = False
+
     def parse(self):
         return cde.InvertOperation()
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class MixUpBatch(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be color inverted.
+
+        Returns:
+            PIL Image, color inverted image.
+        """
+
+        return util.invert_color(img)
+
+
+class LinearTransformation(PyTensorOperation):
+    r"""
+    Linearly transform the input numpy.ndarray image with a square transformation matrix and a mean vector.
+
+    It will first flatten the input image and subtract the mean vector from it, then compute the dot
+    product with the transformation matrix, finally reshape it back to its original shape.
+
+    Args:
+        transformation_matrix (numpy.ndarray): A square transformation matrix in shape of (D, D), where
+            :math:`D = C \times H \times W`.
+        mean_vector (numpy.ndarray): A mean vector in shape of (D,), where :math:`D = C \times H \times W`.
+
+    Raises:
+        TypeError: If `transformation_matrix` is not of type :class:`numpy.ndarray`.
+        TypeError: If `mean_vector` is not of type :class:`numpy.ndarray`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> height, width = 32, 32
+        >>> dim = 3 * height * width
+        >>> transformation_matrix = np.ones([dim, dim])
+        >>> mean_vector = np.zeros(dim)
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.Resize((height,width)),
+        ...                            vision.ToTensor(),
+        ...                            vision.LinearTransformation(transformation_matrix, mean_vector)])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_linear_transform
+    def __init__(self, transformation_matrix, mean_vector):
+        super().__init__()
+        self.transformation_matrix = transformation_matrix
+        self.mean_vector = mean_vector
+        self.random = False
+        self.implementation = Implementation.PY
+
+    def __call__(self, np_img):
+        """
+        Call method.
+
+        Args:
+            np_img (numpy.ndarray): Image in shape of (C, H, W) to be linearly transformed.
+
+        Returns:
+            numpy.ndarray, linearly transformed image.
+        """
+        return util.linear_transform(np_img, self.transformation_matrix, self.mean_vector)
+
+
+class MixUp(PyTensorOperation):
+    """
+    Randomly mix up a batch of images together with its labels.
+
+    Each image will be multiplied by a random weight lambda generated from the Beta distribution and then added
+    to another image multiplied by 1 - lambda. The same transformation will be applied to their labels with the
+    same value of lambda. Make sure that the labels are one-hot encoded in advance.
+
+    Args:
+        batch_size (int): The number of images in a batch.
+        alpha (float): The alpha and beta parameter for the Beta distribution.
+        is_single (bool, optional): If True, it will randomly mix up [img0, ..., img(n-1), img(n)] with
+            [img1, ..., img(n), img0] in each batch. Otherwise, it will randomly mix up images with the
+            output of the previous batch. Default: True.
+
+    Raises:
+        TypeError: If `batch_size` is not of type integer.
+        TypeError: If `alpha` is not of type float.
+        TypeError: If `is_single` is not of type boolean.
+        ValueError: If `batch_size` is not positive.
+        ValueError: If `alpha` is not positive.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> # Setup multi-batch mixup transformation
+        >>> transform = [vision.MixUp(batch_size=16, alpha=0.2, is_single=False)]
+        >>> # Apply the transform to the dataset through dataset.map()
+        >>> image_folder_dataset = image_folder_dataset.map(input_columns="image",
+        ...                                                 operations=transform)
+    """
+
+    @check_mix_up
+    def __init__(self, batch_size, alpha, is_single=True):
+        super().__init__()
+        self.image = 0
+        self.label = 0
+        self.is_first = True
+        self.batch_size = batch_size
+        self.alpha = alpha
+        self.is_single = is_single
+        self.random = False
+        self.implementation = Implementation.PY
+
+    def __call__(self, image, label):
+        """
+        Call method.
+
+        Args:
+            image (numpy.ndarray): Images to be mixed up.
+            label (numpy.ndarray): Labels to be mixed up.
+
+        Returns:
+            numpy.ndarray, images after mixing up.
+            numpy.ndarray, labels after mixing up.
+        """
+        if self.is_single:
+            return util.mix_up_single(self.batch_size, image, label, self.alpha)
+        return util.mix_up_muti(self, self.batch_size, image, label, self.alpha)
+
+
+class MixUpBatch(TensorOperation):
     """
     Apply MixUp transformation on input batch of images and labels. Each image is
     multiplied by a random weight (lambda) and then added to a randomly selected image from the batch
@@ -766,10 +1066,10 @@ class MixUpBatch(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> onehot_op = c_transforms.OneHot(num_classes=10)
+        >>> onehot_op = data_transforms.OneHot(num_classes=10)
         >>> image_folder_dataset= image_folder_dataset.map(operations=onehot_op,
         ...                                                input_columns=["label"])
-        >>> mixup_batch_op = c_vision.MixUpBatch(alpha=0.9)
+        >>> mixup_batch_op = vision.MixUpBatch(alpha=0.9)
         >>> image_folder_dataset = image_folder_dataset.batch(5)
         >>> image_folder_dataset = image_folder_dataset.map(operations=mixup_batch_op,
         ...                                                 input_columns=["image", "label"])
@@ -777,54 +1077,57 @@ class MixUpBatch(ImageTensorOperation):
 
     @check_mix_up_batch_c
     def __init__(self, alpha=1.0):
+        super().__init__()
         self.alpha = alpha
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.MixUpBatchOperation(self.alpha)
 
 
-class Normalize(ImageTensorOperation):
+class Normalize(TensorOperation):
     """
     Normalize the input image with respect to mean and standard deviation. This operator will normalize
     the input image with: output[channel] = (input[channel] - mean[channel]) / std[channel], where channel >= 1.
-
-    Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
             The mean values must be in range [0.0, 255.0].
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
+        is_hwc (bool): Whether the input image is in HWC format. True - HWC format, False - CHW format. Default: True.
 
     Raises:
         TypeError: If `mean` is not of type sequence.
         TypeError: If `std` is not of type sequence.
         ValueError: If `mean` is not in range [0.0, 255.0].
         ValueError: If `mean` is not in range (0.0, 255.0].
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``CPU``
 
     Examples:
-        >>> decode_op = c_vision.Decode()
-        >>> normalize_op = c_vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0])
+        >>> decode_op = vision.Decode() ## Decode output is expected to be HWC format
+        >>> normalize_op = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0], is_hwc=True)
         >>> transforms_list = [decode_op, normalize_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
-    @check_normalize_c
-    def __init__(self, mean, std):
+    @check_normalize
+    def __init__(self, mean, std, is_hwc=True):
+        super().__init__()
         self.mean = mean
         self.std = std
+        self.is_hwc = is_hwc
+        self.random = False
+        self.implementation = Implementation.C
 
     def parse(self):
-        return cde.NormalizeOperation(self.mean, self.std, True)
+        return cde.NormalizeOperation(self.mean, self.std, self.is_hwc)
 
 
-class NormalizePad(ImageTensorOperation):
+class NormalizePad(TensorOperation):
     """
     Normalize the input image with respect to mean and standard deviation then pad an extra channel with value zero.
 
@@ -833,42 +1136,46 @@ class NormalizePad(ImageTensorOperation):
             The mean values must be in range (0.0, 255.0].
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
-        dtype (str, optional): Set the dtype of the output image (default is "float32").
+        dtype (str, optional): Set the output data type of normalized image (default is "float32").
+        is_hwc (bool): Whether the input image is in HWC format. True - HWC format, False - CHW format. Default: True.
 
     Raises:
         TypeError: If `mean` is not of type sequence.
         TypeError: If `std` is not of type sequence.
-        TypeError: If `dtype` is not of type str.
+        TypeError: If `dtype` is not of type string.
         ValueError: If `mean` is not in range [0.0, 255.0].
-        ValueError: If `std` is not in range (0.0, 255.0].
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        ValueError: If `mean` is not in range (0.0, 255.0].
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> decode_op = c_vision.Decode()
-        >>> normalize_pad_op = c_vision.NormalizePad(mean=[121.0, 115.0, 100.0],
-        ...                                          std=[70.0, 68.0, 71.0],
-        ...                                          dtype="float32")
+        >>> decode_op = vision.Decode()
+        >>> normalize_pad_op = vision.NormalizePad(mean=[121.0, 115.0, 100.0],
+        ...                                        std=[70.0, 68.0, 71.0],
+        ...                                        dtype="float32")
         >>> transforms_list = [decode_op, normalize_pad_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
-    @check_normalizepad_c
-    def __init__(self, mean, std, dtype="float32"):
+    @check_normalizepad
+    def __init__(self, mean, std, dtype="float32", is_hwc=True):
+        super().__init__()
         self.mean = mean
         self.std = std
         self.dtype = dtype
+        self.is_hwc = is_hwc
+        self.random = False
+        self.implementation = Implementation.C
 
     def parse(self):
-        return cde.NormalizePadOperation(self.mean, self.std, self.dtype, True)
+        return cde.NormalizePadOperation(self.mean, self.std, self.dtype, self.is_hwc)
 
 
-class Pad(ImageTensorOperation):
+class Pad(TensorOperation, PyTensorOperation):
     """
-    Pad the image.
+    Pad the image according to padding parameters.
 
     Args:
         padding (Union[int, Sequence[tuple]]): The number of pixels to pad each border of the image.
@@ -906,25 +1213,41 @@ class Pad(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.Pad([100, 100, 100, 100])]
+        >>> transforms_list = [vision.Decode(), vision.Pad([100, 100, 100, 100])]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_pad
     def __init__(self, padding, fill_value=0, padding_mode=Border.CONSTANT):
+        super().__init__()
         padding = parse_padding(padding)
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         self.padding = padding
         self.fill_value = fill_value
         self.padding_mode = padding_mode
+        self.random = False
+        self.c_padding_mode = Border.to_c_type(padding_mode)
+        self.pil_padding_mode = Border.to_python_type(padding_mode)
 
     def parse(self):
-        return cde.PadOperation(self.padding, self.fill_value, DE_C_BORDER_TYPE[self.padding_mode])
+        return cde.PadOperation(self.padding, self.fill_value, self.c_padding_mode)
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be padded.
+
+        Returns:
+            PIL Image, padded image.
+        """
+        return util.pad(img, self.padding, self.fill_value, self.pil_padding_mode)
 
 
-class RandomAdjustSharpness(ImageTensorOperation):
+class RandomAdjustSharpness(TensorOperation):
     """
     Randomly adjust the sharpness of the input image with a given probability.
 
@@ -946,21 +1269,23 @@ class RandomAdjustSharpness(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomAdjustSharpness(2.0, 0.5)]
+        >>> transforms_list = [vision.Decode(), vision.RandomAdjustSharpness(2.0, 0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_random_adjust_sharpness
     def __init__(self, degree, prob=0.5):
+        super().__init__()
         self.prob = prob
         self.degree = degree
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RandomAdjustSharpnessOperation(self.degree, self.prob)
 
 
-class RandomAffine(ImageTensorOperation):
+class RandomAffine(TensorOperation, PyTensorOperation):
     """
     Apply Random affine transformation to the input image.
 
@@ -980,13 +1305,15 @@ class RandomAffine(ImageTensorOperation):
             If None, no translation is applied.
         scale (sequence, optional): Scaling factor interval, which must be non negative
             (default=None, original scale is used).
-        shear (Union[int, float, sequence], optional): Range of shear factor, which must be positive (default=None).
-            If a number, then a shear parallel to the X axis in the range of (-shear, +shear) is applied.
-            If a tuple or list of size 2, then a shear parallel to the X axis in the range of (shear[0], shear[1])
-            is applied.
-            If a tuple or list of size 4, then a shear parallel to X axis in the range of (shear[0], shear[1])
-            and a shear parallel to Y axis in the range of (shear[2], shear[3]) is applied.
-            If None, no shear is applied.
+        shear (Union[float, Sequence[float, float], Sequence[float, float, float, float]], optional):
+            Range of shear factor to select from.
+            If float is provided, a shearing parallel to X axis with a factor selected from
+            (- `shear` , `shear` ) will be applied.
+            If Sequence[float, float] is provided, a shearing parallel to X axis with a factor selected
+            from ( `shear` [0], `shear` [1]) will be applied.
+            If Sequence[float, float, float, float] is provided, a shearing parallel to X axis with a factor selected
+            from ( `shear` [0], `shear` [1]) and a shearing parallel to Y axis with a factor selected from
+            ( `shear` [2], `shear` [3]) will be applied. Default: None, means no shearing.
         resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA].
 
@@ -1020,11 +1347,11 @@ class RandomAffine(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
-        >>> decode_op = c_vision.Decode()
-        >>> random_affine_op = c_vision.RandomAffine(degrees=15,
-        ...                                          translate=(-0.1, 0.1, 0, 0),
-        ...                                          scale=(0.9, 1.1),
-        ...                                          resample=Inter.NEAREST)
+        >>> decode_op = vision.Decode()
+        >>> random_affine_op = vision.RandomAffine(degrees=15,
+        ...                                        translate=(-0.1, 0.1, 0, 0),
+        ...                                        scale=(0.9, 1.1),
+        ...                                        resample=Inter.NEAREST)
         >>> transforms_list = [decode_op, random_affine_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1032,6 +1359,7 @@ class RandomAffine(ImageTensorOperation):
 
     @check_random_affine
     def __init__(self, degrees, translate=None, scale=None, shear=None, resample=Inter.NEAREST, fill_value=0):
+        super().__init__()
         # Parameter checking
         if shear is not None:
             if isinstance(shear, numbers.Number):
@@ -1062,17 +1390,44 @@ class RandomAffine(ImageTensorOperation):
 
         self.degrees = degrees
         self.translate = translate
-        self.scale_ = scale
+        self.scale = scale
         self.shear = shear
-        self.resample = DE_C_INTER_MODE[resample]
+        self.c_resample = None
+        self.py_resample = None
+        if resample in [Inter.AREA, Inter.PILCUBIC]:
+            self.c_resample = Inter.to_c_type(resample)
+        elif resample == Inter.ANTIALIAS:
+            self.py_resample = Inter.to_python_type(resample)
+        else:
+            self.c_resample = Inter.to_c_type(resample)
+            self.py_resample = Inter.to_python_type(resample)
         self.fill_value = fill_value
 
     def parse(self):
-        return cde.RandomAffineOperation(self.degrees, self.translate, self.scale_, self.shear, self.resample,
-                                         self.fill_value)
+        return cde.RandomAffineOperation(self.degrees, self.translate, self.scale, self.shear,
+                                         self.c_resample, self.fill_value)
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be randomly affine transformed.
+
+        Returns:
+            PIL Image, randomly affine transformed image.
+        """
+
+        return util.random_affine(img,
+                                  self.degrees,
+                                  self.translate,
+                                  self.scale,
+                                  self.shear,
+                                  self.py_resample,
+                                  self.fill_value)
 
 
-class RandomAutoContrast(ImageTensorOperation):
+class RandomAutoContrast(TensorOperation):
     """
     Automatically adjust the contrast of the image with a given probability.
 
@@ -1086,7 +1441,7 @@ class RandomAutoContrast(ImageTensorOperation):
 
     Raises:
         TypeError: If `cutoff` is not of type float.
-        TypeError: If `ignore` is not of type int or sequence of int.
+        TypeError: If `ignore` is not of type integer or sequence of integer.
         TypeError: If `prob` is not of type float.
         ValueError: If `cutoff` is not in range [0.0, 50.0).
         ValueError: If `ignore` is not in range [0, 255].
@@ -1097,13 +1452,14 @@ class RandomAutoContrast(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomAutoContrast(cutoff=0.0, ignore=None, prob=0.5)]
+        >>> transforms_list = [vision.Decode(), vision.RandomAutoContrast(cutoff=0.0, ignore=None, prob=0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_random_auto_contrast
     def __init__(self, cutoff=0.0, ignore=None, prob=0.5):
+        super().__init__()
         if ignore is None:
             ignore = []
         if isinstance(ignore, int):
@@ -1111,15 +1467,16 @@ class RandomAutoContrast(ImageTensorOperation):
         self.cutoff = cutoff
         self.ignore = ignore
         self.prob = prob
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RandomAutoContrastOperation(self.cutoff, self.ignore, self.prob)
 
 
-class RandomColor(ImageTensorOperation):
+class RandomColor(TensorOperation, PyTensorOperation):
     """
     Adjust the color of the input image by a fixed or random degree.
-    This operation works only with 3-channel RGB images.
+    This operation works only with 3-channel color images.
 
     Args:
          degrees (Sequence[float], optional): Range of random color adjustment degrees, which must be non-negative.
@@ -1135,25 +1492,36 @@ class RandomColor(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomColor((0.5, 2.0))]
+        >>> transforms_list = [vision.Decode(), vision.RandomColor((0.5, 2.0))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
+        super().__init__()
         self.degrees = degrees
 
     def parse(self):
         return cde.RandomColorOperation(*self.degrees)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class RandomColorAdjust(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be color adjusted.
+
+        Returns:
+            PIL Image, color adjusted image.
+        """
+
+        return util.random_color(img, self.degrees)
+
+
+class RandomColorAdjust(TensorOperation, PyTensorOperation):
     """
     Randomly adjust the brightness, contrast, saturation, and hue of the input image.
-
-    Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
         brightness (Union[float, Sequence[float]], optional): Brightness adjustment factor (default=(1, 1)).
@@ -1184,13 +1552,13 @@ class RandomColorAdjust(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``CPU``
 
     Examples:
-        >>> decode_op = c_vision.Decode()
-        >>> transform_op = c_vision.RandomColorAdjust(brightness=(0.5, 1),
-        ...                                           contrast=(0.4, 1),
-        ...                                           saturation=(0.3, 1))
+        >>> decode_op = vision.Decode()
+        >>> transform_op = vision.RandomColorAdjust(brightness=(0.5, 1),
+        ...                                         contrast=(0.4, 1),
+        ...                                         saturation=(0.3, 1))
         >>> transforms_list = [decode_op, transform_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1198,6 +1566,7 @@ class RandomColorAdjust(ImageTensorOperation):
 
     @check_random_color_adjust
     def __init__(self, brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0)):
+        super().__init__()
         brightness = self.__expand_values(brightness)
         contrast = self.__expand_values(contrast)
         saturation = self.__expand_values(saturation)
@@ -1209,6 +1578,21 @@ class RandomColorAdjust(ImageTensorOperation):
         self.saturation = saturation
         self.hue = hue
 
+    def parse(self):
+        return cde.RandomColorAdjustOperation(self.brightness, self.contrast, self.saturation, self.hue)
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL image): Image to be randomly color adjusted.
+
+        Returns:
+            PIL Image, randomly color adjusted image.
+        """
+        return util.random_color_adjust(img, self.brightness, self.contrast, self.saturation, self.hue)
+
     def __expand_values(self, value, center=1, bound=(0, FLOAT_MAX_INTEGER), non_negative=True):
         """Expand input value for vision adjustment factor."""
         if isinstance(value, numbers.Number):
@@ -1218,11 +1602,8 @@ class RandomColorAdjust(ImageTensorOperation):
             check_range(value, bound)
         return (value[0], value[1])
 
-    def parse(self):
-        return cde.RandomColorAdjustOperation(self.brightness, self.contrast, self.saturation, self.hue)
 
-
-class RandomCrop(ImageTensorOperation):
+class RandomCrop(TensorOperation, PyTensorOperation):
     """
     Crop the input image at a random location. If input image size is smaller than output size,
     input image will be padded before cropping.
@@ -1277,8 +1658,8 @@ class RandomCrop(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Border
-        >>> decode_op = c_vision.Decode()
-        >>> random_crop_op = c_vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=Border.EDGE)
+        >>> decode_op = vision.Decode()
+        >>> random_crop_op = vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=Border.EDGE)
         >>> transforms_list = [decode_op, random_crop_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1286,6 +1667,7 @@ class RandomCrop(ImageTensorOperation):
 
     @check_random_crop
     def __init__(self, size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT):
+        super().__init__()
         if isinstance(size, int):
             size = (size, size)
         if padding is None:
@@ -1299,14 +1681,28 @@ class RandomCrop(ImageTensorOperation):
         self.padding = padding
         self.pad_if_needed = pad_if_needed
         self.fill_value = fill_value
-        self.padding_mode = padding_mode.value
+        self.c_padding_mode = Border.to_c_type(padding_mode)
+        self.pil_padding_mode = Border.to_python_type(padding_mode)
 
     def parse(self):
-        border_type = DE_C_BORDER_TYPE[self.padding_mode]
-        return cde.RandomCropOperation(self.size, self.padding, self.pad_if_needed, self.fill_value, border_type)
+        return cde.RandomCropOperation(self.size, self.padding, self.pad_if_needed, self.fill_value,
+                                       self.c_padding_mode)
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be randomly cropped.
+
+        Returns:
+            PIL Image, cropped image.
+        """
+        return util.random_crop(img, self.size, self.padding, self.pad_if_needed,
+                                self.fill_value, self.pil_padding_mode)
 
 
-class RandomCropDecodeResize(ImageTensorOperation):
+class RandomCropDecodeResize(TensorOperation):
     """
     A combination of `Crop`, `Decode` and `Resize`. It will get better performance for JPEG images. This operator
     will crop the input image at a random location, decode the cropped image in RGB mode, and resize the decoded image.
@@ -1314,10 +1710,10 @@ class RandomCropDecodeResize(ImageTensorOperation):
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
-        scale (Union[list, tuple], optional): Range [min, max) of respective size of the
+            If size is a sequence of length 2, it should be (height, width).
+        scale (list, tuple, optional): Range [min, max) of respective size of the
             original size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
+        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
         interpolation (Inter, optional): Image interpolation mode for resize operator(default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
@@ -1338,10 +1734,10 @@ class RandomCropDecodeResize(ImageTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `scale` is not of type tuple or list.
-        TypeError: If `ratio` is not of type tuple or list.
+        TypeError: If `scale` is not of type tuple.
+        TypeError: If `ratio` is not of type tuple.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
-        TypeError: If `max_attempts` is not of type int.
+        TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
@@ -1353,10 +1749,10 @@ class RandomCropDecodeResize(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
-        >>> resize_crop_decode_op = c_vision.RandomCropDecodeResize(size=(50, 75),
-        ...                                                         scale=(0.25, 0.5),
-        ...                                                         interpolation=Inter.NEAREST,
-        ...                                                         max_attempts=5)
+        >>> resize_crop_decode_op = vision.RandomCropDecodeResize(size=(50, 75),
+        ...                                                       scale=(0.25, 0.5),
+        ...                                                       interpolation=Inter.NEAREST,
+        ...                                                       max_attempts=5)
         >>> transforms_list = [resize_crop_decode_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1365,6 +1761,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
+        super().__init__()
         if isinstance(size, int):
             size = (size, size)
         self.size = size
@@ -1372,11 +1769,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
         self.ratio = ratio
         self.interpolation = interpolation
         self.max_attempts = max_attempts
-
-    def parse(self):
-        return cde.RandomCropDecodeResizeOperation(self.size, self.scale, self.ratio,
-                                                   DE_C_INTER_MODE[self.interpolation],
-                                                   self.max_attempts)
+        self.implementation = Implementation.C
 
     def __call__(self, img):
         if not isinstance(img, np.ndarray):
@@ -1387,8 +1780,13 @@ class RandomCropDecodeResize(ImageTensorOperation):
                             "got format:{}, dtype:{}.".format(type(img), img.dtype.type))
         return super().__call__(img)
 
+    def parse(self):
+        return cde.RandomCropDecodeResizeOperation(self.size, self.scale, self.ratio,
+                                                   Inter.to_c_type(self.interpolation),
+                                                   self.max_attempts)
 
-class RandomCropWithBBox(ImageTensorOperation):
+
+class RandomCropWithBBox(TensorOperation):
     """
     Crop the input image at a random location and adjust bounding boxes accordingly.
 
@@ -1420,6 +1818,7 @@ class RandomCropWithBBox(ImageTensorOperation):
               value of edge.
 
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
+
               value of edge.
 
     Raises:
@@ -1437,8 +1836,8 @@ class RandomCropWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> decode_op = c_vision.Decode()
-        >>> random_crop_with_bbox_op = c_vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
+        >>> decode_op = vision.Decode()
+        >>> random_crop_with_bbox_op = vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
         >>> transforms_list = [decode_op, random_crop_with_bbox_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1446,6 +1845,7 @@ class RandomCropWithBBox(ImageTensorOperation):
 
     @check_random_crop
     def __init__(self, size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT):
+        super().__init__()
         if isinstance(size, int):
             size = (size, size)
         if padding is None:
@@ -1461,14 +1861,15 @@ class RandomCropWithBBox(ImageTensorOperation):
         self.pad_if_needed = pad_if_needed
         self.fill_value = fill_value
         self.padding_mode = padding_mode.value
+        self.implementation = Implementation.C
 
     def parse(self):
-        border_type = DE_C_BORDER_TYPE[self.padding_mode]
+        border_type = Border.to_c_type(self.padding_mode)
         return cde.RandomCropWithBBoxOperation(self.size, self.padding, self.pad_if_needed, self.fill_value,
                                                border_type)
 
 
-class RandomEqualize(ImageTensorOperation):
+class RandomEqualize(TensorOperation):
     """
     Apply histogram equalization on the input image with a given probability.
 
@@ -1485,25 +1886,155 @@ class RandomEqualize(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomEqualize(0.5)]
+        >>> transforms_list = [vision.Decode(), vision.RandomEqualize(0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_prob
     def __init__(self, prob=0.5):
+        super().__init__()
         self.prob = prob
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RandomEqualizeOperation(self.prob)
 
 
-class RandomHorizontalFlip(ImageTensorOperation):
+class RandomErasing(PyTensorOperation):
+    """
+    Randomly erase pixels within a random selected rectangle erea on the input numpy.ndarray image.
+
+    See `Random Erasing Data Augmentation <https://arxiv.org/pdf/1708.04896.pdf>`_.
+
+    Args:
+        prob (float, optional): Probability of performing erasing. Default: 0.5.
+        scale (sequence, optional): Range of area scale of the erased area relative
+            to the original image to select from, arranged in order of (min, max).
+            Default: (0.02, 0.33).
+        ratio (sequence, optional): Range of aspect ratio of the erased area to select
+            from, arraged in order of (min, max). Default: (0.3, 3.3).
+        value (Union[int, str, sequence]): Pixel value used to pad the erased area.
+            If a single integer is provided, it will be used for all RGB channels.
+            If a sequence of length 3 is provided, it will be used for R, G, B channels respectively.
+            If a string of 'random' is provided, each pixel will be erased with a random value obtained
+            from a standard normal distribution. Default: 0.
+        inplace (bool, optional): Whether to apply erasing inplace. Default: False.
+        max_attempts (int, optional): The maximum number of attempts to propose a valid
+            erased area, beyond which the original image will be returned. Default: 10.
+
+    Raises:
+        TypeError: If `prob` is not of type float.
+        TypeError: If `scale` is not of type sequence.
+        TypeError: If `ratio` is not of type sequence.
+        TypeError: If `value` is not of type integer, string, or sequence.
+        TypeError: If `inplace` is not of type boolean.
+        TypeError: If `max_attempts` is not of type integer.
+        ValueError: If `prob` is not in range of [0, 1].
+        ValueError: If `scale` is negative.
+        ValueError: If `ratio` is negative.
+        ValueError: If `value` is not in range of [0, 255].
+        ValueError: If `max_attempts` is not positive.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.ToTensor(),
+        ...                            vision.RandomErasing(value='random')])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_random_erasing
+    def __init__(self, prob=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False, max_attempts=10):
+        super().__init__()
+        self.prob = prob
+        self.scale = scale
+        self.ratio = ratio
+        self.value = value
+        self.inplace = inplace
+        self.max_attempts = max_attempts
+        self.implementation = Implementation.PY
+
+    def __call__(self, np_img):
+        """
+        Call method.
+
+        Args:
+            np_img (numpy.ndarray): image in shape of (C, H, W) to be randomly erased.
+
+        Returns:
+            numpy.ndarray, erased image.
+        """
+        bounded = True
+        if self.prob > random.random():
+            i, j, erase_h, erase_w, erase_value = util.get_erase_params(np_img, self.scale, self.ratio,
+                                                                        self.value, bounded, self.max_attempts)
+            return util.erase(np_img, i, j, erase_h, erase_w, erase_value, self.inplace)
+        return np_img
+
+
+class RandomGrayscale(PyTensorOperation):
+    """
+    Randomly convert the input PIL Image to grayscale.
+
+    Args:
+        prob (float, optional): Probability of performing grayscale conversion. Default: 0.1.
+
+    Raises:
+        TypeError: If `prob` is not of type float.
+        ValueError: If `prob` is not in range of [0, 1].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.RandomGrayscale(0.3),
+        ...                            vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_prob
+    def __init__(self, prob=0.1):
+        super().__init__()
+        self.prob = prob
+        self.implementation = Implementation.PY
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be randomly converted to grayscale.
+
+        Returns:
+            PIL Image, randomly converted grayscale image, which has the same number of channels as the input image.
+                If input image has 1 channel, the output grayscale image will have 1 channel.
+                If input image has 3 channels, the output grayscale image will have 3 identical channels.
+        """
+        if img.mode == 'L':
+            num_output_channels = 1
+        else:
+            num_output_channels = 3
+
+        if self.prob > random.random():
+            return util.grayscale(img, num_output_channels=num_output_channels)
+        return img
+
+
+class RandomHorizontalFlip(TensorOperation, PyTensorOperation):
     """
     Randomly flip the input image horizontally with a given probability.
-
-    Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
         prob (float, optional): Probability of the image being flipped, which must be in range of [0, 1] (default=0.5).
@@ -1514,23 +2045,36 @@ class RandomHorizontalFlip(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomHorizontalFlip(0.75)]
+        >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlip(0.75)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_prob
     def __init__(self, prob=0.5):
+        super().__init__()
         self.prob = prob
 
     def parse(self):
         return cde.RandomHorizontalFlipOperation(self.prob)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class RandomHorizontalFlipWithBBox(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be horizontally flipped.
+
+        Returns:
+            PIL Image, randomly horizontally flipped image.
+        """
+        return util.random_horizontal_flip(img, self.prob)
+
+
+class RandomHorizontalFlipWithBBox(TensorOperation):
     """
     Flip the input image horizontally randomly with a given probability and adjust bounding boxes accordingly.
 
@@ -1546,20 +2090,22 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomHorizontalFlipWithBBox(0.70)]
+        >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlipWithBBox(0.70)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_prob
     def __init__(self, prob=0.5):
+        super().__init__()
         self.prob = prob
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RandomHorizontalFlipWithBBoxOperation(self.prob)
 
 
-class RandomInvert(ImageTensorOperation):
+class RandomInvert(TensorOperation):
     """
     Randomly invert the colors of image with a given probability.
 
@@ -1575,20 +2121,22 @@ class RandomInvert(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomInvert(0.5)]
+        >>> transforms_list = [vision.Decode(), vision.RandomInvert(0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_prob
     def __init__(self, prob=0.5):
+        super().__init__()
         self.prob = prob
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RandomInvertOperation(self.prob)
 
 
-class RandomLighting(ImageTensorOperation):
+class RandomLighting(TensorOperation, PyTensorOperation):
     """
     Add AlexNet-style PCA-based noise to an image. The eigenvalue and eigenvectors for Alexnet's PCA noise is
     calculated from the imagenet dataset.
@@ -1605,32 +2153,108 @@ class RandomLighting(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomLighting(0.1)]
+        >>> transforms_list = [vision.Decode(), vision.RandomLighting(0.1)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_alpha
     def __init__(self, alpha=0.05):
+        super().__init__()
         self.alpha = alpha
 
     def parse(self):
         return cde.RandomLightingOperation(self.alpha)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class RandomPosterize(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be added AlexNet-style PCA-based noise.
+
+        Returns:
+            PIL Image, image with noise added.
+        """
+
+        return util.random_lighting(img, self.alpha)
+
+
+class RandomPerspective(PyTensorOperation):
+    """
+    Randomly apply perspective transformation to the input PIL Image with a given probability.
+
+    Args:
+        distortion_scale (float, optional): Scale of distortion, in range of [0, 1]. Default: 0.5.
+        prob (float, optional): Probability of performing perspective transformation. Default: 0.5.
+        interpolation (Inter, optional): Method of interpolation. It can be Inter.BILINEAR,
+            Inter.NEAREST or Inter.BICUBIC. Default: Inter.BICUBIC.
+
+            - Inter.BILINEAR, bilinear interpolation.
+            - Inter.NEAREST, nearest-neighbor interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
+
+    Raises:
+        TypeError: If `distortion_scale` is not of type float.
+        TypeError: If `prob` is not of type float.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
+        ValueError: If `distortion_scale` is not in range of [0, 1].
+        ValueError: If `prob` is not in range of [0, 1].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.RandomPerspective(prob=0.1),
+        ...                            vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_random_perspective
+    def __init__(self, distortion_scale=0.5, prob=0.5, interpolation=Inter.BICUBIC):
+        super().__init__()
+        self.distortion_scale = distortion_scale
+        self.prob = prob
+        self.interpolation = Inter.to_python_type(interpolation)
+        self.implementation = Implementation.PY
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be applied randomly perspective transformation.
+
+        Returns:
+            PIL Image, image applied randomly perspective transformation.
+        """
+        if not is_pil(img):
+            raise ValueError("Input image should be a Pillow image.")
+        if self.prob > random.random():
+            start_points, end_points = util.get_perspective_params(
+                img, self.distortion_scale)
+            return util.perspective(img, start_points, end_points, self.interpolation)
+        return img
+
+
+class RandomPosterize(TensorOperation):
     """
     Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
 
     Args:
-        bits (Union[int, Sequence[int]], optional): Range of random posterize to compress image.
+        bits (sequence or int, optional): Range of random posterize to compress image.
             Bits values must be in range of [1,8], and include at
             least one integer value in the given range. It must be in
             (min, max) or integer format. If min=max, then it is a single fixed
             magnitude operation (default=(8, 8)).
 
     Raises:
-        TypeError: If `bits` is not of type int or sequence of int.
+        TypeError: If `bits` is not of type integer or sequence of integer.
         ValueError: If `bits` is not in range [1, 8].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -1638,14 +2262,16 @@ class RandomPosterize(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomPosterize((6, 8))]
+        >>> transforms_list = [vision.Decode(), vision.RandomPosterize((6, 8))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_posterize
     def __init__(self, bits=(8, 8)):
+        super().__init__()
         self.bits = bits
+        self.implementation = Implementation.C
 
     def parse(self):
         bits = self.bits
@@ -1654,7 +2280,7 @@ class RandomPosterize(ImageTensorOperation):
         return cde.RandomPosterizeOperation(bits)
 
 
-class RandomResizedCrop(ImageTensorOperation):
+class RandomResizedCrop(TensorOperation, PyTensorOperation):
     """
     This operator will crop the input image randomly, and resize the cropped image using a selected interpolation mode.
 
@@ -1703,9 +2329,9 @@ class RandomResizedCrop(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
-        >>> decode_op = c_vision.Decode()
-        >>> resize_crop_op = c_vision.RandomResizedCrop(size=(50, 75), scale=(0.25, 0.5),
-        ...                                             interpolation=Inter.BILINEAR)
+        >>> decode_op = vision.Decode()
+        >>> resize_crop_op = vision.RandomResizedCrop(size=(50, 75), scale=(0.25, 0.5),
+        ...                                           interpolation=Inter.BILINEAR)
         >>> transforms_list = [decode_op, resize_crop_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1714,33 +2340,55 @@ class RandomResizedCrop(ImageTensorOperation):
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
+        super().__init__()
         if isinstance(size, int):
             size = (size, size)
         self.size = size
         self.scale = scale
         self.ratio = ratio
-        self.interpolation = interpolation
+        self.c_interpolation = None
+        self.py_interpolation = None
+        if interpolation in [Inter.AREA, Inter.PILCUBIC]:
+            self.c_interpolation = Inter.to_c_type(interpolation)
+        elif interpolation == Inter.ANTIALIAS:
+            self.py_interpolation = Inter.to_python_type(interpolation)
+        else:
+            self.c_interpolation = Inter.to_c_type(interpolation)
+            self.py_interpolation = Inter.to_python_type(interpolation)
         self.max_attempts = max_attempts
 
     def parse(self):
-        return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio, DE_C_INTER_MODE[self.interpolation],
+        return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio, self.c_interpolation,
                                               self.max_attempts)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class RandomResizedCropWithBBox(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be randomly cropped and resized.
+
+        Returns:
+            PIL Image, randomly cropped and resized image.
+        """
+        return util.random_resize_crop(img, self.size, self.scale, self.ratio,
+                                       self.py_interpolation, self.max_attempts)
+
+
+class RandomResizedCropWithBBox(TensorOperation):
     """
     Crop the input image to a random size and aspect ratio and adjust bounding boxes accordingly.
 
     Args:
         size (Union[int, Sequence[int]]): The size of the output image. The size value(s) must be positive.
-            If size is an integer, a square of size (size, size) will be cropped with this value.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
-        scale (Union[list, tuple], optional): Range (min, max) of respective size of the original
+            If size is an integer, a square crop of size (size, size) is returned.
+            If size is a sequence of length 2, it should be (height, width).
+        scale (list, tuple, optional): Range (min, max) of respective size of the original
             size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (Union[list, tuple], optional): Range (min, max) of aspect ratio to be
+        ratio (list, tuple, optional): Range (min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
-        interpolation (Inter mode, optional): Method of interpolation (default=Inter.BILINEAR).
-            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC] .
+        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means interpolation method is bilinear interpolation.
 
@@ -1753,10 +2401,10 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `scale` is not of type tuple or list.
-        TypeError: If `ratio` is not of type tuple or list.
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
-        TypeError: If `max_attempts` is not of type int.
+        TypeError: If `scale` is not of type tuple.
+        TypeError: If `ratio` is not of type tuple.
+        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
@@ -1768,8 +2416,8 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
-        >>> decode_op = c_vision.Decode()
-        >>> bbox_op = c_vision.RandomResizedCropWithBBox(size=50, interpolation=Inter.NEAREST)
+        >>> decode_op = vision.Decode()
+        >>> bbox_op = vision.RandomResizedCropWithBBox(size=50, interpolation=Inter.NEAREST)
         >>> transforms_list = [decode_op, bbox_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -1778,6 +2426,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
+        super().__init__()
         if isinstance(size, int):
             size = (size, size)
         self.size = size
@@ -1785,20 +2434,22 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         self.ratio = ratio
         self.interpolation = interpolation
         self.max_attempts = max_attempts
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RandomResizedCropWithBBoxOperation(self.size, self.scale, self.ratio,
-                                                      DE_C_INTER_MODE[self.interpolation], self.max_attempts)
+                                                      Inter.to_c_type(self.interpolation), self.max_attempts)
 
 
-class RandomResize(ImageTensorOperation):
+class RandomResize(TensorOperation):
     """
     Resize the input image using a randomly selected interpolation mode.
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, a square of size (size, size) will be cropped with this value.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+            If size is an integer, smaller edge of the image will be resized to this value with
+            the same image aspect ratio.
+            If size is a sequence of length 2, it should be (height, width).
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -1810,18 +2461,20 @@ class RandomResize(ImageTensorOperation):
 
     Examples:
         >>> # randomly resize image, keeping aspect ratio
-        >>> transforms_list1 = [c_vision.Decode(), c_vision.RandomResize(50)]
+        >>> transforms_list1 = [vision.Decode(), vision.RandomResize(50)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
         >>> # randomly resize image to landscape style
-        >>> transforms_list2 = [c_vision.Decode(), c_vision.RandomResize((40, 60))]
+        >>> transforms_list2 = [vision.Decode(), vision.RandomResize((40, 60))]
         >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
         ...                                                     input_columns=["image"])
     """
 
     @check_resize
     def __init__(self, size):
+        super().__init__()
         self.size = size
+        self.implementation = Implementation.C
 
     def parse(self):
         size = self.size
@@ -1830,15 +2483,16 @@ class RandomResize(ImageTensorOperation):
         return cde.RandomResizeOperation(size)
 
 
-class RandomResizeWithBBox(ImageTensorOperation):
+class RandomResizeWithBBox(TensorOperation):
     """
     Tensor operation to resize the input image using a randomly selected interpolation mode and adjust
     bounding boxes accordingly.
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, a square of size (size, size) will be cropped with this value.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+            If size is an integer, smaller edge of the image will be resized to this value with
+            the same image aspect ratio.
+            If size is a sequence of length 2, it should be (height, width).
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -1850,18 +2504,20 @@ class RandomResizeWithBBox(ImageTensorOperation):
 
     Examples:
         >>> # randomly resize image with bounding boxes, keeping aspect ratio
-        >>> transforms_list1 = [c_vision.Decode(), c_vision.RandomResizeWithBBox(60)]
+        >>> transforms_list1 = [vision.Decode(), vision.RandomResizeWithBBox(60)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
         >>> # randomly resize image with bounding boxes to portrait style
-        >>> transforms_list2 = [c_vision.Decode(), c_vision.RandomResizeWithBBox((80, 60))]
+        >>> transforms_list2 = [vision.Decode(), vision.RandomResizeWithBBox((80, 60))]
         >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
         ...                                                     input_columns=["image"])
     """
 
     @check_resize
     def __init__(self, size):
+        super().__init__()
         self.size = size
+        self.implementation = Implementation.C
 
     def parse(self):
         size = self.size
@@ -1870,7 +2526,7 @@ class RandomResizeWithBBox(ImageTensorOperation):
         return cde.RandomResizeWithBBoxOperation(size)
 
 
-class RandomRotation(ImageTensorOperation):
+class RandomRotation(TensorOperation, PyTensorOperation):
     """
     Rotate the input image randomly within a specified range of degrees.
 
@@ -1879,7 +2535,7 @@ class RandomRotation(ImageTensorOperation):
             If `degrees` is a number, the range will be converted to (-degrees, degrees).
             If `degrees` is a sequence, it should be (min, max).
         resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
-            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA].
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.ANTIALIAS].
 
             - Inter.BILINEAR, means resample method is bilinear interpolation.
 
@@ -1887,7 +2543,9 @@ class RandomRotation(ImageTensorOperation):
 
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
-            - Inter.AREA: means the interpolation method is area interpolation.
+            - Inter.AREA, means the interpolation method is area interpolation.
+
+            - Inter.ANTIALIAS, means the interpolation method is antialias interpolation.
 
         expand (bool, optional):  Optional expansion flag (default=False). If set to True, expand the output
             image to make it large enough to hold the entire rotated image.
@@ -1901,8 +2559,8 @@ class RandomRotation(ImageTensorOperation):
             The fill_value values must be in range [0, 255] (default=0).
 
     Raises:
-        TypeError: If `degrees` is not of type int, float or sequence.
-        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `degrees` is not of type integer, float or sequence.
+        TypeError: If `resample` is not of type Inter.
         TypeError: If `expand` is not of type boolean.
         TypeError: If `center` is not of type tuple.
         TypeError: If `fill_value` is not of type int or tuple[int].
@@ -1914,8 +2572,8 @@ class RandomRotation(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
-        >>> transforms_list = [c_vision.Decode(),
-        ...                    c_vision.RandomRotation(degrees=5.0,
+        >>> transforms_list = [vision.Decode(),
+        ...                    vision.RandomRotation(degrees=5.0,
         ...                    resample=Inter.NEAREST,
         ...                    expand=True)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
@@ -1924,6 +2582,7 @@ class RandomRotation(ImageTensorOperation):
 
     @check_random_rotation
     def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
+        super().__init__()
         if isinstance(degrees, (int, float)):
             degrees = degrees % 360
             degrees = [-degrees, degrees]
@@ -1934,22 +2593,43 @@ class RandomRotation(ImageTensorOperation):
                 degrees = [degrees[0] % 360, degrees[1] % 360]
                 if degrees[0] > degrees[1]:
                     degrees[1] += 360
-        if center is None:
-            center = ()
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         self.degrees = degrees
-        self.resample = resample
+        self.c_resample = None
+        self.py_resample = None
+        if resample in [Inter.AREA, Inter.PILCUBIC]:
+            self.c_resample = Inter.to_c_type(resample)
+        elif resample == Inter.ANTIALIAS:
+            self.py_resample = Inter.to_python_type(resample)
+        else:
+            self.c_resample = Inter.to_c_type(resample)
+            self.py_resample = Inter.to_python_type(resample)
         self.expand = expand
-        self.center = center
+        self.py_center = center
+        self.c_center = center
+        if center is None:
+            self.c_center = ()
         self.fill_value = fill_value
 
     def parse(self):
-        return cde.RandomRotationOperation(self.degrees, DE_C_INTER_MODE[self.resample], self.expand, self.center,
+        return cde.RandomRotationOperation(self.degrees, self.c_resample, self.expand, self.c_center,
                                            self.fill_value)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class RandomSelectSubpolicy(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be randomly rotated.
+
+        Returns:
+            PIL Image, randomly rotated image.
+        """
+        return util.random_rotation(img, self.degrees, self.py_resample, self.expand, self.py_center, self.fill_value)
+
+
+class RandomSelectSubpolicy(TensorOperation):
     """
     Choose a random sub-policy from a policy list to be applied on the input image.
 
@@ -1967,18 +2647,20 @@ class RandomSelectSubpolicy(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> policy = [[(c_vision.RandomRotation((45, 45)), 0.5),
-        ...            (c_vision.RandomVerticalFlip(), 1),
-        ...            (c_vision.RandomColorAdjust(), 0.8)],
-        ...           [(c_vision.RandomRotation((90, 90)), 1),
-        ...            (c_vision.RandomColorAdjust(), 0.2)]]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=c_vision.RandomSelectSubpolicy(policy),
+        >>> policy = [[(vision.RandomRotation((45, 45)), 0.5),
+        ...            (vision.RandomVerticalFlip(), 1),
+        ...            (vision.RandomColorAdjust(), 0.8)],
+        ...           [(vision.RandomRotation((90, 90)), 1),
+        ...            (vision.RandomColorAdjust(), 0.2)]]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=vision.RandomSelectSubpolicy(policy),
         ...                                                 input_columns=["image"])
     """
 
     @check_random_select_subpolicy_op
     def __init__(self, policy):
+        super().__init__()
         self.policy = policy
+        self.implementation = Implementation.C
 
     def parse(self):
         policy = []
@@ -1993,13 +2675,10 @@ class RandomSelectSubpolicy(ImageTensorOperation):
         return cde.RandomSelectSubpolicyOperation(policy)
 
 
-class RandomSharpness(ImageTensorOperation):
+class RandomSharpness(TensorOperation, PyTensorOperation):
     """
     Adjust the sharpness of the input image by a fixed or random degree. Degree of 0.0 gives a blurred image,
     degree of 1.0 gives the original image, and degree of 2.0 gives a sharpened image.
-
-    Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
         degrees (Union[list, tuple], optional): Range of random sharpness adjustment degrees,
@@ -2007,28 +2686,42 @@ class RandomSharpness(ImageTensorOperation):
             it is a single fixed magnitude operation (default = (0.1, 1.9)).
 
     Raises:
-        TypeError : If `degrees` is not of type list or tuple.
+        TypeError : If `degrees` is not a list or a tuple.
         ValueError: If `degrees` is negative.
         ValueError: If `degrees` is in (max, min) format instead of (min, max).
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomSharpness(degrees=(0.2, 1.9))]
+        >>> transforms_list = [vision.Decode(), vision.RandomSharpness(degrees=(0.2, 1.9))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
+        super().__init__()
         self.degrees = degrees
 
     def parse(self):
         return cde.RandomSharpnessOperation(self.degrees)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class RandomSolarize(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be sharpness adjusted.
+
+        Returns:
+            PIL Image, sharpness adjusted image.
+        """
+
+        return util.random_sharpness(img, self.degrees)
+
+
+class RandomSolarize(TensorOperation):
     """
     Randomly selects a subrange within the specified threshold range and sets the pixel value within
     the subrange to (255 - pixel).
@@ -2047,25 +2740,24 @@ class RandomSolarize(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomSolarize(threshold=(10,100))]
+        >>> transforms_list = [vision.Decode(), vision.RandomSolarize(threshold=(10,100))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_random_solarize
     def __init__(self, threshold=(0, 255)):
+        super().__init__()
         self.threshold = threshold
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RandomSolarizeOperation(self.threshold)
 
 
-class RandomVerticalFlip(ImageTensorOperation):
+class RandomVerticalFlip(TensorOperation, PyTensorOperation):
     """
     Randomly flip the input image vertically with a given probability.
-
-    Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
@@ -2076,23 +2768,36 @@ class RandomVerticalFlip(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomVerticalFlip(0.25)]
+        >>> transforms_list = [vision.Decode(), vision.RandomVerticalFlip(0.25)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_prob
     def __init__(self, prob=0.5):
+        super().__init__()
         self.prob = prob
 
     def parse(self):
         return cde.RandomVerticalFlipOperation(self.prob)
 
+    def execute_pil(self, img):
+        """
+        Execute method.
 
-class RandomVerticalFlipWithBBox(ImageTensorOperation):
+        Args:
+            img (PIL Image): Image to be vertically flipped.
+
+        Returns:
+            PIL Image, randomly vertically flipped image.
+        """
+        return util.random_vertical_flip(img, self.prob)
+
+
+class RandomVerticalFlipWithBBox(TensorOperation):
     """
     Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
 
@@ -2108,26 +2813,25 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomVerticalFlipWithBBox(0.20)]
+        >>> transforms_list = [vision.Decode(), vision.RandomVerticalFlipWithBBox(0.20)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_prob
     def __init__(self, prob=0.5):
+        super().__init__()
         self.prob = prob
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RandomVerticalFlipWithBBoxOperation(self.prob)
 
 
-class Rescale(ImageTensorOperation):
+class Rescale(TensorOperation):
     """
     Rescale the input image with the given rescale and shift. This operator will rescale the input image
     with: output = image * rescale + shift.
-
-    Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
         rescale (float): Rescale factor.
@@ -2138,35 +2842,41 @@ class Rescale(ImageTensorOperation):
         TypeError: If `shift` is not of type float.
 
     Supported Platforms:
-        ``CPU`` ``Ascend`` ``GPU``
+        ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.Rescale(1.0 / 255.0, -1.0)]
+        >>> transforms_list = [vision.Decode(), vision.Rescale(1.0 / 255.0, -1.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
     @check_rescale
     def __init__(self, rescale, shift):
+        super().__init__()
         self.rescale = rescale
         self.shift = shift
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RescaleOperation(self.rescale, self.shift)
 
 
-class Resize(ImageTensorOperation):
+class Resize(TensorOperation, PyTensorOperation):
     """
     Resize the input image to the given size with a given interpolation mode.
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, a square of size (size, size) will be cropped with this value.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
-        interpolation (Inter, optional): Image interpolation mode (default=Inter.LINEAR).
-            It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
+            If size is an integer, the smaller edge of the image will be resized to this value with
+            the same image aspect ratio.
+            If size is a sequence of length 2, it should be (height, width).
+        interpolation (Inter, optional): Image interpolation mode (default=Inter.BILINEAR).
+           It can be any of [Inter.BILINEAR, Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC,
+           Inter.ANTIALIAS].
 
-            - Inter.LINEAR, means interpolation method is bilinear interpolation.
+            - Inter.BILINEAR, means interpolation method is bilinear interpolation.
+
+            - Inter.LINEAR, means interpolation method is bilinear interpolation, here is the same as Inter.BILINEAR.
 
             - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
 
@@ -2174,12 +2884,14 @@ class Resize(ImageTensorOperation):
 
             - Inter.AREA, means interpolation method is pixel area interpolation.
 
-            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow, input
+            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in Pillow, input
               should be in 3 channels format.
+
+            - Inter.ANTIALIAS, means antialias interpolation.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `interpolation` is not of type Inter.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -2188,8 +2900,8 @@ class Resize(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
-        >>> decode_op = c_vision.Decode()
-        >>> resize_op = c_vision.Resize([100, 75], Inter.BICUBIC)
+        >>> decode_op = vision.Decode()
+        >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC)
         >>> transforms_list = [decode_op, resize_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2197,16 +2909,39 @@ class Resize(ImageTensorOperation):
 
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.LINEAR):
+        super().__init__()
+        self.py_size = size
         if isinstance(size, int):
             size = (size,)
-        self.size = size
-        self.interpolation = interpolation
+        self.c_size = size
+        self.c_interpolation = None
+        self.py_interpolation = None
+        if interpolation in [Inter.AREA, Inter.PILCUBIC]:
+            self.c_interpolation = Inter.to_c_type(interpolation)
+        elif interpolation == Inter.ANTIALIAS:
+            self.py_interpolation = Inter.to_python_type(interpolation)
+        else:
+            self.c_interpolation = Inter.to_c_type(interpolation)
+            self.py_interpolation = Inter.to_python_type(interpolation)
+        self.random = False
 
     def parse(self):
-        return cde.ResizeOperation(self.size, DE_C_INTER_MODE[self.interpolation])
+        return cde.ResizeOperation(self.c_size, self.c_interpolation)
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be resized.
+
+        Returns:
+            PIL Image, resized image.
+        """
+        return util.resize(img, self.py_size, self.py_interpolation)
 
 
-class ResizeWithBBox(ImageTensorOperation):
+class ResizeWithBBox(TensorOperation):
     """
     Resize the input image to the given size and adjust bounding boxes accordingly.
 
@@ -2215,7 +2950,7 @@ class ResizeWithBBox(ImageTensorOperation):
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
-        interpolation (Inter, optional): Image interpolation mode (default=Inter.LINEAR).
+        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.LINEAR).
             It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.LINEAR, means interpolation method is bilinear interpolation.
@@ -2226,7 +2961,7 @@ class ResizeWithBBox(ImageTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `interpolation` is not of type Inter.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -2235,8 +2970,8 @@ class ResizeWithBBox(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
-        >>> decode_op = c_vision.Decode()
-        >>> bbox_op = c_vision.ResizeWithBBox(50, Inter.NEAREST)
+        >>> decode_op = vision.Decode()
+        >>> bbox_op = vision.ResizeWithBBox(50, Inter.NEAREST)
         >>> transforms_list = [decode_op, bbox_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -2244,48 +2979,69 @@ class ResizeWithBBox(ImageTensorOperation):
 
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.LINEAR):
+        super().__init__()
         self.size = size
         self.interpolation = interpolation
+        self.implementation = Implementation.C
 
     def parse(self):
         size = self.size
         if isinstance(size, int):
             size = (size,)
-        return cde.ResizeWithBBoxOperation(size, DE_C_INTER_MODE[self.interpolation])
+        return cde.ResizeWithBBoxOperation(size, Inter.to_c_type(self.interpolation))
 
 
-class RgbToBgr(ImageTensorOperation):
+class RgbToHsv(PyTensorOperation):
     """
-    Convert RGB image to BGR.
+    Convert the input numpy.ndarray images from RGB to HSV.
 
-    Raises:
-        RuntimeError: If given tensor shape is not <H, W, C>.
+    Args:
+        is_hwc (bool): If True, means the input image is in shape of (H, W, C) or (N, H, W, C).
+            Otherwise, it is in shape of (C, H, W) or (N, C, H, W). Default: False.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.vision import Inter
+        >>> from mindspore.dataset.transforms.transforms import Compose
         >>>
-        >>> decode_op = c_vision.Decode()
-        >>> rgb2bgr_op = c_vision.RgbToBgr()
-        >>> transforms_list = [decode_op, rgb2bgr_op]
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.CenterCrop(20),
+        ...                            vision.ToTensor(),
+        ...                            vision.RgbToHsv()])
+        >>> # apply the transform to dataset through map function
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        ...                                                 input_columns="image")
     """
 
-    def parse(self):
-        return cde.RgbToBgrOperation()
+    @check_rgb_to_hsv
+    def __init__(self, is_hwc=False):
+        super().__init__()
+        self.is_hwc = is_hwc
+        self.random = False
+        self.implementation = Implementation.PY
+
+    def __call__(self, rgb_imgs):
+        """
+        Call method.
+
+        Args:
+            rgb_imgs (numpy.ndarray): RGB images to be converted.
+
+        Returns:
+            numpy.ndarray, converted HSV images.
+        """
+        return util.rgb_to_hsvs(rgb_imgs, self.is_hwc)
 
 
-class Rotate(ImageTensorOperation):
+class Rotate(TensorOperation):
     """
     Rotate the input image by specified degrees.
 
     Args:
         degrees (Union[int, float]): Rotation degrees.
 
-        resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
+        resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means resample method is bilinear interpolation.
@@ -2304,8 +3060,8 @@ class Rotate(ImageTensorOperation):
             The fill_value values must be in range [0, 255] (default=0).
 
     Raises:
-        TypeError: If `degrees` is not of type int or float.
-        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `degrees` is not of type integer, float or sequence.
+        TypeError: If `resample` is not of type Inter.
         TypeError: If `expand` is not of type bool.
         TypeError: If `center` is not of type tuple.
         TypeError: If `fill_value` is not of type int or tuple[int].
@@ -2317,8 +3073,8 @@ class Rotate(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
-        >>> transforms_list = [c_vision.Decode(),
-        ...                    c_vision.Rotate(degrees=30.0,
+        >>> transforms_list = [vision.Decode(),
+        ...                    vision.Rotate(degrees=30.0,
         ...                    resample=Inter.NEAREST,
         ...                    expand=True)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
@@ -2327,6 +3083,7 @@ class Rotate(ImageTensorOperation):
 
     @check_rotate
     def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
+        super().__init__()
         if isinstance(degrees, (int, float)):
             degrees = degrees % 360
         if center is None:
@@ -2338,13 +3095,14 @@ class Rotate(ImageTensorOperation):
         self.expand = expand
         self.center = center
         self.fill_value = fill_value
+        self.implementation = Implementation.C
 
     def parse(self):
-        return cde.RotateOperation(self.degrees, DE_C_INTER_MODE[self.resample], self.expand, self.center,
+        return cde.RotateOperation(self.degrees, Inter.to_c_type(self.resample), self.expand, self.center,
                                    self.fill_value)
 
 
-class SlicePatches(ImageTensorOperation):
+class SlicePatches(TensorOperation):
     """
     Slice Tensor to multiple patches in horizontal and vertical directions.
 
@@ -2362,10 +3120,10 @@ class SlicePatches(ImageTensorOperation):
             The fill_value must be in range [0, 255] (default=0).
 
     Raises:
-        TypeError: If `num_height` is not of type int.
-        TypeError: If `num_width` is not of type int.
-        TypeError: If `slice_mode` is not of type :class:`mindspore.dataset.vision.Inter`.
-        TypeError: If `fill_value` is not of type int.
+        TypeError: If `num_height` is not of type integer.
+        TypeError: If `num_width` is not of type integer.
+        TypeError: If `slice_mode` is not of type Inter.
+        TypeError: If `fill_value` is not of type integer.
         ValueError: If `num_height` is not positive.
         ValueError: If `num_width` is not positive.
         ValueError: If `fill_value` is not in range [0, 255].
@@ -2376,9 +3134,9 @@ class SlicePatches(ImageTensorOperation):
 
     Examples:
         >>> # default padding mode
-        >>> decode_op = c_vision.Decode()
+        >>> decode_op = vision.Decode()
         >>> num_h, num_w = (1, 4)
-        >>> slice_patches_op = c_vision.SlicePatches(num_h, num_w)
+        >>> slice_patches_op = vision.SlicePatches(num_h, num_w)
         >>> transforms_list = [decode_op, slice_patches_op]
         >>> cols = ['img' + str(x) for x in range(num_h*num_w)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
@@ -2388,17 +3146,19 @@ class SlicePatches(ImageTensorOperation):
 
     @check_slice_patches
     def __init__(self, num_height=1, num_width=1, slice_mode=SliceMode.PAD, fill_value=0):
+        super().__init__()
         self.num_height = num_height
         self.num_width = num_width
         self.slice_mode = slice_mode
         self.fill_value = fill_value
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.SlicePatchesOperation(self.num_height, self.num_width,
-                                         DE_C_SLICE_MODE[self.slice_mode], self.fill_value)
+                                         SliceMode.to_c_type(self.slice_mode), self.fill_value)
 
 
-class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
+class SoftDvppDecodeRandomCropResizeJpeg(TensorOperation):
     """
     A combination of `Crop`, `Decode` and `Resize` using the simulation algorithm of Ascend series chip DVPP module.
 
@@ -2410,19 +3170,19 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
     Args:
         size (Union[int, Sequence[int]]): The size of the output image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
-        scale (Union[list, tuple], optional): Range [min, max) of respective size of the
+            If size is a sequence of length 2, it should be (height, width).
+        scale (list, tuple, optional): Range [min, max) of respective size of the
             original size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
+        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
         max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area (default=10).
             If exceeded, fall back to use center_crop instead. The max_attempts value must be positive.
 
     Raises:
-        TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `scale` is not of type tuple or list.
-        TypeError: If `ratio` is not of type tuple or list.
-        TypeError: If `max_attempts` is not of type int.
+        TypeError: If `size` is not of type integer or Sequence[int].
+        TypeError: If `scale` is not of type tuple.
+        TypeError: If `ratio` is not of type tuple.
+        TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
@@ -2434,29 +3194,31 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
 
     Examples:
         >>> # decode, randomly crop and resize image, keeping aspect ratio
-        >>> transforms_list1 = [c_vision.SoftDvppDecodeRandomCropResizeJpeg(90)]
+        >>> transforms_list1 = [vision.SoftDvppDecodeRandomCropResizeJpeg(90)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
         >>> # decode, randomly crop and resize to landscape style
-        >>> transforms_list2 = [c_vision.SoftDvppDecodeRandomCropResizeJpeg((80, 100))]
+        >>> transforms_list2 = [vision.SoftDvppDecodeRandomCropResizeJpeg((80, 100))]
         >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
         ...                                                     input_columns=["image"])
     """
 
     @check_soft_dvpp_decode_random_crop_resize_jpeg
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), max_attempts=10):
+        super().__init__()
         if isinstance(size, int):
             size = (size, size)
         self.size = size
         self.scale = scale
         self.ratio = ratio
         self.max_attempts = max_attempts
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.SoftDvppDecodeRandomCropResizeJpegOperation(self.size, self.scale, self.ratio, self.max_attempts)
 
 
-class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
+class SoftDvppDecodeResizeJpeg(TensorOperation):
     """
     Decode and resize JPEG image using the simulation algorithm of Ascend series chip DVPP module.
 
@@ -2472,10 +3234,10 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+            If size is a sequence of length 2, it should be (height, width).
 
     Raises:
-        TypeError: If `size` is not of type int or Sequence[int].
+        TypeError: If `size` is not of type integer or sequence of integer.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor is not a 1D sequence.
 
@@ -2484,73 +3246,262 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
 
     Examples:
         >>> # decode and resize image, keeping aspect ratio
-        >>> transforms_list1 = [c_vision.SoftDvppDecodeResizeJpeg(70)]
+        >>> transforms_list1 = [vision.SoftDvppDecodeResizeJpeg(70)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
         >>> # decode and resize to portrait style
-        >>> transforms_list2 = [c_vision.SoftDvppDecodeResizeJpeg((80, 60))]
+        >>> transforms_list2 = [vision.SoftDvppDecodeResizeJpeg((80, 60))]
         >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
         ...                                                     input_columns=["image"])
     """
 
     @check_resize
     def __init__(self, size):
+        super().__init__()
         if isinstance(size, int):
             size = (size,)
         self.size = size
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.SoftDvppDecodeResizeJpegOperation(self.size)
 
 
-class UniformAugment(ImageTensorOperation):
+class TenCrop(PyTensorOperation):
     """
-    Perform randomly selected augmentation on input image.
+    Crop the given image into one central crop and four corners with the flipped version of these.
 
     Args:
-        transforms (TensorOperation): C++ transformation operation to be applied on random selection
-            of bounding box regions of a given image (Python operations are not accepted).
-        num_ops (int, optional): Number of operations to be selected and applied, which must be positive (default=2).
+        size (Union[int, sequence]): The size of the cropped image.
+            If a single integer is provided, a square of size (size, size) will be cropped with this value.
+            If a sequence of length 2 is provided, an image of size (height, width) will be cropped.
+        use_vertical_flip (bool, optional): If True, flip the images vertically. Otherwise, flip them
+            horizontally. Default: False.
 
     Raises:
-        TypeError: If `transform` is not an image processing operation
-            in :class:`mindspore.dataset.vision.c_transforms`.
-        TypeError: If `num_ops` is not of type int.
+        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `use_vertical_flip` is not of type boolean.
+        ValueError: If `size` is not positive.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.TenCrop(size=200),
+        ...                            # 4D stack of 10 images
+        ...                            lambda *images: numpy.stack([vision.ToTensor()(image) for image in images])])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_ten_crop
+    def __init__(self, size, use_vertical_flip=False):
+        super().__init__()
+        if isinstance(size, int):
+            size = (size, size)
+        self.size = size
+        self.use_vertical_flip = use_vertical_flip
+        self.random = False
+        self.implementation = Implementation.PY
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be cropped.
+
+        Returns:
+            tuple, a tuple of 10 PIL Image, in order of top_left, top_right, bottom_left, bottom_right, center
+                of the original image and top_left, top_right, bottom_left, bottom_right, center of the flipped image.
+        """
+        return util.ten_crop(img, self.size, self.use_vertical_flip)
+
+
+class ToPIL(PyTensorOperation):
+    """
+    Convert the input decoded numpy.ndarray image to PIL Image.
+
+    Note:
+        The conversion mode will be determined by the data type using :class:`PIL.Image.fromarray`.
+
+    Raises:
+        TypeError: If the input image is not of type :class:`numpy.ndarray` or :class:`PIL.Image`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> # data is already decoded, but not in PIL Image format
+        >>> transforms_list = Compose([vision.ToPIL(),
+        ...                            vision.RandomHorizontalFlip(0.5),
+        ...                            vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.random = False
+        self.implementation = Implementation.PY
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (numpy.ndarray): Decoded numpy.ndarray image to be converted to PIL Image.
+
+        Returns:
+            PIL Image, converted PIL Image.
+        """
+        return util.to_pil(img)
+
+
+class ToTensor(TensorOperation, PyTensorOperation):
+    """
+    Rescale of pixel value range from [0, 255] to [0.0, 1.0] and change the shape from (H, W, C) to (C, H, W).
+    For Python implementation of operation, convert the input PIL Image or numpy.ndarray to numpy.ndarray
+    of the desired dtype.
+
+    Args:
+        output_type (numpy.dtype, optional): The desired dtype of the output image. Default: :class:`numpy.float32`.
+
+    Raises:
+        TypeError: If the input image is not of type :class:`PIL.Image` or :class:`numpy.ndarray`.
+        TypeError: If dimension of the input image is not 2 or 3.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> # create a list of transformations to be applied to the "image" column of each data row
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.RandomHorizontalFlip(0.5),
+        ...                            vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    def __init__(self, output_type="float32"):
+        super().__init__()
+        self.output_type = output_type
+        self.random = False
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (Union[PIL Image, numpy.ndarray]): PIL Image or numpy.ndarray to be type converted.
+
+        Returns:
+            numpy.ndarray, converted numpy.ndarray with desired type.
+        """
+        return util.to_tensor(img, self.output_type)
+
+    def parse(self):
+        return cde.ToTensorOperation(self.output_type)
+
+
+class ToType(TypeCast):
+    """
+    Convert the input numpy.ndarray image to the desired dtype.
+
+    Args:
+        output_type (numpy.dtype): The desired dtype of the output image, e.g. :class:`numpy.float32`.
+
+    Raises:
+        TypeError: If the input image is not of type :class:`numpy.ndarray`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.RandomHorizontalFlip(0.5),
+        ...                            vision.ToTensor(),
+        ...                            vision.ToType(np.float32)])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+
+class UniformAugment(CompoundOperation):
+    """
+    Uniformly select a number of transformations from a sequence and apply them
+    sequentially and randomly, which means that there is a chance that a chosen
+    transformation will not be applied.
+
+    All transformations in the sequence require the output type to be the same as
+    the input. Thus, the latter one can deal with the output of the previous one.
+
+    Args:
+         transforms (sequence): Sequence of transformations to select from.
+         num_ops (int, optional): Number of transformations to be sequentially and randomly applied. Default: 2.
+
+    Raises:
+        TypeError: If `transforms` is not a sequence of data processing operations.
+        TypeError: If `num_ops` is not of type integer.
         ValueError: If `num_ops` is not positive.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
-        >>> transforms_list = [c_vision.RandomHorizontalFlip(),
-        ...                    c_vision.RandomVerticalFlip(),
-        ...                    c_vision.RandomColorAdjust(),
-        ...                    c_vision.RandomRotation(degrees=45)]
-        >>> uni_aug_op = c_vision.UniformAugment(transforms=transforms_list, num_ops=2)
-        >>> transforms_all = [c_vision.Decode(), c_vision.Resize(size=[224, 224]),
-        ...                   uni_aug_op]
-        >>> image_folder_dataset_1 = image_folder_dataset.map(operations=transforms_all,
-        ...                                                   input_columns="image",
-        ...                                                   num_parallel_workers=1)
+        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>>
+        >>> transforms = [vision.CenterCrop(64),
+        ...               vision.RandomColor(),
+        ...               vision.RandomSharpness(),
+        ...               vision.RandomRotation(30)]
+        >>> transforms_list = Compose([vision.Decode(to_pil=True)),
+        ...                            vision.UniformAugment(transforms),
+        ...                            vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_uniform_augment_cpp
     def __init__(self, transforms, num_ops=2):
-        self.transforms = transforms
+        super().__init__(transforms)
         self.num_ops = num_ops
+        self.random = True
 
     def parse(self):
-        transforms = []
-        for op in self.transforms:
-            if op and getattr(op, 'parse', None):
-                transforms.append(op.parse())
-            else:
-                transforms.append(op)
-        return cde.UniformAugOperation(transforms, self.num_ops)
+        operations = self.parse_transforms()
+        return cde.UniformAugOperation(operations, self.num_ops)
+
+    def execute_pil(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be transformed.
+
+        Returns:
+            PIL Image, transformed image.
+        """
+        return util.uniform_augment(img, self.transforms.copy(), self.num_ops)
 
 
-class VerticalFlip(ImageTensorOperation):
+class VerticalFlip(TensorOperation):
     """
     Flip the input image vertically.
 
@@ -2561,10 +3512,23 @@ class VerticalFlip(ImageTensorOperation):
         ``CPU``
 
     Examples:
-        >>> transforms_list = [c_vision.Decode(), c_vision.VerticalFlip()]
+        >>> transforms_list = [vision.Decode(), vision.VerticalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
+    def __init__(self):
+        super().__init__()
+        self.implementation = Implementation.C
+
     def parse(self):
         return cde.VerticalFlipOperation()
+
+
+def not_random(func):
+    """
+    Specify the function as "not random", i.e., it produces deterministic result.
+    A Python function can only be cached after it is specified as "not random".
+    """
+    func.random = False
+    return func

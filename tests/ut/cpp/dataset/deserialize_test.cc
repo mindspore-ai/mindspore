@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,12 +111,13 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCelebA) {
   std::shared_ptr<TensorOperation> operation2 = std::make_shared<vision::CenterCropOperation>(size);
   std::shared_ptr<TensorOperation> operation3 =
     std::make_shared<vision::CutMixBatchOperation>(ImageBatchFormat::kNHWC, 0.1, 0.1);
-  std::shared_ptr<TensorOperation> operation4 = std::make_shared<vision::CutOutOperation>(1, 1);
+  std::shared_ptr<TensorOperation> operation4 = std::make_shared<vision::CutOutOperation>(1, 1, true);
   std::shared_ptr<TensorOperation> operation5 = std::make_shared<vision::DecodeOperation>(true);
   std::shared_ptr<TensorOperation> operation6 = std::make_shared<vision::GaussianBlurOperation>(coordinates, sigma);
   std::shared_ptr<TensorOperation> operation7 = std::make_shared<vision::MixUpBatchOperation>(1.0);
-  std::shared_ptr<TensorOperation> operation8 = std::make_shared<vision::NormalizeOperation>(mean, std);
-  std::shared_ptr<TensorOperation> operation9 = std::make_shared<vision::NormalizePadOperation>(mean, std, "float");
+  std::shared_ptr<TensorOperation> operation8 = std::make_shared<vision::NormalizeOperation>(mean, std, true);
+  std::shared_ptr<TensorOperation> operation9 = std::make_shared<vision::NormalizePadOperation>(mean, std, "float",
+                                                                                                true);
   std::shared_ptr<TensorOperation> operation10 =
     std::make_shared<vision::PadOperation>(padding, fill_value, BorderType::kConstant);
   std::shared_ptr<TensorOperation> operation11 = std::make_shared<vision::RescaleOperation>(1.0, 0.5);
@@ -237,7 +238,7 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCifar100) {
   std::shared_ptr<TensorOperation> operation3 = std::make_shared<vision::RescaleOperation>(0.5, 0.0);
   std::vector<float> mean = {0.49, 0.48, 0.46};
   std::vector<float> std = {0.20, 0.199, 0.201};
-  std::shared_ptr<TensorOperation> operation4 = std::make_shared<vision::NormalizeOperation>(mean, std);
+  std::shared_ptr<TensorOperation> operation4 = std::make_shared<vision::NormalizeOperation>(mean, std, true);
   operations.push_back(operation1);
   operations.push_back(operation2);
   operations.push_back(operation3);

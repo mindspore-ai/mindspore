@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
 Interpolation Mode, Resampling Filters
 """
 from enum import Enum, IntEnum
+import numbers
+
+import mindspore._c_dataengine as cde
+from PIL import Image
 
 
 class Inter(IntEnum):
@@ -41,6 +45,30 @@ class Inter(IntEnum):
     AREA = 4
     PILCUBIC = 5
 
+    @staticmethod
+    def to_python_type(inter_type):
+        """
+        Function to return Python type for Interpolation Mode.
+        """
+        python_values = {Inter.NEAREST: Image.NEAREST,
+                         Inter.ANTIALIAS: Image.ANTIALIAS,
+                         Inter.LINEAR: Image.LINEAR,
+                         Inter.CUBIC: Image.CUBIC}
+        return python_values.get(inter_type)
+
+    @staticmethod
+    def to_c_type(inter_type):
+        """
+        Function to return C type for Interpolation Mode.
+        """
+        c_values = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
+                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
+                    Inter.CUBIC: cde.InterpolationMode.DE_INTER_CUBIC,
+                    Inter.AREA: cde.InterpolationMode.DE_INTER_AREA,
+                    Inter.PILCUBIC: cde.InterpolationMode.DE_INTER_PILCUBIC}
+
+        return c_values.get(inter_type)
+
 
 class Border(str, Enum):
     """
@@ -60,6 +88,29 @@ class Border(str, Enum):
     REFLECT: str = "reflect"
     SYMMETRIC: str = "symmetric"
 
+    @staticmethod
+    def to_python_type(border_type):
+        """
+        Function to return Python type for Border Type.
+        """
+        python_values = {Border.CONSTANT: 'constant',
+                         Border.EDGE: 'edge',
+                         Border.REFLECT: 'reflect',
+                         Border.SYMMETRIC: 'symmetric'}
+        return python_values.get(border_type)
+
+    @staticmethod
+    def to_c_type(border_type):
+        """
+        Function to return C type for Border Type.
+        """
+        c_values = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
+                    Border.EDGE: cde.BorderType.DE_BORDER_EDGE,
+                    Border.REFLECT: cde.BorderType.DE_BORDER_REFLECT,
+                    Border.SYMMETRIC: cde.BorderType.DE_BORDER_SYMMETRIC}
+
+        return c_values.get(border_type)
+
 
 class ImageBatchFormat(IntEnum):
     """
@@ -72,6 +123,16 @@ class ImageBatchFormat(IntEnum):
     """
     NHWC = 0
     NCHW = 1
+
+    @staticmethod
+    def to_c_type(image_batch_format):
+        """
+        Function to return C type for ImageBatchFormat.
+        """
+        c_values = {ImageBatchFormat.NHWC: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NHWC,
+                    ImageBatchFormat.NCHW: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NCHW}
+
+        return c_values.get(image_batch_format)
 
 
 class ConvertMode(IntEnum):
@@ -122,6 +183,35 @@ class ConvertMode(IntEnum):
     COLOR_BGRA2GRAY = 10
     COLOR_RGBA2GRAY = 11
 
+    @staticmethod
+    def to_c_type(mode):
+        """
+        Function to return C type for color mode.
+        """
+        c_values = {ConvertMode.COLOR_BGR2BGRA: cde.ConvertMode.DE_COLOR_BGR2BGRA,
+                    ConvertMode.COLOR_RGB2RGBA: cde.ConvertMode.DE_COLOR_RGB2RGBA,
+                    ConvertMode.COLOR_BGRA2BGR: cde.ConvertMode.DE_COLOR_BGRA2BGR,
+                    ConvertMode.COLOR_RGBA2RGB: cde.ConvertMode.DE_COLOR_RGBA2RGB,
+                    ConvertMode.COLOR_BGR2RGBA: cde.ConvertMode.DE_COLOR_BGR2RGBA,
+                    ConvertMode.COLOR_RGB2BGRA: cde.ConvertMode.DE_COLOR_RGB2BGRA,
+                    ConvertMode.COLOR_RGBA2BGR: cde.ConvertMode.DE_COLOR_RGBA2BGR,
+                    ConvertMode.COLOR_BGRA2RGB: cde.ConvertMode.DE_COLOR_BGRA2RGB,
+                    ConvertMode.COLOR_BGR2RGB: cde.ConvertMode.DE_COLOR_BGR2RGB,
+                    ConvertMode.COLOR_RGB2BGR: cde.ConvertMode.DE_COLOR_RGB2BGR,
+                    ConvertMode.COLOR_BGRA2RGBA: cde.ConvertMode.DE_COLOR_BGRA2RGBA,
+                    ConvertMode.COLOR_RGBA2BGRA: cde.ConvertMode.DE_COLOR_RGBA2BGRA,
+                    ConvertMode.COLOR_BGR2GRAY: cde.ConvertMode.DE_COLOR_BGR2GRAY,
+                    ConvertMode.COLOR_RGB2GRAY: cde.ConvertMode.DE_COLOR_RGB2GRAY,
+                    ConvertMode.COLOR_GRAY2BGR: cde.ConvertMode.DE_COLOR_GRAY2BGR,
+                    ConvertMode.COLOR_GRAY2RGB: cde.ConvertMode.DE_COLOR_GRAY2RGB,
+                    ConvertMode.COLOR_GRAY2BGRA: cde.ConvertMode.DE_COLOR_GRAY2BGRA,
+                    ConvertMode.COLOR_GRAY2RGBA: cde.ConvertMode.DE_COLOR_GRAY2RGBA,
+                    ConvertMode.COLOR_BGRA2GRAY: cde.ConvertMode.DE_COLOR_BGRA2GRAY,
+                    ConvertMode.COLOR_RGBA2GRAY: cde.ConvertMode.DE_COLOR_RGBA2GRAY,
+                    }
+
+        return c_values.get(mode)
+
 
 class SliceMode(IntEnum):
     """
@@ -134,6 +224,16 @@ class SliceMode(IntEnum):
     """
     PAD = 0
     DROP = 1
+
+    @staticmethod
+    def to_c_type(mode):
+        """
+        Function to return C type for SliceMode.
+        """
+        c_values = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
+                    SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
+
+        return c_values.get(mode)
 
 
 class AutoAugmentPolicy(str, Enum):
@@ -198,3 +298,28 @@ class AutoAugmentPolicy(str, Enum):
     IMAGENET: str = "imagenet"
     CIFAR10: str = "cifar10"
     SVHN: str = "svhn"
+
+    @staticmethod
+    def to_c_type(policy):
+        """
+        Function to return C type for AutoAugment policy.
+        """
+        c_values = {AutoAugmentPolicy.IMAGENET: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_IMAGENET,
+                    AutoAugmentPolicy.CIFAR10: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_CIFAR10,
+                    AutoAugmentPolicy.SVHN: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_SVHN}
+
+        return c_values.get(policy)
+
+
+def parse_padding(padding):
+    """ Parses and prepares the padding tuple"""
+
+    if isinstance(padding, numbers.Number):
+        padding = [padding] * 4
+    if len(padding) == 2:
+        left = top = padding[0]
+        right = bottom = padding[1]
+        padding = (left, top, right, bottom,)
+    if isinstance(padding, list):
+        padding = tuple(padding)
+    return padding
