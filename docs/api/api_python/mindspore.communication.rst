@@ -31,7 +31,6 @@ mindspore.communication
 
     - **TypeError** – 参数 `backend_name` 不是字符串。
     - **RuntimeError** – 1）硬件设备类型无效；2）后台服务无效；3）分布式计算初始化失败；4）未设置环境变量 `RANK_ID` 或 `MINDSPORE_HCCL_CONFIG_PATH` 的情况下初始化HCCL服务。
-    - **ValueError** – 环境变量 `RANK_ID` 设置成非数字。
 
 .. py:class:: mindspore.communication.release()
 
