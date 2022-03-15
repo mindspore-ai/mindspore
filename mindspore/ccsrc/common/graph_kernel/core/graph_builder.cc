@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ AnfNodePtrList FindOutputs(const AnfNodePtrList &nodes, const AnfNodePtrToAnfNod
   return output;
 }
 
-AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNodePtrList *const inputs_ptr,
+AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNodePtrList *inputs_ptr,
                            AnfNodePtrToAnfNodePtrMap *eqv_ptr) {
   auto &eqv = *eqv_ptr;
   if (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) {
@@ -103,7 +103,7 @@ void EliminateTupleOfTuple(const FuncGraphPtr &fg) {
   fg->output()->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
 }
 
-bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *const inputs_ptr) {
+bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
   auto cnodes = fg->GetOrderedCnodes();
   mindspore::OrderedSet<AnfNodePtr> value_nodes;
   for (const auto &cnode : cnodes) {
@@ -191,7 +191,7 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
 }
 
 // remove parameter which is not used
-void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *const inputs) {
+void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs) {
   MS_EXCEPTION_IF_NULL(inputs);
   const auto &ori_parameter = func_graph->parameters();
   auto todos = TopoSort(func_graph->get_return());

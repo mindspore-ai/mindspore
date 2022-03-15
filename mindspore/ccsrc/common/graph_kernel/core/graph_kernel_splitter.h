@@ -43,7 +43,7 @@ class SplitSchemer {
   SplitSchemer() = default;
   virtual ~SplitSchemer() = default;
   virtual bool Split(const FuncGraphPtr &func_graph) = 0;
-  virtual bool NeedInline(size_t group_id) const { return false; }
+  virtual bool NeedInline(size_t) const { return false; }
   const std::vector<AnfNodePtrList> &split_plan() const { return split_plan_; }
 
  protected:

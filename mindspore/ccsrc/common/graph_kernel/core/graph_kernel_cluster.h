@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class GraphKernelCluster : public opt::Pass {
   void DumpClusterInfo(const AnfNodePtrList &old_nodes, const AnfNodePtr &new_node);
   void DumpToFile();
   void Clean() {
-    std::vector<AnfNodePtr>().swap(nodes_);
+    nodes_.clear();
     node_idx_map_.clear();
     graph_ = nullptr;
   }

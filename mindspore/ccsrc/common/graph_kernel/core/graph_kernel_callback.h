@@ -28,6 +28,7 @@
 namespace mindspore::graphkernel {
 class Callback {
  public:
+  virtual ~Callback() = default;
   static Callback *Instance() { return instance_.get(); }
 
   /**
@@ -160,7 +161,7 @@ class Callback {
 
 class CallbackImplRegister {
  public:
-  explicit CallbackImplRegister(std::function<Callback *()> fn) { Callback::RegImpl(fn()); }
+  explicit CallbackImplRegister(const std::function<Callback *()> &fn) { Callback::RegImpl(fn()); }
   ~CallbackImplRegister() = default;
 
  protected:

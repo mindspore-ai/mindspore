@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -369,7 +369,8 @@ bool GraphKernelCluster::Process(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto candidates = FindCandidates(IntToSize(i));
-    CircleChecker(graph_).RemoveCircle(&candidates);
+    CircleChecker circle_checker(graph_);
+    circle_checker.RemoveCircle(&candidates);
     RemoveWildGetitem(&candidates);
     if (candidates.empty()) continue;
     // merge candidates into one cluster

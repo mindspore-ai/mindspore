@@ -180,7 +180,7 @@ void TraverseFuncGraphFromCNode(const CNodePtr &cnode, const std::function<void(
   mindspore::HashSet<AnfNodePtr> visited;
   std::queue<AnfNodePtr> que;
   que.push(cnode);
-  visited.insert(cnode);
+  (void)visited.insert(cnode);
   while (!que.empty()) {
     auto ft_node = que.front();
     que.pop();
@@ -190,7 +190,7 @@ void TraverseFuncGraphFromCNode(const CNodePtr &cnode, const std::function<void(
     for (const auto &in_node : ft_cnode->inputs()) {
       if (visited.count(in_node) == 0) {
         que.push(in_node);
-        visited.insert(in_node);
+        (void)visited.insert(in_node);
       }
     }
   }
@@ -210,7 +210,7 @@ class Area {
       if (cnode == nullptr) continue;
       const auto &inputs = cnode->inputs();
       if (std::any_of(inputs.begin(), inputs.end(), [this](const AnfNodePtr &node) { return IsExternalCNode(node); })) {
-        spy_cnodes_.emplace_back(node);
+        (void)spy_cnodes_.emplace_back(node);
       }
     }
   }
@@ -246,8 +246,7 @@ class Area {
   }
 
   // Make a return node for traitor nodes.
-  void CreateReturnNode(const FuncGraphPtr &func_graph,
-                        mindspore::HashMap<AnfNodePtr, size_t> *const tuple_node_index) {
+  void CreateReturnNode(const FuncGraphPtr &func_graph, mindspore::HashMap<AnfNodePtr, size_t> *tuple_node_index) {
     // If there's no traitor in the area, it means that this area is the last part
     // of the original FuncGraph, it already contains the original Return node.
     if (traitor_nodes_.empty()) {
@@ -269,27 +268,27 @@ class Area {
       size_t i = 0;
       for (auto &traitor : traitor_nodes_) {
         (void)tuple_node_index->emplace(traitor, i++);
-        maketuple_inputs.emplace_back(traitor);
-        abstracts.emplace_back(traitor->abstract());
+        (void)maketuple_inputs.emplace_back(traitor);
+        (void)abstracts.emplace_back(traitor->abstract());
       }
       auto maketuple_node = func_graph->NewCNode(maketuple_inputs);
       maketuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstracts));
-      nodes_.insert(maketuple_node);
-      return_inputs.emplace_back(maketuple_node);
+      (void)nodes_.insert(maketuple_node);
+      (void)return_inputs.emplace_back(maketuple_node);
     } else {
-      return_inputs.emplace_back(traitor_nodes_[0]);
+      (void)return_inputs.emplace_back(traitor_nodes_[0]);
     }
     auto return_node = func_graph->NewCNode(return_inputs);
     return_node->set_abstract(return_inputs.back()->abstract());
     func_graph->set_return(return_node);
-    nodes_.insert(return_node);
+    (void)nodes_.insert(return_node);
     traitor_nodes_.clear();  // traitor list is not useful anymore
     return;
   }
 
   void AddTraitor(const AnfNodePtr &node) {
     if (std::find(traitor_nodes_.begin(), traitor_nodes_.end(), node) == traitor_nodes_.end()) {
-      traitor_nodes_.emplace_back(node);
+      (void)traitor_nodes_.emplace_back(node);
     }
   }
 
@@ -354,7 +353,7 @@ class AreaGraph {
 
   explicit AreaGraph(const std::vector<AnfNodePtrList> &node_groups) : edge_prev_(node_groups.size()) {
     for (size_t i = 0; i < node_groups.size(); ++i) {
-      areas_.emplace_back(node_groups[i]);
+      (void)areas_.emplace_back(node_groups[i]);
       for (const auto &node : node_groups[i]) {
         node_area_map_[node] = i;
       }
@@ -371,7 +370,7 @@ class AreaGraph {
           if (u == v) continue;
           areas_[u].AddTraitor(in_node);
           if (std::find(edge_prev_[v].begin(), edge_prev_[v].end(), u) == edge_prev_[v].end()) {
-            edge_prev_[v].emplace_back(u);
+            (void)edge_prev_[v].emplace_back(u);
           }
         }
       }
@@ -395,7 +394,7 @@ class AreaGraph {
     while (!que.empty()) {
       size_t u = que.front();
       que.pop();
-      topo_order_.emplace_back(u);
+      (void)topo_order_.emplace_back(u);
       for (size_t i : edge_prev_[u]) {
         if (--out_degree[i] == 0) que.push(i);
       }
@@ -428,9 +427,9 @@ class AreaGraph {
         } else {
           getitem_node->set_abstract(main_cnodes[input_area]->abstract());
         }
-        main_cnode_inputs.emplace_back(getitem_node);
+        (void)main_cnode_inputs.emplace_back(getitem_node);
       } else {
-        main_cnode_inputs.emplace_back(main_cnodes[input_area]);
+        (void)main_cnode_inputs.emplace_back(main_cnodes[input_area]);
       }
     }
     auto new_main_cnode = main_func_graph->NewCNode(main_cnode_inputs);
@@ -440,8 +439,8 @@ class AreaGraph {
 
   void SortCNodes(std::vector<CNodePtr> *main_cnodes) const {
     std::vector<CNodePtr> main_cnodes_sorted;
-    std::transform(topo_order_.begin(), topo_order_.end(), std::back_inserter(main_cnodes_sorted),
-                   [main_cnodes](size_t index) { return main_cnodes->at(index); });
+    (void)std::transform(topo_order_.begin(), topo_order_.end(), std::back_inserter(main_cnodes_sorted),
+                         [main_cnodes](size_t index) { return main_cnodes->at(index); });
     *main_cnodes = std::move(main_cnodes_sorted);
   }
 
@@ -537,7 +536,7 @@ class Splitter {
           cnode->add_input(input);
           sub_func_graph->add_parameter(param);
           // Avoid repeating parameters.
-          this->param_to_main_graph_node_map_.erase(it);
+          (void)this->param_to_main_graph_node_map_.erase(it);
         }
       };
       TraverseFuncGraph(sub_func_graph, callback);
@@ -565,7 +564,7 @@ class Splitter {
           }
         }
         if (AnfUtils::IsRealKernel(node)) {
-          inlined_nodes_.emplace_back(node);
+          (void)inlined_nodes_.emplace_back(node);
         }
       }
     }
@@ -594,7 +593,7 @@ class Splitter {
         if (i + 1 == new_subgraph_cnodes_.size()) {
           replace_map[this->old_subgraph_cnode_] = new_subgraph_cnodes_.back();
         }
-        tmp_subgraph_cnodes.emplace_back(new_subgraph_cnodes_[i]);
+        (void)tmp_subgraph_cnodes.emplace_back(new_subgraph_cnodes_[i]);
       }
     }
     new_subgraph_cnodes_ = std::move(tmp_subgraph_cnodes);
