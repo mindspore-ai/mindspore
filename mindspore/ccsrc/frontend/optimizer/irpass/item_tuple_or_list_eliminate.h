@@ -351,7 +351,9 @@ class TupleListGetSetitemEliminator : public AnfVisitor {
       if (key1_ == key2_) {
         return last_;
       }
-      return fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), tuple_, c2_});
+      auto new_tuple_getitem = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), tuple_, c2_});
+      new_tuple_getitem->set_abstract(node->abstract());
+      return new_tuple_getitem;
     }
     return nullptr;
   }
@@ -433,6 +435,7 @@ class TupleListGetitemDependReorder : public AnfVisitor {
     }
 
     auto item_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), x_, c_}, fg);
+    item_node->set_abstract(node->abstract());
     auto depend_node = NewCNode({depend_cnode->input(0), item_node, y_}, fg);
     auto abs = x_->abstract();
     if (abs == nullptr) {

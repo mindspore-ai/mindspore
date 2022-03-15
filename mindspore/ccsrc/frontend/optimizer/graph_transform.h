@@ -27,13 +27,9 @@
 
 namespace mindspore {
 namespace opt {
-bool CNodeHasTupleInput(const CNodePtr &cnode);
 bool FuncGraphHasTupleInput(const FuncGraphPtr &fg);
 std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
                                                const abstract::AbstractTuplePtr &abs);
-AnfNodePtr TransformCallGraph(const FuncGraphPtr &trans_fg, const CNodePtr &cnode);
-AnfNodePtr TransformPartial(const FuncGraphPtr &trans_fg, const CNodePtr &cnode);
-AnfNodePtr TransformSwitchCall(const AnfNodePtr &switch_node, const CNodePtr &cnode);
 
 class GraphTupleParamTransform {
  public:
