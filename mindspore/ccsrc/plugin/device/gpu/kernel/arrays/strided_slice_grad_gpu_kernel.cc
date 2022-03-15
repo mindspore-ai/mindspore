@@ -42,5 +42,104 @@ MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeUIn
                       StridedSliceGradGpuKernelMod, uchar)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
                       StridedSliceGradGpuKernelMod, bool)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      StridedSliceGradGpuKernelMod, double, int64_t)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      StridedSliceGradGpuKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeInt64),
+                      StridedSliceGradGpuKernelMod, int64_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      StridedSliceGradGpuKernelMod, int, int64_t)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt16)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeInt16),
+                      StridedSliceGradGpuKernelMod, short, int64_t)  // NOLINT
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt8)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeInt8),
+                      StridedSliceGradGpuKernelMod, int8_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeUInt64),
+                      StridedSliceGradGpuKernelMod, uint64_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeUInt32),
+                      StridedSliceGradGpuKernelMod, uint32_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt16)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeUInt16),
+                      StridedSliceGradGpuKernelMod, uint16_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt8)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeUInt8),
+                      StridedSliceGradGpuKernelMod, uchar, int64_t)
+MS_REG_GPU_KERNEL_TWO(StridedSliceGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeBool),
+                      StridedSliceGradGpuKernelMod, bool, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

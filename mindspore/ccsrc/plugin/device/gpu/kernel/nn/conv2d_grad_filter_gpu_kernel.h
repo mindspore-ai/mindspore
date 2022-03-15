@@ -228,6 +228,41 @@ class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
                                "cudnnDestroyTensorDescriptor failed");
   }
 
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    dw_desc_ = nullptr;
+    conv_desc_ = nullptr;
+    dy_desc_ = nullptr;
+    x_desc_ = nullptr;
+    padded_descriptor_ = nullptr;
+    algo_ = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
+    pad_mode_ = "";
+    data_format_ = kOpFormat_NCHW;
+    format_attr_ = kOpFormat_NCHW;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    compute_format_ = CUDNN_TENSOR_NCHW;
+    old_height_ = 0;
+    old_width_ = 0;
+    pad_height_ = 0;
+    pad_width_ = 0;
+    pad_top_ = 0;
+    pad_left_ = 0;
+    n_ = 0;
+    c_ = 0;
+    group_ = 1;
+    is_null_input_ = false;
+    kernel_name_ = "Conv2dGradFilter";
+    input_size_ = 0;
+    dy_size_ = 0;
+    output_size_ = 0;
+    padded_size_ = 0;
+    workspace_size_ = 0;
+    use_pad_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
