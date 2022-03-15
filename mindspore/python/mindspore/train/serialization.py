@@ -785,8 +785,8 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
 
     Args:
         net (Cell): MindSpore network.
-        inputs (Union[Tensor, tuple(Tensor), Dataset]): While the input type is Tensor, it represents the inputs
-             of the `net`, if the network has multiple inputs, incoming tuple(Tensor). While its type is Dataset,
+        inputs (Union[Tensor, Dataset]): While the input type is Tensor, it represents the inputs
+             of the `net`, if the network has multiple inputs, set them together. While its type is Dataset,
              it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.
              In second situation, you should adjust batch size of dataset script manually which will impact on
              the batch size of 'net' input. Only supports parse "image" column from dataset currently.

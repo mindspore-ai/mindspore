@@ -344,6 +344,8 @@ class ModelCheckpoint(Callback):
     Note:
         In the distributed training scenario, please specify different directories for each training process
         to save the checkpoint file. Otherwise, the training may fail.
+        If this callback is used in the `model` function, the checkpoint file will saved
+        parameters of the optimizer by default.
 
     Args:
         prefix (str): The prefix name of checkpoint files. Default: "CKP".

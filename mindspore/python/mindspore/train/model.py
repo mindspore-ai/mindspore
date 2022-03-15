@@ -172,7 +172,7 @@ class Model:
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
         >>> # For details about how to build the dataset, please refer to the function `create_dataset` in tutorial
         >>> # document on the official website:
-        >>> # https://www.mindspore.cn/tutorials/zh-CN/master/quick_start.html
+        >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
         >>> dataset = create_custom_dataset()
         >>> model.train(2, dataset)
     """
@@ -953,8 +953,8 @@ class Model:
 
         if context.get_context("device_target") == "CPU" and dataset_sink_mode:
             dataset_sink_mode = False
-            logger.warning("CPU cannot support dataset sink mode currently."
-                           "So the evaluating process will be performed with dataset non-sink mode.")
+            logger.info("CPU cannot support dataset sink mode currently."
+                        "So the evaluating process will be performed with dataset non-sink mode.")
 
         with _CallbackManager(callbacks) as list_callback:
             if dataset_sink_mode:

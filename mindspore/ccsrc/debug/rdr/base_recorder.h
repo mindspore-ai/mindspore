@@ -24,7 +24,7 @@
 #include "debug/env_config_parser.h"
 #include "mindspore/core/utils/log_adapter.h"
 
-const int maxNameLength = 32;
+const int maxNameLength = 64;
 namespace mindspore {
 class BaseRecorder {
  public:
