@@ -25,9 +25,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAddcmul = "Addcmul";
+
+/// \brief Performs the element-wise product of tensor x1 and tensor x2,
+/// multiply the result by the scalar value and add it to input_data.
+/// Refer to Python API @ref mindspore.ops.Addcmul for more details.
 class MIND_API Addcmul : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Addcmul);
+  /// \brief Constructor.
   Addcmul() : BaseOperator(kNameAddcmul) { InitIOName({"input_data", "x1", "x2", "value"}, {"output"}); }
 };
 
