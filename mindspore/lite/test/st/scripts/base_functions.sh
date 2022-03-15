@@ -356,12 +356,12 @@ function Run_Benchmark() {
 function Exist_File_In_Path() {
 # $1:Path; $2:FileName;
   for file in $1/*; do
-    if [[ ${file} =~ $2 ]]; then
+    if [[ ${file##*/} =~ $2 ]]; then
       echo "true"
-      exit 0
+      return
     fi
-  echo "false"
   done
+  echo "false"
 }
 
 # Print start msg before run testcase
