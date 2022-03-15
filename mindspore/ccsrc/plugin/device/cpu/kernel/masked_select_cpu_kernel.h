@@ -18,13 +18,13 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class MaskedSelectCpuKernelMod : public NativeCpuKernelMod {
  public:
   MaskedSelectCpuKernelMod() = default;
@@ -32,46 +32,27 @@ class MaskedSelectCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using MaskedSelectFunc = std::function<bool(MaskedSelectCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                              const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, MaskedSelectFunc>> func_list_;
+  MaskedSelectFunc kernel_func_;
   std::vector<size_t> input_shape_a_;
   std::vector<size_t> input_shape_b_;
   std::vector<size_t> output_shape_;
   uint64_t tensor_size_ = 1;
   CNodeWeakPtr node_wpt_;
 };
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat32),
-  MaskedSelectCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
-  MaskedSelectCpuKernelMod, int);
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt16),
-  MaskedSelectCpuKernelMod, int16_t);
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
-  MaskedSelectCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat16),
-  MaskedSelectCpuKernelMod, float16);
-
-MS_REG_CPU_KERNEL_T(
-  MaskedSelect,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat64),
-  MaskedSelectCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_CPU_KERNEL_H_

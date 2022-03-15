@@ -30,21 +30,20 @@ namespace server {
 namespace kernel {
 using mindspore::kernel::SGDCpuKernelMod;
 template <typename T>
-
-class SGDKernelMod : public SGDCpuKernelMod<T>, public OptimizerKernelMod {
+class SGDKernelMod : public SGDCpuKernelMod, public OptimizerKernelMod {
  public:
   SGDKernelMod() = default;
   ~SGDKernelMod() override = default;
 
   void InitKernel(const CNodePtr &cnode) override {
-    SGDCpuKernelMod<T>::InitKernel(cnode);
+    SGDCpuKernelMod::InitKernel(cnode);
     InitServerKernelInputOutputSize(cnode);
     GenerateReuseKernelNodeInfo();
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return SGDCpuKernelMod<T>::Launch(inputs, workspace, outputs);
+    return SGDCpuKernelMod::Launch(inputs, workspace, outputs);
   }
 
   void GenerateReuseKernelNodeInfo() override {

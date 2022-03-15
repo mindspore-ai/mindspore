@@ -22,7 +22,7 @@
 #include <memory>
 #include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "fl/worker/fl_worker.h"
 #include "fl/armour/secure_protocol/masking.h"
 
@@ -138,6 +138,11 @@ class UpdateModelKernelMod : public NativeCpuKernelMod {
 
  protected:
   void InitSizeLists() { return; }
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
 
  private:
   bool BuildUpdateModelReq(const std::shared_ptr<fl::FBBuilder> &fbb, const std::vector<AddressPtr> &weights) {

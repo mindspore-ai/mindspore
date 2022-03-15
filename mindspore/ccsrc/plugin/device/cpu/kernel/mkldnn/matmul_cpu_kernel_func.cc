@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/mkldnn/matmul_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/mkldnn/matmul_cpu_kernel_func.h"
 #include <utility>
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
@@ -33,7 +33,7 @@ constexpr size_t kRankMin = 2;
 using dims = dnnl::memory::dims;
 }  // namespace
 
-void MatMulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+void MatMulCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -88,8 +88,9 @@ void MatMulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, dst_md);
 }
 
-bool MatMulCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatMulOutputsNum, kernel_name_);
   const auto input_a = reinterpret_cast<float *>(inputs[0]->addr);

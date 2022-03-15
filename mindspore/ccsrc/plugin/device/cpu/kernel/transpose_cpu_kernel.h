@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "nnacl/base/transpose_base.h"
 
 namespace mindspore {
@@ -55,7 +55,7 @@ class TransposeFwdCpuKernelMod : public NativeCpuKernelMod {
   TypeKernel launch_func_;
 };
 
-MS_REG_CPU_KERNEL(Transpose, KernelAttr(), TransposeFwdCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Transpose, TransposeFwdCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TRANSPOSE_CPU_KERNEL_H_

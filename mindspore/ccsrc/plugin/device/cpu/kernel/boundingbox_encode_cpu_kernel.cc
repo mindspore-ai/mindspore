@@ -15,12 +15,35 @@
  */
 
 #include "plugin/device/cpu/kernel/boundingbox_encode_cpu_kernel.h"
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void BoundingBoxEncodeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+std::vector<std::pair<KernelAttr, BoundingBoxEncodeCpuKernelMod::BoundingBoxEncodeFunc>>
+  BoundingBoxEncodeCpuKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &BoundingBoxEncodeCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &BoundingBoxEncodeCpuKernelMod::LaunchKernel<float16>}};
+
+void BoundingBoxEncodeCpuKernelMod::InitTaskFunc(const CNodePtr &kernel_node) {
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "BoundingBoxEncode does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+}
+
+std::vector<KernelAttr> BoundingBoxEncodeCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, BoundingBoxEncodeFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+void BoundingBoxEncodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -61,12 +84,12 @@ void BoundingBoxEncodeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
                          "but got the length of 'means': "
                       << means_.size() << ", and the length of 'stds': " << stds_.size();
   }
+  InitTaskFunc(kernel_node);
 }
 
 template <typename T>
-bool BoundingBoxEncodeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+bool BoundingBoxEncodeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                                 const std::vector<AddressPtr> &outputs) {
   auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);
   auto groundtruth_box = reinterpret_cast<T *>(inputs[1]->addr);
   auto deltas = reinterpret_cast<T *>(outputs[0]->addr);
@@ -128,5 +151,7 @@ bool BoundingBoxEncodeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressP
 
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BoundingBoxEncode, BoundingBoxEncodeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

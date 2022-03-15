@@ -25,6 +25,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <algorithm>
 
 #include "utils/log_adapter.h"
 #include "ir/dtype/type.h"

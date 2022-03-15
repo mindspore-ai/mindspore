@@ -21,11 +21,10 @@
 #include <memory>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class L2NormalizeCpuKernelMod : public NativeCpuKernelMod {
  public:
   L2NormalizeCpuKernelMod() = default;
@@ -34,27 +33,16 @@ class L2NormalizeCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return func_obj_->RunFunc(inputs, workspace, outputs);
+  }
 
-  void CalcDenominator(const T *input_addr, const size_t reduce_size, const int dims,
-                       std::unique_ptr<T[]> *denominator_addr);
-
-  void CalcOutput(const T *input_addr, const std::vector<size_t> reduce_shape, const size_t output_size, T *output_addr,
-                  std::unique_ptr<T[]> const &denominator_addr);
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
-  T epsilon_{0};
-  int axis_{0};
-  void CheckParam(const CNodePtr &kernel_node);
+  std::shared_ptr<CpuKernelFunc> func_obj_;
 };
-
-MS_REG_CPU_KERNEL_T(L2Normalize, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                    L2NormalizeCpuKernelMod, float16);
-
-MS_REG_CPU_KERNEL_T(L2Normalize, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    L2NormalizeCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 

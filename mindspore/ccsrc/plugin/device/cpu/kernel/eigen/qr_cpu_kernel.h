@@ -17,22 +17,35 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_QR_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_QR_CPU_KERNEL_H_
 
+#include <utility>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class QRCpuKernelMod : public NativeCpuKernelMod {
  public:
   QRCpuKernelMod() = default;
   ~QRCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using QRFunc = std::function<bool(QRCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                    const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, QRFunc>> func_list_;
+  QRFunc kernel_func_;
+
   size_t a_row_{0};
   size_t a_col_{0};
   size_t q_row_{0};
@@ -41,13 +54,6 @@ class QRCpuKernelMod : public NativeCpuKernelMod {
   size_t r_col_{0};
   bool economic_{false};
 };
-
-MS_REG_CPU_KERNEL_T(
-  QR, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  QRCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(
-  QR, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  QRCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 

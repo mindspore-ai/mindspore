@@ -75,5 +75,7 @@ void DropoutCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     output_addr[i] = mask_addr[i] * input_addr[i] * scale;
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Dropout, DropoutCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

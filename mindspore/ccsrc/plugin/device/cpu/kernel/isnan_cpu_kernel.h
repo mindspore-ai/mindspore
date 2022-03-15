@@ -20,7 +20,7 @@
 #include <vector>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,6 +33,24 @@ class IsNanCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool)};
+    return support_list;
+  }
 
  private:
   template <typename T>
@@ -52,35 +70,7 @@ class IsNanCpuKernelMod : public NativeCpuKernelMod {
   TypeId input_dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-                  IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-                  IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-                  IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
-                  IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
-                  IsNanCpuKernelMod);
-
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool),
-                  IsNanCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IsNan, IsNanCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

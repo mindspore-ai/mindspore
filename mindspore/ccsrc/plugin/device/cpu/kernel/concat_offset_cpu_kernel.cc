@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/concat_offset_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -23,9 +25,7 @@ namespace {
 constexpr size_t kConcatOffsetOutputNum = 1;
 constexpr size_t kConcatOffsetOutputShapeSize = 2;
 }  // namespace
-
-template <typename T>
-void ConcatOffsetCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void ConcatOffsetCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   cnode_ptr_ = kernel_node;
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -42,12 +42,18 @@ void ConcatOffsetCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
                       << "', the 'axis' should be less than the dimension of 'input_x', but got 'axis': " << axis_
                       << ", and the dimension of 'input_x': " << input_1_shape.size();
   }
-}
 
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Concat offset does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = func_list_[index].second;
+}
 template <typename T>
-bool ConcatOffsetCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOffsetOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();
   if (!node_) {
@@ -94,5 +100,37 @@ bool ConcatOffsetCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &
   }
   return true;
 }
+
+std::vector<std::pair<KernelAttr, ConcatOffsetCpuKernelMod::ConcatOffsetFunc>> ConcatOffsetCpuKernelMod::func_list_ = {
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
+   &ConcatOffsetCpuKernelMod::LaunchKernel<bool>}};  // namespace kernel
+
+std::vector<KernelAttr> ConcatOffsetCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, ConcatOffsetFunc> &pair) { return pair.first; });
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ConcatOffset, ConcatOffsetCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

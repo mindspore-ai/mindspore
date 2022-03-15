@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
@@ -27,6 +28,7 @@ namespace kernel {
 class ConvGradInputCpuKernelMod : public MKLCpuKernelMod {
  public:
   ConvGradInputCpuKernelMod() = default;
+  explicit ConvGradInputCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~ConvGradInputCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -34,20 +36,14 @@ class ConvGradInputCpuKernelMod : public MKLCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   size_t weight_index_{0};
   size_t diff_dst_index_{1};
+  std::string kernel_type_;
 };
-
-MS_REG_CPU_KERNEL(
-  Conv2DBackpropInput,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ConvGradInputCpuKernelMod)
-
-MS_REG_CPU_KERNEL(
-  Conv3DBackpropInput,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ConvGradInputCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

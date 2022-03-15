@@ -23,8 +23,11 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <map>
+#include <set>
 
 #include "kernel/kernel.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -145,8 +148,21 @@ class NativeCpuKernelMod : public CpuKernelMod {
 
   ParallelSearchInfo parallel_search_info_;
 
+  static std::vector<KernelAttr> GetCpuSupportedList(const std::string &kernel_name) {
+    auto temp_mod = kernel::Factory<NativeCpuKernelMod>::Instance().Create(kernel_name);
+    if (temp_mod == nullptr) {
+      MS_LOG(ERROR) << "Get cpu supported list failed!";
+      return std::vector<KernelAttr>{};
+    }
+    return temp_mod->GetAllSupportedList(kernel_name);
+  }
+
+  void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
+
  protected:
   virtual void InitInputOutputSize(const CNodePtr &kernel_node);
+  virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
+
   CNodeWeakPtr cnode_ptr_;
 
   template <typename T>
@@ -162,6 +178,28 @@ class NativeCpuKernelMod : public CpuKernelMod {
 
     return reinterpret_cast<T *>(addr_list[index]->addr);
   }
+
+ private:
+  std::vector<KernelAttr> GetAllSupportedList(const std::string &kernel_name);
+  std::vector<KernelAttr> GetSupportFromOpLib(const std::string &kernel_name);
+  std::vector<TypeId> GetInputDtypes(const CNodePtr &kernel_node);
+  std::vector<std::string> GetInputFormats(const CNodePtr &kernel_node);
+  std::vector<TypeId> GetOutputDtypes(const CNodePtr &kernel_node);
+  std::vector<std::string> GetOutputFormats(const CNodePtr &kernel_node);
+  static std::map<std::string, std::vector<KernelAttr>> support_map_;
+  static std::set<std::string> initialize_;
+};
+
+class CpuKernelFunc {
+ public:
+  CpuKernelFunc() = default;
+  virtual ~CpuKernelFunc() = default;
+  virtual bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                       const std::vector<AddressPtr> &outputs) = 0;
+  virtual void InitFunc(const CNodePtr &kernel_node) {}
+  virtual void InitInputOutputSize(const CNodePtr &kernel_node, std::vector<size_t> *input_size_list,
+                                   std::vector<size_t> *output_size_list, std::vector<size_t> *workspace_size_list) {}
+  ParallelSearchInfo parallel_search_info_;
 };
 
 class CPUKernelUtils {
@@ -248,6 +286,8 @@ class AxisIterator {
   size_t inner_size_{0};
   size_t axis_offset_{0};
 };
+
+int Sign(float x);
 }  // namespace kernel
 }  // namespace mindspore
 

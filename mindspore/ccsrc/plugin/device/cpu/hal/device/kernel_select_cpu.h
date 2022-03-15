@@ -31,52 +31,6 @@ namespace cpu {
 using DataType = std::pair<TypeId, std::string>;
 
 void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
-// Indicate whether the kernel input/output number are variable.
-bool IsDynamicParamKernel(const std::string &op_name);
-
-class KernelAttr {
- public:
-  KernelAttr() : all_same_(0) {}
-  ~KernelAttr() = default;
-
-  KernelAttr &AddInputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT) {
-    input_type_.emplace_back(ms_type, format);
-    return *this;
-  }
-
-  KernelAttr &AddOutputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT) {
-    output_type_.emplace_back(ms_type, format);
-    return *this;
-  }
-
-  KernelAttr &SetAllSameAttr(bool all_same) {
-    all_same_ = all_same;
-    return *this;
-  }
-
-  KernelAttr &AddOutInRef(size_t output_index, size_t input_index) {
-    out_in_ref_map_[output_index] = input_index;
-    return *this;
-  }
-
-  const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
-  const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
-  bool GetAllSame() const { return all_same_; }
-  void SetInputAttrList(const std::vector<DataType> &addr_list) {
-    input_type_.assign(addr_list.begin(), addr_list.end());
-  }
-
-  size_t GetInputSize() const { return input_type_.size(); }
-  size_t GetOutputSize() const { return output_type_.size(); }
-  const OutputInputRefMap &GetOutInRefMap() const { return out_in_ref_map_; }
-
- private:
-  std::vector<DataType> input_type_;
-  std::vector<DataType> output_type_;
-  // The map between kernel's output and input ref relationship.
-  OutputInputRefMap out_in_ref_map_;
-  bool all_same_;
-};
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

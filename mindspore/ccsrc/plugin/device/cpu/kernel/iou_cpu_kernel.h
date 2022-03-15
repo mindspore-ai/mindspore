@@ -17,23 +17,34 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IOU_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class IOUCpuKernelMod : public NativeCpuKernelMod {
  public:
   IOUCpuKernelMod() = default;
   ~IOUCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using IOUFunc = std::function<bool(IOUCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, IOUFunc>> func_list_;
+  IOUFunc kernel_func_;
   size_t anchor_boxes_size_{0};
   size_t gt_boxes_size_{0};
   size_t iou_size_{0};
@@ -42,13 +53,6 @@ class IOUCpuKernelMod : public NativeCpuKernelMod {
   enum iou_mod_ { IOU_MODE, IOF_MODE };
   int mode_{IOU_MODE};
 };
-
-MS_REG_CPU_KERNEL_T(
-  IOU, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  IOUCpuKernelMod, float)
-MS_REG_CPU_KERNEL_T(
-  IOU, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  IOUCpuKernelMod, float16)
 }  // namespace kernel
 }  // namespace mindspore
 

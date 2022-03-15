@@ -20,14 +20,17 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
-
+#include <map>
+#include <string>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kUnkown = "Unknown";
 class PoolingCpuKernelMod : public MKLCpuKernelMod {
  public:
   PoolingCpuKernelMod() = default;
+  explicit PoolingCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~PoolingCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -47,21 +50,15 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   std::vector<float> padding_invalid_;
   std::vector<float> kernel_;
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   void InitFields(const CNodePtr &kernel_node);
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
   size_t workspace_size_{0};
+  std::string kernel_type_{kUnkown};
 };
-
-MS_REG_CPU_KERNEL(MaxPool, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  PoolingCpuKernelMod)
-MS_REG_CPU_KERNEL(MaxPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  PoolingCpuKernelMod)
-MS_REG_CPU_KERNEL(AvgPool, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  PoolingCpuKernelMod)
-MS_REG_CPU_KERNEL(AvgPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  PoolingCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

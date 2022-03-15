@@ -20,12 +20,12 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class HSigmoidGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   HSigmoidGradCpuKernelMod() = default;
@@ -34,18 +34,20 @@ class HSigmoidGradCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using HSigmoidGradFunc = std::function<bool(HSigmoidGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                              const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, HSigmoidGradFunc>> func_list_;
+  HSigmoidGradFunc kernel_func_;
   std::vector<size_t> x_shape_;
   uint64_t tensor_size_ = 1;
 };
-
-MS_REG_CPU_KERNEL_T(HSigmoidGrad, KernelAttr(), HSigmoidGradCpuKernelMod, int8_t);
-MS_REG_CPU_KERNEL_T(HSigmoidGrad, KernelAttr(), HSigmoidGradCpuKernelMod, int16_t);
-MS_REG_CPU_KERNEL_T(HSigmoidGrad, KernelAttr(), HSigmoidGradCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(HSigmoidGrad, KernelAttr(), HSigmoidGradCpuKernelMod, int64_t);
-MS_REG_CPU_KERNEL_T(HSigmoidGrad, KernelAttr(), HSigmoidGradCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSIGMOID_GRAD_CPU_KERNEL_H_

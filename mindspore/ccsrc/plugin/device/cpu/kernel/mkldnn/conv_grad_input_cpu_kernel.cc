@@ -24,6 +24,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr auto kConv2DBackpropInput = "Conv2DBackpropInput";
+constexpr auto kConv3DBackpropInput = "Conv3DBackpropInput";
 constexpr size_t kConvGradInputInputsNum = 2;
 constexpr size_t kConvGradInputOutputsNum = 1;
 }  // namespace
@@ -112,5 +114,28 @@ bool ConvGradInputCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   ExecutePrimitive();
   return true;
 }
+
+std::vector<KernelAttr> ConvGradInputCpuKernelMod::GetOpSupport() {
+  static std::map<std::string, std::vector<KernelAttr>> support_list_map = {{kConv2DBackpropInput,
+                                                                             {KernelAttr()
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddOutputAttr(kNumberTypeFloat32)}},
+                                                                            {kConv3DBackpropInput,
+                                                                             {KernelAttr()
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddInputAttr(kNumberTypeFloat32)
+                                                                                .AddOutputAttr(kNumberTypeFloat32)}}};
+  auto iter = support_list_map.find(kernel_type_);
+  if (iter == support_list_map.end()) {
+    MS_LOG(EXCEPTION) << "ConvGradInput does not support " << kernel_type_;
+  }
+  return iter->second;
+}
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Conv2DBackpropInput,
+                                 []() { return std::make_shared<ConvGradInputCpuKernelMod>(kConv2DBackpropInput); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Conv3DBackpropInput,
+                                 []() { return std::make_shared<ConvGradInputCpuKernelMod>(kConv3DBackpropInput); });
 }  // namespace kernel
 }  // namespace mindspore

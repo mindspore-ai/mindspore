@@ -20,7 +20,7 @@
 #include <memory>
 #include <unordered_map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,6 +37,21 @@ class PadAndShiftCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeInt32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
+
  private:
   size_t batch_size_{1};
   size_t cum_sum_size_{1};
@@ -45,21 +60,7 @@ class PadAndShiftCpuKernelMod : public NativeCpuKernelMod {
   CNodeWeakPtr node_wpt_;
 };
 
-MS_REG_CPU_KERNEL(PadAndShift,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  PadAndShiftCpuKernelMod);
-
-MS_REG_CPU_KERNEL(PadAndShift,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  PadAndShiftCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PadAndShift, PadAndShiftCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

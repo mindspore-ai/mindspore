@@ -17,28 +17,49 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_LU_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_LU_CPU_KERNEL_H_
 
+#include <tuple>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class LUCpuKernelMod : public NativeCpuKernelMod {
  public:
   LUCpuKernelMod() = default;
   ~LUCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  T GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j);
+  template <typename T>
+  bool UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k, size_t rows);
+  template <typename T>
+  void SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j, const T &value);
+  template <typename T>
+  void InitIOSize(const CNodePtr &kernel_node);
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using LUFunc = std::function<bool(LUCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                    const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using InitFunc = std::function<void(LUCpuKernelMod *, const CNodePtr &)>;
+  static std::vector<std::tuple<KernelAttr, LUFunc, InitFunc>> func_list_;
+  LUFunc kernel_func_;
+  InitFunc init_io_func_;
+
+  void InitInputOutputSize(const CNodePtr &kernel_node) override { init_io_func_(this, kernel_node); }
+
   void InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
   void InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
-  T GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j);
-  bool UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k, size_t rows);
-  void SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j, const T &value);
   size_t batch_size_{1};
   size_t a_row_{1};
   size_t a_col_{1};
@@ -51,21 +72,6 @@ class LUCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kNumberTypeFloat32};
   int *batch_pivots_{nullptr};
 };
-
-MS_REG_CPU_KERNEL_T(LU,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeInt32),
-                    LUCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(LU,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddOutputAttr(kNumberTypeFloat64)
-                      .AddOutputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeInt32),
-                    LUCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 

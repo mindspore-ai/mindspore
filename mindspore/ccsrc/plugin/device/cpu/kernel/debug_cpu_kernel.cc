@@ -44,5 +44,13 @@ bool DebugCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   }
   return true;
 }
+
+std::vector<KernelAttr> DebugCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Debug, DebugCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

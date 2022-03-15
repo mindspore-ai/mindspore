@@ -18,8 +18,33 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <utility>
+#include <algorithm>
+#include <memory>
+
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr auto kReal = "Real";
+constexpr auto kImag = "Imag";
+constexpr auto kConj = "Conj";
+
+template <typename T, typename S>
+class UnaryOpCpuKernelFunc : public CpuKernelFunc {
+ public:
+  UnaryOpCpuKernelFunc() = default;
+  ~UnaryOpCpuKernelFunc() override = default;
+  using UnaryOpFunc = std::function<void(const T *, S *, size_t, size_t)>;
+  void InitFunc(const CNodePtr &kernel_node) override;
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  void GetUnaryOpFunc();
+  UnaryOpFunc unary_op_func_{nullptr};
+  std::string kernel_name_;
+};
+
 template <typename T, typename S>
 void Real(const T *input, S *output, size_t start, size_t end) {
   if (!std::is_same<S, complex64>::value && !std::is_same<S, complex128>::value) {
@@ -55,7 +80,7 @@ void Conj(const T *input, S *output, size_t start, size_t end) {
 }
 
 template <typename T, typename S>
-void UnaryOpCpuKernelMod<T, S>::GetUnaryOpFunc() {
+void UnaryOpCpuKernelFunc<T, S>::GetUnaryOpFunc() {
   if constexpr (std::is_same<T, complex64>::value || std::is_same<T, complex128>::value) {
     static std::map<std::string, UnaryOpFunc> kComplexSupportedTypeMap = {{prim::kPrimReal->name(), &Real<T, S>},
                                                                           {prim::kPrimImag->name(), &Imag<T, S>},
@@ -71,14 +96,14 @@ void UnaryOpCpuKernelMod<T, S>::GetUnaryOpFunc() {
 }
 
 template <typename T, typename S>
-void UnaryOpCpuKernelMod<T, S>::InitKernel(const CNodePtr &kernel_node) {
+void UnaryOpCpuKernelFunc<T, S>::InitFunc(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   GetUnaryOpFunc();
 }
 
 template <typename T, typename S>
-bool UnaryOpCpuKernelMod<T, S>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
+bool UnaryOpCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                         const std::vector<AddressPtr> &outputs) {
   auto input = inputs.front();
   auto output = outputs.front();
   const auto input_addr = reinterpret_cast<T *>(input->addr);
@@ -92,5 +117,117 @@ bool UnaryOpCpuKernelMod<T, S>::Launch(const std::vector<AddressPtr> &inputs, co
   }
   return true;
 }
+
+template <typename T, typename S>
+std::shared_ptr<CpuKernelFunc> SpecializeUnaryFunc() {
+  return std::make_shared<UnaryOpCpuKernelFunc<T, S>>();
+}
+using UnaryOpCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>> kernel_attr_list = {
+  {kReal,
+   {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeUnaryFunc<complex128, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeUnaryFunc<complex64, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeUnaryFunc<char, char>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeUnaryFunc<int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeUnaryFunc<int32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeUnaryFunc<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     SpecializeUnaryFunc<uint16_t, uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     SpecializeUnaryFunc<uint32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     SpecializeUnaryFunc<uint64_t, uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeUnaryFunc<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeUnaryFunc<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}},
+  {kImag,
+   {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeUnaryFunc<complex128, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeUnaryFunc<complex64, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeUnaryFunc<char, char>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeUnaryFunc<int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeUnaryFunc<int32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeUnaryFunc<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     SpecializeUnaryFunc<uint16_t, uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     SpecializeUnaryFunc<uint32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     SpecializeUnaryFunc<uint64_t, uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeUnaryFunc<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeUnaryFunc<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}},
+  {kConj,
+   {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     SpecializeUnaryFunc<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     SpecializeUnaryFunc<complex64, complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeUnaryFunc<char, char>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeUnaryFunc<int16_t, int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeUnaryFunc<int32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeUnaryFunc<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     SpecializeUnaryFunc<uint16_t, uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     SpecializeUnaryFunc<uint32_t, uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     SpecializeUnaryFunc<uint64_t, uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeUnaryFunc<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeUnaryFunc<double, double>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}}};
+}  // namespace
+
+void UnaryOpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  if (kernel_name_ != kernel_type_) {
+    MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
+  }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << kernel_type_ << " does not support this kernel data type: " << kernel_attr;
+  }
+
+  func_obj_ = kernel_attr_list[kernel_type_][index].second();
+  func_obj_->InitFunc(kernel_node);
+}
+
+std::vector<KernelAttr> UnaryOpCpuKernelMod::GetOpSupport() {
+  auto iter = kernel_attr_list.find(kernel_type_);
+  if (iter == kernel_attr_list.end()) {
+    MS_LOG(EXCEPTION) << "UnaryOp cpu does not support " << kernel_type_;
+  }
+
+  std::vector<KernelAttr> support_list;
+  std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, UnaryOpCpuFuncCreator> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Real,
+                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(kReal); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Imag,
+                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(kImag); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Conj,
+                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(kConj); });
 }  // namespace kernel
 }  // namespace mindspore

@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/eigen/eig_cpu_kernel.h"
+#include <algorithm>
 #include <type_traits>
+#include <utility>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "utils/ms_utils.h"
 #include "Eigen/Eigenvalues"
@@ -28,8 +30,7 @@ constexpr size_t kOutputsNumNV = 1;
 constexpr size_t kOutputsNumV = 2;
 }  // namespace
 
-template <typename T, typename C>
-void EigCpuKernelMod<T, C>::InitMatrixInfo(const std::vector<size_t> &shape) {
+void EigCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape) {
   if (shape.size() < kShape2dDims) {
     MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', the rank of parameter 'a' must be at least 2, but got "
                      << shape.size() << " dimensions.";
@@ -48,8 +49,7 @@ void EigCpuKernelMod<T, C>::InitMatrixInfo(const std::vector<size_t> &shape) {
   batch_size_ /= (row_size_ * col_size_);
 }
 
-template <typename T, typename C>
-void EigCpuKernelMod<T, C>::InitKernel(const CNodePtr &kernel_node) {
+void EigCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   // If compute_v_ is true, then: w, v = Eig(a)
   // If compute_v_ is false, then: w = Eig(a)
@@ -63,10 +63,17 @@ void EigCpuKernelMod<T, C>::InitKernel(const CNodePtr &kernel_node) {
   CHECK_KERNEL_OUTPUTS_NUM(output_num, expect_output_num, kernel_name_);
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   InitMatrixInfo(input_shape);
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Eig does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T, typename C>
-bool EigCpuKernelMod<T, C>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool EigCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_w_addr = reinterpret_cast<C *>(outputs[0]->addr);
@@ -92,5 +99,46 @@ bool EigCpuKernelMod<T, C>::Launch(const std::vector<AddressPtr> &inputs, const 
   }
   return true;
 }
+
+std::vector<std::pair<KernelAttr, EigCpuKernelMod::EigFunc>> EigCpuKernelMod::func_list_ = {
+  // If compute_v is false.
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
+   &EigCpuKernelMod::LaunchKernel<float, float_complex>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
+   &EigCpuKernelMod::LaunchKernel<double, double_complex>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &EigCpuKernelMod::LaunchKernel<float_complex, float_complex>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &EigCpuKernelMod::LaunchKernel<double_complex, double_complex>},
+  // If compute_v is true.
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &EigCpuKernelMod::LaunchKernel<float, float_complex>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &EigCpuKernelMod::LaunchKernel<double, double_complex>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &EigCpuKernelMod::LaunchKernel<float_complex, float_complex>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &EigCpuKernelMod::LaunchKernel<double_complex, double_complex>}};
+
+std::vector<KernelAttr> EigCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, EigFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Eig, EigCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

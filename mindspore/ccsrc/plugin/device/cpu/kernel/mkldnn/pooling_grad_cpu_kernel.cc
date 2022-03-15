@@ -172,5 +172,14 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
   ExecutePrimitive();
   return true;
 }
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPoolGrad,
+                                 []() { return std::make_shared<PoolingGradCpuKernelMod>(kAvgPoolGrad); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool3DGrad,
+                                 []() { return std::make_shared<PoolingGradCpuKernelMod>(kAvgPool3DGrad); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPoolGrad,
+                                 []() { return std::make_shared<PoolingGradCpuKernelMod>(kMaxPoolGrad); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool3DGrad,
+                                 []() { return std::make_shared<PoolingGradCpuKernelMod>(kMaxPool3DGrad); });
 }  // namespace kernel
 }  // namespace mindspore

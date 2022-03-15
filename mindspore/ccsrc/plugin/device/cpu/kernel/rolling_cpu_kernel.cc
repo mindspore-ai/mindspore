@@ -18,13 +18,71 @@
 #include <map>
 #include <limits>
 #include <algorithm>
+#include <string>
+#include <memory>
+#include <utility>
 #include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
 using rolling::Method;
+
 template <typename T, typename S>
-void RollingCpuKernelMod<T, S>::InitKernel(const CNodePtr &kernel_node) {
+class RollingCpuKernelFunc : public CpuKernelFunc {
+ public:
+  RollingCpuKernelFunc() = default;
+  ~RollingCpuKernelFunc() override = default;
+
+  void InitFunc(const CNodePtr &kernel_node) override;
+
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  void InitInputOutputSize(const CNodePtr &, std::vector<size_t> *, std::vector<size_t> *,
+                           std::vector<size_t> *workspace_size_list) override {
+    size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
+    // input values
+    (void)workspace_size_list->emplace_back((sizeof(size_t) * element_size));
+  }
+
+ private:
+  void RollingBoundsCalculate();
+  void MethodSwitch();
+  S Var(const T *input_addr, const size_t *ids, size_t start, size_t end) const {
+    // float for division
+    float n = SizeToFloat(end - start);
+    T sum1 = 0;
+    for (size_t x = start; x < end; ++x) {
+      sum1 += input_addr[ids[x]];
+    }
+    double mean = sum1 / n;
+    double sum2 = 0;
+    for (size_t x = start; x < end; ++x) {
+      double diff = input_addr[ids[x]] - mean;
+      sum2 += diff * diff;
+    }
+    // ddof = 1
+    return sum2 / (n - 1);
+  }
+
+  int32_t window_{0};
+  int64_t min_periods_{0};
+  bool center_{false};
+  std::string closed_{};
+  rolling::Method method_{};
+  std::function<S(const T *values, const size_t *ids, size_t start, size_t end)> reduceMethod_{};
+  // shape info
+  AxisIterator axisIterator_{};
+  // rolling info
+  std::vector<size_t> starts_{};
+  std::vector<size_t> ends_{};
+  std::string kernel_name_;
+};
+
+template <typename T, typename S>
+void RollingCpuKernelFunc<T, S>::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -63,15 +121,7 @@ void RollingCpuKernelMod<T, S>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T, typename S>
-void RollingCpuKernelMod<T, S>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
-  // input values
-  (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
-}
-
-template <typename T, typename S>
-void RollingCpuKernelMod<T, S>::RollingBoundsCalculate() {
+void RollingCpuKernelFunc<T, S>::RollingBoundsCalculate() {
   int offset = 0;
   if (center_) {
     offset = (window_ - 1) / 2;
@@ -99,7 +149,7 @@ void RollingCpuKernelMod<T, S>::RollingBoundsCalculate() {
 }
 
 template <typename T, typename S>
-void RollingCpuKernelMod<T, S>::MethodSwitch() {
+void RollingCpuKernelFunc<T, S>::MethodSwitch() {
   switch (method_) {
     case Method::Max:
       reduceMethod_ = [](const T *input_addr, const size_t *ids, size_t start, size_t end) {
@@ -158,8 +208,9 @@ void RollingCpuKernelMod<T, S>::MethodSwitch() {
 }
 
 template <typename T, typename S>
-bool RollingCpuKernelMod<T, S>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
+bool RollingCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto workspace_addr = reinterpret_cast<size_t *>(workspace[0]->addr);
   auto output_addr = reinterpret_cast<S *>(outputs[0]->addr);
@@ -203,5 +254,47 @@ bool RollingCpuKernelMod<T, S>::Launch(const std::vector<AddressPtr> &inputs, co
   ParallelLaunch(tasks);
   return true;
 }
+
+template <typename T, typename S>
+std::shared_ptr<CpuKernelFunc> SpecializeRollingFunc() {
+  return std::make_shared<RollingCpuKernelFunc<T, S>>();
+}
+using SpecializeRollingFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+static std::vector<std::pair<KernelAttr, SpecializeRollingFuncCreator>> kernel_attr_list = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   SpecializeRollingFunc<float, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   SpecializeRollingFunc<double, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   SpecializeRollingFunc<int32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   SpecializeRollingFunc<int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+   SpecializeRollingFunc<int32_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+   SpecializeRollingFunc<int64_t, double>}};
+}  // namespace
+
+void RollingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Arithmetic does not support this kernel data type: " << kernel_attr;
+  }
+
+  func_obj_ = kernel_attr_list[index].second();
+  func_obj_->InitFunc(kernel_node);
+}
+
+std::vector<KernelAttr> RollingCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(kernel_attr_list.begin(), kernel_attr_list.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, SpecializeRollingFuncCreator> &pair) { return pair.first; });
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Rolling, RollingCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/shift_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 #include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void ShiftCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void ShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -62,12 +63,18 @@ void ShiftCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     copy_dst_begin_ = 0;
     copy_size_ = SizeToLong(input_shape[axis]) + periods_;
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Shift does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool ShiftCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                  const std::vector<AddressPtr> & /* workspace */,
-                                  const std::vector<AddressPtr> &outputs) {
+bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                     const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << inputs.size()
                       << " input(s).";
@@ -137,5 +144,26 @@ bool ShiftCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
   ParallelLaunch(tasks);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, ShiftCpuKernelMod::ShiftFunc>> ShiftCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+   &ShiftCpuKernelMod::LaunchKernel<bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &ShiftCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &ShiftCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &ShiftCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &ShiftCpuKernelMod::LaunchKernel<int64_t>}};
+
+std::vector<KernelAttr> ShiftCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, ShiftFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Shift, ShiftCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

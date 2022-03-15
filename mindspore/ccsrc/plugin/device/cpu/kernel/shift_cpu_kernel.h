@@ -17,13 +17,13 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SORT_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class ShiftCpuKernelMod : public NativeCpuKernelMod {
  public:
   ShiftCpuKernelMod() = default;
@@ -32,12 +32,25 @@ class ShiftCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using ShiftFunc =
+    std::function<bool(ShiftCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, ShiftFunc>> func_list_;
+  ShiftFunc kernel_func_;
+
   // inputs
   int64_t periods_{0};
-  T fill_value_{0};
 
   // slice info
   AxisIterator axisIterator_{};
@@ -50,29 +63,6 @@ class ShiftCpuKernelMod : public NativeCpuKernelMod {
   int64_t fill_begin_{0};
   int64_t fill_size_{0};
 };
-
-MS_REG_CPU_KERNEL_T(
-  Shift, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ShiftCpuKernelMod, bool)
-
-MS_REG_CPU_KERNEL_T(
-  Shift,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ShiftCpuKernelMod, float)
-
-MS_REG_CPU_KERNEL_T(
-  Shift,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  ShiftCpuKernelMod, double)
-
-MS_REG_CPU_KERNEL_T(
-  Shift, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ShiftCpuKernelMod, int32_t)
-
-MS_REG_CPU_KERNEL_T(
-  Shift, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ShiftCpuKernelMod, int64_t)
-
 }  // namespace kernel
 }  // namespace mindspore
 

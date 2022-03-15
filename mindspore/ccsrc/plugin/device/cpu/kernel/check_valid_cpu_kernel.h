@@ -18,14 +18,14 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHECK_VALID_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr size_t COORDINATE = 4;
-template <typename T>
 class CheckValidCpuKernelMod : public NativeCpuKernelMod {
  public:
   CheckValidCpuKernelMod() = default;
@@ -33,33 +33,29 @@ class CheckValidCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
   void CheckParams(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using CheckValidFunc =
+    std::function<bool(CheckValidCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, CheckValidFunc>> func_list_;
+  CheckValidFunc kernel_func_;
   std::vector<size_t> anchor_box_shape_;
   std::vector<size_t> img_metas_shape_;
   std::vector<size_t> output_shape_;
 };
-
-MS_REG_CPU_KERNEL_T(
-  CheckValid,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  CheckValidCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(
-  CheckValid,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  CheckValidCpuKernelMod, float16);
-
-MS_REG_CPU_KERNEL_T(
-  CheckValid, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-  CheckValidCpuKernelMod, int16_t);
-
-MS_REG_CPU_KERNEL_T(
-  CheckValid, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-  CheckValidCpuKernelMod, uint8_t);
 }  // namespace kernel
 }  // namespace mindspore
 

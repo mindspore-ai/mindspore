@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,10 +31,16 @@ class TensorArrayCloseCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &kernel_node) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
 };
 
-MS_REG_CPU_KERNEL(TensorArrayClose, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  TensorArrayCloseCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayClose, TensorArrayCloseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

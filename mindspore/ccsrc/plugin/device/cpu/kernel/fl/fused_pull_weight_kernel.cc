@@ -15,11 +15,23 @@
  */
 
 #include "plugin/device/cpu/kernel/fl/fused_pull_weight_kernel.h"
+#include <algorithm>
+#include <utility>
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL_T(
-  FusedPullWeight, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  FusedPullWeightKernelMod, float);
+std::vector<std::pair<KernelAttr, FusedPullWeightKernelMod::FusedPullWeightInitFunc>>
+  FusedPullWeightKernelMod::func_list_ = {
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &FusedPullWeightKernelMod::InitFunc<float>}};
+
+std::vector<KernelAttr> FusedPullWeightKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, FusedPullWeightInitFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedPullWeight, FusedPullWeightKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

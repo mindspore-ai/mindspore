@@ -347,5 +347,26 @@ void CTCLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     }
   }
 }
+
+std::vector<KernelAttr> CTCLossCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat16)
+                                                   .AddInputAttr(kNumberTypeInt64)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddOutputAttr(kNumberTypeFloat16)
+                                                   .AddOutputAttr(kNumberTypeFloat16),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat32)
+                                                   .AddInputAttr(kNumberTypeInt64)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddOutputAttr(kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat32)};
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CTCLoss, CTCLossCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

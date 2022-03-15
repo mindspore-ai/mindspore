@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,6 +36,15 @@ class EmbeddingLookUpCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
+
+ protected:
   template <typename T>
   void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
@@ -47,20 +56,7 @@ class EmbeddingLookUpCpuKernelMod : public NativeCpuKernelMod {
   CNodeWeakPtr node_wpt_;
 };
 
-MS_REG_CPU_KERNEL(
-  EmbeddingLookup,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  EmbeddingLookUpCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  EmbeddingLookup,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  EmbeddingLookUpCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  EmbeddingLookup,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  EmbeddingLookUpCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EmbeddingLookup, EmbeddingLookUpCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

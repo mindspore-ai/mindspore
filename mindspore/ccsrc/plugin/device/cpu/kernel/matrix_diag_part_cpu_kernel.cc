@@ -20,8 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void MatrixDiagPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void MatrixDiagPartCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   out_shapes_ = shapes_;
   dim_size_ = shapes_.size();
@@ -37,12 +36,18 @@ void MatrixDiagPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   auto alignment = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, ALIGNMENT);
   alignment_ = GetAlignments(alignment);
   node_wpt_ = kernel_node;
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "MatrixDiagPart does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool MatrixDiagPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool MatrixDiagPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
   T *in_value = reinterpret_cast<T *>(inputs[0]->addr);
   // K is 2 elements vector, k[0] is lower part, k[0]<0, k[1] is upper part,
   int64_t *k_range = reinterpret_cast<int64_t *>(inputs[1]->addr);
@@ -104,5 +109,40 @@ bool MatrixDiagPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
   ParallelLaunch(func, out_range_size_ * (u - l + 1) * max_diag_len);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, MatrixDiagPartCpuKernelMod::MatrixDiagPartFunc>>
+  MatrixDiagPartCpuKernelMod::func_list_ = {{KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt32),
+                                             &MatrixDiagPartCpuKernelMod::LaunchKernel<int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeInt64),
+                                             &MatrixDiagPartCpuKernelMod::LaunchKernel<int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat32)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeFloat32)
+                                               .AddOutputAttr(kNumberTypeFloat32),
+                                             &MatrixDiagPartCpuKernelMod::LaunchKernel<float>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeFloat64)
+                                               .AddOutputAttr(kNumberTypeFloat64),
+                                             &MatrixDiagPartCpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> MatrixDiagPartCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, MatrixDiagPartFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixDiagPart, MatrixDiagPartCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

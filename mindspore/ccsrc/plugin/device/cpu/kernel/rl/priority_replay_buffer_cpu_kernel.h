@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <random>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/rl/priority_replay_buffer.h"
 
 namespace mindspore {
@@ -39,6 +39,12 @@ class PriorityReplayBufferCreateCpuKernel : public NativeCpuKernelMod {
   // Execute kernel.
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
 
  private:
   int64_t handle_{-1};
@@ -93,6 +99,13 @@ class PriorityReplayBufferUpdateCpuKernel : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
+
  private:
   int64_t handle_{-1};
   std::vector<size_t> indices_shape_;
@@ -100,14 +113,10 @@ class PriorityReplayBufferUpdateCpuKernel : public NativeCpuKernelMod {
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
 
-MS_REG_CPU_KERNEL(PriorityReplayBufferCreate, KernelAttr().AddOutputAttr(kNumberTypeInt64),
-                  PriorityReplayBufferCreateCpuKernel)
-MS_REG_CPU_KERNEL(PriorityReplayBufferPush, KernelAttr(), PriorityReplayBufferPushCpuKernel)
-MS_REG_CPU_KERNEL(PriorityReplayBufferSample, KernelAttr(), PriorityReplayBufferSampleCpuKernel)
-MS_REG_CPU_KERNEL(
-  PriorityReplayBufferUpdate,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-  PriorityReplayBufferUpdateCpuKernel)
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferCreate, PriorityReplayBufferCreateCpuKernel);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferPush, PriorityReplayBufferPushCpuKernel);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferSample, PriorityReplayBufferSampleCpuKernel);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferUpdate, PriorityReplayBufferUpdateCpuKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

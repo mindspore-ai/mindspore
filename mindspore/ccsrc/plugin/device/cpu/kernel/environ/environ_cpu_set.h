@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,6 +33,61 @@ class EnvironSetCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &node) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt16)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeUInt32)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeUInt16)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeUInt8)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeUInt64)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeFloat16)
+                                                     .AddOutputAttr(kNumberTypeInt64),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeBool)
+                                                     .AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
+
  private:
   // The type of env tensor set.
   TypeId value_type_attr_;
@@ -42,76 +97,7 @@ class EnvironSetCpuKernelMod : public NativeCpuKernelMod {
   size_t value_size_;
 };
 
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt16)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeUInt16)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeUInt8)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
-MS_REG_CPU_KERNEL(EnvironSet,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeBool)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  EnvironSetCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EnvironSet, EnvironSetCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

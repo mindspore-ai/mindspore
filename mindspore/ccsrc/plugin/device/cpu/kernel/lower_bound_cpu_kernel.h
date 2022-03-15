@@ -17,12 +17,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LOWER_BOUND_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-template <typename I, typename O>
 class LowerBoundCpuKernelMod : public NativeCpuKernelMod {
  public:
   LowerBoundCpuKernelMod() = default;
@@ -30,10 +30,21 @@ class LowerBoundCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename I, typename O>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using LowerBoundFunc = std::function<bool(LowerBoundCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, LowerBoundFunc>> func_list_;
+  LowerBoundFunc kernel_func_;
   std::vector<size_t> sorted_x_shape_;
   std::vector<size_t> values_shape_;
   std::vector<size_t> output_shape_;
@@ -41,94 +52,6 @@ class LowerBoundCpuKernelMod : public NativeCpuKernelMod {
   size_t values_num_;
   size_t output_num_;
 };
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-  LowerBoundCpuKernelMod, float16, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-  LowerBoundCpuKernelMod, float, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-  LowerBoundCpuKernelMod, double, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
-  LowerBoundCpuKernelMod, int8_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
-  LowerBoundCpuKernelMod, int16_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  LowerBoundCpuKernelMod, int32_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  LowerBoundCpuKernelMod, int64_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
-  LowerBoundCpuKernelMod, uint8_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
-  LowerBoundCpuKernelMod, uint16_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
-  LowerBoundCpuKernelMod, float16, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-  LowerBoundCpuKernelMod, float, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
-  LowerBoundCpuKernelMod, double, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
-  LowerBoundCpuKernelMod, int8_t, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
-  LowerBoundCpuKernelMod, int16_t, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  LowerBoundCpuKernelMod, int32_t, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  LowerBoundCpuKernelMod, int64_t, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
-  LowerBoundCpuKernelMod, uint8_t, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(
-  LowerBound,
-  KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
-  LowerBoundCpuKernelMod, uint16_t, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

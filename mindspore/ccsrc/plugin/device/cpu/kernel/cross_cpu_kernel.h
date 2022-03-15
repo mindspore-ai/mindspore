@@ -22,7 +22,7 @@
 #include <string>
 #include <complex>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,6 +36,9 @@ class CrossCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   std::vector<size_t> input1_shape_;
   std::vector<size_t> input2_shape_;
@@ -43,67 +46,6 @@ class CrossCpuKernelMod : public NativeCpuKernelMod {
   int64_t dim_;
   TypeId input1_dtype_;
 };
-
-MS_REG_CPU_KERNEL(
-  Cross, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  Cross,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(Cross,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeComplex64)
-                    .AddInputAttr(kNumberTypeComplex64)
-                    .AddOutputAttr(kNumberTypeComplex64),
-                  CrossCpuKernelMod);
-
-MS_REG_CPU_KERNEL(Cross,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeComplex128)
-                    .AddInputAttr(kNumberTypeComplex128)
-                    .AddOutputAttr(kNumberTypeComplex128),
-                  CrossCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

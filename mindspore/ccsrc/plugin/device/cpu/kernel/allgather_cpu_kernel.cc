@@ -45,5 +45,12 @@ bool AllGatherCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   auto input_data_num = inputs[0]->size / sizeof(float);
   return MPIAllGather(input_addr, output_addr, ranks_group_, input_data_num);
 }
+
+std::vector<KernelAttr> AllGatherCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> kernel_attr_list = {
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+  return kernel_attr_list;
+}
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, _HostAllGather, AllGatherCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

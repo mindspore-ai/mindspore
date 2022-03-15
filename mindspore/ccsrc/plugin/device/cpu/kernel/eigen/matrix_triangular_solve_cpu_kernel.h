@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATRIX_TRIANGULAR_SOLVE_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class MatrixTriangularSolveCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixTriangularSolveCpuKernelMod() = default;
@@ -31,10 +31,24 @@ class MatrixTriangularSolveCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   void InitShape(const CNodePtr &kernel_node);
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using MatrixTriangularSolveFunc =
+    std::function<bool(MatrixTriangularSolveCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, MatrixTriangularSolveFunc>> func_list_;
+  MatrixTriangularSolveFunc kernel_func_;
 
   size_t m_{0};
   size_t n_{0};
@@ -43,23 +57,6 @@ class MatrixTriangularSolveCpuKernelMod : public NativeCpuKernelMod {
   bool trans_{false};
   bool unit_diagonal_{false};
 };
-
-MS_REG_CPU_KERNEL_T(
-  SolveTriangular,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  MatrixTriangularSolveCpuKernelMod, float)
-MS_REG_CPU_KERNEL_T(
-  SolveTriangular,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  MatrixTriangularSolveCpuKernelMod, double)
-MS_REG_CPU_KERNEL_T(
-  MatrixTriangularSolve,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  MatrixTriangularSolveCpuKernelMod, float)
-MS_REG_CPU_KERNEL_T(
-  MatrixTriangularSolve,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  MatrixTriangularSolveCpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
 

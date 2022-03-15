@@ -19,14 +19,14 @@
 
 #include <vector>
 #include <algorithm>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUMS = 2;
-template <typename T>
 class BoundingBoxEncodeCpuKernelMod : public NativeCpuKernelMod {
  public:
   BoundingBoxEncodeCpuKernelMod() = default;
@@ -34,24 +34,28 @@ class BoundingBoxEncodeCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using BoundingBoxEncodeFunc =
+    std::function<bool(BoundingBoxEncodeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, BoundingBoxEncodeFunc>> func_list_;
+  BoundingBoxEncodeFunc kernel_func_;
+
+  void InitTaskFunc(const CNodePtr &kernel_node);
   std::vector<float> means_;
   std::vector<float> stds_;
 };
-
-MS_REG_CPU_KERNEL_T(
-  BoundingBoxEncode,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BoundingBoxEncodeCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(
-  BoundingBoxEncode,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BoundingBoxEncodeCpuKernelMod, float16);
-
 }  // namespace kernel
 }  // namespace mindspore
 

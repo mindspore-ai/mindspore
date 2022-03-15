@@ -18,15 +18,15 @@
 
 #include <complex>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-template <typename T>
 class ZerosLikeCpuKernelMod : public NativeCpuKernelMod {
  public:
   ZerosLikeCpuKernelMod() = default;
@@ -34,41 +34,26 @@ class ZerosLikeCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using ZerosLikeFunc =
+    std::function<bool(ZerosLikeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, ZerosLikeFunc>> func_list_;
+  ZerosLikeFunc kernel_func_;
+
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
 };
-
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                    ZerosLikeCpuKernelMod, float16);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    ZerosLikeCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                    ZerosLikeCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                    ZerosLikeCpuKernelMod, int8_t);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                    ZerosLikeCpuKernelMod, int16_t);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    ZerosLikeCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                    ZerosLikeCpuKernelMod, int64_t);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                    ZerosLikeCpuKernelMod, uint8_t);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                    ZerosLikeCpuKernelMod, uint16_t);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                    ZerosLikeCpuKernelMod, uint32_t);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                    ZerosLikeCpuKernelMod, uint64_t);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                    ZerosLikeCpuKernelMod, bool);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-                    ZerosLikeCpuKernelMod, complex64);
-MS_REG_CPU_KERNEL_T(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-                    ZerosLikeCpuKernelMod, complex128);
 }  // namespace kernel
 }  // namespace mindspore
 

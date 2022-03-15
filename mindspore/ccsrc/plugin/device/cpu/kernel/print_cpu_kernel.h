@@ -19,12 +19,12 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class PrintCpuKernelMod : public NativeCpuKernelMod {
  public:
   PrintCpuKernelMod() = default;
@@ -32,54 +32,27 @@ class PrintCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override {
+    return kernel_func_(this, inputs);
+  }
 
-  void LaunchKernel(const std::vector<AddressPtr> &inputs);
-
+  template <typename T>
   TypeId CheckType();
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs);
+  using PrintFunc = std::function<bool(PrintCpuKernelMod *, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, PrintFunc>> func_list_;
+  PrintFunc kernel_func_;
+
   std::vector<std::vector<size_t>> input_shapes_;
   std::vector<size_t> input_sizes_;
 };
-
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, bool)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, int8_t)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, int16_t)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, int)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, int64_t)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, uint8_t)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, uint16_t)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, uint32_t)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, uint64_t)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, float16)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, float)
-MS_REG_CPU_KERNEL_T(Print,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-                    PrintCpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
 

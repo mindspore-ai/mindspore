@@ -17,12 +17,14 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_FL_PUSH_METRICS_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_FL_PUSH_METRICS_H_
 
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <memory>
 #include <functional>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "fl/worker/fl_worker.h"
 
 namespace mindspore {
@@ -31,13 +33,53 @@ namespace kernel {
 constexpr int kRetryDurationOfPushMetrics = 500;
 // Retry for 30 minutes.
 constexpr int kMaxRetryTime = 3600;
-template <typename T>
 class PushMetricsKernelMod : public NativeCpuKernelMod {
  public:
   PushMetricsKernelMod() : fbb_(nullptr), total_iteration_(0) {}
   ~PushMetricsKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+  void Init(const CNodePtr &kernel_node) {
+    MS_EXCEPTION_IF_NULL(kernel_node);
+    fbb_ = std::make_shared<fl::FBBuilder>();
+    MS_EXCEPTION_IF_NULL(fbb_);
+    input_size_list_.push_back(sizeof(float));
+    input_size_list_.push_back(sizeof(float));
+    output_size_list_.push_back(sizeof(float));
+
+    auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      MS_LOG(EXCEPTION) << "PushMetrics does not support this kernel data type: " << kernel_attr;
+    }
+    kernel_func_ = func_list_[index].second;
+  }
+
+  void InitKernel(const CNodePtr &kernel_node) { return; }
+
+ protected:
+  void InitSizeLists() { return; }
+  std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
+  template <typename T>
+  bool BuildPushMetricsReq(const std::shared_ptr<fl::FBBuilder> &fbb, T loss, T accuracy) {
+    MS_EXCEPTION_IF_NULL(fbb);
+    schema::RequestPushMetricsBuilder req_push_metrics_builder(*(fbb.get()));
+    req_push_metrics_builder.add_loss(loss);
+    req_push_metrics_builder.add_accuracy(accuracy);
+    auto req_push_metrics = req_push_metrics_builder.Finish();
+    fbb->Finish(req_push_metrics);
+    return true;
+  }
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &) {
     if (inputs.size() != 2) {
       MS_LOG(EXCEPTION) << "Input number of PushMetricsKernelMod should be " << 2 << ", but got " << inputs.size();
       return false;
@@ -95,30 +137,11 @@ class PushMetricsKernelMod : public NativeCpuKernelMod {
     return true;
   }
 
-  void Init(const CNodePtr &kernel_node) {
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    fbb_ = std::make_shared<fl::FBBuilder>();
-    MS_EXCEPTION_IF_NULL(fbb_);
-    input_size_list_.push_back(sizeof(float));
-    input_size_list_.push_back(sizeof(float));
-    output_size_list_.push_back(sizeof(float));
-  }
-
-  void InitKernel(const CNodePtr &kernel_node) { return; }
-
- protected:
-  void InitSizeLists() { return; }
-
- private:
-  bool BuildPushMetricsReq(const std::shared_ptr<fl::FBBuilder> &fbb, T loss, T accuracy) {
-    MS_EXCEPTION_IF_NULL(fbb);
-    schema::RequestPushMetricsBuilder req_push_metrics_builder(*(fbb.get()));
-    req_push_metrics_builder.add_loss(loss);
-    req_push_metrics_builder.add_accuracy(accuracy);
-    auto req_push_metrics = req_push_metrics_builder.Finish();
-    fbb->Finish(req_push_metrics);
-    return true;
-  }
+  using PushMetricsFunc =
+    std::function<bool(PushMetricsKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, PushMetricsFunc>> func_list_;
+  PushMetricsFunc kernel_func_;
 
   std::shared_ptr<fl::FBBuilder> fbb_;
   size_t total_iteration_;

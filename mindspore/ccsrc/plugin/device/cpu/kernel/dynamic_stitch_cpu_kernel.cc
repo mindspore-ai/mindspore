@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/dynamic_stitch_cpu_kernel.h"
 #include <functional>
 #include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -24,19 +25,13 @@ namespace kernel {
 namespace {
 constexpr size_t kDynamicStitchOutputNum = 1;
 }  // namespace
-
-template <typename T>
-void DynamicStitchCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
-  cnode_ptr_ = kernel_node;
-}
-
 size_t GetShapeSize(const std::vector<size_t> &shape) {
   return std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
 }
 
 template <typename T>
-void DynamicStitchCpuKernelMod<T>::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicStitchOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();
   int first_dim_size = 0;
@@ -84,14 +79,86 @@ void DynamicStitchCpuKernelMod<T>::LaunchKernel(const std::vector<kernel::Addres
       }
     }
   }
-}
-
-template <typename T>
-bool DynamicStitchCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
-  LaunchKernel(inputs, outputs);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, DynamicStitchCpuKernelMod::DynamicStitchFunc>> DynamicStitchCpuKernelMod::func_list_ =
+  {{KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddOutputAttr(kNumberTypeFloat32),
+    &DynamicStitchCpuKernelMod::LaunchKernel<float>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt8)
+      .AddOutputAttr(kNumberTypeInt8),
+    &DynamicStitchCpuKernelMod::LaunchKernel<int8_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt16)
+      .AddOutputAttr(kNumberTypeInt16),
+    &DynamicStitchCpuKernelMod::LaunchKernel<int16_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddOutputAttr(kNumberTypeInt32),
+    &DynamicStitchCpuKernelMod::LaunchKernel<int32_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeInt64)
+      .AddOutputAttr(kNumberTypeInt64),
+    &DynamicStitchCpuKernelMod::LaunchKernel<int64_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeUInt8)
+      .AddOutputAttr(kNumberTypeUInt8),
+    &DynamicStitchCpuKernelMod::LaunchKernel<uint8_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeUInt16)
+      .AddOutputAttr(kNumberTypeUInt16),
+    &DynamicStitchCpuKernelMod::LaunchKernel<uint16_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeUInt32)
+      .AddOutputAttr(kNumberTypeUInt32),
+    &DynamicStitchCpuKernelMod::LaunchKernel<uint32_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeUInt64)
+      .AddOutputAttr(kNumberTypeUInt64),
+    &DynamicStitchCpuKernelMod::LaunchKernel<uint64_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeInt32)
+      .AddInputAttr(kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeBool),
+    &DynamicStitchCpuKernelMod::LaunchKernel<bool>}};
+
+void DynamicStitchCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  cnode_ptr_ = kernel_node;
+
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, DynamicStitchFunc> &pair) { return pair.first; });
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "DynamicStitch does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = func_list_[index].second;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, DynamicStitch, DynamicStitchCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

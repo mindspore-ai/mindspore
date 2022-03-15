@@ -20,13 +20,14 @@
 #include <vector>
 #include <memory>
 #include <thread>
+#include <tuple>
+
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/nnacl/base/split_base.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class SplitCpuKernelMod : public NativeCpuKernelMod {
  public:
   SplitCpuKernelMod() = default;
@@ -39,25 +40,28 @@ class SplitCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  template <typename T>
+  void InitIOSize(const CNodePtr &kernel_node);
 
+  using SplitFunc = std::function<bool(SplitCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using InitIOFunc = std::function<void(SplitCpuKernelMod *, const CNodePtr &)>;
+  static std::vector<std::tuple<KernelAttr, SplitFunc, InitIOFunc>> func_list_;
+  SplitFunc kernel_func_;
+  InitIOFunc init_io_func_;
+
+  template <typename T>
   void LaunchSplit(T *input, T **output, size_t size);
 
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+  void InitInputOutputSize(const CNodePtr &kernel_node) override { init_io_func_(this, kernel_node); }
 
   int64_t axis_{0};
   size_t output_num_{1};
   std::vector<int> input_shape_;
 };
-
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, float16);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, double);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, int32_t);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, uint32_t);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

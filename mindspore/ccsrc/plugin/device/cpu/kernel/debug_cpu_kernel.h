@@ -19,9 +19,10 @@
 
 #include <vector>
 #include <memory>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,10 +35,10 @@ class DebugCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-};
 
-MS_REG_CPU_KERNEL(Debug, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-                  DebugCpuKernelMod);
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+};
 }  // namespace kernel
 }  // namespace mindspore
 

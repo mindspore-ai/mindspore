@@ -20,11 +20,10 @@
 #include <vector>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class PackFwdCpuKernelMod : public NativeCpuKernelMod {
  public:
   PackFwdCpuKernelMod() = default;
@@ -32,29 +31,13 @@ class PackFwdCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return func_obj_->RunFunc(inputs, workspace, outputs);
+  }
 
  private:
-  void PackTensor(T *output, size_t start, size_t end) const;
-
-  int axis_{0};
-  size_t input_num_{1};
-  size_t output_size_{0};
-  size_t dims_behind_axis_{1};
-  std::unique_ptr<T *[]> inputs_host_ { nullptr };
+  std::shared_ptr<CpuKernelFunc> func_obj_;
 };
-
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, int8_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, int16_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, int32_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, int64_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, uint8_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, uint16_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, uint32_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, uint64_t)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, float16)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, float)
-MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackFwdCpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PACK_CPU_KERNEL_H_

@@ -19,7 +19,8 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/kernel_build_info.h"
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
 #include "utils/trace_base.h"
@@ -220,11 +221,12 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
     }
     std::string kernel_name = common::AnfAlgo::GetCNodeName(node);
     std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel =
-      kernel::NativeCpuKernelModFactory::GetInstance().Create(kernel_name, node);
+      kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(kernel_name);
     if (!cpu_kernel) {
       MS_LOG(EXCEPTION) << "Build cpu operator[" << node->fullname_with_scope() << "] failed";
     }
 
+    cpu_kernel->SetCpuRefMapToKernelInfo(node);
     cpu_kernel->Init(node);
     AnfAlgo::SetKernelMod(cpu_kernel, node.get());
   }

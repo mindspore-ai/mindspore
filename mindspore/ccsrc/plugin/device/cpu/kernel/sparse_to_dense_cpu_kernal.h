@@ -20,12 +20,12 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename I, typename T>
 class SparseToDenseCpuKernelMod : public NativeCpuKernelMod {
  public:
   SparseToDenseCpuKernelMod() = default;
@@ -34,109 +34,26 @@ class SparseToDenseCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename I, typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using SparseToDenseFunc =
+    std::function<bool(SparseToDenseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, SparseToDenseFunc>> func_list_;
+  SparseToDenseFunc kernel_func_;
+
   std::vector<size_t> output_shape_;
   size_t values_size_{0};
 };
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeBool)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeBool),
-                      SparseToDenseCpuKernelMod, int32_t, bool);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt8)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt8),
-                      SparseToDenseCpuKernelMod, int32_t, int8_t);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt16),
-                      SparseToDenseCpuKernelMod, int32_t, int16_t);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt32),
-                      SparseToDenseCpuKernelMod, int32_t, int32_t);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt64),
-                      SparseToDenseCpuKernelMod, int32_t, int64_t);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeUInt8)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeUInt8),
-                      SparseToDenseCpuKernelMod, int32_t, uint8_t);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeUInt16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeUInt16),
-                      SparseToDenseCpuKernelMod, int32_t, uint16_t);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeUInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeUInt32),
-                      SparseToDenseCpuKernelMod, int32_t, uint32_t);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeUInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeUInt64),
-                      SparseToDenseCpuKernelMod, int32_t, uint64_t);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      SparseToDenseCpuKernelMod, int32_t, float16);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      SparseToDenseCpuKernelMod, int32_t, float);
-
-MS_REG_CPU_KERNEL_T_S(SparseToDense,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat64),
-                      SparseToDenseCpuKernelMod, int32_t, double);
-
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_TO_DENSE_CPU_KERNEL_H_

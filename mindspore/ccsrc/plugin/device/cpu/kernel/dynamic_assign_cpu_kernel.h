@@ -22,7 +22,7 @@
 #include <unordered_map>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,6 +36,9 @@ class DynamicAssignCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
@@ -45,26 +48,6 @@ class DynamicAssignCpuKernelMod : public NativeCpuKernelMod {
   size_t input_x_dtype_size_{4};
   CNodeWeakPtr node_wpt_;
 };
-
-MS_REG_CPU_KERNEL(
-  DynamicAssign,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  DynamicAssignCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  DynamicAssign,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  DynamicAssignCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  DynamicAssign,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  DynamicAssignCpuKernelMod);
-
-MS_REG_CPU_KERNEL(
-  DynamicAssign,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  DynamicAssignCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

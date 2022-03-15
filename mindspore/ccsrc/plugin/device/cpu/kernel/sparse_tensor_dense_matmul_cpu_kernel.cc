@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/sparse_tensor_dense_matmul_cpu_kernel.h"
+#include <algorithm>
 #include <functional>
+#include <utility>
 
 namespace mindspore {
 namespace kernel {
@@ -28,8 +30,7 @@ constexpr size_t kIndicesSizeNum = 2;
 constexpr size_t kIndices2rdDimNum = 2;
 }  // namespace
 
-template <typename I, typename T>
-void SparseTensorDenseMatmulCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
+void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   adj_st_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
@@ -59,11 +60,17 @@ void SparseTensorDenseMatmulCpuKernelMod<I, T>::InitKernel(const CNodePtr &kerne
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
                       << kSparseTensorDenseMatmulOutputShapeSize << "-D, but got " << output_shape_.size() << "-D";
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename I, typename T>
-bool SparseTensorDenseMatmulCpuKernelMod<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> & /* workspace */,
+bool SparseTensorDenseMatmulCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseMatmulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseMatmulOutputsNum, kernel_name_);
@@ -126,5 +133,45 @@ bool SparseTensorDenseMatmulCpuKernelMod<I, T>::Launch(const std::vector<kernel:
   }
   return true;
 }
+
+std::vector<std::pair<KernelAttr, SparseTensorDenseMatmulCpuKernelMod::SparseTensorDenseMatmulFunc>>
+  SparseTensorDenseMatmulCpuKernelMod::func_list_ = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, double>}};
+
+std::vector<KernelAttr> SparseTensorDenseMatmulCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, SparseTensorDenseMatmulFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseTensorDenseMatmul, SparseTensorDenseMatmulCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

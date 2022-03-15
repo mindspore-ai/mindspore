@@ -15,6 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/roi_align_cpu_kernel.h"
+#include <algorithm>
+#include <memory>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -22,10 +25,45 @@ namespace kernel {
 namespace {
 constexpr size_t kInputSize = 2;
 constexpr size_t kOutputSize = 1;
-}  //  namespace
+template <typename T>
+class ROIAlignCpuKernelFunc : public CpuKernelFunc {
+ public:
+  ROIAlignCpuKernelFunc() = default;
+  ~ROIAlignCpuKernelFunc() override = default;
+
+  void InitFunc(const CNodePtr &kernel_node) override;
+
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  void CheckParam(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+  void bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low, int *x_high,
+                            int *y_high, T *w1, T *w2, T *w3, T *w4);
+
+  void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale, const int sample_num,
+               int roi_end_mode, const int channels, const int height, const int width, const int pooled_height,
+               const int pooled_width, int *offset, int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h,
+               int *roi_bin_grid_w, T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w);
+
+  int pooled_height_{0};
+  int pooled_width_{0};
+  T spatial_scale_{0.0};
+  int sample_num_{0};
+  int roi_end_mode_{0};
+
+  int roi_rows_{0};
+  int roi_cols_{0};
+  int channels_{0};
+  int height_{0};
+  int width_{0};
+
+  std::string kernel_name_;
+};
 
 template <typename T>
-void ROIAlignCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void ROIAlignCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   //  Get the input shapes
@@ -56,9 +94,9 @@ void ROIAlignCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ROIAlignCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool ROIAlignCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   const T *input = reinterpret_cast<T *>(inputs[0]->addr);
   const T *rois = reinterpret_cast<T *>(inputs[1]->addr);
   auto out_data = reinterpret_cast<T *>(outputs[0]->addr);
@@ -119,8 +157,8 @@ bool ROIAlignCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
-void ROIAlignCpuKernelMod<T>::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+void ROIAlignCpuKernelFunc<T>::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kInputSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputSize << ", but got "
                       << inputs.size() << " input(s).";
@@ -133,12 +171,13 @@ void ROIAlignCpuKernelMod<T>::CheckParam(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename T>
-void ROIAlignCpuKernelMod<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low,
-                                                   int *x_high, int *y_high, T *w1, T *w2, T *w3, T *w4) {
+void ROIAlignCpuKernelFunc<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low,
+                                                    int *x_high, int *y_high, T *w1, T *w2, T *w3, T *w4) {
   constexpr float eps = 0.00007;
   const T ZERO = T(0.0);
   const T ONE = T(1.0);
-  if (y < static_cast<T>(-1.0) || y > static_cast<T>(height) || x < static_cast<T>(-1.0) || x > static_cast<T>(width)) {
+  const T NEG_ONE = static_cast<T>(-1.0);
+  if (y < NEG_ONE || y > static_cast<T>(height) || x < NEG_ONE || x > static_cast<T>(width)) {
     *w1 = *w2 = *w3 = *w4 = static_cast<T>(0);
     *x_low = *x_high = *y_low = *y_high = -1;
     return;
@@ -179,11 +218,11 @@ void ROIAlignCpuKernelMod<T>::bilinear_interpolate(const int height, const int w
 }
 
 template <typename T>
-void ROIAlignCpuKernelMod<T>::bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale,
-                                      const int sample_num, int roi_end_mode, const int channels, const int height,
-                                      const int width, const int pooled_height, const int pooled_width, int *offset,
-                                      int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
-                                      T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
+void ROIAlignCpuKernelFunc<T>::bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale,
+                                       const int sample_num, int roi_end_mode, const int channels, const int height,
+                                       const int width, const int pooled_height, const int pooled_width, int *offset,
+                                       int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
+                                       T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
   constexpr int START_W = 0;
   constexpr int START_H = 1;
   constexpr int END_W = 2;
@@ -232,5 +271,39 @@ void ROIAlignCpuKernelMod<T>::bin_box(int thread_idx, const T *roi_boxes, int ro
   *roi_bin_grid_w = (sample_num > 0) ? sample_num : static_cast<int>(floor(roi_width / static_cast<T>(pooled_width)));
   return;
 }
+
+template <typename T>
+std::shared_ptr<CpuKernelFunc> SpecializeROIAlignFunc() {
+  return std::make_shared<ROIAlignCpuKernelFunc<T>>();
+}
+using SpecializeROIAlignFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+static std::vector<std::pair<KernelAttr, SpecializeROIAlignFuncCreator>> kernel_attr_list = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   SpecializeROIAlignFunc<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   SpecializeROIAlignFunc<float16>}};
+}  // namespace
+
+void ROIAlignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "ROIAlign does not support this kernel data type: " << kernel_attr;
+  }
+
+  func_obj_ = kernel_attr_list[index].second();
+  func_obj_->InitFunc(kernel_node);
+}
+
+std::vector<KernelAttr> ROIAlignCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(kernel_attr_list.begin(), kernel_attr_list.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, SpecializeROIAlignFuncCreator> &pair) { return pair.first; });
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ROIAlign, ROIAlignCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

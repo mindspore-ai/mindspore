@@ -69,5 +69,15 @@ void EluGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
+
+std::vector<KernelAttr> EluGradCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list = {
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    KernelAttr().AddInputAttr(kNumberTypeFloat).AddInputAttr(kNumberTypeFloat).AddOutputAttr(kNumberTypeFloat)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EluGrad, EluGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

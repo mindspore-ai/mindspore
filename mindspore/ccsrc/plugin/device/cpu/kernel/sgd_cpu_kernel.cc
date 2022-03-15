@@ -15,8 +15,10 @@
  */
 
 #include "plugin/device/cpu/kernel/sgd_cpu_kernel.h"
+#include <algorithm>
 #include <thread>
 #include <vector>
+#include <utility>
 
 namespace mindspore {
 namespace kernel {
@@ -24,18 +26,23 @@ namespace {
 constexpr size_t kSGDInputsNum = 6;
 constexpr size_t kSGDOutputsNum = 1;
 }  // namespace
-template <typename T>
-void SGDCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void SGDCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dampening_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "dampening");
   weight_decay_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "weight_decay");
   nesterov_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "nesterov");
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "SGD does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool SGDCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &outputs) {
+bool SGDCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSGDInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSGDOutputsNum, kernel_name_);
   auto param = reinterpret_cast<T *>(inputs[PARAM]->addr);
@@ -75,5 +82,34 @@ bool SGDCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std
   ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, SGDCpuKernelMod::SGDFunc>> SGDCpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &SGDCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &SGDCpuKernelMod::LaunchKernel<float16>}};
+
+std::vector<KernelAttr> SGDCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, SGDFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SGD, SGDCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -14,15 +14,46 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/cholesky_inverse_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kDimNum = 2;
-}
+using CholeskyInverseFunc = std::function<bool(const CNodePtr &, const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &)>;
 template <typename T>
-void CholeskyInverseCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+bool CholeskyInverseKernelFunc(const CNodePtr &node_wpt, const std::vector<kernel::AddressPtr> &inputs,
+                               const std::vector<kernel::AddressPtr> &outputs) {
+  auto input_x0 = reinterpret_cast<T *>(inputs[0]->addr);
+  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto inputShape = AnfAlgo::GetInputDeviceShape(node_wpt, 0);
+  int64_t n = SizeToLong(inputShape[0]);
+  using MatrixXd = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  Eigen::Map<MatrixXd> A(input_x0, n, n);
+  MatrixXd result;
+  auto upper = common::AnfAlgo::GetNodeAttr<bool>(node_wpt, "upper");
+  if (upper) {
+    result = (A.transpose() * A).inverse();
+  } else {
+    result = (A * A.transpose()).inverse();
+  }
+  for (int64_t i = 0; i < n; i++) {
+    for (int64_t j = 0; j < n; j++) {
+      *(output_y + i * n + j) = result(i, j);
+    }
+  }
+  return true;
+}
+
+static std::vector<std::pair<KernelAttr, CholeskyInverseFunc>> kernel_attr_list = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CholeskyInverseKernelFunc<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CholeskyInverseKernelFunc<double>}};
+}  // namespace
+
+void CholeskyInverseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -39,31 +70,24 @@ void CholeskyInverseCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
                              << "while row is " << x_shape[x_shape.size() - kDimNum] << ", col is "
                              << x_shape[x_shape.size() - 1];
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Cholesky inverse valid cpu kernel does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = std::bind(kernel_attr_list[index].second, node_wpt_, std::placeholders::_1, std::placeholders::_2);
 }
 
-template <typename T>
-bool CholeskyInverseCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x0 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
-  auto inputShape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
-  int64_t n = SizeToLong(inputShape[0]);
-  typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
-  Eigen::Map<MatrixXd> A(input_x0, n, n);
-  MatrixXd result;
-  auto upper = common::AnfAlgo::GetNodeAttr<bool>(node_wpt_, "upper");
-  if (upper) {
-    result = (A.transpose() * A).inverse();
-  } else {
-    result = (A * A.transpose()).inverse();
-  }
-  for (int64_t i = 0; i < n; i++) {
-    for (int64_t j = 0; j < n; j++) {
-      *(output_y + i * n + j) = result(i, j);
-    }
-  }
-  return true;
+std::vector<KernelAttr> CholeskyInverseCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(kernel_attr_list.begin(), kernel_attr_list.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, CholeskyInverseFunc> &pair) { return pair.first; });
+
+  return support_list;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CholeskyInverse, CholeskyInverseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

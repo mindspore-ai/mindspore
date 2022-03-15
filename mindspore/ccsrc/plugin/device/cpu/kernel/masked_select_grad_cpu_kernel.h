@@ -18,13 +18,13 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_GRAD_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class MaskedSelectGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   MaskedSelectGradCpuKernelMod() = default;
@@ -32,10 +32,22 @@ class MaskedSelectGradCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using MaskedSelectGradFunc = std::function<bool(
+    MaskedSelectGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, MaskedSelectGradFunc>> func_list_;
+  MaskedSelectGradFunc kernel_func_;
+
   std::vector<size_t> input_shape_a_;
   std::vector<size_t> input_shape_b_;
   std::vector<size_t> grad_shape_;
@@ -43,54 +55,6 @@ class MaskedSelectGradCpuKernelMod : public NativeCpuKernelMod {
   uint64_t tensor_size_ = 1;
   enum input_list_ { INPUT, MASK, GRAD };
 };
-
-MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    MaskedSelectGradCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeInt32),
-                    MaskedSelectGradCpuKernelMod, int);
-
-MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeFloat16)
-                      .AddOutputAttr(kNumberTypeFloat16),
-                    MaskedSelectGradCpuKernelMod, float16);
-
-MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddOutputAttr(kNumberTypeFloat64),
-                    MaskedSelectGradCpuKernelMod, double);
-
-MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt16)
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeInt16)
-                      .AddOutputAttr(kNumberTypeInt16),
-                    MaskedSelectGradCpuKernelMod, int16_t);
-
-MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddInputAttr(kNumberTypeBool)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeInt64),
-                    MaskedSelectGradCpuKernelMod, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_GRAD_CPU_KERNEL_H_

@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/print_cpu_kernel.h"
 #include <algorithm>
+#include <utility>
 #include "ir/tensor.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -23,8 +24,7 @@ using mindspore::tensor::Tensor;
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-void PrintCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void PrintCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -37,13 +37,21 @@ void PrintCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     }
     (void)input_sizes_.emplace_back(size);
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, PrintFunc> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Print does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool PrintCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> & /* workspace */,
-                                  const std::vector<kernel::AddressPtr> & /* outputs */) {
-  auto data_type = CheckType();
+bool PrintCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs) {
+  auto data_type = CheckType<T>();
   if (data_type == kTypeUnknown) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of 'input_x' should be bool, float, int, or uint, but got unsupported type.";
@@ -64,7 +72,7 @@ bool PrintCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-TypeId PrintCpuKernelMod<T>::CheckType() {
+TypeId PrintCpuKernelMod::CheckType() {
   if constexpr (std::is_same_v<T, bool>) {
     return kNumberTypeBool;
   } else if constexpr (std::is_same_v<T, int8_t>) {
@@ -92,5 +100,40 @@ TypeId PrintCpuKernelMod<T>::CheckType() {
   }
   return kTypeUnknown;
 }
+
+std::vector<std::pair<KernelAttr, PrintCpuKernelMod::PrintFunc>> PrintCpuKernelMod::func_list_ = {
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<bool>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<int>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
+   &PrintCpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> PrintCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, PrintFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Print, PrintCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

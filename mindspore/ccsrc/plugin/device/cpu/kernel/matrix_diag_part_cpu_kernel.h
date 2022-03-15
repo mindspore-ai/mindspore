@@ -20,20 +20,31 @@
 #include <complex>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class MatrixDiagPartCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixDiagPartCpuKernelMod() = default;
   ~MatrixDiagPartCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using MatrixDiagPartFunc = std::function<bool(MatrixDiagPartCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                                const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, MatrixDiagPartFunc>> func_list_;
+  MatrixDiagPartFunc kernel_func_;
+
   // <Super_matrix_diag_align, Sub_matrix_diag_align>
   std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> alignment_{MatrixDiag::RIGHT, MatrixDiag::LEFT};
   std::vector<size_t> shapes_{};
@@ -44,38 +55,6 @@ class MatrixDiagPartCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> out_shapes_{};
   CNodeWeakPtr node_wpt_;
 };
-
-MS_REG_CPU_KERNEL_T(MatrixDiagPartV3,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddInputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeInt32),
-                    MatrixDiagPartCpuKernelMod, int32_t);
-
-MS_REG_CPU_KERNEL_T(MatrixDiagPartV3,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddOutputAttr(kNumberTypeInt64),
-                    MatrixDiagPartCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(MatrixDiagPartV3,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32),
-                    MatrixDiagPartCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(MatrixDiagPartV3,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddInputAttr(kNumberTypeInt64)
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddOutputAttr(kNumberTypeFloat64),
-                    MatrixDiagPartCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATRIX_DIAG_PART_H

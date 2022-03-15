@@ -22,17 +22,17 @@
 #include "ps/worker.h"
 #include "ps/util.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class PullKernelMod : public NativeCpuKernelMod {
  public:
   PullKernelMod() : key_(UINT64_MAX), keys_size_(sizeof(size_t)), var_size_(sizeof(size_t)) {}
   ~PullKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override {
     if (inputs.size() != 2) {
       MS_LOG(EXCEPTION) << "Inputs size is " << inputs.size() << ", but PullKernelMod needs 2.";
     }
@@ -43,7 +43,8 @@ class PullKernelMod : public NativeCpuKernelMod {
     }
     return true;
   }
-  void Init(const CNodePtr &kernel_node) {
+
+  void Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
@@ -69,7 +70,8 @@ class PullKernelMod : public NativeCpuKernelMod {
     InitSizeLists();
     return;
   }
-  void InitKernel(const CNodePtr &kernel_node) { return; }
+
+  void InitKernel(const CNodePtr &kernel_node) override { return; }
 
  protected:
   void InitSizeLists() {
@@ -77,6 +79,8 @@ class PullKernelMod : public NativeCpuKernelMod {
     input_size_list_.push_back(var_size_);
     output_size_list_.push_back(0);
   }
+
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   size_t key_;

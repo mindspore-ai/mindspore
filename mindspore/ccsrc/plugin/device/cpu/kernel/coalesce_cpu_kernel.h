@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -38,6 +38,9 @@ class CoalesceCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
@@ -50,26 +53,6 @@ class CoalesceCpuKernelMod : public NativeCpuKernelMod {
   size_t jump = 0;
   CNodeWeakPtr node_wpt_;
 };
-
-MS_REG_CPU_KERNEL(Coalesce,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  CoalesceCpuKernelMod);
-
-MS_REG_CPU_KERNEL(Coalesce,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  CoalesceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_COALESCE_CPU_KERNEL_H_

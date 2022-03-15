@@ -18,9 +18,17 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL_T(
-  PushMetrics,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  PushMetricsKernelMod, float);
+std::vector<std::pair<KernelAttr, PushMetricsKernelMod::PushMetricsFunc>> PushMetricsKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &PushMetricsKernelMod::LaunchKernel<float>}};
+
+std::vector<KernelAttr> PushMetricsKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, PushMetricsFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PushMetrics, PushMetricsKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include <functional>
-
 #include "plugin/device/cpu/kernel/check_valid_cpu_kernel.h"
+#include <functional>
+#include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -29,20 +30,26 @@ constexpr size_t kIndex1 = 1;
 constexpr size_t kIndex2 = 2;
 }  // namespace
 
-template <typename T>
-void CheckValidCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void CheckValidCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   anchor_box_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   img_metas_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "CheckValid does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool CheckValidCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  CheckParams(inputs, outputs);
+bool CheckValidCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
+  CheckParams<T>(inputs, outputs);
   auto anchor_box = reinterpret_cast<T *>(inputs[0]->addr);
   auto img_metas = reinterpret_cast<T *>(inputs[1]->addr);
   auto output = reinterpret_cast<bool *>(outputs[0]->addr);
@@ -77,8 +84,8 @@ bool CheckValidCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void CheckValidCpuKernelMod<T>::CheckParams(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
+void CheckValidCpuKernelMod::CheckParams(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &outputs) {
   //  inputs: anchor_box, img_metas
   if (inputs.size() != kInputSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputSize << ", but got "
@@ -96,5 +103,24 @@ void CheckValidCpuKernelMod<T>::CheckParams(const std::vector<AddressPtr> &input
                       << Vector2Str(output_shape_) << ", the shape of 'img_metas': " << Vector2Str(img_metas_shape_);
   }
 }
+
+std::vector<std::pair<KernelAttr, CheckValidCpuKernelMod::CheckValidFunc>> CheckValidCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+   &CheckValidCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+   &CheckValidCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+   &CheckValidCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+   &CheckValidCpuKernelMod::LaunchKernel<uint8_t>}};
+
+std::vector<KernelAttr> CheckValidCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, CheckValidFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CheckValid, CheckValidCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/gather_d_grad_cpu_kernel.h"
+#include <algorithm>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -61,8 +63,7 @@ void GatherDGradCopyTask(size_t cur, std::vector<size_t> *pos, T *input, I *inde
 }
 }  // namespace
 
-template <typename I, typename T>
-void GatherDGradCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
+void GatherDGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   index_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -74,11 +75,21 @@ void GatherDGradCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
   }
   axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, DIM);
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, GatherDGradFunc> &pair) { return pair.first; });
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "GatherDGrad does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename I, typename T>
-bool GatherDGradCpuKernelMod<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &,
+bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGatherDGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherDGradOutputsNum, kernel_name_);
@@ -144,5 +155,29 @@ bool GatherDGradCpuKernelMod<I, T>::Launch(const std::vector<kernel::AddressPtr>
   GatherDGradCopyTask<I, T>(0, &pos, out, index, axis_, input, index_shape_, input_cargo_size, out_cargo_size);
   return true;
 }
+
+std::vector<std::pair<KernelAttr, GatherDGradCpuKernelMod::GatherDGradFunc>> GatherDGradCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &GatherDGradCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &GatherDGradCpuKernelMod::LaunchKernel<int32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &GatherDGradCpuKernelMod::LaunchKernel<int32_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &GatherDGradCpuKernelMod::LaunchKernel<int32_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+   &GatherDGradCpuKernelMod::LaunchKernel<int32_t, bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &GatherDGradCpuKernelMod::LaunchKernel<int64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &GatherDGradCpuKernelMod::LaunchKernel<int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &GatherDGradCpuKernelMod::LaunchKernel<int64_t, float>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &GatherDGradCpuKernelMod::LaunchKernel<int64_t, float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+   &GatherDGradCpuKernelMod::LaunchKernel<int64_t, bool>}};
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, GatherDGrad, GatherDGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

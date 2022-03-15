@@ -23,11 +23,10 @@
 #include <algorithm>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class ArgMinWithValueCpuKernelMod : public NativeCpuKernelMod {
  public:
   ArgMinWithValueCpuKernelMod() = default;
@@ -36,17 +35,24 @@ class ArgMinWithValueCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using ArgMinWithValueFunc =
+    std::function<bool(ArgMinWithValueCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  ArgMinWithValueFunc kernel_func_;
+
   std::vector<size_t> shape_;
   size_t num_before_axis_{0};
   size_t num_after_axis_{0};
   size_t dim_axis_{0};
 };
-
-MS_REG_CPU_KERNEL_T(ArgMinWithValue, KernelAttr(), ArgMinWithValueCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(ArgMinWithValue, KernelAttr(), ArgMinWithValueCpuKernelMod, float16);
 }  // namespace kernel
 }  // namespace mindspore
 

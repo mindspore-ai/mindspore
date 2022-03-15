@@ -19,41 +19,45 @@
 
 #include <vector>
 #include <algorithm>
+#include <tuple>
 #include "ps/worker.h"
 #include "ps/util.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class PushKernelMod : public NativeCpuKernelMod {
  public:
   PushKernelMod() : key_(UINT64_MAX) {}
   ~PushKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) {
-    if (outputs.size() != 1) {
-      MS_LOG(EXCEPTION) << "Outputs size is " << outputs.size() << ", but PushKernelMod needs 1.";
-    }
-    std::vector<size_t> keys;
-    std::vector<uintptr_t> addrs;
-    std::vector<int64_t> sizes;
-    for (auto input : inputs) {
-      keys.push_back(key_);
-      addrs.push_back(reinterpret_cast<uintptr_t>(input->addr));
-      sizes.push_back(SizeToLong(input->size) / sizeof(T));
-    }
-    mindspore::ps::Worker::GetInstance().Push(keys, addrs, sizes);
-    auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, &key_, sizeof(size_t));
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
-    }
-    return true;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  void Init(const CNodePtr &kernel_node) {
+  void Init(const CNodePtr &kernel_node) override {
+    auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      MS_LOG(EXCEPTION) << "Push does not support this kernel data type: " << kernel_attr;
+    }
+    kernel_func_ = std::get<1>(func_list_[index]);
+    const size_t kTwoIdx = 2;
+    init_func_ = std::get<kTwoIdx>(func_list_[index]);
+
+    init_func_(this, kernel_node);
+  }
+
+  void InitKernel(const CNodePtr &kernel_node) override { return; }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
+  template <typename T>
+  void InitFunc(const CNodePtr &kernel_node) {
     key_ = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
     auto optim_input_shapes =
       common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "optim_input_shapes");
@@ -76,9 +80,36 @@ class PushKernelMod : public NativeCpuKernelMod {
     return;
   }
 
-  void InitKernel(const CNodePtr &kernel_node) { return; }
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs) {
+    if (outputs.size() != 1) {
+      MS_LOG(EXCEPTION) << "Outputs size is " << outputs.size() << ", but PushKernelMod needs 1.";
+    }
+    std::vector<size_t> keys;
+    std::vector<uintptr_t> addrs;
+    std::vector<int64_t> sizes;
+    for (auto input : inputs) {
+      keys.push_back(key_);
+      addrs.push_back(reinterpret_cast<uintptr_t>(input->addr));
+      sizes.push_back(SizeToLong(input->size) / sizeof(T));
+    }
+    mindspore::ps::Worker::GetInstance().Push(keys, addrs, sizes);
+    auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, &key_, sizeof(size_t));
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
+    }
+    return true;
+  }
 
- private:
+  using PushFunc =
+    std::function<bool(PushKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using PushInitFunc = std::function<void(PushKernelMod *, const CNodePtr &kernel_node)>;
+  static std::vector<std::tuple<KernelAttr, PushFunc, PushInitFunc>> func_list_;
+  PushFunc kernel_func_;
+  PushInitFunc init_func_;
+
   size_t key_;
 };
 }  // namespace kernel

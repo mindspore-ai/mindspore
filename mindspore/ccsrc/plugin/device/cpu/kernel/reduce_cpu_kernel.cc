@@ -19,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include <map>
 #include "nnacl/fp32/reduce_fp32.h"
 
 namespace mindspore {
@@ -27,7 +28,42 @@ namespace {
 constexpr size_t kReduceSmallVectorSize = 200000;
 constexpr size_t kReduceInputsNum = 1;
 constexpr size_t kReduceOutputsNum = 1;
-}  // namespace
+constexpr auto kReduceMeanName = "ReduceMean";
+constexpr auto kReduceMaxName = "ReduceMax";
+constexpr auto kReduceSumName = "ReduceSum";
+constexpr auto kReduceMinName = "ReduceMin";
+constexpr auto kReduceProdName = "ReduceProd";
+constexpr auto kReduceAllName = "ReduceAll";
+constexpr auto kReduceAnyName = "ReduceAny";
+
+template <typename T>
+class ReduceCpuKernelFunc : public CpuKernelFunc {
+ public:
+  ReduceCpuKernelFunc() = default;
+  ~ReduceCpuKernelFunc() override = default;
+  void InitFunc(const CNodePtr &kernel_node) override;
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
+
+  enum class ReduceFuncType {
+    kReduceAllType,
+    kReduceAnyType,
+    kReduceMaxType,
+    kReduceMinType,
+    kReduceSumType,
+    kReduceMeanType,
+    kReduceProdType
+  };
+  std::vector<size_t> input_shape_;
+  std::vector<int64_t> axis_;
+  ReduceFuncType reduce_type_{ReduceFuncType::kReduceAllType};
+  std::function<void(const T *, size_t, T *)> reduce_func_;
+  bool simple_execute_{false};
+  std::string kernel_name_;
+};
 
 void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std::string &kernel_name,
                 std::vector<int64_t> *axis) {
@@ -49,7 +85,7 @@ void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std
 }
 
 template <typename T>
-void ReduceCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void ReduceCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   axis_.clear();
@@ -68,29 +104,29 @@ void ReduceCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 
   if constexpr (std::is_same<T, bool>::value) {
     if (kernel_name_ == prim::kPrimReduceAll->name()) {
-      reduce_type_ = kReduceAll;
+      reduce_type_ = ReduceFuncType::kReduceAllType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out &= input[pos]; };
     } else if (kernel_name_ == prim::kPrimReduceAny->name()) {
-      reduce_type_ = kReduceAny;
+      reduce_type_ = ReduceFuncType::kReduceAnyType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out |= input[pos]; };
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for bool.";
     }
   } else {
     if (kernel_name_ == prim::kPrimReduceMax->name()) {
-      reduce_type_ = kReduceMax;
+      reduce_type_ = ReduceFuncType::kReduceMaxType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::max(input[pos], *out); };
     } else if (kernel_name_ == prim::kPrimReduceMin->name()) {
-      reduce_type_ = kReduceMin;
+      reduce_type_ = ReduceFuncType::kReduceMinType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::min(input[pos], *out); };
     } else if (kernel_name_ == prim::kPrimReduceSum->name()) {
-      reduce_type_ = kReduceSum;
+      reduce_type_ = ReduceFuncType::kReduceSumType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
     } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
-      reduce_type_ = kReduceMean;
+      reduce_type_ = ReduceFuncType::kReduceMeanType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
     } else if (kernel_name == "ReduceProd") {
-      reduce_type_ = kReduceProd;
+      reduce_type_ = ReduceFuncType::kReduceProdType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out *= input[pos]; };
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation.";
@@ -99,17 +135,17 @@ void ReduceCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 
   // special accelerate for axis = 1 and input has 2 dims
   if constexpr (std::is_same<T, float>::value) {
-    if ((reduce_type_ == kReduceMean || reduce_type_ == kReduceSum) && axis_.size() == 1 && axis_[0] == 1 &&
-        input_shape_.size() == 2) {
+    if ((reduce_type_ == ReduceFuncType::kReduceMeanType || reduce_type_ == ReduceFuncType::kReduceSumType) &&
+        axis_.size() == 1 && axis_[0] == 1 && input_shape_.size() == 2) {
       simple_execute_ = true;
     }
   }
 }
 
 template <typename T>
-bool ReduceCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceOutputsNum, kernel_name_);
   size_t input_size = inputs[0]->size / sizeof(T);
@@ -122,7 +158,7 @@ bool ReduceCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs
       for (size_t i = 1; i < input_size; ++i) {
         reduce_func_(input_addr, i, output_addr);
       }
-      if (reduce_type_ == kReduceMean) {
+      if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
         *output_addr /= input_size;
       }
     } else {
@@ -155,7 +191,7 @@ bool ReduceCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs
         auto task = [&](size_t start, size_t end) {
           for (size_t i = start; i < end; ++i) {
             (void)ReduceSumDim2Axis1(stride, input_addr + i * stride, output_addr + i);
-            if (reduce_type_ == kReduceMean) {
+            if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
               output_addr[i] /= stride;
             }
           }
@@ -180,7 +216,7 @@ bool ReduceCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs
           reduce_func_(input_addr, iter.GetPos(), &output_addr[i]);
           iter.GenNextPos();
         }
-        if (reduce_type_ == kReduceMean) {
+        if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
           output_addr[i] /= stride;
         }
       }
@@ -191,7 +227,7 @@ bool ReduceCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 template <typename T>
-void ReduceCpuKernelMod<T>::AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size) {
+void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size) {
   // init output_addr
   *output_addr = input_addr[0];
   std::mutex task_mutex;
@@ -214,9 +250,86 @@ void ReduceCpuKernelMod<T>::AccelerateLongVector(T *input_addr, T *output_addr, 
     }
   };
   ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
-  if (reduce_type_ == kReduceMean) {
+  if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
     *output_addr /= input_size;
   }
 }
+template <typename T>
+std::shared_ptr<CpuKernelFunc> SpecializeReduceFunc() {
+  return std::make_shared<ReduceCpuKernelFunc<T>>();
+}
+using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>>> kernel_attr_list = {
+  {kReduceMeanName,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
+  {kReduceMaxName,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
+  {kReduceSumName,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}},
+  {kReduceMinName,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
+  {kReduceProdName,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
+  {kReduceAllName,
+   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}},
+  {kReduceAnyName,
+   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}}};
+}  // namespace
+
+void ReduceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  if (kernel_name_ != kernel_type_) {
+    MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
+  }
+
+  auto iter = kernel_attr_list.find(kernel_type_);
+  if (iter == kernel_attr_list.end()) {
+    MS_LOG(EXCEPTION) << "Reduce cpu does not support " << kernel_type_;
+  }
+
+  std::vector<KernelAttr> support_list;
+  std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, SpecializeReduceFuncCreator> &pair) { return pair.first; });
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Reduce does not support this kernel data type: " << kernel_attr;
+  }
+
+  func_obj_ = kernel_attr_list[kernel_type_][index].second();
+  func_obj_->InitFunc(kernel_node);
+}
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMean,
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceMeanName); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMax,
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceMaxName); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceSum,
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceSumName); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMin,
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceMinName); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceProd,
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceProdName); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceAll,
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceAllName); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceAny,
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceAnyName); });
 }  // namespace kernel
 }  // namespace mindspore

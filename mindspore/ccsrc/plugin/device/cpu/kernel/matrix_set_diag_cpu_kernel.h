@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "kernel/common_utils.h"
 namespace mindspore {
 namespace kernel {
@@ -34,6 +34,31 @@ class MatrixSetDiagCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeInt32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat16)
+                                                     .AddInputAttr(kNumberTypeFloat16)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeFloat16),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeFloat64)};
+    return support_list;
+  }
 
  private:
   template <typename T>
@@ -54,37 +79,7 @@ class MatrixSetDiagCpuKernelMod : public NativeCpuKernelMod {
   TypeId data_type_{0};
 };
 
-MS_REG_CPU_KERNEL(MatrixSetDiag,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  MatrixSetDiagCpuKernelMod)
-
-MS_REG_CPU_KERNEL(MatrixSetDiag,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat16),
-                  MatrixSetDiagCpuKernelMod)
-
-MS_REG_CPU_KERNEL(MatrixSetDiag,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  MatrixSetDiagCpuKernelMod)
-
-MS_REG_CPU_KERNEL(MatrixSetDiag,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat64),
-                  MatrixSetDiagCpuKernelMod)
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixSetDiag, MatrixSetDiagCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_SET_DIAG_KERNEL_H_

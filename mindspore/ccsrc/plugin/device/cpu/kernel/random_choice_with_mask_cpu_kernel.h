@@ -19,7 +19,7 @@
 #include <random>
 #include <algorithm>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,6 +39,13 @@ class RandomChoiceWithMaskCpuKernelMod : public NativeCpuKernelMod {
 
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool)};
+    return support_list;
+  }
+
  private:
   int32_t input_dim_size = 0;
   int32_t input_total_count = 1;
@@ -50,10 +57,7 @@ class RandomChoiceWithMaskCpuKernelMod : public NativeCpuKernelMod {
   std::mt19937 generator_;
 };
 
-MS_REG_CPU_KERNEL(
-  RandomChoiceWithMask,
-  KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  RandomChoiceWithMaskCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RandomChoiceWithMask, RandomChoiceWithMaskCpuKernelMod);
 
 }  // namespace kernel
 }  // namespace mindspore

@@ -24,7 +24,7 @@
 #include <utility>
 #include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "fl/worker/fl_worker.h"
 
 namespace mindspore {
@@ -134,6 +134,12 @@ class GetModelKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) { return; }
 
  protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
+
   void InitSizeLists() { return; }
 
  private:

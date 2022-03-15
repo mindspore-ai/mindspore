@@ -20,7 +20,7 @@
 #include <vector>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -52,7 +52,7 @@ class IsFiniteCpuKernelMod : public NativeCpuKernelMod {
   TypeId input_dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr(), IsFiniteCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IsFinite, IsFiniteCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

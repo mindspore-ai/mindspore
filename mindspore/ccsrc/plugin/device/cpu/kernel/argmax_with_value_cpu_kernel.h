@@ -23,11 +23,10 @@
 #include <algorithm>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class ArgMaxWithValueCpuKernelMod : public NativeCpuKernelMod {
  public:
   ArgMaxWithValueCpuKernelMod() = default;
@@ -35,18 +34,25 @@ class ArgMaxWithValueCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using ArgMaxWithValueFunc =
+    std::function<bool(ArgMaxWithValueCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  ArgMaxWithValueFunc kernel_func_;
+
   std::vector<size_t> shape_;
   size_t num_before_axis_{0};
   size_t num_after_axis_{0};
   size_t dim_axis_{0};
 };
-
-MS_REG_CPU_KERNEL_T(ArgMaxWithValue, KernelAttr(), ArgMaxWithValueCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(ArgMaxWithValue, KernelAttr(), ArgMaxWithValueCpuKernelMod, float16);
 }  // namespace kernel
 }  // namespace mindspore
 

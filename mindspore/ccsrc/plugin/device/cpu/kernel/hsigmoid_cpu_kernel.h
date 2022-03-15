@@ -20,12 +20,12 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class HSigmoidCpuKernelMod : public NativeCpuKernelMod {
  public:
   HSigmoidCpuKernelMod() = default;
@@ -34,22 +34,20 @@ class HSigmoidCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using HSigmoidFunc = std::function<bool(HSigmoidCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                          const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, HSigmoidFunc>> func_list_;
+  HSigmoidFunc kernel_func_;
   std::vector<size_t> x_shape_;
   uint64_t tensor_size_ = 1;
 };
-
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, int8_t);
-
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, int16_t);
-
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, int32_t);
-
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSIGMOID_CPU_KERNEL_H_

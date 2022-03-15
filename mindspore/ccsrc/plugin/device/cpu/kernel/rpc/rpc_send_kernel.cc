@@ -18,8 +18,12 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_CPU_KERNEL_T(
-  RpcSend, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).SetAllSameAttr(true),
-  RpcSendKernelMod, float);
+std::vector<KernelAttr> RpcSendKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddAllSameAttr(true)};
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RpcSend, RpcSendKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -103,5 +103,7 @@ bool BiasAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BiasAdd, BiasAddCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

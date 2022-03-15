@@ -31,12 +31,16 @@ class AssignAddCpuKernelMod : public MKLCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
 };
 
-MS_REG_CPU_KERNEL(
-  AssignAdd,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  AssignAddCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AssignAdd, AssignAddCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

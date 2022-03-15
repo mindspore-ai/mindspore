@@ -23,7 +23,8 @@
 #include <algorithm>
 #include "backend/common/optimizer/helper.h"
 #include "kernel/kernel_build_info.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
@@ -63,11 +64,12 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, cast.get());
   common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
   std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel =
-    kernel::NativeCpuKernelModFactory::GetInstance().Create(kCastOpName, cast);
+    kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(kCastOpName);
   if (cpu_kernel == nullptr) {
     MS_LOG(EXCEPTION) << "Operator[Cast] " << cast->kernel_info() << " is not support.";
   }
   try {
+    cpu_kernel->SetCpuRefMapToKernelInfo(cast);
     cpu_kernel->Init(cast);
   } catch (std::exception &e) {
     MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(cast);

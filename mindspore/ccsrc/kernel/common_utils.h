@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_COMMON_UTILS_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_COMMON_UTILS_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_COMMON_UTILS_H_
+#define MINDSPORE_CCSRC_KERNEL_COMMON_UTILS_H_
 
 #include <dirent.h>
 #include <memory>
@@ -23,6 +23,7 @@
 #include <unordered_set>
 #include <map>
 #include <string>
+#include <sstream>
 #include <algorithm>
 #include <vector>
 #include <utility>
@@ -145,7 +146,6 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info, const s
 std::string GetProcessor(const AnfNodePtr &anf_node);
 Processor GetProcessor(const string &processor);
 bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);
-int Sign(float x);
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
                                                           const std::vector<AnfNodePtr> &input_list,
                                                           const std::vector<AnfNodePtr> &output_list);
@@ -235,6 +235,41 @@ size_t GetCopySize(const std::vector<int64_t> &dim_offset, const std::vector<int
                    const std::vector<int64_t> &stop);
 size_t UnitSizeInBytes(const mindspore::TypeId &t);
 
+class KernelAttr {
+ public:
+  using DataType = std::pair<TypeId, std::string>;
+  KernelAttr() = default;
+  ~KernelAttr() = default;
+
+  KernelAttr &AddInputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
+  KernelAttr &AddOutputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
+  KernelAttr &AddAllSameAttr(const bool &all_same);
+  KernelAttr &AddOutInRef(size_t output_index, size_t input_index);
+
+  const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
+  const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
+  const bool &GetAllSame() const { return all_same_; }
+
+  size_t GetInputSize() const { return input_type_.size(); }
+  size_t GetOutputSize() const { return output_type_.size(); }
+  const OutputInputRefMap &GetOutInRefMap() const { return out_in_ref_map_; }
+
+  void SetInputAttrList(const std::vector<DataType> &addr_list);
+
+ private:
+  std::vector<DataType> input_type_;
+  std::vector<DataType> output_type_;
+  bool all_same_{false};
+
+  // The map between kernel's output and input ref relationship.
+  OutputInputRefMap out_in_ref_map_;
+};
+std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr);
+
+std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr, const std::vector<KernelAttr> &attr_list);
+KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info);
+KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
+
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
   do {                                                                                                 \
     if ((actual_inputs_num) != (expect_inputs_num)) {                                                  \
@@ -261,4 +296,4 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_COMMON_UTILS_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_COMMON_UTILS_H_

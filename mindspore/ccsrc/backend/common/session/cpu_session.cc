@@ -24,9 +24,10 @@
 #include "include/common/utils/context/graph_kernel_flags.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "plugin/factory/ms_factory.h"
 #include "runtime/device/kernel_runtime.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pass_manager.h"
@@ -375,11 +376,12 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
       continue;
     }
     std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel_mod =
-      kernel::NativeCpuKernelModFactory::GetInstance().Create(kernel_name, kernel_node);
+      kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(kernel_name);
     if (cpu_kernel_mod == nullptr) {
       KernelNotSupportException(kernel_node);
     }
     try {
+      cpu_kernel_mod->SetCpuRefMapToKernelInfo(kernel_node);
       cpu_kernel_mod->Init(kernel_node);
     } catch (std::exception &e) {
       MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(kernel_node);

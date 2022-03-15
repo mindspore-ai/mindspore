@@ -19,11 +19,11 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class SpaceToDepthCpuKernelMod : public NativeCpuKernelMod {
  public:
   SpaceToDepthCpuKernelMod() = default;
@@ -31,54 +31,27 @@ class SpaceToDepthCpuKernelMod : public NativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  using SpaceToDepthFunc =
+    std::function<bool(SpaceToDepthCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, SpaceToDepthFunc>> func_list_;
+  SpaceToDepthFunc kernel_func_;
+
   size_t block_size_{0};
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
 };
-
-MS_REG_CPU_KERNEL_T(
-  SpaceToDepth, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  SpaceToDepthCpuKernelMod, float);
-
-MS_REG_CPU_KERNEL_T(
-  SpaceToDepth, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  SpaceToDepthCpuKernelMod, float16);
-
-MS_REG_CPU_KERNEL_T(SpaceToDepth,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                    SpaceToDepthCpuKernelMod, int8_t);
-
-MS_REG_CPU_KERNEL_T(SpaceToDepth,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                    SpaceToDepthCpuKernelMod, int16_t);
-
-MS_REG_CPU_KERNEL_T(SpaceToDepth,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    SpaceToDepthCpuKernelMod, int);
-
-MS_REG_CPU_KERNEL_T(SpaceToDepth,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                    SpaceToDepthCpuKernelMod, int64_t);
-
-MS_REG_CPU_KERNEL_T(SpaceToDepth,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                    SpaceToDepthCpuKernelMod, uint8_t);
-
-MS_REG_CPU_KERNEL_T(SpaceToDepth,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                    SpaceToDepthCpuKernelMod, uint16_t);
-
-MS_REG_CPU_KERNEL_T(SpaceToDepth,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                    SpaceToDepthCpuKernelMod, uint32_t);
-
-MS_REG_CPU_KERNEL_T(SpaceToDepth,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                    SpaceToDepthCpuKernelMod, uint64_t);
-
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPACETODEPTH_CPU_KERNEL_H_

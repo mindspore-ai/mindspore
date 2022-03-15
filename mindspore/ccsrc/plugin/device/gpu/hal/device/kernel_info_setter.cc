@@ -165,7 +165,8 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
   if (func_type == kCustomTypeAOT) {
     *kernel_type = KernelType::GPU_KERNEL;
     if (!kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(op_name, selected_kernel_info)) {
-      kernel::GpuKernelRegister(op_name, KernelAttr(), []() { return new kernel::CustomAOTGpuKernelMod(); });
+      kernel::GpuKernelRegister(op_name, mindspore::kernel::KernelAttr(),
+                                []() { return new kernel::CustomAOTGpuKernelMod(); });
     }
   } else if (kCustomTypeAkg.find(func_type) != kCustomTypeAkg.end()) {
     *kernel_type = KernelType::AKG_KERNEL;

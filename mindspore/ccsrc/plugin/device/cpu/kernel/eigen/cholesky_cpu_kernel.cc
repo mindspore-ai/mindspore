@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/eigen/cholesky_cpu_kernel.h"
+#include <algorithm>
 #include <vector>
+#include <utility>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "utils/ms_utils.h"
 #include "Eigen/Cholesky"
@@ -30,8 +32,7 @@ constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 }  // namespace
 
-template <typename T>
-void CholeskyCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+void CholeskyCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   if (shape.empty()) {
     MS_LOG_EXCEPTION << kernel_name_ << " input or output shape is empty which is invalid.";
   }
@@ -52,8 +53,7 @@ void CholeskyCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, s
   outer_batch_ /= ((*row) * (*col));
 }
 
-template <typename T>
-void CholeskyCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void CholeskyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -72,11 +72,18 @@ void CholeskyCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   if (common::AnfAlgo::HasNodeAttr(LOWER, kernel_node)) {
     lower_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Cholesky does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool CholeskyCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs) {
+bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                        const std::vector<AddressPtr> &outputs) {
   T *batch_input_value = reinterpret_cast<T *>(inputs[kInputIndex]->addr);
   T *batch_output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
   Eigen::LLT<Matrix<T, RowMajor>> llt;
@@ -102,5 +109,20 @@ bool CholeskyCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, cons
   }
   return true;
 }
+
+std::vector<std::pair<KernelAttr, CholeskyCpuKernelMod::CholeskyFunc>> CholeskyCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &CholeskyCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &CholeskyCpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> CholeskyCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::pair<KernelAttr, CholeskyFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Cholesky, CholeskyCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

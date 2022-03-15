@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATMUL_DOUBLE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATMUL_DOUBLE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_MATMUL_DOULE_CPU_KERNEL_FUNC_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_MATMUL_DOULE_CPU_KERNEL_FUNC_H_
 
+#include <string>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class MatmulDoubleCpuKernelMod : public NativeCpuKernelMod {
+class MatmulDoubleCpuKernelFunc : public CpuKernelFunc {
  public:
-  MatmulDoubleCpuKernelMod() = default;
-  ~MatmulDoubleCpuKernelMod() override = default;
+  MatmulDoubleCpuKernelFunc() = default;
+  ~MatmulDoubleCpuKernelFunc() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  void InitFunc(const CNodePtr &kernel_node) override;
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override;
 
  private:
   size_t a_row_{0};
@@ -41,14 +41,9 @@ class MatmulDoubleCpuKernelMod : public NativeCpuKernelMod {
   size_t out_col_{0};
   bool trans_a_{false};
   bool trans_b_{false};
+  std::string kernel_name_;
 };
-
-MS_REG_CPU_KERNEL(
-  MatMul,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  MatmulDoubleCpuKernelMod);
-
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATMUL_DOUBLE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_EIGEN_MATMUL_DOULE_CPU_KERNEL_FUNC_H_

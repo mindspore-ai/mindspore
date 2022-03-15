@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <utility>
 #include <unordered_map>
+#include <tuple>
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -35,8 +36,7 @@ constexpr size_t kColIndex = 1;
 constexpr int kZeroThreshold = INT32_MIN;
 }  // namespace
 
-template <typename T>
-void LUCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+void LUCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   constexpr size_t lu_min_dim = 1;
   if (shape.size() <= lu_min_dim) {
     MS_LOG_EXCEPTION << kernel_name_ << "shape is " << shape.size() << " which is invalid.";
@@ -50,8 +50,7 @@ void LUCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t 
   }
 }
 
-template <typename T>
-void LUCpuKernelMod<T>::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+void LUCpuKernelMod::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   constexpr size_t pivot_min_dim = 1;
   if (shape.size() < pivot_min_dim) {
     MS_LOG_EXCEPTION << kernel_name_ << "pivots shape is " << shape.size() << " which is invalid.";
@@ -64,8 +63,7 @@ void LUCpuKernelMod<T>::InitPivotVecInfo(const std::vector<size_t> &shape, size_
   }
 }
 
-template <typename T>
-void LUCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void LUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -81,10 +79,19 @@ void LUCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   InitMatrixInfo(permutation_shape, &permutation_row_, &permutation_col_);
   auto pivots_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kPivotsIndex);
   InitPivotVecInfo(pivots_shape, &pivots_row_, &pivots_col_);
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "LU does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = std::get<1>(func_list_[index]);
+  const size_t kTwoIdx = 2;
+  init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
 }
 
 template <typename T>
-void LUCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+void LUCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t lu_size = lu_col_ * sizeof(T);
   (void)workspace_size_list_.emplace_back(lu_size);
@@ -92,14 +99,14 @@ void LUCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-T LUCpuKernelMod<T>::GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j) {
+T LUCpuKernelMod::GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j) {
   const T *pered_lu_value = lu_value + per_value[i] * lu_col_ + j;
   return *pered_lu_value;
 }
 
 template <typename T>
-bool LUCpuKernelMod<T>::UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k,
-                                               size_t rows) {
+bool LUCpuKernelMod::UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k,
+                                            size_t rows) {
   T max_major_value = static_cast<T>(kZeroThreshold);
   size_t max_major_index = 0;
   for (size_t i = k; i < rows; ++i) {
@@ -118,16 +125,16 @@ bool LUCpuKernelMod<T>::UpdateMajorPermutation(T *lu_value, std::vector<int> *pe
 }
 
 template <typename T>
-void LUCpuKernelMod<T>::SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j,
-                                           const T &value) {
+void LUCpuKernelMod::SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j,
+                                        const T &value) {
   T *per_lu_value = lu_value + per_value[i] * lu_col_ + j;
   *per_lu_value = value;
 }
 
 template <typename T>
-bool LUCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &workspace,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &workspace,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
   // input matrix of (m,n) PA = LU
   T *batch_a_value = reinterpret_cast<T *>(inputs[kLUaIndex]->addr);
   T *batch_lu_value = reinterpret_cast<T *>(outputs[kLuIndex]->addr);
@@ -233,5 +240,28 @@ bool LUCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
   return true;
 }
+
+std::vector<std::tuple<KernelAttr, LUCpuKernelMod::LUFunc, LUCpuKernelMod::InitFunc>> LUCpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   &LUCpuKernelMod::LaunchKernel<float>, &LUCpuKernelMod::InitIOSize<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   &LUCpuKernelMod::LaunchKernel<double>, &LUCpuKernelMod::InitIOSize<double>}};
+
+std::vector<KernelAttr> LUCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                 [](const std::tuple<KernelAttr, LUFunc, InitFunc> &tuple_item) { return std::get<0>(tuple_item); });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LU, LUCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

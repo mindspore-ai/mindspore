@@ -21,7 +21,6 @@
 #include <functional>
 #include "abstract/utils.h"
 #include "plugin/device/cpu/hal/device/cpu_common.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
 #include "plugin/device/cpu/kernel/custom/julia_api.h"
 #include "utils/file_utils.h"
 

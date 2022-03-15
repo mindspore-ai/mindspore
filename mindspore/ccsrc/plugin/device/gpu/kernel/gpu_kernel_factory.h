@@ -25,10 +25,10 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "kernel/kernel_build_info.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-using mindspore::device::gpu::KernelAttr;
 using NativeGpuKernelModCreater = std::function<NativeGpuKernelMod *()>;
 class NativeGpuKernelModFactory {
  public:
