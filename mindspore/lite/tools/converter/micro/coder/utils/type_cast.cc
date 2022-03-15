@@ -51,6 +51,40 @@ std::string EnumNameDataType(TypeId type) {
   }
 }
 
+std::string EnumNameMSDataType(TypeId type) {
+  switch (type) {
+    case kNumberTypeInt:
+      return "kMSDataTypeNumberTypeInt32";
+    case kNumberTypeInt8:
+      return "kMSDataTypeNumberTypeInt8";
+    case kNumberTypeInt16:
+      return "kMSDataTypeNumberTypeInt16";
+    case kNumberTypeInt32:
+      return "kMSDataTypeNumberTypeInt32";
+    case kNumberTypeInt64:
+      return "kMSDataTypeNumberTypeUInt64";
+    case kNumberTypeUInt:
+      return "kMSDataTypeNumberTypeUInt32";
+    case kNumberTypeUInt8:
+      return "kMSDataTypeNumberTypeUInt8";
+    case kNumberTypeUInt16:
+      return "kMSDataTypeNumberTypeUInt16";
+    case kNumberTypeUInt32:
+      return "kMSDataTypeNumberTypeUInt32";
+    case kNumberTypeFloat:
+    case kNumberTypeFloat32:
+      return "kMSDataTypeNumberTypeFloat32";
+    case kNumberTypeFloat16:
+      return "kMSDataTypeNumberTypeFloat16";
+    case kNumberTypeFloat64:
+      return "kMSDataTypeNumberTypeFloat64";
+    case kTypeUnknown:
+      return "kMSDataTypeUnknown";
+    default:
+      return "unsupported";
+  }
+}
+
 std::string GetTensorDataType(TypeId type) {
   switch (type) {
     case kNumberTypeFloat:

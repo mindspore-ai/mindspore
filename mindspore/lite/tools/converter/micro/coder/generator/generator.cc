@@ -27,7 +27,7 @@
 #include "coder/generator/component/const_blocks/calib_output.h"
 #include "coder/generator/component/const_blocks/msession.h"
 #include "coder/generator/component/const_blocks/mtensor.h"
-#include "coder/generator/component/const_blocks/mmodel.h"
+#include "coder/generator/component/const_blocks/mcontext.h"
 #include "coder/generator/component/const_blocks/thread_pool.h"
 #include "coder/generator/component/const_blocks/benchmark.h"
 #include "coder/generator/component/const_blocks/license.h"
@@ -97,10 +97,10 @@ int Generator::CodeStaticContent() {
     {net_main_file_path_ + "load_input.c", load_input_c},
     {net_main_file_path_ + "benchmark.cc", benchmark_source},
     {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
-    {net_src_file_path_ + "session.h", session_header},
+    {net_src_file_path_ + "context.h", context_header},
+    {net_src_file_path_ + "context.c", context_source},
     {net_src_file_path_ + "tensor.h", tensor_header},
-    {net_src_file_path_ + "tensor.cc", tensor_source},
-    {net_src_file_path_ + "mmodel.h", model_header}};
+    {net_src_file_path_ + "tensor.c", tensor_source}};
 
   if (config_->support_parallel()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + kThreadWrapper, thread_header));
@@ -117,23 +117,25 @@ int Generator::CodeStaticContent() {
   return RET_OK;
 }
 
-int Generator::CodeSessionImplement() {
-  std::string cfile = net_src_file_path_ + "session.cc";
+int Generator::CodeMSModelImplement() {
+  std::string cfile = net_src_file_path_ + "model.c";
   std::ofstream ofs(cfile);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << cfile;
   ofs << g_hwLicense;
-  ofs << "#include \"session.h\"\n";
-  ofs << "#include \"mmodel.h\"\n";
+  ofs << "#include \"tensor.h\"\n";
+  ofs << "#include \"context.h\"\n";
+  ofs << "#include \"c_api/model_c.h\"\n";
   ofs << "#include \"net.h\"\n";
-  ofs << "#include <new>\n\n";
+  ofs << "#include \"weight.h\"\n\n";
   if (config_->support_parallel()) {
     ofs << "#include \"" << kThreadWrapper << "\"\n";
   }
-  CodeSessionCompileGraph(ofs, ctx_, config_);
-  CodeCreateSessionDestructor(ofs, config_);
-  ofs << session_source;
-  CodeCreateSessionImplement(ofs, config_);
+  ofs << model_runtime_init_source;
+  CodeMSModelCreate(ofs, ctx_);
+  CodeMSModelBuild(ofs, config_);
+  ofs << model_runtime_other_source;
+  CodeMSModelDestory(ofs, config_);
   return RET_OK;
 }
 
@@ -194,7 +196,7 @@ int Generator::GenerateCode() {
   MS_CHECK_RET_CODE(CodeWeightFile(), "code weight file failed.");
   MS_CHECK_RET_CODE(CodeSourceCMakeFile(), "code net cmake file failed.");
   MS_CHECK_RET_CODE(CodeStaticContent(), "code static content failed.");
-  MS_CHECK_RET_CODE(CodeSessionImplement(), "code session file failed.");
+  MS_CHECK_RET_CODE(CodeMSModelImplement(), "code session file failed.");
   MS_CHECK_RET_CODE(CodeRegKernelHFile(), "code registered kernel header file failed.");
   return RET_OK;
 }

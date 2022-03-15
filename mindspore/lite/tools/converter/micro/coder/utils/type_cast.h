@@ -31,6 +31,8 @@
 namespace mindspore::lite::micro {
 std::string EnumNameDataType(TypeId type);
 
+std::string EnumNameMSDataType(TypeId type);
+
 std::string GetTensorDataType(TypeId type);
 
 std::string EnumMicroTensorFormat(mindspore::Format format);

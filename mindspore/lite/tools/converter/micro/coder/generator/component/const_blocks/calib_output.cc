@@ -38,7 +38,8 @@ const char *calib_header = R"RAW(
 #define MINDSPORE_LITE_MICRO_CALIB_OUTPUT_H_
 
 #include "lite_utils.h"
-#include "ms_tensor.h"
+#include "c_api/model_c.h"
+#include "src/tensor.h"
 #include "errorcode.h"
 
 namespace mindspore {
@@ -80,7 +81,7 @@ class Calibrator {
     calib_outputs_.clear();
   }
   int ReadCalibData(const char *calib_data_path);
-  int CompareOutputs(const Vector<tensor::MSTensor *> &outputs) const;
+  int CompareOutputs(const MSTensorHandleArray& outputs) const;
 
  private:
   Vector<CalibTensor *> calib_outputs_;
@@ -187,42 +188,42 @@ float CompareData(const T *output, const float *calib, size_t elements_num) {
   return error;
 }
 
-int Calibrator::CompareOutputs(const Vector<tensor::MSTensor *> &outputs) const {
-  if (outputs.size() != calib_outputs_.size()) {
+int Calibrator::CompareOutputs(const MSTensorHandleArray &outputs) const {
+  if (outputs.handle_num != calib_outputs_.size()) {
     printf("error, outputs and calibs size is mismatch\n");
     return RET_ERROR;
   }
   float total_error = 0;
-  size_t outputs_num = outputs.size();
+  size_t outputs_num = outputs.handle_num;
   for (size_t i = 0; i < outputs_num; ++i) {
-    tensor::MSTensor *output = outputs[i];
+    MicroTensor *output = (MicroTensor *)outputs.handle_list[i];
     MS_ERROR_IF_NULL(output);
     CalibTensor *calib = calib_outputs_[i];
     MS_ERROR_IF_NULL(calib);
-    if (output->tensor_name() != calib->tensor_name()) {
+    if (output->name != calib->tensor_name().data()) {
       printf("warning, output tensor name is not equal to calib\n");
     }
-    if (output->ElementsNum() != calib->ElementsNum()) {
+    int64_t elements = MSTensorGetElementNum(output);
+    if (elements != calib->ElementsNum()) {
       printf("error, output elements num is not equal to calib\n");
       return RET_ERROR;
     }
-    switch (output->data_type()) {
-      case TypeId::kNumberTypeFloat:
-      case TypeId::kNumberTypeFloat32: {
-        total_error += CompareData(static_cast<float *>(output->data()), calib->MutableData(), output->ElementsNum());
+    switch (output->type) {
+      case kMSDataTypeNumberTypeFloat32: {
+        total_error += CompareData(static_cast<float *>(output->data), calib->MutableData(), elements);
         break;
       }
-      case TypeId::kNumberTypeInt8: {
-        total_error += CompareData(static_cast<int8_t *>(output->data()), calib->MutableData(), output->ElementsNum());
+      case kMSDataTypeNumberTypeInt8: {
+        total_error += CompareData(static_cast<int8_t *>(output->data), calib->MutableData(), elements);
         break;
       }
-      case TypeId::kNumberTypeUInt8: {
-        total_error += CompareData(static_cast<uint8_t *>(output->data()), calib->MutableData(), output->ElementsNum());
+      case kMSDataTypeNumberTypeUInt8: {
+        total_error += CompareData(static_cast<uint8_t *>(output->data), calib->MutableData(), elements);
         break;
       }
-      case TypeId::kNumberTypeUInt:
-      case TypeId::kNumberTypeUInt32: {
-        total_error += CompareData(static_cast<int32_t *>(output->data()), calib->MutableData(), output->ElementsNum());
+      case kMSDataTypeNumberTypeInt32:
+      case kMSDataTypeNumberTypeUInt32: {
+        total_error += CompareData(static_cast<int32_t *>(output->data), calib->MutableData(), elements);
         break;
       }
       default: {

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MMODEL_H_
-#define MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MMODEL_H_
+#ifndef MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MCONTEXT_H_
+#define MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MCONTEXT_H_
 
 namespace mindspore::lite::micro {
-extern const char model_header[];
+extern const char context_header[];
+extern const char context_source[];
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MMODEL_H_
+#endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MCONTEXT_H_
