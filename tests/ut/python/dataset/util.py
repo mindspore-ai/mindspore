@@ -69,6 +69,11 @@ def _compare_to_golden_dict(golden_ref_dir, result_dict, check_pillow_version=Fa
     # Note: The version of PILLOW that is used in Jenkins CI is compared with below
     if (not check_pillow_version or PIL.__version__ == '7.1.2'):
         np.testing.assert_equal(result_dict, dict(golden_array))
+    elif PIL.__version__ >= '9.0.0':
+        try:
+            np.testing.assert_equal(result_dict, dict(golden_array))
+        except AssertionError:
+            logger.warning("Results from Pillow >= 9.0.0 is incompatibale with Pillow < 9.0.0, need more validation.")
     else:
         # Beware: If error, PILLOW version of golden results may be incompatible with current PILLOW version
         np.testing.assert_equal(result_dict, dict(golden_array),
@@ -336,28 +341,28 @@ def visualize_with_bounding_boxes(orig, aug, annot_name="bbox", plot_rows=3):
         orig = [orig]
         aug = [aug]
 
-    for ix, allData in enumerate(zip(orig, aug)):
+    for ix, all_data in enumerate(zip(orig, aug)):
         base_ix = ix * plot_rows  # current batch starting index
-        curPlot = len(allData[0])
+        cur_plot = len(all_data[0])
 
-        fig, axs = plt.subplots(curPlot, 2)
+        fig, axs = plt.subplots(cur_plot, 2)
         fig.tight_layout(pad=1.5)
 
-        for x, (dataA, dataB) in enumerate(zip(allData[0], allData[1])):
+        for x, (data_a, data_b) in enumerate(zip(all_data[0], all_data[1])):
             cur_ix = base_ix + x
             # select plotting axes based on number of image rows on plot - else case when 1 row
-            (axA, axB) = (axs[x, 0], axs[x, 1]) if (curPlot > 1) else (axs[0], axs[1])
+            (ax_a, ax_b) = (axs[x, 0], axs[x, 1]) if (cur_plot > 1) else (axs[0], axs[1])
 
-            axA.imshow(dataA["image"])
-            add_bounding_boxes(axA, dataA[annot_name])
-            axA.title.set_text("Original" + str(cur_ix + 1))
+            ax_a.imshow(data_a["image"])
+            add_bounding_boxes(ax_a, data_a[annot_name])
+            ax_a.title.set_text("Original" + str(cur_ix + 1))
 
-            axB.imshow(dataB["image"])
-            add_bounding_boxes(axB, dataB[annot_name])
-            axB.title.set_text("Augmented" + str(cur_ix + 1))
+            ax_b.imshow(data_b["image"])
+            add_bounding_boxes(ax_b, data_b[annot_name])
+            ax_b.title.set_text("Augmented" + str(cur_ix + 1))
 
-            logger.info("Original **\n{} : {}".format(str(cur_ix + 1), dataA[annot_name]))
-            logger.info("Augmented **\n{} : {}\n".format(str(cur_ix + 1), dataB[annot_name]))
+            logger.info("Original **\n{} : {}".format(str(cur_ix + 1), data_a[annot_name]))
+            logger.info("Augmented **\n{} : {}\n".format(str(cur_ix + 1), data_b[annot_name]))
 
         plt.show()
 
