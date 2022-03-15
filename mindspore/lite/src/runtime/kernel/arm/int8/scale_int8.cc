@@ -130,7 +130,7 @@ int ScaleInt8CPUKernel::InitParameter() {
   }
   for (; i < static_cast<int>(input1_shape.size()) + scale_param_->axis_; ++i) {
     tile_para->in_shape0_[i] = input0_shape[i];
-    tile_para->in_shape1_[i] = input1_shape[i];
+    tile_para->in_shape1_[i] = input0_shape[i];
     tile_para->out_shape_[i] = out_shape[i];
   }
   for (; i < static_cast<int>(tile_para->ndim_); ++i) {
