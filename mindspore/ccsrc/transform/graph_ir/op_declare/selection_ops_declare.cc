@@ -99,6 +99,12 @@ ATTR_MAP(GatherNd) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherNd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherNd, kNameGatherNd, ADPT_DESC(GatherNd))
 
+// GatherD
+INPUT_MAP(GatherD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dim)}, {3, INPUT_DESC(index)}};
+ATTR_MAP(GatherD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(GatherD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GatherD, kNameGatherD, ADPT_DESC(GatherD))
+
 // Range
 INPUT_MAP(RangeD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(RangeD) = {{"start", ATTR_DESC(start, AnyTraits<float>())},
