@@ -80,7 +80,7 @@ class TbeJsonCreator {
   virtual void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {}
   void GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
   void GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr, nlohmann::json *attrs_json);
-  bool AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *attrs_ptr,
+  void AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *attrs_ptr,
                               nlohmann::json *attrs_json);
   virtual bool AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
                                        nlohmann::json *attrs_json);
@@ -95,7 +95,7 @@ class TbeJsonCreator {
 
  private:
   std::string json_name_;
-  size_t json_hash_;
+  size_t json_hash_{0};
 };
 
 }  // namespace mindspore::kernel

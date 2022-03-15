@@ -114,12 +114,12 @@ std::string TbeUtils::GetOpDebugPath() {
 }
 
 std::string GetOpDebugLevel() {
-  static const std::set<int> value_ranges = {OP_DEBUG_LEVEL_0, OP_DEBUG_LEVEL_1, OP_DEBUG_LEVEL_2, OP_DEBUG_LEVEL_3,
-                                             OP_DEBUG_LEVEL_4};
+  static const std::set<size_t> value_ranges = {OP_DEBUG_LEVEL_0, OP_DEBUG_LEVEL_1, OP_DEBUG_LEVEL_2, OP_DEBUG_LEVEL_3,
+                                                OP_DEBUG_LEVEL_4};
   std::string op_debug_level = std::to_string(OP_DEBUG_LEVEL_3);
   auto env_level = common::GetEnv(kCOMPILER_OP_LEVEL);
   if (!env_level.empty()) {
-    if (!TbeUtils::IsOneOf(value_ranges, std::atoi(env_level.c_str()))) {
+    if (!TbeUtils::IsOneOf(value_ranges, std::stoul(env_level.c_str()))) {
       MS_LOG(WARNING) << "Invalid environment variable '" << kCOMPILER_OP_LEVEL << "': " << env_level
                       << ", the value should be in [0, 1, 2, 3, 4], now using the default value 3."
                          "Get more detail info at https://www.mindspore.cn/docs/note/zh-CN/master/env_var_list.html";

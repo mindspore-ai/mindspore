@@ -35,13 +35,12 @@ namespace kernel {
 namespace tbe {
 using std::string;
 using std::vector;
-enum OpDebugLevel {
-  OP_DEBUG_LEVEL_0,  // 0: turn off op debug, remove kernel_meta
-  OP_DEBUG_LEVEL_1,  // 1: turn on op debug, gen cce file
-  OP_DEBUG_LEVEL_2,  // 2: turn on op debug, gen cce file, turn off op compile optimization
-  OP_DEBUG_LEVEL_3,  // 3: turn off op debug, keep kernel_meta
-  OP_DEBUG_LEVEL_4   // 4: turn off op debug, gen _compute.json file
-};
+
+constexpr size_t OP_DEBUG_LEVEL_0 = 0;  // 0: turn off op debug, remove kernel_meta
+constexpr size_t OP_DEBUG_LEVEL_1 = 1;  // 1: turn on op debug, gen cce file
+constexpr size_t OP_DEBUG_LEVEL_2 = 2;  // 2: turn on op debug, gen cce file, turn off op compile optimization
+constexpr size_t OP_DEBUG_LEVEL_3 = 3;  // 3: turn off op debug, keep kernel_meta
+constexpr size_t OP_DEBUG_LEVEL_4 = 4;  // 4: turn off op debug, gen _compute.json file
 
 class TbeUtils {
  public:

@@ -62,7 +62,7 @@ class AscendMemAdapter {
   };
 
   uint8_t *MallocFromRts(size_t size);
-  bool FreeToRts(void *devPtr);
+  bool FreeToRts(void *devPtr) const;
   size_t GetDeviceMemSizeFromContext();
 
   bool initialized_{false};
