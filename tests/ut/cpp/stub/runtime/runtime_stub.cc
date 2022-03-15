@@ -188,8 +188,14 @@ RTS_API rtError_t rtLabelCreateEx(rtLabel_t *label, rtStream_t stream) { return 
 RTS_API rtError_t rtLabelCreateExV2(rtLabel_t *lbl, rtModel_t mdl, rtStream_t stm) { return RT_ERROR_NONE; }
 
 RTS_API rtError_t rtCpuKernelLaunchWithFlag(const void *soName, const void *kernelName, uint32_t blockDim,
-                                            const void *args, uint32_t argsSize, rtSmDesc_t *smDesc, rtStream_t stream,
+                                            const rtArgsEx_t *argsInfo, rtSmDesc_t *smDesc, rtStream_t stm,
                                             uint32_t flags) {
+  return RT_ERROR_NONE;
+}
+
+RTS_API rtError_t rtCpuKernelLaunchWithFlagV2(const void *soName, const void *kernelName, uint32_t blockDim,
+                                              const rtArgsEx_t *argsInfo, rtSmDesc_t *smDesc, rtStream_t stm,
+                                              uint32_t flags) {
   return RT_ERROR_NONE;
 }
 
@@ -203,8 +209,13 @@ RTS_API rtError_t rtProfilerTraceEx(uint64_t id, uint64_t modelId, uint16_t tagI
   return RT_ERROR_NONE;
 }
 
-RTS_API rtError_t rtKernelLaunchWithFlag(const void *stubFunc, uint32_t blockDim, void *args, uint32_t argsSize,
-                                         rtSmDesc_t *smDesc, rtStream_t stream, uint32_t flags) {
+RTS_API rtError_t rtKernelLaunchWithFlag(const void *stubFunc, uint32_t blockDim, rtArgsEx_t *argsInfo,
+                                         rtSmDesc_t *smDesc, rtStream_t stm, uint32_t flags) {
+  return RT_ERROR_NONE;
+}
+
+RTS_API rtError_t rtKernelLaunchWithFlagV2(const void *stubFunc, uint32_t blockDim, rtArgsEx_t *argsInfo,
+                                           rtSmDesc_t *smDesc, rtStream_t stm, uint32_t flags) {
   return RT_ERROR_NONE;
 }
 
@@ -214,8 +225,14 @@ RTS_API rtError_t rtProfRegisterCtrlCallback(uint32_t moduleId, rtProfCtrlHandle
 
 RTS_API rtError_t rtGetRtCapability(rtFeatureType_t, int32_t, int64_t *) { return RT_ERROR_NONE; }
 
-RTS_API rtError_t rtKernelLaunchWithHandle(void *handle, const void *devFunc, uint32_t blockDim, void *args,
-                                           uint32_t argsSize, rtSmDesc_t *smDesc, rtStream_t stream,
+RTS_API rtError_t rtKernelLaunchWithHandle(void *hdl, const void *kernelInfoExt, uint32_t blockDim,
+                                           rtArgsEx_t *argsInfo, rtSmDesc_t *smDesc, rtStream_t stm,
                                            const void *kernelInfo) {
+  return RT_ERROR_NONE;
+}
+
+RTS_API rtError_t rtKernelLaunchWithHandleV2(void *hdl, const void *kernelInfoExt, uint32_t blockDim,
+                                             rtArgsEx_t *argsInfo, rtSmDesc_t *smDesc, rtStream_t stm,
+                                             const void *kernelInfo) {
   return RT_ERROR_NONE;
 }

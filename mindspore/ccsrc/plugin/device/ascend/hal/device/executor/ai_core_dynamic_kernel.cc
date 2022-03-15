@@ -96,9 +96,12 @@ void AiCoreDynamicKernel::Execute() {
   if (handle_ != nullptr) {
     const auto dev_func = std::to_string(tiling_key_);
     const auto kernel_info = node_info + "/" + std::to_string(tiling_key_);
-    if (RT_ERROR_NONE != rtKernelLaunchWithHandle(handle_, dev_func.c_str(), block_dim_, runtime_args_.data(),
-                                                  args_size, l2ctrl, stream_, kernel_info.c_str())) {
-      MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunchWithHandle error. Node info: " << node_info;
+    rtArgsEx_t args_info = {};
+    args_info.args = runtime_args_.data();
+    args_info.argsSize = args_size;
+    if (RT_ERROR_NONE != rtKernelLaunchWithHandleV2(handle_, dev_func.c_str(), block_dim_, &args_info, l2ctrl, stream_,
+                                                    kernel_info.c_str())) {
+      MS_LOG(EXCEPTION) << "Call runtime rtKernelLaunchWithHandleV2 error. Node info: " << node_info;
     }
   } else {
     if (RT_ERROR_NONE != rtKernelLaunch(stub_func_, block_dim_, runtime_args_.data(), args_size, l2ctrl, stream_)) {

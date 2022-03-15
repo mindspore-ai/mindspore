@@ -209,7 +209,7 @@ def test_reset_mindrecord(add_and_remove_cv_file):  # pylint: disable=unused-arg
             run_reset(data, num_epochs=num_epochs, failure_point=failure_point, reset_step=reset_step)
 
 
-def test_reset_np_error():
+def skip_test_reset_np_error():
     """
     Feature: dataset recovery
     Description: Simple test of data pipeline reset feature for error cases (step is negative, or larger than expected)
@@ -229,4 +229,3 @@ if __name__ == "__main__":
     test_reset_cifar2()
     test_reset_imagenet()
     test_reset_mindrecord(add_and_remove_cv_file)
-    test_reset_np_error()
