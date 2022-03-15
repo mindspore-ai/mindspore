@@ -75,7 +75,9 @@ class ControlActor : public MemoryAwareActor {
   const std::map<size_t, std::set<DeviceTensorPtr>> &ref_node_formal_parameter_device_tensors() const {
     return ref_node_formal_parameter_device_tensors_;
   }
-  size_t branch_id() const { return output_branch_id_; }
+  int branch_id() const { return output_branch_id_; }
+  // Free memory by the dynamic ref count decremented. It corresponds to the EraseInput.
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
  protected:
   friend class ControlNodeScheduler;
@@ -107,8 +109,6 @@ class ControlActor : public MemoryAwareActor {
 
   // Increase the dynamic ref count by the outputs. It corresponds to the SendOutput.
   virtual void IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context);
-  // Free memory by the dynamic ref count decremented. It corresponds to the EraseInput.
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
   // Input data.
   // 1.Input partial.

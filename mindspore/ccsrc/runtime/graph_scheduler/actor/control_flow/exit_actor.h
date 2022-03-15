@@ -50,13 +50,13 @@ class ExitActor : public ControlActor {
     return output_branch_partial_arrows_;
   }
   const std::vector<bool> &is_need_copy_device_tensors() const { return is_need_copy_device_tensors_; }
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
  protected:
   void Init() override;
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;
   void IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) override;
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;

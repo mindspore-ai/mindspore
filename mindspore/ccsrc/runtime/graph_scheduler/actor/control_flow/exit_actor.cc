@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include "runtime/graph_scheduler/actor/control_flow/exit_actor.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
 
@@ -179,7 +180,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
                     << " for actor:" << GetAID();
       auto shape_tmp = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
       host_shape.clear();
-      std::transform(shape_tmp.begin(), shape_tmp.end(), std::back_inserter(host_shape), IntToSize);
+      (void)std::transform(shape_tmp.begin(), shape_tmp.end(), std::back_inserter(host_shape), IntToSize);
     }
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
     auto new_device_tensor =
@@ -224,11 +225,11 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       continue;
     }
 
-    const auto &data = input_device_tensors_[i];
-    MS_EXCEPTION_IF_NULL(data);
+    const auto &device_tensor = input_device_tensors_[i];
+    MS_EXCEPTION_IF_NULL(device_tensor);
     for (auto &output_data : output_data_by_output_index_[i]) {
       MS_EXCEPTION_IF_NULL(output_data);
-      output_data->data_ = data;
+      output_data->data_ = device_tensor;
     }
   }
 }
