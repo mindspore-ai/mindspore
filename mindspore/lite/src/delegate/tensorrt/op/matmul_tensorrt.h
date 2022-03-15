@@ -43,8 +43,14 @@ class MatMulTensorRT : public TensorRTOp {
 
   nvinfer1::ITensor *AddAsFullConnect(nvinfer1::INetworkDefinition *network);
 
-  nvinfer1::MatrixOperation transpose_a_ = nvinfer1::MatrixOperation::kNONE;
-  nvinfer1::MatrixOperation transpose_b_ = nvinfer1::MatrixOperation::kNONE;
+  nvinfer1::ITensor *AddAsOptPlugin(nvinfer1::INetworkDefinition *network);
+
+  nvinfer1::ITensor *AddBias(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input_tensor);
+
+  bool RunOptPlugin();
+
+  bool transpose_a_{false};
+  bool transpose_b_{false};
   Format out_format_;
   schema::ActivationType activation_{schema::ActivationType::ActivationType_NO_ACTIVATION};
   void *weight_ptr_{nullptr};

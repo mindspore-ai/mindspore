@@ -77,7 +77,7 @@ int TensorRTOp::SetInt8DynamicRange() {
     return RET_ERROR;
   }
   if (quant_type_ != schema::QuantType_QUANT_ALL) {
-    MS_LOG(INFO) << "op " << op_name_ << " not quantized.";
+    MS_LOG(DEBUG) << "op " << op_name_ << " not quantized.";
     return RET_OK;
   }
 

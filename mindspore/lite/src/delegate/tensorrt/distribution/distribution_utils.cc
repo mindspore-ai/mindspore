@@ -19,7 +19,7 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore::lite {
-ncclDataType_t ConvertDataType(nvinfer1::DataType type_id) {
+ncclDataType_t ConvertNCCLDataType(nvinfer1::DataType type_id) {
   std::unordered_map<nvinfer1::DataType, ncclDataType_t> data_type_map = {
     {nvinfer1::DataType::kINT8, ncclInt8},
     {nvinfer1::DataType::kINT32, ncclInt32},

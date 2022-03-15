@@ -116,6 +116,24 @@ nvinfer1::DataType ConvertDataType(DataType type_id) {
   return data_type;
 }
 
+cudaDataType_t ConvertDataType(nvinfer1::DataType type_id) {
+  std::map<nvinfer1::DataType, cudaDataType_t> data_type_map = {
+    {nvinfer1::DataType::kINT8, CUDA_R_8I},
+    {nvinfer1::DataType::kINT32, CUDA_R_32I},
+    {nvinfer1::DataType::kFLOAT, CUDA_R_32F},
+    {nvinfer1::DataType::kHALF, CUDA_R_16F},
+  };
+  auto iter = data_type_map.find(type_id);
+  cudaDataType_t data_type;
+  if (iter != data_type_map.end()) {
+    data_type = iter->second;
+  } else {
+    data_type = CUDA_R_32F;
+    MS_LOG(WARNING) << "invalid data_type for TensorRT, need check: " << static_cast<int>(type_id);
+  }
+  return data_type;
+}
+
 nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input) {
   // NHWC 0123 NCHW 0312
   nvinfer1::Permutation perm{{0, 3, 1, 2}};

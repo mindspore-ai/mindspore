@@ -57,7 +57,6 @@ set(TENSORRT_RUNTIME_SRC
 
 link_libraries(${CUDA_LIB_PATH}/libcudnn.so)
 link_libraries(${CUDA_LIB_PATH}/libnvrtc.so)
-link_libraries(${CUDA_LIB_PATH}/libcublas.so)
 link_libraries(${CUDA_LIB_PATH}/libcublasLt.so)
 
 add_library(libcudart SHARED IMPORTED)
@@ -66,12 +65,15 @@ set_target_properties(libcudart PROPERTIES IMPORTED_LOCATION ${CUDA_LIB_PATH}/li
 add_library(libnvinfer SHARED IMPORTED)
 set_target_properties(libnvinfer PROPERTIES IMPORTED_LOCATION ${TENSORRT_LIB_PATH}/libnvinfer.so)
 
+add_library(libcublas SHARED IMPORTED)
+set_target_properties(libcublas PROPERTIES IMPORTED_LOCATION ${CUDA_LIB_PATH}/libcublas.so)
 add_library(tensorrt_kernel_mid OBJECT ${TENSORRT_RUNTIME_SRC})
 
 add_dependencies(tensorrt_kernel_mid fbs_src)
 target_link_libraries(
     tensorrt_kernel_mid
     libcudart
+    libcublas
     libnvinfer
 )
 

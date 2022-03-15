@@ -18,6 +18,7 @@
 #include <cfloat>
 #include <memory>
 #include "src/delegate/tensorrt/op/cast_tensorrt.h"
+#include "src/delegate/tensorrt/op/activation_opt_plugin.h"
 
 namespace mindspore::lite {
 int ActivationTensorRT::IsSupport(const schema::Primitive *primitive,
@@ -73,10 +74,10 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_input = cast_layer->getOutput(0);
   }
 
-  nvinfer1::IActivationLayer *activation_layer = ActivationTensorRT::AddActivation(
+  auto activation_layer = ActivationTensorRT::AddActivation(
     network, activation_op->activation_type(), alpha,
     std::isfinite(activation_op->min_val()) ? activation_op->min_val() : FLT_MIN,
-    std::isfinite(activation_op->max_val()) ? activation_op->max_val() : FLT_MAX, activation_input);
+    std::isfinite(activation_op->max_val()) ? activation_op->max_val() : FLT_MAX, activation_input, quant_type_);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return RET_ERROR;
@@ -103,10 +104,23 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   this->layer_ = activation_layer;
   return RET_OK;
 }
-nvinfer1::IActivationLayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition *network,
-                                                              schema::ActivationType activation_type, float alpha,
-                                                              float min_value, float max_value,
-                                                              nvinfer1::ITensor *trt_in_tensor) {
+nvinfer1::ILayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition *network,
+                                                    schema::ActivationType activation_type, float alpha,
+                                                    float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
+                                                    schema::QuantType quant_type) {
+  // sigmoid precision is wrong for trt
+  if (quant_type == schema::QuantType_QUANT_NONE && activation_type == schema::ActivationType::ActivationType_SIGMOID) {
+    auto plugin = std::make_shared<ActivationOptPlugin>(trt_in_tensor->getName(), activation_type);
+    MS_LOG(INFO) << "using opt plugin for " << trt_in_tensor->getName();
+    if (plugin == nullptr) {
+      MS_LOG(ERROR) << "create ActivationOptPlugin failed for " << trt_in_tensor->getName();
+      return nullptr;
+    }
+    nvinfer1::ITensor *inputTensors[] = {trt_in_tensor};
+    nvinfer1::IPluginV2Layer *activation_opt_layer = network->addPluginV2(inputTensors, 1, *plugin);
+    return activation_opt_layer;
+  }
+
   // Just some action_code correct, unfind code is set to default relu. need double check.
   lite::ActivationParams action_param = ConvertActivationType(activation_type);
   if (action_param.activation_type == nvinfer1::ActivationType::kRELU &&
