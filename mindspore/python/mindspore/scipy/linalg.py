@@ -441,8 +441,7 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
 
 
 def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
-         overwrite_b=False, turbo=True, eigvals=None, _type=1,
-         check_finite=True):
+         overwrite_b=False, turbo=True, eigvals=None, type=1, check_finite=True):  # pylint: disable=W0622
     """
     Solve a standard or generalized eigenvalue problem for a complex Hermitian or real symmetric matrix.
 
@@ -470,7 +469,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             triangle of `a` and, if applicable, `b`. Default: True.
         eigvals_only (bool, optional): Whether to calculate only eigenvalues and no eigenvectors.
             Default: False.
-        _type (int, optional): For the generalized problems, this keyword specifies the problem type
+        type (int, optional): For the generalized problems, this keyword specifies the problem type
             to be solved for `w` and `v` (only takes 1, 2, 3 as possible inputs)::
 
                 1 =>     a @ v = w @ b @ v
@@ -533,6 +532,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     eigh_type_check(overwrite_a, bool, 'overwrite_a')
     eigh_type_check(overwrite_b, bool, 'overwrite_b')
     eigh_type_check(turbo, bool, 'turbo')
+    eigh_type_check(type, int, 'type')
     eigh_type_check(check_finite, bool, 'check_finite')
     _mstype_check(func_name, a, mstype.tensor_type)
     _dtype_check(func_name, a,
