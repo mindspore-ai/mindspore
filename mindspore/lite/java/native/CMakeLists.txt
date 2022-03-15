@@ -36,6 +36,10 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 
+if(DEFINED ENV{MSLITE_ENABLE_SERVER_INFERENCE})
+    set(MSLITE_ENABLE_SERVER_INFERENCE $ENV{MSLITE_ENABLE_SERVER_INFERENCE})
+endif()
+
 if(ENABLE_VERBOSE)
     set(CMAKE_VERBOSE_MAKEFILE on)
 endif()
@@ -79,10 +83,11 @@ set(JNI_SRC
         ${NEW_NATIVE_DIR}/ms_context.cpp
         ${NEW_NATIVE_DIR}/ms_tensor.cpp
         ${NEW_NATIVE_DIR}/version.cpp
-  )
+        )
 
 if(MSLITE_ENABLE_SERVER_INFERENCE)
-    set(JNI_TRAIN_SRC
+    set(JNI_SRC
+            ${JNI_SRC}
             ${NEW_NATIVE_DIR}/runner_config.cpp
             ${NEW_NATIVE_DIR}/model_parallel_runner.cpp
             )
@@ -102,9 +107,9 @@ endif()
 if(SUPPORT_TRAIN)
     set(LITE_TRAIN_SO_NAME mindspore-lite-train)
     set(JNI_TRAIN_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
-        ${NEW_NATIVE_DIR}/train_config.cpp
-    )
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
+            ${NEW_NATIVE_DIR}/train_config.cpp
+            )
     add_library(mindspore-lite-train-jni SHARED ${JNI_TRAIN_SRC})
     if(PLATFORM_ARM64 OR PLATFORM_ARM32)
         find_library(log-lib log)

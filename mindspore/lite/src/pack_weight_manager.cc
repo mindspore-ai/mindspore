@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
 namespace mindspore::lite {
 namespace {
-constexpr size_t kMemAliginSize = 64;
+constexpr size_t kMemAlignSize = 64;
 
-size_t RoundMemSize(size_t size) { return (size + kMemAliginSize - 1) & (~(kMemAliginSize - 1)); }
+size_t RoundMemSize(size_t size) { return (size + kMemAlignSize - 1) & (~(kMemAlignSize - 1)); }
 }  // namespace
 PackWeightManager *PackWeightManager::GetInstance() {
   static PackWeightManager instance;
@@ -120,9 +119,9 @@ std::pair<PackStatus, void *> PackWeightManager::FindPackedTensor(ModelConstWeig
     auto origin_index = weight->origin_data_index[tensor->data()];
     void *data = nullptr;
 #ifdef _WIN32
-    data = _aligned_malloc(allocate_size, kMemAlginSize);
+    data = _aligned_malloc(size, kMemAlignSize);
 #else
-    auto ret = posix_memalign(&data, kMemAliginSize, size);
+    auto ret = posix_memalign(&data, kMemAlignSize, size);
     if (ret != 0) {
       MS_LOG(ERROR) << "posix_memalign failed.";
       return std::make_pair(MALLOC, nullptr);
@@ -198,12 +197,11 @@ void PackWeightManager::FreePackedWeight(ModelConstWeight *weight) {
 PackWeightManager::~PackWeightManager() {
   for (auto &item : path_model_weight_) {
     FreePackedWeight(item.second);
-    path_model_weight_.erase(item.first);
   }
+  path_model_weight_.clear();
   for (auto &item : buf_model_weight_) {
     FreePackedWeight(item.second);
-    buf_model_weight_.erase(item.first);
   }
+  buf_model_weight_.clear();
 }
 }  // namespace mindspore::lite
-#endif

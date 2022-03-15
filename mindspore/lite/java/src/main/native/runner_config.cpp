@@ -38,6 +38,17 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_RunnerConfig_create
     return (jlong) nullptr;
   }
   context.reset(c_context_ptr);
-  runner_config->model_ctx = context;
+  runner_config->context = context;
   return (jlong)runner_config;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setWorkersNum(JNIEnv *env, jobject thiz,
+                                                                                       jstring runner_config_ptr,
+                                                                                       jint workers_num) {
+  auto *pointer = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("runner config pointer from java is nullptr");
+    return;
+  }
+  pointer->workers_num = workers_num;
 }

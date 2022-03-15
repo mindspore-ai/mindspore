@@ -55,6 +55,14 @@ public class RunnerConfig {
         return this.runnerConfigPtr != 0L;
     }
 
+    /**
+     * Set workers num
+     *
+     * @param workersNum The number of parallel models.
+     */
+    public void setWorkersNum(int workersNum) {
+        setWorkersNum(runnerConfigPtr, workersNum);
+    }
 
     /**
      * Get RunnerConfig pointer.
@@ -66,5 +74,7 @@ public class RunnerConfig {
     }
 
     private native long createRunnerConfig(long msContextPtr);
+
+    private native void setWorkersNum(long runnerConfigPtr, int workersNum);
 
 }
