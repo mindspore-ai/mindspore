@@ -16,5 +16,10 @@
 #include "src/runtime/inner_allocator.h"
 
 namespace mindspore {
-std::shared_ptr<Allocator> Allocator::Create() { return std::make_shared<DefaultAllocator>(); }
+std::shared_ptr<Allocator> Allocator::Create() {
+#ifdef SERVER_INFERENCE
+  return nullptr;
+#endif
+  return std::make_shared<DefaultAllocator>();
+}
 }  // namespace mindspore
