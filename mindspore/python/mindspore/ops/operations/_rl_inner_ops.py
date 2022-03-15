@@ -15,6 +15,8 @@
 
 """Inner operators for reinforcement learning."""
 
+import functools
+from mindspore.common.dtype import type_size_in_bytes
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ..primitive import prim_attr_register, PrimitiveWithInfer
@@ -345,6 +347,12 @@ class PriorityReplayBufferCreate(PrimitiveWithInfer):
         validator.check_non_negative_int(seed0, "seed0", self.name)
         validator.check_non_negative_int(seed1, "seed1", self.name)
 
+        schema = []
+        for shape, dtype in zip(shapes, dtypes):
+            num_element = functools.reduce(lambda x, y: x * y, shape)
+            schema.append(num_element * type_size_in_bytes(dtype))
+        self.add_prim_attr("schema", schema)
+
     def infer_shape(self):
         return (1,)
 
@@ -411,6 +419,12 @@ class PriorityReplayBufferSample(PrimitiveWithInfer):
         validator.check_int(batch_size, 1, Rel.GE, "batch_size", self.name)
         validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
         validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
+
+        schema = []
+        for shape, dtype in zip(shapes, dtypes):
+            num_element = functools.reduce(lambda x, y: x * y, shape)
+            schema.append(num_element * type_size_in_bytes(dtype))
+        self.add_prim_attr("schema", schema)
 
     def infer_shape(self):
         output_shape = [(self.batch_size,), (self.batch_size,)]

@@ -125,3 +125,7 @@ from .cummax import _cummax_aicpu
 from .floor_div import _floor_div_aicpu
 from .one_hot import _one_hot_aicpu
 from .mul_no_nan import _mul_no_nan_aicpu
+from .priority_replay_buffer import _prb_create_op_cpu
+from .priority_replay_buffer import _prb_push_op_cpu
+from .priority_replay_buffer import _prb_sample_op_cpu
+from .priority_replay_buffer import _prb_update_op_cpu
