@@ -34,7 +34,7 @@ SomasTensor::SomasTensor(size_t id, SomasNodePtr source_node, SomasStreamPtr sou
       original_size_(real_size) {
   const size_t alignment = 512;
   const size_t alignment_complement = 31;
-  aligned_size_ = (real_size > 0) ? (real_size + alignment + alignment_complement) / alignment * alignment : 0;
+  aligned_size_ = (real_size > 0) ? ((real_size + alignment + alignment_complement) / alignment) * alignment : 0;
 
   solver_tensor_desc_ = std::make_shared<SomasSolverTensorDesc>(id_, aligned_size_, offset_, false);
 

@@ -61,9 +61,9 @@ class SomasNode {
   ~SomasNode() = default;
 
   // Accessors
-  const size_t &GetId() { return id_; }
-  SomasStreamPtr GetStream() { return stream_; }
-  const NodeType &GetType() { return type_; }
+  const size_t &GetId() const { return id_; }
+  const SomasStreamPtr GetStream() const { return stream_; }
+  const NodeType &GetType() const { return type_; }
 
  private:
   const size_t id_{0};

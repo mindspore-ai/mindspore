@@ -16,7 +16,6 @@
 
 #include "backend/common/somas/somas.h"
 #include <algorithm>
-#include <cstdio>
 #include <fstream>
 #include <iterator>
 #include <memory>
