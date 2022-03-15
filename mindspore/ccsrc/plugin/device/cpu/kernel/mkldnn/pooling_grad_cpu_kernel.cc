@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/mkldnn/pooling_grad_cpu_kernel.h"
 
-#include <utility>
 #include <algorithm>
 #include <unordered_map>
 
@@ -28,10 +27,16 @@ namespace {
 constexpr size_t kAvgPooling3DGradInputsNum = 1;
 constexpr size_t kPoolingGradInputsNum = 3;
 constexpr size_t kPoolingGradOutputsNum = 1;
-constexpr size_t kPoolingGradDilation = 1;
-constexpr size_t kForwardCNodeIndex = 2;
+constexpr size_t kPoolingGradWorkSpaceNum = 1;
 constexpr size_t kGradIndex = 2;
 }  // namespace
+
+void PoolingGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  if (algorithm_ == dnnl::algorithm::pooling_max) {
+    (void)workspace_size_list_.emplace_back(workspace_size_);
+  }
+}
 
 void PoolingGradCpuKernelMod::InitFields(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -85,7 +90,7 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   const dnnl::memory::dims kernel(kernel_include_nc.begin() + NC_LEN, kernel_include_nc.end());
   const dnnl::memory::dims strides(strides_include_nc.begin() + NC_LEN, strides_include_nc.end());
-  const dnnl::memory::dims dilation(kernel.size(), kPoolingGradDilation);
+  const dnnl::memory::dims dilation(kernel.size(), kPoolingDilation);
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
   std::transform(kernel.begin(), kernel.end(), std::back_inserter(kernel_),
@@ -110,11 +115,12 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   // For pooling_max, need a workspace that generated in forward and stored the max value indexes to compute grad.
   if (algorithm_ == dnnl::algorithm::pooling_max) {
     workspace_desc_ = GetWorkspaceDesc(forward_prim_desc_);
+    workspace_size_ = GetSize(workspace_desc_);
     AddArgument(DNNL_ARG_WORKSPACE, workspace_desc_);
   }
 }
 
-void PoolingGradCpuKernelMod::ComputeMaxValueIndex(void *src, void *dst, unsigned char *work_array) const {
+void PoolingGradCpuKernelMod::ComputeMaxValueIndex(void *src, void *dst, void *work_array) const {
   // Compute maxvalue index for pooling_backward_max.
   MS_LOG(INFO) << "Compute maxvalue index for " << kernel_name_;
   auto primitive_forward = CreatePrimitive<dnnl::pooling_forward>(forward_prim_desc_);
@@ -133,7 +139,7 @@ void PoolingGradCpuKernelMod::ComputeMaxValueIndex(void *src, void *dst, unsigne
 }
 
 bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &workspace,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   size_t input_num = kernel_name_ == kAvgPool3DGradOpName ? kAvgPooling3DGradInputsNum : kPoolingGradInputsNum;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -143,19 +149,10 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 
   // For pooling_max, get the workspace that store the max value indexes.
   if (algorithm_ == dnnl::algorithm::pooling_max) {
-    auto value = pooling_max_workspace_.find(inputs[1]->addr);
-    if (value != pooling_max_workspace_.end()) {
-      MS_LOG(INFO) << "Found workspace for " << kernel_name_;
-      SetArgumentHandle(DNNL_ARG_WORKSPACE, value->second.data());
-      ExecutePrimitive();
-      pooling_max_workspace_.erase(value);
-    } else {
-      const size_t workspace_size = GetSize(workspace_desc_);
-      unsigned char work_array[workspace_size];
-      ComputeMaxValueIndex(inputs[0]->addr, inputs[1]->addr, work_array);
-      SetArgumentHandle(DNNL_ARG_WORKSPACE, work_array);
-      ExecutePrimitive();
-    }
+    CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kPoolingGradWorkSpaceNum, kernel_name_);
+    ComputeMaxValueIndex(inputs[0]->addr, inputs[1]->addr, workspace[0]->addr);
+    SetArgumentHandle(DNNL_ARG_WORKSPACE, workspace[0]->addr);
+    ExecutePrimitive();
     return true;
   }
 

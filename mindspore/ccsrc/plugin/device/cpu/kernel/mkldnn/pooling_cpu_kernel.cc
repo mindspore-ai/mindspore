@@ -26,20 +26,7 @@ namespace kernel {
 namespace {
 constexpr size_t kPoolingInputsNum = 1;
 constexpr size_t kPoolingOutputsNum = 1;
-constexpr size_t kPoolingGradDilation = 1;
-constexpr auto kMaxPool3D = "MaxPool3D";
-constexpr auto kMaxPool = "MaxPool";
-constexpr auto kAvgPool = "AvgPool";
-constexpr auto kAvgPool3D = "AvgPool3D";
 }  // namespace
-
-std::unordered_map<void *, std::vector<unsigned char>> PoolingCpuKernelMod::pooling_max_workspace_;
-void PoolingCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  if (algorithm_ == dnnl::algorithm::pooling_max) {
-    (void)workspace_size_list_.emplace_back(workspace_size_);
-  }
-}
 
 void PoolingCpuKernelMod::InitFields(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -92,7 +79,7 @@ void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   const dnnl::memory::dims kernel(kernel_include_nc.begin() + NC_LEN, kernel_include_nc.end());
   const dnnl::memory::dims strides(strides_include_nc.begin() + NC_LEN, strides_include_nc.end());
-  const dnnl::memory::dims dilation(kernel.size(), kPoolingGradDilation);
+  const dnnl::memory::dims dilation(kernel.size(), kPoolingDilation);
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
   std::transform(kernel.begin(), kernel.end(), std::back_inserter(kernel_),
@@ -100,19 +87,12 @@ void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   PaddingInfo padding_info{pad_mode, kernel, strides, dilation, &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
   GetPadding(kernel_node, src_shape, padding_info);
 
-  const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_training, algorithm_, src_desc,
+  const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_inference, algorithm_, src_desc,
                                                             dst_desc, strides, kernel, padding_l, padding_r);
   const auto prim_desc = CreateDesc<dnnl::pooling_forward::primitive_desc>(desc, engine_);
   primitive_ = CreatePrimitive<dnnl::pooling_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, dst_desc);
-
-  // For pooling_max, need a workspace to store the max value indexes, and will use in backward.
-  if (algorithm_ == dnnl::algorithm::pooling_max) {
-    const auto wksp_desc = GetWorkspaceDesc(prim_desc);
-    workspace_size_ = GetSize(wksp_desc);
-    AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
-  }
 }
 
 void PoolingCpuKernelMod::EliminateInvalidPadding(float *dst) {
@@ -178,10 +158,10 @@ void PoolingCpuKernelMod::ReComputeDivisor(float *dst) {
 
 std::vector<KernelAttr> PoolingCpuKernelMod::GetOpSupport() {
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
-    {kMaxPool, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-    {kMaxPool3D, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-    {kAvgPool, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-    {kAvgPool3D, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}}};
+    {kMaxPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kMaxPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kAvgPool3DOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}}};
 
   auto iter = support_list_map.find(kernel_type_);
   if (iter == support_list_map.end()) {
@@ -191,27 +171,13 @@ std::vector<KernelAttr> PoolingCpuKernelMod::GetOpSupport() {
   return iter->second;
 }
 
-bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> &workspace,
+bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
-  if (algorithm_ == dnnl::algorithm::pooling_max) {
-    SetArgumentHandle(DNNL_ARG_WORKSPACE, workspace[0]->addr);
-  }
   ExecutePrimitive();
-
-  if (algorithm_ == dnnl::algorithm::pooling_max) {
-    void *out = outputs[0]->addr;
-    pooling_max_workspace_[out] = std::vector<unsigned char>(workspace_size_);
-    auto ret = memcpy_s(pooling_max_workspace_[out].data(), workspace_size_, workspace[0]->addr, workspace_size_);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Copy workspace memory for " << kernel_name_ << " failed!";
-    }
-    return true;
-  }
 
   float *dst = reinterpret_cast<float *>(outputs[0]->addr);
   if (divisor_override_ != 0.f) {
@@ -228,12 +194,12 @@ bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool3D,
-                                 []() { return std::make_shared<PoolingCpuKernelMod>(kMaxPool3D); });
+                                 []() { return std::make_shared<PoolingCpuKernelMod>(kMaxPool3DOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MaxPool,
-                                 []() { return std::make_shared<PoolingCpuKernelMod>(kMaxPool); });
+                                 []() { return std::make_shared<PoolingCpuKernelMod>(kMaxPoolOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool,
-                                 []() { return std::make_shared<PoolingCpuKernelMod>(kAvgPool); });
+                                 []() { return std::make_shared<PoolingCpuKernelMod>(kAvgPoolOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AvgPool3D,
-                                 []() { return std::make_shared<PoolingCpuKernelMod>(kAvgPool3D); });
+                                 []() { return std::make_shared<PoolingCpuKernelMod>(kAvgPool3DOpName); });
 }  // namespace kernel
 }  // namespace mindspore

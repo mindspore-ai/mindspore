@@ -38,9 +38,9 @@ constexpr size_t kBottom2DPadIndex = 1;
 constexpr size_t kLeft2DPadIndex = 2;
 constexpr size_t kRight2DPadIndex = 3;
 
-constexpr size_t k2DStrideSize = 2;
-constexpr size_t kHeight2DStrideIndex = 0;
-constexpr size_t kWidth2DStrideIndex = 1;
+constexpr size_t k2DStrideSize = 4;
+constexpr size_t kHeight2DStrideIndex = 2;
+constexpr size_t kWidth2DStrideIndex = 3;
 
 constexpr size_t k2DDilationSize = 4;
 constexpr size_t kHeight2DDilationIndex = 2;
