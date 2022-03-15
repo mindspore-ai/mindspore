@@ -343,12 +343,12 @@ if(PLATFORM_ARM64)
                             DESTINATION ${RUNTIME_LIB_DIR} RENAME libturbojpeg.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
                     install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.so.8.0.0
                             DESTINATION ${RUNTIME_LIB_DIR} RENAME libtinyxml2.so.8 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${icu4c_LIBPATH}/libicuuc.so.67.1
-                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicuuc.so.67 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${icu4c_LIBPATH}/libicudata.so.67.1
-                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicudata.so.67 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${icu4c_LIBPATH}/libicui18n.so.67.1
-                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicui18n.so.67 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${icu4c_LIBPATH}/libicuuc.so.69.1
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicuuc.so.69 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${icu4c_LIBPATH}/libicudata.so.69.1
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicudata.so.69 COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES ${icu4c_LIBPATH}/libicui18n.so.69.1
+                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicui18n.so.69 COMPONENT ${RUNTIME_COMPONENT_NAME})
                     install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.so.1.36.1 DESTINATION ${RUNTIME_LIB_DIR}
                             RENAME libmindspore_grpc++.so.1 COMPONENT ${RUNTIME_COMPONENT_NAME})
                     install(FILES ${grpc_LIBPATH}/libmindspore_grpc.so.15.0.0 DESTINATION

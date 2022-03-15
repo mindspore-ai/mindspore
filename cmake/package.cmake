@@ -134,12 +134,12 @@ if(ENABLE_MINDDATA)
     install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.so.8.0.0
       DESTINATION ${INSTALL_LIB_DIR} RENAME libtinyxml2.so.8 COMPONENT mindspore)
 
-    install(FILES ${icu4c_LIBPATH}/libicuuc.so.67.1
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libicuuc.so.67 COMPONENT mindspore)
-    install(FILES ${icu4c_LIBPATH}/libicudata.so.67.1
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libicudata.so.67 COMPONENT mindspore)
-    install(FILES ${icu4c_LIBPATH}/libicui18n.so.67.1
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libicui18n.so.67 COMPONENT mindspore)
+    install(FILES ${icu4c_LIBPATH}/libicuuc.so.69.1
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libicuuc.so.69 COMPONENT mindspore)
+    install(FILES ${icu4c_LIBPATH}/libicudata.so.69.1
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libicudata.so.69 COMPONENT mindspore)
+    install(FILES ${icu4c_LIBPATH}/libicui18n.so.69.1
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libicui18n.so.69 COMPONENT mindspore)
 endif()
 
 if(ENABLE_CPU)

@@ -25,8 +25,7 @@ enum {
   // define the error code of ACL model, this is same with the aclError which is
   // error code of ACL API Error codes 1~999 are reserved for the ACL. Do not
   // add other error codes. Add it after APP_ERR_COMMON_ERR_BASE.
-  APP_ERR_ACL_FAILURE = -1,  // ACL: general error
-  APP_ERR_ACL_ERR_BASE = 0,
+  APP_ERR_ACL_FAILURE = -1,                   // ACL: general error
   APP_ERR_ACL_INVALID_PARAM = 1,              // ACL: invalid parameter
   APP_ERR_ACL_BAD_ALLOC = 2,                  // ACL: memory allocation fail
   APP_ERR_ACL_RT_FAILURE = 3,                 // ACL: runtime failure
