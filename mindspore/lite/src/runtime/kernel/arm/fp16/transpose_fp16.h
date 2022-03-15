@@ -18,23 +18,22 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "src/inner_kernel.h"
-#include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/transpose_fp32.h"
+#include "src/runtime/kernel/arm/base/transpose_base.h"
 
 namespace mindspore::kernel {
 
-class TransposeFp16CPUKernel : public TransposeCPUKernel {
+class TransposeFp16CPUKernel : public TransposeBaseCPUKernel {
  public:
   explicit TransposeFp16CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : TransposeCPUKernel(param, inputs, outputs, ctx) {}
+      : TransposeBaseCPUKernel(param, inputs, outputs, ctx) {}
   ~TransposeFp16CPUKernel() = default;
 
+  int ReSize() override;
+
  private:
-  void SetOptTransposeFunc() override;
-  int TransposeDim2to6() override;
-  int TransposeDimGreaterThan6(int task_id) override;
+  int DoTransposeSingleThread() override;
+  int DoTransposeMultiThread(int task_id) override;
 };
 }  // namespace mindspore::kernel
 
