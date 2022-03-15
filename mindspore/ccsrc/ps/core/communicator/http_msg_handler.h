@@ -33,6 +33,7 @@ class HttpMsgHandler : public MessageHandler {
   void *data() const override;
   size_t len() const override;
   bool SendResponse(const void *data, const size_t &len) override;
+  bool SendResponseInference(const void *data, const size_t &len, RefBufferRelCallback cb) override;
 
  private:
   std::shared_ptr<HttpMessageHandler> http_msg_;

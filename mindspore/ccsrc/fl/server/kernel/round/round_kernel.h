@@ -102,9 +102,12 @@ class RoundKernel {
   float upload_loss() const;
 
  protected:
-  // Generating response data of this round. The data is allocated on the heap to ensure it's not released before sent
-  // back to worker.
+  // Send response to client, and the data can be released after the call.
   void GenerateOutput(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len);
+  // Send response to client, and the data will be released by cb after finished send msg.
+  void GenerateOutputInference(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len,
+                               ps::core::RefBufferRelCallback cb);
+
   // Round kernel's name.
   std::string name_;
 

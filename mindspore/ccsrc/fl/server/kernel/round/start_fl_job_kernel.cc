@@ -117,7 +117,6 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
     return update_reason == kNetworkError ? false : true;
   }
 
-  StartFLJob(fbb, device_meta);
   // If calling ReportCount before ReadyForStartFLJob, the result will be inconsistent if the device is not selected.
   result_code = CountForStartFLJob(fbb, start_fl_job_req);
   if (result_code != ResultCode::kSuccess) {
@@ -125,7 +124,19 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
     return ConvertResultCode(result_code);
   }
   IncreaseAcceptClientNum();
-  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+  auto curr_iter_num = LocalMetaStore::GetInstance().curr_iter_num();
+  auto last_iteration = curr_iter_num - 1;
+  auto cache = ModelStore::GetInstance().GetModelResponseCache(name_, curr_iter_num, last_iteration);
+  if (cache == nullptr) {
+    StartFLJob(fbb);
+    cache = ModelStore::GetInstance().StoreModelResponseCache(name_, curr_iter_num, last_iteration,
+                                                              fbb->GetBufferPointer(), fbb->GetSize());
+    if (cache == nullptr) {
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+      return true;
+    }
+  }
+  GenerateOutputInference(message, cache->data(), cache->size(), ModelStore::GetInstance().RelModelResponseCache);
   return true;
 }
 
@@ -288,7 +299,7 @@ ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder>
   return ResultCode::kSuccess;
 }
 
-void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &) {
+void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb) {
   size_t last_iteration = LocalMetaStore::GetInstance().curr_iter_num() - 1;
   auto feature_maps = ModelStore::GetInstance().GetModelByIterNum(last_iteration);
   if (feature_maps.empty()) {

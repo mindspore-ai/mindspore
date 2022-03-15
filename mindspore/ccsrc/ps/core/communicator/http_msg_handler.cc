@@ -35,6 +35,12 @@ bool HttpMsgHandler::SendResponse(const void *data, const size_t &len) {
   http_msg_->QuickResponse(kHttpSuccess, data, len);
   return true;
 }
+
+bool HttpMsgHandler::SendResponseInference(const void *data, const size_t &len, RefBufferRelCallback cb) {
+  MS_ERROR_IF_NULL_W_RET_VAL(data, false);
+  http_msg_->QuickResponseInference(kHttpSuccess, data, len, cb);
+  return true;
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

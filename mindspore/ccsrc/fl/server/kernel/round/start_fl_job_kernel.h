@@ -55,7 +55,7 @@ class StartFLJobKernel : public RoundKernel {
   // Distributed count service counts for startFLJob.
   ResultCode CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestFLJob *start_fl_job_req);
 
-  void StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta);
+  void StartFLJob(const std::shared_ptr<FBBuilder> &fbb);
 
   bool JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestFLJob *start_fl_job_req);
 
