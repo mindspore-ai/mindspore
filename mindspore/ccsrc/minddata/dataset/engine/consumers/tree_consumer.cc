@@ -58,8 +58,10 @@ Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) {
 }
 
 Status TreeConsumer::Terminate() {
-  CHECK_FAIL_RETURN_UNEXPECTED(tree_adapter_->AllTasks() != nullptr, " Execution tree has not been built");
-  return tree_adapter_->AllTasks()->ServiceStop();
+  if (tree_adapter_->AllTasks() != nullptr) {
+    return tree_adapter_->AllTasks()->ServiceStop();
+  }
+  return Status::OK();
 }
 
 #ifndef ENABLE_SECURITY
