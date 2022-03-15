@@ -439,6 +439,14 @@ class Cell(Cell_):
                             f"{default_args} default argument, total {positional_args + default_args}, "
                             f"but got {len(inputs)}.")
 
+    def _hook_fn_registered(self):
+        if self._enable_forward_pre_hook or self._enable_forward_hook or self._enable_backward_hook:
+            return True
+        for cell in self.cells():
+            if cell._hook_fn_registered():
+                return True
+        return False
+
     def _get_prims_recursively(self):
         all_prims = list()
         for _, value in self._primitives.items():
@@ -555,9 +563,9 @@ class Cell(Cell_):
         # Run in Graph mode.
         if context._get_mode() == context.GRAPH_MODE:
             self._check_construct_args(*args, **kwargs)
-            if self._enable_forward_pre_hook or self._enable_forward_hook or self._enable_backward_hook:
-                logger.warning(f"For 'Cell', it's not support hook function in graph mode, please use "
-                               f"context.set_context to set pynative mode.")
+            if self._hook_fn_registered():
+                logger.warning(f"For 'Cell', it's not support hook function in graph mode. If you want to use hook "
+                               f"function, please use context.set_context to set pynative mode.")
             out = self.compile_and_run(*args)
             return out
 
@@ -1755,15 +1763,15 @@ class Cell(Cell_):
         Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
         """
-        inputs = self._cell_backward_hook(*inputs)
-        if isinstance(inputs, tuple):
-            inputs = self.construct(*inputs)
+        if len(inputs) > 1:
+            inputs = self._cell_backward_hook(inputs)
         else:
-            inputs = self.construct(inputs)
+            inputs = self._cell_backward_hook(*inputs)
         if isinstance(inputs, tuple):
-            outputs = self._cell_backward_hook(*inputs)
+            outputs = self.construct(*inputs)
         else:
-            outputs = self._cell_backward_hook(inputs)
+            outputs = self.construct(inputs)
+        outputs = self._cell_backward_hook(outputs)
         return outputs
 
     def register_backward_hook(self, hook_fn):

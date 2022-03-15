@@ -268,6 +268,12 @@ class _MindsporeFunctionExecutor:
 
     def compile(self, args_list, method_name):
         """Returns pipeline for the given args."""
+        # Check whether hook function registered on Cell object.
+        if self.obj and hasattr(self.obj, "_hook_fn_registered"):
+            if self.obj._hook_fn_registered():
+                logger.warning(f"For 'Cell', it's not support hook function when using ms_function. If you want to "
+                               f"use hook function, please use context.set_context to set pynative mode and remove "
+                               f"`ms_function`.")
         # Verify the signature for both function and method
         if self.input_signature is not None:
             signatures = []
