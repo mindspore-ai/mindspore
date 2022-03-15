@@ -34,15 +34,15 @@ void CublasMM1Batch(const void *a_addr, const void *b_addr, void *c_addr, const 
   const int k = params[2];
   cublasOperation_t trans_a = operations[0];
   cublasOperation_t trans_b = operations[1];
-  const int lda = (trans_a == CUBLAS_OP_N) ? m : k;
-  const int ldb = (trans_b == CUBLAS_OP_N) ? k : n;
-  const int ldc = m;
+  const int lda = (trans_a == CUBLAS_OP_N) ? k : m;
+  const int ldb = (trans_b == CUBLAS_OP_N) ? n : k;
+  const int ldc = n;
   cudaDataType_t type_a = data_types[0];
   cudaDataType_t type_b = data_types[1];
   cudaDataType_t type_c = data_types[2];
   const float alpha = 1.0f;
   const float beta = 0.0f;
-  CUBLAS_CHECK_VOID(cublasGemmEx(cublas_handle, trans_a, trans_b, m, n, k, &alpha, a_addr, type_a, lda, b_addr, type_b,
-                                 ldb, &beta, c_addr, type_c, ldc, type_compute, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+  CUBLAS_CHECK_VOID(cublasGemmEx(cublas_handle, trans_b, trans_a, n, m, k, &alpha, b_addr, type_b, ldb, a_addr, type_a,
+                                 lda, &beta, c_addr, type_c, ldc, type_compute, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
 }
 }  // namespace mindspore::lite

@@ -67,9 +67,6 @@ class MatmulOptPlugin : public nvinfer1::IPluginV2DynamicExt {
   bool b_trans_{false};
   int bias_index_{-1};  // -1 means no bias, otherwise should be 2
   cublasHandle_t cublas_handle_{nullptr};
-  void *a_addr_trans_{nullptr};
-  void *b_addr_trans_{nullptr};
-  void *c_addr_trans_{nullptr};
   cublasOperation_t operations_[2]{CUBLAS_OP_N, CUBLAS_OP_N};
   cudaDataType_t data_types_[3]{CUDA_R_32F, CUDA_R_32F, CUDA_R_32F};
   cublasComputeType_t type_compute_;

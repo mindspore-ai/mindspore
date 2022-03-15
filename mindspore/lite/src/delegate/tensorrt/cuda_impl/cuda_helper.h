@@ -39,6 +39,15 @@ class CudaHelper {
 #define GET_BLOCKS(total_threads) CudaHelper::GetInstance().GetBlocksNum(total_threads)
 #define GET_THREADS CudaHelper::GetInstance().GetThreadNum()
 
+#define CUDA_CHECK(ret)                                                          \
+  do {                                                                           \
+    cudaError_t cuda_ret = (ret);                                                \
+    if ((cuda_ret) != cudaSuccess) {                                             \
+      MS_LOG(ERROR) << "cuda func call error: " << cudaGetErrorString(cuda_ret); \
+      return -1;                                                                 \
+    }                                                                            \
+  } while (0)
+
 #define CUDA_CHECK_VOID(ret)                                                     \
   do {                                                                           \
     cudaError_t cuda_ret = (ret);                                                \
