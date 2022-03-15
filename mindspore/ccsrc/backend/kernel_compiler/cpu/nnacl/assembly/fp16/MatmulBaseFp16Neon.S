@@ -18,8 +18,9 @@
 // x9: writeMode
 
 asm_function MatmulBaseFp16Neon
-    sub sp, sp, #96
+    sub sp, sp, #160
     st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
+    st1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
     stp x19, x20, [sp], #16
     stp x21, x22, [sp], #16
 
@@ -935,8 +936,9 @@ LoopColEnd:
     add x0, x0, x15
     bgt LoopRowStart
 
-    sub sp, sp, #96
+    sub sp, sp, #160
     ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
+    ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
     ldp x19, x20, [sp], #16
     ldp x21, x22, [sp], #16
     ret
