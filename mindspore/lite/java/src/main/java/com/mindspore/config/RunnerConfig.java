@@ -51,6 +51,9 @@ public class RunnerConfig {
      * @return init status.
      */
     public boolean init(MSContext msContext) {
+        if (msContext == null) {
+            return false;
+        }
         this.runnerConfigPtr = createRunnerConfig(msContext.getMSContextPtr());
         return this.runnerConfigPtr != 0L;
     }

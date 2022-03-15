@@ -28,7 +28,11 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
   }
   auto model_path_str = env->GetStringUTFChars(model_path, JNI_FALSE);
   if (runner_config_ptr == 0L) {
-    runner->Init(model_path_str);
+    auto ret = runner->Init(model_path_str);
+    if (ret != mindspore::kSuccess) {
+      delete runner;
+      return (jlong) nullptr;
+    }
   } else {
     auto *c_runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
     auto runner_config = std::make_shared<mindspore::RunnerConfig>();
@@ -38,7 +42,11 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
       return (jlong) nullptr;
     }
     runner_config.reset(c_runner_config);
-    runner->Init(model_path_str, runner_config);
+    auto ret = runner->Init(model_path_str, runner_config);
+    if (ret != mindspore::kSuccess) {
+      delete runner;
+      return (jlong) nullptr;
+    }
   }
   return (jlong)runner;
 }
