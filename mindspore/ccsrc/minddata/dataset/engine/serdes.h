@@ -195,8 +195,9 @@ class Serdes {
   /// \brief Helper function to save JSON to a file
   /// \param[in] json_string The JSON string to be saved to the file
   /// \param[in] file_name The file name
+  /// \param[in] pretty Flag to control pretty printing of JSON string to the file
   /// \return Status The status code returned
-  static Status SaveJSONToFile(const nlohmann::json &json_string, const std::string &file_name);
+  static Status SaveJSONToFile(const nlohmann::json &json_string, const std::string &file_name, bool pretty = false);
 
  protected:
   /// \brief Function to determine type of the node - dataset node if no dataset exists or operation node
