@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,42 +17,21 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_TRANSPOSE_INT8_H_
 
 #include <vector>
-#include "nnacl/int8/pack_int8.h"
-#include "nnacl/int8/transpose_int8.h"
-#include "src/kernel_registry.h"
-#include "src/inner_kernel.h"
-#include "include/errorcode.h"
+#include "src/runtime/kernel/arm/base/transpose_base.h"
 
 namespace mindspore::kernel {
-
-typedef void (*TransposeFunc)(const void *src, void *dst, int batch, int plane, int channel);
-
-class TransposeInt8CPUKernel : public InnerKernel {
+class TransposeInt8CPUKernel : public TransposeBaseCPUKernel {
  public:
   TransposeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
-    transpose_param_ = reinterpret_cast<TransposeParameter *>(op_parameter_);
-  }
+      : TransposeBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~TransposeInt8CPUKernel() = default;
 
-  int Prepare() override;
   int ReSize() override;
-  int Run() override;
-
- public:
-  int DoTranspose(int task_id);
 
  private:
-  void GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor,
-                            const TransposeParameter *param);
-  TransposeParameter *transpose_param_;
-  TransposeFunc NHNCTransposeFunc_ = nullptr;
-  int8_t *in_ptr_ = nullptr;
-  int8_t *out_ptr_ = nullptr;
-  int in_shape_[20] = {0};
-  int out_shape_[20] = {0};
-  int nhnc_param_[3] = {0};
+  int DoTransposeSingleThread() override;
+  int DoTransposeMultiThread(int task_id) override;
 };
 }  // namespace mindspore::kernel
 
