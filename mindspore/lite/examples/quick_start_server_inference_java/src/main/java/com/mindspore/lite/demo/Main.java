@@ -38,6 +38,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Main {
+    private static ModelParallelRunner runner;
+    private static List<MSTensor> inputs;
+    private static List<MSTensor> outputs;
+
     public static float[] generateArray(int len) {
         Random rand = new Random();
         float[] arr = new float[len];
@@ -56,6 +60,15 @@ public class Main {
         FloatBuffer floatBuffer = buffer.asFloatBuffer();
         floatBuffer.put(floats);
         return buffer;
+    }
+
+    private static void freeTensor(){
+        for (int i = 0; i < inputs.size(); i++) {
+            inputs.get(i).free();
+        }
+        for (int i = 0; i < outputs.size(); i++) {
+            outputs.get(i).free();
+        }
     }
 
     public static void main(String[] args) {
@@ -91,7 +104,7 @@ public class Main {
         }
 
         // init input tensor
-        List<MSTensor> inputs = new ArrayList<>();
+        inputs = new ArrayList<>();
         MSTensor input = runner.getInputs().get(0);
         if (input.getDataType() != DataType.kNumberTypeFloat32) {
             System.err.println("Input tensor data type is not float, the data type is " + input.getDataType());
@@ -106,16 +119,18 @@ public class Main {
         inputs.add(inputTensor);
 
         // init output
-        List<MSTensor> outputs = new ArrayList<>();
+        outputs = new ArrayList<>();
 
         // runner do predict
         ret = runner.predict(inputs,outputs);
         if (!ret) {
             System.err.println("MindSpore Lite predict failed.");
+            freeTensor();
             runner.free();
             return;
         }
         System.err.println("========== model parallel runner predict success ==========");
+        freeTensor();
         runner.free();
     }
 }

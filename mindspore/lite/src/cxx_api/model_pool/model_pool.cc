@@ -162,13 +162,13 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
           MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
           return nullptr;
         }
-      } else {
+      } else if (runner_config->workers_num > 0) {
         // User defined number of models
         workers_num_ = runner_config->workers_num;
+      } else {
+        MS_LOG(ERROR) << "user set worker num" << runner_config->workers_num << " < 0";
+        return nullptr;
       }
-    } else {
-      MS_LOG(ERROR) << "not support device: " << device->GetDeviceType();
-      return nullptr;
     }
   }
   return context;
