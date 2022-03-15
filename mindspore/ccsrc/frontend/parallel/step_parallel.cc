@@ -2903,6 +2903,7 @@ void HandleRootReshapeAndSaveStrategy(const std::vector<AnfNodePtr> &all_nodes) 
     if (prim->name() != RESHAPE) {
       continue;
     }
+
     Shape origin_dst_shape = GetValue<std::vector<int64_t>>(cnode->input(2)->cast<ValueNodePtr>()->value());
     if (origin_dst_shape.size() == 1 && origin_dst_shape[0] == -1) {
       continue;

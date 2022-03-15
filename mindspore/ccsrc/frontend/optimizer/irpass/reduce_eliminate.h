@@ -53,6 +53,14 @@ class ReduceOneEliminater : public AnfVisitor {
         return nullptr;
       }
 
+      // if node has keep_alive attr, it would not be eliminated.
+      if (IsPrimitiveCNode(node, prim::kPrimReduceMean)) {
+        if (prim->HasAttr("keep_alive") && GetValue<bool>(prim->GetAttr("keep_alive"))) {
+          MS_LOG(INFO) << "keep node " << node->fullname_with_scope() << " alive";
+          return nullptr;
+        }
+      }
+
       // consider keep_dims
       auto keep_dims = prim->GetAttr("keep_dims");
       auto is_keep_dims = GetValue<bool>(keep_dims);
