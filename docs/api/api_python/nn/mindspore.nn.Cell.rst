@@ -188,7 +188,7 @@
         初始化并替换Cell中所有的parameter的值。
 
         .. note::
-            在调用`init_parameters_data`后，`trainable_params()` 或其他相似的接口可能返回不同的参数对象，不要保存这些结果。
+            在调用 `init_parameters_data` 后，`trainable_params()` 或其他相似的接口可能返回不同的参数对象，不要保存这些结果。
 
         **参数：**
 
