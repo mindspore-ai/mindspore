@@ -46,14 +46,14 @@ int SoftmaxCPUKernel::Prepare() {
 #ifdef SERVER_INFERENCE
 int SoftmaxCPUKernel::UpdateThreadNumPass() {
   if (thread_cost_context_ == nullptr) {
-    thread_cost_context_ = new lite::ThreadCostContext();
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
     thread_cost_context_->per_unit_load_num_ = softmax_param_->input_shape_[softmax_param_->axis_];
     thread_cost_context_->per_unit_store_num_ = softmax_param_->input_shape_[softmax_param_->axis_];
-    thread_cost_context_->per_unit_compute_cost_ = 42.042;  // 42.042 : split per unit compute cost
+    thread_cost_context_->per_unit_compute_cost_ = 42.042;  // 42.042 : compute cost, dataNum about 6k
   }
 
   if (thread_cost_context_ != nullptr) {
-    thread_cost_context_->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
     thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
   }
   return RET_OK;

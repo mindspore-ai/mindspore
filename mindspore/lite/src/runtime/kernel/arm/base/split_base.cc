@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,17 @@ using mindspore::schema::PrimitiveType_Split;
 namespace mindspore::kernel {
 #ifdef SERVER_INFERENCE
 int SplitBaseCPUKernel::UpdateThreadNumPass() {
-  if (thread_cost_context_ == nullptr) {
-    thread_cost_context_ = new lite::ThreadCostContext();
+  if (thread_cost_context_ == nullptr && num_unit_ > 0) {
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
+    CHECK_NULL_RETURN(thread_cost_context_);
+
     thread_cost_context_->per_unit_load_num_ = in_tensors_.at(0)->ElementsNum() / num_unit_;
     thread_cost_context_->per_unit_store_num_ = in_tensors_.at(0)->ElementsNum() / num_unit_;
-    thread_cost_context_->per_unit_compute_cost_ = 17.573;  // 17.573 : split per unit compute cost
+    thread_cost_context_->per_unit_compute_cost_ = 17.573;  // 17.573 : compute cost, dataNum about 8k
   }
 
   if (thread_cost_context_ != nullptr) {
-    thread_cost_context_->total_unit_num_ = in_tensors_.at(0)->ElementsNum();
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
     thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
   }
   return RET_OK;
@@ -124,12 +126,12 @@ int SplitBaseCPUKernel::ReSize() {
   if (UpdateThreadNumPass() != RET_OK) {
     return RET_ERROR;
   }
-#else
-  thread_num_ = MSMIN(thread_num_, num_unit_);
 #endif
 
-  CHECK_LESS_RETURN(thread_num_, 1);
-  thread_n_stride_ = UP_DIV(num_unit_, thread_num_);
+  thread_num_ = MSMIN(thread_num_, num_unit_);
+  if (thread_num_ != 0) {
+    thread_n_stride_ = UP_DIV(num_unit_, thread_num_);
+  }
   return RET_OK;
 }
 

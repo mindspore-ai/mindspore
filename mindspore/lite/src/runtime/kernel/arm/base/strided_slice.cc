@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,18 +57,45 @@ void StridedSliceCPUKernel::InitFastRunParam() {
     inner_ *= in_shape[i];
   }
   // decide multi-thread launch strategy
-  if (op_parameter_->thread_num_ == 0) {
+  if (thread_num_ == 0) {
     MS_LOG(ERROR) << "thread num is zero.";
     return;
   }
-  if (outer_ == 1) {
-    parallel_on_split_axis_ = true;
-    cal_num_per_thread_ = UP_DIV(out_shape[split_axis_], op_parameter_->thread_num_);
-  } else {
-    parallel_on_outer_ = true;
-    cal_num_per_thread_ = UP_DIV(outer_, op_parameter_->thread_num_);
+
+  outer_ == 1 ? (parallel_on_split_axis_ = true) : (parallel_on_outer_ = true);
+
+#ifdef SERVER_INFERENCE
+  if (UpdateThreadNumPass() != RET_OK) {
+    MS_LOG(ERROR) << "thread num update thread file.";
+    return;
   }
+#endif
+
+  cal_num_per_thread_ =
+    parallel_on_split_axis_ ? UP_DIV(out_shape[split_axis_], thread_num_) : UP_DIV(outer_, thread_num_);
 }
+
+#ifdef SERVER_INFERENCE
+int StridedSliceCPUKernel::UpdateThreadNumPass() {
+  if (thread_cost_context_ == nullptr) {
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
+    CHECK_NULL_RETURN(thread_cost_context_);
+
+    thread_cost_context_->per_unit_load_num_ = 1;
+    thread_cost_context_->per_unit_store_num_ = 1;
+    if (parallel_on_outer_) {                                 // parallel on outer tile
+      thread_cost_context_->per_unit_compute_cost_ = 42.042;  // 42.042 : compute cost, dataNum about 4.5k
+    } else {                                                  // parallel on split axis
+      thread_cost_context_->per_unit_compute_cost_ = 38.027;  // 38.027 : compute cost, dataNum about 5.2k
+    }
+  }
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+  }
+  return RET_OK;
+}
+#endif
 
 int StridedSliceCPUKernel::ReSize() {
   auto input_tensor = in_tensors_.at(0);
@@ -81,6 +108,7 @@ int StridedSliceCPUKernel::ReSize() {
   if (fast_run_) {
     InitFastRunParam();
   }
+
   return RET_OK;
 }
 
@@ -181,7 +209,7 @@ int StridedSliceCPUKernel::FastRun() {
   CHECK_NULL_RETURN(input_ptr_);
   output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(output_ptr_);
-  auto ret = ParallelLaunch(this->ms_context_, StrideRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, StrideRun, this, thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Stride run error error_code[" << ret << "]";
     return ret;

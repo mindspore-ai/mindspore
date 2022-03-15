@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,9 @@ class SplitBaseCPUKernel : public InnerKernel {
   int Run() override;
   virtual int Split(int task_id);
   static int CheckAndInitSplitParam(const lite::Tensor &in_tensor, SplitParameter *param);
+#ifdef SERVER_INFERENCE
   int UpdateThreadNumPass();
+#endif
 
  protected:
   int thread_n_stride_ = 0;
