@@ -115,10 +115,7 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   return akg_ret;
 }
 
-bool KernelBuild(const std::vector<CNodePtr> &kernels) {
-  TbeUtils::LoadCache();
-  return device::ascend::KernelBuildParallelCompile(kernels);
-}
+bool KernelBuild(const std::vector<CNodePtr> &kernels) { return device::ascend::KernelBuildParallelCompile(kernels); }
 
 namespace {
 bool IsAtomicNode(const CNodePtr &kernel_node) {

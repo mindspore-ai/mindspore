@@ -870,6 +870,8 @@ void TbeKernelCompileManager::TbeInitialize() {
   auto init_ret = DispatchCompileTask(init_json);
   auto json_ret = TurnStrToJson(init_ret);
   PrintInitResult(json_ret);
+  // load cache before kernel build
+  TbeUtils::LoadCache();
 }
 
 void TbeKernelCompileManager::TbeFinalize() {
