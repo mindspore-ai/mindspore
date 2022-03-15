@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,39 @@ using mindspore::schema::ActivationType_SWISH;
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
+namespace {
+#ifdef SERVER_INFERENCE
+const std::map<int, float> activation_compute_cost_map_ = {
+  {schema::ActivationType_RELU, 1.806f},        // dataNum about 100k
+  {schema::ActivationType_RELU6, 1.806f},       // dataNum about 100k
+  {schema::ActivationType_LEAKY_RELU, 1.806f},  // dataNum about 100k
+  // {schema::ActivationType_SIGMOID, 10.0f}, {schema::ActivationType_TANH, 10.0f},
+  // {schema::ActivationType_SWISH, 1.0f}, {schema::ActivationType_HSWISH, 1.0f},
+  // {schema::ActivationType_HSIGMOID, 1.0f}, {schema::ActivationType_HARD_TANH, 1.0f},
+  // {schema::ActivationType_GELU, 1.0f}, {schema::ActivationType_SOFTPLUS, 1.0f},   {schema::ActivationType_ELU, 1.0f},
+};
+#endif
+}  // namespace
+
+#ifdef SERVER_INFERENCE
+int ActivationCPUKernel::UpdateThreadNumPass() {
+  if (thread_cost_context_ == nullptr && activation_compute_cost_map_.count(type_) > 0) {
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
+    CHECK_NULL_RETURN(thread_cost_context_);
+
+    thread_cost_context_->per_unit_load_num_ = 1;
+    thread_cost_context_->per_unit_store_num_ = 1;
+    thread_cost_context_->per_unit_compute_cost_ = activation_compute_cost_map_.at(type_);
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+  }
+  return RET_OK;
+}
+#endif
+
 int ActivationCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
@@ -55,10 +88,22 @@ int ActivationCPUKernel::Prepare() {
       return RET_ERROR;
     }
   }
-  return RET_OK;
+
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
-int ActivationCPUKernel::ReSize() { return RET_OK; }
+int ActivationCPUKernel::ReSize() {
+#ifdef SERVER_INFERENCE
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
+  }
+#endif
+
+  return RET_OK;
+}
 
 int ActivationCPUKernel::DoActivation(int task_id) {
   if (in_tensors_.front()->data_type() == kNumberTypeFloat32) {
@@ -76,7 +121,7 @@ int ActivationCPUKernel::DoActivationInt32(int task_id) {
   MS_ASSERT(output_addr != nullptr);
   auto length = in_tensors_.at(0)->ElementsNum();
 
-  int stride = UP_DIV(length, thread_count_);
+  int stride = UP_DIV(length, thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -105,7 +150,7 @@ int ActivationCPUKernel::DoActivationFp32(int task_id) {
   MS_ASSERT(output_addr != nullptr);
   auto length = in_tensors_.at(0)->ElementsNum();
 
-  int stride = UP_DIV(length, thread_count_);
+  int stride = UP_DIV(length, thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -163,7 +208,7 @@ int ActivationRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ActivationCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->ms_context_, ActivationRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, ActivationRun, this, thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation function error error_code[" << error_code << "]";
     return RET_ERROR;

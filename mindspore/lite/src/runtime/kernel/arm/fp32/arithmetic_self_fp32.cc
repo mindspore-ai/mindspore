@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,45 @@ struct TYPE_FUNC_INFO {
   int primitive_type_ = 0;
   ArithmeticSelfFunc func_ = nullptr;
 };
+
+#ifdef SERVER_INFERENCE
+const std::map<int, float> arithmetic_self_compute_cost_map_ = {
+  // {schema::PrimitiveType_Abs, 0.5f},
+  // {schema::PrimitiveType_Cos, 1.0f},
+  // {schema::PrimitiveType_Log, 1.0f},
+  // {schema::PrimitiveType_Square, 10.0f},
+  {schema::PrimitiveType_Sqrt, 1.806f},  // dataNum about 100k
+  // {schema::PrimitiveType_Rsqrt, 1.0f},
+  // {schema::PrimitiveType_Sin, 1.0f},
+  // {schema::PrimitiveType_LogicalNot, 1.0f},
+  // {schema::PrimitiveType_Floor, 1.0f},
+  // {schema::PrimitiveType_Ceil, 1.0f},
+  // {schema::PrimitiveType_Round, 1.0f},
+  // {schema::PrimitiveType_Neg, 1.0f},
+  // {schema::PrimitiveType_Reciprocal, 1.0f},
+  // {schema::PrimitiveType_Erf, 1.0f},
+};
+#endif
 }  // namespace
+
+#ifdef SERVER_INFERENCE
+int ArithmeticSelfCPUKernel::UpdateThreadNumPass() {
+  if (thread_cost_context_ == nullptr && arithmetic_self_compute_cost_map_.count(type_) > 0) {
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
+    CHECK_NULL_RETURN(thread_cost_context_);
+
+    thread_cost_context_->per_unit_load_num_ = 1;
+    thread_cost_context_->per_unit_store_num_ = 1;
+    thread_cost_context_->per_unit_compute_cost_ = arithmetic_self_compute_cost_map_.at(type_);
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+  }
+  return RET_OK;
+}
+#endif
 
 ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_type) const {
   TYPE_FUNC_INFO type_func_table[] = {{mindspore::schema::PrimitiveType_Abs, ElementAbs},
@@ -60,20 +98,28 @@ ArithmeticSelfBoolFunc ArithmeticSelfCPUKernel::GetArithmeticSelfBoolFun(int pri
 }
 
 int ArithmeticSelfCPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-int ArithmeticSelfCPUKernel::ReSize() { return RET_OK; }
+int ArithmeticSelfCPUKernel::ReSize() {
+#ifdef SERVER_INFERENCE
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
+  }
+#endif
+  return RET_OK;
+}
 
 int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
   int elements_num = in_tensors_.at(0)->ElementsNum();
-  MS_CHECK_TRUE_RET(op_parameter_->thread_num_ != 0, RET_ERROR);
-  int stride = UP_DIV(elements_num, op_parameter_->thread_num_);
+  MS_CHECK_TRUE_RET(thread_num_ != 0, RET_ERROR);
+  int stride = UP_DIV(elements_num, thread_num_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, stride, RET_ERROR);
   int offset = task_id * stride;
   int count = MSMIN(stride, elements_num - offset);
@@ -117,7 +163,7 @@ int ArithmeticSelfRun(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 int ArithmeticSelfCPUKernel::Run() {
-  auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfRun, this, thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ACTIVATION_H_
 
 #include <vector>
+#include <map>
+#include <memory>
 #include "src/inner_kernel.h"
 #include "nnacl/fp32/activation_fp32.h"
 
@@ -26,13 +28,17 @@ class ActivationCPUKernel : public InnerKernel {
  public:
   ActivationCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx), thread_count_(op_parameter_->thread_num_) {
+      : InnerKernel(param, inputs, outputs, ctx) {
     type_ = (reinterpret_cast<ActivationParameter *>(param))->type_;
     alpha_ = (reinterpret_cast<ActivationParameter *>(param))->alpha_;
     min_val_ = (reinterpret_cast<ActivationParameter *>(param))->min_val_;
     max_val_ = (reinterpret_cast<ActivationParameter *>(param))->max_val_;
   }
   ~ActivationCPUKernel() override = default;
+
+#ifdef SERVER_INFERENCE
+  int UpdateThreadNumPass();
+#endif
 
   int Prepare() override;
   int ReSize() override;
@@ -44,7 +50,6 @@ class ActivationCPUKernel : public InnerKernel {
   int DoActivationInt32(int task_id);
 
  private:
-  int thread_count_;
   int type_;
   float alpha_;
   float min_val_;

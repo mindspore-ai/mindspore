@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,10 @@
 #include "include/api/context.h"
 #include "include/api/kernel.h"
 
+#ifdef SERVER_INFERENCE
+#include "src/thread_cost_model.h"
+#endif
+
 namespace mindspore::kernel {
 class InnerKernel : public Kernel {
  public:
@@ -42,7 +46,11 @@ class InnerKernel : public Kernel {
       : op_parameter_(parameter),
         in_tensors_(std::move(in_tensors)),
         out_tensors_(std::move(out_tensors)),
-        ms_context_(ctx) {}
+        ms_context_(ctx) {
+    if (parameter != nullptr) {
+      thread_num_ = parameter->thread_num_;
+    }
+  }
 
   virtual ~InnerKernel() {
     if (op_parameter_ != nullptr) {
@@ -50,6 +58,13 @@ class InnerKernel : public Kernel {
       op_parameter_ = nullptr;
       FreeWorkspace();
     }
+
+#ifdef SERVER_INFERENCE
+    if (thread_cost_context_ != nullptr) {
+      free(thread_cost_context_);
+      thread_cost_context_ = nullptr;
+    }
+#endif
   }
 
   int Execute() override;
@@ -197,6 +212,11 @@ class InnerKernel : public Kernel {
   size_t workspace_size_ = 0;
   void *workspace_ = nullptr;
   const lite::Context *ms_context_ = nullptr;
+
+  int thread_num_ = 1;
+#ifdef SERVER_INFERENCE
+  lite::ThreadCostContext *thread_cost_context_ = nullptr;
+#endif
 };
 }  // namespace mindspore::kernel
 

@@ -86,7 +86,7 @@ int StackFp16CPUKernel::Prepare() {
 int StackFp16CPUKernel::Execute(int task_id) {
   auto inputs = buffers_.data();
   void *output_data = reinterpret_cast<void *>(out_buffer_);
-  auto step = UP_DIV(outer_size_, num_threads_);
+  auto step = UP_DIV(outer_size_, thread_num_);
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(task_id, step), RET_ERROR);
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
@@ -113,8 +113,8 @@ int StackFp16CPUKernel::Run() {
     return ret;
   }
   // run stack
-  num_threads_ = MSMIN(UP_DIV(outer_size_, kStackStep), this->op_parameter_->thread_num_);
-  ret = ParallelLaunch(this->ms_context_, StackRun, this, num_threads_);
+  thread_num_ = MSMIN(UP_DIV(outer_size_, kStackStep), this->op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, StackRun, this, thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";
     return RET_ERROR;

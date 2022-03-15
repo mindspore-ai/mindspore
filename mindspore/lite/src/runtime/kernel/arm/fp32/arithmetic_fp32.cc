@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,61 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
+namespace {
+#ifdef SERVER_INFERENCE
+const std::map<std::pair<int, int>, float> arithmetic_compute_cost_map_ = {
+  {{PrimitiveType_MulFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
+  {{PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
+  {{PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},  // dataNum about 130k
+
+  {{PrimitiveType_AddFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
+  {{PrimitiveType_AddFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
+  {{PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},  // dataNum about 130k
+
+  {{PrimitiveType_SubFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
+  {{PrimitiveType_SubFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
+  {{PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},  // dataNum about 130k
+
+  // {{PrimitiveType_DivFusion, schema::ActivationType_RELU}, 1.0f},
+  // {{PrimitiveType_DivFusion, schema::ActivationType_RELU6}, 1.0f},
+  // {{PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+
+  // {{PrimitiveType_RealDiv, schema::ActivationType_RELU}, 1.0f},
+  // {{PrimitiveType_RealDiv, schema::ActivationType_RELU6}, 1.0f},
+  // {{PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+
+  // {{PrimitiveType_LogicalAnd, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_LogicalOr, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_Maximum, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_Minimum, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_FloorMod, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_FloorDiv, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_Mod, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+  // {{PrimitiveType_SquaredDifference, schema::ActivationType_NO_ACTIVATION}, 1.0f},
+};
+#endif
+}  // namespace
+
+#ifdef SERVER_INFERENCE
+int ArithmeticCPUKernel::UpdateThreadNumPass() {
+  std::pair<int, int> fusion_type = std::make_pair(param_->op_parameter_.type_, param_->activation_type_);
+  if (thread_cost_context_ == nullptr && arithmetic_compute_cost_map_.count(fusion_type) > 0) {
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
+    CHECK_NULL_RETURN(thread_cost_context_);
+
+    thread_cost_context_->per_unit_load_num_ = 1;
+    thread_cost_context_->per_unit_store_num_ = 1;
+    thread_cost_context_->per_unit_compute_cost_ = arithmetic_compute_cost_map_.at(fusion_type);
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+  }
+  return RET_OK;
+}
+#endif
+
 int ArithmeticCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
@@ -52,6 +107,11 @@ int ArithmeticCPUKernel::Prepare() {
 }
 
 int ArithmeticCPUKernel::ReSize() {
+#ifdef SERVER_INFERENCE
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
+  }
+#endif
   CalcMultiplesAndStrides(param_);
   if (param_->broadcasting_) {
     outside_ = 1;
@@ -324,7 +384,7 @@ int ArithmeticCPUKernel::BatchScalarCalc(int task_id) {
     return RET_ERROR;
   }
   int batch = param_->out_elements_num_ / param_->out_strides_[break_pos_ - 1];
-  int batch_per_thread = UP_DIV(batch, op_parameter_->thread_num_);
+  int batch_per_thread = UP_DIV(batch, thread_num_);
 
   int start_batch = batch_per_thread * task_id;
   int end_batch = MSMIN(start_batch + batch_per_thread, batch);
@@ -356,7 +416,7 @@ int ArithmeticCPUKernel::BiasCalc(int task_id) {
   }
   int last_shape = param_->out_shape_[param_->ndim_ - 1];
   int batch = param_->out_elements_num_ / last_shape;
-  int batch_per_thread = UP_DIV(batch, op_parameter_->thread_num_);
+  int batch_per_thread = UP_DIV(batch, thread_num_);
 
   int start_batch = batch_per_thread * task_id;
   int end_batch = MSMIN(start_batch + batch_per_thread, batch);
@@ -389,7 +449,7 @@ int ArithmeticCPUKernel::BiasCalc(int task_id) {
 
 int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   auto element_num = out_tensors_[0]->ElementsNum();
-  int stride = UP_DIV(element_num, op_parameter_->thread_num_);
+  int stride = UP_DIV(element_num, thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -416,7 +476,7 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   }
   /* need broadcast in runtime */
   if (param_->broadcasting_) {
-    stride = UP_DIV(outside_, op_parameter_->thread_num_);
+    stride = UP_DIV(outside_, thread_num_);
     int out_count = MSMIN(stride, outside_ - stride * task_id);
     if (out_count <= 0) {
       return RET_OK;
@@ -452,7 +512,7 @@ int ArithmeticCPUKernel::Run() {
   }
   output_ptr_ = out_tensors_[0]->data();
   CHECK_NULL_RETURN(output_ptr_);
-  return ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
+  return ParallelLaunch(this->ms_context_, ArithmeticsRun, this, thread_num_);
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MulFusion, LiteKernelCreator<ArithmeticCPUKernel>)

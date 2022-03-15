@@ -139,6 +139,7 @@ if(MSLITE_ENABLE_SERVER_INFERENCE)
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/dynamic_mem_manager.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/numa_adapter.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/thread_cost_model.cc
             )
 endif()
 
