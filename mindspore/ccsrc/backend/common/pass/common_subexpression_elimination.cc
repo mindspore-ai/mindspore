@@ -16,14 +16,20 @@
 #include "backend/common/pass/common_subexpression_elimination.h"
 
 #include <memory>
+#include <vector>
 #include "runtime/device/kernel_info.h"
+#include "base/core_ops.h"
 #include "utils/flags.h"
 #include "utils/ms_context.h"
+#include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
+#include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
+using KernelWithIndex = std::pair<AnfNodePtr, int64_t>;
+
 bool CheckIgnoreCase(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (common::AnfAlgo::GetCNodeName(node) != kTransDataOpName) {
@@ -41,6 +47,38 @@ bool CheckIgnoreCase(const AnfNodePtr &node) {
     }
   }
   return need_ignore;
+}
+
+void EliminateDuplicatedTupleGetItem(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(manager);
+
+  // key: (getitem_input, getitem_index), value: getitem_list
+  std::map<KernelWithIndex, std::vector<AnfNodePtr>> getitem_dup_map;
+  const auto &node_list = TopoSort(graph->get_return());
+  for (auto &node : node_list) {
+    if (!node->isa<CNode>() || !IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+      continue;
+    }
+    auto getitem_cnode = node->cast<CNodePtr>();
+    KernelWithIndex input_with_index{getitem_cnode->input(kRealInputNodeIndexInTupleGetItem),
+                                     GetGetitemIndex(getitem_cnode)};
+    if (getitem_dup_map.count(input_with_index) == 0) {
+      getitem_dup_map.emplace(input_with_index, std::vector<AnfNodePtr>{node});
+    } else {
+      getitem_dup_map[input_with_index].push_back(node);
+    }
+  }
+
+  // remove duplicated
+  for (auto &item : getitem_dup_map) {
+    auto &getitem_list = item.second;
+    if (getitem_list.size() > 1) {
+      auto first_getitem = getitem_list[0];
+      std::for_each(getitem_list.begin() + 1, getitem_list.end(),
+                    [first_getitem, manager](const AnfNodePtr &getitem) { manager->Replace(getitem, first_getitem); });
+    }
+  }
 }
 }  // namespace
 
@@ -141,7 +179,11 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) co
 
 bool BackendCSE::Cse(const FuncGraphPtr graph, const FuncGraphManagerPtr manager) const {
   MS_EXCEPTION_IF_NULL(manager);
-  return BuildOrderGroupAndDoReplaceForOneGraph(graph, manager);
+  auto ret = BuildOrderGroupAndDoReplaceForOneGraph(graph, manager);
+  if (ret) {
+    EliminateDuplicatedTupleGetItem(graph, manager);
+  }
+  return ret;
 }
 
 bool CommonSubexpressionElimination::Run(const FuncGraphPtr &func_graph) {
