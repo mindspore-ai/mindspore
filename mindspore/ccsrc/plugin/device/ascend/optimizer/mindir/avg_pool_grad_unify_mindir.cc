@@ -147,7 +147,6 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const Anf
     auto ret = memcpy_s(&output[LongToSize(i) * hw_output.size()], dst_size, &hw_output[0], src_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "Call memcpy_s error, errorno(" << ret << ")";
-      return nullptr;
     }
   }
   auto output_tensor = std::make_shared<tensor::Tensor>(x_dtype, output_shape, &output[0], kNumberTypeFloat32);

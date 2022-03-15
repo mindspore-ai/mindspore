@@ -85,7 +85,7 @@ const AnfNodePtr PackFission::Process(const FuncGraphPtr &func_graph, const AnfN
     cur_input_index += inputs_divisor_;
   }
   if (cur_input_index <= origin_input_size) {
-    base_concat_inputs.emplace_back(
+    (void)base_concat_inputs.emplace_back(
       CreateNewPack(func_graph, cnode, cur_input_index, (origin_input_size - cur_input_index) + 1));
   }
 

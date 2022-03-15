@@ -31,7 +31,7 @@ namespace mindspore {
 namespace kernel {
 class DynamicTbeKernelMod : public TbeKernelMod {
  public:
-  explicit DynamicTbeKernelMod(KernelPackPtr kernel_pack) : TbeKernelMod(kernel_pack) {}  // maybe delete later
+  explicit DynamicTbeKernelMod(const KernelPackPtr &kernel_pack) : TbeKernelMod(kernel_pack) {}  // maybe delete later
   DynamicTbeKernelMod(KernelPackPtr kernel_pack, const AnfNodePtr &anf_node_ptr);
   ~DynamicTbeKernelMod() override;
 
@@ -50,7 +50,6 @@ class DynamicTbeKernelMod : public TbeKernelMod {
   bool CopyTilingToDevice(void *stream_ptr);
   bool NeedSkipExecute(const CNodePtr &cnode);
 
-  uint32_t block_dim_ = 1;
   std::string tiling_data_;
   // Because the ~DynamicTbeKernelMod() is after ResetDevice, and ResetDevice has the function to free mem,
   // so it is no rtFree of tiling_data_ptr_ in ~DynamicTbeKernelMod()

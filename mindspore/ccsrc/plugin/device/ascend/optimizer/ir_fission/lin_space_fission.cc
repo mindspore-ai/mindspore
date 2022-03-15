@@ -110,7 +110,7 @@ const AnfNodePtr LinSpaceFission::Process(const FuncGraphPtr &graph, const AnfNo
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kLinSpaceOpName))};
   auto assist_const = CreateValueNode(cnode);
   new_inputs.push_back(assist_const);
-  new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  (void)new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());

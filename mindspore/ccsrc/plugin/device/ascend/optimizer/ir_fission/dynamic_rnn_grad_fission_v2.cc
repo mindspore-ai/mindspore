@@ -143,12 +143,12 @@ void DynamicRnnGradFissionV2::CreateTLoopNode(const FuncGraphPtr &func_graph, co
     }
 
     basic_lstm_cell_c_state_grad_nodes.emplace_back(basic_lstm_cell_c_state_grad);
-    matmul_nodes.emplace_back(matmul);
-    split_nodes.emplace_back(split_v);
+    (void)matmul_nodes.emplace_back(matmul);
+    (void)split_nodes.emplace_back(split_v);
   }
-  result_nodes->emplace_back(basic_lstm_cell_c_state_grad_nodes);
-  result_nodes->emplace_back(matmul_nodes);
-  result_nodes->emplace_back(split_nodes);
+  (void)result_nodes->emplace_back(basic_lstm_cell_c_state_grad_nodes);
+  (void)result_nodes->emplace_back(matmul_nodes);
+  (void)result_nodes->emplace_back(split_nodes);
 }
 
 AnfNodePtr DynamicRnnGradFissionV2::CreateLSTMSPlitV(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
@@ -382,14 +382,14 @@ AnfNodePtr DynamicRnnGradFissionV2::AddLSTMInputGradNode(const FuncGraphPtr &fun
                                  lstm_gage_concat);
     common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(SizeToLong(0)), lstm_gage_concat);
 
-    outputs->emplace_back(lstm_x_concat);
-    outputs->emplace_back(pre_split_outputs[1]);
-    outputs->emplace_back(pre_basic_lstm_cell_c_state_grad_outputs[1]);
+    (void)outputs->emplace_back(lstm_x_concat);
+    (void)outputs->emplace_back(pre_split_outputs[1]);
+    (void)outputs->emplace_back(pre_basic_lstm_cell_c_state_grad_outputs[1]);
     return lstm_gage_concat;
   } else {
-    outputs->emplace_back(lstm_x_concat_input[1]);
-    outputs->emplace_back(pre_split_outputs[1]);
-    outputs->emplace_back(pre_basic_lstm_cell_c_state_grad_outputs[1]);
+    (void)outputs->emplace_back(lstm_x_concat_input[1]);
+    (void)outputs->emplace_back(pre_split_outputs[1]);
+    (void)outputs->emplace_back(pre_basic_lstm_cell_c_state_grad_outputs[1]);
     return lstm_gage_concat_input[1];
   }
 }
@@ -887,7 +887,7 @@ const AnfNodePtr DynamicRnnGradFissionV2::Process(const FuncGraphPtr &func_graph
   auto value_node = CreateValueNode(func_graph, dynamic_rnn_grad_cnode, specs);
   // create reduce_sum_2
   auto db_reduce_sum = CreateDbReduceSum(func_graph, dynamic_rnn_grad_cnode, lstm_input_grad, value_node, specs);
-  make_tuple_inputs.emplace_back(db_reduce_sum);
+  (void)make_tuple_inputs.emplace_back(db_reduce_sum);
   make_tuple_inputs.insert(make_tuple_inputs.end(), new_outputs.begin(), new_outputs.end());
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
   return make_tuple;

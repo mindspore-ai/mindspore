@@ -63,9 +63,9 @@ bool TbeJsonUtils::GetOutputsRealNum(const AnfNodePtr &anf_node, const std::vect
                       << "outputs, however one of the outputs param_type is " << output_ptr->param_type();
         return false;
       }
-      outputs_num->emplace_back(real_output_num);
+      (void)outputs_num->emplace_back(real_output_num);
     } else {
-      outputs_num->emplace_back(1);
+      (void)outputs_num->emplace_back(1);
     }
   }
   return true;
@@ -105,7 +105,7 @@ std::vector<int64_t> TbeJsonUtils::GetOutputOriShapeForTbeBuild(const AnfNodePtr
     shape = shape_ptr->shape();
   }
   if (shape.empty()) {
-    shape.emplace_back(1);
+    (void)shape.emplace_back(1);
   }
   return shape;
 }

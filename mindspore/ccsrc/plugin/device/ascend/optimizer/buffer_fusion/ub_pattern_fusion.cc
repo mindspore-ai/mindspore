@@ -470,13 +470,13 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
   GetBufferFusionInfo(kernel_graph, &buffer_fusion_infos);
 
   std::vector<mindspore::kernel::FusionScopeInfo> fusion_scope_infos;
-  std::transform(buffer_fusion_infos.begin(), buffer_fusion_infos.end(), std::back_inserter(fusion_scope_infos),
-                 [](const auto &buffer_fusion_info) -> mindspore::kernel::FusionScopeInfo {
-                   return mindspore::kernel::FusionScopeInfo(
-                     buffer_fusion_info.first, buffer_fusion_info.second.full_name, buffer_fusion_info.second.core_type,
-                     buffer_fusion_info.second.inputs_list, buffer_fusion_info.second.anf_nodes,
-                     buffer_fusion_info.second.outputs_list);
-                 });
+  (void)std::transform(buffer_fusion_infos.begin(), buffer_fusion_infos.end(), std::back_inserter(fusion_scope_infos),
+                       [](const auto &buffer_fusion_info) -> mindspore::kernel::FusionScopeInfo {
+                         return mindspore::kernel::FusionScopeInfo(
+                           buffer_fusion_info.first, buffer_fusion_info.second.full_name,
+                           buffer_fusion_info.second.core_type, buffer_fusion_info.second.inputs_list,
+                           buffer_fusion_info.second.anf_nodes, buffer_fusion_info.second.outputs_list);
+                       });
   auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
   auto id_names = build_manager.TbeFusionOpCompile(fusion_scope_infos);
   std::set<int64_t> fusion_ids;

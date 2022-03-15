@@ -273,10 +273,10 @@ void TbeJsonCreator::DeleteDescName(nlohmann::json *desc_jsons) {
 size_t TbeJsonCreator::GenJsonHash(nlohmann::json tbe_json) {
   auto &op_lists = tbe_json.at(kJOpList);
   for (auto &op : op_lists) {
-    op.erase(kJName);
-    op.erase(kJOriName);
-    op.erase(kJPattern);
-    op.erase(kJOutputDataDesc);
+    (void)op.erase(kJName);
+    (void)op.erase(kJOriName);
+    (void)op.erase(kJPattern);
+    (void)op.erase(kJOutputDataDesc);
     DeleteDescName(&op.at(kJOutputDesc));
     if (op[kJType] != kJData) {
       DeleteDescName(&op.at(kJInputDesc));

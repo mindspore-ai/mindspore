@@ -113,7 +113,7 @@ void LicManager::ParseFeSwitch(const std::map<std::string, std::string> &options
   // close all first
   for (auto iter = kPassCodeMap.begin(); iter != kPassCodeMap.end(); ++iter) {
     auto pass = iter->second;
-    pass_switch_.emplace(pass, false);
+    (void)pass_switch_.emplace(pass, false);
   }
 
   // then open passes in options

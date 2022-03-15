@@ -26,7 +26,7 @@ namespace mindspore {
 namespace {
 #define HCCL_RUN_CHECK(op_name, group, op)                      \
   do {                                                          \
-    auto hccl_result = (op);                                    \
+    auto hccl_result = static_cast<int64_t>(op);                \
     if (hccl_result != 0) {                                     \
       MS_LOG(ERROR) << op_name << " failed: #" << group << "#"; \
       return false;                                             \

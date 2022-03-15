@@ -39,7 +39,7 @@ class AscendMemAdapter {
 
   uint8_t *MallocStaticDevMem(size_t size, const std::string &tag = "");
   uint8_t *MallocDynamicDevMem(size_t size, const std::string &tag = "");
-  bool FreeStaticDevMem(void *devPtr) { return true; }
+  bool FreeStaticDevMem(void *devPtr) const { return true; }
   void ResetDynamicMemory();
 
   uint64_t FreeDevMemSize() { return static_mem_offset_ - max_dynamic_mem_offset_; }
