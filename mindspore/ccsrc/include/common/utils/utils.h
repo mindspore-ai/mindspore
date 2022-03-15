@@ -622,36 +622,31 @@ constexpr auto kLoadStateInput = 2;
 constexpr int kBasicTimeTransferUnit = 1000;
 constexpr int kMaxVectorSize = 10000;
 // index of input or output
-enum Index : size_t {
-  kIndex0 = 0,
-  kIndex1,
-  kIndex2,
-  kIndex3,
-  kIndex4,
-  kIndex5,
-  kIndex6,
-  kIndex7,
-  kIndex8,
-  kIndex9,
-  kIndex10,
-  kIndex11,
-  kIndex12,
-  kIndex13,
-  kIndex14,
-  kIndex15,
-  kIndex16,
-};
+constexpr auto kIndex0 = 0;
+constexpr auto kIndex1 = 1;
+constexpr auto kIndex2 = 2;
+constexpr auto kIndex3 = 3;
+constexpr auto kIndex4 = 4;
+constexpr auto kIndex5 = 5;
+constexpr auto kIndex6 = 6;
+constexpr auto kIndex7 = 7;
+constexpr auto kIndex8 = 8;
+constexpr auto kIndex9 = 9;
+constexpr auto kIndex10 = 10;
+constexpr auto kIndex11 = 11;
+constexpr auto kIndex12 = 12;
+constexpr auto kIndex13 = 13;
+constexpr auto kIndex14 = 14;
+constexpr auto kIndex15 = 15;
+constexpr auto kIndex16 = 16;
 // dim of shape
-enum Dim : size_t {
-  kDim0 = 0,
-  kDim1,
-  kDim2,
-  kDim3,
-  kDim4,
-  kDim5,
-  kDim6,
-};
-
+constexpr auto kDim0 = 0;
+constexpr auto kDim1 = 1;
+constexpr auto kDim2 = 2;
+constexpr auto kDim3 = 3;
+constexpr auto kDim4 = 4;
+constexpr auto kDim5 = 5;
+constexpr auto kDim6 = 6;
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
 constexpr auto kOpFormat_ChannelFirst = "ChannelFirst";

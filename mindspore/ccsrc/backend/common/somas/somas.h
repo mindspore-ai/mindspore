@@ -48,7 +48,7 @@ class Somas {
   ~Somas() = default;
 
   bool Allocate(const session::KernelGraph *graph);
-  size_t GetTotalMemSize() { return mem_offset_; }
+  size_t GetTotalMemSize() const { return mem_offset_; }
   void set_mem_base_addr(uint8_t *mem_base_addr) { mem_base_addr_ = mem_base_addr; }
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;

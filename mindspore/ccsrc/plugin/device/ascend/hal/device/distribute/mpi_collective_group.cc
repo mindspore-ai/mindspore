@@ -41,15 +41,15 @@ MPICollective &MPICollective::instance() {
   return instance;
 }
 int MPICollective::GetRankIdByGroup(const std::string &name) {
-  CHECK_RET(group_info_.count(name), 1, "Failed to get MPI group rank by group name " + name);
+  CHECK_RET(group_info_.count(name), 1, ("Failed to get MPI group rank by group name " + name));
   return group_info_[name].first;
 }
 int MPICollective::GetGroupSize(const std::string &name) {
-  CHECK_RET(group_info_.count(name), 1, "Failed to get MPI group size by group name " + name);
+  CHECK_RET(group_info_.count(name), 1, ("Failed to get MPI group size by group name " + name));
   return group_info_[name].second;
 }
 HcclComm MPICollective::GetGroupComm(const std::string &name) {
-  CHECK_RET(group_comm_.count(name), 1, "Failed to get MPI group comm by group name " + name);
+  CHECK_RET(group_comm_.count(name), 1, ("Failed to get MPI group comm by group name " + name));
   return group_comm_[name];
 }
 int MPICollective::GetDeviceId() const { return local_rank_id_; }

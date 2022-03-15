@@ -39,7 +39,7 @@ std::vector<size_t> CalCdistBroadCastShape(std::vector<size_t> x_shape, std::vec
   }
   auto length = x_shape.size();
   std::vector<size_t> broadcast_shape;
-  std::copy(x_shape.begin(), x_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
+  (void)std::copy(x_shape.begin(), x_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
   for (size_t i = length; i > 0; --i) {
     if (x_shape[length - i] == 1) {
       broadcast_shape.push_back(y_shape[length - i]);

@@ -60,7 +60,7 @@ const AnfNodePtr AddnFission::Process(const FuncGraphPtr &func_graph, const AnfN
     std::vector<AnfNodePtr> base_addn_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAddN->name()))};
     size_t cur_input_index = 1;
     // Divide the inputs of addn by inputs_divisor_.
-    while (origin_input_size - cur_input_index + 1 >= inputs_divisor_) {
+    while ((origin_input_size - cur_input_index + 1) >= inputs_divisor_) {
       base_addn_inputs.push_back(CreateNewAddn(func_graph, new_cnode, cur_input_index, inputs_divisor_));
       cur_input_index += inputs_divisor_;
     }

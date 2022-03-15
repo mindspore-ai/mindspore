@@ -65,7 +65,7 @@ std::vector<MSTensor> MSTensorRef::ConvertTuple(const VectorRef &args) {
     if (utils::isa<VectorRef>(item)) {
       VectorRef args_vec = utils::cast<VectorRef>(args);
       auto ret = ConvertTuple(args_vec);
-      outs.insert(outs.end(), ret.begin(), ret.end());
+      (void)outs.insert(outs.end(), ret.begin(), ret.end());
     } else if (utils::isa<MSTensorRef>(item)) {
       auto wrapper = utils::cast<MSTensorRef>(item);
       outs.push_back(wrapper.ms_tensor_);

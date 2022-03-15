@@ -25,7 +25,8 @@ namespace mindspore {
 namespace opt {
 class BnGradSplit : public PatternProcessPass {
  public:
-  explicit BnGradSplit(string name = "bn_grad_split", bool multigraph = true) : PatternProcessPass(name, multigraph) {}
+  explicit BnGradSplit(const string name = "bn_grad_split", bool multigraph = true)
+      : PatternProcessPass(name, multigraph) {}
   ~BnGradSplit() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;

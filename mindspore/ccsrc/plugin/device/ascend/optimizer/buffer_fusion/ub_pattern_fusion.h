@@ -30,8 +30,6 @@
 
 namespace mindspore {
 namespace opt {
-using FusedNodeRecord = std::vector<mindspore::HashSet<AnfNodePtr>>;
-
 class UbPatternFusion : public PassWithSwitch {
  public:
   UbPatternFusion() : PassWithSwitch("TbeBufferFusion") {}
