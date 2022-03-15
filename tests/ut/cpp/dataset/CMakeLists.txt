@@ -163,6 +163,7 @@ SET(DE_UT_SRCS
         rgba_to_bgr_op_test.cc
         rgba_to_rgb_op_test.cc
         schema_test.cc
+        skip_first_epoch_sampler_test.cc
         skip_pushdown_optimization_pass_test.cc
         slice_op_test.cc
         sliding_window_op_test.cc

@@ -29,7 +29,7 @@ SkipFirstEpochSamplerObj::~SkipFirstEpochSamplerObj() = default;
 Status SkipFirstEpochSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
   RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
-  args["sampler_name"] = "SkipFirstEpochSamplerObj";
+  args["sampler_name"] = "SkipFirstEpochSampler";
   args["start_index"] = start_index_;
   *out_json = args;
   return Status::OK();
@@ -37,7 +37,7 @@ Status SkipFirstEpochSamplerObj::to_json(nlohmann::json *const out_json) {
 
 #ifndef ENABLE_ANDROID
 Status SkipFirstEpochSamplerObj::from_json(nlohmann::json json_obj, std::shared_ptr<SamplerObj> *sampler) {
-  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "start_index", "SkipFirstEpochSamplerObj"));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "start_index", "SkipFirstEpochSampler"));
   int64_t start_index = json_obj["start_index"];
   *sampler = std::make_shared<SkipFirstEpochSamplerObj>(start_index);
   // Run common code in super class to add children samplers

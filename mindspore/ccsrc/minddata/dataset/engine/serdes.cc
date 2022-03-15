@@ -218,6 +218,10 @@ Status Serdes::CreateDatasetOperationNode(const std::shared_ptr<DatasetNode> &ds
 }
 
 Status Serdes::ConstructSampler(nlohmann::json json_obj, std::shared_ptr<SamplerObj> *sampler) {
+  if (json_obj["sampler_name"] == "SkipFirstEpochSampler") {
+    RETURN_IF_NOT_OK(SkipFirstEpochSamplerObj::from_json(json_obj, sampler));
+    return Status::OK();
+  }
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler_name") != json_obj.end(), "Failed to find sampler_name");
   int64_t num_samples = json_obj["num_samples"];
