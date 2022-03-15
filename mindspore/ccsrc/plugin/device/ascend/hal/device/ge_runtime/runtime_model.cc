@@ -80,7 +80,7 @@ void RuntimeModel::InitStream(const std::shared_ptr<DavinciModel> &davinci_model
     }
 
     MS_LOG(INFO) << "rtStreamCreateWithFlags end.";
-    stream_list_.emplace_back(stream);
+    (void)stream_list_.emplace_back(stream);
 
     // Bind rt_model_handle_ to all task related streams
     flag = (wait_active_streams.find(i) != wait_active_streams.end()) ? (static_cast<uint32_t>(RT_INVALID_FLAG))

@@ -51,8 +51,6 @@ constexpr size_t kNopNodeInputSize = 2;
 constexpr size_t kReturnDataIndex = 1;
 constexpr size_t kSwitchTrueBranchIndex = 2;
 
-enum class ShapeType { kMaxShape, kMinShape };
-
 // ops pair that dynamic input order is differ from the fixed shape ops
 // pair: <real_input->ori_input, ori_input->real_input>
 static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_dynamic_node_list = {

@@ -142,7 +142,7 @@ void DynamicRnnGradFissionV2::CreateTLoopNode(const FuncGraphPtr &func_graph, co
                                    MakeValue(std::vector<std::vector<int64_t>>{Convert2Long(input_shape)}), split_v);
     }
 
-    basic_lstm_cell_c_state_grad_nodes.emplace_back(basic_lstm_cell_c_state_grad);
+    (void)basic_lstm_cell_c_state_grad_nodes.emplace_back(basic_lstm_cell_c_state_grad);
     (void)matmul_nodes.emplace_back(matmul);
     (void)split_nodes.emplace_back(split_v);
   }
@@ -343,11 +343,11 @@ AnfNodePtr DynamicRnnGradFissionV2::AddLSTMInputGradNode(const FuncGraphPtr &fun
     CreateMultipleOutputsOfAnfNode(func_graph, lstm_split_tanh, num_split_x, &lstm_split_tanh_outputs);
     result_nodes.push_back(lstm_split_tanh_outputs);
   } else {
-    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex12)});
-    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex13)});
-    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex14)});
-    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex15)});
-    result_nodes.push_back(std::vector<AnfNodePtr>{dynamic_rnn_grad_cnode->input(kIndex16)});
+    (void)result_nodes.emplace_back(1, dynamic_rnn_grad_cnode->input(kIndex12));
+    (void)result_nodes.emplace_back(1, dynamic_rnn_grad_cnode->input(kIndex13));
+    (void)result_nodes.emplace_back(1, dynamic_rnn_grad_cnode->input(kIndex14));
+    (void)result_nodes.emplace_back(1, dynamic_rnn_grad_cnode->input(kIndex15));
+    (void)result_nodes.emplace_back(1, dynamic_rnn_grad_cnode->input(kIndex16));
   }
 
   // Add edges

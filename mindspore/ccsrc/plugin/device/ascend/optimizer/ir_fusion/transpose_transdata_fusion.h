@@ -42,8 +42,6 @@ class TransposeTransDataFusion : public PatternProcessPass {
 
  private:
   VarPtr input_varptr_;
-
- private:
   SupportedCheckerPtr supported_checker_;
 };
 }  // namespace opt
