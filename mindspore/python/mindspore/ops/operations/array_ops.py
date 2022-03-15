@@ -3014,6 +3014,13 @@ class Slice(PrimitiveWithInfer):
         x_shape = x['shape']
         x_shp_len = len(x_shape)
         begin_v, size_v = begin['value'], size['value']
+
+        if 'max_shape' in x:
+            max_shape = x['max_shape']
+            min_shape = x['min_shape']
+        else:
+            min_shape = x['shape']
+            max_shape = x['shape']
         if begin_v is None or size_v is None:
             # if size_v is not None and begin_v is None, it should be also a dynamic output shape.
             if size_v is None:
@@ -3022,12 +3029,6 @@ class Slice(PrimitiveWithInfer):
                 out_shape = [-1] * size['shape'][0]
             else:
                 out_shape = [-1] * len(size_v)
-            if 'max_shape' in x:
-                max_shape = x['max_shape']
-                min_shape = x['min_shape']
-            else:
-                min_shape = x['shape']
-                max_shape = x['shape']
             return {'shape': out_shape,
                     'dtype': x['dtype'],
                     'value': None,
@@ -3041,19 +3042,31 @@ class Slice(PrimitiveWithInfer):
             validator.check(f'len of {key}', len(value),
                             'len x\'s dim', x_shp_len)
         size_v = list(size_v)
-        if -1 not in x_shape:
-            for i in range(x_shp_len):
-                if size_v[i] == -1:
-                    size_v[i] = x_shape[i] - begin_v[i]
-                validator.check_positive_int(size_v[i], f'input size[{i}]')
-                validator.check_non_negative_int(begin_v[i], f'input begin[{i}]')
-                if x_shape[i] < begin_v[i] + size_v[i]:
-                    y = begin_v[i] + size_v[i]
-                    raise ValueError(f"For '{self.name}', the sliced shape can not be greater than origin shape, "
-                                     f"but got sliced shape is {y}, and origin shape is {x_shape}.")
+        is_dynamic = False
+        for i in range(x_shp_len):
+            validator.check_non_negative_int(begin_v[i], f'input begin[{i}]')
+            if x_shape[i] == -1:
+                is_dynamic = True
+                continue
+            if size_v[i] == -1:
+                size_v[i] = x_shape[i] - begin_v[i]
+            validator.check_positive_int(size_v[i], f'input size[{i}]')
+            if x_shape[i] < begin_v[i] + size_v[i]:
+                y = begin_v[i] + size_v[i]
+                raise ValueError(f"For '{self.name}', the sliced shape can not be greater than origin shape, "
+                                 f"but got sliced shape is {y}, and origin shape is {x_shape}.")
+        if not is_dynamic:
+            return {'shape': size_v,
+                    'dtype': x['dtype'],
+                    'value': None}
+        if size_v[i] >= 0:
+            min_shape[i] = size_v[i]
+            max_shape[i] = size_v[i]
         return {'shape': size_v,
                 'dtype': x['dtype'],
-                'value': None}
+                'value': None,
+                'min_shape': min_shape,
+                'max_shape': max_shape}
 
 
 class Coalesce(Primitive):

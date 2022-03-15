@@ -188,10 +188,7 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public NativeGpuKernelMod {
     }
     size_t out_size = index_num;
     if (index_num == 0) {
-      out_size = input_num;
-      for (size_t i = 0; i < input_num; i++) {
-        output.push_back(static_cast<S>(i));
-      }
+      return out_size;
     }
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(addr, &output[0], out_size * sizeof(S), cudaMemcpyHostToDevice, stream),

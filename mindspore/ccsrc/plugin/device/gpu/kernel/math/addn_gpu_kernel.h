@@ -88,6 +88,15 @@ class AddNFwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    ResetSizeLists();
+    input_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+    is_null_input_ = false;
+    num_input_ = 0;
+  }
+
  protected:
   void InitSizeLists() override {
     for (size_t i = 0; i < num_input_; i++) {

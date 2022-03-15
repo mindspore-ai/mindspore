@@ -48,7 +48,6 @@ class DynamicTbeKernelMod : public TbeKernelMod {
   std::string ParseCompileJson(const CNodePtr &cnode);
   void InitTilingDataPtr();
   bool CopyTilingToDevice(void *stream_ptr);
-  bool NeedSkipExecute(const CNodePtr &cnode);
 
   uint32_t block_dim_ = 1;
   std::string tiling_data_;
