@@ -14,15 +14,16 @@
 # ============================================================================
 """
 @File   : conftest.py
-@Desc   : common fixtures for pytest
+@Desc   : common fixtures for pytest dataset
 """
 
 import pytest
 from mindspore.dataset.engine.iterators import _cleanup, _unset_iterator_cleanup
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def close_iterators():
     yield
+    # Note: code after `yield` is teardown code
     _cleanup()
     _unset_iterator_cleanup()
