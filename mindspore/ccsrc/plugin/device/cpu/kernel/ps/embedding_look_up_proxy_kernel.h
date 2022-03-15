@@ -45,8 +45,6 @@ class EmbeddingLookUpProxyKernel : public EmbeddingLookUpCpuKernelMod {
   size_t key_{0};
   size_t input_dims_{1};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EmbeddingLookupProxy, EmbeddingLookUpProxyKernel);
 }  // namespace ps
 }  // namespace kernel
 }  // namespace mindspore

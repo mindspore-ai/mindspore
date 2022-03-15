@@ -119,5 +119,7 @@ bool PadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
   ParallelLaunchAutoSearch(task, input_size_, this, &parallel_search_info_);
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Pad, PadCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

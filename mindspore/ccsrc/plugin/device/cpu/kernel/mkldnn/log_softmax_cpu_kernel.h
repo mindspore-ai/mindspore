@@ -40,8 +40,6 @@ class LogSoftmaxCpuKernelMod : public MKLCpuKernelMod {
     return support_list;
   }
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LogSoftmax, LogSoftmaxCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

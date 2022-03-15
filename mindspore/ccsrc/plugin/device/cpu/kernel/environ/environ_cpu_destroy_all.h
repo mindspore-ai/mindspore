@@ -38,8 +38,6 @@ class EnvironDestroyAllCpuKernelMod : public NativeCpuKernelMod {
     return support_list;
   }
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EnvironDestroyAll, EnvironDestroyAllCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

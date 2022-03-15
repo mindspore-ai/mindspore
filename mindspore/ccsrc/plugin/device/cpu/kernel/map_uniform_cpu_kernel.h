@@ -59,8 +59,6 @@ class MapUniformCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
   CNodeWeakPtr node_wpt_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MapUniform, MapUniformCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

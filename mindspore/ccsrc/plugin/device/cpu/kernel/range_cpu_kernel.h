@@ -40,8 +40,6 @@ class RangeCpuKernelMod : public NativeCpuKernelMod {
 
   TypeId dtype_{kTypeUnknown};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Range, RangeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

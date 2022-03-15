@@ -61,5 +61,7 @@ bool SoftmaxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   ExecutePrimitive();
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Softmax, SoftmaxCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

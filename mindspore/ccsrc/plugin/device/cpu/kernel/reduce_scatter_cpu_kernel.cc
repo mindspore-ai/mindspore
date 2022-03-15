@@ -57,5 +57,7 @@ bool ReduceScatterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   auto output_data_num = outputs[0]->size / sizeof(float);
   return MPIReduceScatter(input_addr, output_addr, ranks_group_, output_data_num, op_type_);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, _HostReduceScatter, ReduceScatterCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

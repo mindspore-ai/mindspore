@@ -323,5 +323,7 @@ bool GridSampler3DGradCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64
   int64_t iW = static_cast<int64_t>(W);
   return d >= 0 && d < iD && h >= 0 && h < iH && w >= 0 && w < iW;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, GridSampler3DGrad, GridSampler3DGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

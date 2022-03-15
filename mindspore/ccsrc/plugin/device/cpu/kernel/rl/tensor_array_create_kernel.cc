@@ -56,5 +56,7 @@ bool TensorArrayCreateCpuKernelMod::Launch(const std::vector<AddressPtr> &, cons
   TensorArrayMgr::GetInstance().AddTensorArray(tensor_array_handle, tensor_array);
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArray, TensorArrayCreateCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

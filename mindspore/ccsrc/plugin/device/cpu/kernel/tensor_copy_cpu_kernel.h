@@ -49,8 +49,6 @@ class TensorCopyCpuKernelMod : public NativeCpuKernelMod {
     return support_list;
   }
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorMove, TensorCopyCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -41,8 +41,6 @@ class EnvironCreateCpuKernelMod : public NativeCpuKernelMod {
  private:
   size_t handle_size_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EnvironCreate, EnvironCreateCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

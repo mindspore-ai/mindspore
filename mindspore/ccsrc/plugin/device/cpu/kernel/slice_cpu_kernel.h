@@ -67,8 +67,6 @@ class SliceCpuKernelMod : public NativeCpuKernelMod {
   int data_size_{4};
   SliceParameter slice_param_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Slice, SliceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -45,8 +45,6 @@ class TensorArrayCreateCpuKernelMod : public NativeCpuKernelMod {
   TypePtr type_;
   std::string name_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArray, TensorArrayCreateCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

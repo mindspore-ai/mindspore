@@ -67,8 +67,6 @@ class SparseApplyProximalAdagradCpuKernelMod : public SparseOptimizerCpuKernelMo
   void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                     const std::vector<kernel::AddressPtr> &workspace) const;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedSparseProximalAdagrad, SparseApplyProximalAdagradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

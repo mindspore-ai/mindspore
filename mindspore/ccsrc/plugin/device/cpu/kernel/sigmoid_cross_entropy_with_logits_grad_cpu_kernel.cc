@@ -69,5 +69,8 @@ void SigmoidCrossEntropyWithLogitsGradCpuKernelMod::LaunchKernel(const std::vect
     }
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SigmoidCrossEntropyWithLogitsGrad,
+                      SigmoidCrossEntropyWithLogitsGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

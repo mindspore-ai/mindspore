@@ -62,8 +62,6 @@ class ResizeNearestNeighborGradCpuKernelMod : public NativeCpuKernelMod {
   float height_scale_{1.0};
   float width_scale_{1.0};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeNearestNeighborGrad, ResizeNearestNeighborGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_NEAREST_NEIGHBOR_GRAD_CPU_KERNEL_H_

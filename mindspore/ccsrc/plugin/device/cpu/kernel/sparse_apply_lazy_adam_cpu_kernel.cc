@@ -200,5 +200,7 @@ bool SparseApplyLazyAdamCpuKernelMod::Launch(const std::vector<kernel::AddressPt
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedSparseLazyAdam, SparseApplyLazyAdamCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -52,5 +52,7 @@ bool EqualCountCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
   output[0] = count;
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EqualCount, EqualCountCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

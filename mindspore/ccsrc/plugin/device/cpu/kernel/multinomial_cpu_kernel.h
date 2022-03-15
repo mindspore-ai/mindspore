@@ -49,8 +49,6 @@ class MultinomialCpuKernel : public NativeCpuKernelMod {
   int seed2_{0};
   std::default_random_engine rng_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Multinomial, MultinomialCpuKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_

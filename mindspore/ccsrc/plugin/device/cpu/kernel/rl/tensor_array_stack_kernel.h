@@ -62,8 +62,6 @@ class TensorArrayStackCpuKernelMod : public NativeCpuKernelMod {
   TypePtr type_;
   bool is_dynamic_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayStack, TensorArrayStackCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

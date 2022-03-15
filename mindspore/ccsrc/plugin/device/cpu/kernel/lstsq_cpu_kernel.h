@@ -52,8 +52,6 @@ class LstsqCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_0_{kTypeUnknown};
   TypeId dtype_1_{kTypeUnknown};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Lstsq, LstsqCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

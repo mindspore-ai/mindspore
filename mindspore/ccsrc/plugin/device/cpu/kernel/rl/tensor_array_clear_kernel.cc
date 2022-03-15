@@ -41,5 +41,7 @@ bool TensorArrayClearCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
   tensors_->Clear();
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayClear, TensorArrayClearCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

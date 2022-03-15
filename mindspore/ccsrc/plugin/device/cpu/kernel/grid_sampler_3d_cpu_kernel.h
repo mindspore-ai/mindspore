@@ -68,8 +68,6 @@ class GridSampler3DCpuKernelMod : public NativeCpuKernelMod {
 
   bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W);
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, GridSampler3D, GridSampler3DCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

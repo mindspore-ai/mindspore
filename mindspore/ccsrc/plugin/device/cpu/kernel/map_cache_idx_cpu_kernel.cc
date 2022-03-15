@@ -203,5 +203,7 @@ void MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   }
   UpdateShape(miss_count, node);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MapCacheIdx, MapCacheIdxCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

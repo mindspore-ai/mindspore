@@ -54,8 +54,6 @@ class IsInfCpuKernelMod : public NativeCpuKernelMod {
 
   TypeId input_dtype_{kTypeUnknown};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IsInf, IsInfCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

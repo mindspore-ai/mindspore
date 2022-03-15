@@ -112,5 +112,7 @@ bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BatchNorm, BatchNormCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

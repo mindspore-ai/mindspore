@@ -54,8 +54,6 @@ class UnsortedSegmentSumCpuKernelMod : public NativeCpuKernelMod {
   size_t output_dim0_{1};
   size_t output_dim1_{1};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentSum, UnsortedSegmentSumCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

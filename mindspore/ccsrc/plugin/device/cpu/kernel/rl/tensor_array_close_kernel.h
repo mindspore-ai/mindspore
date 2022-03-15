@@ -39,8 +39,6 @@ class TensorArrayCloseCpuKernelMod : public NativeCpuKernelMod {
     return support_list;
   }
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayClose, TensorArrayCloseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

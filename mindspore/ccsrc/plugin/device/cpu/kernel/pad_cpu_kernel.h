@@ -48,8 +48,6 @@ class PadCpuKernelMod : public NativeCpuKernelMod {
   size_t input_size_{1};
   size_t output_size_{1};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Pad, PadCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PAD_CPU_KERNEL_H_

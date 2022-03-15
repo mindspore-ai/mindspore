@@ -109,5 +109,7 @@ bool TensorArrayStackCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayStack, TensorArrayStackCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

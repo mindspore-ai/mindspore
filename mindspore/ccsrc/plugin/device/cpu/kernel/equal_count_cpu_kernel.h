@@ -34,8 +34,6 @@ class EqualCountCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EqualCount, EqualCountCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

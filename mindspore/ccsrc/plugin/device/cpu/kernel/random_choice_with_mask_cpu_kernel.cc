@@ -203,5 +203,7 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
   UpdateOutput(dims, non_zero_num, count, output_length, mask_dim, output_coordinate, mask);
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RandomChoiceWithMask, RandomChoiceWithMaskCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

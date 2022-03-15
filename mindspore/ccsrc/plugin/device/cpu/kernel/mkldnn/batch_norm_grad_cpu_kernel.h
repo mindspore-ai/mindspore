@@ -58,8 +58,6 @@ class BatchNormGradCpuKernelMod : public MKLCpuKernelMod {
   enum workspace_list_ { SCALE_BIAS, DIFF_SCALE_BIAS };
   enum output_list_ { DX, DSCALE, DBIAS };
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BatchNormGrad, BatchNormGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

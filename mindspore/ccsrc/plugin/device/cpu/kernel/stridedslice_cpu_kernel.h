@@ -92,8 +92,6 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> output_shape_;
   StridedSliceParameter slice_param_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, StridedSlice, StridedSliceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

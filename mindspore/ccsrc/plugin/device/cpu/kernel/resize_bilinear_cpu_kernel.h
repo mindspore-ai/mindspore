@@ -55,8 +55,6 @@ class ResizeBilinearCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> size_;
   std::vector<size_t> shape_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeBilinear, ResizeBilinearCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_BILINEAR_CPU_KERNEL_H_

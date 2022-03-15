@@ -183,5 +183,7 @@ std::vector<KernelAttr> TensorArrayWriteCpuKernelMod::support_list_ = {  // inde
     .AddOutputAttr(kNumberTypeInt64)};
 
 std::vector<KernelAttr> TensorArrayWriteCpuKernelMod::GetOpSupport() { return support_list_; }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayWrite, TensorArrayWriteCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -90,8 +90,6 @@ class MapCacheIdxCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
   CNodeWeakPtr node_wpt_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MapCacheIdx, MapCacheIdxCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

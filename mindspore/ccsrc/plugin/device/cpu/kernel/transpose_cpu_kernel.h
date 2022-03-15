@@ -54,8 +54,6 @@ class TransposeFwdCpuKernelMod : public NativeCpuKernelMod {
   std::unordered_map<TypeId, TypeKernel> launch_map_;
   TypeKernel launch_func_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Transpose, TransposeFwdCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TRANSPOSE_CPU_KERNEL_H_

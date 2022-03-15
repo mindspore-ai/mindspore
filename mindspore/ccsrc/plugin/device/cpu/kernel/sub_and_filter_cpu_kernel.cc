@@ -85,5 +85,7 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, out_shape}, node.get());
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SubAndFilter, SubAndFilterCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

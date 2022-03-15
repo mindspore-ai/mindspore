@@ -163,5 +163,7 @@ bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeBilinearGrad, ResizeBilinearGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

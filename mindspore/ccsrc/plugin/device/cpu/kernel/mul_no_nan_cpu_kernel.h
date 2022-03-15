@@ -76,8 +76,6 @@ class MulNoNanCPUKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MulNoNan, MulNoNanCPUKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

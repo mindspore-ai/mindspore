@@ -229,5 +229,7 @@ bool SparseApplyAdamCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedSparseAdam, SparseApplyAdamCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

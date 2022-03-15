@@ -60,5 +60,7 @@ void Expm1CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     output[i] = exp(input[i]) - T(1);
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Expm1, Expm1CpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

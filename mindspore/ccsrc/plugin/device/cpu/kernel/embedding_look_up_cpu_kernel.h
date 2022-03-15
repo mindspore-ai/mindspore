@@ -55,8 +55,6 @@ class EmbeddingLookUpCpuKernelMod : public NativeCpuKernelMod {
   TypeId indices_data_type_{kNumberTypeInt32};
   CNodeWeakPtr node_wpt_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EmbeddingLookup, EmbeddingLookUpCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

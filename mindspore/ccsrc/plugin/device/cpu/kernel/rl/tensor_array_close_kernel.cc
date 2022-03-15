@@ -47,5 +47,7 @@ bool TensorArrayCloseCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayClose, TensorArrayCloseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

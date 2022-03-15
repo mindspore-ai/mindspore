@@ -56,9 +56,6 @@ class RandomChoiceWithMaskCpuKernelMod : public NativeCpuKernelMod {
   size_t seed2{0};
   std::mt19937 generator_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RandomChoiceWithMask, RandomChoiceWithMaskCpuKernelMod);
-
 }  // namespace kernel
 }  // namespace mindspore
 

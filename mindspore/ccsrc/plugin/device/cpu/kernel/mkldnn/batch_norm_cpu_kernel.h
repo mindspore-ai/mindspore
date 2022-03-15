@@ -56,8 +56,6 @@ class BatchNormCpuKernelMod : public MKLCpuKernelMod {
   size_t hw_size{0};
   size_t nhw_size{0};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BatchNorm, BatchNormCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

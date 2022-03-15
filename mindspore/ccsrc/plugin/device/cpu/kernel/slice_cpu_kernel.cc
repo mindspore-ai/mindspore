@@ -177,5 +177,7 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Slice, SliceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

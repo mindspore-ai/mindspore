@@ -176,5 +176,7 @@ void MatrixSetDiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   };
   CPUKernelUtils::ParallelFor(task, max_index);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixSetDiag, MatrixSetDiagCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

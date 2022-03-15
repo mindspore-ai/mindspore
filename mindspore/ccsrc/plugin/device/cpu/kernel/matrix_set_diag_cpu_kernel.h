@@ -78,8 +78,6 @@ class MatrixSetDiagCpuKernelMod : public NativeCpuKernelMod {
   std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> alignment_{MatrixDiag::RIGHT, MatrixDiag::LEFT};
   TypeId data_type_{0};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixSetDiag, MatrixSetDiagCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_SET_DIAG_KERNEL_H_

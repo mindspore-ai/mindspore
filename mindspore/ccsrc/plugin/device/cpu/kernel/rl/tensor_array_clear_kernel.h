@@ -39,8 +39,6 @@ class TensorArrayClearCpuKernelMod : public NativeCpuKernelMod {
     return support_list;
   }
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayClear, TensorArrayClearCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

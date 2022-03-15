@@ -251,5 +251,7 @@ bool LSTMGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   Reorder(&diff_weights_h_memory_, &user_diff_weights_h_memory_);
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LSTMGrad, LSTMGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

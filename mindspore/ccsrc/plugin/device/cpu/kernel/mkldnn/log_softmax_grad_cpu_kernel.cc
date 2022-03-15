@@ -60,5 +60,7 @@ bool LogSoftmaxGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
   ExecutePrimitive();
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LogSoftmaxGrad, LogSoftmaxGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

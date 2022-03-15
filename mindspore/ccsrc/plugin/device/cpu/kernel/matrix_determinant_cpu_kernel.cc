@@ -96,5 +96,7 @@ void MatrixDeterminantCpuKernelMod::LaunchMatrixDeterminant(const std::vector<Ad
   };
   CPUKernelUtils::ParallelFor(task, n);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixDeterminant, MatrixDeterminantCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

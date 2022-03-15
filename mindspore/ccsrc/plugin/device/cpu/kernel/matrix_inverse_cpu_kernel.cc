@@ -124,5 +124,7 @@ void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<AddressPtr
     CPUKernelUtils::ParallelFor(task, matrix_num);
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixInverse, MatrixInverseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

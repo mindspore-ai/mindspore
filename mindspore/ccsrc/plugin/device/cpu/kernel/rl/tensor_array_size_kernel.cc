@@ -43,5 +43,7 @@ bool TensorArraySizeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, 
   MS_LOG(DEBUG) << "Launch TensorArraySize, valid size is " << out_addr[0];
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArraySize, TensorArraySizeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

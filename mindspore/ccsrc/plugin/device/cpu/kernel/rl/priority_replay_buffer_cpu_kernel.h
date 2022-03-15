@@ -112,11 +112,6 @@ class PriorityReplayBufferUpdateCpuKernel : public NativeCpuKernelMod {
   std::vector<size_t> priorities_shape_;
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferCreate, PriorityReplayBufferCreateCpuKernel);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferPush, PriorityReplayBufferPushCpuKernel);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferSample, PriorityReplayBufferSampleCpuKernel);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferUpdate, PriorityReplayBufferUpdateCpuKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

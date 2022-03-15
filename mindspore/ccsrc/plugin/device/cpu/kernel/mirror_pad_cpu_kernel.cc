@@ -210,5 +210,7 @@ void MirrorPadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     outputs_addr[pos] = inputs_addr[pos_index];
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MirrorPad, MirrorPadCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -89,8 +89,6 @@ class UpdateCacheCpuKernelMod : public NativeCpuKernelMod {
   size_t input_x_dtype_size_{4};
   CNodeWeakPtr node_wpt_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UpdateCache, UpdateCacheCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

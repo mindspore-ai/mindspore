@@ -66,8 +66,6 @@ class TensorArrayReadCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> shapes_;
   TypePtr type_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayRead, TensorArrayReadCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

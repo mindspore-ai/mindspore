@@ -311,5 +311,7 @@ void MirrorPadGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   MirrorPadGrad_Width_Height(output_size_, interim, output_shape_[2], output_shape_[3], input_shape_[2],
                              input_shape_[3], num_paddings_, paddings, mode_, outputs_addr);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MirrorPadGrad, MirrorPadGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
