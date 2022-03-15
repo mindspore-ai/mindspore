@@ -19,6 +19,7 @@ from functools import cmp_to_key
 
 import numpy as onp
 import scipy.sparse.linalg
+from scipy.linalg import eigvals
 from mindspore import Tensor, CSRTensor
 import mindspore.ops as ops
 import mindspore.numpy as mnp
@@ -127,8 +128,14 @@ def create_sym_pos_matrix(shape, dtype):
             'Symmetric positive definite matrix must be a square matrix, but has shape: ', shape)
 
     n = shape[-1]
-    x = onp.random.random(shape)
-    return (onp.matmul(x, x.T) + onp.eye(n)).astype(dtype)
+    count = 0
+    while count < 100:
+        x = onp.random.random(shape).astype(dtype)
+        a = (onp.matmul(x, x.T) + onp.eye(n)).astype(dtype)
+        count += 1
+        if onp.min(eigvals(a)) > 0:
+            return a
+    raise ValueError('Symmetric positive definite matrix create failed')
 
 
 def gradient_check(x, net, epsilon=1e-3, symmetric=False, enumerate_fn=onp.ndenumerate):

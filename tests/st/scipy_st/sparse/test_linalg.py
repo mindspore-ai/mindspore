@@ -25,19 +25,19 @@ from mindspore.common import Tensor
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_full_rank_matrix, to_tensor, to_ndarray, get_platform
 
 
-def _fetch_preconditioner(preconditioner, A):
+def _fetch_preconditioner(preconditioner, a):
     """
     Returns one of various preconditioning matrices depending on the identifier
     `preconditioner' and the input matrix A whose inverse it supposedly
     approximates.
     """
     if preconditioner == 'identity':
-        M = onp.eye(A.shape[0], dtype=A.dtype)
+        M = onp.eye(a.shape[0], dtype=a.dtype)
     elif preconditioner == 'random':
-        random_metrix = create_sym_pos_matrix(A.shape, A.dtype)
-        M = onp.linalg.inv(random_metrix)
+        random_matrix = create_sym_pos_matrix(a.shape, a.dtype)
+        M = onp.linalg.inv(random_matrix)
     elif preconditioner == 'exact':
-        M = onp.linalg.inv(A)
+        M = onp.linalg.inv(a)
     else:
         M = None
     return M
@@ -305,125 +305,78 @@ def test_cg_grad_pynative(tensor_type, dtype, tol, a, b, grad_a, grad_b):
     onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), **kw)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('n', [128])
+@pytest.mark.parametrize('dtype,error', [(onp.float32, 1e-4)])
+@pytest.mark.parametrize('restart', [1])
+@pytest.mark.parametrize('maxiter', [1])
+@pytest.mark.parametrize('preconditioner', ['random'])
+@pytest.mark.parametrize('solve_method', ['incremental', 'batched'])
+def test_gmres_against_scipy_level1(n, dtype, error, restart, maxiter, preconditioner, solve_method):
+    """
+    Feature: ALL TO ALL
+    Description: level1 test cases for [N x N] X [N X 1]
+    Expectation: the result match scipy
+    """
+    onp.random.seed(0)
+    a = create_full_rank_matrix((n, n), dtype)
+    b = onp.random.rand(n).astype(dtype)
+    x0 = onp.zeros_like(b).astype(dtype)
+    M = _fetch_preconditioner(preconditioner, a)
+    tol = float(onp.finfo(dtype=dtype).eps)
+    atol = tol
+    if preconditioner == 'random':
+        restart = n
+        maxiter = None
+    scipy_output, _ = osp.sparse.linalg.gmres(a, b, x0, tol=tol, restart=restart, maxiter=maxiter, M=M, atol=atol)
+    context.set_context(mode=context.GRAPH_MODE)
+    ms_output, _ = msp.sparse.linalg.gmres(Tensor(a), Tensor(b), Tensor(x0), tol=tol, restart=restart, maxiter=maxiter,
+                                           M=M, atol=atol, solve_method=solve_method)
+    assert onp.allclose(scipy_output, ms_output.asnumpy(), rtol=error, atol=error)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [3, 5, 7])
-@pytest.mark.parametrize('dtype,tol', [(onp.float64, 7), (onp.float32, 3)])
-@pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
-def test_gmres_incremental_against_scipy(n, tol, dtype, preconditioner):
+@pytest.mark.parametrize('n', [3, 7])
+@pytest.mark.parametrize('dtype,error', [(onp.float64, 1e-5), (onp.float32, 1e-4)])
+@pytest.mark.parametrize('restart', [1, 2])
+@pytest.mark.parametrize('maxiter', [1, 2])
+@pytest.mark.parametrize('preconditioner', ['identity', 'exact', 'random'])
+@pytest.mark.parametrize('solve_method', ['incremental', 'batched'])
+def test_gmres_against_scipy(n, dtype, error, restart, maxiter, preconditioner, solve_method):
     """
     Feature: ALL TO ALL
     Description:  test cases for [N x N] X [N X 1]
     Expectation: the result match scipy
     """
     onp.random.seed(0)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    A = create_full_rank_matrix((n, n), dtype)
+    a = create_full_rank_matrix((n, n), dtype)
     b = onp.random.rand(n).astype(dtype)
     x0 = onp.zeros_like(b).astype(dtype)
-    M = _fetch_preconditioner(preconditioner, A)
-
-    scipy_x, _ = osp.sparse.linalg.gmres(A, b, x0, tol=1e-07, atol=0, M=M)
-    A = Tensor(A)
-    b = Tensor(b)
-    x0 = Tensor(x0)
-    if M is not None:
-        M = Tensor(M)
-
-    gmres_x, _ = msp.sparse.linalg.gmres(A, b, x0, tol=1e-07, atol=0, solve_method='incremental', M=M)
-    onp.testing.assert_almost_equal(scipy_x, gmres_x.asnumpy(), decimal=tol)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [3, 5, 7])
-@pytest.mark.parametrize('dtype, tol', [(onp.float64, 7), (onp.float32, 3)])
-@pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
-def test_gmres_incremental_against_scipy_graph(n, tol, dtype, preconditioner):
-    """
-    Feature: ALL TO ALL
-    Description:  test cases for [N x N] X [N X 1]
-    Expectation: the result match scipy
-    """
-    onp.random.seed(0)
-    context.set_context(mode=context.GRAPH_MODE)
-    A = create_full_rank_matrix((n, n), dtype)
-    b = onp.random.rand(n).astype(dtype)
-    x0 = onp.zeros_like(b).astype(dtype)
-    M = _fetch_preconditioner(preconditioner, A)
-
-    scipy_x, _ = osp.sparse.linalg.gmres(A, b, x0, tol=1e-07, atol=0, M=M)
-    A = Tensor(A)
-    b = Tensor(b)
-    x0 = Tensor(x0)
-    if M is not None:
-        M = Tensor(M)
-
-    gmres_x, _ = msp.sparse.linalg.gmres(A, b, x0, tol=1e-07, atol=0, solve_method='incremental', M=M)
-    onp.testing.assert_almost_equal(scipy_x, gmres_x.asnumpy(), decimal=tol)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [4, 5, 6])
-@pytest.mark.parametrize('dtype, tol', [(onp.float64, 7), (onp.float32, 3)])
-@pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
-@pytest.mark.parametrize('maxiter', [1, 2])
-def test_pynative_batched_gmres_against_scipy(n, dtype, tol, preconditioner, maxiter):
-    """
-    Feature: ALL TO ALL
-    Description: test cases for gmres
-    Expectation: the result match scipy
-    """
-    onp.random.seed(0)
+    M = _fetch_preconditioner(preconditioner, a)
+    tol = float(onp.finfo(dtype=dtype).eps)
+    atol = tol
+    if preconditioner == 'random':
+        restart = n
+        maxiter = None
+    scipy_output, _ = osp.sparse.linalg.gmres(a, b, x0, tol=tol, restart=restart, maxiter=maxiter, M=M, atol=atol)
+    # PyNative Mode
     context.set_context(mode=context.PYNATIVE_MODE)
-    shape = (n, n)
-    a = create_full_rank_matrix(shape, dtype)
-    b = onp.random.rand(n).astype(dtype=dtype)
-    M = _fetch_preconditioner(preconditioner, a)
-    tensor_a = Tensor(a)
-    tensor_b = Tensor(b)
     M = Tensor(M) if M is not None else M
+    ms_output, _ = msp.sparse.linalg.gmres(Tensor(a), Tensor(b), Tensor(x0), tol=tol, restart=restart, maxiter=maxiter,
+                                           M=M, atol=atol, solve_method=solve_method)
+    assert onp.allclose(scipy_output, ms_output.asnumpy(), rtol=error, atol=error)
 
-    osp_x, _ = osp.sparse.linalg.gmres(a, b, maxiter=maxiter, atol=1e-6)
-
-    msp_x, _ = msp.sparse.linalg.gmres(tensor_a, tensor_b, maxiter=maxiter, M=M, atol=1e-6,
-                                       solve_method='batched')
-    onp.testing.assert_almost_equal(msp_x.asnumpy(), osp_x, decimal=tol)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [5, 6])
-@pytest.mark.parametrize('dtype, tol', [(onp.float64, 7), (onp.float32, 3)])
-@pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
-@pytest.mark.parametrize('maxiter', [1, 2])
-def test_graph_batched_gmres_against_scipy(n, dtype, tol, preconditioner, maxiter):
-    """
-    Feature: ALL TO ALL
-    Description: test cases for gmres
-    Expectation: the result match scipy
-    """
-    onp.random.seed(0)
+    # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
-    shape = (n, n)
-    a = create_full_rank_matrix(shape, dtype)
-    b = onp.random.rand(n).astype(dtype=dtype)
-    tensor_a = Tensor(a)
-    tensor_b = Tensor(b)
-    M = _fetch_preconditioner(preconditioner, a)
-    M = Tensor(M) if M is not None else M
-    osp_x, _ = osp.sparse.linalg.gmres(a, b, maxiter=maxiter, atol=0.0)
-    msp_x, _ = msp.sparse.linalg.gmres(tensor_a, tensor_b, maxiter=maxiter, M=M, atol=0.0, solve_method='batched')
-    onp.testing.assert_almost_equal(msp_x.asnumpy(), osp_x, decimal=tol)
+    ms_output, _ = msp.sparse.linalg.gmres(Tensor(a), Tensor(b), Tensor(x0), tol=tol, restart=restart, maxiter=maxiter,
+                                           M=M, atol=atol, solve_method=solve_method)
+    assert onp.allclose(scipy_output, ms_output.asnumpy(), rtol=error, atol=error)
 
 
 @pytest.mark.level0
