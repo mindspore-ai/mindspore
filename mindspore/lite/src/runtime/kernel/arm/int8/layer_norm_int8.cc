@@ -22,6 +22,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int min_layernorm_input = 3;
+constexpr int min_layernorm_output = 1;
+}  // namespace
 LayerNormInt8CPUKernel::~LayerNormInt8CPUKernel() {
   if (quant_param_ != nullptr) {
     free(quant_param_);
@@ -92,8 +96,8 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
 }
 
 int LayerNormInt8CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 3);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), min_layernorm_input);
+  CHECK_LESS_RETURN(out_tensors_.size(), min_layernorm_output);
   CHECK_NULL_RETURN(param_);
   SetQuantArgs();
 

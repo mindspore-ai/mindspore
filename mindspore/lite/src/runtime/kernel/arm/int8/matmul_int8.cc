@@ -28,9 +28,13 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int min_matmul_input = 2;
+constexpr int min_matmul_output = 1;
+}  // namespace
 int MatmulInt8CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), min_matmul_input);
+  CHECK_LESS_RETURN(out_tensors_.size(), min_matmul_output);
   InitParameter();
 
   auto ret = MatmulBaseInt8CPUKernel::Prepare();

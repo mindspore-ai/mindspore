@@ -185,7 +185,7 @@ int MatmulBaseInt8CPUKernel::MallocQuantParam() {
   auto weight_quant_params = weight_tensor->quant_params();
   auto w_shape = weight_tensor->shape();
   MS_CHECK_TRUE_MSG(weight_tensor->shape().size() >= DIMENSION_2D, lite::RET_ERROR, "weight dims should >=2");
-  int col = param_->b_transpose_ ? w_shape[w_shape.size() - 2] : w_shape[w_shape.size() - 1];
+  int col = param_->b_transpose_ ? w_shape[w_shape.size() - DIMENSION_2D] : w_shape[w_shape.size() - 1];
 
   filter_per_channel_ = (weight_quant_params.size() > 1);
 
