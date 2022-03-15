@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ context.set_context(mode=context.GRAPH_MODE)
 
 def test_list_index_1D():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self):
             list_ = [[1], [2, 2], [3, 3, 3]]
             list_[0] = [100]
@@ -37,16 +34,13 @@ def test_list_index_1D():
 
     net = Net()
     out = net()
-    assert out[0] == [100]
-    assert out[1] == [2, 2]
-    assert out[2] == [3, 3, 3]
+    assert list(out[0]) == [100]
+    assert list(out[1]) == [2, 2]
+    assert list(out[2]) == [3, 3, 3]
 
 
 def test_list_neg_index_1D():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self):
             list_ = [[1], [2, 2], [3, 3, 3]]
             list_[-3] = [100]
@@ -54,16 +48,13 @@ def test_list_neg_index_1D():
 
     net = Net()
     out = net()
-    assert out[0] == [100]
-    assert out[1] == [2, 2]
-    assert out[2] == [3, 3, 3]
+    assert list(out[0]) == [100]
+    assert list(out[1]) == [2, 2]
+    assert list(out[2]) == [3, 3, 3]
 
 
 def test_list_index_2D():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self):
             list_ = [[1], [2, 2], [3, 3, 3]]
             list_[1][0] = 200
@@ -72,16 +63,13 @@ def test_list_index_2D():
 
     net = Net()
     out = net()
-    assert out[0] == [1]
-    assert out[1] == [200, 201]
-    assert out[2] == [3, 3, 3]
+    assert list(out[0]) == [1]
+    assert list(out[1]) == [200, 201]
+    assert list(out[2]) == [3, 3, 3]
 
 
 def test_list_neg_index_2D():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self):
             list_ = [[1], [2, 2], [3, 3, 3]]
             list_[1][-2] = 200
@@ -90,16 +78,13 @@ def test_list_neg_index_2D():
 
     net = Net()
     out = net()
-    assert out[0] == [1]
-    assert out[1] == [200, 201]
-    assert out[2] == [3, 3, 3]
+    assert list(out[0]) == [1]
+    assert list(out[1]) == [200, 201]
+    assert list(out[2]) == [3, 3, 3]
 
 
 def test_list_index_3D():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self):
             list_ = [[1], [2, 2], [[3, 3, 3]]]
             list_[2][0][0] = 300
@@ -109,16 +94,13 @@ def test_list_index_3D():
 
     net = Net()
     out = net()
-    assert out[0] == [1]
-    assert out[1] == [2, 2]
-    assert out[2] == [[300, 301, 302]]
+    assert list(out[0]) == [1]
+    assert list(out[1]) == [2, 2]
+    assert list(out[2][0]) == [300, 301, 302]
 
 
 def test_list_neg_index_3D():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self):
             list_ = [[1], [2, 2], [[3, 3, 3]]]
             list_[2][0][-3] = 300
@@ -128,16 +110,13 @@ def test_list_neg_index_3D():
 
     net = Net()
     out = net()
-    assert out[0] == [1]
-    assert out[1] == [2, 2]
-    assert out[2] == [[300, 301, 302]]
+    assert list(out[0]) == [1]
+    assert list(out[1]) == [2, 2]
+    assert list(out[2][0]) == [300, 301, 302]
 
 
 def test_list_index_1D_parameter():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x):
             list_ = [x]
             list_[0] = 100
@@ -149,9 +128,6 @@ def test_list_index_1D_parameter():
 
 def test_list_index_2D_parameter():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x):
             list_ = [[x, x]]
             list_[0][0] = 100
@@ -163,9 +139,6 @@ def test_list_index_2D_parameter():
 
 def test_list_index_3D_parameter():
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x):
             list_ = [[[x, x]]]
             list_[0][0][0] = 100
