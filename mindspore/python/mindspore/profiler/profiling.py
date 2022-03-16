@@ -154,6 +154,7 @@ class Profiler:
         self._has_started = False
         self._has_started_twice = False
         self.start_profile = True
+        self._profile_memory = False
 
         # Setup and start MindData Profiling
         self._md_profiler = cde.GlobalContext.profiling_manager()
@@ -177,11 +178,7 @@ class Profiler:
             if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
                 self._dev_id = str(get_rank())
             os.environ['DEVICE_ID'] = self._dev_id
-
-            self.start_profile = kwargs.pop("start_profile", True)
-            if not isinstance(self.start_profile, bool):
-                raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
-                                f"but got type {type(self.start_profile)}")
+            self._parse_parameter_for_gpu(**kwargs)
 
         elif self._device_target and self._device_target == "Ascend":
             self._init_time = int(time.time() * 10000000)
@@ -239,6 +236,28 @@ class Profiler:
         }
 
         return profiling_options
+
+    def _parse_parameter_for_gpu(self, **kwargs):
+        """Parse parameter in Proflier when the device target is GPU."""
+
+        self.start_profile = kwargs.pop("start_profile", True)
+        if not isinstance(self.start_profile, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
+                            f"but got type {type(self.start_profile)}")
+
+        self._profile_communication = kwargs.pop("profile_communication", False)
+        if not isinstance(self._profile_communication, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_communication must be bool, "
+                            f"but got type {type(self._profile_communication)}")
+        if self._profile_communication:
+            raise RuntimeError(f"The parameter profile_communication is not supported on GPU currently.")
+
+        self._profile_memory = kwargs.pop("profile_memory", False)
+        if not isinstance(self._profile_memory, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter _profile_memory must be bool, "
+                            f"but got type {type(self._profile_memory)}")
+        if self._profile_memory:
+            raise RuntimeError(f"The parameter profile_memory is not supported on GPU currently.")
 
     def _parse_parameter_for_ascend(self, **kwargs):
         """Parse parameter in Proflier when the device target is Ascend."""
