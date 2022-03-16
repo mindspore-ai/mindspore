@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,15 +116,25 @@ int PreprocessParser::ParseCalibratePath(const std::string &str, std::map<std::s
       MS_LOG(ERROR) << "vector need size >= 2, size is " << string_split.size();
       return RET_INPUT_PARAM_INVALID;
     }
-    auto data_path = string_split.at(1);
-    for (size_t i = 2; i < string_split.size(); ++i) {
-      data_path += ":" + string_split[i];
+    auto string_split_quotation = SplitStringToVector(key_value, '\'');
+    if (string_split_quotation.size() == 1) {
+      auto name = string_split.at(0);
+      for (size_t i = 1; i < string_split.size() - 1; ++i) {
+        name += ":" + string_split.at(i);
+      }
+      if (name.empty()) {
+        MS_LOG(ERROR) << "path is invalid.";
+        return RET_INPUT_PARAM_INVALID;
+      }
+      (*value)[name] = string_split.at(string_split.size() - 1);
+    } else {
+      auto name_str = string_split_quotation.at(0);
+      auto name = string_split.at(0);
+      for (size_t i = 1; i < string_split.size() - 1; ++i) {
+        name += ":" + string_split.at(i);
+      }
+      (*value)[name] = string_split_quotation.at(string_split_quotation.size() - 1);
     }
-    if (data_path.empty()) {
-      MS_LOG(ERROR) << "path is invalid.";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    (*value)[string_split.at(0)] = data_path;
   }
   return RET_OK;
 }
