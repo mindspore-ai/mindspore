@@ -398,7 +398,7 @@ def _context():
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
-                 strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
+                 strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, grad_accumulation_step=int,
                  parallel_optimizer_config=dict, comm_fusion=dict)
 def set_auto_parallel_context(**kwargs):
@@ -427,7 +427,7 @@ def set_auto_parallel_context(**kwargs):
     all_reduce_fusion_config     strategy_ckpt_save_file
     enable_parallel_optimizer    dataset_strategy
     parallel_optimizer_config    pipeline_stages
-               \                 grad_accumulation_step
+    enable_alltoall              grad_accumulation_step
                \                 auto_parallel_search_mode
                \                 comm_fusion
     ===========================  ===========================
@@ -481,6 +481,9 @@ def set_auto_parallel_context(**kwargs):
                        data parallel training in the benefit of time and memory saving. Currently, auto and semi auto
                        parallel mode support all optimizers in both Ascend and GPU. Data parallel mode only supports
                        `Lamb` and `AdamWeightDecay` in Ascend . Default: False.
+        enable_alltoall (bool): A switch that allows AllToAll operators to be generated during communication. If its
+                        value is False, there will be a combination of operators such as AllGather, Split and Concat
+                        instead of AllToAll. Default: False.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
@@ -545,6 +548,7 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
         >>> context.set_auto_parallel_context(dataset_strategy=((1, 8), (1, 8)))
         >>> context.set_auto_parallel_context(enable_parallel_optimizer=False)
+        >>> context.set_auto_parallel_context(enable_alltoall=False)
         >>> context.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
         >>> context.set_auto_parallel_context(pipeline_stages=2)
         >>> parallel_config = {"gradient_accumulation_shard": True, "parallel_optimizer_threshold": 24}
@@ -592,6 +596,7 @@ def reset_auto_parallel_context():
     - strategy_ckpt_save_file: ''.
     - full_batch: False.
     - enable_parallel_optimizer: False.
+    - enable_alltoall: False.
     - pipeline_stages: 1.
     - fusion_threshold: 64.
     """
