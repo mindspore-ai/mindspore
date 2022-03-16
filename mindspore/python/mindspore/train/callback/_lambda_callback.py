@@ -33,7 +33,10 @@ class LambdaCallback(Callback):
         begin (Function): called at the beginning of model train/eval.
         end (Function): called at the end of model train/eval.
 
-    Example:
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> from mindspore.train.callback import History
         >>> from mindspore import Model, nn
         >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
         >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)

@@ -27,7 +27,7 @@ from .callback._checkpoint import _chg_ckpt_file_name_if_same_exist
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
 from .._checkparam import check_input_data, check_output_data, Validator
-from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, History
+from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check
@@ -939,10 +939,6 @@ class Model:
                              "you should set the argument 'metrics' for model.")
         if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Sink mode is currently not supported when evaluating with a GraphCell.")
-
-        if (isinstance(callbacks, Callback) and isinstance(callbacks, History)) or \
-                (isinstance(callbacks, list) and any(isinstance(cb, History) for cb in callbacks)):
-            logger.warning("History callback is recommended to be used in training process.")
 
         cb_params = _InternalCallbackParam()
         cb_params.eval_network = self._eval_network

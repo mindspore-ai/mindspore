@@ -31,6 +31,9 @@ class History(Callback):
         Normally used in `mindspore.Model.train`.
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> from mindspore.train.callback import History
         >>> from mindspore import Model, nn
         >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
         >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
@@ -42,7 +45,7 @@ class History(Callback):
         >>> model.train(2, train_dataset, callbacks=[history_cb])
         >>> print(history_cb.epoch)
         >>> print(history_cb.history)
-        [1, 2]
+        {'epoch': [1, 2]}
         {'net_output': [1.607877, 1.6033841]}
     """
     def __init__(self):
@@ -54,20 +57,20 @@ class History(Callback):
         Initialize the `epoch` property at the begin of training.
 
         Args:
-            run_context (RunContext): Context of the `mindspore.Model.train/eval`.
+            run_context (RunContext): Context of the `mindspore.Model.{train | eval}`.
         """
-        self.epoch = []
+        self.epoch = {"epoch": []}
 
     def epoch_end(self, run_context):
         """
         Records the first element of network outputs at the end of epoch.
 
         Args:
-            run_context (RunContext): Context of the `mindspore.Model.train/eval`.
+            run_context (RunContext): Context of the `mindspore.Model.{train | eval}`.
         """
         cb_params = run_context.original_args()
         epoch = cb_params.get("cur_epoch_num", 1)
-        self.epoch.append(epoch)
+        self.epoch.get("epoch").append(epoch)
         net_output = cb_params.net_outputs
         if isinstance(net_output, (tuple, list)):
             if isinstance(net_output[0], Tensor) and isinstance(net_output[0].asnumpy(), np.ndarray):
