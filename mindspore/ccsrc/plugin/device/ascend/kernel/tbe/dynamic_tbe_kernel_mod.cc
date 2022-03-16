@@ -96,6 +96,10 @@ void DynamicTbeKernelMod::InitOp() {
     for (const auto &atomic_clean_node : atomic_clean_nodes_) {
       AnfAlgo::GetKernelMod(atomic_clean_node.lock())->InitOp();
     }
+  } else {
+    // update output size after InferShape.
+    // avoid atomic_clean memory violation, we need dynamic atomic_clean op.
+    KernelMod::UpdateOutputSizeList();
   }
 
   if (need_skip_execute_) {
