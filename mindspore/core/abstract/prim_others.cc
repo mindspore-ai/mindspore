@@ -46,10 +46,6 @@ inline void CheckSparseShape(ShapeVector sparse_shp, ShapeVector dense_shp) {
   if (sparse_shp.size() < 1) {
     MS_LOG(EXCEPTION) << "Failure: dense tensor and sparse tensor shapes cannot be zero.";
   }
-  if (dense_shp[0] != sparse_shp[0]) {
-    MS_EXCEPTION(mindspore::ValueError)
-      << "Currently, dense tensor and sparse tensor shapes must equal in first dimension.";
-  }
   for (size_t i = 0; i < sparse_shp.size(); i++) {
     auto s = sparse_shp[i];
     auto d = dense_shp[i];

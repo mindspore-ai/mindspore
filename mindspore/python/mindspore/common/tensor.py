@@ -2806,8 +2806,8 @@ class CSRTensor(CSRTensor_):
         Examples:
             >>> from mindspore import Tensor, CSRTensor
             >>> from mindspore import dtype as mstype
-            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
-            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+            >>> indices = Tensor([0, 1], dtype=mstype.int32)
             >>> values = Tensor([2, 1], dtype=mstype.float32)
             >>> dense_shape = (2, 4)
             >>> csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
