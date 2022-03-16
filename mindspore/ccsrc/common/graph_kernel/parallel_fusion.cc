@@ -545,8 +545,9 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
   std::vector<ParallelInfo> parallel_infos;
   std::vector<bool> origin_candidates_used(origin_size, false);
   std::vector<bool> sorted_candidates_used(candidates.size(), false);
-  size_t i = 0;
-  while (i < candidates.size()) {
+  size_t offset;
+  for (size_t i = 0; i < candidates.size(); i += offset + 1) {
+    offset = 0;
     if (sorted_candidates_used[i]) {
       continue;
     }
@@ -599,7 +600,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
       }
       max_benefit = benefit;
       best_parallel_info = ParallelInfo(other_candidates, dim_infos, fusion_info);
-      i += begin - 1;
+      offset = begin - 1;
     }
 
     if (max_benefit > 0) {
@@ -609,7 +610,6 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
         origin_candidates_used[IntToSize(get_index(origin_indices, node))] = true;
       }
     }
-    i++;
   }
 
   // Current nodes is not suitable to fuse, so pop first node to try other fusion possibility.

@@ -67,7 +67,7 @@ bool AkgKernelPool::LockMng::TryLock() const {
   uint32_t trial = 2000;
   const uint32_t sleep_time_us = 5000;
 
-  int32_t ret = -1;
+  int32_t ret;
   while (trial > 0) {
     ret = lockf(fd_, F_TLOCK, 0);
     if (ret == 0 || (errno != EACCES && errno != EAGAIN)) {
@@ -87,7 +87,7 @@ bool AkgKernelPool::LockMng::TryLock() const {
   return true;
 }
 
-void AkgKernelPool::LockMng::Unlock() const {
+void AkgKernelPool::LockMng::Unlock() const noexcept {
   auto ret = lockf(fd_, F_ULOCK, 0);
   if (ret == -1) {
     MS_LOG(ERROR) << "Failed to release the lock, error msg:" << GetErrorInfo();
@@ -118,7 +118,8 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
 
   auto hash_id = std::hash<std::string>()(path);
   auto key_id = static_cast<key_t>(hash_id);
-  auto mem_size = sizeof(size_t) * kListNum_ * (kMaxKernelNum_ + 1) + 512;
+  const size_t min_mem_size = 512;
+  auto mem_size = sizeof(size_t) * kListNum_ * (kMaxKernelNum_ + 1) + min_mem_size;
 
   {
     ACQUIRE_LOCK;
@@ -418,7 +419,7 @@ std::vector<JsonNodePair> AkgKernelBuilder::GetNotCachedKernels(const std::vecto
       (void)repeat_nodes_.emplace_back(json_generator, anf_node);
       continue;
     }
-    kernel_name_set.insert(kernel_name);
+    (void)kernel_name_set.insert(kernel_name);
     (void)new_build_args.emplace_back(json_generator, anf_node);
   }
   return new_build_args;
@@ -616,7 +617,7 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
         MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
       }
     }
-    json_and_node.push_back({akg_kernel_json_generator, anf_node});
+    (void)json_and_node.emplace_back(std::move(akg_kernel_json_generator), anf_node);
   }
 
   if (json_and_node.empty()) {

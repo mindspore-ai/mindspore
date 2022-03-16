@@ -44,19 +44,18 @@ bool UssAtomicAdd::Run(const FuncGraphPtr &func_graph) {
   }
 
   bool changed = false;
-  std::shared_ptr<AtomicAddChecker> atomic_add_checker =
+  std::shared_ptr<AtomicAddChecker> checker =
     std::make_shared<UssChecker>(std::make_shared<Primitive>("UnsortedSegmentSum"));
-  if (atomic_add_checker == nullptr) {
+  if (checker == nullptr) {
     return changed;
   }
 
   auto topo_nodes = TopoSort(kernel_graph->get_return());
   for (const auto &node : topo_nodes) {
-    if (!atomic_add_checker->Check(node)) {
+    if (!checker->Check(node)) {
       continue;
     }
-
-    auto atomic_add_infos = atomic_add_checker->GetAtomicAddInfo();
+    auto atomic_add_infos = checker->GetAtomicAddInfo();
     InsertAtomicClean(kernel_graph, node, atomic_add_infos, mng);
     changed = true;
   }

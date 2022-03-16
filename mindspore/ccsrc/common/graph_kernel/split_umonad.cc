@@ -65,7 +65,7 @@ AnfNodePtr ProcessNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, s
   return new_cnode;
 }
 
-const AnfNodePtr SplitAssign::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
+const AnfNodePtr SplitAssign::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
   if (!CanSplit(node)) return node;
   return ProcessNode(node->func_graph(), node, 1);

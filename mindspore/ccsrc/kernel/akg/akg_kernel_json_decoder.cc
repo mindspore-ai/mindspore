@@ -236,26 +236,23 @@ class CNodeDecoder {
   PrimitivePtr CreatePrimitiveWithAttrs(const std::string &op_name) const {
     auto primitive = std::make_shared<Primitive>(op_name);
     for (const auto &attr : cnode_attrs_) {
-      primitive->AddAttr(attr.first, attr.second);
+      (void)primitive->AddAttr(attr.first, attr.second);
     }
     return primitive;
   }
 
   tensor::TensorPtr DecodeScalar(const nlohmann::json &scalar_json) const {
     auto type_id = StringToTypeId(scalar_json[kJsonKeyDataType]);
-    switch (type_id) {
-      case kNumberTypeFloat16:
-        return std::make_shared<tensor::Tensor>(static_cast<float>(scalar_json[kJsonKeyValue]), kFloat16);
-      case kNumberTypeFloat32:
-        return std::make_shared<tensor::Tensor>(static_cast<float>(scalar_json[kJsonKeyValue]), kFloat32);
-      case kNumberTypeInt32:
-        return std::make_shared<tensor::Tensor>(static_cast<int64_t>(scalar_json[kJsonKeyValue]), kInt32);
-      default:
-        MS_LOG(ERROR) << "Fail to parse scalar " << scalar_json[kJsonKeyValue]
-                      << " in json, because its type: " << scalar_json[kJsonKeyDataType]
-                      << " is not in supported list: [float16, float32, int32]. json is: " << scalar_json;
-        break;
+    if (type_id == TypeId::kNumberTypeFloat16) {
+      return std::make_shared<tensor::Tensor>(static_cast<float>(scalar_json[kJsonKeyValue]), kFloat16);
+    } else if (type_id == TypeId::kNumberTypeFloat32) {
+      return std::make_shared<tensor::Tensor>(static_cast<float>(scalar_json[kJsonKeyValue]), kFloat32);
+    } else if (type_id == TypeId::kNumberTypeInt32) {
+      return std::make_shared<tensor::Tensor>(static_cast<int64_t>(scalar_json[kJsonKeyValue]), kInt32);
     }
+    MS_LOG(ERROR) << "Fail to parse scalar " << scalar_json[kJsonKeyValue]
+                  << " in json, because its type: " << scalar_json[kJsonKeyDataType]
+                  << " is not in supported list: [float16, float32, int32]. json is: " << scalar_json;
     return nullptr;
   }
 

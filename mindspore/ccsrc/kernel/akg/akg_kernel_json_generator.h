@@ -93,7 +93,7 @@ class AkgKernelJsonGenerator {
  public:
   explicit AkgKernelJsonGenerator(DumpOption dump_option)
       : dump_option_(std::move(dump_option)), cb_(Callback::Instance()) {}
-  ~AkgKernelJsonGenerator() = default;
+  ~AkgKernelJsonGenerator() { cb_ = nullptr; }
 
   bool CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
@@ -119,7 +119,7 @@ class AkgKernelJsonGenerator {
   bool CreateAttrDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *attrs_json);
   void GenStitchJson(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map,
                      nlohmann::json *kernel_json);
-  bool GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
+  void GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
                  std::vector<size_t> *output_size) const;
   bool GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
   void UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);

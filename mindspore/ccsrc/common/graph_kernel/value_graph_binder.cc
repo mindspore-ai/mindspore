@@ -37,7 +37,7 @@ bool BindValueToGraph::Run(const FuncGraphPtr &func_graph) {
     }
     if (auto vptr = node->cast<ValueNodePtr>(); value_nodes.count(vptr) == 0) {
       auto new_node = kernel_graph->NewValueNode(vptr);
-      mng->Replace(vptr, new_node);
+      (void)mng->Replace(vptr, new_node);
       kernel_graph->AddValueNodeToGraph(new_node);
       changed = true;
     }

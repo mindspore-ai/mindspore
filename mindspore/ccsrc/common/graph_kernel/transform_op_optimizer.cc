@@ -157,10 +157,11 @@ class MinCut {
   std::vector<std::pair<size_t, TransOpType>> GetOneNodeOps() const {
     std::vector<std::pair<size_t, TransOpType>> one_node_ops;
     for (size_t i = 1; i <= origin_nodes_num_; ++i) {
+      auto tmpi = i;  // to evade pclint warning "for statement index variable modified in body."
       if (nodes_[i].format == kFormatA && nodes_[i + origin_nodes_num_].format != kFormatA) {
-        (void)one_node_ops.emplace_back(i, kTransAB);
+        (void)one_node_ops.emplace_back(tmpi, kTransAB);
       } else if (nodes_[i].format != kFormatA && nodes_[i + origin_nodes_num_].format == kFormatA) {
-        (void)one_node_ops.emplace_back(i, kTransBA);
+        (void)one_node_ops.emplace_back(tmpi, kTransBA);
       }
     }
     return one_node_ops;

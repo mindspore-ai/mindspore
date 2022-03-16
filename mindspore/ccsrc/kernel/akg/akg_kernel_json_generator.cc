@@ -35,6 +35,7 @@ using kernel::OpInfo;
 using kernel::OpIOInfo;
 namespace {
 constexpr auto kAttrParallelDimInfoSize = 2;
+constexpr auto kDebugStrDepth = 2;
 
 std::vector<int64_t> GetDynInputSizes(const AnfNodePtr &anf_node) {
   std::vector<int64_t> dyn_input_sizes;
@@ -73,7 +74,7 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
     const NodeUsersMap &users = mng->node_users();
     auto input_users = users.find(input);
     if (input_users == users.end() || input_users->second.empty()) {
-      MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(2) << "] of ["
+      MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(kDebugStrDepth) << "] of ["
                                   << input->func_graph()->ToString() << "] has no users.";
     }
     bool found = false;
@@ -88,14 +89,14 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
           found = true;
           break;
         }
-        int used_as_idx = input_user.second - 1;
-        int accum_idx = 0;
+        int64_t used_as_idx = IntToLong(input_user.second - 1);
+        int64_t accum_idx = 0;
         for (size_t dyn_i = 0; dyn_i < dyn_input_sizes.size(); ++dyn_i) {
-          accum_idx += LongToInt(dyn_input_sizes[dyn_i]);
+          accum_idx += dyn_input_sizes[dyn_i];
           if (used_as_idx < accum_idx) {
+            auto tmp_dyn_i = dyn_i;  // to evade pclint warning "for statement index variable modified in body."
             input_index.push_back(std::make_pair(
-              anf_node,
-              std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - LongToInt(dyn_input_sizes[dyn_i]))))));
+              anf_node, std::make_pair(tmp_dyn_i, LongToSize(used_as_idx - (accum_idx - dyn_input_sizes[dyn_i])))));
             found = true;
             break;
           }
@@ -105,7 +106,7 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
       if (found) break;
     }
     if (found) continue;
-    MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(2) << "] of ["
+    MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(kDebugStrDepth) << "] of ["
                                 << input->func_graph()->ToString() << "] found no related kernel info.";
   }
   return input_index;
@@ -131,7 +132,7 @@ std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfN
       found = true;
     }
     if (!found) {
-      MS_EXCEPTION(ArgumentError) << "Output [" << i << "][" << output->DebugString(2) << "] of ["
+      MS_EXCEPTION(ArgumentError) << "Output [" << i << "][" << output->DebugString(kDebugStrDepth) << "] of ["
                                   << output->func_graph()->ToString() << "] found no related kernel info.";
     }
   }
@@ -258,7 +259,8 @@ bool AkgKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, siz
   MS_EXCEPTION_IF_NULL(data);
   if (tensor->DataSize() > 1) {
     // not const tensor.
-    MS_LOG(WARNING) << "Not take value of tensor whose datasize greater than 1, [" << input_node->DebugString(2) << "]";
+    MS_LOG(WARNING) << "Not take value of tensor whose datasize greater than 1, ["
+                    << input_node->DebugString(kDebugStrDepth) << "]";
     return false;
   }
 
@@ -333,14 +335,14 @@ bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, con
       auto input_shape = this->cb_->GetInputShape(anf_node, real_input_index);
       if (!is_basic_op_ && GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
         MS_LOG(DEBUG) << "Pick single value [" << input_desc_json[kJsonKeyValue] << "] from input[" << real_input_index
-                      << "] of node [" << anf_node->DebugString(2);
+                      << "] of node [" << anf_node->DebugString(kDebugStrDepth);
         input_shape.clear();
       }
       if (input_shape.empty()) {
         input_shape.push_back(1);
       }
       input_desc_json[kJsonKeyShape] = input_shape;
-      input_list.emplace_back(input_desc_json);
+      (void)input_list.emplace_back(input_desc_json);
       real_input_index++;
     }
     (void)inputs_json->emplace_back(input_list);
@@ -587,7 +589,8 @@ void AkgKernelJsonGenerator::SaveNodeAddress(const AnfNodePtr &anf_node, nlohman
 
 OpInfoPtr AkgKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) const {
   if (dump_option_.extract_opinfo_from_anfnode) {
-    return OpInfoExtractor().Run(anf_node);
+    OpInfoExtractor e;
+    return e.Run(anf_node);
   } else {
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
     MS_LOG(EXCEPTION) << "OpLib is not supported.";
@@ -671,26 +674,18 @@ size_t AkgKernelJsonGenerator::GetTensorSize(const nlohmann::json &node_json) co
   return std::accumulate(shape.begin(), shape.end(), nbyte, std::multiplies<size_t>());
 }
 
-bool AkgKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
+void AkgKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
                                        std::vector<size_t> *output_size) const {
-  if (input_size == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "input size or output size is nullptr when parsing IO size in json: " << node_json;
-    return false;
-  }
   input_size->clear();
   output_size->clear();
-
   for (size_t i = 0; i < node_json[kJsonKeyInputDesc].size(); i++) {
     for (size_t m = 0; m < node_json[kJsonKeyInputDesc][i].size(); m++) {
       input_size->push_back(GetTensorSize(node_json[kJsonKeyInputDesc][i][m]));
     }
   }
-
   for (size_t i = 0; i < node_json[kJsonKeyOutputDesc].size(); i++) {
     output_size->push_back(GetTensorSize(node_json[kJsonKeyOutputDesc][i]));
   }
-
-  return true;
 }
 
 bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) {
@@ -716,10 +711,7 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
     (*kernel_json)[kJsonKeyComputeCapability] = ComputeCapability::Get();
   }
 
-  if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
-    MS_LOG(ERROR) << "Fail to get input and output size of json: " << *kernel_json;
-    return false;
-  }
+  GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
 
   MS_LOG(DEBUG) << "Akg create kernel json desc success, full scope name is : " << anf_node->fullname_with_scope()
                 << ", json info name is : " << kernel_name_;
@@ -737,16 +729,15 @@ void AkgKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_no
     if (stitch_attr != nullptr && GetValue<std::string>(stitch_attr) == "common") {
       auto name = GetTensorName((*node_json_map)[anf_node], kJsonKeyOutputDesc, {0, 0});
       if (std::find(stitchs.begin(), stitchs.end(), name) == stitchs.end()) {
-        stitchs.emplace_back(name);
+        (void)stitchs.emplace_back(name);
       }
     }
   }
   if (!stitchs.empty()) {
     std::vector<nlohmann::json> v;
     for (auto &s : stitchs) {
-      std::vector<std::string> t;
-      t.emplace_back(s);
-      v.emplace_back(t);
+      std::vector<std::string> t(1, s);
+      (void)v.emplace_back(std::move(t));
     }
     nlohmann::json stitch_json;
     stitch_json[kJsonKeyStitchOp] = v;
@@ -771,8 +762,8 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   UpdateTensorName(anf_nodes, &node_json_map);
 
   std::vector<nlohmann::json> node_json_desc;
-  std::transform(anf_nodes.begin(), anf_nodes.end(), std::back_inserter(node_json_desc),
-                 [&node_json_map](const AnfNodePtr &anf_node) { return node_json_map[anf_node]; });
+  (void)std::transform(anf_nodes.begin(), anf_nodes.end(), std::back_inserter(node_json_desc),
+                       [&node_json_map](const AnfNodePtr &anf_node) { return node_json_map[anf_node]; });
   (*kernel_json)[kJsonKeyOpDesc] = node_json_desc;
 
   auto inputs_json = CreateInputsJson(anf_nodes, input_list, node_json_map);
@@ -816,11 +807,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   }
 
   GenStitchJson(anf_nodes, &node_json_map, kernel_json);
-
-  if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
-    MS_LOG(ERROR) << "Fail to get input and output size of json: " << *kernel_json;
-    return false;
-  }
+  GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
 
   return true;
 }
@@ -853,11 +840,14 @@ void AkgKernelJsonGenerator::UpdateTensorName(const std::vector<AnfNodePtr> &anf
       size_t input_tensor_num = is_dynamic_input ? LongToSize(dyn_input_sizes[i]) : 1;
       for (size_t j = 0; j < input_tensor_num; ++j) {
         auto tmp_input = GetKernelInput(anf_node, real_input_index);
-        std::string tensor_name = GetTensorName((*node_json_map)[anf_node], kJsonKeyInputDesc, std::make_pair(i, j));
+        auto tmpi = i;
+        auto tmpj = j;  // use tmpi and tmpj to evade pclint warning "for statement index variable modified in body."
+        std::string tensor_name =
+          GetTensorName((*node_json_map)[anf_node], kJsonKeyInputDesc, std::make_pair(tmpi, tmpj));
         if (node_json_map->find(tmp_input.first) != node_json_map->end()) {
           std::string new_tensor_name =
             GetTensorName((*node_json_map)[tmp_input.first], kJsonKeyOutputDesc, std::make_pair(0, tmp_input.second));
-          SetTensorName(kJsonKeyInputDesc, new_tensor_name, std::make_pair(i, j), &((*node_json_map)[anf_node]));
+          SetTensorName(kJsonKeyInputDesc, new_tensor_name, std::make_pair(tmpi, tmpj), &((*node_json_map)[anf_node]));
           MS_LOG(DEBUG) << "Update [" << real_input_index << "] input [" << tensor_name << "] of ["
                         << anf_node->fullname_with_scope() << "] to [" << tmp_input.second << "] output ["
                         << new_tensor_name << "] of [" << tmp_input.first->fullname_with_scope() << "].";
@@ -947,11 +937,12 @@ void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_
     parallel_fusion_json[kJsonKeyTypeInfo] = type_info;
     std::vector<std::vector<std::string>> sgraphs;
     std::vector<size_t> cnums;
-    std::for_each(sub_graphs_info.cbegin(), sub_graphs_info.cend(),
-                  [&sgraphs, &cnums](const std::pair<size_t, std::pair<size_t, std::vector<std::string>>> &sg_info) {
-                    sgraphs.push_back(sg_info.second.second);
-                    cnums.push_back(sg_info.second.first);
-                  });
+    (void)std::for_each(
+      sub_graphs_info.cbegin(), sub_graphs_info.cend(),
+      [&sgraphs, &cnums](const std::pair<size_t, std::pair<size_t, std::vector<std::string>>> &sg_info) {
+        sgraphs.push_back(sg_info.second.second);
+        cnums.push_back(sg_info.second.first);
+      });
     parallel_fusion_json[kJsonKeySubGraph] = sgraphs;
     parallel_fusion_json[kJsonKeyCoreNum] = cnums;
 

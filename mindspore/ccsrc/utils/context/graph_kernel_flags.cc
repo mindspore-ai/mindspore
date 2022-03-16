@@ -34,7 +34,7 @@ std::vector<std::string> GetTokens(const std::string &str, const std::string &de
   char *saveptr = nullptr;
   char *pch = strtok_r(&c_str[0], delim.c_str(), &saveptr);
   while (pch != nullptr) {
-    tokens.emplace_back(pch);
+    (void)tokens.emplace_back(pch);
     pch = strtok_r(nullptr, delim.c_str(), &saveptr);
   }
   return tokens;
@@ -85,7 +85,7 @@ class FlagRegister {
   ~FlagRegister() = default;
 
   template <typename T>
-  void AddFlag(const std::string &flag_name, T *const flag_var, T default_value = T()) const {
+  void AddFlag(const std::string &flag_name, T *flag_var, T default_value = T()) const {
     auto iter = flag_map_.find(flag_name);
     if (iter != flag_map_.end()) {
       T var;
@@ -100,7 +100,7 @@ class FlagRegister {
           MS_LOG(WARNING) << "Invalid GraphKernel flag: --" << iter->first << "=" << iter->second;
         }
       }
-      flag_map_.erase(iter);
+      (void)flag_map_.erase(iter);
     } else {
       *flag_var = std::move(default_value);
     }
@@ -162,8 +162,9 @@ const GraphKernelFlags &GraphKernelFlags::GetInstance() {
 std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
   // This environment variable is deprecated.
   auto flags = common::GetEnv("MS_GRAPH_KERNEL_FLAGS");
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
   bool enable_context{false};
-#ifndef MSLITE_ENABLE_GRAPH_KERNEL
+#else
   static bool print_warning = true;
   if ((!flags.empty()) && print_warning) {
     print_warning = false;
@@ -176,7 +177,7 @@ std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
   if (flags.empty()) {
     flags = context->get_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS);
   }
-  enable_context = context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
+  bool enable_context = context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
 #endif
   return std::make_pair(flags, enable_context);
 }
@@ -231,11 +232,10 @@ void GraphKernelFlags::Refresh() {
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
   FlagRegister reg(flag_map);
   bool is_ascend{false};
-#ifndef MSLITE_ENABLE_GRAPH_KERNEL
   auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-#endif
+  if (context_ptr != nullptr) {
+    is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  }
 
   // Set opt_level first, some flags' default value depends on it.
   // Default optimization level is level 2 when enable graphkernel

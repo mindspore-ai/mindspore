@@ -22,8 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
-void AkgMetadataInfo(const CNodePtr &kernel_node,
-                     std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list) {
+void AkgMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
 
