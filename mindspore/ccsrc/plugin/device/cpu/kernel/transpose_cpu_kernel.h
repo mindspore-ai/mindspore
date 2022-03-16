@@ -23,7 +23,7 @@
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "nnacl/base/transpose_base.h"
+#include "nnacl/transpose.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,16 +33,58 @@ class TransposeFwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   ~TransposeFwdCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+      KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+      KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+      KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+      KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128)};
+    return support_list;
+  }
 
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
   template <typename T>
-  void ParallelRun(const T *input_addr, T *output_addr, const int *output_shape, size_t count);
+  void ParallelRun(const T *input_addr, T *output_addr, const int *output_shape, size_t count,
+                   const TransposeParameter *transpose_param);
+  template <typename T>
+  int DoTranspose(const T *in_data, T *out_data, const int *output_shape, const TransposeParameter *transpose_param);
+  template <typename T>
+  void TransposeDim2(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
+                     const int *output_shape);
+  template <typename T>
+  void TransposeDim3(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
+                     const int *output_shape);
+  template <typename T>
+  void TransposeDim4(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
+                     const int *output_shape);
+  template <typename T>
+  void TransposeDim5(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
+                     const int *output_shape);
+  template <typename T>
+  void TransposeDim6(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
+                     const int *output_shape);
+  template <typename T>
+  void TransposeDim7(const T *in_data, T *out_data, const int *strides, const int *out_strides, const int *perm,
+                     const int *output_shape);
+  template <typename T>
+  void TransposeDims(const T *in_data, T *out_data, const int *output_shape, const TransposeParameter *transpose_param,
+                     int task_id, int thread_num);
 
   TransposeParameter transpose_param_;
   std::vector<size_t> input_shape_;
