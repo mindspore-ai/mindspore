@@ -67,5 +67,8 @@
 #include "frontend/parallel/ops_info/random_choice_with_mask_info.h"
 #include "frontend/parallel/ops_info/crop_and_resize_info.h"
 #include "frontend/parallel/ops_info/roi_align_info.h"
+#include "frontend/parallel/ops_info/addn_info.h"
+#include "frontend/parallel/ops_info/inplace_add_info.h"
+#include "frontend/parallel/ops_info/cdist_info.h"
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_HEAD_FILES_H_

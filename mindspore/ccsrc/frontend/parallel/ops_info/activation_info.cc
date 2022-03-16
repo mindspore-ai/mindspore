@@ -27,6 +27,7 @@
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
+#include "frontend/parallel/tensor_layout/redistribution_operator_infer.h"
 
 namespace mindspore {
 namespace parallel {
@@ -204,8 +205,8 @@ std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-Status CumSumInfo::GetAttrs() {
-  if (input_value_.size() != CUMSUM_INPUT_SIZE) {
+Status CumOpBase::GetAttrs() {
+  if (input_value_.size() != CUM_OP_INPUT_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid inputs size " << input_value_.size();
     return FAILED;
   }
@@ -237,7 +238,7 @@ Status CumSumInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status CumSumInfo::CheckStrategy(const StrategyPtr &strategy) {
+Status CumOpBase::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
@@ -259,7 +260,7 @@ Status CumSumInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-std::vector<StrategyPtr> CumSumInfo::GenerateOpStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> CumOpBase::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   if (axis_ < 0 || LongToSize(axis_) >= inputs_shape_[0].size()) {
     MS_LOG(EXCEPTION) << "Wrong axis value: " << axis_;
@@ -275,30 +276,21 @@ std::vector<StrategyPtr> CumSumInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-Status CumSumInfo::InferMirrorOps() {
-  mirror_ops_.clear();
-  Shape input_a_tensor_map = inputs_tensor_map_.at(0);
-  std::vector<Group> input_a_group;
-  if (CreateGroupByTensorMap(input_a_tensor_map, &input_a_group) != SUCCESS) {
-    ReportError(name_ + ": Create group for input a failed.");
+void CumOpBase::ReComputeBatchSplitFlagList() { axis_ == 0 ? split_flag_list_[0] = false : split_flag_list_[0] = true; }
+
+Status CumOpBase::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
     return FAILED;
   }
-  OperatorVector op_for_input_a, op_for_axis;
-  if (input_a_group.empty()) {
-    MS_LOG(INFO) << name_ << ": The mirror group is empty.";
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
     return SUCCESS;
-  } else {
-    op_for_input_a = CreateMirrorOps(input_a_group[0].name(), input_a_group[0].GetDevNum());
-    MS_LOG(INFO) << name_ << ": Create the mirror ops for input a success, groups is " << input_a_group[0].name();
   }
 
-  mirror_ops_.push_back(op_for_input_a);
-  mirror_ops_.push_back(op_for_axis);
-
+  OperatorVector op_for_axis;
+  (void)mirror_ops_.emplace_back(std::move(op_for_axis));
   return SUCCESS;
 }
-
-Status CumSumInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status ActivationBase::InferDevMatrixShape() {
   Strategys stra = strategy_->GetInputDim();
@@ -611,6 +603,15 @@ Status SqueezeInfo::InferTensorMap() {
   MS_LOG(INFO) << name_ << ": The tensor map of input is " << ShapeToString(input_tensor_map)
                << ", and the tensor map of output is " << ShapeToString(output_tensor_map);
 
+  return SUCCESS;
+}
+
+Status L2LossInfo::InferTensorMap() {
+  if (ActivationOther::InferTensorMap() != SUCCESS) {
+    return FAILED;
+  }
+  // outputs_shape is [], so clearing its tensor map.
+  outputs_tensor_map_[0].clear();
   return SUCCESS;
 }
 }  // namespace parallel

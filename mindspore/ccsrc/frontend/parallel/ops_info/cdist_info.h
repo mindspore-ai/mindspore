@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,41 +14,39 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_BOUNDING_BOX_ENCODE_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_BOUNDING_BOX_ENCODE_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_CDIST_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_CDIST_INFO_H_
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
+#include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
-#include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {
 namespace parallel {
-class BoundingBoxEncodeInfo : public OperatorInfo {
+class CdistInfo : public OperatorInfo {
  public:
-  BoundingBoxEncodeInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &output_shape,
-                        const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, output_shape, attrs, std::make_shared<BoundingBoxEncodeCost>()) {}
-  ~BoundingBoxEncodeInfo() override = default;
+  CdistInfo(const std::string &name, const Shapes &input_shape, const Shapes &output_shape, const PrimitiveAttrs &attrs)
+      : OperatorInfo(name, input_shape, output_shape, attrs, std::make_shared<CdistCost>()) {}
+  ~CdistInfo() override = default;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
   void ReComputeBatchSplitFlagList() override;
 
  protected:
+  Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status GetAttrs() override { return SUCCESS; }
-  Status InferForwardCommunication() override { return SUCCESS; };
+  Status InferForwardCommunication() override { return SUCCESS; }
 
  private:
-  Status PrepareStrategy(int64_t stage_id, int64_t split_num, size_t dev_num, StrategyPtr *sp);
+  size_t input_dims_;
 };
 }  // namespace parallel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_BOUNDING_BOX_ENCODE_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_CDIST_INFO_H_

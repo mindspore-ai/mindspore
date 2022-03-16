@@ -119,24 +119,6 @@ class Softmax : public ActivationBase {
   std::vector<int64_t> axis_;
 };
 
-class CumSumInfo : public ActivationBase {
- public:
-  explicit CumSumInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                      const PrimitiveAttrs &attrs)
-      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftmaxCost>()) {}
-  ~CumSumInfo() override = default;
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-
- protected:
-  Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferMirrorOps() override;
-  Status GetAttrs() override;
-
- private:
-  int64_t axis_ = -1;
-};
-
 class SoftmaxInfo : public Softmax {
  public:
   SoftmaxInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
@@ -151,6 +133,40 @@ class LogSoftmaxInfo : public Softmax {
                  const PrimitiveAttrs &attrs)
       : Softmax(name, inputs_shape, outputs_shape, attrs) {}
   ~LogSoftmaxInfo() override = default;
+};
+
+class CumOpBase : public ActivationBase {
+ public:
+  CumOpBase(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+            const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+      : ActivationBase(name, inputs_shape, outputs_shape, attrs, cost) {}
+  ~CumOpBase() override = default;
+
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
+  void ReComputeBatchSplitFlagList() override;
+
+ protected:
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferMirrorOps() override;
+  Status GetAttrs() override;
+  int axis_ = -1;
+};
+
+class CumSumInfo : public CumOpBase {
+ public:
+  CumSumInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : CumOpBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<CumSumCost>()) {}
+  ~CumSumInfo() override = default;
+};
+
+class CumProdInfo : public CumOpBase {
+ public:
+  CumProdInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : CumOpBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<CumProdCost>()) {}
+  ~CumProdInfo() = default;
 };
 
 class EluInfo : public ActivationOther {
@@ -298,6 +314,73 @@ class DropoutInfo : public ActivationOther {
     static int64_t SEED_NUM;
     return ++SEED_NUM;
   }
+};
+
+class HShrinkInfo : public ActivationOther {
+ public:
+  HShrinkInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<HShrinkCost>()) {}
+  ~HShrinkInfo() = default;
+};
+
+class HSigmoidInfo : public ActivationOther {
+ public:
+  HSigmoidInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<HSigmoidCost>()) {}
+  ~HSigmoidInfo() = default;
+};
+
+class IsFiniteInfo : public ActivationOther {
+ public:
+  IsFiniteInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<IsFiniteCost>()) {}
+  ~IsFiniteInfo() = default;
+};
+
+class MishInfo : public ActivationOther {
+ public:
+  MishInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<MishCost>()) {}
+  ~MishInfo() = default;
+};
+
+class RintInfo : public ActivationOther {
+ public:
+  RintInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<RintCost>()) {}
+  ~RintInfo() = default;
+};
+
+class SeLUInfo : public ActivationOther {
+ public:
+  SeLUInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<SeLUCost>()) {}
+  ~SeLUInfo() = default;
+};
+
+class SoftShrinkInfo : public ActivationOther {
+ public:
+  SoftShrinkInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftShrinkCost>()) {}
+  ~SoftShrinkInfo() override = default;
+};
+
+class L2LossInfo : public ActivationOther {
+ public:
+  L2LossInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &output_shape,
+             const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, output_shape, attrs, std::make_shared<L2LossCost>()) {}
+  ~L2LossInfo() = default;
+
+ protected:
+  Status InferTensorMap() override;
 };
 }  // namespace parallel
 }  // namespace mindspore
