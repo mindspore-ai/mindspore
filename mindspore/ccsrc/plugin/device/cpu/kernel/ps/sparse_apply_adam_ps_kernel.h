@@ -44,6 +44,11 @@ class SparseApplyAdamPSKernelMod : public SparseApplyAdamCpuKernelMod, public PS
 
  protected:
   void ReInit(const std::vector<AddressPtr> &) override;
+  size_t var_index_{0};
+  size_t m_index_{1};
+  size_t v_index_{2};
+  size_t grad_index_{9};
+  size_t indices_index_{10};
 };
 }  // namespace ps
 }  // namespace kernel

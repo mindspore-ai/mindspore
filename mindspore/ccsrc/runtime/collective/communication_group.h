@@ -85,14 +85,14 @@ using CommunicationGroupPtr = std::shared_ptr<CommunicationGroup>;
 }  // namespace device
 }  // namespace mindspore
 
-#define CHECK_RET(expression, result, message)                                                   \
-  do {                                                                                           \
-    auto ret = (expression);                                                                     \
-    if (ret != result) {                                                                         \
-      std::ostringstream oss;                                                                    \
-      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << ": " << message; \
-      pybind11::pybind11_fail(oss.str());                                                        \
-    }                                                                                            \
+#define CHECK_RET(expression, result, message)                                                     \
+  do {                                                                                             \
+    auto ret = (expression);                                                                       \
+    if (ret != result) {                                                                           \
+      std::ostringstream oss;                                                                      \
+      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << ": " << (message); \
+      pybind11::pybind11_fail(oss.str());                                                          \
+    }                                                                                              \
   } while (0)
 
 #define CHECK_IF_NULL(ptr)                                                                               \

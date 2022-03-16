@@ -57,6 +57,5 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(Broadcast,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                       NcclCollectiveGpuKernel, int)
-
 }  // namespace kernel
 }  // namespace mindspore

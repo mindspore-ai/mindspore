@@ -51,7 +51,8 @@ void EmbeddingLookUpPSKernelMod::InitKernel(
   for (auto shape : indices_shape) {
     indices_lens_ = indices_lens_ * shape;
   }
-  auto output_shape = *(shape_vec[2]);
+  size_t output_index = 2;
+  auto output_shape = *(shape_vec[output_index]);
 
   int64_t offset = 0;
   for (size_t i = 0; i < rank_id_; i++) {

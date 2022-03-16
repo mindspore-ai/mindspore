@@ -115,11 +115,6 @@ constexpr uint32_t kCheckRegisteredRetryCount = 30;
 // The timeout interval for judging whether all nodes are successfully registered.
 constexpr uint32_t kCheckRegisteredIntervalInMs = 1000;
 
-// The barrier function which should be called before doing scaling out/in operations.
-// It's easy for us to scale out/in nodes after one iteration is completed and keep consistent.
-using BarrierBeforeScaleOut = std::function<void(void)>;
-using BarrierBeforeScaleIn = std::function<void(void)>;
-
 constexpr int64_t kSparseLazyAdamIndex = 2;
 constexpr int64_t kSparseFtrlIndex = 3;
 constexpr int64_t kSparseGradIndex = 6;
