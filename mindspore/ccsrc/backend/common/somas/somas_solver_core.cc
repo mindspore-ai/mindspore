@@ -52,7 +52,8 @@ Status SomasSolverCore::MemoryAllocationSolver() {
       for (size_t sort_strategy = 0; sort_strategy < kNumSortingTypes; sort_strategy++) {
         sort_strategy_ = static_cast<SortingType>(sort_strategy);
         SortTensors();
-        for (size_t branching_strategy = 0; branching_strategy < kNumFittingTypes; branching_strategy++) {
+        for (size_t branching_strategy = 0; branching_strategy < static_cast<size_t>(kNumFittingTypes);
+             branching_strategy++) {
           branching_strategy_ = static_cast<FittingType>(branching_strategy);
           Clean();
           MS_LOG(DEBUG) << "Timing Start " << tensors_.size() << " Tensors";
@@ -307,9 +308,10 @@ size_t SomasSolverCore::Search(const std::shared_ptr<FootPrint> &pFootprint) {
     if (all_ || is_multi_thread_valid_) {
       const double giga = 1073741824.;
       MS_LOG(INFO) << timing_ << " ms\t" << sol_count_ + 1 << "/"
-                   << kNumFittingTypes * kNumAlgorithmTypes * kNumSortingTypes << "\t" << result << " Bytes ("
-                   << result / giga << " GB)\t" << algorithmTypeNames[algorithm_] << "\t"
-                   << sortingNames[sort_strategy_] << "\t" << branchingNames[branching_strategy_];
+                   << static_cast<size_t>(kNumFittingTypes) * static_cast<size_t>(kNumAlgorithmTypes) *
+                        static_cast<size_t>(kNumSortingTypes)
+                   << "\t" << result << " Bytes (" << result / giga << " GB)\t" << algorithmTypeNames[algorithm_]
+                   << "\t" << sortingNames[sort_strategy_] << "\t" << branchingNames[branching_strategy_];
     }
   } else {
     MS_LOG(INFO) << "FastSolver could not find solution";
