@@ -337,6 +337,7 @@ void HideNopNode(session::KernelGraph *const graph) {
     MS_EXCEPTION_IF_NULL(cnode);
     if (NeedHideNode(outputs, cnode, is_dynamic_graph)) {
       common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(true), cnode);
+      common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpExecution, MakeValue(true), cnode);
     } else {
       new_nodes.push_back(cnode);
     }
@@ -361,6 +362,7 @@ void RemoveNopNode(session::KernelGraph *const graph) {
       // ignore nop node itself
       if (NeedHideNode(outputs, cnode, is_dynamic_graph)) {
         common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(true), cnode);
+        common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpExecution, MakeValue(true), cnode);
         continue;
       }
       // Replace the input which is nop node

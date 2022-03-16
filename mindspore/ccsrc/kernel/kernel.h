@@ -239,7 +239,7 @@ class KernelMod {
   std::set<uint32_t> depend_list_;
 
  private:
-  void InferShapeForNopNode(AnfNodePtr *input_node);
+  void InferShapeForNopNode(const AnfNodePtr &input_node);
   bool InferShapeForDefiniteOutputNode(const CNodePtr &cnode);
 
   std::vector<AddressPtr> inputs_addr_;

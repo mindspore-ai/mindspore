@@ -258,3 +258,35 @@ def test_dynamic_reduce_sum():
     inputs = data_list[0]
     output_cmp = np.sum(inputs[0], inputs[1][0])
     assert np.allclose(output.asnumpy(), output_cmp, rtol=1.0e-4, atol=1.0e-4)
+
+
+class NopNet(nn.Cell):
+    def construct(self, x):
+        x1 = ops.squeeze(x)
+        y1 = ops.expand_dims(x1, 1)
+        return ops.sub(y1, x1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_nop():
+    """
+    Feature: Test Nop.
+    Description:  The shape of inputs is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dtype = np.float32
+    data_list = []
+    for i in [2, 64]:
+        data = []
+        data.append(np.random.rand(i, 1).astype(dtype))
+        data_list.append(tuple(data))
+    column_names = get_columns(len(data_list[0]))
+    dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
+    dynamic_columns = {column_names[0]: [None, 1]}
+    dataset.set_dynamic_columns(columns=dynamic_columns)
+    net = NopNet()
+    output = dynamic_shape_sink_process(net, dataset)
+    output_cmp = fixed_shape_process(net, dataset)
+    assert compare(output, output_cmp)

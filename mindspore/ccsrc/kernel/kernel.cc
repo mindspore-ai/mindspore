@@ -63,7 +63,7 @@ void KernelMod::InferShape() {
     MS_EXCEPTION_IF_NULL(real_input);
     auto cnode_input = cnode->input(i + 1);
     MS_EXCEPTION_IF_NULL(cnode_input);
-    InferShapeForNopNode(&real_input);
+    InferShapeForNopNode(real_input);
     if (depend_list_.find(i) != depend_list_.end()) {
       auto pre_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
       bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
@@ -138,24 +138,28 @@ bool KernelMod::InferShapeForDefiniteOutputNode(const CNodePtr &cnode) {
   return true;
 }
 
-void KernelMod::InferShapeForNopNode(AnfNodePtr *input_node) {
-  MS_EXCEPTION_IF_NULL(*input_node);
-  if (!common::AnfAlgo::IsNopNode(*input_node) || !common::AnfAlgo::IsDynamicShape(*input_node)) {
+void KernelMod::InferShapeForNopNode(const AnfNodePtr &input_node) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (!common::AnfAlgo::IsNopNode(input_node) || !common::AnfAlgo::IsDynamicShape(input_node)) {
     MS_LOG(INFO) << "Input node is not a nop node, no need infer.";
+    return;
+  }
+  if (!common::AnfAlgo::IsNeedSkipNopOpExecution(input_node)) {
+    MS_LOG(INFO) << "The Nop node need execution, no need the InferShapeForNopNode.";
     return;
   }
   MS_LOG(INFO) << "Infer shape for nop node.";
   std::stack<AnfNodePtr> nop_road;
-  nop_road.push(*input_node);
+  nop_road.push(input_node);
 
+  auto in_node = input_node;
   /*lint -e716*/
   while (true) {
-    auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(*input_node, 0);
-    auto in_node = input_node_with_idx.first;
+    auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(in_node, 0);
+    in_node = input_node_with_idx.first;
     MS_EXCEPTION_IF_NULL(in_node);
     if (common::AnfAlgo::IsNopNode(in_node)) {
       nop_road.push(in_node);
-      *input_node = in_node;
     } else {
       break;
     }

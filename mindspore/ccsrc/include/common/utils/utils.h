@@ -521,6 +521,7 @@ constexpr auto kAttrInputSize = "input_size";
 constexpr auto kAttrDstType = "dst_type";
 constexpr auto kAttrDump = "dump";
 constexpr auto kAttrSkipNopOpAddr = "skip_nop_op_addr";
+constexpr auto kAttrSkipNopOpExecution = "skip_nop_op_execution";
 constexpr auto kAttrFixedInputFormat = "fixed_input_format";
 constexpr auto kAttrFixedOutputFormat = "fixed_output_format";
 constexpr auto kAttrFixedInputDeviceShape = "fixed_input_device_shape";
