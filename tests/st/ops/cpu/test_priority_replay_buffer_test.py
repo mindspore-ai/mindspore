@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import sys
 import pytest
 import numpy as np
 import mindspore
@@ -49,6 +50,9 @@ def test_priority_replay_buffer_ops():
     Description: test cases PriorityReplayBuffer.
     Expectation: push, sample, update operators result correct.
     """
+    if sys.platform == 'darwin':
+        return
+
     capacity = 200
     batch_size = 32
     state_shape, state_dtype = (17,), mindspore.float32
