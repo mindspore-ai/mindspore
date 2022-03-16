@@ -31,10 +31,16 @@ class UserData {
   UserData(const UserData &other) : data_(other.data_ ? std::make_unique<DataMap>(*other.data_) : nullptr) {}
   UserData(UserData &&other) : data_(std::move(other.data_)) {}
   UserData &operator=(const UserData &other) {
+    if (this == &other) {
+      return *this;
+    }
     data_ = (other.data_ ? std::make_unique<DataMap>(*other.data_) : nullptr);
     return *this;
   }
   UserData &operator=(UserData &&other) {
+    if (this == &other) {
+      return *this;
+    }
     data_ = std::move(other.data_);
     return *this;
   }
@@ -44,7 +50,7 @@ class UserData {
   void set(const std::string &key, const std::shared_ptr<T> &value) {
     InitData();
     if (value == nullptr) {
-      data_->erase(key);
+      (void)data_->erase(key);
     } else {
       data_->insert_or_assign(key, value);
     }
