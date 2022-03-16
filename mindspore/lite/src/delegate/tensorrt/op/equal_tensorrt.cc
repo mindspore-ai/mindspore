@@ -48,7 +48,7 @@ int EqualTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
 int EqualTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_, tensorrt_in_tensors_[1].trt_tensor_};
   auto plugin = std::make_shared<EqualPlugin>(op_name_);
-  nvinfer1::IPluginV2Layer *equal_layer = network->addPluginV2(inputTensors, 2, *plugin);
+  nvinfer1::IPluginV2Layer *equal_layer = network->addPluginV2(inputTensors, INPUT_SIZE2, *plugin);
   if (equal_layer == nullptr) {
     MS_LOG(ERROR) << "create equal layer failed for: " << op_name_;
     return RET_ERROR;

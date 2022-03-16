@@ -83,7 +83,7 @@ int LSTMTensorRT::PreProcess() {
   auto ms_input_shape = in_tensors_[0].Shape();
   params_.sequence_size_ = ms_input_shape[0];
   params_.batch_size_ = ms_input_shape[1];
-  params_.input_data_size_ = ms_input_shape[2];
+  params_.input_data_size_ = ms_input_shape[INPUT_SIZE_INDEX];
   if (params_.batch_size_ != 1) {
     MS_LOG(WARNING) << op_name_ << " lstm has batchsize " << params_.batch_size_ << ", needs further verify";
   }
@@ -93,7 +93,7 @@ int LSTMTensorRT::PreProcess() {
     MS_LOG(ERROR) << "create transpose_in_layer failed for " << op_name_;
     return RET_ERROR;
   }
-  nvinfer1::Permutation transpose_perm{{1, 0, 2}};
+  nvinfer1::Permutation transpose_perm{{1, 0, INPUT_SIZE_INDEX}};
   transpose_in_layer->setFirstTranspose(transpose_perm);
   transpose_in_layer->setName((op_name_ + "transpose_in").c_str());
   input_data_ = transpose_in_layer->getOutput(0);
@@ -353,7 +353,7 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMCalculation(const LstmState &input_state
   }
   *hidden_out = ConcateAll(all_batch_hidden, 1);
   *cell_out = ConcateAll(all_batch_cell, 1);
-  return ConcateAll(all_batch_outputs, 2);
+  return ConcateAll(all_batch_outputs, BATCH_SIZE_INDEX);
 }
 
 nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(const LstmState &input_state, const LstmWeights &lstm_weights,
@@ -417,10 +417,11 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(const LstmState &input_state, co
     network_->addActivation(*isolateGate(*gates_calculate, 1), nvinfer1::ActivationType::kSIGMOID)->getOutput(0);
 
   nvinfer1::ITensor *f =
-    network_->addActivation(*isolateGate(*gates_calculate, 2), nvinfer1::ActivationType::kSIGMOID)->getOutput(0);
+    network_->addActivation(*isolateGate(*gates_calculate, FORGET_GATE), nvinfer1::ActivationType::kSIGMOID)
+      ->getOutput(0);
 
   nvinfer1::ITensor *c =
-    network_->addActivation(*isolateGate(*gates_calculate, 3), nvinfer1::ActivationType::kTANH)->getOutput(0);
+    network_->addActivation(*isolateGate(*gates_calculate, CELL_GATE), nvinfer1::ActivationType::kTANH)->getOutput(0);
 
   nvinfer1::ITensor *C =
     network_

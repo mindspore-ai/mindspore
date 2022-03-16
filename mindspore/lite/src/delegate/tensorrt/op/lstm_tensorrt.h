@@ -32,6 +32,10 @@ constexpr int LSTM_GATE_NUM = 4;
 constexpr int BIDIRECTIONAL = 2;
 constexpr int OUTPUT_HIDDEN_INDEX = 1;
 constexpr int OUTPUT_CELL_INDEX = 2;
+constexpr int INPUT_SIZE_INDEX = 2;
+constexpr int FORGET_GATE = 2;
+constexpr int CELL_GATE = 3;
+constexpr int BATCH_SIZE_INDEX = 2;
 static const std::array<int, 4> INDICES{0, 1, 2, 3};
 
 struct LSTMParams {
