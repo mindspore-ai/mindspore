@@ -16,9 +16,11 @@
 import numpy as np
 
 from mindspore import Tensor
+from mindspore import dtype as mstype
 from mindspore.ops import Primitive
 from mindspore.ops import _constants as Constants
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
 
 # pylint: disable=unused-variable
@@ -68,8 +70,12 @@ def test_add_zero(tag):
     return fns[tag]
 
 
-def test_elimR(tag):
-    """ test_elimR """
+def test_elim_r(tag):
+    """
+    Feature: optimizer.
+    Description: test elimi R.
+    Expectation: run case with no exception.
+    """
     R = Primitive('R')
 
     fns = FnDict()
@@ -494,6 +500,7 @@ def test_elim_transpose(tag):
         return x
 
     return fns[tag]
+
 
 def test_elim_depend_value(tag):
     """ test_elim_depend_value """
@@ -1201,5 +1208,87 @@ def test_sparse_tensor(tag):
     @fns
     def after_get_dense_shape(x, y, z):
         return z
+
+    return fns[tag]
+
+
+# Test ut for file: call_graph_tuple_transform.h.
+def test_tuple_flatten(tag):
+    """
+    Feature: optimizer.
+    Description: test cases for pass: graph_tuple_transform.
+    Expectation: the tuple args and parameters are successfully flattened by the pass.
+    """
+    fns = FnDict()
+    w = Tensor(np.random.randn(64, 3, 7, 7).astype(np.float32))
+    x = Tensor(np.random.randn(32, 3, 224, 224).astype(np.float32))
+    y = Tensor(np.random.randn(32, 3, 224, 224).astype(np.float32))
+
+    p = Tensor(3, mstype.float32)
+
+    out_channel = 64
+    kernel_size = 7
+    conv = P.Conv2D(out_channel,
+                    kernel_size,
+                    mode=1,
+                    pad_mode="valid",
+                    pad=0,
+                    stride=1,
+                    dilation=1,
+                    group=1)
+    pow_ops = P.Pow()
+
+    @fns
+    def test_flatten_switch_partial_arg():
+        def called_graph_with_tuple(tuple_x, tuple_y):
+            return conv(F.tuple_getitem(tuple_x, 0), F.tuple_getitem(tuple_x, 1)) + conv(F.tuple_getitem(tuple_y, 0),
+                                                                                         F.tuple_getitem(tuple_y, 1))
+
+        # Add tuple args in partial args.
+        func1 = F.partial(called_graph_with_tuple, (pow_ops(x, p), pow_ops(w, p)))
+        func2 = F.partial(called_graph_with_tuple, (pow_ops(x, p), pow_ops(w, p)))
+        cond = x < y
+
+        switch_node = F.switch(cond, func1, func2)
+        # Add tuple args in call args.
+        return switch_node((pow_ops(x, p), pow_ops(w, p)))
+
+    index = Tensor(1, mstype.int32)
+
+    @fns
+    def test_flatten_switch_layer_partial_arg():
+        def called_graph_with_tuple(tuple_x):
+            return conv(F.tuple_getitem(tuple_x, 0), F.tuple_getitem(tuple_x, 1))
+
+        def called_graph_no_tuple(param1, param2):
+            return conv(param1, param2)
+
+        # Add tuple args in partial
+        func1 = F.partial(called_graph_with_tuple, (pow_ops(x, p), pow_ops(w, p)))
+        func2 = F.partial(called_graph_with_tuple, (pow_ops(x, p), pow_ops(w, p)))
+        # Add tensor args in partial
+        func3 = F.partial(called_graph_no_tuple, pow_ops(x, p), pow_ops(w, p))
+        switch_node = F.switch_layer(pow_ops(index, index), (func1, func2, func3))
+        return switch_node()
+
+    @fns
+    def test_flatten_simple_call_tuple_in_tuple_arg():
+        def called_graph_with_tuple(tuple_x, tuple_tuple_y, tensor_z):
+            result1 = conv(F.tuple_getitem(tuple_x, 0), F.tuple_getitem(tuple_x, 1))
+            tuple_0 = F.tuple_getitem(tuple_tuple_y, 0)
+            result2 = conv(F.tuple_getitem(tuple_0, 0), F.tuple_getitem(tuple_0, 1))
+            tensor_1 = F.tuple_getitem(tuple_tuple_y, 1)
+            result3 = conv(tensor_1, tensor_z)
+            return result1 + result2 + result3
+
+        # Tuple arg.
+        tuple_x_arg = (pow_ops(x, p), pow_ops(w, p))
+        # TupleTuple arg.
+        tuple_0_arg = (pow_ops(x, p), pow_ops(w, p))
+        tensor_1_arg = pow_ops(x, p)
+        tuple_tuple_y_arg = (tuple_0_arg, tensor_1_arg)
+        # TensorArg
+        tensor_z_arg = pow_ops(w, p)
+        return called_graph_with_tuple(tuple_x_arg, tuple_tuple_y_arg, tensor_z_arg)
 
     return fns[tag]

@@ -683,6 +683,7 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
 }
 
 void SetDumpConfigByString(const std::string &str, DumpConfig *dump_config) {
+  MS_LOG(INFO) << "Set dump config:" << str;
   static mindspore::HashMap<std::string, enum LocDumpMode> dump_level_map = {
     {kDumpConfigLineLevel0, kOff}, {kDumpConfigLineLevel1, kTopStack}, {kDumpConfigLineLevel2, kWholeStack}};
   auto it = dump_level_map.find(str);
@@ -700,11 +701,64 @@ void SetDumpConfigByString(const std::string &str, DumpConfig *dump_config) {
   }
 }
 
+std::shared_ptr<OrderedSet<std::string>> GetAllConfigStrings(const std::string &config_full_string) {
+  size_t start_pos = 0;
+  auto config_strings = std::make_shared<OrderedSet<std::string>>();
+  // if '#' is the last char of str, the str is legal, so we use '<=' but not '<'.
+  while (start_pos <= config_full_string.size()) {
+    auto pos = config_full_string.find('#', start_pos);
+    if (pos == std::string::npos) {
+      pos = config_full_string.size();
+    }
+    auto substr = config_full_string.substr(start_pos, pos - start_pos);
+    // Skip the '#'
+    start_pos = pos + 1;
+    if (substr.empty()) {
+      continue;
+    }
+    (void)config_strings->insert(substr);
+  }
+  return config_strings;
+}
+
+bool ConfigsAreLegal(const std::shared_ptr<OrderedSet<std::string>> &config_strings) {
+  // Value 'int' is used to mark config group id
+  HashMap<std::string, int> config_white_list = {{kDumpConfigLineLevel0, 0},
+                                                 {kDumpConfigLineLevel1, 0},
+                                                 {kDumpConfigLineLevel2, 0},
+                                                 {kDumpConfigDisableBackend, 1},
+                                                 {kDumpConfigEnablePassIR, 2}};
+  // Key 'int' is config group id, value is the config.
+  HashMap<int, std::string> config_groups;
+  for (const auto &config_string : *config_strings) {
+    auto config_white_list_it = config_white_list.find(config_string);
+    if (config_white_list_it == config_white_list.end()) {
+      std::ostringstream buffer;
+      buffer << "Support configs:\n"
+             << "[0]: " << kDumpConfigLineLevel0 << "\n"
+             << "[1]: " << kDumpConfigLineLevel1 << "\n"
+             << "[2]: " << kDumpConfigLineLevel2 << "\n"
+             << "[3]: " << kDumpConfigDisableBackend << "\n"
+             << "[4]: " << kDumpConfigEnablePassIR;
+      MS_LOG(WARNING) << "Illegal dump config:\n" << config_string << "\n" << buffer.str();
+      return false;
+    }
+    auto group_id = config_white_list_it->second;
+    // Check conflict configs.
+    auto config_groups_it = config_groups.find(group_id);
+    if (config_groups_it != config_groups.end()) {
+      const auto &record_config = config_groups_it->second;
+      MS_LOG(WARNING) << "Dump configs are conflict. Conflict configs: [" << record_config << "] and [" << config_string
+                      << "].\n"
+                      << "Please keep only one of them.";
+      return false;
+    }
+    config_groups[group_id] = config_string;
+  }
+  return true;
+}
+
 DumpConfig GetDumpConfig() {
-  static std::vector<HashSet<std::string>> config_white_list = {
-    {kDumpConfigLineLevel0, kDumpConfigLineLevel1, kDumpConfigLineLevel2},
-    {kDumpConfigDisableBackend},
-    {kDumpConfigEnablePassIR}};
   static DumpConfig dump_config = DumpConfig();
   static bool parsed = false;
   if (parsed) {
@@ -713,9 +767,6 @@ DumpConfig GetDumpConfig() {
   parsed = true;
   // Start parse config.
   std::string str(common::GetEnv("MS_DEV_DUMP_IR_CONFIG"));
-  std::vector<std::shared_ptr<HashSet<std::string>>> configs = {std::make_shared<HashSet<std::string>>(),
-                                                                std::make_shared<HashSet<std::string>>(),
-                                                                std::make_shared<HashSet<std::string>>()};
   auto constexpr max_string_len = 100;
   if (str.size() > max_string_len) {
     MS_LOG(WARNING) << "Dump ir config length exceed max length: " << max_string_len;
@@ -724,45 +775,12 @@ DumpConfig GetDumpConfig() {
   if (str.empty()) {
     return dump_config;
   }
-  size_t start_pos = 0;
-  // if '#' is the last char of str, the str is illegal, so we use '<=' but not '<'.
-  while (start_pos <= str.size()) {
-    auto pos = str.find('#', start_pos);
-    if (pos == std::string::npos) {
-      pos = str.size();
-    }
-    auto substr = str.substr(start_pos, pos - start_pos);
-    start_pos = pos + 1;
-    bool is_illegal_config = true;
-    for (size_t i = 0; i < config_white_list.size(); i++) {
-      if (config_white_list[i].find(substr) != config_white_list[i].end()) {
-        is_illegal_config = false;
-        (void)configs[i]->insert(substr);
-        if (configs[i]->size() > 1) {
-          std::ostringstream buffer;
-          (void)std::for_each(configs[i]->begin(), configs[i]->end(), [&buffer](const std::string &config) {
-            buffer << "\n" << config;
-          });
-          MS_LOG(WARNING) << "Dump configs are conflict. Conflict configs: " << buffer.str() << "\n"
-                          << "Please keep only one of them.";
-          return dump_config;
-        }
-      }
-    }
-    if (is_illegal_config) {
-      std::ostringstream buffer;
-      buffer << "Support configs:\n"
-             << "[0]: " << kDumpConfigLineLevel0 << "\n"
-             << "[1]: " << kDumpConfigLineLevel1 << "\n"
-             << "[2]: " << kDumpConfigLineLevel2 << "\n"
-             << "[3]: " << kDumpConfigDisableBackend << "\n"
-             << "[4]: " << kDumpConfigEnablePassIR;
-      MS_LOG(WARNING) << "Illegal dump config:\n" << substr << "\n" << buffer.str();
-      return {};
-    }
+  auto config_strings = GetAllConfigStrings(str);
+  if (!ConfigsAreLegal(config_strings)) {
+    return dump_config;
   }
-  for (auto &config : configs) {
-    SetDumpConfigByString(*config->begin(), &dump_config);
+  for (const auto &config : *config_strings) {
+    SetDumpConfigByString(config, &dump_config);
   }
   return dump_config;
 }

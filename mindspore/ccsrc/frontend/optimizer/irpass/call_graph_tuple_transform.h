@@ -87,7 +87,7 @@ class GraphTupleTransform : public AnfVisitor {
   GraphTupleParamTransform graph_transform_;
 };
 
-// {,kPrimPartial, G, Tuple_Xs}
+// {PrimPartial, G, Tuple_Xs}
 // =>
 // {kPrimPartial, G, TupleGetItem{Tuple_Xs,0}, TupleGetItem{Tuple_Xs,1}, ..., TupleGetItem{Tuple_Xs,n}}
 // transform partial's tuple binding args to flat inputs.
@@ -102,12 +102,12 @@ class PartialTupleArgTransform : public AnfVisitor {
     auto partial = node->cast<CNodePtr>();
     const auto &partial_inputs = partial->inputs();
     const auto &fg = partial->func_graph();
-    // And primitive and function value node into args.
     constexpr auto kPartialFirstArgIndex = 2;
-    auto new_args = AnfNodePtrList(partial_inputs.begin(), partial_inputs.begin() + kPartialFirstArgIndex);
-    auto change = FlattenArgs(fg, partial_inputs, kPartialFirstArgIndex, &new_args);
+    // Put ValueNode<kPrimPartial> and ValueNode<FuncGraph> into new_inputs.
+    auto new_inputs = AnfNodePtrList(partial_inputs.begin(), partial_inputs.begin() + kPartialFirstArgIndex);
+    auto change = FlattenArgs(fg, partial_inputs, kPartialFirstArgIndex, &new_inputs);
     if (change) {
-      auto new_partial = fg->NewCNode(new_args);
+      auto new_partial = fg->NewCNode(new_inputs);
       new_partial->set_abstract(partial->abstract());
       return new_partial;
     }
@@ -132,11 +132,11 @@ class CallTupleArgTransform : public AnfVisitor {
     const auto &call_inputs = call_node->inputs();
     const auto &fg = call_node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
-    // Add function value node into args.
-    auto new_args = AnfNodePtrList(call_inputs.begin(), call_inputs.begin() + 1);
-    auto change = FlattenArgs(fg, call_inputs, 1, &new_args);
+    // Put ValueNode<FuncGraph> into inputs.
+    auto new_inputs = AnfNodePtrList(call_inputs.begin(), call_inputs.begin() + 1);
+    auto change = FlattenArgs(fg, call_inputs, 1, &new_inputs);
     if (change) {
-      auto new_call = fg->NewCNode(new_args);
+      auto new_call = fg->NewCNode(new_inputs);
       new_call->set_abstract(call_node->abstract());
       return new_call;
     }
