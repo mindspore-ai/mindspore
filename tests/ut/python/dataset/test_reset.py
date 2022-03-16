@@ -229,3 +229,4 @@ if __name__ == "__main__":
     test_reset_cifar2()
     test_reset_imagenet()
     test_reset_mindrecord(add_and_remove_cv_file)
+    test_reset_np_error()

@@ -35,7 +35,7 @@ class Monitor {
   // Monitor object constructor
   explicit Monitor(ProfilingManager *profiler_manager);
 
-  ~Monitor() = default;
+  ~Monitor();
 
   // Functor for Perf Monitor main loop.
   // This function will be the entry point of mindspore::Dataset::Task

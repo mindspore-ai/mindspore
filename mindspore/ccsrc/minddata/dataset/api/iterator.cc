@@ -136,7 +136,7 @@ Status PullIterator::GetNextRow(MSTensorVec *const row) {
 // Function to build and launch the execution tree. This function kicks off a different type of consumer
 // for the tree, the reason why this is the case is due to the fact that PullBasedIterator does not need
 // to instantiate threads for each op. As such, the call to the consumer will by pass the execution tree.
-Status PullIterator::BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds) {
+Status PullIterator::BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds, int32_t num_epochs) {
   if (pull_consumer_ == nullptr) {
     pull_consumer_ = std::make_unique<PullBasedIteratorConsumer>();
   }

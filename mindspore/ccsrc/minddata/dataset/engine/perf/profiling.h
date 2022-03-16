@@ -521,7 +521,7 @@ class ProfilingManager {
 
   /// Get number of epochs that have been already profiled
   /// \return number of epochs
-  int32_t GetNumOfProfiledEpochs() { return epoch_end_step_.size() - 1; }
+  int32_t GetNumOfProfiledEpochs() { return static_cast<int32_t>(epoch_end_step_.size()) - 1; }
 
   // Get number of steps taken in pipeline
   /// \return number of steps
@@ -529,11 +529,11 @@ class ProfilingManager {
 
   /// Determine if the Profiler is being used for autotuning.
   /// \return boolean
-  bool IsAutotuning() { return autotuning_; }
+  bool IsAutotuning() const { return autotuning_; }
 
   /// Determine if the Profiler is being used for profiling.
   /// \return boolean
-  bool IsProfiling() { return profiling_; }
+  bool IsProfiling() const { return profiling_; }
 
   // Registration state for the profiler
   enum ProfilingRegistrationState {

@@ -1835,7 +1835,7 @@ class MS_API CMUArcticDataset : public Dataset {
                    const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CMUArcticDataset.
-  ~CMUArcticDataset() = default;
+  ~CMUArcticDataset() override = default;
 };
 
 /// \brief Function to create a CMUArcticDataset.
@@ -2789,7 +2789,7 @@ class MS_API GTZANDataset : public Dataset {
                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of GTZANDataset.
-  ~GTZANDataset() = default;
+  ~GTZANDataset() override = default;
 };
 
 /// \brief Function to create a GTZANDataset.
@@ -3203,7 +3203,7 @@ class MS_API KITTIDataset : public Dataset {
                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of KITTIDataset.
-  ~KITTIDataset() = default;
+  ~KITTIDataset() override = default;
 };
 
 /// \brief Function to create a KITTIDataset.
@@ -3388,7 +3388,7 @@ class MS_API LFWDataset : public Dataset {
              const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of LFWDataset.
-  ~LFWDataset() = default;
+  ~LFWDataset() override = default;
 };
 
 /// \brief Function to create a LFWDataset.
@@ -3498,7 +3498,7 @@ class MS_API LibriTTSDataset : public Dataset {
                   const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of LibriTTSDataset.
-  ~LibriTTSDataset() = default;
+  ~LibriTTSDataset() override = default;
 };
 
 /// \brief Function to create a LibriTTSDataset.
@@ -3670,7 +3670,7 @@ class MS_API LSUNDataset : public Dataset {
               const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of LSUNDataset.
-  ~LSUNDataset() = default;
+  ~LSUNDataset() override = default;
 };
 
 /// \brief Function to create a LSUNDataset.
@@ -4281,7 +4281,7 @@ class MS_API Multi30kDataset : public Dataset {
                   int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Multi30kDataset.
-  ~Multi30kDataset() = default;
+  ~Multi30kDataset() override = default;
 };
 
 /// \brief Function to create a Multi30kDataset.
@@ -4359,7 +4359,7 @@ class MS_API OmniglotDataset : public Dataset {
                   const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// Destructor of OmniglotDataset.
-  ~OmniglotDataset() = default;
+  ~OmniglotDataset() override = default;
 };
 
 /// \brief Function to create an OmniglotDataset.
@@ -5138,7 +5138,7 @@ class MS_API SQuADDataset : public Dataset {
                ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of SQuADUDataset.
-  ~SQuADDataset() = default;
+  ~SQuADDataset() override = default;
 };
 
 /// \brief Function to create a SQuADDataset.

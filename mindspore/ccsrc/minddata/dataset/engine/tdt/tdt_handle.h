@@ -19,6 +19,7 @@
 #include <iostream>
 #include <map>
 #include <thread>
+#include <utility>
 #include "utils/log_adapter.h"
 #include "acl/acl_tdt.h"
 
@@ -26,11 +27,11 @@ namespace mindspore {
 namespace dataset {
 class TdtHandle {
  public:
-  static void AddHandle(acltdtChannelHandle **handle, std::thread *use_thread);
+  static inline void AddHandle(acltdtChannelHandle **handle, std::thread *use_thread);
 
-  static bool DestroyHandle();
+  static inline bool DestroyHandle();
 
-  static void DelHandle(acltdtChannelHandle **handle);
+  static inline void DelHandle(acltdtChannelHandle **handle);
 
  private:
   TdtHandle() {}
@@ -39,7 +40,10 @@ class TdtHandle {
 
 inline void TdtHandle::AddHandle(acltdtChannelHandle **handle, std::thread *use_thread) {
   if (*handle != nullptr) {
-    acl_handle_map.insert({reinterpret_cast<void **>(handle), use_thread});
+    auto ret = acl_handle_map.emplace(reinterpret_cast<void **>(handle), use_thread);
+    if (!std::get<1>(ret)) {
+      MS_LOG(ERROR) << "Failed to add new handle to acl_handle_map." << std::endl;
+    }
   }
 }
 
@@ -53,7 +57,11 @@ inline bool TdtHandle::DestroyHandle() {
   for (auto &item : acl_handle_map) {
     acltdtChannelHandle **handle = reinterpret_cast<acltdtChannelHandle **>(item.first);
     if (*handle != nullptr) {
-      acltdtStopChannel(*handle);
+      aclError stop_status = acltdtStopChannel(*handle);
+      if (stop_status != ACL_SUCCESS) {
+        MS_LOG(ERROR) << "Failed stop acl data channel and the stop status is " << stop_status << std::endl;
+        return false;
+      }
       if (item.second != nullptr && item.second->joinable()) {
         item.second->join();
       }

@@ -33,7 +33,7 @@ class DatasetIteratorTracing : public Tracing {
 
   std::string Name() const override { return kDatasetIteratorTracingName; };
 
- private:
+ protected:
   Path GetFileName(const std::string &dir_path, const std::string &rank_id) override;
 };
 }  // namespace dataset

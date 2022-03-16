@@ -184,8 +184,9 @@ class MS_API PullIterator : public Iterator {
   /// \brief Method for building and launching the pipeline.
   /// \note Consider making this function protected.
   /// \param[in] ds The root node that calls the function.
+  /// \param[in] num_epochs Number of epochs passed down to EpochCtrlNode (default=-1, which means infinite epochs).
   /// \return Status error code, returns OK if no error encountered.
-  Status BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds);
+  Status BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds, int32_t num_epochs);
 
  private:
   std::unique_ptr<PullBasedIteratorConsumer> pull_consumer_;

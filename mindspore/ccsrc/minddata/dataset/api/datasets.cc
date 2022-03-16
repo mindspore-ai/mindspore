@@ -205,7 +205,7 @@ std::shared_ptr<PullIterator> Dataset::CreatePullBasedIterator(const std::vector
   }
 
   std::shared_ptr<PullIterator> iter = std::make_shared<PullIterator>();
-  Status rc = iter->BuildAndLaunchTree(ds);
+  Status rc = iter->BuildAndLaunchTree(ds, 1);
   if (rc.IsError()) {
     MS_LOG(ERROR) << "CreateIterator: Iterator exception caught: " << rc;
   }
