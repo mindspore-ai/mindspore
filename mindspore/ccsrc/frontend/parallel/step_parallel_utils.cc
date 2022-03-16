@@ -521,34 +521,5 @@ std::shared_ptr<Value> GetAttrsFromAnfNode(const std::shared_ptr<AnfNode> &node,
   }
   return nullptr;
 }
-
-AnfNodePtr MatchPattern(const AnfNodePtr &node, const NodeUsersMap &user_map,
-                        const std::vector<std::pair<const std::string, int64_t>> &match_pattern) {
-  AnfNodePtr start_node = node;
-  bool find = false;
-  for (uint32_t i = 0; i < match_pattern.size(); ++i) {
-    find = false;
-    if (!IsSomePrimitive(start_node->cast<CNodePtr>(), {match_pattern[i].first})) {
-      break;
-    } else if (i == match_pattern.size() - 1) {
-      find = true;
-      break;
-    }
-
-    auto next_node_users = user_map.at(start_node);
-    for (auto &next_node : next_node_users) {
-      if (i + 1 < match_pattern.size() &&
-          IsSomePrimitive(next_node.first->cast<CNodePtr>(), {match_pattern[i + 1].first}) &&
-          next_node.second == match_pattern[i + 1].second) {
-        start_node = next_node.first;
-        break;
-      }
-    }
-  }
-  if (!find) {
-    start_node = nullptr;
-  }
-  return start_node;
-}
 }  // namespace parallel
 }  // namespace mindspore

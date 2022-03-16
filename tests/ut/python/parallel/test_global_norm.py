@@ -30,6 +30,21 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore import context
 
+
+class OneParameterNet(nn.Cell):
+    """Net definition"""
+    def __init__(self, param_type, strategy1, strategy2):
+        super(OneParameterNet, self).__init__()
+        self.fc1 = P.MatMul().shard(strategy1)
+        self.p1 = Parameter(Tensor(np.ones([48, 16]).astype(param_type)), name="weight1")
+        self.sub = P.Sub().shard(strategy2)
+
+    def construct(self, x, y):
+        x = P.Cast()(x, ms.float16)
+        p1 = P.Cast()(self.p1, ms.float16)
+        x = self.fc1(x, p1)
+        return self.sub(x, 0)
+
 class Net(nn.Cell):
     """Net definition"""
     def __init__(self, param_type, strategy1, strategy2):
@@ -136,6 +151,16 @@ class TestGlobalNormInserted:
                 if len(res) >= 1:
                     appear_count += 1
         assert appear_count == target_count
+
+    def test_nonpipeline_global_norm_one_parameter(self):
+        """
+        Feature: Parallel ClipByGlobalNorm
+        Description: Test the global norm using one parameter, there should be only one allreduce
+        Expectation:When there is no PARALLEL_GLOBALNORM_IN_STAGES inserted
+        """
+        auto_parallel_compile_net("semi_auto_parallel", 8, OneParameterNet, ((1, 8), (8, 1)), ((8, 1), ()),
+                                  interleaved_batch=1, param_type=np.float32)
+        self.run_count_check(target_count=1, pattern=r"PARALLEL_GLOBALNORM_IN_STAGES")
 
     def test_nonpipeline_global_norm(self):
         """
