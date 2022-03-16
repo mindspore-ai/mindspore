@@ -265,7 +265,7 @@ else
 fi
 # Empty config file is allowed, but warning message will be shown
 if [[ $(Exist_File_In_Path ${ms_models_path} ".ms") != "true" ]]; then
-  echo "No ms model found in ${ms_models_path}, please check if config file is empty!" >> ${run_converter_result_file}
+  echo "No ms model found in ${ms_models_path}, please check if config file is empty!"
   exit 0
 fi
 
