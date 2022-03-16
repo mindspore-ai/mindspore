@@ -33,6 +33,7 @@
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/scale.h"
+#include "nnacl/arithmetic.h"
 
 using mindspore::schema::ActivationType;
 using mindspore::schema::ActivationType_LEAKY_RELU;
@@ -227,7 +228,7 @@ void TryMergePadXxx(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::
   if (!pad->InferShapeDone()) {
     return;
   }
-  if (pad->in_tensors().front()->shape().size() != 4) {
+  if (pad->in_tensors().front()->shape().size() != DIMENSION_4D) {
     return;
   }
   auto *pad_param = reinterpret_cast<PadParameter *>(reinterpret_cast<OpenCLKernel *>(pad->kernel())->GetParameter());
@@ -240,10 +241,10 @@ void TryMergePadXxx(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::
   auto *conv_param = reinterpret_cast<ParamType *>(reinterpret_cast<OpenCLKernel *>(node->kernel())->GetParameter());
   MS_ASSERT(conv_param);
   auto paddings = reinterpret_cast<int32_t *>(pad->in_tensors().at(1)->data());
-  conv_param->pad_u_ += paddings[2];
-  conv_param->pad_d_ += paddings[3];
-  conv_param->pad_l_ += paddings[4];
-  conv_param->pad_r_ += paddings[5];
+  conv_param->pad_u_ += paddings[CLARGSINDEX2];
+  conv_param->pad_d_ += paddings[CLARGSINDEX3];
+  conv_param->pad_l_ += paddings[CLARGSINDEX4];
+  conv_param->pad_r_ += paddings[CLARGSINDEX5];
   pad->set_in_tensors({pad->in_tensors().front()});
   MergeRemoveA(pad, node, removed_set);
   MS_LOG(DEBUG) << "Merge Pad and " + GetTypeName(node) + " success";

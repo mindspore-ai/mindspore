@@ -21,6 +21,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/arithmetic.cl.inc"
+#include "nnacl/arithmetic.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -34,8 +35,25 @@ using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::EltwiseMode_MAXIMUM;
 using mindspore::schema::EltwiseMode_PROD;
 using mindspore::schema::EltwiseMode_SUM;
+using mindspore::schema::PrimitiveType_AddFusion;
 using mindspore::schema::PrimitiveType_BiasAdd;
+using mindspore::schema::PrimitiveType_DivFusion;
 using mindspore::schema::PrimitiveType_Eltwise;
+using mindspore::schema::PrimitiveType_Equal;
+using mindspore::schema::PrimitiveType_FloorDiv;
+using mindspore::schema::PrimitiveType_FloorMod;
+using mindspore::schema::PrimitiveType_Greater;
+using mindspore::schema::PrimitiveType_GreaterEqual;
+using mindspore::schema::PrimitiveType_Less;
+using mindspore::schema::PrimitiveType_LessEqual;
+using mindspore::schema::PrimitiveType_LogicalAnd;
+using mindspore::schema::PrimitiveType_LogicalOr;
+using mindspore::schema::PrimitiveType_Maximum;
+using mindspore::schema::PrimitiveType_Minimum;
+using mindspore::schema::PrimitiveType_MulFusion;
+using mindspore::schema::PrimitiveType_NotEqual;
+using mindspore::schema::PrimitiveType_SquaredDifference;
+using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::kernel {
 int ArithmeticOpenCLKernel::CheckSpecsWithoutShape() {

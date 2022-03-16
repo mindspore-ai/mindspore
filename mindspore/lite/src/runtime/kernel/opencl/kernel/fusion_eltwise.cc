@@ -17,6 +17,7 @@
 #include <algorithm>
 #include "src/runtime/kernel/opencl/utils.h"
 #include "include/errorcode.h"
+#include "nnacl/arithmetic.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/scale.h"
 
