@@ -268,9 +268,6 @@ void GPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &grap
   MS_EXCEPTION_IF_NULL(graph);
   // Operator fusion optimization.
   FuseOperators(graph);
-
-  // Update Graph Dynamic Shape Attr.
-  opt::AddDynamicShapeAttrPass(graph);
 }
 
 void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {
@@ -309,6 +306,14 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
 
 void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
+  // In the dynamic shape scene, the infershape stage needs to call the primitive infer function.
+  // When the fusion operator generates a new primitive, but there
+  // is no corresponding primitive infer function, an error will occur.
+  // Therefore, this kind of scene does not support dynamic shape.
+  if (graph->is_dynamic_shape()) {
+    MS_LOG(INFO) << "Dynamic shape skip fusion";
+    return;
+  }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::MatMulBiasAddFusion>());

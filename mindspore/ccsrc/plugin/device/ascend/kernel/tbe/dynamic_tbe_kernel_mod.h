@@ -48,7 +48,6 @@ class DynamicTbeKernelMod : public TbeKernelMod {
   std::string ParseCompileJson(const CNodePtr &cnode);
   void InitTilingDataPtr();
   bool CopyTilingToDevice(void *stream_ptr);
-  bool NeedSkipExecute(const CNodePtr &cnode);
 
   std::string tiling_data_;
   // Because the ~DynamicTbeKernelMod() is after ResetDevice, and ResetDevice has the function to free mem,

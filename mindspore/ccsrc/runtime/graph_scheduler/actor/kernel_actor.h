@@ -109,10 +109,6 @@ class KernelActor : public DebugAwareActor {
   // Back refresh the dynamic device tensor stores that have been triggered copy.
   void RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context);
 
-  // The size of output address may be changed in dynamic shape scenario, for example, the output shape of operator
-  // 'Unique' will change after PostExecute, the output address size should update.
-  void UpdateOutputAddrSize();
-
   // The info of kernel.
   CNodePtr kernel_;
   bool is_dynamic_shape_;

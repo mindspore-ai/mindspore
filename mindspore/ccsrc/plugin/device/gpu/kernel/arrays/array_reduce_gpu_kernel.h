@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <functional>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
@@ -43,23 +44,23 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    if (is_dynamic_axis_ && !get_dynamic_axis_value_) {
+    if (is_dynamic_axis_ && !get_dynamic_axis_value_ && !need_skip_execute_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of the axis when axis is dynamic!";
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
 
     T alpha = static_cast<T>(1.0f);
     T beta = static_cast<T>(0.0f);
-    if (all_match_) {
+    if (all_match_ || need_skip_execute_) {
       MS_LOG(DEBUG)
         << "The corresponding dimensions of the input and output tensors all match. No need to call cuDNN kernel.";
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
+                                 cudaMemcpyAsync(output_addr, input_addr, input_size_, cudaMemcpyDeviceToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync failed in ArrayReduceGpuKernelMod::Launch.");
     } else {
+      T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
       if (data_type_ == CUDNN_DATA_DOUBLE) {
         CHECK_CUDNN_RET_WITH_EXCEPT(
           kernel_node_,
@@ -102,8 +103,15 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    int input_dim_length = SizeToInt(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0).size());
+    auto inputA_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    if (is_dynamic_axis_ && NeedSkipExecute(kernel_node)) {
+      need_skip_execute_ = true;
+      input_size_ = std::accumulate(inputA_shape.begin(), inputA_shape.end(), sizeof(T), std::multiplies<size_t>());
+      InitSizeLists();
+      return true;
+    }
 
+    int input_dim_length = SizeToInt(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0).size());
     std::vector<int64_t> attr_axis;
     if (is_dynamic_axis_) {
       get_dynamic_axis_value_ = GetDynamicAttrIntValue(kernel_node, kAxisIndex_, &attr_axis);
@@ -128,7 +136,6 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
 
     keep_dims_ = GetAttr<bool>(kernel_node, "keep_dims");
 
-    auto inputA_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     auto outputC_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(inputA_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(outputC_shape, kernel_name_, "output");
@@ -166,6 +173,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     dynamic_axis_size_ = 0;
     is_dynamic_axis_ = false;
     get_dynamic_axis_value_ = false;
+    need_skip_execute_ = false;
   }
 
   void DestroyResource() noexcept override {
@@ -188,6 +196,14 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
                                 "cudnnCreateTensorDescriptor failed.");
   }
   void InitSizeLists() override {
+    if (need_skip_execute_) {
+      input_size_list_.push_back(input_size_);
+      input_size_list_.push_back(dynamic_axis_size_ * sizeof(S));
+      output_size_ = input_size_;
+      output_size_list_.push_back(output_size_);
+      return;
+    }
+
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(inputA_descriptor_, &input_size_),
                                 "cudnnGetTensorSizeInBytes failed.");
     input_size_list_.push_back(input_size_);
@@ -327,6 +343,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   size_t dynamic_axis_size_;
   bool is_dynamic_axis_;
   bool get_dynamic_axis_value_;
+  bool need_skip_execute_;
   static constexpr size_t kAxisIndex_{1};
 };
 }  // namespace kernel

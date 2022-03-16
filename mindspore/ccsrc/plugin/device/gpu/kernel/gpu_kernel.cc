@@ -21,7 +21,14 @@ namespace kernel {
 void NativeGpuKernelMod::InferOp() {
   anf_node_ = kernel_node_.lock();
   if (common::AnfAlgo::IsDynamicShape(kernel_node_.lock())) {
-    KernelMod::InferShape();
+    auto cnode = kernel_node_.lock();
+    if (NeedSkipExecute(cnode)) {
+      std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
+      common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0)},
+                                                  cnode.get());
+    } else {
+      KernelMod::InferShape();
+    }
   }
 }
 

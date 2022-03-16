@@ -449,7 +449,7 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
   // The size of output address may be changed in dynamic shape scenario.
   if (is_dynamic_shape_) {
-    UpdateOutputAddrSize();
+    UpdateOutputAddrSize(kernel_info_, kernel_);
   }
 
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
@@ -471,18 +471,6 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
 
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     SendOutput(context);
-  }
-}
-
-void KernelActor::UpdateOutputAddrSize() {
-  auto &output_addresses = kernel_info_->output_address_list();
-  for (size_t i = 0; i < output_addresses.size(); ++i) {
-    auto output_address = output_addresses[i].get();
-    MS_EXCEPTION_IF_NULL(output_address);
-    auto output_addr_size = AnfAlgo::GetOutputTensorMemSize(kernel_, i);
-    if (output_addr_size != output_address->GetSize()) {
-      output_address->SetSize(output_addr_size);
-    }
   }
 }
 

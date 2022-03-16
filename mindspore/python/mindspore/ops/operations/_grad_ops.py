@@ -212,9 +212,12 @@ class ConcatOffset(PrimitiveWithInfer):
         x_type = input_x['dtype']
         self.add_prim_attr('T', x_type[0].element_type())
 
-        # if input_x is dynamic shape
+        # if the dimension of input_x on the axis is dynamic
+        rank_base = len(x_shp[0])
+        if axis < 0:
+            axis = axis + rank_base
         for each in x_shp:
-            if -1 in each:
+            if each[axis] == -1:
                 return {
                     'shape': [len(x_shp), len(x_shp[0])],
                     'dtype': mstype.int64,

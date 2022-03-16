@@ -40,6 +40,7 @@ using mindspore::session::KernelWithIndex;
 using tensor::TensorPtr;
 using DeviceTensor = mindspore::device::DeviceAddress;
 using mindspore::device::DeviceContext;
+using mindspore::device::KernelInfo;
 
 // The execution result of actor.
 constexpr int kSuccess = 0;
@@ -242,6 +243,10 @@ bool HasAbstractRef(const AnfNodePtr &node);
 std::set<size_t> FetchModifiableRefInputIndex(const CNodePtr &node);
 // Fetch the output indexes which may be modified that exist in the ref node.
 std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &node, const KernelGraphPtr &graph);
+
+// The size of output address may be changed in dynamic shape scenario, for example, the output shape of operator
+// 'Unique' will change after Launch, the output address size should update.
+void UpdateOutputAddrSize(KernelInfo *kernel_info, const CNodePtr &kernel);
 }  // namespace runtime
 }  // namespace mindspore
 

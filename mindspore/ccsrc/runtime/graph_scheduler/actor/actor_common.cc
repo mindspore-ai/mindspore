@@ -381,5 +381,17 @@ std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &cnode, const Kern
   }
   return ref_output_indexes;
 }
+
+void UpdateOutputAddrSize(KernelInfo *kernel_info, const CNodePtr &kernel) {
+  auto &output_addresses = kernel_info->output_address_list();
+  for (size_t i = 0; i < output_addresses.size(); ++i) {
+    auto output_address = output_addresses[i].get();
+    MS_EXCEPTION_IF_NULL(output_address);
+    auto output_addr_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
+    if (output_addr_size != output_address->GetSize()) {
+      output_address->SetSize(output_addr_size);
+    }
+  }
+}
 }  // namespace runtime
 }  // namespace mindspore

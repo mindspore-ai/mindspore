@@ -224,6 +224,7 @@ class KernelMod {
   void InferShape();
   void GetDepndLists(const CNodePtr &cnode);
   void UpdateOutputSizeList();
+  bool NeedSkipExecute(const CNodePtr &cnode);
 
   std::string kernel_name_;
   std::string unique_name_;
