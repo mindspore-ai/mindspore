@@ -16,6 +16,8 @@
 
 #include "tools/converter/adapter/acl/mapper/arithmetic_mapper.h"
 #include <memory>
+#include <map>
+#include <string>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "src/common/log_util.h"
 #include "ops/real_div.h"

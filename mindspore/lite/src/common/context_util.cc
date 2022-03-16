@@ -18,6 +18,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <vector>
 #include <string>
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"

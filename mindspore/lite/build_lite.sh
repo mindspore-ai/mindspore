@@ -93,7 +93,8 @@ build_lite_x86_64_jni_and_jar() {
 
     cd ${LITE_JAVA_PATH}/java
     rm -rf gradle .gradle gradlew gradlew.bat
-    local gradle_version=`gradle --version | grep Gradle | awk '{print$2}'`
+    local gradle_version=""
+    gradle_version=`gradle --version | grep Gradle | awk '{print$2}'`
     if [[ ${gradle_version} == '6.6.1' ]]; then
       gradle_command=gradle
     else
@@ -187,7 +188,8 @@ build_lite_aarch64_jni_and_jar() {
 
     cd ${LITE_JAVA_PATH}/java
     rm -rf gradle .gradle gradlew gradlew.bat
-    local gradle_version=`gradle --version | grep Gradle | awk '{print$2}'`
+    local gradle_version=""
+    gradle_version=`gradle --version | grep Gradle | awk '{print$2}'`
     if [[ ${gradle_version} == '6.6.1' ]]; then
       gradle_command=gradle
     else
@@ -588,7 +590,8 @@ build_aar() {
     fi
     cd ${LITE_JAVA_PATH}/java
     rm -rf gradle .gradle gradlew gradlew.bat
-    local gradle_version=`gradle --version | grep Gradle | awk '{print$2}'`
+    local gradle_version=""
+    gradle_version=`gradle --version | grep Gradle | awk '{print$2}'`
     if [[ ${gradle_version} == '6.6.1' ]]; then
       gradle_command=gradle
     else
@@ -655,8 +658,10 @@ build_lite_x86_64_aarch64_jar()
     exit 1
   fi
 
-  local x86_64_base_path=${SERVER_X86_64_PACKAGE_FILE%/*}
-  local aarch64_base_path=${SERVER_AARCH64_PACKAGE_FILE%/*}
+  local x86_64_base_path=""
+  x86_64_base_path=${SERVER_X86_64_PACKAGE_FILE%/*}
+  local aarch64_base_path=""
+  aarch64_base_path=${SERVER_AARCH64_PACKAGE_FILE%/*}
   echo "x86_64_base_path: "${x86_64_base_path}
   echo "aarch64_base_path: "${aarch64_base_path}
 
@@ -682,7 +687,8 @@ build_lite_x86_64_aarch64_jar()
   # compile jar package
   rm -rf ${LITE_JAVA_PATH}/build
   # build jar
-  local gradle_version=`gradle --version | grep Gradle | awk '{print$2}'`
+  local gradle_version=""
+  gradle_version=`gradle --version | grep Gradle | awk '{print$2}'`
   if [[ ${gradle_version} == '6.6.1' ]]; then
     gradle_command=gradle
   else

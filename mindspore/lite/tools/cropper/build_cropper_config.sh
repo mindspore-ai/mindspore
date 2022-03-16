@@ -268,8 +268,10 @@ getOpsFileWithNoDeepSearch() {
       # concat schemaType + fileType + fileName append to files
       echo "${type},${3},${out_file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
 
-      local ret=$(egrep -r *.h\" ${file} | awk -F '\"' '{print $2}')
-      local ret_h=$(egrep -r *.h\" ${file%cc*}h | awk -F '\"' '{print $2}')
+      local ret=""
+      ret=$(egrep -r *.h\" ${file} | awk -F '\"' '{print $2}')
+      local ret_h=""
+      ret_h=$(egrep -r *.h\" ${file%cc*}h | awk -F '\"' '{print $2}')
       local depend_file=("${ret}" "${ret_h}")
       for array_file in ${depend_file[@]}; do
         # only add existing files

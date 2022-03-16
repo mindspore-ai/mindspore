@@ -16,6 +16,7 @@
 
 #include "src/delegate/parameter_cache/gpu/gpu_cache_mem.h"
 #include <cuda_runtime.h>
+#include <string>
 #include "src/delegate/tensorrt/cuda_impl/hash.cuh"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "src/common/log_adapter.h"

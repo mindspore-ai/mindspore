@@ -15,6 +15,7 @@
  */
 
 #include "tools/optimizer/format/to_nhwc_format.h"
+#include <string>
 
 namespace mindspore {
 namespace opt {
