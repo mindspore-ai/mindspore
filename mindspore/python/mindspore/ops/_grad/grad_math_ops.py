@@ -43,7 +43,7 @@ to_array = P.TupleToArray()
 real_div = P.RealDiv()
 
 
-def dyn_binop_grad_common(x, y, dx, dy, shift=0):
+def dyn_binop_grad_common(x, y, dx, dy):
     """
     Common grad definition for binary operations when the input is dynamic shape.
 
@@ -51,11 +51,24 @@ def dyn_binop_grad_common(x, y, dx, dy, shift=0):
     """
     shape_of_x = dyn_shape_op(x)
     shape_of_y = dyn_shape_op(y)
-    broadcast_shape_of_x = shape_of_x
-    broadcast_shape_of_y = shape_of_y
-    if shift != 0:
-        broadcast_shape_of_x = shape_of_x[:-shift]
-        broadcast_shape_of_y = shape_of_y[:-shift]
+    rx, ry = DynamicBroadcastGradientArgs()(shape_of_x, shape_of_y)
+    dx = reduce_sum(dx, rx)
+    dy = reduce_sum(dy, ry)
+    reduce_dx = reshape(dx, shape_of_x)
+    reduce_dy = reshape(dy, shape_of_y)
+    return reduce_dx, reduce_dy
+
+
+def dyn_binop_grad_common_with_shift(x, y, dx, dy, shift):
+    """
+    Common grad definition for binary operations with shift when the input is dynamic shape.
+
+    The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
+    """
+    shape_of_x = dyn_shape_op(x)
+    shape_of_y = dyn_shape_op(y)
+    broadcast_shape_of_x = shape_of_x[:-shift]
+    broadcast_shape_of_y = shape_of_y[:-shift]
     rx, ry = DynamicBroadcastGradientArgs()(broadcast_shape_of_x, broadcast_shape_of_y)
     dx = reduce_sum(dx, rx)
     dy = reduce_sum(dy, ry)
@@ -64,31 +77,61 @@ def dyn_binop_grad_common(x, y, dx, dy, shift=0):
     return reduce_dx, reduce_dy
 
 
-def binop_grad_common(x, y, dx, dy, shift=0):
+def _reduce_sum_with_cast(dx, axis):
+    dx_origin_dtype = dx.dtype
+    # Currently, for Ascend and GPU, the reduce_sum's input does not support int16, int32 and int64.
+    if dx_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
+        dx = F.cast(dx, mstype.float32)
+        dx = reduce_sum(dx, axis)
+        return F.cast(dx, dx_origin_dtype)
+    return reduce_sum(dx, axis)
+
+
+def binop_grad_common(x, y, dx, dy):
     """
     Common grad definition for binary operations.
 
     The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
     """
-
-    def reduce_sum_with_cast(dx, axis):
-        dx_origin_dtype = dx.dtype
-        # Currently, for Ascend and GPU, the reduce_sum's input does not support int16, int32 and int64.
-        if dx_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
-            dx = F.cast(dx, mstype.float32)
-            dx = reduce_sum(dx, axis)
-            dx = F.cast(dx, dx_origin_dtype)
-        else:
-            dx = reduce_sum(dx, axis)
-        return dx
-
     shape_of_x = shape_op(x)
     shape_of_y = shape_op(y)
-    broadcast_shape_of_x = shape_of_x
-    broadcast_shape_of_y = shape_of_y
-    if shift != 0:
-        broadcast_shape_of_x = shape_of_x[:-shift]
-        broadcast_shape_of_y = shape_of_y[:-shift]
+    # if input shape is the same as dout shape, do not need to reduce
+    reduce_dx = dx
+    reduce_dy = dy
+    if not (is_shape_unknown(shape_of_x) or is_shape_unknown(shape_of_y)):
+        rx = broadcast_gradient_args(shape_of_x, shape_of_y)
+        if rx[0]:
+            # if dx is scalar whose shape is (), do not need reduce
+            if shape_op(dx):
+                dx = _reduce_sum_with_cast(dx, rx[0])
+            reduce_dx = reshape(dx, shape_of_x)
+        if rx[1]:
+            # if dy is scalar whose shape is (), do not need reduce
+            if shape_op(dy):
+                dy = _reduce_sum_with_cast(dy, rx[1])
+            reduce_dy = reshape(dy, shape_of_y)
+        return reduce_dx, reduce_dy
+    if not shape_of_x or not shape_of_y:
+        # x or y is scalar
+        if not shape_of_x:
+            reduce_dx = _reduce_sum_with_cast(dx, ())
+        if not shape_of_y:
+            reduce_dy = _reduce_sum_with_cast(dy, ())
+        return reduce_dx, reduce_dy
+
+    return dyn_binop_grad_common(x, y, dx, dy)
+
+
+def binop_grad_common_with_shift(x, y, dx, dy, shift):
+    """
+    Common grad definition for binary operations with shift.
+
+    The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
+    """
+    shape_of_x = shape_op(x)
+    shape_of_y = shape_op(y)
+    broadcast_shape_of_x = shape_of_x[:-shift]
+    broadcast_shape_of_y = shape_of_y[:-shift]
     # if input shape is the same as dout shape, do not need to reduce
     reduce_dx = dx
     reduce_dy = dy
@@ -97,23 +140,23 @@ def binop_grad_common(x, y, dx, dy, shift=0):
         if rx[0]:
             # if dx is scalar whose shape is (), do not need reduce
             if shape_op(dx):
-                dx = reduce_sum_with_cast(dx, rx[0])
+                dx = _reduce_sum_with_cast(dx, rx[0])
             reduce_dx = reshape(dx, shape_of_x)
         if rx[1]:
             # if dy is scalar whose shape is (), do not need reduce
             if shape_op(dy):
-                dy = reduce_sum_with_cast(dy, rx[1])
+                dy = _reduce_sum_with_cast(dy, rx[1])
             reduce_dy = reshape(dy, shape_of_y)
         return reduce_dx, reduce_dy
     if not shape_of_x or not shape_of_y:
         # x or y is scalar
         if not shape_of_x:
-            reduce_dx = reduce_sum_with_cast(dx, ())
+            reduce_dx = _reduce_sum_with_cast(dx, ())
         if not shape_of_y:
-            reduce_dy = reduce_sum_with_cast(dy, ())
+            reduce_dy = _reduce_sum_with_cast(dy, ())
         return reduce_dx, reduce_dy
 
-    return dyn_binop_grad_common(x, y, dx, dy, shift)
+    return dyn_binop_grad_common_with_shift(x, y, dx, dy, shift)
 
 
 def _dyn_reduced_shape(input_shape, axis):
@@ -232,7 +275,7 @@ def bprop_batchmatmul(self):
             dw = mul2(dout, x)
         else:
             dw = mul2(x, dout)
-        return binop_grad_common(x, w, dx, dw, shift=2)
+        return binop_grad_common_with_shift(x, w, dx, dw, 2)
 
     return bprop
 
