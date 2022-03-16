@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,14 @@ namespace mindspore::graphkernel {
 class Expander {
  public:
   virtual AnfNodePtr Run(const AnfNodePtr &node) = 0;
+  virtual ~Expander() = default;
 };
 using ExpanderPtr = std::shared_ptr<Expander>;
 
 class DefaultExpander : public Expander {
  public:
   AnfNodePtr Run(const AnfNodePtr &node) override;
+  virtual ~DefaultExpander() = default;
 
  protected:
   virtual AnfNodePtr CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node);

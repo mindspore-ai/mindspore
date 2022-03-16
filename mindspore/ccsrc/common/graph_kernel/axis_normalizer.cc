@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ bool AxisNormalizer::IsReduce(const AnfNodePtr &node) const {
   std::vector<PrimitivePtr> node_with_axis = {prim::kPrimReduceSum, prim::kPrimReduceMax, prim::kPrimReduceMin,
                                               prim::kPrimArgMax, prim::kPrimArgMin};
   return std::any_of(node_with_axis.begin(), node_with_axis.end(),
-                     [&node](PrimitivePtr &p) { return IsPrimitiveCNode(node, p); });
+                     [&node](const PrimitivePtr &p) { return IsPrimitiveCNode(node, p); });
 }
 
 bool AxisNormalizer::Process(const FuncGraphPtr &func_graph) const {

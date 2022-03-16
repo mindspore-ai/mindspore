@@ -68,7 +68,7 @@ using ConstMap = mindspore::HashMap<std::string, inner::NodePtr>;
 class PatternTree {
  public:
   // pattern_str->ex."Pow(Exp(A),B)=Exp(Mul(A,B))"
-  explicit PatternTree(const std::string &pattern_str) { BuildTree(pattern_str); }
+  explicit PatternTree(const std::string &pattern_str) { (void)BuildTree(pattern_str); }
   virtual ~PatternTree() = default;
 
   PatternNodePtr lhs_root() { return lhs_root_; }
@@ -135,7 +135,7 @@ PatternNodePtr PatternTree::BuildTree(const std::string &pattern_str) {
     if (p_start != std::string::npos) {
       size_t p_end = pattern_str.rfind(")");
       auto op_name = CutStr(pattern_str, 0, p_start);
-      auto op_inputs = CutStr(pattern_str, p_start + 1, p_end - p_start - 1);
+      auto op_inputs = CutStr(pattern_str, p_start + 1, (p_end - p_start) - 1);
       PatternNodePtr cur_node = std::make_shared<PatternNode>(op_name);
       int tmp = 0;
       size_t comma = 0;
@@ -178,7 +178,7 @@ inner::NType PatternNodeType(const std::string &n) {
 
 std::string CleanStr(const std::string &s) {
   std::string res = "";
-  std::for_each(s.begin(), s.end(), [&res](const char &c) {
+  (void)std::for_each(s.begin(), s.end(), [&res](const char &c) {
     if (c != '[' && c != ']' && c != ' ') {
       res += c;
     }
@@ -377,10 +377,10 @@ class ExtraReduce1PatternTree : public PatternTree {
     bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
     if (keep_dims) {
       for (auto &i : GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second)) {
-        axis_set.insert(i);
+        (void)axis_set.insert(i);
       }
       for (auto &i : GetValue<std::vector<int64_t>>(first_reduce->attrs().find("axis")->second)) {
-        axis_set.insert(i);
+        (void)axis_set.insert(i);
       }
     } else {
       auto first_axis = GetValue<std::vector<int64_t>>(first_reduce->attrs().find("axis")->second);
@@ -395,10 +395,11 @@ class ExtraReduce1PatternTree : public PatternTree {
           mp[n - shift] = n;
         }
       }
-      std::for_each(first_axis.begin(), first_axis.end(), [&axis_set](auto &i) { axis_set.insert(i); });
-      std::for_each(second_axis.begin(), second_axis.end(), [&axis_set, &mp](auto &i) { axis_set.insert(mp[i]); });
+      (void)std::for_each(first_axis.begin(), first_axis.end(), [&axis_set](auto &i) { (void)axis_set.insert(i); });
+      (void)std::for_each(second_axis.begin(), second_axis.end(),
+                          [&axis_set, &mp](auto &i) { (void)axis_set.insert(mp[i]); });
     }
-    std::copy(axis_set.begin(), axis_set.end(), std::back_inserter(axis));
+    (void)std::copy(axis_set.begin(), axis_set.end(), std::back_inserter(axis));
     attrs_map[this->rhs_root()] = {{"keep_dims", MakeValue(keep_dims)}, {"axis", MakeValue(axis)}};
     return attrs_map;
   }
@@ -430,7 +431,8 @@ class ExtraReduce2PatternTree : public PatternTree {
  */
 bool OutsideRely(const inner::NodePtrList &nodes, const inner::NodePtr &root) {
   mindspore::HashSet<inner::Node *> nodes_can_simplify;
-  std::for_each(nodes.begin(), nodes.end(), [&nodes_can_simplify](auto n) { nodes_can_simplify.insert(n.get()); });
+  (void)std::for_each(nodes.begin(), nodes.end(),
+                      [&nodes_can_simplify](auto n) { (void)nodes_can_simplify.insert(n.get()); });
   for (auto &n : nodes) {
     if (n == root) {
       continue;
@@ -653,7 +655,7 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
       auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs);
-      mng->Replace(node, new_node);
+      (void)mng->Replace(node, new_node);
       mng->AddFuncGraph(new_funcgraph);
       do_simplify = true;
     }
