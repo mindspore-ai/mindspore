@@ -250,6 +250,11 @@ class DbgServices:
         return watchpoint_hit_list
 
     @check_initialize_done
+    def check_watchpoint_progress(self):
+        progress_percentage = self.dbg_instance.CheckWatchpointProgress()
+        return progress_percentage
+
+    @check_initialize_done
     @check_read_tensor_info
     def read_tensors(self, info):
         """

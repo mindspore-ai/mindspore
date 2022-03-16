@@ -30,7 +30,8 @@ PYBIND11_MODULE(_mindspore_offline_debug, m) {
     .def("ReadTensors", &DbgServices::ReadTensors, py::call_guard<py::gil_scoped_release>())
     .def("ReadTensorsBase", &DbgServices::ReadTensorsBase, py::call_guard<py::gil_scoped_release>())
     .def("ReadTensorsStat", &DbgServices::ReadTensorsStat, py::call_guard<py::gil_scoped_release>())
-    .def("GetVersion", &DbgServices::GetVersion);
+    .def("GetVersion", &DbgServices::GetVersion)
+    .def("CheckWatchpointProgress", &DbgServices::CheckWatchpointProgress);
 
   (void)py::class_<parameter_t>(m, "parameter")
     .def(py::init<std::string, bool, double, bool, double>())

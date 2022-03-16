@@ -23,6 +23,7 @@
 namespace mindspore {
 constexpr float ms_to_s = 1000.0;
 constexpr int precision = 2;
+constexpr int percentage = 100;
 DbgServices::DbgServices() { debug_services_ = std::make_shared<DebugServices>(); }
 
 DbgServices::DbgServices(const DbgServices &other) {
@@ -222,6 +223,8 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
   MS_LOG(INFO) << "ReadNeededDumpedTensors Took: " << std::fixed << std::setprecision(precision)
                << (ms_double.count()) / ms_to_s << "s";
+  total_tensor_count_ = tensor_list.size();
+  check_wp_in_progress_ = true;
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
                                     &file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id,
                                     error_on_no_value);
@@ -261,9 +264,20 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
 
     hits.push_back(hit);
   }
+  check_wp_in_progress_ = false;
   return hits;
 }
 
+float DbgServices::CheckWatchpointProgress() {
+  if (!check_wp_in_progress_ || total_tensor_count_ == 0) {
+    // we are not checking the watchpoints
+    return -1;
+  }
+  float progress =
+    static_cast<float>(debug_services_->GetProcessedTensorCount()) / static_cast<float>(total_tensor_count_);
+  float result = progress * percentage;
+  return result;
+}
 std::string GetTensorFullName(const tensor_info_t info) { return info.node_name + ":" + std::to_string(info.slot); }
 
 unsigned int GetTensorRankId(const tensor_info_t info) { return info.rank_id; }
