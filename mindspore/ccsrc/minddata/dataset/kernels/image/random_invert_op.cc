@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "minddata/dataset/kernels/image/random_invert_op.h"
+
+#include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -21,6 +24,19 @@ const float RandomInvertOp::kDefProbability = 0.5;
 
 Status RandomInvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+  // check input
+  if (input->Rank() != DEFAULT_IMAGE_RANK) {
+    RETURN_STATUS_UNEXPECTED("RandomInvert: image shape is not <H,W,C>, got rank: " + std::to_string(input->Rank()));
+  }
+  if (input->shape()[CHANNEL_INDEX] != DEFAULT_IMAGE_CHANNELS) {
+    RETURN_STATUS_UNEXPECTED(
+      "RandomInvert: image shape is incorrect, expected num of channels is 3, "
+      "but got:" +
+      std::to_string(input->shape()[CHANNEL_INDEX]));
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type().AsCVType() != kCVInvalidType,
+                               "RandomInvert: Cannot convert from OpenCV type, unknown CV type. Currently "
+                               "supported data type: [int8, uint8, int16, uint16, int32, float16, float32, float64].");
   if (distribution_(rnd_)) {
     return InvertOp::Compute(input, output);
   }
