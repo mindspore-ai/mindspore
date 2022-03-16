@@ -2639,12 +2639,12 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
     Examples:
         >>> # 1) Read LFW People dataset
         >>> lfw_people_dataset_dir = "/path/to/lfw_people_dataset_directory"
-        >>> dataset = ds.LFWDataset(dataset_dir=lfw_people_dataset_dir, task="people", uasge="10fold",
+        >>> dataset = ds.LFWDataset(dataset_dir=lfw_people_dataset_dir, task="people", usage="10fold",
         ...                         image_set="original")
         >>>
         >>> # 2) Read LFW Pairs dataset
         >>> lfw_pairs_dataset_dir = "/path/to/lfw_pairs_dataset_directory"
-        >>> dataset = ds.LFWDataset(dataset_dir=lfw_pairs_dataset_dir, task="pairs", uasge="test", image_set="funneled")
+        >>> dataset = ds.LFWDataset(dataset_dir=lfw_pairs_dataset_dir, task="pairs", usage="test", image_set="funneled")
 
     About LFW dataset:
 

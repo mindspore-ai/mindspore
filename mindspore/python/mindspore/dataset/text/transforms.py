@@ -876,6 +876,8 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import mindspore.dataset.text.transforms as text
+            >>>
             >>> replace_op = text.FilterWikipediaXML()
             >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
         """

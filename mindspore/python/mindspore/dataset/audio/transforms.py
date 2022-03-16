@@ -885,7 +885,7 @@ class FrequencyMasking(AudioTensorOperation):
         >>>
         >>> waveform = np.random.random([1, 3, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.FrequencyMasking(frequency_mask_param=1)]
+        >>> transforms = [audio.FrequencyMasking(freq_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
 
     .. image:: frequency_masking_original.png
@@ -1112,7 +1112,7 @@ class MaskAlongAxisIID(AudioTensorOperation):
     Examples:
         >>> import numpy as np
         >>>
-        >>> waveform= np.random.random(1, 20, 20)
+        >>> waveform= np.random.random([1, 20, 20])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MaskAlongAxisIID(5, 0.5, 2)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
