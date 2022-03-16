@@ -78,8 +78,6 @@ class MirrorPadGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MirrorPadGrad, MirrorPadGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MIRROR_PAD_CPU_KERNEL_H_

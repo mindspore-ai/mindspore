@@ -50,8 +50,6 @@ class MatrixDeterminantCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void LaunchMatrixDeterminant(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixDeterminant, MatrixDeterminantCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_DETERMINANT_CPU_KERNEL_H_

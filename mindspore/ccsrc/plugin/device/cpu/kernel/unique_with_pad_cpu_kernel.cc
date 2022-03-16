@@ -55,5 +55,7 @@ void UniqueWithPadCpuKernelMod::PadOutput(const std::vector<AddressPtr> &inputs,
     out[i] = pad_num;
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UniqueWithPad, UniqueWithPadCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

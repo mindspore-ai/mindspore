@@ -124,9 +124,6 @@ class TensorScatterUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
     return support_list;
   }
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdUpdate, ScatterNdUpdateCpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterUpdate, TensorScatterUpdateCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

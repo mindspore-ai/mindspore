@@ -153,5 +153,7 @@ void MulNoNanCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     BcastCompute<T>(inputs, outputs);
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MulNoNan, MulNoNanCPUKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

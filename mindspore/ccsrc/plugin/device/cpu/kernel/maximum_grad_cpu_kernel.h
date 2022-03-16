@@ -46,8 +46,6 @@ class MaximumGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> dy_shape;
   TypeId dtype_{kTypeUnknown};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MaximumGrad, MaximumGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

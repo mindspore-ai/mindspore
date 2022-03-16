@@ -107,5 +107,7 @@ void LstsqCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
       *(output_addr + i * k + j) = static_cast<T2>(result(i, j));
     }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Lstsq, LstsqCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -38,5 +38,7 @@ bool EnvironDestroyAllCpuKernelMod::Launch(const std::vector<AddressPtr> &, cons
 
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EnvironDestroyAll, EnvironDestroyAllCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

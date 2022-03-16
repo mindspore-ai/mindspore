@@ -103,5 +103,7 @@ bool SoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel:
   ForwardPostExecute(logits, labels, output1, output2);
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SoftmaxCrossEntropyWithLogits, SoftmaxCrossEntropyWithLogitsCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -198,5 +198,7 @@ bool SparseApplyProximalAdagradCpuKernelMod::Launch(const std::vector<kernel::Ad
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedSparseProximalAdagrad, SparseApplyProximalAdagradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

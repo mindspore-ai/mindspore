@@ -88,5 +88,7 @@ void IsFiniteCpuKernelMod::LaunchKernelOther(const std::vector<AddressPtr> &inpu
     output[i] = true;
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IsFinite, IsFiniteCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

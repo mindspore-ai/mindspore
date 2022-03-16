@@ -106,5 +106,7 @@ void ResizeNearestNeighborCpuKernelMod::LaunchKernel(const std::vector<AddressPt
     output_addr[i] = input_addr[input_pos];
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeNearestNeighbor, ResizeNearestNeighborCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

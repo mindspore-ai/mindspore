@@ -165,5 +165,7 @@ bool HSVToRGBCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HSVToRGB, HSVToRGBCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

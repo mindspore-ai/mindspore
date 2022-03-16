@@ -75,8 +75,6 @@ class LstmCpuKernelMod : public MKLCpuKernelMod {
   dnnl::memory weights_h_memory_;
   dnnl::memory bias_memory_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LSTM, LstmCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_CPU_KERNEL_H

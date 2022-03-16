@@ -80,5 +80,19 @@ bool EltWiseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   ExecutePrimitive();
   return true;
 }
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Elu, []() { return std::make_shared<EltWiseCpuKernelMod>(kElu); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU,
+                                 []() { return std::make_shared<EltWiseCpuKernelMod>(kReLU); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU6,
+                                 []() { return std::make_shared<EltWiseCpuKernelMod>(kReLU6); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Exp, []() { return std::make_shared<EltWiseCpuKernelMod>(kExp); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Log, []() { return std::make_shared<EltWiseCpuKernelMod>(kLog); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sigmoid,
+                                 []() { return std::make_shared<EltWiseCpuKernelMod>(kSigmoid); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tanh,
+                                 []() { return std::make_shared<EltWiseCpuKernelMod>(kTanh); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softplus,
+                                 []() { return std::make_shared<EltWiseCpuKernelMod>(kSoftplus); });
 }  // namespace kernel
 }  // namespace mindspore

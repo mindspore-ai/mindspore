@@ -81,8 +81,6 @@ class FusedCastAdamWeightDecayCpuKernelMod : public NativeCpuKernelMod {
   TypeId gradient_dtype_{kTypeUnknown};
   enum input_list_ { VAR, M, V, LR, BETA1, BETA2, EPSILON, DECAY, GRAD, GLOBAL_NORM };
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedCastAdamWeightDecay, FusedCastAdamWeightDecayCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

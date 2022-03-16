@@ -80,5 +80,7 @@ void MapUniformCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     }
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MapUniform, MapUniformCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -69,8 +69,6 @@ class IsNanCpuKernelMod : public NativeCpuKernelMod {
                                          {kNumberTypeUInt32, sizeof(uint32_t)}, {kNumberTypeUInt64, sizeof(uint64_t)}};
   TypeId input_dtype_{kTypeUnknown};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IsNan, IsNanCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

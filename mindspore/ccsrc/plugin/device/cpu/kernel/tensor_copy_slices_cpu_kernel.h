@@ -42,8 +42,6 @@ class TensorCopySlicesCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> update_shape_;
   std::vector<int64_t> output_shape_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorCopySlices, TensorCopySlicesCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

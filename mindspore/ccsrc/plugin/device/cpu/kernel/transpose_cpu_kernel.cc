@@ -166,5 +166,7 @@ void TransposeFwdCpuKernelMod::ParallelRun(const T *input_addr, T *output_addr, 
   };
   ParallelLaunchAutoSearch(task, thread_num, this, &parallel_search_info_);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Transpose, TransposeFwdCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

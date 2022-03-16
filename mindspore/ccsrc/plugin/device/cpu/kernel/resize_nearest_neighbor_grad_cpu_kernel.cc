@@ -108,5 +108,7 @@ void ResizeNearestNeighborGradCpuKernelMod::LaunchKernel(const std::vector<Addre
     }
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeNearestNeighborGrad, ResizeNearestNeighborGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

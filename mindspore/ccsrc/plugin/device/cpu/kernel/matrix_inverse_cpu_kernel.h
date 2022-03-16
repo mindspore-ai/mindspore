@@ -51,8 +51,6 @@ class MatrixInverseCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void LaunchMatrixInverse(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixInverse, MatrixInverseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_INVERSE_CPU_KERNEL_H_

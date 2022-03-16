@@ -57,8 +57,6 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
   template <typename T>
   void PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UniqueWithPad, UniqueWithPadCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UNIQUE_WITH_PAD_CPU_KERNEL_H_

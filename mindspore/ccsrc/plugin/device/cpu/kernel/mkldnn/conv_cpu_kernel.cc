@@ -102,5 +102,8 @@ bool ConvCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   ExecutePrimitive();
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Conv2D, ConvCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Conv3D, ConvCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

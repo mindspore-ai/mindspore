@@ -87,5 +87,7 @@ void IsNanCpuKernelMod::LaunchKernelOther(const std::vector<AddressPtr> &inputs,
     output[i] = false;
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IsNan, IsNanCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

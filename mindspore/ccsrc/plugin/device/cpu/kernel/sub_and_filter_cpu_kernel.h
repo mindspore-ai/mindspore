@@ -60,8 +60,6 @@ class SubAndFilterCpuKernelMod : public NativeCpuKernelMod {
   TypeId input_x_dtype_{kTypeUnknown};
   CNodeWeakPtr node_wpt_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SubAndFilter, SubAndFilterCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

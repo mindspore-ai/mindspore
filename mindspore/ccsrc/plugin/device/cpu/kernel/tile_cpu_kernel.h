@@ -73,8 +73,6 @@ class TileCpuKernelMod : public NativeCpuKernelMod {
   bool one_dim_tile_{false};
   size_t input_size_{0};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Tile, TileCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_

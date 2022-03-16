@@ -78,8 +78,6 @@ class SparseApplyLazyAdamCpuKernelMod : public SparseOptimizerCpuKernelMod {
   void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                     const std::vector<kernel::AddressPtr> &workspace) const;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedSparseLazyAdam, SparseApplyLazyAdamCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

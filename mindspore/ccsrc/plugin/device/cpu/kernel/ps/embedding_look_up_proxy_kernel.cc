@@ -96,6 +96,8 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EmbeddingLookupProxy, EmbeddingLookUpProxyKernel);
 }  // namespace ps
 }  // namespace kernel
 }  // namespace mindspore

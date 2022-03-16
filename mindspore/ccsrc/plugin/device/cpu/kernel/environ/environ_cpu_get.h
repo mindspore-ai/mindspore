@@ -95,8 +95,6 @@ class EnvironGetCpuKernelMod : public NativeCpuKernelMod {
   size_t key_size_;
   size_t value_size_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EnvironGet, EnvironGetCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

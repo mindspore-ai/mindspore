@@ -39,8 +39,6 @@ class TensorArraySizeCpuKernelMod : public NativeCpuKernelMod {
     return support_list;
   }
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArraySize, TensorArraySizeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

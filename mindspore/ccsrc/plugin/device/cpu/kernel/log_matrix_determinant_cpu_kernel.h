@@ -56,8 +56,6 @@ class LogMatrixDeterminantCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void LaunchLogMatrixDeterminant(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };  // namespace kernel
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LogMatrixDeterminant, LogMatrixDeterminantCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LOG_MATRIX_DETERMINANT_CPU_KERNEL_H_

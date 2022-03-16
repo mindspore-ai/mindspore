@@ -44,8 +44,6 @@ class EmbeddingLookUpCommGradCpuKernelMod : public NativeCpuKernelMod {
  private:
   int64_t split_num_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EmbeddingLookupCommGrad, EmbeddingLookUpCommGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

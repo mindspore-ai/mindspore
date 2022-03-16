@@ -45,8 +45,6 @@ class ReduceScatterCpuKernelMod : public NativeCpuKernelMod {
   std::string op_type_;
   std::vector<int> ranks_group_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, _HostReduceScatter, ReduceScatterCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

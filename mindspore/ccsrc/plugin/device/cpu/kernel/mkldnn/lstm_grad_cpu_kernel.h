@@ -99,8 +99,6 @@ class LSTMGradCpuKernelMod : public MKLCpuKernelMod {
   dnnl::memory user_diff_weights_memory_;
   dnnl::memory user_diff_weights_h_memory_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LSTMGrad, LSTMGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_GRAD_CPU_KERNEL_H_

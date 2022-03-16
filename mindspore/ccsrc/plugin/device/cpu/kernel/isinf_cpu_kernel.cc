@@ -80,5 +80,6 @@ void IsInfCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
   }
 }
 
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IsInf, IsInfCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

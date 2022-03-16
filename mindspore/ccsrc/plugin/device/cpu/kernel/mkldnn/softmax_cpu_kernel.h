@@ -40,8 +40,6 @@ class SoftmaxCpuKernelMod : public MKLCpuKernelMod {
     return support_list;
   }
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Softmax, SoftmaxCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

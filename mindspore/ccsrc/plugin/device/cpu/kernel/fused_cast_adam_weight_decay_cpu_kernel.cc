@@ -198,5 +198,7 @@ bool FusedCastAdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::Addr
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FusedCastAdamWeightDecay, FusedCastAdamWeightDecayCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -55,5 +55,7 @@ bool LogSoftmaxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
   ExecutePrimitive();
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LogSoftmax, LogSoftmaxCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

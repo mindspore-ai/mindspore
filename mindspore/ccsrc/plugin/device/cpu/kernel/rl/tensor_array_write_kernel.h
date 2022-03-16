@@ -42,8 +42,6 @@ class TensorArrayWriteCpuKernelMod : public NativeCpuKernelMod {
   TypeId type_;
   static std::vector<KernelAttr> support_list_;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorArrayWrite, TensorArrayWriteCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

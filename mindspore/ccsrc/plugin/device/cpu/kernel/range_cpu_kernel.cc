@@ -62,5 +62,7 @@ bool RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Range, RangeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

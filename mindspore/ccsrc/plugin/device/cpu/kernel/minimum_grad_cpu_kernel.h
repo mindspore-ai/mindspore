@@ -46,8 +46,6 @@ class MinimumGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> dy_shape;
   TypeId dtype_{kTypeUnknown};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MinimumGrad, MinimumGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MINIMUMGRAD_CPU_KERNEL_H_

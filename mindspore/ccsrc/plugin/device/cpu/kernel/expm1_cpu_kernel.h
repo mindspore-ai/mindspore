@@ -48,8 +48,6 @@ class Expm1CpuKernelMod : public NativeCpuKernelMod {
  private:
   TypeId input_dtype_{kTypeUnknown};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Expm1, Expm1CpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

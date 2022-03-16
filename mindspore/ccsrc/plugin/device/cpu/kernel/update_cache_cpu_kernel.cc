@@ -102,5 +102,7 @@ void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     }
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UpdateCache, UpdateCacheCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

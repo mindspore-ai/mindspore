@@ -244,5 +244,7 @@ bool StridedSliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, StridedSlice, StridedSliceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

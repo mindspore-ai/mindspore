@@ -117,5 +117,7 @@ void UniqueCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   }
   output_size_ = static_cast<size_t>(params->output_size_);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Unique, UniqueCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -71,5 +71,7 @@ bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorCopySlices, TensorCopySlicesCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

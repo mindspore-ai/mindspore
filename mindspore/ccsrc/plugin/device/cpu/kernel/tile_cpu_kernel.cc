@@ -160,5 +160,7 @@ void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
 
   Tile(x_addr, y_addr, &tile_parameter_);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Tile, TileCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

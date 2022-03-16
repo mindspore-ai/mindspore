@@ -45,8 +45,6 @@ class LayerNormCpuKernelMod : public NativeCpuKernelMod {
   size_t block_size_{1};
   size_t param_num_{1};
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LayerNorm, LayerNormCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LAYER_NORM_CPU_KERNEL_H_

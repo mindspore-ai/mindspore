@@ -155,5 +155,7 @@ void MaximumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   MaximumGradRecTask<T>(x_addr, y_addr, dout_addr, dx_addr, dy_addr, 0, 0, 0, 0, x_cargo, y_cargo, dout_cargo, x_shape,
                         y_shape, dout_shape);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MaximumGrad, MaximumGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

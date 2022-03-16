@@ -190,5 +190,7 @@ bool LstmCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   ExecutePrimitive();
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LSTM, LstmCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

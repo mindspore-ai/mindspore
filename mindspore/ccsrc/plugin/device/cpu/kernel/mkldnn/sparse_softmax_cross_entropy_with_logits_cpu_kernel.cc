@@ -138,5 +138,8 @@ bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<k
   }
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseSoftmaxCrossEntropyWithLogits,
+                      SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

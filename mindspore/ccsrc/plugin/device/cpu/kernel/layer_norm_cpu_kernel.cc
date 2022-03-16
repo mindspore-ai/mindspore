@@ -124,5 +124,7 @@ void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
   ParallelLaunch(tasks);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LayerNorm, LayerNormCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

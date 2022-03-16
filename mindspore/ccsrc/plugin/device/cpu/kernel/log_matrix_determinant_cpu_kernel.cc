@@ -162,5 +162,7 @@ void LogMatrixDeterminantCpuKernelMod::LaunchLogMatrixDeterminant(const std::vec
     }
   }
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LogMatrixDeterminant, LogMatrixDeterminantCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

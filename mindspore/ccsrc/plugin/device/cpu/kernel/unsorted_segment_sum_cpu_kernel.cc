@@ -94,5 +94,7 @@ bool UnsortedSegmentSumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
 
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentSum, UnsortedSegmentSumCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

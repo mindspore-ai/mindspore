@@ -157,5 +157,10 @@ bool PriorityReplayBufferUpdateCpuKernel::Launch(const std::vector<AddressPtr> &
   *handle = handle_;
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferCreate, PriorityReplayBufferCreateCpuKernel);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferPush, PriorityReplayBufferPushCpuKernel);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferSample, PriorityReplayBufferSampleCpuKernel);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferUpdate, PriorityReplayBufferUpdateCpuKernel);
 }  // namespace kernel
 }  // namespace mindspore

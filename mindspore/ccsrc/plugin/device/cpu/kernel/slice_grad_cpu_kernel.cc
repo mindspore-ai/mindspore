@@ -405,5 +405,10 @@ std::vector<KernelAttr> SliceGradCpuKernelMod::GetOpSupport() {
 
   return iter->second;
 }
+
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, SliceGrad,
+                                 []() { return std::make_shared<SliceGradCpuKernelMod>(kSliceGrad); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, StridedSliceGrad,
+                                 []() { return std::make_shared<SliceGradCpuKernelMod>(kStridedSliceGrad); });
 }  // namespace kernel
 }  // namespace mindspore

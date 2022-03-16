@@ -96,5 +96,7 @@ void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PadAndShift, PadAndShiftCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

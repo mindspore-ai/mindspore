@@ -42,7 +42,12 @@ class Factory {
     return instance;
   }
 
-  void Register(const std::string &name, CreatorFunc &&creator) { (void)kernel_mod_creators_.emplace(name, creator); }
+  void Register(const std::string &name, CreatorFunc &&creator) {
+    if (IsRegistered(name)) {
+      MS_LOG(EXCEPTION) << "Kernel " << name << " is already registered!";
+    }
+    (void)kernel_mod_creators_.emplace(name, creator);
+  }
 
   std::shared_ptr<C> Create(const std::string &name) {
     auto iter = kernel_mod_creators_.find(name);

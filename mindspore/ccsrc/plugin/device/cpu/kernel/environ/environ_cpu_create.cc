@@ -44,5 +44,7 @@ bool EnvironCreateCpuKernelMod::Launch(const std::vector<AddressPtr> &, const st
 
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, EnvironCreate, EnvironCreateCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

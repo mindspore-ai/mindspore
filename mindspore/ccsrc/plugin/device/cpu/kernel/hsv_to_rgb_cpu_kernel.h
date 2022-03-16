@@ -51,8 +51,6 @@ class HSVToRGBCpuKernelMod : public NativeCpuKernelMod {
   const size_t kInputNum = 1;
   const size_t kOutputNum = 1;
 };
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HSVToRGB, HSVToRGBCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif
