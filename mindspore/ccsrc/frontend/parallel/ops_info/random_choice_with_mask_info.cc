@@ -59,9 +59,9 @@ Status RandomChoiceWithMaskInfo::InferTensorMap() {
   Shape output1_shape = outputs_shape_.at(1);
 
   inputs_tensor_map_.clear();
-  inputs_tensor_map_.emplace_back(Shape(input0_shape.size(), -1));
-  outputs_tensor_map_.emplace_back(Shape(output0_shape.size(), -1));
-  outputs_tensor_map_.emplace_back(Shape(output1_shape.size(), -1));
+  (void)inputs_tensor_map_.emplace_back(Shape(input0_shape.size(), -1));
+  (void)outputs_tensor_map_.emplace_back(Shape(output0_shape.size(), -1));
+  (void)outputs_tensor_map_.emplace_back(Shape(output1_shape.size(), -1));
   return SUCCESS;
 }
 
@@ -69,7 +69,7 @@ std::vector<StrategyPtr> RandomChoiceWithMaskInfo::GenerateOpStrategies(int64_t 
   Dimensions input_partitions(inputs_shape_[0].size(), 1);
   Strategys strategies = {input_partitions};
   std::vector<StrategyPtr> sp_vector;
-  sp_vector.emplace_back(std::make_shared<Strategy>(stage_id, strategies));
+  (void)sp_vector.emplace_back(std::make_shared<Strategy>(stage_id, strategies));
   return sp_vector;
 }
 

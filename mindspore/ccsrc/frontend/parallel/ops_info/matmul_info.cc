@@ -449,7 +449,8 @@ Status MatMulBase::GenerateStrategiesBase(int64_t stage_id, size_t dev_num, cons
   };
   recursive(0, dev_num);
   if (sp_vector->empty()) {
-    MS_LOG(EXCEPTION) << name_ << " : No available strategy.";
+    MS_LOG(ERROR) << name_ << " : No available strategy.";
+    return FAILED;
   }
   return Status::SUCCESS;
 }
@@ -472,9 +473,10 @@ Status MatMulBase::GenerateStrategiesNotPower2(int64_t stage_id, size_t dev_num_
           continue;
         }
         auto new_stra_arrays{stra_arrays};
-        new_stra_arrays[i][j] = new_stra_arrays[i][j] * dev_num_not_2_power;
+        new_stra_arrays[i][j] = new_stra_arrays[i][j] * SizeToLong(dev_num_not_2_power);
         if (i == 0 && j == related_dim_left) {
-          new_stra_arrays[1][related_dim_right] = new_stra_arrays[1][related_dim_right] * dev_num_not_2_power;
+          new_stra_arrays[1][related_dim_right] =
+            new_stra_arrays[1][related_dim_right] * SizeToLong(dev_num_not_2_power);
         }
         StrategyPtr new_stra = std::make_shared<Strategy>(stage_id, new_stra_arrays);
         sp_vector.push_back(new_stra);
@@ -517,6 +519,7 @@ Status MatMulBase::GenerateStrategies(int64_t stage_id) {
   std::vector<StrategyPtr> sp_vector_2_power_part;
   if (dev_num_2_power == 0) {
     if (GenerateStrategiesBase(stage_id, dev_num, input0_shape, input1_shape, &sp_vector_2_power_part) != SUCCESS) {
+      MS_LOG(ERROR) << "No available strategy.";
       return FAILED;
     }
     strategy_cost_.clear();
@@ -660,7 +663,7 @@ Status MatMulBase::CheckForTensorSliceValid() const {
 
 std::shared_ptr<Strategys> BatchMatMulInfo::GenerateBatchStrategies() {
   Dimensions batch_strategy(inputs_shape_[1].size() - 1, 1);
-  batch_strategy.insert(batch_strategy.begin(), stage_device_size_);
+  (void)batch_strategy.insert(batch_strategy.begin(), stage_device_size_);
   Strategys strategy_v = {batch_strategy, batch_strategy};
   return std::make_shared<Strategys>(strategy_v);
 }
@@ -706,7 +709,7 @@ Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &
   std::shared_ptr<StrategyWithCost> swc =
     std::make_shared<StrategyWithCost>(strategy, inputs_tensor_info_, outputs_tensor_info_);
   swc->cost_list.push_back(result);
-  strategy_cost_.emplace_back(swc);
+  (void)strategy_cost_.emplace_back(swc);
 
   return SUCCESS;
 }

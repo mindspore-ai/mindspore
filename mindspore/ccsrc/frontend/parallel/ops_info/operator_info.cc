@@ -395,7 +395,7 @@ void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node
   }
   int32_t fusion_type = param_info->comm_fusion();
   attrs[FUSION] = MakeValue<int64_t>(fusion_type);
-  prim->SetAttrs(attrs);
+  (void)prim->SetAttrs(attrs);
   bool parallel_optimizer_comm_recompute = param_info->parallel_optimizer_comm_recompute();
   std::string instance_name = prim->instance_name();
   if (instance_name == PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE && parallel_optimizer_comm_recompute &&
@@ -413,7 +413,7 @@ void AddCommOpMeanFlag(const CNodePtr &comm_node) {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
   attrs[MEAN_FLAG] = MakeValue<bool>(mean_flag);
-  prim->SetAttrs(attrs);
+  (void)prim->SetAttrs(attrs);
 }
 
 void AddCommOpMirrorFlag(const CNodePtr &comm_node, bool do_mirror) {
@@ -422,7 +422,7 @@ void AddCommOpMirrorFlag(const CNodePtr &comm_node, bool do_mirror) {
   auto attrs = prim->attrs();
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   attrs[DO_MIRROR] = MakeValue<bool>(do_mirror);
-  prim->SetAttrs(attrs);
+  (void)prim->SetAttrs(attrs);
 }
 
 void AddCommOpAddAccuFlag(const CNodePtr &comm_node, bool add_accu) {
@@ -431,7 +431,7 @@ void AddCommOpAddAccuFlag(const CNodePtr &comm_node, bool add_accu) {
   auto attrs = prim->attrs();
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   attrs[ADD_ACCU] = MakeValue<bool>(add_accu);
-  prim->SetAttrs(attrs);
+  (void)prim->SetAttrs(attrs);
 }
 
 void AddCommOpParamFlag(const CNodePtr &comm_node) {
@@ -1407,7 +1407,7 @@ Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &in
           continue;
         }
         auto new_stra_arrays{stra_arrays};
-        new_stra_arrays[i][j] = new_stra_arrays[i][j] * dev_num_not_2_power;
+        new_stra_arrays[i][j] = new_stra_arrays[i][j] * UlongToLong(dev_num_not_2_power);
         StrategyPtr new_stra = std::make_shared<Strategy>(stage_id, new_stra_arrays);
         sp_vector->push_back(new_stra);
       }
@@ -1563,7 +1563,7 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
   std::shared_ptr<StrategyWithCost> swc =
     std::make_shared<StrategyWithCost>(strategy, inputs_tensor_info_, outputs_tensor_info_);
   swc->cost_list.push_back(result);
-  strategy_cost_.emplace_back(swc);
+  (void)strategy_cost_.emplace_back(swc);
 
   return SUCCESS;
 }
@@ -1680,7 +1680,6 @@ void OperatorInfo::ExactStrategiesAndRelatedEdges() {
   ClearStrategyCost();
   if (GenerateStrategies(0) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Strategy search for Operator " << name() << " failed.";
-    return;
   }
   SetIsStrategyCostExactTrue();
   // re-init the previous edges
@@ -1736,7 +1735,7 @@ int64_t OperatorInfo::ComputeOpAndPrevEdgeParameterInvolved() {
   for (auto &p_edge : prev_edges) {
     auto input_index = p_edge->next_op_input_index();
     auto is_in_mem = p_edge->prev_operator()->operator_cost()->is_output_in_memory();
-    input_in_memory.emplace(std::make_pair(input_index, is_in_mem));
+    (void)input_in_memory.emplace(std::make_pair(input_index, is_in_mem));
   }
   operator_cost()->CalculateInputsInMemory(input_in_memory);
 
@@ -1771,7 +1770,6 @@ Status OperatorInfo::CalculateMemoryCostForInference() {
   // First, set the 'is_outputs_critical_' flag into OperatorCost.
   if (is_output_critical_ == -1) {
     MS_LOG(EXCEPTION) << "The critical flag is not set.";
-    return FAILED;
   }
   operator_cost()->set_output_critical(is_output_critical_);
   // Set the memory cost in the 'strategy_cost_'

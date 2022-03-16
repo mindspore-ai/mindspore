@@ -567,7 +567,9 @@ Status SqueezeInfo::GetAttrs() {
   MS_EXCEPTION_IF_NULL(iter->second);
   auto value_tuple = iter->second->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(value_tuple);
-  InferAxis(value_tuple);
+  if (InferAxis(value_tuple) != SUCCESS) {
+    return FAILED;
+  }
   attrs_[AXIS] = axis_;
   return SUCCESS;
 }

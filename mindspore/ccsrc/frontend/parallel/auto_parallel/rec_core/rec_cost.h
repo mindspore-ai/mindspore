@@ -175,6 +175,8 @@ class CostReshape {
 // class CostCommon is used to compute the cost of an element-wise operator
 class CostCommon {
  public:
+  virtual ~CostCommon() = default;
+
   virtual StrategyRec GetOptimalStr(const Graph::NodeType &node,
                                     const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                                     const Graph &graph);
@@ -189,11 +191,14 @@ class CostCommon {
 
 // class CostBiasAdd is used to compute the cost of the addition between a tensor and a bias
 class CostBiasAdd : public CostCommon {
-  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+ protected:
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str) override;
 };
+
 // class CostAdd is used to compute the cost of Add operator.
 class CostTensorAdd : public CostCommon {
-  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+ protected:
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str) override;
 };
 
 // all the following operation are element-wise and have the same cost
@@ -210,6 +215,8 @@ class CostCast : public CostCommon {};
 // class BatchParallel is used to compute the cost of BatchParallel operator.
 class CostBatchParallel {
  public:
+  virtual ~CostBatchParallel() = default;
+
   virtual StrategyRec GetOptimalStr(const Graph::NodeType &node);
 
   virtual double GetMaxCostIn() const { return DOUBLE_MAX; }
@@ -226,7 +233,8 @@ class CostPRelu : public CostBatchParallel {};
 class CostSoftmax : public CostBatchParallel {};
 
 class CostSoftmaxCrossEntropyWithLogits : public CostBatchParallel {
-  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+ protected:
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str) override;
 };
 }  // namespace parallel
 }  // namespace mindspore

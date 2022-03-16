@@ -32,7 +32,7 @@ namespace parallel {
 class ArithmeticBase : public OperatorInfo {
  public:
   ArithmeticBase(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                 const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+                 const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, cost) {}
   ~ArithmeticBase() override = default;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;

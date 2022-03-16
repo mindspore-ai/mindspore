@@ -45,6 +45,7 @@ class TensorDotInfo : public OperatorInfo {
   ~TensorDotInfo() override = default;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   Status PrepareStrategy(int32_t stage_id, size_t dev_num, Dimensions combined_partitions, size_t input0_shape_size,
                          size_t input1_shape_size, StrategyPtr *sp);
@@ -55,7 +56,6 @@ class TensorDotInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetAttrs() override;
-  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
   void InferTensorMapAxesInt(const TensorMap &tensor_map_index);
   void InferTensorMapAxesTuple(size_t size, const TensorMap &input_a_tensor_map, const TensorMap &tensor_map_index);
   void ShowAxes();

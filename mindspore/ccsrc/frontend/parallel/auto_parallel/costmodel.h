@@ -125,6 +125,7 @@ struct OpEliminationDecision : public Decision {
         right_cost_(std::move(r_cost)) {
     type_ = DecisionType::OP_ELIMINATION;
   }
+  ~OpEliminationDecision() override = default;
 
   StrategyPtr op_strategy_;
   CostPtr left_cost_;
@@ -144,6 +145,7 @@ struct EdgeEliminationDecision : public Decision {
   explicit EdgeEliminationDecision(CostPtrList cost_list) : edges_cost_list_(std::move(cost_list)) {
     type_ = DecisionType::EDGE_ELIMINATION;
   }
+  ~EdgeEliminationDecision() override = default;
 
   CostPtrList edges_cost_list_;
   MS_DECLARE_PARENT(EdgeEliminationDecision, Decision);
@@ -167,6 +169,7 @@ struct MergeEliminationDecision : public Decision {
         target_op_cost_(std::move(target_op_c)) {
     type_ = DecisionType::MERGE_ELIMINATION;
   }
+  ~MergeEliminationDecision() override = default;
 
   StrategyPtr merged_op_strategy_;
   CostPtr merged_op_cost_;
@@ -194,6 +197,7 @@ struct ContractEliminationDecision : public Decision {
         target_cost_(std::move(tar_cost)) {
     type_ = DecisionType::CONTRACT_ELIMINATION;
   }
+  ~ContractEliminationDecision() override = default;
 
   StrategyPtr contracted_op_strategy_;
   CostPtr contracted_op_cost_;
@@ -228,6 +232,8 @@ struct SourceEliminationDecision : public Decision {
         op2_cost_(std::move(op2_c)) {
     type_ = DecisionType::SOURCE_ELIMINATION;
   }
+  ~SourceEliminationDecision() override = default;
+
   StrategyPtr op1_strategy_;
   CostPtr op1_cost_;
   StrategyPtr op2_strategy_;
@@ -258,6 +264,7 @@ struct TriangleEliminationDecision : public Decision {
         right_node_cost_(std::move(r_node_cost)) {
     type_ = DecisionType::TRIANGLE_ELIMINATION;
   }
+  ~TriangleEliminationDecision() override = default;
 
   StrategyPtr eliminated_op_strategy_;
   CostPtr eliminated_op_cost_;
@@ -288,6 +295,7 @@ struct StarEliminationDecision : public Decision {
         succ_ops_cost_list_(std::move(succ_ops_clist)) {
     type_ = DecisionType::STAR_ELIMINATION;
   }
+  ~StarEliminationDecision() override = default;
 
   StrategyPtr eliminated_op_strategy_;
   CostPtr eliminated_op_cost_;
@@ -308,6 +316,7 @@ struct FinalDecision : public Decision {
         right_cost_(std::move(r_cost)) {
     type_ = DecisionType::FINAL_TYPE;
   }
+  ~FinalDecision() override = default;
 
   StrategyPtr u_strategy_;
   StrategyPtr v_strategy_;
@@ -323,6 +332,7 @@ struct FinalSingleDecision : public Decision {
   FinalSingleDecision(StrategyPtr u_stra, CostPtr u_cost) : u_strategy_(std::move(u_stra)), u_cost_(std::move(u_cost)) {
     type_ = DecisionType::FINAL_SINGLE;
   }
+  ~FinalSingleDecision() override = default;
 
   StrategyPtr u_strategy_;
   CostPtr u_cost_;

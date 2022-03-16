@@ -112,15 +112,15 @@ class TensorLayout {
 
   void set_opt_weight_shard_step(int32_t step) { opt_weight_shard_step_ = step; }
 
-  int32_t opt_weight_shard_step() { return opt_weight_shard_step_; }
+  int32_t opt_weight_shard_step() const { return opt_weight_shard_step_; }
 
   void set_opt_weight_shard_size(int32_t size) { opt_weight_shard_size_ = size; }
 
-  int32_t opt_weight_shard_size() { return opt_weight_shard_size_; }
+  int32_t opt_weight_shard_size() const { return opt_weight_shard_size_; }
 
   void set_is_shared_param(bool is_shared_param) { is_shared_param_ = is_shared_param; }
 
-  bool is_shared_param() { return is_shared_param_; }
+  bool is_shared_param() const { return is_shared_param_; }
 
   // Key for user data.
   constexpr static char key[] = "TLayout";
@@ -145,7 +145,7 @@ class TensorLayout {
   bool skip_redistribution_ = false;
   bool uniform_split_ = true;
   bool layout_transfer_ = false;
-  int32_t field_size_ = 0;
+  int64_t field_size_ = 0;
   Shape opt_shard_slice_shape_;
   std::string opt_shard_group_ = "";         // for allgather
   std::string opt_shard_mirror_group_ = "";  // for mirror ops

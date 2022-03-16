@@ -145,7 +145,8 @@ bool IsDataParallelStrategy(const Dimensions &strategy, int32_t stage_id) {
 }
 
 Status ReduceMethod::InferForwardCommunication() {
-  Dimensions stra = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  Dimensions stra = strategies.at(0);
   if (cross_batch_ && IsDataParallelStrategy(stra, stage_id_)) {
     MS_LOG(INFO) << name_ << ": cross_batch is True, don't need to InferForwardCommunication";
     return SUCCESS;
@@ -225,7 +226,8 @@ ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, con
 }
 
 Status ReduceMeanInfo::InferForwardCommunication() {
-  Dimensions stra = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  Dimensions stra = strategies.at(0);
   if (cross_batch_ && IsDataParallelStrategy(stra, stage_id_)) {
     MS_LOG(INFO) << name_ << ": cross_batch is True, don't need to InferForwardCommunication";
     return SUCCESS;
@@ -281,7 +283,7 @@ Status ReduceMeanInfo::InferForwardCommunication() {
   return SUCCESS;
 }
 
-ForwardOp ReduceAnyInfo::CreateForwardOp(const std::vector<Group> &forward_group) {
+ForwardOp ReduceAnyInfo::CreateForwardOp(const std::vector<Group> &forward_group) const {
   // Create Cast to Int32 op
   Operator op0 = CreateCastOp(kInt32);
 
@@ -299,7 +301,8 @@ ForwardOp ReduceAnyInfo::CreateForwardOp(const std::vector<Group> &forward_group
 }
 
 Status ReduceAnyInfo::InferForwardCommunication() {
-  Dimensions stra = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  Dimensions stra = strategies.at(0);
   if (cross_batch_ && IsDataParallelStrategy(stra, stage_id_)) {
     MS_LOG(INFO) << name_ << ": cross_batch is True, don't need to InferForwardCommunication";
     return SUCCESS;
@@ -399,7 +402,8 @@ Status ArgMaxWithValueInfo::InferMirrorOps() {
 Dimensions ReduceMethod::InferOutputStrategy() {
   std::vector<int64_t> dim_list = reduce_dim();
   Dimensions output_strategy;
-  Dimensions stra = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  Dimensions stra = strategies.at(0);
   // if keepdims_ is true,then output strategy is same with input.
   for (size_t i = 0; i < stra.size(); ++i) {
     if (find(dim_list.begin(), dim_list.end(), SizeToLong(i)) != dim_list.end()) {
@@ -786,7 +790,8 @@ Status SquareSumAllInfo::InferTensorInfo() {
 }
 
 Status SquareSumAllInfo::InferGroup() {
-  Dimensions stra = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  Dimensions stra = strategies.at(0);
   forward_op_.clear();
   std::vector<int64_t> dim_list = reduce_dim();
   size_t size = stra.size();
@@ -832,9 +837,11 @@ Status SquareSumAllInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph(attrs_);
   if (gen_g.Init(cnode) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": GenerateGraph Init failed";
+    return FAILED;
   }
   if (InferGroup() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Infer Group failed";
+    return FAILED;
   }
 
   MS_LOG(INFO) << name_ << ": The rank is " << g_device_manager->rank_index_in_stage();

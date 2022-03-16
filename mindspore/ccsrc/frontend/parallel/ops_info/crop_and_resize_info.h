@@ -52,8 +52,8 @@ class CropAndResizeInfo : public OperatorInfo {
   Status InferGroup();
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 
-  int64_t slice_size_;
-  int64_t bias_;
+  int64_t slice_size_ = 0;
+  int64_t bias_ = 0;
   Group group_;
 };
 }  // namespace parallel

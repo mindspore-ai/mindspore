@@ -50,7 +50,7 @@ void SimplifyForDecreasingCommunicationForward(CostPtrList *clist_ptrs) {
   for (size_t i = 0; i < clist_ptrs->size(); ++i) {
     if ((ret.size() == size_t(0)) ||
         (clist_ptrs->at(id[i])->communication_forward_ < ret.back()->communication_forward_)) {
-      ret.emplace_back(std::move(clist_ptrs->at(id[i])));
+      (void)ret.emplace_back(std::move(clist_ptrs->at(id[i])));
     }
   }
   *clist_ptrs = std::move(ret);
@@ -73,7 +73,7 @@ void SimplifyForDecreasingCommunicationWithPartialPara(CostPtrList *clist_ptrs) 
   for (size_t i = 0; i < clist_ptrs->size(); ++i) {
     if ((ret.size() == size_t(0)) ||
         (clist_ptrs->at(id[i])->communication_with_partial_para_ < ret.back()->communication_with_partial_para_)) {
-      ret.emplace_back(std::move(clist_ptrs->at(id[i])));
+      (void)ret.emplace_back(std::move(clist_ptrs->at(id[i])));
     }
   }
   *clist_ptrs = std::move(ret);

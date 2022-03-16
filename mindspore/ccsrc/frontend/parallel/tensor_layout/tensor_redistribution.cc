@@ -187,13 +187,13 @@ Status TensorRedistribution::InferRedistribution(const TensorLayout &from_layout
     return Status::FAILED;
   } else {
     for (auto op : operator_infer.operator_vector()) {
-      operator_vector->insert(operator_vector->end(), op);
+      (void)operator_vector->insert(operator_vector->end(), op);
     }
     for (auto info : operator_infer.output_info_vector()) {
-      output_info_vector->insert(output_info_vector->end(), info);
+      (void)output_info_vector->insert(output_info_vector->end(), info);
     }
     for (auto opc : operator_infer.operator_list()) {
-      operator_list_.insert(operator_list_.end(), opc);
+      (void)operator_list_.insert(operator_list_.end(), opc);
     }
   }
   return Status::SUCCESS;

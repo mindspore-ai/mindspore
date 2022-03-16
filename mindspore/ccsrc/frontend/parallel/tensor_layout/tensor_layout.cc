@@ -425,7 +425,9 @@ TensorLayout TensorLayout::TransferRepeatLayout() const {
   Shape tensor_map(tensor_map_origin_.GetDimSize(), -1);
   Shape tensor_shape(tensor_shape_origin_.array());
   TensorLayout repeat;
-  repeat.InitFromVector(dev_mat, tensor_map, tensor_shape);
+  if (repeat.InitFromVector(dev_mat, tensor_map, tensor_shape) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Init from vector failed.";
+  }
   return repeat;
 }
 

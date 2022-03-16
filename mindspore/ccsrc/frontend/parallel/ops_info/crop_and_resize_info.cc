@@ -57,8 +57,9 @@ Status CropAndResizeInfo::CheckStrategy(const StrategyPtr &strategy) {
 Status CropAndResizeInfo::InferDevMatrixShape() {
   dev_matrix_shape_.clear();
 
-  auto x_strategy = strategy_->GetInputDim().at(0);
-  auto boxes_strategy = strategy_->GetInputDim().at(1);
+  auto strategies = strategy_->GetInputDim();
+  auto x_strategy = strategies.at(0);
+  auto boxes_strategy = strategies.at(1);
   dev_matrix_shape_ = {x_strategy[0], x_strategy[3], boxes_strategy[0]};
   return SUCCESS;
 }
@@ -83,7 +84,8 @@ Status CropAndResizeInfo::InferBias() {
   CheckGlobalDeviceManager();
 
   int64_t rank = g_device_manager->rank_index_in_stage();
-  auto x_strategy = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  auto x_strategy = strategies.at(0);
   Shape x_shape = inputs_shape_.at(0);
   if (x_shape[0] % x_strategy[0] != 0) {
     return FAILED;
@@ -181,7 +183,8 @@ Status CropAndResizeInfo::InitForCostModel(const StrategyPtr &strategy, const St
 
   constexpr size_t CROP_SIZE_INDEX = 3;
   auto crop_size = GetValue<std::vector<int64_t>>(input_value_[CROP_SIZE_INDEX]);
-  auto x_strategy = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  auto x_strategy = strategies.at(0);
   auto crop_and_resize_cost = std::dynamic_pointer_cast<CropAndResizeCost>(operator_cost());
   crop_and_resize_cost->set_crop_size(crop_size);
   crop_and_resize_cost->set_strategy(x_strategy);
@@ -190,7 +193,8 @@ Status CropAndResizeInfo::InitForCostModel(const StrategyPtr &strategy, const St
 }
 
 ReplaceGraphPtr CropAndResizeInfo::replace_graph(const CNodePtr &cnode) {
-  auto x_strategy = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  auto x_strategy = strategies.at(0);
   if (x_strategy[0] != 1 && ComputeReplaceGraph(cnode) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
   }

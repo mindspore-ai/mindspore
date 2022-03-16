@@ -54,7 +54,8 @@ class Edge;
 
 class OperatorInfo {
  public:
-  OperatorInfo(std::string name, Shapes inputs_shape, Shapes outputs_shape, PrimitiveAttrs attrs, OperatorCostPtr cost)
+  OperatorInfo(std::string name, Shapes inputs_shape, Shapes outputs_shape, PrimitiveAttrs attrs,
+               const OperatorCostPtr &cost)
       : name_(std::move(name)),
         inputs_shape_(std::move(inputs_shape)),
         outputs_shape_(std::move(outputs_shape)),
@@ -156,12 +157,12 @@ class OperatorInfo {
   bool IsTmpIdentity() const;
 
   void set_swc_index(int64_t, int64_t);
-  int64_t swc_index() { return swc_index_; }
+  int64_t swc_index() const { return swc_index_; }
   // Approximate the list of available strategies
   void ApproximateStrategies();
   // Make the list of available strategies exact and re-init the related edges incident to this operator
   void ExactStrategiesAndRelatedEdges();
-  bool is_strategy_cost_exact() { return is_strategy_cost_exact_; }
+  bool is_strategy_cost_exact() const { return is_strategy_cost_exact_; }
   void SetIsStrategyCostExactTrue() { is_strategy_cost_exact_ = true; }
   void ClearStrategyCost() { strategy_cost_.clear(); }
   void CheckSelectedStrategy(const StrategyPtr &);
@@ -245,7 +246,7 @@ class OperatorInfo {
   float GetFloatAttr(const std::string &attr_name);
   std::string GetStringAttr(const std::string &attr_name);
   std::vector<int64_t> GetTupleIntAttr(const std::string &attr_name);
-  void ReportError(const std::string &error_msg) {
+  void ReportError(const std::string &error_msg) const {
     if (is_auto_parallel_) {
       MS_LOG(INFO) << error_msg;
     } else {

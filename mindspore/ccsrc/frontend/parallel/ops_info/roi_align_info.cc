@@ -30,7 +30,7 @@ Status ROIAlignInfo::GetAttrs() {
       MS_LOG(ERROR) << name_ << ": Get primitive attr \"" << attr_key << "\" failed.";
       return FAILED;
     }
-    roi_align_attrs.emplace_back(std::make_pair(attr_key, attrs_[attr_key]));
+    (void)roi_align_attrs.emplace_back(std::make_pair(attr_key, attrs_[attr_key]));
   }
   return SUCCESS;
 }
@@ -61,8 +61,9 @@ Status ROIAlignInfo::CheckStrategy(const StrategyPtr &strategy) {
 Status ROIAlignInfo::InferDevMatrixShape() {
   dev_matrix_shape_.clear();
 
-  auto features_strategy = strategy_->GetInputDim().at(0);
-  auto rois_strategy = strategy_->GetInputDim().at(1);
+  auto strategies = strategy_->GetInputDim();
+  auto features_strategy = strategies.at(0);
+  auto rois_strategy = strategies.at(1);
   dev_matrix_shape_ = {features_strategy[0], features_strategy[1], rois_strategy[0]};
   return SUCCESS;
 }
@@ -85,9 +86,10 @@ Status ROIAlignInfo::InferBias() {
   CheckGlobalDeviceManager();
 
   int64_t rank = g_device_manager->rank_index_in_stage();
-  auto features_strategy = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  auto features_strategy = strategies.at(0);
   auto features_shape = inputs_shape_.at(0);
-  auto rois_strategy = strategy_->GetInputDim().at(1);
+  auto rois_strategy = strategies.at(1);
   auto rois_shape = inputs_shape_.at(1);
   if (features_shape[0] % features_strategy[0] != 0 || rois_shape[0] % rois_strategy[0] != 0) {
     return FAILED;
@@ -202,7 +204,8 @@ Status ROIAlignInfo::InitForCostModel(const StrategyPtr &strategy, const Strateg
     }
     return FAILED;
   }
-  auto features_strategy = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  auto features_strategy = strategies.at(0);
   auto roi_align_cost = std::dynamic_pointer_cast<ROIAlignCost>(operator_cost());
   auto pooled_height = GetValue<int64_t>(attrs_[POOLED_HEIGHT]);
   auto pooled_width = GetValue<int64_t>(attrs_[POOLED_WIDTH]);
@@ -213,14 +216,15 @@ Status ROIAlignInfo::InitForCostModel(const StrategyPtr &strategy, const Strateg
 }
 
 ReplaceGraphPtr ROIAlignInfo::replace_graph(const CNodePtr &cnode) {
-  auto features_strategy = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  auto features_strategy = strategies.at(0);
   if (features_strategy[0] != 1 && ComputeReplaceGraph(cnode) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
   }
   return replace_graph_;
 }
 
-std::vector<int64_t> ROIAlignInfo::CreateRangeVector(int64_t upper_bound) {
+std::vector<int64_t> ROIAlignInfo::CreateRangeVector(int64_t upper_bound) const {
   std::vector<int64_t> range(upper_bound);
   for (int64_t i = 0; i < upper_bound; ++i) {
     range[LongToSize(i)] = i;

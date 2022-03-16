@@ -148,7 +148,6 @@ class OptParamMgrImpl : public OptParamMgr {
     return true;
   }
 
- private:
   FuncGraphPtr root_;
   int64_t DEFAULT_VAL = 64;  // unit: KB
   int64_t DIVISOR_K = 1024;

@@ -261,9 +261,8 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
 
   if (DevicesMemoryControl(num_device, device_memory, graph) != SUCCESS) {
     return FAILED;
-  } else {
-    return SUCCESS;
   }
+  return SUCCESS;
 }
 
 // Apply OP Strategy to Tensor Strategy
@@ -294,7 +293,7 @@ Status DevicesMemoryControl(const size_t num_device, const double device_memory,
   double used_memory = 0.0;
 
   for (uint64_t i_node = 0; i_node < iter_nodes; i_node++) {
-    if (graph->nodes[i_node].info == 0) {
+    if (graph->nodes[i_node].info == InfoType::kApplication) {
       Graph::NodeType &Node = graph->nodes[i_node];
       for (int64_t index = 0; index < 2; index++) {
         used_memory += Node.apply.arguments[index].tensor_str.str_n * Node.apply.arguments[index].tensor_shape.shape_n *
@@ -308,7 +307,6 @@ Status DevicesMemoryControl(const size_t num_device, const double device_memory,
 
   if (device_memory < (used_memory / num_device)) {
     MS_LOG(EXCEPTION) << "Failure: Out of memory!";
-    return FAILED;
   } else {
     return SUCCESS;
   }
