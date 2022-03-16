@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,16 +32,18 @@ class StitchAtomicCleanInsertter : public AtomicCleanInsertter {
   ~StitchAtomicCleanInsertter() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
- private:
+ protected:
   void CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
                               const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &clean_infos) override;
+  void ProcessOriginCNode(
+    const AnfNodePtr &composite_node,
+    const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) override;
+
+ private:
   CNodePtr CreateInplaceAssignNode(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter,
                                    const AtomicAddInfo &info) const;
   std::vector<std::pair<AnfNodePtr, int>> FindInnerCNodeUsers(const AnfNodePtr &inner_node,
                                                               const CNodePtr &target) const;
-  void ProcessOriginCNode(
-    const AnfNodePtr &composite_node,
-    const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) override;
   std::pair<bool, AtomicAddInfo> IsStitchWithAtomic(const AnfNodePtr &anf_node);
 
   void AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node, const AnfNodePtr &composite_node,

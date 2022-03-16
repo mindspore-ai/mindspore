@@ -26,6 +26,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "kernel/common_utils.h"
+#include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "include/common/utils/context/graph_kernel_flags.h"
 
@@ -107,13 +108,13 @@ class CostModelSplitSchemer : public SplitSchemer {
         MS_LOG(ERROR) << "Failed decode sub graph, " << graph_desc;
         return false;
       }
-      split_plan_.emplace_back(std::move(res_graph));
+      (void)split_plan_.emplace_back(std::move(res_graph));
     }
 
     // ops to be inlined.
     need_inline_.clear();
-    std::transform(graph_modes.begin(), graph_modes.end(), std::back_inserter(need_inline_),
-                   [](const std::string &mode) { return mode == "basic" ? 1 : 0; });
+    (void)std::transform(graph_modes.begin(), graph_modes.end(), std::back_inserter(need_inline_),
+                         [](const std::string &mode) { return mode == "basic" ? 1 : 0; });
     return true;
   }
 
@@ -151,8 +152,8 @@ class CostModelSplitSchemer : public SplitSchemer {
   virtual void GetValidKernelNodes() {
     topo_all_nodes_ = TopoSort(func_graph_->get_return());
     topo_valid_nodes_.clear();
-    std::copy_if(topo_all_nodes_.begin(), topo_all_nodes_.end(), std::back_inserter(topo_valid_nodes_),
-                 [this](const AnfNodePtr &node) { return IsValidKernelNode(node); });
+    (void)std::copy_if(topo_all_nodes_.begin(), topo_all_nodes_.end(), std::back_inserter(topo_valid_nodes_),
+                       [this](const AnfNodePtr &node) { return IsValidKernelNode(node); });
   }
 
   void MapNodeGroup() {
@@ -175,14 +176,14 @@ class CostModelSplitSchemer : public SplitSchemer {
     if (IsValidKernelNode(output)) {
       auto group_id = node_group_[output];
       node_group_[ret_node] = group_id;
-      split_plan_[group_id].emplace_back(ret_node);
+      (void)split_plan_[group_id].emplace_back(ret_node);
       return;
     }
     // assign the make_tuple node to a new group.
     if (common::AnfAlgo::CheckPrimitiveType(output, prim::kPrimMakeTuple)) {
       auto group_id = split_plan_.size();
-      split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
-      need_inline_.emplace_back(1);
+      (void)split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
+      (void)need_inline_.emplace_back(1);
       node_group_[output] = group_id;
       node_group_[ret_node] = group_id;
       return;

@@ -21,8 +21,8 @@
 #include <string>
 #include <memory>
 
-#include "include/common/utils/context/graph_kernel_flags.h"
 #include "backend/common/optimizer/pass_manager.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 using opt::PassManager;
@@ -32,10 +32,10 @@ class GraphKernelPassManager : public PassManager {
       : PassManager(name, true), stage_(stage), flags_(GraphKernelFlags::GetInstance()) {}
   ~GraphKernelPassManager() = default;
 
-  // Add graph pass, the pass object will be freed when pass manager freed.
-  virtual void AddPass(const opt::PassPtr &pass, unsigned int pass_level, bool default_enable = true);
+  // Add graph pass for lite, the pass object will be freed when pass manager freed.
+  void Add(const opt::PassPtr &pass, unsigned int pass_level, bool default_enable = true);
 
-  // Run passes on the func_graph
+  // Run passes for lite on the func_graph
   bool Run(const FuncGraphPtr &func_graph) const override;
 
  protected:

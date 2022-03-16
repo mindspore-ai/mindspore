@@ -39,14 +39,14 @@ using opt::GraphOptimizer;
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "cluster");
   // Expand complex basic kernels to composite kernels
-  pm->AddPass(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
 
   // Cluster basic kernels and composite kernels
-  pm->AddPass(std::make_shared<GraphKernelCluster>(), OptLevel_1);
-  pm->AddPass(std::make_shared<ConvertConstInputToAttr>(), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelCluster>(), OptLevel_1);
+  pm->Add(std::make_shared<ConvertConstInputToAttr>(), OptLevel_1);
 
   // Eliminate the outputs without external user
-  pm->AddPass(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
+  pm->Add(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
   return pm;
 }
 
@@ -55,27 +55,27 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   // Make certain nodes redundant so that they are used by only one user,
   // which can avoid unnecessary input-output and get better performance.
   // preprocess for ShapeOpsSplitter
-  pm->AddPass(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
+  pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
-  pm->AddPass(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
+  pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
 
   // Split kernel according to costmodel
-  pm->AddPass(std::make_shared<GraphKernelSplitter>(), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelSplitter>(), OptLevel_1);
 
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.
-  pm->AddPass(std::make_shared<GetitemTuple>(), OptLevel_1);
+  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
 
   // Eliminate the redundant node that is copied above but not handled by GraphKernelSplitter
-  pm->AddPass(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
-  pm->AddPass(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
+  pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
+  pm->Add(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
   return pm;
 }
 
 PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   auto pm = std::make_shared<GraphKernelPassManager>(2, "postprocess");
   // build akg and replace graph kernel nodes
-  pm->AddPass(std::make_shared<KernelBuilder>(), OptLevel_1);
+  pm->Add(std::make_shared<KernelBuilder>(), OptLevel_1);
   return pm;
 }
 

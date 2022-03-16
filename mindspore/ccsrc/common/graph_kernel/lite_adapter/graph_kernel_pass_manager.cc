@@ -23,26 +23,26 @@
 #include "debug/anf_ir_dump.h"
 
 namespace mindspore::graphkernel {
-void GraphKernelPassManager::AddPass(const opt::PassPtr &pass, unsigned int pass_level, bool supported_device) {
+void GraphKernelPassManager::Add(const opt::PassPtr &pass, unsigned int pass_level, bool supported_device) {
   MS_EXCEPTION_IF_NULL(pass);
-  auto pass_id = passes_.size();
   auto pass_name = pass->name();
+  auto pass_id = passes_.size();
   auto pass_in_list = [this, pass_id, &pass_name](const std::vector<std::string> &pass_list) {
-    // the config format can be "stage_id.pass_id" or "stage_name.pass_name"
+    // config format can be "stage_id.pass_id" or "stage_name.pass_name"
     return std::find(pass_list.begin(), pass_list.end(),
                      std::to_string(this->stage_) + "." + std::to_string(pass_id)) != pass_list.end() ||
            std::find(pass_list.begin(), pass_list.end(), this->name_ + "." + pass_name) != pass_list.end();
   };
   bool enable = supported_device && flags_.opt_level >= pass_level;
   if (enable) {
-    // if it meets the condition to enable, check whether it's in the disabled list.
+    // if it meets the condition to enable, check whether it's in the disabled pass list.
     enable = !pass_in_list(flags_.disable_pass);
   } else {
-    // if it doesn't meet the condition to enable, check whether it's in the enabled list.
+    // if it doesn't meet the condition to enable, check whether it's in the enabled pass list.
     enable = pass_in_list(flags_.enable_pass);
   }
-  passes_.push_back(pass);
   enabled_.push_back(enable);
+  passes_.push_back(pass);
 }
 
 bool GraphKernelPassManager::RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const opt::PassPtr &pass) const {
@@ -59,10 +59,10 @@ bool GraphKernelPassManager::Run(const FuncGraphPtr &func_graph) const {
   for (size_t i = 0; i < passes_.size(); i++) {
     if (enabled_[i]) {
       changed = RunPass(func_graph, i, passes_[i]) || changed;
-      // dump ir to a graph_kernel subdir, and set a global id in front of the filename
+      // dump ir to a graph_kernel subdir, and set a global id in front of the filenames
       std::ostringstream oss;
-      static int g_id = 0;
       constexpr int id_length = 4;
+      static int g_id = 0;
       oss << "graph_kernel/" << std::setfill('0') << std::setw(id_length) << g_id++ << "_"
           << GetPassFullname(i, passes_[i]);
       DumpPassIR(func_graph, oss.str());

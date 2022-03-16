@@ -52,8 +52,9 @@ std::set<int64_t> GetUniqReduceAxes(const AnfNodePtr &node, bool is_ascend = fal
   }
   auto axis_vec = GetReduceAxis(node);
   if (axis_vec.empty()) {
+    axis_vec.resize(src_shape_vec.size());
     for (size_t i = 0; i < src_shape_vec.size(); ++i) {
-      (void)axis_vec.emplace_back(i);
+      axis_vec[i] = i;
     }
   } else {
     (void)std::transform(axis_vec.begin(), axis_vec.end(), axis_vec.begin(), [&src_shape_vec](int64_t axis) -> int64_t {
@@ -281,15 +282,8 @@ void AtomicCleanInsertter::CorrectKernelBuildInfo(
     new_inputs_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
   }
 
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder new_info_builder;
-  new_info_builder.SetInputsFormat(new_inputs_format);
-  new_info_builder.SetInputsDeviceType(new_inputs_type);
-  new_info_builder.SetOutputsFormat(new_outputs_format);
-  new_info_builder.SetOutputsDeviceType(new_outputs_type);
-  new_info_builder.SetProcessor(origin_processor);
-  new_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  new_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
-  auto new_selected_info = new_info_builder.Build();
+  auto new_selected_info = BuildSelectKernelBuildInfo(new_inputs_format, new_inputs_type, new_outputs_format,
+                                                      new_outputs_type, origin_processor);
   AnfAlgo::SetSelectKernelBuildInfo(new_selected_info, composite_node.get());
 }
 

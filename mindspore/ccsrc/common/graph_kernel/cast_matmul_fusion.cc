@@ -33,8 +33,8 @@ void UpdateBuildInfo(const AnfNodePtr &matmul_node, const AnfNodePtr &cast_node)
   input_types.push_back(cast_types.front());
   std::vector<std::string> output_formats = AnfAlgo::GetAllOutputFormats(matmul_node);
   std::vector<TypeId> output_types = AnfAlgo::GetAllOutputDeviceTypes(matmul_node);
-  auto graph_sel_info =
-    BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types, matmul_node);
+  auto graph_sel_info = BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types,
+                                                   AnfAlgo::GetProcessor(matmul_node));
   AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, matmul_node.get());
 }
 

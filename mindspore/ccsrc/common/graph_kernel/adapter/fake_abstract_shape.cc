@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 namespace mindspore::graphkernel {
 namespace {
-class AbstractShapeCreator {
+class FakeAbstractShape {
  public:
   using AbstractShapeTransferFunc = std::function<ShapeVector(const ShapeVector &)>;
   /**
@@ -49,10 +49,14 @@ class AbstractShapeCreator {
   static ShapeVector NchwAbstractShape(const ShapeVector &device_shape) { return device_shape; }
   static ShapeVector NhwcAbstractShape(const ShapeVector &device_shape) {
     const size_t nhwc_size = 4;
+    const size_t index_n = 0;
+    const size_t index_h = 1;
+    const size_t index_w = 2;
+    const size_t index_c = 3;
     if (device_shape.size() != nhwc_size) {
       MS_LOG(EXCEPTION) << "Shape size of NHWC should be 4, but got " << device_shape.size();
     }
-    return {device_shape[0], device_shape[3], device_shape[1], device_shape[2]};
+    return {device_shape[index_n], device_shape[index_c], device_shape[index_h], device_shape[index_w]};
   }
   static ShapeVector FractalNzAbstractShape(const ShapeVector &device_shape) {
     if (device_shape.size() == 1 && (device_shape[0] == 1 || static_cast<size_t>(device_shape[0]) % kCubeSize == 0)) {
@@ -64,12 +68,16 @@ class AbstractShapeCreator {
     }
     ShapeVector shape;
     size_t dims = device_shape.size();
-    size_t batch = dims - 4;
+    size_t batch = dims - nz_size;
     for (size_t i = 0; i < batch; ++i) {
       shape.push_back(device_shape[i]);
     }
-    int64_t m = device_shape[dims - 3] * device_shape[dims - 2];
-    int64_t n = device_shape[dims - 4] * device_shape[dims - 1];
+    const size_t index_m1 = 3;
+    const size_t index_m2 = 2;
+    const size_t index_n1 = 4;
+    const size_t index_n2 = 1;
+    int64_t m = device_shape[dims - index_m1] * device_shape[dims - index_m2];
+    int64_t n = device_shape[dims - index_n1] * device_shape[dims - index_n2];
     shape.push_back(m);
     shape.push_back(n);
 
@@ -79,6 +87,6 @@ class AbstractShapeCreator {
 }  // namespace
 
 ShapeVector GetFakeAbstractShape(const ShapeVector &device_shape, const std::string &format) {
-  return AbstractShapeCreator::GetFakeAbstractShape(device_shape, format);
+  return FakeAbstractShape::GetFakeAbstractShape(device_shape, format);
 }
 }  // namespace mindspore::graphkernel

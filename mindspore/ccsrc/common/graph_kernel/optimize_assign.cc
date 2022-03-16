@@ -178,7 +178,8 @@ bool ReplaceAssignByInplaceAssignInGraphkernel(const FuncGraphPtr &func_graph) {
     input_types.push_back(input_types.back());
     std::vector<std::string> output_formats = {input_formats.back()};
     std::vector<TypeId> output_types = {input_types.back()};
-    auto graph_sel_info = BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types, cnode);
+    auto graph_sel_info = BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types,
+                                                     AnfAlgo::GetProcessor(cnode));
     AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, new_cnode.get());
     mng->Replace(cnode, new_cnode);
   }

@@ -169,6 +169,6 @@ class CallbackImplRegister {
 };
 
 #define GRAPH_KERNEL_CALLBACK_REGISTER(cls) \
-  static const CallbackImplRegister g_graphkernel_callback([]() { return static_cast<Callback *>(new cls()); })
+  const CallbackImplRegister g_graphkernel_callback([]() { return static_cast<Callback *>(new cls()); })
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_CALLBACK_H_
