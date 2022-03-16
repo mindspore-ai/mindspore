@@ -44,9 +44,9 @@ class UserData {
   void set(const std::string &key, const std::shared_ptr<T> &value) {
     InitData();
     if (value == nullptr) {
-      data_->erase(key);
+      (void)data_->erase(key);
     } else {
-      data_->insert_or_assign(key, value);
+      (void)data_->insert_or_assign(key, value);
     }
   }
 
