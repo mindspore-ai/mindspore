@@ -95,6 +95,7 @@ mindspore
     :toctree: mindspore
 
     mindspore.ms_function
+    mindspore.ms_class
 
 日志
 ----

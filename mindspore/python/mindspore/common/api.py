@@ -459,6 +459,10 @@ def ms_class(cls):
     Returns:
         Class with __ms_class__ attribute.
 
+    Raises:
+        TypeError: If ms_class is used for non-class types or nn.Cell.
+        AttributeError: If the private attributes or magic methods of the class decorated by ms_class is called.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -467,7 +471,7 @@ def ms_class(cls):
         >>> from mindspore import ms_class
         ...
         >>> @ms_class
-        >>> class UserDefinedNet:
+        ... class UserDefinedNet:
         ...     def __init__(self):
         ...         self.value = 10
         ...
