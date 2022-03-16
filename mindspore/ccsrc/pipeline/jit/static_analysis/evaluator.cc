@@ -623,7 +623,7 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
   ShapeVector orig_shape = dyn_cast<abstract::Shape>(orig_abs->BuildShape())->shape();
   int shape_len = SizeToInt(orig_shape.size());
   if (*axis < -shape_len || *axis >= shape_len) {
-    MS_LOG(EXCEPTION) << "ValueError: The axis: " << *axis << " in `in_axes` is out of bounds for array of dimension ["
+    MS_LOG(EXCEPTION) << "ValueError: The axis: " << *axis << " in 'in_axes' is out of bounds for array of dimension ["
                       << -shape_len << "," << shape_len << ").";
   }
   *axis = *axis < 0 ? shape_len + *axis : *axis;
@@ -631,7 +631,7 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
   if (*axis_size == -1) {
     *axis_size = temp_axes_size;
   } else if (*axis_size != temp_axes_size) {
-    MS_LOG(EXCEPTION) << "The `axes_size` of each argument in the scope of `vmap` should be equal, but got "
+    MS_LOG(EXCEPTION) << "The 'axis_size' of each argument in the scope of 'vmap' should be equal, but got "
                       << *axis_size << " and " << temp_axes_size << ".";
   }
   (void)orig_shape.erase(orig_shape.begin() + *axis);
@@ -666,14 +666,14 @@ AbstractBasePtr GetLogicalViewAbs(const AbstractBasePtr &physical_view_abs, cons
     return std::make_shared<AbstractTuple>(logical_view_abs_list);
   }
   ValuePtr in_axis = in_axes;
-  if (!in_axis->isa<Int64Imm>() && !in_axis->isa<None>()) {
-    MS_LOG(EXCEPTION) << "The axis in vmap's `in_axes` should be a None or a scalar of type Int64Imm, but got a "
-                      << in_axis->ToString() << ".";
-  }
   if (in_axis->isa<Int64Imm>()) {
     int axis = dyn_cast<Int64Imm>(in_axis)->value();
     auto logical_view_abs = ReduceDim(&axis, physical_view_abs, axis_size);
     return logical_view_abs;
+  }
+  if (!in_axis->isa<None>()) {
+    MS_LOG(EXCEPTION) << "The axis in vmap's 'in_axes' should be a None or a scalar of type Int64Imm, but got a "
+                      << in_axis->ToString() << ".";
   }
   // in_axis is None.
   return physical_view_abs;
@@ -688,7 +688,7 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
   }
   int shape_len = SizeToInt(orig_shape.size() + 1);
   if (*axis < -shape_len || *axis >= shape_len) {
-    MS_LOG(EXCEPTION) << "ValueError: The axis: " << *axis << " in `out_axes` is out of bounds for array of dimension ["
+    MS_LOG(EXCEPTION) << "ValueError: The axis: " << *axis << " in 'out_axes' is out of bounds for array of dimension ["
                       << -shape_len << "," << shape_len << ").";
   }
   *axis = *axis < 0 ? shape_len + *axis : *axis;
@@ -700,7 +700,7 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
   } else if (orig_abs->isa<AbstractScalar>()) {
     out_abs = std::make_shared<abstract::AbstractTensor>(orig_abs, new_shape);
   } else {
-    MS_LOG(EXCEPTION) << "The outputs of vmap's `fn` should be consisting of tensors or constants, but got "
+    MS_LOG(EXCEPTION) << "The outputs of vmap's 'fn' should be consisting of tensors or constants, but got "
                       << orig_abs->ToString() << ".";
   }
   return out_abs;
@@ -715,7 +715,7 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
     auto out_axes_seq = dyn_cast<ValueSequeue>(out_axes);
     if (out_axes_seq != nullptr) {
       if (logical_view_abs_list.size() != out_axes_seq->size()) {
-        MS_LOG(EXCEPTION) << "The size of vmap's `out_axes` should be equal to the number of results of `fn`: "
+        MS_LOG(EXCEPTION) << "The size of vmap's 'out_axes' should be equal to the number of results of 'fn': "
                           << logical_view_abs_list.size() << ", but got size: " << out_axes_seq->size() << ".";
       }
     }
@@ -737,7 +737,7 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
         } else if (sub_out_axes->isa<None>()) {
           return arg_spec;
         }
-        MS_LOG(EXCEPTION) << "The axis in vmap's `out_axes` should be a None or a scalar of type Int64Imm, but got a "
+        MS_LOG(EXCEPTION) << "The axis in vmap's 'out_axes' should be a None or a scalar of type Int64Imm, but got a "
                           << sub_out_axes->ToString() << ".";
       });
     if (logical_view_abs->isa<AbstractList>()) {
@@ -746,18 +746,24 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
     return std::make_shared<AbstractTuple>(physical_view_abs_list);
   }
 
-  int axis = 0;
-  if (out_axes->isa<None>()) {
-    return logical_view_abs;
-  } else if (out_axes->isa<ValueSequeue>()) {
-    ValueSequeuePtr out_axes_seq = dyn_cast<ValueSequeue>(out_axes);
+  // for the single output case, outputs: A, and out_axes: 1 or (1,).
+  ValuePtr sub_out_axes = out_axes;
+  ValueSequeuePtr out_axes_seq = dyn_cast<ValueSequeue>(out_axes);
+  if (out_axes_seq != nullptr) {
     if (out_axes_seq->size() != 1) {
-      MS_LOG(EXCEPTION) << "The  size of vmap's `out_axes` should be equal to the result size: 1, but got size: "
+      MS_LOG(EXCEPTION) << "The  size of vmap's 'out_axes' should be equal to the result size: 1, but got size: "
                         << out_axes_seq->size() << ".";
     }
-    axis = dyn_cast<Int64Imm>((*out_axes_seq)[0])->value();
-  } else if (out_axes->isa<Int64Imm>()) {
-    axis = dyn_cast<Int64Imm>(out_axes)->value();
+    sub_out_axes = (*out_axes_seq)[0];
+  }
+
+  int axis = 0;
+  auto axis_int_ptr = dyn_cast<Int64Imm>(sub_out_axes);
+  if (axis_int_ptr != nullptr) {
+    axis = LongToInt(axis_int_ptr->value());
+  } else {
+    MS_LOG(EXCEPTION) << "The axis in vmap's 'out_axes' should be a None or a scalar of type Int64Imm, but got a "
+                      << sub_out_axes->ToString() << ".";
   }
   return ExtendDim(&axis, logical_view_abs, axis_size);
 }
