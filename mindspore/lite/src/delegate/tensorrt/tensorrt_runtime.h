@@ -39,6 +39,8 @@ class TensorRTLogger : public nvinfer1::ILogger {
   }
 };
 
+enum RuntimePrecisionMode : int { RuntimePrecisionMode_FP32, RuntimePrecisionMode_FP16 };
+
 class TensorRTRuntime {
  public:
   TensorRTRuntime() = default;
@@ -53,6 +55,12 @@ class TensorRTRuntime {
 
   void SetBatchSize(int batch_size) { batch_size_ = batch_size; }
 
+  RuntimePrecisionMode GetRuntimePrecisionMode() { return runtime_percision_mode_; }
+
+  void SetRuntimePrecisionMode(RuntimePrecisionMode runtime_percision_mode) {
+    runtime_percision_mode_ = runtime_percision_mode;
+  }
+
   TensorRTAllocator *GetAllocator() { return this->allocator_; }
 
  private:
@@ -61,6 +69,7 @@ class TensorRTRuntime {
   TensorRTLogger logger_;
   TensorRTAllocator *allocator_{nullptr};
   int batch_size_{0};
+  RuntimePrecisionMode runtime_percision_mode_{RuntimePrecisionMode::RuntimePrecisionMode_FP32};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_

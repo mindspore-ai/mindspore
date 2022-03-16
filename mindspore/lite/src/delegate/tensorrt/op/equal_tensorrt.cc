@@ -53,6 +53,7 @@ int EqualTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "create equal layer failed for: " << op_name_;
     return RET_ERROR;
   }
+  layer_ = equal_layer;
   nvinfer1::ITensor *equal_out = equal_layer->getOutput(0);
   equal_layer->setName(op_name_.c_str());
   equal_out->setName((op_name_ + "_output").c_str());
