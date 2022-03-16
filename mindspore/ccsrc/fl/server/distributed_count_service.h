@@ -73,7 +73,7 @@ class DistributedCountService {
 
   // Query whether the count reaches the threshold count for the name. If the count is the same as the threshold count,
   // this method returns true.
-  bool CountReachThreshold(const std::string &name);
+  bool CountReachThreshold(const std::string &name, const std::string &fl_id = "");
 
   // Reset the count of the name to 0.
   void ResetCounter(const std::string &name);

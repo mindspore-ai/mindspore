@@ -142,7 +142,7 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
   return true;
 }
 
-bool DistributedCountService::CountReachThreshold(const std::string &name) {
+bool DistributedCountService::CountReachThreshold(const std::string &name, const std::string &fl_id) {
   MS_LOG(DEBUG) << "Rank " << local_rank_ << " query whether count reaches threshold for " << name;
   if (local_rank_ == counting_server_rank_) {
     if (global_threshold_count_.count(name) == 0) {
@@ -162,8 +162,9 @@ bool DistributedCountService::CountReachThreshold(const std::string &name) {
     std::shared_ptr<std::vector<unsigned char>> query_cnt_enough_rsp_msg = nullptr;
     if (!communicator_->SendPbRequest(count_reach_threshold_req, counting_server_rank_,
                                       ps::core::TcpUserCommand::kReachThreshold, &query_cnt_enough_rsp_msg)) {
-      MS_LOG(WARNING) << "Sending querying whether count reaches threshold message to leader server failed for "
-                      << name;
+      std::string reason = "Sending querying whether count reaches " + name +
+                           " threshold message to leader server failed" + (fl_id.empty() ? "" : " for fl id " + fl_id);
+      MS_LOG(WARNING) << reason;
       return false;
     }
 

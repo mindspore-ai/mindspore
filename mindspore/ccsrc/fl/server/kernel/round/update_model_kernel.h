@@ -51,7 +51,8 @@ class UpdateModelKernel : public RoundKernel {
   void OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) override;
 
  private:
-  ResultCode ReachThresholdForUpdateModel(const std::shared_ptr<FBBuilder> &fbb);
+  ResultCode ReachThresholdForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
+                                          const schema::RequestUpdateModel *update_model_req);
   ResultCode UpdateModel(const schema::RequestUpdateModel *update_model_req, const std::shared_ptr<FBBuilder> &fbb,
                          const DeviceMeta &device_meta);
   std::map<std::string, UploadData> ParseFeatureMap(const schema::RequestUpdateModel *update_model_req);

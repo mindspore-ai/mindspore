@@ -55,7 +55,10 @@ bool PushMetricsKernel::Launch(const uint8_t *req_data, size_t len,
 
   ResultCode result_code = PushMetrics(fbb, push_metrics_req);
   GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
-  return ConvertResultCode(result_code);
+  if (result_code != ResultCode::kSuccess) {
+    return false;
+  }
+  return true;
 }
 
 bool PushMetricsKernel::Reset() {
@@ -74,8 +77,8 @@ void PushMetricsKernel::OnLastCountEvent(const std::shared_ptr<ps::core::Message
 
 ResultCode PushMetricsKernel::PushMetrics(const std::shared_ptr<FBBuilder> &fbb,
                                           const schema::RequestPushMetrics *push_metrics_req) {
-  MS_ERROR_IF_NULL_W_RET_VAL(fbb, ResultCode::kSuccessAndReturn);
-  MS_ERROR_IF_NULL_W_RET_VAL(push_metrics_req, ResultCode::kSuccessAndReturn);
+  MS_ERROR_IF_NULL_W_RET_VAL(fbb, ResultCode::kFail);
+  MS_ERROR_IF_NULL_W_RET_VAL(push_metrics_req, ResultCode::kFail);
 
   float loss = push_metrics_req->loss();
   float accuracy = push_metrics_req->accuracy();
@@ -87,7 +90,7 @@ ResultCode PushMetricsKernel::PushMetrics(const std::shared_ptr<FBBuilder> &fbb,
     std::string reason = "Count for push metrics request failed.";
     BuildPushMetricsRsp(fbb, schema::ResponseCode_SystemError);
     MS_LOG(ERROR) << reason;
-    return count_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
+    return ResultCode::kFail;
   }
 
   BuildPushMetricsRsp(fbb, schema::ResponseCode_SUCCEED);

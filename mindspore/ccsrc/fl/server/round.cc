@@ -95,7 +95,11 @@ bool Round::ReInitForScaling(uint32_t server_num) {
   }
 
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_, false);
-  kernel_->InitKernel(threshold_count_);
+  if (name_ == "reconstructSecrets") {
+    kernel_->InitKernel(server_num);
+  } else {
+    kernel_->InitKernel(threshold_count_);
+  }
   return true;
 }
 
@@ -138,8 +142,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   bool ret = kernel_->Launch(reinterpret_cast<const uint8_t *>(message->data()), message->len(), message);
   // Must send response back no matter what value Launch method returns.
   if (!ret) {
-    reason = "Launching round kernel of round " + name_ + " failed.";
-    Iteration::GetInstance().NotifyNext(false, reason);
+    MS_LOG(DEBUG) << "Launching round kernel of round " + name_ + " failed.";
   }
   (void)(Iteration::GetInstance().running_round_num_--);
   return;

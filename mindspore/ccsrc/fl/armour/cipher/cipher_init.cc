@@ -75,6 +75,7 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
   if (param.encrypt_type == mindspore::ps::kPWEncryptType) {
     cipher_meta_storage_.RegisterClass();
     const std::string new_prime(reinterpret_cast<const char *>(param.prime), PRIME_MAX_LEN);
+    new_prime_ = new_prime;
     cipher_meta_storage_.RegisterPrime(fl::server::kCtxCipherPrimer, new_prime);
     if (!cipher_meta_storage_.GetPrimeFromServer(fl::server::kCtxCipherPrimer, publicparam_.prime)) {
       MS_LOG(ERROR) << "Cipher Param Update is invalid.";
@@ -99,6 +100,19 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
     cipher_meta_storage_.RegisterStablePWClass();
     MS_LOG(INFO) << "Register metadata for StablePWEncrypt is finished.";
   }
+  return true;
+}
+
+bool CipherInit::ReInitForScaling() {
+  if (ps::PSContext::instance()->encrypt_type() == mindspore::ps::kPWEncryptType) {
+    cipher_meta_storage_.RegisterClass();
+    cipher_meta_storage_.RegisterPrime(fl::server::kCtxCipherPrimer, new_prime_);
+    if (!cipher_meta_storage_.GetPrimeFromServer(fl::server::kCtxCipherPrimer, publicparam_.prime)) {
+      MS_LOG(ERROR) << "Cipher Param Update is invalid.";
+      return false;
+    }
+  }
+  MS_LOG(INFO) << "CipherInit reinit for scaling success.";
   return true;
 }
 

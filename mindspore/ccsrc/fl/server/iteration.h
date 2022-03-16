@@ -219,6 +219,8 @@ class Iteration {
 
   void UpdateRoundClientUploadLoss(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg);
 
+  void StartNewInstance();
+
   std::shared_ptr<ps::core::ServerNode> server_node_;
   std::shared_ptr<ps::core::TcpCommunicator> communicator_;
 

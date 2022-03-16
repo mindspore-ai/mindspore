@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 #include "fl/server/executor.h"
-#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/parse/python_adapter.h"
 
 namespace mindspore {
 namespace fl {
@@ -34,6 +34,7 @@ void ModelStore::Initialize(uint32_t rank_id, uint32_t max_count) {
   initial_model_ = AssignNewModelMemory();
   iteration_to_model_[kInitIterationNum] = initial_model_;
   model_size_ = ComputeModelSize();
+  MS_LOG(INFO) << "Model store checkpoint dir is: " << ps::PSContext::instance()->checkpoint_dir();
 }
 
 void ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &new_model) {
