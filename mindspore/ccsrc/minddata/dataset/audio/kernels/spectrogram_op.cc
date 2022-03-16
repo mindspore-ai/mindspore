@@ -32,6 +32,7 @@ Status SpectrogramOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
   constexpr int two = 2;
   int length_ = inputs[0][-1] + pad_ * 2 + n_fft_;
   int n_columns = 0;
+  CHECK_FAIL_RETURN_UNEXPECTED(hop_length_ != 0, "Spectrogram: hop_length can not be zero.");
   while ((1 + n_columns++) * hop_length_ + n_fft_ <= length_) {
   }
   auto vec = inputs[0].AsVector();

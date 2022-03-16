@@ -1615,6 +1615,7 @@ Status SpectrogramImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
                                  ", but got n_fft: " + std::to_string(n_fft) + ".");
 
   // calculate the sliding times of the window function
+  CHECK_FAIL_RETURN_UNEXPECTED(hop_length != 0, "Spectrogram: hop_length can not be zero.");
   int n_columns = 0;
   while ((1 + n_columns++) * hop_length + n_fft <= input_data_tensor->shape()[-1]) {
   }
