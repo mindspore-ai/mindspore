@@ -36,24 +36,6 @@ float L2Normalize::get_epsilon() const {
   return GetValue<float>(value_ptr);
 }
 
-AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", int64_t(input_args.size()), kEqual, 1, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_rank = SizeToLong(x_shape.size());
-  auto axiss = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
-  for (auto &axis : axiss) {
-    CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);
-  }
-  return input_args[0]->Broaden();
-}
 REGISTER_PRIMITIVE_C(kNameL2Normalize, L2Normalize);
 }  // namespace ops
 }  // namespace mindspore

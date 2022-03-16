@@ -24,19 +24,6 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr FftRealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto out_dtype = kFloat32;
-  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  out_shape.pop_back();
-  return std::make_shared<abstract::AbstractTensor>(out_dtype, std::make_shared<abstract::Shape>(out_shape));
-}
 REGISTER_PRIMITIVE_C(kNameFftReal, FftReal);
 }  // namespace ops
 }  // namespace mindspore

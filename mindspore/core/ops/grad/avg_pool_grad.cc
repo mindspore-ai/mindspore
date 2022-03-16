@@ -19,16 +19,6 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr AvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[0]->BuildValue());
-  auto origin_input_shape = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
-  auto tensor_type = input_args[1]->BuildType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto element = tensor_type->element();
-  return std::make_shared<abstract::AbstractTensor>(element, origin_input_shape);
-}
 REGISTER_PRIMITIVE_C(kNameAvgPoolGrad, AvgPoolGrad);
 }  // namespace ops
 }  // namespace mindspore

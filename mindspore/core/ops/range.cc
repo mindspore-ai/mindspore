@@ -57,51 +57,6 @@ void Range::Init(const int64_t d_type, const int64_t start, const int64_t limit,
   this->set_delta(delta);
 }
 
-AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  int64_t shape_size = 0;
-  const size_t max_input_num = 3;
-  if (input_args.size() == max_input_num) {
-    MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]->BuildValue());
-    MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]->BuildValue());
-    MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]->BuildValue());
-    auto start_tensor = input_args[kInputIndex0]->BuildValue()->cast<tensor::TensorPtr>();
-    auto limit_tensor = input_args[kInputIndex1]->BuildValue()->cast<tensor::TensorPtr>();
-    auto delta_tensor = input_args[kInputIndex2]->BuildValue()->cast<tensor::TensorPtr>();
-    auto dtype = start_tensor->data_type();
-    switch (dtype) {
-      case kNumberTypeInt:
-      case kNumberTypeInt32: {
-        auto start = *reinterpret_cast<int *>(start_tensor->data_c());
-        auto limit = *reinterpret_cast<int *>(limit_tensor->data_c());
-        auto delta = *reinterpret_cast<int *>(delta_tensor->data_c());
-        shape_size =
-          std::max(static_cast<int64_t>(std::ceil(static_cast<float>(limit - start) / delta)), static_cast<int64_t>(0));
-      } break;
-      case kNumberTypeFloat32:
-      case kNumberTypeFloat: {
-        auto start = *reinterpret_cast<float *>(start_tensor->data_c());
-        auto limit = *reinterpret_cast<float *>(limit_tensor->data_c());
-        auto delta = *reinterpret_cast<float *>(delta_tensor->data_c());
-        shape_size =
-          std::max(static_cast<int64_t>(std::ceil(static_cast<float>(limit - start) / delta)), static_cast<int64_t>(0));
-      } break;
-      default: {
-        MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                          << "', the supported dataType is ['int32', 'float32'], but got " << dtype;
-      }
-    }
-  } else {
-    int64_t start = GetValue<int64_t>(primitive->GetAttr(kStart));
-    int64_t limit = GetValue<int64_t>(primitive->GetAttr(kLimit));
-    int64_t delta = GetValue<int64_t>(primitive->GetAttr(kDelta));
-    shape_size =
-      std::max(static_cast<int64_t>(std::ceil(LongToDouble(limit - start) / delta)), static_cast<int64_t>(0));
-  }
-  return std::make_shared<abstract::AbstractTensor>(
-    kInt32, std::make_shared<abstract::Shape>(std::vector<int64_t>{shape_size}));
-}
 REGISTER_PRIMITIVE_C(kNameRange, Range);
 }  // namespace ops
 }  // namespace mindspore

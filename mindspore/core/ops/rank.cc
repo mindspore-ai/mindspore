@@ -18,21 +18,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-TypePtr RankInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto op_name = prim->name();
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto infer_dtype = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, {kTensorType}, op_name);
-  return kTypeNone;
-}
-}  // namespace
-AbstractBasePtr RankInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) {
-  std::vector<int64_t> infer_shape;
-  return std::make_shared<abstract::AbstractTensor>(RankInferType(primitive, input_args), infer_shape);
-}
 REGISTER_PRIMITIVE_C(kNameRank, Rank);
 }  // namespace ops
 }  // namespace mindspore

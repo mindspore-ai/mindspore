@@ -42,26 +42,7 @@ std::string Broadcast::get_group() const {
   auto value_ptr = this->GetAttr(kGroup);
   return GetValue<std::string>(value_ptr);
 }
-AbstractBasePtr BroadcastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  // infer shape
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  // infer type
-  auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  std::vector<TypePtr> output_types;
-  const std::set<TypePtr> valid_types = {kInt8, kInt32, kFloat16, kFloat32};
-  for (size_t i = 0; i < input_args.size(); i++) {
-    auto out_type = input_args[i]->BuildType()->cast<TensorTypePtr>()->element();
-    output_types.push_back(out_type);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("index_type", out_type, valid_types, prim_name);
-  }
-  return std::make_shared<abstract::AbstractTensor>(x_type, in_shape);
-}
+
 REGISTER_PRIMITIVE_C(kNameBroadcast, Broadcast);
 }  // namespace ops
 }  // namespace mindspore

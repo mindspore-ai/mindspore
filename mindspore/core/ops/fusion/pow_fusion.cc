@@ -34,34 +34,6 @@ void PowFusion::set_shift(const float &shift) { (void)this->AddAttr(kShift, Make
 float PowFusion::get_scale() const { return GetValue<float>(GetAttr(kScale)); }
 float PowFusion::get_shift() const { return GetValue<float>(GetAttr(kShift)); }
 
-namespace {
-abstract::ShapePtr PowFusionInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  return BroadCastInferShape(op_name, input_args);
-}
-
-TypePtr PowFusionInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-}
-}  // namespace
-
-AbstractBasePtr PowFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("PowFusion infer", SizeToLong(input_args.size()), kGreaterEqual, input_num,
-                                           primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(PowFusionInferType(primitive, input_args),
-                                                    PowFusionInferShape(primitive, input_args));
-}
 REGISTER_PRIMITIVE_C(kNamePowFusion, PowFusion);
 }  // namespace ops
 }  // namespace mindspore

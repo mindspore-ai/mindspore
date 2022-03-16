@@ -78,63 +78,6 @@ void AvgPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<in
   this->set_round_mode(round_mode);
 }
 
-namespace {
-abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = primitive->name();
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
-  const int64_t x_size = 4;
-  const int64_t attr_size = 4;
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, x_size, op_name);
-  if (format == NHWC) {
-    in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
-  }
-  auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
-  auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
-  auto batch = in_shape[0];
-  auto channel = in_shape[1];
-  auto in_h = in_shape[2];
-  auto in_w = in_shape[3];
-  auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
-  (void)CheckAndConvertUtils::CheckInteger("kernel size", SizeToLong(kernel_size.size()), kEqual, attr_size, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("strides size", SizeToLong(strides.size()), kEqual, attr_size, op_name);
-  if (std::any_of(strides.begin(), strides.end(), [](int64_t stride) { return stride <= 0; })) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', strides must be positive, but it's " << strides << ".";
-  }
-  if (std::any_of(kernel_size.begin(), kernel_size.end(), [](int64_t size) { return size <= 0; })) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', Kernel size must be positive, but it's " << kernel_size << ".";
-  }
-  auto kernel_h = kernel_size[2];
-  auto kernel_w = kernel_size[3];
-  auto stride_h = strides[2];
-  auto stride_w = strides[3];
-  int64_t out_h = abstract::Shape::SHP_ANY;
-  int64_t out_w = abstract::Shape::SHP_ANY;
-  if (pad_mode == VALID) {
-    out_h = static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
-    out_w = static_cast<int64_t>(std::ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
-  } else if (pad_mode == SAME) {
-    out_h = static_cast<int64_t>(std::ceil(in_h / static_cast<float>(stride_h)));
-    out_w = static_cast<int64_t>(std::ceil(in_w / static_cast<float>(stride_w)));
-  }
-  std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
-  if (format == NHWC) {
-    out_shape = {batch, out_h, out_w, channel};
-  }
-  return std::make_shared<abstract::Shape>(out_shape);
-}
-
-TypePtr AvgPoolInferType(const std::vector<AbstractBasePtr> &input_args) { return input_args[0]->BuildType(); }
-}  // namespace
-
-AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(AvgPoolInferType(input_args),
-                                                    AvgPoolInferShape(primitive, input_args)->shape());
-}
 REGISTER_PRIMITIVE_C(kNameAvgPool, AvgPool);
 }  // namespace ops
 }  // namespace mindspore

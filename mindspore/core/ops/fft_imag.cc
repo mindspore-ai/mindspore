@@ -21,23 +21,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr FftImagInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto name = primitive->name();
-  MS_LOG(DEBUG) << "Infer shape for " << name;
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  in_shape.pop_back();
-  return std::make_shared<abstract::Shape>(in_shape);
-}
-}  // namespace
-
-AbstractBasePtr FftImagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(kFloat32, FftImagInferShape(primitive, input_args));
-}
 REGISTER_PRIMITIVE_C(kNameFftImag, FftImag);
 }  // namespace ops
 }  // namespace mindspore

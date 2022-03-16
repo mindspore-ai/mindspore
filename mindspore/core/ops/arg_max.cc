@@ -18,34 +18,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr ArgMaxInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInRange<int64_t>("argmax axis", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);
-  axis = axis < 0 ? axis + x_rank : axis;
-  std::vector<int64_t> out_shape;
-  for (size_t i = 0; i < x_shape.size(); ++i) {
-    if (SizeToLong(i) != axis) {
-      (void)out_shape.emplace_back(x_shape[i]);
-    }
-  }
-  return std::make_shared<abstract::Shape>(out_shape);
-}
-
-TypePtr ArgMaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim->name());
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  return kInt32;
-}
-}  // namespace
-
 void ArgMax::Init(const int64_t axis, const TypeId output_type) {
   set_axis(axis);
   set_output_type(output_type);
@@ -60,11 +32,6 @@ TypeId ArgMax::get_output_type() const {
   return type_ptr->type_id();
 }
 
-AbstractBasePtr ArgMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(ArgMaxInferType(primitive, input_args),
-                                                    ArgMaxInferShape(primitive, input_args)->shape());
-}
 REGISTER_PRIMITIVE_C(kNameArgMax, ArgMax);
 }  // namespace ops
 }  // namespace mindspore

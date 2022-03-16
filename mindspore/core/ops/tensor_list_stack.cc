@@ -46,24 +46,6 @@ int64_t TensorListStack::get_element_dtype() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-AbstractBasePtr TensorListStackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &input : input_args) {
-    MS_EXCEPTION_IF_NULL(input);
-  }
-  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  int64_t num = std::accumulate(input0_shape.begin(), input0_shape.end(), 1LL, std::multiplies<int64_t>());
-  if (num == 0) {
-    MS_LOG(ERROR) << "For '" << primitive->name() << "', Try to stack a empty tensorlist!";
-  }
-  if (input_args[1]->BuildShape() == nullptr) {
-    MS_LOG(ERROR) << "For '" << primitive->name() << "', the seceond input data shape is nullptr";
-  }
-  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  (void)input1_shape.insert(input1_shape.begin(), 1);
-  return std::make_shared<abstract::AbstractTensor>(input_args[0]->BuildType(), input1_shape);
-}
 REGISTER_PRIMITIVE_C(kNameTensorListStack, TensorListStack);
 }  // namespace ops
 }  // namespace mindspore

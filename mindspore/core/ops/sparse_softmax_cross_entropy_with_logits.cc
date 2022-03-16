@@ -33,29 +33,6 @@ void SparseSoftmaxCrossEntropyWithLogits::set_is_grad(const bool is_grad) {
 
 bool SparseSoftmaxCrossEntropyWithLogits::get_is_grad() const { return GetValue<bool>(GetAttr(kIsGrad)); }
 
-AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &,
-                                                         const PrimitivePtr &primitive,
-                                                         const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
-                                           prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  // infer shape
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  std::vector<int64_t> output_shape;
-  if (GetValue<bool>(primitive->GetAttr(kIsGrad)) != 0) {
-    output_shape = input_shape;
-  } else {
-    output_shape.push_back(1);
-  }
-  // infer type
-  auto output_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  return std::make_shared<abstract::AbstractTensor>(output_type, output_shape);
-}
 REGISTER_PRIMITIVE_C(kNameSparseSoftmaxCrossEntropyWithLogits, SparseSoftmaxCrossEntropyWithLogits);
 }  // namespace ops
 }  // namespace mindspore

@@ -42,20 +42,6 @@ float CustomPredict::get_weight_threshold() const {
   return GetValue<float>(value_ptr);
 }
 
-AbstractBasePtr CustomPredictInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &input : input_args) {
-    MS_EXCEPTION_IF_NULL(input);
-  }
-  std::vector<int64_t> shape;
-  shape.push_back(GetValue<int64_t>(primitive->GetAttr(kOutputNum)));
-
-  auto output0 = std::make_shared<abstract::AbstractTensor>(kInt32, shape);
-  auto output1 = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
-  AbstractBasePtrList output = {output0, output1};
-  return std::make_shared<abstract::AbstractTuple>(output);
-}
 REGISTER_PRIMITIVE_C(kNameCustomPredict, CustomPredict);
 }  // namespace ops
 }  // namespace mindspore

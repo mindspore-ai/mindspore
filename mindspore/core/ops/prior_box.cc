@@ -119,30 +119,6 @@ void PriorBox::Init(const std::vector<int64_t> &min_sizes, const std::vector<int
   this->set_offset(offset);
 }
 
-AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  std::vector<float> different_aspect_ratios{1.0f};
-  auto aspect_ratios = GetValue<std::vector<float>>(primitive->GetAttr(kAspectRatios));
-  for (size_t i = 0; i < aspect_ratios.size(); i++) {
-    float ratio = aspect_ratios[i];
-    bool exist = std::any_of(different_aspect_ratios.begin(), different_aspect_ratios.end(),
-                             [&](float v) { return abs(ratio - v) < 1e-6; });
-    if (!exist) {
-      (void)different_aspect_ratios.emplace_back(ratio);
-      if (GetValue<bool>(primitive->GetAttr(kFlip))) {
-        (void)different_aspect_ratios.emplace_back(1.0f / ratio);
-      }
-    }
-  }
-  auto min_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr(kMinSizes));
-  int64_t num_priors_box = SizeToLong(min_sizes.size() * different_aspect_ratios.size() + min_sizes.size());
-  auto input = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  int64_t h = input[0] * input[1] * num_priors_box * 4;
-  std::vector<int64_t> output_shape{1, h, 1, 2};
-  return std::make_shared<abstract::AbstractTensor>(kFloat32, output_shape);
-}
 REGISTER_PRIMITIVE_C(kNamePriorBox, PriorBox);
 }  // namespace ops
 }  // namespace mindspore

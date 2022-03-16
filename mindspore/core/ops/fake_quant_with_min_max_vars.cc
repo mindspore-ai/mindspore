@@ -25,41 +25,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr FakeQuantWithMinMaxVarsInferShape(const PrimitivePtr &primitive,
-                                                     const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kGreaterEqual, 1, prim_name);
-  CheckAndConvertUtils::Check("min_shape", min_shape, kEqual, max_shape, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("min_shape", SizeToLong(min_shape.size()), kEqual, 1, prim_name);
-  int64_t shape_val = 1;
-  for (size_t i = 0; i < in_shape.size(); i++) {
-    shape_val = shape_val * in_shape[i];
-    if (min_shape[0] > 1 && min_shape[0] != shape_val) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name
-                               << "', the shape of \'min\' cannot broadcast to the shape of  \'x\'";
-    }
-  }
-  return std::make_shared<abstract::Shape>(in_shape);
-}
-
-TypePtr FakeQuantWithMinMaxVarsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name()
-                      << "', the input args userd for infer shape and type, can not be a nullptr.";
-  }
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("min", input_args[kInputIndex1]->BuildType());
-  (void)types.emplace("max", input_args[kInputIndex2]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-}
-}  // namespace
 void FakeQuantWithMinMaxVars::Init(const bool narrow_range, const int64_t num_bits) {
   this->set_narrow_range(narrow_range);
   this->set_num_bits(num_bits);
@@ -82,11 +47,7 @@ int64_t FakeQuantWithMinMaxVars::get_num_bits() const {
   auto value_ptr = this->GetAttr(kNumBits);
   return GetValue<int64_t>(value_ptr);
 }
-AbstractBasePtr FakeQuantWithMinMaxVarsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(FakeQuantWithMinMaxVarsInferType(primitive, input_args),
-                                                    FakeQuantWithMinMaxVarsInferShape(primitive, input_args)->shape());
-}
+
 REGISTER_PRIMITIVE_C(kNameFakeQuantWithMinMaxVars, FakeQuantWithMinMaxVars);
 }  // namespace ops
 }  // namespace mindspore

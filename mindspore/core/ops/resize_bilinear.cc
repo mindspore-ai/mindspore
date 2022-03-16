@@ -42,25 +42,7 @@ void ResizeBilinear::Init(const std::vector<int64_t> &size, const bool align_cor
   this->set_size(size);
   this->set_align_corners(align_corners);
 }
-AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
 
-  // Infer shape
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  const int64_t shape_size = 4;
-  (void)CheckAndConvertUtils::CheckInteger("input rank", SizeToLong(input_shape.size()), kEqual, shape_size, prim_name);
-  std::vector<int64_t> out_shape = {input_shape[0], input_shape[1]};
-  auto size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSize));
-  (void)out_shape.insert(out_shape.end(), size.begin(), size.end());
-
-  // Infer type
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_type", input_args[0]->BuildType(), valid_types, prim_name);
-  return std::make_shared<abstract::AbstractTensor>(input_args[0]->BuildType(), out_shape);
-}
 REGISTER_PRIMITIVE_C(kNameResizeBilinear, ResizeBilinear);
 }  // namespace ops
 }  // namespace mindspore

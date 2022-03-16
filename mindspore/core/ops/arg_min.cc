@@ -34,32 +34,6 @@ TypeId ArgMin::get_output_type() const {
   return type_ptr->type_id();
 }
 
-AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("arg_min_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-
-  // Infer shape
-  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);
-  if (axis < 0) {
-    axis += x_rank;
-  }
-  std::vector<int64_t> out_shape;
-  for (int64_t i = 0; i < x_rank; i++) {
-    if (i != axis) {
-      out_shape.push_back(x_shape[LongToSize(i)]);
-    }
-  }
-
-  // Infer type
-  auto x_dtype = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  return std::make_shared<abstract::AbstractTensor>(x_dtype, std::make_shared<abstract::Shape>(out_shape));
-}
 REGISTER_PRIMITIVE_C(kNameArgMin, ArgMin);
 }  // namespace ops
 }  // namespace mindspore

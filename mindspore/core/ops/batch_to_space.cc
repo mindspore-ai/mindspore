@@ -44,43 +44,6 @@ std::vector<std::vector<int64_t>> BatchToSpace::get_crops() const {
   return GetValue<std::vector<std::vector<int64_t>>>(value_ptr);
 }
 
-AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), common_valid_types,
-                                                   prim_name);
-
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto block_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockSize));
-  auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));
-  auto out_shape = x_shape;
-  const int64_t attr_size = 4;
-  const int64_t x_rank = 4;
-  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("block_size size", SizeToLong(block_size.size()), kEqual, attr_size,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("crops size", SizeToLong(crops.size()), kEqual, attr_size, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("crops[0] size", SizeToLong(crops[0].size()), kEqual, attr_size, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("crops[1] size", SizeToLong(crops[1].size()), kEqual, attr_size, prim_name);
-  for (size_t i = 0; i < 2; ++i) {
-    auto x_block_prod = out_shape[i + 2] * block_size[i];
-    auto crops_sum = crops[i][0] + crops[i][1];
-    CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, attr_size, prim_name);
-    out_shape[i + 2] = x_block_prod - crops_sum;
-  }
-  (void)CheckAndConvertUtils::CheckInteger("x_shape[0] % (block_size[0]*block_size[1])",
-                                           out_shape[0] % (block_size[0] * block_size[1]), kEqual, 0, prim_name);
-  out_shape[0] /= block_size[0] * block_size[1];
-
-  auto ret = input_args[0]->Broaden();
-  ret->set_shape(std::make_shared<abstract::Shape>(out_shape));
-  return ret;
-}
 REGISTER_PRIMITIVE_C(kNameBatchToSpace, BatchToSpace);
 }  // namespace ops
 }  // namespace mindspore

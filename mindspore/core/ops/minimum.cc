@@ -26,34 +26,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr MinimumInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  return BroadCastInferShape(op_name, input_args);
-}
-
-TypePtr MinimumInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto op_name = prim->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name()
-                      << ", the input args userd for infer shape and type, can not be a nullptr.";
-  }
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, op_name);
-}
-}  // namespace
-
-AbstractBasePtr MinimumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(MinimumInferType(primitive, input_args),
-                                                    MinimumInferShape(primitive, input_args));
-}
 REGISTER_PRIMITIVE_C(kNameMinimum, Minimum);
 }  // namespace ops
 }  // namespace mindspore

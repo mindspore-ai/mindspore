@@ -22,35 +22,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr BinaryCrossEntroyGradInferShape(const PrimitivePtr &primitive,
-                                                   const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("x shape", x_shape, kEqual, y_shape, prim_name);
-  if (weight_shape.size() < 1) {
-    CheckAndConvertUtils::Check("y shape", y_shape, kEqual, weight_shape, prim_name);
-  }
-  return std::make_shared<abstract::Shape>(x_shape);
-}
-
-TypePtr BinaryCrossEntroyGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x_shape", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("y_shape", input_args[kInputIndex1]->BuildType());
-  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  if (input_args[kInputIndex3]->BuildType() != nullptr) {
-    (void)types.emplace("x_shape", input_args[kInputIndex0]->BuildType());
-    (void)types.emplace("weight_shape", input_args[kInputIndex2]->BuildType());
-    infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  }
-  return infer_type;
-}
-}  // namespace
 void BinaryCrossEntropyGrad::Init(const Reduction &reduction) { set_reduction(reduction); }
 
 void BinaryCrossEntropyGrad::set_reduction(const Reduction &reduction) {
@@ -62,18 +33,6 @@ Reduction BinaryCrossEntropyGrad::get_reduction() const {
   return Reduction(GetValue<int64_t>(value_ptr));
 }
 
-AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  const int64_t input_num = 4;
-  (void)CheckAndConvertUtils::CheckInteger("BinaryCrossEntropyGrad infer", SizeToLong(input_args.size()), kGreaterEqual,
-                                           input_num, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(BinaryCrossEntroyGradInferType(primitive, input_args),
-                                                    BinaryCrossEntroyGradInferShape(primitive, input_args));
-}
 REGISTER_PRIMITIVE_C(kNameBinaryCrossEntropyGrad, BinaryCrossEntropyGrad);
 }  // namespace ops
 }  // namespace mindspore

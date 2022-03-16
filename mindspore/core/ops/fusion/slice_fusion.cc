@@ -30,40 +30,6 @@ std::vector<int64_t> SliceFusion::get_axes() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_shape_len = x_shape.size();
-  auto begin_v = input_args[kInputIndex1]->BuildValue();
-  auto size_v = input_args[kInputIndex2]->BuildValue();
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  MS_EXCEPTION_IF_NULL(x_type);
-  MS_EXCEPTION_IF_NULL(begin_v);
-  MS_EXCEPTION_IF_NULL(size_v);
-  auto tensor_type = x_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto data_type = tensor_type->element();
-  MS_EXCEPTION_IF_NULL(data_type);
-  if (begin_v == kAnyValue || size_v == kAnyValue) {
-    return std::make_shared<abstract::AbstractTensor>(data_type, std::vector<int64_t>{});
-  }
-  auto begin = GetValue<std::vector<int64_t>>(begin_v);
-  auto size = GetValue<std::vector<int64_t>>(size_v);
-  CheckAndConvertUtils::Check("len of begin", (int64_t)begin.size(), kEqual, SizeToLong(x_shape_len));
-  CheckAndConvertUtils::Check("len of size", (int64_t)size.size(), kEqual, SizeToLong(x_shape_len));
-
-  for (size_t i = 0; i < x_shape_len; i++) {
-    (void)CheckAndConvertUtils::CheckInteger("input size[" + std::to_string(i) + "]", size[i], kGreaterThan, 0, "");
-    if (x_shape[i] < (begin[i] + size[i])) {
-      auto y = begin[i] + size[i];
-      MS_EXCEPTION(ValueError) << "For " + op_name + "slice shape can't bigger than origin shape " +
-                                    std::to_string(x_shape[i]) + "," + std::to_string(y);
-    }
-  }
-  return std::make_shared<abstract::AbstractTensor>(data_type, size);
-}
 REGISTER_PRIMITIVE_C(kNameSliceFusion, SliceFusion);
 }  // namespace ops
 }  // namespace mindspore

@@ -40,21 +40,7 @@ std::vector<int64_t> Crop::get_offsets() const {
   auto value_ptr = this->GetAttr(kOffsets);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
-AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  // infer shape
-  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  // infer type
-  auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  return std::make_shared<abstract::AbstractTensor>(x_type, out_shape);
-}
+
 REGISTER_PRIMITIVE_C(kNameCrop, Crop);
 }  // namespace ops
 }  // namespace mindspore

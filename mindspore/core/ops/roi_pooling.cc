@@ -48,31 +48,7 @@ void ROIPooling::Init(const int64_t pooled_h, const int64_t pooled_w, const floa
   this->set_pooled_w(pooled_w);
   this->set_scale(scale);
 }
-AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  MS_EXCEPTION_IF_NULL(input_args[1]);
 
-  // Infer type
-  auto output_data_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-
-  // Infer shape
-  auto new_h = GetValue<int64_t>(primitive->GetAttr(kPooledH));
-  auto new_w = GetValue<int64_t>(primitive->GetAttr(kPooledW));
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  std::vector<int64_t> output_shape;
-  output_shape.push_back(roi_shape[0]);
-  output_shape.push_back(new_h);
-  output_shape.push_back(new_w);
-  output_shape.push_back(input_shape[1]);
-
-  return std::make_shared<abstract::AbstractTensor>(output_data_type, std::make_shared<abstract::Shape>(output_shape));
-}
 REGISTER_PRIMITIVE_C(kNameROIPooling, ROIPooling);
 }  // namespace ops
 }  // namespace mindspore

@@ -29,23 +29,7 @@ void DynamicQuant::Init(const bool symmetric, const int64_t dst_type) {
   this->set_symmetric(symmetric);
   this->set_dst_type(dst_type);
 }
-AbstractBasePtr DynamicQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  const size_t x_index = 0;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
-  auto input_type = CheckAndConvertUtils::GetTensorInputType(primitive->name(), input_args, x_index);
-  auto dst_type = TypeIdToType(TypeId(GetValue<int64_t>(primitive->GetAttr(kDstType))));
-  MS_EXCEPTION_IF_NULL(dst_type);
-  if (input_type->type_id() != kNumberTypeFloat16 && input_type->type_id() != kNumberTypeFloat32) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
-                            << "', Input type should be kNumberTypeFloat16 or kNumberTypeFloat32"
-                            << ", but " << input_type->ToString();
-  }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  return std::make_shared<abstract::AbstractTensor>(dst_type, input_shape);
-}
+
 REGISTER_PRIMITIVE_C(kNameDynamicQuant, DynamicQuant);
 }  // namespace ops
 }  // namespace mindspore

@@ -20,17 +20,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-AbstractBasePtr LstmGradInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  // infer shape
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &input : input_args) {
-    MS_EXCEPTION_IF_NULL(input);
-  }
-  return nullptr;
-}
-}  // namespace
-
 void LSTMGrad::set_input_size(const int64_t input_size) {
   (void)CheckAndConvertUtils::CheckInteger(kInput_size, input_size, kGreaterThan, 0, this->name());
   (void)AddAttr(kInput_size, MakeValue(input_size));
@@ -95,10 +84,6 @@ void LSTMGrad::Init(const int64_t input_size, const int64_t hidden_size, const i
   this->set_zoneout_hidden(zoneout_hidden);
 }
 
-AbstractBasePtr LstmGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(LstmGradInfer(primitive, input_args));
-}
 REGISTER_PRIMITIVE_C(kNameLSTMGrad, LSTMGrad);
 }  // namespace ops
 }  // namespace mindspore

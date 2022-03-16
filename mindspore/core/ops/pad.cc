@@ -20,40 +20,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr PadInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  auto paddings_attr = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("paddings_size", SizeToLong(paddings_attr.size()), kEqual,
-                                           int64_t(2 * x_shape.size()), prim_name);
-  int64_t size = SizeToLong(paddings_attr.size());
-  for (int64_t i = 0; i < size; i++) {
-    for (int64_t j = 0; j < 2; j++) {
-      if (paddings_attr[LongToSize(i)][LongToSize(j)] < 0) {
-        MS_LOG_ERROR << "For '" << prim_name << "', All elements of paddings must be >= 0, but got "
-                     << paddings_attr[LongToSize(i)][LongToSize(j)];
-      }
-    }
-  }
-  std::vector<int64_t> out_shape;
-  for (int64_t i = 0; i < int64_t(paddings_attr.size() / 2); i++) {
-    (void)out_shape.emplace_back(x_shape[LongToSize(i)] + paddings_attr[LongToSize(i)][0] +
-                                 paddings_attr[LongToSize(i)][1]);
-  }
-  return std::make_shared<abstract::Shape>(out_shape);
-}
-
-TypePtr PadInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  const std::set<TypePtr> valid_types = {kTensorType};
-  return CheckAndConvertUtils::CheckSubClass("infer type", input_args[0]->BuildType(), valid_types, prim->name());
-}
-}  // namespace
-
 void Pad::Init(const std::vector<std::vector<int64_t>> &paddings) { this->set_paddings(paddings); }
 void Pad::set_paddings(const std::vector<std::vector<int64_t>> &paddings) {
   (void)this->AddAttr(kPaddings, MakeValue(paddings));
@@ -61,11 +27,7 @@ void Pad::set_paddings(const std::vector<std::vector<int64_t>> &paddings) {
 std::vector<std::vector<int64_t>> Pad::get_paddings() const {
   return GetValue<std::vector<std::vector<int64_t>>>(GetAttr(kPaddings));
 }
-AbstractBasePtr PadInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(PadInferType(primitive, input_args),
-                                                    PadInferShape(primitive, input_args)->shape());
-}
+
 REGISTER_PRIMITIVE_C(kNamePad, Pad);
 }  // namespace ops
 }  // namespace mindspore
