@@ -124,7 +124,7 @@ class ControlNodeParser {
              const std::vector<DeviceContext *> &device_contexts, const FuncGraphPtr &root_graph,
              const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs);
 
-  bool IsInited() { return is_inited_; }
+  bool IsInited() const { return is_inited_; }
   // Check whether there is a call node in the front input nodes of the kernel graph.
   bool IsCallInputKernelGraph(KernelGraph *const graph);
   // Check whether there is a call node in the front input nodes of the kernel graph group.
