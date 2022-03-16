@@ -318,7 +318,7 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   } else {
     auto formats = builder->GetAllOutputFormats();
     for (size_t i = 0; i <= front_node_with_index.second - builder->GetAllOutputFormats().size(); ++i) {
-      formats.emplace_back(kOpFormat_DEFAULT);
+      (void)formats.emplace_back(kOpFormat_DEFAULT);
     }
     builder->SetOutputsFormat(formats);
   }
@@ -330,7 +330,7 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   } else {
     auto types = builder->GetAllOutputDeviceTypes();
     for (size_t i = 0; i <= front_node_with_index.second - builder->GetAllOutputDeviceTypes().size(); ++i) {
-      types.emplace_back(type_id);
+      (void)types.emplace_back(type_id);
     }
     builder->SetOutputsDeviceType(types);
   }
@@ -1558,11 +1558,11 @@ std::vector<FuncGraphPtr> GetFuncGraphs(const AnfNodePtr &anf_node) {
   std::vector<FuncGraphPtr> ret;
   if (abs->isa<abstract::AbstractFuncUnion>()) {
     auto visit_func = [&ret, &anf_node](const abstract::AbstractFuncAtomPtr &poss) {
-      ret.emplace_back(GetFuncGraph(poss, anf_node));
+      (void)ret.emplace_back(GetFuncGraph(poss, anf_node));
     };
     abs_func->Visit(visit_func);
   } else {
-    ret.emplace_back(GetFuncGraph(abs_func, anf_node));
+    (void)ret.emplace_back(GetFuncGraph(abs_func, anf_node));
   }
   return ret;
 }
@@ -1679,7 +1679,7 @@ void ControlNodeParser::ParseFirstControlNodeAndKernelGraphForFuncGraph(const st
         if (group_info_iter->second->level_ < level_iter->second) {
           MS_LOG(DEBUG) << "Kernel graph group;" << group_info_iter->second->group_name_
                         << " need link control to entrance of funcgraph:" << func_graph->ToString();
-          func_graph_to_first_kernel_graphs_[func_graph].emplace(group_info_iter->second);
+          (void)func_graph_to_first_kernel_graphs_[func_graph].emplace(group_info_iter->second);
         }
       }
     }
@@ -1778,7 +1778,7 @@ void ControlNodeParser::ParseNeedStackControlNode(const std::vector<AnfNodePtr> 
 }
 
 void CollectEffectiveInputByGraph(const KernelGraphPtr &graph, const FrontToBackendKernelWithContext &outputs,
-                                  DeviceContext *const device_context,
+                                  const DeviceContext *const device_context,
                                   std::map<KernelWithIndex, const DeviceContext *> *const inputs,
                                   bool *const need_stack) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -1917,8 +1917,8 @@ size_t ControlNodeParser::ParseControlNodeLevel(const AnfNodePtr &node, std::set
 
   const auto &inputs = group_info_iter->second->front_input_nodes_;
   for (const auto &input : inputs) {
-    const auto &node = input.first.first;
-    size_t tmp_level = ParseControlNodeLevel(node, checked_nodes);
+    const auto &input_node = input.first.first;
+    size_t tmp_level = ParseControlNodeLevel(input_node, checked_nodes);
     level = (tmp_level > level ? tmp_level : level);
   }
   return level;
