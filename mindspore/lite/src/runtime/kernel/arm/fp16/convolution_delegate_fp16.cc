@@ -66,21 +66,21 @@ void *ConvolutionDelegateFP16CPUKernel::CopyData(const lite::Tensor *tensor) {
 }
 
 int ConvolutionDelegateFP16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     CHECK_NULL_RETURN(weight_tensor);
     origin_weight_ = weight_tensor->data() != nullptr ? CopyData(weight_tensor) : nullptr;
     need_free_ = need_free_ | WEIGHT_NEED_FREE;
-    if (in_tensors_.size() == 3) {
+    if (in_tensors_.size() == C3NUM) {
       origin_bias_ = CopyData(in_tensors_.at(kBiasIndex));
       need_free_ = need_free_ | BIAS_NEED_FREE;
     }
     return RET_OK;
   }
   origin_weight_ = in_tensors_.at(kWeightIndex)->data();
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == C3NUM) {
     origin_bias_ = in_tensors_.at(kBiasIndex)->data();
     MS_ASSERT(origin_bias_ != nullptr);
   }
@@ -149,7 +149,7 @@ kernel::InnerKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *
     return kernel;
   }
 #endif
-  if (conv_param->input_channel_ < 32) {
+  if (conv_param->input_channel_ < C32NUM) {
     kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWFp16CPUKernel(opParameter, inputs, outputs, ctx);
   } else {
     kernel = new (std::nothrow) kernel::ConvolutionDepthwiseFp16CPUKernel(opParameter, inputs, outputs, ctx);

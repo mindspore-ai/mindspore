@@ -127,11 +127,11 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  tmp_buffer_address_list_[0] = trans_input_;
-  tmp_buffer_address_list_[1] = gemm_out_;
-  tmp_buffer_address_list_[2] = tmp_data_;
-  tmp_buffer_address_list_[3] = col_buffer_;
-  tmp_buffer_address_list_[4] = opt_input_trans_;
+  tmp_buffer_address_list_[FIRST_INPUT] = trans_input_;
+  tmp_buffer_address_list_[SECOND_INPUT] = gemm_out_;
+  tmp_buffer_address_list_[THIRD_INPUT] = tmp_data_;
+  tmp_buffer_address_list_[FOURTH_INPUT] = col_buffer_;
+  tmp_buffer_address_list_[FIFTH_INPUT] = opt_input_trans_;
   return RET_OK;
 }
 
@@ -160,7 +160,7 @@ int ConvolutionWinogradFP16CPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionWinogradFP16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   col_tile_ = C8NUM;
 #ifdef ENABLE_ARM64

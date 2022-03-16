@@ -134,7 +134,7 @@ void Convolution1x1FP16CPUKernel::PackWeight() {
 }
 
 int Convolution1x1FP16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
   if (out_tensors_.front()->format() == NC4HW4) {

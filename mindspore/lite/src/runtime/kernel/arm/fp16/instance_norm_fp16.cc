@@ -44,7 +44,7 @@ void InstanceNormFp16CPUKernel::FreeTmpBuffer() {
 }
 
 int InstanceNormFp16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(in_tensors_.size(), C3NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto gamma = in_tensors_.at(1);
   CHECK_NULL_RETURN(gamma->data());
@@ -62,7 +62,7 @@ int InstanceNormFp16CPUKernel::Prepare() {
     return RET_ERROR;
   }
 
-  auto beta = in_tensors_.at(2);
+  auto beta = in_tensors_.at(THIRD_INPUT);
   CHECK_NULL_RETURN(beta->data());
   if (beta->data_type() == kNumberTypeFloat32) {
     beta_data_ = reinterpret_cast<float16_t *>(malloc(beta->ElementsNum() * sizeof(float16_t)));

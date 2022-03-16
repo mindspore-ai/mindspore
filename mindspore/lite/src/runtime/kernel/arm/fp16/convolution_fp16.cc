@@ -93,7 +93,7 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
 }
 
 int ConvolutionFP16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
   row_tile_ = C16NUM;
