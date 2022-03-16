@@ -64,11 +64,11 @@ class FusionBasePass : public PassWithSwitch {
       : PassWithSwitch(name), fusion_id_allocator(std::move(idAllocator)) {}
   ~FusionBasePass() override = default;
   bool MatchUBFusionPattern(const session::KernelGraph &kernel_graph);
+  virtual void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
+                                        FusedNodeRecord *candidate_fusion) = 0;
 
  protected:
   bool RunPass(const FuncGraphPtr &graph) override;
-  virtual void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
-                                        FusedNodeRecord *candidate_fusion) = 0;
   void SetRecordFusionId(const mindspore::HashSet<AnfNodePtr> &record);
   bool CheckEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
   bool CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);

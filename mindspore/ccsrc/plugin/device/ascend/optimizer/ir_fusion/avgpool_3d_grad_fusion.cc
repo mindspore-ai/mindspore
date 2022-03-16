@@ -103,7 +103,7 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   if (divisor_override != 0) {
     val = 1.0 / divisor_override;
   } else if (IsZeroPads(pad_list) && !ceil_mode) {
-    val = 1.0 / (kd * kh * kw);
+    val = 1.0 / static_cast<float>(kd * kh * kw);
   }
   // create value node
   int64_t cnt = c1 * kd * kh * kw;

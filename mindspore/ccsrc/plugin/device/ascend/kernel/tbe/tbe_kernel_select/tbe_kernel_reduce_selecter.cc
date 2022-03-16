@@ -147,10 +147,10 @@ void TbeKernelReduceSelecter::AssignSupportFormat(const std::string &support_for
   MS_EXCEPTION_IF_NULL(support_format);
   SupportFormatItem input_support_format;
   SupportFormatItem output_support_format;
-  input_support_format.emplace_back(support_format_str);
-  output_support_format.emplace_back(support_format_str);
-  support_format->input_format.emplace_back(input_support_format);
-  support_format->output_format.emplace_back(output_support_format);
+  (void)input_support_format.emplace_back(support_format_str);
+  (void)output_support_format.emplace_back(support_format_str);
+  (void)support_format->input_format.emplace_back(input_support_format);
+  (void)support_format->output_format.emplace_back(output_support_format);
 }
 
 bool TbeKernelReduceSelecter::Is4DShape(const std::vector<size_t> &shape) const { return shape.size() == kShape4dDims; }
@@ -160,7 +160,7 @@ bool TbeKernelReduceSelecter::Is5DShape(const std::vector<size_t> &shape) const 
 void TbeKernelReduceSelecter::PadScalarShape(std::vector<size_t> *shape) const {
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->empty()) {
-    shape->emplace_back(1);
+    (void)shape->emplace_back(1);
   }
 }
 }  // namespace kernel

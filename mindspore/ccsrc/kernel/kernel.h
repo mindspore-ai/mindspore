@@ -200,7 +200,7 @@ class KernelMod {
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
-  virtual device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) { return nullptr; }
+  virtual device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &, void *) { return nullptr; }
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void ReleaseResource() {}
 

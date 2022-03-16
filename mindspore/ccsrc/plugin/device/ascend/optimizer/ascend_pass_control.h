@@ -26,8 +26,10 @@ namespace opt {
 class PassSwitchManager {
  public:
   static PassSwitchManager &GetInstance();
-  void RegistPass(const std::string &pass_name) { env_pass_switch_.emplace(pass_name, true); }
-  void RegistLicPass(const std::string &pass_name, enum OptPassEnum pass) { pass_enum_map_.emplace(pass_name, pass); }
+  void RegistPass(const std::string &pass_name) { (void)env_pass_switch_.emplace(pass_name, true); }
+  void RegistLicPass(const std::string &pass_name, enum OptPassEnum pass) {
+    (void)pass_enum_map_.emplace(pass_name, pass);
+  }
   bool GetPassSwitch(const std::string &pass_name) const;
 
  private:

@@ -121,13 +121,13 @@ std::vector<int64_t> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, c
   for (size_t i = 0; i < axis.size(); ++i) {
     auto axis_idx = (frac_nz_axis[i] + shape_len) % shape_len;
     if (axis_idx == shape_len - kIndex1) {
-      frac_nz_axis[i] = axis_idx - kIndex1;
+      frac_nz_axis[i] = static_cast<int64_t>(axis_idx) - static_cast<int64_t>(kIndex1);
       frac_nz_axis.push_back(axis_idx + kIndex2);
     } else if (axis_idx == shape_len - kIndex2) {
-      frac_nz_axis[i] = axis_idx + kIndex1;
+      frac_nz_axis[i] = static_cast<int64_t>(axis_idx) + static_cast<int64_t>(kIndex1);
       frac_nz_axis.push_back(axis_idx + kIndex2);
     } else {
-      frac_nz_axis[i] = axis_idx;
+      frac_nz_axis[i] = static_cast<int64_t>(axis_idx);
     }
   }
   return frac_nz_axis;
@@ -138,7 +138,7 @@ std::vector<size_t> GetReducedFracNZShape(const std::vector<size_t> &ori_shape, 
   std::vector<size_t> result;
   std::set<size_t> positive_idx;
   for (const auto &a : axis) {
-    positive_idx.insert(a >= 0 ? LongToSize(a) : ori_shape.size() + LongToSize(a));
+    (void)positive_idx.insert(a >= 0 ? LongToSize(a) : ori_shape.size() + LongToSize(a));
   }
   for (size_t i = 0; i < ori_shape.size(); ++i) {
     if (positive_idx.count(i) == 0) {
@@ -220,7 +220,7 @@ void GetDefaultFormat(const CNodePtr &kernel_node, std::string *default_format, 
   } else {
     std::vector<std::pair<std::string, size_t>> pairs;
     for (auto iter = all_input_formats.begin(); iter != all_input_formats.end(); ++iter) {
-      pairs.emplace_back(std::make_pair(iter->first, iter->second));
+      (void)pairs.emplace_back(std::make_pair(iter->first, iter->second));
     }
 
     std::sort(pairs.begin(), pairs.end(), cmp_format_num);
@@ -264,9 +264,9 @@ void UpdateInputsKernelInfo(const CNodePtr &kernel_node, const std::vector<AnfNo
         }
       }
       if (can_convert) {
-        graph_input_format->emplace_back(default_format);
+        (void)graph_input_format->emplace_back(default_format);
       } else {
-        graph_input_format->emplace_back(kOpFormat_DEFAULT);
+        (void)graph_input_format->emplace_back(kOpFormat_DEFAULT);
       }
       graph_input_type->push_back(AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, i));
       continue;
@@ -313,7 +313,7 @@ void UpdateEquivFormat(const std::vector<AnfNodePtr> &node_list, const FuncGraph
     auto cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-    SelectKernelInfo(cnode, KernelType::AKG_KERNEL);
+    (void)SelectKernelInfo(cnode, KernelType::AKG_KERNEL);
     // Update ReduceSum
     if (!IsPrimitiveCNode(cnode, prim::kPrimReduceSum)) {
       continue;
@@ -336,8 +336,8 @@ void UpdateEquivFormat(const std::vector<AnfNodePtr> &node_list, const FuncGraph
     if (trans_node->kernel_info() == nullptr) {
       trans_node->set_kernel_info(std::make_shared<device::KernelInfo>());
     }
-    SelectKernelInfo(trans_node, KernelType::AKG_KERNEL);
-    mng->Replace(cnode, trans_node);
+    (void)SelectKernelInfo(trans_node, KernelType::AKG_KERNEL);
+    (void)mng->Replace(cnode, trans_node);
   }
 }
 
@@ -442,7 +442,7 @@ void UpdateFormatsAndDtypes(const CNodePtr &kernel_node, const std::vector<AnfNo
       builder.SetOutputsDeviceType(std::vector<TypeId>{kTypeUnknown});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), input_node.get());
     }
-    SelectKernelInfo(node_list[i]->cast<CNodePtr>(), KernelType::AKG_KERNEL);
+    (void)SelectKernelInfo(node_list[i]->cast<CNodePtr>(), KernelType::AKG_KERNEL);
   }
 }
 

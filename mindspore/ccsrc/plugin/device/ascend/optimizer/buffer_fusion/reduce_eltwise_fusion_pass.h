@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 class ReduceEltwiseFusionPass : public FusionBasePass {
  public:
-  explicit ReduceEltwiseFusionPass(FusionIdAllocatorPtr idAllocator)
+  explicit ReduceEltwiseFusionPass(const FusionIdAllocatorPtr &idAllocator)
       : FusionBasePass("ReduceEltwiseFusionPass", idAllocator) {}
   ~ReduceEltwiseFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;

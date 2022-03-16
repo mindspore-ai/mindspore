@@ -153,7 +153,6 @@ void KernelMod::InferShapeForNopNode(const AnfNodePtr &input_node) {
   nop_road.push(input_node);
 
   auto in_node = input_node;
-  /*lint -e716*/
   while (true) {
     auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(in_node, 0);
     in_node = input_node_with_idx.first;
@@ -165,7 +164,6 @@ void KernelMod::InferShapeForNopNode(const AnfNodePtr &input_node) {
     }
   }
 
-  /*lint +e716*/
   while (!nop_road.empty()) {
     auto nop_node = nop_road.top();
     MS_EXCEPTION_IF_NULL(nop_node);

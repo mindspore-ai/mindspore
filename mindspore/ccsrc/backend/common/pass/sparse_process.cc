@@ -104,7 +104,7 @@ bool SplitCNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs) {
   auto sparse_prim = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(sparse_prim);
   // Currently, only MakeCSR and MakeTuple nodes can be split.
-  if (make_sparse_set.count(sparse_prim->name()) <= 0 && sparse_prim->name().compare(prim::kPrimMakeTuple->name()) != 0)
+  if (make_sparse_set.count(sparse_prim->name()) == 0 && sparse_prim->name().compare(prim::kPrimMakeTuple->name()) != 0)
     return false;
 
   auto sparse_inputs = cnode->inputs();
@@ -146,7 +146,7 @@ const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const An
   // cnode is a MakeSparse node
   if (make_sparse_set.find(prim_name) != make_sparse_set.end()) {
     std::vector<AnfNodePtr> inputs;
-    inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     (void)inputs.insert(inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
     auto new_node = cnode->func_graph()->NewCNode(inputs);
     std::vector<AbstractBasePtr> abstract_list = GetAbstractList(node, prim_name);
