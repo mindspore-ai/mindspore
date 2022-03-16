@@ -15,7 +15,7 @@
 """
 Test Dataset AutoTune's Save and Load Configuration support
 """
-import filecmp
+import json
 
 import numpy as np
 import pytest
@@ -25,6 +25,17 @@ import mindspore.dataset.vision.c_transforms as c_vision
 
 MNIST_DATA_DIR = "../data/dataset/testMnistData"
 DATA_DIR = "../data/dataset/testPK/data"
+
+
+def data_pipeline_same(file1, file2):
+    assert file1.exists()
+    assert file2.exists()
+    with file1.open() as f1, file2.open() as f2:
+        pipeline1 = json.load(f1)
+        pipeline1 = pipeline1["pipeline"] if "pipeline" in pipeline1 else pipeline1
+        pipeline2 = json.load(f2)
+        pipeline2 = pipeline2["pipeline"] if "pipeline" in pipeline2 else pipeline2
+        return pipeline1 == pipeline2
 
 
 @pytest.mark.forked
@@ -40,14 +51,14 @@ class TestAutotuneSaveLoad:
         Expectation: pipeline runs successfully
         """
         original_autotune = ds.config.get_enable_autotune()
-        ds.config.set_enable_autotune(True, str(tmp_path) + "test_autotune_generator_atfinal.json")
+        ds.config.set_enable_autotune(True, str(tmp_path / "test_autotune_generator_atfinal.json"))
 
         source = [(np.array([x]),) for x in range(1024)]
         data1 = ds.GeneratorDataset(source, ["data"])
         data1 = data1.shuffle(64)
         data1 = data1.batch(32)
 
-        ds.serialize(data1, str(tmp_path) + "test_autotune_generator_serialized.json")
+        ds.serialize(data1, str(tmp_path / "test_autotune_generator_serialized.json"))
 
         itr = data1.create_dict_iterator(num_epochs=5)
         for _ in range(5):
@@ -64,7 +75,7 @@ class TestAutotuneSaveLoad:
         Expectation: pipeline runs successfully
         """
         original_autotune = ds.config.get_enable_autotune()
-        ds.config.set_enable_autotune(True, str(tmp_path) + "test_autotune_mnist_pipeline_atfinal.json")
+        ds.config.set_enable_autotune(True, str(tmp_path / "test_autotune_mnist_pipeline_atfinal.json"))
         original_seed = ds.config.get_seed()
         ds.config.set_seed(1)
 
@@ -74,19 +85,20 @@ class TestAutotuneSaveLoad:
 
         data1 = data1.batch(batch_size=10, drop_remainder=True)
 
-        ds.serialize(data1, str(tmp_path) + "test_autotune_mnist_pipeline_serialized.json")
+        ds.serialize(data1, str(tmp_path / "test_autotune_mnist_pipeline_serialized.json"))
 
         for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
 
         ds.config.set_enable_autotune(original_autotune)
 
-        # Confirm final AutoTune config file is identical to the serialized file.
-        assert filecmp.cmp(str(tmp_path) + "test_autotune_mnist_pipeline_atfinal.json",
-                           str(tmp_path) + "test_autotune_mnist_pipeline_serialized.json")
+        # Confirm final AutoTune config file pipeline is identical to the serialized file pipeline.
+        file1 = tmp_path / "test_autotune_mnist_pipeline_atfinal.json"
+        file2 = tmp_path / "test_autotune_mnist_pipeline_serialized.json"
+        assert data_pipeline_same(file1, file2)
 
-        desdata1 = ds.deserialize(json_filepath=str(tmp_path) + "test_autotune_mnist_pipeline_atfinal.json")
-        desdata2 = ds.deserialize(json_filepath=str(tmp_path) + "test_autotune_mnist_pipeline_serialized.json")
+        desdata1 = ds.deserialize(json_filepath=str(tmp_path / "test_autotune_mnist_pipeline_atfinal.json"))
+        desdata2 = ds.deserialize(json_filepath=str(tmp_path / "test_autotune_mnist_pipeline_serialized.json"))
 
         num = 0
         for newdata1, newdata2 in zip(desdata1.create_dict_iterator(num_epochs=1, output_numpy=True),
@@ -110,7 +122,7 @@ class TestAutotuneSaveLoad:
 
         at_final_json_filename = "test_autotune_save_overwrite_generator_atfinal.json"
         original_autotune = ds.config.get_enable_autotune()
-        ds.config.set_enable_autotune(True, str(tmp_path) + at_final_json_filename)
+        ds.config.set_enable_autotune(True, str(tmp_path / at_final_json_filename))
 
         data1 = ds.GeneratorDataset(source, ["data"])
 
@@ -143,14 +155,14 @@ class TestAutotuneSaveLoad:
 
         # Pipeline#1
         original_autotune = ds.config.get_enable_autotune()
-        ds.config.set_enable_autotune(True, str(tmp_path) + at_final_json_filename)
+        ds.config.set_enable_autotune(True, str(tmp_path / at_final_json_filename))
 
         data1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=100)
         one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
         data1 = data1.map(operations=one_hot_encode, input_columns="label")
         data1 = data1.batch(batch_size=10, drop_remainder=True)
 
-        ds.serialize(data1, str(tmp_path) + "test_autotune_save_overwrite_mnist_serialized1.json")
+        ds.serialize(data1, str(tmp_path / "test_autotune_save_overwrite_mnist_serialized1.json"))
 
         for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
@@ -158,14 +170,14 @@ class TestAutotuneSaveLoad:
         ds.config.set_enable_autotune(False)
 
         # Pipeline#2
-        ds.config.set_enable_autotune(True, str(tmp_path) + at_final_json_filename)
+        ds.config.set_enable_autotune(True, str(tmp_path / at_final_json_filename))
 
         data1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=200)
         data1 = data1.map(operations=one_hot_encode, input_columns="label")
         data1 = data1.shuffle(40)
         data1 = data1.batch(batch_size=20, drop_remainder=False)
 
-        ds.serialize(data1, str(tmp_path) + "test_autotune_save_overwrite_mnist_serialized2.json")
+        ds.serialize(data1, str(tmp_path / "test_autotune_save_overwrite_mnist_serialized2.json"))
 
         for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
@@ -173,12 +185,14 @@ class TestAutotuneSaveLoad:
         ds.config.set_enable_autotune(False)
 
         # Confirm 2nd serialized file is identical to final AutoTune config file.
-        assert filecmp.cmp(str(tmp_path) + "test_autotune_save_overwrite_mnist_atfinal.json",
-                           str(tmp_path) + "test_autotune_save_overwrite_mnist_serialized2.json")
+        file1 = tmp_path / "test_autotune_save_overwrite_mnist_atfinal.json"
+        file2 = tmp_path / "test_autotune_save_overwrite_mnist_serialized2.json"
+        assert data_pipeline_same(file1, file2)
 
         # Confirm the serialized files for the 2 different pipelines are different
-        assert not filecmp.cmp(str(tmp_path) + "test_autotune_save_overwrite_mnist_serialized1.json",
-                               str(tmp_path) + "test_autotune_save_overwrite_mnist_serialized2.json")
+        file1 = tmp_path / "test_autotune_save_overwrite_mnist_serialized1.json"
+        file2 = tmp_path / "test_autotune_save_overwrite_mnist_serialized2.json"
+        assert not data_pipeline_same(file1, file2)
 
         ds.config.set_seed(original_seed)
         ds.config.set_enable_autotune(original_autotune)

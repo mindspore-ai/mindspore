@@ -53,6 +53,11 @@ class AutoTune {
   /// \brief Helper to print the tree configuration
   void PrintTreeConfiguration() const;
 
+  /// \brief Helper to summarize the execution tree
+  /// \param[out] out An output vector of string to store the summary
+  /// \return Status object
+  Status SummarizeTreeConfiguration(std::vector<std::string> *out);
+
 #ifndef ENABLE_ANDROID
   /// \brief Serialize the dataset and save the AT config (workers and queue size) to a json file
   /// \param file_name Name of the file
