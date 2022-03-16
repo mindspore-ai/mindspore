@@ -146,7 +146,11 @@ enum SubModuleId : int {
 };
 
 #ifndef SUBMODULE_ID
+#ifndef BUILD_LITE
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
+#else
+#define SUBMODULE_ID mindspore::SubModuleId::SM_LITE
+#endif
 #endif
 
 /// \brief Get sub-module name by the module id.
@@ -202,11 +206,12 @@ class LogWriter {
   /// \param[in] stream The input log stream.
   MS_CORE_API void operator<(const LogStream &stream) const noexcept;
 
+#ifndef BUILD_LITE
   /// \brief Output log message from the input log stream and then throw exception.
   ///
   /// \param[in] stream The input log stream.
   MS_CORE_API void operator^(const LogStream &stream) const __attribute__((noreturn));
-
+#endif
   static void set_exception_handler(const ExceptionHandler &exception_handler) {
     exception_handler_ = exception_handler;
   }
@@ -230,10 +235,16 @@ class LogWriter {
                           ? void(0)                                                                                 \
                           : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, \
                                                  SUBMODULE_ID, excp_type) < mindspore::LogStream()
+#ifndef BUILD_LITE
 #define MSLOG_THROW(excp_type)                                                                                         \
   mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::EXCEPTION, SUBMODULE_ID, \
                        excp_type) ^                                                                                    \
     mindspore::LogStream()
+#else
+#define MSLOG_THROW(excp_type)                                                                                     \
+  mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::ERROR, SUBMODULE_ID, \
+                       excp_type) < mindspore::LogStream()
+#endif
 
 #define IS_OUTPUT_ON(level) \
   ((level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] && (level) <= mindspore::this_thread_max_log_level)

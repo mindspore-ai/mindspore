@@ -30,7 +30,7 @@ endif()
 if(NOT MSLITE_ENABLE_INT8)
     add_compile_definitions(OP_INT8_CLIP)
 endif()
-
+add_compile_definitions(BUILD_LITE)
 if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT APPLE)
@@ -158,7 +158,6 @@ if(BUILD_EXPERIMENT)
 endif()
 
 if(MSLITE_ENABLE_RUNTIME_GLOG)
-    add_definitions(-DPRIMITIVE_WRITEABLE)
     add_definitions(-DUSE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -172,7 +171,7 @@ endif()
 
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
     add_definitions(-DRUNTIME_CONVERT)
-
+    add_definitions(-DPRIMITIVE_WRITEABLE)
     file(GLOB RUNTIME_CONVERT_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_def.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_utils.cc

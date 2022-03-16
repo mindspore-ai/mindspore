@@ -63,7 +63,7 @@
 namespace mindspore {
 #ifdef USE_GLOG
 extern "C" {
-extern void common_log_init();
+extern void mindspore_log_init();
 }
 #endif
 namespace lite {
@@ -137,7 +137,7 @@ bool ExistCustomCpuKernel() {
 
 LiteSession::LiteSession() {
 #ifdef USE_GLOG
-  mindspore::common_log_init();
+  mindspore::mindspore_log_init();
 #endif
   this->is_running_.store(false);
 }
