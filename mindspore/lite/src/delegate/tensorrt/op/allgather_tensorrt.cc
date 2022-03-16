@@ -19,10 +19,6 @@
 #include "NvInferRuntimeCommon.h"
 
 namespace mindspore::lite {
-const char *ALLGATHER_PLUGIN_VERSION{"1"};
-const char *ALLGATHER_PLUGIN_NAME{"AllGatherPluginCreater"};
-nvinfer1::PluginFieldCollection AllGatherPluginCreater::field_collection_{};
-std::vector<nvinfer1::PluginField> AllGatherPluginCreater::fields_;
 REGISTER_TENSORRT_PLUGIN(AllGatherPluginCreater);
 
 int AllGatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -73,36 +69,6 @@ int AllGatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-// AllGatherPluginCreater
-AllGatherPluginCreater::AllGatherPluginCreater() {
-  // Fill PluginFieldCollection with PluginField arguments metadata
-  field_collection_.nbFields = fields_.size();
-  field_collection_.fields = fields_.data();
-}
-
-const char *AllGatherPluginCreater::getPluginName() const noexcept { return ALLGATHER_PLUGIN_NAME; }
-
-const char *AllGatherPluginCreater::getPluginVersion() const noexcept { return ALLGATHER_PLUGIN_VERSION; }
-
-const nvinfer1::PluginFieldCollection *AllGatherPluginCreater::getFieldNames() noexcept { return &field_collection_; }
-
-nvinfer1::IPluginV2 *AllGatherPluginCreater::createPlugin(const char *name,
-                                                          const nvinfer1::PluginFieldCollection *fc) noexcept {
-  const nvinfer1::PluginField *fields = fc->fields;
-  int rank = static_cast<const int *>(fields[0].data)[0];
-  MS_LOG(DEBUG) << "createPlugin: " << name << " of rank: " << rank;
-  return new (std::nothrow) AllGatherPlugin(name, rank);
-}
-nvinfer1::IPluginV2 *AllGatherPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                               size_t serialLength) noexcept {
-  int rank = GetGPUGroupSize();
-  MS_LOG(DEBUG) << name << " is deserialize as rank: " << rank;
-  return new (std::nothrow) AllGatherPlugin(name, rank);
-}
-void AllGatherPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *AllGatherPluginCreater::getPluginNamespace() const noexcept { return name_space_.c_str(); }
-
 // AllGatherPlugin
 int AllGatherPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
                              const void *const *inputs, void *const *outputs, void *workspace,
@@ -126,6 +92,7 @@ nvinfer1::IPluginV2DynamicExt *AllGatherPlugin::clone() const noexcept {
   plugin->setPluginNamespace(name_space_.c_str());
   return plugin;
 }
+
 nvinfer1::DimsExprs AllGatherPlugin::getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs *inputs,
                                                          int nbInputs, nvinfer1::IExprBuilder &exprBuilder) noexcept {
   nvinfer1::DimsExprs out_dims{};
@@ -137,41 +104,19 @@ nvinfer1::DimsExprs AllGatherPlugin::getOutputDimensions(int outputIndex, const 
   }
   return out_dims;
 }
-bool AllGatherPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
-                                                int nbOutputs) noexcept {
-  return true;
-}
-void AllGatherPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
-                                      const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {}
 
-size_t AllGatherPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int nbInputs,
-                                         const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept {
-  return 0;
-}
-nvinfer1::DataType AllGatherPlugin::getOutputDataType(int index, const nvinfer1::DataType *inputTypes,
-                                                      int nbInputs) const noexcept {
-  return inputTypes[0];
-}
-const char *AllGatherPlugin::getPluginType() const noexcept { return ALLGATHER_PLUGIN_NAME; }
-
-const char *AllGatherPlugin::getPluginVersion() const noexcept { return ALLGATHER_PLUGIN_VERSION; }
-
-int AllGatherPlugin::getNbOutputs() const noexcept { return 1; }
-
-int AllGatherPlugin::initialize() noexcept { return 0; }
-
-void AllGatherPlugin::terminate() noexcept {}
-
-size_t AllGatherPlugin::getSerializationSize() const noexcept { return 0; }
-
-void AllGatherPlugin::serialize(void *buffer) const noexcept {}
-
-void AllGatherPlugin::destroy() noexcept {
-  // This gets called when the network containing plugin is destroyed
-  delete this;
+nvinfer1::IPluginV2 *AllGatherPluginCreater::createPlugin(const char *name,
+                                                          const nvinfer1::PluginFieldCollection *fc) noexcept {
+  const nvinfer1::PluginField *fields = fc->fields;
+  int rank = static_cast<const int *>(fields[0].data)[0];
+  MS_LOG(DEBUG) << "createPlugin: " << name << " of rank: " << rank;
+  return new (std::nothrow) AllGatherPlugin(name, rank);
 }
 
-void AllGatherPlugin::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *AllGatherPlugin::getPluginNamespace() const noexcept { return name_space_.c_str(); }
+nvinfer1::IPluginV2 *AllGatherPluginCreater::deserializePlugin(const char *name, const void *serialData,
+                                                               size_t serialLength) noexcept {
+  int rank = GetGPUGroupSize();
+  MS_LOG(DEBUG) << name << " is deserialize as rank: " << rank;
+  return new (std::nothrow) AllGatherPlugin(name, rank);
+}
 }  // namespace mindspore::lite

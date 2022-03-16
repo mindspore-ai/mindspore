@@ -20,13 +20,8 @@
 #include <memory>
 #include <functional>
 #include "src/delegate/tensorrt/tensorrt_utils.h"
-#include "NvInferRuntimeCommon.h"
 
 namespace mindspore::lite {
-const char *CAST_PLUGIN_VERSION{"1"};
-const char *CAST_PLUGIN_NAME{"CastPluginCreater"};
-nvinfer1::PluginFieldCollection CastPluginCreater::field_collection_{};
-std::vector<nvinfer1::PluginField> CastPluginCreater::fields_;
 REGISTER_TENSORRT_PLUGIN(CastPluginCreater);
 
 int CastTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -76,43 +71,6 @@ int CastTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-// CastPluginCreater
-CastPluginCreater::CastPluginCreater() {
-  // Fill PluginFieldCollection with PluginField arguments metadata
-  field_collection_.nbFields = fields_.size();
-  field_collection_.fields = fields_.data();
-}
-
-const char *CastPluginCreater::getPluginName() const noexcept { return CAST_PLUGIN_NAME; }
-
-const char *CastPluginCreater::getPluginVersion() const noexcept { return CAST_PLUGIN_VERSION; }
-
-const nvinfer1::PluginFieldCollection *CastPluginCreater::getFieldNames() noexcept { return &field_collection_; }
-
-nvinfer1::IPluginV2 *CastPluginCreater::createPlugin(const char *name,
-                                                     const nvinfer1::PluginFieldCollection *fc) noexcept {
-  const nvinfer1::PluginField *fields = fc->fields;
-  nvinfer1::DataType origin_datatype = static_cast<const nvinfer1::DataType *>(fields[0].data)[0];
-  nvinfer1::DataType dest_datatype = static_cast<const nvinfer1::DataType *>(fields[1].data)[0];
-  return new (std::nothrow) CastPlugin(name, origin_datatype, dest_datatype);
-}
-
-nvinfer1::IPluginV2 *CastPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                          size_t serialLength) noexcept {
-  nvinfer1::DataType origin_datatype;
-  DeserializeValue(&serialData, &serialLength, &origin_datatype, sizeof(nvinfer1::DataType));
-  nvinfer1::DataType dest_datatype;
-  DeserializeValue(&serialData, &serialLength, &dest_datatype, sizeof(nvinfer1::DataType));
-  MS_LOG(DEBUG) << name << " is deserialize as origin_datatype: " << static_cast<int32_t>(origin_datatype)
-                << ", dest_datatype: " << static_cast<int32_t>(dest_datatype);
-  return new (std::nothrow) CastPlugin(name, origin_datatype, dest_datatype);
-}
-
-void CastPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *CastPluginCreater::getPluginNamespace() const noexcept { return name_space_.c_str(); }
-
-// CastPlugin
 int CastPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
                         const void *const *inputs, void *const *outputs, void *workspace,
                         cudaStream_t stream) noexcept {
@@ -150,38 +108,10 @@ nvinfer1::IPluginV2DynamicExt *CastPlugin::clone() const noexcept {
   return plugin;
 }
 
-nvinfer1::DimsExprs CastPlugin::getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs *inputs, int nbInputs,
-                                                    nvinfer1::IExprBuilder &exprBuilder) noexcept {
-  return *inputs;
-}
-
-bool CastPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
-                                           int nbOutputs) noexcept {
-  return true;
-}
-
-void CastPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
-                                 const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {}
-
-size_t CastPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int nbInputs,
-                                    const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept {
-  return 0;
-}
-
 nvinfer1::DataType CastPlugin::getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
   noexcept {
   return dest_datatype_;
 }
-
-const char *CastPlugin::getPluginType() const noexcept { return CAST_PLUGIN_NAME; }
-
-const char *CastPlugin::getPluginVersion() const noexcept { return CAST_PLUGIN_VERSION; }
-
-int CastPlugin::getNbOutputs() const noexcept { return 1; }
-
-int CastPlugin::initialize() noexcept { return 0; }
-
-void CastPlugin::terminate() noexcept {}
 
 size_t CastPlugin::getSerializationSize() const noexcept {
   // origin_datatype_ and dest_datatype_
@@ -193,12 +123,22 @@ void CastPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &dest_datatype_, sizeof(nvinfer1::DataType));
 }
 
-void CastPlugin::destroy() noexcept {
-  // This gets called when the network containing plugin is destroyed
-  delete this;
+nvinfer1::IPluginV2 *CastPluginCreater::createPlugin(const char *name,
+                                                     const nvinfer1::PluginFieldCollection *fc) noexcept {
+  const nvinfer1::PluginField *fields = fc->fields;
+  nvinfer1::DataType origin_datatype = static_cast<const nvinfer1::DataType *>(fields[0].data)[0];
+  nvinfer1::DataType dest_datatype = static_cast<const nvinfer1::DataType *>(fields[1].data)[0];
+  return new (std::nothrow) CastPlugin(name, origin_datatype, dest_datatype);
 }
 
-void CastPlugin::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *CastPlugin::getPluginNamespace() const noexcept { return name_space_.c_str(); }
+nvinfer1::IPluginV2 *CastPluginCreater::deserializePlugin(const char *name, const void *serialData,
+                                                          size_t serialLength) noexcept {
+  nvinfer1::DataType origin_datatype;
+  DeserializeValue(&serialData, &serialLength, &origin_datatype, sizeof(nvinfer1::DataType));
+  nvinfer1::DataType dest_datatype;
+  DeserializeValue(&serialData, &serialLength, &dest_datatype, sizeof(nvinfer1::DataType));
+  MS_LOG(DEBUG) << name << " is deserialize as origin_datatype: " << static_cast<int32_t>(origin_datatype)
+                << ", dest_datatype: " << static_cast<int32_t>(dest_datatype);
+  return new (std::nothrow) CastPlugin(name, origin_datatype, dest_datatype);
+}
 }  // namespace mindspore::lite

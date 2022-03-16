@@ -22,10 +22,6 @@
 #include "NvInferRuntimeCommon.h"
 
 namespace mindspore::lite {
-const char *EQUAL_PLUGIN_VERSION{"1"};
-const char *EQUAL_PLUGIN_NAME{"EqualPluginCreater"};
-nvinfer1::PluginFieldCollection EqualPluginCreater::field_collection_{};
-std::vector<nvinfer1::PluginField> EqualPluginCreater::fields_;
 REGISTER_TENSORRT_PLUGIN(EqualPluginCreater);
 
 int EqualTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -62,35 +58,6 @@ int EqualTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-// EqualPluginCreater
-EqualPluginCreater::EqualPluginCreater() {
-  // Fill PluginFieldCollection with PluginField arguments metadata
-  field_collection_.nbFields = fields_.size();
-  field_collection_.fields = fields_.data();
-}
-
-const char *EqualPluginCreater::getPluginName() const noexcept { return EQUAL_PLUGIN_NAME; }
-
-const char *EqualPluginCreater::getPluginVersion() const noexcept { return EQUAL_PLUGIN_VERSION; }
-
-const nvinfer1::PluginFieldCollection *EqualPluginCreater::getFieldNames() noexcept { return &field_collection_; }
-
-nvinfer1::IPluginV2 *EqualPluginCreater::createPlugin(const char *name,
-                                                      const nvinfer1::PluginFieldCollection *fc) noexcept {
-  return new (std::nothrow) EqualPlugin(name);
-}
-
-nvinfer1::IPluginV2 *EqualPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                           size_t serialLength) noexcept {
-  MS_LOG(DEBUG) << name << " deserialize";
-  return new (std::nothrow) EqualPlugin(name);
-}
-
-void EqualPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *EqualPluginCreater::getPluginNamespace() const noexcept { return name_space_.c_str(); }
-
-// EqualPlugin
 int EqualPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
                          const void *const *inputs, void *const *outputs, void *workspace,
                          cudaStream_t stream) noexcept {
@@ -119,49 +86,14 @@ nvinfer1::IPluginV2DynamicExt *EqualPlugin::clone() const noexcept {
   return plugin;
 }
 
-nvinfer1::DimsExprs EqualPlugin::getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs *inputs, int nbInputs,
-                                                     nvinfer1::IExprBuilder &exprBuilder) noexcept {
-  return *inputs;
+nvinfer1::IPluginV2 *EqualPluginCreater::createPlugin(const char *name,
+                                                      const nvinfer1::PluginFieldCollection *fc) noexcept {
+  return new (std::nothrow) EqualPlugin(name);
 }
 
-bool EqualPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
-                                            int nbOutputs) noexcept {
-  return true;
+nvinfer1::IPluginV2 *EqualPluginCreater::deserializePlugin(const char *name, const void *serialData,
+                                                           size_t serialLength) noexcept {
+  MS_LOG(DEBUG) << name << " deserialize";
+  return new (std::nothrow) EqualPlugin(name);
 }
-
-void EqualPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
-                                  const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {}
-
-size_t EqualPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int nbInputs,
-                                     const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept {
-  return 0;
-}
-
-nvinfer1::DataType EqualPlugin::getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
-  noexcept {
-  return inputTypes[0];
-}
-
-const char *EqualPlugin::getPluginType() const noexcept { return EQUAL_PLUGIN_NAME; }
-
-const char *EqualPlugin::getPluginVersion() const noexcept { return EQUAL_PLUGIN_VERSION; }
-
-int EqualPlugin::getNbOutputs() const noexcept { return 1; }
-
-int EqualPlugin::initialize() noexcept { return 0; }
-
-void EqualPlugin::terminate() noexcept {}
-
-size_t EqualPlugin::getSerializationSize() const noexcept { return 0; }
-
-void EqualPlugin::serialize(void *buffer) const noexcept {}
-
-void EqualPlugin::destroy() noexcept {
-  // This gets called when the network containing plugin is destroyed
-  delete this;
-}
-
-void EqualPlugin::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *EqualPlugin::getPluginNamespace() const noexcept { return name_space_.c_str(); }
 }  // namespace mindspore::lite

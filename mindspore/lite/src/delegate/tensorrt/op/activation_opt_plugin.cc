@@ -26,13 +26,8 @@
 #include "src/delegate/tensorrt/cuda_impl/activation.cuh"
 
 namespace mindspore::lite {
-const char *ACTIVATION_OPT_PLUGIN_VERSION{"1"};
-const char *ACTIVATION_OPT_PLUGIN_NAME{"ActivationOptPluginCreater"};
-nvinfer1::PluginFieldCollection ActivationOptPluginCreater::field_collection_{};
-std::vector<nvinfer1::PluginField> ActivationOptPluginCreater::fields_;
 REGISTER_TENSORRT_PLUGIN(ActivationOptPluginCreater);
 
-// ActivationOptPlugin
 int ActivationOptPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc,
                                  const nvinfer1::PluginTensorDesc *outputDesc, const void *const *inputs,
                                  void *const *outputs, void *workspace, cudaStream_t stream) noexcept {
@@ -63,6 +58,8 @@ int ActivationOptPlugin::RunCuDNNActivation(const nvinfer1::PluginTensorDesc *in
                                            infer_dims_, infer_stride_));
   }
   CHECK_NULL_RETURN(cudnn_handle_);
+  CHECK_NULL_RETURN(activation_desc_);
+  CHECK_NULL_RETURN(input_desc_);
   CUDNN_CHECK(cudnnSetStream(cudnn_handle_, stream));
   auto ret = CudnnActivation(cudnn_handle_, activation_desc_, input_desc_, inputs[0], input_desc_, outputs[0]);
   if (ret != RET_OK) {
@@ -85,67 +82,10 @@ nvinfer1::IPluginV2DynamicExt *ActivationOptPlugin::clone() const noexcept {
   return plugin;
 }
 
-nvinfer1::DimsExprs ActivationOptPlugin::getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs *inputs,
-                                                             int nbInputs,
-                                                             nvinfer1::IExprBuilder &exprBuilder) noexcept {
-  return inputs[0];
-}
-
-bool ActivationOptPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc,
-                                                    int nbInputs, int nbOutputs) noexcept {
-  return true;
-}
-
-void ActivationOptPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
-                                          const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {}
-
-size_t ActivationOptPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int nbInputs,
-                                             const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept {
-  return 0;
-}
-
-nvinfer1::DataType ActivationOptPlugin::getOutputDataType(int index, const nvinfer1::DataType *inputTypes,
-                                                          int nbInputs) const noexcept {
-  return inputTypes[0];
-}
-
-const char *ActivationOptPlugin::getPluginType() const noexcept { return ACTIVATION_OPT_PLUGIN_NAME; }
-
-const char *ActivationOptPlugin::getPluginVersion() const noexcept { return ACTIVATION_OPT_PLUGIN_VERSION; }
-
-int ActivationOptPlugin::getNbOutputs() const noexcept { return 1; }
-
-int ActivationOptPlugin::initialize() noexcept { return 0; }
-
-void ActivationOptPlugin::terminate() noexcept {}
-
 size_t ActivationOptPlugin::getSerializationSize() const noexcept { return sizeof(schema::ActivationType); }
 
 void ActivationOptPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &activation_type_, sizeof(schema::ActivationType));
-}
-
-void ActivationOptPlugin::destroy() noexcept {
-  // This gets called when the network containing plugin is destroyed
-  delete this;
-}
-
-void ActivationOptPlugin::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *ActivationOptPlugin::getPluginNamespace() const noexcept { return name_space_.c_str(); }
-
-// ActivationOptPluginCreater
-ActivationOptPluginCreater::ActivationOptPluginCreater() {
-  field_collection_.nbFields = fields_.size();
-  field_collection_.fields = fields_.data();
-}
-
-const char *ActivationOptPluginCreater::getPluginName() const noexcept { return ACTIVATION_OPT_PLUGIN_NAME; }
-
-const char *ActivationOptPluginCreater::getPluginVersion() const noexcept { return ACTIVATION_OPT_PLUGIN_VERSION; }
-
-const nvinfer1::PluginFieldCollection *ActivationOptPluginCreater::getFieldNames() noexcept {
-  return &field_collection_;
 }
 
 nvinfer1::IPluginV2 *ActivationOptPluginCreater::createPlugin(const char *name,
@@ -161,8 +101,4 @@ nvinfer1::IPluginV2 *ActivationOptPluginCreater::deserializePlugin(const char *n
   DeserializeValue(&serialData, &serialLength, &activation_type, sizeof(schema::ActivationType));
   return new (std::nothrow) ActivationOptPlugin(name, activation_type);
 }
-
-void ActivationOptPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *ActivationOptPluginCreater::getPluginNamespace() const noexcept { return name_space_.c_str(); }
 }  // namespace mindspore::lite
