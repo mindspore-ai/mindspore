@@ -185,7 +185,8 @@ void RecoveryContext::ObtainGlobalLatestCkptInfo() {
   const uint32_t kRecvBufferLen = kSendBufferLen * global_rank_size_;
 
   int send_buffer[kSendBufferLen] = {latest_ckpt_epoch_, latest_ckpt_step_};
-  int recv_buffer[kRecvBufferLen] = {0};
+  int recv_buffer[kRecvBufferLen];
+  (void)std::fill_n(recv_buffer, kRecvBufferLen, 0);
   recv_buffer[kSendBufferLen * global_rank_id_] = latest_ckpt_epoch_;
   recv_buffer[kSendBufferLen * global_rank_id_ + 1] = latest_ckpt_step_;
 
