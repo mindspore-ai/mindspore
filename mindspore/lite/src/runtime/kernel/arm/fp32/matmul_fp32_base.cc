@@ -25,7 +25,7 @@
 using mindspore::lite::RET_NULL_PTR;
 
 namespace mindspore::kernel {
-int MatmulRun(const void *cdata, int task_id, float, float) {
+int MatmulRun(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto op = reinterpret_cast<const MatmulFp32BaseCPUKernel *>(cdata);
   auto error_code = (op->*(op->parallel_fun_))(task_id);

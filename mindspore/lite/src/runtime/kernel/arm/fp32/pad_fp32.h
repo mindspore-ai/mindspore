@@ -61,8 +61,8 @@ class PadCPUKernel : public InnerKernel {
   std::vector<MirrorPadBlock> mirror_pad_block_;
 };
 
-int PadImpl(const void *cdata, int task_id, float, float);
-int MirrorPadImpl(const void *cdata, int task_id, float, float);
+int PadImpl(void *cdata, int task_id, float, float);
+int MirrorPadImpl(void *cdata, int task_id, float, float);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_PAD_H_
