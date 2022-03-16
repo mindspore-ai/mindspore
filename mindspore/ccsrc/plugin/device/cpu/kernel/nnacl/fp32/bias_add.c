@@ -60,83 +60,75 @@ void BiasAddByBatchCore(const float *input, const float *bias, float *output, in
   }
 }
 
-void DoBiasAddByBatch(const float *input, const float *bias, float *output, int64_t start, int64_t end,
-                      int64_t inner_num) {
-  if (inner_num == 0) {
-    return;
-  }
-  int64_t start_outer = start / inner_num;
-  int64_t start_inner = start % inner_num;
-  int64_t end_outer = end / inner_num;
-  int64_t end_inner = end % inner_num;
-  const float *cur_input = input + start;
+void DoBiasAddByBatch(const float *input, const float *bias, float *output, int64_t start_inner, int64_t start_outer,
+                      int64_t end_inner, int64_t end_outer, int64_t inner_num) {
   const float *cur_bias = bias + start_inner;
-  float *cur_output = output + start;
   if (start_outer == end_outer) {
-    BiasAddByInnerCore(cur_input, cur_bias, cur_output, end_inner - start_inner);
+    BiasAddByInnerCore(input, cur_bias, output, end_inner - start_inner);
     return;
   }
   if (start_inner != 0) {
-    BiasAddByInnerCore(cur_input, cur_bias, cur_output, inner_num - start_inner);
+    BiasAddByInnerCore(input, cur_bias, output, inner_num - start_inner);
     start_outer += 1;
-    cur_input += inner_num - start_inner;
+    input += inner_num - start_inner;
     cur_bias = bias;
-    cur_output += inner_num - start_inner;
+    output += inner_num - start_inner;
   }
   int64_t step = C4NUM * inner_num;
   for (; start_outer <= end_outer - C4NUM; start_outer += C4NUM) {
-    BiasAddByBatchCore(cur_input, cur_bias, cur_output, inner_num);
-    cur_input += step;
-    cur_output += step;
+    BiasAddByBatchCore(input, cur_bias, output, inner_num);
+    input += step;
+    output += step;
   }
   for (; start_outer < end_outer; ++start_outer) {
-    BiasAddByInnerCore(cur_input, cur_bias, cur_output, inner_num);
-    cur_input += inner_num;
-    cur_output += inner_num;
+    BiasAddByInnerCore(input, cur_bias, output, inner_num);
+    input += inner_num;
+    output += inner_num;
   }
-  BiasAddByInnerCore(cur_input, cur_bias, cur_output, end_inner);
+  BiasAddByInnerCore(input, cur_bias, output, end_inner);
 }
 
-void DoBiasAddByInner(const float *input, const float *bias, float *output, int64_t start, int64_t end,
-                      int64_t inner_num) {
-  if (inner_num == 0) {
-    return;
-  }
-  int64_t start_outer = start / inner_num;
-  int64_t start_inner = start % inner_num;
-  int64_t end_outer = end / inner_num;
-  int64_t end_inner = end % inner_num;
-  const float *cur_input = input + start;
+void DoBiasAddByInner(const float *input, const float *bias, float *output, int64_t start_inner, int64_t start_outer,
+                      int64_t end_inner, int64_t end_outer, int64_t inner_num) {
   const float *cur_bias = bias + start_inner;
-  float *cur_output = output + start;
   if (start_outer == end_outer) {
-    BiasAddByInnerCore(cur_input, cur_bias, cur_output, end_inner - start_inner);
+    BiasAddByInnerCore(input, cur_bias, output, end_inner - start_inner);
     return;
   } else {
-    BiasAddByInnerCore(cur_input, cur_bias, cur_output, inner_num - start_inner);
+    BiasAddByInnerCore(input, cur_bias, output, inner_num - start_inner);
     start_outer += 1;
-    cur_input += inner_num - start_inner;
+    input += inner_num - start_inner;
     cur_bias = bias;
-    cur_output += inner_num - start_inner;
+    output += inner_num - start_inner;
   }
   if (start_outer == end_outer) {
-    BiasAddByInnerCore(cur_input, cur_bias, cur_output, end_inner);
+    BiasAddByInnerCore(input, cur_bias, output, end_inner);
     return;
   } else {
     for (; start_outer < end_outer; ++start_outer) {
-      BiasAddByInnerCore(cur_input, cur_bias, cur_output, inner_num);
-      cur_input += inner_num;
-      cur_output += inner_num;
+      BiasAddByInnerCore(input, cur_bias, output, inner_num);
+      input += inner_num;
+      output += inner_num;
     }
   }
-  BiasAddByInnerCore(cur_input, cur_bias, cur_output, end_inner);
+  BiasAddByInnerCore(input, bias, output, end_inner);
 }
 
 void BiasAddOpt(const float *input, const float *bias, float *output, int64_t start, int64_t end, int64_t inner_num,
                 bool batch_priority) {
+  if (inner_num == 0) {
+    return;
+  }
+  int64_t start_outer = start / inner_num;
+  int64_t start_inner = start % inner_num;
+  int64_t end_outer = end / inner_num;
+  int64_t end_inner = end % inner_num;
+  const float *cur_input = input + start;
+  float *cur_output = output + start;
+
   if (batch_priority) {
-    DoBiasAddByBatch(input, bias, output, start, end, inner_num);
+    DoBiasAddByBatch(cur_input, bias, cur_output, start_inner, start_outer, end_inner, end_outer, inner_num);
   } else {
-    DoBiasAddByInner(input, bias, output, start, end, inner_num);
+    DoBiasAddByInner(cur_input, bias, cur_output, start_inner, start_outer, end_inner, end_outer, inner_num);
   }
 }

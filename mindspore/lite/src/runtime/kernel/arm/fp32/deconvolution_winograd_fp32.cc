@@ -23,6 +23,7 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+const int kDeconvWinogradMaxPixel = 3145728;
 DeConvolutionWinogradCPUKernel::~DeConvolutionWinogradCPUKernel() {
   FreeResizeBuf();
   FreeDeconvParam();
@@ -365,7 +366,7 @@ int DeConvolutionWinogradCPUKernel::ReSize() {
     MS_LOG(ERROR) << "InitParameter error! ret: " << error_code;
     return error_code;
   }
-  if (conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_ <= 3145728) {
+  if (conv_param_->output_channel_ * conv_param_->output_h_ * conv_param_->output_w_ <= kDeconvWinogradMaxPixel) {
     deconv_param_->thread_num_ = MSMIN(deconv_param_->thread_num_, C3NUM);
   }
   return RET_OK;
