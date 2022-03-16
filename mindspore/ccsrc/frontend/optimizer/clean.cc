@@ -44,9 +44,11 @@ using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractCOOTensor;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractList;
+using mindspore::abstract::AbstractListPtr;
 using mindspore::abstract::AbstractRowTensor;
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTuple;
+using mindspore::abstract::AbstractTuplePtr;
 
 namespace {
 void CheckInputsSize(const CNodePtr &cnode, size_t expect_size) {
@@ -592,11 +594,12 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
+  static constexpr size_t kMaxListRecursiveDepth = 5;
+
   // ValueList --> ValueTuple
-  static ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr &value_list, int64_t depth) {
-    constexpr int64_t max_depth = 5;
-    if (depth > max_depth) {
-      MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << max_depth << " levels.";
+  static ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr &value_list, size_t depth) {
+    if (depth > kMaxListRecursiveDepth) {
+      MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxListRecursiveDepth << " levels.";
     }
     const auto &list_elements = value_list->value();
     std::vector<ValuePtr> elements;
@@ -619,11 +622,29 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return nullptr;
   }
 
+  // AbstractList --> AbstractTuple
+  static AbstractTuplePtr ConvertAbstractListToAbstractTuple(const AbstractListPtr &abs_list, size_t depth) {
+    if (depth > kMaxListRecursiveDepth) {
+      MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxListRecursiveDepth << " levels.";
+    }
+    const auto &list_elements = abs_list->elements();
+    std::vector<AbstractBasePtr> elements;
+    elements.reserve(list_elements.size());
+    for (const auto &element : list_elements) {
+      if (element->isa<AbstractList>()) {
+        (void)elements.emplace_back(ConvertAbstractListToAbstractTuple(element->cast<AbstractListPtr>(), depth + 1));
+      } else {
+        (void)elements.emplace_back(element);
+      }
+    }
+    return std::make_shared<AbstractTuple>(std::move(elements));
+  }
+
   AbstractBasePtr ConvertAbstract(const AbstractBasePtr &abs) override {
     // AbstractList --> AbstractTuple.
-    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    auto abs_list = abs->cast<AbstractListPtr>();
     if (abs_list != nullptr) {
-      return std::make_shared<AbstractTuple>(abs_list->elements());
+      return ConvertAbstractListToAbstractTuple(abs_list, 0);
     }
     // AbstractCOOTensor --> AbstractTuple.
     auto abs_sparse = abs->cast<abstract::AbstractCOOTensorPtr>();
