@@ -14,6 +14,8 @@
 # ============================================================================
 """
 Common module for various compression algorithms, now only including datatype definition for quantization.
+
+Note: This is an experimental interface that is subject to change and/or deletion.
 """
 
 from .constant import QuantDtype

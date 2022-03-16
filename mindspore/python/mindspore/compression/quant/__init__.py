@@ -15,6 +15,8 @@
 """
 Quantization module, including base class of the quantizer, the quantization aware training algorithm,
 and quantization utils.
+
+Note: This is an experimental interface that is subject to change and/or deletion.
 """
 
 from .quantizer import OptimizeOption

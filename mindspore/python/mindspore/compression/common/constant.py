@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Constant module for compression"""
+"""
+Note:
+    Constant module for compression. This is interface that is subject to change or deletion.
+"""
+
 import enum
 import re
 from types import DynamicClassAttribute

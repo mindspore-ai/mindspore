@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Base Class of Quantizer."""
+"""
+Note:
+    Base Class of Quantizer. This is interface that is subject to change or deletion.
+"""
 
 from abc import ABC, abstractmethod
 from enum import Enum

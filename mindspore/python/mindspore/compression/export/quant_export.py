@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Export for quantization."""
+"""
+Note:
+    Export for quantization. This is interface that is subject to change or deletion.
+"""
 
 import copy
 
