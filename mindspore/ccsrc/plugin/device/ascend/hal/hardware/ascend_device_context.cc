@@ -725,7 +725,15 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
   LaunchDeviceLibrary();
 }
 
-void AscendDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {}
+void AscendDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  if (!(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    kernel_mod->InferOp();
+    kernel_mod->InitOp();
+  }
+}
 
 std::shared_ptr<Bucket> AscendDeviceContext::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
   auto bucket = std::make_shared<AscendBucket>(bucket_id, bucket_size);
@@ -842,15 +850,12 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
     MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
     // TODO(dsj): for ms_function running in graph_mode. should be delete later
     if (is_dynamic_shape && !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
-      kernel::AscendKernelMod *ascend_kernel = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
-      MS_EXCEPTION_IF_NULL(ascend_kernel);
-      ascend_kernel->InitDynamicKernel(kernel, GetKernelStream(kernel));
-      auto dynamic_kernel = ascend_kernel->DynamicKernel();
-      MS_EXCEPTION_IF_NULL(dynamic_kernel);
-      dynamic_kernel->InferShape();
-      dynamic_kernel->UpdateArgs();
-      dynamic_kernel->Execute();
-      dynamic_kernel->PostExecute();
+      ret = kernel_mod->Launch(real_inputs, workspace, outputs, GetKernelStream(kernel));
+      if (!ret) {
+        MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+        return false;
+      }
+      kernel_mod->UpdateOp();
     } else {
       auto stream = GetKernelStream(kernel);
 #ifndef ENABLE_SECURITY
