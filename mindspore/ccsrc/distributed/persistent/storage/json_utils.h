@@ -44,6 +44,9 @@ class JsonUtils {
   template <typename T>
   void Insert(const std::string &key, const T &value);
 
+  // Check whether key exists in json or not.
+  bool Exists(const std::string &key) const;
+
  private:
   // Json object.
   nlohmann::json js_;

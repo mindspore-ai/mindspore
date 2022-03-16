@@ -40,6 +40,7 @@
 #include "ps/util.h"
 #endif
 #include "ps/ps_context.h"
+#include "runtime/recovery/recovery_context.h"
 
 #include "pybind_api/gil_scoped_long_running.h"
 
@@ -57,6 +58,7 @@ using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
 using mindspore::MsCtxParam;
 using PSContext = mindspore::ps::PSContext;
+using RecoveryContext = mindspore::runtime::recovery::RecoveryContext;
 
 // Interface with python
 PYBIND11_MODULE(_c_expression, m) {
@@ -510,6 +512,21 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");
   (void)m.def("_is_cipher_file", &mindspore::pipeline::PyIsCipherFile, "Determine whether the file is encrypted");
+
+  (void)py::class_<RecoveryContext, std::shared_ptr<RecoveryContext>>(m, "RecoveryContext")
+    .def_static("get_instance", &RecoveryContext::GetInstance, "Get recovery context instance.")
+    .def("enable_recovery", &RecoveryContext::enable_recovery, "Get whether enable recovery.")
+    .def("latest_ckpt_file", &RecoveryContext::latest_ckpt_file, "Get latest checkpoint file path.")
+    .def("latest_ckpt_epoch", &RecoveryContext::latest_ckpt_epoch, "Get the epoch of latest checkpoint.")
+    .def("latest_ckpt_step", &RecoveryContext::latest_ckpt_step, "Get the step of latest checkpoint.")
+    .def("set_need_reset", &RecoveryContext::set_need_reset,
+         "Set whether should call reset minddata and load ckpt for disaster recovery.")
+    .def("need_reset", &RecoveryContext::need_reset,
+         "Get whether should call reset minddata and load ckpt for disaster recovery.")
+    .def("recovery_path", &RecoveryContext::recovery_path,
+         "Get the recovery path used to save that need to be persisted.")
+    .def("ckpt_path", &RecoveryContext::GetCkptPath, "Get the recovery path used to save checkpoint.")
+    .def("set_ckpt_path", &RecoveryContext::SetCkptPath, "Set the recovery path used to save checkpoint.");
 
 #ifndef _WIN32
   (void)m.def("_export_bprop_mindir", &mindspore::ad::KPrim::ExportBpropMindir,

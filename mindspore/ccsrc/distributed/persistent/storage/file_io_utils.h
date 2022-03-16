@@ -42,6 +42,9 @@ class FileIOUtils {
 
   // Create directory.
   static void CreateDir(const std::string &dir_path, mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO);
+
+  // Create directory recursively.
+  static void CreateDirRecursive(const std::string &dir_path, mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO);
 };
 }  // namespace storage
 }  // namespace distributed

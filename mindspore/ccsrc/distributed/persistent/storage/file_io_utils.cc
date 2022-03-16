@@ -153,6 +153,35 @@ void FileIOUtils::CreateDir(const std::string &dir_path, mode_t mode) {
     MS_LOG(EXCEPTION) << "Failed to create directory " << dir_path << ". Errno = " << errno;
   }
 }
+
+void FileIOUtils::CreateDirRecursive(const std::string &dir_path, mode_t mode) {
+  size_t dir_path_len = dir_path.length();
+  if (dir_path_len > PATH_MAX) {
+    MS_LOG(EXCEPTION) << "Directory path is too long: " << dir_path;
+  }
+
+  char tmp_dir_path[PATH_MAX] = {0};
+  for (size_t i = 0; i < dir_path_len; ++i) {
+    tmp_dir_path[i] = dir_path[i];
+    if (tmp_dir_path[i] == '/' || dir_path == tmp_dir_path) {
+      if (access(tmp_dir_path, F_OK) == 0) {
+        continue;
+      }
+
+#if defined(_WIN32) || defined(_WIN64)
+      int32_t ret = mkdir(tmp_dir_path);
+#else
+      int32_t ret = mkdir(tmp_dir_path, mode);
+      if (ret == 0) {
+        ChangeFileMode(tmp_dir_path, mode);
+      }
+#endif
+      if (ret != 0) {
+        MS_LOG(EXCEPTION) << "Failed to create directory recursion: " << dir_path << ". Errno = " << errno;
+      }
+    }
+  }
+}
 }  // namespace storage
 }  // namespace distributed
 }  // namespace mindspore

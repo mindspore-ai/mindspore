@@ -23,9 +23,7 @@ namespace distributed {
 namespace storage {
 bool JsonUtils::Initialize() {
   if (!FileIOUtils::IsFileOrDirExist(file_name_)) {
-    std::ofstream output_file(file_name_);
-    output_file.close();
-    ChangeFileMode(file_name_, S_IRWXU | S_IRWXG | S_IRWXO);
+    FileIOUtils::CreateFile(file_name_);
     return true;
   }
 
@@ -37,6 +35,13 @@ bool JsonUtils::Initialize() {
     json_file.close();
     std::string illegal_exception = e.what();
     MS_LOG(ERROR) << "Parse json file:" << file_name_ << " failed, the exception:" << illegal_exception;
+    return false;
+  }
+  return true;
+}
+
+bool JsonUtils::Exists(const std::string &key) const {
+  if (!js_.contains(key)) {
     return false;
   }
   return true;
