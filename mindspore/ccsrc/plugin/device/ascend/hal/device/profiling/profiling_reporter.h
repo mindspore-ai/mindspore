@@ -81,23 +81,24 @@ class ProfilingReporter {
   void ReportData(int32_t device_id, unsigned char *data, size_t data_size, const std::string &tag_name);
   void ReportTask(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type);
   void ReportNode(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, uint32_t tensor_type);
-  void BuildProfTensorDataCommon(MsprofGeProfTensorData &tensor_info, uint32_t stream_id, uint32_t task_id);
-  void BuildTensorData(MsprofGeTensorData &tensor_data, const CNodePtr &node, size_t index, uint32_t tensor_type);
+  void BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, uint32_t stream_id, uint32_t task_id);
+  void BuildTensorData(MsprofGeTensorData *tensor_data, const CNodePtr &node, size_t index, uint32_t tensor_type);
 
   template <typename T>
-  void SetAlternativeValue(T &property, const size_t property_size, const string &value, const int32_t &device_id) {
+  void SetAlternativeValue(T *property, const size_t property_size, const string &value, const int32_t &device_id) {
+    MS_EXCEPTION_IF_NULL(property);
     if (value.size() < property_size) {
-      property.type = static_cast<uint8_t>(MSPROF_MIX_DATA_HASH_ID);
-      const auto ret = strncpy_s(property.data.dataStr, property_size, value.c_str(), value.size());
+      property->type = static_cast<uint8_t>(MSPROF_MIX_DATA_HASH_ID);
+      const auto ret = strncpy_s(property->data.dataStr, property_size, value.c_str(), value.size());
       if (ret != 0) {
         MS_LOG(ERROR) << "[Profiling] strncpy_s value " << value.c_str() << " error!";
         return;
       }
     } else {
-      property.type = static_cast<uint8_t>(MSPROF_MIX_DATA_STRING);
+      property->type = static_cast<uint8_t>(MSPROF_MIX_DATA_STRING);
       uint64_t hash_id;
-      (void)ProfilingManager::GetInstance().QueryHashId(device_id, value, hash_id);
-      property.data.hashId = hash_id;
+      (void)ProfilingManager::GetInstance().QueryHashId(device_id, value, &hash_id);
+      property->data.hashId = hash_id;
     }
   }
 };

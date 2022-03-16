@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "backend/common/pass/convert_const_input_to_attr.h"
+#include <vector>
+#include <algorithm>
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
