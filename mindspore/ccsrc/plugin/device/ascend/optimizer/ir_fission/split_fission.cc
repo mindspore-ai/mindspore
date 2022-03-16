@@ -35,7 +35,7 @@ void AddNewOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &new_splitv,
   MS_EXCEPTION_IF_NULL(inputs);
   std::vector<AnfNodePtr> new_splitv_output;
   CreateMultipleOutputsOfAnfNode(func_graph, new_splitv, LongToSize(outputs_num), &new_splitv_output);
-  inputs->insert(inputs->end(), new_splitv_output.begin(), new_splitv_output.end());
+  (void)inputs->insert(inputs->end(), new_splitv_output.begin(), new_splitv_output.end());
 }
 
 AnfNodePtr CreateTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &input, int64_t index) {
@@ -89,7 +89,7 @@ void SetAttrAndAbstractForBaseSplitv(const CNodePtr &origin_cnode, const CNodePt
   auto num_split_l = LongToSize(num_split);
   for (size_t i = 0; i < num_split_l; ++i) {
     output_shape[split_dim_l] = LongToSize(size_splits_base[i]);
-    base_output_shapes_base.emplace_back(output_shape);
+    (void)base_output_shapes_base.emplace_back(output_shape);
     common::AnfAlgo::SetOutputInferTypeAndShape({type_id}, {output_shape}, base_splitv_outputs[i].get());
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(base_type_ids, base_output_shapes_base, base_splitv.get());
@@ -169,7 +169,7 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
     } else {
       auto tuple_getitem = CreateTupleGetItem(func_graph, base_splitv, nodes_num);
       base_splitv_outputs.push_back(tuple_getitem);
-      make_tuple_inputs.emplace_back(tuple_getitem);
+      (void)make_tuple_inputs.emplace_back(tuple_getitem);
       size_splits_base.emplace_back(size_splits[size_splits.size() - 1]);
     }
     nodes_num++;

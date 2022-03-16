@@ -81,7 +81,8 @@ bool MPICollective::CreateCommGroup(const std::string &name, const std::vector<u
   CHECK_RET(rtSetDevice(local_rank_id_), RT_ERROR_NONE, "Call rtSetDevice error.");
   HcclRootInfo rootInfo;
   if (static_cast<unsigned int>(rank_id_) == ranks[0]) {
-    CHECK_RET(HcclGetRootInfo(&rootInfo), ::HcclResult::HCCL_SUCCESS, "HcclGetRootInfo failed.");
+    CHECK_RET(static_cast<int32_t>(HcclGetRootInfo(&rootInfo)), static_cast<int32_t>(::HcclResult::HCCL_SUCCESS),
+              "HcclGetRootInfo failed.");
   }
   MPI_Group mpi_group = MPI_GROUP_NULL;
   CHECK_RET(MPI_Group_incl(comm_group_world_, group_ranks.size(), group_ranks.data(), &mpi_group), MPI_SUCCESS,
@@ -102,9 +103,9 @@ bool MPICollective::CreateCommGroup(const std::string &name, const std::vector<u
     return false;
   }
 
-  CHECK_RET(HcclCommInitRootInfo(static_cast<uint32_t>(ranks.size()), &rootInfo, static_cast<uint32_t>(group_rank[0]),
-                                 &group_hcomm),
-            ::HcclResult::HCCL_SUCCESS, "HcclCommInitRootInfo failed.");
+  CHECK_RET(static_cast<int32_t>(HcclCommInitRootInfo(static_cast<uint32_t>(ranks.size()), &rootInfo,
+                                                      static_cast<uint32_t>(group_rank[0]), &group_hcomm)),
+            static_cast<int32_t>(::HcclResult::HCCL_SUCCESS), "HcclCommInitRootInfo failed.");
   group_comm_[name] = group_hcomm;
   group_info_[name] = {group_rank[0], static_cast<int>(ranks.size())};
   return true;

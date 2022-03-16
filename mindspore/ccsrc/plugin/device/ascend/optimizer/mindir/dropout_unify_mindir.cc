@@ -110,7 +110,8 @@ std::vector<int64_t> CalGenMaskOutputShape(const std::vector<int64_t> &shape) {
 
 std::vector<int64_t> CalGenMaskV3OutputShape(const std::vector<int64_t> &shape, TypeId type) {
   // [*dim, M, N] -> [*dim, N/16, M/16, 16, 16] if M%16=0 and N%16=0
-  if (shape.size() >= 2 && shape[shape.size() - 1] % kCubeSize == 0 && shape[shape.size() - 2] % kCubeSize == 0) {
+  if (shape.size() >= 2 && shape[shape.size() - 1] % static_cast<int64_t>(kCubeSize) == 0 &&
+      shape[shape.size() - 2] % static_cast<int64_t>(kCubeSize) == 0) {
     auto fnz_shape = trans::TransShapeToDevice(shape, kOpFormat_FRAC_NZ, type);
     return fnz_shape;
   }

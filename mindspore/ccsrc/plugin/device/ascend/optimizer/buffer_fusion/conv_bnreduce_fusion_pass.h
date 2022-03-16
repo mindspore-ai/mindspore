@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 class ConvBnReduceFusionPass : public FusionBasePass {
  public:
-  explicit ConvBnReduceFusionPass(FusionIdAllocatorPtr idAllocator)
+  explicit ConvBnReduceFusionPass(const FusionIdAllocatorPtr &idAllocator)
       : FusionBasePass("ConvBnReduceFusionPass", idAllocator) {
     PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::ConvBnReduceFusionPass);
   }

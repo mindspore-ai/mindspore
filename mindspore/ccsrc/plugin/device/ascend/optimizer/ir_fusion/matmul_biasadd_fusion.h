@@ -24,7 +24,7 @@ namespace mindspore {
 namespace opt {
 class MatmulBiasaddFusion : public PatternProcessPassWithSwitch {
  public:
-  explicit MatmulBiasaddFusion(bool multigraph = true, string pass_name = "matmul_biasadd_fusion")
+  explicit MatmulBiasaddFusion(bool multigraph = true, const string &pass_name = "matmul_biasadd_fusion")
       : PatternProcessPassWithSwitch(pass_name, multigraph) {
     x0_ = std::make_shared<Var>();
     x1_ = std::make_shared<Var>();

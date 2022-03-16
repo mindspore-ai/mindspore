@@ -105,7 +105,7 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
         MS_LOG(EXCEPTION) << "Invalid rank id " << rank_ids[i] << " at index " << i << " as rank size " << rank_size_;
       }
       (*counts)[LongToSize(rank_ids[i])] = static_cast<int64_t>(real_sizes[i]);
-      (*displs)[LongToSize(rank_ids[i])] = mem_offset[i];
+      (*displs)[LongToSize(rank_ids[i])] = static_cast<int64_t>(mem_offset[i]);
     }
     return;
   }

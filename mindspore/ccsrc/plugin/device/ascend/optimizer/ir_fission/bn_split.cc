@@ -160,7 +160,7 @@ AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const 
   std::vector<AnfNodePtr> allreduce_mul_outputs;
   for (size_t i = 0; i < bn_training_reduce_outputs.size(); ++i) {
     auto allreduce_mul_output = CreateAllReduceAndMul(func_graph, bn_training_reduce_outputs[i], cnode, *this);
-    allreduce_mul_outputs.emplace_back(allreduce_mul_output);
+    (void)allreduce_mul_outputs.emplace_back(allreduce_mul_output);
   }
 
   // Create BNTrainingUpdate node
@@ -239,7 +239,6 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   if (opid_pos == std::string::npos || opid_pos + kPositionOffset >= sync_bn_opname.size()) {
     MS_LOG(EXCEPTION) << "Op[" << sync_bn_cnode->DebugString() << "] has no opid."
                       << trace::DumpSourceLines(sync_bn_cnode);
-    return nullptr;
   }
   int64_t opid = std::stol(sync_bn_opname.substr(opid_pos + kPositionOffset));
   // user defined fusion should be greater than 1

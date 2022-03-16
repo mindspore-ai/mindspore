@@ -187,7 +187,7 @@ bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const 
   }
 
   std::vector<int64_t> tmp_shape;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(tmp_shape), SizeToLong);
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(tmp_shape), SizeToLong);
   if (output_index >= output_shape_and_type_.size()) {
     MS_LOG(ERROR) << "Invalid output_index: " << output_index
                   << " the size of output_shape_and_type_ is: " << output_shape_and_type_.size();

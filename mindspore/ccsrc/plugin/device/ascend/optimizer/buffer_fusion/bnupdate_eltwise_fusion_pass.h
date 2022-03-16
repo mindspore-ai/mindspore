@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 class BnupdateEltwiseFusionPass : public FusionBasePass {
  public:
-  explicit BnupdateEltwiseFusionPass(FusionIdAllocatorPtr idAllocator)
+  explicit BnupdateEltwiseFusionPass(const FusionIdAllocatorPtr &idAllocator)
       : FusionBasePass("BnupdateEltwiseFusionPass", idAllocator) {
     PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::BnupdateEltwiseFusionPass);
   }

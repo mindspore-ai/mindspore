@@ -336,7 +336,10 @@ class StreamSwitchTaskInfo : public TaskInfo {
         value_addr_(value_addr),
         cond_(cond),
         data_type_(data_type) {}
-  ~StreamSwitchTaskInfo() override {}
+  ~StreamSwitchTaskInfo() override {
+    input_addr_ = nullptr;
+    value_addr_ = nullptr;
+  }
 
   int64_t true_stream_id() const { return true_stream_id_; }
   void *input_addr() const { return input_addr_; }

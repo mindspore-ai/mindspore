@@ -29,7 +29,8 @@ namespace mindspore {
 namespace opt {
 class EltwiseFusionPass : public FusionBasePass {
  public:
-  explicit EltwiseFusionPass(FusionIdAllocatorPtr idAllocator) : FusionBasePass("EltwiseFusionPass", idAllocator) {
+  explicit EltwiseFusionPass(const FusionIdAllocatorPtr &idAllocator)
+      : FusionBasePass("EltwiseFusionPass", idAllocator) {
     PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::EltwiseFusionPass);
   }
   ~EltwiseFusionPass() override = default;

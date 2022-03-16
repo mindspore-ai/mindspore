@@ -26,7 +26,7 @@
 namespace mindspore::ge::model_runner {
 class LabelGuard {
  public:
-  explicit LabelGuard(void *label_info) : label_info_(reinterpret_cast<uintptr_t>(label_info)) {}
+  explicit LabelGuard(const void *label_info) : label_info_(reinterpret_cast<uintptr_t>(label_info)) {}
   ~LabelGuard();
   void *GetLabelInfo() noexcept { return reinterpret_cast<void *>(label_info_); }
 

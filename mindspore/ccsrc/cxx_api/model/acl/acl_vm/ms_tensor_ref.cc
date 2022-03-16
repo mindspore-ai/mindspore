@@ -19,8 +19,8 @@
 namespace mindspore {
 VectorRef MSTensorRef::Convert(const std::vector<MSTensor> &tensors) {
   VectorRef res;
-  std::transform(tensors.begin(), tensors.end(), std::back_inserter(res),
-                 [](const MSTensor &t) { return MSTensorRef(t); });
+  (void)std::transform(tensors.begin(), tensors.end(), std::back_inserter(res),
+                       [](const MSTensor &t) { return MSTensorRef(t); });
   return res;
 }
 
