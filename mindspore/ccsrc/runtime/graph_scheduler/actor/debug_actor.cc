@@ -81,10 +81,6 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
       debugger->SetAscendKernelByKernelFlag(true);
-      if (debugger->CheckDebuggerEnabled()) {
-        std::string error_info = "Debugger is not supported with kernel-by-kernel ascend.";
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
-      }
       bool read_data = CheckReadData(cnode);
       if (read_data) {
         ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
