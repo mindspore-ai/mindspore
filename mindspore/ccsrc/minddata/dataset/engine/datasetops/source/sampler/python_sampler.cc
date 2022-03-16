@@ -16,6 +16,7 @@
 
 #include "minddata/dataset/engine/datasetops/source/sampler/python_sampler.h"
 
+#include <string>
 #include <utility>
 
 namespace mindspore {
