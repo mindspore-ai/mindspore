@@ -300,9 +300,7 @@ void TbeJsonCreator::GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &o
   MS_EXCEPTION_IF_NULL(op_info);
   MS_EXCEPTION_IF_NULL(attrs_json);
   auto attrs_ptr = op_info->attrs_ptr();
-  if (!AttrsJsonPreProcessing(anf_node, &attrs_ptr, attrs_json)) {
-    MS_LOG(EXCEPTION) << "PreProcessing node attr error, node: " << anf_node->fullname_with_scope();
-  }
+  AttrsJsonPreProcessing(anf_node, &attrs_ptr, attrs_json);
 
   std::string op_name = common::AnfAlgo::GetCNodeName(anf_node);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
@@ -535,10 +533,9 @@ void TbeJsonCreator::GenInputConstValue(const AnfNodePtr &anf_node, size_t real_
   }
 }
 
-bool TbeJsonCreator::AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *attrs_ptr,
+void TbeJsonCreator::AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *attrs_ptr,
                                             nlohmann::json *attrs_json) {
   tbe::TbeAdapter::CastAttrJsonPrePass(anf_node, attrs_ptr, attrs_json);
-  return true;
 }
 void TbeJsonCreator::GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
   MS_EXCEPTION_IF_NULL(anf_node);

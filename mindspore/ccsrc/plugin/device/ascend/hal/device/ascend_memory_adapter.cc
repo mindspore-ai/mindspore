@@ -239,7 +239,7 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) {
   return ptr;
 }
 
-bool AscendMemAdapter::FreeToRts(void *devPtr) {
+bool AscendMemAdapter::FreeToRts(void *devPtr) const {
   if (devPtr != nullptr) {
     auto ret = rtFree(devPtr);
     if (ret != RT_ERROR_NONE) {

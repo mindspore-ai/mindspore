@@ -243,7 +243,7 @@ MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum Dat
 
     if (ret->ElementNum() * TypeByte[type] != size) {
       ifs.close();
-      MS_LOG(ERROR) << "Tensor data size: " << ret->ElementNum() * TypeByte[type]
+      MS_LOG(ERROR) << "Tensor data size: " << LongToSize(ret->ElementNum()) * TypeByte[type]
                     << " not match input data length: " << size;
       return nullptr;
     }

@@ -363,8 +363,8 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
                             [](const int64_t item) { return item != kInvalidId; });
   auto iter2 = std::copy_if(recv_rank_ids.begin(), recv_rank_ids.end(), real_recv_rank_ids.begin(),
                             [](const int64_t item) { return item != kInvalidId; });
-  real_send_rank_ids.resize(std::distance(real_send_rank_ids.begin(), iter1));
-  real_recv_rank_ids.resize(std::distance(real_recv_rank_ids.begin(), iter2));
+  real_send_rank_ids.resize(LongToSize(std::distance(real_send_rank_ids.begin(), iter1)));
+  real_recv_rank_ids.resize(LongToSize(std::distance(real_recv_rank_ids.begin(), iter2)));
 
   std::vector<TypeId> dtypes(real_recv_rank_ids.size(), base_dtype);
 
@@ -742,7 +742,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
     }
     (void)concat_input_all.insert(concat_input_all.end(), concat_right_outputs.begin(), concat_right_outputs.end());
     ++input_nums_all;
-    shape_all[kDim3] += recv_lens[kDim3];
+    shape_all[kDim3] += LongToSize(recv_lens[kDim3]);
   }
 
   std::vector<TypeId> concat_right_output_dtype = {common::AnfAlgo::GetOutputInferDataType(concat_input_all[1], 0)};

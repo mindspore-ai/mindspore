@@ -522,7 +522,7 @@ void TbeKernelSelect::CreateNewOpInfo(const mindspore::kernel::OpInfo &op_info,
     op_info_new->ClearOutputs();
     for (size_t i = 0; i < op_info.inputs_ptr().size(); ++i) {
       auto input_new = std::make_shared<OpIOInfo>();
-      CreateNewOpIOInfo(*op_info.inputs_ptr().at(i), inputs.at(i).dtypes, inputs.at(i).formats, input_new.get());
+      CreateNewOpIOInfo(*(op_info.inputs_ptr().at(i)), inputs.at(i).dtypes, inputs.at(i).formats, input_new.get());
       op_info_new->add_inputs_ptr(input_new);
     }
     for (size_t i = 0; i < op_info.outputs_ptr().size(); ++i) {

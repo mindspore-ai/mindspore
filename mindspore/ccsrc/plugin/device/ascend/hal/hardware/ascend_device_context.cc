@@ -942,7 +942,7 @@ DeviceAddressPtr AscendDeviceContext::CreateDeviceAddress(void *const device_ptr
   auto device_address = std::make_shared<AscendDeviceAddress>(
     device_ptr, device_size, format, type_id, device_context_key_.device_name_, device_context_key_.device_id_);
   if (shape.empty()) {
-    MS_LOG(WARNING) << "shape size is empty.";
+    MS_LOG(DEBUG) << "shape size is empty.";
   }
   device_address->set_host_shape(shape);
   return device_address;

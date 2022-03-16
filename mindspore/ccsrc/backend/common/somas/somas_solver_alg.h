@@ -54,8 +54,8 @@ class Interval {
   }
   ~Interval() = default;
 
-  bool intersect(const Interval &i) { return (in(i.m_a_) || in(i.m_b_)); }
-  bool in(const size_t &a) { return ((a > m_a_) && (a < m_b_)); }
+  bool intersect(const Interval &i) const { return (in(i.m_a_) || in(i.m_b_)); }
+  bool in(const size_t &a) const { return ((a > m_a_) && (a < m_b_)); }
   Interval intersection(const Interval &i) {
     if (m_a_ < i.m_a_)
       return Interval(m_a_, i.m_b_);
