@@ -3119,11 +3119,36 @@ class Unstack(Primitive):
         validator.check_value_type("axis", axis, [int], self.name)
 
 
-class Slice(PrimitiveWithInfer):
+class Slice(Primitive):
     """
     Slices a tensor in the specified shape.
 
     Refer to :func:`mindspore.ops.slice` for more detail.
+    Slice the tensor `input_x` in shape of `size` and starting at the location specified by `begin`,
+    The slice `begin` represents the offset in each dimension of `input_x`,
+    The slice `size` represents the size of the output tensor.
+
+    Note that `begin` is zero-based and `size` is one-based.
+
+    If `size[i]` is -1, all remaining elements in dimension i are included in the slice.
+    This is equivalent to setting :math:`size[i] = input_x.shape(i) - begin[i]`.
+
+    Inputs:
+        - **input_x** (Tensor): The target tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
+        - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
+
+    Outputs:
+        Tensor, the shape is : input `size`, the data type is the same as `input_x`.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `begin` or `size` is neither tuple nor list.
+        ValueError: If `input_x`, `begin` and `size` not be equal in size.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3154,64 +3179,6 @@ class Slice(PrimitiveWithInfer):
     def __init__(self):
         """Initialize slice"""
         self.init_prim_io_names(inputs=['x', 'begin', 'size'], outputs=['output'])
-
-    def __infer__(self, x, begin, size):
-        x_shape = x['shape']
-        x_shp_len = len(x_shape)
-        begin_v, size_v = begin['value'], size['value']
-
-        if 'max_shape' in x and 'min_shape' in x:
-            max_shape = x['max_shape']
-            min_shape = x['min_shape']
-        else:
-            min_shape = x['shape']
-            max_shape = x['shape']
-        if begin_v is None or size_v is None:
-            # if size_v is not None and begin_v is None, it should be also a dynamic output shape.
-            if size_v is None:
-                if size['shape'][0] < 0:
-                    raise ValueError(f"For '{self.name}', the size shape haven't support dynamic yet.")
-                out_shape = [-1] * size['shape'][0]
-            else:
-                out_shape = [-1] * len(size_v)
-            return {'shape': out_shape,
-                    'dtype': x['dtype'],
-                    'value': None,
-                    'min_shape': min_shape,
-                    'max_shape': max_shape}
-        validator.check_valid_input('begin', begin['value'], self.name)
-        validator.check_valid_input('size', size['value'], self.name)
-        validator.check_value_type("input begin", begin_v, [tuple, list], self.name)
-        validator.check_value_type("input size", size_v, [tuple, list], self.name)
-        for key, value in zip(('begin', 'size'), (begin_v, size_v)):
-            validator.check(f'len of {key}', len(value),
-                            'len x\'s dim', x_shp_len)
-        size_v = list(size_v)
-        is_dynamic = False
-        for i in range(x_shp_len):
-            validator.check_non_negative_int(begin_v[i], f'input begin[{i}]')
-            if x_shape[i] == -1:
-                is_dynamic = True
-                continue
-            if size_v[i] == -1:
-                size_v[i] = x_shape[i] - begin_v[i]
-            validator.check_positive_int(size_v[i], f'input size[{i}]')
-            if x_shape[i] < begin_v[i] + size_v[i]:
-                y = begin_v[i] + size_v[i]
-                raise ValueError(f"For '{self.name}', the sliced shape can not be greater than origin shape, "
-                                 f"but got sliced shape is {y}, and origin shape is {x_shape}.")
-        if not is_dynamic:
-            return {'shape': size_v,
-                    'dtype': x['dtype'],
-                    'value': None}
-        if size_v[i] >= 0:
-            min_shape[i] = size_v[i]
-            max_shape[i] = size_v[i]
-        return {'shape': size_v,
-                'dtype': x['dtype'],
-                'value': None,
-                'min_shape': min_shape,
-                'max_shape': max_shape}
 
 
 class Coalesce(Primitive):

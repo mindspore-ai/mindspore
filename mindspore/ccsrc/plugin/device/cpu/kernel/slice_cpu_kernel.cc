@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/slice_cpu_kernel.h"
+#include <complex>
 #include <algorithm>
 #include <unordered_map>
 #include "include/common/thread_pool.h"
@@ -42,9 +43,19 @@ void SliceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
   static const std::unordered_map<TypeId, int> type_size_map = {{kNumberTypeBool, sizeof(bool)},
-                                                                {kNumberTypeInt32, sizeof(int)},
+                                                                {kNumberTypeInt8, sizeof(int8_t)},
+                                                                {kNumberTypeInt16, sizeof(int16_t)},
+                                                                {kNumberTypeInt32, sizeof(int32_t)},
+                                                                {kNumberTypeInt64, sizeof(int64_t)},
+                                                                {kNumberTypeUInt8, sizeof(uint8_t)},
+                                                                {kNumberTypeUInt16, sizeof(uint16_t)},
+                                                                {kNumberTypeUInt32, sizeof(uint32_t)},
+                                                                {kNumberTypeUInt64, sizeof(uint64_t)},
                                                                 {kNumberTypeFloat32, sizeof(float)},
-                                                                {kNumberTypeFloat64, sizeof(double)}};
+                                                                {kNumberTypeFloat64, sizeof(double)},
+                                                                {kNumberTypeFloat16, sizeof(float16)},
+                                                                {kNumberTypeComplex64, sizeof(std::complex<float>)},
+                                                                {kNumberTypeComplex128, sizeof(std::complex<double>)}};
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > DIMENSION_8D || input_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -70,9 +81,7 @@ void SliceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   TypeId dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto size_pair = type_size_map.find(dtype);
   if (size_pair == type_size_map.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' must be bool, int32, float32 or float64, but got "
-                      << TypeIdToType(dtype)->ToString();
+    MS_LOG(EXCEPTION) << "Slice supports type in type_size_map, but got " << TypeIdToType(dtype)->ToString();
   }
   data_size_ = size_pair->second;
 }
@@ -155,9 +164,9 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
     for (size_t i = 0; i < begin.size(); ++i) {
       if (input_shape[i] < LongToSize(begin[i] + size[i])) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                          << "', slice shape can not be greater than origin shape. But in dimension i=" << i
-                          << ", origin shape 'input_shape[i]' is " << input_shape[i] << " and slice shape is "
-                          << LongToSize(begin[i] + size[i]);
+                          << "', slice shape should be not greater than origin shape. But in dimension i=" << i
+                          << ", origin shape 'input_shape[i]' is " << input_shape[i]
+                          << " and slice shape 'LongToSize(begin[i] + size[i])' is " << LongToSize(begin[i] + size[i]);
       }
     }
     InitSliceParam(input_shape, begin, size);

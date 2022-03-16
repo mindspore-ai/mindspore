@@ -303,6 +303,8 @@ class MS_CORE_API CheckAndConvertUtils {
                                                  const std::string &arg_name);
   static std::vector<int64_t> CheckTupleInt(const std::string &prim_name, const ValuePtr &attr,
                                             const std::string &arg_name);
+  static std::vector<int64_t> CheckListInt(const std::string &prim_name, const ValuePtr &attr,
+                                           const std::string &arg_name);
   static void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);
   static int64_t GetAndCheckFormat(const ValuePtr &value);
   static size_t GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list);

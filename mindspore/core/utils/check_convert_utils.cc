@@ -816,6 +816,27 @@ std::vector<int64_t> CheckAndConvertUtils::CheckTupleInt(const std::string &arg_
   return result;
 }
 
+std::vector<int64_t> CheckAndConvertUtils::CheckListInt(const std::string &arg_name, const ValuePtr &attr,
+                                                        const std::string &prim_name) {
+  std::vector<int64_t> result;
+  MS_EXCEPTION_IF_NULL(attr);
+  if (attr->isa<ValueList>()) {
+    std::vector<ValuePtr> attr_vec = attr->cast<ValueListPtr>()->value();
+    (void)std::transform(
+      attr_vec.begin(), attr_vec.end(), std::back_inserter(result), [=](const ValuePtr &e) -> int64_t {
+        if (!e->isa<Int64Imm>()) {
+          MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
+                                  << " must be a list with all Int elements, but got " << attr->ToString();
+        }
+        return GetValue<int64_t>(e);
+      });
+  } else {
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
+                            << " must be a list with all Int elements, but got " << attr->ToString() << ".";
+  }
+  return result;
+}
+
 void CheckAndConvertUtils::CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape) {
   *min_shape = (*min_shape).empty() ? shape : *min_shape;
   *max_shape = (*max_shape).empty() ? shape : *max_shape;
