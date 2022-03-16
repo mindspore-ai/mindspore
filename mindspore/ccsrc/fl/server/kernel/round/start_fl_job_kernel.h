@@ -43,7 +43,8 @@ class StartFLJobKernel : public RoundKernel {
 
  private:
   // Returns whether the startFLJob count of this iteration has reached the threshold.
-  ResultCode ReachThresholdForStartFLJob(const std::shared_ptr<FBBuilder> &fbb);
+  ResultCode ReachThresholdForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
+                                         const schema::RequestFLJob *start_fl_job_req);
 
   // The metadata of device will be stored and queried in updateModel round.
   DeviceMeta CreateDeviceMetadata(const schema::RequestFLJob *start_fl_job_req);

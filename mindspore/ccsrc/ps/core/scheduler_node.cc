@@ -41,8 +41,8 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
   }
 
   if (PSContext::instance()->scheduler_manage_port() != 0) {
-    MS_LOG(WARNING) << "Start the restful scheduler http service, the ip is 127.0.0.1 "
-                    << ", the port:" << PSContext::instance()->scheduler_manage_port();
+    MS_LOG(INFO) << "Start the restful scheduler http service, the ip is 127.0.0.1 "
+                 << ", the port:" << PSContext::instance()->scheduler_manage_port();
     StartRestfulServer(kLocalIp, PSContext::instance()->scheduler_manage_port(), 1);
   }
   Initialize();

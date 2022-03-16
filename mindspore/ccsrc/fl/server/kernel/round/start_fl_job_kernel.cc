@@ -59,7 +59,7 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(WARNING) << reason;
     SendResponseMsg(message, reason.c_str(), reason.size());
-    return true;
+    return false;
   }
 
   flatbuffers::Verifier verifier(req_data, len);
@@ -68,13 +68,7 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
     BuildStartFLJobRsp(fbb, schema::ResponseCode_RequestError, reason, false, "");
     MS_LOG(WARNING) << reason;
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
-    return true;
-  }
-
-  ResultCode result_code = ReachThresholdForStartFLJob(fbb);
-  if (result_code != ResultCode::kSuccess) {
-    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
-    return ConvertResultCode(result_code);
+    return false;
   }
 
   const schema::RequestFLJob *start_fl_job_req = flatbuffers::GetRoot<schema::RequestFLJob>(req_data);
@@ -85,17 +79,23 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(WARNING) << reason;
     SendResponseMsg(message, reason.c_str(), reason.size());
-    return true;
+    return false;
+  }
+
+  ResultCode result_code = ReachThresholdForStartFLJob(fbb, start_fl_job_req);
+  if (result_code != ResultCode::kSuccess) {
+    SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
+    return false;
   }
 
   if (ps::PSContext::instance()->pki_verify()) {
     if (!JudgeFLJobCert(fbb, start_fl_job_req)) {
       SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
-      return true;
+      return false;
     }
     if (!StoreKeyAttestation(fbb, start_fl_job_req)) {
       SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
-      return true;
+      return false;
     }
   }
 
@@ -103,25 +103,25 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   result_code = ReadyForStartFLJob(fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
-    return ConvertResultCode(result_code);
+    return false;
   }
   PBMetadata metadata;
   *metadata.mutable_device_meta() = device_meta;
   std::string update_reason = "";
   if (!DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxDeviceMetas, metadata, &update_reason)) {
-    std::string reason = "Updating device metadata failed. " + update_reason;
+    std::string reason = "Updating device metadata failed for fl id " + device_meta.fl_id();
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
-    return update_reason == kNetworkError ? false : true;
+    return false;
   }
 
   // If calling ReportCount before ReadyForStartFLJob, the result will be inconsistent if the device is not selected.
   result_code = CountForStartFLJob(fbb, start_fl_job_req);
   if (result_code != ResultCode::kSuccess) {
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
-    return ConvertResultCode(result_code);
+    return false;
   }
   IncreaseAcceptClientNum();
   auto curr_iter_num = LocalMetaStore::GetInstance().curr_iter_num();
@@ -133,7 +133,7 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
                                                               fbb->GetBufferPointer(), fbb->GetSize());
     if (cache == nullptr) {
       SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
-      return true;
+      return false;
     }
   }
   SendResponseMsgInference(message, cache->data(), cache->size(), ModelStore::GetInstance().RelModelResponseCache);
@@ -237,14 +237,17 @@ void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::Message
   Iteration::GetInstance().SetIterationRunning();
 }
 
-ResultCode StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<FBBuilder> &fbb) {
-  if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
+ResultCode StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
+                                                         const schema::RequestFLJob *start_fl_job_req) {
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, ResultCode::kFail);
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), ResultCode::kFail);
+  if (DistributedCountService::GetInstance().CountReachThreshold(name_, start_fl_job_req->fl_id()->str())) {
     std::string reason = "Current amount for startFLJob has reached the threshold. Please startFLJob later.";
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(DEBUG) << reason;
-    return ResultCode::kSuccessAndReturn;
+    return ResultCode::kFail;
   }
   return ResultCode::kSuccess;
 }
@@ -271,7 +274,7 @@ ResultCode StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder>
   std::string reason = "";
   if (device_meta.data_size() < 1) {
     reason = "FL job data size is not enough.";
-    ret = ResultCode::kSuccessAndReturn;
+    ret = ResultCode::kFail;
   }
   if (ret != ResultCode::kSuccess) {
     BuildStartFLJobRsp(
@@ -284,17 +287,18 @@ ResultCode StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder>
 
 ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
                                                 const schema::RequestFLJob *start_fl_job_req) {
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, ResultCode::kSuccessAndReturn);
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), ResultCode::kSuccessAndReturn);
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, ResultCode::kFail);
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), ResultCode::kFail);
 
   std::string count_reason = "";
   if (!DistributedCountService::GetInstance().Count(name_, start_fl_job_req->fl_id()->str(), &count_reason)) {
-    std::string reason = "Counting start fl job request failed. Please retry later.";
+    std::string reason =
+      "Counting start fl job request failed for fl id " + start_fl_job_req->fl_id()->str() + ", Please retry later.";
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(WARNING) << reason;
-    return count_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
+    return ResultCode::kFail;
   }
   return ResultCode::kSuccess;
 }

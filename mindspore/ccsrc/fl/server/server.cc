@@ -431,7 +431,11 @@ void Server::RegisterRoundKernel() {
     }
 
     // For some round kernels, the threshold count should be set.
-    round_kernel->InitKernel(round->threshold_count());
+    if (name == "reconstructSecrets") {
+      round_kernel->InitKernel(server_node_->server_num());
+    } else {
+      round_kernel->InitKernel(round->threshold_count());
+    }
     round->BindRoundKernel(round_kernel);
   }
   return;
