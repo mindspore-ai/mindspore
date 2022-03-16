@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDDATA_PYBINDSUPPORT_H
-#define MINDDATA_PYBINDSUPPORT_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_PYBIND_SUPPORT_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_PYBIND_SUPPORT_H_
 
 #include <string>
 
@@ -70,7 +70,7 @@ struct npy_format_descriptor<float16> {
     handle ptr = npy_api::get().PyArray_DescrFromType_(kNpyFloat16);
     return reinterpret_borrow<pybind11::dtype>(ptr);
   }
-  virtual ~npy_format_descriptor<float16>() {}
+  virtual ~npy_format_descriptor<float16>() = default;
 
   static std::string format() {
     // following: https://docs.python.org/3/library/struct.html#format-characters
@@ -85,4 +85,4 @@ struct type_caster<float16> : public npy_scalar_caster<float16> {
 }  // namespace detail
 }  // namespace pybind11
 
-#endif  // MINDDATA_PYBINDSUPPORT_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_PYBIND_SUPPORT_H_

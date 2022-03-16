@@ -245,7 +245,7 @@ class ConfigManager {
 
   // getter function
   // @return - Flag to indicate whether to save AutoTune configuration
-  bool save_autoconfig() { return save_autoconfig_; }
+  bool save_autoconfig() const { return save_autoconfig_; }
 
   // getter function
   // @return - The final AutoTune configuration JSON filepath
@@ -276,6 +276,10 @@ class ConfigManager {
   void set_multiprocessing_timeout_interval(uint32_t interval) { multiprocessing_timeout_interval_ = interval; }
 
  private:
+  // Private helper function that takes a nlohmann json format and populates the settings
+  // @param j - The json nlohmann json info
+  Status FromJson(const nlohmann::json &j);
+
   int32_t num_parallel_workers_;
   int32_t worker_connector_size_;
   int32_t op_connector_size_;
@@ -299,14 +303,11 @@ class ConfigManager {
   bool enable_shared_mem_;
   bool auto_offload_;
   bool enable_autotune_;
-  bool save_autoconfig_;                // True if should save AutoTune configuration
-  std::string autotune_json_filepath_;  // Filepath name of the final AutoTune Configuration JSON file
+  bool save_autoconfig_;  // True if should save AutoTune configuration
   int64_t autotune_interval_;
   bool enable_watchdog_;                       // Watchdog python thread enabled flag
   uint32_t multiprocessing_timeout_interval_;  // Multiprocessing timeout interval in seconds
-  // Private helper function that takes a nlohmann json format and populates the settings
-  // @param j - The json nlohmann json info
-  Status FromJson(const nlohmann::json &j);
+  std::string autotune_json_filepath_;         // Filepath name of the final AutoTune Configuration JSON file
 };
 }  // namespace dataset
 }  // namespace mindspore

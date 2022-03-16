@@ -17,10 +17,12 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_STORAGE_MANAGER_H_
 
 #include <unistd.h>
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "minddata/dataset/engine/cache/storage_container.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/auto_index.h"
@@ -31,6 +33,7 @@
 #include "minddata/dataset/util/slice.h"
 
 using ListOfContainers = std::vector<std::shared_ptr<mindspore::dataset::StorageContainer>>;
+
 namespace mindspore {
 namespace dataset {
 class StorageManager : public Service {
@@ -51,7 +54,7 @@ class StorageManager : public Service {
 
   explicit StorageManager(const Path &);
 
-  StorageManager(const Path &root, int pool_size);
+  StorageManager(const Path &root, size_t pool_size);
 
   ~StorageManager() override;
 
@@ -75,12 +78,12 @@ class StorageManager : public Service {
   int file_id_;
   RWLock rw_lock_;
   storage_index index_;
-  std::vector<int> writable_containers_pool_;
-  int pool_size_;
+  std::vector<size_t> writable_containers_pool_;
+  size_t pool_size_;
 
-  std::string GetBaseName(const std::string &prefix, int32_t file_id);
+  static std::string GetBaseName(const std::string &prefix, int32_t file_id);
 
-  std::string ConstructFileName(const std::string &prefix, int32_t file_id, const std::string &suffix);
+  static std::string ConstructFileName(const std::string &prefix, int32_t file_id, const std::string &suffix);
 
   /// \brief Add a new storage container
   /// The newly-created container is going to be added into a pool of writable containers.
