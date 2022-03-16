@@ -19,6 +19,7 @@
 
 #include <dirent.h>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -46,6 +47,7 @@ struct dump_data_t {
   int32_t sub_format;
   std::string in_out_str;
   uint32_t slot;
+  std::shared_ptr<tensor::Tensor> trans_buf{nullptr};
 };
 
 class E2eDump {
@@ -116,10 +118,13 @@ class E2eDump {
 #ifdef ENABLE_D
   static nlohmann::json ParseOverflowInfo(char *data_ptr);
 
-  static bool ConvertFormatForTensorAndDump(const dump_data_t &dump_tensor_info);
+  static bool ConvertFormatForOneTensor(dump_data_t *dump_tensor_info);
 
-  static void ConvertFormatForTensors(const std::vector<dump_data_t> &dump_tensor_vec, uint32_t start_idx,
-                                      uint32_t end_idx);
+  static void ConvertFormatForTensors(std::vector<dump_data_t> *dump_tensor_vec, uint32_t start_idx, uint32_t end_idx);
+
+  static bool DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_info);
+
+  static bool DumpTensorDataIfNeeded(const dump_data_t &dump_tensor_info);
 #endif
 
   inline static unsigned int starting_graph_id = INT32_MAX;

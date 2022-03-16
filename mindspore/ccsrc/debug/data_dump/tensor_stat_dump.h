@@ -41,15 +41,12 @@ class CsvWriter {
   void CloseFile() noexcept;
   template <typename T>
   void WriteToCsv(const T &val, bool end_line = false);
-  void Lock() { dump_csv_lock_.lock(); }
-  void Unlock() { dump_csv_lock_.unlock(); }
 
  private:
   const std::string kSeparator = ",";
   const std::string kEndLine = "\n";
   std::ofstream file_;
   std::string file_path_str_ = "";
-  std::mutex dump_csv_lock_;
 };
 
 class TensorStatDump {
