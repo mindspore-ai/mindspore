@@ -81,6 +81,7 @@ file(GLOB C_API_SRCS
 set(API_SRC ${CXX_API_SRCS} ${C_API_SRCS})
 if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
     set(API_SRC ${API_SRC} ${CORE_DIR}/utils/status.cc)
+    set(LITE_SRC ${LITE_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/common/config_file.cc)
 endif()
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     file(GLOB CXX_API_TRAIN_SRCS
@@ -99,10 +100,10 @@ if(SUPPORT_NPU)
 endif()
 
 set(LITE_SRC
+        ${LITE_SRC}
         ${API_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/context_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/config_file.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log.cc
@@ -467,12 +468,12 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
     target_link_libraries(mindspore-lite
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            config_parser_mid mslite_converter_plugin mindspore_core
+            config_parser_mid mslite_converter_plugin mindspore_core coder_mid
             mindspore::protobuf ${SECUREC_LIBRARY})
     target_link_libraries(mindspore-lite_static
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            config_parser_mid mslite_converter_plugin mindspore_core
+            config_parser_mid mslite_converter_plugin mindspore_core coder_mid
             mindspore::protobuf ${SECUREC_LIBRARY})
     if(MSLITE_ENABLE_ACL)
         target_link_libraries(mindspore-lite lite_acl_mid
