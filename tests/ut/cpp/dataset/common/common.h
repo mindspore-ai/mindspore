@@ -27,6 +27,7 @@
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 using mindspore::Status;
 using mindspore::StatusCode;
@@ -118,4 +119,20 @@ class DatasetOpTesting : public Common {
   void SetUp() override;
 };
 }  // namespace UT
+
+namespace mindspore {
+namespace dataset {
+// defined in datasets.cc code, and function prototypes added here for UT purposes
+// convert MSTensorVec to DE TensorRow, return empty if fails
+TensorRow VecToRow(const MSTensorVec &v);
+
+// defined in datasets.cc code, and function prototypes added here for UT purposes
+// convert DE TensorRow to MSTensorVec, won't fail
+MSTensorVec RowToVec(const TensorRow &v);
+
+MSTensorVec Predicate1(MSTensorVec in);
+
+MSTensorVec Predicate2(MSTensorVec in);
+}  // namespace dataset
+}  // namespace mindspore
 #endif  // TESTS_UT_CPP_DATASET_COMMON_COMMON_H_

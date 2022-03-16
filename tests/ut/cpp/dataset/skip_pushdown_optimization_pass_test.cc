@@ -18,7 +18,6 @@
 #include <string>
 
 #include "common/common.h"
-#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/engine/opt/pre/skip_pushdown_pass.h"
 #include "minddata/dataset/include/dataset/samplers.h"
 #include "minddata/dataset/include/dataset/vision.h"
@@ -106,12 +105,6 @@ class MindDataSkipPushdownTestOptimizationPass : public UT::DatasetOpTesting {
     return Status::OK();
   }
 };
-
-TensorRow VecToRow(const MSTensorVec &v);
-
-MSTensorVec RowToVec(const TensorRow &v);
-
-MSTensorVec Predicate1(MSTensorVec in);
 
 /// Feature: MindData Skip Pushdown Optimization Pass Test
 /// Description: Test MindData Skip Pushdown Optimization Pass with Sampler in MappableSourceNode
