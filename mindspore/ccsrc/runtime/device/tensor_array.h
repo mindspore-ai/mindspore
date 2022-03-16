@@ -83,7 +83,6 @@ class TensorArray {
   // Using a vector tensors_ to store the dev_tensor_addr from Write().
   std::vector<mindspore::kernel::AddressPtr> tensors_;
 };
-using TensorArray = TensorArray;
 using TensorArrayPtr = std::shared_ptr<TensorArray>;
 }  // namespace device
 }  // namespace mindspore

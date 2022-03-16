@@ -45,7 +45,7 @@ class TensorArrayMgr {
 
   void AddTensorArray(const int64_t handle, const TensorArrayPtr &ta) {
     MS_LOG(DEBUG) << "Add a TensorArray to map, handle is " << handle;
-    tensors_map_.emplace(std::make_pair(handle, ta));
+    (void)tensors_map_.emplace(std::make_pair(handle, ta));
     // Increase handle count when added a TensorArray.
     tensor_array_handle_count += 1;
   }
@@ -62,7 +62,7 @@ class TensorArrayMgr {
   bool EraseTensorArray(const int64_t handle) {
     if (tensors_map_.count(handle)) {
       MS_LOG(DEBUG) << "Erase tensorarray from map, handle number is " << handle;
-      tensors_map_.erase(handle);
+      (void)tensors_map_.erase(handle);
       return true;
     } else {
       MS_LOG(ERROR) << "Erase failed, no such handle " << handle;
