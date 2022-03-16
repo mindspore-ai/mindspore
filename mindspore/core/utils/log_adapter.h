@@ -146,7 +146,11 @@ enum SubModuleId : int {
 };
 
 #ifndef SUBMODULE_ID
+#ifndef BUILD_LITE_INFERENCE
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
+#else
+#define SUBMODULE_ID mindspore::SubModuleId::SM_LITE
+#endif
 #endif
 
 /// \brief Get sub-module name by the module id.
@@ -204,10 +208,12 @@ class MS_CORE_API LogWriter {
   /// \param[in] stream The input log stream.
   void operator<(const LogStream &stream) const noexcept;
 
+#ifndef BUILD_LITE_INFERENCE
   /// \brief Output log message from the input log stream and then throw exception.
   ///
   /// \param[in] stream The input log stream.
   void operator^(const LogStream &stream) const __attribute__((noreturn));
+#endif
 
   static void set_exception_handler(const ExceptionHandler &exception_handler);
   static void set_trace_provider(const TraceProvider &trace_provider);
@@ -230,10 +236,16 @@ class MS_CORE_API LogWriter {
                : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, SUBMODULE_ID, \
                                       excp_type) < mindspore::LogStream()
 
+#ifndef BUILD_LITE_INFERENCE
 #define MSLOG_THROW(excp_type)                                                                                         \
   mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::EXCEPTION, SUBMODULE_ID, \
                        excp_type) ^                                                                                    \
     mindspore::LogStream()
+#else
+#define MSLOG_THROW(excp_type)                                                                                     \
+  mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::ERROR, SUBMODULE_ID, \
+                       excp_type) < mindspore::LogStream()
+#endif
 
 inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
   return (static_cast<int>(level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] &&

@@ -33,7 +33,7 @@ function Run_server_inference_avx512() {
     cd ${path}/server || exit 1
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     cd ${path}/server/mindspore-lite-${version}-linux-x64 || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
     cp tools/benchmark/benchmark ./ || exit 1
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:benchmark_mode
     Run_Benchmark "${models_server_inference_cfg_file_list[*]}" $ms_models_path $models_path $run_server_inference_x86_log_file $run_benchmark_result_file 'x86_avx512' 'CPU' '' $run_fail_not_return
@@ -49,7 +49,7 @@ function Run_server_inference_arm64() {
     cd ${path}/server || exit 1
     tar -zxf mindspore-lite-${version}-linux-aarch64.tar.gz || exit 1
     cd ${path}/server/mindspore-lite-${version}-linux-aarch64 || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
     cp tools/benchmark/benchmark ./ || exit 1
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:benchmark_mode
     Run_Benchmark "${models_server_inference_cfg_file_list[*]}" $ms_models_path $models_path $run_server_inference_arm64_log_file $run_benchmark_result_file 'x86_avx512' 'CPU' '' $run_fail_not_return

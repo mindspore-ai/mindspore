@@ -239,6 +239,10 @@ if(PLATFORM_ARM64)
     if(ANDROID_NDK_TOOLCHAIN_INCLUDED OR MSLITE_ENABLE_CONVERTER)
         __install_micro_wrapper()
     endif()
+    if(MSLITE_ENABLE_RUNTIME_GLOG)
+        install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${GLOG_DIR} RENAME libglog.so.0
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
     if(MSLITE_ENABLE_TOOLS)
         if(NOT MSLITE_COMPILE_TWICE)
             install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR}
@@ -635,6 +639,10 @@ else()
                 GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/linux-x64/libmsdeobfuscator-lite.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
+    if(MSLITE_ENABLE_RUNTIME_GLOG)
+        install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${GLOG_DIR} RENAME libglog.so.0
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     if(MSLITE_ENABLE_CONVERTER)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${CONVERTER_ROOT_DIR}/include

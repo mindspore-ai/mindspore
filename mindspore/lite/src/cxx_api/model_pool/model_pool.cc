@@ -16,7 +16,7 @@
 #include "src/cxx_api/model_pool/model_pool.h"
 #include <unistd.h>
 #include <future>
-#include "src/common/log.h"
+#include "src/common/log_adapter.h"
 #include "include/lite_types.h"
 #include "src/common/config_file.h"
 #include "src/runtime/inner_allocator.h"
