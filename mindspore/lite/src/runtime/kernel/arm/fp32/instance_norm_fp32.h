@@ -52,6 +52,7 @@ class InstanceNormCPUKernel : public InnerKernel {
   float *dst_data_ = nullptr;
   float *gamma_data_ = nullptr;
   float *beta_data_ = nullptr;
+  bool input_pack_to_nc4hw4_ = false;
 };
 }  // namespace mindspore::kernel
 

@@ -94,7 +94,7 @@ int InstanceNormFp16CPUKernel::ReSize() {
 
 int InstanceNormFp16CPUKernel::DoInstanceNorm(int task_id) {
   int ret = RET_OK;
-  if (in_tensors_.at(0)->format() == NC4HW4) {
+  if (input_pack_to_nc8hw8_) {
     ret = InstanceNormNC8HW8Fp16(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
   } else {
     ret = InstanceNormFp16(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
@@ -125,8 +125,11 @@ int InstanceNormFp16CPUKernel::Run() {
     tmp_src_data_ = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(in_tensors_[0]->Size()));
     CHECK_NULL_RETURN(tmp_src_data_);
     PackNHWCToNC8HW8NotAlignedFp16(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
-    in_tensors_[0]->set_format(NC4HW4);
+    input_pack_to_nc8hw8_ = true;
   } else {
+    if (in_tensors_[0]->format() == NC4HW4) {
+      input_pack_to_nc8hw8_ = true;
+    }
     tmp_src_data_ = src_data_;
   }
   auto ret = ParallelLaunch(this->ms_context_, InstanceNormFp16Run, this, op_parameter_->thread_num_);
