@@ -51,7 +51,7 @@ Status SpectrogramOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> SpectrogramOperation::Build() {
   int32_t win_length = (win_length_ == 0) ? n_fft_ : win_length_;
-  int32_t hop_length = (hop_length_ == 0) ? win_length_ / 2 : hop_length_;
+  int32_t hop_length = (hop_length_ == 0) ? win_length / 2 : hop_length_;
   std::shared_ptr<SpectrogramOp> tensor_op = std::make_shared<SpectrogramOp>(
     n_fft_, win_length, hop_length, pad_, window_, power_, normalized_, center_, pad_mode_, onesided_);
   return tensor_op;

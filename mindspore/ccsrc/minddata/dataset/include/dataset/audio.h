@@ -916,7 +916,9 @@ class MS_API Spectrogram : public TensorTransform {
   /// \param[in] power Exponent for the magnitude spectrogram, which must be greater than or equal to 0 (Default: 2.0).
   /// \param[in] normalized Whether to normalize by magnitude after stft (Default: false).
   /// \param[in] center Whether to pad waveform on both sides (Default: true).
-  /// \param[in] pad_mode Controls the padding method used when center is true (Default: BorderType::kReflect).
+  /// \param[in] pad_mode Controls the padding method used when center is true,
+  ///     which can be BorderType::kReflect, BorderType::kConstant, BorderType::kEdge,
+  ///     BorderType::kSymmetric (Default: BorderType::kReflect).
   /// \param[in] onesided Controls whether to return half of results to avoid redundancy (Default: true).
   explicit Spectrogram(int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0,
                        WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false,
