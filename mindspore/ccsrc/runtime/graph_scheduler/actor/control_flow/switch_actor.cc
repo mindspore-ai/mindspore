@@ -87,7 +87,7 @@ size_t SwitchActor::GetIndex(const OpContext<DeviceTensor> *const context) const
   char buf[kMaxSwitchCondSize] = {0};
   ShapeVector host_shape;
   if (!device_tensor->SyncDeviceToHost(host_shape, size, type_id, static_cast<void *>(buf))) {
-    MS_LOG(ERROR) << GetAID().Name() << " get index from device address failed, type id:" << std::to_string(type_id)
+    MS_LOG(ERROR) << GetAID().Name() << " get index from device address failed, type id:" << type_id
                   << ", device type:" << std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceAddressType()));
     return 0;
   }

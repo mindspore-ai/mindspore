@@ -446,7 +446,7 @@ void ControlActor::UpdateDynamicShapeInParameter() {
 
     auto shape = input_device_tensors_[i]->host_shape();
     std::vector<size_t> shape_tmp;
-    std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), IntToSize);
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), IntToSize);
 
     for (const auto &parameter : backend_parameters_[i]) {
       common::AnfAlgo::SetOutputInferTypeAndShape({input_device_tensors_[i]->type_id()}, {shape_tmp}, parameter.get());

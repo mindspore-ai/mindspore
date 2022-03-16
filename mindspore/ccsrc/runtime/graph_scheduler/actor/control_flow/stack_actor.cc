@@ -343,14 +343,14 @@ void StackActor::EraseInput(const OpContext<DeviceTensor> *const context) {
         MS_LOG(ERROR) << "Input stack control aid:" << stack_iter->first << " is null in actor:" << GetAID();
         return;
       } else if (stack_iter->second == 1) {
-        control_iter->second.erase(stack_iter++);
+        (void)control_iter->second.erase(stack_iter++);
       } else {
         stack_iter->second--;
-        stack_iter++;
+        (void)stack_iter++;
       }
     }
     if (control_iter->second.empty()) {
-      input_stack_controls_.erase(control_iter);
+      (void)input_stack_controls_.erase(control_iter);
     }
   }
 }
@@ -361,7 +361,7 @@ void StackActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
 
   // Collect the input device tensors.
   std::vector<DeviceTensor *> memory_free_list;
-  if (input_op_datas_.count(sequential_num) > 0) {
+  if (input_op_datas_.find(sequential_num) != input_op_datas_.end()) {
     for (auto &input_data : input_op_datas_[sequential_num]) {
       MS_EXCEPTION_IF_NULL(input_data);
       MS_EXCEPTION_IF_NULL(input_data->data_);
@@ -369,7 +369,7 @@ void StackActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
     }
   }
 
-  if (input_op_partials_.count(sequential_num) > 0) {
+  if (input_op_partials_.find(sequential_num) != input_op_partials_.end()) {
     for (auto &input_partial_pair : input_op_partials_[sequential_num]) {
       GetAllDeviceTensors(input_partial_pair.second, &memory_free_list);
     }
