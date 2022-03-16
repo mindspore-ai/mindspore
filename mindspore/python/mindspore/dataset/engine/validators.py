@@ -22,6 +22,7 @@ import re
 from functools import wraps
 
 import numpy as np
+from mindspore import log
 from mindspore._c_expression import typing
 from ..core.validator_helpers import parse_user_args, type_check, type_check_list, check_value, \
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
@@ -2814,3 +2815,26 @@ def check_multi30k_dataset(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def deprecated(version, substitute=None):
+    """deprecated warning
+
+    Args:
+        version (str): version that the operator or function is deprecated.
+        substitute (str): the substitute name for deprecated operator or function.
+    """
+
+    def decorate(func):
+        def wrapper(*args, **kwargs):
+            name = func.__name__
+            message = f"'{name}' is deprecated from version {version} and will be removed in a future version. "
+            if substitute:
+                message += f"Use '{substitute}' instead."
+            log.warning(message)
+            ret = func(*args, **kwargs)
+            return ret
+
+        return wrapper
+
+    return decorate

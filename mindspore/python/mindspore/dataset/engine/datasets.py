@@ -66,7 +66,7 @@ from .queue import _SharedQueue
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_device_send, check_take, check_project, \
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
-    check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
+    check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, deprecated
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_enable_watchdog
 from ..core.datatypes import mstype_to_detype
@@ -1604,6 +1604,7 @@ class Dataset:
             runtime_getter[2].notify_watchdog()
         return self.dataset_size
 
+    @deprecated("1.5")
     def set_dynamic_columns(self, columns=None):
         """
         Set dynamic shape information of source data, it should be set after the pipeline is defined.
