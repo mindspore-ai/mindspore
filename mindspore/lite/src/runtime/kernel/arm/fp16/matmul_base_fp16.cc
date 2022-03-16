@@ -76,20 +76,36 @@ void MatmulBaseFP16CPUKernel::InitParameter() {
 }
 
 int MatmulBaseFP16CPUKernel::InitBias() {
-  if (params_->col_ != 0 && bias_ptr_ == nullptr) {
-    int max_bias_data = UP_ROUND(params_->col_, C16NUM);
+  int max_bias_data = 0;
+  if (params_->col_ == 0) {
+    if (in_tensors().size() == C3NUM) {
+      max_bias_data = in_tensors().at(THIRD_INPUT)->ElementsNum();
+    }
+  } else {
+    max_bias_data = UP_ROUND(params_->col_, C16NUM);
+  }
+  if (max_bias_data > bias_count_) {
+    auto bias_ptr_bak = bias_ptr_;
     bias_ptr_ = reinterpret_cast<float16_t *>(malloc(max_bias_data * sizeof(float16_t)));
     if (bias_ptr_ == nullptr) {
       MS_LOG(ERROR) << "malloc bias_ptr_ failed";
       return RET_ERROR;
     }
-    if (in_tensors_.size() == 3) {
-      auto bias_tensor = in_tensors_[2];
-      CHECK_NULL_RETURN(bias_tensor);
-      memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(float16_t));
+    if (bias_count_ == 0) {
+      if (in_tensors_.size() == C3NUM) {
+        auto bias_tensor = in_tensors_[THIRD_INPUT];
+        CHECK_NULL_RETURN(bias_tensor);
+        memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(float16_t));
+      } else {
+        memset(bias_ptr_, 0, max_bias_data * sizeof(float16_t));
+      }
     } else {
       memset(bias_ptr_, 0, max_bias_data * sizeof(float16_t));
+      memcpy(bias_ptr_, bias_ptr_bak, bias_count_ * sizeof(float16_t));
+      free(bias_ptr_bak);
+      bias_ptr_bak = nullptr;
     }
+    bias_count_ = max_bias_data;
   }
   return RET_OK;
 }
@@ -115,7 +131,11 @@ int MatmulBaseFP16CPUKernel::ReSize() {
     thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_, C8NUM));
     thread_stride_ = UP_DIV(UP_DIV(params_->col_, C8NUM), thread_count_) * C8NUM;
   }
-
+  auto ret = InitBias();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitBias failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -250,6 +270,9 @@ void MatmulBaseFP16CPUKernel::InitMatrixB(const void *src_ptr, TypeId src_data_t
 int MatmulBaseFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (in_tensors_.size() == FOURTH_INPUT) {
+    MS_CHECK_TRUE_MSG(in_tensors_[THIRD_INPUT]->IsConst(), RET_ERROR, "matrix-c must be const when existing.");
+  }
   ResizeParameter();
   if (params_->a_const_ == true) {
     if (RET_OK != InitBufferA()) {
@@ -330,7 +353,6 @@ int MatmulBaseFP16CPUKernel::Run() {
       return RET_ERROR;
     }
     InitMatrixB(in_tensors_[1]->data(), in_tensors_[1]->data_type());
-    InitBias();
   }
 
   CHECK_NULL_RETURN(c_ptr);
