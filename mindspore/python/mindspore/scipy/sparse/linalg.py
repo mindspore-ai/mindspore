@@ -61,6 +61,17 @@ def rotate_vectors(H, i, cs, sn):
     return H
 
 
+def _high_precision_cho_solve(a, b, data_type=mstype.float64):
+    a = a.astype(mstype.float64)
+    b = b.astype(mstype.float64)
+    a_a = mnp.dot(a, a.T)
+    a_b = mnp.dot(a, b)
+    c, lower = cho_factor(a_a, lower=False)
+    factor = (c, lower)
+    y = cho_solve(factor, a_b)
+    return y.astype(data_type)
+
+
 class BatchedGmres(nn.Cell):
     """
     Implements a single restart of GMRES. The ``restart``-dimensional Krylov subspace
@@ -97,14 +108,10 @@ class BatchedGmres(nn.Cell):
                 k_iter += 1
             beta_vec = mnp.zeros((restart + 1,), dtype=dtype)
             beta_vec[0] = residual_norm
-            a2 = mnp.dot(H, H.T)
-            b2 = mnp.dot(H, beta_vec)
-            c, lower = cho_factor(a2, lower=False)
-            factor = (c, lower)
-            y = cho_solve(factor, b2)
+            y = _high_precision_cho_solve(H, beta_vec, data_type=dtype)
             dx = mnp.dot(V[..., :-1], y)
             x = x + dx
-            residual = b - A(x)
+            residual = M(b - A(x))
             unit_residual, residual_norm = _safe_normalize(residual)
             k += 1
 
@@ -189,8 +196,8 @@ class IterativeGmres(nn.Cell):
         return x0, F.select(r_norm > atol, iters, _INT_ZERO)
 
 
-def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
-          M=None, solve_method='batched'):
+def gmres(A, b, x0=None, *, tol=1e-5, restart=20, maxiter=None,
+          M=None, callback=None, restrt=None, atol=0.0, callback_type=None, solve_method='batched'):
     """
     Given given A and b, GMRES solves the linear system:
 
@@ -216,23 +223,32 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
             :math:`norm(residual) <= max(tol*norm(b), atol)`. We do not implement SciPy's
             "legacy" behavior, so MindSpore's tolerance will differ from SciPy unless you
             explicitly pass `atol` to SciPy's `gmres`. Default: 1e-5.
-        atol (float, optional): The same as `tol`. Default: 0.0.
         restart (integer, optional): Size of the Krylov subspace ("number of iterations")
             built between restarts. GMRES works by approximating the true solution x as its
             projection into a Krylov space of this dimension - this parameter
             therefore bounds the maximum accuracy achievable from any guess
             solution. Larger values increase both number of iterations and iteration
             cost, but may be necessary for convergence. The algorithm terminates
-            early if convergence is achieved before the full subspace is built.
-            Default: 20.
+            early if convergence is achieved before the full subspace is built. Default: 20.
         maxiter (int): Maximum number of times to rebuild the size-`restart`
             Krylov space starting from the solution found at the last iteration. If GMRES
-            halts or is very slow, decreasing this parameter may help.
-            Default: None.
+            halts or is very slow, decreasing this parameter may help. Default: None.
         M (Union[Tensor, function]): Preconditioner for A.  The preconditioner should approximate the
             inverse of A.  Effective preconditioning dramatically improves the
             rate of convergence, which implies that fewer iterations are needed
             to reach a given error tolerance. Default: None.
+        callback (function): User-supplied function to call after each iteration. It is called as callback(args),
+            where args are selected by callback_type. Default: None.
+        restrt (int, optional): Deprecated, use restart instead. Default: None.
+        atol (float, optional): The same as `tol`. Default: 0.0.
+        callback_type (str, optional): Callback function argument requested:
+            Default: None.
+
+            - x: current iterate (ndarray), called on every restart
+            - pr_norm: relative (preconditioned) residual norm (float), called on every inner iteration
+            - legacy (default): same as pr_norm, but also changes the meaning of ‘maxiter’ to count inner
+              iterations instead of restart cycles.
+
         solve_method (str): There are two kinds of solve methods,'incremental' or 'batched'. Default: "batched".
 
             - incremental: builds a QR decomposition for the Krylov subspace incrementally during
@@ -268,12 +284,19 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
     size = b.size
     if maxiter is None:
         maxiter = 10 * size  # copied from scipy
-    if restart > size:
-        restart = size
-
     if M is None:
         M = lambda x: x
-
+    func_name = "gmres"
+    _type_check(func_name, tol, float, 'tol')
+    _type_check(func_name, restart, int, 'restart')
+    _type_check(func_name, maxiter, int, 'maxiter')
+    _type_check(func_name, solve_method, str, 'solve_method')
+    _value_check(func_name, callback, None, 'callback', op='is', fmt='todo')
+    _value_check(func_name, restrt, None, 'restrt', op='is', fmt='todo')
+    _value_check(func_name, callback_type, None, 'callback_type', op='is', fmt='todo')
+    if restart > size:
+        restart = size
+    A, M, b, x0 = _sparse_check(func_name, A, M, b, x0)
     if solve_method == 'incremental':
         x, info = IterativeGmres(A, M)(b, x0, tol, atol, restart, maxiter)
     elif solve_method == 'batched':
