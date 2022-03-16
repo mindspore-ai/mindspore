@@ -246,7 +246,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // tuple parameter graph transform
   call_graph_tuple_transform_ =
-    MakeSubstitution(std::make_shared<CallGraphTupleTransform>(), "graph_param_transform", IsCNode);
+    MakeSubstitution(std::make_shared<CallGraphTupleTransform>(), "graph_param_transform", IsNode);
 
   // RowTensor Eliminate
   row_tensor_eliminate_ = MakeSubstitution(

@@ -35,206 +35,127 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-constexpr int kInputZero = 0;
-constexpr int kInputOne = 1;
-constexpr int kInputTwo = 2;
-constexpr int kInputThree = 3;
-// {G, Xs}-->transform graph call tuple inputs to flat inputs.
-class GraphCallTupleTransform : public AnfVisitor {
- public:
-  explicit GraphCallTupleTransform(GraphTupleParamTransform &transformer) : graph_transform_(transformer) {}
-  ~GraphCallTupleTransform() override = default;
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
-    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
-      return nullptr;
-    }
-
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    auto &inputs = cnode->inputs();
-    auto fg = GetValueNode<FuncGraphPtr>(inputs[kInputZero]);
-    if (fg == nullptr) {
-      return nullptr;
-    }
-    if (!CNodeHasTupleInput(cnode)) {
-      return nullptr;
-    }
-    FuncGraphPtr transformed_fg = graph_transform_(fg, optimizer->manager());
-    auto new_node = TransformCallGraph(transformed_fg, cnode);
-    return new_node;
-  }
-
- private:
-  GraphTupleParamTransform &graph_transform_;
-};
-
-// {{switch, cond, true_branch, false_branch}, Xs} -->transform switch graph call tuple inputs to flat inputs.
-class SwitchCallTupleTransform : public AnfVisitor {
- public:
-  explicit SwitchCallTupleTransform(GraphTupleParamTransform &transformer) : graph_transform_(transformer) {}
-  ~SwitchCallTupleTransform() override = default;
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
-    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
-      return nullptr;
-    }
-    auto switch_call_cnode = node->cast<CNodePtr>();
-    auto call_inputs = switch_call_cnode->inputs();
-    if (call_inputs.size() < 1) {
-      return nullptr;
-    }
-    if (!IsPrimitiveCNode(call_inputs[kInputZero], prim::kPrimSwitch)) {
-      return nullptr;
-    }
-    auto switch_cnode = call_inputs[kInputZero]->cast<CNodePtr>();
-    auto switch_inputs = switch_cnode->inputs();
-    if (switch_inputs.size() != 4) {
-      return nullptr;
-    }
-
-    AnfNodePtr transformed = nullptr;
-    bool true_br_changed = TransformBranchNode(switch_inputs[kInputTwo], optimizer->manager(), &transformed);
-    if (true_br_changed) {
-      switch_inputs[kInputTwo] = transformed;
-    }
-    bool false_br_changed = TransformBranchNode(switch_inputs[kInputThree], optimizer->manager(), &transformed);
-    if (false_br_changed) {
-      switch_inputs[kInputThree] = transformed;
-    }
-    if (true_br_changed || false_br_changed) {
-      call_inputs[kInputZero] = switch_cnode->func_graph()->NewCNode(switch_inputs);
-    }
-    if (CNodeHasTupleInput(switch_call_cnode)) {
-      return TransformSwitchCall(call_inputs[kInputZero], switch_call_cnode);
-    }
-    if (true_br_changed || false_br_changed) {
-      return switch_call_cnode->func_graph()->NewCNode(call_inputs);
-    }
-    return nullptr;
-  }
-
-  bool TransformBranchNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng, AnfNodePtr *trans_node) {
-    if (IsValueNode<FuncGraph>(node)) {
-      FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
-      if (FuncGraphHasTupleInput(fg)) {
-        FuncGraphPtr transformed_fg = graph_transform_(fg, mng);
-        *trans_node = NewValueNode(transformed_fg);
-        return true;
-      }
-      return false;
-    }
-    if (IsPrimitiveCNode(node, prim::kPrimPartial)) {
-      auto partial_inputs = node->cast<CNodePtr>()->inputs();
-      if (IsValueNode<FuncGraph>(partial_inputs[kInputOne])) {
-        FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(partial_inputs[kInputOne]);
-        if (FuncGraphHasTupleInput(fg)) {
-          fg = graph_transform_(fg, mng);
-        }
-        if (CNodeHasTupleInput(node->cast<CNodePtr>())) {
-          *trans_node = TransformPartial(fg, node->cast<CNodePtr>());
-          return true;
-        }
-      }
-      return false;
-    }
-
-    MS_LOG(WARNING) << "Got unexpected switch branch node " << node->DebugString();
+bool IsFuncGraphCallNode(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
     return false;
   }
+  auto cnode = node->cast<CNodePtr>();
+  return !IsValueNode<Primitive>(cnode->input(kAnfPrimitiveIndex));
+}
+
+bool FlattenArgs(const FuncGraphPtr &fg, const AnfNodePtrList &args, size_t start_idx, AnfNodePtrList *new_args) {
+  bool change = false;
+  for (size_t i = start_idx; i < args.size(); i++) {
+    const auto &arg = args[i];
+    auto abs = arg->abstract();
+    if (abs == nullptr) {
+      MS_LOG(EXCEPTION) << "Null abs of arg:" << arg->DebugString();
+    }
+    if (!abs->isa<abstract::AbstractTuple>()) {
+      new_args->push_back(arg);
+      continue;
+    }
+    auto new_arg = TransformTupleArgument(fg, arg, abs->cast<abstract::AbstractTuplePtr>());
+    new_args->insert(new_args->end(), new_arg.begin(), new_arg.end());
+    change = true;
+  }
+  return change;
+}
+
+// fg(param1_tuple, param2)
+// =>
+// fg(param1_1, param1_2, ..., param1_n, param2)
+// Transform graph call tuple inputs to flat inputs.
+class GraphTupleTransform : public AnfVisitor {
+ public:
+  GraphTupleTransform() = default;
+  ~GraphTupleTransform() override = default;
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
+    if (!IsValueNode<FuncGraph>(node)) {
+      return nullptr;
+    }
+    auto fg = GetValueNode<FuncGraphPtr>(node);
+    if (!FuncGraphHasTupleInput(fg)) {
+      return nullptr;
+    }
+    fg = graph_transform_(fg, optimizer->manager());
+    // Can't set abstract of the value node, otherwise the renormalize process won't be executed.
+    return NewValueNode(fg);
+  }
 
  private:
-  GraphTupleParamTransform &graph_transform_;
+  GraphTupleParamTransform graph_transform_;
 };
 
-// {{switch_layer, index, {make_tuple, br1, br2,...,}}, Xs} ->
-// transform switch layer graph call tuple inputs to flat inputs.
-class SwitchLayerCallTupleTransform : public AnfVisitor {
+// {,kPrimPartial, G, Tuple_Xs}
+// =>
+// {kPrimPartial, G, TupleGetItem{Tuple_Xs,0}, TupleGetItem{Tuple_Xs,1}, ..., TupleGetItem{Tuple_Xs,n}}
+// transform partial's tuple binding args to flat inputs.
+class PartialTupleArgTransform : public AnfVisitor {
  public:
-  explicit SwitchLayerCallTupleTransform(GraphTupleParamTransform &transformer) : graph_transform_(transformer) {}
-  ~SwitchLayerCallTupleTransform() override = default;
+  PartialTupleArgTransform() = default;
+  ~PartialTupleArgTransform() override = default;
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
-    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
+    if (!IsPrimitiveCNode(node, prim::kPrimPartial)) {
       return nullptr;
     }
-    auto switch_layer_call_cnode = node->cast<CNodePtr>();
-    auto call_inputs = switch_layer_call_cnode->inputs();
-    if (call_inputs.size() < 1) {
-      return nullptr;
-    }
-    if (!IsPrimitiveCNode(call_inputs[kInputZero], prim::kPrimSwitchLayer)) {
-      return nullptr;
-    }
-    auto switch_layer_cnode = call_inputs[kInputZero]->cast<CNodePtr>();
-    auto switch_layer_inputs = switch_layer_cnode->inputs();
-    if (switch_layer_inputs.size() != 3) {
-      return nullptr;
-    }
-
-    AnfNodePtr transformed = nullptr;
-    bool layer_changed = TransformLayerNode(switch_layer_inputs[kInputTwo], optimizer->manager(), &transformed);
-    if (layer_changed) {
-      transformed->set_abstract(switch_layer_inputs[kInputTwo]->abstract());
-      switch_layer_inputs[kInputTwo] = transformed;
-      auto new_switch_layer = switch_layer_call_cnode->func_graph()->NewCNode(switch_layer_inputs);
-      new_switch_layer->set_abstract(switch_layer_cnode->abstract());
-      call_inputs[kInputZero] = new_switch_layer;
-    }
-    if (CNodeHasTupleInput(switch_layer_call_cnode)) {
-      return TransformSwitchCall(call_inputs[kInputZero], switch_layer_call_cnode);
-    }
-    if (layer_changed) {
-      return switch_layer_call_cnode->func_graph()->NewCNode(call_inputs);
+    auto partial = node->cast<CNodePtr>();
+    const auto &partial_inputs = partial->inputs();
+    const auto &fg = partial->func_graph();
+    // And primitive and function value node into args.
+    constexpr auto kPartialFirstArgIndex = 2;
+    auto new_args = AnfNodePtrList(partial_inputs.begin(), partial_inputs.begin() + kPartialFirstArgIndex);
+    auto change = FlattenArgs(fg, partial_inputs, kPartialFirstArgIndex, &new_args);
+    if (change) {
+      auto new_partial = fg->NewCNode(new_args);
+      new_partial->set_abstract(partial->abstract());
+      return new_partial;
     }
     return nullptr;
   }
+};
 
-  bool TransformLayerNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng, AnfNodePtr *trans_node) {
-    if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-      MS_LOG(WARNING) << "SwitchLayer input is not MakeTuple";
-      return false;
+// {G,Tuple_Xs}
+// =>
+// {G, TupleGetItem{Tuple_Xs,0}, TupleGetItem{Tuple_Xs,1}, ..., TupleGetItem{Tuple_Xs,n}}
+// Transform call's tuple args to flat inputs.
+class CallTupleArgTransform : public AnfVisitor {
+ public:
+  CallTupleArgTransform() = default;
+  ~CallTupleArgTransform() override = default;
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
+    if (!IsFuncGraphCallNode(node)) {
+      return nullptr;
     }
-    auto tuple_inputs = node->cast<CNodePtr>()->inputs();
-    bool changed = false;
-    for (size_t i = 1; i < tuple_inputs.size(); i++) {
-      if (!IsValueNode<FuncGraph>(tuple_inputs[i])) {
-        MS_LOG(WARNING) << "SwitchLayer input is not FuncGraph";
-        return false;
-      }
-      FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(tuple_inputs[i]);
-      if (FuncGraphHasTupleInput(fg)) {
-        FuncGraphPtr transformed_fg = graph_transform_(fg, mng);
-        auto new_value_node = NewValueNode(transformed_fg);
-        new_value_node->set_abstract(tuple_inputs[i]->abstract());
-        tuple_inputs[i] = new_value_node;
-        changed = true;
-      }
+
+    auto call_node = node->cast<CNodePtr>();
+    const auto &call_inputs = call_node->inputs();
+    const auto &fg = call_node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    // Add function value node into args.
+    auto new_args = AnfNodePtrList(call_inputs.begin(), call_inputs.begin() + 1);
+    auto change = FlattenArgs(fg, call_inputs, 1, &new_args);
+    if (change) {
+      auto new_call = fg->NewCNode(new_args);
+      new_call->set_abstract(call_node->abstract());
+      return new_call;
     }
-    if (changed) {
-      *trans_node = node->func_graph()->NewCNode(tuple_inputs);
-    }
-    return changed;
+    return nullptr;
   }
-
- private:
-  GraphTupleParamTransform &graph_transform_;
 };
 
 class CallGraphTupleTransform : public OptimizerCaller {
  public:
-  CallGraphTupleTransform()
-      : graph_transformer_(),
-        graph_call_transform_(std::make_shared<GraphCallTupleTransform>(graph_transformer_)),
-        switch_call_transform_(std::make_shared<SwitchCallTupleTransform>(graph_transformer_)),
-        switch_layer_call_transform_(std::make_shared<SwitchLayerCallTupleTransform>(graph_transformer_)) {
-    transformers_.emplace_back(graph_call_transform_);
-    transformers_.emplace_back(switch_call_transform_);
-    transformers_.emplace_back(switch_layer_call_transform_);
+  CallGraphTupleTransform() {
+    transformers_.emplace_back(std::make_shared<GraphTupleTransform>());
+    transformers_.emplace_back(std::make_shared<PartialTupleArgTransform>());
+    transformers_.emplace_back(std::make_shared<CallTupleArgTransform>());
   }
-  ~CallGraphTupleTransform() = default;
+  ~CallGraphTupleTransform() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
-    AnfNodePtr new_node;
     for (auto &transform : transformers_) {
-      new_node = (*transform)(optimizer, node);
+      auto new_node = (*transform)(optimizer, node);
       if (new_node != nullptr) {
         return new_node;
       }
@@ -243,10 +164,6 @@ class CallGraphTupleTransform : public OptimizerCaller {
   }
 
  private:
-  GraphTupleParamTransform graph_transformer_;
-  OptimizerCallerPtr graph_call_transform_;
-  OptimizerCallerPtr switch_call_transform_;
-  OptimizerCallerPtr switch_layer_call_transform_;
   std::vector<OptimizerCallerPtr> transformers_{};
 };
 }  // namespace irpass
