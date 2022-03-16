@@ -149,6 +149,11 @@ constexpr auto kUpdateModelRejectClientNum = "updateModelRejectClientNum";
 constexpr auto kGetModelTotalClientNum = "getModelTotalClientNum";
 constexpr auto kGetModelAcceptClientNum = "getModelAcceptClientNum";
 constexpr auto kGetModelRejectClientNum = "getModelRejectClientNum";
+constexpr auto kMinVal = "min_val";
+constexpr auto kMaxVal = "max_val";
+constexpr auto kQuant = "QUANT";
+constexpr auto kDiffSparseQuant = "DIFF_SPARSE_QUANT";
+constexpr auto kNoCompress = "NO_COMPRESS";
 
 // OptimParamNameToIndex represents every inputs/workspace/outputs parameter's offset when an optimizer kernel is
 // launched.

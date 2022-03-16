@@ -15,8 +15,9 @@
 """Context for parameter server training mode"""
 
 import os
-from mindspore._checkparam import Validator
+from mindspore._checkparam import Validator, Rel
 from mindspore._c_expression import PSContext
+from mindspore import log as logger
 
 _ps_context = None
 
@@ -79,6 +80,9 @@ _set_ps_context_func_map = {
     "sign_global_lr": ps_context().set_sign_global_lr,
     "sign_dim_out": ps_context().set_sign_dim_out,
     "checkpoint_dir": ps_context().set_checkpoint_dir,
+    "upload_compress_type": ps_context().set_upload_compress_type,
+    "upload_sparse_rate": ps_context().set_upload_sparse_rate,
+    "download_compress_type": ps_context().set_download_compress_type,
 }
 
 _get_ps_context_func_map = {
@@ -126,7 +130,10 @@ _get_ps_context_func_map = {
     "sign_thr_ratio": ps_context().sign_thr_ratio,
     "sign_global_lr": ps_context().sign_global_lr,
     "sign_dim_out": ps_context().sign_dim_out,
-    "checkpoint_dir": ps_context().checkpoint_dir
+    "checkpoint_dir": ps_context().checkpoint_dir,
+    "upload_compress_type": ps_context().upload_compress_type,
+    "upload_sparse_rate": ps_context().upload_sparse_rate,
+    "download_compress_type": ps_context().download_compress_type,
 }
 
 _check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",
@@ -139,6 +146,15 @@ _check_non_negative_int_keys = ["worker_num"]
 _check_positive_float_keys = ["update_model_ratio", "client_learning_rate"]
 
 _check_port_keys = ["scheduler_port", "fl_server_port"]
+
+_check_string_keys = {
+    "upload_compress_type": ["NO_COMPRESS", "DIFF_SPARSE_QUANT"],
+    "download_compress_type": ["NO_COMPRESS", "QUANT"],
+}
+
+_check_float_range_keys = {
+    "upload_sparse_rate": {"lower_limit": 0.0, "upper_limit": 1.0, "rel": Rel.INC_RIGHT},
+}
 
 def _get_ps_mode_rank():
     ps_rank = ps_context().ps_rank_id()
@@ -183,6 +199,7 @@ def _set_ps_context(**kwargs):
     Examples:
         >>> context.set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
     """
+    kwargs = _check_conflict_value(kwargs)
     for key, value in kwargs.items():
         if key not in _set_ps_context_func_map:
             raise ValueError("Set PS context keyword %s is not recognized!" % key)
@@ -287,6 +304,31 @@ def _check_value(key, value):
     if key in _check_positive_float_keys:
         Validator.check_positive_float(value, key)
 
+    if key in _check_string_keys:
+        try:
+            string_keys = _check_string_keys[key]
+            Validator.check_string(value, string_keys)
+        except KeyError:
+            pass
+
+    if key in _check_float_range_keys:
+        try:
+            range_keys = _check_float_range_keys[key]
+            Validator.check_float_range(value, **range_keys)
+        except KeyError:
+            pass
+
     if key in _check_port_keys:
         if value < 1 or value > 65535:
             raise ValueError("The range of %s must be 1 to 65535, but got %d." % (key, value))
+
+
+def _check_conflict_value(kwargs):
+    if "upload_compress_type" in kwargs and " encrypt_type" in kwargs:
+        if kwargs["upload_compress_type"] != "NO_COMPRESS" and kwargs["encrypt_type"] in ("SIGNDS", "PW_ENCRYPT"):
+            logger.warning("The '{}' and '{}' are conflicted, and in '{}' mode the"
+                           " 'upload_compress_type' will be 'NO_COMPRESS'".format(kwargs["encrypt_type"],
+                                                                                  kwargs["upload_compress_type"],
+                                                                                  kwargs["encrypt_type"]))
+            kwargs["upload_compress_type"] = "NO_COMPRESS"
+    return kwargs

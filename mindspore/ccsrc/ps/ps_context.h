@@ -40,6 +40,7 @@ constexpr char kPWEncryptType[] = "PW_ENCRYPT";
 constexpr char kStablePWEncryptType[] = "STABLE_PW_ENCRYPT";
 constexpr char kNotEncryptType[] = "NOT_ENCRYPT";
 constexpr char kDSEncryptType[] = "SIGNDS";
+constexpr char kNoCompressType[] = "NO_COMPRESS";
 
 // Use binary data to represent federated learning server's context so that we can judge which round resets the
 // iteration. From right to left, each bit stands for:
@@ -230,6 +231,15 @@ class PSContext {
   void set_global_iteration_time_window(const uint64_t &global_iteration_time_window);
   uint64_t global_iteration_time_window() const;
 
+  void set_upload_compress_type(const std::string &upload_compress_type);
+  std::string upload_compress_type() const;
+
+  void set_upload_sparse_rate(float upload_sparse_rate);
+  float upload_sparse_rate() const;
+
+  void set_download_compress_type(const std::string &download_compress_type);
+  std::string download_compress_type() const;
+
   std::string checkpoint_dir() const;
   void set_checkpoint_dir(const std::string &checkpoint_dir);
 
@@ -286,6 +296,9 @@ class PSContext {
         server_password_(""),
         http_url_prefix_(""),
         global_iteration_time_window_(3600000),
+        upload_compress_type_(kNoCompressType),
+        upload_sparse_rate_(0.4f),
+        download_compress_type_(kNoCompressType),
         checkpoint_dir_("") {}
   bool ps_enabled_;
   bool is_worker_;
@@ -419,6 +432,13 @@ class PSContext {
 
   // The time window of startFLJob round in millisecond.
   uint64_t global_iteration_time_window_;
+
+  // Hyper parameters for upload compression.
+  std::string upload_compress_type_;
+  float upload_sparse_rate_;
+  // Hyper parameters for download compression.
+  std::string download_compress_type_;
+
   // directory of server checkpoint
   std::string checkpoint_dir_;
 };

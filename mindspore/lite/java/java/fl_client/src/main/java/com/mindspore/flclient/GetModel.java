@@ -18,6 +18,7 @@ package com.mindspore.flclient;
 
 import com.google.flatbuffers.FlatBufferBuilder;
 
+import com.mindspore.flclient.compression.DecodeExecutor;
 import com.mindspore.flclient.model.AlInferBert;
 import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
@@ -27,11 +28,9 @@ import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.Status;
 
 import com.mindspore.flclient.model.TrainLenet;
-import mindspore.schema.FeatureMap;
-import mindspore.schema.RequestGetModel;
-import mindspore.schema.ResponseCode;
-import mindspore.schema.ResponseGetModel;
+import mindspore.schema.*;
 
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.logging.Logger;
@@ -94,7 +93,8 @@ public class GetModel {
             throw new IllegalArgumentException();
         }
         RequestGetModelBuilder builder = new RequestGetModelBuilder();
-        return builder.iteration(iteration).flName(name).time().build();
+        return builder.iteration(iteration).flName(name).time()
+                .downloadCompressTypesBuilder(flParameter.getDownloadCompressTypes()).build();
     }
 
     private FLClientStatus deprecatedParseResponseAlbert(ResponseGetModel responseDataBuf) {
@@ -226,11 +226,29 @@ public class GetModel {
         return status;
     }
 
+    private List<FeatureMap> parseFeatureMapList(ResponseGetModel responseDataBuf) {
+        List<FeatureMap> featureMaps;
+        byte compressType = responseDataBuf.downloadCompressType();
+        if (responseDataBuf.downloadCompressType() == mindspore.schema.CompressType.NO_COMPRESS) {
+            featureMaps = new ArrayList<>();
+            for (int i = 0; i < responseDataBuf.featureMapLength(); i++) {
+                featureMaps.add(responseDataBuf.featureMap(i));
+            }
+        } else {
+            List<mindspore.schema.CompressFeatureMap> compressFeatureMapList = new ArrayList<>();
+            for (int i = 0; i < responseDataBuf.compressFeatureMapLength(); i++) {
+                compressFeatureMapList.add(responseDataBuf.compressFeatureMap(i));
+            }
+            featureMaps = DecodeExecutor.getInstance().deCompressWeight(compressType, compressFeatureMapList);
+        }
+        return featureMaps;
+    }
+
     private FLClientStatus parseResponseFeatures(ResponseGetModel responseDataBuf) {
         FLClientStatus status;
         Client client = ClientManager.getClient(flParameter.getFlName());
-        int fmCount = responseDataBuf.featureMapLength();
-        if (fmCount <= 0) {
+        List<FeatureMap> featureMapList = parseFeatureMapList(responseDataBuf);
+        if (featureMapList.size() <= 0) {
             LOGGER.severe(Common.addTag("[getModel] the feature size get from server is zero"));
             retCode = ResponseCode.SystemError;
             return FLClientStatus.FAILED;
@@ -239,8 +257,8 @@ public class GetModel {
             LOGGER.info(Common.addTag("[getModel] parseResponseFeatures by " + localFLParameter.getServerMod()));
             ArrayList<FeatureMap> trainFeatureMaps = new ArrayList<FeatureMap>();
             ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
-            for (int i = 0; i < fmCount; i++) {
-                FeatureMap feature = responseDataBuf.featureMap(i);
+            for (int i = 0; i < featureMapList.size(); i++) {
+                FeatureMap feature = featureMapList.get(i);
                 if (feature == null) {
                     LOGGER.severe(Common.addTag("[getModel] the feature returned from server is null"));
                     retCode = ResponseCode.SystemError;
@@ -289,8 +307,8 @@ public class GetModel {
         } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
             LOGGER.info(Common.addTag("[getModel] parseResponseFeatures by " + localFLParameter.getServerMod()));
             ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
-            for (int i = 0; i < fmCount; i++) {
-                FeatureMap feature = responseDataBuf.featureMap(i);
+            for (int i = 0; i < featureMapList.size(); i++) {
+                FeatureMap feature = featureMapList.get(i);
                 if (feature == null) {
                     LOGGER.severe(Common.addTag("[getModel] the feature returned from server is null"));
                     retCode = ResponseCode.SystemError;
@@ -365,6 +383,7 @@ public class GetModel {
         private int nameOffset = 0;
         private int iteration = 0;
         private int timeStampOffset = 0;
+        private int downloadCompressTypesOffset = 0;
 
         public RequestGetModelBuilder() {
             builder = new FlatBufferBuilder();
@@ -392,11 +411,23 @@ public class GetModel {
             return this;
         }
 
+        private RequestGetModelBuilder downloadCompressTypesBuilder(byte[] downloadCompressTypes) {
+            if (downloadCompressTypes == null || downloadCompressTypes.length == 0) {
+                LOGGER.severe(Common.addTag("[GetModel] the parameter of <downloadCompressTypes> is null or empty," +
+                        " please check!"));
+                throw new IllegalArgumentException();
+            }
+            this.downloadCompressTypesOffset = RequestGetModel.createDownloadCompressTypesVector(builder,
+                    downloadCompressTypes);
+            return this;
+        }
+
         private byte[] build() {
             RequestGetModel.startRequestGetModel(builder);
             RequestGetModel.addFlName(builder, nameOffset);
             RequestGetModel.addIteration(builder, iteration);
             RequestGetModel.addTimestamp(builder, timeStampOffset);
+            RequestGetModel.addDownloadCompressTypes(builder, downloadCompressTypesOffset);
             int root = RequestGetModel.endRequestGetModel(builder);
             builder.finish(root);
             return builder.sizedByteArray();

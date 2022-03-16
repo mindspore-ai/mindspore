@@ -25,6 +25,7 @@
 #include "fl/server/executor.h"
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
+#include "fl/compression/encode_executor.h"
 
 namespace mindspore {
 namespace fl {
@@ -44,7 +45,9 @@ class GetModelKernel : public RoundKernel {
   void GetModel(const schema::RequestGetModel *get_model_req, const std::shared_ptr<ps::core::MessageHandler> &message);
   void BuildGetModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                         const std::string &reason, const size_t iter,
-                        const std::map<std::string, AddressPtr> &feature_maps, const std::string &timestamp);
+                        const std::map<std::string, AddressPtr> &feature_maps, const std::string &timestamp,
+                        const schema::CompressType &compressType = schema::CompressType_NO_COMPRESS,
+                        const std::map<std::string, AddressPtr> &compress_feature_maps = {});
 
   // The executor is for getting model for getModel request.
   Executor *executor_;

@@ -208,35 +208,34 @@ public class SecureProtocol {
      * @param trainDataSize trainDataSize tne size of train data set.
      * @return the serialized model weights after adding masks.
      */
-    public int[] pwMaskModel(FlatBufferBuilder builder, int trainDataSize, Map<String, float[]> trainedMap) {
+    public Map<String, List<Float>> pwMaskModel(FlatBufferBuilder builder, int trainDataSize, Map<String,
+            float[]> trainedMap) {
+        Map<String, List<Float>> featureMaps = new HashMap<>();
         if (featureMask == null || featureMask.length == 0) {
             LOGGER.severe("[Encrypt] feature mask is null, please check");
-            return new int[0];
+            return new HashMap<>();
         }
         LOGGER.info(String.format("[Encrypt] feature mask size: %s", featureMask.length));
         int featureSize = updateFeatureName.size();
-        int[] featuresMap = new int[featureSize];
         int maskIndex = 0;
         for (int i = 0; i < featureSize; i++) {
             String key = updateFeatureName.get(i);
             float[] data = trainedMap.get(key);
+            List<Float> featureMap = new ArrayList<>();
             LOGGER.info(String.format("[Encrypt] feature name: %s feature size: %s", key, data.length));
             for (int j = 0; j < data.length; j++) {
                 float rawData = data[j];
                 if (maskIndex >= featureMask.length) {
                     LOGGER.severe("[Encrypt] the maskIndex is out of range for array featureMask, please check");
-                    return new int[0];
+                    return new HashMap<>();
                 }
                 float maskData = rawData * trainDataSize + featureMask[maskIndex];
                 maskIndex += 1;
-                data[j] = maskData;
+                featureMap.add(maskData);
             }
-            int featureName = builder.createString(key);
-            int weight = FeatureMap.createDataVector(builder, data);
-            int featureMap = FeatureMap.createFeatureMap(builder, featureName, weight);
-            featuresMap[i] = featureMap;
+            featureMaps.put(key, featureMap);
         }
-        return featuresMap;
+        return featureMaps;
     }
 
     /**
@@ -365,7 +364,9 @@ public class SecureProtocol {
      * @param trainDataSize tne size of train data set.
      * @return the serialized model weights after adding masks.
      */
-    public int[] dpMaskModel(FlatBufferBuilder builder, int trainDataSize, Map<String, float[]> trainedMap) {
+    public Map<String, List<Float>> dpMaskModel(FlatBufferBuilder builder, int trainDataSize,
+                                                Map<String, float[]> trainedMap) {
+        Map<String, List<Float>> featureMaps = new HashMap<>();
         // get feature map
         Map<String, float[]> mapBeforeTrain = modelMap;
         int featureSize = updateFeatureName.size();
@@ -383,7 +384,7 @@ public class SecureProtocol {
                 float rawData = data[j];
                 if (j >= dataBeforeTrain.length) {
                     LOGGER.severe("[Encrypt] the index j is out of range for array dataBeforeTrain, please check");
-                    return new int[0];
+                    return new HashMap<>();
                 }
                 float rawDataBeforeTrain = dataBeforeTrain[j];
                 float updateData = rawData - rawDataBeforeTrain;
@@ -393,23 +394,23 @@ public class SecureProtocol {
         updateL2Norm = Math.sqrt(updateL2Norm);
         if (updateL2Norm == 0) {
             LOGGER.severe(Common.addTag("[Encrypt] updateL2Norm is 0, please check"));
-            return new int[0];
+            return new HashMap<>();
         }
         double clipFactor = Math.min(1.0, dpNormClip / updateL2Norm);
 
         // clip and add noise
-        int[] featuresMap = new int[featureSize];
         for (int i = 0; i < featureSize; i++) {
             String key = updateFeatureName.get(i);
             if (!trainedMap.containsKey(key)) {
                 LOGGER.severe("[Encrypt] the key: " + key + " is not in map, please check!");
-                return new int[0];
+                return new HashMap<>();
             }
             float[] data = trainedMap.get(key);
             float[] data2 = new float[data.length];
+            List<Float> featureMap = new ArrayList<>();
             if (!mapBeforeTrain.containsKey(key)) {
                 LOGGER.severe("[Encrypt] the key: " + key + " is not in mapBeforeTrain, please check!");
-                return new int[0];
+                return new HashMap<>();
             }
             float[] dataBeforeTrain = mapBeforeTrain.get(key);
 
@@ -419,7 +420,7 @@ public class SecureProtocol {
                 float rawData = data[j];
                 if (j >= dataBeforeTrain.length) {
                     LOGGER.severe("[Encrypt] the index j is out of range for array dataBeforeTrain, please check");
-                    return new int[0];
+                    return new HashMap<>();
                 }
                 float rawDataBeforeTrain = dataBeforeTrain[j];
                 float updateData = rawData - rawDataBeforeTrain;
@@ -432,13 +433,11 @@ public class SecureProtocol {
                 updateData += gaussianNoise;
                 data2[j] = rawDataBeforeTrain + updateData;
                 data2[j] = data2[j] * trainDataSize;
+                featureMap.add(data2[j]);
             }
-            int featureName = builder.createString(key);
-            int weight = FeatureMap.createDataVector(builder, data2);
-            int featureMap = FeatureMap.createFeatureMap(builder, featureName, weight);
-            featuresMap[i] = featureMap;
+            featureMaps.put(key, featureMap);
         }
-        return featuresMap;
+        return featureMaps;
     }
 
     /**

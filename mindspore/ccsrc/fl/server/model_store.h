@@ -25,6 +25,7 @@
 #include "fl/server/common.h"
 #include "fl/server/memory_register.h"
 #include "fl/server/executor.h"
+#include "fl/compression/encode_executor.h"
 #include "fl/server/local_meta_store.h"
 
 namespace mindspore {
@@ -35,6 +36,9 @@ constexpr size_t kInitIterationNum = 0;
 
 // The initial iteration number after ModelStore is reset.
 constexpr size_t kResetInitialIterNum = 1;
+
+// The compress type map.
+using CompressTypeMap = std::map<schema::CompressType, std::shared_ptr<MemoryRegister>>;
 
 // Server framework use ModelStore to store and query models.
 // ModelStore stores multiple models because worker could get models of the previous iterations.
@@ -64,15 +68,25 @@ class ModelStore {
   // Returns the model size, which could be calculated at the initializing phase.
   size_t model_size() const;
 
+  // Get compress model of the given iteration.
+  std::map<std::string, AddressPtr> GetCompressModelByIterNum(size_t iteration, schema::CompressType compressType);
+
+  const std::map<size_t, std::map<schema::CompressType, std::shared_ptr<MemoryRegister>>>
+    &iteration_to_compress_model();
+
+  void StoreCompressModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &new_model);
+
   static void RelModelResponseCache(const void *data, size_t datalen, void *extra);
   std::shared_ptr<std::vector<uint8_t>> GetModelResponseCache(const std::string &round_name, size_t cur_iteration_num,
-                                                              size_t model_iteration_num);
+                                                              size_t model_iteration_num,
+                                                              const std::string &compress_type);
   std::shared_ptr<std::vector<uint8_t>> StoreModelResponseCache(const std::string &round_name, size_t cur_iteration_num,
-                                                                size_t model_iteration_num, const void *data,
+                                                                size_t model_iteration_num,
+                                                                const std::string &compress_type, const void *data,
                                                                 size_t datalen);
 
  private:
-  ModelStore() : max_model_count_(0), model_size_(0), iteration_to_model_({}) {}
+  ModelStore() : max_model_count_(0), model_size_(0), iteration_to_model_({}), iteration_to_compress_model_({}) {}
   ~ModelStore() = default;
   ModelStore(const ModelStore &) = delete;
   ModelStore &operator=(const ModelStore &) = delete;
@@ -82,6 +96,9 @@ class ModelStore {
   // To store multiple models, new memory must assigned. The max memory size assigned for models is max_model_count_ *
   // model_size_.
   std::shared_ptr<MemoryRegister> AssignNewModelMemory();
+
+  std::shared_ptr<MemoryRegister> AssignNewCompressModelMemory(schema::CompressType compressType,
+                                                               const std::map<std::string, AddressPtr> &model);
 
   // Calculate the model size. This method should be called after iteration_to_model_ is initialized.
   size_t ComputeModelSize();
@@ -95,12 +112,17 @@ class ModelStore {
   // The number of all models stored is max_model_count_.
   std::mutex model_mtx_;
   std::map<size_t, std::shared_ptr<MemoryRegister>> iteration_to_model_;
+
+  // iteration -> (compress type -> compress model)
+  std::map<size_t, std::map<schema::CompressType, std::shared_ptr<MemoryRegister>>> iteration_to_compress_model_;
+
   uint32_t rank_id_;
 
   struct HttpResponseModelCache {
     std::string round_name;  // startFlJob, getModel
     size_t cur_iteration_num = 0;
     size_t model_iteration_num = 0;
+    std::string compress_type = kNoCompress;
     size_t reference_count = 0;
     std::shared_ptr<std::vector<uint8_t>> cache = nullptr;
   };

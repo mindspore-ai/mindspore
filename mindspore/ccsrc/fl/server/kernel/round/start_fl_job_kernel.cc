@@ -126,10 +126,19 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   IncreaseAcceptClientNum();
   auto curr_iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   auto last_iteration = curr_iter_num - 1;
-  auto cache = ModelStore::GetInstance().GetModelResponseCache(name_, curr_iter_num, last_iteration);
+  auto download_compress_types = start_fl_job_req->download_compress_types();
+  schema::CompressType compressType =
+    mindspore::fl::compression::CompressExecutor::GetInstance().GetCompressType(download_compress_types);
+  std::string compress_type;
+  if (compressType == schema::CompressType_QUANT) {
+    compress_type = kQuant;
+  } else {
+    compress_type = kNoCompress;
+  }
+  auto cache = ModelStore::GetInstance().GetModelResponseCache(name_, curr_iter_num, last_iteration, compress_type);
   if (cache == nullptr) {
-    StartFLJob(fbb);
-    cache = ModelStore::GetInstance().StoreModelResponseCache(name_, curr_iter_num, last_iteration,
+    StartFLJob(fbb, device_meta, start_fl_job_req);
+    cache = ModelStore::GetInstance().StoreModelResponseCache(name_, curr_iter_num, last_iteration, compress_type,
                                                               fbb->GetBufferPointer(), fbb->GetSize());
     if (cache == nullptr) {
       SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
@@ -303,22 +312,40 @@ ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder>
   return ResultCode::kSuccess;
 }
 
-void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb) {
+void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &,
+                                  const schema::RequestFLJob *start_fl_job_req) {
   size_t last_iteration = LocalMetaStore::GetInstance().curr_iter_num() - 1;
-  auto feature_maps = ModelStore::GetInstance().GetModelByIterNum(last_iteration);
-  if (feature_maps.empty()) {
-    MS_LOG(WARNING) << "The feature map for startFLJob is empty.";
+
+  std::map<std::string, AddressPtr> feature_maps = {};
+  std::map<std::string, AddressPtr> compress_feature_maps = {};
+
+  // Only download compress weights if client support.
+  auto download_compress_types = start_fl_job_req->download_compress_types();
+  schema::CompressType compressType =
+    mindspore::fl::compression::CompressExecutor::GetInstance().GetCompressType(download_compress_types);
+  if (compressType == schema::CompressType_NO_COMPRESS) {
+    feature_maps = ModelStore::GetInstance().GetModelByIterNum(last_iteration);
+    if (feature_maps.empty()) {
+      MS_LOG(WARNING) << "The feature map for startFLJob is empty.";
+    }
+  } else {
+    if (mindspore::fl::compression::CompressExecutor::GetInstance().EnableCompressWeight(compressType)) {
+      compress_feature_maps = ModelStore::GetInstance().GetCompressModelByIterNum(last_iteration, compressType);
+    }
   }
+
   BuildStartFLJobRsp(fbb, schema::ResponseCode_SUCCEED, "success", true,
                      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
-                     feature_maps);
+                     feature_maps, compressType, compress_feature_maps);
   return;
 }
 
 void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                                           const std::string &reason, const bool is_selected,
                                           const std::string &next_req_time,
-                                          std::map<std::string, AddressPtr> feature_maps) {
+                                          const std::map<std::string, AddressPtr> &feature_maps,
+                                          const schema::CompressType &compressType,
+                                          const std::map<std::string, AddressPtr> &compress_feature_maps) {
   if (fbb == nullptr) {
     MS_LOG(WARNING) << "Input fbb is nullptr.";
     return;
@@ -350,6 +377,12 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   auto cipher_public_params =
     schema::CreateCipherPublicParams(*fbb.get(), encrypt_type, pw_params, dp_params, ds_params);
 #endif
+  schema::CompressType upload_compress_type;
+  if (ps::PSContext::instance()->upload_compress_type() == kDiffSparseQuant) {
+    upload_compress_type = schema::CompressType_DIFF_SPARSE_QUANT;
+  } else {
+    upload_compress_type = schema::CompressType_NO_COMPRESS;
+  }
 
   schema::FLPlanBuilder fl_plan_builder(*(fbb.get()));
   fl_plan_builder.add_fl_name(fbs_fl_name);
@@ -375,6 +408,33 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   }
   auto fbs_feature_maps_vector = fbb->CreateVector(fbs_feature_maps);
 
+  // construct compress feature maps with fbs
+  std::vector<flatbuffers::Offset<schema::CompressFeatureMap>> fbs_compress_feature_maps;
+  for (const auto &compress_feature_map : compress_feature_maps) {
+    if (compressType == schema::CompressType_QUANT) {
+      if (compress_feature_map.first.find(kMinVal) != string::npos ||
+          compress_feature_map.first.find(kMaxVal) != string::npos) {
+        continue;
+      }
+      auto fbs_compress_weight_fullname = fbb->CreateString(compress_feature_map.first);
+      auto fbs_compress_weight_data = fbb->CreateVector(reinterpret_cast<int8_t *>(compress_feature_map.second->addr),
+                                                        compress_feature_map.second->size / sizeof(int8_t));
+
+      const std::string min_val_name = compress_feature_map.first + "." + kMinVal;
+      const std::string max_val_name = compress_feature_map.first + "." + kMaxVal;
+
+      const AddressPtr min_val_ptr = compress_feature_maps.at(min_val_name);
+      const AddressPtr max_val_ptr = compress_feature_maps.at(max_val_name);
+
+      float *fbs_min_val_ptr = reinterpret_cast<float *>(min_val_ptr->addr);
+      float *fbs_max_val_ptr = reinterpret_cast<float *>(max_val_ptr->addr);
+      auto fbs_compress_feature_map = schema::CreateCompressFeatureMap(
+        *(fbb.get()), fbs_compress_weight_fullname, fbs_compress_weight_data, *fbs_min_val_ptr, *fbs_max_val_ptr);
+      fbs_compress_feature_maps.push_back(fbs_compress_feature_map);
+    }
+  }
+  auto fbs_compress_feature_maps_vector = fbb->CreateVector(fbs_compress_feature_maps);
+
   schema::ResponseFLJobBuilder rsp_fl_job_builder(*(fbb.get()));
   rsp_fl_job_builder.add_retcode(static_cast<int>(retcode));
   rsp_fl_job_builder.add_reason(fbs_reason);
@@ -383,6 +443,10 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   rsp_fl_job_builder.add_next_req_time(fbs_next_req_time);
   rsp_fl_job_builder.add_fl_plan_config(fbs_fl_plan);
   rsp_fl_job_builder.add_feature_map(fbs_feature_maps_vector);
+  rsp_fl_job_builder.add_download_compress_type(compressType);
+  rsp_fl_job_builder.add_compress_feature_map(fbs_compress_feature_maps_vector);
+  rsp_fl_job_builder.add_upload_compress_type(upload_compress_type);
+  rsp_fl_job_builder.add_upload_sparse_rate(ps::PSContext::instance()->upload_sparse_rate());
   auto rsp_fl_job = rsp_fl_job_builder.Finish();
   fbb->Finish(rsp_fl_job);
   return;

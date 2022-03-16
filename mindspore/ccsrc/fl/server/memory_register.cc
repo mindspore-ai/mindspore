@@ -44,6 +44,11 @@ void MemoryRegister::StoreCharArray(std::unique_ptr<char[]> *array) {
   MS_ERROR_IF_NULL_WO_RET_VAL(array);
   char_arrays_.push_back(std::move(*array));
 }
+
+void MemoryRegister::StoreFloat32(std::unique_ptr<float> *param) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(param);
+  float_params_.push_back(std::move(*param));
+}
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

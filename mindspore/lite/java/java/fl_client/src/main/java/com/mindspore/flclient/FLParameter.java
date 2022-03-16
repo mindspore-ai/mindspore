@@ -18,7 +18,9 @@ package com.mindspore.flclient;
 
 import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 
+import com.mindspore.flclient.compression.CompressMode;
 import com.mindspore.flclient.model.RunType;
+import mindspore.schema.CompressType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -601,6 +603,16 @@ public class FLParameter {
             throw new IllegalArgumentException();
         }
         this.batchSize = batchSize;
+    }
+
+    public byte[] getDownloadCompressTypes() {
+        byte[] downloadCompressTypes = new byte[CompressMode.COMPRESS_TYPE_MAP.size()];
+        int index = 0;
+        for (byte downloadCompressType : CompressMode.COMPRESS_TYPE_MAP.keySet()) {
+            downloadCompressTypes[index] = downloadCompressType;
+            index += 1;
+        }
+        return downloadCompressTypes;
     }
 
     public int[][] getInputShape() {

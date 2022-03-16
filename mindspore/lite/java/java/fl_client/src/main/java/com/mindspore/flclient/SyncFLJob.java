@@ -147,6 +147,10 @@ public class SyncFLJob {
             LOGGER.info(Common.addTag("[startFLJob] startFLJob succeed, curIteration: " + flLiteClient.getIteration()));
             updateTryTimePerIter(flLiteClient);
 
+            // Copy weights before training.
+            Map<String, float[]> oldFeatureMap = flLiteClient.getFeatureMap();
+            localFLParameter.setOldFeatureMap(oldFeatureMap);
+
             // create mask
             curStatus = flLiteClient.getFeatureMask();
             if (curStatus == FLClientStatus.RESTART) {

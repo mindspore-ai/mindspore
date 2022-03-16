@@ -24,6 +24,7 @@
 #include <utility>
 #include <typeinfo>
 #include "fl/server/common.h"
+#include "fl/compression/encode_executor.h"
 
 namespace mindspore {
 namespace fl {
@@ -70,6 +71,25 @@ class MemoryRegister {
     return;
   }
 
+  template <typename T>
+  void RegisterParameter(const std::string &name, std::unique_ptr<T> *param, size_t size) {
+    MS_EXCEPTION_IF_NULL(param);
+    void *data = param->get();
+    AddressPtr addressPtr = std::make_shared<Address>();
+    addressPtr->addr = data;
+    addressPtr->size = size;
+    if (typeid(T) == typeid(float)) {
+      auto float_param = CastUniqueParamPtr<float, T>(param);
+      StoreFloat32(&float_param);
+    } else {
+      MS_LOG(ERROR) << "MemoryRegister does not support type " << typeid(T).name();
+      return;
+    }
+
+    RegisterAddressPtr(name, addressPtr);
+    return;
+  }
+
  private:
   std::map<std::string, AddressPtr> addresses_;
   std::vector<std::unique_ptr<float[]>> float_arrays_;
@@ -85,6 +105,15 @@ class MemoryRegister {
   template <typename T, typename S>
   std::unique_ptr<T[]> CastUniquePtr(std::unique_ptr<S[]> *array) {
     return std::unique_ptr<T[]>{reinterpret_cast<T *>(array->release())};
+  }
+
+  std::vector<std::unique_ptr<float>> float_params_;
+
+  void StoreFloat32(std::unique_ptr<float> *array);
+
+  template <typename T, typename S>
+  std::unique_ptr<T> CastUniqueParamPtr(std::unique_ptr<S> *param) {
+    return std::unique_ptr<T>{reinterpret_cast<T *>(param->release())};
   }
 };
 }  // namespace server

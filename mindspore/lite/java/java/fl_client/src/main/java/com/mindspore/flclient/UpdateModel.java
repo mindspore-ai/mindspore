@@ -26,11 +26,15 @@ import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.Status;
 import com.mindspore.flclient.model.TrainLenet;
 import com.mindspore.lite.MSTensor;
+import com.mindspore.flclient.compression.EncodeExecutor;
+import com.mindspore.flclient.compression.CompressWeight;
 
 import mindspore.schema.FeatureMap;
+import mindspore.schema.CompressFeatureMap;
 import mindspore.schema.RequestUpdateModel;
 import mindspore.schema.ResponseCode;
 import mindspore.schema.ResponseUpdateModel;
+import static mindspore.schema.CompressType.NO_COMPRESS;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -208,6 +212,7 @@ public class UpdateModel {
         private RequestUpdateModel requestUM;
         private FlatBufferBuilder builder;
         private int fmOffset = 0;
+        private int compFmOffset = 0;
         private int nameOffset = 0;
         private int idOffset = 0;
         private int timestampOffset = 0;
@@ -215,8 +220,11 @@ public class UpdateModel {
         private int sign = 0;
         private int indexArrayOffset = 0;
         private int iteration = 0;
+        private byte uploadCompressType = 0;
+        private float uploadSparseRate = 0.0f;
         private EncryptLevel encryptLevel = EncryptLevel.NOT_ENCRYPT;
         private float uploadLossOffset = 0.0f;
+        private int nameVecOffset = 0;
 
         private RequestUpdateModelBuilder(EncryptLevel encryptLevel) {
             builder = new FlatBufferBuilder();
@@ -294,34 +302,33 @@ public class UpdateModel {
             } else {
                 trainedMap = getFeatureMap();
             }
+            Map<String, List<Float>> featureMaps = new HashMap<>();
             long startTime;
             long endTime;
             switch (encryptLevel) {
                 case PW_ENCRYPT:
-                    int[] fmOffsetsPW = secureProtocol.pwMaskModel(builder, trainDataSize, trainedMap);
-                    if (fmOffsetsPW == null || fmOffsetsPW.length == 0) {
-                        LOGGER.severe("[Encrypt] the return fmOffsetsPW from <secureProtocol.pwMaskModel> is " +
+                    featureMaps = secureProtocol.pwMaskModel(builder, trainDataSize, trainedMap);
+                    if (featureMaps == null || featureMaps.size() == 0) {
+                        LOGGER.severe("[Encrypt] the return featureMaps from <secureProtocol.pwMaskModel> is " +
                                 "null, please check");
                         throw new IllegalArgumentException();
                     }
-                    this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsPW);
                     LOGGER.info(Common.addTag("[Encrypt] pairwise mask model ok!"));
-                    return this;
+                    break;
                 case DP_ENCRYPT:
                     startTime = System.currentTimeMillis();
-                    int[] fmOffsetsDP = secureProtocol.dpMaskModel(builder, trainDataSize, trainedMap);
-                    if (fmOffsetsDP == null || fmOffsetsDP.length == 0) {
-                        LOGGER.severe("[Encrypt] the return fmOffsetsDP from <secureProtocol.dpMaskModel> is " +
+                    featureMaps = secureProtocol.dpMaskModel(builder, trainDataSize, trainedMap);
+                    if (featureMaps == null || featureMaps.size() == 0) {
+                        LOGGER.severe("[Encrypt] the return featureMaps from <secureProtocol.dpMaskModel> is " +
                                 "null, please check");
                         retCode = ResponseCode.RequestError;
                         status = FLClientStatus.FAILED;
                         throw new IllegalArgumentException();
                     }
-                    this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsDP);
                     LOGGER.info(Common.addTag("[Encrypt] DP mask model ok!"));
                     endTime = System.currentTimeMillis();
-                    LOGGER.info(Common.addTag("[Encrypt] dp time is: " + (endTime - startTime) + "ms"));
-                    return this;
+                    LOGGER.info(Common.addTag("dp time is " + (endTime - startTime) + "ms"));
+                    break;
                 case SIGNDS:
                     startTime = System.currentTimeMillis();
                     // signds alg return indexArray, and package indexArray into flatbuffer.
@@ -352,31 +359,104 @@ public class UpdateModel {
                     this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsSignds);
                     LOGGER.info(Common.addTag("[Encrypt] SignDS mask model ok!"));
                     endTime = System.currentTimeMillis();
-                    LOGGER.info(Common.addTag("[Encrypt] signds time is: " + (endTime - startTime) + "ms"));
+                    LOGGER.info(Common.addTag("signds time is " + (endTime - startTime) + "ms"));
                     return this;
                 case NOT_ENCRYPT:
                 default:
                     startTime = System.currentTimeMillis();
-                    int featureSize = updateFeatureName.size();
-                    int[] fmOffsets = new int[featureSize];
-                    for (int i = 0; i < featureSize; i++) {
-                        String key = updateFeatureName.get(i);
-                        float[] data = trainedMap.get(key);
-                        LOGGER.info(Common.addTag("[updateModel build featuresMap] feature name: " + key + " feature " +
-                                "size: " + data.length));
-                        for (int j = 0; j < data.length; j++) {
-                            data[j] = data[j] * trainDataSize;
+                    for (String name : updateFeatureName) {
+                        float[] data = trainedMap.get(name);
+                        List<Float> featureMap = new ArrayList<>();
+                        for (float datum : data) {
+                            featureMap.add(datum * (float) trainDataSize);
                         }
-                        int featureName = builder.createString(key);
-                        int weight = FeatureMap.createDataVector(builder, data);
-                        int featureMap = FeatureMap.createFeatureMap(builder, featureName, weight);
-                        fmOffsets[i] = featureMap;
+                        featureMaps.put(name, featureMap);
                     }
-                    this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsets);
                     endTime = System.currentTimeMillis();
-                    LOGGER.info(Common.addTag("[Encrypt] not encrypt time is: " + (endTime - startTime) + "ms"));
-                    return this;
+                    LOGGER.info(Common.addTag("not encrypt time is " + (endTime - startTime) + "ms"));
+                    break;
             }
+            byte uploadCompressType = localFLParameter.getUploadCompressType();
+            if (uploadCompressType != NO_COMPRESS) {
+                startTime = System.currentTimeMillis();
+                this.compFmOffset = buildCompFmOffset(featureMaps, trainDataSize);
+                this.uploadCompressType = localFLParameter.getUploadCompressType();
+                this.uploadSparseRate = localFLParameter.getUploadSparseRatio();
+                this.nameVecOffset = buildNameVecOffset(updateFeatureName);
+                endTime = System.currentTimeMillis();
+                LOGGER.info(Common.addTag("compression time is " + (endTime - startTime) + "ms"));
+                return this;
+            }
+            this.fmOffset = buildFmOffset(featureMaps, updateFeatureName);
+            return this;
+        }
+
+        private int buildCompFmOffset(Map<String, List<Float>> featureMaps, int trainDataSize) {
+            List<CompressWeight> compressWeights = EncodeExecutor.getInstance().encode(featureMaps, trainDataSize);
+            if (compressWeights == null || compressWeights.size() == 0) {
+                LOGGER.severe("[Compression] the return compressWeights from <encodeExecutor.encode> is " +
+                        "null, please check");
+                retCode = ResponseCode.RequestError;
+                status = FLClientStatus.FAILED;
+                throw new IllegalArgumentException();
+            }
+            int compFeatureSize = compressWeights.size();
+            int[] compFmOffsets = new int[compFeatureSize];
+            int index = 0;
+            for (CompressWeight compressWeight : compressWeights) {
+                String weightFullname = compressWeight.getWeightFullname();
+                List<Byte> compressData = compressWeight.getCompressData();
+                float minVal = compressWeight.getMinValue();
+                float maxVal = compressWeight.getMaxValue();
+                byte[] data = new byte[compressData.size()];
+                LOGGER.info(Common.addTag("[updateModel build compressWeight] feature name: "
+                        + weightFullname + ", feature size: " + data.length));
+                for (int j = 0; j < data.length; j++) {
+                    data[j] = compressData.get(j);
+                }
+                int featureName = builder.createString(weightFullname);
+                int weight = CompressFeatureMap.createCompressDataVector(builder, data);
+                int featureMap = CompressFeatureMap.createCompressFeatureMap(builder, featureName, weight,
+                        minVal, maxVal);
+                LOGGER.info(Common.addTag("[Compression]" +
+                        " featureName: " + weightFullname +
+                        ", min_val: " + minVal +
+                        ", max_val: " + maxVal));
+                compFmOffsets[index] = featureMap;
+                index += 1;
+            }
+            return RequestUpdateModel.createCompressFeatureMapVector(builder, compFmOffsets);
+        }
+
+        private int buildNameVecOffset(ArrayList<String> updateFeatureName) {
+            int featureSize = updateFeatureName.size();
+            int[] nameVecOffsets = new int[featureSize];
+            for (int i = 0; i < featureSize; i++) {
+                String key = updateFeatureName.get(i);
+                int featureName = builder.createString(key);
+                nameVecOffsets[i] = featureName;
+            }
+            return RequestUpdateModel.createNameVecVector(builder, nameVecOffsets);
+        }
+
+        private int buildFmOffset(Map<String, List<Float>> featureMaps, ArrayList<String> updateFeatureName) {
+            int featureSize = updateFeatureName.size();
+            int[] fmOffsets = new int[featureSize];
+            for (int i = 0; i < featureSize; i++) {
+                String key = updateFeatureName.get(i);
+                List<Float> featureMap = featureMaps.get(key);
+                float[] data = new float[featureMap.size()];
+                LOGGER.info(Common.addTag("[updateModel build featuresMap] feature name: " + key + " feature " +
+                        "size: " + data.length));
+                for (int j = 0; j < data.length; j++) {
+                    data[j] = featureMap.get(j);
+                }
+                int featureName = builder.createString(key);
+                int weight = FeatureMap.createDataVector(builder, data);
+                int featureMapOff = FeatureMap.createFeatureMap(builder, featureName, weight);
+                fmOffsets[i] = featureMapOff;
+            }
+            return RequestUpdateModel.createFeatureMapVector(builder, fmOffsets);
         }
 
         /**
@@ -417,6 +497,10 @@ public class UpdateModel {
             RequestUpdateModel.addFlId(this.builder, idOffset);
             RequestUpdateModel.addTimestamp(builder, this.timestampOffset);
             RequestUpdateModel.addIteration(builder, this.iteration);
+            RequestUpdateModel.addCompressFeatureMap(builder, this.compFmOffset);
+            RequestUpdateModel.addUploadCompressType(builder, this.uploadCompressType);
+            RequestUpdateModel.addUploadSparseRate(builder, this.uploadSparseRate);
+            RequestUpdateModel.addNameVec(builder, this.nameVecOffset);
             RequestUpdateModel.addFeatureMap(builder, this.fmOffset);
             RequestUpdateModel.addSignature(builder, this.signDataOffset);
             RequestUpdateModel.addUploadLoss(builder, this.uploadLossOffset);
