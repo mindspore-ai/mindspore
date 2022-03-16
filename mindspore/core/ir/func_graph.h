@@ -366,6 +366,11 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
   void set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes);
   void ClearUsedForwardNodes() { used_forward_nodes_.clear(); }
 
+  bool is_tensor_condition_branch() const { return is_tensor_condition_branch_; }
+  void set_is_tensor_condition_branch(bool is_tensor_condition_branch) {
+    is_tensor_condition_branch_ = is_tensor_condition_branch;
+  }
+
  private:
   // Only used for func_graph manager to control resource free.
   int attached_mng_cnt() const { return attached_mng_cnt_; }
@@ -455,6 +460,8 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
   // forward nodes used in grad graph will be added to output for holding output values.
   bool modify_output_ = false;
   mindspore::HashSet<AnfNodePtr> used_forward_nodes_;
+  // If the func_graph is input of switch node, and the condition of switch is AbstractTensor, need set true.
+  bool is_tensor_condition_branch_ = false;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {

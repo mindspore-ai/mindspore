@@ -32,6 +32,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "utils/ms_context.h"
+#include "utils/log_adapter.h"
 #include "utils/interpret_node_recorder.h"
 #include "pipeline/jit/debug/trace.h"
 #include "mindspore/core/ir/cell.h"
@@ -87,6 +88,7 @@ void Parser::BuildMethodMap() {
   stmt_method_map_["Break"] = &Parser::ParseBreak;
   stmt_method_map_["Continue"] = &Parser::ParseContinue;
   stmt_method_map_["Pass"] = &Parser::ParsePass;
+  stmt_method_map_["Raise"] = &Parser::ParseRaise;
   expr_method_map_["NoneType"] = &Parser::ParseNone;
   expr_method_map_["BinOp"] = &Parser::ParseBinOp;
   expr_method_map_["Name"] = &Parser::ParseName;
@@ -111,6 +113,8 @@ void Parser::BuildMethodMap() {
   expr_method_map_["Ellipsis"] = &Parser::ParseEllipsis;
   expr_method_map_["ListComp"] = &Parser::ParseListComp;
   expr_method_map_["GeneratorExp"] = &Parser::ParseListComp;  // We treat 'GeneratorExp' the same as 'ListComp'.
+  expr_method_map_["JoinedStr"] = &Parser::ParseJoinedStr;
+  expr_method_map_["FormattedValue"] = &Parser::ParseFormattedValue;
 }
 
 void Parser::UpdateTopFuncGraph(const FuncGraphPtr &func_graph) { top_func_graph_ = FuncGraphWeakPtr(func_graph); }
@@ -886,6 +890,47 @@ AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &arg
   return block->MakeResolve(name_space, symbol);
 }
 
+void Parser::ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes) {
+  for (size_t i = 0; i < args.size(); ++i) {
+    AnfNodePtr node = ParseExprNode(block, args[i]);
+    (void)str_nodes->emplace_back(node);
+  }
+}
+
+std::vector<AnfNodePtr> Parser::ParseException(const FunctionBlockPtr &block, const py::list &args,
+                                               const std::string &name) {
+  auto exception_type_node = NewValueNode(name);
+  std::vector<AnfNodePtr> node_inputs = {exception_type_node};
+  ParseStrInError(block, args, &node_inputs);
+  return node_inputs;
+}
+
+std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast Call, the current node is raise.";
+  // Process function call
+  py::object function_ast_node = python_adapter::GetPyObjAttr(node, "func");
+  // Process raise ValueError
+  if (py::isinstance<py::none>(function_ast_node)) {
+    auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "id"));
+    if (std::find(exception_types.begin(), exception_types.end(), name_id) != exception_types.end()) {
+      return {NewValueNode(name_id)};
+    }
+  }
+
+  py::list args = python_adapter::GetPyObjAttr(node, "args");
+
+  auto arg_type =
+    AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, function_ast_node)));
+  if (arg_type == AST_SUB_TYPE_NAME) {
+    auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
+    MS_LOG(DEBUG) << "The name of call node is: " << name_id;
+    if (std::find(exception_types.begin(), exception_types.end(), name_id) != exception_types.end()) {
+      return ParseException(block, args, name_id);
+    }
+  }
+  return {};
+}
+
 // Process function call, eg : f1(x, y) ...
 AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Call";
@@ -897,6 +942,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
     AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, function_ast_node)));
   if (arg_type == AST_SUB_TYPE_NAME) {
     auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
+    MS_LOG(DEBUG) << "The name of call node is: " << name_id;
     if (name_id == "super") {
       return ParseSuper(block, args);
     }
@@ -2262,6 +2308,29 @@ AnfNodePtr Parser::ParseListComp(const FunctionBlockPtr &block, const py::object
   return output;
 }
 
+AnfNodePtr Parser::ParseJoinedStr(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast JoinedStr.";
+  MS_EXCEPTION_IF_NULL(block);
+  py::list py_values = python_adapter::GetPyObjAttr(node, "values");
+  std::vector<AnfNodePtr> value_nodes{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < py_values.size(); ++i) {
+    AnfNodePtr str_value = ParseExprNode(block, py_values[i]);
+    (void)value_nodes.emplace_back(str_value);
+  }
+  auto func_graph = block->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  AnfNodePtr output = func_graph->NewCNodeInOrder(std::move(value_nodes));
+  return output;
+}
+
+AnfNodePtr Parser::ParseFormattedValue(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast FormattedValue.";
+  MS_EXCEPTION_IF_NULL(block);
+  py::object value_object = python_adapter::GetPyObjAttr(node, "value");
+  AnfNodePtr value_node = ParseExprNode(block, value_object);
+  return value_node;
+}
+
 void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &target_object,
                               const AnfNodePtr &assigned_node) {
   MS_EXCEPTION_IF_NULL(block);
@@ -2583,6 +2652,28 @@ FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::
 
 FunctionBlockPtr Parser::ParsePass(const FunctionBlockPtr &block, const py::object &node) {
   // We just bypass 'pass' statement.
+  return block;
+}
+
+FunctionBlockPtr Parser::ParseRaise(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process raise statement";
+  MS_EXCEPTION_IF_NULL(block);
+  auto func_graph = block->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  py::object exc_ast_node = python_adapter::GetPyObjAttr(node, "exc");
+  // raise
+  if (py::isinstance<py::none>(exc_ast_node)) {
+    CNodePtr raise_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimRaise)});
+    func_graph->set_return(raise_node);
+    return block;
+  }
+  auto exc_node_inputs = ParseRaiseCall(block, exc_ast_node);
+  // raise ExceptionType or raise ExceptionType(ExceptionString)
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimRaise)};
+  (void)inputs.insert(inputs.end(), exc_node_inputs.begin(), exc_node_inputs.end());
+  CNodePtr raise_node = func_graph->NewCNodeInOrder(inputs);
+  CNodePtr return_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), raise_node});
+  func_graph->set_return(return_node);
   return block;
 }
 

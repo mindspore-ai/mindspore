@@ -34,6 +34,20 @@ AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
   return abs_base;
 }
 
+void SetTensorFlag(const AbstractBasePtr abs) {
+  if (abs->isa<abstract::AbstractFunction>()) {
+    const auto &func_abs = abs->cast<abstract::AbstractFunctionPtr>();
+    MS_EXCEPTION_IF_NULL(func_abs);
+    auto closure_abs = func_abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+    if (closure_abs) {
+      auto func = closure_abs->func_graph();
+      MS_EXCEPTION_IF_NULL(func);
+      func->set_is_tensor_condition_branch(true);
+      MS_LOG(DEBUG) << "Set is_tensor_condition_branch for func_graph:" << func->ToString();
+    }
+  }
+}
+
 AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
                                 const AbstractBasePtrList &args_spec_list) {
   // Inputs: condition, true branch, false branch
@@ -51,6 +65,11 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
   MS_EXCEPTION_IF_NULL(v);
   // For tensor as condition, keeps both true and false branch.
   if (v->isa<AnyValue>() || cond->isa<AbstractTensor>()) {
+    // Need record two func_graph
+    if (cond->isa<AbstractTensor>()) {
+      SetTensorFlag(tb);
+      SetTensorFlag(fb);
+    }
     MS_EXCEPTION_IF_NULL(tb);
     return tb->Join(fb);
   }

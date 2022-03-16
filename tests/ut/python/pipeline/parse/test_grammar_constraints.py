@@ -30,9 +30,6 @@ context.set_context(mode=context.GRAPH_MODE)
 
 def test_missing_return():
     class NetMissReturn(nn.Cell):
-        def __init__(self):
-            super(NetMissReturn, self).__init__()
-
         def construct(self, x, y, z):
             if x == 1:
                 return 10
@@ -65,9 +62,6 @@ def test_missing_return():
 
 def test_nest_function_missing_return():
     class NetNestFuncMissReturn(nn.Cell):
-        def __init__(self):
-            super(NetNestFuncMissReturn, self).__init__()
-
         def construct(self, x, y, z):
             if x == 1:
                 return 10
@@ -100,12 +94,9 @@ def test_nest_function_missing_return():
 
 def test_raise_in_method():
     class NetRaiseInMethod(nn.Cell):
-        def __init__(self):
-            super(NetRaiseInMethod, self).__init__()
-
         def construct(self, x, y, z):
             if x == 1:
-                return 10
+                return Tensor(10, mstype.int32)
             elif x == 20:
                 # add not support grammar 'raise' here
                 raise ValueError('Illegal case')
@@ -118,24 +109,22 @@ def test_raise_in_method():
     z = Tensor(2, mstype.int32)
     with pytest.raises(RuntimeError) as er:
         net(x, y, z)
-    assert "Unsupported statement 'Raise'." in str(er.value)
+    assert "Currently only supports raise in constant scenarios." in str(er.value)
 
 
 def test_raise_in_nested_function():
     class NetNestRaise(nn.Cell):
-        def __init__(self):
-            super(NetNestRaise, self).__init__()
+        def nest_fn(self, u):
+            if u > 0:
+                # add not support grammar 'raise' here
+                raise ValueError('Illegal case')
+            return u + z + 1
 
         def construct(self, x, y, z):
             if x == 1:
-                return 10
+                return Tensor(10, mstype.int32)
             elif x == 20:
-                def nest_fn(u):
-                    if u > 0:
-                       # add not support grammar 'raise' here
-                        raise ValueError('Illegal case')
-                    return u + z + 1
-                return nest_fn(y)
+                return self.nest_fn(y)
             else:
                 return y + z
 
@@ -145,14 +134,11 @@ def test_raise_in_nested_function():
     z = Tensor(2, mstype.int32)
     with pytest.raises(RuntimeError) as er:
         net(x, y, z)
-    assert "Unsupported statement 'Raise'." in str(er.value)
+    assert "Currently only supports raise in constant scenarios." in str(er.value)
 
 
 def test_nest_branch_with_return():
     class NetBranchWithReturn(nn.Cell):
-        def __init__(self):
-            super(NetBranchWithReturn, self).__init__()
-
         def construct(self, x, y, z):
             if x == 1:
                 return 10
@@ -168,9 +154,6 @@ def test_nest_branch_with_return():
 
 def test_any_with_no_return():
     class NetAnyNoReturn(nn.Cell):
-        def __init__(self):
-            super(NetAnyNoReturn, self).__init__()
-
         def construct(self, inp):
             result = inp.any()
             if result:
@@ -186,9 +169,6 @@ def test_any_with_no_return():
 
 def test_missing_construct():
     class NetMissConstruct(nn.Cell):
-        def __init__(self):
-            super(NetMissConstruct, self).__init__()
-
         def construct1(self, inp):
             return 5
 

@@ -23,6 +23,7 @@
 #include <sstream>
 #include <memory>
 #include <map>
+#include <vector>
 #include <thread>
 #include <functional>
 #include "utils/visible.h"
@@ -70,6 +71,33 @@ enum ExceptionType {
   AttributeError,
   NameError
 };
+
+// exception types
+const std::vector<std::string> exception_types = {"NoExceptionType",  "UnknownError",        "ArgumentError",
+                                                  "NotSupportError",  "NotExistsError",      "AlreadyExistsError",
+                                                  "UnavailableError", "DeviceProcessError",  "AbortedError",
+                                                  "TimeOutError",     "ResourceUnavailable", "NoPermissionError",
+                                                  "IndexError",       "ValueError",          "TypeError",
+                                                  "KeyError",         "AttributeError",      "NameError"};
+
+static inline std::map<std::string, ExceptionType> exception_types_map = {{"NoExceptionType", NoExceptionType},
+                                                                          {"UnknownError", UnknownError},
+                                                                          {"ArgumentError", ArgumentError},
+                                                                          {"NotSupportError", NotSupportError},
+                                                                          {"NotExistsError", NotExistsError},
+                                                                          {"AlreadyExistsError", AlreadyExistsError},
+                                                                          {"UnavailableError", UnavailableError},
+                                                                          {"DeviceProcessError", DeviceProcessError},
+                                                                          {"AbortedError", AbortedError},
+                                                                          {"TimeOutError", TimeOutError},
+                                                                          {"ResourceUnavailable", ResourceUnavailable},
+                                                                          {"NoPermissionError", NoPermissionError},
+                                                                          {"IndexError", IndexError},
+                                                                          {"ValueError", ValueError},
+                                                                          {"TypeError", TypeError},
+                                                                          {"KeyError", KeyError},
+                                                                          {"AttributeError", AttributeError},
+                                                                          {"NameError", NameError}};
 
 struct LocationInfo {
   LocationInfo(const char *file, int line, const char *func) : file_(file), line_(line), func_(func) {}

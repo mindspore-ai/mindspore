@@ -37,6 +37,7 @@
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
+#include "pipeline/jit/debug/trace.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/ms_context.h"
@@ -1918,6 +1919,82 @@ class PartialEvaluator : public Evaluator {
   }
 };
 
+class RaiseEvaluator : public TransitionPrimEvaluator {
+ public:
+  RaiseEvaluator() : TransitionPrimEvaluator("RaiseEvaluator") {}
+  ~RaiseEvaluator() override = default;
+  MS_DECLARE_PARENT(RaiseEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+                         const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
+    auto node = out_conf->node();
+    MS_EXCEPTION_IF_NULL(node);
+    auto cur_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_graph);
+    if (cur_graph->is_tensor_condition_branch()) {
+      MS_LOG(EXCEPTION) << "Currently only supports raise in constant scenarios."
+                        << "Tensor type data cannot exist in the conditional statement."
+                        << "Please check your conditions which raise node is located at:"
+                        << trace::GetDebugInfo(node->debug_info()) << ".";
+    }
+    if (args_spec_list.empty()) {
+      // process raise
+      MS_LOG(EXCEPTION) << "No active exception to reraise.";
+    }
+
+    std::string exception_type = GetScalarStringValue(args_spec_list[0]);
+    auto iter = exception_types_map.find(exception_type);
+    if (iter == exception_types_map.end()) {
+      MS_LOG(EXCEPTION) << "Unsupported exception type: " << exception_type << ".";
+    }
+    ExceptionType type = iter->second;
+    if (args_spec_list.size() == 1) {
+      // Process raise ValueError()
+      MS_EXCEPTION(type);
+    }
+    std::string exception_string = "";
+    for (size_t index = 1; index < args_spec_list.size(); ++index) {
+      exception_string += GetExceptionString(args_spec_list[index]);
+    }
+    MS_EXCEPTION(type) << exception_string;
+    return nullptr;
+  }
+
+ private:
+  std::string GetExceptionString(const AbstractBasePtr &arg) {
+    std::string exception_str = "";
+    if (arg->isa<abstract::AbstractTuple>()) {
+      // Process raise ValueError("str")
+      auto arg_tuple = arg->cast<abstract::AbstractTuplePtr>();
+      const auto &arg_tuple_elements = arg_tuple->elements();
+      if (arg_tuple_elements.size() == 0) {
+        MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
+      }
+      for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
+        auto &element = arg_tuple_elements[index];
+        exception_str += GetScalarStringValue(element);
+      }
+    } else {
+      // Process raise ValueError
+      exception_str += GetScalarStringValue(arg);
+    }
+    return exception_str;
+  }
+
+  std::string GetScalarStringValue(const AbstractBasePtr &abs) {
+    std::string str = "";
+    if (abs->isa<abstract::AbstractScalar>()) {
+      auto scalar = abs->cast<abstract::AbstractScalarPtr>();
+      auto scalar_value = scalar->BuildValue();
+      if (scalar_value->isa<Int64Imm>()) {
+        str = std::to_string(GetValue<int64_t>(scalar_value));
+      } else if (scalar_value->isa<StringImm>()) {
+        str = GetValue<std::string>(scalar_value);
+      }
+    }
+    return str;
+  }
+};
+
 struct PrimitiveImplInferValue {
   PrimitiveImpl impl_;        // implement function of primitive
   bool eval_value_;           // whether evaluate value
@@ -1976,6 +2053,7 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimPyInterpret] = std::make_shared<PyInterpretEvaluator>();
   constructor[prim::kPrimMakeTuple] = std::make_shared<MakeTupleEvaluator>();
   constructor[prim::kPrimMakeList] = std::make_shared<MakeListEvaluator>();
+  constructor[prim::kPrimRaise] = std::make_shared<RaiseEvaluator>();
 }
 }  // namespace
 
