@@ -2434,11 +2434,12 @@ class COOTensor(COOTensor_):
 
     Note:
         This is an experimental feature and is subjected to change.
+        Currently, duplicate coordinates in the indices will not be coalesced.
 
     Args:
         indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
             where N and ndims are the number of `values` and number of dimensions in
-            the COOTensor, respectively.
+            the COOTensor, respectively. Please make sure that the indices are in range of the given shape.
         values (Tensor): A 1-D tensor of any type and shape `[N]`, which
             supplies the values for each element in `indices`.
         shape (tuple(int)): A integer tuple of size `ndims`,
@@ -2476,9 +2477,11 @@ class COOTensor(COOTensor_):
         # Init a COOTensor from indices, values and shape
         else:
             if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
-                raise TypeError("Inputs must follow: COOTensor(indices, values, shape).")
+                raise TypeError("Inputs must follow: COOTensor(Tensor, Tensor, tuple).")
             validator.check_coo_tensor_shape(indices.shape, values.shape, shape)
             validator.check_coo_tensor_dtype(indices.dtype)
+            if not (indices < Tensor(shape)).all() or (indices < 0).any():
+                raise ValueError("All the indices should be non-negative integer and in range of the given shape!")
             COOTensor_.__init__(self, indices, values, shape)
         self.init_finished = True
 
@@ -2630,8 +2633,8 @@ class CSRTensor(CSRTensor_):
             stores the data for CSRTensor. Default: None.
         shape (Tuple): A tuple indicates the shape of the CSRTensor, its length must
             be `2`, as only 2-D CSRTensor is currently supported, and `shape[0]` must
-            equal to `indptr[0] - 1`, which all equal to number of rows of the CSRTensor.
-        csr_tensor (CSRTensor): A CSRTensor object.
+            equal to `indptr[0] - 1`, which all equal to number of rows of the CSRTensor. Default: None.
+        csr_tensor (CSRTensor): A CSRTensor object. Default: None.
 
     Outputs:
         CSRTensor, with shape defined by `shape`, and dtype inferred from `value`.
@@ -2834,8 +2837,8 @@ class CSRTensor(CSRTensor_):
         Examples:
             >>> from mindspore import Tensor, CSRTensor
             >>> from mindspore import dtype as mstype
-            >>> indptr = Tensor([0, 1, 2], dtype=ms.int32)
-            >>> indices = Tensor([0, 1], dtype=ms.int32)
+            >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+            >>> indices = Tensor([0, 1], dtype=mstype.int32)
             >>> values = Tensor([2, 1], dtype=mstype.float32)
             >>> dense_shape = (2, 4)
             >>> csr_tensor = CSRTensor(indptr, indices, values, dense_shape)

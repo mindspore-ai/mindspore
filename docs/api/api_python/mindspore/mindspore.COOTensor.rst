@@ -16,11 +16,11 @@ mindspore.COOTensor
          [0, 0, 0, 0]]
 
     .. note::
-        这是一个实验特性，在未来可能会发生API的变化。
+        这是一个实验特性，在未来可能会发生API的变化。目前COOTensor中相同索引的值不会进行合并。
 
     **参数：**
 
-    - **indices** (Tensor) - 形状为 `[N, ndims]` 的二维整数张量，其中N和ndims分别表示稀疏张量中 `values` 的数量和COOTensor维度的数量。
+    - **indices** (Tensor) - 形状为 `[N, ndims]` 的二维整数张量，其中N和ndims分别表示稀疏张量中 `values` 的数量和COOTensor维度的数量。 请确保indices的值在所给shape范围内。
     - **values** (Tensor) - 形状为 `[N]` 的一维张量，用来给 `indices` 中的每个元素提供数值。
     - **shape** (tuple(int)) - 形状为ndims的整数元组，用来指定稀疏矩阵的稠密形状。
     - **coo_tensor** (COOTensor) - COOTensor对象，用来初始化新的COOTensor。
@@ -35,7 +35,7 @@ mindspore.COOTensor
 
         **返回：**
 
-        CSRTensor。
+        COOTensor。
 
     .. py:method:: astype(dtype)
 

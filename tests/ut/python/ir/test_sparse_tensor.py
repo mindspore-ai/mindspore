@@ -84,7 +84,7 @@ def test_sparse_tensor_indices_dim_greater_than_dense_shape_dim():
     indices = Tensor(np.array([[0, 0, 0], [0, 0, 1]], dtype=np.int32))
     values = Tensor(np.array([100, 200], dtype=np.float32))
     dense_shape = (2, 2)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         MakeSparseTensor(dense_shape)(indices, values)
 
 

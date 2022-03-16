@@ -892,6 +892,10 @@ class Validator:
             raise ValueError(f"Values must be a 1-dimensional tensor, but got a {len(values_shp)} dimension tensor.")
         if indices_shp[0] != values_shp[0]:
             raise ValueError(f"Indices.shape must be (N, 2), where N equals to number of nonzero values in coo tensor.")
+        if indices_shp[1] != 2:
+            raise ValueError(f"Indices.shape must be (N, 2), where N equals to number of nonzero values in coo tensor.")
+        if min(coo_shp) <= 0:
+            raise ValueError(f"Dense shape must be a tuple of positive integers.")
 
     @staticmethod
     def check_coo_tensor_dtype(indices_dtype):
