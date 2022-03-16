@@ -345,9 +345,9 @@ size_t SomasSolverCore::FindSolutions() {
   MS_LOG(DEBUG) << "Start allocating blocks,offset strategy: " << branchingNames[branching_strategy_];
 
   std::shared_ptr<FootPrint> pFootprint = std::make_shared<FootPrint>();
-  pFootprint->setBranchingStrategy(branching_strategy_);
+  pFootprint->setBranchingStrategy(static_cast<uint32_t>(branching_strategy_));
   pFootprint->setCurrentSol(sol_count_);
-  pFootprint->setAlgorithm(algorithm_);
+  pFootprint->setAlgorithm(static_cast<uint32_t>(algorithm_));
   Search(pFootprint);
   AppendLifelongTensors();
   Destroy(pFootprint);

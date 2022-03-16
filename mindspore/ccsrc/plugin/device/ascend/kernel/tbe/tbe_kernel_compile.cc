@@ -616,7 +616,7 @@ std::string TbeKernelCompileManager::ParseSelectAndCheckResult(const nlohmann::j
       return kFailed;
     }
     if (res != kFullySupported) {
-      PrintProcessLog(json, WARNING);
+      PrintProcessLog(json, static_cast<int>(WARNING));
     }
   } else if (json.at(kStatus) == kFailed) {
     auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
@@ -635,7 +635,7 @@ JsonNameMap TbeKernelCompileManager::GetAllSuccessFusion() {
     auto full_name = iter->second;
     auto json_name = full_name_to_json_name_[full_name];
     if (TbeUtils::SearchCache(json_name) != nullptr) {
-      success_fusion_ops_.insert(std::pair<int64_t, std::string>(scope_id, full_name));
+      (void)success_fusion_ops_.emplace(scope_id, full_name);
     }
     iter++;
   }

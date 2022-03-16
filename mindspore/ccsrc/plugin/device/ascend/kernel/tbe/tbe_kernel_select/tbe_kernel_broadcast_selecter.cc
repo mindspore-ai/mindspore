@@ -49,7 +49,7 @@ bool TbeKernelBroadCastSelecter::GetShapeInfo(SupportFormat *support_format) {
     }
     auto dynamic_input_shape0_ = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, kInputIndex_0);
     PadScalarShape(&dynamic_input_shape0_);
-    input_shapes_.emplace_back(dynamic_input_shape0_);
+    (void)input_shapes_.emplace_back(dynamic_input_shape0_);
     input_num_ = 1;
   } else {
     input_num_ = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
@@ -113,8 +113,8 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupport5HD(SupportFormat *support_fo
     input_support_format.assign(input_num_, kOpFormat_NC1HWC0);
   }
   GenOutputSupportFormat(kOpFormat_NC1HWC0, &output_support_format);
-  support_format->input_format.emplace_back(input_support_format);
-  support_format->output_format.emplace_back(output_support_format);
+  (void)support_format->input_format.emplace_back(input_support_format);
+  (void)support_format->output_format.emplace_back(output_support_format);
   return true;
 }
 
@@ -148,8 +148,8 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracZ(SupportFormat *support_
     return false;
   }
   GenOutputSupportFormat(kOpFormat_FRAC_Z, &output_support_format);
-  support_format->input_format.emplace_back(input_support_format);
-  support_format->output_format.emplace_back(output_support_format);
+  (void)support_format->input_format.emplace_back(input_support_format);
+  (void)support_format->output_format.emplace_back(output_support_format);
   return true;
 }
 bool TbeKernelBroadCastSelecter::IsBroadCastSupportC1HWNCoC0(SupportFormat *support_format) const {
@@ -250,8 +250,8 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracNZ(SupportFormat *support
     input_support_format.assign(input_num_, kOpFormat_FRAC_NZ);
   }
   GenOutputSupportFormat(kOpFormat_FRAC_NZ, &output_support_format);
-  support_format->input_format.emplace_back(input_support_format);
-  support_format->output_format.emplace_back(output_support_format);
+  (void)support_format->input_format.emplace_back(input_support_format);
+  (void)support_format->output_format.emplace_back(output_support_format);
   return true;
 }
 
@@ -364,8 +364,8 @@ void TbeKernelBroadCastSelecter::AssignSupportFormat(const std::string &support_
   SupportFormatItem output_support_format;
   input_support_format.assign(input_num_, support_format_str);
   output_support_format.assign(output_num_, support_format_str);
-  support_format->input_format.emplace_back(input_support_format);
-  support_format->output_format.emplace_back(output_support_format);
+  (void)support_format->input_format.emplace_back(input_support_format);
+  (void)support_format->output_format.emplace_back(output_support_format);
 }
 }  // namespace kernel
 }  // namespace mindspore

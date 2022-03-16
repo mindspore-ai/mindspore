@@ -158,7 +158,7 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
       base_score = kWeightUnInitScore;
     }
     if (kernel_build_info.GetInputFormat(input_index) == AnfAlgo::GetPrevNodeOutputFormat(kernel_node, input_index)) {
-      (*cur_kernelinfo_match_counts)[MATCH_FORMAT_COUNT] += base_score;
+      (*cur_kernelinfo_match_counts)[static_cast<size_t>(MATCH_FORMAT_COUNT)] += base_score;
     }
     // we match output fix precision first.
     auto prev_device_type = common::AnfAlgo::GetPrevNodeOutputPrecision(kernel_node, input_index);
@@ -166,14 +166,14 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
       prev_device_type = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
     }
     if (kernel_build_info.GetInputDeviceType(input_index) == prev_device_type) {
-      (*cur_kernelinfo_match_counts)[MATCH_DTYPE_COUNT] += base_score;
+      (*cur_kernelinfo_match_counts)[static_cast<size_t>(MATCH_DTYPE_COUNT)] += base_score;
     }
     if (kernel_build_info.GetInputFormat(input_index) == pri_match_format) {
-      (*cur_kernelinfo_match_counts)[MATCH_SPECIAL_FORMAT_COUNT] += base_score;
+      (*cur_kernelinfo_match_counts)[static_cast<size_t>(MATCH_SPECIAL_FORMAT_COUNT)] += base_score;
     }
     if (kernel_build_info.GetInputFormat(input_index) == kOpFormat_DEFAULT ||
         kernel_build_info.GetInputFormat(input_index) == kOpFormat_NCDHW) {
-      (*cur_kernelinfo_match_counts)[MATCH_DEFAULT_FORMAT_COUNT] += base_score;
+      (*cur_kernelinfo_match_counts)[static_cast<size_t>(MATCH_DEFAULT_FORMAT_COUNT)] += base_score;
     }
   }
 
@@ -182,10 +182,10 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
     // cal count of same output dtype between abstract and kernel info
     if (kernel_build_info.GetOutputDeviceType(output_index) ==
         common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index)) {
-      (*cur_kernelinfo_match_counts)[MATCH_OUTPUT_DTYPE_COUNT] += 1;
+      (*cur_kernelinfo_match_counts)[static_cast<size_t>(MATCH_OUTPUT_DTYPE_COUNT)] += 1;
     }
     if (kernel_build_info.GetOutputFormat(output_index) == pri_match_format) {
-      (*cur_kernelinfo_match_counts)[MATCH_SPECIAL_FORMAT_COUNT] += 1;
+      (*cur_kernelinfo_match_counts)[static_cast<size_t>(MATCH_SPECIAL_FORMAT_COUNT)] += 1;
     }
   }
 }

@@ -626,7 +626,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
   }
 
   std::vector<TypeId> concat_output_dtype = {common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)};
-  auto concat_all = CreateConcatNode(graph, concat_input_all, concat_dim, input_num_all);
+  auto concat_all = CreateConcatNode(graph, concat_input_all, SizeToLong(concat_dim), input_num_all);
   if (is_dynamic) {
     ShapeVector shape;
     std::transform(single_shape.begin(), single_shape.end(), std::back_inserter(shape), SizeToLong);
@@ -717,7 +717,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
     }
     (void)concat_input_all.insert(concat_input_all.end(), concat_left_outputs.begin(), concat_left_outputs.end());
     ++input_nums_all;
-    shape_all[kDim3] += recv_lens[kDim2];
+    shape_all[kDim3] += static_cast<size_t>(recv_lens[kDim2]);
   }
 
   // middle concat connect to concat_all
@@ -746,7 +746,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
   }
 
   std::vector<TypeId> concat_right_output_dtype = {common::AnfAlgo::GetOutputInferDataType(concat_input_all[1], 0)};
-  auto concat_all = CreateConcatNode(graph, concat_input_all, kWDim, input_nums_all);
+  auto concat_all = CreateConcatNode(graph, concat_input_all, static_cast<int64_t>(kWDim), input_nums_all);
   common::AnfAlgo::SetOutputInferTypeAndShape(concat_right_output_dtype, {shape_all}, concat_all.get());
   return concat_all;
 }

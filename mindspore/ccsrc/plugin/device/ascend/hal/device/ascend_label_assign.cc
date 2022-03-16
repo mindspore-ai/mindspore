@@ -66,7 +66,7 @@ static void UpdateLabelSwitch(NotNull<CNodePtr> node) {
 }
 
 static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>> graph, NotNull<uint32_t *> label_id,
-                                   NotNull<std::set<std::shared_ptr<session::KernelGraph>> *> memo) {
+                                   const NotNull<std::set<std::shared_ptr<session::KernelGraph>> *> &memo) {
   if (memo->find(graph.get()) != memo->end()) {
     return;
   }
