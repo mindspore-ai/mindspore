@@ -938,6 +938,7 @@ void ControlNodeParser::ParseDeviceContextForFuncGraph(const std::vector<KernelG
   }
 
   // If there is no kernel in funcgraph, the parameter uses the default device context type.
+  MS_EXCEPTION_IF_NULL(root_func_graph_->manager());
   FuncGraphSet sub_graphs = root_func_graph_->manager()->func_graphs();
   for (auto sub_graph : sub_graphs) {
     if (func_graph_to_device_contexts_.find(sub_graph) == func_graph_to_device_contexts_.end()) {
@@ -1081,6 +1082,9 @@ void ControlNodeParser::ParseDeviceContextForReturnNode(const DeviceContext *def
     const auto &cnode = return_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     const auto &inputs = cnode->inputs();
+    if (inputs.size() <= kReturnInputPos) {
+      MS_LOG(EXCEPTION) << "Invalid return node:" << cnode->DebugString();
+    }
     const auto output_nodes = FetchInputNodeByNode(inputs[kReturnInputPos]);
     std::vector<const DeviceContext *> return_device_contexts;
 
