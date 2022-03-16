@@ -102,6 +102,7 @@ void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
       input_tensor->set_sync_status(kNeedSyncHostToDeviceImmediately);
       input_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
       node_address->set_from_persistent_mem(input_tensor->is_parameter());
+      node_address->SetNodeIndex(input_node, 0);
       UpdateRefCount(node_address.get(), true);
     }
 
