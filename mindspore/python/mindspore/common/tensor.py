@@ -1385,7 +1385,7 @@ class Tensor(Tensor_):
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
-            >>> a = Tensor(np.arange(4)).astype('float32'))
+            >>> a = Tensor(np.arange(4)).astype('float32')
             >>> print(a)
             [0. 1. 2. 3.]
             >>> mask = Tensor([False, False, True, True])
