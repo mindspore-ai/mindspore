@@ -317,12 +317,14 @@
 
     .. py:method:: register_forward_pre_hook(hook_fn)
 
-        设置Cell对象的正向pre_hook函数。此函数仅在PyNative模式下支持。
+        设置Cell对象的正向pre_hook函数。
 
         .. note::
+            - `register_forward_pre_hook(hook_fn)` 在图模式下，或者在PyNative模式下使用 `ms_function` 功能时不起作用。
             - hook_fn必须有如下代码定义。 `cell_id` 是已注册Cell对象的信息，包括名称和ID。 `inputs` 是网络正向传播时Cell对象的输入数据。用户可以在hook_fn中打印输入数据或者返回新的输入数据。
             - hook_fn返回新的输入数据或者None：hook_fn(cell_id, inputs) -> New inputs or None。
-            - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_forward_pre_hook(hook_fn)`。
+            - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_forward_pre_hook(hook_fn)` 。
+            - PyNative模式下，如果在Cell对象的 `construct` 函数中调用 `register_forward_pre_hook(hook_fn)` ，那么Cell对象每次运行都将增加一个 `hook_fn` 。
 
         **参数：**
 
@@ -338,12 +340,14 @@
 
     .. py:method:: register_forward_hook(hook_fn)
 
-        设置Cell对象的正向hook函数。此函数仅在PyNative模式下支持。
+        设置Cell对象的正向hook函数。
 
         .. note::
+            - `register_forward_hook(hook_fn)` 在图模式下，或者在PyNative模式下使用 `ms_function` 功能时不起作用。
             - hook_fn必须有如下代码定义。 `cell_id` 是已注册Cell对象的信息，包括名称和ID。 `inputs` 是网络正向传播时Cell对象的输入数据。 `outputs` 是网络正向传播时Cell对象的输出数据。用户可以在hook_fn中打印数据或者返回新的输出数据。
             - hook_fn返回新的输出数据或者None：hook_fn(cell_id, inputs, outputs) -> New outputs or None。
-            - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_forward_hook(hook_fn)`。
+            - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_forward_hook(hook_fn)` 。
+            - PyNative模式下，如果在Cell对象的 `construct` 函数中调用 `register_forward_hook(hook_fn)` ，那么Cell对象每次运行都将增加一个 `hook_fn` 。
 
         **参数：**
 
@@ -359,12 +363,14 @@
 
     .. py:method:: register_backward_hook(hook_fn)
 
-        设置Cell对象的反向hook函数。此函数仅在PyNative模式下支持。
+        设置Cell对象的反向hook函数。
 
         .. note::
+            - `register_backward_hook(hook_fn)` 在图模式下，或者在PyNative模式下使用 `ms_function` 功能时不起作用。
             - hook_fn必须有如下代码定义。 `cell_id` 是已注册Cell对象的信息，包括名称和ID。 `grad_input` 是反向传递给Cell对象的梯度。 `grad_output` 是Cell对象的反向输出梯度。用户可以在hook_fn中打印梯度数据或者返回新的输出梯度。
             - hook_fn返回新的输出梯度或者None：hook_fn(cell_id, grad_input, grad_output) -> New grad_output or None。
-            - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_backward_hook(hook_fn)`。
+            - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_backward_hook(hook_fn)` 。
+            - PyNative模式下，如果在Cell对象的 `construct` 函数中调用 `register_backward_hook(hook_fn)` ，那么Cell对象每次运行都将增加一个 `hook_fn` 。
 
         **参数：**
 
@@ -384,16 +390,16 @@
 
         这个接口通常不需要显式调用。
 
-    .. py:method:: run_construct(self, cast_inputs, kwargs)
+    .. py:method:: run_construct(cast_inputs, kwargs)
 
         运行construct方法。
 
         .. note::
-            此函数将会在未来版本中弃用，不推荐使用此函数。
+            - 该函数已经弃用，将会在未来版本中删除，不推荐使用此函数。
 
         **参数：**
 
-        - **cast_inputs** (tuple) – 输入的Cell对象。
+        - **cast_inputs** (tuple) – Cell的输入。
         - **kwargs** (dict) – 关键字参数。
 
         **返回：**
