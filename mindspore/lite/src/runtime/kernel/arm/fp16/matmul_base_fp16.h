@@ -67,6 +67,7 @@ class MatmulBaseFP16CPUKernel : public InnerKernel {
  private:
   int thread_stride_ = 0;
   int thread_count_ = 0;
+  int bias_count_ = 0;
   bool vec_matmul_ = false;
   float16_t *a_pack_ptr_ = nullptr;
   float16_t *b_pack_ptr_ = nullptr;
