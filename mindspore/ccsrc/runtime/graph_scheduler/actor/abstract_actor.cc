@@ -121,7 +121,7 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
       // Create a new op data for stack actor.
       auto to_stack_data =
         std::make_unique<OpData<DeviceTensor>>(output_data->op_id_, output_data->data_, output_data->index_);
-      to_stack_data_.emplace_back(std::move(to_stack_data));
+      (void)to_stack_data_.emplace_back(std::move(to_stack_data));
       ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, to_stack_data_.back().get(), context);
     } else {
       ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
