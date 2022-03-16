@@ -40,7 +40,9 @@ struct ConnectionInfo {
 class ConnectionPool {
  public:
   ConnectionPool() : double_link_(false) {}
-  ~ConnectionPool();
+  ~ConnectionPool() = default;
+
+  void Finalize();
 
   /*
    * Operations for ConnectionInfo.
@@ -90,7 +92,6 @@ class ConnectionPool {
   // each to_url has two fds at most, and each fd has multiple linkinfos
   std::map<int, std::set<ConnectionInfo *>> conn_infos_;
 
-  friend class Connection;
   friend class TCPComm;
 };
 }  // namespace rpc

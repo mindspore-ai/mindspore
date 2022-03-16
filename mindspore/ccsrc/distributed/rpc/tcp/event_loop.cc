@@ -27,7 +27,6 @@
 #include <atomic>
 #include <string>
 #include <thread>
-#include <csignal>
 
 #include "actor/log.h"
 #include "distributed/rpc/tcp/constants.h"
@@ -98,7 +97,8 @@ void QueueReadyCallback(int fd, uint32_t events, void *arg) {
     return;
   }
   uint64_t count;
-  if (read(evloop->task_queue_event_fd_, &count, sizeof(count)) == sizeof(count)) {
+  ssize_t retval = read(evloop->task_queue_event_fd_, &count, sizeof(count));
+  if (retval > 0 && retval == sizeof(count)) {
     // take out functions from the queue
     std::queue<std::function<void()>> q;
 
@@ -129,7 +129,7 @@ void EventLoop::ReleaseResource() {
   }
 }
 
-int EventLoop::AddTask(std::function<int()> &&task) {
+ssize_t EventLoop::AddTask(std::function<int()> &&task) {
   // put func to the queue
   task_queue_mutex_.lock();
   (void)task_queue_.emplace(std::move(task));
@@ -141,7 +141,8 @@ int EventLoop::AddTask(std::function<int()> &&task) {
   if (result == 1) {
     // wakeup event loop
     uint64_t one = 1;
-    if (write(task_queue_event_fd_, &one, sizeof(one)) != sizeof(one)) {
+    ssize_t retval = write(task_queue_event_fd_, &one, sizeof(one));
+    if (retval != sizeof(one)) {
       MS_LOG(WARNING) << "Failed to write queue Event fd: " << task_queue_event_fd_ << ",errno:" << errno;
     }
   }
@@ -195,14 +196,6 @@ void EventLoop::Finalize() {
   RemoveDeletedEvents();
   ReleaseResource();
   MS_LOG(INFO) << "Stop loop succ";
-}
-
-EventLoop::~EventLoop() {
-  try {
-    Finalize();
-  } catch (...) {
-    MS_LOG(ERROR) << "Failed to finalize the event loop";
-  }
 }
 
 void EventLoop::DeleteEvent(int fd) {
@@ -410,7 +403,7 @@ void EventLoop::RemoveDeletedEvents() {
   deleted_events_.clear();
 }
 
-int EventLoop::FindDeletedEvent(Event *tev) {
+int EventLoop::FindDeletedEvent(const Event *tev) {
   std::map<int, std::list<Event *>>::iterator fdIter = deleted_events_.find(tev->fd);
   if (fdIter == deleted_events_.end()) {
     return 0;

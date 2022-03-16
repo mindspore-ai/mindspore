@@ -43,7 +43,7 @@ void ConnectedEventHandler(int fd, uint32_t events, void *context) {
   uint32_t error = events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP);
   int soError = 0;
   Connection *conn = reinterpret_cast<Connection *>(context);
-  conn->socket_operation->ConnEstablishedEventHandler(fd, events, context);
+  conn->socket_operation->ConnEstablishedEventHandler(context);
   if (conn->state == ConnectionState::kDisconnecting) {
     DoDisconnect(fd, conn, error, soError);
     return;
@@ -128,6 +128,7 @@ void OnAccept(int server, uint32_t events, void *arg) {
     delete conn;
     return;
   }
+  tcpmgr->conn_pool_->AddConnection(conn);
 }
 
 int DoSend(Connection *conn) {
@@ -163,15 +164,7 @@ int DoSend(Connection *conn) {
   return total_send_bytes;
 }
 
-TCPComm::~TCPComm() {
-  try {
-    Finalize();
-  } catch (...) {
-    MS_LOG(ERROR) << "Failed to finalize tcp communicator.";
-  }
-}
-
-void TCPComm::SetMessageHandler(MessageHandler handler) { message_handler_ = handler; }
+void TCPComm::SetMessageHandler(const MessageHandler &handler) { message_handler_ = handler; }
 
 bool TCPComm::Initialize() {
   conn_pool_ = std::make_shared<ConnectionPool>();
@@ -244,7 +237,7 @@ bool TCPComm::StartServerSocket() {
   return StartServerSocket(url);
 }
 
-int TCPComm::GetServerFd() { return server_fd_; }
+int TCPComm::GetServerFd() const { return server_fd_; }
 
 void TCPComm::ReadCallBack(void *connection) {
   const int max_recv_count = 3;
@@ -264,7 +257,7 @@ void TCPComm::EventCallBack(void *connection) {
 
   if (conn->state == ConnectionState::kConnected) {
     conn->conn_mutex->lock();
-    DoSend(conn);
+    (void)DoSend(conn);
     conn->conn_mutex->unlock();
   } else if (conn->state == ConnectionState::kDisconnecting) {
     conn->conn_mutex->lock();
@@ -276,7 +269,7 @@ void TCPComm::WriteCallBack(void *connection) {
   Connection *conn = reinterpret_cast<Connection *>(connection);
   if (conn->state == ConnectionState::kConnected) {
     conn->conn_mutex->lock();
-    DoSend(conn);
+    (void)DoSend(conn);
     conn->conn_mutex->unlock();
   }
 }
@@ -288,25 +281,6 @@ int TCPComm::ReceiveMessage(Connection *conn) {
   switch (conn->recv_message_type) {
     case ParseType::kTcpMsg:
       return conn->ReceiveMessage();
-
-#ifdef HTTP_ENABLED
-    case ParseType::KHTTP_REQ:
-      if (httpReqCb) {
-        return httpReqCb(conn, message_handler_);
-      } else {
-        conn->state = ConnectionState::kDisconnecting;
-        return -1;
-      }
-
-    case ParseType::KHTTP_RSP:
-      if (httpRspCb) {
-        return httpRspCb(conn, message_handler_);
-      } else {
-        conn->state = ConnectionState::kDisconnecting;
-        return -1;
-      }
-#endif
-
     default:
       return 0;
   }
@@ -357,7 +331,7 @@ void TCPComm::DropMessage(MessageBase *msg) {
   ptr = nullptr;
 }
 
-int TCPComm::Send(MessageBase *msg, bool sync) {
+ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
   auto task = [msg, this] {
     std::lock_guard<std::mutex> lock(*conn_mutex_);
     // Search connection by the target address
@@ -476,7 +450,7 @@ void TCPComm::Disconnect(const std::string &dst_url) {
   });
 }
 
-Connection *TCPComm::CreateDefaultConn(std::string to) {
+Connection *TCPComm::CreateDefaultConn(const std::string &to) {
   Connection *conn = new (std::nothrow) Connection();
   if (conn == nullptr) {
     MS_LOG(ERROR) << "Failed to create new connection and reconnect fail to: " << to.c_str();
@@ -512,6 +486,13 @@ void TCPComm::Finalize() {
       MS_LOG(ERROR) << "Failed to close fd: " << server_fd_;
     }
     server_fd_ = -1;
+  }
+
+  if (conn_pool_ != nullptr) {
+    MS_LOG(INFO) << "Delete connection pool.";
+    conn_pool_->Finalize();
+    conn_pool_.reset();
+    conn_pool_ = nullptr;
   }
 }
 }  // namespace rpc

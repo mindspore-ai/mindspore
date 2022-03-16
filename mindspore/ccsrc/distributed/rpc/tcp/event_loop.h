@@ -46,7 +46,7 @@ int EventLoopRun(EventLoop *evloop, int timeout);
 /*
  * The event occurred on the fd.
  */
-typedef struct Event {
+typedef struct {
   int fd;
   void *data;
   EventHandler handler;
@@ -61,14 +61,14 @@ class EventLoop {
   EventLoop() : epoll_fd_(-1), is_stop_(false), loop_thread_(0), task_queue_event_fd_(-1) {}
   EventLoop(const EventLoop &) = delete;
   EventLoop &operator=(const EventLoop &) = delete;
-  ~EventLoop();
+  ~EventLoop() = default;
 
   bool Initialize(const std::string &threadName);
   void Finalize();
 
   // Add task (eg. send message, reconnect etc.) to task queue of the event loop.
   // These tasks are executed asynchronously.
-  int AddTask(std::function<int()> &&task);
+  ssize_t AddTask(std::function<int()> &&task);
 
   // Set event handler for events(read/write/..) occurred on the socket fd.
   int SetEventHandler(int sock_fd, uint32_t events, EventHandler handler, void *data);
@@ -91,7 +91,7 @@ class EventLoop {
 
   // Operate the soft deleted events.
   void AddDeletedEvent(Event *event);
-  int FindDeletedEvent(Event *event);
+  int FindDeletedEvent(const Event *event);
   void RemoveDeletedEvents();
 
   // Event operations.

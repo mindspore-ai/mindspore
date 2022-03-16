@@ -71,7 +71,7 @@ class SocketOperation {
   static int Accept(int sock_fd);
 
   // Call recv with flag MSG_PEEK which means do not delete data in buffer after reading.
-  virtual int ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) = 0;
+  virtual ssize_t ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) = 0;
 
   // Try to receive messages up to totalRecvLen (for message header).
   virtual int Receive(Connection *connection, char *recvBuf, uint32_t totalRecvLen, uint32_t *recvLen) = 0;
@@ -79,11 +79,11 @@ class SocketOperation {
   // Receive message (for message body).
   virtual int ReceiveMessage(Connection *connection, struct msghdr *recvMsg, uint32_t recvLen) = 0;
 
-  virtual int SendMessage(Connection *connection, struct msghdr *sendMsg, uint32_t *sendLen) = 0;
+  virtual ssize_t SendMessage(Connection *connection, struct msghdr *sendMsg, size_t *sendLen) = 0;
 
   // Handle connect and connected events.
-  virtual void NewConnEventHandler(int fd, uint32_t events, void *context) = 0;
-  virtual void ConnEstablishedEventHandler(int fd, uint32_t events, void *context) = 0;
+  virtual void NewConnEventHandler(void *context) = 0;
+  virtual void ConnEstablishedEventHandler(void *context) = 0;
 };
 }  // namespace rpc
 }  // namespace distributed

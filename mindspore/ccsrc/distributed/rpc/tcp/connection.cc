@@ -32,7 +32,9 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
   if (fd != conn->socket_fd) {
     MS_LOG(ERROR) << "Failed to reuse connection, delete and close fd: " << fd << ", connfd: " << conn->socket_fd
                   << ", event: " << events;
-    conn->recv_event_loop->DeleteEpollEvent(fd);
+    if (conn->recv_event_loop->DeleteEpollEvent(fd) != RPC_OK) {
+      MS_LOG(ERROR) << "Failed to delete epoll event for fd: " << fd;
+    }
     conn->state = ConnectionState::kDisconnecting;
     if (conn->event_callback != nullptr) {
       conn->event_callback(conn);
@@ -76,7 +78,7 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
 void NewConnectEventHandler(int fd, uint32_t events, void *context) {
   int retval = 0;
   Connection *conn = reinterpret_cast<Connection *>(context);
-  conn->socket_operation->NewConnEventHandler(fd, events, context);
+  conn->socket_operation->NewConnEventHandler(context);
 
   if (conn->state == ConnectionState::kDisconnecting) {
     conn->Disconnect(fd);
@@ -170,10 +172,9 @@ void Connection::InitSocketOperation() {
 }
 
 bool Connection::ReconnectSourceSocket(int fd, uint32_t events, int *soError, uint32_t error) {
-  int retval = 0;
   socklen_t len = sizeof(*soError);
 
-  retval = recv_event_loop->DeleteEpollEvent(fd);
+  int retval = recv_event_loop->DeleteEpollEvent(fd);
   if (retval) {
     MS_LOG(ERROR) << "Failed to delete event for fd: " << fd << ", event: " << events;
     return false;
@@ -274,7 +275,7 @@ void Connection::CheckMessageType() {
   magic_id.resize(sizeof(RPC_MAGICID) - 1);
   char *buf = const_cast<char *>(magic_id.data());
 
-  int size = socket_operation->ReceivePeek(this, buf, sizeof(RPC_MAGICID) - 1);
+  ssize_t size = socket_operation->ReceivePeek(this, buf, sizeof(RPC_MAGICID) - 1);
   if (size < static_cast<int>(sizeof(RPC_MAGICID) - 1)) {
     if (size == 0) {
       MS_LOG(INFO) << "Set connection disconnecting for fd: " << socket_fd << ", size: " << size
@@ -321,13 +322,12 @@ std::string Connection::GenerateHttpMessage(MessageBase *msg) {
   return postLine + userAgentLine + fromLine + connectLine + hostLine + commonEndLine;
 }
 
-void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseUrl, bool isHttpKmsg, int index) {
-  index = 0;
+void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseUrl, bool isHttpKmsg) {
   if (msg->type == MessageBase::Type::KMSG) {
+    size_t index = 0;
     if (!isHttpKmsg) {
       send_to = msg->to;
       send_from = msg->from;
-
       FillMessageHeader(*msg, &send_msg_header);
 
       send_io_vec[index].iov_base = &send_msg_header;
@@ -346,7 +346,7 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
       send_io_vec[index].iov_len = msg->body.size();
       ++index;
       send_kernel_msg.msg_iov = send_io_vec;
-      send_kernel_msg.msg_iovlen = IntToSize(index);
+      send_kernel_msg.msg_iovlen = index;
       total_send_len =
         UlongToUint(sizeof(send_msg_header)) + msg->name.size() + send_to.size() + send_from.size() + msg->body.size();
       send_message = msg;
@@ -358,11 +358,11 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
       return;
     } else {
       if (advertise_addr_.empty()) {
-        size_t index = advertiseUrl.find(URL_PROTOCOL_IP_SEPARATOR);
-        if (index == std::string::npos) {
+        size_t idx = advertiseUrl.find(URL_PROTOCOL_IP_SEPARATOR);
+        if (idx == std::string::npos) {
           advertise_addr_ = advertiseUrl;
         } else {
-          advertise_addr_ = advertiseUrl.substr(index + sizeof(URL_PROTOCOL_IP_SEPARATOR) - 1);
+          advertise_addr_ = advertiseUrl.substr(idx + sizeof(URL_PROTOCOL_IP_SEPARATOR) - 1);
         }
       }
       msg->body = GenerateHttpMessage(msg);
@@ -418,7 +418,7 @@ void Connection::FillRecvMessage() {
 
   recv_kernel_msg.msg_iov = recv_io_vec;
   recv_kernel_msg.msg_iovlen = IntToSize(i);
-  total_recv_len = UlongToUint(msg->name.size()) + recv_to.size() + recv_from.size() + msg->body.size();
+  total_recv_len = msg->name.size() + recv_to.size() + recv_from.size() + msg->body.size();
   recv_message = msg;
 }
 

@@ -45,7 +45,7 @@ class TCPComm {
   TCPComm() : server_fd_(-1), recv_event_loop_(nullptr), send_event_loop_(nullptr) {}
   TCPComm(const TCPComm &) = delete;
   TCPComm &operator=(const TCPComm &) = delete;
-  ~TCPComm();
+  ~TCPComm() = default;
 
   // Init the event loop for reading and writing.
   bool Initialize();
@@ -66,17 +66,17 @@ class TCPComm {
 
   // Send the message from the source to the destination.
   // The flag sync means if the message is sent directly or added to the task queue.
-  int Send(MessageBase *msg, bool sync = false);
+  ssize_t Send(MessageBase *msg, bool sync = false);
 
   // Set the message processing handler.
-  void SetMessageHandler(MessageHandler handler);
+  void SetMessageHandler(const MessageHandler &handler);
 
   // Get the file descriptor of server socket.
-  int GetServerFd();
+  int GetServerFd() const;
 
  private:
   // Build the connection.
-  Connection *CreateDefaultConn(std::string to);
+  Connection *CreateDefaultConn(const std::string &to);
 
   // Send a message.
   static void SendExitMsg(const std::string &from, const std::string &to);

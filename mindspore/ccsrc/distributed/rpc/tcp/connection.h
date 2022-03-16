@@ -101,7 +101,7 @@ struct Connection {
   void CheckMessageType();
 
   // Fill the message to be sent based on the input message.
-  void FillSendMessage(MessageBase *msg, const std::string &advertiseUrl, bool isHttpKmsg, int index = 0);
+  void FillSendMessage(MessageBase *msg, const std::string &advertiseUrl, bool isHttpKmsg);
 
   void FillRecvMessage();
 
@@ -155,9 +155,9 @@ struct Connection {
   State recv_state;
 
   // Total length of received and sent messages.
-  uint32_t total_recv_len;
-  uint32_t total_send_len;
-  uint32_t recv_len;
+  size_t total_recv_len;
+  size_t total_send_len;
+  size_t recv_len;
 
   std::string send_to;
   std::string send_from;

@@ -23,7 +23,6 @@
 #include <securec.h>
 #include <netinet/tcp.h>
 #include <unistd.h>
-#include <csignal>
 #include <system_error>
 
 #include "actor/log.h"
@@ -289,7 +288,9 @@ std::string SocketOperation::GetPeer(int sock_fd) {
     }
     peer = std::string(ipdotdec) + ":" + std::to_string(ntohs(isa.saIn.sin_port));
   } else if (isa.sa.sa_family == AF_INET6) {
-    inet_ntop(AF_INET6, reinterpret_cast<void *>(&isa.saIn6.sin6_addr), ipdotdec, IP_LEN_MAX);
+    if (inet_ntop(AF_INET6, reinterpret_cast<void *>(&isa.saIn6.sin6_addr), ipdotdec, IP_LEN_MAX) == nullptr) {
+      MS_LOG(ERROR) << "Failed to call inet_ntop.";
+    }
     peer = std::string(ipdotdec) + ":" + std::to_string(ntohs(isa.saIn6.sin6_port));
   } else {
     MS_LOG(INFO) << "Unknown fd: " << sock_fd << ", family: " << isa.sa.sa_family;
@@ -363,7 +364,9 @@ int SocketOperation::Accept(int sock_fd) {
     MS_LOG(ERROR) << "Failed to call accept, errno: " << errno << ", server: " << sock_fd;
     return acceptFd;
   }
-  SetSocketOptions(acceptFd);
+  if (SetSocketOptions(acceptFd) < 0) {
+    MS_LOG(ERROR) << "Failed to set socket options for accepted socket: " << acceptFd;
+  }
   return acceptFd;
 }
 }  // namespace rpc

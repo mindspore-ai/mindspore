@@ -47,7 +47,7 @@ constexpr size_t MAX_KMSG_NAME_LEN = 1024;
 constexpr size_t MAX_KMSG_BODY_LEN = 104857600;
 
 enum ParseType { kTcpMsg = 1, kHttpReq, kHttpRsp, kUnknown };
-enum State { kMagicId = 1, kMsgHeader, kName, kDestination, kSource, kBody };
+enum State { kMsgHeader, kBody };
 enum ConnectionState { kInit = 1, kConnecting, kConnected, kDisconnecting, kClose };
 enum ConnectionType { kTcp = 1, kSSL };
 enum ConnectionPriority { kPriorityLow = 1, kPriorityHigh };
@@ -84,7 +84,7 @@ constexpr int RPC_OK = 0;
 constexpr int IP_LEN_MAX = 128;
 
 // Kill the process for safe exiting.
-inline void KillProcess(const std::string &ret) { raise(SIGKILL); }
+inline void KillProcess(const std::string &ret) { (void)raise(SIGKILL); }
 
 /*
  * The MessageHeader contains the stats info about the message body.

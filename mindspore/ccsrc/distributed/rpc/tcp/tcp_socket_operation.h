@@ -25,16 +25,16 @@ namespace distributed {
 namespace rpc {
 class TCPSocketOperation : public SocketOperation {
  public:
-  int ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) override;
+  ssize_t ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) override;
   int Receive(Connection *connection, char *recvBuf, uint32_t totRecvLen, uint32_t *recvLen) override;
   int ReceiveMessage(Connection *connection, struct msghdr *recvMsg, uint32_t recvLen) override;
 
-  int SendMessage(Connection *connection, struct msghdr *sendMsg, uint32_t *sendLen) override;
+  ssize_t SendMessage(Connection *connection, struct msghdr *sendMsg, size_t *sendLen) override;
 
   void Close(Connection *connection) override;
 
-  void NewConnEventHandler(int fd, uint32_t events, void *context) override;
-  void ConnEstablishedEventHandler(int fd, uint32_t events, void *context) override;
+  void NewConnEventHandler(void *context) override;
+  void ConnEstablishedEventHandler(void *context) override;
 };
 }  // namespace rpc
 }  // namespace distributed
