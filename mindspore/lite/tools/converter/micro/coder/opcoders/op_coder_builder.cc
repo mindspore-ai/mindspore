@@ -50,6 +50,9 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build(int schema_version) {
   op_coder->set_input_tensor_indices(input_indices_);
   op_coder->set_output_tensor_indices(output_indices_);
   int thread_num = support_parallel_ ? kMaxThreadNumSupported : 1;
+  if ((primitive_type == schema::PrimitiveType_FullConnection) && data_type_ == kNumberTypeFloat32) {
+    thread_num = 1;  // cur cannot support parallel run
+  }
   op_coder->set_thread_num(thread_num);
   if (primitive_type != schema::PrimitiveType_Custom) {
     parameter_->thread_num_ = thread_num;

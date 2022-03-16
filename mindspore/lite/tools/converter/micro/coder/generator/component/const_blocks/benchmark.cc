@@ -41,9 +41,10 @@ const char benchmark_source[] = R"RAW(
 #include "c_api/context_c.h"
 #include "src/tensor.h"
 #include <time.h>
-#include <iostream>
-
-using namespace mindspore;
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void usage() {
   printf(
@@ -64,28 +65,16 @@ uint64_t GetTimeUs() {
   if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
     return 0;
   }
-  auto retval = (uint64_t)((ts.tv_sec * USEC) + (ts.tv_nsec / MSEC));
+  uint64_t retval = (uint64_t)((ts.tv_sec * USEC) + (ts.tv_nsec / MSEC));
   return retval;
 }
 
-template <typename T>
-void PrintData(void *data, size_t data_number) {
-  if (data == nullptr) {
-    return;
-  }
-  auto casted_data = static_cast<T *>(data);
-  for (size_t i = 0; i < 10 && i < data_number; i++) {
-    printf("%s, ", std::to_string(casted_data[i]).c_str());
-  }
-  printf("\n");
-}
-
-void PrintTensor(MSTensorHandle tensor) {
+void PrintTensorHandle(MSTensorHandle tensor) {
   printf("name: %s, ", MSTensorGetName(tensor));
   MSDataType data_type = MSTensorGetDataType(tensor);
   printf("DataType: %d, ", data_type);
-  int element_num = static_cast<int>(MSTensorGetElementNum(tensor));
-  printf("Elements: %d, ", element_num);
+  size_t element_num = (size_t)(MSTensorGetElementNum(tensor));
+  printf("Elements: %zu, ", element_num);
   printf("Shape: [");
   size_t shape_num = 0;
   const int64_t *dims = MSTensorGetShape(tensor, &shape_num);
@@ -94,27 +83,41 @@ void PrintTensor(MSTensorHandle tensor) {
   }
   printf("], Data: \n");
   void *data = MSTensorGetMutableData(tensor);
+  element_num = element_num > 10 ? 10 : element_num;
   switch (data_type) {
     case kMSDataTypeNumberTypeFloat32: {
-      PrintData<float>(data, element_num);
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%.6f, ", ((float *)data)[i]);
+      }
+      printf("\n");
     } break;
-    case kMSDataTypeNumberTypeFloat16: {
-      PrintData<int16_t>(data, element_num);
+    case kMSDataTypeNumberTypeFloat16:
+    case kMSDataTypeNumberTypeInt16: {
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%" PRId16, ((int16_t *)data)[i]);
+      }
+      printf("\n");
     } break;
     case kMSDataTypeNumberTypeInt32: {
-      PrintData<int32_t>(data, element_num);
-    } break;
-    case kMSDataTypeNumberTypeInt16: {
-      PrintData<int16_t>(data, element_num);
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%" PRId32, ((int32_t *)data)[i]);
+      }
+      printf("\n");
     } break;
     case kMSDataTypeNumberTypeInt8: {
-      PrintData<int8_t>(data, element_num);
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%" PRIi8, ((int8_t *)data)[i]);
+      }
+      printf("\n");
     } break;
     case kMSDataTypeNumberTypeUInt8: {
-      PrintData<uint8_t>(data, element_num);
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%u", ((uint8_t *)data)[i]);
+      }
+      printf("\n");
     } break;
     default:
-      std::cout << "Unsupported data type to print" << std::endl;
+      printf("Unsupported data type to print");
       break;
   }
 }
@@ -140,11 +143,11 @@ int main(int argc, const char **argv) {
       return -1;
     }
     ms_context_handle = MSContextCreate();
-    if(ms_context_handle) {
+    if (ms_context_handle) {
       MSContextSetThreadNum(ms_context_handle, thread_num);
       MSContextSetThreadAffinityMode(ms_context_handle, bind_mode);
     }
-    printf("context: ThreadNum: %d, BindMode: %d\n", thread_num,bind_mode);
+    printf("context: ThreadNum: %d, BindMode: %d\n", thread_num, bind_mode);
   }
 
   void *model_buffer = NULL;
@@ -155,6 +158,7 @@ int main(int argc, const char **argv) {
   }
   MSModelHandle model_handle = MSModelCreate();
   int ret = MSModelBuild(model_handle, model_buffer, model_size, kMSModelTypeMindIR, ms_context_handle);
+  MSContextDestroy(&ms_context_handle);
   if (ret != kMSStatusSuccess) {
     printf("MSModelBuildFromFile failed, ret: %d\n", ret);
     free(model_buffer);
@@ -167,7 +171,7 @@ int main(int argc, const char **argv) {
   }
   // set model inputs tensor data
   MSTensorHandleArray inputs_handle = MSModelGetInputs(model_handle);
-  if (inputs_handle.handle_list == nullptr) {
+  if (inputs_handle.handle_list == NULL) {
     printf("MSModelGetInputs failed, ret: %d", ret);
     return ret;
   }
@@ -187,7 +191,7 @@ int main(int argc, const char **argv) {
     void *input_data = MSTensorGetMutableData(inputs_handle.handle_list[i]);
     memcpy(input_data, inputs_binbuf[i], inputs_size[i]);
     free(inputs_binbuf[i]);
-    inputs_binbuf[i] = nullptr;
+    inputs_binbuf[i] = NULL;
   }
 
   MSTensorHandleArray outputs_handle = MSModelGetOutputs(model_handle);
@@ -224,32 +228,24 @@ int main(int argc, const char **argv) {
   printf("\noutputs: \n");
   for (size_t i = 0; i < outputs_handle.handle_num; i++) {
     MSTensorHandle output = outputs_handle.handle_list[i];
-    PrintTensor(output);
+    PrintTensorHandle(output);
   }
   if (argc >= 5) {
-    auto *calibrator = new (std::nothrow) lite::Calibrator();
-    if (calibrator == nullptr) {
+    CalibTensor *calib_tensors;
+    int calib_num = 0;
+    ret = ReadCalibData(argv[4], &calib_tensors, &calib_num);
+    if (ret != kMSStatusSuccess) {
       MSModelDestroy(&model_handle);
-      return lite::RET_NULL_PTR;
     }
-    ret = calibrator->ReadCalibData(argv[4]);
-    if (ret != lite::RET_OK) {
+    ret = CompareOutputs(outputs_handle, &calib_tensors, calib_num);
+    if (ret != kMSStatusSuccess) {
       MSModelDestroy(&model_handle);
-      delete calibrator;
-      return lite::RET_ERROR;
     }
-    ret = calibrator->CompareOutputs(outputs_handle);
-    if (ret != lite::RET_OK) {
-      MSModelDestroy(&model_handle);
-      delete calibrator;
-      return lite::RET_ERROR;
-    }
-    delete calibrator;
+    FreeCalibTensors(&calib_tensors, calib_num);
   }
   printf("========run success=======\n");
   MSModelDestroy(&model_handle);
-  return lite::RET_OK;
+  return kMSStatusSuccess;
 }
-
 )RAW";
 }  // namespace mindspore::lite::micro

@@ -60,6 +60,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SoftmaxParam
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParameter &conv_parameter) {
+  code << gThreadNum << " = 1;\n";
   code << "int thread_num = MSMIN(" << gThreadNum << ", " << conv_parameter.output_h_ << ");\n";
   CodeBaseStruct<false>(
     "ConvParameter", name, conv_parameter.op_parameter_, "{}", conv_parameter.kernel_h_, conv_parameter.kernel_w_,
