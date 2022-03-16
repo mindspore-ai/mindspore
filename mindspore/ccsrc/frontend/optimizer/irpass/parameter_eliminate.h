@@ -137,6 +137,9 @@ class ParameterEliminator {
     TraceGuard trace_guard(std::make_shared<TraceCopy>(caller->debug_info()));
     auto new_caller = caller->func_graph()->NewCNode(new_args);
     new_caller->set_abstract(caller->abstract());
+    // Should be done before manager.Replace as caller CNode will be dropped after Replace, the ReplaceInOrder will be
+    // no effect.
+    caller->func_graph()->ReplaceInOrder(caller, new_caller);
     manager->Replace(caller, new_caller);
   }
 };
