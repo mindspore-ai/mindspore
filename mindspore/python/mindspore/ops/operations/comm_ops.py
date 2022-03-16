@@ -280,6 +280,7 @@ class _MiniStepAllGather(PrimitiveWithInfer):
         self.add_prim_attr('fusion', 1)
         self.grad_accumulation_step = grad_accumulation_step
         self.mean_flag = mean_flag
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape, z_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
@@ -312,6 +313,7 @@ class _MicroStepAllGather(PrimitiveWithInfer):
         self.add_prim_attr('fusion', 1)
         self.add_prim_attr('do_mirror', False)
         self.mean_flag = mean_flag
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape, z_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
@@ -362,6 +364,7 @@ class _HostAllGather(PrimitiveWithInfer):
         self.group_size = len(group)
         self.add_prim_attr('group', group)
         self.add_prim_attr('no_eliminate', True)
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
@@ -495,6 +498,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
         self.group_size = len(group)
         self.add_prim_attr('group', group)
         self.add_prim_attr('no_eliminate', True)
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape):
         if x_shape[0] % self.group_size != 0:
@@ -625,6 +629,7 @@ class _AllSwap(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['tensor_in', 'send_size', 'recv_size'], outputs=['tensor_out'])
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('no_eliminate', True)
+        self.add_prim_attr('order_enforce_skip', True)
 
     def __check__(self, tensor_in, send_size, recv_size):
         validator.check_subclass("tensor_in", tensor_in['dtype'], mstype.tensor, self.name)
@@ -907,6 +912,7 @@ class _MirrorOperator(PrimitiveWithInfer):
         self.dev_num = dev_num
         self.mean_flag = mean_flag
         self.add_prim_attr("fusion", 1)
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -937,6 +943,7 @@ class _MirrorMiniStepOperator(PrimitiveWithInfer):
         self.dev_num = dev_num
         self.mean_flag = mean_flag
         self.grad_accumulation_step = grad_accumulation_step
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape, z_shape):
         return x_shape
@@ -960,6 +967,7 @@ class _VirtualDiv(PrimitiveWithInfer):
     def __init__(self, divisor=None):
         """Initialize _VirtualDiv."""
         self.divisor = divisor
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -977,6 +985,7 @@ class _VirtualAdd(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize _VirtualAdd."""
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape, y_shape):
         return x_shape
@@ -995,6 +1004,7 @@ class _VirtualDataset(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize _VirtualDataset."""
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, *args):
         return args
@@ -1016,6 +1026,7 @@ class _VirtualAssignAdd(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize _VirtualAssignAdd."""
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape, y_shape):
         return x_shape
@@ -1036,6 +1047,7 @@ class _VirtualAccuGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize _VirtualAccuGrad."""
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape, y_shape):
         return x_shape
@@ -1064,6 +1076,7 @@ class _MirrorMicroStepOperator(PrimitiveWithInfer):
         self.group = group
         self.dev_num = dev_num
         self.mean_flag = mean_flag
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape, z_shape):
         return x_shape
@@ -1082,6 +1095,7 @@ class _VirtualOutput(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize _VirtualOutput."""
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_shape(self, x_shape):
         return x_shape
@@ -1102,6 +1116,7 @@ class _GetTensorSlice(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize _GetTensorSlice."""
+        self.add_prim_attr('order_enforce_skip', True)
 
     def infer_value(self, x, dev_mat, tensor_map):
         from mindspore.parallel._tensor import _load_tensor

@@ -29,6 +29,7 @@ inline const char GRAPH_FLAG_SIDE_EFFECT_EXCEPTION[] = "side_effect_exception";
 inline const char GRAPH_FLAG_SIDE_EFFECT_PROPAGATE[] = "side_effect_propagate";
 inline const char GRAPH_FLAG_SIDE_EFFECT_BACKPROP[] = "side_effect_backprop";
 inline const char GRAPH_FLAG_IS_WHILE_HEADER[] = "is_while_header";
+inline const char GRAPH_FLAG_ORDER_ENFORCE_SKIP[] = "order_enforce_skip";
 
 // method names of python primitive called from c++ source code
 // 1. infer method name of class 'PrimitiveWithInfer'
