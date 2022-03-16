@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include "utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/convert_utils.h"
@@ -363,7 +364,7 @@ void CopyDataToDevice(const KernelGraphPtr &graph, const std::vector<tensor::Ten
 }
 
 // kernel_mode launch
-void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *device_context, bool is_dynamic_shape) {
+void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(DEBUG) << "Start";
@@ -372,6 +373,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
   const auto &execution_order = graph->execution_order();
   for (auto const &node : execution_order) {
     MS_EXCEPTION_IF_NULL(node);
+    auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(node);
     auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
     MS_EXCEPTION_IF_NULL(runtime_info);
 
@@ -394,8 +396,9 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
     auto outputs = CreateKernelOutputAddress(runtime_info);
-
-    device_context->LaunchKernel(node, inputs, workspaces, outputs, is_dynamic_shape);
+    if (!device_context->LaunchKernel(node, inputs, workspaces, outputs, is_dynamic_shape)) {
+      MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << node->fullname_with_scope();
+    }
 
     if (is_dynamic_shape) {
       UpdateOutputAddrSize(node, runtime_info);
@@ -441,10 +444,10 @@ void UpdateDeviceAddress(const KernelGraphPtr &graph, const std::vector<tensor::
 }
 
 void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
-                      const device::DeviceContext *device_context, bool is_dynamic_shape) {
+                      const device::DeviceContext *device_context) {
   WaitCommunicationFinish(input_tensors);
   CopyDataToDevice(graph, input_tensors, device_context);
-  LaunchKernels(graph, device_context, is_dynamic_shape);
+  LaunchKernels(graph, device_context);
   ReleaseKernelResource(graph);
 }
 }  // namespace mindspore::runtime
