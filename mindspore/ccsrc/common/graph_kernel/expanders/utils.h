@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <utility>
 
 #include "common/graph_kernel/model/lite_graph.h"
 #include "common/graph_kernel/model/node.h"
@@ -59,6 +60,7 @@ class OpDesc {
 class Validator {
  public:
   virtual bool Check(const OpDesc &e) = 0;
+  virtual ~Validator() = default;
 };
 
 class CheckAllFormatsSame : public Validator {
@@ -79,8 +81,8 @@ class CheckAllFormatsSame : public Validator {
 
 class CheckAttr : public Validator {
  public:
-  CheckAttr(std::initializer_list<std::string> l) : attrs_(l) {}
-  ~CheckAttr() = default;
+  CheckAttr(const std::initializer_list<std::string> l) : attrs_(std::move(l)) {}
+  virtual ~CheckAttr() = default;
   bool Check(const OpDesc &e) override {
     for (auto &a : attrs_) {
       if (e.Attrs().count(a) == 0) {
@@ -97,7 +99,7 @@ class CheckAttr : public Validator {
 
 class SupportFormat : public Validator {
  public:
-  void AddFormat(std::initializer_list<std::string> l) { formats_.emplace_back(l); }
+  void AddFormat(std::initializer_list<std::string> l) { (void)formats_.emplace_back(l); }
   bool Check(const OpDesc &e) override {
     for (auto &formats : formats_) {
       if (formats.size() != e.InputsInfo().size()) {
@@ -117,6 +119,7 @@ class SupportFormat : public Validator {
     MS_LOG(INFO) << "unsupported format for op " << e.Op();
     return false;
   }
+  virtual ~SupportFormat() = default;
 
  private:
   std::vector<std::vector<std::string>> formats_;

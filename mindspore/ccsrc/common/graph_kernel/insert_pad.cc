@@ -29,9 +29,11 @@ inline const PrimitivePtr kPrimPadAkg = std::make_shared<Primitive>("PadAkg");
 namespace graphkernel {
 namespace {
 using vec = std::vector<size_t>;
+constexpr size_t MAX_PER_DIM_SHAPE = 4096;
+constexpr int64_t MAX_ALL_SHAPE = static_cast<int64_t>(3e10);
 
 // M,N pad 32, K pad 16
-auto GetPadShape = [](size_t K, size_t M, size_t N) {
+const auto GetPadShape = [](size_t K, size_t M, size_t N) {
   size_t pad_K = ((K - 1) / 16 + 1) * 16;
   size_t pad_M = ((M - 1) / 32 + 1) * 32;
   size_t pad_N = ((N - 1) / 32 + 1) * 32;
@@ -39,7 +41,7 @@ auto GetPadShape = [](size_t K, size_t M, size_t N) {
 };
 
 // Get (K M .. pad_N) when tran_a is true and tran_b is false
-auto TransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
+const auto TransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
   size_t K, M, N, pad_K, pad_M, pad_N;
   size_t size = shape_a.size();
   K = shape_a[size - 2];
@@ -54,7 +56,7 @@ auto TransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape
 };
 
 // Get (K M .. pad_N) when tran_a is true and tran_b is true
-auto TransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
+const auto TransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
   size_t K, M, N, pad_K, pad_M, pad_N;
   size_t size = shape_a.size();
   K = shape_a[size - 2];
@@ -69,7 +71,7 @@ auto TransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a,
 };
 
 // Get (K M .. pad_N) when tran_a is false and tran_b is true
-auto NotTransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
+const auto NotTransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
   size_t K, M, N, pad_K, pad_M, pad_N;
   size_t size = shape_a.size();
   K = shape_a[size - 1];
@@ -84,7 +86,7 @@ auto NotTransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape
 };
 
 // Get (K M .. pad_N) when tran_a is false and tran_b is false
-auto NotTransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
+const auto NotTransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
   size_t K, M, N, pad_K, pad_M, pad_N;
   size_t size = shape_a.size();
   K = shape_a[size - 1];
@@ -99,7 +101,7 @@ auto NotTransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_sh
 };
 
 bool IsAkgMatMul(size_t K, size_t M, size_t N) {
-  if (K > 4096 || M * N * K >= 3e10) {
+  if (K > MAX_PER_DIM_SHAPE || static_cast<int64_t>(M * N * K) >= MAX_ALL_SHAPE) {
     return false;
   }
   return true;
@@ -150,8 +152,8 @@ std::tuple<bool, bool, bool> NeedPad(const CNodePtr &matmul, vec *pad_shape_a, v
 }
 
 // Insert pad for A if left is true, insert pad for B if left is false
-void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng, bool left,
-               const vec &pad_shape, const vec &tail_shape) {
+void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, bool left, const vec &pad_shape,
+               const vec &tail_shape) {
   size_t input_index = left ? 1 : 2;
   AnfNodePtrList pad_inp = {NewValueNode(prim::kPrimPadAkg), matmul->input(input_index)};
   auto pad_cnode = func_graph->NewCNode(pad_inp);
@@ -248,10 +250,10 @@ bool InsertPadUnpad(const FuncGraphPtr &func_graph) {
       NeedPad(mm_cnode, &pad_shape_a, &pad_shape_b, &unpad_shape, &tail_shape_a, &tail_shape_b, &tail_shape_unpad);
     if (!pad_K && !pad_M && !pad_N) continue;
     if (pad_K || pad_M) {
-      InsertPad(mm_cnode, func_graph, mng, true, pad_shape_a, tail_shape_a);
+      InsertPad(mm_cnode, func_graph, true, pad_shape_a, tail_shape_a);
     }
     if (pad_K || pad_N) {
-      InsertPad(mm_cnode, func_graph, mng, false, pad_shape_b, tail_shape_b);
+      InsertPad(mm_cnode, func_graph, false, pad_shape_b, tail_shape_b);
     }
     if (pad_M || pad_N) {
       UpdateMatmulInfo(mm_cnode, unpad_shape, tail_shape_unpad);

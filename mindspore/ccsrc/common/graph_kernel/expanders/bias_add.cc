@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class BiasAdd : public OpDesc {
     } else if (input_x->format == kOpFormat_DEFAULT) {
       auto data_format = GetValue<std::string>(attrs_["format"]);
       size_t channel_idx = (data_format == kOpFormat_NHWC) ? input_x->shape.size() - 1 : 1;
-      std::vector<int64_t> axis(input_x->shape.size() - channel_idx - 1, -1);
+      std::vector<int64_t> axis((input_x->shape.size() - channel_idx) - 1, -1);
       if (!axis.empty()) {
         input_y = gb.Emit("Reshape", {input_y}, {{"shape", MakeValue(ExpandDimsInferShape(input_y->shape, axis))}});
       }
