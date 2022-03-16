@@ -34,7 +34,7 @@ class MPICommunicationGroup : public CommunicationGroup {
 
   ~MPICommunicationGroup() override = default;
 
-  bool Initialize(void *root_info) override { return true; }
+  bool Initialize(void *) override { return true; }
   bool Finalize() override;
 
   // The OpenMPI groups should be created from the world group.

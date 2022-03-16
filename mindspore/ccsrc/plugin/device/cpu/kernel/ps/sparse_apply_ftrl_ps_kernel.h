@@ -47,6 +47,11 @@ class SparseApplyFtrlPSKernelMod : public SparseApplyFtrlCpuKernelMod, public PS
  protected:
   void ReInit(const std::vector<AddressPtr> &) override;
   float init_accum_{0.1};
+  size_t var_index_{0};
+  size_t accum_index_{1};
+  size_t linear_index_{2};
+  size_t grad_index_{3};
+  size_t indices_index_{4};
 };
 }  // namespace ps
 }  // namespace kernel

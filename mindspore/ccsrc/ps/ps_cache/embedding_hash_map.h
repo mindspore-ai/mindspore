@@ -61,8 +61,10 @@ class EmbeddingHashMap {
   virtual ~EmbeddingHashMap() = default;
   int ParseData(const int id, int *const swap_out_index, int *const swap_out_ids, const size_t data_step,
                 const size_t graph_running_step, size_t *const swap_out_size, bool *const need_wait_graph);
-  size_t hash_step(const int hash_index) const { return hash_map_elements_[hash_index].step_; }
-  void set_hash_step(const int hash_index, const size_t step) { hash_map_elements_[hash_index].set_step(step); }
+  size_t hash_step(const int hash_index) const { return hash_map_elements_[IntToSize(hash_index)].step_; }
+  void set_hash_step(const int hash_index, const size_t step) {
+    hash_map_elements_[IntToSize(hash_index)].set_step(step);
+  }
   const mindspore::HashMap<int, int> &hash_id_to_index() const { return hash_id_to_index_; }
   size_t hash_capacity() const { return hash_capacity_; }
   void DumpHashMap();

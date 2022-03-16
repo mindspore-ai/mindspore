@@ -31,11 +31,11 @@ void SparseApplyFtrlPSKernelMod::InitKernel(
     MS_LOG(EXCEPTION) << "SparseApplyAdamPSKernelMod needs " << kSparseApplyFtrlPSInputSize << " input shapes, but got "
                       << shape_vec.size();
   }
-  std::vector<size_t> var_shape = *(shape_vec[0]);
-  std::vector<size_t> accum_shape = *(shape_vec[1]);
-  std::vector<size_t> linear_shape = *(shape_vec[2]);
-  std::vector<size_t> grad_shape = *(shape_vec[3]);
-  std::vector<size_t> indices_shape = *(shape_vec[4]);
+  std::vector<size_t> var_shape = *(shape_vec[var_index_]);
+  std::vector<size_t> accum_shape = *(shape_vec[accum_index_]);
+  std::vector<size_t> linear_shape = *(shape_vec[linear_index_]);
+  std::vector<size_t> grad_shape = *(shape_vec[grad_index_]);
+  std::vector<size_t> indices_shape = *(shape_vec[indices_index_]);
 
   Shard(&var_shape, 0);
   Shard(&accum_shape, 0);
@@ -104,7 +104,7 @@ void SparseApplyFtrlPSKernelMod::ReInit(const std::vector<AddressPtr> &inputs) {
     MS_LOG(EXCEPTION) << "Input numbers should not be less than " << kSparseApplyFtrlPSInputSize << ", but got "
                       << inputs.size();
   }
-  const auto &indices_addr = inputs[4];
+  const auto &indices_addr = inputs[indices_index_];
   indices_size_ = indices_addr->size / sizeof(int);
   workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_;
   workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;
