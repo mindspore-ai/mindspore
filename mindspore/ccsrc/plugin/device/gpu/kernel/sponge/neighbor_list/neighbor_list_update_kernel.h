@@ -37,23 +37,23 @@ constexpr float kCutoffDef = 10.0;
 constexpr int kMaxAtomInGridNumDef = 64;
 constexpr int kMaxNbNumDef = 800;
 
-constexpr size_t kIdx2 = 2;
 constexpr size_t kIdx3 = 3;
-constexpr size_t kIdx4 = 4;
 constexpr size_t kIdx5 = 5;
 constexpr size_t kIdx6 = 6;
-constexpr size_t kIdx7 = 7;
 constexpr size_t kIdx8 = 8;
+constexpr size_t kIdx2 = 2;
+constexpr size_t kIdx4 = 4;
 constexpr size_t kIdx9 = 9;
-constexpr size_t kIdx10 = 10;
-constexpr size_t kIdx11 = 11;
-constexpr size_t kIdx12 = 12;
-constexpr size_t kIdx13 = 13;
-constexpr size_t kIdx14 = 14;
-constexpr size_t kIdx15 = 15;
 constexpr size_t kIdx16 = 16;
-constexpr size_t kIdx17 = 17;
+constexpr size_t kIdx10 = 10;
+constexpr size_t kIdx7 = 7;
+constexpr size_t kIdx14 = 14;
+constexpr size_t kIdx12 = 12;
+constexpr size_t kIdx11 = 11;
+constexpr size_t kIdx13 = 13;
 constexpr size_t kIdx18 = 18;
+constexpr size_t kIdx15 = 15;
+constexpr size_t kIdx17 = 17;
 
 template <typename T, typename T1>
 class NeighborListUpdateGpuKernelMod : public NativeGpuKernelMod {
@@ -176,9 +176,9 @@ class NeighborListUpdateGpuKernelMod : public NativeGpuKernelMod {
   float skin;
   float cutoff;
   int not_first_time;
-  int atom_numbers;
   int grid_numbers;
   int refresh_interval;
+  int atom_numbers;
   int nxy;
   int max_atom_in_grid_numbers;
   int max_neighbor_numbers;

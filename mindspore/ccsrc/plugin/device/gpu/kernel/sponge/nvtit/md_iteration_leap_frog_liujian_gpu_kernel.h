@@ -19,22 +19,22 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/nvtit/md_iteration_leap_frog_liujian_gpu_impl.cuh"
 #include <cuda_runtime_api.h>
-#include <map>
 #include <string>
+#include <map>
 #include <vector>
 
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kIdx2 = 2;
-constexpr size_t kIdx3 = 3;
-constexpr size_t kIdx4 = 4;
 constexpr size_t kIdx5 = 5;
+constexpr size_t kIdx4 = 4;
+constexpr size_t kIdx2 = 2;
 constexpr size_t kIdx6 = 6;
 constexpr size_t kIdx7 = 7;
+constexpr size_t kIdx3 = 3;
 
 template <typename T, typename T1>
 class MDIterationLeapFrogLiujianCudaGpuKernelMod : public NativeGpuKernelMod {
@@ -45,10 +45,10 @@ class MDIterationLeapFrogLiujianCudaGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     // get bond_numbers
     kernel_node_ = kernel_node;
-    atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
     half_dt = static_cast<float>(GetAttr<float>(kernel_node, "half_dt"));
-    dt = static_cast<float>(GetAttr<float>(kernel_node, "dt"));
+    atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
     exp_gamma = static_cast<float>(GetAttr<float>(kernel_node, "exp_gamma"));
+    dt = static_cast<float>(GetAttr<float>(kernel_node, "dt"));
     const double kCoef1 = 3.;
     const double kCoef2 = 4.;
     float4_numbers = ceil(kCoef1 * static_cast<double>(atom_numbers) / kCoef2);
@@ -61,11 +61,11 @@ class MDIterationLeapFrogLiujianCudaGpuKernelMod : public NativeGpuKernelMod {
     auto inverse_mass = GetDeviceAddress<float>(inputs, 0);
     auto sqrt_mass_inverse = GetDeviceAddress<float>(inputs, 1);
     auto vel = GetDeviceAddress<float>(inputs, kIdx2);
-    auto crd = GetDeviceAddress<float>(inputs, kIdx3);
     auto frc = GetDeviceAddress<float>(inputs, kIdx4);
+    auto crd = GetDeviceAddress<float>(inputs, kIdx3);
     auto acc = GetDeviceAddress<float>(inputs, kIdx5);
-    auto rand_state = GetDeviceAddress<float>(inputs, kIdx6);
     auto rand_frc = GetDeviceAddress<float>(inputs, kIdx7);
+    auto rand_state = GetDeviceAddress<float>(inputs, kIdx6);
 
     auto output = GetDeviceAddress<float>(outputs, 0);
 
@@ -93,10 +93,10 @@ class MDIterationLeapFrogLiujianCudaGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  int atom_numbers;
   float half_dt;
-  float dt;
   float exp_gamma;
+  float dt;
+  int atom_numbers;
   int float4_numbers;
 };
 }  // namespace kernel
