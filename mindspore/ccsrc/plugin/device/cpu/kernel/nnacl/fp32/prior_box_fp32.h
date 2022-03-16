@@ -26,6 +26,7 @@ extern "C" {
 #endif
 static int PriorBox(const float *input_data, float *output_data, const size_t size, const int tid,
                     const int thread_num) {
+  NNACL_CHECK_ZERO_RETURN_ERR(thread_num);
   size_t unit_size = size / thread_num;
   size_t copy_size = (tid == thread_num - 1) ? size - unit_size * tid : unit_size;
   (void)memcpy(output_data + tid * unit_size, input_data + tid * unit_size, copy_size * sizeof(float));

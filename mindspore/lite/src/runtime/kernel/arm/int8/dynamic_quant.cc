@@ -15,6 +15,7 @@
  */
 #include "src/runtime/kernel/arm/int8/dynamic_quant.h"
 #include <vector>
+#include <algorithm>
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
