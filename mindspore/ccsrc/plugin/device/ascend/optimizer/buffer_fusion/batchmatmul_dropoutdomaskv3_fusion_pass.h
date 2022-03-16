@@ -35,8 +35,7 @@ class BatchMatmulDropoutDoMaskV3FusionPass : public FusionBasePass {
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchBatchMatmulDropoutDoMaskV3(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
-                                       FusedNodeRecord *candidate_fusion);
+  void MatchBatchMatmulDropoutDoMaskV3(const CNodePtr &cnode, FusedNodeRecord *candidate_fusion);
 };
 }  // namespace opt
 }  // namespace mindspore

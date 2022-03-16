@@ -31,7 +31,7 @@ ProfilerTask::ProfilerTask(const ModelContext &model_context, const std::shared_
   stream_ = stream_list[stream_id];
 }
 
-ProfilerTask::~ProfilerTask() {}
+ProfilerTask::~ProfilerTask() { stream_ = nullptr; }
 
 void ProfilerTask::Distribute() {
   MS_LOG(INFO) << "ProfilerTask Distribute start.";

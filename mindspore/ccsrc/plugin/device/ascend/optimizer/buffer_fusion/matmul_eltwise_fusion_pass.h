@@ -37,8 +37,7 @@ class MatmulEltwiseFusionPass : public FusionBasePass {
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchMatmulEltwise(const CNodePtr &cnode, const AnfNodePtr &relu_input, const session::KernelGraph &kernel_graph,
-                          FusedNodeRecord *candidate_fusion);
+  void MatchMatmulEltwise(const CNodePtr &cnode, const AnfNodePtr &relu_input, FusedNodeRecord *candidate_fusion);
 };
 }  // namespace opt
 }  // namespace mindspore

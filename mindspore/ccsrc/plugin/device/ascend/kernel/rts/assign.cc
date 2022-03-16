@@ -28,8 +28,8 @@ AssignKernel::AssignKernel() {}
 
 AssignKernel::~AssignKernel() {}
 
-bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /* workspace */,
-                          const std::vector<AddressPtr> & /*outputs*/, void *stream_ptr) {
+bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                          const std::vector<AddressPtr> &, void *stream_ptr) {
   if (inputs.size() != 2) {
     MS_LOG(ERROR) << "inputs size is not two";
     return false;

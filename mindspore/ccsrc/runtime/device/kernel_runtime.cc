@@ -1294,7 +1294,7 @@ bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_
   start->set_record_stream(stream);
   end->set_record_stream(stream);
   start->RecordEvent();
-  bool ret = kernel_mod->Launch(kernel_launch_info, stream);
+  bool ret = kernel_mod->LaunchKernel(kernel_launch_info, stream);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Launch kernel failed, kernel name is : " << op_name;
   }
@@ -1523,7 +1523,7 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
     if (pynative_mode_profiling_flag_) {
       ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_launch_info, stream);
     } else {
-      ret = kernel_mod->Launch(kernel_launch_info, stream);
+      ret = kernel_mod->LaunchKernel(kernel_launch_info, stream);
     }
     if (!ret) {
       return ret;
