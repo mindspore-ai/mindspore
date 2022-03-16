@@ -42,6 +42,10 @@ AscendEvent::~AscendEvent() {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "rtEventDestory failed, ret:" << ret;
   }
+
+  event_ = nullptr;
+  wait_stream_ = nullptr;
+  record_stream_ = nullptr;
 }
 
 void AscendEvent::RecordEvent() {
