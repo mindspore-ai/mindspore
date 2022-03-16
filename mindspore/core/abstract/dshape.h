@@ -146,7 +146,7 @@ class MS_CORE_API Shape final : public BaseShape {
   std::size_t hash() const override {
     auto hash_code = static_cast<std::size_t>(tid());
     for (auto dim : shape_) {
-      hash_code = hash_combine(hash_code, dim);
+      hash_code = hash_combine(hash_code, static_cast<size_t>(dim));
     }
     return hash_code;
   }

@@ -23,6 +23,7 @@
 #include "abstract/param_validator.h"
 #include "utils/shape_utils.h"
 #include "ops/op_utils.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -496,8 +497,8 @@ AbstractBasePtr InferImplScatterUpdate(const AnalysisEnginePtr &, const Primitiv
 AbstractBasePtr InferImplScatterElements(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
-  CheckRequiredArgsSize(op_name, args_spec_list, 3);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckRequiredArgsSize(op_name, args_spec_list, kSizeThree);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexZero);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   ShapeVector shape = x->shape()->shape();
@@ -805,23 +806,10 @@ AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp, min_shp, max_shp));
 }
 
-AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
+static ShapeVector GetShape(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list,
+                            const std::string &op_name) {
   ShapeVector shape;
-  ShapeVector x_shape = x->shape()->shape();
-  ShapeVector x_max_shape = x->shape()->max_shape();
-  ShapeVector x_min_shape = x->shape()->min_shape();
-  if (x_max_shape.empty()) {
-    x_max_shape = x_shape;
-  }
-  if (x_min_shape.empty()) {
-    x_min_shape = x_shape;
-  }
-  if (args_spec_list.size() == 2) {
+  if (args_spec_list.size() == kSizeTwo) {
     auto input_value = args_spec_list[1]->BuildValue();
     if (input_value->isa<tensor::Tensor>()) {
       shape = CheckAndConvertUtils::CheckTensorIntValue("shape", input_value, op_name);
@@ -843,6 +831,26 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
       MS_EXCEPTION(ValueError) << "In stage of execution， the primitive[Reshape]'s input['shape'] must be a tuple or "
                                << "constant Tensor.";
     }
+  }
+  return shape;
+}
+
+AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+
+  ShapeVector shape = GetShape(primitive, args_spec_list, op_name);
+  ShapeVector x_shape = x->shape()->shape();
+  ShapeVector x_max_shape = x->shape()->max_shape();
+  ShapeVector x_min_shape = x->shape()->min_shape();
+  if (x_max_shape.empty()) {
+    x_max_shape = x_shape;
+  }
+  if (x_min_shape.empty()) {
+    x_min_shape = x_shape;
   }
 
   auto max_shape = shape;
@@ -1144,9 +1152,8 @@ AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &pr
                       << args_spec_list[range_delta_index]->type_name();
   }
 
-  int64_t max_output_length = -1;
   ValuePtr max_output_length_ptr = primitive->GetAttr("maxlen");
-  max_output_length = GetValue<int64_t>(max_output_length_ptr);
+  int64_t max_output_length = GetValue<int64_t>(max_output_length_ptr);
   ShapeVector output_shape = {Shape::SHP_ANY};
   ShapeVector min_shape = {1};
   ShapeVector max_shape = {max_output_length};

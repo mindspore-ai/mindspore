@@ -1724,15 +1724,15 @@ AbstractBasePtr AbstractCOOTensor::BroadenWithShape() const {
 }
 
 std::string AbstractCOOTensor::ToString() const {
-  std::ostringstream buffer;
   BaseShapePtr shape_track = GetShapeTrack();
   MS_EXCEPTION_IF_NULL(shape_track);
-  MS_EXCEPTION_IF_NULL(element());
   auto value_track = GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_track);
   MS_EXCEPTION_IF_NULL(indices_);
   MS_EXCEPTION_IF_NULL(values_);
   MS_EXCEPTION_IF_NULL(dense_shape_);
+  MS_EXCEPTION_IF_NULL(element());
+  std::ostringstream buffer;
   buffer << type_name() << "("
          << "shape: " << shape_track->ToString() << ", element: " << element()->ToString()
          << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")"

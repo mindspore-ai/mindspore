@@ -30,6 +30,22 @@ constexpr auto kInfer = "DS_Infer";
 constexpr auto kInit = "DS_Init";
 constexpr auto kUpdate = "DS_Update";
 
+// Define constant about size number here.
+constexpr size_t kSizeZero = 0;
+constexpr size_t kSizeOne = 1;
+constexpr size_t kSizeTwo = 2;
+constexpr size_t kSizeThree = 3;
+constexpr size_t kSizeFour = 4;
+constexpr size_t kSizeFive = 5;
+
+// Define constant about index number here.
+constexpr size_t kIndexZero = 0;
+constexpr size_t kIndexOne = 1;
+constexpr size_t kIndexTwo = 2;
+constexpr size_t kIndexThree = 3;
+constexpr size_t kIndexFour = 4;
+constexpr size_t kIndexFive = 5;
+
 class MS_CORE_API AbstractScope {
  public:
   explicit AbstractScope(std::recursive_mutex *mu);

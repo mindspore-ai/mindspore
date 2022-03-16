@@ -15,12 +15,9 @@
  */
 
 #include <string>
-#include <sstream>
 
 #include "ir/dtype.h"
 #include "utils/ms_utils.h"
-#include "base/core_ops.h"
-#include "abstract/param_validator.h"
 #include "abstract/infer_functions.h"
 #include "abstract/utils.h"
 #include "utils/ms_context.h"
