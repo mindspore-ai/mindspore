@@ -553,8 +553,7 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
 }
 
 TypePtr CheckAndConvertUtils::CheckSparseTensorTypeValid(const std::string &type_name, const TypePtr &type,
-                                                         const std::set<TypePtr> &check_list,
-                                                         const std::string &prim_name) {
+                                                         const std::set<TypePtr> &, const std::string &prim_name) {
   MS_EXCEPTION_IF_NULL(type);
   if (!type->isa<CSRTensorType>() && !type->isa<COOTensorType>()) {
     MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input argument[" << type_name

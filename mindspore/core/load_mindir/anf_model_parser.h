@@ -20,16 +20,48 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <vector>
 #include "utils/hash_map.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "ir/func_graph.h"
 #include "proto/mind_ir.pb.h"
 #include "utils/crypto.h"
-#include "load_mindir/load_model.h"
+
 namespace mindspore {
 using int32 = int32_t;
 using int64 = int64_t;
 using uint64 = uint64_t;
+
+class Layout {
+ public:
+  Layout() = default;
+
+  const std::vector<int64_t> &get_device_arrangement() const { return device_arrangement_; }
+  void set_device_arrangement(const std::vector<int64_t> &device_arrangement) {
+    device_arrangement_ = device_arrangement;
+  }
+  const std::vector<int64_t> &get_tensor_map() const { return tensor_map_; }
+  void set_tensor_map(const std::vector<int64_t> &tensor_map) { tensor_map_ = tensor_map; }
+  const std::vector<int64_t> &get_slice_shape() const { return slice_shape_; }
+  void set_slice_shape(const std::vector<int64_t> &slice_shape) { slice_shape_ = slice_shape; }
+  int64_t get_field_size() const { return field_size_; }
+  void set_field_size(int64_t field_size) { field_size_ = field_size; }
+  bool get_uniform_split() const { return uniform_split_; }
+  void set_uniform_split(bool uniform_split) { uniform_split_ = uniform_split; }
+  const std::string &get_opt_shard_group() const { return opt_shard_group_; }
+  void set_opt_shard_group(const std::string &opt_shard_group) { opt_shard_group_ = opt_shard_group; }
+
+ private:
+  std::vector<int64_t> device_arrangement_{};
+  std::vector<int64_t> tensor_map_{};
+  std::vector<int64_t> slice_shape_{};
+  int64_t field_size_ = 0;
+  bool uniform_split_ = false;
+  std::string opt_shard_group_ = "";
+};
+using LayoutPtr = std::shared_ptr<Layout>;
+using LayoutMap = std::map<string, LayoutPtr>;
+
 class MSANFModelParser {
  public:
   MSANFModelParser() : producer_name_(""), model_version_(""), ir_version_("") {}

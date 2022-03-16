@@ -36,7 +36,7 @@ bool Padding(std::string *message);
 
 bool ProcessInner(const std::string &message, const int &bias, uint32_t *digest, const int &digest_size);
 
-std::string ConvertToString(uint32_t *input, const int &size);
+std::string ConvertToString(const uint32_t *input, const int &size);
 
 std::string Encrypt(const std::string &message);
 

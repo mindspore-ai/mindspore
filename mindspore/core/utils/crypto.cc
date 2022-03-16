@@ -20,6 +20,7 @@
 #include <fstream>
 #include <algorithm>
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 #ifdef ENABLE_OPENSSL
 #include <openssl/aes.h>
@@ -120,7 +121,7 @@ bool ParseMode(const std::string &mode, std::string *alg_mode, std::string *work
 }
 
 int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std::string &work_mode, const Byte *key,
-                  int32_t key_len, const Byte *iv, int iv_len, bool is_encrypt) {
+                  int32_t, const Byte *iv, int iv_len, bool is_encrypt) {
   int32_t ret = 0;
 
   if (work_mode == "GCM") {
@@ -328,7 +329,7 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
   if (!ParseEncryptData(encrypt_data, encrypt_len, &iv, &cipher_data)) {
     return false;
   }
-  auto ctx = GetEvpCipherCtx(work_mode, key, key_len, iv.data(), iv.size(), false);
+  auto ctx = GetEvpCipherCtx(work_mode, key, key_len, iv.data(), SizeToInt(iv.size()), false);
   if (ctx == nullptr) {
     MS_LOG(ERROR) << "Failed to get EVP_CIPHER_CTX.";
     return false;
@@ -455,7 +456,7 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
 
     unsigned char tag[Byte16];
     if (dec_mode == "AES-GCM") {
-      fid.read(reinterpret_cast<char *>(tag), Byte16);
+      (void)fid.read(reinterpret_cast<char *>(tag), SizeToLong(Byte16));
     }
     fid.read(int_buf.data(), static_cast<int64_t>(sizeof(int32_t)));
     auto block_size = ByteToInt(reinterpret_cast<Byte *>(int_buf.data()), int_buf.size());
@@ -465,7 +466,7 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
     }
     fid.read(block_buf.data(), static_cast<int64_t>(block_size));
     if (!(BlockDecrypt(decrypt_block_buf.data(), &decrypt_block_len, reinterpret_cast<Byte *>(block_buf.data()),
-                       static_cast<size_t>(block_size), key, static_cast<int32_t>(key_len), dec_mode, tag))) {
+                       IntToSize(block_size), key, static_cast<int32_t>(key_len), dec_mode, tag))) {
       MS_LOG(ERROR) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
       return nullptr;
     }
@@ -535,7 +536,7 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
       MS_LOG(ERROR) << "The block_size read from the cipher data must be not negative, but got " << block_size;
       return nullptr;
     }
-    if (offset + block_size > data_size) {
+    if (offset + IntToSize(block_size) > data_size) {
       MS_LOG(ERROR) << "assign len is invalid.";
       return nullptr;
     }
