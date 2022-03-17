@@ -62,8 +62,8 @@ Status GraphLoader::GetNodesAndEdges() {
       RETURN_IF_NOT_OK(edge_ptr->GetNode(&p));
       auto src_itr = n_id_map->find(p.first->id()), dst_itr = n_id_map->find(p.second->id());
 
-      CHECK_FAIL_RETURN_UNEXPECTED(src_itr != n_id_map->end(), "invalid src_id:" + std::to_string(src_itr->first));
-      CHECK_FAIL_RETURN_UNEXPECTED(dst_itr != n_id_map->end(), "invalid src_id:" + std::to_string(dst_itr->first));
+      CHECK_FAIL_RETURN_UNEXPECTED(src_itr != n_id_map->end(), "invalid src_id.");
+      CHECK_FAIL_RETURN_UNEXPECTED(dst_itr != n_id_map->end(), "invalid src_id.");
 
       RETURN_IF_NOT_OK(edge_ptr->SetNode({src_itr->second, dst_itr->second}));
       RETURN_IF_NOT_OK(src_itr->second->AddNeighbor(dst_itr->second, edge_ptr->weight()));

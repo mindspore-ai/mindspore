@@ -137,7 +137,7 @@ class Connector {
   // Resets the internal index tracking of the queue so that it can be used again with new inputs,
   // starting from the beginning.
   void Reset() {
-    for (int i = 0; i < queues_.size(); ++i) {
+    for (size_t i = 0; i < queues_.size(); ++i) {
       queues_[i]->Reset();
     }
     expect_consumer_ = 0;
@@ -158,16 +158,16 @@ class Connector {
   }
 
   // Get current size of connector.
-  int32_t size() const {
-    int32_t size = 0;
+  size_t size() const {
+    size_t size = 0;
     for (size_t i = 0; i < queues_.size(); ++i) {
       size += queues_[i]->size();
     }
     return size;
   }
 
-  int32_t capacity() const {
-    int32_t capacity = 0;
+  size_t capacity() const {
+    size_t capacity = 0;
     for (size_t i = 0; i < queues_.size(); ++i) {
       capacity += queues_[i]->capacity();
     }

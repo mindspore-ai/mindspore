@@ -685,7 +685,7 @@ Status CsvOp::ComputeColMap() {
     for (auto &csv_file : csv_files_list_) {
       Status rc = ColMapAnalyse(csv_file);
 
-      /* Process exception if ERROR in column name solving*/
+      /* Process exception if ERROR in column name solving */
       if (!rc.IsOk()) {
         MS_LOG(ERROR) << "Invalid file, failed to get column name list from csv file: " + csv_file;
         RETURN_STATUS_UNEXPECTED("Invalid file, failed to get column name list from csv file: " + csv_file);
@@ -787,7 +787,7 @@ bool CsvOp::ColumnNameValidate() {
     getline(handle, line);
     std::vector<std::string> col_names = split(line, field_delim_);
 
-    /* Analyse the column name and draw a conclusion*/
+    /* Analyse the column name and draw a conclusion */
     if (record.empty()) {  // Case the first file
       record = col_names;
       match_file = csv_file;

@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const std::unordered_map<DataTypePb, DataType::Type> g_pb2datatype_map{
   {DataTypePb::DE_PB_UNKNOWN, DataType::DE_UNKNOWN}, {DataTypePb::DE_PB_BOOL, DataType::DE_BOOL},
   {DataTypePb::DE_PB_INT8, DataType::DE_INT8},       {DataTypePb::DE_PB_UINT8, DataType::DE_UINT8},
@@ -79,6 +78,5 @@ Status PbToTensor(const TensorPb *tensor_pb, std::shared_ptr<Tensor> *tensor) {
   *tensor = std::move(tensor_out);
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore
