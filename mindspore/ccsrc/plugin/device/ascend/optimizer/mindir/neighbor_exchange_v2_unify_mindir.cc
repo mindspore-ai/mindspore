@@ -493,7 +493,7 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
         max_shape[kHDim] = (is_dynamic) ? send_lens[0] : max_shape[kHDim];
       } else {
         (void)split_input.insert(split_input.end(), split_outputs_bottom.end() - 1, split_outputs_bottom.end());
-        shape_tmp[kHDim] = send_lens[1];
+        shape_tmp[kHDim] = LongToSize(send_lens[1]);
         min_shape[kHDim] = (is_dynamic) ? send_lens[1] : min_shape[kHDim];
         max_shape[kHDim] = (is_dynamic) ? send_lens[1] : max_shape[kHDim];
       }

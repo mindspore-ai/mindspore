@@ -27,37 +27,6 @@
 namespace mindspore {
 namespace kernel {
 namespace tbe {
-bool TbeDynamicShapeUtil::IsDynamicShapeNode(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  for (size_t i = 0; i < input_num; ++i) {
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, i);
-    if (std::any_of(input_shape.begin(), input_shape.end(), [](const size_t &dim) { return dim < 0; })) {
-      MS_LOG(INFO) << "Node(" << cnode->fullname_with_scope() << ") is dynamic shape node.";
-      return true;
-    }
-  }
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
-  for (size_t i = 0; i < output_num; ++i) {
-    auto output_shape = common::AnfAlgo::GetOutputInferShape(cnode, i);
-    if (std::any_of(output_shape.begin(), output_shape.end(), [](const size_t &dim) { return dim < 0; })) {
-      MS_LOG(INFO) << "Node(" << cnode->fullname_with_scope() << ") is dynamic shape node.";
-      return true;
-    }
-  }
-  return false;
-}
-
-bool TbeDynamicShapeUtil::IsDynamicShapeNode(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  if (anf_node->isa<CNode>()) {
-    auto cnode = anf_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    return IsDynamicShapeNode(cnode);
-  }
-  return false;
-}
-
 bool TbeDynamicShapeUtil::GetDynamicShapeAttr(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (anf_node->isa<CNode>()) {
