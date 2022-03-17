@@ -60,7 +60,7 @@ void Node::SetInputs(const NodePtrList &inputs) {
   }
 }
 
-void Node::ClearInputs() {
+void Node::ClearInputs() noexcept {
   if (!inputs_.empty()) {
     // remove the original inputs
     for (size_t i = 0; i < inputs_.size(); i++) {
@@ -81,7 +81,7 @@ void Node::ReplaceWith(const NodePtr &other_node) {
   }
 }
 
-void Node::RemoveUser(Node *const user, size_t index) {
+void Node::RemoveUser(Node *user, size_t index) {
   if (auto iter = users_.find(user); iter != users_.end()) {
     (void)iter->second.erase(index);
     if (iter->second.empty()) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ class LiteGraph {
   explicit LiteGraph(const std::string &name = "") : name_(name), output_(new OutputNode()) {}
 
   NodePtr &Add(PrimOpPtr op) {
-    ops_.emplace_back(op);
+    (void)ops_.emplace_back(op);
     return ops_.back();
   }
 

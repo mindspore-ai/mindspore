@@ -62,7 +62,7 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
   void AddInput(const NodePtr &new_input);
   void SetInput(size_t i, const NodePtr &new_input);
   void SetInputs(const NodePtrList &inputs);
-  void ClearInputs();
+  void ClearInputs() noexcept;
   void ReplaceWith(const NodePtr &other_node);
   void SetAttrs(const DAttrs &attrs) { attrs_ = attrs; }
   void SetAttr(const std::string &key, const ValuePtr &value) { attrs_[key] = value; }
@@ -87,7 +87,7 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
 
  private:
   // the nodes' users are only maintained by AddInput/SetInput.
-  void AddUser(Node *user, size_t index) { users_[user].insert(index); }
+  void AddUser(Node *user, size_t index) { (void)users_[user].insert(index); }
   void RemoveUser(Node *const user, size_t index);
 };
 
