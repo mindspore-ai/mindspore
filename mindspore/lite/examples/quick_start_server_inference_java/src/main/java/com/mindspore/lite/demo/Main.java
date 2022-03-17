@@ -129,7 +129,7 @@ public class Main {
             runner.free();
             return;
         }
-        System.err.println("========== model parallel runner predict success ==========");
+        System.out.println("========== model parallel runner predict success ==========");
         freeTensor();
         runner.free();
     }
