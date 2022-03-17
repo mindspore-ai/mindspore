@@ -469,24 +469,6 @@ void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node)
   }
 }
 
-namespace {
-ValuePtr ShallowCopyValue(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<mindspore::tensor::Tensor>()) {
-    auto tensor_value = value->cast<mindspore::tensor::TensorPtr>();
-    return std::make_shared<mindspore::tensor::Tensor>(*tensor_value);
-  } else if (value->isa<ValueTuple>()) {
-    std::vector<ValuePtr> values;
-    auto value_tuple = value->cast<ValueTuplePtr>();
-    (void)std::transform(value_tuple->value().begin(), value_tuple->value().end(), std::back_inserter(values),
-                         [](const ValuePtr &elem) { return ShallowCopyValue(elem); });
-    return std::make_shared<ValueTuple>(values);
-  } else {
-    return value;
-  }
-}
-}  // namespace
-
 PynativeAdjointPtr KPynativeCellImpl::ForgeGetItemAdjoint(const CNodePtr &cnode) {
   if (cnode->size() != 3) {
     MS_LOG(EXCEPTION) << "TupleGetItem/ListGetItem CNode should have 3 inputs, but CNode: " << cnode->DebugString();
@@ -642,8 +624,8 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
   // is not used in bprop_fg;
   ValuePtrList cloned_op_args;
   (void)std::transform(op_args.begin(), op_args.end(), std::back_inserter(cloned_op_args),
-                       [](const ValuePtr &value) { return ShallowCopyValue(value); });
-  ValuePtr cloned_out = ShallowCopyValue(out);
+                       [](const ValuePtr &value) { return ShallowCopyTensorValue(value); });
+  ValuePtr cloned_out = ShallowCopyTensorValue(out);
   PynativeAdjointPtr cnode_adjoint;
   if (fg_type == PynativeAdjoint::FuncGraphType::kBackwardPropagate) {
     auto optimized_bprop_fg = OptimizeBPropFuncGraph(fg, cnode, cloned_op_args, cloned_out);
