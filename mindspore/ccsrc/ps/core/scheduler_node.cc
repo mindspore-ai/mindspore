@@ -172,14 +172,29 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
     MS_LOG(WARNING) << "Send heart beat failed.";
   }
 
+  if (node_manager_.IsAllNodesRegistered()) {
+    return;
+  }
+
   // Re-Add the missing node into node manager.
-  if (heartbeat_message.has_address()) {
-    node_manager_.ReAddNodeIfNotExists(node_id, heartbeat_message.ip(), heartbeat_message.port());
+  if (heartbeat_message.has_address() &&
+      node_manager_.ReAddNodeIfNotExists(node_id, heartbeat_message.ip(), heartbeat_message.port())) {
+    SetRegisterConnectionFd(conn, node_id);
+
     if (node_manager_.IsAllNodesRegistered()) {
       is_ready_ = true;
       MS_LOG(INFO) << "There are " << node_manager_.worker_num() << " workers and " << node_manager_.server_num()
                    << " servers registered to scheduer, so the scheduler send meta data to worker/server.";
       node_manager_.UpdateNodesInfo();
+
+      auto node_infos = node_manager_.nodes_info();
+      for (const auto &kvs : node_infos) {
+        auto client = GetOrCreateClient(kvs.second);
+        MS_EXCEPTION_IF_NULL(client);
+        SendMetadata(client, kvs.second.rank_id_);
+        node_manager_.UpdateHeartbeat(kvs.first);
+      }
+
       node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
       PersistMetaData();
       wait_start_cond_.notify_all();

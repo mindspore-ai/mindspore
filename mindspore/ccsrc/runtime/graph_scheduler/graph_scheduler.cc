@@ -46,9 +46,11 @@
 #endif
 #include "profiler/device/profiling.h"
 #include "debug/common.h"
+#include "runtime/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace runtime {
+using recovery::RecoveryContext;
 namespace {
 bool IsNeedInsertCopyActor(const DeviceContext *from_device_context, const DeviceContext *to_device_context) {
   MS_EXCEPTION_IF_NULL(from_device_context);
@@ -464,21 +466,19 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
     MS_LOG(EXCEPTION) << op_context.error_info_;
   }
 
-  // Sync device stream.
-  if (strategy == GraphExecutionStrategy::kPipeline) {
-    std::set<DeviceContext *> sync_stream_device_contexts;
-    for (auto &device_context : device_contexts) {
-      MS_EXCEPTION_IF_NULL(device_context);
-      if ((sync_stream_device_contexts.count(device_context) == 0) && (!device_context->SyncStream())) {
-        MS_LOG(EXCEPTION) << "Sync stream failed:" << device_context->device_context_key().ToString();
-      }
-      (void)sync_stream_device_contexts.insert(device_context);
-    }
-  }
-
   double end_time = GetTime();
   const size_t kSecondsToMilliseconds = 1000;
   SetActorExecutionStrategy(actor_set, strategy, (end_time - start_time) * kSecondsToMilliseconds);
+
+  if (RecoveryContext::GetInstance()->enable_recovery() && RecoveryContext::GetInstance()->need_reinit_collective()) {
+    MS_LOG(INFO) << "Begin reinitialize collective communication for recovery.";
+    if (!RecoveryContext::GetInstance()->ReInitializeCollective()) {
+      MS_LOG(EXCEPTION) << "Reinitialize collective communication failed.";
+    }
+    MS_LOG(INFO) << "Finish reinitialize collective communication for recovery.";
+
+    RecoveryContext::GetInstance()->set_need_reinit_collective(false);
+  }
 }
 
 void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy,
@@ -843,7 +843,8 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
 
   auto actor_name = graph_compiler_info.name_ + kLoopCountActorNameSuffix;
   auto loop_count_actor =
-    std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_);
+    std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_,
+                                     graph_compiler_info.strategy_, graph_compiler_info.device_contexts_);
   MS_LOG(INFO) << "Create loop count actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(loop_count_actor);
 

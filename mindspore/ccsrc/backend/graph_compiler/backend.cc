@@ -37,6 +37,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/run_op_helper.h"
+#include "runtime/recovery/recovery_context.h"
 #include "include/common/utils/scoped_long_running.h"
 #ifdef ENABLE_D
 #include "include/common/utils/callbacks_ge.h"
@@ -998,17 +999,22 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
 
-  // Update device address for output node of graph.
-  // Summary processing will use the output device address, so must be after the summary processing.
-  actor_set->output_actor_->UpdateOutputDeviceAddress();
+  bool need_contruct_output = !(runtime::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
+                                runtime::recovery::RecoveryContext::GetInstance()->need_reset());
+  if (need_contruct_output) {
+    // Update device address for output node of graph.
+    // Summary processing will use the output device address, so must be after the summary processing.
+    actor_set->output_actor_->UpdateOutputDeviceAddress();
 
-  // Fetch outputs.
-  MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
-  auto &output_tensors = actor_set->output_actor_->outputs();
-  if (output_tensors.size() > 0) {
-    size_t output_position = 0;
-    ConstructOutputs(root_graph_->output(), output_tensors, &output_position, outputs);
+    // Fetch outputs.
+    MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
+    auto &output_tensors = actor_set->output_actor_->outputs();
+    if (output_tensors.size() > 0) {
+      size_t output_position = 0;
+      ConstructOutputs(root_graph_->output(), output_tensors, &output_position, outputs);
+    }
   }
+
   runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
   // Close abstract_lock for dynamic_shape
   AnfUtils::CloseAbstractLock();

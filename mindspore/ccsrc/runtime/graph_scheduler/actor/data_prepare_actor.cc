@@ -25,9 +25,11 @@
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
+#include "runtime/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace runtime {
+using recovery::RecoveryContext;
 namespace {
 void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor, const AnfNodePtr &node,
                     const DeviceContext *device_context, OpContext<DeviceTensor> *const context,
@@ -353,6 +355,10 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
         PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context, context);
       }
     }
+  }
+  if (RecoveryContext::GetInstance()->enable_recovery() &&
+      RecoveryContext::GetInstance()->need_sync_weight_to_device()) {
+    RecoveryContext::GetInstance()->set_need_sync_weight_to_device(false);
   }
 
   PrepareDeviceTensorStoreForControlNode(graph_compiler_info_->control_node_parser_, input_tensors.back(), context);
@@ -721,6 +727,11 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   // so need update the device tensor store always.
   host_tensor_address->SetNodeIndex(backend_node, 0);
   DeviceTensorStore::GetInstance().Insert(front_node.get(), host_tensor_address);
+
+  if (RecoveryContext::GetInstance()->enable_recovery() &&
+      RecoveryContext::GetInstance()->need_sync_weight_to_device()) {
+    is_need_sync = true;
+  }
 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
   MS_EXCEPTION_IF_NULL(host_tensor_address);

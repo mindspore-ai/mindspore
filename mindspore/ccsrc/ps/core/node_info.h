@@ -35,6 +35,7 @@ enum class ClusterEvent {
   CLUSTER_SCALE_IN_DONE = 6,
   ON_PREPARE_PERSIST = 7,
   ON_BEGIN_PERSIST = 8,
+  ON_SEND_META_DATA = 9,
 };
 
 struct NodeInfo {

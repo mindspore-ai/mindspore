@@ -79,6 +79,14 @@ class OutputActor : public AbstractActor {
 
   TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position);
 
+  // The output device memory will be taken over by tensor in the last loop, otherwise needs to free the memory.
+  // 1.Avoid the memory leak when memory used by dynamic ref count in the control flow scene.
+  // 2.Alloc the new memory in the next step using the new shape size in the dynamic shape scene.
+  void FreeOutputNodeMem();
+
+  // Clear output nodes and tensors in cache.
+  void ClearOutputCache();
+
   // The loop count is constant, the current count is increased after each step running finished.
   // Collect the output result in the last loop which is represented by "loop_count_ - current_count_ == 1".
   size_t loop_count_;

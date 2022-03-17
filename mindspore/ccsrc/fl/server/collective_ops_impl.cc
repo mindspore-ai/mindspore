@@ -17,6 +17,7 @@
 #include "fl/server/collective_ops_impl.h"
 #include "fl/server/local_meta_store.h"
 #include "fl/server/iteration.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace fl {
@@ -323,6 +324,12 @@ bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff
     return false;
   }
 
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  // If enable recovery, set timeout 300s to prevent networking flapping.
+  uint32_t collective_comm_timeout =
+    context_ptr->get_param<bool>(MS_CTX_ENABLE_RECOVERY) ? kCollectiveCommMaxTimeout : kCollectiveCommTimeout;
+
   // Ring AllGather.
   for (size_t i = 0; i < rank_size_ - 1; i++) {
     size_t send_chunk_index = (rank_id_ - i + rank_size_) % rank_size_;
@@ -337,7 +344,7 @@ bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff
 
     std::shared_ptr<std::vector<unsigned char>> recv_str;
     auto recv_req_id = node_->CollectiveReceiveAsync(node_role_, recv_from_rank, &recv_str);
-    if (!node_->CollectiveWait(recv_req_id, kCollectiveCommTimeout)) {
+    if (!node_->CollectiveWait(recv_req_id, collective_comm_timeout)) {
       MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
       return false;
     }
@@ -348,7 +355,7 @@ bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff
                     << recv_str->size();
       return false;
     }
-    if (!node_->Wait(send_req_id, kCollectiveCommTimeout)) {
+    if (!node_->Wait(send_req_id, collective_comm_timeout)) {
       MS_LOG(ERROR) << "CollectiveWait " << send_req_id << " failed.";
       return false;
     }

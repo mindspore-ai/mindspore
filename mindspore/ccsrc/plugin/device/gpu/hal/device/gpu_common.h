@@ -39,6 +39,14 @@ namespace gpu {
     }                                                                                 \
   }
 
+#define CHECK_OP_RET_WITH_EXCEPT_TRANCE(node, expression, message)                                  \
+  {                                                                                                 \
+    bool success = (expression);                                                                    \
+    if (!success) {                                                                                 \
+      MS_LOG(EXCEPTION) << "Op Error: " << message << " | " << trace::DumpSourceLines(node.lock()); \
+    }                                                                                               \
+  }
+
 #define CHECK_OP_RET_WITH_ERROR(expression, message)                              \
   {                                                                               \
     bool success = (expression);                                                  \

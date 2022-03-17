@@ -21,9 +21,12 @@
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
+#include "runtime/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace runtime {
+using recovery::RecoveryContext;
+
 void KernelActor::Init() {
   // Check device contexts number.
   if (device_contexts_.size() != device::kDeviceContextsNumOne) {
@@ -240,11 +243,18 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   PreLaunchKernel(context);
 
   try {
-    auto ret = device_contexts_[0]->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                                 launch_info_.outputs_, is_dynamic_shape_);
-    if (!ret) {
-      std::string error_info = "Launch kernel failed: " + kernel_->fullname_with_scope();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+    if (RecoveryContext::GetInstance()->enable_recovery() && RecoveryContext::GetInstance()->need_reinit_collective()) {
+      // In disaster recovery scenarios, run dag in this step failed, the rest operators of graph do not need launch,
+      // especially the collective communication operators.
+      MS_LOG(WARNING) << "Collective communication need reinitialize, skip launch kernel: "
+                      << kernel_->fullname_with_scope();
+    } else {
+      auto ret = device_contexts_[0]->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
+                                                   launch_info_.outputs_, is_dynamic_shape_);
+      if (!ret) {
+        std::string error_info = "Launch kernel failed: " + kernel_->fullname_with_scope();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+      }
     }
   } catch (const std::exception &e) {
     if (strategy_ == GraphExecutionStrategy::kPipeline) {

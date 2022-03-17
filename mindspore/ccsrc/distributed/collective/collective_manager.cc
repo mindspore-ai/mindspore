@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include "utils/ms_context.h"
+#include "runtime/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace distributed {
@@ -60,7 +61,7 @@ std::shared_ptr<CollectiveManager> CollectiveManager::instance() {
 }
 
 bool CollectiveManager::Initialize() {
-  if (inited_) {
+  if (inited_ && !runtime::recovery::RecoveryContext::GetInstance()->need_reinit_collective()) {
     return true;
   }
 
@@ -127,15 +128,51 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   if (!host_comm_lib_instance_->Broadcast(root_info, root_info, root_info_size, TypeId::kNumberTypeInt8, 0,
                                           group_name)) {
     MS_LOG(ERROR) << "Broadcast for device root info failed on the host side.";
+    if (runtime::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
+      runtime::recovery::RecoveryContext::GetInstance()->set_recovery_status(
+        runtime::recovery::RecoveryErrCode::kBroadcastUniqueIDFailed);
+    }
     return false;
   }
 
   // Step 5: Initialize communication group on the device side.
-  if (!group->Initialize(root_info)) {
+  return InitDeviceCommGroup(group, root_info);
+}
+
+bool CollectiveManager::InitDeviceCommGroup(const CommunicationGroupPtr &group, void *root_info) {
+  bool init_group_success = false;
+  bool init_group_fail = false;
+  std::condition_variable thread_blocker;
+  init_group_thread_ = std::make_unique<std::thread>([&] {
+    device_ctx_->Initialize();
+    if (!group->Initialize(root_info)) {
+      MS_LOG(ERROR) << "Initialize group on the device side failed.";
+      std::unique_lock<std::mutex> lock(init_group_mutex_);
+      init_group_fail = true;
+      thread_blocker.notify_one();
+      return;
+    }
+
+    {
+      std::unique_lock<std::mutex> lock(init_group_mutex_);
+      init_group_success = true;
+      thread_blocker.notify_one();
+    }
+  });
+  init_group_thread_->detach();
+
+  // Timeout limit 180 seconds to wait finishing init device communication group.
+  const int64_t kTimeToWait = 180;
+  std::unique_lock<std::mutex> locker(init_group_mutex_);
+  (void)thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait),
+                                [&] { return init_group_success || init_group_fail; });
+
+  if (!init_group_success && runtime::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
+    runtime::recovery::RecoveryContext::GetInstance()->set_recovery_status(
+      runtime::recovery::RecoveryErrCode::kInitNcclFailed);
     MS_LOG(ERROR) << "Initialize group on the device side failed.";
-    return false;
   }
-  return true;
+  return init_group_success;
 }
 
 bool CollectiveManager::DestroyCommunicationGroup(const std::string &group_name) {
@@ -208,6 +245,10 @@ bool CollectiveManager::InitHostCommlib() {
     return false;
   }
 
+  if (!global_group_ranks_.empty()) {
+    global_group_ranks_.clear();
+  }
+
   // Reassign 'global_rank_id_' and 'global_rank_size_'. Generate global communication group ranks.
   global_rank_id_ = host_comm_lib_instance_->global_rank_id();
   global_rank_size_ = host_comm_lib_instance_->global_rank_size();
@@ -276,11 +317,18 @@ bool CollectiveManager::AssignLocalRank() {
   // AllGather host names across the global communication group.
   if (!host_comm_lib_instance_->AllGather(&host_hash, all_host_hashs, 1, TypeId::kNumberTypeUInt64,
                                           host_global_group_name_)) {
+    if (runtime::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
+      runtime::recovery::RecoveryContext::GetInstance()->set_recovery_status(
+        runtime::recovery::RecoveryErrCode::kAllGatherHostNameFailed);
+    }
     MS_LOG(ERROR) << "AllGather for host names failed.";
     return false;
   }
 
   // Accumulate rank id.
+  // In disaster recovery scenario, this function will enter multiple times when the network is reconfigured, so old
+  // local rank id need to be cleaned.
+  local_rank_id_ = 0;
   for (uint32_t rank = 0; rank < global_rank_size_; rank++) {
     if (rank == global_rank_id_) {
       break;

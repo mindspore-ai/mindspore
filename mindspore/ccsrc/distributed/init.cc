@@ -17,9 +17,12 @@
 #include "distributed/init.h"
 #include <vector>
 #include <string>
+#include "runtime/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace distributed {
+using runtime::recovery::RecoveryContext;
+
 bool Initialize() {
   if (!InitializeCluster()) {
     MS_LOG(ERROR) << "Failed to initialize cluster.";
@@ -39,9 +42,19 @@ bool Initialize() {
       collective::CollectiveManager::instance()->set_global_rank_id(abstract_node->rank_id());
       collective::CollectiveManager::instance()->set_global_rank_size(abstract_node->worker_num());
 
+      if (RecoveryContext::GetInstance()->enable_recovery()) {
+        cluster::ClusterContext::instance()->WaitForClusterReady();
+      }
+
       if (!InitializeCollective()) {
         MS_LOG(ERROR) << "Failed to initialize collective communication.";
         return false;
+      }
+
+      if (RecoveryContext::GetInstance()->enable_recovery()) {
+        RecoveryContext::GetInstance()->set_global_rank_id(abstract_node->rank_id());
+        RecoveryContext::GetInstance()->set_global_rank_size(abstract_node->worker_num());
+        RecoveryContext::GetInstance()->ObtainGlobalLatestCkptInfo();
       }
     }
   }

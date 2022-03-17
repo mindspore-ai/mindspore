@@ -31,7 +31,7 @@ namespace recovery {
 using distributed::storage::FileIOUtils;
 using distributed::storage::JsonUtils;
 
-enum class RecoveryStatus { kUnKnownError, kAllGatherHostNameFailed, kBroadcastUniqueIDFailed, kInitNcclFailed };
+enum class RecoveryErrCode { kUnKnownError, kAllGatherHostNameFailed, kBroadcastUniqueIDFailed, kInitNcclFailed };
 
 // Used to save disaster recovery-related state quantities and provide disaster recovery-related
 // functions, such as reinitializing collective communication, etc.
@@ -65,9 +65,9 @@ class RecoveryContext {
   int recovery_interval() const { return recovery_interval_; }
 
   // Get the error status of recovery.
-  RecoveryStatus recovery_status() const { return recovery_status_; }
+  RecoveryErrCode recovery_status() const { return recovery_status_; }
   // Set the error status of recovery.
-  void set_recovery_status(RecoveryStatus recovery_status) { recovery_status_ = recovery_status; }
+  void set_recovery_status(RecoveryErrCode recovery_status) { recovery_status_ = recovery_status; }
 
   // Set the path used to save checkpoint.
   void SetCkptPath(const std::string &path);
@@ -161,7 +161,7 @@ class RecoveryContext {
   bool initialized_{false};
 
   // The error status of recovery.
-  RecoveryStatus recovery_status_{RecoveryStatus::kUnKnownError};
+  RecoveryErrCode recovery_status_{RecoveryErrCode::kUnKnownError};
 
   // The persitent json file util, used to persist recovery config.
   std::unique_ptr<JsonUtils> persistent_json_;

@@ -32,6 +32,8 @@ namespace fl {
 namespace server {
 // The timeout for server collective communication in case of network jitter.
 constexpr uint32_t kCollectiveCommTimeout = 30;
+// The max timeout for server collective communication, used in disaster recovery to prevent networking flapping.
+constexpr uint32_t kCollectiveCommMaxTimeout = 300;
 
 // The collective communication groups which are composed of multiple processes. Refer to MPI_Group.
 struct CommunicationGroupInfo {
