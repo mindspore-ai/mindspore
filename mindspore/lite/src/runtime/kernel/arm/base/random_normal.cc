@@ -26,6 +26,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_RandomNormal;
+using mindspore::schema::PrimitiveType_RandomStandardNormal;
 
 namespace mindspore::kernel {
 int RandomNormalCPUKernel::Prepare() {
@@ -62,7 +63,9 @@ int RandomNormalCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_RandomNormal, LiteKernelCreator<RandomNormalCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_RandomStandardNormal, LiteKernelCreator<RandomNormalCPUKernel>)
 #ifdef ENABLE_FP16
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_RandomNormal, LiteKernelCreator<RandomNormalCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_RandomStandardNormal, LiteKernelCreator<RandomNormalCPUKernel>)
 #endif
 }  // namespace mindspore::kernel

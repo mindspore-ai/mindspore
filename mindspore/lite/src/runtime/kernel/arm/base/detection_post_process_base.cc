@@ -28,6 +28,10 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
+namespace {
+const constexpr int kSecondTensorIndex = 2;
+}
+
 namespace mindspore::kernel {
 void PartialArgSort(const float *scores, int *indexes, int num_to_sort, int num_values) {
   std::partial_sort(indexes, indexes + num_to_sort, indexes + num_values, [&scores](const int i, const int j) {
@@ -52,7 +56,7 @@ int DetectionPostProcessBaseCPUKernel::Prepare() {
 
   CHECK_LESS_RETURN(in_tensors_.size(), FOURTH_INPUT);
   CHECK_LESS_RETURN(out_tensors_.size(), FIFTH_INPUT);
-  auto anchor_tensor = in_tensors_.at(2);
+  auto anchor_tensor = in_tensors_.at(kSecondTensorIndex);
   CHECK_NULL_RETURN(anchor_tensor);
   MS_CHECK_GT(anchor_tensor->ElementsNum(), 0, RET_ERROR);
   CHECK_NULL_RETURN(anchor_tensor->data());

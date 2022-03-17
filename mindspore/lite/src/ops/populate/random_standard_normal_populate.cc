@@ -30,16 +30,22 @@ OpParameter *PopulateRandomStandardNormalParameter(const void *prim) {
     return nullptr;
   }
 
-  auto *param = reinterpret_cast<RandomParam *>(malloc(sizeof(RandomParam)));
+  auto *param = reinterpret_cast<RandomNormalParam *>(malloc(sizeof(RandomNormalParam)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc RandomParam failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(RandomParam));
+  memset(param, 0, sizeof(RandomNormalParam));
 
   param->op_parameter_.type_ = primitive->value_type();
-  param->seed_ = value->seed();
-  param->seed2_ = value->seed2();
+  if (value->seed2() != 0) {
+    param->seed_ = value->seed2();
+  } else {
+    param->seed_ = value->seed();
+  }
+  param->mean_ = 0.0;
+  param->scale_ = 1.0;
+
   return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace
