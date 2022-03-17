@@ -28,6 +28,7 @@
 
 namespace mindspore::opt {
 namespace {
+const size_t kIndexNum = 2;
 int ProcessInputIsMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto first_input = cnode->input(1);
@@ -270,13 +271,13 @@ int RemoveRedundantOpPass::GetConstDataFromInputNode(const CNodePtr &cnode, lite
   auto padding_node = cnode->input(kInputIndexTwo);
   MS_ASSERT(padding_node != nullptr);
   if (utils::isa<Parameter>(padding_node)) {
-    auto status = lite::FetchDataFromParameterNode(cnode, 2, converter::kFmkTypeMs, data_info, true);
+    auto status = lite::FetchDataFromParameterNode(cnode, kIndexNum, converter::kFmkTypeMs, data_info, true);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "fetch data from parameter node failed.";
       return lite::RET_ERROR;
     }
   } else if (utils::isa<ValueNode>(padding_node)) {
-    auto status = lite::FetchDataFromValueNode(cnode, 2, converter::kFmkTypeMs, false, data_info, true);
+    auto status = lite::FetchDataFromValueNode(cnode, kIndexNum, converter::kFmkTypeMs, false, data_info, true);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "fetch data from value node failed.";
       return lite::RET_ERROR;
