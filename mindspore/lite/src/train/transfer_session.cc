@@ -310,7 +310,6 @@ lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size
   }
   return session;
 }
-
 }  // namespace lite
 
 session::LiteSession *session::TrainSession::CreateTransferSession(const std::string &filename_backbone,

@@ -1107,22 +1107,12 @@ int TrainSession::FindExportKernels(std::vector<kernel::LiteKernel *> *export_ke
 
 int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantizationType quant_type,
                          FormatType format, std::vector<std::string> out_put_tensor_name) {
-  if (file_name.empty()) {
-    MS_LOG(ERROR) << "File name cannot be empty";
-    return RET_ERROR;
-  }
-  if (model_type > mindspore::lite::MT_INFERENCE || model_type < mindspore::lite::MT_TRAIN) {
-    MS_LOG(ERROR) << "Export model type parameter error";
-    return RET_ERROR;
-  }
-  if (quant_type < mindspore::lite::QT_DEFAULT || quant_type > mindspore::lite::QT_WEIGHT) {
-    MS_LOG(ERROR) << "Export quant type parameter error";
-    return RET_ERROR;
-  }
-  if (format != FT_FLATBUFFERS) {
-    MS_LOG(ERROR) << "Currently only flatbuffer format is supported";
-    return RET_ERROR;
-  }
+  MS_CHECK_FALSE_MSG(file_name.empty(), RET_ERROR, "File name cannot be empty");
+  MS_CHECK_FALSE_MSG(model_type > mindspore::lite::MT_INFERENCE || model_type < mindspore::lite::MT_TRAIN, RET_ERROR,
+                     "Export model type parameter error");
+  MS_CHECK_FALSE_MSG(quant_type < mindspore::lite::QT_DEFAULT || quant_type > mindspore::lite::QT_WEIGHT, RET_ERROR,
+                     "Export quant type parameter error");
+  MS_CHECK_FALSE_MSG(format != FT_FLATBUFFERS, RET_ERROR, "File name cannot be empty");
 
   bool orig_train_state = IsTrain();
   Eval();
