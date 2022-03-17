@@ -59,7 +59,7 @@ void ReachTable::FuseArea(size_t target, size_t other) {
     }
   }
   // discard other_node.
-  alive_.erase(other);
+  (void)alive_.erase(other);
 }
 
 bool ReachTable::HasCircle(const AreaPtr &a, const AreaPtr &b) const {
@@ -115,7 +115,7 @@ void SplitModel::AlignShape(const LiteGraphPtr &litegraph) {
     }
     if (cur_shape_size > op->shape.size()) {
       auto num = cur_shape_size - op->shape.size();
-      op->shape.insert(op->shape.begin(), num, 1LL);
+      (void)op->shape.insert(op->shape.begin(), num, 1LL);
     }
   }
 }
@@ -150,7 +150,9 @@ void SplitModel::AddPattern(const std::shared_ptr<FusePattern> &pn, bool enable)
 
 void SplitModel::LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas, size_t max_size) {
   auto dom_size = dom->size();
-  std::for_each(areas->begin(), areas->end(), [&dom_size](const AreaPtr &a) { dom_size += a->size(); });
+  for (auto a = areas->begin(); a != areas->end(); ++a) {
+    dom_size += (*a)->size();
+  }
   if (dom_size <= max_size) {
     return;
   }
@@ -161,7 +163,7 @@ void SplitModel::LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas, 
     cur_size += a->size();
     return cur_size > max_size;
   });
-  areas->erase(iter, areas->end());
+  (void)areas->erase(iter, areas->end());
 }
 
 void SplitModel::FuseAreas(const AreaPtr &dom, const std::vector<AreaPtr> &areas, FuseDirection direction) {
@@ -195,9 +197,9 @@ bool SplitModel::RunOnePattern(const FusePatternPtr &pattern) {
     }
     if (pattern->Run(area)) {
       MS_LOG(DEBUG) << "Area " << area->ToString() << " matches " << pattern->ToString();
-      LimitAreaSize(area, &pattern->fused_areas());
-      if (!pattern->fused_areas().empty()) {
-        FuseAreas(area, pattern->fused_areas(), pattern->direction());
+      LimitAreaSize(area, &pattern->fused_areas_);
+      if (!pattern->fused_areas_.empty()) {
+        FuseAreas(area, pattern->fused_areas_, pattern->direction());
         changed = true;
         continue;
       }

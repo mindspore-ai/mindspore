@@ -30,7 +30,7 @@ class OpRegistry {
     static OpRegistry instance{};
     return instance;
   }
-  void Register(const std::string &op_name, const CreatorFunc &func) { creators.insert({op_name, func}); }
+  void Register(const std::string &op_name, const CreatorFunc &func) { (void)creators.emplace(op_name, func); }
 
   PrimOpPtr NewOp(const std::string &op) {
     // "OpaqueOp" is registered by default.

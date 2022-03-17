@@ -107,7 +107,7 @@ using ParallelCostModelPtr = std::shared_ptr<ParallelCostModel>;
 class ParellelCostModelWarehouse {
  public:
   static ParellelCostModelWarehouse &Instance() {
-    static ParellelCostModelWarehouse instance;
+    static ParellelCostModelWarehouse instance = ParellelCostModelWarehouse();
     return instance;
   }
   ParallelCostModelPtr GetParallelCostModel(const std::string &target) const;

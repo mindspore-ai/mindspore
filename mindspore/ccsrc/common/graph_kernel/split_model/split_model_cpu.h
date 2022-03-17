@@ -20,6 +20,10 @@
 namespace mindspore::graphkernel::inner {
 class SplitModelCpu : public SplitModel {
  public:
+  SplitModelCpu() = default;
+  virtual ~SplitModelCpu() = default;
+
+ protected:
   AreaMode GetDefaultAreaMode(const PrimOpPtr &) const override;
   void InitFusePatterns() override;
 };

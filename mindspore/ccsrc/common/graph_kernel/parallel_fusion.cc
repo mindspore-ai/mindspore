@@ -40,7 +40,7 @@ bool IsOneOf(const AnfNodePtr &node, const std::vector<PrimitivePtr> &ops_prim) 
 }
 
 void ProcessThroughPassCNode(const std::function<bool(const AnfNodePtr &)> &pass_fn,
-                             OrderedMap<AnfNodePtr, NodeRelation> *const node_rels) {
+                             OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
   std::set<AnfNodePtr> latter_to_be_erased;
   for (const auto &[node, node_rel] : (*node_rels)) {
     if (!pass_fn(node) || latter_to_be_erased.count(node) != 0) {
@@ -62,35 +62,35 @@ void ProcessThroughPassCNode(const std::function<bool(const AnfNodePtr &)> &pass
         continue;
       }
 
-      latter_to_be_erased.insert(cur_node);
+      (void)latter_to_be_erased.insert(cur_node);
       auto predecessors = (*node_rels)[cur_node].pres;
       if (predecessors.empty()) {
         continue;
       }
 
       for (const auto &pre_node : predecessors) {
-        (*node_rels)[cur_node].pres.erase(pre_node);
-        (*node_rels)[pre_node].nexts.erase(cur_node);
+        (void)(*node_rels)[cur_node].pres.erase(pre_node);
+        (void)(*node_rels)[pre_node].nexts.erase(cur_node);
         node_que.push(pre_node);
       }
     }
 
     // Modify the relation: delete node <-> next_node, add pre node <-> next_node.
     for (const auto &next_node : nexts) {
-      (*node_rels)[next_node].pres.erase(node);
+      (void)(*node_rels)[next_node].pres.erase(node);
       for (const auto &cur_node : pre_nodes) {
-        (*node_rels)[next_node].pres.insert(cur_node);
-        (*node_rels)[cur_node].nexts.insert(next_node);
+        (void)(*node_rels)[next_node].pres.insert(cur_node);
+        (void)(*node_rels)[cur_node].nexts.insert(next_node);
       }
     }
   }
 
   for (const auto &node : latter_to_be_erased) {
-    node_rels->erase(node);
+    (void)node_rels->erase(node);
   }
 }
 
-void ProcessTailMakeTupleCNode(OrderedMap<AnfNodePtr, NodeRelation> *const node_rels) {
+void ProcessTailMakeTupleCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
   AnfNodePtrList latter_to_be_erased;
   for (auto &[node, node_rel] : (*node_rels)) {
     if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
@@ -123,15 +123,15 @@ void ProcessTailMakeTupleCNode(OrderedMap<AnfNodePtr, NodeRelation> *const node_
   // Delete Tail MakeTuple(including its getitem nodes).
   for (const auto &node : latter_to_be_erased) {
     for (auto &pre : (*node_rels)[node].pres) {
-      (*node_rels)[pre].nexts.erase(node);
+      (void)(*node_rels)[pre].nexts.erase(node);
     }
 
     // Tail MakeTuple is just be consumed by nothing or invalid getitem node.
     for (auto &getitem : (*node_rels)[node].nexts) {
-      node_rels->erase(getitem);
+      (void)node_rels->erase(getitem);
     }
 
-    node_rels->erase(node);
+    (void)node_rels->erase(node);
   }
 }
 
@@ -177,8 +177,8 @@ bool IsNoOutputsNode(const OrderedMap<AnfNodePtr, NodeRelation> &node_rels, cons
   return false;
 }
 
-void ProcessLocalStructure(OrderedMap<AnfNodePtr, NodeRelation> *node_rels,
-                           std::set<AnfNodePtr> *const virtual_noout_nodes, std::set<AnfNodePtr> *ignore_noin_nodes) {
+void ProcessLocalStructure(OrderedMap<AnfNodePtr, NodeRelation> *node_rels, std::set<AnfNodePtr> *virtual_noout_nodes,
+                           std::set<AnfNodePtr> *ignore_noin_nodes) {
   // 1. Local relation
   // Graph as following left part, relation D->B and D->E(D is a no input node)
   // will make B and E to be multiply inputs node.
@@ -218,16 +218,16 @@ void ProcessLocalStructure(OrderedMap<AnfNodePtr, NodeRelation> *node_rels,
         serial_tail = cur_node;
         cur_node = *((*node_rels)[cur_node].nexts.begin());
       }
-      latter_delete.emplace_back(serial_tail, cur_node);
+      (void)latter_delete.emplace_back(serial_tail, cur_node);
     }
   }
 
   // Delete relation.
   for (const auto &[serial_tail, cur_node] : latter_delete) {
-    virtual_noout_nodes->insert(serial_tail);
-    ignore_noin_nodes->insert(cur_node);
-    (*node_rels)[serial_tail].nexts.erase(cur_node);
-    (*node_rels)[cur_node].pres.erase(serial_tail);
+    (void)virtual_noout_nodes->insert(serial_tail);
+    (void)ignore_noin_nodes->insert(cur_node);
+    (void)(*node_rels)[serial_tail].nexts.erase(cur_node);
+    (void)(*node_rels)[cur_node].pres.erase(serial_tail);
     MS_LOG(INFO) << "Process local relation delete relation: " << serial_tail->fullname_with_scope() << " -> "
                  << cur_node->fullname_with_scope();
   }
@@ -302,7 +302,7 @@ bool Parallelizable(const AnfNodePtr &node) { return WhiteOpsFilter(node) && !Un
 std::vector<AnfNodePtrList> SearchFromNodes(const AnfNodePtrList &nodes,
                                             const std::function<bool(const AnfNodePtr &)> &filter_func,
                                             const OrderedMap<AnfNodePtr, NodeRelation> &node_rels, bool is_backward,
-                                            std::set<AnfNodePtr> *const seen) {
+                                            std::set<AnfNodePtr> *seen) {
   // Start from multi-inputs node, stop on seen node or multi-inputs or multi-outputs nodes.
   // For backward search, the other multi-inputs node can be contained in.
   // For forward search, the other multi-outputs node can be contained in.
@@ -319,12 +319,12 @@ std::vector<AnfNodePtrList> SearchFromNodes(const AnfNodePtrList &nodes,
          iter = node_rels.find(n)) {
       if (filter_func(n)) {
         stream.push_back(n);
-        seen->insert(n);
+        (void)seen->insert(n);
       }
       if (get_contain_node_set(iter->second).size() != 1) {
         break;
       }
-      n = *(get_contain_node_set(iter->second).begin());
+      n = *(get_contain_node_set(iter->second).cbegin());
     }
     if (stream.size() > 0) {
       group.push_back(stream);
@@ -333,7 +333,7 @@ std::vector<AnfNodePtrList> SearchFromNodes(const AnfNodePtrList &nodes,
 
   if (group.size() == 1) {
     for (const auto &drop : group[0]) {
-      seen->erase(drop);
+      (void)seen->erase(drop);
     }
     group.clear();
   }
@@ -343,8 +343,7 @@ std::vector<AnfNodePtrList> SearchFromNodes(const AnfNodePtrList &nodes,
 
 void SearchStreamFromMultiRelationNode(const AnfNodePtrList &multi_nodes,
                                        const OrderedMap<AnfNodePtr, NodeRelation> &node_rels, bool is_backward,
-                                       std::vector<std::vector<AnfNodePtrList>> *groups,
-                                       std::set<AnfNodePtr> *const seen) {
+                                       std::vector<std::vector<AnfNodePtrList>> *groups, std::set<AnfNodePtr> *seen) {
   auto get_related_nodes = is_backward ? [](const NodeRelation &info) { return info.pres; }
                                        : [](const NodeRelation &info) { return info.nexts; };
   for (const auto &node : multi_nodes) {
@@ -367,8 +366,7 @@ void SearchStreamFromMultiRelationNode(const AnfNodePtrList &multi_nodes,
 
 void SearchStreamFromUnidirectionalNode(const AnfNodePtrList &ud_nodes,
                                         const OrderedMap<AnfNodePtr, NodeRelation> &node_rels, bool is_backward,
-                                        std::vector<std::vector<AnfNodePtrList>> *groups,
-                                        std::set<AnfNodePtr> *const seen) {
+                                        std::vector<std::vector<AnfNodePtrList>> *groups, std::set<AnfNodePtr> *seen) {
   groups->push_back(SearchFromNodes(ud_nodes, Parallelizable, node_rels, is_backward, seen));
 
   // Erase empty groups.
@@ -426,18 +424,15 @@ inline bool ParameterLimit(const AnfNodePtrList &nodes) {
   }
 
   bool res = true;
-  switch (AnfAlgo::GetProcessor(nodes[0])) {
-    case kernel::Processor::CUDA: {
-      // The number of inputs and outputs for a valid kernel should be less than cuda's limit.
-      size_t para_count = 0;
-      for (const auto &node : nodes) {
-        para_count += common::AnfAlgo::GetInputTensorNum(node);
-        para_count += common::AnfAlgo::GetOutputTensorNum(node);
-      }
-      res = para_count <= CUDA_PARA_LIMIT;
-    } break;
-    default:
-      break;
+  auto processor_type = AnfAlgo::GetProcessor(nodes[0]);
+  if (processor_type == kernel::Processor::CUDA) {
+    // The number of inputs and outputs for a valid kernel should be less than cuda's limit.
+    size_t para_count = 0;
+    for (const auto &node : nodes) {
+      para_count += common::AnfAlgo::GetInputTensorNum(node);
+      para_count += common::AnfAlgo::GetOutputTensorNum(node);
+    }
+    res = para_count <= CUDA_PARA_LIMIT;
   }
 
   return res;
@@ -467,8 +462,8 @@ OrderedMap<AnfNodePtr, NodeRelation> ParallelOpFusion::GenAnalysisGraph(const An
         continue;
       }
       auto behind_node = get_info(input);
-      prior_node->pres.insert(input);
-      behind_node->nexts.insert(node);
+      (void)prior_node->pres.insert(input);
+      (void)behind_node->nexts.insert(node);
     }
   }
 
@@ -550,8 +545,8 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
   std::vector<ParallelInfo> parallel_infos;
   std::vector<bool> origin_candidates_used(origin_size, false);
   std::vector<bool> sorted_candidates_used(candidates.size(), false);
-
-  for (size_t i = 0; i < candidates.size(); ++i) {
+  size_t i = 0;
+  while (i < candidates.size()) {
     if (sorted_candidates_used[i]) {
       continue;
     }
@@ -572,7 +567,9 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
     while (begin <= end) {
       size_t mid = (begin + end) / 2;
       std::vector<size_t> tc(mid);
-      std::iota(tc.begin(), tc.end(), 1);
+      for (size_t idx = 0; idx < mid; idx++) {
+        tc[idx] = idx + 1;
+      }
       AnfNodePtrList other_candidates;
       std::tie(other_candidates, std::ignore) =
         GetAvaliableNodesByOffset(SizeToInt(i), tc, sorted_candidates_used, candidates, std::set<int>());
@@ -589,7 +586,9 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
 
     if (begin > 1) {
       std::vector<size_t> tc(begin - 1);
-      std::iota(tc.begin(), tc.end(), 1);
+      for (size_t idx = 0; idx < begin - 1; idx++) {
+        tc[idx] = idx + 1;
+      }
       AnfNodePtrList other_candidates;
       std::tie(other_candidates, std::ignore) =
         GetAvaliableNodesByOffset(SizeToInt(i), tc, sorted_candidates_used, candidates, std::set<int>());
@@ -610,6 +609,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
         origin_candidates_used[IntToSize(get_index(origin_indices, node))] = true;
       }
     }
+    i++;
   }
 
   // Current nodes is not suitable to fuse, so pop first node to try other fusion possibility.
@@ -626,7 +626,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::Searc
   std::vector<size_t> indices;
   for (size_t i = 0; i < cs.size(); ++i) {
     if (cs[i]) {
-      (void)origin_indices.emplace(cs[i], i);
+      origin_indices[cs[i]] = i;
       indices.push_back(i);
     }
   }
@@ -646,7 +646,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::Searc
 
   std::map<AnfNodePtr, int> sorted_indices;
   for (size_t i = 0; i < candidates.size(); ++i) {
-    (void)sorted_indices.emplace(candidates[i], i);
+    sorted_indices[candidates[i]] = i;
   }
 
   return DoSearchInSortedCandidates(cs.size(), candidates, &origin_indices, &sorted_indices);
@@ -685,8 +685,8 @@ void ParallelOpFusion::SearchFuseNodesInParallelGroup(const std::vector<AnfNodeP
   auto candidates = get_candidates();
   while (valid_candidate_num(candidates) > 1) {
     auto [used, fnds] = SearchFuseNodesInCandidates(candidates);
-    std::transform(fnds.cbegin(), fnds.cend(), std::back_insert_iterator(*parallel_infos),
-                   [](const ParallelInfo &pi) { return pi; });
+    (void)std::transform(fnds.cbegin(), fnds.cend(), std::back_insert_iterator(*parallel_infos),
+                         [](const ParallelInfo &pi) { return pi; });
     update_tails(used);
     candidates = get_candidates();
   }

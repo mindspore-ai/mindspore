@@ -49,8 +49,8 @@ std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFu
   const AnfNodePtrList &nodes) const {
   nlohmann::json json_desc;
   std::vector<AnfNodePtrList> graphs;
-  std::transform(nodes.begin(), nodes.end(), std::back_inserter(graphs),
-                 [](const AnfNodePtr &node) -> AnfNodePtrList { return {node}; });
+  (void)std::transform(nodes.begin(), nodes.end(), std::back_inserter(graphs),
+                       [](const AnfNodePtr &node) -> AnfNodePtrList { return {node}; });
   DumpOption dump_option;
   if (!AnfToJsonDesc(graphs, dump_option, &json_desc)) {
     MS_LOG(EXCEPTION) << "Collect json desc failed.";
