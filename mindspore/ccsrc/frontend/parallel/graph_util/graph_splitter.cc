@@ -46,23 +46,23 @@ bool OperatorLabel::operator!=(const OperatorLabel &label) const { return !(*thi
 std::string OperatorLabel::to_string() const { return std::to_string(rank_id) + "_" + ms_role; }
 
 ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_node) {
-  tensor::TensorPtr mock_tensor = nullptr;
+  tensor::TensorPtr fake_tensor = nullptr;
   if (use_origin_node) {
     MS_EXCEPTION_IF_NULL(origin_node);
     auto origin_abstract = origin_node->abstract()->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(origin_abstract);
-    mock_tensor = std::make_shared<tensor::Tensor>(origin_abstract->element()->BuildType()->type_id(),
+    fake_tensor = std::make_shared<tensor::Tensor>(origin_abstract->element()->BuildType()->type_id(),
                                                    origin_abstract->shape()->shape());
-    MS_EXCEPTION_IF_NULL(mock_tensor);
+    MS_EXCEPTION_IF_NULL(fake_tensor);
   } else {
-    mock_tensor = std::make_shared<tensor::Tensor>(1.0);
-    MS_EXCEPTION_IF_NULL(mock_tensor);
+    fake_tensor = std::make_shared<tensor::Tensor>(1.0);
+    MS_EXCEPTION_IF_NULL(fake_tensor);
   }
 
-  auto mock_value = NewValueNode(mock_tensor);
-  MS_EXCEPTION_IF_NULL(mock_value);
-  mock_value->set_abstract(mock_tensor->ToAbstract());
-  return mock_value;
+  auto fake_value = NewValueNode(fake_tensor);
+  MS_EXCEPTION_IF_NULL(fake_value);
+  fake_value->set_abstract(fake_tensor->ToAbstract());
+  return fake_value;
 }
 
 void SetSendNodeAttr(const AnfNodePtr &send_node, const InterProcessOpEdge &inter_process_edge) {
@@ -398,142 +398,21 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeInputs(cons
     }
 
     InterProcessOpEdge edge = {input_i, node_labels_[input_i], cnode, node_labels_[cnode]};
-    auto send_node = GenerateSendNode(edge);
+
+    auto send_node = CreateSendNode(func_graph_, edge);
     MS_EXCEPTION_IF_NULL(send_node);
-    auto recv_node = GenerateRecvNode(edge);
+    // The label should be the same as the node which will 'launch' Send node.
+    node_labels_[send_node] = edge.src_label;
+
+    auto recv_node = CreateRecvNode(func_graph_, edge);
     MS_EXCEPTION_IF_NULL(recv_node);
+    // The label should be the same as the node which Receives the 'input'.
+    node_labels_[recv_node] = edge.dst_label;
 
     auto comm_node_pair = std::make_tuple(send_node, recv_node, cnode, SizeToInt(i));
     (void)comm_edges.insert(std::make_pair(edge, comm_node_pair));
   }
   return comm_edges;
-}
-
-CNodePtr GraphSplitter::GenerateSendNode(const InterProcessOpEdge &inter_process_edge) {
-  const auto &src_node = inter_process_edge.src_node;
-  const auto &dst_node = inter_process_edge.dst_node;
-  MS_EXCEPTION_IF_NULL(src_node);
-  MS_EXCEPTION_IF_NULL(dst_node);
-
-  std::vector<AnfNodePtr> send_inputs = {NewValueNode(std::make_shared<Primitive>(kRpcSendOpName))};
-  ValueNodePtr mock_value = nullptr;
-  if (IsPrimitiveCNode(src_node, prim::kPrimUpdateState)) {
-    mock_value = GenerateMockValueNode(false);
-    send_inputs.push_back(mock_value);
-    send_inputs.push_back(src_node);
-  } else {
-    send_inputs.push_back(src_node);
-    mock_value = GenerateMockValueNode(true, src_node);
-  }
-  CNodePtr send_node = func_graph_->NewCNode(send_inputs);
-  MS_EXCEPTION_IF_NULL(send_node);
-  send_node->set_abstract(mock_value->abstract());
-
-  // The label should be the same as the node which will 'launch' Send node.
-  node_labels_[send_node] = inter_process_edge.src_label;
-
-  SetSendNodeAttr(send_node, inter_process_edge);
-  return send_node;
-}
-
-CNodePtr GraphSplitter::GenerateRecvNode(const InterProcessOpEdge &inter_process_edge) {
-  const auto &src_node = inter_process_edge.src_node;
-  const auto &dst_node = inter_process_edge.dst_node;
-  MS_EXCEPTION_IF_NULL(src_node);
-  MS_EXCEPTION_IF_NULL(dst_node);
-
-  std::vector<AnfNodePtr> recv_inputs = {NewValueNode(std::make_shared<Primitive>(kRpcRecvOpName))};
-  CNodePtr recv_node = nullptr;
-  AbstractBasePtr recv_node_abs = nullptr;
-  if (IsPrimitiveCNode(src_node, prim::kPrimUpdateState)) {
-    ValuePtr monad_value = nullptr;
-    if (HasAbstractUMonad(src_node)) {
-      monad_value = kUMonad;
-    } else if (HasAbstractIOMonad(src_node)) {
-      monad_value = kIOMonad;
-    } else {
-      MS_LOG(EXCEPTION) << "The src_node is PrimUpdateState must have monad abstract.";
-    }
-    auto monad_input = NewValueNode(monad_value);
-    monad_input->set_abstract(monad_value->ToAbstract());
-    recv_inputs.push_back(monad_input);
-    recv_node_abs = src_node->abstract();
-  } else {
-    if (src_node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrUpdateParameter, src_node->cast<CNodePtr>()) &&
-        common::AnfAlgo::HasNodeAttr(kAttrParameterInputIndex, src_node->cast<CNodePtr>())) {
-      int64_t parameter_index = common::AnfAlgo::GetNodeAttr<int64_t>(src_node, kAttrParameterInputIndex);
-      auto kernel_with_index = common::AnfAlgo::VisitKernel(
-        common::AnfAlgo::GetInputNode(src_node->cast<CNodePtr>(), LongToSize(parameter_index)), 0);
-      auto param_node = kernel_with_index.first;
-      recv_inputs.push_back(param_node);
-      recv_node_abs = param_node->abstract();
-    } else {
-      auto mock_value = GenerateMockValueNode(true, src_node);
-      MS_EXCEPTION_IF_NULL(mock_value);
-      recv_inputs.push_back(mock_value);
-      recv_node_abs = src_node->abstract();
-    }
-  }
-  recv_node = func_graph_->NewCNode(recv_inputs);
-  MS_EXCEPTION_IF_NULL(recv_node);
-  recv_node->set_abstract(recv_node_abs);
-
-  // The label should be the same as the node which Receives the 'input'.
-  node_labels_[recv_node] = inter_process_edge.dst_label;
-
-  SetRecvNodeAttr(recv_node, inter_process_edge);
-  return recv_node;
-}
-
-void GraphSplitter::SetSendNodeAttr(const AnfNodePtr &send_node, const InterProcessOpEdge &inter_process_edge) {
-  const auto &send_src_node = inter_process_edge.src_node;
-  const auto &send_dst_node = inter_process_edge.dst_node;
-  MS_EXCEPTION_IF_NULL(send_src_node);
-  MS_EXCEPTION_IF_NULL(send_dst_node);
-  MS_EXCEPTION_IF_NULL(send_node);
-
-  std::string src_node_name = send_src_node->fullname_with_scope();
-  std::string dst_node_name = send_dst_node->fullname_with_scope();
-
-  // These attributes are the inter-process edge information.
-  std::vector<uint32_t> dst_ranks = {inter_process_edge.dst_label.rank_id};
-  common::AnfAlgo::SetNodeAttr(kAttrSendDstRanks, MakeValue(dst_ranks), send_node);
-  std::vector<std::string> dst_roles = {inter_process_edge.dst_label.ms_role};
-  common::AnfAlgo::SetNodeAttr(kAttrSendDstRoles, MakeValue(dst_roles), send_node);
-
-  common::AnfAlgo::SetNodeAttr(kAttrSendSrcNodeName, MakeValue(src_node_name), send_node);
-  common::AnfAlgo::SetNodeAttr(kAttrSendDstNodeName, MakeValue(dst_node_name), send_node);
-  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeName, MakeValue(inter_process_edge.to_string()), send_node);
-
-  // Set send node to CPU for now.
-  common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), send_node);
-}
-
-void GraphSplitter::SetRecvNodeAttr(const AnfNodePtr &recv_node, const InterProcessOpEdge &inter_process_edge) {
-  const auto &recv_src_node = inter_process_edge.src_node;
-  const auto &recv_dst_node = inter_process_edge.dst_node;
-  MS_EXCEPTION_IF_NULL(recv_src_node);
-  MS_EXCEPTION_IF_NULL(recv_dst_node);
-  MS_EXCEPTION_IF_NULL(recv_node);
-
-  std::string src_node_name = recv_src_node->fullname_with_scope();
-  std::string dst_node_name = recv_dst_node->fullname_with_scope();
-  if (node_labels_.count(recv_src_node) == 0) {
-    MS_LOG(EXCEPTION) << "Recv from node " << src_node_name << " has no operator label.";
-  }
-
-  // These attributes are the inter-process edge information.
-  std::vector<uint32_t> src_ranks = {inter_process_edge.src_label.rank_id};
-  common::AnfAlgo::SetNodeAttr(kAttrRecvSrcRanks, MakeValue(src_ranks), recv_node);
-  std::vector<std::string> src_roles = {inter_process_edge.src_label.ms_role};
-  common::AnfAlgo::SetNodeAttr(kAttrRecvSrcRoles, MakeValue(src_roles), recv_node);
-
-  common::AnfAlgo::SetNodeAttr(kAttrRecvSrcNodeName, MakeValue(src_node_name), recv_node);
-  common::AnfAlgo::SetNodeAttr(kAttrRecvDstNodeName, MakeValue(dst_node_name), recv_node);
-  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeName, MakeValue(inter_process_edge.to_string()), recv_node);
-
-  // Set recv node to CPU for now.
-  common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), recv_node);
 }
 
 std::vector<AnfNodePtr> GraphSplitter::FindInterProcessInDegree(const std::vector<AnfNodePtr> &nodes,
@@ -587,26 +466,6 @@ bool GraphSplitter::IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodeP
                       << " or 'node2': " << node2->fullname_with_scope() << " is not marked with split label.";
   }
   return node_labels_[node1] == node_labels_[node2];
-}
-
-ValueNodePtr GraphSplitter::GenerateMockValueNode(bool use_origin_node, const AnfNodePtr &origin_node) {
-  tensor::TensorPtr mock_tensor = nullptr;
-  if (use_origin_node) {
-    MS_EXCEPTION_IF_NULL(origin_node);
-    auto origin_abstract = origin_node->abstract()->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(origin_abstract);
-    mock_tensor = std::make_shared<tensor::Tensor>(origin_abstract->element()->BuildType()->type_id(),
-                                                   origin_abstract->shape()->shape());
-    MS_EXCEPTION_IF_NULL(mock_tensor);
-  } else {
-    mock_tensor = std::make_shared<tensor::Tensor>(1.0);
-    MS_EXCEPTION_IF_NULL(mock_tensor);
-  }
-
-  auto mock_value = NewValueNode(mock_tensor);
-  MS_EXCEPTION_IF_NULL(mock_value);
-  mock_value->set_abstract(mock_tensor->ToAbstract());
-  return mock_value;
 }
 }  // namespace parallel
 }  // namespace mindspore
