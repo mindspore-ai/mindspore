@@ -149,7 +149,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
         if (upperbound <= best) {
           best = upperbound;
           best_sol = sol;
-          best_timing = solver->timing_;
+          best_timing = LongToSize(solver->timing_);
         }
       }
       auto end = std::chrono::system_clock::now();

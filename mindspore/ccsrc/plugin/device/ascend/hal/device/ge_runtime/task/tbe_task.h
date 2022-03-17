@@ -30,7 +30,7 @@ class TbeTask : public TaskRepeater<TbeTaskInfo> {
 
   void Distribute() override;
 
-  void *Args() override { return args_; }
+  void *Args() const override { return args_; }
 
   std::string task_name() const override { return task_info_->op_name(); }
 

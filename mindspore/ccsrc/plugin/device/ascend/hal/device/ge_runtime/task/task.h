@@ -33,7 +33,7 @@ class Task {
 
   virtual void Distribute() = 0;
 
-  virtual void *Args() { return nullptr; }
+  virtual void *Args() const { return nullptr; }
 
   virtual std::string task_name() const { return ""; }
 
