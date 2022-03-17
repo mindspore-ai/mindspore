@@ -28,7 +28,11 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
   MS_EXCEPTION_IF_ZERO("device_contexts_ size", device_contexts_.size());
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   try {
-    device_contexts_[0]->LaunchCustomFunc(node);
+    auto ret = device_contexts_[0]->LaunchCustomFunc(node);
+    if (!ret) {
+      std::string error_info = "Launch custom kernel failed: " + node->fullname_with_scope();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
+    }
   } catch (const std::exception &e) {
     if (strategy_ == GraphExecutionStrategy::kPipeline) {
       MsException::Instance().SetException();

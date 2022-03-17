@@ -124,10 +124,10 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
   // the dynamic size of workspace.
   if (launch_info_.workspaces_.size() > workspace_sizes.size()) {
     size_t size = launch_info_.workspaces_.size() - workspace_sizes.size();
-    workspace_device_tensors_.erase(workspace_device_tensors_.end() - size, workspace_device_tensors_.end());
-    memory_alloc_list_.erase(memory_alloc_list_.end() - size, memory_alloc_list_.end());
-    memory_free_list_.erase(memory_free_list_.end() - size, memory_free_list_.end());
-    launch_info_.workspaces_.erase(launch_info_.workspaces_.end() - size, launch_info_.workspaces_.end());
+    (void)workspace_device_tensors_.erase(workspace_device_tensors_.end() - size, workspace_device_tensors_.end());
+    (void)memory_alloc_list_.erase(memory_alloc_list_.end() - size, memory_alloc_list_.end());
+    (void)memory_free_list_.erase(memory_free_list_.end() - size, memory_free_list_.end());
+    (void)launch_info_.workspaces_.erase(launch_info_.workspaces_.end() - size, launch_info_.workspaces_.end());
   } else if (launch_info_.workspaces_.size() < workspace_sizes.size()) {
     for (size_t i = launch_info_.workspaces_.size(); i < workspace_sizes.size(); ++i) {
       auto device_address =
@@ -139,7 +139,7 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
       (void)workspace_device_tensors_.emplace_back(device_address.get());
       (void)memory_alloc_list_.emplace_back(device_address.get());
       (void)memory_free_list_.emplace_back(device_address.get());
-      launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
+      (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
     }
   }
   // Set workspace address new size

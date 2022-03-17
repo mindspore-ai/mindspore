@@ -51,7 +51,7 @@ void UpdateOutputTensorShape(const std::vector<TensorPtr> &output_tensors,
     auto shape = common::AnfAlgo::GetOutputInferShape(output_nodes[i].first, output_nodes[i].second);
     std::vector<int64_t> temp_shape;
     (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
-    output_tensors[i]->set_shape(temp_shape);
+    (void)output_tensors[i]->set_shape(temp_shape);
   }
 }
 
