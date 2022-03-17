@@ -181,7 +181,7 @@ class Tensor(Tensor_):
 
     def __repr__(self):
         if self.init_finished:
-            Tensor_.data_sync(self, False)
+            Tensor_.data_sync(self, True)
             return Tensor_.__repr__(self)
         return ''
 
