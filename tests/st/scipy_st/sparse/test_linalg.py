@@ -338,7 +338,7 @@ def test_gmres_against_scipy_level1(n, dtype, error, restart, maxiter, precondit
     assert onp.allclose(scipy_output, ms_output.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
