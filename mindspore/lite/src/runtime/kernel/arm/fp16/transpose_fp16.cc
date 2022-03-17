@@ -13,32 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "src/runtime/kernel/arm/fp16/transpose_fp16.h"
-#include <vector>
+#include "src/kernel_registry.h"
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/transpose_fp16.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
-#include "include/errorcode.h"
-#include "nnacl/fp16/cast_fp16.h"
 
 using mindspore::lite::KernelRegistrar;
-using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
-void TransposeFp16CPUKernel::SetOptTransposeFunc() { optTransposeFunc_ = PackNHWCToNCHWFp16; }
+int TransposeFp16CPUKernel::ReSize() {
+  auto ret = TransposeBaseCPUKernel::ReSize();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Do transpose resize failed.";
+    return ret;
+  }
+  thread_num_ = (!opt_run_ && param_->num_axes_ <= DIMENSION_6D) ? 1 : thread_num_;
+  return RET_OK;
+}
 
-int TransposeFp16CPUKernel::TransposeDim2to6() {
+int TransposeFp16CPUKernel::DoTransposeSingleThread() {
+  if (opt_run_ || param_->num_axes_ > DIMENSION_6D) {
+    return DoTransposeMultiThread(0);
+  }
   return DoTransposeFp16(static_cast<const float16_t *>(in_data_), static_cast<float16_t *>(out_data_), out_shape_,
                          param_);
 }
 
-int TransposeFp16CPUKernel::TransposeDimGreaterThan6(int task_id) {
+int TransposeFp16CPUKernel::DoTransposeMultiThread(int task_id) {
+  if (opt_run_) {
+    PackNHWCToNCHWFp16(in_data_, out_data_, opt_param_[FIRST_INPUT], opt_param_[SECOND_INPUT], opt_param_[THIRD_INPUT],
+                       task_id, thread_num_);
+    return RET_OK;
+  }
   TransposeDimsFp16(static_cast<const float16_t *>(in_data_), static_cast<float16_t *>(out_data_), out_shape_, param_,
-                    task_id, op_parameter_->thread_num_);
+                    task_id, thread_num_);
   return RET_OK;
 }
 
