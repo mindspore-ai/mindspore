@@ -36,7 +36,7 @@ class LambdaCallback(Callback):
     Examples:
         >>> import numpy as np
         >>> import mindspore.dataset as ds
-        >>> from mindspore.train.callback import History
+        >>> from mindspore.train.callback import LambdaCallback
         >>> from mindspore import Model, nn
         >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
         >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
