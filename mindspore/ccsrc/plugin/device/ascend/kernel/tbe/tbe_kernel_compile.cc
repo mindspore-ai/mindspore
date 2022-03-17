@@ -529,7 +529,7 @@ void TbeKernelCompileManager::Query(const std::string &type) {
     if (!task_map_.empty()) {
       if (query_cnt % KSleepInterval == 0) {
         MS_LOG(INFO) << "Querying Parallel Compilation Job. Current Query Count: " << query_cnt;
-        sleep(KSleepSeconds);
+        (void)sleep(KSleepSeconds);
       }
     }
   }
@@ -669,7 +669,7 @@ void TbeKernelCompileManager::DistributePreBuildTask(const std::vector<CNodePtr>
     SaveTaskInfo(is_dynamic, build_json, json_name, full_name, task_id, INT64_MAX);
 
     // save pair<task_id, node> for exception print and get node trace
-    (void)job_id_to_node_.insert(std::pair<int, CNodePtr>(task_id, node));
+    (void)job_id_to_node_.emplace(std::pair<int, CNodePtr>(task_id, node));
     // start compile
     auto build_result = DispatchCompileTask(build_json);
     auto json_obj = TurnStrToJson(build_result);
@@ -730,7 +730,7 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
     SaveTaskInfo(is_dynamic, build_json, json_name, full_name, task_id, INT64_MAX);
 
     // save pair<task_id, node> for exception print and get node trace
-    (void)job_id_to_node_.insert(std::pair<int, CNodePtr>(task_id, node));
+    (void)job_id_to_node_.emplace(std::pair<int, CNodePtr>(task_id, node));
     // start compile
     auto build_result = DispatchCompileTask(build_json);
     auto json_obj = TurnStrToJson(build_result);

@@ -51,7 +51,7 @@ inline Status DLSoPath(std::string *so_path) {
       }
       ent = readdir(dir);
     }
-    closedir(dir);
+    (void)closedir(dir);
   } else {
     return Status(kMEFailed, "Could not open directory: " + parent_dir);
   }
