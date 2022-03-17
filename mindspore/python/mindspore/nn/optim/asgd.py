@@ -14,6 +14,7 @@
 # ============================================================================
 """asgd"""
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
@@ -183,7 +184,7 @@ class ASGD(Optimizer):
             lr = lrs[index] if self.is_group_lr else lrs
             lr = self.squeeze(lr)
 
-            if self.global_step == 1:
+            if self.squeeze(self.global_step) == 1:
                 self.assign(eta, lr)
 
             param_fp32 = self.cast(param, mstype.float32)
@@ -198,7 +199,8 @@ class ASGD(Optimizer):
             else:
                 self.assign(ax, param)
 
-            self.assign(eta, lr / (self.pow((1. + (self.lambd * lr * self.cast(self.global_step, mstype.float32))),
-                                            self.alpha)))
-            self.assign(mu, 1. / self.squeeze(self.maximum(1., self.cast(self.global_step, mstype.float32) - self.t0)))
+            success = F.depend(success, self.assign(eta, lr / (self.pow((1. + (self.lambd * lr * self.cast(
+                self.squeeze(self.global_step), mstype.float32))), self.alpha))))
+            success = F.depend(success, self.assign(mu, 1. / self.squeeze(self.maximum(1., self.cast(
+                self.squeeze(self.global_step), mstype.float32) - self.t0))))
         return success
