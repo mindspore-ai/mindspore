@@ -100,8 +100,8 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
     for (int i = 0; i < size; ++i) {
       weight_shape.emplace_back((*node_iter).dims(i));
     }
-    if (weight_shape.size() != 4) {
-      MS_LOG(ERROR) << "weight_shape.size() should be 4, but is " << weight_shape.size();
+    if (weight_shape.size() < DIMENSION_2D) {
+      MS_LOG(ERROR) << "weight_shape.size() should not be less than 2, but is " << weight_shape.size();
       return nullptr;
     }
     prim->set_in_channel(weight_shape[0]);
