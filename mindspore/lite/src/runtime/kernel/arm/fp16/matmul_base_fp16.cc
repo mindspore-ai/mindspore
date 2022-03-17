@@ -68,13 +68,6 @@ void MatmulBaseFP16CPUKernel::FreeResizeBufB() {
   return;
 }
 
-void MatmulBaseFP16CPUKernel::InitParameter() {
-  NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[0]);
-  NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[1]);
-  params_->a_const_ = (in_tensors_[0]->data() != nullptr);
-  params_->b_const_ = (in_tensors_[1]->data() != nullptr);
-}
-
 int MatmulBaseFP16CPUKernel::InitBias() {
   int max_bias_data = 0;
   if (params_->col_ == 0) {
@@ -268,8 +261,18 @@ void MatmulBaseFP16CPUKernel::InitMatrixB(const void *src_ptr, TypeId src_data_t
 }
 
 int MatmulBaseFP16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  MS_CHECK_TRUE_MSG(in_tensors_[0] != nullptr, RET_ERROR, "A-metric tensor is a nullptr");
+  MS_CHECK_TRUE_MSG(in_tensors_[1] != nullptr, RET_ERROR, "B-metric tensor is a nullptr");
+  params_->a_const_ = (in_tensors_[0]->data() != nullptr);
+  params_->b_const_ = (in_tensors_[1]->data() != nullptr);
+  if (params_->a_const_) {
+    auto ret = InitAShape();
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "init A-metrics' info failed");
+  }
+  if (params_->b_const_) {
+    auto ret = InitBShape();
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "init B-metrics' info failed");
+  }
   if (in_tensors_.size() == FOURTH_INPUT) {
     MS_CHECK_TRUE_MSG(in_tensors_[THIRD_INPUT]->IsConst(), RET_ERROR, "matrix-c must be const when existing.");
   }
@@ -307,7 +310,10 @@ int MatmulBaseFP16CPUKernel::Prepare() {
     MS_LOG(ERROR) << "Matmul fp16 malloc matrix A buffer failed";
     return RET_ERROR;
   }
-  return RET_OK;
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
 }
 
 int MatmulBaseFP16CPUKernel::RunImpl(int task_id) {

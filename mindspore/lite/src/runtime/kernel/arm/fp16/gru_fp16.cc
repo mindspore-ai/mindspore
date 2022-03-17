@@ -64,7 +64,7 @@ int GruFp16CPUKernel::InitParam() {
   std::vector<int> in_shape = input->shape();
   gru_param_->seq_len_ = in_shape.at(0);
   gru_param_->batch_ = in_shape.at(1);
-  gru_param_->input_size_ = in_shape.at(2);
+  gru_param_->input_size_ = in_shape.at(kNHWC_W);
 
   auto weight_g = in_tensors_.at(1);
   MS_ASSERT(weight_g != nullptr);
@@ -110,7 +110,7 @@ int GruFp16CPUKernel::InitInputWeightBias() {
   }
 
   // input bias
-  auto bias = in_tensors_.at(3);
+  auto bias = in_tensors_.at(FOURTH_INPUT);
   CHECK_NULL_RETURN(bias->data());
   input_bias_ = reinterpret_cast<float16_t *>(malloc(weight_batch_ * gru_param_->input_col_align_ * sizeof(float16_t)));
   if (input_bias_ == nullptr) {
@@ -136,7 +136,7 @@ int GruFp16CPUKernel::InitStateWeightBias() {
   // state -- row: batch; col: hidden_size
   // weight -- row: hidden_size; col: hidden_size, need transpose
   // result -- row: batch; col: hidden_size
-  auto weight_r = in_tensors_.at(2);
+  auto weight_r = in_tensors_.at(THIRD_INPUT);
   CHECK_NULL_RETURN(weight_r->data());
   weight_r_ptr_ = reinterpret_cast<float16_t *>(
     malloc(weight_batch_ * gru_param_->state_col_align_ * gru_param_->hidden_size_ * sizeof(float16_t)));
@@ -168,7 +168,7 @@ int GruFp16CPUKernel::InitStateWeightBias() {
   }
 
   // state bias
-  auto bias = in_tensors_.at(3);
+  auto bias = in_tensors_.at(FOURTH_INPUT);
   CHECK_NULL_RETURN(bias->data());
   state_bias_ = reinterpret_cast<float16_t *>(malloc(weight_batch_ * gru_param_->state_col_align_ * sizeof(float16_t)));
   if (state_bias_ == nullptr) {
@@ -267,15 +267,15 @@ int GruFp16CPUKernel::Run() {
   auto output = out_tensors_.at(0);
   auto output_ptr = reinterpret_cast<float16_t *>(output->data());
   CHECK_NULL_RETURN(output_ptr);
-  auto hidden_state = in_tensors_.at(4);
+  auto hidden_state = in_tensors_.at(FIFTH_INPUT);
   auto output_hidden_state = out_tensors_.at(1);
   CHECK_NULL_RETURN(output_hidden_state->data());
   CHECK_NULL_RETURN(hidden_state->data());
   memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float16_t));
   int check_seq_len = gru_param_->seq_len_;
   if (in_tensors_.size() == C6NUM) {
-    MS_ASSERT(in_tensors_.at(5) != nullptr);
-    int *seq_len = reinterpret_cast<int *>(in_tensors_.at(5)->data());
+    MS_ASSERT(in_tensors_.at(SIXTH_INPUT) != nullptr);
+    int *seq_len = reinterpret_cast<int *>(in_tensors_.at(SIXTH_INPUT)->data());
     MS_ASSERT(seq_len != nullptr);
     if (!std::equal(seq_len + 1, seq_len + gru_param_->batch_, seq_len)) {
       MS_LOG(ERROR) << "different batch seq_len is currently not supported";

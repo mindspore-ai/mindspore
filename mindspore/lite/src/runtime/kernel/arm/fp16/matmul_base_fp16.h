@@ -42,7 +42,8 @@ class MatmulBaseFP16CPUKernel : public InnerKernel {
   int RunImpl(int task_id);
 
  protected:
-  void InitParameter();
+  virtual int InitAShape() = 0;
+  virtual int InitBShape() = 0;
   bool IsRepack() { return is_repack_; }
   bool is_repack_ = false;
 

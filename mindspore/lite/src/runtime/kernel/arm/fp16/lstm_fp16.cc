@@ -70,7 +70,7 @@ int LstmFp16CPUKernel::InitParam() {
   std::vector<int> in_shape = input->shape();
   lstm_param_->seq_len_ = in_shape.at(0);
   lstm_param_->batch_ = in_shape.at(1);
-  lstm_param_->input_size_ = in_shape.at(2);
+  lstm_param_->input_size_ = in_shape.at(kNHWC_W);
 
   auto weight_i = in_tensors_.at(1);
   std::vector<int> w_shape = weight_i->shape();
@@ -80,7 +80,7 @@ int LstmFp16CPUKernel::InitParam() {
   const int twice = 2;
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? twice * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
-  weight_batch_ = lstm_param_->bidirectional_ ? 2 * gate_num : gate_num;
+  weight_batch_ = lstm_param_->bidirectional_ ? twice * gate_num : gate_num;
   lstm_param_->input_row_align_ = UP_ROUND(lstm_param_->seq_len_ * lstm_param_->batch_, C16NUM);
   lstm_param_->input_col_align_ = UP_ROUND(lstm_param_->hidden_size_, C8NUM);
 
@@ -116,7 +116,7 @@ int LstmFp16CPUKernel::InitInputWeightBias() {
   }
 
   // input bias
-  auto bias = in_tensors_.at(3);
+  auto bias = in_tensors_.at(FOURTH_INPUT);
   auto bias_data = bias->data();
   CHECK_NULL_RETURN(bias_data);
   input_bias_ =
@@ -144,7 +144,7 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
   // state -- row: batch; col: hidden_size
   // weight -- row: hidden_size; col: hidden_size, need transpose
   // result -- row: batch; col: hidden_size
-  auto weight_h = in_tensors_.at(2);
+  auto weight_h = in_tensors_.at(THIRD_INPUT);
   auto weight_h_data = weight_h->data();
   CHECK_NULL_RETURN(weight_h_data);
   weight_h_ptr_ = reinterpret_cast<float16_t *>(
@@ -177,7 +177,7 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
   }
 
   // state bias
-  auto bias = in_tensors_.at(3);
+  auto bias = in_tensors_.at(FOURTH_INPUT);
   auto bias_data = bias->data();
   CHECK_NULL_RETURN(bias_data);
   state_bias_ =
@@ -203,11 +203,11 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
 }
 
 int LstmFp16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 6);
+  CHECK_LESS_RETURN(in_tensors_.size(), C6NUM);
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     CHECK_NULL_RETURN(in_tensors_.at(i));
   }
-  CHECK_LESS_RETURN(out_tensors_.size(), 3);
+  CHECK_LESS_RETURN(out_tensors_.size(), C3NUM);
   for (size_t i = 0; i < out_tensors_.size(); i++) {
     CHECK_NULL_RETURN(out_tensors_.at(i));
   }
@@ -303,15 +303,15 @@ int LstmFp16CPUKernel::Run() {
   auto output_ptr = reinterpret_cast<float16_t *>(output->data());
   CHECK_NULL_RETURN(output_ptr);
 
-  auto hidden_state = in_tensors_.at(4);
+  auto hidden_state = in_tensors_.at(FIFTH_INPUT);
   CHECK_NULL_RETURN(hidden_state->data());
-  auto cell_state = in_tensors_.at(5);
+  auto cell_state = in_tensors_.at(SIXTH_INPUT);
   CHECK_NULL_RETURN(cell_state->data());
 
   auto output_hidden_state = out_tensors_[1];
   CHECK_NULL_RETURN(output_hidden_state->data());
   memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float16_t));
-  auto output_cell_state = out_tensors_[2];
+  auto output_cell_state = out_tensors_[THIRD_INPUT];
   CHECK_NULL_RETURN(output_cell_state->data());
   memcpy(output_cell_state->data(), cell_state->data(), cell_state->ElementsNum() * sizeof(float16_t));
 

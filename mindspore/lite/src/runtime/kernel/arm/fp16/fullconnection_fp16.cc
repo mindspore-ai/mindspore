@@ -25,7 +25,7 @@ using mindspore::schema::PrimitiveType_FullConnection;
 namespace mindspore::kernel {
 int FullconnectionFP16CPUKernel::InitAShape() {
   auto a_shape = in_tensors_.at(0)->shape();
-  CHECK_LESS_RETURN(a_shape.size(), C2NUM);
+  MS_CHECK_TRUE_MSG(a_shape.size(), C2NUM, "fully-connection A-metrics' shape is invalid.");
   params_->row_ = a_shape[0];
   params_->deep_ = a_shape[1];
   return RET_OK;
@@ -33,7 +33,7 @@ int FullconnectionFP16CPUKernel::InitAShape() {
 
 int FullconnectionFP16CPUKernel::InitBShape() {
   auto b_shape = in_tensors_.at(1)->shape();
-  CHECK_LESS_RETURN(b_shape.size(), C2NUM);
+  MS_CHECK_TRUE_MSG(b_shape.size(), C2NUM, "fully-connection B-metrics' shape is invalid.");
   params_->col_ = b_shape[0];
   params_->deep_ = b_shape[1];
   return RET_OK;
@@ -62,25 +62,11 @@ int FullconnectionFP16CPUKernel::Prepare() {
   b_offset_.resize(params_->batch, 0);
   params_->a_transpose_ = false;
   params_->b_transpose_ = true;
-
-  params_->a_const_ = (in_tensors_[0]->data() != nullptr);
-  params_->b_const_ = (in_tensors_[1]->data() != nullptr);
-  if (params_->a_const_ == true) {
-    InitAShape();
-  }
-  if (params_->b_const_ == true) {
-    InitBShape();
-  }
-
   auto ret = MatmulBaseFP16CPUKernel::Prepare();
   if (ret != RET_OK) {
-    return ret;
+    MS_LOG(ERROR) << "Do fully-connection prepare failed.";
   }
-
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  return ReSize();
+  return ret;
 }
 
 int FullconnectionFP16CPUKernel::Run() {

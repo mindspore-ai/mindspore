@@ -226,7 +226,7 @@ int DeConvolutionFp16CPUKernel::DoDeconvPost(int task_id) {
 }
 
 int DeConvolutionFp16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(conv_param_);
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));

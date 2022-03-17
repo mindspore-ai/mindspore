@@ -28,64 +28,47 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::kernel {
-void MatmulFP16CPUKernel::InitAShape() {
+int MatmulFP16CPUKernel::InitAShape() {
   auto a_shape = in_tensors_[0]->shape();
-  if (a_shape.empty()) {
-    return;
-  }
-  MS_CHECK_TRUE_RET_VOID(a_shape.size() >= 2);
+  MS_CHECK_TRUE_MSG(a_shape.size() >= DIMENSION_2D, RET_ERROR, "A-metric tensor's shape is invalid.");
   int batch = 1;
-  for (size_t i = 0; i < a_shape.size() - 2; ++i) {
+  for (size_t i = 0; i < a_shape.size() - DIMENSION_2D; ++i) {
     batch *= a_shape[i];
   }
   a_batch_ = batch;
   params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - 2];
   params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
   params_->row_16_ = UP_ROUND(params_->row_, row_tile_);
+  return RET_OK;
 }
 
-void MatmulFP16CPUKernel::InitBShape() {
+int MatmulFP16CPUKernel::InitBShape() {
   auto b_shape = in_tensors_[1]->shape();
-  if (b_shape.empty()) {
-    return;
-  }
-  MS_CHECK_TRUE_RET_VOID(b_shape.size() >= 2);
+  MS_CHECK_TRUE_MSG(b_shape.size() >= DIMENSION_2D, RET_ERROR, "B-metric tensor's shape is invalid.");
   int batch = 1;
-  for (size_t i = 0; i < b_shape.size() - 2; ++i) {
+  for (size_t i = 0; i < b_shape.size() - DIMENSION_2D; ++i) {
     batch *= b_shape[i];
   }
   b_batch_ = batch;
   params_->col_ = params_->b_transpose_ ? b_shape[b_shape.size() - 2] : b_shape[b_shape.size() - 1];
-  params_->col_8_ = UP_ROUND(params_->col_, 8);
+  params_->col_8_ = UP_ROUND(params_->col_, C8NUM);
   params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
+  return RET_OK;
 }
 
 int MatmulFP16CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
   row_tile_ = C4NUM;
 #else
   row_tile_ = C12NUM;
 #endif
-  MatmulBaseFP16CPUKernel::InitParameter();
-
-  if (params_->a_const_) {
-    InitAShape();
-  }
-  if (params_->b_const_) {
-    InitBShape();
-  }
-
   auto ret = MatmulBaseFP16CPUKernel::Prepare();
   if (ret != RET_OK) {
-    return ret;
+    MS_LOG(ERROR) << "Do matmul prepare failed.";
   }
-
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  return ReSize();
+  return ret;
 }
 
 int MatmulFP16CPUKernel::InitBroadcastParams() {
