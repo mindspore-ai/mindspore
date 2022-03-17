@@ -27,9 +27,7 @@ std::string SchedulerRecovery::GetMetadata(const std::string &key) {
 
 bool SchedulerRecovery::Recover() {
   std::unique_lock<std::mutex> lock(recovery_mtx_);
-  if (recovery_storage_ == nullptr) {
-    return false;
-  }
+  MS_ERROR_IF_NULL_W_RET_VAL(recovery_storage_, false);
   core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
 
   // 1. recover worker num
@@ -38,7 +36,7 @@ bool SchedulerRecovery::Recover() {
       UlongToUint(std::strtoul(recovery_storage_->Get(kRecoveryWorkerNum, "").c_str(), nullptr, kBase));
     clusterConfig.initial_worker_num = initial_worker_num;
   } else {
-    clusterConfig.initial_worker_num = PSContext::instance()->initial_worker_num();
+    MS_LOG(EXCEPTION) << kRecoveryWorkerNum << " is not contained in " << recovery_storage_->file_path();
   }
 
   // 2. recover server num
@@ -47,14 +45,14 @@ bool SchedulerRecovery::Recover() {
       UlongToUint(std::strtoul(recovery_storage_->Get(kRecoveryServerNum, "").c_str(), nullptr, kBase));
     clusterConfig.initial_server_num = initial_server_num;
   } else {
-    clusterConfig.initial_server_num = PSContext::instance()->initial_server_num();
+    MS_LOG(EXCEPTION) << kRecoveryServerNum << " is not contained in " << recovery_storage_->file_path();
   }
 
   // 3. recover scheduler ip
   if (recovery_storage_->Exists(kRecoverySchedulerIp)) {
     clusterConfig.scheduler_host = recovery_storage_->GetString(kRecoverySchedulerIp, "");
   } else {
-    clusterConfig.scheduler_host = PSContext::instance()->scheduler_host();
+    MS_LOG(EXCEPTION) << kRecoverySchedulerIp << " is not contained in " << recovery_storage_->file_path();
   }
 
   // 4. recover scheduler port
@@ -62,7 +60,7 @@ bool SchedulerRecovery::Recover() {
     uint16_t scheduler_port = std::strtol(recovery_storage_->Get(kRecoverySchedulerPort, "").c_str(), nullptr, kBase);
     clusterConfig.scheduler_port = scheduler_port;
   } else {
-    clusterConfig.scheduler_port = PSContext::instance()->scheduler_port();
+    MS_LOG(EXCEPTION) << kRecoverySchedulerPort << " is not contained in " << recovery_storage_->file_path();
   }
 
   MS_LOG(INFO) << "The worker num:" << clusterConfig.initial_worker_num
@@ -70,15 +68,14 @@ bool SchedulerRecovery::Recover() {
                << ", the scheduler ip:" << clusterConfig.scheduler_host
                << ", the scheduler port:" << clusterConfig.scheduler_port;
 
-  if (scheduler_recovery_storage_ == nullptr) {
-    MS_LOG(WARNING) << "scheduler recovery storage is null. return false";
-    return false;
-  }
+  MS_ERROR_IF_NULL_W_RET_VAL(scheduler_recovery_storage_, false);
   // 5. recover total node num
   if (scheduler_recovery_storage_->Exists(kRecoveryTotalNodeNum)) {
     uint32_t initial_total_node_num =
       UlongToUint(std::strtoul(scheduler_recovery_storage_->Get(kRecoveryTotalNodeNum, "").c_str(), nullptr, kBase));
     clusterConfig.initial_total_node_num = initial_total_node_num;
+  } else {
+    MS_LOG(EXCEPTION) << kRecoveryTotalNodeNum << " is not contained in " << recovery_storage_->file_path();
   }
 
   // 6. recover next worker rank id
@@ -86,6 +83,8 @@ bool SchedulerRecovery::Recover() {
     uint32_t initial_next_worker_rank_id = UlongToUint(
       std::strtoul(scheduler_recovery_storage_->Get(kRecoveryNextWorkerRankId, "").c_str(), nullptr, kBase));
     clusterConfig.initial_next_worker_rank_id = initial_next_worker_rank_id;
+  } else {
+    MS_LOG(EXCEPTION) << kRecoveryNextWorkerRankId << " is not contained in " << recovery_storage_->file_path();
   }
 
   // 7. recover next server rank id
@@ -93,6 +92,8 @@ bool SchedulerRecovery::Recover() {
     uint32_t initial_next_server_rank_id = UlongToUint(
       std::strtoul(scheduler_recovery_storage_->Get(kRecoveryNextServerRankId, "").c_str(), nullptr, kBase));
     clusterConfig.initial_next_server_rank_id = initial_next_server_rank_id;
+  } else {
+    MS_LOG(EXCEPTION) << kRecoveryNextServerRankId << " is not contained in " << recovery_storage_->file_path();
   }
 
   // 8. recover register nodes info
@@ -122,13 +123,11 @@ bool SchedulerRecovery::Recover() {
                         << recovery_server_num << " initial server num is:" << clusterConfig.initial_server_num;
     }
     clusterConfig.initial_registered_nodes_infos = nodes_infos;
+  } else {
+    MS_LOG(EXCEPTION) << kRecoveryRegisteredNodesInfos << " is not contained in " << recovery_storage_->file_path();
   }
 
-  MS_LOG(INFO) << "The worker num:" << clusterConfig.initial_worker_num
-               << ", the server num:" << clusterConfig.initial_server_num
-               << ", the scheduler ip:" << clusterConfig.scheduler_host
-               << ", the scheduler port:" << clusterConfig.scheduler_port
-               << ", the initial total node num:" << clusterConfig.initial_total_node_num
+  MS_LOG(INFO) << ", the initial total node num:" << clusterConfig.initial_total_node_num
                << ", the initial next worker rank id:" << clusterConfig.initial_next_worker_rank_id
                << ", the initial next server rank id:" << clusterConfig.initial_next_server_rank_id;
 

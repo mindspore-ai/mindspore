@@ -1337,7 +1337,7 @@ void AbstractNode::InitNodeNum() {
   server_num_ = PSContext::instance()->cluster_config().initial_server_num;
   scheduler_ip_ = PSContext::instance()->cluster_config().scheduler_host;
   scheduler_port_ = PSContext::instance()->cluster_config().scheduler_port;
-  MS_LOG(INFO) << "The worker num:" << worker_num_ << ", the server num:" << server_num_
+  MS_LOG(INFO) << "From ps context The worker num:" << worker_num_ << ", the server num:" << server_num_
                << ", the scheduler ip:" << scheduler_ip_ << ", the scheduler port:" << scheduler_port_;
 }
 
@@ -1347,11 +1347,10 @@ bool AbstractNode::Recover() {
     MS_LOG(INFO) << "The node is support recovery.";
     node_recovery_ = std::make_unique<NodeRecovery>(this);
     MS_EXCEPTION_IF_NULL(node_recovery_);
-    if (!node_recovery_->Initialize(config_->Get(kKeyRecovery, ""))) {
-      MS_LOG(ERROR) << "Initializing node recovery failed.";
-      return false;
+    if (node_recovery_->Initialize(config_->Get(kKeyRecovery, ""))) {
+      MS_LOG(INFO) << "Initializing node recovery successful.";
+      return node_recovery_->Recover();
     }
-    return node_recovery_->Recover();
   }
   return false;
 }
@@ -1428,8 +1427,16 @@ void AbstractNode::CreateTcpServer() {
 
 void AbstractNode::UpdateClusterState(const ClusterState &state) {
   std::lock_guard<std::mutex> lock(cluster_state_mutex_);
+  std::string state_str = CommUtil::ClusterStateToString(state);
+  if (state_str.empty()) {
+    return;
+  }
+
+  if (state == current_cluster_state_) {
+    return;
+  }
   MS_LOG(INFO) << "[state]: Cluster state change from:" << CommUtil::ClusterStateToString(current_cluster_state_)
-               << " to " << CommUtil::ClusterStateToString(state);
+               << " to " << state_str;
   current_cluster_state_ = state;
 }
 

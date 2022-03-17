@@ -132,6 +132,8 @@ class Iteration {
   // The round kernels whose Launch method has not returned yet.
   std::atomic_uint32_t running_round_num_;
 
+  void set_instance_state(InstanceState state);
+
  private:
   Iteration()
       : running_round_num_(0),

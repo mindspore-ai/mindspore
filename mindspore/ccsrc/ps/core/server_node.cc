@@ -42,12 +42,12 @@ bool ServerNode::Start(const uint32_t &timeout) {
 void ServerNode::Initialize() {
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
+  InitNodeNum();
   if (!config_->Initialize()) {
-    MS_LOG(INFO) << "The config file is empty, then init node by context.";
-    InitNodeNum();
+    MS_LOG(WARNING) << "The config file is empty.";
   } else {
     if (!Recover()) {
-      MS_LOG(WARNING) << "Recover the server node is failed.";
+      MS_LOG(DEBUG) << "Recover the server node is failed.";
     }
   }
   InitServerHandler();

@@ -218,15 +218,9 @@ void CommUtil::LogCallback(int severity, const char *msg) {
   }
 }
 
-bool CommUtil::IsFileExists(const std::string &file) {
-  std::ifstream f(file.c_str());
-  if (!f.good()) {
-    return false;
-  } else {
-    f.close();
-    return true;
-  }
-}
+bool CommUtil::IsFileExists(const std::string &file) { return access(file.c_str(), F_OK) != -1; }
+
+bool CommUtil::IsFileReadable(const std::string &file) { return access(file.c_str(), R_OK) != -1; }
 
 bool CommUtil::IsFileEmpty(const std::string &file) {
   if (!IsFileExists(file)) {

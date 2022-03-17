@@ -103,7 +103,8 @@ bool Round::ReInitForScaling(uint32_t server_num) {
   return true;
 }
 
-bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t updated_time_window) {
+bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t updated_time_window,
+                                         uint32_t server_num) {
   time_window_ = updated_time_window;
   threshold_count_ = updated_threshold_count;
   if (check_count_) {
@@ -114,7 +115,11 @@ bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t 
   }
 
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_, false);
-  kernel_->InitKernel(threshold_count_);
+  if (name_ == "reconstructSecrets") {
+    kernel_->InitKernel(server_num);
+  } else {
+    kernel_->InitKernel(threshold_count_);
+  }
   return true;
 }
 

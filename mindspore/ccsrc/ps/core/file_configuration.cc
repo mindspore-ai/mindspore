@@ -29,9 +29,12 @@ bool FileConfiguration::Initialize() {
     return false;
   }
 
+  if (!CommUtil::IsFileReadable(file_path_)) {
+    MS_LOG(EXCEPTION) << "The file path: " << file_path_ << " is not readable.";
+  }
+
   if (CommUtil::IsFileEmpty(file_path_)) {
-    MS_LOG(INFO) << "The file: " << file_path_ << " is empty.";
-    return true;
+    MS_LOG(EXCEPTION) << "The file path: " << file_path_ << " content is empty.";
   }
 
   std::ifstream json_file(file_path_);
@@ -142,6 +145,8 @@ void FileConfiguration::PersistFile(const core::ClusterConfig &clusterConfig) co
   output_file.close();
   MS_LOG(INFO) << "The meta data persist to " << file_path_;
 }
+
+std::string FileConfiguration::file_path() const { return file_path_; }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

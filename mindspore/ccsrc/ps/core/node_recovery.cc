@@ -31,7 +31,7 @@ bool NodeRecovery::Recover() {
     int32_t worker_num = std::strtol(recovery_storage_->Get(kRecoveryWorkerNum, "").c_str(), nullptr, kBase);
     node_->set_worker_num(worker_num);
   } else {
-    node_->set_worker_num(PSContext::instance()->cluster_config().initial_worker_num);
+    MS_LOG(EXCEPTION) << kRecoveryWorkerNum << " is not contained in " << recovery_storage_->file_path();
   }
 
   // 2. recover server num
@@ -39,14 +39,14 @@ bool NodeRecovery::Recover() {
     int32_t server_num = std::strtol(recovery_storage_->Get(kRecoveryServerNum, "").c_str(), nullptr, kBase);
     node_->set_server_num(server_num);
   } else {
-    node_->set_server_num(PSContext::instance()->cluster_config().initial_server_num);
+    MS_LOG(EXCEPTION) << kRecoveryServerNum << " is not contained in " << recovery_storage_->file_path();
   }
 
   // 3. recover scheduler ip
   if (recovery_storage_->Exists(kRecoverySchedulerIp)) {
     node_->set_scheduler_ip(recovery_storage_->GetString(kRecoverySchedulerIp, ""));
   } else {
-    node_->set_scheduler_ip(PSContext::instance()->cluster_config().scheduler_host);
+    MS_LOG(EXCEPTION) << kRecoverySchedulerIp << " is not contained in " << recovery_storage_->file_path();
   }
 
   // 4. recover scheduler port
@@ -54,7 +54,7 @@ bool NodeRecovery::Recover() {
     uint16_t scheduler_port = std::strtol(recovery_storage_->Get(kRecoverySchedulerPort, "").c_str(), nullptr, kBase);
     node_->set_scheduler_port(scheduler_port);
   } else {
-    node_->set_scheduler_port(PSContext::instance()->cluster_config().scheduler_port);
+    MS_LOG(EXCEPTION) << kRecoverySchedulerPort << " is not contained in " << recovery_storage_->file_path();
   }
   MS_LOG(INFO) << "The worker num:" << node_->worker_num() << ", the server num:" << node_->server_num()
                << ", the scheduler ip:" << node_->scheduler_ip() << ", the scheduler port:" << node_->scheduler_port();
