@@ -122,7 +122,8 @@ void DynamicKernel::InferShapeForNopNode(AnfNodePtr *input_node) {
   nop_road.push(*input_node);
 
   auto temp_node = input_node;
-  while (true) {
+  bool loop = true;
+  while (loop) {
     auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(*temp_node, 0);
     auto in_node = input_node_with_idx.first;
     MS_EXCEPTION_IF_NULL(in_node);
@@ -130,7 +131,7 @@ void DynamicKernel::InferShapeForNopNode(AnfNodePtr *input_node) {
       nop_road.push(in_node);
       temp_node = &in_node;
     } else {
-      break;
+      loop = false;
     }
   }
 

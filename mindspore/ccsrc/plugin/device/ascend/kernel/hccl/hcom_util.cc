@@ -50,7 +50,7 @@ bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<si
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
   for (size_t i = 0; i < output_num; ++i) {
     std::vector<size_t> shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
-    hccl_kernel_output_shape_list->emplace_back(shape_i);
+    (void)hccl_kernel_output_shape_list->emplace_back(shape_i);
   }
 
   return true;

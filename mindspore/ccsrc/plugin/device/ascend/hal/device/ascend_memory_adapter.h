@@ -45,8 +45,8 @@ class AscendMemAdapter {
   [[nodiscard]] uint64_t FreeDevMemSize() const { return static_mem_offset_ - max_dynamic_mem_offset_; }
   [[nodiscard]] uint64_t MaxHbmSizeForMs() const { return max_available_ms_hbm_size_; }
   [[nodiscard]] uint64_t GetMsUsedHbmSize() const { return ms_used_hbm_size_; }
-  std::string DevMemStatistics();
-  std::string DevMemDetailInfo();
+  std::string DevMemStatistics() const;
+  std::string DevMemDetailInfo() const;
 
  private:
   struct MemoryBlock {

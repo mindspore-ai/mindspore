@@ -75,7 +75,7 @@ const AnfNodePtr BatchToSpaceNDAttrUpdate::Process(const FuncGraphPtr &graph, co
   }
   auto crops = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(node, kAttrCrops);
   if (crops.size() == kBlockShapeDimNum) {
-    crops.emplace(crops.begin(), std::vector<int64_t>{0, 0});
+    (void)crops.emplace(crops.begin(), std::vector<int64_t>{0, 0});
     common::AnfAlgo::SetNodeAttr(kAttrCrops, MakeValue(crops), node);
   }
   return node;

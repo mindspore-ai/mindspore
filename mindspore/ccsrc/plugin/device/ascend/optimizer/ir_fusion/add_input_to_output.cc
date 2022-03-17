@@ -51,7 +51,7 @@ void AddOutputs(const CNodePtr &cnode, const std::vector<size_t> &input_indices)
     AbstractBasePtrList origin_abstract_list = origin_abstract_tuple->elements();
     (void)std::copy(origin_abstract_list.begin(), origin_abstract_list.end(), std::back_inserter(abstract_list));
   } else {
-    abstract_list.emplace_back(origin_abstract);
+    (void)abstract_list.emplace_back(origin_abstract);
   }
 
   for (size_t i = 0; i < input_indices.size(); ++i) {

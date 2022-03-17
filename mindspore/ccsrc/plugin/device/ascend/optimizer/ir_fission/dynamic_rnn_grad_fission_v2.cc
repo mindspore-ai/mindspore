@@ -290,9 +290,9 @@ AnfNodePtr DynamicRnnGradFissionV2::AddLSTMInputGradNode(const FuncGraphPtr &fun
   std::vector<TypeId> split_types;
   std::vector<int64_t> size_split;
   for (size_t i = 0; i < num_split_x; ++i) {
-    split_shapes.emplace_back(split_c_dims);
-    split_types.emplace_back(kNumberTypeFloat32);
-    size_split.emplace_back(1);
+    (void)split_shapes.emplace_back(split_c_dims);
+    (void)split_types.emplace_back(kNumberTypeFloat32);
+    (void)size_split.emplace_back(1);
   }
   // Create lstm_split_c
   auto lstm_split_c = CreateLSTMSPlitV(func_graph, origin_input7, split_shapes, split_types, size_split, num_split_x);
