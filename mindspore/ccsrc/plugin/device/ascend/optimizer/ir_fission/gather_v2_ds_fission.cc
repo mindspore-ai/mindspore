@@ -134,8 +134,8 @@ CNodePtr GatherV2DsFission::CreateGatherV2Ds(const FuncGraphPtr &graph, const CN
     ShapeVector shape_tmp;
     auto min_shape = common::AnfAlgo::GetOutputMinShape(origin_node, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(origin_node, 0);
-    min_shape[min_shape.size() - 1] = pad_dim_size;
-    max_shape[max_shape.size() - 1] = pad_dim_size;
+    min_shape[min_shape.size() - 1] = SizeToLong(pad_dim_size);
+    max_shape[max_shape.size() - 1] = SizeToLong(pad_dim_size);
     std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     std::vector<BaseShapePtr> shapes = {std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape)};
     common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, shapes,

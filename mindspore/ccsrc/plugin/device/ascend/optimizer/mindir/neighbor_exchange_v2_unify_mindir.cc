@@ -76,7 +76,7 @@ int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first
     MS_LOG(EXCEPTION) << "Wrong split_dim: " << split_dim << ", it should less than 4.";
   }
   int64_t num_split = 0;
-  int64_t split_middle_size = base_shape[split_dim];
+  int64_t split_middle_size = SizeToLong(base_shape[split_dim]);
   std::vector<size_t> shape_tmp(base_shape);
   // [top, bottom, left, right]
   int64_t first_size = split_dim == kWDim ? send_lens[kDim2] : send_lens[0];
@@ -490,7 +490,7 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
       std::vector<AnfNodePtr> split_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
       if (corner_splitvs_is_input_top[i]) {
         (void)split_input.insert(split_input.end(), split_outputs_top.begin(), split_outputs_top.begin() + 1);
-        shape_tmp[kHDim] = send_lens[0];
+        shape_tmp[kHDim] = LongToSize(send_lens[0]);
         min_shape[kHDim] = (is_dynamic) ? send_lens[0] : min_shape[kHDim];
         max_shape[kHDim] = (is_dynamic) ? send_lens[0] : max_shape[kHDim];
       } else {
@@ -590,8 +590,8 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
   auto is_dynamic = AnfUtils::IsShapeDynamic(single_shape);
   size_t first_idx = concat_dim == kWDim ? kIndex6 : kIndex0;
   size_t last_idx = concat_dim == kWDim ? kIndex2 : kIndex4;
-  size_t first_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim2]) : static_cast<size_t>(recv_lens[0]);
-  size_t last_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim3]) : static_cast<size_t>(recv_lens[1]);
+  int64_t first_len = concat_dim == kWDim ? recv_lens[kDim2] : recv_lens[0];
+  int64_t last_len = concat_dim == kWDim ? recv_lens[kDim3] : recv_lens[1];
 
   // left
   if (recv_rank_ids[first_idx] != kInvalidId) {
@@ -603,7 +603,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
     }
 
     ++input_num_all;
-    single_shape[concat_dim] += first_len;
+    single_shape[concat_dim] += LongToSize(first_len);
     max_shape[concat_dim] += (is_dynamic) ? first_len : 0;
     min_shape[concat_dim] += (is_dynamic) ? first_len : 0;
   }
@@ -622,7 +622,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
     }
 
     ++input_num_all;
-    single_shape[concat_dim] += last_len;
+    single_shape[concat_dim] += LongToSize(last_len);
     max_shape[concat_dim] += (is_dynamic) ? last_len : 0;
     min_shape[concat_dim] += (is_dynamic) ? last_len : 0;
   }

@@ -55,7 +55,6 @@ int64_t windowed_output_size(const AnfNodePtr &node, int64_t input_size, int64_t
   *pad_after = 0;
   if (stride == 0) {
     MS_LOG(EXCEPTION) << "The stride of AvgPoolGrad should not be 0." << trace::DumpSourceLines(node);
-    return 0;
   }
   if (pad_mode == PadMode::VALID) {
     output = (input_size - ksize + stride) / stride;

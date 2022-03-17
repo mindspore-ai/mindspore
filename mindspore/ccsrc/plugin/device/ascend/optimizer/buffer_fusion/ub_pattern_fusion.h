@@ -35,9 +35,10 @@ class UbPatternFusion : public PassWithSwitch {
   UbPatternFusion() : PassWithSwitch("TbeBufferFusion") {}
   ~UbPatternFusion() override = default;
 
- private:
+ protected:
   bool RunPass(const FuncGraphPtr &graph) override;
 
+ private:
   void GetBufferFusionInfo(session::KernelGraph *kernel_graph,
                            mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) const;
   bool ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos, int64_t fusion_id,
