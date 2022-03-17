@@ -217,7 +217,7 @@ class Custom(ops.PrimitiveWithInfer):
         >>> # In this case, the input func must be a function written in the Hybrid DSL
         >>> # and decorated by @ms_hybrid.
         >>> @ms_hybrid
-        >>> def outer_product_script(a, b):
+        ... def outer_product_script(a, b):
         ...     c = output_tensor(a.shape, a.dtype)
         ...     for i0 in range(a.shape[0]):
         ...         for i1 in range(b.shape[1]):
