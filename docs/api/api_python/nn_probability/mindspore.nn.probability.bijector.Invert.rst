@@ -26,7 +26,7 @@ mindspore.nn.probability.bijector.Invert
 
         **返回：**
 
-        Tensor, 基础Bijector的输入随机变量的值。
+        Tensor，基础Bijector的输入随机变量的值。
 
     .. py:method:: forward_log_jacobian(x)
 
@@ -38,7 +38,7 @@ mindspore.nn.probability.bijector.Invert
 
         **返回：**
 
-        Tensor, 基类逆映射导数的对数值。
+        Tensor，基类逆映射导数的对数值。
 
     .. py:method:: inverse(y)
 
@@ -50,11 +50,11 @@ mindspore.nn.probability.bijector.Invert
 
         **返回：**
 
-        Tensor, 基础Bijector的输出随机变量的值。
+        Tensor，基础Bijector的输出随机变量的值。
 
         **返回：**
 
-        Tensor, 输出随机变量的值。
+        Tensor，输出随机变量的值。
 
     .. py:method:: inverse_log_jacobian(y)
 
@@ -66,5 +66,5 @@ mindspore.nn.probability.bijector.Invert
 
         **返回：**
 
-        Tensor, 基类正映射导数的对数值。
+        Tensor，基类正映射导数的对数值。
 
