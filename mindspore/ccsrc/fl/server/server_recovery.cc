@@ -75,13 +75,18 @@ bool ServerRecovery::Recover() {
     return false;
   }
   uint64_t current_iter = JsonGetKeyWithException<uint64_t>(server_recovery_json, kCurrentIteration);
+  std::string instance_state = JsonGetKeyWithException<std::string>(server_recovery_json, kInstanceState);
+
   LocalMetaStore::GetInstance().set_curr_iter_num(current_iter);
-  MS_LOG(INFO) << "Recover from persistent storage: current iteration number is " << current_iter;
+  LocalMetaStore::GetInstance().set_curr_instance_state(GetInstanceState(instance_state));
+
+  MS_LOG(INFO) << "Recover from persistent storage: current iteration number is " << current_iter
+               << ", instance state is " << instance_state;
   server_recovery_file_.close();
   return true;
 }
 
-bool ServerRecovery::Save(uint64_t current_iter) {
+bool ServerRecovery::Save(uint64_t current_iter, InstanceState instance_state) {
   std::unique_lock<std::mutex> lock(server_recovery_file_mtx_);
   server_recovery_file_.open(server_recovery_file_path_, std::ios::out | std::ios::ate);
   if (!server_recovery_file_.good() || !server_recovery_file_.is_open()) {
@@ -92,6 +97,7 @@ bool ServerRecovery::Save(uint64_t current_iter) {
 
   nlohmann::json server_metadata_json;
   server_metadata_json[kCurrentIteration] = current_iter;
+  server_metadata_json[kInstanceState] = GetInstanceStateStr(instance_state);
   server_recovery_file_ << server_metadata_json;
   server_recovery_file_.close();
   return true;

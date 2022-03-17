@@ -28,9 +28,8 @@ bool IterationMetrics::Initialize() {
   config_ = std::make_unique<ps::core::FileConfiguration>(config_file_path_);
   MS_EXCEPTION_IF_NULL(config_);
   if (!config_->Initialize()) {
-    MS_LOG(WARNING) << "Initializing for metrics failed. Config file path " << config_file_path_
-                    << " may be invalid or not exist.";
-    return false;
+    MS_LOG(EXCEPTION) << "Initializing for metrics failed. Config file path " << config_file_path_
+                      << " may be invalid or not exist.";
   }
 
   // Read the metrics file path. If file is not set or not exits, create one.

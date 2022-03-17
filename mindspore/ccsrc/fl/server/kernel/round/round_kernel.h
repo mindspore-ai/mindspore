@@ -100,6 +100,8 @@ class RoundKernel {
 
   float upload_loss() const;
 
+  bool verifyResponse(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len);
+
  protected:
   // Send response to client, and the data can be released after the call.
   void SendResponseMsg(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len);

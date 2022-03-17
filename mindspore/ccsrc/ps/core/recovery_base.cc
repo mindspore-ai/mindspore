@@ -50,8 +50,10 @@ bool RecoveryBase::Initialize(const std::string &config_json) {
     }
     recovery_storage_ = std::make_unique<FileConfiguration>(storage_file_path);
     MS_EXCEPTION_IF_NULL(recovery_storage_);
-    if (!recovery_storage_->Initialize()) {
-      MS_LOG(WARNING) << "The storage file path " << storage_file_path << " is empty.";
+    if (recovery_storage_->Initialize()) {
+      MS_LOG(INFO) << "The storage file path " << storage_file_path << " initialize success.";
+    } else {
+      return false;
     }
   }
 
@@ -80,8 +82,10 @@ bool RecoveryBase::InitializeNodes(const std::string &config_json) {
   }
   scheduler_recovery_storage_ = std::make_unique<FileConfiguration>(scheduler_storage_file_path);
   MS_EXCEPTION_IF_NULL(scheduler_recovery_storage_);
-  if (!scheduler_recovery_storage_->Initialize()) {
-    MS_LOG(WARNING) << "The scheduler storage file path " << scheduler_storage_file_path << " is empty.";
+  if (scheduler_recovery_storage_->Initialize()) {
+    MS_LOG(INFO) << "The scheduler storage file path " << scheduler_storage_file_path << " initialize success.";
+  } else {
+    return false;
   }
 
   MS_LOG(INFO) << "the scheduler storage file path is:" << scheduler_storage_file_path;

@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include "fl/server/common.h"
 #include "ps/core/recovery_base.h"
 #include "ps/core/file_configuration.h"
 #include "ps/core/communicator/tcp_communicator.h"
@@ -45,7 +46,7 @@ class ServerRecovery : public ps::core::RecoveryBase {
   bool Recover() override;
 
   // Save server's metadata to persistent storage.
-  bool Save(uint64_t current_iter);
+  bool Save(uint64_t current_iter, InstanceState instance_state);
 
   // If this server recovers, need to notify cluster to reach consistency.
   bool SyncAfterRecovery(const std::shared_ptr<ps::core::TcpCommunicator> &communicator, uint32_t rank_id);

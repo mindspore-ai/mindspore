@@ -44,7 +44,7 @@ class Round {
   bool ReInitForScaling(uint32_t server_num);
 
   // After hyper-parameters are updated, some rounds and kernels should be reinitialized.
-  bool ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t updated_time_window);
+  bool ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t updated_time_window, uint32_t server_num);
 
   // Bind a round kernel to this Round. This method should be called after Initialize.
   void BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel);

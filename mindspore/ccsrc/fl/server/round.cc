@@ -94,7 +94,8 @@ bool Round::ReInitForScaling(uint32_t server_num) {
   return true;
 }
 
-bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t updated_time_window) {
+bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t updated_time_window,
+                                         uint32_t server_num) {
   time_window_ = updated_time_window;
   threshold_count_ = updated_threshold_count;
   if (check_count_) {
@@ -105,7 +106,11 @@ bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t 
   }
 
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_, false);
-  kernel_->InitKernel(threshold_count_);
+  if (name_ == "reconstructSecrets") {
+    kernel_->InitKernel(server_num);
+  } else {
+    kernel_->InitKernel(threshold_count_);
+  }
   return true;
 }
 
@@ -189,7 +194,11 @@ bool Round::IsServerAvailable(std::string *reason) {
   // If the server state is Disable or Finish, refuse the request.
   if (Iteration::GetInstance().instance_state() == InstanceState::kDisable ||
       Iteration::GetInstance().instance_state() == InstanceState::kFinish) {
-    MS_LOG(WARNING) << "The server's training job is disabled or finished, please retry " + name_ + " later.";
+    if (kPrintTimes % kPrintTimesThreshold == 0) {
+      MS_LOG(WARNING) << "The server's training job is disabled or finished, please retry " + name_ + " later.";
+      kPrintTimes = 0;
+    }
+    kPrintTimes += 1;
     *reason = ps::kJobNotAvailable;
     return false;
   }
