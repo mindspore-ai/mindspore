@@ -32,7 +32,6 @@
 #endif
 #include "include/backend/visible.h"
 
-using mindspore::kernel::KernelLaunchInfo;
 #ifndef ENABLE_DEBUGGER
 class Debugger;
 #endif
@@ -71,12 +70,11 @@ class E2eDump {
   static void DumpParametersData(uint32_t rank_id, const Debugger *debugger);
 
   static bool DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id,
-                                 const Debugger *debugger = nullptr, const KernelLaunchInfo *launch_info = nullptr);
+                                 const Debugger *debugger = nullptr);
 
   // Dump data when task error.
   static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
-                            std::string *kernel_name, const Debugger *debugger,
-                            const KernelLaunchInfo *launch_info = nullptr);
+                            std::string *kernel_name, const Debugger *debugger);
 
   static void DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                              std::string *kernel_name, const Debugger *debugger);
@@ -93,6 +91,10 @@ class E2eDump {
                                 char *data_ptr);
 #endif
 
+  static bool IsDeviceTargetGPU();
+
+  static bool IsMindRTKernelByKernel();
+
  private:
   static void DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
 
@@ -100,15 +102,13 @@ class E2eDump {
 
   static void DumpInput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
 
-  static void DumpInputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger,
-                                  const KernelLaunchInfo *launch_info = nullptr);
+  static void DumpInputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger);
 
   static void DumpParameters(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
 
-  static void DumpGPUMemToFile(const Debugger *debugger, const std::string &file_path, bool trans_flag,
-                               const device::DeviceAddress &addr, const std::string &original_kernel_name, size_t slot,
-                               const ShapeVector &int_shapes, const TypeId &host_type);
-  static bool IsDeviceTargetGPU();
+  static void DumpMemFromTensorLoaderToFile(const Debugger *debugger, const std::string &file_path,
+                                            const std::string &original_kernel_name, size_t slot);
+
   static void DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
                                 bool trans_flag, const Debugger *debugger);
 

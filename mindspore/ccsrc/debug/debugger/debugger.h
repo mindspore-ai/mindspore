@@ -107,7 +107,7 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
 
   void DumpConstantDataAscend(const KernelGraphPtr &graph);
 
-  void DumpSingleNode(const CNodePtr &node, uint32_t graph_id, const KernelLaunchInfo *launch_info = nullptr);
+  void DumpSingleNode(const CNodePtr &node, uint32_t graph_id);
 
   void DumpInGraphCompiler(const KernelGraphPtr &kernel_graph);
 
@@ -117,9 +117,7 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
 
   void PostExecuteNode(const CNodePtr &kernel, bool last_kernel);
 
-  bool DumpTensorToFile(const std::string &filepath, bool trans_flag, const std::string &host_fmt,
-                        const std::string &addr_format, const std::string &tensor_name, size_t slot,
-                        const std::vector<int64_t> &host_shape, TypeId host_type) const;
+  bool DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) const;
 
   bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev);
 

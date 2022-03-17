@@ -527,10 +527,10 @@ void Debugger::DumpConstantDataAscend(const KernelGraphPtr &graph) {
  * Runtime category: MindRT.
  * Description: Dumps a single node for given graph_id.
  */
-void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id, const KernelLaunchInfo *launch_info) {
+void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     uint32_t rank_id = GetRankID();
-    (void)E2eDump::DumpSingleNodeData(node, graph_id, rank_id, debugger_.get(), launch_info);
+    (void)E2eDump::DumpSingleNodeData(node, graph_id, rank_id, debugger_.get());
   }
 }
 
@@ -1335,11 +1335,8 @@ void Debugger::SendWatchpoints(const std::list<WatchpointHit> &points) {
   }
 }
 
-bool Debugger::DumpTensorToFile(const std::string &filepath, bool trans_flag, const std::string &host_fmt,
-                                const std::string &addr_format, const std::string &tensor_name, size_t slot,
-                                const std::vector<int64_t> &host_shape, TypeId host_type) const {
-  return debug_services_.get()->DumpTensorToFile(filepath, trans_flag, host_fmt, addr_format, tensor_name, slot,
-                                                 host_shape, host_type);
+bool Debugger::DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) const {
+  return debug_services_.get()->DumpTensorToFile(filepath, tensor_name, slot);
 }
 
 bool Debugger::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
@@ -1541,7 +1538,8 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   } else {
     keep_prev = false;
   }
-  bool ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, keep_prev, root_graph_id, false);
+  bool ret =
+    addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, keep_prev, root_graph_id, false, true);
   if (!ret) {
     MS_LOG(ERROR) << "LoadMemToHost:"
                   << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
@@ -1572,7 +1570,7 @@ void Debugger::LoadSingleParameterMindRT(const AnfNodePtr &node) {
   }
   // Keep_prev is True for parameters.
   // force update for parameters.
-  bool ret = device_addr->LoadMemToHost(tensor_name, 0, format, int_shapes, type, 0, true, root_graph_id, true);
+  bool ret = device_addr->LoadMemToHost(tensor_name, 0, format, int_shapes, type, 0, true, root_graph_id, true, true);
   if (!ret) {
     MS_LOG(ERROR) << "LoadMemToHost:"
                   << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
@@ -1702,7 +1700,8 @@ void Debugger::LoadGraphOutputs() {
       auto format = kOpFormat_DEFAULT;
       string tensor_name = kernel_name + ':' + std::to_string(j);
       ShapeVector int_shapes = trans::GetRuntimePaddingShape(node, j);
-      auto ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, root_graph_id, false);
+      auto ret =
+        addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, root_graph_id, false, true);
       if (!ret) {
         MS_LOG(ERROR) << "LoadMemToHost:"
                       << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
