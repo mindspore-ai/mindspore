@@ -35,12 +35,12 @@ inline void *GetMPIAdapterHandle() {
 }
 
 template <class T>
-static T GetMPIAdapterFunc(const char *name) {
+static T GetMPIAdapterFunc(const std::string &name) {
   void *handle = GetMPIAdapterHandle();
   if (handle == nullptr) {
     MS_LOG(EXCEPTION) << "Load lib " << name << " failed, make sure you have installed it!";
   }
-  auto func = reinterpret_cast<T>(dlsym(handle, name));
+  auto func = reinterpret_cast<T>(dlsym(handle, name.c_str()));
   if (func == nullptr) {
     MS_LOG(EXCEPTION) << "Load func " << name << " failed, make sure you have implied it!";
   }
