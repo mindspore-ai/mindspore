@@ -40,7 +40,7 @@ WordIdType Vocab::TokensToIds(const WordType &word) const {
 
 std::vector<WordIdType> Vocab::TokensToIds(const std::vector<WordType> &words) const {
   std::vector<WordIdType> ids;
-  std::transform(words.begin(), words.end(), std::back_inserter(ids), [this](auto w) { return TokensToIds(w); });
+  (void)std::transform(words.begin(), words.end(), std::back_inserter(ids), [this](auto w) { return TokensToIds(w); });
   return ids;
 }
 
@@ -63,13 +63,13 @@ std::vector<WordType> Vocab::IdsToTokens(const std::vector<WordIdType> &ids) {
     }
   }
   std::vector<WordType> words;
-  std::transform(ids.begin(), ids.end(), std::back_inserter(words), [this](auto i) { return IdsToTokens(i); });
+  (void)std::transform(ids.begin(), ids.end(), std::back_inserter(words), [this](auto i) { return IdsToTokens(i); });
   return words;
 }
 
 void Vocab::AppendWord(const std::string &word) {
   if (word2id_.find(word) == word2id_.end()) {
-    word2id_[word] = word2id_.size();
+    word2id_[word] = static_cast<WordIdType>(word2id_.size());
   }
 }
 
@@ -150,7 +150,7 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
   std::unordered_set<std::string> specials;
   // used to check that words in file don't contain any special token that already exists
   for (auto word : special_tokens) {
-    specials.insert(word);
+    (void)specials.insert(word);
   }
   WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
   std::unordered_map<WordType, WordIdType> word2id;

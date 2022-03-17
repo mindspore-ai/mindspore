@@ -19,10 +19,10 @@
 #include "DvppCommon.h"
 #include "CommonDataType.h"
 
-static auto g_resizeConfigDeleter = [](acldvppResizeConfig *p) { acldvppDestroyResizeConfig(p); };
-static auto g_picDescDeleter = [](acldvppPicDesc *picDesc) { acldvppDestroyPicDesc(picDesc); };
-static auto g_roiConfigDeleter = [](acldvppRoiConfig *p) { acldvppDestroyRoiConfig(p); };
-static auto g_jpegeConfigDeleter = [](acldvppJpegeConfig *p) { acldvppDestroyJpegeConfig(p); };
+const static auto g_resizeConfigDeleter = [](acldvppResizeConfig *p) { (void)acldvppDestroyResizeConfig(p); };
+const static auto g_picDescDeleter = [](acldvppPicDesc *picDesc) { (void)acldvppDestroyPicDesc(picDesc); };
+const static auto g_roiConfigDeleter = [](acldvppRoiConfig *p) { (void)acldvppDestroyRoiConfig(p); };
+const static auto g_jpegeConfigDeleter = [](acldvppJpegeConfig *p) { (void)acldvppDestroyJpegeConfig(p); };
 
 DvppCommon::DvppCommon(aclrtContext dvppContext, aclrtStream dvppStream)
     : dvppContext_(dvppContext), dvppStream_(dvppStream) {}
@@ -43,7 +43,7 @@ APP_ERROR DvppCommon::Init(void) {
   APP_ERROR ret = acldvppCreateChannel(dvppChannelDesc_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to create dvpp channel: " << GetAppErrCodeInfo(ret) << ".";
-    acldvppDestroyChannelDesc(dvppChannelDesc_);
+    (void)acldvppDestroyChannelDesc(dvppChannelDesc_);
     dvppChannelDesc_ = nullptr;
     return ret;
   }
@@ -157,7 +157,7 @@ APP_ERROR DvppCommon::DestroyResource() {
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to destroy dvpp channel, ret = " << ret;
     }
-    aclvdecDestroyChannelDesc(vdecChannelDesc_);
+    (void)aclvdecDestroyChannelDesc(vdecChannelDesc_);
     vdecChannelDesc_ = nullptr;
   }
   return ret;
@@ -292,7 +292,7 @@ APP_ERROR DvppCommon::GetVpcOutputStrideSize(uint32_t width, uint32_t height, ac
  * @return: APP_ERR_OK if success, other values if failure
  * @attention: This function can be called only when the DvppCommon object is initialized with Init
  */
-APP_ERROR DvppCommon::VpcResize(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize,
+APP_ERROR DvppCommon::VpcResize(const DvppDataInfo &input, const DvppDataInfo &output, bool withSynchronize,
                                 VpcProcessType processType) {
   // Return special error code when the DvppCommon object is initialized with InitVdec
   if (isVdec_) {
@@ -343,7 +343,7 @@ APP_ERROR DvppCommon::VpcResize(DvppDataInfo &input, DvppDataInfo &output, bool 
  * @param: picsDesc specifies the picture description information to be set
  * @return: APP_ERR_OK if success, other values if failure
  */
-APP_ERROR DvppCommon::SetDvppPicDescData(const DvppDataInfo &dataInfo, acldvppPicDesc &picDesc) {
+APP_ERROR DvppCommon::SetDvppPicDescData(const DvppDataInfo &dataInfo, acldvppPicDesc &picDesc) const {
   APP_ERROR ret = acldvppSetPicDescData(&picDesc, dataInfo.data);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to set data for dvpp picture description, ret = " << ret << ".";
@@ -391,7 +391,7 @@ APP_ERROR DvppCommon::SetDvppPicDescData(const DvppDataInfo &dataInfo, acldvppPi
  * @param: output specifies the output image information
  * @return: APP_ERR_OK if success, other values if failure
  */
-APP_ERROR DvppCommon::CheckResizeParams(const DvppDataInfo &input, const DvppDataInfo &output) {
+APP_ERROR DvppCommon::CheckResizeParams(const DvppDataInfo &input, const DvppDataInfo &output) const {
   if (output.format != PIXEL_FORMAT_YUV_SEMIPLANAR_420 && output.format != PIXEL_FORMAT_YVU_SEMIPLANAR_420 &&
       output.format != PIXEL_FORMAT_RGB_888) {
     MS_LOG(ERROR) << "Output format[" << output.format << "] for VPC is not supported, only NV12 or NV21 or RGB888.";
@@ -456,8 +456,9 @@ APP_ERROR DvppCommon::ResizeProcess(acldvppPicDesc &inputDesc, acldvppPicDesc &o
  * @attention: If the width and height of the crop area are different from those of the
  *             paste area, the image is scaled again
  */
-APP_ERROR DvppCommon::ResizeWithPadding(acldvppPicDesc &inputDesc, acldvppPicDesc &outputDesc, CropRoiConfig &cropRoi,
-                                        CropRoiConfig &pasteRoi, bool withSynchronize) {
+APP_ERROR DvppCommon::ResizeWithPadding(acldvppPicDesc &inputDesc, acldvppPicDesc &outputDesc,
+                                        const CropRoiConfig &cropRoi, const CropRoiConfig &pasteRoi,
+                                        bool withSynchronize) {
   acldvppRoiConfig *cropRoiCfg = acldvppCreateRoiConfig(cropRoi.left, cropRoi.right, cropRoi.up, cropRoi.down);
   if (cropRoiCfg == nullptr) {
     MS_LOG(ERROR) << "Failed to create dvpp roi config for corp area.";
@@ -498,7 +499,7 @@ APP_ERROR DvppCommon::ResizeWithPadding(acldvppPicDesc &inputDesc, acldvppPicDes
  * @return: APP_ERR_OK if success, other values if failure
  */
 void DvppCommon::GetCropRoi(const DvppDataInfo &input, const DvppDataInfo &output, VpcProcessType processType,
-                            CropRoiConfig &cropRoi) {
+                            CropRoiConfig &cropRoi) const {
   // When processType is not VPC_PT_FILL, crop area is the whole input image
   if (processType != VPC_PT_FILL) {
     cropRoi.right = CONVERT_TO_ODD(input.width - ODD_NUM_1);
@@ -520,14 +521,14 @@ void DvppCommon::GetCropRoi(const DvppDataInfo &input, const DvppDataInfo &outpu
     cropRoi.left = 0;
     cropRoi.right = CONVERT_TO_ODD(input.width - ODD_NUM_1);
     cropRoi.up = CONVERT_TO_EVEN(static_cast<uint32_t>((input.height - output.height * resizeRatio) / halfValue));
-    cropRoi.down = CONVERT_TO_ODD(input.height - cropRoi.up - ODD_NUM_1);
+    cropRoi.down = CONVERT_TO_ODD((input.height - cropRoi.up) - ODD_NUM_1);
     return;
   }
 
   cropRoi.up = 0;
   cropRoi.down = CONVERT_TO_ODD(input.height - ODD_NUM_1);
   cropRoi.left = CONVERT_TO_EVEN(static_cast<uint32_t>((input.width - output.width * resizeRatio) / halfValue));
-  cropRoi.right = CONVERT_TO_ODD(input.width - cropRoi.left - ODD_NUM_1);
+  cropRoi.right = CONVERT_TO_ODD((input.width - cropRoi.left) - ODD_NUM_1);
   return;
 }
 
@@ -540,7 +541,7 @@ void DvppCommon::GetCropRoi(const DvppDataInfo &input, const DvppDataInfo &outpu
  * @return: APP_ERR_OK if success, other values if failure
  */
 void DvppCommon::GetPasteRoi(const DvppDataInfo &input, const DvppDataInfo &output, VpcProcessType processType,
-                             CropRoiConfig &pasteRoi) {
+                             CropRoiConfig &pasteRoi) const {
   if (processType == VPC_PT_FILL) {
     pasteRoi.right = CONVERT_TO_ODD(output.width - ODD_NUM_1);
     pasteRoi.down = CONVERT_TO_ODD(output.height - ODD_NUM_1);
@@ -569,13 +570,13 @@ void DvppCommon::GetPasteRoi(const DvppDataInfo &input, const DvppDataInfo &outp
   if (widthRatioLarger) {
     pasteRoi.left = 0;
     pasteRoi.right = output.width - ODD_NUM_1;
-    pasteRoi.up = (output.height - (input.height / resizeRatio)) / halfValue;
-    pasteRoi.down = output.height - pasteRoi.up - ODD_NUM_1;
+    pasteRoi.up = static_cast<uint32_t>((output.height - (input.height / resizeRatio)) / halfValue);
+    pasteRoi.down = (output.height - pasteRoi.up) - ODD_NUM_1;
   } else {
     pasteRoi.up = 0;
     pasteRoi.down = output.height - ODD_NUM_1;
-    pasteRoi.left = (output.width - (input.width / resizeRatio)) / halfValue;
-    pasteRoi.right = output.width - pasteRoi.left - ODD_NUM_1;
+    pasteRoi.left = static_cast<uint32_t>((output.width - (input.width / resizeRatio)) / halfValue);
+    pasteRoi.right = (output.width - pasteRoi.left) - ODD_NUM_1;
   }
 
   // The left must be even and align to 16, up must be even, right and down must be odd which is required by acl
@@ -595,7 +596,7 @@ void DvppCommon::GetPasteRoi(const DvppDataInfo &input, const DvppDataInfo &outp
  * @return: APP_ERR_OK if success, other values if failure
  * @attention: This function can be called only when the DvppCommon object is initialized with Init
  */
-APP_ERROR DvppCommon::CombineResizeProcess(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize,
+APP_ERROR DvppCommon::CombineResizeProcess(DvppDataInfo &input, const DvppDataInfo &output, bool withSynchronize,
                                            VpcProcessType processType) {
   // Return special error code when the DvppCommon object is initialized with InitVdec
   if (isVdec_) {
@@ -638,7 +639,7 @@ APP_ERROR DvppCommon::CombineResizeProcess(DvppDataInfo &input, DvppDataInfo &ou
     return ret;
   }
 
-  aclrtMemset(resizedImage_->data, resizedImage_->dataSize, YUV_GREYER_VALUE, resizedImage_->dataSize);
+  (void)aclrtMemset(resizedImage_->data, resizedImage_->dataSize, YUV_GREYER_VALUE, resizedImage_->dataSize);
   resizedImage_->frameId = input.frameId;
   ret = VpcResize(input, *resizedImage_, withSynchronize, processType);
   if (ret != APP_ERR_OK) {
@@ -686,7 +687,7 @@ APP_ERROR DvppCommon::VpcCrop(const DvppCropInputInfo &cropInput, const DvppData
  * @param: input specifies the image information and the information about the area to be cropped
  * @return: APP_ERR_OK if success, other values if failure
  */
-APP_ERROR DvppCommon::CheckCropParams(const DvppCropInputInfo &input) {
+APP_ERROR DvppCommon::CheckCropParams(const DvppCropInputInfo &input) const {
   APP_ERROR ret;
   uint32_t payloadSize;
   ret = GetVpcDataSize(input.dataInfo.widthStride, input.dataInfo.heightStride, PIXEL_FORMAT_YUV_SEMIPLANAR_420,
@@ -708,8 +709,8 @@ APP_ERROR DvppCommon::CheckCropParams(const DvppCropInputInfo &input) {
   }
 
   // Calculate crop width and height according to the input location
-  uint32_t cropWidth = input.roi.right - input.roi.left + ODD_NUM_1;
-  uint32_t cropHeight = input.roi.down - input.roi.up + ODD_NUM_1;
+  uint32_t cropWidth = (input.roi.right - input.roi.left) + ODD_NUM_1;
+  uint32_t cropHeight = (input.roi.down - input.roi.up) + ODD_NUM_1;
   if ((cropWidth < MIN_CROP_WIDTH) || (cropHeight < MIN_CROP_HEIGHT)) {
     MS_LOG(ERROR) << "Crop area width:" << cropWidth << " need to be larger than 10 and height:" << cropHeight
                   << " need to be larger than 6.";
@@ -774,7 +775,7 @@ APP_ERROR DvppCommon::CropProcess(acldvppPicDesc &inputDesc, acldvppPicDesc &out
  * @return: APP_ERR_OK if success, other values if failure
  * @attention: This function can be called only when the DvppCommon object is initialized with Init
  */
-APP_ERROR DvppCommon::CombineCropProcess(DvppCropInputInfo &input, DvppDataInfo &output, bool withSynchronize) {
+APP_ERROR DvppCommon::CombineCropProcess(DvppCropInputInfo &input, const DvppDataInfo &output, bool withSynchronize) {
   // Return special error code when the DvppCommon object is initialized with InitVdec
   if (isVdec_) {
     MS_LOG(ERROR) << "CombineCropProcess cannot be called by the DvppCommon object which is initialized with InitVdec.";
@@ -831,7 +832,7 @@ APP_ERROR DvppCommon::CombineCropProcess(DvppCropInputInfo &input, DvppDataInfo 
  * @return: APP_ERR_OK if success, other values if failure
  * @attention: This function can be called only when the DvppCommon object is initialized with Init
  */
-APP_ERROR DvppCommon::JpegDecode(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize) {
+APP_ERROR DvppCommon::JpegDecode(const DvppDataInfo &input, const DvppDataInfo &output, bool withSynchronize) {
   // Return special error code when the DvppCommon object is initialized with InitVdec
   if (isVdec_) {
     MS_LOG(ERROR) << "JpegDecode cannot be called by the DvppCommon object which is initialized with InitVdec.";
@@ -869,7 +870,7 @@ APP_ERROR DvppCommon::JpegDecode(DvppDataInfo &input, DvppDataInfo &output, bool
  * @return: APP_ERR_OK if success, other values if failure
  * @attention: This function can be called only when the DvppCommon object is initialized with Init
  */
-APP_ERROR DvppCommon::PngDecode(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize) {
+APP_ERROR DvppCommon::PngDecode(const DvppDataInfo &input, const DvppDataInfo &output, bool withSynchronize) {
   // Return special error code when the DvppCommon object is initialized with InitVdec
   if (isVdec_) {
     MS_LOG(ERROR) << "PngDecode cannot be called by the DvppCommon object which is initialized with InitVdec.";
@@ -1050,8 +1051,8 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
   // Member variable of inputImage_, uint8_t *data will be on device
   inputImage_ = std::make_shared<DvppDataInfo>();
   inputImage_->format = format;
-  APP_ERROR ret =
-    GetJpegImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+  APP_ERROR ret = GetJpegImageInfo(imageInfo.data, static_cast<uint32_t>(imageInfo.lenOfByte), inputImage_->width,
+                                   inputImage_->height, components);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
     return ret;
@@ -1059,7 +1060,7 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
 
   // Get the buffer size(On device) of decode output according to the input data and output format
   uint32_t outBuffSize;
-  ret = GetJpegDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBuffSize);
+  ret = GetJpegDecodeDataSize(imageInfo.data, static_cast<uint32_t>(imageInfo.lenOfByte), format, outBuffSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
     return ret;
@@ -1101,8 +1102,8 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
   return APP_ERR_OK;
 }
 
-APP_ERROR DvppCommon::SinkCombineJpegdProcess(std::shared_ptr<DvppDataInfo> &input,
-                                              std::shared_ptr<DvppDataInfo> &output, bool withSynchronize) {
+APP_ERROR DvppCommon::SinkCombineJpegdProcess(const std::shared_ptr<DvppDataInfo> &input,
+                                              const std::shared_ptr<DvppDataInfo> &output, bool withSynchronize) {
   // Both input and output are locate on device, so we must release them if fail in decode
   APP_ERROR ret = JpegDecode(*input, *output, withSynchronize);
   if (ret != APP_ERR_OK) {
@@ -1116,8 +1117,8 @@ APP_ERROR DvppCommon::SinkCombineJpegdProcess(std::shared_ptr<DvppDataInfo> &inp
   return APP_ERR_OK;
 }
 
-APP_ERROR DvppCommon::SinkCombinePngdProcess(std::shared_ptr<DvppDataInfo> &input,
-                                             std::shared_ptr<DvppDataInfo> &output, bool withSynchronize) {
+APP_ERROR DvppCommon::SinkCombinePngdProcess(const std::shared_ptr<DvppDataInfo> &input,
+                                             const std::shared_ptr<DvppDataInfo> &output, bool withSynchronize) {
   // Both input and output are locate on device, so we must release them if fail in decode
   APP_ERROR ret = PngDecode(*input, *output, withSynchronize);
   if (ret != APP_ERR_OK) {
@@ -1150,8 +1151,8 @@ APP_ERROR DvppCommon::CombinePngdProcess(const RawData &imageInfo, acldvppPixelF
   int32_t components;
   inputImage_ = std::make_shared<DvppDataInfo>();
   inputImage_->format = format;
-  APP_ERROR ret =
-    GetPngImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+  APP_ERROR ret = GetPngImageInfo(imageInfo.data, static_cast<uint32_t>(imageInfo.lenOfByte), inputImage_->width,
+                                  inputImage_->height, components);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
     return ret;
@@ -1159,7 +1160,7 @@ APP_ERROR DvppCommon::CombinePngdProcess(const RawData &imageInfo, acldvppPixelF
 
   // Get the buffer size of decode output according to the input data and output format
   uint32_t outBuffSize;
-  ret = GetPngDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBuffSize);
+  ret = GetPngDecodeDataSize(imageInfo.data, static_cast<uint32_t>(imageInfo.lenOfByte), format, outBuffSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
     return ret;
@@ -1206,7 +1207,7 @@ APP_ERROR DvppCommon::CombinePngdProcess(const RawData &imageInfo, acldvppPixelF
  * @return: APP_ERR_OK if success, other values if failure
  */
 APP_ERROR DvppCommon::TransferYuvDataH2D(const DvppDataInfo &imageinfo) {
-  if (imageinfo.dataSize <= 0) {
+  if (imageinfo.dataSize == 0) {
     MS_LOG(ERROR) << "The input buffer size on host should not be empty.";
     return APP_ERR_COMM_INVALID_PARAM;
   }
@@ -1221,12 +1222,14 @@ APP_ERROR DvppCommon::TransferYuvDataH2D(const DvppDataInfo &imageinfo) {
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy " << imageinfo.dataSize << " bytes from host to device, ret = " << ret << ".";
     RELEASE_DVPP_DATA(device_ptr);
+    device_ptr = nullptr;
     return ret;
   }
   ret = aclrtSynchronizeStream(dvppStream_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
     RELEASE_DVPP_DATA(device_ptr);
+    device_ptr = nullptr;
     return ret;
   }
   /* Important!!! decodedImage_ speifies the image in decoded format(RGB OR YUV)
@@ -1251,7 +1254,7 @@ APP_ERROR DvppCommon::TransferYuvDataH2D(const DvppDataInfo &imageinfo) {
  */
 APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shared_ptr<DvppDataInfo> &jpegInput) {
   // Check image buffer size validity
-  if (imageInfo.lenOfByte <= 0) {
+  if (imageInfo.lenOfByte == 0) {
     MS_LOG(ERROR) << "The input buffer size on host should not be empty.";
     return APP_ERR_COMM_INVALID_PARAM;
   }
@@ -1280,7 +1283,7 @@ APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shar
     return ret;
   }
   jpegInput->data = inDevBuff;
-  jpegInput->dataSize = imageInfo.lenOfByte;
+  jpegInput->dataSize = static_cast<uint32_t>(imageInfo.lenOfByte);
   return APP_ERR_OK;
 }
 
@@ -1304,7 +1307,8 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo, acldvppPixelFormat 
   // Member variable of inputImage_, uint8_t *data will be on device
   inputImage_ = std::make_shared<DvppDataInfo>();
   inputImage_->format = format;
-  ret = GetJpegImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+  ret = GetJpegImageInfo(imageInfo.data, static_cast<uint32_t>(imageInfo.lenOfByte), inputImage_->width,
+                         inputImage_->height, components);
 
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
@@ -1314,7 +1318,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo, acldvppPixelFormat 
   // Get the buffer size(On device) of decode output according to the input data and output format
   uint32_t outBufferSize;
 
-  ret = GetJpegDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBufferSize);
+  ret = GetJpegDecodeDataSize(imageInfo.data, static_cast<uint32_t>(imageInfo.lenOfByte), format, outBufferSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
     return ret;
@@ -1363,7 +1367,8 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo) {
   acldvppPixelFormat format = PIXEL_FORMAT_RGB_888;
   inputImage_->format = format;
 
-  ret = GetPngImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+  ret = GetPngImageInfo(imageInfo.data, static_cast<uint32_t>(imageInfo.lenOfByte), inputImage_->width,
+                        inputImage_->height, components);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
     return ret;
@@ -1372,7 +1377,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo) {
   // Get the buffer size of decode output according to the input data and output format
   uint32_t outBuffSize;
 
-  ret = GetPngDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBuffSize);
+  ret = GetPngDecodeDataSize(imageInfo.data, static_cast<uint32_t>(imageInfo.lenOfByte), format, outBuffSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
     return ret;
@@ -1408,7 +1413,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo) {
  * @param: data specifies the information about the video stream
  * @return: APP_ERR_OK if success, other values if failure
  */
-APP_ERROR DvppCommon::CreateStreamDesc(std::shared_ptr<DvppDataInfo> data) {
+APP_ERROR DvppCommon::CreateStreamDesc(const std::shared_ptr<DvppDataInfo> &data) {
   // Malloc input device memory which need to be released in vdec callback function
   void *modelInBuff = nullptr;
   APP_ERROR ret = acldvppMalloc(&modelInBuff, data->dataSize);
@@ -1422,7 +1427,7 @@ APP_ERROR DvppCommon::CreateStreamDesc(std::shared_ptr<DvppDataInfo> data) {
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory with " << data->dataSize << " bytes from host to device, ret = " << ret
                   << ".";
-    acldvppFree(modelInBuff);
+    (void)acldvppFree(modelInBuff);
     modelInBuff = nullptr;
     return APP_ERR_ACL_FAILURE;
   }
@@ -1454,7 +1459,7 @@ APP_ERROR DvppCommon::CreateStreamDesc(std::shared_ptr<DvppDataInfo> data) {
  * @return: APP_ERR_OK if success, other values if failure
  * @attention: This function can be called only when the DvppCommon object is initialized with InitVdec
  */
-APP_ERROR DvppCommon::CombineVdecProcess(std::shared_ptr<DvppDataInfo> data, void *userData) {
+APP_ERROR DvppCommon::CombineVdecProcess(const std::shared_ptr<DvppDataInfo> data, void *userData) {
   // Return special error code when the DvppCommon object is not initialized with InitVdec
   if (!isVdec_) {
     MS_LOG(ERROR)
@@ -1488,8 +1493,8 @@ APP_ERROR DvppCommon::CombineVdecProcess(std::shared_ptr<DvppDataInfo> data, voi
   }
 
   DvppDataInfo dataInfo;
-  dataInfo.width = vdecConfig_.inputWidth;
-  dataInfo.height = vdecConfig_.inputHeight;
+  dataInfo.width = static_cast<uint32_t>(vdecConfig_.inputWidth);
+  dataInfo.height = static_cast<uint32_t>(vdecConfig_.inputHeight);
   dataInfo.format = vdecConfig_.outFormat;
   dataInfo.dataSize = dataSize;
   dataInfo.data = static_cast<uint8_t *>(picOutBufferDev);
@@ -1521,10 +1526,10 @@ APP_ERROR DvppCommon::VdecSendEosFrame() const {
   }
 
   // set eos for eos stream desc
-  APP_ERROR ret = acldvppSetStreamDescEos(eosStreamDesc, true);
+  APP_ERROR ret = acldvppSetStreamDescEos(eosStreamDesc, 1);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Fail to set eos for stream desc, ret = " << ret << ".";
-    acldvppDestroyStreamDesc(eosStreamDesc);
+    (void)acldvppDestroyStreamDesc(eosStreamDesc);
     return ret;
   }
 
@@ -1532,7 +1537,7 @@ APP_ERROR DvppCommon::VdecSendEosFrame() const {
   ret = aclvdecSendFrame(vdecChannelDesc_, eosStreamDesc, nullptr, nullptr, nullptr);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Fail to send eos, ret = " << ret << ".";
-    acldvppDestroyStreamDesc(eosStreamDesc);
+    (void)acldvppDestroyStreamDesc(eosStreamDesc);
     return ret;
   }
 
@@ -1596,7 +1601,7 @@ APP_ERROR DvppCommon::GetVideoDecodeDataSize(uint32_t width, uint32_t height, ac
  * @return: APP_ERR_OK if success, other values if failure
  * @attention: This function can be called only when the DvppCommon object is initialized with Init
  */
-APP_ERROR DvppCommon::JpegEncode(DvppDataInfo &input, DvppDataInfo &output, acldvppJpegeConfig *jpegeConfig,
+APP_ERROR DvppCommon::JpegEncode(const DvppDataInfo &input, DvppDataInfo &output, acldvppJpegeConfig *jpegeConfig,
                                  bool withSynchronize) {
   // Return special error code when the DvppCommon object is initialized with InitVdec
   if (isVdec_) {
@@ -1631,7 +1636,7 @@ APP_ERROR DvppCommon::JpegEncode(DvppDataInfo &input, DvppDataInfo &output, acld
  * @param: inputImage specifies the input image information
  * @return: APP_ERR_OK if success, other values if failure
  */
-APP_ERROR DvppCommon::GetJpegEncodeStrideSize(std::shared_ptr<DvppDataInfo> &inputImage) {
+APP_ERROR DvppCommon::GetJpegEncodeStrideSize(const std::shared_ptr<DvppDataInfo> &inputImage) {
   uint32_t inputWidth = inputImage->width;
   uint32_t inputHeight = inputImage->height;
   acldvppPixelFormat format = inputImage->format;
@@ -1670,7 +1675,8 @@ APP_ERROR DvppCommon::GetJpegEncodeStrideSize(std::shared_ptr<DvppDataInfo> &inp
  * @return: APP_ERR_OK if success, other values if failure
  * @attention: This function can be called only when the DvppCommon object is initialized with Init
  */
-APP_ERROR DvppCommon::GetJpegEncodeDataSize(DvppDataInfo &input, acldvppJpegeConfig *jpegeConfig, uint32_t &encSize) {
+APP_ERROR DvppCommon::GetJpegEncodeDataSize(const DvppDataInfo &input, const acldvppJpegeConfig *jpegeConfig,
+                                            uint32_t &encSize) {
   // Return special error code when the DvppCommon object is initialized with InitVdec
   if (isVdec_) {
     MS_LOG(ERROR)
@@ -1774,7 +1780,7 @@ APP_ERROR DvppCommon::CombineJpegeProcess(const RawData &imageInfo, uint32_t wid
   ret = acldvppMalloc((void **)&encodedImage_->data, encodedImage_->dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc memory on dvpp, ret = " << ret << ".";
-    acldvppFree(inputImage_->data);
+    (void)acldvppFree(inputImage_->data);
     return ret;
   }
 
@@ -1782,8 +1788,8 @@ APP_ERROR DvppCommon::CombineJpegeProcess(const RawData &imageInfo, uint32_t wid
   ret = JpegEncode(*inputImage_, *encodedImage_, jpegeConfig_.get(), withSynchronize);
   if (ret != APP_ERR_OK) {
     // Release the output buffer when decode failed, otherwise release it after use
-    acldvppFree(inputImage_->data);
-    acldvppFree(encodedImage_->data);
+    (void)acldvppFree(inputImage_->data);
+    (void)acldvppFree(encodedImage_->data);
     return ret;
   }
   return APP_ERR_OK;

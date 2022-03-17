@@ -62,7 +62,7 @@ Status ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &path
     std::optional<std::string> whole_path = "";
     FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
 
-    file_paths_.emplace_back(whole_path.value());
+    (void)file_paths_.emplace_back(whole_path.value());
   }
   return Status::OK();
 }

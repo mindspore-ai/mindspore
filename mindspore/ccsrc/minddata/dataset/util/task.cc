@@ -111,6 +111,7 @@ Status Task::GetTaskErrorIfAny() const {
 Task::Task(const std::string &myName, const std::function<Status()> &f, int32_t operator_id)
     : my_name_(myName),
       operator_id_(operator_id),
+      thread_id_(-1),
       rc_(),
       fnc_obj_(f),
       task_group_(nullptr),

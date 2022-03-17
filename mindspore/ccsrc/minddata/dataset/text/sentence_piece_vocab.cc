@@ -88,7 +88,7 @@ Status SentencePieceVocab::BuildFromFile(const std::vector<std::string> &path_li
   return Status::OK();
 }
 
-Status SentencePieceVocab::SaveModel(const std::shared_ptr<SentencePieceVocab> *vocab, std::string path,
+Status SentencePieceVocab::SaveModel(const std::shared_ptr<SentencePieceVocab> *vocab, const std::string path,
                                      std::string filename) {
   if (vocab == nullptr) {
     RETURN_STATUS_UNEXPECTED("SentencePieceVocab::SaveModel: input vocab can not be null");

@@ -50,7 +50,7 @@ Status CondVar::WaitFor(std::unique_lock<std::mutex> *lck, int64_t duration) {
     if (svc_ != nullptr) {
       // If this cv registers with a global resource tracking, then wait unconditionally.
       auto f = [this]() -> bool { return this->Interrupted(); };
-      cv_.wait_for(*lck, std::chrono::milliseconds(duration), f);
+      (void)cv_.wait_for(*lck, std::chrono::milliseconds(duration), f);
       // If we are interrupted, override the return value if this is the master thread.
       // Master thread is being interrupted mostly because of some thread is reporting error.
       RETURN_IF_NOT_OK(Task::OverrideInterruptRc(this->GetInterruptStatus()));
