@@ -74,6 +74,25 @@ int PadCPUKernel::ReSize() {
   return RET_OK;
 }
 
+std::vector<int> InitPadRegin(std::vector<int> separate_offset, std::vector<int> right_pads, size_t remain_stride_size,
+                              size_t output_separate_stride_size) {
+  /* init pad region */
+  std::vector<int> pad_region;
+  for (size_t i = remain_stride_size; i < output_separate_stride_size; ++i) {
+    // 0: center, 1: left, 2: right
+    int r = 1;
+    if (separate_offset[i] > 0) {
+      r++;
+    }
+    if (right_pads[i] > 0) {
+      r++;
+    }
+    pad_region.emplace_back(r);
+  }
+
+  return pad_region;
+}
+
 void PadCPUKernel::InitMirrorPadBlock() {
   mirror_pad_block_.clear();
   std::vector<int> left_pads(DEFAULT_PAD_NDIMS);
@@ -115,18 +134,9 @@ void PadCPUKernel::InitMirrorPadBlock() {
     right_pads[i] = output_separate_dims[i] - input_separate_dims[i] - separate_offset[i];
   }
   /* init pad region */
-  std::vector<int> pad_region;
-  for (size_t i = remain_stride.size(); i < output_separate_stride.size(); ++i) {
-    // 0: center, 1: left, 2: right
-    int r = 1;
-    if (separate_offset[i] > 0) {
-      r++;
-    }
-    if (right_pads[i] > 0) {
-      r++;
-    }
-    pad_region.emplace_back(r);
-  }
+  std::vector<int> pad_region =
+    InitPadRegin(separate_offset, right_pads, remain_stride.size(), output_separate_stride.size());
+
   std::vector<int> pad_region_stride(pad_region.size());
   int region_size = GetStride(pad_region_stride.data(), pad_region.data(), pad_region.size());
   int remain_dim_offset = static_cast<int>(remain_stride.size());
@@ -206,7 +216,7 @@ int PadCPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_paddi
   return RET_OK;
 }
 
-int PadImpl(const void *cdata, int task_id, float, float) {
+int PadImpl(void *cdata, int task_id, float, float) {
   auto padKernel = reinterpret_cast<const PadCPUKernel *>(cdata);
   int error_code = padKernel->RunImpl(task_id);
   if (error_code != NNACL_OK) {
@@ -228,7 +238,7 @@ int PadCPUKernel::RunImpl(int task_id) const {
   return RET_OK;
 }
 
-int MirrorPadImpl(const void *cdata, int task_id, float, float) {
+int MirrorPadImpl(void *cdata, int task_id, float, float) {
   auto padKernel = reinterpret_cast<const PadCPUKernel *>(cdata);
   int error_code = padKernel->RunMirrorPadImpl(task_id);
   if (error_code != NNACL_OK) {

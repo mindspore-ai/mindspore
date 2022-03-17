@@ -24,7 +24,7 @@ namespace mindspore::kernel {
 #ifdef SERVER_INFERENCE
 constexpr int kMinCostPerThread = 16384;
 #endif
-int GatherRun(const void *cdata, int task_id, float, float) {
+int GatherRun(void *cdata, int task_id, float, float) {
   auto gather_kernel = reinterpret_cast<const GatherBaseCPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {

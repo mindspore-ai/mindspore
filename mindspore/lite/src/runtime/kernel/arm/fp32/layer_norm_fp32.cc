@@ -74,7 +74,7 @@ int LayerNormCPUKernel::DoLayerNorm(int thread_id) const {
   return RET_OK;
 }
 
-int LayerNormRun(const void *cdata, int task_id, float, float) {
+int LayerNormRun(void *cdata, int task_id, float, float) {
   auto kernel = reinterpret_cast<const LayerNormCPUKernel *>(cdata);
   CHECK_NULL_RETURN(kernel);
   auto ret = kernel->DoLayerNorm(task_id);

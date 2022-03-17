@@ -141,17 +141,17 @@ int GluCPUKernel::Mul(int task_id) const {
   return ElementMul(input_addr0 + offset, input_addr1 + offset, output_addr + offset, count);
 }
 
-static int SplitRun(const void *cdata, int task_id, float, float) {
+static int SplitRun(void *cdata, int task_id, float, float) {
   auto g_kernel = reinterpret_cast<const GluCPUKernel *>(cdata);
   return g_kernel->Split(task_id);
 }
 
-static int SigmoidRun(const void *cdata, int task_id, float, float) {
+static int SigmoidRun(void *cdata, int task_id, float, float) {
   auto activation_kernel = reinterpret_cast<const GluCPUKernel *>(cdata);
   return activation_kernel->Sigmoid(task_id);
 }
 
-static int MulRun(const void *cdata, int task_id, float, float) {
+static int MulRun(void *cdata, int task_id, float, float) {
   auto g_kernel = reinterpret_cast<const GluCPUKernel *>(cdata);
   return g_kernel->Mul(task_id);
 }

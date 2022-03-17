@@ -358,7 +358,7 @@ void LstmCPUKernel::InputWeightMatMul(int task_id) const {
             cur_oc, lstm_param_->hidden_size_, OutType_Nhwc);
 }
 
-int LstmInputMulWeightRun(const void *cdata, int task_id, float, float) {
+int LstmInputMulWeightRun(void *cdata, int task_id, float, float) {
   auto kernel = reinterpret_cast<const LstmCPUKernel *>(cdata);
   CHECK_NULL_RETURN(kernel);
   kernel->InputWeightMatMul(task_id);
