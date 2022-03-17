@@ -171,8 +171,6 @@ def csr_mul(x, y):
     Supported Platforms:
         ``GPU`` ``CPU``
     """
-    if x.shape[0] != 1 and y.shape[0] == 1:
-        y = y.expand_as(x)
     return _csr_ops.CSRMul()(x, y)
 
 def csr_div(x, y):
@@ -195,8 +193,6 @@ def csr_div(x, y):
     Supported Platforms:
         ``GPU`` ``CPU``
     """
-    if x.shape[0] != 1 and y.shape[0] == 1:
-        y = y.expand_as(x)
     return _csr_ops.CSRDiv()(x, y)
 
 csr_mv = _csr_ops.CSRMV()
@@ -973,6 +969,7 @@ coo_tensor_get_dense_shape = Primitive('COOTensorGetDenseShape')
 @constexpr
 def print_info(info):
     print(info)
+
 
 def make_sparse_tensor(indices, values, dense_shape):
     """Call make_coo_tensor in this function."""
