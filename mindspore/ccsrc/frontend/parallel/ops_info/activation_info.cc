@@ -230,9 +230,9 @@ Status CumOpBase::GetAttrs() {
   }
 
   if (axis < 0) {
-    axis_ = dim + axis;
+    axis_ = LongToInt(dim + axis);
   } else {
-    axis_ = axis;
+    axis_ = LongToInt(axis);
   }
   MS_LOG(INFO) << name_ << ": The axis is " << axis;
   return SUCCESS;

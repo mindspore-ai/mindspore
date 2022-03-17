@@ -46,7 +46,8 @@ Status InplaceAddInfo::CheckStrategy(const StrategyPtr &strategy) {
 Status InplaceAddInfo::InferDevMatrixShape() {
   dev_matrix_shape_.clear();
 
-  auto x_strategy = strategy_->GetInputDim().at(0);
+  auto strategies = strategy_->GetInputDim();
+  auto x_strategy = strategies.at(0);
   dev_matrix_shape_.assign(x_strategy.begin() + 1, x_strategy.end());
 
   MS_LOG(INFO) << name_ << ": dev matrix: " << ShapeToString(dev_matrix_shape_);
@@ -79,7 +80,7 @@ std::vector<StrategyPtr> InplaceAddInfo::GenerateOpStrategies(int64_t stage_id) 
   Shapes splittable_inputs = inputs_shape_;
   for (size_t i = 0; i < splittable_inputs.size(); ++i) {
     for (size_t j = 0; j < splittable_inputs[i].size(); ++j) {
-      splittable_inputs[i][j] = j;
+      splittable_inputs[i][j] = SizeToLong(j);
     }
   }
   std::vector<StrategyPtr> sp_vector;

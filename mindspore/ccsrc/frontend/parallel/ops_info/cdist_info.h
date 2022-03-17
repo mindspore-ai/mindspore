@@ -45,7 +45,7 @@ class CdistInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
 
  private:
-  size_t input_dims_;
+  size_t input_dims_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -138,7 +138,7 @@ class LogSoftmaxInfo : public Softmax {
 class CumOpBase : public ActivationBase {
  public:
   CumOpBase(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-            const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+            const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
       : ActivationBase(name, inputs_shape, outputs_shape, attrs, cost) {}
   ~CumOpBase() override = default;
 
