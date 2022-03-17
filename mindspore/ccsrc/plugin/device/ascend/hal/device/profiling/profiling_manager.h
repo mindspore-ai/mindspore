@@ -64,7 +64,7 @@ class ProfilingManager {
   Status PluginInit() const;
   void PluginUnInit() const;
   Status CallMsprofReport(NotNull<ReporterData *> reporter_data) const;
-  void QueryHashId(const int32_t &device_id, const std::string &src_str, uint64_t &hash_id);
+  void QueryHashId(const int32_t &device_id, const std::string &src_str, uint64_t *hash_id);
   const struct MsprofCallback &GetMsprofCallback() { return prof_cb_; }
   void SetMsprofCtrlCallback(MsprofCtrlCallback func) { prof_cb_.msprofCtrlCallback = func; }
   void SetMsprofReporterCallback(MsprofReporterCallback func) { prof_cb_.msprofReporterCallback = func; }
