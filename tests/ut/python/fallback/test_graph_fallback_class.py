@@ -18,7 +18,8 @@ import numpy as np
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, context, ms_class
+from mindspore import Tensor, context, ms_class, ms_function
+from . import test_graph_fallback
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -134,6 +135,23 @@ def test_fallback_self_method_tensor():
 
     net = Network()
     out = net()
+    print(out)
+
+
+def test_fallback_import_modules():
+    """
+    Feature: JIT Fallback
+    Description: add_func is defined in test_graph_fallback.py
+    Expectation: No exception.
+    """
+    @ms_function
+    def use_imported_module(x, y):
+        out = test_graph_fallback.add_func(x, y)
+        return out
+
+    x = Tensor(2, dtype=mstype.int32)
+    y = Tensor(3, dtype=mstype.int32)
+    out = use_imported_module(x, y)
     print(out)
 
 
