@@ -1,7 +1,7 @@
 mindspore.ms_class
 ==================
 
-.. py:function:: mindspore.class(cls)
+.. py:function:: mindspore.ms_class(cls)
 
     用户自定义类的类装饰器。
 

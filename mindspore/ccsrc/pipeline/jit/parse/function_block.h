@@ -89,7 +89,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   bool is_dead_block() const { return is_dead_block_; }
   void SetAsDeadBlock();
 
-  const py::dict &global_py_params() { return global_py_params_; }
+  const py::dict &global_py_params() const { return global_py_params_; }
   void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
   void AddGlobalPyParam(const std::string &name, const py::object &obj) { global_py_params_[py::str(name)] = obj; }
   void UpdateGlobalPyParam(const py::dict &symbols) {

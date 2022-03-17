@@ -233,7 +233,7 @@ void Parser::TransformParallelCall() {
       MS_LOG(DEBUG) << "The latter graph is handled before, " << latter_call_graph->ToString();
       continue;
     }
-    latter_call_graphs_set.emplace(latter_call_graph);
+    (void)latter_call_graphs_set.emplace(latter_call_graph);
     auto former_graph_output = former_call_graph->output();
     MS_EXCEPTION_IF_NULL(former_graph_output);
     std::vector<AnfNodePtr> inputs({latter_graph_node});
@@ -241,10 +241,10 @@ void Parser::TransformParallelCall() {
       for (size_t i = 0; i < middle_graph_output_cnode_size - 1; ++i) {
         auto getitem_input = former_call_graph->NewCNodeInOrder(
           {NewValueNode(prim::kPrimTupleGetItem), former_graph_output, NewValueNode(SizeToLong(i))});
-        inputs.emplace_back(getitem_input);
+        (void)inputs.emplace_back(getitem_input);
       }
     } else {
-      inputs.emplace_back(former_graph_output);
+      (void)inputs.emplace_back(former_graph_output);
     }
     auto new_output = former_call_graph->NewCNodeInOrder(std::move(inputs));
     former_call_graph->set_output(new_output);
@@ -1431,11 +1431,11 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   // Record the former, middle, latter graphs info.
   if (true_branch_graphs.second != nullptr && false_branch_graphs.second != nullptr) {
     true_branch_graphs.first = block;
-    parallel_call_graphs_.emplace_back(true_branch_graphs);
+    (void)parallel_call_graphs_.emplace_back(true_branch_graphs);
     MS_LOG(DEBUG) << "Record tail call graphs, true: {former: " << true_branch_graphs.first->func_graph()->ToString()
                   << ", middle: " << true_branch_graphs.second->func_graph()->ToString() << "}";
     false_branch_graphs.first = block;
-    parallel_call_graphs_.emplace_back(false_branch_graphs);
+    (void)parallel_call_graphs_.emplace_back(false_branch_graphs);
     MS_LOG(DEBUG) << "Record tail call graphs, false: {former: " << false_branch_graphs.first->func_graph()->ToString()
                   << ", middle: " << false_branch_graphs.second->func_graph()->ToString() << "}";
   }

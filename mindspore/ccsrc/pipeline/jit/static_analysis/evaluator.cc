@@ -627,7 +627,7 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
                       << -shape_len << "," << shape_len << ").";
   }
   *axis = *axis < 0 ? shape_len + *axis : *axis;
-  int64_t temp_axes_size = orig_shape[*axis];
+  auto temp_axes_size = orig_shape[*axis];
   if (*axis_size == -1) {
     *axis_size = temp_axes_size;
   } else if (*axis_size != temp_axes_size) {
@@ -666,16 +666,17 @@ AbstractBasePtr GetLogicalViewAbs(const AbstractBasePtr &physical_view_abs, cons
     return std::make_shared<AbstractTuple>(logical_view_abs_list);
   }
   ValuePtr in_axis = in_axes;
+  if (!in_axis->isa<Int64Imm>() && !in_axis->isa<None>()) {
+    MS_LOG(EXCEPTION) << "The axis in vmap's `in_axes` should be a None or a scalar of type Int64Imm, but got a "
+                      << in_axis->ToString() << ".";
+  }
   if (in_axis->isa<Int64Imm>()) {
     int axis = dyn_cast<Int64Imm>(in_axis)->value();
     auto logical_view_abs = ReduceDim(&axis, physical_view_abs, axis_size);
     return logical_view_abs;
-  } else if (in_axis->isa<None>()) {
-    return physical_view_abs;
   }
-  MS_LOG(EXCEPTION) << "The axis in vmap's `in_axes` should be a None or a scalar of type Int64Imm, but got a "
-                    << in_axis->ToString() << ".";
-  return nullptr;
+  // in_axis is None.
+  return physical_view_abs;
 }
 
 AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_size) {
@@ -691,7 +692,7 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
                       << -shape_len << "," << shape_len << ").";
   }
   *axis = *axis < 0 ? shape_len + *axis : *axis;
-  orig_shape.insert(orig_shape.begin() + *axis, axis_size);
+  (void)orig_shape.insert(orig_shape.begin() + *axis, axis_size);
   BaseShapePtr new_shape = std::make_shared<abstract::Shape>(orig_shape);
   if (orig_abs->isa<abstract::AbstractTensor>()) {
     out_abs = orig_abs->Clone()->Broaden();
@@ -701,7 +702,6 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
   } else {
     MS_LOG(EXCEPTION) << "The outputs of vmap's `fn` should be consisting of tensors or constants, but got "
                       << orig_abs->ToString() << ".";
-    out_abs = nullptr;
   }
   return out_abs;
 }
@@ -739,7 +739,6 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
         }
         MS_LOG(EXCEPTION) << "The axis in vmap's `out_axes` should be a None or a scalar of type Int64Imm, but got a "
                           << sub_out_axes->ToString() << ".";
-        return nullptr;
       });
     if (logical_view_abs->isa<AbstractList>()) {
       return std::make_shared<AbstractList>(physical_view_abs_list);

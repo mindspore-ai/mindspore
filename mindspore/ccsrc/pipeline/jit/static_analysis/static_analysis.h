@@ -68,8 +68,8 @@ class EvalResult : public Base {
   EvalResult(const AbstractBasePtr &abs, const AttrValueMapPtr &attr) : abstract_(abs), attribute_(attr) {}
   ~EvalResult() override = default;
   MS_DECLARE_PARENT(EvalResult, Base);
-  const AbstractBasePtr &abstract() { return abstract_; }
-  const AttrValueMapPtr &attribute() { return attribute_; }
+  const AbstractBasePtr &abstract() const { return abstract_; }
+  const AttrValueMapPtr &attribute() const { return attribute_; }
 
  private:
   AbstractBasePtr abstract_;

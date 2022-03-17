@@ -425,6 +425,5 @@ std::string TypedPrimitiveAbstractClosure::ToString() const {
   buffer << "}, output: " << output_->ToString() << ")";
   return buffer.str();
 }
-
 }  // namespace abstract
 }  // namespace mindspore
