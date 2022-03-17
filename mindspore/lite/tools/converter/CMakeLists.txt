@@ -223,12 +223,19 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
     target_link_libraries(converter_lite PRIVATE opencl_kernel_mid)
 endif()
 
+if(MSLITE_ENABLE_FP16)
+    target_link_libraries(converter_lite PRIVATE
+        nnacl_fp16_mid
+        )
+endif()
+
 target_link_libraries(converter_lite PRIVATE
         ccsrc_src_mid
         converter_src_mid
         cpu_ops_mid
         nnacl_mid
         cpu_kernel_mid
+        cast_for_converter_mid
         tflite_parser_mid
         tf_parser_mid
         caffe_parser_mid

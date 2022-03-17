@@ -7,6 +7,14 @@ file(GLOB KERNEL_SRC
 if(NOT MSLITE_ENABLE_RUNTIME_PASS)
   list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp32/shape_fusion_fp32.cc)
 endif()
+
+if(PLATFORM_ARM AND MSLITE_ENABLE_FP16)
+    list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp32/cast_for_converter_fp32.cc)
+endif()
+
+add_library(cast_for_converter_mid OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/fp32/cast_for_converter_fp32.cc)
+add_dependencies(cast_for_converter_mid fbs_src)
+
 if(MSLITE_ENABLE_INT8)
     file(GLOB INT8_KERNEL_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.cc
