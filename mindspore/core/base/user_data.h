@@ -52,7 +52,7 @@ class UserData {
     if (value == nullptr) {
       (void)data_->erase(key);
     } else {
-      data_->insert_or_assign(key, value);
+      (void)data_->insert_or_assign(key, value);
     }
   }
 

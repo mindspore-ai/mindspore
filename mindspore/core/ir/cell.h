@@ -91,7 +91,7 @@ class MS_CORE_API Cell final : public Named {
   /// \brief Get mixed precision type.
   ///
   /// \return The mixed precision type.
-  enum MixedPrecisionType GetMixedPrecisionType() { return mixed_type_; }
+  MixedPrecisionType GetMixedPrecisionType() const { return mixed_type_; }
 
   /// \brief Set mixed precision type.
   ///
