@@ -25,6 +25,16 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kAxisN = 0;
+constexpr size_t kAxisC = 1;
+constexpr size_t kAxisH = 2;
+constexpr size_t kAxisW = 3;
+
+constexpr size_t kAxisUp = 0;
+constexpr size_t kAxisLeft = 1;
+constexpr size_t kAxisDown = 2;
+constexpr size_t kAxisRight = 3;
+
 nvinfer1::ITensor *ToShape(LayerInput *input, const std::vector<size_t> &shape,
                            std::shared_ptr<TrtConverterContext> context) {
   MS_EXCEPTION_IF_NULL(input);
@@ -141,12 +151,13 @@ ConvertResult AddPoolingLayer(AnfNodePtr node, std::shared_ptr<TrtConverterConte
   }
 
   const auto &kernel_size = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "kernel_size");
-  auto *layer = context->network()->addPoolingNd(
-    *(inputs[0].tensor()), pooling_type, nvinfer1::DimsHW{LongToInt(kernel_size[2]), LongToInt(kernel_size[3])});
+  auto *layer =
+    context->network()->addPoolingNd(*(inputs[0].tensor()), pooling_type,
+                                     nvinfer1::DimsHW{LongToInt(kernel_size[kAxisH]), LongToInt(kernel_size[kAxisW])});
   MS_EXCEPTION_IF_NULL(layer);
 
   const auto &strides = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
-  layer->setStride(nvinfer1::DimsHW{LongToInt(strides[2]), LongToInt(strides[3])});
+  layer->setStride(nvinfer1::DimsHW{LongToInt(strides[kAxisH]), LongToInt(strides[kAxisW])});
 
   auto pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(node, "pad_mode");
   std::transform(pad_mode.begin(), pad_mode.end(), pad_mode.begin(), toupper);
@@ -276,7 +287,7 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2D) {
   MS_EXCEPTION_IF_NULL(layer);
 
   const auto &strides = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "stride");
-  layer->setStride(nvinfer1::DimsHW{LongToInt(strides[2]), LongToInt(strides[3])});
+  layer->setStride(nvinfer1::DimsHW{LongToInt(strides[kAxisH]), LongToInt(strides[kAxisW])});
 
   auto pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(node, "pad_mode");
   std::transform(pad_mode.begin(), pad_mode.end(), pad_mode.begin(), toupper);
@@ -286,8 +297,8 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2D) {
 
   if (pad_mode == "PAD") {
     const auto &pad_list = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "pad_list");
-    layer->setPrePadding(nvinfer1::DimsHW{LongToInt(pad_list[0]), LongToInt(pad_list[2])});
-    layer->setPostPadding(nvinfer1::DimsHW{LongToInt(pad_list[1]), LongToInt(pad_list[3])});
+    layer->setPrePadding(nvinfer1::DimsHW{LongToInt(pad_list[kAxisUp]), LongToInt(pad_list[kAxisDown])});
+    layer->setPostPadding(nvinfer1::DimsHW{LongToInt(pad_list[kAxisLeft]), LongToInt(pad_list[kAxisRight])});
   }
 
   const auto &group = common::AnfAlgo::GetNodeAttr<int64_t>(node, "group");
@@ -729,7 +740,7 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2DBackpropInput) {
   MS_EXCEPTION_IF_NULL(layer);
 
   const auto &strides = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "stride");
-  layer->setStride(nvinfer1::DimsHW{LongToInt(strides[2]), LongToInt(strides[3])});
+  layer->setStride(nvinfer1::DimsHW{LongToInt(strides[kAxisH]), LongToInt(strides[kAxisW])});
 
   auto pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(node, "pad_mode");
   std::transform(pad_mode.begin(), pad_mode.end(), pad_mode.begin(), toupper);
@@ -740,8 +751,8 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2DBackpropInput) {
   if (pad_mode == "PAD") {
     const auto &pad_list = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "pad_list");
     layer->setPaddingMode(nvinfer1::PaddingMode::kEXPLICIT_ROUND_DOWN);
-    layer->setPrePadding(nvinfer1::DimsHW{LongToInt(pad_list[0]), LongToInt(pad_list[2])});
-    layer->setPostPadding(nvinfer1::DimsHW{LongToInt(pad_list[1]), LongToInt(pad_list[3])});
+    layer->setPrePadding(nvinfer1::DimsHW{LongToInt(pad_list[kAxisUp]), LongToInt(pad_list[kAxisDown])});
+    layer->setPostPadding(nvinfer1::DimsHW{LongToInt(pad_list[kAxisLeft]), LongToInt(pad_list[kAxisRight])});
   }
 
   return {true, {layer->getOutput(0)}};

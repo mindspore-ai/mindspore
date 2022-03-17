@@ -89,7 +89,7 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetNodeUserList(const F
     return output_node_list;
   }
   auto output_info_list = iter->second;
-  std::copy(output_info_list.begin(), output_info_list.end(), std::back_inserter(*output_node_list));
+  (void)std::copy(output_info_list.begin(), output_info_list.end(), std::back_inserter(*output_node_list));
   return output_node_list;
 }
 
@@ -150,7 +150,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
         if (!used_node->isa<CNode>()) {
           continue;
         }
-        utils::cast<CNodePtr>(used_node)->set_input(used_node_list->at(j).second, second_depend_node);
+        utils::cast<CNodePtr>(used_node)->set_input(IntToSize(used_node_list->at(j).second), second_depend_node);
       }
     }
   }
