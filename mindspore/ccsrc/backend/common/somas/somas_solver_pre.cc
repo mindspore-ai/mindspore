@@ -191,7 +191,6 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
     Log(graph, tensors, pConstraints, continuous_v);
   } catch (const std::exception &e) {
     MS_LOG(EXCEPTION) << "SomasSolver::Solving FAILED: " << e.what();
-    ret = FAILED;
   }
   return ret;
 }

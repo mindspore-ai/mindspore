@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_SOLVER_PRE_H_
 
 #include <algorithm>
-#include <cassert>
 #include <cstddef>
 #include <cstring>
 #include <iostream>
@@ -72,7 +71,7 @@ class DynamicBitSet {
   inline size_t GetIndex(size_t index) const { return index / bit_width_; }
 
   inline uint64_t GetBitMask(size_t index) const {
-    return (((uint64_t)0x1) << (bit_width_ - 1 - (index % bit_width_)));
+    return (((uint64_t)0x1) << ((bit_width_ - 1) - (index % bit_width_)));
   }
 
   inline void Reset(uint64_t val) {
@@ -184,7 +183,7 @@ class SomasSolverPre {
   SomasSolverPre(const SomasSolverPre &) = delete;
   SomasSolverPre &operator=(const SomasSolverPre &) = delete;
 
-  size_t GetMaxOffset() { return max_offset_; }
+  size_t GetMaxOffset() const { return max_offset_; }
 
   Status Solving(const session::KernelGraph *graph, TensorsDescMap *tensors,
                  const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,

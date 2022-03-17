@@ -44,7 +44,7 @@ namespace somas {
 class Interval {
  public:
   Interval() { m_a_ = m_b_ = 0; }
-  explicit Interval(SomasSolverTensorDescPtr t) {
+  explicit Interval(const SomasSolverTensorDescPtr t) {
     m_a_ = t->offset_;
     m_b_ = m_a_ + t->size_;
   }
@@ -68,8 +68,8 @@ class Interval {
   }
   size_t &lb() { return m_a_; }
   size_t &ub() { return m_b_; }
-  bool contains(size_t width) { return (m_b_ - m_a_) >= width; }
-  bool contains(const Interval &a) { return ((a.m_a_ >= m_a_) && (a.m_b_ <= m_b_)); }
+  bool contains(size_t width) const { return (m_b_ - m_a_) >= width; }
+  bool contains(const Interval &a) const { return ((a.m_a_ >= m_a_) && (a.m_b_ <= m_b_)); }
   Interval &operator=(const Interval &in) {
     if (this == &in) {
       return *this;
@@ -140,7 +140,7 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
   std::shared_ptr<FootPrint> &Next() { return m_foot_print_next_; }
   vector<BlockTensor *> &getStarts() { return m_starts_; }
   void Destroy();
-  const size_t getOffset() { return m_offset_; }
+  const size_t getOffset() const { return m_offset_; }
   void setOffset(const size_t &offset) { m_offset_ = offset; }
   bool findOffset(const std::vector<DynamicBitSet> *constraints, const BlockTensor &block, size_t *offset);
   void Merge(vector<Interval> *l_interval, stack<Interval> *l_merged);

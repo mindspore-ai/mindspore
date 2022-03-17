@@ -225,7 +225,6 @@ bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, const std::shared
 
   std::shared_ptr<FootPrint> p = foot_print;
   bool bpushed = false;
-  uint32_t startscount = 0;
   size_t offset = foot_print->getOffset();
   m_tensors_allocated_ = 0;
   SomasSolverTensorDescPtr tensor = nullptr;
@@ -248,7 +247,6 @@ bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, const std::shared
     while (!bpushed) {
       if (p->findOffset(pConstraints, block, &offset)) {
         p->addElem(&block, offset);
-        startscount++;
         tensor = block.m_start_tensor_;
         while (tensor) {
           m_tensors_allocated_++;

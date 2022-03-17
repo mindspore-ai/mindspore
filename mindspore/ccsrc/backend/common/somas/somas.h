@@ -45,10 +45,10 @@ class Somas {
   Somas() = default;
   Somas(const Somas &) = delete;
   Somas &operator=(const Somas &) = delete;
-  ~Somas() = default;
+  ~Somas() { mem_base_addr_ = nullptr; }
 
   bool Allocate(const session::KernelGraph *graph);
-  size_t GetTotalMemSize() const { return mem_offset_; }
+  const size_t GetTotalMemSize() const { return mem_offset_; }
   void set_mem_base_addr(uint8_t *mem_base_addr) { mem_base_addr_ = mem_base_addr; }
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
