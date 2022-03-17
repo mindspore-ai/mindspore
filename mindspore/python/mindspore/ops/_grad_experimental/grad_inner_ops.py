@@ -15,12 +15,13 @@
 
 """inner_ops"""
 
-from mindspore.ops import operations as P
 from .._grad.grad_base import bprop_getters
 from ..operations import _inner_ops as inner
 from ..operations import _grad_ops as G
 from .. import functional as F
+from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from ...common import dtype as mstype
 
 
 @bprop_getters.register(inner.TensorCopySlices)
@@ -74,5 +75,25 @@ def get_bprop_parallel_resize_bilinear(self):
     def bprop(x, size, out, dout):
         dx = grad(dout, x, size)
         return dx, zeros_like(size)
+
+    return bprop
+
+
+@bprop_getters.register(inner.FillV2)
+def get_bprop_fill_v2(self):
+    """Generate bprop for FillV2"""
+    sum_op = P.ReduceSum()
+    cast_op = P.Cast()
+
+    def bprop(shape, value, out, dout):
+        dout_type = F.dtype(dout)
+        type_list = [mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                     mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64, mstype.float16]
+        if dout_type in type_list:
+            dout = cast_op(dout, mstype.float32)
+        if dout_type == mstype.float64:
+            dout = cast_op(dout, mstype.float32)
+        dvalue = sum_op(dout)
+        return zeros_like(shape), cast_op(dvalue, dout_type)
 
     return bprop

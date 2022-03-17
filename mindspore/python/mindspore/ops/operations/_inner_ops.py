@@ -29,6 +29,50 @@ from ...common.parameter import Parameter
 from ...communication.management import GlobalComm
 
 
+class FillV2(Primitive):
+    """
+    Creates a tensor filled with a scalar value.
+
+    Creates a tensor with shape described by the first argument and fills it with values in the second argument.
+
+    Inputs:
+        - **shape** (tensor) - The specified shape of output tensor. The shape of the input1 must be 1D and
+          the data type of the input1 must be int32 or int64.
+        - **value** (tensor) - Value to fill the returned tensor. The shape of the input2 must be 0D and
+          the data type of the input2 must be one of the following types:
+          bool, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32, float64.
+
+    Outputs:
+        A tensor, has the same type and shape as input value.
+
+    Raises:
+        ValueError: If `shape` is not a 1D tensor.
+        TypeError: If the data type of `shape` is not int32 or int64.
+        ValueError: If `value` is not a 0D tensor.
+        ValueError: If the number of output elements is greater than 1000000.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> fillV2 = ops.FillV2()
+        >>> output = fillV2(Tensor([2, 3], mindspore.int32), Tensor(1, mindspore.float32))
+        >>> print(output)
+        [[1. 1. 1.]
+         [1. 1. 1.]]
+        >>> output = fillV2(Tensor([3, 3], mindspore.int64), Tensor(0, mindspore.int32))
+        >>> print(output)
+        [[0 0 0]
+         [0 0 0]
+         [0 0 0]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize FillV2"""
+        self.add_prim_attr("max_length", 1000000)
+
+
 class ExtractImagePatches(PrimitiveWithInfer):
     """
     Extracts patches from images.
