@@ -213,7 +213,6 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
     input_desc_list_tmp.emplace_back(optional_input_desc);
   }
   std::vector<nlohmann::json> input_desc_list;
-  // TODO(jjf): error when reordered op have input not in input_nodes.
   TbeAdapter::InputOrderPass<nlohmann::json>(cnode, input_desc_list_tmp, &input_desc_list);
   (*compute_json)[kJInputDesc] = input_desc_list;
   return true;

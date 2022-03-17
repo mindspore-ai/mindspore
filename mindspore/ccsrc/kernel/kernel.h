@@ -187,7 +187,7 @@ class KernelMod {
   explicit KernelMod(const AnfNodePtr &anf_node_ptr) : anf_node_(anf_node_ptr) {}
   virtual ~KernelMod() = default;
 
-  bool Launch(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
+  bool LaunchKernel(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
     return Launch(kernel_launch_address.inputs_, kernel_launch_address.workspaces_, kernel_launch_address.outputs_,
                   stream_ptr);
   }

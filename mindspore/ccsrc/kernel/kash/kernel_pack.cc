@@ -25,6 +25,7 @@
 #include "kernel/common_utils.h"
 namespace mindspore {
 namespace kernel {
+constexpr size_t kJsonSuffixLength = 5;
 namespace {
 bool CheckHash(const std::string &json_file, const std::string &bin_file, const nlohmann::json &js) {
   if (js.find("sha256") == js.end()) {
@@ -108,7 +109,7 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   }
 
   if (processor == kProcessorCuda) {
-    std::string bin_f = json_f.substr(0, json_f.length() - 5) + ".ptx";
+    std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + ".ptx";
     std::ifstream kernelbin(bin_f);
     if (!kernelbin.is_open()) {
       MS_LOG(ERROR) << "read kernel ptx file error, please check kernelmeta.";
@@ -140,7 +141,7 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   }
 
   std::string binfile_suffix = js["binFileSuffix"];
-  std::string bin_f = json_f.substr(0, json_f.length() - 5) + binfile_suffix;
+  std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + binfile_suffix;
   if (binfile_suffix == ".so") {
     // change "xx/xx.so" -> "xx/libxx.so"
     auto sp = bin_f.rfind('/');
@@ -234,7 +235,7 @@ bool KernelPack::LoadKernelMeta(const std::string &json_f) {
   }
   ParseKernelJson(js);
 
-  std::string bin_f = json_f.substr(0, json_f.length() - 5) + kernel_json_info_.bin_file_suffix;
+  std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + kernel_json_info_.bin_file_suffix;
   if (kernel_json_info_.bin_file_suffix == ".so") {
     // change "xx/xx.so" -> "xx/libxx.so"
     auto sp = bin_f.rfind('/');

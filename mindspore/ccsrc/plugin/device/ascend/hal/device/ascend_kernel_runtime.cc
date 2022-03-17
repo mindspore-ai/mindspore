@@ -365,7 +365,7 @@ bool AscendKernelRuntime::Init() {
   return true;
 }
 
-bool AscendKernelRuntime::LoadData(const session::KernelGraph & /* graph */) {
+bool AscendKernelRuntime::LoadData(const session::KernelGraph &) {
 #ifdef ENABLE_DEBUGGER
   MS_LOG(INFO) << "Start load step";
   MS_EXCEPTION_IF_NULL(debugger_);

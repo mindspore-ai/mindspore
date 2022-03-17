@@ -180,7 +180,7 @@ void TbeKernelSelect::GetBroadcastPatternKernelInfo(const OpInfo &op_info) {
 void TbeKernelSelect::GetReducePatternKernelInfo(const OpInfo &op_info) {
   auto reduce_selecter = TbeKernelReduceSelecter(cnode_ptr_);
   SupportFormat support_format;
-  reduce_selecter.GetShapeInfo(&support_format);
+  (void)reduce_selecter.GetShapeInfo(&support_format);
   (void)reduce_selecter.IsReduceSupport5HD(&support_format);
   (void)reduce_selecter.IsReduceSupportFracZ(&support_format);
   (void)reduce_selecter.IsReduceSupportC1HWNCoC0(&support_format);

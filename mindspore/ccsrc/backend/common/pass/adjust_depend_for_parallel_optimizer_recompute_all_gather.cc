@@ -20,6 +20,7 @@
 
 namespace mindspore {
 namespace opt {
+constexpr const int64_t kFusionGap = 2;
 bool AdjustDependForParallelOptimizerRecomputeAllGather::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   mindspore::HashMap<int64_t, bool> forward_allgather_recompute_value_in_fusion_group;
@@ -81,12 +82,14 @@ void AdjustDependForParallelOptimizerRecomputeAllGather::IncreaseAllgatherFusion
     MS_LOG(WARNING) << "Increase the duplicated allgather fusion id";
     for (auto &adjust_node : parallel_optimizer_recompute_first_fusion_allgathers) {
       int64_t current_fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
-      int64_t destination_fusion_id = current_fusion_id + unrecompute_max_fusion_id - recompute_min_fusion_id + 2;
+      int64_t destination_fusion_id =
+        current_fusion_id + unrecompute_max_fusion_id - recompute_min_fusion_id + kFusionGap;
       common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(destination_fusion_id), adjust_node);
     }
     for (auto &adjust_node : parallel_optimizer_recompute_allgathers) {
       int64_t current_fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
-      int64_t destination_fusion_id = current_fusion_id + unrecompute_max_fusion_id - recompute_min_fusion_id + 2;
+      int64_t destination_fusion_id =
+        current_fusion_id + unrecompute_max_fusion_id - recompute_min_fusion_id + kFusionGap;
       common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(destination_fusion_id), adjust_node);
     }
   }

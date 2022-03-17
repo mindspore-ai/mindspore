@@ -24,7 +24,6 @@
 namespace mindspore {
 namespace opt {
 void MatmulEltwiseFusionPass::MatchMatmulEltwise(const CNodePtr &cnode, const AnfNodePtr &relu_input,
-                                                 const session::KernelGraph & /* kernel_graph */,
                                                  FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
@@ -62,7 +61,7 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
       auto eltwise_input = cnode->input(kIndex1);
       MS_EXCEPTION_IF_NULL(eltwise_input);
       if (eltwise_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimMatMul)) {
-        MatchMatmulEltwise(cnode, eltwise_input, kernel_graph, candidate_fusion);
+        MatchMatmulEltwise(cnode, eltwise_input, candidate_fusion);
       }
     }
   }

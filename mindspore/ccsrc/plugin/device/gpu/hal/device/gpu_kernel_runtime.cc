@@ -903,7 +903,7 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     KernelLaunchInfo kernel_launch_info;
     GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
     MS_EXCEPTION_IF_NULL(stream_);
-    auto ret = kernel_mod->Launch(kernel_launch_info, stream_);
+    auto ret = kernel_mod->LaunchKernel(kernel_launch_info, stream_);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed.";
       return false;

@@ -81,7 +81,7 @@ void HcclDynamicKernel::StaticShapeExecute() {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   KernelLaunchInfo kernel_launch_info;
   KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_launch_info);
-  kernel_mod->Launch(kernel_launch_info, stream_);
+  kernel_mod->LaunchKernel(kernel_launch_info, stream_);
 }
 
 void HcclDynamicKernel::Execute() {

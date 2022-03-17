@@ -24,8 +24,8 @@
 
 namespace mindspore {
 namespace opt {
-void BatchMatmulDropoutDoMaskV3FusionPass::MatchBatchMatmulDropoutDoMaskV3(
-  const CNodePtr &cnode, const session::KernelGraph & /* kernel_graph */, FusedNodeRecord *candidate_fusion) {
+void BatchMatmulDropoutDoMaskV3FusionPass::MatchBatchMatmulDropoutDoMaskV3(const CNodePtr &cnode,
+                                                                           FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto batch_matmul = cnode->input(1);
@@ -50,7 +50,7 @@ void BatchMatmulDropoutDoMaskV3FusionPass::MatchSingleFusionPattern(const sessio
     MS_EXCEPTION_IF_NULL(cnode);
 
     if (common::AnfAlgo::GetCNodeName(cnode) == kDropoutDoMaskV3OpName) {
-      MatchBatchMatmulDropoutDoMaskV3(cnode, kernel_graph, candidate_fusion);
+      MatchBatchMatmulDropoutDoMaskV3(cnode, candidate_fusion);
     }
   }
 }

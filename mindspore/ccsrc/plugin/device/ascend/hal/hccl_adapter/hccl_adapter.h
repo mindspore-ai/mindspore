@@ -106,6 +106,7 @@ class HcclAdapter {
   bool FinalizeHcclExec();
 
   HcclMode GetCurrentHcclMode() const;
+  void CheckExcutionMode() const;
   static std::string GetHcclModeString(HcclMode hccl_mode);
 
   void *plugin_handle_ = nullptr;
