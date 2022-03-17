@@ -147,6 +147,9 @@ void PrepareDataForValue(const ValuePtr &value, const KernelWithIndex &node_with
   } else if (value->isa<Int32Imm>()) {
     type = kNumberTypeInt32;
     (reinterpret_cast<int32_t *>(host_addr.get()))[0] = GetValue<int32_t>(value);
+  } else if (value->isa<FloatImm>()) {
+    type = kNumberTypeFloat;
+    (reinterpret_cast<float *>(host_addr.get()))[0] = GetValue<float>(value);
   } else if (value->isa<Monad>()) {
     return;
   } else {
