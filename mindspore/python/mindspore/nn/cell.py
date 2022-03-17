@@ -1285,6 +1285,7 @@ class Cell(Cell_):
             ...         out = self.conv(x)
             ...         return out
             >>> names = []
+            >>> n = Net()
             >>> for m in n.cells_and_names():
             ...     if m[0]:
             ...         names.append(m[0])
