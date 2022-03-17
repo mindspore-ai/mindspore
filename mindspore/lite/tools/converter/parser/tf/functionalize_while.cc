@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ mindspore::ValueNodePtr GetWhileAnfPrim() {
   while_primc->set_cond_subgraph_index(mindspore::opt::FunctionalizeControlOpPass::GetSubgraphIndex());
   while_primc->set_body_subgraph_index(mindspore::opt::FunctionalizeControlOpPass::GetSubgraphIndex());
   mindspore::ValueNodePtr partial_anf_prim = NewValueNode(while_primc);
+  MS_CHECK_TRUE_MSG(partial_anf_prim != nullptr, nullptr, "new partial_anf_prim failed.");
   return partial_anf_prim;
 }
 }  // namespace
@@ -56,6 +57,7 @@ CNodePtr FunctionalizeWhile::BlongToWhichEnter(const CNodePtr &node) {
 
 CNodePtr FunctionalizeWhile::BlongToWhichExternalEnter(const CNodePtr &node) {
   if (node == nullptr) {
+    MS_LOG(ERROR) << "node is null,search node belong to which external enter failed.";
     return nullptr;
   }
   if (FunctionalizeControlOpPass::IsEnter(node)) {
@@ -99,6 +101,7 @@ CNodePtr FunctionalizeWhile::BlongToWhichExternalEnter(const CNodePtr &node) {
 int FunctionalizeWhile::PosInInputEnterNodes(const CNodePtr &node) {
   auto index = std::find(input_enter_nodes_.begin(), input_enter_nodes_.end(), node);
   if (index == input_enter_nodes_.end()) {
+    MS_LOG(WARNING) << "not found pos in input enter nodes.";
     return POS_INVALID;
   }
   return index - input_enter_nodes_.begin();
@@ -186,7 +189,7 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeOutput() {
       auto enter_node = BlongToWhichExternalEnter(merge_node);
       CHECK_NULL_RETURN(enter_node);
       int pos = PosInInputEnterNodes(enter_node);
-      if (pos == -1) {
+      if (pos == POS_INVALID) {
         MS_LOG(ERROR) << "not find in input enter nodes.";
         return RET_ERROR;
       }

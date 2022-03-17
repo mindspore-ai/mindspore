@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,6 +129,10 @@ STATUS SetFloatTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
       tensor_data[i] = tensor_proto.float_val(0);
     }
   }
+  if (INT_MUL_OVERFLOW_THRESHOLD(shape_size, sizeof(float), SIZE_MAX)) {
+    MS_LOG(ERROR) << "data_size overflow.";
+    return RET_ERROR;
+  }
   if (tensor_proto.tensor_content().size() == shape_size * sizeof(float)) {
     const auto addr = reinterpret_cast<const float *>(tensor_proto.tensor_content().data());
     if (::memcpy_s(tensor_data, (*tensor_info)->Size(), addr, shape_size * sizeof(float)) != EOK) {
@@ -163,6 +167,10 @@ STATUS SetInt32TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
     for (int i = 0; i < shape_size; i++) {
       tensor_data[i] = tensor_proto.int_val(0);
     }
+  }
+  if (INT_MUL_OVERFLOW_THRESHOLD(shape_size, sizeof(int32_t), SIZE_MAX)) {
+    MS_LOG(ERROR) << "data_size overflow.";
+    return RET_ERROR;
   }
   if (shape_size != 0 && tensor_proto.tensor_content().size() == shape_size * sizeof(int32_t)) {
     const auto addr = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
@@ -206,6 +214,10 @@ STATUS SetInt64TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
     }
   } else {
     const auto origin_data = reinterpret_cast<const int64_t *>(tensor_proto.tensor_content().data());
+    if (INT_MUL_OVERFLOW_THRESHOLD(shape_size, sizeof(int64_t), SIZE_MAX)) {
+      MS_LOG(ERROR) << "data_size overflow.";
+      return RET_ERROR;
+    }
     MS_CHECK_GE(tensor_proto.tensor_content().size(), shape_size * sizeof(int64_t), RET_ERROR);
     for (int i = 0; i < shape_size; ++i) {
       if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
@@ -279,7 +291,10 @@ STATUS SetStringTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::
     delete tensor_data;
     return RET_ERROR;
   }
-
+  if (INT_ADD_OVERFLOW(shape_str.size(), (*tensor_data).size())) {
+    MS_LOG(ERROR) << "data_size overflow.";
+    return RET_ERROR;
+  }
   shape_vector = {static_cast<int64_t>(shape_str.size() + (*tensor_data).size())};
   *tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kObjectTypeString);
   if (*tensor_info == nullptr) {
@@ -490,6 +505,7 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(const std::vector<const tensor
     if (!have_data_depend) {
       CHECK_NULL_RETURN(anf_graph);
       auto parameter = anf_graph->add_parameter();
+      CHECK_NULL_RETURN(parameter);
       if (ConvertParameter(*node, parameter, anf_node_map, root_graph) != RET_OK) {
         MS_LOG(ERROR) << "convert Parameter Node failed";
         return RET_ERROR;

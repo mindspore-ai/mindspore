@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ ops::PrimitiveC *TFLinSpaceParser::Parse(const tensorflow::NodeDef &tf_op,
   for (int i = 0; i < tf_op.input_size(); ++i) {
     auto status = AddOpInput(tf_op, i, inputs);
     if (status != RET_OK) {
+      MS_LOG(ERROR) << "add op input failed.";
       return nullptr;
     }
   }

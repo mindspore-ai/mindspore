@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,7 @@ bool FunctionalizeControlOpPass::Run(const FuncGraphPtr &func_graph) {
 CNodePtr FunctionalizeControlOpPass::BelongToWhichNode(const CNodePtr &node, const AimFunc &aim_func,
                                                        const FilterFunc &filter_func) {
   if (node == nullptr) {
+    MS_LOG(ERROR) << "node is null,search node belong to which node failed.";
     return nullptr;
   }
   if (aim_func(node)) {
