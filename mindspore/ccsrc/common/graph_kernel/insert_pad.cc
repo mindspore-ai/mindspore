@@ -229,8 +229,8 @@ void UpdateMatmulInfo(const AnfNodePtr &matmul_node, const vec &unpad_shape, con
   std::vector<TypeId> input_types = AnfAlgo::GetAllInputDeviceTypes(matmul_node);
   std::vector<std::string> output_formats = AnfAlgo::GetAllOutputFormats(matmul_node);
   std::vector<TypeId> output_types = AnfAlgo::GetAllOutputDeviceTypes(matmul_node);
-  auto graph_sel_info =
-    BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types, matmul_node);
+  auto graph_sel_info = BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types,
+                                                   AnfAlgo::GetProcessor(matmul_node));
   AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, matmul_node.get());
 }
 

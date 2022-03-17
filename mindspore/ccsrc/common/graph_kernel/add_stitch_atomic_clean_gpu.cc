@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,15 +52,8 @@ void StitchAtomicCleanInsertter::CorrectKernelBuildInfo(
   new_inputs_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
   new_inputs_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
 
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder new_info_builder;
-  new_info_builder.SetInputsFormat(new_inputs_format);
-  new_info_builder.SetInputsDeviceType(new_inputs_type);
-  new_info_builder.SetOutputsFormat(new_outputs_format);
-  new_info_builder.SetOutputsDeviceType(new_outputs_type);
-  new_info_builder.SetProcessor(origin_processor);
-  new_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  new_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
-  auto new_selected_info = new_info_builder.Build();
+  auto new_selected_info = BuildSelectKernelBuildInfo(new_inputs_format, new_inputs_type, new_outputs_format,
+                                                      new_outputs_type, origin_processor);
   AnfAlgo::SetSelectKernelBuildInfo(new_selected_info, composite_node.get());
 }
 
@@ -124,7 +117,7 @@ void StitchAtomicCleanInsertter::ProcessOriginCNode(
   for (const auto &[user_node, index] : reduce_user_nodes) {
     auto user_cnode = user_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(user_cnode);
-    user_cnode->set_input(static_cast<size_t>(index), parameter);
+    user_cnode->set_input(IntToSize(index), parameter);
     if (!connected) {
       std::vector<std::pair<AnfNodePtr, int>> user_user = FindInnerCNodeUsers(stitch_node_, user_cnode);
       if (!user_user.empty()) {
@@ -154,8 +147,8 @@ std::vector<std::pair<AnfNodePtr, int>> StitchAtomicCleanInsertter::FindInnerCNo
   }
   std::vector<std::pair<AnfNodePtr, int>> inner_user_nodes;
   auto users = mng_sub->node_users()[target];
-  std::transform(users.cbegin(), users.cend(), std::back_inserter(inner_user_nodes),
-                 [](const std::pair<AnfNodePtr, int> &pair) { return pair; });
+  (void)std::transform(users.cbegin(), users.cend(), std::back_inserter(inner_user_nodes),
+                       [](const std::pair<AnfNodePtr, int> &pair) { return pair; });
   return inner_user_nodes;
 }
 

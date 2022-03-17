@@ -57,11 +57,12 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
 kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::string> &inputs_format,
                                                       const std::vector<TypeId> &inputs_type,
                                                       const std::vector<std::string> &output_formats,
-                                                      const std::vector<TypeId> &output_types, const AnfNodePtr &node);
+                                                      const std::vector<TypeId> &output_types);
 kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::string> &inputs_format,
                                                       const std::vector<TypeId> &inputs_type,
                                                       const std::vector<std::string> &output_formats,
-                                                      const std::vector<TypeId> &output_types);
+                                                      const std::vector<TypeId> &output_types,
+                                                      const kernel::Processor &processor);
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc);
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc,
                    std::map<std::string, AnfNodePtr> *address_node_map);

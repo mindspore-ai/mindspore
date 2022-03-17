@@ -24,7 +24,7 @@
 #include "debug/anf_ir_dump.h"
 
 namespace mindspore::graphkernel {
-void GraphKernelPassManager::AddPass(const opt::PassPtr &pass, unsigned int pass_level, bool supported_device) {
+void GraphKernelPassManager::Add(const opt::PassPtr &pass, unsigned int pass_level, bool supported_device) {
   MS_EXCEPTION_IF_NULL(pass);
   auto pass_id = passes_.size();
   auto pass_name = pass->name();

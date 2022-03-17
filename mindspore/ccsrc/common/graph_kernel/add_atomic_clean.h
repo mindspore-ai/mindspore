@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ class AtomicAddChecker {
   std::vector<AtomicAddInfo> GetAtomicAddInfo() { return atomic_add_infos_; }
 
  protected:
-  virtual bool SuitableForAtomicAdd(const AnfNodePtr &node) { return false; }
+  virtual bool SuitableForAtomicAdd(const AnfNodePtr &) { return false; }
   virtual bool FindCandidate(const AnfNodePtr &anf_node);
   virtual bool CanActivateAtomicAdd(const AnfNodePtr &anf_node);
   std::vector<AtomicAddInfo> atomic_add_infos_;

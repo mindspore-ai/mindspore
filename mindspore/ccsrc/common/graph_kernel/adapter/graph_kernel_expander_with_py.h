@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,18 @@
 
 namespace mindspore::graphkernel {
 class PyExpander : public DefaultExpander {
+ public:
+  virtual ~PyExpander() = default;
+
  protected:
   virtual bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
   FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node) override;
 };
 
 class ComplexOpExpander : public PyExpander {
+ public:
+  virtual ~ComplexOpExpander() = default;
+
  protected:
   bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
 };

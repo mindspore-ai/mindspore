@@ -33,7 +33,7 @@ class GraphKernelPassManager : public PassManager {
   ~GraphKernelPassManager() = default;
 
   // Add graph pass, the pass object will be freed when pass manager freed.
-  virtual void AddPass(const opt::PassPtr &pass, unsigned int pass_level, bool default_enable = true);
+  void Add(const opt::PassPtr &pass, unsigned int pass_level, bool default_enable = true);
 
   // Run passes on the func_graph
   bool Run(const FuncGraphPtr &func_graph) const override;

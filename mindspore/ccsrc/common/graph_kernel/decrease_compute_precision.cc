@@ -74,7 +74,8 @@ void UpdateOutputInfo(const AnfNodePtr &cnode) {
     }
     std::vector<std::string> output_formats = AnfAlgo::GetAllOutputFormats(cnode);
     std::vector<TypeId> output_types = {TypeId::kNumberTypeFloat16};
-    auto graph_sel_info = BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types, cnode);
+    auto graph_sel_info = BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types,
+                                                     AnfAlgo::GetProcessor(cnode));
     AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, cnode.get());
   }
 }

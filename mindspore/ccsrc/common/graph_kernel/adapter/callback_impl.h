@@ -23,6 +23,7 @@
 namespace mindspore::graphkernel {
 class CallbackImpl : public Callback {
  public:
+  virtual ~CallbackImpl() = default;
   ShapeVector GetInputShape(const AnfNodePtr &node, size_t i) override;
   ShapeVector GetOutputShape(const AnfNodePtr &node, size_t i) override;
   ShapeVector GetInputInferShape(const AnfNodePtr &node, size_t i) override;
