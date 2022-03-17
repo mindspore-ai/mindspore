@@ -43,6 +43,7 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 using CNodeKey = void *;
+using GroupGraphMap = std::map<std::string, std::map<uint32_t, std::vector<CNodePtr>>>;
 const uint32_t kInvalidStreamId = UINT32_MAX;
 const uint32_t kInvalidEventId = UINT32_MAX;
 enum StreamActiveKind { kInvalid = 0, kHead, kMiddle, kTail };
@@ -57,32 +58,32 @@ class AscendStreamAssign {
   AscendStreamAssign &operator=(const AscendStreamAssign &) = delete;
 
   void AssignStream(const NotNull<KernelGraphPtr> &graph_ptr);
-  void GetHcomStreams(std::vector<uint32_t> *streams);
   void GetWaitStreams(vector<uint32_t> *wait_active_stream_list);
+  void GetHcomStreams(std::vector<uint32_t> *streams);
   void AssignStreamForNonTaskSink(const std::vector<CNodePtr> &kernels);
   const std::vector<std::vector<uint32_t>> &get_stream_group() const { return stream_groups_; }
   const std::map<CNodePtr, CNodePtr> &get_event_map() const { return event_map_; }
-  uint32_t max_stream_count();
-  uint32_t max_task_count();
 
  private:
   AscendStreamAssign() = default;
   ~AscendStreamAssign() = default;
-  void GetMaxStreamTaskNum();
-  void Reset();
+
+  void AssignAllNodesStream(const NotNull<KernelGraphPtr> &graph_ptr);
+  std::set<uint32_t> AssignNodeStreamInOrder(const std::vector<CNodePtr> node_list);
+  void ClassifyNodeByKernel(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<CNodePtr> *common_list,
+                            std::vector<CNodePtr> *hcom_list, std::vector<CNodePtr> *independent_list);
+  void ClassifyNodeByGroupAndGraph(const std::vector<CNodePtr> hcom_list, GroupGraphMap *group_graph_map);
+  void ClassifyNodeByGraph(const std::vector<CNodePtr> indepent_list,
+                           std::map<uint32_t, std::vector<CNodePtr>> *graph_node_map);
+  uint32_t GetNodeTaskNum(const CNodePtr &cnode);
+
   CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
   CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
   void CheckResourceAssign(const NotNull<KernelGraphPtr> &graph_ptr);
   void CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_ptr);
   void CheckEventAssign(const NotNull<KernelGraphPtr> &graph_ptr);
-  void AssignAllNodesStream(const NotNull<KernelGraphPtr> &graph_ptr);
-  void AssignCommonStreamId(const CNodePtr &cur_cnode_ptr);
-  void AssignHcom(const NotNull<KernelGraphPtr> &graph_ptr);
-  uint32_t AssignHcomStreamId(const CNodePtr &cur_cnode_ptr, bool new_graph);
-  void AssignIndependent(const NotNull<KernelGraphPtr> &graph_ptr);
-  uint32_t AssignIndependentStreamId(const CNodePtr &cur_cnode_ptr, bool new_graph);
+
   void UpdateAtomicAddrCleanStreamId(const NotNull<KernelGraphPtr> &graph_ptr);
-  void FindHcomParallelStreams(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActive(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActiveForCommon(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActiveForIndependent(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -92,7 +93,6 @@ class AscendStreamAssign {
                                   const std::set<uint32_t> &independent_streams);
   void ActiveOtherGraphParallel(const NotNull<KernelGraphPtr> &graph_ptr,
                                 std::map<uint32_t, std::set<uint32_t>> other_graph);
-  bool CheckStreamSwitch(const CNodePtr &switch_ptr);
   void InsertEventForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertCtrlForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventForHcomParallel(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -134,11 +134,11 @@ class AscendStreamAssign {
   bool IsTaskSink();
   bool IsHcom(const CNodePtr &cur_cnode_ptr);
   bool IsIndependentNode(const CNodePtr &node_ptr);
-  bool IsProcessedStream(uint32_t stream_id);
   vector<CNodePtr>::iterator FindTargetOp(vector<CNodePtr>::iterator begin, vector<CNodePtr>::iterator end,
                                           const CNodePtr &node, bool exclude_hcom);
-  void GetParallelStream(uint32_t cur_stream_id, uint32_t stream_acitve_id, std::vector<uint32_t> *parallel_streams);
   void SetLoopSink();
+  void GetMaxStreamTaskNum();
+  void Reset();
 
   // function for memory reuse
   void GetStreamRelations();
@@ -165,12 +165,10 @@ class AscendStreamAssign {
   bool hcom_stream_activated_{false};
   bool loop_sink_{false};
 
-  // key:stream id, value:node number
-  std::map<uint32_t, uint32_t> common_stream_map_{};
-  // key:stream id, value:node number
-  std::map<uint32_t, uint32_t> independent_stream_map_{};
   // key:stream id, value:task number
-  std::map<uint32_t, uint32_t> hcom_stream_map_{};
+  std::set<uint32_t> common_stream_{};
+  std::set<uint32_t> independent_stream_{};
+  std::set<uint32_t> hcom_stream_{};
 
   std::set<uint32_t> processed_streams_{};
   std::vector<uint32_t> need_first_active_streams_{};
@@ -189,7 +187,6 @@ class AscendStreamAssign {
   std::set<uint32_t> middle_active_streams_{};
   // new policy end
   bool IsAllOutGraphOut(const KernelGraphPtr &graph, const CNodePtr &cnode);
-  vector<CNodePtr>::iterator FindGraphEnd(vector<CNodePtr>::iterator begin, vector<CNodePtr>::iterator end);
 
   uint32_t max_stream_count_ = 0;
   uint32_t max_task_count_ = 0;

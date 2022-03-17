@@ -24,10 +24,6 @@ namespace ascend {
 void AscendLabelAssign::AssignLabel(NotNull<std::shared_ptr<session::KernelGraph>> graph) {}
 uint32_t AscendLabelAssign::GetLabelNum(NotNull<const session::KernelGraph *> graph) { return 1; }
 uint32_t AscendLabelAssign::GetLabelNum(NotNull<std::shared_ptr<session::KernelGraph>> graph) { return 1; }
-
-uint32_t AscendStreamAssign::max_stream_count() { return 1; }
-uint32_t AscendStreamAssign::max_task_count() { return 1; }
-
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) { return; }
 
 void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_list) { return; }

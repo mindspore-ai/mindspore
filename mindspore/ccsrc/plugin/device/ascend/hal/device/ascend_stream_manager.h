@@ -44,6 +44,14 @@ class AscendStreamMng {
     }
   }
 
+  void DeleteStream() {
+    if (!cur_stream_num_) {
+      MS_LOG(WARNING) << " total stream num is 0, no stream to delete";
+    } else {
+      --cur_stream_num_;
+    }
+  }
+
   uint32_t cur_stream_num() const { return cur_stream_num_; }
 
   uint32_t GetCurAllocStreamId() {
