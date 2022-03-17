@@ -241,7 +241,7 @@ MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum Dat
       {DataType::kNumberTypeFloat32, 4}, {DataType::kNumberTypeFloat64, 8},
     };
 
-    if (ret->ElementNum() * TypeByte[type] != size) {
+    if (LongToSize(ret->ElementNum()) * TypeByte[type] != size) {
       ifs.close();
       MS_LOG(ERROR) << "Tensor data size: " << LongToSize(ret->ElementNum()) * TypeByte[type]
                     << " not match input data length: " << size;

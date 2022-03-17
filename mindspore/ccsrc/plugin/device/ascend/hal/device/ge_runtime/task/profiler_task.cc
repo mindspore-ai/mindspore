@@ -40,8 +40,7 @@ void ProfilerTask::Distribute() {
   if (rt_model_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtModelGetId failed, ret: " << rt_model_ret;
   }
-  uint64_t new_model_id = 0;
-  new_model_id = static_cast<uint64_t>(model_id);
+  auto new_model_id = static_cast<uint64_t>(model_id);
   // The first step index, here keep same with ge
   uint64_t first_step_index = 1;
   if (task_info_->log_id() > static_cast<size_t>(std::numeric_limits<uint16_t>::max())) {

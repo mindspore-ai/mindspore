@@ -64,7 +64,7 @@ std::vector<MSTensor> AclGraphImpl::GetOutputs() {
   return model_process_.GetOutputs();
 }
 
-Status AclGraphImpl::LoadAclModel(Buffer om_data) {
+Status AclGraphImpl::LoadAclModel(const Buffer om_data) {
   MS_LOG(INFO) << "Start load acl model.";
   // acl load model
   uint32_t acl_model_id;

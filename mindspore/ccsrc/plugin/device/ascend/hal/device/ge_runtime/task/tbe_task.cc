@@ -47,6 +47,8 @@ TbeTask::~TbeTask() {
       MS_LOG(ERROR) << "Call rt api rtFree failed, ret: " << rt_ret;
     }
     args_ = nullptr;
+    stub_func_ = nullptr;
+    stream_ = nullptr;
   }
 }
 

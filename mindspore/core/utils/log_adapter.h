@@ -235,7 +235,7 @@ class MS_CORE_API LogWriter {
                        excp_type) ^                                                                                    \
     mindspore::LogStream()
 
-inline bool IS_OUTPUT_ON(enum MsLogLevel level) {
+inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
   return (static_cast<int>(level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] &&
           static_cast<int>(level) <= static_cast<int>(mindspore::this_thread_max_log_level));
 }
