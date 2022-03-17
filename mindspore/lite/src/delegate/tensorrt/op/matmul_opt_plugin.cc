@@ -24,10 +24,6 @@
 #include "NvInferRuntimeCommon.h"
 
 namespace mindspore::lite {
-const char *MATMUL_OPT_PLUGIN_VERSION{"1"};
-const char *MATMUL_OPT_PLUGIN_NAME{"MatmulOptPluginCreater"};
-nvinfer1::PluginFieldCollection MatmulOptPluginCreater::field_collection_{};
-std::vector<nvinfer1::PluginField> MatmulOptPluginCreater::fields_;
 REGISTER_TENSORRT_PLUGIN(MatmulOptPluginCreater);
 
 // MatmulOptPlugin
@@ -75,11 +71,6 @@ nvinfer1::DimsExprs MatmulOptPlugin::getOutputDimensions(int outputIndex, const 
   return out_dims;
 }
 
-bool MatmulOptPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
-                                                int nbOutputs) noexcept {
-  return true;
-}
-
 void MatmulOptPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
                                       const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {
   bias_index_ = (nbInputs == INPUT_SIZE3) ? kBiasIndex : -1;
@@ -92,22 +83,6 @@ void MatmulOptPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *i
                     ? CUBLAS_COMPUTE_32F_FAST_16BF
                     : CUBLAS_COMPUTE_32F;
 }
-
-size_t MatmulOptPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int nbInputs,
-                                         const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept {
-  return 0;
-}
-
-nvinfer1::DataType MatmulOptPlugin::getOutputDataType(int index, const nvinfer1::DataType *inputTypes,
-                                                      int nbInputs) const noexcept {
-  return inputTypes[0];
-}
-
-const char *MatmulOptPlugin::getPluginType() const noexcept { return MATMUL_OPT_PLUGIN_NAME; }
-
-const char *MatmulOptPlugin::getPluginVersion() const noexcept { return MATMUL_OPT_PLUGIN_VERSION; }
-
-int MatmulOptPlugin::getNbOutputs() const noexcept { return 1; }
 
 int MatmulOptPlugin::initialize() noexcept {
   if (cublas_handle_ == nullptr) {
@@ -133,28 +108,6 @@ void MatmulOptPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &b_trans_, sizeof(bool));
 }
 
-void MatmulOptPlugin::destroy() noexcept {
-  // This gets called when the network containing plugin is destroyed
-  delete this;
-}
-
-void MatmulOptPlugin::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *MatmulOptPlugin::getPluginNamespace() const noexcept { return name_space_.c_str(); }
-
-// MatmulOptPluginCreater
-MatmulOptPluginCreater::MatmulOptPluginCreater() {
-  // Fill PluginFieldCollection with PluginField arguments metadata
-  field_collection_.nbFields = fields_.size();
-  field_collection_.fields = fields_.data();
-}
-
-const char *MatmulOptPluginCreater::getPluginName() const noexcept { return MATMUL_OPT_PLUGIN_NAME; }
-
-const char *MatmulOptPluginCreater::getPluginVersion() const noexcept { return MATMUL_OPT_PLUGIN_VERSION; }
-
-const nvinfer1::PluginFieldCollection *MatmulOptPluginCreater::getFieldNames() noexcept { return &field_collection_; }
-
 nvinfer1::IPluginV2 *MatmulOptPluginCreater::createPlugin(const char *name,
                                                           const nvinfer1::PluginFieldCollection *fc) noexcept {
   const nvinfer1::PluginField *fields = fc->fields;
@@ -172,8 +125,4 @@ nvinfer1::IPluginV2 *MatmulOptPluginCreater::deserializePlugin(const char *name,
   MS_LOG(DEBUG) << name << " is deserialize as a_trans: " << a_trans << ", b_trans: " << b_trans;
   return new (std::nothrow) MatmulOptPlugin(name, a_trans, b_trans);
 }
-
-void MatmulOptPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *MatmulOptPluginCreater::getPluginNamespace() const noexcept { return name_space_.c_str(); }
 }  // namespace mindspore::lite

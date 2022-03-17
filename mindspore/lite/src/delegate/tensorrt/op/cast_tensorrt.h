@@ -18,9 +18,11 @@
 #include <string>
 #include <vector>
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
+#include "src/delegate/tensorrt/op/tensorrt_plugin.h"
 #include "src/delegate/tensorrt/cuda_impl/cast.cuh"
 
 namespace mindspore::lite {
+constexpr char *CAST_PLUGIN_NAME{"CastPluginCreater"};
 class CastTensorRT : public TensorRTOp {
  public:
   CastTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -38,74 +40,42 @@ class CastTensorRT : public TensorRTOp {
  private:
   // CastTensorRT
 };
-class CastPluginCreater : public nvinfer1::IPluginCreator {
- public:
-  CastPluginCreater();
 
-  const char *getPluginName() const noexcept override;
-
-  const char *getPluginVersion() const noexcept override;
-
-  const nvinfer1::PluginFieldCollection *getFieldNames() noexcept override;
-
-  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept override;
-
-  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData,
-                                         size_t serialLength) noexcept override;
-
-  void setPluginNamespace(const char *pluginNamespace) noexcept override;
-
-  const char *getPluginNamespace() const noexcept override;
-
- private:
-  static nvinfer1::PluginFieldCollection field_collection_;
-  static std::vector<nvinfer1::PluginField> fields_;
-  std::string name_space_;
-};
-
-class CastPlugin : public nvinfer1::IPluginV2DynamicExt {
+class CastPlugin : public TensorRTPlugin {
  public:
   CastPlugin(const std::string name, nvinfer1::DataType origin_datatype, nvinfer1::DataType dest_datatype)
-      : layer_name_(name), origin_datatype_(origin_datatype), dest_datatype_(dest_datatype) {}
+      : TensorRTPlugin(name, std::string(CAST_PLUGIN_NAME)),
+        origin_datatype_(origin_datatype),
+        dest_datatype_(dest_datatype) {}
 
   // It doesn't make sense to make GeluPluginDynamic without arguments, so we delete
   // default constructor.
   CastPlugin() = delete;
 
-  // IPluginV2DynamicExt Methods
   nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
-  nvinfer1::DimsExprs getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs *inputs, int nbInputs,
-                                          nvinfer1::IExprBuilder &exprBuilder) noexcept override;
-  bool supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
-                                 int nbOutputs) noexcept override;
-  void configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
-                       const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept override;
-  size_t getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int nbInputs,
-                          const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept override;
+
   int enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
               const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) noexcept override;
 
-  // IPluginV2Ext Methods
   nvinfer1::DataType getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
     noexcept override;
 
-  // IPluginV2 Methods
-  const char *getPluginType() const noexcept override;
-  const char *getPluginVersion() const noexcept override;
-  int getNbOutputs() const noexcept override;
-  int initialize() noexcept override;
-  void terminate() noexcept override;
   size_t getSerializationSize() const noexcept override;
   void serialize(void *buffer) const noexcept override;
-  void destroy() noexcept override;
-  void setPluginNamespace(const char *pluginNamespace) noexcept override;
-  const char *getPluginNamespace() const noexcept override;
 
  private:
-  const std::string layer_name_;
-  std::string name_space_;
   nvinfer1::DataType origin_datatype_;
   nvinfer1::DataType dest_datatype_;
+};
+
+class CastPluginCreater : public TensorRTPluginCreater {
+ public:
+  CastPluginCreater() : TensorRTPluginCreater(std::string(CAST_PLUGIN_NAME)) {}
+
+  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept override;
+
+  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData,
+                                         size_t serialLength) noexcept override;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_CAST_TENSORRT_H_

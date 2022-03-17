@@ -20,10 +20,6 @@
 #include "NvInferRuntimeCommon.h"
 
 namespace mindspore::lite {
-const char *REDUCESCATTER_PLUGIN_VERSION{"1"};
-const char *REDUCESCATTER_PLUGIN_NAME{"ReduceScatterPluginCreater"};
-nvinfer1::PluginFieldCollection ReduceScatterPluginCreater::field_collection_{};
-std::vector<nvinfer1::PluginField> ReduceScatterPluginCreater::fields_;
 REGISTER_TENSORRT_PLUGIN(ReduceScatterPluginCreater);
 
 int ReduceScatterTensorRT::IsSupport(const schema::Primitive *primitive,
@@ -76,41 +72,6 @@ int ReduceScatterTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-// ReduceScatterPluginCreater
-ReduceScatterPluginCreater::ReduceScatterPluginCreater() {
-  // Fill PluginFieldCollection with PluginField arguments metadata
-  field_collection_.nbFields = fields_.size();
-  field_collection_.fields = fields_.data();
-}
-
-const char *ReduceScatterPluginCreater::getPluginName() const noexcept { return REDUCESCATTER_PLUGIN_NAME; }
-
-const char *ReduceScatterPluginCreater::getPluginVersion() const noexcept { return REDUCESCATTER_PLUGIN_VERSION; }
-
-const nvinfer1::PluginFieldCollection *ReduceScatterPluginCreater::getFieldNames() noexcept {
-  return &field_collection_;
-}
-
-nvinfer1::IPluginV2 *ReduceScatterPluginCreater::createPlugin(const char *name,
-                                                              const nvinfer1::PluginFieldCollection *fc) noexcept {
-  const nvinfer1::PluginField *fields = fc->fields;
-  schema::ReduceMode red_mode = static_cast<const schema::ReduceMode *>(fields[0].data)[0];
-  int rank = static_cast<const int *>(fields[1].data)[0];
-  MS_LOG(DEBUG) << "createPlugin: " << name << " of rank: " << rank;
-  return new (std::nothrow) ReduceScatterPlugin(name, red_mode, rank);
-}
-nvinfer1::IPluginV2 *ReduceScatterPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                                   size_t serialLength) noexcept {
-  int rank = GetGPUGroupSize();
-  schema::ReduceMode red_mode;
-  DeserializeValue(&serialData, &serialLength, &red_mode, sizeof(schema::ReduceMode));
-  MS_LOG(DEBUG) << name << " is deserialize as rank: " << rank << ", red_mode: " << red_mode;
-  return new (std::nothrow) ReduceScatterPlugin(name, red_mode, rank);
-}
-void ReduceScatterPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *ReduceScatterPluginCreater::getPluginNamespace() const noexcept { return name_space_.c_str(); }
-
 // ReduceScatterPlugin
 int ReduceScatterPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc,
                                  const nvinfer1::PluginTensorDesc *outputDesc, const void *const *inputs,
@@ -150,46 +111,26 @@ nvinfer1::DimsExprs ReduceScatterPlugin::getOutputDimensions(int outputIndex, co
   return out_dims;
 }
 
-bool ReduceScatterPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc,
-                                                    int nbInputs, int nbOutputs) noexcept {
-  return true;
-}
-
-void ReduceScatterPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
-                                          const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {}
-
-size_t ReduceScatterPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int nbInputs,
-                                             const nvinfer1::PluginTensorDesc *outputs, int nbOutputs) const noexcept {
-  return 0;
-}
-
-nvinfer1::DataType ReduceScatterPlugin::getOutputDataType(int index, const nvinfer1::DataType *inputTypes,
-                                                          int nbInputs) const noexcept {
-  return inputTypes[0];
-}
-
-const char *ReduceScatterPlugin::getPluginType() const noexcept { return REDUCESCATTER_PLUGIN_NAME; }
-
-const char *ReduceScatterPlugin::getPluginVersion() const noexcept { return REDUCESCATTER_PLUGIN_VERSION; }
-
-int ReduceScatterPlugin::getNbOutputs() const noexcept { return 1; }
-
-int ReduceScatterPlugin::initialize() noexcept { return 0; }
-
-void ReduceScatterPlugin::terminate() noexcept {}
-
 size_t ReduceScatterPlugin::getSerializationSize() const noexcept { return sizeof(schema::ReduceMode); }
 
 void ReduceScatterPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &red_mode_, sizeof(schema::ReduceMode));
 }
 
-void ReduceScatterPlugin::destroy() noexcept {
-  // This gets called when the network containing plugin is destroyed
-  delete this;
+nvinfer1::IPluginV2 *ReduceScatterPluginCreater::createPlugin(const char *name,
+                                                              const nvinfer1::PluginFieldCollection *fc) noexcept {
+  const nvinfer1::PluginField *fields = fc->fields;
+  schema::ReduceMode red_mode = static_cast<const schema::ReduceMode *>(fields[0].data)[0];
+  int rank = static_cast<const int *>(fields[1].data)[0];
+  MS_LOG(DEBUG) << "createPlugin: " << name << " of rank: " << rank;
+  return new (std::nothrow) ReduceScatterPlugin(name, red_mode, rank);
 }
-
-void ReduceScatterPlugin::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *ReduceScatterPlugin::getPluginNamespace() const noexcept { return name_space_.c_str(); }
+nvinfer1::IPluginV2 *ReduceScatterPluginCreater::deserializePlugin(const char *name, const void *serialData,
+                                                                   size_t serialLength) noexcept {
+  int rank = GetGPUGroupSize();
+  schema::ReduceMode red_mode;
+  DeserializeValue(&serialData, &serialLength, &red_mode, sizeof(schema::ReduceMode));
+  MS_LOG(DEBUG) << name << " is deserialize as rank: " << rank << ", red_mode: " << red_mode;
+  return new (std::nothrow) ReduceScatterPlugin(name, red_mode, rank);
+}
 }  // namespace mindspore::lite
