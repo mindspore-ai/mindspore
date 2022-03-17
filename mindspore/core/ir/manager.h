@@ -282,7 +282,7 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
                                      public deprecated::api::FuncGraphManager {
  public:
   explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true);
-  ~FuncGraphManager() {
+  virtual ~FuncGraphManager() {
     if (is_manage_) {
       RemoveRoots();
     }

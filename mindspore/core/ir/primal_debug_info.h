@@ -33,8 +33,8 @@ class MS_CORE_API PrimalDebugInfoManager {
   PrimalDebugInfoManager &operator=(const PrimalDebugInfoManager &) = delete;
   ~PrimalDebugInfoManager() = default;
   void SetPrimalDebugInfo(const std::vector<NodeDebugInfoPtr> &primal_debug_infos) {
-    std::for_each(primal_debug_infos.begin(), primal_debug_infos.end(),
-                  [this](const NodeDebugInfoPtr &debug_info) { primal_debug_infos_.emplace(debug_info); });
+    (void)std::for_each(primal_debug_infos.begin(), primal_debug_infos.end(),
+                        [this](const NodeDebugInfoPtr &debug_info) { (void)primal_debug_infos_.emplace(debug_info); });
   }
   void ClearPrimalDebugInfo() noexcept { primal_debug_infos_.clear(); }
   std::set<NodeDebugInfoPtr, DebugInfoCompare> GetCurrentPrimalDebugInfo() { return primal_debug_infos_; }

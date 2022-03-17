@@ -825,12 +825,10 @@ bool FuncGraphTransaction::Replace(const AnfNodePtr &old_node, const AnfNodePtr 
     return false;
   }
   auto &users = manager_->node_users()[old_node];
-  int counter = 0;
   for (auto &node : users) {
     if (node.first == mask_node) {
       SetEdge(node.first, node.second, new_node);
     }
-    counter++;
   }
   return true;
 }

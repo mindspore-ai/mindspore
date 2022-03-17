@@ -51,19 +51,19 @@ class RuntimeCache {
   std::string device_target() { return device_target_; }
 
   void set_device_target(const std::string &target) { device_target_ = target; }
-  bool is_valid() { return is_valid_; }
+  bool is_valid() const { return is_valid_; }
   void set_valid() { is_valid_ = true; }
   void set_output_tensor_num(const ssize_t output_tensor_num) { output_tensor_num_ = output_tensor_num; }
   ssize_t output_tensor_num() const { return output_tensor_num_; }
-  void set_real_kernel(enum CacheBool b) { is_real_kernel_ = b; }
-  enum CacheBool is_real_kernel() { return is_real_kernel_; }
+  void set_real_kernel(CacheBool b) { is_real_kernel_ = b; }
+  CacheBool is_real_kernel() const { return is_real_kernel_; }
 
  private:
   bool is_valid_{false};
   std::map<size_t, std::pair<AnfNodePtr, size_t>> prev_node_output_map_;
   std::string device_target_;
   ssize_t output_tensor_num_ = -1;
-  enum CacheBool is_real_kernel_ = CacheBool::UNCACHED;
+  CacheBool is_real_kernel_ = CacheBool::UNCACHED;
 };
 // Interface for device kernel program information.
 class KernelInfoDevice {

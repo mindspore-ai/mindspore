@@ -89,7 +89,7 @@ class ParamInfo {
   }
 
   std::vector<int64_t> parameter_shape() const { return parameter_shape_; }
-  void set_parameter_shape(std::vector<int64_t> tensor_shape) { parameter_shape_ = tensor_shape; }
+  void set_parameter_shape(const std::vector<int64_t> &tensor_shape) { parameter_shape_ = tensor_shape; }
 
   bool cache_enable() const { return cache_enable_; }
   void set_cache_enable(bool cache_enable) { cache_enable_ = cache_enable; }
