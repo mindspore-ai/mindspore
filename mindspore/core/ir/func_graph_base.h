@@ -33,11 +33,11 @@ class MS_CORE_API FuncGraphLoopBreaker {
 
   void RegFuncGraphBase(FuncGraphBase *graph) {
     std::lock_guard<std::mutex> lock_set(func_mutex_);
-    func_set_.insert(graph);
+    (void)func_set_.insert(graph);
   }
   void UnRegFuncGraphBase(FuncGraphBase *graph) {
     std::lock_guard<std::mutex> lock_set(func_mutex_);
-    func_set_.erase(graph);
+    (void)func_set_.erase(graph);
   }
 
   void BreakLoop();

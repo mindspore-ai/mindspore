@@ -48,7 +48,7 @@ class EffectInfoHolder {
   // Set effect info.
   void SetEffectInfo(const EffectInfo &info) { effect_info_ = info; }
 
-  ~EffectInfoHolder() = default;
+  virtual ~EffectInfoHolder() = default;
 
  protected:
   EffectInfo effect_info_;
