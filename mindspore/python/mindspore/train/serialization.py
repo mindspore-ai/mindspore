@@ -69,6 +69,7 @@ SLICE_SIZE = 512 * 1024
 PROTO_LIMIT_SIZE = 1024 * 1024 * 2
 TOTAL_SAVE = 1024 * 1024
 PARAMETER_SPLIT_SIZE = 1024 * 1024 * 1024
+ENCRYPT_BLOCK_SIZE = 64 * 1024
 
 
 def _special_process_par(par, new_par):
@@ -222,7 +223,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                         else:
                             plain_data += checkpoint_list.SerializeToString()
 
-                            max_block_size = SLICE_SIZE * 1024
+                            max_block_size = ENCRYPT_BLOCK_SIZE * 1024
                             while len(plain_data) >= max_block_size:
                                 cipher_data += _encrypt(plain_data[0: max_block_size], max_block_size, enc_key,
                                                         len(enc_key), enc_mode)
