@@ -1562,12 +1562,8 @@ std::shared_ptr<TensorData> DebugServices::GetTensor(const std::string &tensor_n
 void DebugServices::EmptyCurrentTensor() { tensor_loader_->EmptyCurrentTensor(); }
 
 #ifdef ONLINE_DBG_MODE
-bool DebugServices::DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
-                                     const std::string &host_fmt, const std::vector<int64_t> &host_shape,
-                                     TypeId host_type, TypeId device_type, const std::string &addr_format,
-                                     size_t slot) const {
-  return tensor_loader_->DumpTensorToFile(tensor_name, trans_flag, filepath, host_fmt, host_shape, host_type,
-                                          device_type, addr_format, slot);
+bool DebugServices::DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) const {
+  return tensor_loader_->DumpTensorToFile(filepath, tensor_name, slot);
 }
 #endif
 

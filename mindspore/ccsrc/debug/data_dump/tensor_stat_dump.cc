@@ -33,11 +33,6 @@ constexpr auto kCsvFileName = "statistic.csv";
 }  // namespace
 
 namespace mindspore {
-const std::map<DbgDataType, std::string> kDbgDataTypeToStringMap = {
-  {DT_BOOL, "bool"},     {DT_INT8, "int8"},       {DT_INT16, "int16"},     {DT_INT32, "int32"},
-  {DT_INT64, "int64"},   {DT_UINT8, "uint8"},     {DT_UINT16, "uint16"},   {DT_UINT32, "uint32"},
-  {DT_UINT64, "uint64"}, {DT_FLOAT16, "float16"}, {DT_FLOAT32, "float32"}, {DT_FLOAT64, "float64"}};
-
 bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
   if (file_.is_open() && path == file_path_str_) {
     return true;
@@ -162,13 +157,10 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
     MS_LOG(INFO) << "Tensor data is empty, skipping current statistics";
     return false;
   }
-  std::string type;
-  auto iter_type = kDbgDataTypeToStringMap.find(data->GetType());
-  if (iter_type == kDbgDataTypeToStringMap.end()) {
+  std::string type = data->GetTypeString();
+  if (type.empty()) {
     type = "unsupported(" + std::to_string(data->GetType()) + ")";
     MS_LOG(INFO) << "Unsupported tensor data_type " << type << " for tensor " << data->GetName();
-  } else {
-    type = iter_type->second;
   }
   if (!OpenStatisticsFile(dump_path)) {
     return false;

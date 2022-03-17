@@ -202,29 +202,20 @@ class TensorLoader {
   void SetMemTotal(uint64_t total_mem_size) { this->mem_total_ = total_mem_size; }
 
 #ifdef ONLINE_DBG_MODE
-  bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
-                        const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
-                        TypeId device_type, const std::string &addr_format, size_t slot) {
+  bool DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) {
     if (filepath.empty()) {
       MS_LOG(ERROR) << "Dump file path is null!";
       return false;
     }
-    std::string path = "";
-    if (trans_flag) {
-      path = filepath + '.' + host_fmt;
-    } else {
-      path = filepath + '.' + addr_format;
-    }
-
-    MS_LOG(INFO) << "Dump path is " << path;
 
     std::string tensor_loader_name = tensor_name + ":" + std::to_string(slot);
     auto iter = tensor_list_map_.find(tensor_loader_name);
     if (iter != tensor_list_map_.end()) {
       std::shared_ptr<TensorData> node = iter->second;
-      size_t host_size = node->GetByteSize();
+      std::string path = filepath + '.' + node->GetFormat();
 
-      return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), host_size, host_shape, host_type);
+      return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), node->GetByteSize(), node->GetShape(),
+                                        StringToTypeId(node->GetTypeString()));
     }
     MS_LOG(INFO) << "Tensor name:" << tensor_name << " not found in tensor_list_map_";
     return false;

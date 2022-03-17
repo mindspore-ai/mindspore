@@ -117,18 +117,17 @@ bool E2eDump::IsDeviceTargetGPU() {
   return context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice;
 }
 
-void E2eDump::DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
-                               const device::DeviceAddress &addr, const ShapeVector &int_shapes,
-                               const TypeId &host_type, const TypeId &device_type, bool trans_flag, size_t slot,
-                               const Debugger *debugger) {
+bool E2eDump::IsMindRTKernelByKernel() {
+  return IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag();
+}
+
+void E2eDump::DumpMemFromTensorLoaderToFile(const Debugger *debugger, const std::string &file_path,
+                                            const std::string &original_kernel_name, size_t slot) {
 #ifdef ENABLE_DEBUGGER
-  auto format = kOpFormat_DEFAULT;
   MS_EXCEPTION_IF_NULL(debugger);
-  auto ret = debugger->DumpTensorToFile(original_kernel_name, trans_flag, file_path, format, int_shapes, host_type,
-                                        device_type, addr.format(), slot);
+  auto ret = debugger->DumpTensorToFile(file_path, original_kernel_name, slot);
   if (!ret) {
-    MS_LOG(INFO) << "DumpTensorToFile Failed: flag:" << trans_flag << ", path:" << file_path
-                 << ", host_format:" << format;
+    MS_LOG(INFO) << "DumpTensorToFile Failed: path:" << file_path;
   }
 #endif
 }
@@ -178,11 +177,11 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(node, j);
+    std::string node_name = GetKernelNodeName(node);
     MS_EXCEPTION_IF_NULL(addr);
     ShapeVector int_shapes;
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes), trans_flag);
     auto type = AnfAlgo::GetOutputInferDataType(node, j);
-    auto device_type = AnfAlgo::GetOutputDeviceDataType(node, j);
     std::string op_type = AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint32_t task_id = 0;
@@ -191,15 +190,13 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output." +
                             std::to_string(j);
-    if (DumpJsonParser::GetInstance().IsStatisticDump() &&
-        (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag())) {
+    if (DumpJsonParser::GetInstance().IsStatisticDump() && IsMindRTKernelByKernel()) {
       TensorStatDump stat_dump(op_type, op_name, task_id, stream_id, timestamp, false, j, j);
-      (void)stat_dump.DumpTensorStatsToFile(GetKernelNodeName(node), dump_path, debugger);
+      (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (DumpJsonParser::GetInstance().IsTensorDump()) {
-      if (IsDeviceTargetGPU()) {
-        DumpGPUMemToFile(file_path, GetKernelNodeName(node), *addr, int_shapes, type, device_type, trans_flag, j,
-                         debugger);
+      if (IsMindRTKernelByKernel()) {
+        DumpMemFromTensorLoaderToFile(debugger, file_path, node_name, j);
       } else {
         DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
       }
@@ -209,10 +206,8 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
 
 void E2eDump::DumpOutputData(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                              std::string *kernel_name) {
-  auto debugger = Debugger::GetInstance();
-  MS_EXCEPTION_IF_NULL(debugger);
-  if (IsDeviceTargetGPU() || debugger->GetAscendKernelByKernelFlag()) {
-    MS_LOG(INFO) << "DumpInputData is only for graph mode on Ascend";
+  if (IsMindRTKernelByKernel()) {
+    MS_LOG(INFO) << "DumpOutputData is only for graph mode on Ascend";
     return;
   }
   MS_EXCEPTION_IF_NULL(node);
@@ -252,8 +247,7 @@ void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &du
   }
 }
 
-void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger,
-                                  const KernelLaunchInfo *launch_info) {
+void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!dump_json_parser.InputNeedDump()) {
     return;
@@ -265,25 +259,11 @@ void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_
     return;
   }
   DumpJsonParser::GetInstance().MatchKernel(kernel_name);
-  DumpInputImpl(node, trans_flag, dump_path, &kernel_name, debugger, launch_info);
-}
-
-std::shared_ptr<device::DeviceAddress> CreateAscendDeviceAddress(const KernelLaunchInfo *launch_info, size_t index,
-                                                                 TypeId type) {
-  MS_EXCEPTION_IF_NULL(launch_info);
-  auto addr_ptr = launch_info->inputs_[index];
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
-  auto format = kOpFormat_DEFAULT;
-  MS_EXCEPTION_IF_NULL(addr_ptr);
-  return device_context->CreateDeviceAddress(addr_ptr->addr, addr_ptr->size, format, type);
+  DumpInputImpl(node, trans_flag, dump_path, &kernel_name, debugger);
 }
 
 void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
-                            std::string *kernel_name, const Debugger *debugger, const KernelLaunchInfo *launch_info) {
+                            std::string *kernel_name, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
   auto input_size = AnfAlgo::GetInputTensorNum(node);
@@ -294,18 +274,17 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     if (!AnfAlgo::OutputAddrExist(input, index)) {
       continue;
     }
-    std::string tensor_name = GetKernelNodeName(node);
+    std::string node_name = GetKernelNodeName(node);
     size_t slot = j;
-    if (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
+    if (IsMindRTKernelByKernel()) {
       auto input_kernel = node->input(j + 1);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
-      tensor_name = input_kernel_name;
+      node_name = input_kernel_name;
       slot = 0;
     }
     ShapeVector int_shapes;
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
     auto type = AnfAlgo::GetOutputInferDataType(input, index);
-    auto device_type = AnfAlgo::GetOutputDeviceDataType(input, index);
     std::string op_type = AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint64_t timestamp = GetTimeStamp();
@@ -315,18 +294,13 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
     auto addr = AnfAlgo::GetOutputAddr(input, index);
     MS_EXCEPTION_IF_NULL(addr);
-    if (DumpJsonParser::GetInstance().IsStatisticDump() &&
-        (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag())) {
+    if (DumpJsonParser::GetInstance().IsStatisticDump() && IsMindRTKernelByKernel()) {
       TensorStatDump stat_dump(op_type, op_name, task_id, stream_id, timestamp, true, j, slot);
-      (void)stat_dump.DumpTensorStatsToFile(tensor_name, dump_path, debugger);
+      (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (DumpJsonParser::GetInstance().IsTensorDump()) {
-      if (IsDeviceTargetGPU()) {
-        DumpGPUMemToFile(file_path, tensor_name, *addr, int_shapes, type, device_type, trans_flag, slot, debugger);
-      } else if (Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
-        // load address from launch_info when it's Ascend Kernel by kernel mode.
-        auto ascend_device_addr = CreateAscendDeviceAddress(launch_info, j, type);
-        DumpMemToFile(file_path, *ascend_device_addr, int_shapes, type, trans_flag);
+      if (IsMindRTKernelByKernel()) {
+        DumpMemFromTensorLoaderToFile(debugger, file_path, node_name, slot);
       } else {
         DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
       }
@@ -336,9 +310,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
 
 void E2eDump::DumpInputData(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                             std::string *kernel_name) {
-  auto debugger = Debugger::GetInstance();
-  MS_EXCEPTION_IF_NULL(debugger);
-  if (IsDeviceTargetGPU() || debugger->GetAscendKernelByKernelFlag()) {
+  if (IsMindRTKernelByKernel()) {
     MS_LOG(INFO) << "DumpInputData is only for graph mode on Ascend";
     return;
   }
@@ -395,7 +367,6 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   ShapeVector int_shapes;
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes), trans_flag);
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
-  auto device_type = AnfAlgo::GetOutputDeviceDataType(anf_node, output_index);
   uint64_t timestamp = GetTimeStamp();
   uint32_t task_id = 0;
   uint32_t stream_id = 0;
@@ -407,7 +378,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
       (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (dump_json_parser.IsTensorDump()) {
-      DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
+      DumpMemFromTensorLoaderToFile(debugger, file_path, node_name, 0);
     }
   } else {
     DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
@@ -443,7 +414,7 @@ void E2eDump::DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::str
       (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (dump_json_parser.IsTensorDump()) {
-      DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
+      DumpMemFromTensorLoaderToFile(debugger, file_path, node_name, 0);
     }
   } else {
     DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
@@ -619,13 +590,12 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
   }
 }
 
-bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id, const Debugger *debugger,
-                                 const KernelLaunchInfo *launch_info) {
+bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id, const Debugger *debugger) {
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (dump_json_parser.DumpEnabledForIter()) {
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);
-    DumpInputSingleNode(node, dump_path, debugger, launch_info);
+    DumpInputSingleNode(node, dump_path, debugger);
     DumpOutputSingleNode(node, dump_path, debugger);
     success = true;
   }

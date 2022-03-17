@@ -426,9 +426,7 @@ class DebugServices {
   void EmptyCurrentTensor();
 
 #ifdef ONLINE_DBG_MODE
-  bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
-                        const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
-                        TypeId device_type, const std::string &addr_format, size_t slot) const;
+  bool DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) const;
 #endif
 
   bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev);
