@@ -72,7 +72,7 @@ std::vector<StrategyPtr> AddNInfo::GenerateOpStrategies(int64_t stage_id) {
   for (size_t i = 0; i < inputs_shape_.size(); ++i) {
     (void)splittable_inputs.emplace_back(inputs_shape_[i].size());
     for (size_t j = 0; j < inputs_shape_[i].size(); ++j) {
-      splittable_inputs[i][j] = j + 1;
+      splittable_inputs[i][j] = SizeToLong(j) + 1;
     }
   }
 

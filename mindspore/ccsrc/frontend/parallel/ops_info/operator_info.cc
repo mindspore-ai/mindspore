@@ -1460,21 +1460,22 @@ Status GenerateStrategiesForDependentInputs(int64_t stage_id, const Shapes &inpu
     return FAILED;
   }
 
-  std::transform(tmp_sp_vector.begin(), tmp_sp_vector.end(), std::back_inserter(*sp),
-                 [stage_id, &indices_mp, &splittable_inputs](const StrategyPtr &sp) {
-                   auto tmp_strategy = sp->GetInputDim().at(0);
-                   Strategys strategies(splittable_inputs);
-                   for (size_t i = 0; i < strategies.size(); ++i) {
-                     for (size_t j = 0; j < strategies[i].size(); ++j) {
-                       if (splittable_inputs[i][j] == 0) {
-                         strategies[i][j] = 1;
-                       } else {
-                         strategies[i][j] = tmp_strategy[indices_mp[splittable_inputs[i][j]]];
-                       }
-                     }
-                   }
-                   return std::make_shared<Strategy>(stage_id, strategies);
-                 });
+  (void)std::transform(tmp_sp_vector.begin(), tmp_sp_vector.end(), std::back_inserter(*sp),
+                       [stage_id, &indices_mp, &splittable_inputs](const StrategyPtr &sp) {
+                         auto sp_strategies = sp->GetInputDim();
+                         auto sp_sub_strategy = sp_strategies.at(0);
+                         Strategys strategies(splittable_inputs);
+                         for (size_t i = 0; i < strategies.size(); ++i) {
+                           for (size_t j = 0; j < strategies[i].size(); ++j) {
+                             if (splittable_inputs[i][j] == 0) {
+                               strategies[i][j] = 1;
+                             } else {
+                               strategies[i][j] = sp_sub_strategy[indices_mp[splittable_inputs[i][j]]];
+                             }
+                           }
+                         }
+                         return std::make_shared<Strategy>(stage_id, strategies);
+                       });
   return SUCCESS;
 }
 

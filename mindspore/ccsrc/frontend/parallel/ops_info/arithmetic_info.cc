@@ -167,7 +167,7 @@ Status ArithmeticBase::InferTensorMap() {
     if (repeated_num_in_dev_matrix_right_) {
       dev_shape.pop_back();
     } else {
-      dev_shape.erase(dev_shape.begin());
+      (void)dev_shape.erase(dev_shape.begin());
     }
   }
 
@@ -227,7 +227,8 @@ Status LerpInfo::CheckStrategy(const StrategyPtr &strategy) {
   for (size_t i = 0; i < expand_begin_strategy.size(); ++i) {
     expand_cmp_strategy.push_back(std::max(expand_begin_strategy[i], expand_end_strategy[i]));
   }
-  Dimensions expand_weight_strategy = ExpandShape(expand_cmp_strategy, strategy->GetInputDim().at(2));
+  auto strategies = strategy->GetInputDim();
+  Dimensions expand_weight_strategy = ExpandShape(expand_cmp_strategy, strategies.at(2));
 
   Shapes input_shapes = InferExpandShape();
   Shape expand_begin_shape = input_shapes.at(0);
@@ -257,7 +258,8 @@ Status LerpInfo::InferDevMatrixShape() {
   Strategys expand_strategy = ExpandStrategy(strategy_);
   Dimensions expand_start_strategy = expand_strategy.at(0);
   Dimensions expand_end_strategy = expand_strategy.at(1);
-  Dimensions expand_weight_strategy = ExpandShape(expand_start_strategy, strategy_->GetInputDim().at(2));
+  auto strategies = strategy_->GetInputDim();
+  Dimensions expand_weight_strategy = ExpandShape(expand_start_strategy, strategies.at(2));
   for (size_t i = 0; i < expand_start_strategy.size(); ++i) {
     if (expand_start_strategy[i] == expand_end_strategy[i] && expand_start_strategy[i] == expand_weight_strategy[i]) {
       dev_matrix_shape_.push_back(expand_start_strategy[i]);
@@ -293,7 +295,7 @@ Status LerpInfo::InferTensorMap() {
     if (repeated_num_in_dev_matrix_right_) {
       dev_shape.pop_back();
     } else {
-      dev_shape.erase(dev_shape.begin());
+      (void)dev_shape.erase(dev_shape.begin());
     }
   }
   inputs_tensor_map_.push_back(SetTensorMap(expand_weight_strategy, dev_shape, weight_strategy));

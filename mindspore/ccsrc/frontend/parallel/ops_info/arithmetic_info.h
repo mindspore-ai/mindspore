@@ -261,7 +261,7 @@ class LerpInfo : public ArithmeticBase {
   Status InferTensorMap() override;
 
  private:
-  size_t inputs_size_;
+  size_t inputs_size_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore

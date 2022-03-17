@@ -98,7 +98,7 @@ std::vector<StrategyPtr> CdistInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 void CdistInfo::ReComputeBatchSplitFlagList() {
-  size_t input_dims = inputs_shape_.at(0).at(0);
+  size_t input_dims = LongToSize(inputs_shape_.at(0).at(0));
   if (input_dims == 3) {
     if (inputs_shape_[0][0] != 1) {
       split_flag_list_[0] = true;
