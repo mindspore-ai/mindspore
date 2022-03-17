@@ -1245,6 +1245,10 @@ def tril(m, k=0):
     if device_target == "Ascend":
         m = m.astype(mstype.float32)
         assist = nn_tril(m.shape, mstype.float32, k)
+    # MindSpore binary op do not support bool
+    elif dtype == mstype.Bool:
+        m = m.astype(mstype.float32)
+        assist = nn_tril(m.shape, mstype.float32, k)
     else:
         assist = nn_tril(m.shape, dtype, k)
     return F.tensor_mul(assist, m).astype(dtype)

@@ -235,6 +235,7 @@ class Add(_MathBinaryOp):
         >>> print(output.dtype)
         Float32
     """
+
     def _infer_specified_add_value(self, a, b):
         """Calculate min/max value for output for Add op"""
         if a is not None and b is not None:
@@ -1937,6 +1938,7 @@ class Mul(_MathBinaryOp):
         >>> print(output)
         [ 4. 10. 18.]
     """
+
     def _infer_specified_mul_value(self, x, y):
         """Calculate min/max value for output of Mul op"""
         if x is not None and y is not None:
@@ -1958,10 +1960,6 @@ class Mul(_MathBinaryOp):
     def _infer_max_value(self, x, y):
         """Calculate max value for output for Mul op"""
         return self._infer_specified_mul_value(x, y)
-
-    def infer_dtype(self, x_dtype, y_dtype):
-        mul_valid_type = mstype.number_type + (mstype.bool_,)
-        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, mul_valid_type, self.name)
 
     def infer_value(self, x, y):
         if x is not None and y is not None:
