@@ -20,6 +20,7 @@
 #include "tools/common/string_util.h"
 #include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -125,11 +126,11 @@ STATUS AclOptionParamParser::ParseInputShapeVector(const std::string &input_shap
   int32_t idx = 0;
   std::map<int32_t, std::vector<int32_t>> input_shape_map;
   for (auto &item : intput_shape_str) {
-    if (item.size() < 2 || item[0] != '[' || item[item.size() - 1] != ']') {
+    if (item.size() < DIMENSION_2D || item[0] != '[' || item[item.size() - 1] != ']') {
       MS_LOG(ERROR) << "Input param valid, item size: " << item.size();
       return RET_ERROR;
     }
-    std::string tmp = item.substr(1, item.size() - 2);
+    std::string tmp = item.substr(1, item.size() - DIMENSION_2D);
     std::vector<std::string> intput_shape = SplitStringToVector(tmp, ',');
     std::vector<int32_t> input_shape_int;
     for (auto &shape : intput_shape) {
