@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@
 #include "ir/anf.h"
 #include "ir/visitor.h"
 #include "ir/func_graph_cloner.h"
+#include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
+#include "pipeline/jit/action.h"
 
 #include "debug/draw.h"
 #include "frontend/operator/ops.h"
@@ -107,6 +109,8 @@ class TestOptOpt : public UT::Common {
   FuncGraphPairMapEquiv equiv_graph;
   NodeMapEquiv equiv_node;
 
+  irpass::OptimizeIRPassLib irpass_lib;
+
   static const PrimitivePtr P;
   static const PrimitivePtr Q;
   static const PrimitivePtr R;
@@ -115,6 +119,7 @@ class TestOptOpt : public UT::Common {
   SubstitutionPtr elim_R;
   SubstitutionPtr idempotent_P;
   SubstitutionPtr Qct_to_P;
+  SubstitutionPtr tuple_flatten = irpass_lib.call_graph_tuple_transform_;
 };
 
 const PrimitivePtr TestOptOpt::P = std::make_shared<Primitive>("P");
@@ -148,8 +153,8 @@ TEST_F(TestOptOpt, ElimTwo) {
 }
 
 TEST_F(TestOptOpt, ElimR) {
-  FuncGraphPtr before = getPyFun.CallAndParseRet("test_elimR", "before_1");
-  FuncGraphPtr after = getPyFun.CallAndParseRet("test_elimR", "after");
+  FuncGraphPtr before = getPyFun.CallAndParseRet("test_elim_r", "before_1");
+  FuncGraphPtr after = getPyFun.CallAndParseRet("test_elim_r", "after");
 
   ASSERT_TRUE(nullptr != before);
   ASSERT_TRUE(nullptr != after);
@@ -208,5 +213,125 @@ TEST_F(TestOptOpt, CSE) {
   ASSERT_EQ(manager2->all_nodes().size(), 12);
 }
 
+size_t TupleArgAndParamSum(const FuncGraphPtr &func_graph) {
+  // Check tuple params and tuple args.
+  auto all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
+  size_t tuple_arg_param_num = 0;
+  auto tuple_accumulate_func = [](size_t prev_num, const AnfNodePtr &node) -> size_t {
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    return abs->isa<abstract::AbstractTuple>() ? prev_num + 1 : prev_num;
+  };
+  for (const auto &node : all_nodes) {
+    // Count func graph call tuple args.
+    if (node->isa<CNode>() && !IsValueNode<Primitive>(node->cast<CNodePtr>()->input(0))) {
+      auto call_node = node->cast<CNodePtr>();
+      tuple_arg_param_num = std::accumulate(call_node->inputs().begin() + 1, call_node->inputs().end(),
+                                            tuple_arg_param_num, tuple_accumulate_func);
+    }
+    // Count partial tuple args.
+    if (IsPrimitiveCNode(node, prim::kPrimPartial)) {
+      auto partial = node->cast<CNodePtr>();
+      constexpr auto kPartialFirstArgIdx = 2;
+      tuple_arg_param_num = std::accumulate(partial->inputs().begin() + kPartialFirstArgIdx, partial->inputs().end(),
+                                            tuple_arg_param_num, tuple_accumulate_func);
+    }
+
+    // Count tuple params.
+    if (IsValueNode<FuncGraph>(node)) {
+      auto fg = GetValueNode<FuncGraphPtr>(node);
+      tuple_arg_param_num =
+        std::accumulate(fg->parameters().begin(), fg->parameters().end(), tuple_arg_param_num, tuple_accumulate_func);
+    }
+  }
+  return tuple_arg_param_num;
+}
+
+// Feature: Switch call tuple arg transform.
+// Description: Test switch call's tuple arg transform.This case include partial's tuple arg and the call's tuple arg in
+// the same time.
+// Expectation: All tuple args are correctly transformed to tensor args.
+TEST_F(TestOptOpt, SwitchPartialTupleTrans) {
+  FuncGraphPtr test_graph = getPyFun.CallAndParseRet("test_tuple_flatten", "test_flatten_switch_partial_arg");
+  ASSERT_TRUE(nullptr != test_graph);
+
+  FuncGraphManagerPtr manager1 = Manage(test_graph);
+  pipeline::ResourcePtr res = std::make_shared<pipeline::Resource>();
+  std::vector<AbstractBasePtr> args_spec;
+
+  // Renormalize firstly.
+  auto renormalized_fg = pipeline::Renormalize(res, test_graph, args_spec);
+  ASSERT_TRUE(TupleArgAndParamSum(renormalized_fg) != 0);
+
+  // Flatten tuple param and args.
+  OptimizerPtr optimizer = std::make_shared<Optimizer>("ut_test", res);
+  SubstitutionList transform(std::vector<SubstitutionPtr>({tuple_flatten}));
+  transform(renormalized_fg, optimizer);
+
+  // Renormalize again.
+  auto transformed_fg = pipeline::Renormalize(res, renormalized_fg, args_spec);
+  ASSERT_TRUE(TupleArgAndParamSum(transformed_fg) == 0);
+
+  abstract::AnalysisResultCacheMgr::GetInstance().Clear();
+  abstract::AnalysisContext::ClearContext();
+}
+
+// Feature: Switch layer call tuple arg transform.
+// Description: Test switch layer call's tuple arg transform.This case include partial's tuple arg and the partial's
+// tensor arg in the same time.
+// Expectation: All tuple args are correctly transformed to tensor args.
+TEST_F(TestOptOpt, SwitchLayerPartialTupleTrans) {
+  FuncGraphPtr test_graph = getPyFun.CallAndParseRet("test_tuple_flatten", "test_flatten_switch_layer_partial_arg");
+  ASSERT_TRUE(nullptr != test_graph);
+
+  FuncGraphManagerPtr manager1 = Manage(test_graph);
+  pipeline::ResourcePtr res = std::make_shared<pipeline::Resource>();
+  std::vector<AbstractBasePtr> args_spec;
+
+  // Renormalize firstly.
+  auto renormalized_fg = pipeline::Renormalize(res, test_graph, args_spec);
+  ASSERT_TRUE(TupleArgAndParamSum(renormalized_fg) != 0);
+
+  // Flatten tuple param and args.
+  OptimizerPtr optimizer = std::make_shared<Optimizer>("ut_test", res);
+  SubstitutionList transform(std::vector<SubstitutionPtr>({tuple_flatten}));
+  transform(renormalized_fg, optimizer);
+
+  // Renormalize again.
+  auto transformed_fg = pipeline::Renormalize(res, renormalized_fg, args_spec);
+  ASSERT_TRUE(TupleArgAndParamSum(transformed_fg) == 0);
+
+  abstract::AnalysisResultCacheMgr::GetInstance().Clear();
+  abstract::AnalysisContext::ClearContext();
+}
+
+// Feature: Single graph call tuple arg transform.
+// Description: Test single graph call's tuple arg transform.This case include tuple in tuple args.
+// Expectation: All tuple args are correctly transformed to tensor args.
+TEST_F(TestOptOpt, SimpleCallTupleTupleTrans) {
+  FuncGraphPtr test_graph =
+    getPyFun.CallAndParseRet("test_tuple_flatten", "test_flatten_simple_call_tuple_in_tuple_arg");
+  ASSERT_TRUE(nullptr != test_graph);
+
+  FuncGraphManagerPtr manager1 = Manage(test_graph);
+  pipeline::ResourcePtr res = std::make_shared<pipeline::Resource>();
+  std::vector<AbstractBasePtr> args_spec;
+
+  // Renormalize firstly.
+  auto renormalized_fg = pipeline::Renormalize(res, test_graph, args_spec);
+  ASSERT_TRUE(TupleArgAndParamSum(renormalized_fg) != 0);
+
+  // Flatten tuple param and args.
+  OptimizerPtr optimizer = std::make_shared<Optimizer>("ut_test", res);
+  SubstitutionList transform(std::vector<SubstitutionPtr>({tuple_flatten}));
+  transform(renormalized_fg, optimizer);
+
+  // Renormalize again.
+  auto transformed_fg = pipeline::Renormalize(res, renormalized_fg, args_spec);
+  ASSERT_TRUE(TupleArgAndParamSum(transformed_fg) == 0);
+
+  abstract::AnalysisResultCacheMgr::GetInstance().Clear();
+  abstract::AnalysisContext::ClearContext();
+}
 }  // namespace opt
 }  // namespace mindspore
