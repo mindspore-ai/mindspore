@@ -246,7 +246,8 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
         } else if (idx == 1) {
           str_index = "third";
         } else {
-          str_index = std::to_string(idx + 2) + "th";
+          constexpr auto arg_start_idx = 2;
+          str_index = std::to_string(idx + arg_start_idx) + "th";
         }
         ++idx;
         oss << "The type of the " << str_index << " argument in Map is: " << item.second->ToString() << ".\n";

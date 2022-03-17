@@ -52,9 +52,9 @@ void CommOpAttrs(const FuncGraphPtr &graph) {
     }
     std::vector<unsigned int> rank_list = {};
     auto long_rank_list = parallel::g_device_manager->FindRankListByHashName(group_name);
-    std::transform(long_rank_list.begin(), long_rank_list.end(), std::back_inserter(rank_list),
-                   [](int64_t d) -> unsigned int { return IntToUint(LongToInt(d)); });
-    comm_prim->AddAttr(kAttrGroupRankIds, MakeValue<std::vector<unsigned int>>(rank_list));
+    (void)std::transform(long_rank_list.begin(), long_rank_list.end(), std::back_inserter(rank_list),
+                         [](int64_t d) -> unsigned int { return IntToUint(LongToInt(d)); });
+    (void)comm_prim->AddAttr(kAttrGroupRankIds, MakeValue<std::vector<unsigned int>>(rank_list));
   }
 }
 }  // namespace opt

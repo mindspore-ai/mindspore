@@ -649,7 +649,7 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
 }
 
 static void TransformNormalArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &outer,
-                                std::vector<AnfNodePtr> *const transf_args) {
+                                std::vector<AnfNodePtr> *transf_args) {
   // bprop_fg has been checked in caller
   // transform except the last 2 parameters: out, dout.
   const size_t last_parameter_sizes = 2;
@@ -667,7 +667,7 @@ static void TransformNormalArgs(const FuncGraphManagerPtr &mng, const FuncGraphP
 }
 void KPrim::TransformArgsForPrimitive(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
                                       const PrimitivePtr &primitive, const FuncGraphPtr &outer,
-                                      std::vector<AnfNodePtr> *const transf_args) {
+                                      std::vector<AnfNodePtr> *transf_args) {
   MS_EXCEPTION_IF_NULL(mng);
   TransformNormalArgs(mng, bprop_fg, outer, transf_args);
   // Fprop_fg for Primitive with side effect should append extra U or IO monad parameter.
@@ -687,7 +687,7 @@ void KPrim::TransformArgsForPrimitive(const FuncGraphManagerPtr &mng, const Func
 template <typename T>
 void KPrim::TransformArgsForFuncGraph(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
                                       const T &current_primal_fg, const FuncGraphPtr &outer,
-                                      std::vector<AnfNodePtr> *const transf_args) {
+                                      std::vector<AnfNodePtr> *transf_args) {
   MS_EXCEPTION_IF_NULL(mng);
   TransformNormalArgs(mng, bprop_fg, outer, transf_args);
   constexpr size_t need_filter_size = 2;

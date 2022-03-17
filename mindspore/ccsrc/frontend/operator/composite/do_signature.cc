@@ -45,7 +45,7 @@ const std::vector<Signature> &GetSignature(const ValuePtr &function) {
 }
 
 void ProcessDefault(const std::string &func_name, size_t actual_param_number, const std::vector<Signature> &signature,
-                    bool has_var, std::vector<AnfNodePtr> *const op_inputs) {
+                    bool has_var, std::vector<AnfNodePtr> *op_inputs) {
   std::size_t sig_size = signature.size();
   auto positional_size = sig_size;
   if (has_var) {
@@ -202,7 +202,7 @@ AnfNodePtr DoCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGrap
 
 void DoAutoCast(const std::string &func_name, const std::vector<Signature> &signature,
                 const std::vector<TypePtr> &input_types, const FuncGraphPtr &graph,
-                const std::set<size_t> &write_indices, std::vector<AnfNodePtr> *const op_inputs) {
+                const std::set<size_t> &write_indices, std::vector<AnfNodePtr> *op_inputs) {
   std::vector<SignatureEnumDType> dtypes;
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
                        [](const Signature &sig) { return sig.dtype; });
@@ -368,7 +368,7 @@ FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrLi
   return func_graph;
 }
 
-void RaiseExceptionForConvertRefDtype(const std::string &func_name, const std::string &ref_type,
+void RaiseExceptionForConvertRefDtype(const std::string &, const std::string &ref_type,
                                       const std::string &target_type) {
   MS_LOG(EXCEPTION) << "Data type conversion of 'Parameter' is not supported, so data type " << ref_type
                     << " cannot be converted to data type " << target_type << " automatically.\n"

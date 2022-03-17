@@ -116,12 +116,12 @@ class ByTypeDataConverter : public DataConverter {
 // Convert the data according object attribute.
 class ByAttrDataConverter : public DataConverter {
  public:
-  ByAttrDataConverter(const char *attr_name, const ArgsObjConvertFunc &convert_func)
+  ByAttrDataConverter(const std::string &attr_name, const ArgsObjConvertFunc &convert_func)
       : DataConverter(
           [convert_func](const py::object &obj, bool, const TypePtr &) -> ValuePtr { return convert_func(obj); }),
         attr_name_(attr_name) {}
 
-  ByAttrDataConverter(const char *attr_name, const ArgsObjSigConvertFunc &convert_func)
+  ByAttrDataConverter(const std::string &attr_name, const ArgsObjSigConvertFunc &convert_func)
       : DataConverter([convert_func](const py::object &obj, bool use_sig, const TypePtr &) -> ValuePtr {
           return convert_func(obj, use_sig);
         }),
@@ -129,10 +129,10 @@ class ByAttrDataConverter : public DataConverter {
 
   ~ByAttrDataConverter() override = default;
 
-  bool Matched(const py::object &obj) override { return py::hasattr(obj, attr_name_); }
+  bool Matched(const py::object &obj) override { return py::hasattr(obj, attr_name_.c_str()); }
 
  private:
-  const char *attr_name_ = nullptr;
+  std::string attr_name_;
 };
 
 FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
@@ -534,7 +534,7 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
 }
 }  // namespace
 
-bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature, const TypePtr &dtype) {
+bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature, const TypePtr &dtype) {
   // Check parameter valid
   if (data == nullptr) {
     MS_LOG(ERROR) << "The value pointer should not be null.";
@@ -609,7 +609,7 @@ const mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs()
 
 void CacheObjectValue(const std::string &obj_key, const ValuePtr &data) { object_map_[obj_key] = data; }
 
-bool GetObjectValue(const std::string &obj_key, ValuePtr *const data) {
+bool GetObjectValue(const std::string &obj_key, ValuePtr *data) {
   if (object_map_.count(obj_key)) {
     *data = object_map_[obj_key];
     return true;
