@@ -50,6 +50,14 @@ def opt_init_args_register(fn):
         if 'optimizer' in arguments.keys():
             setattr(self, 'init_params', dict({"params": arguments['optimizer'].init_params["params"]}))
             arguments.pop('optimizer')
+        if 'learning_rate' in arguments.keys():
+            if isinstance(arguments['learning_rate'], Tensor):
+                arguments['learning_rate'] = list(arguments['learning_rate'].asnumpy())
+            if isinstance(arguments['learning_rate'], Cell):
+                setattr(self, 'init_learning_rate', None)
+            else:
+                setattr(self, 'init_learning_rate', arguments['learning_rate'])
+            arguments.pop('learning_rate')
         setattr(self, 'init_args', arguments)
         fn(self, *args, **kwargs)
     return deco
@@ -193,6 +201,9 @@ class Optimizer(Cell):
             if param.unique:
                 self._unique = False
                 break
+        # set user's parameters as local parameters
+        for param in self.parameters:
+            self._user_parameters.append(param.name)
         ps_filter = lambda x: x.is_param_ps
         self.ps_parameters = tuple(ps_filter(x) for x in self.parameters)
         cache_filter = lambda x: x.cache_enable
