@@ -211,6 +211,7 @@ NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs, const
 // default format shape to fractal_Nz format shape
 DShape ToNz(const DShape &default_shape) {
   constexpr size_t nz_size = 2;
+  constexpr auto align16 = 16;
   auto len = default_shape.size();
   DShape leading_shape;
   DShape tail_shape;
@@ -223,23 +224,23 @@ DShape ToNz(const DShape &default_shape) {
   }
   if (default_shape.size() == 1 || (default_shape.size() >= nz_size && default_shape[len - nz_size] == 1)) {
     // (32) or (N, 1, 32) -> (N, 2, 1, 1, 16)
-    if (default_shape.back() % 16 != 0) {
+    if (default_shape.back() % align16 != 0) {
       MS_LOG(EXCEPTION) << "default_shape[-1] should be multiplies of 16, but got " << default_shape.back();
     }
-    tail_shape = {default_shape.back() / 16, 1, 1, 16};
+    tail_shape = {default_shape.back() / align16, 1, 1, align16};
   } else if (default_shape.size() >= nz_size || default_shape[1] == 1) {
     // (N, 32, 1) -> (N, 1, 2, 16, 1)
-    if (default_shape[len - nz_size] % 16 != 0) {
+    if (default_shape[len - nz_size] % align16 != 0) {
       MS_LOG(EXCEPTION) << "default_shape[-2] should be multiplies of 16, but got " << default_shape[len - nz_size];
     }
-    tail_shape = {1, default_shape[0] / 16, 16, 1};
+    tail_shape = {1, default_shape[0] / align16, align16, 1};
   } else {
     // (N, 32, 48) -> (N, 3, 2, 16, 16)
-    if (default_shape.back() % 16 != 0 || default_shape[len - nz_size] % 16 != 0) {
+    if (default_shape.back() % align16 != 0 || default_shape[len - nz_size] % align16 != 0) {
       MS_LOG(EXCEPTION) << "default_shape[-1] and default_shape[-2]should be multiplies of 16, but got "
                         << default_shape.back() << " " << default_shape[len - nz_size];
     }
-    tail_shape = {default_shape[1] / 16, default_shape[0] / 16, 16, 16};
+    tail_shape = {default_shape[1] / align16, default_shape[0] / align16, align16, align16};
   }
   (void)leading_shape.insert(leading_shape.end(), tail_shape.begin(), tail_shape.end());
   return leading_shape;
@@ -331,9 +332,12 @@ DShape ReshapeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   auto origin_shape = inputs[0]->shape;
   auto origin_product = std::accumulate(origin_shape.begin(), origin_shape.end(), 1, std::multiplies<int64_t>());
   auto new_product = std::accumulate(new_shape.begin(), new_shape.end(), 1, std::multiplies<int64_t>());
+  if (new_product == 0) {
+    new_product = 1;
+  }
   for (size_t i = 0; i < new_shape.size(); i++) {
     if (new_shape[i] == -1) {
-      new_shape[i] = origin_product / new_product * (-1);
+      new_shape[i] = (origin_product / new_product) * (-1);
       return new_shape;
     }
   }
@@ -425,7 +429,10 @@ DShape Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   check_nd(stride, dim_len);
   check_nd(dilation, dim_len);
   bool has_pad = false;
-  if (pad_list[0] != pad_list[1] || pad_list[2] != pad_list[3]) {
+  constexpr auto index1 = 1;
+  constexpr auto index2 = 2;
+  constexpr auto index3 = 3;
+  if (pad_list[0] != pad_list[index1] || pad_list[index2] != pad_list[index3]) {
     has_pad = true;
   } else {
     if (pad_mode == "VALID" || pad_mode == "valid") {
@@ -437,10 +444,10 @@ DShape Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   if (!has_pad) {
     pad_list = {0, 0, 0, 0};
   }
-  auto k_h = (kernel_size[0] - 1) * dilation[2] + 1;
-  auto k_w = (kernel_size[1] - 1) * dilation[3] + 1;
-  auto out_h = (h + pad_list[0] + pad_list[1] - k_h) / stride[2] + 1;
-  auto out_w = (w + pad_list[2] + pad_list[3] - k_w) / stride[3] + 1;
+  auto k_h = (kernel_size[0] - 1) * dilation[index2] + 1;
+  auto k_w = (kernel_size[index1] - 1) * dilation[index3] + 1;
+  auto out_h = (h + pad_list[0] + pad_list[index1] - k_h) / stride[index2] + 1;
+  auto out_w = (w + pad_list[index2] + pad_list[index3] - k_w) / stride[index3] + 1;
   std::vector<int64_t> output = {n, out_h, out_w, out_channel};
   return output;
 }
