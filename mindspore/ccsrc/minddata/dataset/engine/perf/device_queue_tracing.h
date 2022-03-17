@@ -34,7 +34,7 @@ class DeviceQueueTracing : public Tracing {
 
   std::string Name() const override { return kDeviceQueueTracingName; };
 
- private:
+ protected:
   Path GetFileName(const std::string &dir_path, const std::string &rank_id) override;
 };
 }  // namespace dataset

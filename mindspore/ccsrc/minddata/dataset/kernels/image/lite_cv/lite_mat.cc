@@ -499,7 +499,7 @@ inline float32x4_t round_simd(const float32x4_t &v) {
 
 template <typename T>
 inline void DivideImpl(const T *src0, const T *src1, T *dst, int64_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
+  for (int64_t i = 0; i < total_size; i++) {
     dst[i] = src1[i] ? src0[i] / src1[i] : 0;
   }
 }
@@ -641,7 +641,7 @@ bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
 
 template <typename T>
 inline void MultiplyImpl(const T *src0, const T *src1, T *dst, int64_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
+  for (int64_t i = 0; i < total_size; i++) {
     dst[i] = src0[i] * src1[i];
   }
 }

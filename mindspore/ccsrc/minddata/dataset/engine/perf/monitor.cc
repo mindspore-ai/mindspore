@@ -26,6 +26,18 @@ Monitor::Monitor(ProfilingManager *profiling_manager) : profiling_manager_(profi
   sampling_interval_ = cfg->monitor_sampling_interval();
   tree_ = profiling_manager_->tree_;
 }
+
+Monitor::~Monitor() {
+  // just set the pointer to nullptr, it's not be released here
+  if (profiling_manager_) {
+    profiling_manager_ = nullptr;
+  }
+
+  if (tree_) {
+    tree_ = nullptr;
+  }
+}
+
 Status Monitor::operator()() {
   // Register this thread with TaskManager to receive proper interrupt signal.
   TaskManager::FindMe()->Post();

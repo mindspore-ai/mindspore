@@ -153,7 +153,7 @@ class Vocab {
 
   /// \brief Return a read-only vocab in unordered_map type.
   /// \return A unordered_map of word2id.
-  const std::unordered_map<WordType, WordIdType> &GetVocab() { return word2id_; }
+  const std::unordered_map<WordType, WordIdType> &GetVocab() const { return word2id_; }
 
   /// \brief Constructor.
   Vocab() = default;
