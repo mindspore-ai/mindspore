@@ -3,6 +3,13 @@
 # Convert models:
 function Convert() {
   # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile; $6:failNotReturn;
+  fifo_file="fifo_file.txt"
+  mkfifo ${fifo_file}
+  exec 6<>${fifo_file}
+  rm -f ${fifo_file}
+  max_converter_jobs=6
+  for ((i = 0; i < ${max_converter_jobs}; i++)); do echo; done >&6
+
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
         quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size
   cfg_file_list=$1
@@ -11,117 +18,123 @@ function Convert() {
       if [[ $line == \#* || $line == "" ]]; then
         continue
       fi
-      model_info=`echo ${line} | awk -F ' ' '{print $1}'`
-      calib_size=`echo ${line} | awk -F ' ' '{print $3}'`
-      model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
-      input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
-      input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
-      extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
-      input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
-      input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
-      model_type=${model_name##*.}
-      cfg_file_name=${cfg_file##*/}
-      quant_config_path="${cfg_file%/*}/quant"
-      case $model_type in
-        pb)
-          model_fmk="TF"
-          ;;
-        tflite)
-          model_fmk="TFLITE"
-          ;;
-        onnx)
-          model_fmk="ONNX"
-          ;;
-        mindir)
-          model_fmk="MINDIR"
-          ;;
-        *)
-          model_type="caffe"
-          model_fmk="CAFFE"
-          ;;
-      esac
-      # set parameters
-      model_file=$2"/"${model_name}
-      weight_file=""
-      if [[ $model_fmk == "CAFFE" ]]; then
-        model_file=${model_file}".prototxt"
-        weight_file=${model_file%.*}".caffemodel"
-      fi
-      output_file=$3"/"${model_name}
-      quant_type=""
-      config_file=""
-      spec_shapes=""
-      train_model="false"
-      in_dtype="DEFAULT"
-      out_dtype="DEFAULT"
-      if [[ ${cfg_file_name} =~ "weightquant" ]]; then
-        # models_weightquant_${suffix}.cfg
-        suffix=${cfg_file_name: 19: -4}
-        quant_type="WeightQuant"
-        output_file=${output_file}"_${suffix}"
-        config_file="${quant_config_path}/weight_quant_${suffix}.cfg"
-      elif [[ ${cfg_file_name} =~ "_train" ]]; then
-        train_model="true"
-      elif [[ ${cfg_file_name} =~ "_ascend" ]]; then
-        model_path=$2
-        option_file="${model_path}/model_option/${model_name}.txt"
-        if [ -f "$option_file" ]; then
-          config_file=${option_file}
+      read -u6
+      {
+        model_info=`echo ${line} | awk -F ' ' '{print $1}'`
+        calib_size=`echo ${line} | awk -F ' ' '{print $3}'`
+        model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
+        input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+        extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
+        input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
+        input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
+        model_type=${model_name##*.}
+        cfg_file_name=${cfg_file##*/}
+        quant_config_path="${cfg_file%/*}/quant"
+        case $model_type in
+          pb)
+            model_fmk="TF"
+            ;;
+          tflite)
+            model_fmk="TFLITE"
+            ;;
+          onnx)
+            model_fmk="ONNX"
+            ;;
+          mindir)
+            model_fmk="MINDIR"
+            ;;
+          *)
+            model_type="caffe"
+            model_fmk="CAFFE"
+            ;;
+        esac
+        # set parameters
+        model_file=$2"/"${model_name}
+        weight_file=""
+        if [[ $model_fmk == "CAFFE" ]]; then
+          model_file=${model_file}".prototxt"
+          weight_file=${model_file%.*}".caffemodel"
         fi
-      elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
-        quant_type="PostTraining"
-        output_file=${output_file}"_posttraining"
-        config_file="${quant_config_path}/${model_name}_${cfg_file_name:7:-4}.config"
-      elif [[ ${cfg_file_name} =~ "dynamic_quant" ]]; then
-        quant_type="DynamicQuant"
-        output_file=${output_file}"_dynamic_quant"
-        config_file="${quant_config_path}/dynamic_quant.cfg"
-      elif [[ ${cfg_file_name} =~ "awaretraining" || ${extra_info} =~ "aware_training" ]]; then
-        in_dtype="FLOAT"
-        out_dtype="FLOAT"
-      fi
-      if [[ ${extra_info} =~ "offline_resize" && ${input_shapes} != "" && ${input_names} != "" ]]; then
-        if [[ ${input_num} == "" ]]; then
-          input_num=1
+        output_file=$3"/"${model_name}
+        quant_type=""
+        config_file=""
+        spec_shapes=""
+        train_model="false"
+        in_dtype="DEFAULT"
+        out_dtype="DEFAULT"
+        if [[ ${cfg_file_name} =~ "weightquant" ]]; then
+          # models_weightquant_${suffix}.cfg
+          suffix=${cfg_file_name: 19: -4}
+          quant_type="WeightQuant"
+          output_file=${output_file}"_${suffix}"
+          config_file="${quant_config_path}/weight_quant_${suffix}.cfg"
+        elif [[ ${cfg_file_name} =~ "_train" ]]; then
+          train_model="true"
+        elif [[ ${cfg_file_name} =~ "_ascend" ]]; then
+          model_path=$2
+          option_file="${model_path}/model_option/${model_name}.txt"
+          if [ -f "$option_file" ]; then
+            config_file=${option_file}
+          fi
+        elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
+          quant_type="PostTraining"
+          output_file=${output_file}"_posttraining"
+          config_file="${quant_config_path}/${model_name}_${cfg_file_name:7:-4}.config"
+        elif [[ ${cfg_file_name} =~ "dynamic_quant" ]]; then
+          quant_type="DynamicQuant"
+          output_file=${output_file}"_dynamic_quant"
+          config_file="${quant_config_path}/dynamic_quant.cfg"
+        elif [[ ${cfg_file_name} =~ "awaretraining" || ${extra_info} =~ "aware_training" ]]; then
+          in_dtype="FLOAT"
+          out_dtype="FLOAT"
         fi
-        IFS="," read -r -a name_array <<< ${input_names}
-        IFS=":" read -r -a shape_array <<< ${input_shapes}
-        for i in $(seq 0 $((${input_num}-1)))
-        do
-          spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
-        done
-      fi
-      # start running converter
-      echo "Convert ${model_name} ${quant_type} ......"
-      echo ${model_name} >> "$4"
-      echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
-        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape="'${spec_shapes}'"'\
-        ' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
-      ./converter_lite  --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
-        --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}"\
-        --configFile=${config_file} --trainModel=${train_model} >> "$4"
-      if [ $? = 0 ]; then
-          converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
-          model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
-          if [[ -n ${calib_size} ]];then
-            if [ ${model_size} -gt ${calib_size} ]; then
-              echo "${output_file}.ms " model size is " ${model_size} " and calib size is " ${calib_size}"
-              converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' failed';echo ${converter_result} >> $5
-              if [[ $6 != "ON" ]]; then
-                  return 1
+        if [[ ${extra_info} =~ "offline_resize" && ${input_shapes} != "" && ${input_names} != "" ]]; then
+          if [[ ${input_num} == "" ]]; then
+            input_num=1
+          fi
+          IFS="," read -r -a name_array <<< ${input_names}
+          IFS=":" read -r -a shape_array <<< ${input_shapes}
+          for i in $(seq 0 $((${input_num}-1)))
+          do
+            spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+          done
+        fi
+        # start running converter
+        echo "Convert ${model_name} ${quant_type} ......"
+        echo ${model_name} >> "$4"
+        echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
+          ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape="'${spec_shapes}'"'\
+          ' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
+        ./converter_lite  --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
+          --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}"\
+          --configFile=${config_file} --trainModel=${train_model} >> "$4"
+        if [ $? = 0 ]; then
+            converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+            model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
+            if [[ -n ${calib_size} ]];then
+              if [ ${model_size} -gt ${calib_size} ]; then
+                echo "${output_file}.ms " model size is " ${model_size} " and calib size is " ${calib_size}"
+                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' failed';echo ${converter_result} >> $5
+                if [[ $6 != "ON" ]]; then
+                    return 1
+                fi
+              else
+                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' pass';echo ${converter_result} >> $5
               fi
-            else
-              converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' pass';echo ${converter_result} >> $5
             fi
-          fi
-      else
-          converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
-          if [[ $6 != "ON" ]]; then
-              return 1
-          fi
-      fi
+        else
+            converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+            if [[ $6 != "ON" ]]; then
+                return 1
+            fi
+        fi
+        echo >&6
+      } &
     done < ${cfg_file}
   done
+  wait
+  exec 6>&-
 }
 
 function Push_Files() {
