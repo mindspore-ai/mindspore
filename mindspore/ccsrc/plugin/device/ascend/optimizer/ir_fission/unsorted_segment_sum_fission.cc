@@ -60,8 +60,8 @@ CNodePtr UnsortSegmentSumFission::CreatePadding(const FuncGraphPtr &graph, const
   if (AnfUtils::IsShapeDynamic(shape)) {
     auto min_shape = common::AnfAlgo::GetInputMinShape(origin_node, 0);
     auto max_shape = common::AnfAlgo::GetInputMaxShape(origin_node, 0);
-    min_shape[shape.size() - 1] = pad_dim_size;
-    max_shape[shape.size() - 1] = pad_dim_size;
+    min_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
+    max_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
     ShapeVector shape_tmp;
     std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape);
@@ -91,8 +91,8 @@ CNodePtr UnsortSegmentSumFission::CreateUnsortedSegmentSum(const FuncGraphPtr &g
   if (AnfUtils::IsShapeDynamic(shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(origin_node, 0);
     auto max_shape = common::AnfAlgo::GetInputMaxShape(origin_node, 0);
-    min_shape[shape.size() - 1] = pad_dim_size;
-    max_shape[shape.size() - 1] = pad_dim_size;
+    min_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
+    max_shape[shape.size() - 1] = SizeToLong(pad_dim_size);
     ShapeVector shape_tmp;
     std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape);

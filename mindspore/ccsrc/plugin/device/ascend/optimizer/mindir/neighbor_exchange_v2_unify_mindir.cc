@@ -534,12 +534,12 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateLeftRightConcat(const FuncGraphPtr
   size_t middle_ids = is_left ? 6 : 2;
   size_t last_ids = is_left ? 5 : 3;
 
-  auto single_shape =
-    common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
+  auto single_shape = common::AnfAlgo::GetOutputInferShape(
+    all_to_all_v_outputs[LongToSize(AllToAllRealIds(middle_ids, recv_rank_ids))], 0);
   auto max_shape =
-    common::AnfAlgo::GetOutputMaxShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
+    common::AnfAlgo::GetOutputMaxShape(all_to_all_v_outputs[LongToSize(AllToAllRealIds(middle_ids, recv_rank_ids))], 0);
   auto min_shape =
-    common::AnfAlgo::GetOutputMinShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
+    common::AnfAlgo::GetOutputMinShape(all_to_all_v_outputs[LongToSize(AllToAllRealIds(middle_ids, recv_rank_ids))], 0);
 
   auto is_dynamic = AnfUtils::IsShapeDynamic(single_shape);
   if (recv_rank_ids[first_ids] != kInvalidId) {
@@ -821,7 +821,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
                   (send_rank_ids[kRankIdThree] != kInvalidId);
   if (is_left || is_right) {
     if (!is_top) {
-      split_nodes.push_back(nullptr);
+      split_nodes.emplace_back(nullptr);
       split_num->push_back(0);
     }
     for (size_t i = 0; i < split_outputs_top_bottom.size(); ++i) {
@@ -840,15 +840,15 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
       split_num->push_back(num_split_w);
     }
     if (!is_bottom) {
-      split_nodes.push_back(nullptr);
+      split_nodes.emplace_back(nullptr);
       split_num->push_back(0);
     }
   } else {
-    split_nodes.push_back(nullptr);
+    split_nodes.emplace_back(nullptr);
     split_num->push_back(0);
-    split_nodes.push_back(nullptr);
+    split_nodes.emplace_back(nullptr);
     split_num->push_back(0);
-    split_nodes.push_back(nullptr);
+    split_nodes.emplace_back(nullptr);
     split_num->push_back(0);
   }
   MS_LOG(DEBUG) << "Create splitv nodes success.";

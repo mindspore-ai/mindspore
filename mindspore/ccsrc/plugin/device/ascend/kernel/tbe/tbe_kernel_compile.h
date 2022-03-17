@@ -66,9 +66,7 @@ class TbeKernelCompileManager {
  public:
   static TbeKernelCompileManager &GetInstance() {
     static TbeKernelCompileManager instance;
-    if (!instance.tbe_init_flag_) {
-      instance.TbeInitialize();
-    }
+    instance.TbeInitialize();
     return instance;
   }
   void TbeFinalize();

@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_MULTI_OUTPUT_FUSION_PASS_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_MULTI_OUTPUT_FUSION_PASS_H_
 
+#include <utility>
 #include "utils/hash_set.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/fusion_base_pass.h"
 #include "ir/anf.h"
@@ -30,7 +31,7 @@ namespace opt {
 class MultiOutputFusionPass : public FusionBasePass {
  public:
   explicit MultiOutputFusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("MultiOutputFusionPass", idAllocator) {
+      : FusionBasePass("MultiOutputFusionPass", std::move(idAllocator)) {
     PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::MultiOutputFusionPass);
   }
   ~MultiOutputFusionPass() override = default;
