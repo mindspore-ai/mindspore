@@ -1173,3 +1173,34 @@ def test_matmul_soft_shrink():
     y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
     b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
     compile_net(net, x, y, b)
+
+
+def test_matmul_erfinv():
+    """
+    Feature: distribute operator Erfinv in auto parallel.
+    Description: matmul-squared_difference-matmul net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+            self.erfinv = P.Erfinv().shard(strategy2)
+            self.matmul2 = P.MatMul().shard(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.erfinv(out)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2),)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.random.uniform(-5, 5, size=(128, 32)), dtype=ms.float32)
+    y = Tensor(np.random.uniform(-5, 5, size=(32, 64)), dtype=ms.float32)
+    b = Tensor(np.random.uniform(-5, 5, size=(64, 64)), dtype=ms.float32)
+    compile_net(net, x, y, b)

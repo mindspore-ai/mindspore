@@ -30,9 +30,9 @@ namespace mindspore {
 namespace parallel {
 Status SplitInfo::GetAttrs() {
   int64_t axis = 0;
-  int64_t output_num = 0;
 
-  auto axis_iter = attrs_.find(AXIS);
+  std::string attr_axis_name = GetSplitAxisAttrName();
+  auto axis_iter = attrs_.find(attr_axis_name);
   if (axis_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(axis_iter->second);
     if (axis_iter->second->isa<Int64Imm>()) {
@@ -55,21 +55,6 @@ Status SplitInfo::GetAttrs() {
     axis = axis + dim;
   }
   axis_ = LongToSize(axis);
-
-  auto output_num_iter = attrs_.find(OUTPUT_NUM);
-  if (output_num_iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(output_num_iter->second);
-    if (output_num_iter->second->isa<Int64Imm>()) {
-      output_num = output_num_iter->second->cast<Int64ImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << ": The value of output_num is not int";
-      return FAILED;
-    }
-  } else {
-    MS_LOG(ERROR) << name_ << ": Can not find the output_num attr";
-    return FAILED;
-  }
-  output_num_ = LongToSize(output_num);
 
   return SUCCESS;
 }
@@ -151,6 +136,9 @@ std::vector<StrategyPtr> SplitInfo::GenerateOpStrategies(int64_t stage_id) {
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Generate strategies failed";
+  }
+  if (sp_vector.empty()) {
+    MS_LOG(EXCEPTION) << name_ << ": No available strategy";
   }
 
   return sp_vector;

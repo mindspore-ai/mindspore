@@ -112,7 +112,7 @@ class OperatorInfo {
   // In the inference phase, the memory cost is incurred only when the operator is critical. The size is calculated
   // by the output
   Status CalculateMemoryCostForInference();
-  int64_t ComputeOpAndPrevEdgeParameterInvolved();
+  virtual int64_t ComputeOpAndPrevEdgeParameterInvolved();
 
   ForwardOp forward_op() const { return forward_op_; }
   ForwardOp replace_op() const { return replace_op_; }
@@ -227,7 +227,7 @@ class OperatorInfo {
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
-  Status InferAttrs();
+  virtual Status InferAttrs();
   void ResetQueueMember();
   Status InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
   Status InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
@@ -374,6 +374,8 @@ ValuePtr MakeListValue(const std::vector<int64_t> &v);
 ValuePtr MakeTupleListValue(const Shapes &v);
 AnfNodePtr CreateValueTupleAnfNodePtr(const std::vector<int64_t> &value_tuple);
 AnfNodePtr CreateTensorTupleAnfNodePtr(const tensor::TensorPtrList &tensor_tuple);
+
+ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype);
 }  // namespace parallel
 }  // namespace mindspore
 

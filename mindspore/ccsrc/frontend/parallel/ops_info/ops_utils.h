@@ -260,6 +260,9 @@ constexpr char POOLED_WIDTH[] = "pooled_width";
 constexpr char SPATIAL_SCALE[] = "spatial_scale";
 constexpr char SAMPLE_NUM[] = "sample_num";
 constexpr char ROI_END_MODE[] = "roi_end_mode";
+constexpr char REDUCTION[] = "reduction";
+constexpr char MEAN[] = "mean";
+constexpr char ATTR_NONE[] = "none";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
@@ -477,6 +480,12 @@ constexpr char INPLACE_SUB[] = "InplaceSub";
 constexpr char CDIST[] = "Cdist";
 constexpr char L2_LOSS[] = "L2Loss";
 constexpr char LERP[] = "Lerp";
+constexpr char SQUARED_DIFFERENCE[] = "SquaredDifference";
+constexpr char ERFINV[] = "Erfinv";
+constexpr char SPLITV[] = "SplitV";
+constexpr char GAMMA[] = "Gamma";
+constexpr char KLDIV_LOSS[] = "KLDivLoss";
+constexpr char LIN_SPACE[] = "LinSpace";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;

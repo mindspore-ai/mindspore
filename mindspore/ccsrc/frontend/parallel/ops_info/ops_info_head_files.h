@@ -70,5 +70,8 @@
 #include "frontend/parallel/ops_info/addn_info.h"
 #include "frontend/parallel/ops_info/inplace_add_info.h"
 #include "frontend/parallel/ops_info/cdist_info.h"
+#include "frontend/parallel/ops_info/gamma_info.h"
+#include "frontend/parallel/ops_info/kldiv_loss_info.h"
+#include "frontend/parallel/ops_info/lin_space_info.h"
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_HEAD_FILES_H_

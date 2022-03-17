@@ -28,6 +28,19 @@
 
 namespace mindspore {
 namespace parallel {
+Status UniformRealInfo::InferAttrs() {
+  if (infer_attrs_completed_) {
+    return SUCCESS;
+  }
+
+  if (GetAttrs() != SUCCESS) {
+    return FAILED;
+  }
+  ResetInputsShape();
+  infer_attrs_completed_ = true;
+  return SUCCESS;
+}
+
 Status UniformRealInfo::GetAttrs() {
   seed_ = GetIntAttr(SEED);
   if (seed_ < 0) {
@@ -39,10 +52,6 @@ Status UniformRealInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Seed2 must be greater or equal to zero, bug got " << seed2_;
     return FAILED;
   }
-  ValueTuplePtr shape_value = input_value_[0]->cast<ValueTuplePtr>();
-  MS_EXCEPTION_IF_NULL(shape_value);
-  inputs_shape_.push_back(GetValue<Shape>(shape_value));
-
   return SUCCESS;
 }
 
@@ -97,7 +106,10 @@ std::vector<StrategyPtr> UniformRealInfo::GenerateOpStrategies(int64_t stage_id)
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(EXCEPTION) << name_ << " : Generate strategies for independent inputs() failed.";
+    MS_LOG(EXCEPTION) << name_ << ": Generate strategies for independent inputs() failed.";
+  }
+  if (sp_vector.empty()) {
+    MS_LOG(EXCEPTION) << name_ << ": No available strategy.";
   }
   return sp_vector;
 }
@@ -120,23 +132,29 @@ void UniformRealInfo::UpdateShape(const CNodePtr &cnode) {
 }
 
 void UniformRealInfo::ReplaceNodeInputOrAttrs() {
+  // Replace input 'shape' to slice shape
   auto cnode = cnode_;
-  int64_t split_num = 1;
   UpdateShape(cnode);
-  std::vector<Dimensions> stra = strategy_->GetInputDim();
-  for (size_t i = 0; i < stra[0].size(); i++) {
-    split_num *= stra[0][i];
-  }
-  int64_t device_num = stage_device_size_;
-  int64_t rank_id = g_device_manager->rank_index_in_stage();
 
-  if (device_num != split_num) {
-    auto split_group_num = device_num / split_num;
-    int64_t seed_bias = rank_id / split_group_num;
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    prim->set_attr(SEED, MakeValue(seed_ + seed_bias));
-    prim->set_attr(SEED2, MakeValue(seed2_ + seed_bias));
+  // Update seed according rank_id
+  int64_t rank_id = g_device_manager->rank_index_in_stage();
+  int64_t seed_bias;
+  if (repeated_num_in_dev_matrix_right_) {
+    seed_bias = rank_id / repeated_calc_num_;
+  } else {
+    int64_t device_num = stage_device_size_;
+    seed_bias = rank_id % (device_num / repeated_calc_num_);
   }
+
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  prim->set_attr(SEED, MakeValue(seed_ + seed_bias));
+  prim->set_attr(SEED2, MakeValue(seed2_ + seed_bias));
+}
+
+void UniformRealInfo::ResetInputsShape() {
+  ValueTuplePtr shape_value = input_value_[0]->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(shape_value);
+  inputs_shape_.push_back(GetValue<Shape>(shape_value));
 }
 }  // namespace parallel
 }  // namespace mindspore

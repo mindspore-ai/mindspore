@@ -18,7 +18,7 @@ from mindspore import Tensor, context
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
-from parallel.utils.utils import compile_net
+from parallel.utils.utils import ParallelValidator, compile_net
 
 x_ = Tensor(np.random.normal(size=[32, 8, 8]).astype(np.float32))
 
@@ -52,4 +52,21 @@ def test_l2_loss_model_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy = ((2, 2, 2),)
     net = Net(strategy)
-    compile_net(net, x_)
+    phase = compile_net(net, x_)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs('AllReduce-0', ['L2Loss-0'])
+    assert validator.check_node_attrs('AllReduce-0', {'op': 'sum'})
+
+
+def test_l2_loss_data_parallel():
+    """
+    Feature: test L2Loss data parallel
+    Description: data parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    net = Net()
+    phase = compile_net(net, x_)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs('AllReduce-0', ['L2Loss-0'])
+    assert validator.check_node_attrs('AllReduce-0', {'op': 'sum'})
