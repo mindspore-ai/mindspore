@@ -133,10 +133,9 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
     auto &outer_out_kernels = output_kernel->out_kernels();
     auto &out_kernel_out_tensors = output_kernel->out_tensors();
     for (auto out_kernel_out_tensor : out_kernel_out_tensors) {
-      if (out_kernel_out_tensor->IsGraphOutput() || outer_out_kernels.empty()) {
-        if (!lite::IsContain(output_tensors, out_kernel_out_tensor)) {
-          output_tensors.push_back(out_kernel_out_tensor);
-        }
+      if ((out_kernel_out_tensor->IsGraphOutput() || outer_out_kernels.empty()) &&
+          !lite::IsContain(output_tensors, out_kernel_out_tensor)) {
+        output_tensors.push_back(out_kernel_out_tensor);
       }
     }
     if (!outer_out_kernels.empty()) {
@@ -149,10 +148,9 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
         for (auto out_kernel_out_tensor : out_kernel_out_tensors) {
           auto outer_out_kernel_in_tensors_iter =
             std::find(outer_out_kernel_in_tensors.begin(), outer_out_kernel_in_tensors.end(), out_kernel_out_tensor);
-          if (outer_out_kernel_in_tensors_iter != outer_out_kernel_in_tensors.end()) {
-            if (!lite::IsContain(output_tensors, out_kernel_out_tensor)) {
-              output_tensors.push_back(out_kernel_out_tensor);
-            }
+          if ((outer_out_kernel_in_tensors_iter != outer_out_kernel_in_tensors.end()) &&
+              !lite::IsContain(output_tensors, out_kernel_out_tensor)) {
+            output_tensors.push_back(out_kernel_out_tensor);
           }
         }
       }

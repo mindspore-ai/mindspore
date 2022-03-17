@@ -46,8 +46,8 @@ using mindspore::registry::KernelDesc;
 namespace mindspore::lite {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 namespace {
-const char *const kArchCPU = "CPU";
-const char *const kArchGPU = "GPU";
+constexpr auto kArchCPU = "CPU";
+constexpr auto kArchGPU = "GPU";
 void KernelKeyToKernelDesc(const KernelKey &key, KernelDesc *desc) {
   MS_ASSERT(desc != nullptr);
   desc->data_type = static_cast<DataType>(key.data_type);
