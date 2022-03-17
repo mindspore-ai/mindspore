@@ -278,5 +278,4 @@ bool ElementWiseTensorRT::SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::M
   }
   return false;
 }
-
 }  // namespace mindspore::lite

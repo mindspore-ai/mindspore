@@ -102,7 +102,7 @@ int MatMulTensorRT::PreprocessMatMulInputs(nvinfer1::INetworkDefinition *network
       GetDimsVolume(tensorrt_in_tensors_[0].trt_tensor_->getDimensions()) == GetDimsVolume(in_tensors_[0].Shape()) ? 0
                                                                                                                    : 1;
     ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[a_index], matmul_a);
-    if (ret != RET_OK || matmul_a->trt_tensor_ == nullptr) {
+    if (ret != RET_OK || matmul_a->trt_tensor_ == nullptr || matmul_b->trt_tensor_ == nullptr) {
       MS_LOG(ERROR) << "PreprocessInputs2SameDim of matmul input a failed for " << op_name_;
       return RET_ERROR;
     }
@@ -113,7 +113,8 @@ int MatMulTensorRT::PreprocessMatMulInputs(nvinfer1::INetworkDefinition *network
     }
     out_format_ = matmul_a->format_;
     if (matmul_a->format_ != matmul_b->format_) {
-      MS_LOG(WARNING) << "matmul input tensor has different format " << op_name_;
+      MS_LOG(ERROR) << "matmul input tensor has different format " << op_name_;
+      return RET_ERROR;
     }
   } else if (tensorrt_in_tensors_.size() == 1) {
     nvinfer1::ITensor *weight = nullptr;
@@ -133,23 +134,15 @@ int MatMulTensorRT::PreprocessMatMulInputs(nvinfer1::INetworkDefinition *network
       MS_LOG(ERROR) << "create constant weight tensor failed for " << op_name_;
       return RET_ERROR;
     }
-    if (weight_index == 1) {
-      matmul_b->trt_tensor_ = weight;
-      ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], matmul_a);
-      if (ret != RET_OK || matmul_a->trt_tensor_ == nullptr) {
-        MS_LOG(ERROR) << "PreprocessInputs2SameDim of matmul input a failed for " << op_name_;
-        return RET_ERROR;
-      }
-      out_format_ = matmul_a->format_;
-    } else {
-      matmul_a->trt_tensor_ = weight;
-      ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], matmul_b);
-      if (ret != RET_OK || matmul_b->trt_tensor_ == nullptr) {
-        MS_LOG(ERROR) << "PreprocessInputs2SameDim of matmul input b failed for " << op_name_;
-        return RET_ERROR;
-      }
-      out_format_ = matmul_b->format_;
+    ITensorHelper *weight_helper = (weight_index == 1) ? matmul_b : matmul_a;
+    ITensorHelper *var_helper = (weight_index == 1) ? matmul_a : matmul_b;
+    weight_helper->trt_tensor_ = weight;
+    ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[1 - weight_index], var_helper);
+    if (ret != RET_OK || var_helper->trt_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "PreprocessInputs2SameDim of matmul input var_helper failed for " << op_name_;
+      return ret;
     }
+    out_format_ = var_helper->format_;
   } else {
     MS_LOG(ERROR) << op_name_ << " tensorrt in tensor size is invalid " << tensorrt_in_tensors_.size();
     return RET_ERROR;

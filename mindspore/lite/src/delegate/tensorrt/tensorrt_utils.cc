@@ -221,7 +221,7 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
                                                const mindspore::MSTensor &ms_tensor, size_t expand_shape_size,
                                                const std::string &op_name) {
   if (network == nullptr) {
-    MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
+    MS_LOG(ERROR) << "network is null for ConvertTensorWithExpandDims";
     return nullptr;
   }
   std::vector<int64_t> shape(expand_shape_size);

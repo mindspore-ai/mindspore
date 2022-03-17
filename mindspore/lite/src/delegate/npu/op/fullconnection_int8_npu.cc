@@ -96,7 +96,7 @@ int FullconnectionINT8NPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor>
       MS_LOG(ERROR) << "New weight const failed.";
       return RET_ERROR;
     }
-    auto bias_tensor = ConverterToNPUTensor(in_tensors[2], true);
+    auto bias_tensor = ConverterToNPUTensor(in_tensors[kBiasIndex], true);
     bias_->set_attr_value(bias_tensor);
     fc_->set_input_b(*bias_);
   }

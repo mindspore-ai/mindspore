@@ -78,7 +78,7 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   nvinfer1::IGatherLayer *gather_layer =
-    network->addGather(*gather_input.trt_tensor_, *indices_tensor.trt_tensor_ /* indices */, axis_ /* axis */);
+    network->addGather(*gather_input.trt_tensor_, *indices_tensor.trt_tensor_, axis_);
   if (gather_layer == nullptr) {
     MS_LOG(ERROR) << "addGather failed for TensorRT.";
     return RET_ERROR;

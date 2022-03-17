@@ -33,6 +33,12 @@ class ConcateTensorRT : public TensorRTOp {
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
+
+ private:
+  int PreProcessInputs(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *trt_input_tensors[]);
+
+  Format out_format_{Format::NHWC};
+  bool same_format_{true};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_CONCATE_TENSORRT_H_

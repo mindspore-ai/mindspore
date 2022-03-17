@@ -25,7 +25,7 @@ int ReduceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
     MS_LOG(ERROR) << "Get null primitive value for op: " << name_;
     return RET_ERROR;
   }
-  CHECK_LESS_RETURN(in_tensors.size(), 2);
+  CHECK_LESS_RETURN(in_tensors.size(), INPUT_SIZE2);
   auto reduce_axes = inputs_.at(1);
   if (!reduce_axes.IsConst()) {
     MS_LOG(WARNING) << "Npu Reduce op dose not support non-const axes.";
@@ -89,7 +89,7 @@ int ReduceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
 ge::Operator *ReduceNPUOp::GetNPUOp() { return this->reduce_; }
 
 int ReduceNPUOp::HandleAxis() {
-  CHECK_LESS_RETURN(inputs_.size(), 2);
+  CHECK_LESS_RETURN(inputs_.size(), INPUT_SIZE2);
   auto reduce_axes = inputs_.at(1);
   int num_axes = reduce_axes.Shape().at(0);
   MS_CHECK_TRUE_RET(reduce_axes.MutableData() != nullptr, RET_ERROR);

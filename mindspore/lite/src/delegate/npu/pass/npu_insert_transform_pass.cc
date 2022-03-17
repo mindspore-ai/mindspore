@@ -102,7 +102,7 @@ InsertState NPUInsertTransformPass::GetInsertState(NPUOp *op) {
   // won't insert if total input output are all transpose tensor, the fusion pass will handle this.
   size_t transpose_tensor_num = transpose_input_num + transpose_output_num;
   size_t connected_in_out_tensor_num = in_out_tensor_num - graph_output_num - graph_input_num;
-  if (transpose_tensor_num == 0 || transpose_tensor_num * 2 < connected_in_out_tensor_num ||
+  if (transpose_tensor_num == 0 || transpose_tensor_num * INPUT_SIZE2 < connected_in_out_tensor_num ||
       transpose_tensor_num == in_out_tensor_num) {
     return InsertState::InsertNone;
   }
@@ -257,7 +257,7 @@ int NPUInsertTransformPass::Run(NPUGraph *subgraph) {
   all_ops_ = subgraph_->GetOps();
   all_tensors_ = subgraph_->GetInsertTensors();
   std::vector<NPUOp *> insert_ops;
-  for (int j = 0; j < 2; ++j) {
+  for (int j = 0; j < INPUT_SIZE2; ++j) {
     for (size_t i = 0; i < all_ops_->size(); i++) {
       auto op = (*all_ops_)[i];
       auto insert_state = GetInsertState(op);
