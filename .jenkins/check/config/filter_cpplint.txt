@@ -67,3 +67,6 @@
 "mindspore/mindspore/lite/examples/quick_start_c/main.c"                                           "readability/casting"
 "mindspore/mindspore/lite/examples/quick_start_c/main.c"                                           "runtime/threadsafe_fn"
 "mindspore/mindspore/lite/examples/quick_start_micro"                                              "readability/casting"
+"mindspore/mindspore/core/mindrt/include/async/try.h"                                              "runtime/explicit"
+"mindspore/mindspore/core/mindrt/include/async/failure.h"                                          "runtime/explicit"
+"mindspore/mindspore/core/mindrt/include/async/defer.h"                                            "runtime/explicit"

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 
 namespace mindspore {
 namespace dpico {
+enum DumpMode : int { kDumpInputOutput = 0, kDumpInput = 1, kDumpOutput = 2 };
 struct OpAttr {
   std::string data_type;
   size_t input_output_idx;

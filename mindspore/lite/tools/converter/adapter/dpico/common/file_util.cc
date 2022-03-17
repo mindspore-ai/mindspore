@@ -24,6 +24,11 @@
 
 namespace mindspore {
 namespace dpico {
+namespace {
+#ifdef _WIN32
+constexpr size_t kMaxPathLen = 1024;
+#endif
+}  // namespace
 int CreateDir(std::string *file_path) {  // support multi-level directory generated.
   if (file_path == nullptr) {
     MS_LOG(ERROR) << "file_path is nullptr.";
@@ -74,7 +79,7 @@ std::string RealPath(const char *path) {
     return "";
   }
 #ifdef _WIN32
-  char *real_path = _fullpath(resolved_path.get(), path, 1024);
+  char *real_path = _fullpath(resolved_path.get(), path, kMaxPathLen);
 #else
   char *real_path = realpath(path, resolved_path.get());
 #endif

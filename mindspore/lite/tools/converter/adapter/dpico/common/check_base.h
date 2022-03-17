@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,15 @@
 #define UP_ROUND(x, y) (((x) + (y) - (1)) / (y) * (y))
 #define DOWN_DIV(x, y) ((x) / (y))
 #define DOWN_ROUND(x, y) ((x) / (y) * (y))
+
+#define kNHWC_N 0
+#define kNHWC_H 1
+#define kNHWC_W 2
+#define kNHWC_C 3
+#define kNCHW_N 0
+#define kNCHW_C 1
+#define kNCHW_H 2
+#define kNCHW_W 3
 
 #define SIZE_MUL_OVERFLOW(x, y) (((x) == 0) ? false : (SIZE_MAX / (x)) < (y))
 #define INT_MUL_OVERFLOW(x, y)                                                                 \

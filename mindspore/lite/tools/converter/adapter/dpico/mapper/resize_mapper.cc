@@ -105,9 +105,11 @@ STATUS SetResizeDataInfo(const CNodePtr &cnode, const PrimitivePtr &prim, mapper
     auto data = reinterpret_cast<int32_t *>(tensor_info->data_c());
     MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
     if (input_format == Format::NCHW) {
-      size_vec = {static_cast<int32_t>(input_shape.at(0)), static_cast<int32_t>(input_shape.at(1)), *data, *(data + 1)};
+      size_vec = {static_cast<int32_t>(input_shape.at(0)), static_cast<int32_t>(input_shape.at(kNCHW_C)), *data,
+                  *(data + 1)};
     } else {
-      size_vec = {static_cast<int32_t>(input_shape.at(0)), *data, *(data + 1), static_cast<int32_t>(input_shape.at(3))};
+      size_vec = {static_cast<int32_t>(input_shape.at(0)), *data, *(data + 1),
+                  static_cast<int32_t>(input_shape.at(kNHWC_C))};
     }
     resize_operator->SetSizeVec(size_vec);
   } else if (tensor_info->data_type() == kNumberTypeFloat32 || tensor_info->data_type() == kNumberTypeFloat) {

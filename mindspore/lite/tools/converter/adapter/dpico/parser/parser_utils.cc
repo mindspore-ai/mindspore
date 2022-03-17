@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,12 +322,13 @@ bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded
   return proto->ParseFromCodedStream(coded_stream);
 }
 
-STATUS ReadProtoFromText(const char *file, google::protobuf::Message *message) {
-  if (file == nullptr || message == nullptr) {
+STATUS ReadProtoFromText(const std::string &file, google::protobuf::Message *message) {
+  if (message == nullptr) {
+    MS_LOG(ERROR) << "message is nullptr.";
     return RET_ERROR;
   }
 
-  std::string realPath = dpico::RealPath(file);
+  std::string realPath = dpico::RealPath(file.c_str());
   if (realPath.empty()) {
     MS_LOG(ERROR) << "Proto file path " << file << " is  not valid";
     return RET_ERROR;
@@ -352,12 +353,13 @@ STATUS ReadProtoFromText(const char *file, google::protobuf::Message *message) {
   return RET_OK;
 }
 
-STATUS ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *message) {
-  if (file == nullptr || message == nullptr) {
+STATUS ReadProtoFromBinaryFile(const std::string &file, google::protobuf::Message *message) {
+  if (message == nullptr) {
+    MS_LOG(ERROR) << "message is nullptr.";
     return RET_ERROR;
   }
 
-  std::string realPath = dpico::RealPath(file);
+  std::string realPath = dpico::RealPath(file.c_str());
   if (realPath.empty()) {
     MS_LOG(ERROR) << "Binary proto file path " << file << " is not valid";
     return RET_ERROR;

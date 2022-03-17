@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_DEFER_H
 
 #include <functional>
+#include <memory>
+#include <utility>
 
 #include "async/async.h"
 #include "async/option.h"

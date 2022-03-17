@@ -34,6 +34,7 @@ using mindspore::lite::RET_OK;
 namespace mindspore {
 namespace dpico {
 namespace {
+const int kMaxRoiFrameCnt = 300;
 const std::map<mapper::OpDataType, TypeId> kDataTypeMap = {
   {mapper::OpDataType::OP_DTYPE_S8, kNumberTypeInt8},     {mapper::OpDataType::OP_DTYPE_U8, kNumberTypeUInt8},
   {mapper::OpDataType::OP_DTYPE_S16, kNumberTypeInt16},   {mapper::OpDataType::OP_DTYPE_U16, kNumberTypeUInt16},
@@ -243,7 +244,7 @@ STATUS CustomOpCreator::SetCustomAttrs(const Subgraph &subgraph, const api::Func
 
   // add max_roi_fram_cnt attr
   if (subgraph.om_net_type == OmNetType::kRoi) {
-    auto max_roi_frame_cnt_str = std::to_string(300);
+    auto max_roi_frame_cnt_str = std::to_string(kMaxRoiFrameCnt);
     std::vector<uint8_t> max_roi_frame_cnt_value(max_roi_frame_cnt_str.begin(), max_roi_frame_cnt_str.end());
     custom_attrs.insert(std::make_pair("max_roi_frame_cnt", max_roi_frame_cnt_value));
   }

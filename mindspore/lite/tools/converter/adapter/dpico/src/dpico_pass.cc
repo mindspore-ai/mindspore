@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -338,7 +338,7 @@ STATUS DpicoPass::DataPrepare(const api::FuncGraphPtr &func_graph, bool *use_ori
       MS_LOG(DEBUG) << "required tensors are all graph inputs, which do not need to dump data.";
       return RET_OK;
     }
-    int dump_level = param_to_cnode.empty() ? 2 : 0;
+    int dump_level = param_to_cnode.empty() ? kDumpOutput : kDumpInputOutput;
     auto calib_data_generator = std::make_shared<CalibDataGenerator>(dump_level, param_to_cnode);
     MS_CHECK_TRUE_MSG(calib_data_generator != nullptr, RET_ERROR, "new calib generator failed.");
     if (calib_data_generator->Run(graph_inputs, dump_kernels) != RET_OK &&
