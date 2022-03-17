@@ -39,8 +39,8 @@ bool IsCNodePrimitveEqual(const CNodePtr &main, const CNodePtr &node, const std:
     }
     auto main_attrs = main_primitive->attrs();
     auto node_attrs = node_primitive->attrs();
-    std::vector<std::string> exclude_attrs{"IsFeatureMapOutput", "IsFeatureMapInputList", "pri_format", "input_names",
-                                           "output_names"};
+    std::vector<std::string> exclude_attrs{"IsFeatureMapOutput", "IsFeatureMapInputList", "pri_format",  "input_names",
+                                           "output_names",       "in_strategy",           "out_strategy"};
     for (auto &attr : exclude_attrs) {
       auto main_attrs_iter = main_attrs.find(attr);
       if (main_attrs_iter != main_attrs.end()) {
