@@ -463,12 +463,12 @@ class _Dropout(nn.Cell):
         if not self.training:
             return x
 
+        if self.keep_prob == 1:
+            return x
+
         if not self.is_ascend:
             out, _ = self.dropout(x)
             return out
-
-        if self.keep_prob == 1:
-            return x
 
         shape = self.get_shape(x)
         dtype = P.DType()(x)
@@ -492,7 +492,7 @@ class FixedSparseAttention(nn.Cell):
     Fixed Sparse Attention Layer
 
     This function contains the sparse attention primitives used in Sparse Transformers (see paper).
-    https://arxiv.org/abs/1904.10509
+    `Generating Long Sequences with Sparse Transformers <https://arxiv.org/abs/1904.10509>`_.
     Specifically, it includes the following:
     1. A faster implementation of normal attention (the upper triangle is not computed, and many operations are fused).
     2. An implementation of "strided" and "fixed" attention, as in the Sparse Transformers paper.
