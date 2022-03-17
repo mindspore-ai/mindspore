@@ -43,11 +43,8 @@ class MindDataTestProfiler : public UT::DatasetOpTesting {
   }
   std::shared_ptr<Dataset> set_dataset(int32_t op_input) {
     std::string folder_path = datasets_root_path_ + "/testPK/data/";
-    int64_t num_samples = 2;
+    int64_t num_samples = 20;
     std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(0, num_samples));
-    EXPECT_NE(ds, nullptr);
-
-    ds = ds->Repeat(op_input);
     EXPECT_NE(ds, nullptr);
 
     ds = ds->Shuffle(op_input);
@@ -67,7 +64,8 @@ class MindDataTestProfiler : public UT::DatasetOpTesting {
     ds = ds->Batch(op_input, true);
     EXPECT_NE(ds, nullptr);
 
-    ds = ds->Repeat(op_input);
+    int repeat_num = 10;
+    ds = ds->Repeat(repeat_num);
     EXPECT_NE(ds, nullptr);
 
     return ds;
@@ -241,19 +239,19 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByEpoch) {
     ASSERT_OK(profiler_manager->GetSysCpuUtilByEpoch(i - 1, i, &op_result));
     // Epoch is 1 for each iteration and 20 steps for each epoch, so the output size are expected to be 20
     ASSERT_OK(profiler_manager->GetBatchTimeByEpoch(i, &time_result));
-    EXPECT_EQ(time_result.size(), 20);
+    EXPECT_EQ(time_result.size(), 10);
     time_result.clear();
     ASSERT_OK(profiler_manager->GetPipelineTimeByEpoch(i, &time_result));
-    EXPECT_EQ(time_result.size(), 20);
+    EXPECT_EQ(time_result.size(), 10);
     time_result.clear();
     ASSERT_OK(profiler_manager->GetPushTimeByEpoch(i, &time_result));
-    EXPECT_EQ(time_result.size(), 20);
+    EXPECT_EQ(time_result.size(), 10);
     time_result.clear();
     ASSERT_OK(profiler_manager->GetConnectorSizeByEpoch(i, &connector_result));
-    EXPECT_EQ(connector_result.size(), 20);
+    EXPECT_EQ(connector_result.size(), 10);
     connector_result.clear();
     ASSERT_OK(profiler_manager->GetConnectorCapacityByEpoch(i, &connector_result));
-    EXPECT_EQ(connector_result.size(), 20);
+    EXPECT_EQ(connector_result.size(), 10);
     connector_result.clear();
     ASSERT_OK(profiler_manager->GetConnectorSizeByEpoch(i - 1, i, &connector_result));
     EXPECT_GT(connector_result.size(), 0);  // Connector size is expected to be greater than 0
@@ -323,12 +321,10 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByStep) {
   // Manually terminate the pipeline
   iter->Stop();
 
-  // There are 3 epochs and 3 samplers for each epoch, 3x3=9 steps in total
-  for (int i = 1; i < 10; i++) {
+  // There are 3 epochs and 10 samplers for each epoch, 3x10=30 steps in total
+  for (int i = 1; i < 31; i++) {
     ASSERT_OK(profiler_manager->GetUserCpuUtilByStep(i, i, &cpu_result));
-    ASSERT_OK(profiler_manager->GetUserCpuUtilByStep(i - 1, i, i, &op_result));
     ASSERT_OK(profiler_manager->GetSysCpuUtilByStep(i, i, &cpu_result));
-    ASSERT_OK(profiler_manager->GetSysCpuUtilByStep(i - 1, i, i, &op_result));
     // Step is 1 for each iteration, so the output size is expected to be 1
     ASSERT_OK(profiler_manager->GetBatchTimeByStep(i, i, &time_result));
     EXPECT_EQ(time_result.size(), 1);
@@ -345,16 +341,19 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByStep) {
     ASSERT_OK(profiler_manager->GetConnectorCapacityByStep(i, i, &connector_result));
     EXPECT_EQ(connector_result.size(), 1);
     connector_result.clear();
-    ASSERT_OK(profiler_manager->GetConnectorSizeByStep(i - 1, i, i, &connector_result));
-    EXPECT_GT(connector_result.size(), 0);  // Connector size is expected to be greater than 0
-    connector_result.clear();
     ASSERT_OK(profiler_manager->GetEmptyQueueFrequencyByStep(i, i, &queue_result));
     EXPECT_GE(queue_result, 0);
     EXPECT_LE(queue_result, 1);
-    ASSERT_OK(
-      profiler_manager->GetEmptyQueueFrequencyByStep(i - 1, i, &queue_result));  // Check when start_step < end_step
   }
-  ASSERT_ERROR(profiler_manager->GetUserCpuUtilByStep(10, 9, 9, &op_result));  // Check there is no op_id=10
+  // Iterate by op_id
+  for (int i = 0; i < 8; i++) {
+    ASSERT_OK(profiler_manager->GetUserCpuUtilByStep(i, i+1, i+1, &op_result));
+    ASSERT_OK(profiler_manager->GetSysCpuUtilByStep(i, i+1, i+1, &op_result));
+    ASSERT_OK(profiler_manager->GetConnectorSizeByStep(i, i+1, i+1, &connector_result));
+    EXPECT_GT(connector_result.size(), 0);  // Connector size is expected to be greater than 0
+    connector_result.clear();
+  }
+  ASSERT_ERROR(profiler_manager->GetUserCpuUtilByStep(8, 9, 9, &op_result));  // Check there is no op_id=8
 
   int num = profiler_manager->GetNumOfProfiledEpochs();
   EXPECT_EQ(num, 3);
