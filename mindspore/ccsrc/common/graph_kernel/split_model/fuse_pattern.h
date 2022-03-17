@@ -26,6 +26,7 @@ class CircleChecker {
  public:
   // whether it will form a circle if the two areas are fused.
   virtual bool HasCircle(const AreaPtr &a, const AreaPtr &b) const = 0;
+  virtual ~CircleChecker() = default;
 };
 using CircleCheckerPtr = std::shared_ptr<CircleChecker>;
 
@@ -50,7 +51,7 @@ class FusePattern {
 
   std::string name() const { return name_; }
   FuseDirection direction() const { return direction_; }
-  std::vector<AreaPtr> &fused_areas() { return fused_areas_; }
+  std::vector<AreaPtr> fused_areas_;
 
  protected:
   void Reset() { fused_areas_.clear(); }
@@ -65,7 +66,6 @@ class FusePattern {
   }
 
   std::string name_;
-  std::vector<AreaPtr> fused_areas_;
   FuseDirection direction_{FuseDirection::FORWARD};
   CircleCheckerPtr circle_checker_{nullptr};
 };

@@ -107,7 +107,7 @@ void KeepExecOrder(const FuncGraphPtr &func_graph, const AnfNodePtr &getitem, co
   load_node->set_abstract(assign_to_node->abstract());
   func_graph->AddNode(load_node);
 
-  mng->Replace(getitem, load_node);
+  (void)mng->Replace(getitem, load_node);
 }
 
 int64_t GetitemIndex(const AnfNodePtr &getitem) {
@@ -131,7 +131,7 @@ void UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &
       // 2. If the `cnode` has another path to the getitem_user, it's unnecessary to add update_state and load node to
       //    keep exec_order.
       if (HasPathToParamUser(cnode, getitem_user, getitem)) {
-        mng->Replace(getitem, assign_to);
+        (void)mng->Replace(getitem, assign_to);
         continue;
       }
       KeepExecOrder(func_graph, getitem, assign_to, mng);
@@ -180,7 +180,7 @@ bool ReplaceAssignByInplaceAssignInGraphkernel(const FuncGraphPtr &func_graph) {
     std::vector<TypeId> output_types = {input_types.back()};
     auto graph_sel_info = BuildSelectKernelBuildInfo(input_formats, input_types, output_formats, output_types, cnode);
     AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, new_cnode.get());
-    mng->Replace(cnode, new_cnode);
+    (void)mng->Replace(cnode, new_cnode);
   }
   return changed;
 }

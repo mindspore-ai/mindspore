@@ -29,7 +29,7 @@ namespace mindspore::graphkernel::inner {
 class ReachTable : public CircleChecker {
  public:
   explicit ReachTable(size_t size);
-  ~ReachTable() = default;
+  virtual ~ReachTable() = default;
   bool HasCircle(const AreaPtr &a, const AreaPtr &b) const override;
 
   // Link area from `from` to `to`.
@@ -51,6 +51,8 @@ class SplitModel {
  public:
   void Run(const LiteGraphPtr &litegraph);
   const std::list<AreaPtr> &areas() const { return areas_; }
+  SplitModel() = default;
+  virtual ~SplitModel() = default;
 
  protected:
   // transform the litegraph to areas, and initialize inner tables.
