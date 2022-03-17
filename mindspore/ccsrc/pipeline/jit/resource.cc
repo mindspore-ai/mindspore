@@ -357,6 +357,7 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
                                        const std::string &queue_name, size_t compile_cache_id,
                                        bool *compile_cache_consistent) {
   compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
+  compile_cache_manager_->InitParallelGroupCkptSaveFile();
   MS_EXCEPTION_IF_NULL(compile_cache_consistent);
   if (!*compile_cache_consistent) {
     MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";

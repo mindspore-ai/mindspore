@@ -1590,7 +1590,7 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
   anfnode_build_map_.clear();
 
   // Correct the null abstract for compatibility with previous versions.
-  if (!abstract_valid_) {
+  if (!abstract_valid_ && weights.empty()) {
     CorrectFuncGraph(dstGraph);
   }
   return dstGraph;
