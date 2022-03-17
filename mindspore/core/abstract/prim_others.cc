@@ -15,14 +15,13 @@
  */
 
 #include <string>
-#include <sstream>
 
 #include "ir/dtype.h"
 #include "utils/ms_utils.h"
-#include "base/core_ops.h"
 #include "abstract/param_validator.h"
 #include "abstract/infer_functions.h"
 #include "abstract/utils.h"
+#include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "utils/shape_utils.h"
@@ -93,9 +92,9 @@ AbstractBasePtr InferImplEnvironGet(const AnalysisEnginePtr &, const PrimitivePt
                                     const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).
-  CheckArgsSize(primitive->name(), args_spec_list, 3);
-  auto key = args_spec_list[1];
-  auto dflt = args_spec_list[2];
+  CheckArgsSize(primitive->name(), args_spec_list, kSizeThree);
+  auto key = args_spec_list[kIndexOne];
+  auto dflt = args_spec_list[kIndexTwo];
   TypePtr type = key->GetTypeTrack();
   MS_EXCEPTION_IF_NULL(type);
   if (type->type_id() != kObjectTypeSymbolicKeyType) {
@@ -153,8 +152,8 @@ AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
 }
 
-AbstractBasePtr InferImplEnvironDestroyAll(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplEnvironDestroyAll(const AnalysisEnginePtr &, const PrimitivePtr &,
+                                           const AbstractBasePtrList &) {
   return std::make_shared<abstract::AbstractScalar>(kAnyValue, std::make_shared<Bool>());
 }
 
@@ -368,19 +367,18 @@ AbstractBasePtr InferImplRowTensorAdd(const AnalysisEnginePtr &, const Primitive
 AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
-  constexpr auto kMakeSparseInputNum = 3;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kMakeSparseInputNum);
-  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  auto dense_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 2);
+  CheckArgsSize(op_name, args_spec_list, kSizeThree);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexZero);
+  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexOne);
+  auto dense_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, kIndexTwo);
 
   auto indices_dtype = indices->element()->BuildType();
   if (!indices_dtype->isa<Int>()) {
     MS_EXCEPTION(TypeError) << "The dtype of indices must be a Int, but got " << indices_dtype->ToString();
   }
   auto indices_shp = indices->shape()->shape();
-  if (indices_shp.size() != 2) {
+  if (indices_shp.size() != kSizeTwo) {
     MS_EXCEPTION(TypeError) << "Indices must be a 2 dimensional tensor, but got a " << indices_shp.size()
                             << " dimension tensor";
   }
@@ -476,7 +474,7 @@ AbstractBasePtr InferImplCSRElementWise(const AnalysisEnginePtr &, const Primiti
 
   MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
   auto nnz_vec = sparse->indices()->shape()->shape();
-  int csr_avg_rows = SizeToInt(nnz_vec[0] / dense_shape[0]);
+  auto csr_avg_rows = nnz_vec[0] / dense_shape[0];
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
   primitive->set_attr(kIsCSR, MakeValue(true));
@@ -512,7 +510,7 @@ AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &pr
 
   MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
   auto nnz_vec = sparse->indices()->shape()->shape();
-  int csr_avg_rows = SizeToInt(nnz_vec[0] / dense_shape[0]);
+  auto csr_avg_rows = nnz_vec[0] / dense_shape[0];
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
   primitive->set_attr(kIsCSR, MakeValue(true));
@@ -561,7 +559,7 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
 
   MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
   auto nnz_vec = sparse->indices()->shape()->shape();
-  int csr_avg_rows = SizeToInt(nnz_vec[0] / sparse_shape[0]);
+  auto csr_avg_rows = nnz_vec[0] / sparse_shape[0];
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
   primitive->set_attr(kIsCSR, MakeValue(true));
@@ -572,13 +570,12 @@ AbstractBasePtr InferImplCSRGather(const AnalysisEnginePtr &, const PrimitivePtr
                                    const AbstractBasePtrList &args_spec_list) {
   // Inputs: the indptr and indices of a sparse csr tensor, a dense tensor, and the shape of the sparse tensor.
   constexpr auto kCSRShapeSize = 2;
-  constexpr auto kCSRArgsSize = 4;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kCSRArgsSize);
-  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
-  auto sparse_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 3);
+  CheckArgsSize(op_name, args_spec_list, kSizeFour);
+  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexZero);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexOne);
+  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexTwo);
+  auto sparse_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, kIndexThree);
   MS_EXCEPTION_IF_NULL(indptr);
   MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(dense);
@@ -662,13 +659,12 @@ AbstractBasePtr InferImplCOO2CSR(const AnalysisEnginePtr &, const PrimitivePtr &
 AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: three tensors and a tuple.
-  constexpr auto kMakeCSRInputNum = 4;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kMakeCSRInputNum);
-  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
-  auto shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 3);
+  CheckArgsSize(op_name, args_spec_list, kSizeFour);
+  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexZero);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexOne);
+  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexTwo);
+  auto shape = CheckArg<AbstractTuple>(op_name, args_spec_list, kIndexThree);
 
   auto indices_dtype = indices->element()->BuildType();
   if (!indices_dtype->isa<Int>()) {

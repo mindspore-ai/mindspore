@@ -30,11 +30,11 @@ auto constexpr kDumpConfigLineLevel1 = "LINE_LEVEL1";
 auto constexpr kDumpConfigLineLevel2 = "LINE_LEVEL2";
 auto constexpr kDumpConfigDisableBackend = "DISABLE_BACKEND";
 auto constexpr kDumpConfigEnablePassIR = "ENABLE_PASS_IR";
-typedef struct DumpConfig {
+struct DumpConfig {
   LocDumpMode dump_line_level = kInValid;
   bool disable_backend_dump = false;
   bool enable_dump_pass_ir = false;
-} DumpConfig;
+};
 
 constexpr char PARALLEL_STRATEGY[] = "strategy";
 void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
