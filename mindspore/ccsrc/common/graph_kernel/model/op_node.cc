@@ -58,7 +58,7 @@ void PrimOp::Check(const NodePtrList &inputs, const DAttrs &attrs) {
 }
 
 // check all type to be identical
-void PrimOp::CheckType(const NodePtrList &inputs, const DAttrs &attrs) {
+void PrimOp::CheckType(const NodePtrList &inputs, const DAttrs &) {
   TypeId tid = inputs[0]->type;
   for (size_t i = 1; i < inputs.size(); i++) {
     if (inputs[i]->type != tid) {
@@ -68,7 +68,7 @@ void PrimOp::CheckType(const NodePtrList &inputs, const DAttrs &attrs) {
 }
 
 // check all formats are compatible, only DefaultFormat is compatible with others
-void PrimOp::CheckFormat(const NodePtrList &inputs, const DAttrs &attrs) {
+void PrimOp::CheckFormat(const NodePtrList &inputs, const DAttrs &) {
   DFormat res = inputs[0]->format;
   size_t i = 0;
   for (size_t j = 1; j < inputs.size(); j++) {
@@ -76,7 +76,7 @@ void PrimOp::CheckFormat(const NodePtrList &inputs, const DAttrs &attrs) {
       if (inputs[j]->format != kOpFormat_DEFAULT && res != kOpFormat_DEFAULT) {
         MS_LOG(EXCEPTION) << "Incompatible format between input " << i << " and input " << (j + 1);
       }
-      if (res == kOpFormat_DEFAULT) {
+      if (res == kOpFormat_DEFAULT && j < (inputs.size() - 1)) {
         res = inputs[j]->format;
         i = j + 1;
       }
@@ -128,7 +128,7 @@ std::string PrimOp::ToString() const {
 template <typename TM, typename TD>
 tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &op, TypeId tid) {
   std::vector<TM> inputs_tm;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_tm), [](const NodePtr &i) {
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_tm), [](const NodePtr &i) {
     return *static_cast<TM *>(std::static_pointer_cast<inner::ConstTensorNode>(i)->data()->data_c());
   });
 
@@ -141,7 +141,7 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
     {"Reciprocal", [](const std::vector<TM> &n) { return TM(1) / n[0]; }},
     {"Log", [](const std::vector<TM> &n) { return log(n[0]); }},
     {"Exp", [](const std::vector<TM> &n) { return exp(n[0]); }},
-    {"Abs", [](const std::vector<TM> &n) { return n[0] < TM(0) ? (TM(0) - n[0]) : n[0]; }},
+    {"Abs", [](const std::vector<TM> &n) { return n[0] <= TM(0) ? (TM(0) - n[0]) : n[0]; }},
     {"Sqrt", [](const std::vector<TM> &n) { return sqrt(n[0]); }},
     {"Rsqrt", [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); }},
   };
@@ -151,13 +151,13 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
   return std::make_shared<tensor::Tensor>(static_cast<TD>(func_map[op](inputs_tm)), TypeIdToType(tid));
 }
 
-NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs, const std::string &op) {
+NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &, const std::string &op) {
   for (auto i : inputs) {
     if (i->NodeType() != NType::Value) return nullptr;
   }
   TypeId output_type = this->type;
   tensor::TensorPtr res = nullptr;
-  switch (output_type) {
+  switch (static_cast<int>(output_type)) {
     case TypeId::kNumberTypeUInt8: {
       res = CalcByOperator<uint8_t, int64_t>(inputs, op, output_type);
       break;
@@ -249,9 +249,9 @@ DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
   std::vector<std::vector<int64_t>> shapes;
   for (auto &input : inputs) {
     if (to_nz && input->format != kOpFormat_FRAC_NZ) {
-      shapes.emplace_back(ToNz(input->shape));
+      (void)shapes.emplace_back(ToNz(input->shape));
     } else {
-      shapes.emplace_back(input->shape);
+      (void)shapes.emplace_back(input->shape);
     }
   }
   auto max_dim_input =
@@ -261,7 +261,7 @@ DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
   std::vector<std::vector<int64_t>> align_shapes;
   for (auto &s : shapes) {
     std::vector<int64_t> cur(max_dim - s.size(), 1);
-    cur.insert(cur.end(), s.begin(), s.end());
+    (void)cur.insert(cur.end(), s.begin(), s.end());
     (void)align_shapes.emplace_back(cur);
   }
   std::vector<int64_t> output_shape(max_dim, 1);
@@ -299,12 +299,12 @@ DShape ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &) {
   MS_LOG(EXCEPTION) << "Unsupported inputs format: " << inputs_format;
 }
 
-DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
+DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &) {
   auto it = std::find_if(inputs.begin(), inputs.end(), [](const NodePtr &i) { return i->format != kOpFormat_DEFAULT; });
   return it == inputs.end() ? kOpFormat_DEFAULT : (*it)->format;
 }
 
-TypeId CastOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
+TypeId CastOp::InferType(const NodePtrList &, const DAttrs &attrs) {
   CHECK_ATTR(attrs, "dst_type");
   auto dst_type = attrs.find("dst_type")->second;
   if (dst_type->isa<Type>()) {
@@ -343,7 +343,7 @@ DShape ReshapeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   return new_shape;
 }
 
-DShape BroadcastToOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+DShape BroadcastToOp::InferShape(const NodePtrList &, const DAttrs &attrs) {
   CHECK_ATTR(attrs, "shape");
   return GetListInt(attrs.find("shape")->second);
 }
@@ -377,11 +377,11 @@ DShape ReduceOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   const auto &input_shape = inputs[0]->shape;
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (std::find(axis.begin(), axis.end(), i) == axis.end()) {
-      new_shape.emplace_back(input_shape[i]);
+      (void)new_shape.emplace_back(input_shape[i]);
     }
   }
   if (new_shape.empty()) {
-    new_shape.emplace_back(1);
+    (void)new_shape.emplace_back(1);
   }
   return new_shape;
 }
@@ -462,8 +462,8 @@ DShape TransposeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   if (perm.size() != old_shape.size()) {
     MS_LOG(EXCEPTION) << "perm.size() != old_shape.size(). " << perm.size() << " vs " << old_shape.size();
   }
-  std::transform(perm.begin(), perm.end(), std::back_inserter(new_shape),
-                 [&old_shape](int64_t p) { return old_shape[LongToSize(p)]; });
+  (void)std::transform(perm.begin(), perm.end(), std::back_inserter(new_shape),
+                       [&old_shape](int64_t p) { return old_shape[LongToSize(p)]; });
   return new_shape;
 }
 
@@ -526,7 +526,7 @@ DShape PadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   }
   std::vector<int64_t> output;
   for (size_t i = 0; i < n; i++) {
-    output.emplace_back(shape0[i] + pad_before[i] + pad_after[i]);
+    (void)output.emplace_back(shape0[i] + pad_before[i] + pad_after[i]);
   }
   return output;
 }
@@ -541,12 +541,12 @@ DShape UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   }
   std::vector<int64_t> output;
   for (size_t i = 0; i < n; i++) {
-    output.emplace_back(shape0[i] - unpad_after[i]);
+    (void)output.emplace_back(shape0[i] - unpad_after[i]);
   }
   return output;
 }
 
-void ComplexOp::CheckType(const NodePtrList &inputs, const DAttrs &attrs) {
+void ComplexOp::CheckType(const NodePtrList &inputs, const DAttrs &) {
   if (inputs[0]->type != TypeId::kNumberTypeFloat32) {
     MS_LOG(EXCEPTION) << "Complex's input[0] should be float32, but got " << TypeIdToString(inputs[0]->type, true);
   }

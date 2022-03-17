@@ -15,6 +15,7 @@
  */
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <memory>
