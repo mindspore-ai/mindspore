@@ -92,10 +92,10 @@ int Generator::CodeStaticContent() {
   std::vector<std::pair<std::string, std::string>> const_blocks = {
     {config_->code_path() + "/" + "CMakeLists.txt", bench_cmake_lists_txt},
     {net_main_file_path_ + "calib_output.h", calib_header},
-    {net_main_file_path_ + "calib_output.cc", calib_source},
+    {net_main_file_path_ + "calib_output.c", calib_source},
     {net_main_file_path_ + "load_input.h", load_input_h},
     {net_main_file_path_ + "load_input.c", load_input_c},
-    {net_main_file_path_ + "benchmark.cc", benchmark_source},
+    {net_main_file_path_ + "benchmark.c", benchmark_source},
     {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
     {net_src_file_path_ + "context.h", context_header},
     {net_src_file_path_ + "context.c", context_source},

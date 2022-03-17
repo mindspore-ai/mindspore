@@ -87,7 +87,7 @@ MSContextHandle MSContextCreate() {
 }
 
 void MSContextDestroy(MSContextHandle *context) {
-  MicroContext *micro_context = (MicroContext *)context;
+  MicroContext *micro_context = (MicroContext *)(*context);
   if (micro_context) {
     if (micro_context->affinity_core_list_) {
       free(micro_context->affinity_core_list_);

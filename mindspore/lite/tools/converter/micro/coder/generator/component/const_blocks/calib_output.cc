@@ -37,59 +37,23 @@ const char *calib_header = R"RAW(
 #ifndef MINDSPORE_LITE_MICRO_CALIB_OUTPUT_H_
 #define MINDSPORE_LITE_MICRO_CALIB_OUTPUT_H_
 
-#include "lite_utils.h"
 #include "c_api/model_c.h"
 #include "src/tensor.h"
-#include "errorcode.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-namespace mindspore {
-namespace lite {
-
-class CalibTensor {
- public:
-  CalibTensor(String name, size_t elements_num) : tensor_name_(name), elements_num_(elements_num) {}
-  ~CalibTensor() {
-    free(data_);
-    data_ = nullptr;
-  }
-  String tensor_name() const { return tensor_name_; }
-  int ElementsNum() const { return elements_num_; }
-  float *MutableData() {
-    if (data_ == nullptr) {
-      if (elements_num_ == 0 || elements_num_ > INT16_MAX) {
-        return nullptr;
-      }
-      data_ = static_cast<float *>(malloc(elements_num_ * sizeof(float)));
-    }
-    return data_;
-  }
-
- private:
-  String tensor_name_;
-  int elements_num_{0};
-  float *data_{nullptr};
-};
-
-class Calibrator {
- public:
-  Calibrator() = default;
-  ~Calibrator() {
-    for (auto &calib : calib_outputs_) {
-      delete calib;
-      calib = nullptr;
-    }
-    calib_outputs_.clear();
-  }
-  int ReadCalibData(const char *calib_data_path);
-  int CompareOutputs(const MSTensorHandleArray& outputs) const;
-
- private:
-  Vector<CalibTensor *> calib_outputs_;
-};
-
-}  // namespace lite
-}  // namespace mindspore
-
+typedef struct CalibTensor {
+  char *tensor_name;
+  int elemets_num_;
+  float *data_;
+} CalibTensor;
+int ReadCalibData(const char *calib_data_path, CalibTensor **calib_tensots, int *calib_num);
+int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int calib_num);
+void FreeCalibTensors(CalibTensor **calib_tensors, int calib_num);
+#ifdef __cplusplus
+}
+#endif
 #endif  // MINDSPORE_LITE_MICRO_CALIB_OUTPUT_H_
 )RAW";
 
@@ -111,119 +75,129 @@ const char *calib_source = R"RAW(
  */
 
 #include "calib_output.h"
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include <stdio.h>
-#include <cmath>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
 
-namespace mindspore {
-namespace lite {
-constexpr float kToleranceVal = 0.0001;
+#define kToleranceVal 0.0001f
+#define kMaxOutput 5
+#define kMaxTensorSize 400 * 400 * 4
 
-#define MS_ERROR_IF_NULL(ptr)            \
-  do {                                   \
-    if ((ptr) == nullptr) {              \
-      return mindspore::lite::RET_ERROR; \
-    }                                    \
-  } while (0)
-
-int Calibrator::ReadCalibData(const char *calib_data_path) {
-  std::ifstream in_file(calib_data_path);
-  if (!in_file.good()) {
-    printf("file is not exist, %s\n", calib_data_path);
-    return RET_ERROR;
+int ReadCalibData(const char *calib_data_path, CalibTensor **calib_tensor_pointers, int *calib_num) {
+  FILE *file = fopen(calib_data_path, "r");
+  if (!file) {
+    printf("Unable open %s", calib_data_path);
+    return -1;
   }
-  if (!in_file.is_open()) {
-    printf("open file failed, %s\n", calib_data_path);
-    in_file.close();
-    return RET_ERROR;
+  CalibTensor *calib_tensors = (CalibTensor *)malloc(kMaxOutput * sizeof(CalibTensor));
+  // read line by line
+  char line[kMaxTensorSize];
+  char *p;
+  int i = 0;
+  int elements = 1;
+  *calib_num = 0;
+  while (fgets(line, kMaxTensorSize, file) != NULL) {
+    if (i == 0) {
+      elements = 1;
+      int j = 0;
+      int dims = 0;
+      p = strtok(line, " ");
+      calib_tensors[*calib_num].tensor_name = (char *)malloc(strlen(p));
+      memcpy(calib_tensors[*calib_num].tensor_name, p, strlen(p));
+      while (p != NULL) {
+        if (j == 1) {
+          dims = atoi(p);
+        }
+        if (j >= 2 && j - 2 < dims) {
+          elements *= atoi(p);
+          if (j - 2 == dims - 1) {
+            calib_tensors[*calib_num].elemets_num_ = elements;
+            break;
+          }
+        }
+        p = strtok(NULL, " ");
+        j++;
+      }
+      i++;
+    } else {
+      float *data = (float *)malloc(elements * sizeof(float));
+      p = strtok(line, " ");
+      int k = 0;
+      while (p != NULL) {
+        data[k++] = atof(p);
+        p = strtok(NULL, " ");
+        if (k == elements) {
+          calib_tensors[*calib_num].data_ = data;
+          break;
+        }
+      }
+      i--;
+      (*calib_num)++;
+    }
   }
-  while (!in_file.eof()) {
-    std::string line;
-    getline(in_file, line);
-    if (line.empty()) {
-      continue;
-    }
-    std::stringstream name_line(line);
-    std::string tensor_name;
-    size_t dim = 0;
-    name_line >> tensor_name >> dim;
-    size_t elements = 1;
-    for (size_t i = 0; i < dim; i++) {
-      size_t tmp_dim;
-      name_line >> tmp_dim;
-      elements *= tmp_dim;
-    }
-    getline(in_file, line);
-    std::stringstream data_line(line);
-    String name(tensor_name.c_str());
-    CalibTensor *output = new (std::nothrow) CalibTensor(name, elements);
-    MS_ERROR_IF_NULL(output);
-    float *data = output->MutableData();
-    MS_ERROR_IF_NULL(data);
-    for (size_t i = 0; i < elements; i++) {
-      data_line >> data[i];
-    }
-    calib_outputs_.push_back(output);
-  }
-  in_file.close();
-  return RET_OK;
+  *calib_tensor_pointers = calib_tensors;
+  fclose(file);
+  return 0;
 }
 
-template <typename T>
-float CompareData(const T *output, const float *calib, size_t elements_num) {
-  float error = 0.;
-  if (output == nullptr || calib == nullptr) {
-    printf("output or calib is nullptr\n");
-    return error;
-  }
-  for (size_t i = 0; i < elements_num; ++i) {
-    if (std::isnan(output[i]) || std::isinf(output[i]) || std::isnan(calib[i]) || std::isinf(calib[i])) {
-      printf("error, output data is nan or inf\n");
-      return error;
-    }
-    error += std::abs(output[i] - calib[i]);
-  }
-  return error;
-}
-
-int Calibrator::CompareOutputs(const MSTensorHandleArray &outputs) const {
-  if (outputs.handle_num != calib_outputs_.size()) {
+int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int calib_num) {
+  if (outputs.handle_num != (size_t)calib_num) {
     printf("error, outputs and calibs size is mismatch\n");
-    return RET_ERROR;
+    return -1;
   }
   float total_error = 0;
   size_t outputs_num = outputs.handle_num;
   for (size_t i = 0; i < outputs_num; ++i) {
     MicroTensor *output = (MicroTensor *)outputs.handle_list[i];
-    MS_ERROR_IF_NULL(output);
-    CalibTensor *calib = calib_outputs_[i];
-    MS_ERROR_IF_NULL(calib);
-    if (output->name != calib->tensor_name().data()) {
+    if (!output || !output->data) {
+      return -1;
+    }
+    CalibTensor *calib = calib_tensors[0];
+    if (!calib || !calib[i].data_) {
+      return -1;
+    }
+    if (strcmp(output->name, calib[i].tensor_name) != 0) {
       printf("warning, output tensor name is not equal to calib\n");
     }
-    int64_t elements = MSTensorGetElementNum(output);
-    if (elements != calib->ElementsNum()) {
+    size_t elements = (size_t)MSTensorGetElementNum(output);
+    if (elements != (size_t)calib[i].elemets_num_) {
       printf("error, output elements num is not equal to calib\n");
-      return RET_ERROR;
+      return -1;
     }
     switch (output->type) {
       case kMSDataTypeNumberTypeFloat32: {
-        total_error += CompareData(static_cast<float *>(output->data), calib->MutableData(), elements);
+        float *float_output = (float *)output->data;
+        for (size_t j = 0; j < elements; ++j) {
+          if (isnan(float_output[j]) || isinf(float_output[j]) || isnan(calib[i].data_[j]) ||
+              isinf(calib[i].data_[j])) {
+            printf("error, output data is nan or inf\n");
+            return -1;
+          }
+          total_error += fabsf(float_output[j] - calib[i].data_[j]);
+        }
         break;
       }
       case kMSDataTypeNumberTypeInt8: {
-        total_error += CompareData(static_cast<int8_t *>(output->data), calib->MutableData(), elements);
+        int8_t *int_output = (int8_t *)output->data;
+        for (size_t j = 0; j < elements; ++j) {
+          total_error += fabsf(int_output[j] - calib[i].data_[j]);
+        }
         break;
       }
       case kMSDataTypeNumberTypeUInt8: {
-        total_error += CompareData(static_cast<uint8_t *>(output->data), calib->MutableData(), elements);
+        uint8_t *int_output = (uint8_t *)output->data;
+        for (size_t j = 0; j < elements; ++j) {
+          total_error += fabsf(int_output[j] - calib[i].data_[j]);
+        }
         break;
       }
       case kMSDataTypeNumberTypeInt32:
       case kMSDataTypeNumberTypeUInt32: {
-        total_error += CompareData(static_cast<int32_t *>(output->data), calib->MutableData(), elements);
+        int32_t *int_output = (int32_t *)output->data;
+        for (size_t j = 0; j < elements; ++j) {
+          total_error += fabsf(int_output[j] - calib[i].data_[j]);
+        }
         break;
       }
       default: {
@@ -233,12 +207,28 @@ int Calibrator::CompareOutputs(const MSTensorHandleArray &outputs) const {
   }
   if (total_error > kToleranceVal) {
     printf("compare outputs failed, total error: %f\n", total_error);
-    return RET_ERROR;
+    return -1;
   }
   printf("compare outputs success, total error: %f\n", total_error);
-  return RET_OK;
+  return 0;
 }
-}  // namespace lite
-}  // namespace mindspore
+
+void FreeCalibTensors(CalibTensor **calib_tensors_pointers, int calib_num) {
+  CalibTensor *calib_tensors = *calib_tensors_pointers;
+  if (calib_tensors) {
+    for (int i = 0; i < calib_num; i++) {
+      if (calib_tensors[i].data_) {
+        free(calib_tensors[i].data_);
+        calib_tensors[i].data_ = NULL;
+      }
+      if (calib_tensors[i].tensor_name) {
+        free(calib_tensors[i].tensor_name);
+        calib_tensors[i].tensor_name = NULL;
+      }
+    }
+    free(calib_tensors);
+    calib_tensors = NULL;
+  }
+}
 )RAW";
 }  // namespace mindspore::lite::micro
