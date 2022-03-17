@@ -41,6 +41,7 @@ __all__ = ['set_sending_batches', 'load', '_init_device_info',
            'set_enable_shared_mem', 'get_enable_shared_mem',
            'set_enable_autotune', 'get_enable_autotune',
            'set_autotune_interval', 'get_autotune_interval',
+           'set_auto_offload', 'get_auto_offload',
            'set_enable_watchdog', 'get_enable_watchdog',
            'set_multiprocessing_timeout_interval', 'get_multiprocessing_timeout_interval']
 
