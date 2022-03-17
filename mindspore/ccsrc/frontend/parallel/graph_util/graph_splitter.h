@@ -75,12 +75,19 @@ struct SplitGraphSegment {
 
 // The cross-process data flow edge.
 struct InterProcessOpEdge {
-  AnfNodePtr from_node;
-  AnfNodePtr to_node;
+  AnfNodePtr src_node;
+  OperatorLabel src_label;
+  AnfNodePtr dst_node;
+  OperatorLabel dst_label;
+
+  bool operator==(const InterProcessOpEdge &e) const { return to_string() == e.to_string(); }
 
   bool operator<(const InterProcessOpEdge &e) const { return to_string() < e.to_string(); }
 
-  std::string to_string() const { return from_node->fullname_with_scope() + "->" + to_node->fullname_with_scope(); }
+  std::string to_string() const {
+    return src_node->fullname_with_scope() + "_" + src_label.to_string() + "->" + dst_node->fullname_with_scope() +
+           "_" + dst_label.to_string();
+  }
 };
 
 // The connection relationship for Send and Recv nodes.
@@ -108,6 +115,24 @@ constexpr char kAttrGradientInputIndex[] = "gradient_input_index";
 //          \        |            /
 //         GradientAccumulationNode
 constexpr char kVirtualNode[] = "VirtualNode";
+
+// This method creates a scalar tensor. Its type is the same as the origin_node's output if use_origin_node is set
+// true.
+// Normally it is used to connect the edges for send/recv nodes.
+ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_node = nullptr);
+
+// Set attributes for send and recv node. These attributes is used in other stages like graph compiling, rpc route,
+// etc.
+void SetSendNodeAttr(const AnfNodePtr &send_node, const InterProcessOpEdge &inter_process_edge);
+void SetRecvNodeAttr(const AnfNodePtr &recv_node, const InterProcessOpEdge &inter_process_edge);
+
+// The inter-process edge between two nodes should be like this:
+// input-->Send-->Recv-->peer.
+// Send node takes 'input' node as one input, its output's abstract is the same as a scalar value tensor's to save
+// memory. Recv node takes a scalar value tensor as one input, its output's abstract is the same as the 'input'
+// node's.
+CNodePtr CreateSendNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge &inter_process_edge);
+CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge &inter_process_edge);
 
 // The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the
 // cluster.
@@ -156,13 +181,13 @@ class GraphSplitter {
   // Send node takes 'input' node as one input, its output's abstract is the same as a scalar value tensor's to save
   // memory. Recv node takes a scalar value tensor as one input, its output's abstract is the same as the 'input'
   // node's.
-  CNodePtr GenerateSendNode(const AnfNodePtr &input, const AnfNodePtr &peer);
-  CNodePtr GenerateRecvNode(const AnfNodePtr &input, const AnfNodePtr &peer);
+  CNodePtr GenerateSendNode(const InterProcessOpEdge &inter_process_edge);
+  CNodePtr GenerateRecvNode(const InterProcessOpEdge &inter_process_edge);
 
   // Set attributes for send and recv node. These attributes is used in other stages like graph compiling, rpc route,
   // etc.
-  void SetSendNodeAttr(const AnfNodePtr &send_node, const AnfNodePtr &send_from_node, const AnfNodePtr &send_to_node);
-  void SetRecvNodeAttr(const AnfNodePtr &recv_node, const AnfNodePtr &recv_from_node, const AnfNodePtr &recv_to_node);
+  void SetSendNodeAttr(const AnfNodePtr &send_node, const InterProcessOpEdge &inter_process_edge);
+  void SetRecvNodeAttr(const AnfNodePtr &recv_node, const InterProcessOpEdge &inter_process_edge);
 
   // Segments will be independent with each other after the graph is cut, so in-degrees and out-degrees of each segment
   // should be connected with control edges in case that the nodes are optimized out.
