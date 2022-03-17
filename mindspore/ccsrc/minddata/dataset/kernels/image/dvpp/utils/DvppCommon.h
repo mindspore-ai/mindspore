@@ -18,7 +18,6 @@
 
 #include "CommonDataType.h"
 #include "ErrorCode.h"
-#include "acl/ops/acl_dvpp.h"
 
 const int MODULUS_NUM_2 = 2;
 const uint32_t ODD_NUM_1 = 1;
@@ -140,7 +139,7 @@ class DvppCommon {
                                          uint32_t &decSize);
   static APP_ERROR GetPngDecodeDataSize(const void *data, uint32_t dataSize, acldvppPixelFormat format,
                                         uint32_t &decSize);
-  static APP_ERROR GetJpegEncodeStrideSize(std::shared_ptr<DvppDataInfo> &inputImage);
+  static APP_ERROR GetJpegEncodeStrideSize(const std::shared_ptr<DvppDataInfo> &inputImage);
   static APP_ERROR SetEncodeLevel(uint32_t level, acldvppJpegeConfig &jpegeConfig);
   static APP_ERROR GetVideoDecodeStrideSize(uint32_t width, uint32_t height, acldvppPixelFormat format,
                                             uint32_t &widthStride, uint32_t &heightStride);
@@ -148,31 +147,31 @@ class DvppCommon {
                                           uint32_t &vdecSize);
 
   // The following interfaces can be called only when the DvppCommon object is initialized with Init
-  APP_ERROR VpcResize(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize,
+  APP_ERROR VpcResize(const DvppDataInfo &input, const DvppDataInfo &output, bool withSynchronize,
                       VpcProcessType processType = VPC_PT_DEFAULT);
   APP_ERROR VpcCrop(const DvppCropInputInfo &cropInput, const DvppDataInfo &output, bool withSynchronize);
-  APP_ERROR JpegDecode(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize);
+  APP_ERROR JpegDecode(const DvppDataInfo &input, const DvppDataInfo &output, bool withSynchronize);
 
-  APP_ERROR PngDecode(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize);
+  APP_ERROR PngDecode(const DvppDataInfo &input, const DvppDataInfo &output, bool withSynchronize);
 
-  APP_ERROR JpegEncode(DvppDataInfo &input, DvppDataInfo &output, acldvppJpegeConfig *jpegeConfig,
+  APP_ERROR JpegEncode(const DvppDataInfo &input, DvppDataInfo &output, acldvppJpegeConfig *jpegeConfig,
                        bool withSynchronize);
 
-  APP_ERROR GetJpegEncodeDataSize(DvppDataInfo &input, acldvppJpegeConfig *jpegeConfig, uint32_t &encSize);
+  APP_ERROR GetJpegEncodeDataSize(const DvppDataInfo &input, const acldvppJpegeConfig *jpegeConfig, uint32_t &encSize);
 
   // These functions started with "Combine" encapsulate the DVPP process together, malloc DVPP memory,
   // transfer pictures from host to device, and then execute the DVPP operation.
   // The caller needs to pay attention to the release of the memory allocated in these functions.
   // You can call the ReleaseDvppBuffer function to release memory after use completely.
-  APP_ERROR CombineResizeProcess(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize,
+  APP_ERROR CombineResizeProcess(DvppDataInfo &input, const DvppDataInfo &output, bool withSynchronize,
                                  VpcProcessType processType = VPC_PT_DEFAULT);
-  APP_ERROR CombineCropProcess(DvppCropInputInfo &input, DvppDataInfo &output, bool withSynchronize);
+  APP_ERROR CombineCropProcess(DvppCropInputInfo &input, const DvppDataInfo &output, bool withSynchronize);
   APP_ERROR CombineJpegdProcess(const RawData &imageInfo, acldvppPixelFormat format, bool withSynchronize);
 
-  APP_ERROR SinkCombineJpegdProcess(std::shared_ptr<DvppDataInfo> &input, std::shared_ptr<DvppDataInfo> &output,
-                                    bool withSynchronize);
-  APP_ERROR SinkCombinePngdProcess(std::shared_ptr<DvppDataInfo> &input, std::shared_ptr<DvppDataInfo> &output,
-                                   bool withSynchronize);
+  APP_ERROR SinkCombineJpegdProcess(const std::shared_ptr<DvppDataInfo> &input,
+                                    const std::shared_ptr<DvppDataInfo> &output, bool withSynchronize);
+  APP_ERROR SinkCombinePngdProcess(const std::shared_ptr<DvppDataInfo> &input,
+                                   const std::shared_ptr<DvppDataInfo> &output, bool withSynchronize);
 
   APP_ERROR CombineJpegeProcess(const RawData &imageInfo, uint32_t width, uint32_t height, acldvppPixelFormat format,
                                 bool withSynchronize);
@@ -180,7 +179,7 @@ class DvppCommon {
   APP_ERROR CombinePngdProcess(const RawData &imageInfo, acldvppPixelFormat format, bool withSynchronize);
 
   // The following interface can be called only when the DvppCommon object is initialized with InitVdec
-  APP_ERROR CombineVdecProcess(std::shared_ptr<DvppDataInfo> data, void *userData);
+  APP_ERROR CombineVdecProcess(const std::shared_ptr<DvppDataInfo> data, void *userData);
 
   // Get the private member variables which are assigned in the interfaces which are started with "Combine"
   std::shared_ptr<DvppDataInfo> GetInputImage();
@@ -203,19 +202,19 @@ class DvppCommon {
   APP_ERROR VdecSendEosFrame() const;
 
  private:
-  APP_ERROR SetDvppPicDescData(const DvppDataInfo &dataInfo, acldvppPicDesc &picDesc);
+  APP_ERROR SetDvppPicDescData(const DvppDataInfo &dataInfo, acldvppPicDesc &picDesc) const;
   APP_ERROR ResizeProcess(acldvppPicDesc &inputDesc, acldvppPicDesc &outputDesc, bool withSynchronize);
-  APP_ERROR ResizeWithPadding(acldvppPicDesc &inputDesc, acldvppPicDesc &outputDesc, CropRoiConfig &cropRoi,
-                              CropRoiConfig &pasteRoi, bool withSynchronize);
+  APP_ERROR ResizeWithPadding(acldvppPicDesc &inputDesc, acldvppPicDesc &outputDesc, const CropRoiConfig &cropRoi,
+                              const CropRoiConfig &pasteRoi, bool withSynchronize);
   void GetCropRoi(const DvppDataInfo &input, const DvppDataInfo &output, VpcProcessType processType,
-                  CropRoiConfig &cropRoi);
+                  CropRoiConfig &cropRoi) const;
   void GetPasteRoi(const DvppDataInfo &input, const DvppDataInfo &output, VpcProcessType processType,
-                   CropRoiConfig &pasteRoi);
+                   CropRoiConfig &pasteRoi) const;
   APP_ERROR CropProcess(acldvppPicDesc &inputDesc, acldvppPicDesc &outputDesc, const CropRoiConfig &cropArea,
                         bool withSynchronize);
-  APP_ERROR CheckResizeParams(const DvppDataInfo &input, const DvppDataInfo &output);
-  APP_ERROR CheckCropParams(const DvppCropInputInfo &input);
-  APP_ERROR CreateStreamDesc(std::shared_ptr<DvppDataInfo> data);
+  APP_ERROR CheckResizeParams(const DvppDataInfo &input, const DvppDataInfo &output) const;
+  APP_ERROR CheckCropParams(const DvppCropInputInfo &input) const;
+  APP_ERROR CreateStreamDesc(const std::shared_ptr<DvppDataInfo> &data);
   APP_ERROR DestroyResource();
 
   std::shared_ptr<acldvppRoiConfig> cropAreaConfig_ = nullptr;

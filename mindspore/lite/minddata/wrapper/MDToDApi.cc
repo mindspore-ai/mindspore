@@ -88,7 +88,7 @@ std::vector<std::string> MDToDBuffToVector(MDToDBuff_t StrBuff) {
 
 extern "C"
 
-int MDToDApi_pathTest(const char* path) {
+int MDToDApi_pathTest(const char *path) {
   Path f(path);
   MS_LOG(INFO) << f.Exists() << f.IsDirectory() << f.ParentPath();
   // Print out the first few items in the directory

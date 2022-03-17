@@ -267,7 +267,7 @@ Status ShardReader::ExtendRandomFileStreams(const int n_new_consumers) {
                                  ", new n_consumers: " + std::to_string(n_consumer_ + n_new_consumers));
 
   for (int i = 0; i < n_new_consumers; i++) {
-    file_streams_random_.emplace_back(std::vector<std::shared_ptr<std::fstream>>());
+    (void)file_streams_random_.emplace_back(std::vector<std::shared_ptr<std::fstream>>());
   }
 
   for (const auto &file : file_paths_) {

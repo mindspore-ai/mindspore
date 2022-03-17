@@ -214,7 +214,8 @@ class SentencePieceVocab {
   ///     // Save vocab model to local
   ///     vocab->SaveModel(&vocab, datasets_root_path_ + "/test_sentencepiece", "m.model");
   /// \endcode
-  static Status SaveModel(const std::shared_ptr<SentencePieceVocab> *vocab, std::string path, std::string filename);
+  static Status SaveModel(const std::shared_ptr<SentencePieceVocab> *vocab, const std::string path,
+                          std::string filename);
 
   /// \brief Constructor.
   SentencePieceVocab();

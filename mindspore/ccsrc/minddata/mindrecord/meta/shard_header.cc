@@ -382,7 +382,7 @@ std::string ShardHeader::SerializeShardAddress() {
   std::shared_ptr<std::string> fn_ptr;
   for (const auto &addr : shard_addresses_) {
     (void)GetFileName(addr, &fn_ptr);
-    j.emplace_back(*fn_ptr);
+    (void)j.emplace_back(*fn_ptr);
   }
   return j.dump();
 }
