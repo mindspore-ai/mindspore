@@ -182,17 +182,46 @@ class Lamb(Optimizer):
     The updating of parameters follows:
 
     ..  math::
-        \begin{gather*}
-        m_t = \beta_1 m_{t - 1}+ (1 - \beta_1)g_t\\
-        v_t = \beta_2 v_{t - 1}  + (1 - \beta_2)g_t^2\\
-        m_t = \frac{m_t}{\beta_1^t}\\
-        v_t = \frac{v_t}{\beta_2^t}\\
-        r_t = \frac{m_t}{\sqrt{v_t}+\epsilon}\\
-        w_t = w_{t-1} -\eta_t \frac{\| w_{t-1} \|}{\| r_t + \lambda w_{t-1} \|} (r_t + \lambda w_{t-1})
-        \end{gather*}
+        \begin{array}{l}
+            &\newline
+            &\hline \\
+            &\textbf{Parameters}:   \: 1^{\text {st }}\text {moment vector} \: m , \: 2^{\text {nd}} \:
+             \text{moment vector} \: v , \\
+            &\hspace{5mm}\text{learning rate }  \left\{ \gamma_{t}\right\}_{t=1}^{T} , \: \text
+             {exponential decay rates for the moment estimates} \: \beta_{1} \: \beta_{2} , \\
+            &\hspace{5mm}\text{scaling function } \phi \\
+            &\textbf{Init}: \boldsymbol{m}_{0} \leftarrow 0, \: \boldsymbol{v}_{0} \leftarrow 0 \\[-1.ex]
+            &\newline
+            &\hline \\
+            &\textbf{for} \text { t=1  to  T } \textbf{do} \\
+            &\hspace{5mm}\text{Draw b samples } S_{t} \text{ from } \mathbb{P} \text{ . } \\
+            &\hspace{5mm}\text{Compute } g_{t}=\frac{1}{\left|\mathcal{S}_{t}\right|} \sum_{s_{t} \in \mathcal{S}_{t}}
+             \nabla \ell\left(x_{t}, s_{t}\right) . \\
+            &\hspace{5mm}\boldsymbol{m}_{t} \leftarrow \beta_{1} \boldsymbol{m}_{t-1}+\left(1-\beta_{1}\right)
+             \boldsymbol{g}_{t} \\
+            &\hspace{5mm}\boldsymbol{v}_{t} \leftarrow \beta_{2} \boldsymbol{v}_{t-1}+\left(1-\beta_{2}\right)
+             \boldsymbol{g}_{t}^{2} \\
+            &\hspace{5mm}\hat{\boldsymbol{m}}_{t} \leftarrow \boldsymbol{m}_{t} /\left(1-\beta_{1}^{t}\right) \\
+            &\hspace{5mm}\hat{\boldsymbol{v}}_{t} \leftarrow \boldsymbol{v}_{t} /\left(1-\beta_{2}^{t}\right) \\
+            &\hspace{5mm}\text{Compute ratio } \boldsymbol{r}_{t}=\hat{\boldsymbol{m}}_{t}
+             /(\sqrt{\hat{\boldsymbol{v}}_{t}}+\epsilon) \\
+            &\hspace{5mm}\boldsymbol{w}_{t+1}^{(i)}=\boldsymbol{w}_{t}^{(i)}- \gamma_{t}
+             \frac{\boldsymbol{\phi}\left(\left\|\boldsymbol{w}_{t}^{(i)}\right\|\right)}
+             {\left\|\boldsymbol{w}_{t}^{(i)}+\lambda \boldsymbol{w}_{t}^{(i)}\right\|}\left(\boldsymbol{r}_{t}^{(i)}+
+             \lambda \boldsymbol{w}_{t}^{(i)}\right) \\
+            &\textbf{end for} \\[-1.ex]
+            &\newline
+            &\hline \\[-1.ex]
+            &\textbf{return} \: \boldsymbol{w}_{t+1}\\[-1.ex]
+            &\newline
+            &\hline \\[-1.ex]
+        \end{array}
 
-    where :math:`m` is the 1st moment, and :math:`v` the 2nd moment, :math:`\eta` the
-    learning rate, :math:`\lambda` the LAMB weight decay rate.
+    :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
+    :math:`g` represents `gradients`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
+    :math:`t` represents the current step while :math:`beta_1^t` and :math:`beta_2^t` represent
+    `beta1_power` and `beta2_power`, :math:`\gamma` represents `learning_rate`, :math:`w` represents `params`,
+    :math:`\epsilon` represents `eps`, :math:`\lambda` represents `weight_decay`.
 
     Note:
         There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used

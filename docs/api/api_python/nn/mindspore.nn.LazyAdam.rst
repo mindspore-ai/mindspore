@@ -13,12 +13,12 @@ mindspore.nn.LazyAdam
         \begin{array}{ll} \\
             m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
             v_{t+1} = \beta_2 * v_{t} + (1 - \beta_2) * g * g \\
-            l = \alpha * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
-            w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
+            \widehat{m_{t+1}} = \frac{m_{t+1}}{1-\beta_1^t} \\
+            \widehat{v_{t+1}} = \frac{v_{t+1}}{1-\beta_2^t} \\
+            w_{t+1} = w_{t} - \gamma * \frac{\widehat{m_{t+1}}}{\sqrt{\widehat{v_{t+1}}} + \epsilon}
         \end{array}
 
-    :math:`m` 代表第一个矩向量 `moment1` ，:math:`v` 代表第二个矩向量 `moment2` ，:math:`g` 代表 `gradients` ，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power` ， :math:`\alpha` 代表 `learning_rate` ， :math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps`。
-
+    :math:`m` 代表一阶矩变量 `moment1` ，:math:`v` 代表二阶矩变量 `moment2` ，:math:`g` 代表梯度 `gradients` ，:math:`\gamma` 代表学习率 `learning_rate` ，:math:`\beta_1, \beta_2` 代表衰减速率 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power` ， :math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps` 。
 
     .. note::
        .. include:: mindspore.nn.optim_note_sparse.rst

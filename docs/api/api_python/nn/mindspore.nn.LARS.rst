@@ -10,21 +10,29 @@ mindspore.nn.LARS
     更新公式如下：
 
     .. math::
-
         \begin{array}{ll} \\
-            \lambda  = \frac{\theta  \text{ * } || \omega  ||  } \\
-                            {|| g_{t} || \text{ + } \delta \text{ * } || \omega  || }  \\
-            \lambda  =
-            \begin{cases}
-                \min(\frac{\lambda}{\alpha }, 1)
-                    & \text{ if } clip = True \\
-                \lambda
-                    & \text{ otherwise }
-            \end{cases}\\
-            g_{t+1} = \lambda * (g_{t} + \delta * \omega)
+            &\newline
+            &\hline \\
+            &\textbf{Parameters}: \text{base learning rate } \gamma_{0} , \text{ momentum  m}, \text{ weight decay }
+             \lambda , \\
+            &\hspace{5mm}\text{ LARS coefficient } \eta , \text{ number of steps } T \\
+            &\textbf{Init}: \text{ t=0, v=0, init weight }  w_{0}^{l}  \text{ for each layer } l \\[-1.ex]
+            &\newline
+            &\hline \\
+            &\textbf{while} \text{ t<T  for each layer } l \textbf{ do} \\
+            &\hspace{5mm}g_{t}^{l} \leftarrow \nabla L\left(w_{t}^{l}\right) \\
+            &\hspace{5mm}\gamma_{t} \leftarrow \gamma_{0} *\left(1-\frac{t}{T}\right)^{2} \\
+            &\hspace{5mm}\gamma^{l} \leftarrow \eta *\frac{\left\|w_{t}^{l}\right\|}{\left\|g_{t}^{l}\right\|+
+             \lambda\left\|w_{t}^{l}\right\|} \text{(compute the local LR } \gamma^{ l)} \\
+            &\hspace{5mm}v_{t+1}^{l} \leftarrow m v_{t}^{l}+\gamma_{t+1} * \gamma^{l} *\left(g_{t}^{l}+\lambda
+             w_{t}^{l}\right) \\
+            &\hspace{5mm}w_{t+1}^{l} \leftarrow w_{t}^{l}-v_{t+1}^{l} \\
+            &\textbf{ end while } \\[-1.ex]
+            &\newline
+            &\hline \\[-1.ex]
         \end{array}
 
-    :math:`\theta` 表示 `coefficient` ，:math:`\omega` 表示网络参数，:math:`g` 表示 `gradients`，:math:`t` 表示当前step，:math:`\delta` 表示 `optimizer` 配置的 `weight_decay` ，:math:`\alpha` 表示 `optimizer` 配置的 `learning_rate` ，:math:`clip` 表示 `use_clip`。
+    :math:`w` 表示 `params`，:math:`g` 表示 `gradients` ，:math:`t` 表示当前step，:math:`\lambda` 表示 `optimizer` 配置的 `weight_decay` ，:math:`\gamma` 表示 `optimizer` 配置的 `learning_rate` ，:math:`\eta` 表示 `coefficient` 。
 
 
     **参数：**
