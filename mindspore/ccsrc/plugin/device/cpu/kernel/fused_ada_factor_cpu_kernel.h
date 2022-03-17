@@ -64,25 +64,6 @@ class FusedAdaFactorCpuKernelMod : public NativeCpuKernelMod {
   size_t last_col_dim_size_{1};
   TypeId param_dtype_{kTypeUnknown};
   float global_norm_reciprocal_{1.0f};
-
-  enum InputEnum {
-    EPSILON,
-    CLIP_THRESHOLD,
-    BETA1,
-    BETA2T,
-    WEIGHT_DECAY,
-    LEARNING_RATE,
-    GRAD,
-    PARAM,
-    EXP_AVG,
-    EXP_AVG_SQ_ROW,
-    EXP_AVG_SQ_COL,
-    EXP_AVG_SQ,
-    GLOBAL_NORM
-  };
-
-  enum WorkspaceEnum { UPDATE, R_FACTOR, C_FACTOR };
-
   std::string kernel_type_{kUnknown};
 };
 }  // namespace kernel

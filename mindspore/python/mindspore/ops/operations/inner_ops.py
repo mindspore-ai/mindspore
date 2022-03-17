@@ -534,7 +534,6 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         >>> net = Net()
         >>> gradient = Tensor(np.ones([2, 2]), mstype.float16)
         >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient)
-        >>> print(net.var.asnumpy())
     """
 
     @prim_attr_register
@@ -669,7 +668,6 @@ class FusedAdaFactor(PrimitiveWithInfer):
         >>> net = Net()
         >>> gradient = Tensor(np.ones(param_shape), mstype.float32)
         >>> net((1e-30, 1e-3), 1.0, 0.9, 0.8, 1e-2, 0.03, gradient)
-        >>> print(net.param.asnumpy())
     """
 
     @prim_attr_register
