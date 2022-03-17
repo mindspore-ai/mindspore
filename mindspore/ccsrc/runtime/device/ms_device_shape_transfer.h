@@ -147,7 +147,7 @@ class DataTypeTransfer {
     {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeUInt8), DataTypeTransMode::FROM_BOOL_TO_UINT8},
     {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat16), DataTypeTransMode::FROM_BOOL_TO_FLOAT16}};
 
-  bool CastKernel(const TypeIdArgs &args, void *dst, int64_t data_size, DataTypeTransMode mode);
+  bool CastKernel(const TypeIdArgs &args, void *dst, int64_t data_size, DataTypeTransMode mode) const;
 };
 
 /**
@@ -251,6 +251,9 @@ class FormatTransfer {
   static bool FRAC_Z3D_TO_NCDHW(const FormatArgs &args, void *result);
   static bool NDC1HWC0_TO_NCDHW(const FormatArgs &args, void *result);
   static bool FRAC_Z_TO_NCHW_WITH_GROUPS(const FormatArgs &args, void *result, int64_t groups);
+
+  // common check_func
+  static int64_t Common4DCheck(const FormatArgs &args);
 };
 
 /**
@@ -382,7 +385,7 @@ std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape) {
       shape_4d[kW] = shape[kH];
       break;
     case kNchwDims:
-      std::copy(shape.begin(), shape.end(), shape_4d.begin());
+      (void)std::copy(shape.begin(), shape.end(), shape_4d.begin());
       break;
     default:
       MS_LOG(EXCEPTION) << "Unexpected shape : " << shape;
@@ -449,13 +452,13 @@ template <typename T>
 std::vector<T> TransShapeToDevice(const std::vector<T> &shape, const std::string &format, const AnfNodePtr &node,
                                   size_t index, TypeId type, bool is_output = true) {
   ShapeVector shape_before;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_before),
-                 [](T num) { return static_cast<int64_t>(num); });
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_before),
+                       [](T num) { return static_cast<int64_t>(num); });
   DeviceShapeTransfer deviceShapeTransfer;
   auto res = deviceShapeTransfer.GetDeviceShapeByFormat(shape_before, format, node, index, type, is_output);
   std::vector<T> out_shape;
-  std::transform(res.begin(), res.end(), std::back_inserter(out_shape),
-                 [](int64_t num) { return static_cast<T>(num); });
+  (void)std::transform(res.begin(), res.end(), std::back_inserter(out_shape),
+                       [](int64_t num) { return static_cast<T>(num); });
   return out_shape;
 }
 
@@ -463,13 +466,13 @@ template <typename T>
 std::vector<T> TransShapeToDevice(const std::vector<T> &shape, const std::string &format, TypeId type,
                                   int64_t groups = 1, const ShapeVector &input_hidden_size = {kAlign16, kAlign16}) {
   ShapeVector shape_before;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_before),
-                 [](T num) { return static_cast<int64_t>(num); });
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_before),
+                       [](T num) { return static_cast<int64_t>(num); });
   DeviceShapeTransfer deviceShapeTransfer;
   auto res = deviceShapeTransfer.GetDeviceShapeByFormat(shape_before, format, type, groups, input_hidden_size);
   std::vector<T> out_shape;
-  std::transform(res.begin(), res.end(), std::back_inserter(out_shape),
-                 [](int64_t num) { return static_cast<T>(num); });
+  (void)std::transform(res.begin(), res.end(), std::back_inserter(out_shape),
+                       [](int64_t num) { return static_cast<T>(num); });
   return out_shape;
 }
 }  // namespace trans
