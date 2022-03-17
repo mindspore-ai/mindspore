@@ -128,7 +128,10 @@ def mstype_to_pytype(type_):
 _op_dict = StringDict()
 _op_dict.register("in", lambda x: x[0] in _tuple(x[1]))
 _op_dict.register("is", lambda x: x[0] is x[1])
-_op_dict.register("isinstance", lambda x: isinstance(x[0], _tuple(x[1])))
+# Here we use type() to check if two objects have the same class instead of isinstance(),
+# since the later will return true in case of subclasses, e.g., 'bool' is a subclass of 'int'.
+# pylint: disable=C0123
+_op_dict.register("isinstance", lambda x: type(x[0]) in _tuple(x[1]))
 _op_dict.register("solve", lambda x: x[0][1] == x[1][0])
 _op_dict.register("==", lambda x: x[0] == x[1])
 

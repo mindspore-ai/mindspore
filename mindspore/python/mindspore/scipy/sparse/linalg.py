@@ -278,15 +278,11 @@ def gmres(A, b, x0=None, *, tol=1e-5, restart=20, maxiter=None,
         >>> print(onp.allclose(mnp.dot(A,x).asnumpy(), b.asnumpy()))
         True
     """
-
-    if x0 is None:
-        x0 = mnp.zeros_like(b)
+    func_name = "gmres"
+    A, M, b, x0 = _sparse_check(func_name, A, M, b, x0)
     size = b.size
     if maxiter is None:
         maxiter = 10 * size  # copied from scipy
-    if M is None:
-        M = lambda x: x
-    func_name = "gmres"
     _type_check(func_name, tol, float, 'tol')
     _type_check(func_name, restart, int, 'restart')
     _type_check(func_name, maxiter, int, 'maxiter')
@@ -296,7 +292,7 @@ def gmres(A, b, x0=None, *, tol=1e-5, restart=20, maxiter=None,
     _value_check(func_name, callback_type, None, 'callback_type', op='is', fmt='todo')
     if restart > size:
         restart = size
-    A, M, b, x0 = _sparse_check(func_name, A, M, b, x0)
+
     if solve_method == 'incremental':
         x, info = IterativeGmres(A, M)(b, x0, tol, atol, restart, maxiter)
     elif solve_method == 'batched':
@@ -345,10 +341,6 @@ class CG(nn.Cell):
             k += 1
 
         return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
-
-    def bprop(self, b, x0, tol, atol, maxiter, out, dout):
-        grad_b, _ = self.construct(dout[0], x0, tol, atol, maxiter)
-        return grad_b, zeros_like(x0), zeros_like(tol), zeros_like(atol), zeros_like(maxiter)
 
 
 class CGv2(nn.Cell):
@@ -482,21 +474,14 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
         >>> print(info)
         0
     """
-    if x0 is None:
-        x0 = mnp.zeros_like(b)
-
-    if maxiter is None:
-        maxiter = 10 * b.shape[0]
-
-    if M is None:
-        M = lambda x: x
-
     func_name = 'cg'
+    A, M, b, x0 = _sparse_check(func_name, A, M, b, x0)
+    if maxiter is None:
+        maxiter = 10 * b.size  # copied from scipy
     _type_check(func_name, tol, float, 'tol')
     _type_check(func_name, atol, float, 'atol')
     _type_check(func_name, maxiter, int, 'maxiter')
     _value_check(func_name, callback, None, 'callback', op='is', fmt='todo')
-    A, M, b, x0 = _sparse_check(func_name, A, M, b, x0)
 
     if not is_within_graph(A):
         x, info = CG(A, M)(b, x0, tol, atol, maxiter)
