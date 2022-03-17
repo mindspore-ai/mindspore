@@ -33,6 +33,7 @@ class ActorWorker : public Worker {
  public:
   void CreateThread(ActorThreadPool *pool);
   bool ActorActive();
+  ~ActorWorker() override{};
 
  private:
   void RunWithSpin();

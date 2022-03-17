@@ -52,6 +52,8 @@ namespace mindspore {
     }                              \
   } while (0)
 
-enum ThreadRet { THREAD_OK = 0, THREAD_ERROR = 1 };
+/* Thread return code */
+constexpr int THREAD_OK = 0;
+constexpr int THREAD_ERROR = 1;
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_LOG_H_

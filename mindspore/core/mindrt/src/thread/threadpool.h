@@ -44,11 +44,10 @@ constexpr int kMinSpinCount = 1;
 constexpr int kDefaultFrequency = 1;
 constexpr float kMaxScale = 1.;
 
-enum ThreadStatus {
-  kThreadBusy = 0,  // busy, the thread is running task
-  kThreadHeld = 1,  // held, the thread has been marked as occupied
-  kThreadIdle = 2   // idle, the thread is waiting
-};
+/* Thread status */
+constexpr int kThreadBusy = 0;  // busy, the thread is running task
+constexpr int kThreadHeld = 1;  // held, the thread has been marked as occupied
+constexpr int kThreadIdle = 2;  // idle, the thread is waiting
 
 // used in scenarios with unequal division of task
 // the parameters indicate the start and end coefficients
@@ -79,7 +78,7 @@ class Worker {
   bool RunLocalKernelTask();
   // set max spin count before running
   void SetMaxSpinCount(int max_spin_count) { max_spin_count_ = max_spin_count; }
-  void InitWorkerMask(const std::vector<int> &core_list, size_t workers_size);
+  void InitWorkerMask(const std::vector<int> &core_list, const size_t workers_size);
 
   void set_frequency(int frequency) { frequency_ = frequency; }
   int frequency() const { return frequency_; }
