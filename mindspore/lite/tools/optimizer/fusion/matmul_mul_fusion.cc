@@ -35,7 +35,7 @@ int CalNewCnodeScale(const CNodePtr &mul_cnode, const CNodePtr &matmul_cnode) {
     MS_LOG(ERROR) << "only support float32 data type";
     return RET_ERROR;
   }
-  //  std::vector<int64_t> mul_weight_shape = mul_weight_tensor->shape();
+
   auto mul_weight_data = reinterpret_cast<float *>(mul_weight_tensor->data_c());
   MS_CHECK_TRUE_RET(mul_weight_data != nullptr, RET_ERROR);
 
