@@ -14,8 +14,8 @@
  * limitations under the License.
 */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_H_
+#define MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_H_
 
 #include <map>
 #include <memory>
@@ -38,9 +38,6 @@ namespace mindspore {
 namespace somas {
 class Somas {
  public:
-  using SomasStreamPtr = std::shared_ptr<SomasStream>;
-  using SomasTensorPtr = std::shared_ptr<SomasTensor>;
-  using SomasNodePtr = std::shared_ptr<SomasNode>;
   // Constructors/Destructors
   Somas() = default;
   Somas(const Somas &) = delete;
@@ -170,9 +167,11 @@ class Somas {
   bool CalcSomasModelHash(const session::KernelGraph *graph);
   void UpdateInputTensor(SomasNodePtr node, SomasNodePtr pre_somas_node, SomasTensorPtr input_somas_tensor) const;
   bool LoadSomasCache(const session::KernelGraph *graph);
+  SomasStreamPtr GetSomasStream(size_t stream_id) const;
+  SomasNodePtr GetSomasNode(size_t node_id) const;
 };
 
 using SomasPtr = std::shared_ptr<Somas>;
 }  // namespace somas
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_H_

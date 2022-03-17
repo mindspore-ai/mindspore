@@ -14,8 +14,8 @@
  * limitations under the License.
 */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_PARAMETER_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_PARAMETER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_PARAMETER_H_
+#define MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_PARAMETER_H_
 
 #include <memory>
 #include <string>
@@ -43,4 +43,4 @@ using SomasParameterPtr = std::shared_ptr<SomasParameter>;
 }  // namespace somas
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_PARAMETER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_PARAMETER_H_

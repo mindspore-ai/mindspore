@@ -14,37 +14,31 @@
  * limitations under the License.
 */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_NODE_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_NODE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_NODE_H_
+#define MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_NODE_H_
 
 #include <memory>
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "utils/hash_map.h"
-#include "backend/common/somas/somas_stream.h"
 #include "backend/common/somas/somas_tensor.h"
 #include "backend/common/somas/somas_parameter.h"
 
 namespace mindspore {
 namespace somas {
-class SomasStream;
-class SomasTensor;
-
 enum NodeType { kCommonNode, kCommunicationNode };
 
 class SomasNode {
  public:
-  using SomasStreamPtr = std::shared_ptr<SomasStream>;
-  using SomasTensorPtr = std::shared_ptr<SomasTensor>;
-  using SomasNodePtr = std::shared_ptr<SomasNode>;
   // Public attributes (mutated in code)
   std::string scope_full_name_;
 
   // node's dependency including data dependency and time dependency
-  std::set<SomasNodePtr> ancestor_nodes_;
+  std::set<std::shared_ptr<SomasNode>> ancestor_nodes_;
   std::set<SomasTensorPtr> tensors_;
 
   std::vector<SomasTensorPtr> input_tensors_;
@@ -55,22 +49,24 @@ class SomasNode {
   mindspore::HashMap<int64_t, size_t> anc_stream_max_order_;
 
   // Constructors/Destructors
-  SomasNode(size_t id, NodeType type, const SomasStreamPtr &stream) : id_(id), stream_(stream), type_(type) {}
+  SomasNode(std::string scope_full_name, size_t id, NodeType type, const size_t &stream_id)
+      : scope_full_name_(std::move(scope_full_name)), id_(id), type_(type), stream_id_(stream_id) {}
   SomasNode(const SomasNode &) = delete;
   SomasNode &operator=(const SomasNode &) = delete;
   ~SomasNode() = default;
 
   // Accessors
   const size_t &GetId() const { return id_; }
-  const SomasStreamPtr GetStream() const { return stream_; }
+  const size_t GetStreamId() const { return stream_id_; }
   const NodeType &GetType() const { return type_; }
 
  private:
   const size_t id_{0};
-  SomasStreamPtr const stream_;
   const NodeType type_;
+  const size_t stream_id_;
 };
+using SomasNodePtr = std::shared_ptr<SomasNode>;
 }  // namespace somas
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_NODE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_NODE_H_
