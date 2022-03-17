@@ -815,6 +815,32 @@ bool ExistTarget(const std::vector<AnfNodePtr> &all_nodes, const std::string &ta
   return false;
 }
 
+// If the return value of subgraph is Ref in control flow scenarios, should run graph mode with kernelbykernel.
+bool ExistSwitchRef(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &all_nodes) {
+  // %1 = switch(cond, func1, func2)
+  // %2 = %1()  if the abstract of the node is AbstractRef, return true.
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto &node_users = manager->node_users();
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimSwitch)) {
+      continue;
+    }
+    auto iter = node_users.find(node);
+    if (iter != node_users.end()) {
+      auto &users = iter->second;
+      for (auto &user : users) {
+        auto &user_node = user.first;
+        const auto &abs = user_node->abstract();
+        if (abs != nullptr && abs->isa<abstract::AbstractRef>()) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -857,11 +883,18 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
   auto graphs = func_graph->func_graphs_used_total();
   (void)graphs.insert(func_graph);
-  bool exist_func = ExistControlFlow(func_graph) ? HasIncorporateCall(all_nodes) : false;
+  bool exist_control_flow = ExistControlFlow(func_graph);
+  bool exist_func = exist_control_flow && HasIncorporateCall(all_nodes);
+  MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func;
+  if (exist_func) {
+    MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
+    set_ctx(false, false, false);
+    return;
+  }
   bool exist_while =
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
-  MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func << " exist_while: " << exist_while;
-  if (exist_while || exist_func) {
+  MS_LOG(INFO) << func_graph->ToString() << " exist_while: " << exist_while;
+  if (exist_while || ExistSwitchRef(func_graph, all_nodes)) {
     MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
     set_ctx(false, false, false);
     return;
@@ -870,7 +903,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   // Multiple device targets scenario.
   if (func_graph->exist_multi_target()) {
     // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
-    if (ExistControlFlow(func_graph)) {
+    if (exist_control_flow) {
       MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
       set_ctx(false, false, false);
       return;
