@@ -203,6 +203,7 @@ class DbgServices {
   int32_t RemoveWatchpoint(unsigned int id);
 
   std::vector<watchpoint_hit_t> CheckWatchpoints(unsigned int iteration, bool error_on_no_value = false);
+  float CheckWatchpointProgress();
 
   std::vector<std::shared_ptr<TensorData>> ReadTensorsUtil(std::vector<tensor_info_t> info);
 
@@ -216,6 +217,9 @@ class DbgServices {
 
  private:
   std::shared_ptr<DebugServices> debug_services_ = nullptr;
+  // total number of tensors to process in check watchpoint function
+  size_t total_tensor_count_{0};
+  bool check_wp_in_progress_{false};
   void ClearData() noexcept;
 };
 }  // namespace mindspore

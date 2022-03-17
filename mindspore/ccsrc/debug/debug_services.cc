@@ -48,6 +48,7 @@ static constexpr const char *constant_prefix = "Default--data-";
 static constexpr const char *kNpyExt = ".npy";
 constexpr float ms_to_s = 1000.0;
 constexpr int precision = 2;
+static constexpr int32_t wp_progress_period = 300;
 #ifdef __APPLE__
 constexpr int kStrErrorNone = 0;
 #else
@@ -592,6 +593,7 @@ void DebugServices::CheckWatchpointsForTensor(
     // in offline mode remove the need for the data
     tensor.reset();
 #endif
+    tensor_processed_count_.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
@@ -618,15 +620,23 @@ void DebugServices::CheckWatchpoints(
   // vector to store execution order of tensors hit
   std::vector<int> exec_order;
   std::vector<std::string> time_stamps;
-  int tensor_list_size = tensor_list->size();
+  size_t tensor_list_size = tensor_list->size();
   uint64_t tensor_list_byte_size = 0;
   MS_LOG(INFO) << "tensor list size: " << tensor_list_size;
-  if (tensor_list_size <= 0) {
+  if (tensor_list_size == 0) {
     return;
   }
+  if (IS_OUTPUT_ON(INFO)) {
+    wp_progress_enabled_ = true;
+    wp_progress_thread_ =
+      std::make_unique<std::thread>([this, tensor_list_size]() { CheckWatchpointProgress(tensor_list_size); });
+  }
+  const size_t thread_num_with_mem = 16;
+  const size_t thread_num_without_mem = 32;
   // default value for number of threads
-  const int default_thread_num = tensor_loader_->EnableMemoryControl() ? 16 : 32;
-  int max_thread_num = default_thread_num;
+  const size_t default_thread_num =
+    tensor_loader_->EnableMemoryControl() ? thread_num_with_mem : thread_num_without_mem;
+  size_t max_thread_num = default_thread_num;
   if (max_thread_num > tensor_list_size) {
     max_thread_num = tensor_list_size;
   }
@@ -648,7 +658,7 @@ void DebugServices::CheckWatchpoints(
   std::vector<std::future<void>> tensor_future_vec;
   int begin = 0;
   int end = begin;
-  for (int i = 0; i < max_thread_num; i++) {
+  for (size_t i = 0; i < max_thread_num; i++) {
     end += chunk_size;
     if (remainder > 0) {
       end++;
@@ -673,6 +683,19 @@ void DebugServices::CheckWatchpoints(
   MS_LOG(INFO) << "tensor_list byte size is " << tensor_list_byte_size / pow(10.0, 6.0) << " MB";
   MS_LOG(INFO) << "CheckWatchpoints Took: " << std::fixed << std::setprecision(precision)
                << (ms_double.count()) / ms_to_s << "s";
+  if (IS_OUTPUT_ON(INFO) && wp_progress_thread_ && wp_progress_thread_->joinable()) {
+    wp_progress_enabled_ = false;
+    wp_progress_thread_->join();
+    MS_LOG(INFO) << "Join wp_progress_thread_.";
+  }
+}
+
+void DebugServices::CheckWatchpointProgress(size_t tensor_list_size) {
+  while (wp_progress_enabled_ && (tensor_processed_count_ != tensor_list_size)) {
+    MS_LOG(INFO) << "CheckWatchpoint progress: " << tensor_processed_count_ << " tensor processed out of "
+                 << tensor_list_size;
+    std::this_thread::sleep_for(std::chrono::milliseconds(wp_progress_period));
+  }
 }
 
 /*

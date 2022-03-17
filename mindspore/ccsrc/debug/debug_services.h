@@ -515,6 +515,10 @@ class DebugServices {
 
   void SetMemLimit(uint64_t max_mem_size);
 
+  void CheckWatchpointProgress(size_t tensor_list_size);
+
+  size_t GetProcessedTensorCount() { return tensor_processed_count_; }
+
  private:
   std::mutex lock_;
   std::mutex wp_lock_;
@@ -532,7 +536,10 @@ class DebugServices {
   // store history of graphs that have been run (rank_id, graph_id)
   std::map<std::tuple<uint32_t, uint32_t>, std::vector<uint32_t>> graphs_run_history_;
   bool is_sync_mode_{false};
-
+  // processed tensors in checkwatchpoint function
+  std::atomic<size_t> tensor_processed_count_{0};
+  bool wp_progress_enabled_{false};
+  std::unique_ptr<std::thread> wp_progress_thread_;
   std::shared_ptr<TensorLoader> tensor_loader_;
 };
 }  // namespace mindspore
