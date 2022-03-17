@@ -121,6 +121,16 @@ std::vector<KernelAttr> BinaryCrossEntropyGradCpuKernelMod::GetOpSupport() {
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddOutputAttr(kNumberTypeFloat32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddOutputAttr(kNumberTypeFloat16),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
                                                        .AddOutputAttr(kNumberTypeFloat32)};
 
   return kernel_attr_list;
