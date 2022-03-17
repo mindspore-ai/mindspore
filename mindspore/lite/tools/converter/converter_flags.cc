@@ -249,8 +249,8 @@ int Flags::InitGraphInputFormat() {
 int Flags::InitExtendedIntegrationInfo(const lite::ConfigFileParser &config_file_parser) {
   auto extended_info = config_file_parser.GetRegistryInfoString();
   if (!extended_info.plugin_path.empty()) {
-    const char *delimiter = ";";
-    auto relative_path = lite::SplitStringToVector(extended_info.plugin_path, *delimiter);
+    const char delimiter = ';';
+    auto relative_path = lite::SplitStringToVector(extended_info.plugin_path, delimiter);
     if (relative_path.size() > kPluginPathMaxNum) {
       MS_LOG(ERROR) << "extended plugin library's num is too big, which shouldn't be larger than " << kPluginPathMaxNum;
       return RET_INPUT_PARAM_INVALID;
@@ -514,11 +514,11 @@ bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *pa
   if (!device0_flag || !device1_flag) {
     return false;
   }
-  const char *delimiter = ";";
-  std::vector<std::string> device_rates = lite::SplitStringToVector(compute_rate_result, *delimiter);
-  const char *colon = ":";
+  const char delimiter = ';';
+  std::vector<std::string> device_rates = lite::SplitStringToVector(compute_rate_result, delimiter);
+  const char colon = ':';
   for (const auto &device : device_rates) {
-    std::vector<std::string> rate = lite::SplitStringToVector(device, *colon);
+    std::vector<std::string> rate = lite::SplitStringToVector(device, colon);
     int64_t compute_rate = 0;
     try {
       compute_rate = std::stoi(rate.back());

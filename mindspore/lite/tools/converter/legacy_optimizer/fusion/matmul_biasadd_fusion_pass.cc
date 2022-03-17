@@ -28,7 +28,6 @@ constexpr const char *BiasName = "BIASADD";
 }  // namespace
 namespace mindspore {
 namespace lite {
-
 STATUS MatMulBiasAddFusionPass::Run(MetaGraphT *graph) { return FusionPass::Run(graph); }
 
 STATUS MatMulBiasAddFusionPass::DefinePattern() {

@@ -37,7 +37,6 @@ class MindsporeImporter {
   STATUS TraceOutput(const AnfNodePtr &node);
   FuncGraphPtr CheckAndUpdateFuncGraph(const converter::Flags &flag, FuncGraphPtr func_graph);
   STATUS Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const converter::Flags &flag);
-  size_t Hex2ByteArray(const std::string &hex_str, unsigned char *byte_array, size_t max_len);
   std::vector<std::string> output_tensor_name_;
 };
 
