@@ -533,9 +533,9 @@ CNodePtr NeighborExchangeV2Fusion::CreateLeftRightConcat(const FuncGraphPtr &gra
 
   std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   int64_t input_num = 1;
-  size_t first_ids = is_left ? 7 : 1;
-  size_t middle_ids = is_left ? 6 : 2;
-  size_t last_ids = is_left ? 5 : 3;
+  size_t first_ids = is_left ? kIndex7 : kIndex1;
+  size_t middle_ids = is_left ? kIndex6 : kIndex2;
+  size_t last_ids = is_left ? kIndex5 : kIndex3;
 
   auto single_shape =
     common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
@@ -570,8 +570,8 @@ CNodePtr NeighborExchangeV2Fusion::CreateMiddleConcat(const FuncGraphPtr &graph,
   int64_t input_num_all = 0;
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
   auto single_shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
-  size_t first_idx = concat_dim == kWDim ? 6 : 0;
-  size_t last_idx = concat_dim == kWDim ? 2 : 4;
+  size_t first_idx = concat_dim == kWDim ? kIndex6 : kIndex0;
+  size_t last_idx = concat_dim == kWDim ? kIndex2 : kIndex4;
   size_t first_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim2]) : static_cast<size_t>(recv_lens[0]);
   size_t last_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim3]) : static_cast<size_t>(recv_lens[1]);
 

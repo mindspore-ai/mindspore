@@ -135,7 +135,7 @@ bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   }
 
   // process pattern as Relu(TensorAdd(BN#0, BN#1))
-  auto tuple_getitem = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 5);
+  auto tuple_getitem = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex5);
   MS_EXCEPTION_IF_NULL(tuple_getitem);
   if (!utils::isa<CNodePtr>(tuple_getitem) ||
       common::AnfAlgo::GetCNodeName(tuple_getitem) != prim::kPrimTupleGetItem->name()) {
@@ -166,25 +166,25 @@ const AnfNodePtr BatchNormAddReluGradFusion::Process(const FuncGraphPtr &graph, 
     return nullptr;
   }
 
-  auto relu_grad = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
+  auto relu_grad = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex0);
   MS_EXCEPTION_IF_NULL(relu_grad);
-  auto dy = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(relu_grad), 0);
+  auto dy = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(relu_grad), kIndex0);
   MS_EXCEPTION_IF_NULL(dy);
-  auto y = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(relu_grad), 1);
+  auto y = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(relu_grad), kIndex1);
   MS_EXCEPTION_IF_NULL(y);
-  auto x = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 1);
+  auto x = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex1);
   MS_EXCEPTION_IF_NULL(x);
-  auto scale = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 2);
+  auto scale = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex2);
   MS_EXCEPTION_IF_NULL(scale);
-  auto save_mean = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 3);
+  auto save_mean = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex3);
   MS_EXCEPTION_IF_NULL(save_mean);
-  auto save_var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 4);
+  auto save_var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex4);
   MS_EXCEPTION_IF_NULL(save_var);
-  auto reserve = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 5);
+  auto reserve = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex5);
   MS_EXCEPTION_IF_NULL(reserve);
-  auto batch_norm = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(save_mean), 0);
+  auto batch_norm = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(save_mean), kIndex0);
   MS_EXCEPTION_IF_NULL(batch_norm);
-  auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 2);
+  auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
   MS_EXCEPTION_IF_NULL(bias);
   auto is_train = common::AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("is_training");
   MS_EXCEPTION_IF_NULL(is_train);

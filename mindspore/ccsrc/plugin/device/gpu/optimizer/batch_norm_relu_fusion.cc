@@ -75,11 +75,11 @@ const AnfNodePtr BatchNormReluFusion::Process(const FuncGraphPtr &graph, const A
     return nullptr;
   }
 
-  auto x = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 0);
-  auto scale = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 1);
-  auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 2);
-  auto mean = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 3);
-  auto var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 4);
+  auto x = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex0);
+  auto scale = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex1);
+  auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
+  auto mean = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex3);
+  auto var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex4);
 
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(scale);

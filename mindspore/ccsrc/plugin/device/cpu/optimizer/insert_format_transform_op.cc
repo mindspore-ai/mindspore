@@ -29,7 +29,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-
 constexpr int kMinDimNeedToTransform = 3;
 enum FormatTransformDir { ChannelFirst2ChannelLast = 0, ChannelLast2ChannelFirst };
 
@@ -62,8 +61,8 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   std::vector<AnfNodePtr> transpose_input = {NewValueNode(transpose_prim), node};
   auto transpose_op = graph->NewCNode(transpose_input);
   // 3.Set the output info of transpose.
-  auto transpose_type = {common::AnfAlgo::GetPrevNodeOutputInferDataType(used_node, used_node_index)};
-  auto transpose_shape = {common::AnfAlgo::GetPrevNodeOutputDetailShape(used_node, used_node_index)};
+  auto transpose_type = {common::AnfAlgo::GetPrevNodeOutputInferDataType(used_node, IntToSize(used_node_index))};
+  auto transpose_shape = {common::AnfAlgo::GetPrevNodeOutputDetailShape(used_node, IntToSize(used_node_index))};
   common::AnfAlgo::SetOutputTypeAndDetailShape(transpose_type, transpose_shape, transpose_op.get());
   common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(transpose_perm), transpose_op);
   // 4. Set the new edge of transpose op.
@@ -99,8 +98,9 @@ void ProcessForTupleItem(const FuncGraphPtr &graph, const AnfNodePtr &node, int 
 
     // node->used_node, if output format of node equals input format of used_node,
     // then no need to insert transpose between node and used_node.
-    auto used_node_in_format =
-      AnfUtils::IsRealCNodeKernel(used_node) ? AnfAlgo::GetInputFormat(used_node, used_node_index) : kOpFormat_DEFAULT;
+    auto used_node_in_format = AnfUtils::IsRealCNodeKernel(used_node)
+                                 ? AnfAlgo::GetInputFormat(used_node, IntToSize(used_node_index))
+                                 : kOpFormat_DEFAULT;
     if (transpose_format == used_node_in_format) {
       continue;
     }
@@ -159,7 +159,7 @@ void InsertTransformOpForOutput(const FuncGraphPtr &graph, const AnfNodePtr &nod
       // node->used_node, if output format of node equals input format of used_node,
       // then no need to insert transpose between node and used_node.
       auto used_node_in_format = AnfUtils::IsRealCNodeKernel(used_node)
-                                   ? AnfAlgo::GetInputFormat(used_node, used_node_index)
+                                   ? AnfAlgo::GetInputFormat(used_node, IntToSize(used_node_index))
                                    : kOpFormat_DEFAULT;
       if (outputs_format[i] == used_node_in_format) {
         continue;

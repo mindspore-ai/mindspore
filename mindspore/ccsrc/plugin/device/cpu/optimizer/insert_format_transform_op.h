@@ -25,7 +25,7 @@ namespace mindspore {
 namespace opt {
 class InsertFormatTransformOpCPU : public Pass {
  public:
-  explicit InsertFormatTransformOpCPU(const std::string &name) : Pass("insert_format_transform_op_cpu") {}
+  explicit InsertFormatTransformOpCPU(const std::string &) : Pass("insert_format_transform_op_cpu") {}
   ~InsertFormatTransformOpCPU() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 };

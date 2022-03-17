@@ -21,6 +21,7 @@
 #include <utility>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/trace_base.h"
@@ -461,8 +462,9 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
 
   // splitv for 7, 1, 5, 3
   std::vector<bool> corner_splitvs_is_first = {true, false, true, false};
-  std::vector<bool> corner_splitvs_is_exist = {send_rank_ids[7] != kInvalidId, send_rank_ids[1] != kInvalidId,
-                                               send_rank_ids[5] != kInvalidId, send_rank_ids[3] != kInvalidId};
+  std::vector<bool> corner_splitvs_is_exist = {
+    send_rank_ids[kRankIdSeven] != kInvalidId, send_rank_ids[kRankIdOne] != kInvalidId,
+    send_rank_ids[kRankIdFive] != kInvalidId, send_rank_ids[kRankIdThree] != kInvalidId};
   std::vector<bool> corner_splitvs_is_input_top = {true, true, false, false};
   std::vector<AnfNodePtr> split_outputs_top;
   std::vector<AnfNodePtr> split_outputs_bottom;
@@ -530,9 +532,9 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateLeftRightConcat(const FuncGraphPtr
 
   std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   int64_t input_num = 1;
-  size_t first_ids = is_left ? 7 : 1;
-  size_t middle_ids = is_left ? 6 : 2;
-  size_t last_ids = is_left ? 5 : 3;
+  size_t first_ids = is_left ? kIndex7 : kIndex1;
+  size_t middle_ids = is_left ? kIndex6 : kIndex2;
+  size_t last_ids = is_left ? kIndex5 : kIndex3;
 
   auto single_shape =
     common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
@@ -586,8 +588,8 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
   auto max_shape = common::AnfAlgo::GetOutputMaxShape(neighbor_exchange_v2_input, 0);
   auto min_shape = common::AnfAlgo::GetOutputMinShape(neighbor_exchange_v2_input, 0);
   auto is_dynamic = AnfUtils::IsShapeDynamic(single_shape);
-  size_t first_idx = concat_dim == kWDim ? 6 : 0;
-  size_t last_idx = concat_dim == kWDim ? 2 : 4;
+  size_t first_idx = concat_dim == kWDim ? kIndex6 : kIndex0;
+  size_t last_idx = concat_dim == kWDim ? kIndex2 : kIndex4;
   size_t first_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim2]) : static_cast<size_t>(recv_lens[0]);
   size_t last_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim3]) : static_cast<size_t>(recv_lens[1]);
 
