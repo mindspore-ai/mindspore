@@ -68,6 +68,24 @@ void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_
 }
 
 template <typename T>
+void ElementRealDivComplex(const T *input1, const T *input2, T *out, size_t size, size_t delta_1, size_t delta_2) {
+  size_t idx_1 = 0;
+  size_t idx_2 = 0;
+  auto zero = (T)0;
+  for (size_t i = 0; i < size; ++i) {
+    auto dividend = input1[idx_1];
+    auto divisor = input2[idx_2];
+    idx_1 += delta_1;
+    idx_2 += delta_2;
+    if (divisor == zero) {
+      out[i] = std::numeric_limits<T>::quiet_NaN();
+      continue;
+    }
+    out[i] = dividend / divisor;
+  }
+}
+
+template <typename T>
 class ArithmeticCpuTypeFunc : public CpuKernelFunc {
  public:
   ~ArithmeticCpuTypeFunc() override = default;
@@ -120,6 +138,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   void Add(const T *input1, const T *input2, T *out);
   void Mul(const T *input1, const T *input2, T *out);
   void RealDiv(const T *input1, const T *input2, T *out);
+  void RealDivComplex(const T *input1, const T *input2, T *out);
   void Div(const T *input1, const T *input2, T *out);
   void FloorDiv(const T *input1, const T *input2, T *out);
   void Mod(const T *input1, const T *input2, T *out);
@@ -173,7 +192,8 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
       arithmeticMathFuncMap = {
         {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex},
         {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
-        {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::DivComplex}};
+        {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::DivComplex},
+        {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDivComplex}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticMathFuncMap)
@@ -339,6 +359,49 @@ void ArithmeticCpuTypeFunc<T>::RealDiv(const T *input1, const T *input2, T *out)
         } else {
           out[i] = dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
         }
+        continue;
+      }
+      out[i] = dividend / divisor;
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+}
+
+template <typename T>
+void ArithmeticCpuTypeFunc<T>::RealDivComplex(const T *input1, const T *input2, T *out) {
+  if (input_shape1_ == input_shape2_) {
+    auto task = [this, input1, input2, out](size_t start, size_t end) {
+      ElementRealDivComplex<T>(input1 + start, input2 + start, out + start, end - start, 1, 1);
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+    return;
+  }
+  if (op_para_.in_elements_num0_ == 1) {
+    auto task = [this, input1, input2, out](size_t start, size_t end) {
+      ElementRealDivComplex<T>(input1, input2 + start, out + start, end - start, 0, 1);
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+    return;
+  }
+  if (op_para_.in_elements_num1_ == 1) {
+    auto task = [this, input1, input2, out](size_t start, size_t end) {
+      ElementRealDivComplex<T>(input1 + start, input2, out + start, end - start, 1, 0);
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+    return;
+  }
+
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      auto dividend = input1[iter.GetInputPosA()];
+      auto divisor = input2[iter.GetInputPosB()];
+      iter.GenNextPos();
+      auto zero = (T)0;
+      if (divisor == zero) {
+        out[i] = std::numeric_limits<T>::quiet_NaN();
         continue;
       }
       out[i] = dividend / divisor;
@@ -670,7 +733,25 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
      SpecializeArithFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     SpecializeArithFunc<double>}}},
+     SpecializeArithFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     SpecializeArithFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeArithFunc<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeArithFunc<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     SpecializeArithFunc<uint16_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     SpecializeArithFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     SpecializeArithFunc<complex128>}}},
   {prim::kPrimFloorDiv->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      SpecializeArithFunc<int8_t>},
