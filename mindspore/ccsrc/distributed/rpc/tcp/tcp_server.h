@@ -41,11 +41,11 @@ class TCPServer {
   void Finalize();
 
   // Set the message processing handler.
-  void SetMessageHandler(MessageHandler handler);
+  void SetMessageHandler(const MessageHandler &handler);
 
   // Return the IP and port binded by this server.
-  std::string GetIP();
-  uint32_t GetPort();
+  std::string GetIP() const;
+  uint32_t GetPort() const;
 
  private:
   bool InitializeImpl(const std::string &url);

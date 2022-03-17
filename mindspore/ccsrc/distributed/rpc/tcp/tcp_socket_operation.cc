@@ -21,7 +21,7 @@ namespace distributed {
 namespace rpc {
 constexpr int EAGAIN_RETRY = 2;
 
-int TCPSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) {
+ssize_t TCPSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) {
   return recv(connection->socket_fd, recvBuf, recvLen, MSG_PEEK);
 }
 
@@ -31,9 +31,9 @@ int TCPSocketOperation::Receive(Connection *connection, char *recvBuf, uint32_t 
 
   *recvLen = 0;
   while (*recvLen != totalRecvLen) {
-    int retval = recv(fd, curRecvBuf, totalRecvLen - *recvLen, static_cast<int>(0));
+    ssize_t retval = recv(fd, curRecvBuf, totalRecvLen - *recvLen, static_cast<int>(0));
     if (retval > 0) {
-      *recvLen += IntToUint(retval);
+      *recvLen += static_cast<uint32_t>(retval);
       if (*recvLen == totalRecvLen) {
         return UintToInt(totalRecvLen);
       }
@@ -57,7 +57,7 @@ int TCPSocketOperation::Receive(Connection *connection, char *recvBuf, uint32_t 
 }
 
 int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *recvMsg, uint32_t recvLen) {
-  uint32_t totalRecvLen = recvLen;
+  ssize_t totalRecvLen = recvLen;
 
   if (totalRecvLen == 0) {
     return 0;
@@ -66,7 +66,7 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
   while (totalRecvLen) {
     auto retval = recvmsg(connection->socket_fd, recvMsg, 0);
     if (retval > 0) {
-      totalRecvLen -= IntToSize(retval);
+      totalRecvLen -= retval;
       if (totalRecvLen == 0) {
         recvMsg->msg_iovlen = 0;
         break;
@@ -90,28 +90,28 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
         }
       }
     } else if (retval == 0) {
-      return UintToInt(-1);
+      return -1;
     } else {
       if (EAGAIN == errno) {
-        return recvLen - totalRecvLen;
+        return UintToInt(recvLen - totalRecvLen);
       } else if (ECONNRESET == errno || ECONNABORTED == errno || ENOTCONN == errno || EPIPE == errno) {
-        connection->error_code = UintToInt(errno);
+        connection->error_code = errno;
         return -1;
       } else {
         return UintToInt(recvLen - totalRecvLen);
       }
     }
   }
-  return recvLen;
+  return UintToInt(recvLen);
 }
 
-int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendMsg, uint32_t *sendLen) {
+ssize_t TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendMsg, size_t *sendLen) {
   int eagainCount = EAGAIN_RETRY;
-  uint32_t totalLen = *sendLen;
-  int32_t unsendLen = *sendLen;
+  size_t totalLen = *sendLen;
+  ssize_t unsendLen = static_cast<ssize_t>(*sendLen);
 
   while (*sendLen != 0) {
-    int retval = sendmsg(connection->socket_fd, sendMsg, MSG_NOSIGNAL);
+    auto retval = sendmsg(connection->socket_fd, sendMsg, MSG_NOSIGNAL);
     if (retval < 0) {
       --eagainCount;
       if (errno != EAGAIN) {
@@ -148,7 +148,7 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
     }
   }
   if (unsendLen > 0) {
-    unsendLen = UintToInt(totalLen - *sendLen);
+    unsendLen = totalLen - *sendLen;
   }
   return unsendLen;
 }
@@ -159,13 +159,13 @@ void TCPSocketOperation::Close(Connection *connection) {
 }
 
 // accept new conn event handle
-void TCPSocketOperation::NewConnEventHandler(int fd, uint32_t events, void *context) {
+void TCPSocketOperation::NewConnEventHandler(void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
   conn->state = ConnectionState::kConnected;
   return;
 }
 
-void TCPSocketOperation::ConnEstablishedEventHandler(int fd, uint32_t events, void *context) {
+void TCPSocketOperation::ConnEstablishedEventHandler(void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
   conn->state = ConnectionState::kConnected;
   return;

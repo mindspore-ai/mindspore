@@ -25,16 +25,17 @@ bool TCPServer::Initialize() { return InitializeImpl(""); }
 
 void TCPServer::Finalize() {
   if (tcp_comm_ != nullptr) {
+    tcp_comm_->Finalize();
     tcp_comm_.reset();
     tcp_comm_ = nullptr;
   }
 }
 
-void TCPServer::SetMessageHandler(MessageHandler handler) { tcp_comm_->SetMessageHandler(handler); }
+void TCPServer::SetMessageHandler(const MessageHandler &handler) { tcp_comm_->SetMessageHandler(handler); }
 
-std::string TCPServer::GetIP() { return ip_; }
+std::string TCPServer::GetIP() const { return ip_; }
 
-uint32_t TCPServer::GetPort() { return port_; }
+uint32_t TCPServer::GetPort() const { return port_; }
 
 bool TCPServer::InitializeImpl(const std::string &url) {
   if (tcp_comm_ == nullptr) {

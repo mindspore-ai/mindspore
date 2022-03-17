@@ -195,14 +195,10 @@ bool ConnectionPool::ReverseConnInfo(int fromFd, int toFd) {
   return true;
 }
 
-ConnectionPool::~ConnectionPool() {
-  try {
-    DeleteAllConnections(&local_conns_);
-    DeleteAllConnections(&remote_conns_);
-    DeleteAllConnInfos();
-  } catch (...) {
-    MS_LOG(ERROR) << "Failed to release resource for connection pool.";
-  }
+void ConnectionPool::Finalize() {
+  DeleteAllConnections(&local_conns_);
+  DeleteAllConnections(&remote_conns_);
+  DeleteAllConnInfos();
 }
 }  // namespace rpc
 }  // namespace distributed

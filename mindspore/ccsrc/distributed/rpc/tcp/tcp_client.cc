@@ -31,22 +31,33 @@ bool TCPClient::Initialize() {
   return rt;
 }
 
-void TCPClient::Finalize() { tcp_comm_->Finalize(); }
+void TCPClient::Finalize() {
+  if (tcp_comm_ != nullptr) {
+    tcp_comm_->Finalize();
+    tcp_comm_.reset();
+    tcp_comm_ = nullptr;
+  }
+}
 
 bool TCPClient::Connect(const std::string &dst_url, size_t timeout_in_sec) {
   bool rt = false;
   tcp_comm_->Connect(dst_url);
 
-  int timeout = timeout_in_sec * 1000 * 1000;
-  size_t usleep_count = 100000;
+  size_t timeout_in_ms = timeout_in_sec * 1000;
+  size_t sleep_in_ms = 100;
+  useconds_t sleep_in_us = 100000;
 
-  while (timeout) {
+  while (true) {
     if (tcp_comm_->IsConnected(dst_url)) {
       rt = true;
       break;
     }
-    timeout = timeout - usleep_count;
-    usleep(usleep_count);
+    if (timeout_in_ms > sleep_in_ms) {
+      timeout_in_ms -= sleep_in_ms;
+    } else {
+      break;
+    }
+    (void)usleep(sleep_in_us);
   }
   return rt;
 }
@@ -55,25 +66,26 @@ bool TCPClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
   bool rt = false;
   tcp_comm_->Disconnect(dst_url);
 
-  int timeout = timeout_in_sec * 1000 * 1000;
-  size_t usleep_count = 100000;
+  size_t timeout_in_ms = timeout_in_sec * 1000;
+  size_t sleep_in_ms = 100;
+  useconds_t sleep_in_us = 100000;
 
-  while (timeout) {
+  while (true) {
     if (!tcp_comm_->IsConnected(dst_url)) {
       rt = true;
       break;
     }
-    timeout = timeout - usleep_count;
-    usleep(usleep_count);
+    if (timeout_in_ms > sleep_in_ms) {
+      timeout_in_ms -= sleep_in_ms;
+    } else {
+      break;
+    }
+    usleep(sleep_in_us);
   }
   return rt;
 }
 
-int TCPClient::SendSync(std::unique_ptr<MessageBase> &&msg) {
-  int rt = -1;
-  rt = tcp_comm_->Send(msg.release(), true);
-  return rt;
-}
+int TCPClient::SendSync(std::unique_ptr<MessageBase> &&msg) { return tcp_comm_->Send(msg.release(), true); }
 
 void TCPClient::SendAsync(std::unique_ptr<MessageBase> &&msg) { (void)tcp_comm_->Send(msg.release(), false); }
 }  // namespace rpc
