@@ -1542,7 +1542,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   } else {
     keep_prev = false;
   }
-  bool ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, keep_prev, root_graph_id);
+  bool ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, keep_prev, root_graph_id, false);
   if (!ret) {
     MS_LOG(ERROR) << "LoadMemToHost:"
                   << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
@@ -1704,7 +1704,7 @@ void Debugger::LoadGraphOutputs() {
       auto format = kOpFormat_DEFAULT;
       string tensor_name = kernel_name + ':' + std::to_string(j);
       ShapeVector int_shapes = trans::GetRuntimePaddingShape(node, j);
-      auto ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, root_graph_id);
+      auto ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, root_graph_id, false);
       if (!ret) {
         MS_LOG(ERROR) << "LoadMemToHost:"
                       << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";

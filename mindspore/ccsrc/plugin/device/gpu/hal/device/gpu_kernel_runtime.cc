@@ -183,7 +183,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
       string input_tensor_name = input_kernel_name + ':' + "0";
       ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, PARAMETER_OUTPUT_INDEX);
-      auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true);
+      auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true, 0, false);
       if (!ret) {
         MS_LOG(ERROR) << "LoadMemToHost:"
                       << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
@@ -210,7 +210,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
       string tensor_name = kernel_name + ':' + std::to_string(j);
       ShapeVector int_shapes = trans::GetRuntimePaddingShape(kernel, j);
-      auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false);
+      auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, 0, false);
       if (!ret) {
         MS_LOG(ERROR) << "LoadMemToHost:"
                       << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";

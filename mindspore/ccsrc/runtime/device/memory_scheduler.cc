@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #endif
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace device {
@@ -80,12 +81,12 @@ void MemScheduler::Record(const void *key, const MemEventType &event_type, size_
   auto event = std::make_shared<MemEvent>(event_type, current_step_);
   event->mem_size = mem_size;
   event->key = key;
-  mem_events_[key].emplace_back(event);
+  (void)mem_events_[key].emplace_back(event);
   if (step_keys_.size() < current_step_ + 1) {
     step_keys_.resize(current_step_ + 1);
   }
   if (event->type == kGet) {
-    step_keys_[current_step_].insert(event->key);
+    (void)step_keys_[current_step_].insert(event->key);
   }
 }
 
@@ -181,7 +182,7 @@ bool MemScheduler::PreComputeGet(const std::shared_ptr<MemEvent> &event, void *s
   if (iter != mem_result_.end()) {
     auto ptr = iter->second;
     MS_EXCEPTION_IF_NULL(ptr);
-    return ptr;
+    return true;
   }
   if (!optimized_ || stream == nullptr) {
     return false;
@@ -195,7 +196,7 @@ bool MemScheduler::PreComputeGet(const std::shared_ptr<MemEvent> &event, void *s
   auto device_ptr = MallocDevice(mem_size, stream);
   mem_handler_->SwapIn(host_ptr, device_ptr, mem_size, stream);
   if (!from_init) {
-    swap_host_ptr_.erase(host_ptr);
+    (void)swap_host_ptr_.erase(host_ptr);
     mem_handler_->FreeHost(host_ptr);
   }
   mem_result_[key] = device_ptr;
@@ -278,7 +279,7 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
   }
 
   auto available_mem_size = mem_handler_->GetAvailableMemSize();
-  available_mem_size = available_mem_size * mem_used_factor;
+  available_mem_size = FloatToSize(available_mem_size * mem_used_factor);
   strategy_->set_mem_size(available_mem_size);
   strategy_->Execute();
 }

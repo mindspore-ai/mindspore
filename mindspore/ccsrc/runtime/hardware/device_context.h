@@ -131,7 +131,7 @@ class DeviceContext {
   // Launch a kernel via 'KernelMod' of the kernel.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                             const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                            bool is_dynamic_shape = false) const {
+                            bool is_dynamic_shape) const {
     return true;
   }
 

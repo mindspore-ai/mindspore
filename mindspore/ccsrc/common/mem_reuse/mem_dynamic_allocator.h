@@ -124,7 +124,7 @@ struct MemStatusManager {
   std::vector<DynamicMemBlockPtr> mem_block_list_;
   // The map of all idle memory buf by size.
   SizeMapMemBuf idle_mem_buf_map_;
-  void clear() {
+  void clear() noexcept {
     mem_block_list_.clear();
     idle_mem_buf_map_.clear();
   }
