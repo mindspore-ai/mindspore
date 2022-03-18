@@ -43,7 +43,7 @@ uint64_t GetTimeUs();
 bool IsSupportSDot();
 
 size_t GetMaxMallocSize();
-#ifdef SERVER_INFERENCE
+#ifdef BFC_MEMORY
 int64_t GetFreeMemory();
 #endif
 

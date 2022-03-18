@@ -85,7 +85,7 @@ set(JNI_SRC
         ${NEW_NATIVE_DIR}/version.cpp
   )
 
-if(MSLITE_ENABLE_SERVER_INFERENCE)
+if(MSLITE_ENABLE_PARALLEL_INFERENCE)
     set(JNI_SRC
             ${JNI_SRC}
             ${NEW_NATIVE_DIR}/runner_config.cpp

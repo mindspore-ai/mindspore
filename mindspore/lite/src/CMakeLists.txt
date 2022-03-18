@@ -65,7 +65,7 @@ file(GLOB CXX_API_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/*.cc
         )
-if(MSLITE_ENABLE_SERVER_INFERENCE)
+if(MSLITE_ENABLE_PARALLEL_INFERENCE)
     set(CXX_API_SRCS
             ${CXX_API_SRCS}
             ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/predict_task_queue.cc
@@ -140,13 +140,26 @@ if(MSLITE_ENABLE_MODEL_ENCRYPTION)
             )
 endif()
 
-if(MSLITE_ENABLE_SERVER_INFERENCE)
-set(LITE_SRC
+if(MSLITE_ENABLE_BFC_MEMORY)
+    set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/dynamic_mem_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/dynamic_mem_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/numa_adapter.cc
+        )
+endif()
+
+if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
+    set(LITE_SRC
+        ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/thread_cost_model.cc
+        )
+endif()
+
+if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
+    set(LITE_SRC
+        ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/thread_cost_model.cc
         )
 endif()

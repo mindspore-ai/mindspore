@@ -125,13 +125,25 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/huffman_decode.cc
         ${SRC_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         )
-if(MSLITE_ENABLE_SERVER_INFERENCE)
-set(LITE_SRC
+if(MSLITE_ENABLE_BFC_MEMORY)
+    set(LITE_SRC
         ${LITE_SRC}
-        ${SRC_DIR}/pack_weight_manager.cc
         ${SRC_DIR}/runtime/dynamic_mem_allocator.cc
         ${SRC_DIR}/runtime/dynamic_mem_manager.cc
         ${SRC_DIR}/runtime/numa_adapter.cc
+        )
+endif()
+
+if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
+    set(LITE_SRC
+        ${LITE_SRC}
+        ${SRC_DIR}/pack_weight_manager.cc
+        )
+endif()
+
+if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
+    set(LITE_SRC
+        ${LITE_SRC}
         ${SRC_DIR}/thread_cost_model.cc
         )
 endif()

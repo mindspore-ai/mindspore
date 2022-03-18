@@ -16,7 +16,7 @@
 
 #include "src/lite_session.h"
 #include <set>
-#ifdef SERVER_INFERENCE
+#ifdef SHARING_MODEL_WEIGHT
 #include "src/pack_weight_manager.h"
 #endif
 #ifndef RUNTIME_PASS_CLIP
@@ -40,9 +40,6 @@
 #include "src/lite_model.h"
 #include "src/weight_decoder.h"
 #include "src/runtime/runtime_allocator.h"
-#ifdef SERVER_INFERENCE
-#include "src/runtime/dynamic_mem_allocator.h"
-#endif
 #include "src/lite_kernel_util.h"
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 #include "src/registry/register_kernel_impl.h"
@@ -666,7 +663,7 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
     }
   }
 }
-#ifdef SERVER_INFERENCE
+#ifdef SHARING_MODEL_WEIGHT
 int LiteSession::IniPackWeightData(Model *model) {
   auto lite_model = reinterpret_cast<LiteModel *>(model);
   auto kernel_num = model->all_nodes_.size();
@@ -709,7 +706,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-#ifdef SERVER_INFERENCE
+#ifdef SHARING_MODEL_WEIGHT
   ret = IniPackWeightData(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "IniPackWeightData failed.";
@@ -1818,7 +1815,7 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     delete[] model_buf;
     model_buf = nullptr;
   }
-#ifdef SERVER_INFERENCE
+#ifdef SHARING_MODEL_WEIGHT
   lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf);
 #endif
   return lite_buf;
@@ -1842,7 +1839,7 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     delete[] model_buf;
     model_buf = nullptr;
   }
-#ifdef SERVER_INFERENCE
+#ifdef SHARING_MODEL_WEIGHT
   lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf);
 #endif
   return lite_buf;

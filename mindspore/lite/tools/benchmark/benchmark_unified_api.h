@@ -42,7 +42,7 @@
 #ifdef ENABLE_OPENGL_TEXTURE
 #include "tools/common/opengl_util.h"
 #endif
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
 #include "include/api/model_parallel_runner.h"
 #endif
 
@@ -86,7 +86,7 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int GetDataTypeByTensorName(const std::string &tensor_name) override;
 
   int CompareOutput() override;
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
   int CompareOutputForModelPool(std::vector<mindspore::MSTensor> *outputs);
 #endif
   int CompareOutputByCosineDistance(float cosine_distance_threshold);
@@ -100,7 +100,7 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int InitPrintTensorDataCallbackParameter() override;
 
   int PrintInputData();
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
   int RunModelPool(std::shared_ptr<mindspore::Context> context);
 #endif
 

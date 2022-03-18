@@ -63,9 +63,11 @@ Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_p
                          int node_id) {
   model_ = std::make_shared<Model>();
   mindspore::ModelType model_type = kMindIR_Lite;
+#ifdef BFC_MEMORY
   if (node_id != -1) {
     model_->UpdateConfig(lite::kConfigServerInference, {lite::kConfigNUMANodeId, std::to_string(node_id)});
   }
+#endif
   auto status = model_->Build(model_buf, size, model_type, model_context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
