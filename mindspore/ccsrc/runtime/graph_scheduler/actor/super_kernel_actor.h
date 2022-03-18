@@ -49,13 +49,14 @@ class SuperKernelActor : public DebugAwareActor {
   // The debug related operation interface.
   void SendDebugReq(OpContext<DeviceTensor> *const context) override;
 
+  // The input may come from the control actor, so need free the input memory by the dynamic ref count.
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
+
   const KernelGraphPtr &graph() const { return graph_; }
 
  protected:
   void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
-  // The input may come from the control actor, so need free the input memory by the dynamic ref count.
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;

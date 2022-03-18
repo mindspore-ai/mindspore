@@ -52,7 +52,7 @@ class RpcActor : public KernelActor {
       : KernelActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                     modifiable_ref_input_indexes, modifiable_ref_output_indexes, type),
         input_inter_process_num_(0) {}
-  virtual ~RpcActor() = default;
+  ~RpcActor() override = default;
 
   // Normally, an actor's op_context is passed by its input actor, but rpc actors could be triggered by inter-process
   // arrows which do not contain op_context. So we need to set op_context manually.

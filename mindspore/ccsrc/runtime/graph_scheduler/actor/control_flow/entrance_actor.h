@@ -48,6 +48,8 @@ class EntranceActor : public ControlActor {
   void RunOpRealParameterWithBranchID(const OpRealParameterWithBranchID &real_parameter_with_branch_id,
                                       OpContext<DeviceTensor> *const context);
 
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
+
   // Clear the data which are generated in the loop body execution.
   void ClearDataOnStepEnd(AID *const input_control, OpContext<DeviceTensor> *const context);
 
@@ -58,7 +60,6 @@ class EntranceActor : public ControlActor {
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
   void EraseInput(const OpContext<DeviceTensor> *const context) override;
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;

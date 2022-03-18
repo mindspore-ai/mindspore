@@ -44,7 +44,7 @@ class DataSourceActor : public DebugAwareActor {
   DataSourceActor(const std::string &name, KernelTransformType type, size_t buffer_capacity,
                   const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid)
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid), buffer_capacity_(buffer_capacity) {}
-  virtual ~DataSourceActor() = default;
+  ~DataSourceActor() override = default;
 
  protected:
   friend class GraphScheduler;

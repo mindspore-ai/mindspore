@@ -67,6 +67,21 @@ inline bool IsSingleOpActorSet(const ActorSet *actor_set) {
   return actor_set->kernel_actors_.size() == 1;
 }
 
+bool IsTakenOverByControlFlow(const AnfNodePtr &front_node, const KernelGraphPtr &graph,
+                              const ControlNodeParserPtr &parser) {
+  MS_EXCEPTION_IF_NULL(front_node);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (common::AnfAlgo::IsCallNode(front_node)) {
+    return true;
+  }
+
+  if (parser != nullptr && parser->IsInited() && (!parser->IsSameKernelGraphGroup(front_node, graph))) {
+    return true;
+  }
+
+  return false;
+}
+
 // Convert the actors vector by the actor set.
 std::vector<AbstractActorPtr> CollectActors(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
@@ -1358,18 +1373,14 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     if (IsInternalParameter(real_depend_kernel, graph)) {
       auto front_output_with_index = graph->GetFrontNodeByInternalParameter(real_depend_kernel);
       MS_EXCEPTION_IF_NULL(front_output_with_index.first);
-      if (graph_output_to_actor_.count(front_output_with_index) == 0) {
-        if (common::AnfAlgo::IsCallNode(front_output_with_index.first)) {
-          continue;
-        }
-        MS_LOG(EXCEPTION) << "Can't find graph output by front node:" << front_output_with_index.first->DebugString();
-      }
-
-      if (parser != nullptr && parser->IsInited() &&
-          (!parser->IsSameKernelGraphGroup(front_output_with_index.first, graph))) {
+      if (IsTakenOverByControlFlow(front_output_with_index.first, graph, parser)) {
         MS_LOG(DEBUG) << "Skip in control flow from node:" << front_output_with_index.first->DebugString()
                       << " is not in the graph:" << graph->ToString();
         continue;
+      }
+
+      if (graph_output_to_actor_.count(front_output_with_index) == 0) {
+        MS_LOG(EXCEPTION) << "Can't find graph output by front node:" << front_output_with_index.first->DebugString();
       }
       real_depend_kernel = graph_output_to_actor_[front_output_with_index].second.first;
       MS_EXCEPTION_IF_NULL(real_depend_kernel);

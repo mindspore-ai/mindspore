@@ -30,7 +30,7 @@ class MemoryAwareActor : public AbstractActor {
   explicit MemoryAwareActor(const std::string &name, KernelTransformType type, const AID *recorder_aid,
                             const AID &memory_manager_aid)
       : AbstractActor(name, type, recorder_aid), memory_manager_aid_(memory_manager_aid) {}
-  virtual ~MemoryAwareActor() = default;
+  ~MemoryAwareActor() override = default;
 
   virtual void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {}
   virtual void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {}

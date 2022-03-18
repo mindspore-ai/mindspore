@@ -43,7 +43,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
         input_datas_num_(0),
         input_controls_num_(0),
         running_dependent_msg_num_(0) {}
-  virtual ~AbstractActor() = default;
+  ~AbstractActor() override = default;
 
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
 
