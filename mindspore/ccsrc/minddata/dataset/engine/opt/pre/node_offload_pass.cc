@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include <string>
 
 #include "minddata/dataset/engine/opt/pre/node_offload_pass.h"
@@ -39,13 +40,9 @@ Status NodeOffloadPass::OffloadNodes::Visit(std::shared_ptr<MapNode> node, bool 
     if (IS_OUTPUT_ON(mindspore::INFO)) {
       std::string operations = "operations=[";
       auto op_list = node->operations();
-      size_t op_size = op_list.size();
-      for (int i = 0; i < op_size; i++) {
-        operations += op_list[i]->Name();
-        if (i < op_size - 1) {
-          operations += std::string(", ");
-        }
-      }
+      std::for_each(op_list.begin(), op_list.end(), [&](const auto &op) {
+        op == op_list.back() ? operations += op->Name() : operations += op->Name() + ", ";
+      });
       operations += "]";
       MS_LOG(INFO) << "The offload of map(" + operations + ") is true, and heterogeneous acceleration will be enabled.";
     }
