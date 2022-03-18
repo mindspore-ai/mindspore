@@ -101,7 +101,7 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   (void)kernel_json.read(json_->contents, SizeToLong(json_->len));
 
   if (processor == kProcessorCpu) {
-    std::string bin_f = json_f.substr(0, json_f.length() - 5) + ".so";
+    std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + ".so";
     if (!CheckHash(json_f, bin_f, js)) {
       return false;
     }

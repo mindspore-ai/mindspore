@@ -180,7 +180,7 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
     max_shape[LongToSize(concat_dim)] *= split_count;
     min_shape[LongToSize(concat_dim)] *= split_count;
     ShapeVector new_shape;
-    std::transform(single_shape.begin(), single_shape.end(), std::back_inserter(new_shape), SizeToLong);
+    (void)std::transform(single_shape.begin(), single_shape.end(), std::back_inserter(new_shape), SizeToLong);
     common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
                                                  {std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape)},
                                                  concat.get());

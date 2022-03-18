@@ -31,11 +31,10 @@ const AnfNodePtr CustomOpConstInputToAttr::Process(const FuncGraphPtr &, const A
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-
-  // Only process Custom operator.
   if (!IsPrimitiveCNode(cnode, prim::kPrimCustom)) {
     return nullptr;
   }
+
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   mindspore::HashSet<size_t> attr_indices;

@@ -36,7 +36,7 @@ TensorCopySlices::TensorCopySlices() {}
 
 TensorCopySlices::~TensorCopySlices() {}
 
-bool TensorCopySlices::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
+bool TensorCopySlices::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (inputs.size() != 2) {
     MS_LOG(ERROR) << "inputs size is not 2";

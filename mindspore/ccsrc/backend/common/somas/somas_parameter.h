@@ -25,7 +25,7 @@ namespace mindspore {
 namespace somas {
 class SomasParameter {
  public:
-  SomasParameter(size_t id, const std::string source_node_name, size_t index, const void *addr, size_t size)
+  SomasParameter(size_t id, const std::string &source_node_name, size_t index, const void *addr, size_t size)
       : id_(id),
         source_node_name_(source_node_name),
         output_index_(index),
