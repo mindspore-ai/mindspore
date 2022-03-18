@@ -147,6 +147,8 @@ from .reduce_prod import _reduce_prod_aicpu
 from .reduce_mean import _reduce_mean_aicpu
 from .resize_bilinear import _resize_bilinear_aicpu
 from .resize_bilinear_grad import _resize_bilinear_grad_aicpu
+from .resize_nearest_neighbor_v2 import _resize_nearest_neighbor_v2_aicpu
+from .resize_nearest_neighbor_v2_grad import _resize_nearest_neighbor_v2_grad_aicpu
 from .scatter_elements import _scatter_elements_aicpu
 from .non_max_suppression import _non_max_suppression_aicpu
 from .square import _square_aicpu
