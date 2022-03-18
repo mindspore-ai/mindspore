@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,9 @@ void MixedBitWeightQuantizer::GetBiasCorrection(float *weights, int element_num,
   MS_ASSERT(element_num > 0);
   double average_dequant = 0;
   double average_raw = 0;
+  const float upround_offset = 0.5;
   for (int i = 0; i < element_num; i++) {
-    float dequant = scale * (floorf(weights[i] / scale + 0.5));
+    float dequant = scale * (floorf(weights[i] / scale + upround_offset));
     origin_dequant_datas[i] = dequant;
     average_raw += weights[i];
     average_dequant += dequant;
@@ -88,9 +89,10 @@ float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const in
   int bucket_count = shape[preferred_dim];
   std::vector<float> norms2(bucket_count);
   std::vector<float> dnorms2(bucket_count);
+  const float init_number = 0.0;
   for (int i = 0; i < bucket_count; i++) {
-    norms2[i] = 0.0;
-    dnorms2[i] = 0.0;
+    norms2[i] = init_number;
+    dnorms2[i] = init_number;
   }
 
   // Bucketing
@@ -101,12 +103,13 @@ float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const in
     bucket_volume *= shape[i];
   }
   MS_ASSERT(bucket_volume != 0);
+  const float upround_offset = 0.5;
   // Bias Correction
   GetBiasCorrection(weights, element_num, scale, origin_dequant_datas.data());
   for (int i = 0; i < element_num; i++) {
     int bucket = (i / bucket_volume) % bucket_count;
     norms2[bucket] += weights[i] * weights[i];
-    float dequant = var_corr_ * (scale * (floorf(weights[i] / scale + 0.5))) + mean_corr_;
+    float dequant = var_corr_ * (scale * (floorf(weights[i] / scale + upround_offset))) + mean_corr_;
     corr_dequant_datas[i] = dequant;
     float d = weights[i] - dequant;
     dnorms2[bucket] += d * d;
@@ -141,13 +144,13 @@ BinarySearchResult MixedBitWeightQuantizer::BinarySearchForQuantizationScale(flo
   }
   // start a binary search
   float curr_scale = (mm.max - mm.min) * target_err;
-  float right_hs_dx = curr_scale * 2.0;
+  float right_hs_dx = curr_scale * kBinarySearchStep;
   while (MeasureQuantizationError(weights, shape, dims, preferred_dim, right_hs_dx) < target_err) {
-    right_hs_dx *= 2.0;
+    right_hs_dx *= kBinarySearchStep;
   }
-  float left_hs_dx = curr_scale / 2.0;
+  float left_hs_dx = curr_scale / kBinarySearchStep;
   while (MeasureQuantizationError(weights, shape, dims, preferred_dim, left_hs_dx) > target_err) {
-    left_hs_dx /= 2.0;
+    left_hs_dx /= kBinarySearchStep;
   }
   int iter_count = 0;
   BinarySearchResult res = {0, curr_scale};
@@ -168,7 +171,7 @@ BinarySearchResult MixedBitWeightQuantizer::BinarySearchForQuantizationScale(flo
       right_hs_dx = res.scale;
     else
       left_hs_dx = res.scale;
-    res.scale = (left_hs_dx + right_hs_dx) / 2.0;
+    res.scale = (left_hs_dx + right_hs_dx) / kBinarySearchStep;
     iter_count += 1;
   }
 }
@@ -208,8 +211,9 @@ int MixedBitWeightQuantizer::QuantizeByScale(const float *weights, int weightsc,
                                              schema::QuantParamT *quant_params, std::vector<int16_t> *quant_datas) {
   MS_ASSERT(weights != nullptr);
   MS_ASSERT(weightsc <= quant_datas->size());
+  const float upround_offset = 0.5;
   for (int i = 0; i < weightsc; i++) {
-    auto q = static_cast<int>(floorf(weights[i] / scale + 0.5));
+    auto q = static_cast<int>(floorf(weights[i] / scale + upround_offset));
     quant_datas->at(i) = q;
   }
   quant_params->meanCorr = mean_corr_;

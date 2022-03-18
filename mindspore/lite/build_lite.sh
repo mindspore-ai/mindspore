@@ -665,8 +665,10 @@ build_lite_x86_64_aarch64_jar()
   echo "x86_64_base_path: "${x86_64_base_path}
   echo "aarch64_base_path: "${aarch64_base_path}
 
-  local x86_64_package_name=`basename ${SERVER_X86_64_PACKAGE_FILE} '.tar.gz'`
-  local aarch64_package_name=`basename ${SERVER_AARCH64_PACKAGE_FILE} '.tar.gz'`
+  local x86_64_package_name=""
+  local aarch64_package_name=""
+  x86_64_package_name=`basename ${SERVER_X86_64_PACKAGE_FILE} '.tar.gz'`
+  aarch64_package_name=`basename ${SERVER_AARCH64_PACKAGE_FILE} '.tar.gz'`
   echo "x86_64_package_name: "${x86_64_package_name}
   echo "aarch64_package_name: "${aarch64_package_name}
 

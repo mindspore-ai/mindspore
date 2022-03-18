@@ -25,6 +25,7 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite::quant {
+constexpr float kBinarySearchStep = 2.0;
 typedef struct {
   int status;
   float scale;
