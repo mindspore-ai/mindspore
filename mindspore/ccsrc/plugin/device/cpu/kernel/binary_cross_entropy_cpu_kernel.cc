@@ -24,7 +24,7 @@ constexpr size_t kBceOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void BinaryCrossEntropyCpuKernelMod::LaunchToScalar(const int &input_size, const int &reduction, T *loss,
+void BinaryCrossEntropyCpuKernelMod::LaunchToScalar(const int &input_size, const ReductionType &reduction, T *loss,
                                                     T *tmp_loss) const {
   if (input_size % 2 == 1) {
     tmp_loss[0] += tmp_loss[input_size - 1];

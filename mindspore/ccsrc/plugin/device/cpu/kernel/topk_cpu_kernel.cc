@@ -66,7 +66,7 @@ void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
 
       if (sorted_) {
         constexpr float fraction = 0.5;
-        const size_t threshold = inner_size_ * fraction;
+        const size_t threshold = FloatToSize(inner_size_ * fraction);
         // fall back to stable_sort
         if (k_num > threshold) {
           std::stable_sort(idx, idx + inner_size_, comparator);
