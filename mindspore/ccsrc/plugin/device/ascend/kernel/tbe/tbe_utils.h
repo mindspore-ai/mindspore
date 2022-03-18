@@ -96,8 +96,7 @@ using KernelMetaPtr = std::shared_ptr<KernelMetaInfo>;
 class KernelManager {
  public:
   static uintptr_t GenFuncStub(const KernelPack &kernel_pack, bool force_reload, uint32_t *block_dim,
-                               const bool dynamic_flag = false, void **handle = nullptr,
-                               std::string *origin_key = nullptr);
+                               void **handle = nullptr, std::string *origin_key = nullptr);
   static std::string GetStubFuncName(const KernelPackPtr &kernel_pack);
 
  private:

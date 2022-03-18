@@ -31,7 +31,13 @@ AclGraphImpl::AclGraphImpl()
       context_(nullptr),
       acl_env_(nullptr) {}
 
-AclGraphImpl::~AclGraphImpl() { (void)FinalizeEnv(); }
+AclGraphImpl::~AclGraphImpl() {
+  try {
+    (void)FinalizeEnv();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "AclGraphImpl destructor run failed, error message : " << e.what();
+  }
+}
 
 Status AclGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);

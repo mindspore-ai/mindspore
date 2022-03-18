@@ -34,7 +34,7 @@ class TbeKernelSelect {
 
  public:
   TbeKernelSelect(CNodePtr kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list);
-  ~TbeKernelSelect() = default;
+  ~TbeKernelSelect() { kernel_info_list_ = nullptr; }
   void TbeMetadataInfoEx();
 
  private:

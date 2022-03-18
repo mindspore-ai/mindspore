@@ -166,7 +166,7 @@ void TbeKernelSelect::GetAgnosticPatternKernelInfo(const OpInfo &op_info) {
 void TbeKernelSelect::GetBroadcastPatternKernelInfo(const OpInfo &op_info) {
   auto broadcast_selecter = TbeKernelBroadCastSelecter(cnode_ptr_);
   SupportFormat support_format;
-  broadcast_selecter.GetShapeInfo(&support_format);
+  (void)broadcast_selecter.GetShapeInfo(&support_format);
   (void)broadcast_selecter.IsBroadCastSupport5HD(&support_format);
   (void)broadcast_selecter.IsBroadCastSupportFracZ(&support_format);
   (void)broadcast_selecter.IsBroadCastSupportC1HWNCoC0(&support_format);

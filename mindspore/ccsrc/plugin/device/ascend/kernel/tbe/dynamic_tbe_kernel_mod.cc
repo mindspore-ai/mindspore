@@ -108,7 +108,7 @@ void DynamicTbeKernelMod::InitOp() {
 
   // gen FuncStub
   if (func_stub_ == nullptr || handle_ == nullptr) {
-    auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, true, &handle_, &origin_key_);
+    auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, &handle_, &origin_key_);
     if (kernel_pack_->kernel_json_info().has_kernel_list) {
       if (func_stub != 1) {
         MS_LOG(EXCEPTION) << "GenFuncStub failed.";

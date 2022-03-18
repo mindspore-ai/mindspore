@@ -131,7 +131,7 @@ const AnfNodePtr DereluFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
 
   auto manage = graph->manager();
   MS_EXCEPTION_IF_NULL(manage);
-  manage->Replace(relu, relu_v2_node_outputs[0]);
+  (void)manage->Replace(relu, relu_v2_node_outputs[0]);
   return relu_grad_v2;
 }
 }  // namespace opt

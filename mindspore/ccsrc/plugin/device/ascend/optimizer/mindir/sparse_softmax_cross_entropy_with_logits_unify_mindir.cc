@@ -455,7 +455,7 @@ CNodePtr CreateCast(const FuncGraphPtr &graph, const CNodePtr &cast, const AnfNo
   return new_cast_node;
 }
 
-bool IsSparseSoftmaxCrossEntropyWithLogitsGrad(const CNodePtr &sparse, string pass_name) {
+bool IsSparseSoftmaxCrossEntropyWithLogitsGrad(const CNodePtr &sparse, const string &pass_name) {
   MS_EXCEPTION_IF_NULL(sparse);
   if (common::AnfAlgo::GetCNodeName(sparse) != kSparseSoftmaxCrossEntropyWithLogitsOpName) {
     MS_LOG(EXCEPTION) << "The pass of " << pass_name << "'s input node should be "
@@ -557,7 +557,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                     NewValueNode(MakeValue<bool>(true)), NewValueNode(MakeValue<bool>(true))};
   auto new_depend = graph->NewCNode(inputs);
-  manager->Replace(sparse_softmax_node_grad, new_depend);
+  (void)manager->Replace(sparse_softmax_node_grad, new_depend);
   return new_mul_node;
 }
 

@@ -130,7 +130,6 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
 device::DynamicKernelPtr TbeKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
   KernelLaunchInfo kernel_launch_info;
   device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
-  auto dynamic_flag = common::AnfAlgo::IsDynamicShape(cnode_ptr);
 
   // Get para_size from json
   auto kernel_json_info = kernel_pack_->kernel_json_info();
@@ -164,7 +163,7 @@ device::DynamicKernelPtr TbeKernelMod::GenDynamicKernel(const CNodePtr &cnode_pt
   device::DynamicKernelPtr executor = nullptr;
   std::string origin_key;
   void *handle = nullptr;
-  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim, dynamic_flag, &handle, &origin_key);
+  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim, &handle, &origin_key);
   if (kernel_json_info.has_kernel_list) {
     if (func_stub != 1) {
       MS_LOG(EXCEPTION) << "GenFuncStub failed.";

@@ -261,8 +261,7 @@ int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buf
 }
 
 uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel_pack, bool force_reload,
-                                     uint32_t *block_dim, const bool dynamic_flag, void **handle,
-                                     std::string *origin_key) {
+                                     uint32_t *block_dim, void **handle, std::string *origin_key) {
   MS_EXCEPTION_IF_NULL(block_dim);
   auto kernel = kernel_pack.GetKernel();
   if (kernel == nullptr) {
@@ -323,7 +322,7 @@ std::string KernelManager::GetStubFuncName(const KernelPackPtr &kernel_pack) {
 }
 
 KernelMeta *KernelMeta::GetInstance() {
-  static KernelMeta inst;
+  static KernelMeta inst{};
   return &inst;
 }
 
