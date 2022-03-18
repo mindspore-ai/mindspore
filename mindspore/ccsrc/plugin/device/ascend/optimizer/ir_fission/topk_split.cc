@@ -50,11 +50,11 @@ tensor::TensorPtr CreateTensor() {
   MS_EXCEPTION_IF_NULL(data_ptr);
   std::vector<float16> half_data;
   for (size_t i = 0; i < last_dim; ++i) {
-    half_data.emplace_back(float16(static_cast<float>(i)));
+    (void)half_data.emplace_back(float16(static_cast<float>(i)));
   }
   for (size_t i = 0; i < last_dim; ++i) {
     auto gap = static_cast<int>(i) - static_cast<int>(float16(static_cast<float>(i)));
-    half_data.emplace_back(float16(static_cast<float>(gap)));
+    (void)half_data.emplace_back(float16(static_cast<float>(gap)));
   }
   auto elem_num = last_dim * kFloat16Len * 2;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(indices_tensor->data().nbytes()),

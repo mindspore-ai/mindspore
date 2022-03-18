@@ -81,7 +81,7 @@ class TbeTaskInfo : public TaskInfo {
         input_data_addrs_(input_data_addrs),
         output_data_addrs_(output_data_addrs),
         workspace_addrs_(workspace_addrs) {}
-  ~TbeTaskInfo() override {}
+  ~TbeTaskInfo() override { binary_ = nullptr; }
 
   const std::string &stub_func() const { return stub_func_; }
   uint32_t block_dim() const { return block_dim_; }
@@ -178,7 +178,7 @@ class LabelSwitchTaskInfo : public TaskInfo {
         label_size_(label_size),
         label_list_(label_list),
         cond_(cond) {}
-  ~LabelSwitchTaskInfo() override {}
+  ~LabelSwitchTaskInfo() override { cond_ = nullptr; }
   uint32_t label_size() const { return label_size_; }
   const std::vector<uint32_t> &label_list() const { return label_list_; }
   void *cond() const { return cond_; }

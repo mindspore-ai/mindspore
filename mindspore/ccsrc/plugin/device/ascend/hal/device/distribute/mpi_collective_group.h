@@ -57,15 +57,15 @@ class MPICollective {
   MPI_Group comm_group_world_;
   std::map<std::string, std::pair<int, int>> group_info_;
 };
-#define CHECK_RET(expression, result, message)                                       \
-  {                                                                                  \
-    auto ret = (expression);                                                         \
-    if (ret != result) {                                                             \
-      std::ostringstream oss;                                                        \
-      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__         \
-          << " | Ascend collective Error: " << message << " | Error Number " << ret; \
-      pybind11::pybind11_fail(oss.str());                                            \
-    }                                                                                \
+#define CHECK_RET(expression, result, message)                                         \
+  {                                                                                    \
+    auto ret = (expression);                                                           \
+    if (ret != result) {                                                               \
+      std::ostringstream oss;                                                          \
+      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__           \
+          << " | Ascend collective Error: " << (message) << " | Error Number " << ret; \
+      pybind11::pybind11_fail(oss.str());                                              \
+    }                                                                                  \
   }
 }  // namespace collective
 }  // namespace ascend

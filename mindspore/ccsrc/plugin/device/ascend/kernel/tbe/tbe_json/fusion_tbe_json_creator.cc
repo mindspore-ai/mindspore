@@ -194,7 +194,7 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
     if (is_dynamic_input) {
       input_desc[kJDynIndex] = (i - 1);
     }
-    input_desc_list_tmp.emplace_back(input_desc);
+    (void)input_desc_list_tmp.emplace_back(input_desc);
     input_index++;
   }
   std::vector<size_t> inputs_tensor_num;

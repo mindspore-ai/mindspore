@@ -64,9 +64,9 @@ void CreateOutputShapeAndTypeId(const CNodePtr &origin_cnode, int64_t split_dim,
   }
   TypeId type_id = common::AnfAlgo::GetOutputInferDataType(origin_cnode, 0);
   for (size_t i = 0; i < size_splits_new.size(); ++i) {
-    new_type_ids->emplace_back(type_id);
+    (void)new_type_ids->emplace_back(type_id);
     output_shape[split_dim_unsigned] = LongToSize(size_splits_new[i]);
-    new_output_shapes->emplace_back(output_shape);
+    (void)new_output_shapes->emplace_back(output_shape);
   }
 }
 
