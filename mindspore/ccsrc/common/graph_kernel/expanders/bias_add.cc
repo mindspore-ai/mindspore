@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "common/graph_kernel/expanders/utils.h"
 
 namespace mindspore::graphkernel::expanders {
@@ -55,5 +55,5 @@ class BiasAdd : public OpDesc {
     return {result};
   }
 };
-OP_EXPANDER_REGISTER("BiasAdd", BiasAdd);
+EXPANDER_OP_DESC_REGISTER("BiasAdd", BiasAdd);
 }  // namespace mindspore::graphkernel::expanders

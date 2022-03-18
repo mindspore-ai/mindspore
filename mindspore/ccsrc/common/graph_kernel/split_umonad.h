@@ -16,8 +16,10 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_UMONAD_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_UMONAD_H_
 
+#include <memory>
 #include "backend/common/optimizer/optimizer.h"
-#include "common/graph_kernel/adapter/graph_kernel_expander_with_py.h"
+#include "common/graph_kernel/core/graph_kernel_expander.h"
+
 namespace mindspore::graphkernel {
 class SplitAssign : public opt::PatternProcessPass {
  public:
@@ -27,13 +29,21 @@ class SplitAssign : public opt::PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 
-class OpUMonadExpander : public DefaultExpander {
+class OpUMonadExpanderDeco : public ExpanderDecorator {
  public:
-  explicit OpUMonadExpander(size_t input_idx) : input_idx_(input_idx) {}
-  virtual ~OpUMonadExpander() = default;
-  AnfNodePtr Run(const AnfNodePtr &node) override;
+  OpUMonadExpanderDeco(const ExpanderPtr &decorated, size_t input_idx)
+      : ExpanderDecorator(decorated), input_idx_(input_idx) {}
+  ~OpUMonadExpanderDeco() = default;
 
- private:
+  static ExpanderCreatorFunc GetCreator(size_t input_idx) {
+    return [input_idx](const ExpanderPtr &decorated) {
+      return std::static_pointer_cast<Expander>(std::make_shared<OpUMonadExpanderDeco>(decorated, input_idx));
+    };
+  }
+
+ protected:
+  AnfNodePtr PreProcess(const AnfNodePtr &node) override;
+
   size_t input_idx_;
 };
 }  // namespace mindspore::graphkernel

@@ -37,8 +37,8 @@ class OpDesc {
                           const std::string &processor);
   const std::string &Name() const { return name_; }
   const BaseInfoList &InputsInfo() const { return inputs_info_; }
-  const BaseInfoList &OuputsInfo() const { return outputs_info_; }
-  inner::DAttrs Attrs() const { return attrs_; }
+  const BaseInfoList &OutputsInfo() const { return outputs_info_; }
+  const inner::DAttrs &Attrs() const { return attrs_; }
   const std::string &Processor() const { return processor_; }
   virtual ~OpDesc() = default;
 
@@ -55,7 +55,7 @@ class OpDesc {
   std::string processor_;
   std::vector<std::unique_ptr<Validator>> validators_;
 
-  friend class OpExpanderFactory;
+  friend class OpDescFactory;
 };
 
 class Validator {

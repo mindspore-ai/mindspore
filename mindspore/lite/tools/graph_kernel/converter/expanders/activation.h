@@ -28,10 +28,11 @@ class CheckActivationType : public Validator {
   explicit CheckActivationType(int64_t type) { activation_types_.insert(type); }
   ~CheckActivationType() = default;
   bool Check(const OpDesc &e) override {
-    if (e.Attrs().count("activation_type") == 0) {
+    auto iter = e.Attrs().find("activation_type");
+    if (iter == e.Attrs().end()) {
       return true;
     }
-    auto activation_type = GetValue<int64_t>(e.Attrs()["activation_type"]);
+    auto activation_type = GetValue<int64_t>(iter->second);
     if (activation_types_.find(activation_type) == activation_types_.end()) {
       MS_LOG(INFO) << "Activation type " << activation_type << " not supported yet!";
       return false;

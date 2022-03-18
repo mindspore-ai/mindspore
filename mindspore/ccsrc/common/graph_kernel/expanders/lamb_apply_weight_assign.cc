@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
@@ -94,5 +94,5 @@ class LambApplyWeightAssign : public OpDesc {
     return {result};
   }
 };
-OP_EXPANDER_REGISTER("LambApplyWeightAssign", LambApplyWeightAssign);
+EXPANDER_OP_DESC_REGISTER("LambApplyWeightAssign", LambApplyWeightAssign);
 }  // namespace mindspore::graphkernel::expanders

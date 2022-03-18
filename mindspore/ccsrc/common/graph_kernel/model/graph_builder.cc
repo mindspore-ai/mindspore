@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
 #include "common/graph_kernel/model/graph_builder.h"
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include <memory>
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::inner {

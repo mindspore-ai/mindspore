@@ -16,17 +16,20 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SUBSTITUTE_DROPOUT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SUBSTITUTE_DROPOUT_H_
 
-#include "common/graph_kernel/adapter/graph_kernel_expander_with_py.h"
+#include <memory>
+#include "common/graph_kernel/core/graph_kernel_expander.h"
 
 namespace mindspore::graphkernel {
-class DropoutExpander : public PyExpander {
+class DropoutExpanderDeco : public ExpanderDecorator {
  public:
-  DropoutExpander() = default;
-  virtual ~DropoutExpander() = default;
-  AnfNodePtr Run(const AnfNodePtr &node) override;
+  explicit DropoutExpanderDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~DropoutExpanderDeco() override = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<DropoutExpanderDeco>(decorated));
+  }
 
- private:
-  AnfNodePtr PreProcess(const FuncGraphPtr &, const AnfNodePtr &);
+ protected:
+  AnfNodePtr PreProcess(const AnfNodePtr &node) override;
   static int64_t seed_;
 };
 }  // namespace mindspore::graphkernel

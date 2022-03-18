@@ -16,7 +16,7 @@
 
 #include <memory>
 
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "mindapi/base/types.h"
 #include "ir/dtype.h"
 
@@ -24,10 +24,12 @@ namespace mindspore::graphkernel::expanders {
 class CheckReduceMode : public Validator {
  public:
   bool Check(const OpDesc &e) override {
-    if (e.Attrs().count("mode") == 0) {
+    auto iter = e.Attrs().find("mode");
+    if (iter == e.Attrs().end()) {
+      MS_LOG(INFO) << "The mode is not found in attrs.";
       return false;
     }
-    auto mode = GetValue<int64_t>(e.Attrs()["mode"]);
+    auto mode = GetValue<int64_t>(iter->second);
     if (mode != ReduceMode::Reduce_Sum) {
       MS_LOG(INFO) << "Reduce mode " << mode << " not supported yet!";
       return false;
@@ -54,5 +56,5 @@ class ReduceFusion : public OpDesc {
     return {result};
   }
 };
-OP_EXPANDER_REGISTER("ReduceFusion", ReduceFusion);
+EXPANDER_OP_DESC_REGISTER("ReduceFusion", ReduceFusion);
 }  // namespace mindspore::graphkernel::expanders

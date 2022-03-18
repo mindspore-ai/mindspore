@@ -17,7 +17,7 @@
 #include <memory>
 #include <set>
 
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "tools/graph_kernel/converter/expanders/activation.h"
 #include "mindapi/base/types.h"
 #include "ir/dtype.h"
@@ -39,5 +39,5 @@ class AddFusion : public OpDesc {
     return {result};
   }
 };
-OP_EXPANDER_REGISTER("AddFusion", AddFusion);
+EXPANDER_OP_DESC_REGISTER("AddFusion", AddFusion);
 }  // namespace mindspore::graphkernel::expanders

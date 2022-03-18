@@ -24,22 +24,23 @@
 #include "common/graph_kernel/expanders/utils.h"
 
 namespace mindspore::graphkernel::expanders {
-class OpExpanderFactory {
+class OpDescFactory {
  public:
-  static OpExpanderFactory &Instance() {
-    static OpExpanderFactory instance = OpExpanderFactory();
+  static OpDescFactory &Instance() {
+    static OpDescFactory instance = OpDescFactory();
     return instance;
   }
-  std::shared_ptr<OpDesc> GetExpander(const std::string &op) {
+  bool HasOp(const std::string &op) const { return creators.find(op) != creators.end(); }
+  std::shared_ptr<OpDesc> GetOp(const std::string &op) {
     if (auto iter = creators.find(op); iter != creators.end()) {
-      auto expander_ptr = iter->second();
-      expander_ptr->name_ = op;
-      return expander_ptr;
+      auto op_desc = iter->second();
+      op_desc->name_ = op;
+      return op_desc;
     }
     return nullptr;
   }
-  OpExpanderFactory() = default;
-  ~OpExpanderFactory() = default;
+  OpDescFactory() = default;
+  ~OpDescFactory() = default;
 
   using RegFunc = std::function<std::shared_ptr<OpDesc>()>;
   void Register(const std::string &op, const RegFunc &func) { creators[op] = func; }
@@ -48,20 +49,22 @@ class OpExpanderFactory {
   mindspore::HashMap<std::string, RegFunc> creators;
 };
 
-class OpExpanderRegister {
+class OpDescRegister {
  public:
-  OpExpanderRegister(const std::string &name, const OpExpanderFactory::RegFunc &func) : func_(func) {
-    OpExpanderFactory::Instance().Register(name, func);
+  OpDescRegister(const std::string &name, const OpDescFactory::RegFunc &func) : func_(func) {
+    OpDescFactory::Instance().Register(name, func);
   }
-  ~OpExpanderRegister() = default;
+  ~OpDescRegister() = default;
 
  private:
   // for pclint-plus
-  OpExpanderFactory::RegFunc func_;
+  OpDescFactory::RegFunc func_;
 };
 
-#define OP_EXPANDER_REGISTER(name, cls)                 \
-  const OpExpanderRegister g_##cls##_expander_reg(name, \
-                                                  []() -> std::shared_ptr<OpDesc> { return std::make_shared<cls>(); })
+#define JOIN(x, y) x##y
+#define UNIQUE_NAME(prefix, cnt) JOIN(prefix, cnt)
+#define EXPANDER_OP_DESC_REGISTER(name, cls)                         \
+  const OpDescRegister UNIQUE_NAME(g_expander_opdesc_, __COUNTER__)( \
+    name, []() -> std::shared_ptr<OpDesc> { return std::make_shared<cls>(); })
 }  // namespace mindspore::graphkernel::expanders
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_EXPANDER_FACTORY_H_

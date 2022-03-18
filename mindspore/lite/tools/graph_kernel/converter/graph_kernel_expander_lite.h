@@ -23,13 +23,20 @@
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel {
-class LiteExpander : public DefaultExpander {
+class InputToAttrDeco : public ExpanderDecorator {
  public:
-  explicit LiteExpander(HashSet<size_t> input_idx) : input_idx_(input_idx) {}
-  ~LiteExpander() = default;
-  AnfNodePtr Run(const AnfNodePtr &node) override;
+  InputToAttrDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
+      : ExpanderDecorator(decorated), input_idx_(input_idx) {}
+  ~InputToAttrDeco() = default;
 
- private:
+  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
+    return [input_idx](const ExpanderPtr &decorated) {
+      return std::static_pointer_cast<Expander>(std::make_shared<InputToAttrDeco>(decorated, input_idx));
+    };
+  }
+
+ protected:
+  AnfNodePtr PreProcess(const AnfNodePtr &node) override;
   HashSet<size_t> input_idx_;
 };
 

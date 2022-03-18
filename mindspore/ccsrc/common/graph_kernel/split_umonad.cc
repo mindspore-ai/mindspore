@@ -71,14 +71,13 @@ const AnfNodePtr SplitAssign::Process(const FuncGraphPtr &, const AnfNodePtr &no
   return ProcessNode(node->func_graph(), node, 1);
 }
 
-AnfNodePtr OpUMonadExpander::Run(const AnfNodePtr &node) {
+AnfNodePtr OpUMonadExpanderDeco::PreProcess(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // assume the UMonad node is the last input
   if (cnode->size() > 1 && HasAbstractUMonad(cnode->inputs().back())) {
-    auto new_node = ProcessNode(node->func_graph(), node, input_idx_);
-    return DefaultExpander::Run(new_node);
+    return ProcessNode(node->func_graph(), node, input_idx_);
   }
-  return DefaultExpander::Run(node);
+  return node;
 }
 }  // namespace mindspore::graphkernel

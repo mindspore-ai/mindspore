@@ -18,7 +18,7 @@
 #include <set>
 #include <string>
 
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "tools/graph_kernel/converter/expanders/activation.h"
 #include "mindapi/base/types.h"
 #include "ir/dtype.h"
@@ -51,5 +51,5 @@ class Activation : public OpDesc {
     return {GetActivationExpander(gb, inputs, activation_type)};
   }
 };
-OP_EXPANDER_REGISTER("Activation", Activation);
+EXPANDER_OP_DESC_REGISTER("Activation", Activation);
 }  // namespace mindspore::graphkernel::expanders

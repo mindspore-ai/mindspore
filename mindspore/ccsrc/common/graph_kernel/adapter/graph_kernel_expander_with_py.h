@@ -28,16 +28,20 @@ class PyExpander : public DefaultExpander {
   virtual ~PyExpander() = default;
 
  protected:
-  virtual bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
-  FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node) override;
+  virtual bool CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
+  FuncGraphPtr ExpandToGraph(const CNodePtr &node) override;
 };
 
-class ComplexOpExpander : public PyExpander {
+class ComplexOpDecorator : public ExpanderDecorator {
  public:
-  virtual ~ComplexOpExpander() = default;
+  explicit ComplexOpDecorator(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~ComplexOpDecorator() override = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<ComplexOpDecorator>(decorated));
+  }
 
  protected:
-  bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
+  AnfNodePtr PreProcess(const AnfNodePtr &node) override;
 };
 
 class GraphKernelExpanderWithPy : public GraphKernelExpander {

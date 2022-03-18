@@ -29,14 +29,35 @@ class Expander {
 };
 using ExpanderPtr = std::shared_ptr<Expander>;
 
+class ExpanderDecorator : public Expander {
+ public:
+  explicit ExpanderDecorator(const ExpanderPtr &decorated) : decorated_(decorated) {}
+  ~ExpanderDecorator() override = default;
+  AnfNodePtr Run(const AnfNodePtr &node) final;
+
+ protected:
+  // preprocess before Run
+  virtual AnfNodePtr PreProcess(const AnfNodePtr &node) { return node; }
+  // postprocess after Run
+  virtual AnfNodePtr PostProcess(const AnfNodePtr &fg_with_inputs) { return fg_with_inputs; }
+  // The expander cannot change the original node, this function clone the cnode with original info.
+  CNodePtr QuickCloneCNode(const AnfNodePtr &node) const;
+
+ private:
+  ExpanderPtr decorated_;
+};
+
+using ExpanderCreatorFunc = std::function<ExpanderPtr(const ExpanderPtr &)>;
+using ExpanderCreatorFuncList = std::vector<ExpanderCreatorFunc>;
+ExpanderPtr WrapExpander(const ExpanderPtr &base, const ExpanderCreatorFuncList &deco_creators);
+
 class DefaultExpander : public Expander {
  public:
   AnfNodePtr Run(const AnfNodePtr &node) override;
   virtual ~DefaultExpander() = default;
 
  protected:
-  virtual AnfNodePtr CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node);
-  virtual FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node);
+  virtual FuncGraphPtr ExpandToGraph(const CNodePtr &node);
 };
 
 class GraphKernelExpander : public opt::Pass {
@@ -47,9 +68,10 @@ class GraphKernelExpander : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  protected:
-  virtual ExpanderPtr GetExpander(const AnfNodePtr &node);
+  AnfNodePtr CreateExpandedNode(const CNodePtr &node);
+  virtual ExpanderPtr GetExpander(const AnfNodePtr &node) = 0;
   virtual std::vector<PrimitivePtr> InitOpList() = 0;
-  virtual bool DoExpand(const FuncGraphPtr &func_graph);
+  bool DoExpand(const FuncGraphPtr &func_graph);
   virtual bool CanExpand(const CNodePtr &node) const {
     return std::any_of(expand_ops_.begin(), expand_ops_.end(),
                        [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });

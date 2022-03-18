@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 
 namespace mindspore::graphkernel::expanders {
 class StandardNormal : public OpDesc {
@@ -37,5 +37,5 @@ class StandardNormal : public OpDesc {
     return {result};
   }
 };
-OP_EXPANDER_REGISTER("StandardNormal", StandardNormal);
+EXPANDER_OP_DESC_REGISTER("StandardNormal", StandardNormal);
 }  // namespace mindspore::graphkernel::expanders

@@ -19,6 +19,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 #include <algorithm>
 
 #include "utils/ms_context.h"
@@ -33,6 +34,7 @@
 #include "mindspore/core/ir/graph_utils.h"
 #include "include/common/utils/python_adapter.h"
 #include "pybind_api/ir/primitive_py.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 
 namespace mindspore::graphkernel {
 constexpr size_t kAssignInputIdx = 1;
@@ -41,16 +43,20 @@ constexpr size_t kLambWeightInputIdx = 4;
 constexpr size_t kRandomInputIdx = 1;
 constexpr size_t kAdamInputIdx = 10;
 
-bool PyExpander::ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
+bool PyExpander::CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
   DumpOption dump_option;
   dump_option.extract_opinfo_from_anfnode = true;
   AkgKernelJsonGenerator json_generator(dump_option);
   return json_generator.CollectJson(node, kernel_json);
 }
 
-FuncGraphPtr PyExpander::CreateExpandFuncGraph(const CNodePtr &node) {
+FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
+  // use cpp OpDesc in priority
+  if (expanders::OpDescFactory::Instance().HasOp(AnfUtils::GetCNodeName(node))) {
+    return DefaultExpander::ExpandToGraph(node);
+  }
   nlohmann::json kernel_json;
-  if (!ExpandJsonInfo(node, &kernel_json)) {
+  if (!CreateJsonInfo(node, &kernel_json)) {
     constexpr int recursive_level = 2;
     MS_LOG(ERROR) << "Expand json info to: " << node->DebugString(recursive_level) << " failed, ori_json:\n"
                   << kernel_json.dump();
@@ -138,60 +144,28 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
 }
 
 ExpanderPtr GraphKernelExpanderWithPy::GetExpander(const AnfNodePtr &node) {
-  std::vector<std::pair<PrimitivePtr, ExpanderPtr>> expanders = {
-    {prim::kPrimDropout, std::make_shared<DropoutExpander>()},
-    {prim::kPrimAssignAdd, std::make_shared<OpUMonadExpander>(kAssignInputIdx)},
-    {prim::kLambApplyOptimizerAssign, std::make_shared<OpUMonadExpander>(kLambOptimizerInputIdx)},
-    {prim::kLambApplyWeightAssign, std::make_shared<OpUMonadExpander>(kLambWeightInputIdx)},
-    {prim::kPrimStandardNormal, std::make_shared<OpUMonadExpander>(kRandomInputIdx)},
-    {prim::kPrimAdam, std::make_shared<OpUMonadExpander>(kAdamInputIdx)},
-    {prim::kPrimAddN, std::make_shared<PyExpander>()},
-    {prim::kPrimBatchNorm, std::make_shared<PyExpander>()},
-    {prim::kPrimBatchNormGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimBiasAddGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimClipByNormNoDivSum, std::make_shared<PyExpander>()},
-    {prim::kPrimConv2D, std::make_shared<PyExpander>()},
-    {prim::kPrimDropoutGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimEqualCount, std::make_shared<PyExpander>()},
-    {prim::kPrimErfc, std::make_shared<PyExpander>()},
-    {prim::kPrimFusedAdam, std::make_shared<PyExpander>()},
-    {prim::kPrimFusedAdamWeightDecay, std::make_shared<PyExpander>()},
-    {prim::kPrimGather, std::make_shared<PyExpander>()},
-    {prim::kPrimGeLU, std::make_shared<PyExpander>()},
-    {prim::kPrimGeLUGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimIdentityMath, std::make_shared<PyExpander>()},
-    {prim::kPrimLayerNorm, std::make_shared<PyExpander>()},
-    {prim::kPrimLayerNormGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimLogSoftmax, std::make_shared<PyExpander>()},
-    {prim::kPrimLogSoftmaxGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimMatMul, std::make_shared<PyExpander>()},
-    {prim::kPrimMaximumGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimMinimumGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimOnesLike, std::make_shared<PyExpander>()},
-    {prim::kPrimReduceMean, std::make_shared<PyExpander>()},
-    {prim::kPrimReluGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimSigmoidCrossEntropyWithLogits, std::make_shared<PyExpander>()},
-    {prim::kPrimSigmoidCrossEntropyWithLogitsGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimSigmoidGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimSlice, std::make_shared<PyExpander>()},
-    {prim::kPrimSoftmax, std::make_shared<PyExpander>()},
-    {prim::kPrimSoftmaxCrossEntropyWithLogits, std::make_shared<PyExpander>()},
-    {prim::kSoftmaxGradExt, std::make_shared<PyExpander>()},
-    {prim::kPrimSqrtGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimSquaredDifference, std::make_shared<PyExpander>()},
-    {prim::kSquareSumV1, std::make_shared<PyExpander>()},
-    {prim::kPrimSquareSumAll, std::make_shared<PyExpander>()},
-    {prim::kPrimSqueeze, std::make_shared<PyExpander>()},
-    {prim::kPrimTanhGrad, std::make_shared<PyExpander>()},
-    {prim::kPrimTile, std::make_shared<PyExpander>()},
+  auto expander = std::make_shared<PyExpander>();
+  std::map<std::string, ExpanderCreatorFuncList> creators = {
+    {prim::kPrimAssignAdd->name(), {OpUMonadExpanderDeco::GetCreator(kAssignInputIdx)}},
+    {prim::kLambApplyOptimizerAssign->name(), {OpUMonadExpanderDeco::GetCreator(kLambOptimizerInputIdx)}},
+    {prim::kLambApplyWeightAssign->name(), {OpUMonadExpanderDeco::GetCreator(kLambWeightInputIdx)}},
+    {prim::kPrimStandardNormal->name(), {OpUMonadExpanderDeco::GetCreator(kRandomInputIdx)}},
+    {prim::kPrimAdam->name(), {OpUMonadExpanderDeco::GetCreator(kAdamInputIdx)}},
+    {prim::kPrimDropout->name(), {DropoutExpanderDeco::Creator}},
   };
-
-  for (auto &e : expanders) {
-    if (IsPrimitiveCNode(node, e.first)) {
-      return e.second;
-    }
+  auto iter = creators.find(GetCNodePrimitive(node)->name());
+  if (iter != creators.end()) {
+    return WrapExpander(expander, iter->second);
   }
-  return std::make_shared<DefaultExpander>();
+  return expander;
+}
+
+AnfNodePtr ComplexOpDecorator::PreProcess(const AnfNodePtr &node) {
+  auto cnode = QuickCloneCNode(node);
+  auto prim = GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(prim);
+  cnode->set_input(0, NewValueNode(std::make_shared<Primitive>("C" + prim->name(), prim->attrs())));
+  return cnode;
 }
 
 bool GraphKernelComplexExpander::CanExpand(const CNodePtr &node) const {
@@ -206,14 +180,9 @@ bool GraphKernelComplexExpander::CanExpand(const CNodePtr &node) const {
   return has_complex;
 }
 
-ExpanderPtr GraphKernelComplexExpander::GetExpander(const AnfNodePtr &) {
-  return std::make_shared<ComplexOpExpander>();
+ExpanderPtr GraphKernelComplexExpander::GetExpander(const AnfNodePtr &node) {
+  return ComplexOpDecorator::Creator(std::make_shared<PyExpander>());
 }
-bool ComplexOpExpander::ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
-  auto cnode = node->cast<CNodePtr>();
-  if (!PyExpander::ExpandJsonInfo(cnode, kernel_json)) return false;
-  (*kernel_json)["name"] = std::string("C") + common::AnfAlgo::GetCNodeName(cnode);
-  return true;
-}
+
 bool GraphKernelComplexExpander::Run(const FuncGraphPtr &func_graph) { return DoExpand(func_graph); }
 }  // namespace mindspore::graphkernel
