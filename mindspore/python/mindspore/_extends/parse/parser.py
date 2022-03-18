@@ -777,6 +777,10 @@ class Parser:
             logger.debug(f"Found 'mindspore.context' namespace.")
             return True
 
+        if name == 'functools':
+            logger.debug(f"Found 'functools' namespace.")
+            return True
+
         # Check `builtins` namespace.
         if hasattr(value, '__module__'):  # Not types.ModuleType
             mod = value.__module__
