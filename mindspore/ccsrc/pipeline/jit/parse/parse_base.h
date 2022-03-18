@@ -173,7 +173,7 @@ enum ClassInstanceTypeDef {
 };
 
 // Define syntax support.
-enum SyntaxSupportDef {
+enum SyntaxSupportDef : int {
   SYNTAX_SUPPORTED = 0,                  // supported syntax
   SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1,  // unsupported internal type
   SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2,  // unsupported external type

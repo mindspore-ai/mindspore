@@ -155,10 +155,10 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   }
 
   static int64_t GetAttrIndex(const std::vector<AbstractAttribute> &attrs, const std::string &name) {
-    int64_t n_attrs = static_cast<int64_t>(attrs.size());
-    for (int64_t i = 0; i < n_attrs; ++i) {
+    auto n_attrs = attrs.size();
+    for (size_t i = 0; i < n_attrs; ++i) {
       if (attrs[i].first == name) {
-        return i;
+        return SizeToLong(i);
       }
     }
     return n_attrs;
@@ -277,7 +277,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     inputs.reserve(node->size() - 1);
     (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     // Inputs of node should be [make_record, klass, attr1, attr2, ...], so offset by 2 to get attr.
-    constexpr size_t attr_start_index = 2;
+    constexpr auto attr_start_index = 2;
     auto &old_inputs = node->inputs();
     (void)inputs.insert(inputs.end(), old_inputs.begin() + attr_start_index, old_inputs.end());
     return node->func_graph()->NewCNode(std::move(inputs));
@@ -295,7 +295,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
 
     const auto &inputs = node->inputs();
     // Inputs should be [partial, fn, arg1, ...], so offset by 2 to get arg;
-    constexpr size_t min_inputs_size = 2;
+    constexpr auto min_inputs_size = 2;
     if (inputs.size() < min_inputs_size) {
       MS_LOG(EXCEPTION) << "Partial should have at least 2 inputs, but got " << inputs.size();
     }
@@ -307,9 +307,10 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     }
     std::vector<AnfNodePtr> new_inputs;
     new_inputs.reserve(inputs.size());
+    constexpr auto first_arg_idx = 2;
     (void)new_inputs.emplace_back(inputs[0]);
     (void)new_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    (void)new_inputs.insert(new_inputs.end(), inputs.begin() + min_inputs_size, inputs.end());
+    (void)new_inputs.insert(new_inputs.end(), inputs.begin() + first_arg_idx, inputs.end());
     return node->func_graph()->NewCNode(std::move(new_inputs));
   }
 

@@ -33,7 +33,7 @@ PrimToFunction::PrimToFunction()
          {"scalar_ne", kPrimTypeTwoArgs}, {kScalarMod, kPrimTypeTwoArgs},  {kScalarMul, kPrimTypeTwoArgs},
          {kScalarPow, kPrimTypeTwoArgs},  {kScalarSub, kPrimTypeTwoArgs},  {kScalarFloordiv, kPrimTypeTwoArgs}}) {}
 
-bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *const func) const {
+bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *func) const {
   bool result = false;
 
   if (func != nullptr) {

@@ -363,7 +363,7 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
       int64_t fusion_id = prim->HasAttr(kAttrFusion) ? GetValue<int64_t>(prim->GetAttr(kAttrFusion)) : 0;
       if (is_from_parallel_optimizer && fusion_id > 0) {
         auto new_prim = std::make_shared<Primitive>(prim::kPrimAllGather->name());
-        new_prim->SetAttrs(prim->attrs());
+        (void)new_prim->SetAttrs(prim->attrs());
         new_prim->set_attr(kAttrFusion, MakeValue(fusion_id + fusion_id_increasement_size));
         new_prim->set_prim_type(prim->prim_type());
         new_prim->set_instance_name(instance_name);

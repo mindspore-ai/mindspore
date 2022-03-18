@@ -146,7 +146,7 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunOutputReplace(const CNodePtr &forwa
 
   // Save forward output node when it used in its bprop graph.
   std::vector<AnfNodePtr> used_forward_nodes;
-  if (ref_size >= 2) {
+  if (ref_size > 1) {
     cnode_morph->set_forward(output_vnode, "");
     used_forward_nodes.push_back(cnode_morph);
     MS_LOG(DEBUG) << "node has been used in grad graph: " << cnode_morph->DebugString()

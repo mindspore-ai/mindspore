@@ -56,12 +56,12 @@ FuncGraphPtr ListInsert::GenerateFuncGraph(const abstract::AbstractBasePtrList &
     insert_position = len + index_value;
   }
   for (int64_t i = 0; i < insert_position; ++i) {
-    auto value = ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(SizeToLong(i))});
+    auto value = ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(i)});
     elems.push_back(value);
   }
   elems.push_back(arg2_node);
   for (int64_t i = insert_position; i < len; ++i) {
-    auto value = ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(SizeToLong(i))});
+    auto value = ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(i)});
     elems.push_back(value);
   }
   auto out = ret->NewCNode(elems);
@@ -71,7 +71,7 @@ FuncGraphPtr ListInsert::GenerateFuncGraph(const abstract::AbstractBasePtrList &
 
 REGISTER_PYBIND_DEFINE(ListInsert_, ([](const py::module *m) {
                          (void)py::class_<ListInsert, MetaFuncGraph, std::shared_ptr<ListInsert>>(*m, "ListInsert_")
-                           .def(py::init<std::string &>());
+                           .def(py::init<const std::string &>());
                        }));
 }  // namespace prim
 }  // namespace mindspore

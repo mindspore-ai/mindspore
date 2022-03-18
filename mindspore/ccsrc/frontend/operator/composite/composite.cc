@@ -270,7 +270,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
           << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
       int64_t idx = 0;
       std::string str_index = "first";
-      const size_t diff_index = 2;
+      const int64_t diff_index = 2;
       for (auto &item : arg_map) {
         // The first element in HyperMap is func_graph
         if (idx == 0) {
@@ -919,12 +919,12 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   ValuePtr in_axes = CheckAxes(in_axes_arg, true, nparam);
   ValuePtr out_axes = CheckAxes(out_axes_arg);
 
-  PrimitivePtr kPrimVmap = std::make_shared<Primitive>(prim::kVmap, kSideEffectPropagate);
-  kPrimVmap->set_attr("in_axes", in_axes);
-  kPrimVmap->set_attr("out_axes", out_axes);
+  PrimitivePtr kprim_vmap = std::make_shared<Primitive>(prim::kVmap, kSideEffectPropagate);
+  kprim_vmap->set_attr("in_axes", in_axes);
+  kprim_vmap->set_attr("out_axes", out_axes);
 
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(kPrimVmap));
+  inputs.push_back(NewValueNode(kprim_vmap));
   inputs.push_back(param_graph);
   auto vmap = vmap_fg->NewCNodeInOrder(inputs);
 
@@ -941,7 +941,7 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 REGISTER_PYBIND_DEFINE(VmapOperation_, ([](const py::module *m) {
                          (void)py::class_<VmapOperation, MetaFuncGraph, std::shared_ptr<VmapOperation>>(
                            *m, "VmapOperation_")
-                           .def(py::init<std::string &>(), py::arg("fn"));
+                           .def(py::init<const std::string &>(), py::arg("fn"));
                        }));
 
 TaylorOperation::TaylorOperation(const std::string &name) : MetaFuncGraph(name) {
@@ -1015,7 +1015,7 @@ FuncGraphPtr TaylorOperation::GenerateFuncGraph(const AbstractBasePtrList &args_
 REGISTER_PYBIND_DEFINE(TaylorOperation_, ([](const py::module *m) {
                          (void)py::class_<TaylorOperation, MetaFuncGraph, std::shared_ptr<TaylorOperation>>(
                            *m, "TaylorOperation_")
-                           .def(py::init<std::string &>(), py::arg("fn"));
+                           .def(py::init<const std::string &>(), py::arg("fn"));
                        }));
 
 // Generate the ListMap func graph.
@@ -1441,7 +1441,7 @@ FuncGraphPtr Shard::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list)
 
 REGISTER_PYBIND_DEFINE(Shard_, ([](const py::module *m) {
                          (void)py::class_<Shard, MetaFuncGraph, std::shared_ptr<Shard>>(*m, "Shard_")
-                           .def(py::init<std::string &>(), py::arg("fn"));
+                           .def(py::init<const std::string &>(), py::arg("fn"));
                        }));
 }  // namespace prim
 }  // namespace mindspore

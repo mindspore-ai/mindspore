@@ -70,7 +70,7 @@ AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
   return output;
 }
 
-AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNodePtrList *const inputs_ptr,
+AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNodePtrList *inputs_ptr,
                            AnfNodePtrToAnfNodePtrMap *eqv_ptr) {
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(inputs_ptr);

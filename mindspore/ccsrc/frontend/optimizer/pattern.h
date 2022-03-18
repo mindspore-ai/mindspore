@@ -216,7 +216,7 @@ class NewTensor final : public Pattern {
 class NewParameter final : public Pattern {
  public:
   NewParameter() { unique_name_ = std::to_string(g_id_++); }
-  explicit NewParameter(const string &para_name, tensor::TensorPtr default_tensor, bool requires_grad,
+  explicit NewParameter(const string &para_name, const tensor::TensorPtr &default_tensor, bool requires_grad,
                         bool layerwise_parallel)
       : para_name_(para_name), requires_grad_(requires_grad), layerwise_parallel_(layerwise_parallel) {
     unique_name_ = std::to_string(g_id_++) + "NewParameter_" + para_name;
@@ -249,7 +249,7 @@ class NewParameter final : public Pattern {
 
 class Imm final : public Pattern {
  public:
-  Imm() { unique_name_ = std::to_string(g_id_++); }
+  Imm() : value_(0) { unique_name_ = std::to_string(g_id_++); }
   explicit Imm(int value) : value_(value) { unique_name_ = std::to_string(g_id_++) + "Imm_" + std::to_string(value); }
   ~Imm() = default;
   MS_DECLARE_PARENT(Imm, Pattern);
@@ -257,7 +257,7 @@ class Imm final : public Pattern {
   int value() const { return value_; }
 
  private:
-  int64_t value_;
+  int value_;
 };
 
 class MatchResult {

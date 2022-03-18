@@ -37,7 +37,7 @@ static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::ve
   std::vector<AnfNodePtr> nodes;
   AnfNodePtr unpack_graph_node = nullptr;
   if (is_unpack) {
-    auto unpack_graph = std::make_shared<prim::UnpackGraphPrimitive>("unpack_graph", sens_param, true);
+    auto unpack_graph = std::make_shared<prim::UnpackGraphPrimitive>(sens_param, true);
     nodes.push_back(NewValueNode(unpack_graph));
     nodes.push_back(func_node);
     // {unpackcall, {GradOperation, ...}, args...}
@@ -46,7 +46,7 @@ static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::ve
                          [](const AnfNodePtr &node) { return node; });
     unpack_graph_node = func_graph->NewCNodeBefore(origin_node, nodes);
   } else {
-    auto unpack_graph = std::make_shared<prim::UnpackGraphPrimitive>("unpack_graph", sens_param, false);
+    auto unpack_graph = std::make_shared<prim::UnpackGraphPrimitive>(sens_param, false);
     nodes.push_back(NewValueNode(unpack_graph));
     nodes.push_back(func_node);
     // {{GradOperation, ...}, args...}

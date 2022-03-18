@@ -600,7 +600,11 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
     }
   }
   // Slice: start, end, step
-  return std::make_shared<AbstractSlice>(slice_args[0], slice_args[1], slice_args[2]);
+  constexpr size_t kMakeSliceInput0 = 0;
+  constexpr size_t kMakeSliceInput1 = 1;
+  constexpr size_t kMakeSliceInput2 = 2;
+  return std::make_shared<AbstractSlice>(slice_args[kMakeSliceInput0], slice_args[kMakeSliceInput1],
+                                         slice_args[kMakeSliceInput2]);
 }
 
 AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr &,

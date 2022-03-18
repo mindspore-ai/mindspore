@@ -51,11 +51,11 @@
 
 namespace mindspore {
 namespace compile {
-bool Backend::GetCond(const BaseRef &c, bool *const value) {
+bool Backend::GetCond(const BaseRef &c, bool *value) {
   mindspore::ScopedLongRunning long_running;
   return BaseRefToBool(c, value);
 }
-bool Backend::GetIndex(const BaseRef &c, int64_t *const value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
+bool Backend::GetIndex(const BaseRef &c, int64_t *value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
 
 Backend::Backend(const std::string &name) : name_(name) {
   MS_LOG(DEBUG) << "Select backend:" << name;
@@ -1268,19 +1268,7 @@ void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const Kernel
 void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph, const OpRunInfo &op_run_info,
                                      const GraphCompilerInfo *graph_compiler_info) {
   // Erase value node tensor.
-  std::vector<tensor::TensorPtr> tensors_without_value_node;
-  const auto &input_tensors = op_run_info.input_tensors;
-  const auto &tensors_mask = op_run_info.tensor_mask;
-  if (input_tensors.size() != tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
-                      << tensors_mask.size();
-  }
-  for (size_t index = 0; index < tensors_mask.size(); ++index) {
-    if (tensors_mask.at(index) != kValueNodeTensorMask) {
-      (void)tensors_without_value_node.emplace_back(input_tensors.at(index));
-    }
-  }
-
+  std::vector<tensor::TensorPtr> tensors_without_value_node = GetTensorWithoutValueMask(op_run_info);
   std::vector<tensor::TensorPtr> new_input_tensors = GetRealValueNodeTensorFromGraph(graph, tensors_without_value_node);
 
   for (auto &tensor : tensors_without_value_node) {
@@ -1293,6 +1281,7 @@ void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph, const OpRunInf
   // Run actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(graph_compiler_info->name_);
   MS_EXCEPTION_IF_NULL(actor_set);
+  const auto &input_tensors = op_run_info.input_tensors;
   runtime::GraphScheduler::GetInstance().Run(actor_set, {}, {tensors_without_value_node},
                                              new_input_tensors.empty() ? input_tensors : new_input_tensors,
                                              runtime::GraphExecutionStrategy::kStep);
@@ -1549,7 +1538,7 @@ void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const Devi
   runtime::GraphScheduler::GetInstance().Schedule(actor_set);
 }
 
-void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
+void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   for (auto &item_with_index : output_nodes) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);
