@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace mindspore::graphkernel::expanders {
 class OpExpanderFactory {
  public:
   static OpExpanderFactory &Instance() {
-    static OpExpanderFactory instance;
+    static OpExpanderFactory instance = OpExpanderFactory();
     return instance;
   }
   std::shared_ptr<OpDesc> GetExpander(const std::string &op) {
@@ -38,6 +38,7 @@ class OpExpanderFactory {
     }
     return nullptr;
   }
+  OpExpanderFactory() = default;
   ~OpExpanderFactory() = default;
 
   using RegFunc = std::function<std::shared_ptr<OpDesc>()>;
@@ -59,8 +60,8 @@ class OpExpanderRegister {
   OpExpanderFactory::RegFunc func_;
 };
 
-#define OP_EXPANDER_REGISTER(name, cls)                   \
-  static const OpExpanderRegister g_##cls##_expander_reg( \
-    name, []() -> std::shared_ptr<OpDesc> { return std::make_shared<cls>(); })
+#define OP_EXPANDER_REGISTER(name, cls)                 \
+  const OpExpanderRegister g_##cls##_expander_reg(name, \
+                                                  []() -> std::shared_ptr<OpDesc> { return std::make_shared<cls>(); })
 }  // namespace mindspore::graphkernel::expanders
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_EXPANDER_FACTORY_H_

@@ -25,10 +25,10 @@ namespace mindspore::graphkernel {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 class CallbackImpl : public Callback {
  public:
-  ShapeVector GetInputShape(const AnfNodePtr &node, size_t i) override;
-  ShapeVector GetOutputShape(const AnfNodePtr &node, size_t i) override;
   ShapeVector GetInputInferShape(const AnfNodePtr &node, size_t i) override;
   ShapeVector GetOutputInferShape(const AnfNodePtr &node, size_t i) override;
+  ShapeVector GetInputShape(const AnfNodePtr &node, size_t i) override;
+  ShapeVector GetOutputShape(const AnfNodePtr &node, size_t i) override;
   TypeId GetInputType(const AnfNodePtr &node, size_t i) override;
   TypeId GetOutputType(const AnfNodePtr &node, size_t i) override;
   TypeId GetInputInferType(const AnfNodePtr &node, size_t i) override;

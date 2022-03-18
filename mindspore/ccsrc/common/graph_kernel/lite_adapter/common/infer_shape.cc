@@ -112,7 +112,7 @@ int SetOutputsType(TensorC **outputs, size_t outputs_size, const std::string &ou
 }
 }  // namespace
 
-int InferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int InferShape(const TensorC **inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                OpParameter *parameter) {
   auto param = reinterpret_cast<GraphKernelParameter *>(parameter);
   auto prim = static_cast<schema::Primitive *>(param->prim_)->value_as_Custom();
@@ -142,7 +142,7 @@ int InferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outpu
 #ifdef __cplusplus
 extern "C" {
 #endif
-int GraphKernelInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int GraphKernelInferShape(const TensorC **inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
   return mindspore::graphkernel::InferShape(inputs, inputs_size, outputs, outputs_size, parameter);
 }

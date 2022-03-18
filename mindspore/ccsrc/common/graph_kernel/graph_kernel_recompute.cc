@@ -68,7 +68,7 @@ using NextFunc = std::function<AnfNodePtrList(const AnfNodePtr &)>;
 using ProcessFunc = std::function<void(const AnfNodePtr &)>;
 
 void Dfs(const AnfNodePtr &current, const VisitFunc &visit_func, const NextFunc &next_func,
-         const ProcessFunc &before_func, const ProcessFunc &after_func, std::set<AnfNodePtr> *const visited) {
+         const ProcessFunc &before_func, const ProcessFunc &after_func, std::set<AnfNodePtr> *visited) {
   if (visited->count(current) > 0) {
     return;
   }
@@ -172,7 +172,7 @@ OrderedSet<AnfNodePtr> GetLongTermNodes(const AnfNodePtrList &nodes, const AnfNo
  * @param func_graph Graph.
  * @param inputs Real inputs for graph cnode.
  */
-void ElimRedundantInputsAndGraphParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *const inputs) {
+void ElimRedundantInputsAndGraphParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs) {
   MS_EXCEPTION_IF_NULL(inputs);
   const auto &ori_parameter = func_graph->parameters();
   auto nodes = TopoSort(func_graph->get_return());
@@ -683,7 +683,8 @@ void GraphKernelRecompute::Process(const Candidate &candidate) {
 bool GraphKernelRecompute::Run(const FuncGraphPtr &func_graph) {
   int repeat_times = 2;
   while (repeat_times--) {
-    candidates_ = AutoRecompute().Run(func_graph);
+    AutoRecompute recompute;
+    candidates_ = recompute.Run(func_graph);
     if (candidates_.empty()) {
       return false;
     }
