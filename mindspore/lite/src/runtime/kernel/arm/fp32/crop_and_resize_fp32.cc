@@ -137,7 +137,7 @@ int CropAndResizeCPUKernel::RunImpl(int task_id) {
     return RET_OK;
   }
   const auto &input_shape = input->shape();
-  int c = input_shape[3];
+  int c = input_shape[kNHWC_C];
   float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
   float *line1 = line0 + new_width_ * c;
   auto ret = CropAndResizeBilinear(input_data, output_data, box_idx, boxes, param_, input_shape.data(),

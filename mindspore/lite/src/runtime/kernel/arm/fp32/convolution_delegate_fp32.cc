@@ -213,7 +213,7 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect()
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
 #ifdef ENABLE_AVX
     if (conv_param->pad_d_ == 0 && conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->pad_u_ == 0 &&
-        conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % 8 == 0 &&
+        conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % C8NUM == 0 &&
         (conv_param->input_w_ * conv_param->input_h_ >= conv_param->thread_num_)) {
       kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
