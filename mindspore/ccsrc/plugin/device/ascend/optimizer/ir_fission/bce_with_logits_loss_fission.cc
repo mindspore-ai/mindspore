@@ -35,7 +35,7 @@ AnfNodePtr BCEWithLogitsLossFission::AddReduceNode(const FuncGraphPtr &func_grap
   // Copy a new sigmoid node, shape of output is the same as input
   std::vector<AnfNodePtr> new_simoid_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimBCEWithLogitsLoss->name()))};
-  new_simoid_inputs.insert(new_simoid_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  (void)new_simoid_inputs.insert(new_simoid_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
   CNodePtr new_cnode = NewCNode(new_simoid_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   auto predict_input = cnode->inputs()[kIndex1];

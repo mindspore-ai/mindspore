@@ -54,7 +54,7 @@ Status SomasSolverPre::AddContiguousInfoInMap(const vector<vector<size_t>> &cont
     for (size_t i = 0; i < aux.size() - 1; i++) {
       auto index1 = aux[i];
       auto index2 = aux[i + 1];
-      if (CheckTensors(pTensors, index1, index2) == FAILED) {
+      if (CheckTensors(pTensors, SizeToUint(index1), SizeToUint(index2)) == FAILED) {
         return FAILED;
       }
       tensors[index1]->right_ = tensors[index2];

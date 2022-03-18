@@ -29,10 +29,10 @@ CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, cons
   std::vector<AnfNodePtr> new_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
   BaseShapePtr shape;
   if (fir_flag) {
-    new_cast_inputs.emplace_back(input_node->inputs()[kIndex1]);
+    (void)new_cast_inputs.emplace_back(input_node->inputs()[kIndex1]);
     shape = common::AnfAlgo::GetOutputDetailShape(input_node->inputs()[kIndex1], 0);
   } else {
-    new_cast_inputs.emplace_back(input_node);
+    (void)new_cast_inputs.emplace_back(input_node);
     shape = common::AnfAlgo::GetOutputDetailShape(input_node, 0);
   }
   CNodePtr new_cast = NewCNode(new_cast_inputs, func_graph);

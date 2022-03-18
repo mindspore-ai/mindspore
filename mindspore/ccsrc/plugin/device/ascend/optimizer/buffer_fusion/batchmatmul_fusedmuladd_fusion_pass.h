@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 class BatchMatmulFusedMulAddFusionPass : public FusionBasePass {
  public:
-  explicit BatchMatmulFusedMulAddFusionPass(FusionIdAllocatorPtr idAllocator)
+  explicit BatchMatmulFusedMulAddFusionPass(const FusionIdAllocatorPtr &idAllocator)
       : FusionBasePass("BatchMatmulFusedMulAddFusionPass", idAllocator) {
     PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::BatchMatmulFusedMulAddFusionPass);
   }
