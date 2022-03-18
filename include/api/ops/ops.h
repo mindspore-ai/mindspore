@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ struct MS_API Conv2D : public OpCell<Conv2D> {
 
   Output operator()(const Input &, const Input &) const;
 
-  int out_channel;
+  int out_channel = 0;
   std::vector<int> kernel_size;
   int mode = 1;
   std::string pad_mode = "valid";
