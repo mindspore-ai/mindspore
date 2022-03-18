@@ -21,10 +21,9 @@
 #include "ir/dtype/type_id.h"
 namespace mindspore {
 template <typename T>
-void SetTensorData(void *data, T num, size_t data_length) {
+void SetTensorData(void *data, const T &num, size_t data_length) {
   MS_EXCEPTION_IF_NULL(data);
   auto tensor_data = reinterpret_cast<T *>(data);
-  MS_EXCEPTION_IF_NULL(tensor_data);
   std::fill(tensor_data, tensor_data + data_length, num);
 }
 class MS_CORE_API TensorConstructUtils {

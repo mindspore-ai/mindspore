@@ -99,7 +99,7 @@ std::ostream &operator<<(std::ostream &os, const std::pair<T1, T2> &pair) {
 }
 
 template <typename T1, typename T2, typename T3>
-std::ostream &operator<<(std::ostream &os, const mindspore::HashMap<T1, T2, T3> &map) {
+std::ostream &operator<<(std::ostream &os, const mindspore::HashMap<T1, T2, T3> &) {
   os << "[const hash_map]";
   return os;
 }

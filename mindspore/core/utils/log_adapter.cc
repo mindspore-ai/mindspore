@@ -23,6 +23,7 @@
 #include <map>
 #include <iomanip>
 #include <thread>
+#include "utils/convert_utils_base.h"
 
 // namespace to support utils module definition
 namespace mindspore {
@@ -478,7 +479,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
     "GE",                 // SM_GE
     "API",                // SM_API
   };
-  return sub_module_names[(module_id % NUM_SUBMODUES)];
+  return sub_module_names[IntToSize(module_id % NUM_SUBMODUES)];
 }
 
 std::string GetTimeString() {

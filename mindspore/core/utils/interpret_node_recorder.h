@@ -26,11 +26,11 @@ class MS_CORE_API InterpretNodeRecorder {
  public:
   explicit InterpretNodeRecorder(InterpretNodeRecorder &&) = delete;
   explicit InterpretNodeRecorder(const InterpretNodeRecorder &) = delete;
-  void operator=(const InterpretNodeRecorder &) = delete;
-  void operator=(const InterpretNodeRecorder &&) = delete;
+  InterpretNodeRecorder &operator=(const InterpretNodeRecorder &) = delete;
+  InterpretNodeRecorder &operator=(InterpretNodeRecorder &&) = delete;
   static InterpretNodeRecorder &GetInstance();
 
-  void PushLineInfo(const std::string &line) { interpret_nodes_lines_.emplace(line); }
+  void PushLineInfo(const std::string &line) { (void)interpret_nodes_lines_.emplace(line); }
 
   const mindspore::HashSet<std::string> &LineInfos() const { return interpret_nodes_lines_; }
 

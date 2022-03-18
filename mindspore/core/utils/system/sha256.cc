@@ -122,7 +122,7 @@ bool ProcessInner(const std::string &message, const int &bias, uint32_t *digest,
   return true;
 }
 
-std::string ConvertToString(uint32_t *input, const int &size) {
+std::string ConvertToString(const uint32_t *input, const int &size) {
   std::ostringstream oss;
   oss << std::hex;
   for (int i = 0; i < size; ++i) {

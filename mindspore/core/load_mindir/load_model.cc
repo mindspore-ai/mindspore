@@ -26,7 +26,6 @@
 #include <nlohmann/json.hpp>
 
 #include "load_mindir/load_model.h"
-#include "load_mindir/anf_model_parser.h"
 #include "utils/crypto.h"
 
 using std::string;
@@ -192,6 +191,21 @@ std::vector<FuncGraphPtr> MindIRLoader::LoadMindIRs(std::vector<std::string> fil
   return funcgraph_vec;
 }
 
+void MindIRLoader::InitModelParser(MSANFModelParser *model_parser) {
+  model_parser->SetMindIRDecKey(dec_key_);
+  model_parser->SetMindIRKeySize(key_len_);
+  model_parser->SetMindIRDecMode(dec_mode_);
+
+  if (!inc_load_) {
+    MSANFModelParser::LoadTensorMapClear();
+  } else {
+    model_parser->SetIncLoad();
+  }
+  if (is_lite_) {
+    model_parser->SetLite();
+  }
+}
+
 FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
   /* mindir -> func_graph
    * only support lite */
@@ -203,20 +217,7 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
   }
 
   MSANFModelParser model_parser;
-
-  model_parser.SetMindIRDecKey(dec_key_);
-  model_parser.SetMindIRKeySize(key_len_);
-  model_parser.SetMindIRDecMode(dec_mode_);
-
-  if (!inc_load_) {
-    MSANFModelParser::LoadTensorMapClear();
-  } else {
-    model_parser.SetIncLoad();
-  }
-  if (is_lite_) {
-    model_parser.SetLite();
-  }
-
+  InitModelParser(&model_parser);
   FuncGraphPtr func_graph = model_parser.Parse(model);
 
   return func_graph;
@@ -288,18 +289,7 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
 
   auto mindir_path = std::string(abs_path_buff);
   model_parser.SetMindIRPath(mindir_path.substr(0, mindir_path.rfind("/")));
-  model_parser.SetMindIRDecKey(dec_key_);
-  model_parser.SetMindIRKeySize(key_len_);
-  model_parser.SetMindIRDecMode(dec_mode_);
-
-  if (!inc_load_) {
-    MSANFModelParser::LoadTensorMapClear();
-  } else {
-    model_parser.SetIncLoad();
-  }
-  if (is_lite_) {
-    model_parser.SetLite();
-  }
+  InitModelParser(&model_parser);
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model, weights_value_map_);
   if (has_parallel_info_) {
     layout_map_ = model_parser.ParseLayout(origin_model);

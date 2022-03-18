@@ -55,7 +55,7 @@ class AbstractMutexManager {
 };
 
 struct CustomActorInfo {
-  CustomActorInfo(AnfUtils::CustomActorCallback func, const std::string &type_name, const CNodePtr &cnode,
+  CustomActorInfo(const AnfUtils::CustomActorCallback &func, const std::string &type_name, const CNodePtr &cnode,
                   bool is_fake = false, bool is_just_sync = false)
       : actor_func(func), type_name(type_name), base_cnode_ptr_(cnode), is_fake(is_fake), is_just_sync(is_just_sync) {}
   ~CustomActorInfo() = default;
