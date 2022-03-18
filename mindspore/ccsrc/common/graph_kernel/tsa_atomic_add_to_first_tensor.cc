@@ -32,6 +32,7 @@
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
+constexpr auto kTsaInputIndex = 2;
 class TsaChecker : public AtomicAddChecker {
  public:
   explicit TsaChecker(const PrimitivePtr &target) { target_type_ = target; }
@@ -146,7 +147,7 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::GetOrCreateNewTsaFirstN
   return {new_copy_composite_node, tsa_first_input.second};
 }
 
-void TsaAtomicAddToFirstTensor::CorrectKernelBuildInfo(
+void TsaAtomicAddToFirstTensor::ChangeKernelBuildInfo(
   const AnfNodePtr &composite_node, const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_infos) {
   // Change kernel build info with modify input
   auto kernel_info = static_cast<device::KernelInfo *>(composite_node->kernel_info());
@@ -178,7 +179,7 @@ void TsaAtomicAddToFirstTensor::CorrectKernelBuildInfo(
 
   for (const auto &outer_info : outer_infos) {
     auto &modified_input = std::get<1>(outer_info);
-    auto tsa_first_input_index = std::get<2>(outer_info);
+    auto tsa_first_input_index = std::get<kTsaInputIndex>(outer_info);
     auto kernel_with_index = common::AnfAlgo::VisitKernel(modified_input, 0);
     modified_inputs_format[tsa_first_input_index] =
       AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
@@ -198,7 +199,7 @@ void TsaAtomicAddToFirstTensor::CorrectKernelBuildInfo(
   AnfAlgo::SetSelectKernelBuildInfo(new_selected_info, composite_node.get());
 }
 
-void TsaAtomicAddToFirstTensor::ProcessOriginCNode(
+void TsaAtomicAddToFirstTensor::ProcessOriginalCNode(
   const AnfNodePtr &composite_node, const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_nodes) {
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
   auto mng_sub = sub_graph->manager();
@@ -220,7 +221,7 @@ void TsaAtomicAddToFirstTensor::ProcessOriginCNode(
   CreateInplaceAssignNodeAndCorrectReturn(sub_graph, parameters_infos);
 
   CorrectAbstract(composite_node, info_and_tsa_outers);
-  CorrectKernelBuildInfo(composite_node, outer_nodes);
+  ChangeKernelBuildInfo(composite_node, outer_nodes);
 
   auto old_graph_name = GetValue<std::string>(sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
   auto new_graph_name =
@@ -246,7 +247,7 @@ void TsaAtomicAddToFirstTensor::ProcessTsa(const KernelGraphPtr &main_graph, con
 
   // Insert extra input(broadcast node output) to composite node, and make origin TensorScatterAdd inplaceassign to it.
   // Note: if it's single output, this will increase total memory because of a fake out.
-  ProcessOriginCNode(origin_composite_node, info_and_outer_nodes_with_index);
+  ProcessOriginalCNode(origin_composite_node, info_and_outer_nodes_with_index);
 
   // Insert update_state_node to keep execution order.
   auto update_state_node = InsertUpdateState(main_graph, origin_composite_node);

@@ -21,6 +21,8 @@
 namespace mindspore::graphkernel {
 class DropoutExpander : public PyExpander {
  public:
+  DropoutExpander() = default;
+  virtual ~DropoutExpander() = default;
   AnfNodePtr Run(const AnfNodePtr &node) override;
 
  private:

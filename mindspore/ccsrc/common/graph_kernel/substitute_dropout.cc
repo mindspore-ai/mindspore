@@ -47,7 +47,7 @@ AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const Anf
   CheckCNodeInputSize(cnode, kDropoutInputTensorNum);
   auto shape = AnfAlgo::GetInputDeviceShape(cnode, 0);
   ShapeVector shape_i64;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_i64), [](size_t x) { return SizeToLong(x); });
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_i64), SizeToLong);
   // Get seed from original dropout's attrs, rather than set seed by time.
   // Only seed0 and seed1 are all equal to 0, then set seed = time.
   auto node_prim = GetCNodePrimitive(node);

@@ -30,7 +30,7 @@ class SplitAssign : public opt::PatternProcessPass {
 class OpUMonadExpander : public DefaultExpander {
  public:
   explicit OpUMonadExpander(size_t input_idx) : input_idx_(input_idx) {}
-  ~OpUMonadExpander() = default;
+  virtual ~OpUMonadExpander() = default;
   AnfNodePtr Run(const AnfNodePtr &node) override;
 
  private:

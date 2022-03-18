@@ -77,13 +77,12 @@ class AkgKernelPool {
 
    private:
     bool TryLock() const;
-    void Unlock() const;
+    void Unlock() const noexcept;
 
     int32_t fd_{-1};
     std::string calling_position_;
   };
 
- public:
   AkgKernelPool() = default;
   virtual ~AkgKernelPool() {
     // Close key file
@@ -109,9 +108,11 @@ class AkgKernelPool {
   constexpr inline static int32_t kDoneIdx_ = 2;
 
  private:
-  inline size_t *ListBegin(int32_t list_idx) const { return kernel_lists_[list_idx]; }
+  inline size_t *ListBegin(int32_t list_idx) { return kernel_lists_[list_idx]; }
+  inline const size_t *ListBegin(int32_t list_idx) const { return kernel_lists_[list_idx]; }
 
-  inline size_t *ListEnd(int32_t list_idx) const {
+  inline size_t *ListEnd(int32_t list_idx) { return kernel_lists_[list_idx] + kernel_lists_[list_idx][kMaxKernelNum_]; }
+  inline const size_t *ListEnd(int32_t list_idx) const {
     return kernel_lists_[list_idx] + kernel_lists_[list_idx][kMaxKernelNum_];
   }
 

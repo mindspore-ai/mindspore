@@ -48,10 +48,10 @@ class TsaAtomicAddToFirstTensor : public AtomicCleanInsertter {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  void ProcessOriginCNode(const AnfNodePtr &composite_node,
-                          const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_nodes);
-  void CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
-                              const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_infos);
+  void ProcessOriginalCNode(const AnfNodePtr &composite_node,
+                            const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_nodes);
+  void ChangeKernelBuildInfo(const AnfNodePtr &composite_node,
+                             const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_infos);
   void ProcessTsa(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
                   const std::vector<AtomicAddInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
   std::pair<AnfNodePtr, size_t> GetOrCreateNewTsaFirstNode(const KernelGraphPtr &main_graph,
