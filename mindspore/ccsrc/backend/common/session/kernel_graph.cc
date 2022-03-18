@@ -922,6 +922,10 @@ void KernelGraph::AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const
   (void)ref_out_in_map_.emplace(final_pair, origin_pair);
 }
 
+void KernelGraph::ReplaceRefPairs(const AnfWithOutIndex &final_pair, const AnfWithOutIndex &origin_pair) {
+  ref_out_in_map_[final_pair] = origin_pair;
+}
+
 bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
   return graph_value_nodes_.erase(value_node) != 0;
 }

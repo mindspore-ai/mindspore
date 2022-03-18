@@ -64,6 +64,24 @@ ValueNodePtr CreatePermValueNode(const CNodePtr &transposed) {
   AnfAlgo::SetSelectKernelBuildInfo(op_builder.Build(), perm_const.get());
   return perm_const;
 }
+
+void UpdateRefNodeMap(const KernelGraphPtr &graph, const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
+  for (const auto &iter : graph->GetRefMap()) {
+    auto k_node = iter.first.first;
+    auto k_index = iter.first.second;
+    auto v_node = iter.second.first;
+    auto v_index = iter.second.second;
+
+    if (k_node == old_node || v_node == old_node) {
+      auto new_k_node = k_node == old_node ? new_node : k_node;
+      auto new_v_node = v_node == old_node ? new_node : v_node;
+
+      MS_LOG(DEBUG) << "Update ref pairs key<node:" << new_k_node->fullname_with_scope() << ", index:" << k_index
+                    << "> value<node:" << new_v_node->fullname_with_scope() << ", index:" << v_index << ">";
+      graph->ReplaceRefPairs({new_k_node, k_index}, {new_v_node, v_index});
+    }
+  }
+}
 }  // namespace
 
 const BaseRef TransposedUpdateFusion::DefinePattern() const {
@@ -111,6 +129,7 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), transpose.get());
   kernel_graph->AddValueNodeToGraph(perm_vnode);
   common::AnfAlgo::CopyNodeAttrs(transposed, transpose);
+  UpdateRefNodeMap(kernel_graph, transposed, transpose);
   return transpose;
 }
 }  // namespace opt
