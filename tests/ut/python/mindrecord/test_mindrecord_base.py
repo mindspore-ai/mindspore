@@ -1208,6 +1208,31 @@ def test_cv_file_overwrite_04():
 
     remove_multi_files(mindrecord_file_name, FILES_NUM)
 
+
+def test_mindrecord_commit_exception_01():
+    """
+    Feature: commit excepiton
+    Description: write_raw_data after commit
+    Expectation: exception occur
+    """
+
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, 4)
+
+    with pytest.raises(RuntimeError) as err:
+        writer = FileWriter(mindrecord_file_name, 4)
+        data = get_data("../data/mindrecord/testImageNetData/")
+        cv_schema_json = {"file_name": {"type": "string"},
+                          "label": {"type": "int64"}, "data": {"type": "bytes"}}
+        writer.add_schema(cv_schema_json, "img_schema")
+        writer.write_raw_data(data[0:5])
+        writer.commit()
+        writer.write_raw_data(data[5:10])
+
+    assert 'Unexpected error. Not allow to call `write_raw_data` on flushed MindRecord files.' in str(err.value)
+    remove_multi_files(mindrecord_file_name, 4)
+
+
 def test_cv_file_overwrite_exception_01():
     """
     Feature: Overwriting in FileWriter
