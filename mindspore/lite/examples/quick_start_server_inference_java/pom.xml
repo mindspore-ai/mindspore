@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.mindspore.lite.demo</groupId>
-    <artifactId>quick_start_java</artifactId>
+    <artifactId>quick_start_server_inference_java</artifactId>
     <version>1.0</version>
 
     <properties>
