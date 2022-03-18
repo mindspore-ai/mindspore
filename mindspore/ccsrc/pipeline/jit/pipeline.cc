@@ -61,6 +61,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/device/stream_synchronizer.h"
+#include "distributed/collective/collective_manager.h"
 
 #ifndef ENABLE_SECURITY
 #ifdef ENABLE_D
@@ -1607,6 +1608,8 @@ void ClearResAtexit() {
   MS_LOG(INFO) << "Start Finalize StreamSynchronizer...";
   device::StreamSynchronizer::GetInstance()->Finalize();
   MS_LOG(INFO) << "End Finalize StreamSynchronizer...";
+
+  (void)distributed::collective::CollectiveManager::instance()->Finalize();
 
   PrimitivePy::ClearHookRes();
   ad::g_k_prims.clear();

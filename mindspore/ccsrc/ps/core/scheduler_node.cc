@@ -176,10 +176,12 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
     return;
   }
 
+  uint32_t rank_id = UINT32_MAX;
   // Re-Add the missing node into node manager.
   if (heartbeat_message.has_address() &&
-      node_manager_.ReAddNodeIfNotExists(node_id, heartbeat_message.ip(), heartbeat_message.port())) {
+      node_manager_.ReAddNodeIfNotExists(node_id, heartbeat_message.ip(), heartbeat_message.port(), &rank_id)) {
     SetRegisterConnectionFd(conn, node_id);
+    HandleNodeRecoverByHeartBeat(rank_id);
 
     if (node_manager_.IsAllNodesRegistered()) {
       is_ready_ = true;
@@ -234,6 +236,7 @@ void SchedulerNode::InitCommandHandler() {
   handlers_[NodeCommand::SEND_EVENT] = &SchedulerNode::ProcessSendEvent;
   RegisterActorRouteTableServiceHandler();
   RegisterInitCollectCommServiceHandler();
+  RegisterRecoveryServiceHandler();
 }
 
 void SchedulerNode::RegisterActorRouteTableServiceHandler() {
@@ -699,6 +702,7 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
       }
       std::this_thread::sleep_for(std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval));
       node_manager_.UpdateCluster();
+      HandleNodeTimeoutForRecovery(node_manager_.QueryTimeOutNodesInfo());
 
       if (node_manager_.GetClusterState() == ClusterState::CLUSTER_EXIT) {
         std::this_thread::sleep_for(

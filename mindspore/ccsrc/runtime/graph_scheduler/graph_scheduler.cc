@@ -45,11 +45,19 @@
 #endif
 #include "profiler/device/profiling.h"
 #include "include/common/debug/common.h"
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
+#include "distributed/collective/collective_manager.h"
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
+#include "distributed/cluster/cluster_context.h"
+#else
+#include "distributed/cluster/dummy_cluster_context.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
-using recovery::RecoveryContext;
+using distributed::cluster::ClusterContext;
+using distributed::collective::CollectiveManager;
+using distributed::recovery::RecoveryContext;
 namespace {
 bool IsNeedInsertCopyActor(const DeviceContext *from_device_context, const DeviceContext *to_device_context) {
   MS_EXCEPTION_IF_NULL(from_device_context);
@@ -194,6 +202,108 @@ void IntHandler(int, siginfo_t *, void *) {
   int this_pid = getpid();
   MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
   (void)kill(this_pid, SIGTERM);
+}
+#endif
+
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
+bool SendFinishTransform() {
+  auto node = ClusterContext::instance()->node();
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->role() != ps::core::NodeRole::WORKER) {
+    return true;
+  }
+
+  auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(ClusterContext::instance()->node());
+  MS_EXCEPTION_IF_NULL(abstract_node);
+
+  ps::core::SendFinishTransformMessage send_ready_to_run_msg;
+  send_ready_to_run_msg.set_node_id(abstract_node->node_id());
+  send_ready_to_run_msg.set_rank_id(abstract_node->rank_id());
+  send_ready_to_run_msg.set_is_ready(true);
+  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
+  if (!abstract_node->SendToScheduler(send_ready_to_run_msg.SerializeAsString().data(),
+                                      send_ready_to_run_msg.SerializeAsString().size(),
+                                      ps::core::NodeCommand::SEND_FINISH_TRANSFORM, &output)) {
+    MS_LOG(WARNING) << "Failed to send finish transform request to scheduler.";
+    return false;
+  }
+
+  ps::core::GeneralResponseMsg resp_msg;
+  MS_EXCEPTION_IF_NULL(output);
+  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
+  if (!resp_msg.is_success()) {
+    MS_LOG(ERROR) << "Send finish transform to scheduler failed.";
+    return false;
+  }
+  return true;
+}
+
+bool QueryFinishTransform() {
+  auto node = ClusterContext::instance()->node();
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->role() != ps::core::NodeRole::WORKER) {
+    return true;
+  }
+
+  auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(ClusterContext::instance()->node());
+  MS_EXCEPTION_IF_NULL(abstract_node);
+
+  ps::core::GeneralQueryMessage general_query_msg;
+  general_query_msg.set_node_id(abstract_node->node_id());
+  general_query_msg.set_rank_id(abstract_node->rank_id());
+  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
+  bool ret = false;
+  while (!ret) {
+    if (!abstract_node->SendToScheduler(general_query_msg.SerializeAsString().data(),
+                                        general_query_msg.SerializeAsString().size(),
+                                        ps::core::NodeCommand::QUERY_FINISH_TRANSFORM, &output)) {
+      MS_LOG(WARNING) << "Failed to send query finish transform request to scheduler.";
+      ret = false;
+      continue;
+    }
+
+    ps::core::QueryFinishTransformRespMessage resp_msg;
+    MS_EXCEPTION_IF_NULL(output);
+    (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
+    ret = resp_msg.is_ready();
+    if (!ret) {
+      MS_LOG(INFO) << "There is worker which has not finished transform graph";
+    }
+
+    if (resp_msg.is_worker_timeout()) {
+      MS_LOG(WARNING) << "There is worker timeout";
+      return false;
+    }
+    // The time interval for querying the all worker finish transform graphs status to scheduler: 10 seconds.
+    const uint32_t kWaitDuration = 10;
+    std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
+  }
+
+  return ret;
+}
+
+void DoDisasterRecovery() {
+  if (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) {
+    MS_LOG(INFO) << "Begin reinitialize collective communication for recovery.";
+    bool ret = false;
+    while (!ret) {
+      while (!CollectiveManager::instance()->Initialize()) {
+        MS_LOG(WARNING) << "ReInitialize collective communication failed, retrying...";
+      }
+      MS_LOG(INFO) << "Finish reinitialize collective communication for recovery.";
+
+      RecoveryContext::GetInstance()->ObtainGlobalLatestCkptInfo();
+
+      ret = QueryFinishTransform();
+      if (!ret) {
+        CollectiveManager::instance()->set_need_reinit(true);
+        (void)CollectiveManager::instance()->Finalize();
+      }
+    }
+
+    RecoveryContext::GetInstance()->set_need_reset(true);
+    RecoveryContext::GetInstance()->set_need_sync_weight_to_device(true);
+  }
 }
 #endif
 }  // namespace
@@ -407,6 +517,17 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   }
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
+  if (ClusterContext::instance()->initialized() && RecoveryContext::GetInstance()->enable_recovery()) {
+    while (!SendFinishTransform()) {
+      MS_LOG(WARNING) << "Send finish transform graph failed.";
+      // The time interval for sending finish transform graph to scheduler.
+      constexpr uint32_t kWaitDuration = 10;
+      std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
+    }
+  }
+#endif
+
   return actor_set.get();
 }
 
@@ -489,15 +610,9 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   const size_t kSecondsToMilliseconds = 1000;
   SetActorExecutionStrategy(actor_set, strategy, (end_time - start_time) * kSecondsToMilliseconds);
 
-  if (RecoveryContext::GetInstance()->enable_recovery() && RecoveryContext::GetInstance()->need_reinit_collective()) {
-    MS_LOG(INFO) << "Begin reinitialize collective communication for recovery.";
-    if (!RecoveryContext::GetInstance()->ReInitializeCollective()) {
-      MS_LOG(EXCEPTION) << "Reinitialize collective communication failed.";
-    }
-    MS_LOG(INFO) << "Finish reinitialize collective communication for recovery.";
-
-    RecoveryContext::GetInstance()->set_need_reinit_collective(false);
-  }
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
+  DoDisasterRecovery();
+#endif
 }
 
 void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy,

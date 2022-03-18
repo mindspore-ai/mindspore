@@ -71,9 +71,6 @@ class BACKEND_EXPORT StreamSynchronizer {
   // The singleton pointer.
   static std::shared_ptr<StreamSynchronizer> instance_;
 
-  // Record whether the synchronization stream task has timed out.
-  bool sync_stream_time_out_{false};
-
   // Return value of synchronization stream.
   bool sync_stream_ret_{false};
 

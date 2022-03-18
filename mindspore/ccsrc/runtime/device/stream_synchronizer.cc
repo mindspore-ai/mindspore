@@ -17,16 +17,19 @@
 #include "runtime/device/stream_synchronizer.h"
 #include "utils/ms_context.h"
 #include "distributed/collective/collective_manager.h"
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace device {
+using distributed::collective::CollectiveManager;
+using distributed::recovery::RecoveryContext;
+
 std::mutex StreamSynchronizer::instance_lock_;
 std::shared_ptr<StreamSynchronizer> StreamSynchronizer::instance_ = nullptr;
 
 void StreamSynchronizer::Initialize() {
   // Non disaster recovery mode does not need to start thread and timeout mechanisms.
-  if (!runtime::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
+  if (!RecoveryContext::GetInstance()->enable_recovery()) {
     return;
   }
 
@@ -56,7 +59,7 @@ bool StreamSynchronizer::SyncStream(const std::string &device_name, uint32_t tim
   MS_EXCEPTION_IF_NULL(device_context);
 
   // If disable recovery or timeout==0, sync stream directly to improve performance.
-  if (!runtime::recovery::RecoveryContext::GetInstance()->enable_recovery() || timeout == 0) {
+  if (!RecoveryContext::GetInstance()->enable_recovery() || timeout == 0) {
     device_context->Initialize();
     return device_context->SyncStream();
   }
@@ -68,26 +71,19 @@ bool StreamSynchronizer::SyncStream(const std::string &device_name, uint32_t tim
   device_context_ = device_context;
   do_sync_stream_cv_.notify_one();
 
-  if (sync_stream_time_out_) {
-    // If sync stream timeout has happened, increase the timeout by 4 times.
-    const uint32_t kTimeOutScaleFactor = 4;
-    timeout *= kTimeOutScaleFactor;
-  }
-
   if (time_out_cv_.wait_for(lock, std::chrono::seconds(timeout)) == std::cv_status::no_timeout) {
     if (!sync_stream_ret_) {
       MS_LOG(ERROR) << "Synchronize stream failed.";
     }
     return sync_stream_ret_;
   } else {
-    sync_stream_time_out_ = true;
-    runtime::recovery::RecoveryContext::GetInstance()->set_need_reinit_collective(true);
-    if (!distributed::collective::CollectiveManager::instance()->Finalize()) {
+    CollectiveManager::instance()->set_need_reinit(true);
+    if (!CollectiveManager::instance()->Finalize()) {
       MS_LOG(ERROR) << "Finalize collective manager failed.";
       return false;
     }
     time_out_cv_.wait(lock, [this]() { return device_context_ == nullptr; });
-    MS_LOG(WARNING) << "Synchronize stream time out.";
+    MS_LOG(WARNING) << "Synchronize stream timeout.";
     return true;
   }
 }

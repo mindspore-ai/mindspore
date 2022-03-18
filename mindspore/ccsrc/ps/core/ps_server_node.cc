@@ -39,16 +39,13 @@ bool PSServerNode::Start(const uint32_t &timeout) {
 }
 
 void PSServerNode::Initialize() {
+  InitNodeNum();
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
-  if (!config_->Initialize()) {
-    MS_LOG(INFO) << "The config file is empty, then init node by context.";
-    InitNodeNum();
-  } else {
-    if (!Recover()) {
-      MS_LOG(WARNING) << "Recover the server node is failed.";
-    }
+  if (config_->Initialize() && !Recover()) {
+    MS_LOG(INFO) << "Recover the server node is failed.";
   }
+
   InitServerHandler();
   CreateTcpServer();
   InitNodeInfo(NodeRole::SERVER);
@@ -119,8 +116,9 @@ void PSServerNode::Register(const std::shared_ptr<TcpClient> &client) {
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << " begin to register to the scheduler!";
 
+  const int kCommTimeoutInSeconds = 20;
   if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, register_message.SerializeAsString().data(),
-                       register_message.ByteSizeLong())) {
+                       register_message.ByteSizeLong(), kCommTimeoutInSeconds)) {
     MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                       << " the node id:" << node_info_.node_id_ << " register timeout!";
   } else {

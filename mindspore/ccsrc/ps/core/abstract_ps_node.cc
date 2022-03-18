@@ -139,6 +139,9 @@ bool AbstractPSNode::HandleHeartbeatTimeout() {
     if (!stop_heartbeat_.load()) {
       stop_heartbeat_ = true;
       while (!heartbeat_stopped_.load()) {
+        if (is_finish_.load()) {
+          return;
+        }
         MS_LOG(INFO) << "Waiting for heartbeat to stop...";
 
         // Time interval for waiting the heartbeat to stop.
@@ -152,6 +155,9 @@ bool AbstractPSNode::HandleHeartbeatTimeout() {
 
     bool success = false;
     while (!success) {
+      if (is_finish_.load()) {
+        return;
+      }
       MS_LOG(WARNING) << "Trying to reconnect to the scheduler...";
       success = InitClientToScheduler();
       if (success) {
@@ -175,6 +181,11 @@ void AbstractPSNode::RegisterInitCollectCommResphandler() {
   handlers_[NodeCommand::QUERY_HOST_NAMES] = &AbstractPSNode::ProcessReceiveSchedulerResp;
   handlers_[NodeCommand::SEND_UNIQUE_ID] = &AbstractPSNode::ProcessReceiveSchedulerResp;
   handlers_[NodeCommand::QUERY_UNIQUE_ID] = &AbstractPSNode::ProcessReceiveSchedulerResp;
+}
+
+void AbstractPSNode::RegisterRecoveryRespHandler() {
+  handlers_[NodeCommand::SEND_FINISH_TRANSFORM] = &AbstractPSNode::ProcessReceiveSchedulerResp;
+  handlers_[NodeCommand::QUERY_FINISH_TRANSFORM] = &AbstractPSNode::ProcessReceiveSchedulerResp;
 }
 }  // namespace core
 }  // namespace ps

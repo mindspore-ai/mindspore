@@ -40,7 +40,7 @@
 #include "ps/util.h"
 #endif
 #include "ps/ps_context.h"
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
 
 #include "pybind_api/gil_scoped_long_running.h"
 
@@ -58,7 +58,7 @@ using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
 using mindspore::MsCtxParam;
 using PSContext = mindspore::ps::PSContext;
-using RecoveryContext = mindspore::runtime::recovery::RecoveryContext;
+using RecoveryContext = mindspore::distributed::recovery::RecoveryContext;
 
 // Interface with python
 PYBIND11_MODULE(_c_expression, m) {

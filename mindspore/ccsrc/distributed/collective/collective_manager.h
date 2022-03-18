@@ -69,6 +69,11 @@ class BACKEND_EXPORT CollectiveManager {
 
   uint32_t local_rank_id() const;
 
+  // Set whether need reinitialize collective communication.
+  void set_need_reinit(bool need_reinit) { need_reinit_ = need_reinit; }
+  // Get whether need reinitialize collective communication.
+  bool need_reinit() const { return need_reinit_.load(); }
+
  private:
   CollectiveManager();
 
@@ -81,15 +86,12 @@ class BACKEND_EXPORT CollectiveManager {
   // Assign the local rank id for this process.
   bool AssignLocalRank();
 
-  // Initialize communication group on the device side.
-  bool InitDeviceCommGroup(const CommunicationGroupPtr &group, void *root_info);
-
-  // Initialize communication group on the device side in thread with timeout limit.
-  std::unique_ptr<std::thread> init_group_thread_;
-  std::mutex init_group_mutex_;
-
   std::atomic_bool inited_;
   std::atomic_bool finalized_;
+
+  // Whether need reinitialize collective communication, this value should be set to true once a training process
+  // exits unexpectedly is detected.
+  std::atomic_bool need_reinit_;
 
   // The device type read from MindSpore context.
   std::string device_type_;
@@ -119,8 +121,8 @@ class BACKEND_EXPORT CollectiveManager {
   // Global group ranks.
   std::vector<uint32_t> global_group_ranks_;
 
-  // The global group name on the host side. This is used for Creating global group on host side for AllGather operation
-  // of host name while assigning local rank.
+  // The global group name on the host side. This is used for Creating global group on host side for AllGather
+  // operation of host name while assigning local rank.
   std::string host_global_group_name_;
 };
 }  // namespace collective

@@ -17,11 +17,13 @@
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "utils/log_adapter.h"
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
+#include "distributed/collective/collective_manager.h"
 
 namespace mindspore {
 namespace runtime {
-using recovery::RecoveryContext;
+using distributed::collective::CollectiveManager;
+using distributed::recovery::RecoveryContext;
 
 bool IsOutputAddressPersisted(const DeviceTensor *output_device_tensor, const AnfNodePtr &output_node) {
   MS_EXCEPTION_IF_NULL(output_node);
@@ -105,7 +107,7 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
   ++current_count_;
 
   // Trigger disaster recovery and return empty output.
-  if (RecoveryContext::GetInstance()->enable_recovery() && RecoveryContext::GetInstance()->need_reinit_collective()) {
+  if (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) {
     FreeOutputNodeMem();
     ClearOutputCache();
     SET_OPCONTEXT_SUCCESS_RET((*context));

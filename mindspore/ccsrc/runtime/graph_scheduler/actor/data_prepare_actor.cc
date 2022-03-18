@@ -25,11 +25,11 @@
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace runtime {
-using recovery::RecoveryContext;
+using distributed::recovery::RecoveryContext;
 namespace {
 void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor, const AnfNodePtr &node,
                     const DeviceContext *device_context, OpContext<DeviceTensor> *const context,

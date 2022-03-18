@@ -25,11 +25,13 @@
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "runtime/device/stream_synchronizer.h"
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
+#include "distributed/collective/collective_manager.h"
 
 namespace mindspore {
 namespace runtime {
-using recovery::RecoveryContext;
+using distributed::collective::CollectiveManager;
+using distributed::recovery::RecoveryContext;
 
 void LoopCountActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
@@ -70,8 +72,7 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
       (void)sync_stream_device_contexts.insert(device_context);
 
       // Trigger disaster recovery and exit loop early.
-      if (RecoveryContext::GetInstance()->enable_recovery() &&
-          RecoveryContext::GetInstance()->need_reinit_collective()) {
+      if (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) {
         current_count_ = loop_count_;
       }
     }

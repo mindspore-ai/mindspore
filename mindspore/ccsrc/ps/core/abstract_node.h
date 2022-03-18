@@ -228,6 +228,9 @@ class BACKEND_EXPORT AbstractNode : public Node {
   // Register collective communication initialization response methods.
   virtual void RegisterInitCollectCommResphandler() {}
 
+  // Register recovery response methods.
+  virtual void RegisterRecoveryRespHandler() {}
+
   // when initializing the node, should initializing the node info.
   void InitNodeInfo(const NodeRole &role);
   // Initialize worker num and server num by cluster config.

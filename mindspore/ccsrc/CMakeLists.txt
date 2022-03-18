@@ -310,7 +310,6 @@ set(BACKEND_SUB_COMP
         runtime/graph_scheduler
         runtime/hardware
         runtime/pynative
-        runtime/recovery
         plugin/device/ascend/hal/device
         plugin/device/ascend/hal/hardware
         plugin/device/ascend/hal/hccl_adapter
