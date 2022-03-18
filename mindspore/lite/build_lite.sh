@@ -141,7 +141,7 @@ build_lite_x86_64_jni_and_jar() {
 }
 
 build_lite_aarch64_jni_and_jar() {
-    ARM64_JNI_CMAKE_ARGS=$1
+    AARCH64_JNI_CMAKE_ARGS=$1
     export MSLITE_ENABLE_RUNTIME_CONVERT=off
     # copy arm64 so
     local is_train=on
@@ -151,38 +151,37 @@ build_lite_aarch64_jni_and_jar() {
     cd ${BASEPATH}/output/tmp/
     rm -rf ${pkg_name}
     tar -zxf ${BASEPATH}/output/tmp/${pkg_name}.tar.gz
-    rm -rf ${LITE_JAVA_PATH}/java/linux_arm64/libs/   && mkdir -pv ${LITE_JAVA_PATH}/java/linux_arm64/libs/
-    rm -rf ${LITE_JAVA_PATH}/native/libs/linux_arm64/ && mkdir -pv ${LITE_JAVA_PATH}/native/libs/linux_arm64/
-    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/java/linux_arm64/libs/
-    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_arm64/
+    rm -rf ${LITE_JAVA_PATH}/java/linux_aarch64/libs/   && mkdir -pv ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
+    rm -rf ${LITE_JAVA_PATH}/native/libs/linux_aarch64/ && mkdir -pv ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
+    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
+    cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
     local train_so=$pkg_name/runtime/lib/libmindspore-lite-train.so
     if [ ! -f "$train_so" ]; then
         echo "not exist"
         is_train=off
     fi
     if [[ "X$is_train" = "Xon" ]]; then
-        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/linux_arm64/libs/
-        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_arm64/
+        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
+        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
     fi
     # build jni so
     cd ${BASEPATH}/mindspore/lite/build
     rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
-    cmake ${ARM64_JNI_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
-    export LIBRARY_PATH=${BASEPATH}/output/tmp/mindspore-lite-1.6.1-linux-aarch64/runtime/lib/:$LIBRARY_PATH
+    cmake ${AARCH64_JNI_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni arm64 failed----------------"
         exit 1
     fi
-    cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/linux_arm64/libs/
-    cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_arm64/
+    cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
+    cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
     cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
     if [[ "X$is_train" = "Xon" ]]; then
-        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_arm64/libs/
-        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_arm64/
+        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
+        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
         cp ./libmindspore-lite-train-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     fi
 
@@ -199,7 +198,7 @@ build_lite_aarch64_jni_and_jar() {
     # build java common
     ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/common
     ${gradle_command} build -p ${LITE_JAVA_PATH}/java/common
-    cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/linux_arm64/libs/
+    cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
 
     # build java fl_client
     if [[ "X$is_train" = "Xon" ]]; then
@@ -218,7 +217,7 @@ build_lite_aarch64_jni_and_jar() {
       ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test
     else
       if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]] ; then
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${LITE_JAVA_PATH}/native/libs/linux_arm64/
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${LITE_JAVA_PATH}/native/libs/linux_aarch64/
           ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/
       else
            ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test
@@ -231,8 +230,8 @@ build_lite_aarch64_jni_and_jar() {
     rm -rf ${pkg_name}.tar.gz ${pkg_name}.tar.gz.sha256
     tar czf ${pkg_name}.tar.gz ${pkg_name}
     sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256
-    rm -rf ${LITE_JAVA_PATH}/java/linux_arm64/libs/
-    rm -rf ${LITE_JAVA_PATH}/native/libs/linux_arm64/
+    rm -rf ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
+    rm -rf ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
 }
 
 build_lite() {
@@ -413,11 +412,10 @@ build_lite() {
             echo -e "\e[31mJAVA_HOME is not set, so jni and jar packages will not be compiled \e[0m"
             echo -e "\e[31mIf you want to compile the JAR package, please set $JAVA_HOME. For example: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64 \e[0m"
         fi
-      fi
-      if [[ "${local_lite_platform}" == "arm64" ]] && [[ "${machine}" == "aarch64" ]]; then
+      elif [[ "${local_lite_platform}" == "arm64" ]] && [[ "${machine}" == "aarch64" ]]; then
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
-            build_lite_aarch64_jni_and_jar $1
+            build_lite_aarch64_jni_and_jar "-DMACHINE_LINUX_ARM64=on"
         else
             echo -e "\e[31mJAVA_HOME is not set, so jni and jar packages will not be compiled \e[0m"
             echo -e "\e[31mIf you want to compile the JAR package, please set $JAVA_HOME. For example: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64 \e[0m"
