@@ -57,7 +57,7 @@ class NUMAAdapter {
 
   NUMAAdapter();
   ~NUMAAdapter();
-  inline bool Available() const { return available_; }
+  bool Available() const;
   void Bind(int node_id);
   void *Malloc(int node_id, size_t size);
   void Free(void *data, size_t size);
