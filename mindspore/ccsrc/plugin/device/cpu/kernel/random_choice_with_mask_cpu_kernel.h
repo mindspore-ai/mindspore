@@ -37,9 +37,9 @@ class RandomChoiceWithMaskCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool)};

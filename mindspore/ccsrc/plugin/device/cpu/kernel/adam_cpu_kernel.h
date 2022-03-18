@@ -40,7 +40,6 @@ class AdamCpuKernelMod : public NativeCpuKernelMod {
   void LaunchAdamNnacl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   bool use_nesterov_{false};
   TypeId dtype_{kTypeUnknown};
-  enum input_list_ { VAR, M, V, BETA1_POWER, BETA2_POWER, LR, BETA1, BETA2, EPSILON, GRAD };
 };
 }  // namespace kernel
 }  // namespace mindspore

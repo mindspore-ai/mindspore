@@ -142,7 +142,7 @@ void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
       task1(i);
       return common::SUCCESS;
     };
-    tasks1.emplace_back(block);
+    (void)tasks1.emplace_back(block);
   }
   ParallelLaunch(tasks1);
   for (size_t i = 0; i < thread_num2; ++i) {
@@ -150,7 +150,7 @@ void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
       task2(i);
       return common::SUCCESS;
     };
-    tasks2.emplace_back(block);
+    (void)tasks2.emplace_back(block);
   }
   ParallelLaunch(tasks2);
 }

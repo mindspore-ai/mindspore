@@ -53,7 +53,6 @@ class MaskedSelectGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> grad_shape_;
   std::vector<size_t> output_shape_;
   uint64_t tensor_size_ = 1;
-  enum input_list_ { INPUT, MASK, GRAD };
 };
 }  // namespace kernel
 }  // namespace mindspore

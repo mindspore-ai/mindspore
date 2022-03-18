@@ -80,8 +80,6 @@ class NMSWithMaskCpuKernelMod : public NativeCpuKernelMod {
   float iou_value_{0.0};
   size_t ceil_power_2{0};
   static const int box_size_ = 5;  //  pre_defined box width
-  enum workspace_list_ { DATA_BUFF, INDEX_BUFF, ROW_MASK };
-  enum output_list_ { OUTPUT, SEL_IDX, SEL_BOXES };
 };
 }  // namespace kernel
 }  // namespace mindspore

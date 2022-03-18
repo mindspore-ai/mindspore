@@ -20,6 +20,15 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+const size_t kIndexDataBuff = 0;
+const size_t kIndexIndexBuff = 1;
+const size_t kIndexRowMask = 2;
+const size_t kIndexOutput = 0;
+const size_t kIndexSelIdx = 1;
+const size_t kIndexSelBoxes = 2;
+}  // namespace
+
 uint32_t NmsRoundUpPower2(int v) {
   constexpr uint32_t ONE = 1, TWO = 2, FOUR = 4, EIGHT = 8, SIXTEEN = 16;
   v--;
@@ -54,7 +63,7 @@ void NMSWithMaskCpuKernelMod::NmsBitonicSortByKeyKernel(const int inner, const s
 
   for (size_t i = 2; i <= ceil_power2; i <<= 1) {
     for (size_t j = (i >> 1); j > 0; j >>= 1) {
-      auto task2 = [&](size_t start, size_t end) {
+      auto task2 = [i, j, &data_buff, &index_buff](size_t start, size_t end) {
         for (size_t tid = start; tid < end; tid++) {
           size_t tid_comp = tid ^ j;
           if (tid_comp > tid) {
@@ -237,12 +246,12 @@ bool NMSWithMaskCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
                                            const std::vector<kernel::AddressPtr> &workspace,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto data_buff = reinterpret_cast<T *>(workspace[DATA_BUFF]->addr);
-  auto index_buff = reinterpret_cast<int *>(workspace[INDEX_BUFF]->addr);
-  auto row_mask = reinterpret_cast<bool *>(workspace[ROW_MASK]->addr);
-  auto output = reinterpret_cast<T *>(outputs[OUTPUT]->addr);
-  auto sel_idx = reinterpret_cast<int *>(outputs[SEL_IDX]->addr);
-  auto sel_boxes = reinterpret_cast<bool *>(outputs[SEL_BOXES]->addr);
+  auto data_buff = reinterpret_cast<T *>(workspace[kIndexDataBuff]->addr);
+  auto index_buff = reinterpret_cast<int *>(workspace[kIndexIndexBuff]->addr);
+  auto row_mask = reinterpret_cast<bool *>(workspace[kIndexRowMask]->addr);
+  auto output = reinterpret_cast<T *>(outputs[kIndexOutput]->addr);
+  auto sel_idx = reinterpret_cast<int *>(outputs[kIndexSelIdx]->addr);
+  auto sel_boxes = reinterpret_cast<bool *>(outputs[kIndexSelBoxes]->addr);
 
   NmsBitonicSortByKeyKernel<T>(num_input_, ceil_power_2, input, data_buff, index_buff, box_size_);
   size_t total_val = IntToSize(num_input_ * num_input_);

@@ -51,7 +51,6 @@ class SGDCpuKernelMod : public NativeCpuKernelMod {
   float dampening_{0.0};
   float weight_decay_{0.0};
   bool nesterov_{true};
-  enum input_list_ { PARAM, GRAD, LR, ACCUM, MOMENTUM, STAT };
 };
 }  // namespace kernel
 }  // namespace mindspore

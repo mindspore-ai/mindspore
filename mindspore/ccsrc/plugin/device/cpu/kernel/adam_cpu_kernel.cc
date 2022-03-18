@@ -26,29 +26,39 @@ namespace {
 constexpr size_t kAdamInputsNum = 10;
 constexpr size_t kAdamOutputsNum = 3;
 constexpr size_t kScalarIndex = 0;
+constexpr size_t kIndexVar = 0;
+constexpr size_t kIndexM = 1;
+constexpr size_t kIndexV = 2;
+constexpr size_t kIndexBeta1Power = 3;
+constexpr size_t kIndexBeta2Power = 4;
+constexpr size_t kIndexLr = 5;
+constexpr size_t kIndexBeta1 = 6;
+constexpr size_t kIndexBeta2 = 7;
+constexpr size_t kIndexEpsilon = 8;
+constexpr size_t kIndexGrad = 9;
 constexpr float kAdamBlock = 1000;
 }  // namespace
 
 template <typename T>
 void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &) {
-  T *var = reinterpret_cast<T *>(inputs[VAR]->addr);
-  T *m = reinterpret_cast<T *>(inputs[M]->addr);
-  T *v = reinterpret_cast<T *>(inputs[V]->addr);
-  float beta1_power = reinterpret_cast<float *>(inputs[BETA1_POWER]->addr)[kScalarIndex];
-  float beta2_power = reinterpret_cast<float *>(inputs[BETA2_POWER]->addr)[kScalarIndex];
-  float lr = reinterpret_cast<float *>(inputs[LR]->addr)[kScalarIndex];
-  T beta1 = static_cast<T>(reinterpret_cast<float *>(inputs[BETA1]->addr)[kScalarIndex]);
-  T beta2 = static_cast<T>(reinterpret_cast<float *>(inputs[BETA1]->addr)[kScalarIndex]);
-  T epsilon = static_cast<T>(reinterpret_cast<float *>(inputs[EPSILON]->addr)[kScalarIndex]);
-  T *gradient = reinterpret_cast<T *>(inputs[GRAD]->addr);
+  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
+  T *m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
+  T *v = reinterpret_cast<T *>(inputs[kIndexV]->addr);
+  float beta1_power = reinterpret_cast<float *>(inputs[kIndexBeta1Power]->addr)[kScalarIndex];
+  float beta2_power = reinterpret_cast<float *>(inputs[kIndexBeta2Power]->addr)[kScalarIndex];
+  float lr = reinterpret_cast<float *>(inputs[kIndexLr]->addr)[kScalarIndex];
+  T beta1 = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex]);
+  T beta2 = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex]);
+  T epsilon = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex]);
+  T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
   constexpr float ONE = 1.0;
   if (beta1_power - ONE == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can't be set 1.";
   }
   T new_lr = static_cast<T>(lr * std::sqrt(ONE - beta2_power) / (ONE - beta1_power));
   // multithreading
-  size_t lens = inputs[VAR]->size > 0 ? static_cast<size_t>(inputs[VAR]->size / sizeof(T)) : 1;
+  size_t lens = inputs[kIndexVar]->size > 0 ? static_cast<size_t>(inputs[kIndexVar]->size / sizeof(T)) : 1;
   auto task = [this, &var, &m, &v, &gradient, new_lr, beta1, beta2, epsilon](size_t start, size_t end) {
     T one = static_cast<T>(1.0);
     for (size_t i = start; i < end; i++) {
@@ -67,16 +77,16 @@ void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
 
 void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &) {
-  float *var = reinterpret_cast<float *>(inputs[VAR]->addr);
-  float *m = reinterpret_cast<float *>(inputs[M]->addr);
-  float *v = reinterpret_cast<float *>(inputs[V]->addr);
-  float beta1_power = reinterpret_cast<float *>(inputs[BETA1_POWER]->addr)[kScalarIndex];
-  float beta2_power = reinterpret_cast<float *>(inputs[BETA2_POWER]->addr)[kScalarIndex];
-  float lr = reinterpret_cast<float *>(inputs[LR]->addr)[kScalarIndex];
-  float beta1 = reinterpret_cast<float *>(inputs[BETA1]->addr)[kScalarIndex];
-  float beta2 = reinterpret_cast<float *>(inputs[BETA2]->addr)[kScalarIndex];
-  float epsilon = reinterpret_cast<float *>(inputs[EPSILON]->addr)[kScalarIndex];
-  float *gradient = reinterpret_cast<float *>(inputs[GRAD]->addr);
+  float *var = reinterpret_cast<float *>(inputs[kIndexVar]->addr);
+  float *m = reinterpret_cast<float *>(inputs[kIndexM]->addr);
+  float *v = reinterpret_cast<float *>(inputs[kIndexV]->addr);
+  float beta1_power = reinterpret_cast<float *>(inputs[kIndexBeta1Power]->addr)[kScalarIndex];
+  float beta2_power = reinterpret_cast<float *>(inputs[kIndexBeta2Power]->addr)[kScalarIndex];
+  float lr = reinterpret_cast<float *>(inputs[kIndexLr]->addr)[kScalarIndex];
+  float beta1 = reinterpret_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex];
+  float beta2 = reinterpret_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex];
+  float epsilon = reinterpret_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex];
+  float *gradient = reinterpret_cast<float *>(inputs[kIndexGrad]->addr);
   constexpr float ONE = 1.0;
   if (beta1_power - ONE == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can't be set 1.";
@@ -84,7 +94,7 @@ void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &in
   float new_lr = lr * std::sqrt(ONE - beta2_power) / (ONE - beta1_power);
 
   // multithreading
-  size_t lens = inputs[VAR]->size > 0 ? static_cast<size_t>(inputs[VAR]->size / sizeof(float)) : 1;
+  size_t lens = inputs[kIndexVar]->size > 0 ? static_cast<size_t>(inputs[kIndexVar]->size / sizeof(float)) : 1;
   auto task = [this, &var, &m, &v, &gradient, new_lr, beta1, beta2, epsilon](size_t start, size_t end) {
     int ret = AdamFp32(var, m, v, new_lr, beta1, beta2, epsilon, gradient, start, end, use_nesterov_);
     if (ret != NNACL_OK) {
@@ -110,45 +120,45 @@ bool AdamCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamOutputsNum, kernel_name_);
 
-  if (inputs[VAR]->size != inputs[M]->size) {
+  if (inputs[kIndexVar]->size != inputs[kIndexM]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'm' and 'var' should be same, but got the memory size of 'm': "
-                      << inputs[M]->size << " and 'var': " << inputs[VAR]->size;
+                      << inputs[kIndexM]->size << " and 'var': " << inputs[kIndexVar]->size;
   }
-  if (inputs[VAR]->size != inputs[V]->size) {
+  if (inputs[kIndexVar]->size != inputs[kIndexV]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'v' and 'var' should be same, but got the memory size of 'v': "
-                      << inputs[V]->size << " and 'var': " << inputs[VAR]->size;
+                      << inputs[kIndexV]->size << " and 'var': " << inputs[kIndexVar]->size;
   }
-  if (inputs[VAR]->size != inputs[GRAD]->size) {
+  if (inputs[kIndexVar]->size != inputs[kIndexGrad]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape and dtype of 'gradient' and 'var' should be same, but got "
                          "the memory size of 'gradient': "
-                      << inputs[GRAD]->size << " and 'var': " << inputs[VAR]->size;
+                      << inputs[kIndexGrad]->size << " and 'var': " << inputs[kIndexVar]->size;
   }
   size_t f_size = sizeof(float);
-  if (inputs[BETA1_POWER]->size != f_size) {
+  if (inputs[kIndexBeta1Power]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta1_power' should be float, but got 'beta1_power': " << inputs[BETA1_POWER];
+                      << "', the 'beta1_power' should be float, but got 'beta1_power': " << inputs[kIndexBeta1Power];
   }
-  if (inputs[BETA2_POWER]->size != f_size) {
+  if (inputs[kIndexBeta2Power]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta2_power' should be float, but got 'beta2_power': " << inputs[BETA2_POWER];
+                      << "', the 'beta2_power' should be float, but got 'beta2_power': " << inputs[kIndexBeta2Power];
   }
-  if (inputs[LR]->size != f_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' should be float, but got 'lr': " << inputs[LR];
+  if (inputs[kIndexLr]->size != f_size) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' should be float, but got 'lr': " << inputs[kIndexLr];
   }
-  if (inputs[BETA1]->size != f_size) {
+  if (inputs[kIndexBeta1]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta1' should be float, but got 'beta1': " << inputs[BETA1];
+                      << "', the 'beta1' should be float, but got 'beta1': " << inputs[kIndexBeta1];
   }
-  if (inputs[BETA2]->size != f_size) {
+  if (inputs[kIndexBeta2]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta2' should be float, but got 'beta2': " << inputs[BETA2];
+                      << "', the 'beta2' should be float, but got 'beta2': " << inputs[kIndexBeta2];
   }
-  if (inputs[EPSILON]->size != f_size) {
+  if (inputs[kIndexEpsilon]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'epsilon' should be float, but got 'epsilon': " << inputs[EPSILON];
+                      << "', the 'epsilon' should be float, but got 'epsilon': " << inputs[kIndexEpsilon];
   }
 
   if (dtype_ == kNumberTypeFloat32) {
