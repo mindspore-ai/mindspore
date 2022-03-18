@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,6 +191,7 @@ CNodePtr FunctionalizeCond::CreateNewIf(const FuncGraphPtr &else_branch, const F
   }
   auto if_value_node = NewValueNode(if_primc);
   if (if_value_node == nullptr) {
+    MS_LOG(ERROR) << "new if_value_node failed";
     return nullptr;
   }
   auto then_value_node = NewValueNode(then_branch);

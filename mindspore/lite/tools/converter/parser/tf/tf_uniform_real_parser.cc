@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ ops::PrimitiveC *TFUniformRealParser::Parse(const tensorflow::NodeDef &tf_op,
   *output_size = 1;
   auto status = AddOpInput(tf_op, 0, inputs);
   if (status != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
     return nullptr;
   }
   return prim.release();
