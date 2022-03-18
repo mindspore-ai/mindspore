@@ -44,6 +44,7 @@ from mindspore.ops.operations.array_ops import Im2Col
 from mindspore.ops.operations.array_ops import Col2Im
 from mindspore.ops.operations.array_ops import StridedSliceV2
 from mindspore.ops.operations._grad_ops import StridedSliceV2Grad
+from mindspore.ops.operations.random_ops import LogNormalReverse
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops._utils.utils import is_shape_unknown
@@ -292,6 +293,15 @@ def tensor_scatter_possible_replacement(x, indices, updates, out, dout):
     dupdates = gather_nd(dout / F.cast(indicators, F.dtype(dout)), indices) * F.cast(out_indicators, F.dtype(dout))
 
     return F.cast(dx, F.dtype(x)), zeros_like(indices), F.cast(dupdates, F.dtype(updates))
+
+
+@bprop_getters.register(LogNormalReverse)
+def get_bprop_log_normal_reverse(self):
+    """Grad definition for `LogNormalReverse` operation."""
+    def bprop(input_data, out, dout):
+        return (zeros_like(input_data),)
+
+    return bprop
 
 
 @bprop_getters.register(P.TensorScatterMax)

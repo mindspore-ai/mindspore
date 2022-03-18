@@ -265,6 +265,49 @@ class RandomGamma(Primitive):
         Validator.check_non_negative_int(seed2, "seed2", self.name)
 
 
+class LogNormalReverse(Primitive):
+    r"""
+    Fills the elements of the input tensor with log normal values initialized by given mean and std:
+
+    .. math::
+        \text{f}(x;1.0,2.0)=\frac{1}{x\delta \sqrt[]{2\pi} }e^{-\frac{(\ln x-\mu )^2}{2\delta ^2} }
+
+    Args:
+        mean (float): the mean of normal distribution. With float data type. Default: 2.0.
+        std (float): the std of normal distribution. With float data type. Default: 1.0.
+
+    Inputs:
+        - **input** (Tensor) - The tensor to be generated with log-normal distribution.
+        Must be one of the following types: float16, float32.
+
+    Outputs:
+        Tensor. A Tensor with the same type and shape of input.
+
+    Raises:
+        TypeError: If `input` is not Tensor.
+        ValueError: If `input` is NULL.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+
+    Examples:
+        >>> x = Tensor(np.array([2, 2]), mstype.float32)
+        >>> mean = 2.0
+        >>> std = 1.0
+        >>> lognormalreverse = ops.LogNormalReverse(mean, std)
+        >>> output = lognormalreverse(x)
+        >>> print(output)
+        (3, 1, 2)
+    """
+
+    @prim_attr_register
+    def __init__(self, mean=2.0, std=1.0):
+        """Initialize LogNormalReverse"""
+        Validator.check_value_type("mean", mean, [float], self.name)
+        Validator.check_value_type("std", std, [float], self.name)
+
+
 class Gamma(PrimitiveWithInfer):
     r"""
     Produces random positive floating-point values x, distributed according to probability density function:
