@@ -31,7 +31,7 @@ class AicpuTask : public TaskRepeater<AicpuTaskInfo> {
 
   void Distribute() override;
 
-  void *Args() override { return input_output_addr_; }
+  void *Args() const override { return input_output_addr_; }
 
   std::string task_name() const override { return task_info_->op_name(); }
 
