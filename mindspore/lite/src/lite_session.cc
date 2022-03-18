@@ -72,7 +72,7 @@ extern void common_log_init();
 namespace lite {
 namespace {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-const char *const kArchCPU = "CPU";
+constexpr auto kArchCPU = "CPU";
 #endif
 bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
   MS_ASSERT(src_tensor.handler() != nullptr);
@@ -519,22 +519,25 @@ void LiteSession::UpdateGraphOutputMap(const std::vector<kernel::LiteKernel *> &
   for (auto iter_kernel : kernels) {
     auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(iter_kernel);
     for (auto out_kernel : subgraph->out_nodes()) {
-      if (out_kernel->is_model_output()) {
-        for (auto out_tensor : out_kernel->out_tensors())
-          if (out_tensor->IsGraphOutput()) {
-            output_node_map_[out_kernel->name()].emplace_back(out_tensor);
-            if (!out_tensor->tensor_name().empty()) {
-              output_tensor_map_[out_tensor->tensor_name()] = out_tensor;
-              output_tensor_names_.emplace_back(out_tensor->tensor_name());
-            } else {
-              auto tensor_iter = std::find(tensors_.begin(), tensors_.end(), out_tensor);
-              if (tensor_iter != tensors_.end()) {
-                auto tensor_index = std::to_string(tensor_iter - tensors_.begin());
-                output_tensor_map_[tensor_index] = out_tensor;
-                output_tensor_names_.emplace_back(tensor_index);
-              }
-            }
+      if (!out_kernel->is_model_output()) {
+        continue;
+      }
+      for (auto out_tensor : out_kernel->out_tensors()) {
+        if (!out_tensor->IsGraphOutput()) {
+          continue;
+        }
+        output_node_map_[out_kernel->name()].emplace_back(out_tensor);
+        if (!out_tensor->tensor_name().empty()) {
+          output_tensor_map_[out_tensor->tensor_name()] = out_tensor;
+          output_tensor_names_.emplace_back(out_tensor->tensor_name());
+        } else {
+          auto tensor_iter = std::find(tensors_.begin(), tensors_.end(), out_tensor);
+          if (tensor_iter != tensors_.end()) {
+            auto tensor_index = std::to_string(tensor_iter - tensors_.begin());
+            output_tensor_map_[tensor_index] = out_tensor;
+            output_tensor_names_.emplace_back(tensor_index);
           }
+        }
       }
     }
   }
@@ -1499,6 +1502,48 @@ void LiteSession::RuntimeAllocatorInitGraphOutput() {
   return;
 }
 
+void RuntimeAllocatorInitSubgraphInputs(const kernel::LiteKernel *subgraph, const AllocatorPtr &default_allocator,
+                                        const RuntimeAllocatorPtr &runtime_allocator,
+                                        const std::unordered_map<Tensor *, Tensor *> &isolate_input_map,
+                                        std::unordered_map<Tensor *, int> *tensor_ref_count,
+                                        std::unordered_map<size_t, int> *data_ref_count) {
+  MS_ASSERT(subgraph != nullptr && tensor_ref_count != nullptr && data_ref_count != nullptr);
+  for (auto in_tensor : subgraph->in_tensors()) {
+    auto iter = isolate_input_map.find(in_tensor);
+    if (isolate_input_map.end() == iter) break;
+    auto src_t = iter->second;
+
+    if (src_t->data_type() == in_tensor->data_type()) {
+      in_tensor->set_allocator(src_t->allocator());
+      if (src_t->allocator() == runtime_allocator) {
+        (*tensor_ref_count)[in_tensor] = in_tensor->init_ref_count();
+        (*data_ref_count)[runtime_allocator->GetOffsetMap().at(src_t)] += in_tensor->init_ref_count();
+        runtime_allocator->SetDataOffset(in_tensor, runtime_allocator->GetOffsetMap().at(src_t));
+      }
+    } else {
+      if (in_tensor->allocator() == default_allocator) {
+        in_tensor->set_allocator(runtime_allocator);
+        runtime_allocator->MallocTensorData(in_tensor);
+        (*tensor_ref_count)[in_tensor] = in_tensor->init_ref_count();
+        (*data_ref_count)[runtime_allocator->GetOffsetMap().at(in_tensor)] = in_tensor->init_ref_count();
+      }
+    }
+
+    if (src_t->allocator() != runtime_allocator) {
+      continue;
+    }
+
+    (*tensor_ref_count)[src_t]--;
+    (*data_ref_count)[runtime_allocator->GetOffsetMap().at(src_t)]--;
+
+    if ((*tensor_ref_count)[src_t] <= 0) {
+      if ((*data_ref_count)[runtime_allocator->GetOffsetMap().at(src_t)] <= 0) {
+        runtime_allocator->FreeTensorData(src_t);
+      }
+    }
+  }
+}
+
 void LiteSession::RuntimeAllocatorInitSubgraph() {
   AllocatorPtr default_allocator = context_->allocator;
   std::unordered_map<lite::Tensor *, int> tensor_ref_count;
@@ -1509,40 +1554,8 @@ void LiteSession::RuntimeAllocatorInitSubgraph() {
       continue;
     }
 
-    for (auto in_tensor : subgraph->in_tensors()) {
-      auto iter = isolate_input_map_.find(in_tensor);
-      if (isolate_input_map_.end() == iter) break;
-      auto src_t = iter->second;
-
-      if (src_t->data_type() == in_tensor->data_type()) {
-        in_tensor->set_allocator(src_t->allocator());
-        if (src_t->allocator() == runtime_allocator_) {
-          tensor_ref_count[in_tensor] = in_tensor->init_ref_count();
-          data_ref_count[runtime_allocator_->GetOffsetMap().at(src_t)] += in_tensor->init_ref_count();
-          runtime_allocator_->SetDataOffset(in_tensor, runtime_allocator_->GetOffsetMap().at(src_t));
-        }
-      } else {
-        if (in_tensor->allocator() == default_allocator) {
-          in_tensor->set_allocator(runtime_allocator_);
-          runtime_allocator_->MallocTensorData(in_tensor);
-          tensor_ref_count[in_tensor] = in_tensor->init_ref_count();
-          data_ref_count[runtime_allocator_->GetOffsetMap().at(in_tensor)] = in_tensor->init_ref_count();
-        }
-      }
-
-      if (src_t->allocator() != runtime_allocator_) {
-        continue;
-      }
-
-      tensor_ref_count[src_t]--;
-      data_ref_count[runtime_allocator_->GetOffsetMap().at(src_t)]--;
-
-      if (tensor_ref_count[src_t] <= 0) {
-        if (data_ref_count[runtime_allocator_->GetOffsetMap().at(src_t)] <= 0) {
-          runtime_allocator_->FreeTensorData(src_t);
-        }
-      }
-    }
+    RuntimeAllocatorInitSubgraphInputs(subgraph, default_allocator, runtime_allocator_, isolate_input_map_,
+                                       &tensor_ref_count, &data_ref_count);
 
     auto kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
     for (auto kernel : kernel_list) {

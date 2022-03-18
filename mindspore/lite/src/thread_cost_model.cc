@@ -34,7 +34,7 @@ int ThreadCostModel::get_optimal_thread_num(const ThreadCostContext *thread_cost
   int64_t block_size = MSVALID(max_oversharding_factor * thread_num, thread_block_size(thread_cost_context),
                                thread_cost_context->total_unit_num_);
   int64_t block_count = UP_DIV(thread_cost_context->total_unit_num_, block_size);
-
+  // the maximum block size should be 2 times of the regular block size.
   int64_t max_block_size = MSMIN(thread_cost_context->total_unit_num_, 2 * block_size);
   double max_efficiency = static_cast<double>(block_count) / (UP_DIV(block_count, thread_num) * thread_num);
   for (int64_t prev_block_count = block_count; max_efficiency < 1.0 && prev_block_count > 1;) {
