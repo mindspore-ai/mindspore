@@ -34,7 +34,7 @@ class CustomJULIACpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<std::vector<int64_t>> shape_list_;
-  std::vector<int> ndims_;
+  std::vector<size_t> ndims_;
   std::vector<std::string> type_list_;
 
   std::vector<int64_t *> shapes_;

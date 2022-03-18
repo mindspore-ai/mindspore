@@ -39,7 +39,7 @@ void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Invalid file path, " << path << " does not exist.";
   }
   file_path_ = real_path.value();
-  module_name_ = exec_info.substr(pos1 + 1, pos2 - pos1 - 1);
+  module_name_ = exec_info.substr(pos1 + 1, (pos2 - pos1) - 1);
   func_name_ = exec_info.substr(pos2 + 1);
 
   num_input_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -52,11 +52,11 @@ void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < num_input_; i++) {
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
     std::vector<int64_t> in_shape_tmp;
-    std::for_each(in_shape.begin(), in_shape.end(),
-                  [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
-    shape_list_.emplace_back(in_shape_tmp);
-    ndims_.push_back(SizeToInt(in_shape_tmp.size()));
-    type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
+    (void)std::for_each(in_shape.begin(), in_shape.end(),
+                        [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
+    ndims_.push_back(in_shape_tmp.size());
+    shape_list_.push_back(in_shape_tmp);
+    type_list_.push_back(TypeIdToString(input_type_list[i], true));
   }
 
   num_output_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -69,11 +69,11 @@ void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < num_output_; i++) {
     std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
     std::vector<int64_t> out_shape_tmp;
-    std::for_each(out_shape.begin(), out_shape.end(),
-                  [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
-    shape_list_.emplace_back(out_shape_tmp);
-    ndims_.push_back(SizeToInt(out_shape_tmp.size()));
-    type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
+    (void)std::for_each(out_shape.begin(), out_shape.end(),
+                        [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
+    ndims_.push_back(out_shape_tmp.size());
+    shape_list_.push_back(out_shape_tmp);
+    type_list_.push_back(TypeIdToString(output_type_list[i], true));
   }
 
   (void)std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
@@ -91,9 +91,8 @@ bool CustomJULIACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   for (size_t i = 0; i < num_output_; i++) {
     params.push_back(GetDeviceAddress<void>(outputs, i));
   }
-  int nparam = SizeToInt(params.size());
+  size_t nparam = params.size();
   JuliaAPI *julia = JuliaAPI::GetInstance();
-  MS_EXCEPTION_IF_NULL(julia);
   if (!julia->Init()) {
     MS_LOG(EXCEPTION) << "Julia kernel[" << file_path_ << ":" << module_name_ << ":" << func_name_ << "] init failed.";
   }

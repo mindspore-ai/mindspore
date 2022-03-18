@@ -101,7 +101,8 @@ const auto NotTransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *
 };
 
 bool IsAkgMatMul(size_t K, size_t M, size_t N) {
-  if (K > MAX_PER_DIM_SHAPE || static_cast<int64_t>(M * N * K) >= MAX_ALL_SHAPE) {
+  if (K > MAX_PER_DIM_SHAPE ||
+      (static_cast<int64_t>(M) * static_cast<int64_t>(N) * static_cast<int64_t>(K)) >= MAX_ALL_SHAPE) {
     return false;
   }
   return true;
