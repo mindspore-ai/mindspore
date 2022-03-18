@@ -24,13 +24,16 @@ namespace device {
 std::mutex StreamSynchronizer::instance_lock_;
 std::shared_ptr<StreamSynchronizer> StreamSynchronizer::instance_ = nullptr;
 
-StreamSynchronizer::~StreamSynchronizer() {
+StreamSynchronizer::~StreamSynchronizer() noexcept {
   {
     std::unique_lock<std::mutex> lock(task_mutex_);
     stop_ = true;
   }
   do_sync_stream_cv_.notify_all();
-  worker_thread_.join();
+  if (worker_thread_.joinable()) {
+    worker_thread_.join();
+  }
+  device_context_ = nullptr;
 }
 
 bool StreamSynchronizer::SyncStream(const std::string &device_name, uint32_t timeout) {
@@ -70,7 +73,10 @@ bool StreamSynchronizer::SyncStream(const std::string &device_name, uint32_t tim
   } else {
     sync_stream_time_out_ = true;
     runtime::recovery::RecoveryContext::GetInstance()->set_need_reinit_collective(true);
-    distributed::collective::CollectiveManager::instance()->Finalize();
+    if (!distributed::collective::CollectiveManager::instance()->Finalize()) {
+      MS_LOG(ERROR) << "Finalize collective manager failed.";
+      return false;
+    }
     time_out_cv_.wait(lock, [this]() { return device_context_ == nullptr; });
     MS_LOG(WARNING) << "Synchronize stream time out.";
     return true;
