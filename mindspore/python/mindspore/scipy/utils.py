@@ -157,43 +157,47 @@ def _solve_check(func_name, arg1, arg2, arg1_name='a', arg2_name='b', sparse=Fal
 
 def _sparse_check(func_name, a, m, b, x0):
     """Used for cg, bicgstab and gmres method."""
-    # Checking type
-    _mstype_check(func_name, a, [mstype.function_type, mstype.tensor_type, mstype.csr_tensor_type], 'A')
-    _mstype_check(func_name, m, [mstype.function_type, mstype.tensor_type, mstype.csr_tensor_type], 'M')
-    _mstype_check(func_name, b, mstype.tensor_type, 'b')
-    _mstype_check(func_name, x0, mstype.tensor_type, 'x0')
 
-    # Checking shape and dtype
-    if (b.ndim != 1 and b.ndim != 2) or (b.ndim == 2 and b.shape[1] != 1):
-        _raise_value_error(
-            "For: '", func_name, "', the shape of 'b' should be like (N,) or (N, 1), bug got ", b.shape, ".")
-    if (x0.ndim != 1 and x0.ndim != 2) or (x0.ndim == 2 and x0.shape[1] != 1):
-        _raise_value_error(
-            "For: '", func_name, "', the shape of 'x0' should be like (N,) or (N, 1), bug got ", x0.shape, ".")
-    _dtype_check(func_name, b, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b')
-    _dtype_check(func_name, x0, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'x0')
+    def _check_right(arg, arg_name):
+        if arg is None:
+            return mnp.zeros_like(b)  # x0 same as b
+        # Type
+        _mstype_check(func_name, arg, mstype.tensor_type, arg_name)
+        # Shape
+        if (arg.ndim != 1 and arg.ndim != 2) or (arg.ndim == 2 and arg.shape[1] != 1):
+            _raise_value_error(
+                "For: '", func_name, "', the shape of '", arg_name, "' should be like (N,) or (N, 1), bug got ",
+                arg.shape, ".")
+        # DType
+        _dtype_check(func_name, arg, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], arg_name)
+        return arg.ravel()
 
-    def _check(arg, arg_name):
+    b = _check_right(b, 'b')
+    x0 = _check_right(x0, 'x0')
+
+    def _check_left(arg, arg_name):
+        if arg is None:
+            return lambda x: x  # identity function
+        # Type
+        _mstype_check(func_name, arg, [mstype.function_type, mstype.tensor_type, mstype.csr_tensor_type], arg_name)
         if _callable_const(F.typeof(arg)):
             return arg
-
+        # DType
         if isinstance(arg, CSRTensor):
             _dtype_check(func_name, arg.indptr, [mstype.int32], arg_name)
             _dtype_check(func_name, arg.indices, [mstype.int32], arg_name)
             _dtype_check(func_name, arg.values, [mstype.float32], arg_name)
         else:
             _dtype_check(func_name, arg, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], arg_name)
-
+        # Shape
         _solve_check(func_name, arg, b, arg_name, 'b', True)
         _solve_check(func_name, arg, x0, arg_name, 'x0', True)
         if isinstance(arg, Tensor) and F.dtype(arg) in (mstype.int32, mstype.int64):
             arg = F.cast(arg, mstype.float64)
         return arg
 
-    a = _check(a, 'A')
-    m = _check(m, 'M')
-    b = b.ravel()
-    x0 = x0.ravel()
+    a = _check_left(a, 'A')
+    m = _check_left(m, 'M')
     if F.dtype(b) in (mstype.int32, mstype.int64):
         b = F.cast(b, mstype.float64)
         x0 = F.cast(x0, mstype.float64)
