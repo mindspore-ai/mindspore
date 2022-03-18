@@ -2389,3 +2389,14 @@ class GridSampler3DGrad(Primitive):
         validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
         validator.check_bool(align_corners, 'align_corners', self.name)
         self.init_prim_io_names(inputs=['grad', 'input_x', 'grid'], outputs=['dx', 'dgrid'])
+
+
+class FractionalMaxPoolGrad(Primitive):
+    """Computes gradients for FractionalMaxPool operation."""
+
+    @prim_attr_register
+    def  __init__(self, overlapping=False):
+        self.init_prim_io_names(inputs=["orig_input", "orig_output", "out_backprop",
+                                        "row_pooling_sequence", "col_pooling_sequence"],
+                                outputs=["y"])
+        validator.check_value_type("overlapping", overlapping, [bool], self.name)
