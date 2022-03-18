@@ -142,13 +142,13 @@ def start_ps_subprocess(script_path, cache_path, str_to_check, log_name):
     # start sched first time.
     os.environ['MS_ROLE'] = 'MS_SCHED'
     cmd_first = f"cd " + cwd + "/sched && GLOG_v=2 python ../" + script_path + " ../" + cache_path + " > " \
-                + log_name + " 2>&1 &"
-    subprocess.run(cmd_first, shell=True)
+                + log_name + " 2>&1"
+    sched_process = subprocess.Popen(cmd_first, shell=True)
     # start server first time.
     os.environ['MS_ROLE'] = 'MS_PSERVER'
     cmd_first = f"cd " + cwd + "/server && GLOG_v=2 python ../" + script_path + " ../" + cache_path + " > " \
-                + log_name + " 2>&1 &"
-    subprocess.run(cmd_first, shell=True)
+                + log_name + " 2>&1"
+    server_process = subprocess.Popen(cmd_first, shell=True)
     # start worker first time.
     os.environ['MS_ROLE'] = 'MS_WORKER'
     cmd_first = f"cd " + cwd + "/worker && GLOG_v=2 python ../" + script_path + " ../" + cache_path + " > " \
@@ -158,6 +158,8 @@ def start_ps_subprocess(script_path, cache_path, str_to_check, log_name):
     check_log("sched", log_name, str_to_check)
     check_log("server", log_name, str_to_check)
     check_log("worker", log_name, str_to_check)
+    sched_process.wait()
+    server_process.wait()
 
 
 def clear_and_make_run_dir(dir_path):
