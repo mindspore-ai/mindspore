@@ -1,9 +1,19 @@
-if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/abseil-cpp/repository/archive/20200923.3.tar.gz")
-    set(MD5 "daba6e99c7a84e2242a0107bbd873669")
+set(ENABLE_GITEE_EULER OFF)
+if(ENABLE_GITEE_EULER)
+    set(GIT_REPOSITORY "https://gitee.com/src-openeuler/abseil-cpp.git")
+    set(GIT_TAG "openEuler-22.03-LTS")
+    set(MD5 "06c9554d9f9776bb1a4b848ca206c0af")
+    set(ABSL_SRC "${TOP_DIR}/build/mindspore/_deps/absl-src")
+    __download_pkg_with_git(absl ${GIT_REPOSITORY} ${GIT_TAG} ${MD5})
+    execute_process(COMMAND tar -xf ${ABSL_SRC}/abseil-cpp-20210324.2.tar.gz --strip-components 1 -C ${ABSL_SRC})
 else()
-    set(REQ_URL "https://github.com/abseil/abseil-cpp/archive/20200923.3.tar.gz")
-    set(MD5 "daba6e99c7a84e2242a0107bbd873669")
+if(ENABLE_GITEE)
+    set(REQ_URL "https://gitee.com/mirrors/abseil-cpp/repository/archive/20210324.2.tar.gz")
+    set(MD5 "e0b585398b89ee92a10d8c68ef7eed48")
+else()
+    set(REQ_URL "https://github.com/abseil/abseil-cpp/archive/20210324.2.tar.gz")
+    set(MD5 "e0b585398b89ee92a10d8c68ef7eed48")
+endif()
 endif()
 
 if(NOT ENABLE_GLIBCXX)
@@ -11,7 +21,7 @@ if(NOT ENABLE_GLIBCXX)
 endif()
 
 mindspore_add_pkg(absl
-        VER 20200923.3
+        VER 20210324.2
         LIBS absl_strings absl_throw_delegate absl_raw_logging_internal absl_int128 absl_bad_optional_access
         URL ${REQ_URL}
         MD5 ${MD5}
