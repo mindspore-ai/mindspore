@@ -42,8 +42,7 @@ class LayerNormGpuKernelMod : public NativeGpuKernelMod {
     auto mean = GetDeviceAddress<T>(outputs, 1);
     auto variance = GetDeviceAddress<T>(outputs, 2);
 
-    const T epsilon = 10e-12;
-    LayerNorm(input_row_, input_col_, param_dim_, epsilon, x, gamma, beta, y, mean, variance,
+    LayerNorm(input_row_, input_col_, param_dim_, epsilon_, x, gamma, beta, y, mean, variance,
               reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -52,7 +51,7 @@ class LayerNormGpuKernelMod : public NativeGpuKernelMod {
     kernel_node_ = kernel_node;
     int begin_norm_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_norm_axis"));
     int begin_params_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_params_axis"));
-
+    epsilon_ = static_cast<T>(GetAttr<float>(kernel_node, "epsilon"));
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input_x");
     if (is_null_input_) {
@@ -92,6 +91,7 @@ class LayerNormGpuKernelMod : public NativeGpuKernelMod {
     input_row_ = 1;
     input_col_ = 1;
     param_dim_ = 1;
+    epsilon_ = 1e-7;
     is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
@@ -114,6 +114,7 @@ class LayerNormGpuKernelMod : public NativeGpuKernelMod {
   int input_col_;
   int param_dim_;
   bool is_null_input_;
+  T epsilon_;
 };
 }  // namespace kernel
 }  // namespace mindspore
