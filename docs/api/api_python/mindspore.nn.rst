@@ -176,26 +176,6 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.MaxPool2d
 
 
-量化
------
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.ActQuant
-    mindspore.nn.Conv2dBnAct
-    mindspore.nn.Conv2dBnFoldQuant
-    mindspore.nn.Conv2dBnFoldQuantOneConv
-    mindspore.nn.Conv2dBnWithoutFoldQuant
-    mindspore.nn.Conv2dQuant
-    mindspore.nn.DenseBnAct
-    mindspore.nn.DenseQuant
-    mindspore.nn.FakeQuantWithMinMaxObserver
-    mindspore.nn.MulQuant
-    mindspore.nn.TensorAddQuant
-
 损失函数
 --------
 
