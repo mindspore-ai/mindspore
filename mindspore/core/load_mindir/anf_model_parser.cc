@@ -311,7 +311,7 @@ abstract::AbstractBasePtr MSANFModelParser::GetNodeAbstractFromAttrProtoWithType
       return BuildAbstractFunction(attr_proto);
     }
     default: {
-      MS_LOG(ERROR) << "Not support to get the abstract from AttrProto type: " << attr_proto.type();
+      MS_LOG(INFO) << "Not support to get the abstract from AttrProto type: " << attr_proto.type();
       return nullptr;
     }
   }
