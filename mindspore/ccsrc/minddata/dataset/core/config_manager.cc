@@ -42,7 +42,6 @@ ConfigManager::ConfigManager()
       rank_id_(kCfgDefaultRankId),
       seed_(kCfgDefaultSeed),
       monitor_sampling_interval_(kCfgMonitorSamplingInterval),
-      numa_enable_(false),
       callback_timout_(kCfgCallbackTimeout),
       cache_host_(kCfgDefaultCacheHost),
       cache_port_(kCfgDefaultCachePort),
