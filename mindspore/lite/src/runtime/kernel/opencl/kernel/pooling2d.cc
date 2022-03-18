@@ -113,9 +113,9 @@ int PoolingOpenCLKernel::SetGlobalLocal() {
     global_size_ = {static_cast<size_t>(input_tensor_.Slice), 1, 1};
     AlignGlobalLocal(global_size_, local_size_);
   } else {
-    const size_t global_x = out_tensors_[0]->shape()[1] * out_tensors_[0]->shape()[0];
-    const size_t global_y = out_tensors_[0]->shape()[2];
-    const size_t global_z = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
+    const size_t global_x = out_tensors_[0]->shape()[kNHWC_H] * out_tensors_[kNHWC_N]->shape()[kNHWC_N];
+    const size_t global_y = out_tensors_[0]->shape()[kNHWC_W];
+    const size_t global_z = UP_DIV(out_tensors_[0]->shape()[kNHWC_C], C4NUM);
     global_size_ = {global_z, global_y, global_x};
     local_size_ = {};
     AlignGlobalLocal(global_size_, local_size_);
@@ -124,14 +124,15 @@ int PoolingOpenCLKernel::SetGlobalLocal() {
 }
 
 int PoolingOpenCLKernel::SetGlobalConstArgs() {
-  int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
-  cl_int4 input_shape = {in_tensors_[0]->shape()[0], in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], slices};
-  cl_int4 output_shape = {out_tensors_[0]->shape()[0], out_tensors_[0]->shape()[1], out_tensors_[0]->shape()[2],
-                          slices};
+  int slices = UP_DIV(out_tensors_[0]->shape()[kNHWC_C], C4NUM);
+  cl_int4 input_shape = {in_tensors_[0]->shape()[kNHWC_N], in_tensors_[0]->shape()[kNHWC_H],
+                         in_tensors_[0]->shape()[kNHWC_W], slices};
+  cl_int4 output_shape = {out_tensors_[0]->shape()[kNHWC_N], out_tensors_[0]->shape()[kNHWC_H],
+                          out_tensors_[0]->shape()[kNHWC_W], slices};
   cl_int2 stride = {parameter_->stride_h_, parameter_->stride_w_};
   cl_int2 kernel_size = {parameter_->window_h_, parameter_->window_w_};
   cl_int2 padding = {parameter_->pad_u_, parameter_->pad_l_};
-  int arg_idx = 2;
+  int arg_idx = CLARGSINDEX2;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
@@ -161,7 +162,7 @@ int PoolingOpenCLKernel::SetLocalConstArgs() {
   int c = input_tensor_.C;
   int c4 = UP_DIV(c, C4NUM);
   cl_int4 size = {h, w, c4, c};
-  int arg_idx = 2;
+  int arg_idx = CLARGSINDEX2;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;

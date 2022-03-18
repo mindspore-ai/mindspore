@@ -135,27 +135,27 @@ int LayerNormOpenCLKernel::SetGlobalLocal() {
 int LayerNormOpenCLKernel::Initweight() {
   auto allocator = ocl_runtime_->GetAllocator();
   CHECK_NULL_RETURN(allocator);
-  GpuTensorInfo img_info(in_tensors_.at(1));
   auto weight_tensor = in_tensors_.at(1);
   CHECK_NULL_RETURN(weight_tensor);
+  GpuTensorInfo img_info(weight_tensor);
   size_t weight_size = img_info.Image2DSize;
   // allocated memory for weight and init value
   gamma_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
   if (gamma_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
+    MS_LOG(ERROR) << "Malloc gamma memory failed.";
     return RET_ERROR;
   }
   beta_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
   if (beta_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
+    MS_LOG(ERROR) << "Malloc beta memory failed.";
     return RET_ERROR;
   }
   if (allocator->MapBuffer(gamma_, CL_MAP_WRITE, nullptr, true) == nullptr) {
-    MS_LOG(ERROR) << "Map Buffer failed.";
+    MS_LOG(ERROR) << "Map gamma Buffer failed.";
     return RET_ERROR;
   }
   if (allocator->MapBuffer(beta_, CL_MAP_WRITE, nullptr, true) == nullptr) {
-    MS_LOG(ERROR) << "Map Buffer failed.";
+    MS_LOG(ERROR) << "Map beta Buffer failed.";
     return RET_ERROR;
   }
   memset(gamma_, 0x01, weight_size);
@@ -196,11 +196,11 @@ int LayerNormOpenCLKernel::Initweight() {
     }
   }
   if (allocator->UnmapBuffer(gamma_) != RET_OK) {
-    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    MS_LOG(ERROR) << "gamma UnmapBuffer failed.";
     return RET_ERROR;
   }
   if (allocator->UnmapBuffer(beta_) != RET_OK) {
-    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    MS_LOG(ERROR) << "beta UnmapBuffer failed.";
     return RET_ERROR;
   }
   return RET_OK;
