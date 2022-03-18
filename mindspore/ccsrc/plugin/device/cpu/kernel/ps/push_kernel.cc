@@ -42,7 +42,7 @@ std::vector<std::tuple<KernelAttr, PushKernelMod::PushFunc, PushKernelMod::PushI
 
 std::vector<KernelAttr> PushKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(
+  (void)std::transform(
     func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
     [](const std::tuple<KernelAttr, PushFunc, PushInitFunc> &tuple_item) { return std::get<0>(tuple_item); });
   return support_list;

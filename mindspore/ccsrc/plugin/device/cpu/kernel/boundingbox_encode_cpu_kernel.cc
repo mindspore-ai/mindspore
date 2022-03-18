@@ -38,8 +38,8 @@ void BoundingBoxEncodeCpuKernelMod::InitTaskFunc(const CNodePtr &kernel_node) {
 
 std::vector<KernelAttr> BoundingBoxEncodeCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, BoundingBoxEncodeFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, BoundingBoxEncodeFunc> &pair) { return pair.first; });
   return support_list;
 }
 

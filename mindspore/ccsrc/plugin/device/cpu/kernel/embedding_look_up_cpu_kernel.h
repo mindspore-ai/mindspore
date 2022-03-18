@@ -44,7 +44,6 @@ class BACKEND_EXPORT EmbeddingLookUpCpuKernelMod : public NativeCpuKernelMod {
     return support_list;
   }
 
- protected:
   template <typename T>
   void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 

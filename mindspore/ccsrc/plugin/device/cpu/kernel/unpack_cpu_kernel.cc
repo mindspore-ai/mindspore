@@ -120,7 +120,7 @@ std::vector<std::tuple<KernelAttr, UnpackCpuKernelMod::UnstackFunc, UnpackCpuKer
 
 std::vector<KernelAttr> UnpackCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(
+  (void)std::transform(
     func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
     [](const std::tuple<KernelAttr, UnstackFunc, InitFunc> &tuple_item) { return std::get<0>(tuple_item); });
   return support_list;

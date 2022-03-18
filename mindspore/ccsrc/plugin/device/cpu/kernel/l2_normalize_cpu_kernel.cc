@@ -200,8 +200,8 @@ void L2NormalizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 std::vector<KernelAttr> L2NormalizeCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_class_list.begin(), func_class_list.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, SpecializeL2NormFuncCreator> &pair) { return pair.first; });
+  (void)std::transform(func_class_list.begin(), func_class_list.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, SpecializeL2NormFuncCreator> &pair) { return pair.first; });
 
   return support_list;
 }

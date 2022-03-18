@@ -222,8 +222,8 @@ void CastCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   std::vector<KernelAttr> support_list;
-  std::transform(kernel_attr_lists.begin(), kernel_attr_lists.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, CastCpuKernelFuncCreator> &pair) { return pair.first; });
+  (void)std::transform(kernel_attr_lists.begin(), kernel_attr_lists.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, CastCpuKernelFuncCreator> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Cast does not support this kernel data type: " << kernel_attr;

@@ -37,7 +37,6 @@ class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKern
   float l2_{0.0};
   float lr_power_{0.0};
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)

@@ -656,8 +656,8 @@ std::vector<KernelAttr> ArithmeticSelfCpuKernelMod::GetOpSupport() {
   }
 
   std::vector<KernelAttr> support_list;
-  std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, ArithFuncCreator> &pair) { return pair.first; });
+  (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, ArithFuncCreator> &pair) { return pair.first; });
 
   return support_list;
 }
@@ -676,9 +676,9 @@ void IdentityCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 std::vector<KernelAttr> IdentityCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> kernel_attr_list;
-  std::transform(identity_kernel_attr_lists.begin(), identity_kernel_attr_lists.end(),
-                 std::back_inserter(kernel_attr_list),
-                 [](const std::pair<KernelAttr, LaunchFunc> &pair) { return pair.first; });
+  (void)std::transform(identity_kernel_attr_lists.begin(), identity_kernel_attr_lists.end(),
+                       std::back_inserter(kernel_attr_list),
+                       [](const std::pair<KernelAttr, LaunchFunc> &pair) { return pair.first; });
   return kernel_attr_list;
 }
 

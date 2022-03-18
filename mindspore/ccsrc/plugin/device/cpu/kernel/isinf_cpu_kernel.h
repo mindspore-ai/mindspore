@@ -48,7 +48,6 @@ class IsInfCpuKernelMod : public NativeCpuKernelMod {
 
   void LaunchKernelFloat16(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
- private:
   std::map<TypeId, size_t> dtype_map_ = {
     {kNumberTypeFloat16, sizeof(float16)}, {kNumberTypeFloat32, sizeof(float)}, {kNumberTypeFloat64, sizeof(double)}};
 

@@ -63,7 +63,6 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
- private:
   using MaximumLaunchFunc = std::function<bool(MaximumCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, MaximumLaunchFunc>> func_list_;

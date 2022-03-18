@@ -27,8 +27,8 @@ std::vector<std::pair<KernelAttr, FusedPushWeightKernelMod::FusedPushWeightInitF
 
 std::vector<KernelAttr> FusedPushWeightKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, FusedPushWeightInitFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, FusedPushWeightInitFunc> &pair) { return pair.first; });
   return support_list;
 }
 

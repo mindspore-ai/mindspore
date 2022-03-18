@@ -63,7 +63,6 @@ class MinimumCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
- private:
   using MinimumLaunchFunc = std::function<bool(MinimumCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, MinimumLaunchFunc>> func_list_;

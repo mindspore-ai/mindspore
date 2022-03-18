@@ -45,7 +45,7 @@ void SplitCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   std::vector<KernelAttr> support_list;
-  std::transform(
+  (void)std::transform(
     func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
     [](const std::tuple<KernelAttr, SplitFunc, InitIOFunc> &tuple_item) { return std::get<0>(tuple_item); });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);

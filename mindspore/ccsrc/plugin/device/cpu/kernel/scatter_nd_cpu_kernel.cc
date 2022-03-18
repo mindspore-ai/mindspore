@@ -119,8 +119,8 @@ void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, ScatterNdFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, ScatterNdFunc> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
     MS_LOG(EXCEPTION) << "ScatterNd does not support this kernel data type: " << kernel_attr;
@@ -211,8 +211,8 @@ std::vector<std::pair<KernelAttr, ScatterNdCpuKernelMod::ScatterNdFunc>> Scatter
 
 std::vector<KernelAttr> ScatterNdCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, ScatterNdFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, ScatterNdFunc> &pair) { return pair.first; });
   return support_list;
 }
 

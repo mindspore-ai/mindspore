@@ -34,7 +34,6 @@ class BACKEND_EXPORT SparseApplyAdamCpuKernelMod : public SparseOptimizerCpuKern
  protected:
   bool use_nesterov_{false};
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)

@@ -59,8 +59,8 @@ void MaximumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, MaximumLaunchFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MaximumLaunchFunc> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Maximum does not support this kernel data type: " << kernel_attr;

@@ -133,8 +133,8 @@ void PackFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   std::vector<KernelAttr> support_list;
-  std::transform(func_class_list.begin(), func_class_list.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, SpecializePackFwdFuncCreator> &pair) { return pair.first; });
+  (void)std::transform(func_class_list.begin(), func_class_list.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, SpecializePackFwdFuncCreator> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;

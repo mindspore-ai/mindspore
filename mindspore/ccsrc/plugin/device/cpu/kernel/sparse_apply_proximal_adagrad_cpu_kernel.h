@@ -34,7 +34,6 @@ class SparseApplyProximalAdagradCpuKernelMod : public SparseOptimizerCpuKernelMo
  protected:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)

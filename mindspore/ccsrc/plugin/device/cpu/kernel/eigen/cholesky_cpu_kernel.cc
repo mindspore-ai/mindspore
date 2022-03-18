@@ -118,8 +118,8 @@ std::vector<std::pair<KernelAttr, CholeskyCpuKernelMod::CholeskyFunc>> CholeskyC
 
 std::vector<KernelAttr> CholeskyCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, CholeskyFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, CholeskyFunc> &pair) { return pair.first; });
   return support_list;
 }
 

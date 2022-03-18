@@ -38,7 +38,6 @@ class SortCpuKernelMod : public NativeCpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
- protected:
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:
