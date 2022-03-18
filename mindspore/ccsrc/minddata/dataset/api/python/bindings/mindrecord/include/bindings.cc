@@ -29,15 +29,16 @@
 
 namespace mindspore {
 namespace dataset {
-
 PYBIND_REGISTER(ShardOperator, 0, ([](const py::module *m) {
                   (void)py::class_<mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardOperator>>(
                     *m, "ShardOperator")
-                    .def("add_child", [](std::shared_ptr<mindrecord::ShardOperator> self,
-                                         std::shared_ptr<mindrecord::ShardOperator> child) { self->SetChildOp(child); })
-                    .def("set_num_samples", [](std::shared_ptr<mindrecord::ShardOperator> self, int64_t num_samples) {
-                      self->SetNumSamples(num_samples);
-                    });
+                    .def("add_child",
+                         [](const std::shared_ptr<mindrecord::ShardOperator> &self,
+                            const std::shared_ptr<mindrecord::ShardOperator> &child) {
+                           THROW_IF_ERROR(self->SetChildOp(child));
+                         })
+                    .def("set_num_samples", [](const std::shared_ptr<mindrecord::ShardOperator> &self,
+                                               int64_t num_samples) { self->SetNumSamples(num_samples); });
                 }));
 
 PYBIND_REGISTER(ShardDistributedSample, 1, ([](const py::module *m) {
@@ -51,7 +52,7 @@ PYBIND_REGISTER(
   ShardPkSample, 1, ([](const py::module *m) {
     (void)py::class_<mindrecord::ShardPkSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardPkSample>>(
       *m, "MindrecordPkSampler")
-      .def(py::init([](int64_t kVal, std::string kColumn, bool shuffle, int64_t num_samples) {
+      .def(py::init([](int64_t kVal, const std::string &kColumn, bool shuffle, int64_t num_samples) {
         if (shuffle == true) {
           return std::make_shared<mindrecord::ShardPkSample>(kColumn, kVal, std::numeric_limits<int64_t>::max(),
                                                              GetSeed(), num_samples);
@@ -95,6 +96,5 @@ PYBIND_REGISTER(ShuffleMode, 1, ([](const py::module *m) {
                     .value("INFILE", ShuffleMode::kInfile)
                     .export_values();
                 }));
-
 }  // namespace dataset
 }  // namespace mindspore

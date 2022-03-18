@@ -36,7 +36,7 @@ class __attribute__((visibility("default"))) ShardOperator {
 
   virtual bool HasChildOp() { return child_op_ != nullptr; }
 
-  virtual Status SetChildOp(std::shared_ptr<ShardOperator> child_op) {
+  virtual Status SetChildOp(const std::shared_ptr<ShardOperator> &child_op) {
     if (child_op != nullptr) {
       child_op_ = child_op;
     }

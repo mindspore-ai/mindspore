@@ -58,7 +58,7 @@ Status StorageManager::DoServiceStart() {
   if (root_.IsDirectory()) {
     // create multiple containers and store their index in a pool
     CHECK_FAIL_RETURN_UNEXPECTED(pool_size_ > 0, "Expect positive pool_size_, but got:" + std::to_string(pool_size_));
-    for (int i = 0; i < pool_size_; i++) {
+    for (auto i = 0; i < pool_size_; i++) {
       RETURN_IF_NOT_OK(AddOneContainer());
     }
   } else {
@@ -82,7 +82,7 @@ Status StorageManager::Write(key_type *key, const std::vector<ReadableSlice> &bu
   value_type out_value;
   bool create_new_container = false;
   int old_container_pos = -1;
-  size_t last_num_container = -1;
+  int last_num_container = -1;
   do {
     SharedLock lock_s(&rw_lock_);
     size_t num_containers = containers_.size();
@@ -105,9 +105,9 @@ Status StorageManager::Write(key_type *key, const std::vector<ReadableSlice> &bu
       RETURN_STATUS_UNEXPECTED("num_containers is zero");
     }
     // Pick a random container from the writable container pool to insert.
-    std::uniform_int_distribution<int> distribution(0, pool_size_ - 1);
-    int pos_in_pool = distribution(mt);
-    int cont_index = writable_containers_pool_.at(pos_in_pool);
+    std::uniform_int_distribution<size_t> distribution(0, pool_size_ - 1);
+    size_t pos_in_pool = distribution(mt);
+    size_t cont_index = writable_containers_pool_.at(pos_in_pool);
     cont = containers_.at(cont_index);
     off64_t offset;
     Status rc = cont->Insert(buf, &offset);
@@ -135,7 +135,7 @@ Status StorageManager::Read(StorageManager::key_type key, WritableSlice *dest, s
   if (r.second) {
     auto &it = r.first;
     value_type v = *it;
-    int container_inx = v.first;
+    size_t container_inx = v.first;
     off_t offset = v.second.first;
     size_t sz = v.second.second;
     if (dest->GetSize() < sz) {
@@ -173,7 +173,7 @@ Status StorageManager::DoServiceStop() noexcept {
 
 StorageManager::StorageManager(const Path &root) : root_(root), file_id_(0), index_(), pool_size_(1) {}
 
-StorageManager::StorageManager(const Path &root, int pool_size)
+StorageManager::StorageManager(const Path &root, size_t pool_size)
     : root_(root), file_id_(0), index_(), pool_size_(pool_size) {}
 
 StorageManager::~StorageManager() { (void)StorageManager::DoServiceStop(); }

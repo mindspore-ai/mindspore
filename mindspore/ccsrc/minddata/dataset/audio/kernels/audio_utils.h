@@ -766,7 +766,8 @@ Status FindMaxPerFrame(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
   auto channel = input->shape()[0];
   auto num_of_frames = input->shape()[1];
   auto lags = input->shape()[2];
-  int32_t lag_min = static_cast<int32_t>(ceil(static_cast<float>(sample_rate) / freq_high));
+  CHECK_FAIL_RETURN_UNEXPECTED(freq_high != 0, "DetectPitchFrequency: freq_high can not be zero.");
+  auto lag_min = static_cast<int32_t>(ceil(static_cast<float>(sample_rate) / freq_high));
   TensorShape out_shape({channel, num_of_frames});
   // pack batch
   for (auto itr = input->begin<T>(); itr != input->end<T>(); ++itr) {
