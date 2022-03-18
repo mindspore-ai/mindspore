@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 namespace {
 constexpr size_t kAMatrixDimNum = 2;
 constexpr size_t kQRInputsNum = 1;

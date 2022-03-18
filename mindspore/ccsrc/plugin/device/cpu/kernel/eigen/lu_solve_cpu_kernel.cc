@@ -21,7 +21,6 @@
 #include <utility>
 #include "utils/ms_utils.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
-#include "Eigen/Dense"
 #include "Eigen/LU"
 namespace mindspore {
 namespace kernel {
@@ -103,11 +102,6 @@ bool LUSolverCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   } else {
     MS_LOG_EXCEPTION << kernel_name_ << " trans_ flag is invalid:  " << trans_;
   }
-
-  if (output_lu.RowsAtCompileTime == 0 || output_lu.ColsAtCompileTime == 0) {
-    MS_LOG_EXCEPTION << kernel_name_ << " output lu shape invalid.";
-  }
-
   return true;
 }
 

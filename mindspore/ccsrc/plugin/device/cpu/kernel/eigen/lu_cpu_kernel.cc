@@ -46,7 +46,7 @@ void LUCpuKernelMod::InitMatrixInfo(const std::vector<size_t> &shape, size_t *ro
   *col = shape.at(shape.size() - 1);
   batch_size_ = lu_min_dim;
   for (int batch = 0; batch < static_cast<int>(shape.size() - lu_reverse_row_dim); ++batch) {
-    batch_size_ *= shape.at(batch);
+    batch_size_ *= shape.at(SizeToInt(batch));
   }
 }
 
@@ -100,7 +100,7 @@ void LUCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
 
 template <typename T>
 T LUCpuKernelMod::GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j) {
-  const T *pered_lu_value = lu_value + per_value[i] * lu_col_ + j;
+  const T *pered_lu_value = lu_value + per_value[i] * SizeToInt(lu_col_) + SizeToInt(j);
   return *pered_lu_value;
 }
 
@@ -127,7 +127,7 @@ bool LUCpuKernelMod::UpdateMajorPermutation(T *lu_value, std::vector<int> *per_v
 template <typename T>
 void LUCpuKernelMod::SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j,
                                         const T &value) {
-  T *per_lu_value = lu_value + per_value[i] * lu_col_ + j;
+  T *per_lu_value = lu_value + per_value[i] * SizeToInt(lu_col_) + SizeToInt(j);
   *per_lu_value = value;
 }
 
@@ -233,7 +233,7 @@ bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
     (void)memset_s(reinterpret_cast<void *>(permutation_value), count, 0, count);
     for (size_t i = 0; i < pivots_col_; ++i) {
       int position = per_value[i];
-      int *per_addr = permutation_value + position * permutation_row_ + i;
+      int *per_addr = permutation_value + position * SizeToInt(permutation_row_) + SizeToInt(i);
       *per_addr = 1;
     }
   }
