@@ -35,7 +35,6 @@ class SparseApplyLazyAdamCpuKernelMod : public SparseOptimizerCpuKernelMod {
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool use_nesterov_{false};
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)

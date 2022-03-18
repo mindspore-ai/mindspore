@@ -93,8 +93,8 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   const dnnl::memory::dims dilation(kernel.size(), kPoolingDilation);
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
-  std::transform(kernel.begin(), kernel.end(), std::back_inserter(kernel_),
-                 [](const int64_t &k) { return LongToFloat(k); });
+  (void)std::transform(kernel.begin(), kernel.end(), std::back_inserter(kernel_),
+                       [](const int64_t &k) { return LongToFloat(k); });
   PaddingInfo padding_info{pad_mode, kernel, strides, dilation, &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
   GetPadding(kernel_node, src_shape, padding_info);
 

@@ -88,10 +88,10 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
   }
 
-  std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
-                 [](auto &v) { return &v[0]; });
-  std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
-                 [](auto &str) { return str.c_str(); });
+  (void)std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
+                       [](auto &v) { return &v[0]; });
+  (void)std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
+                       [](auto &str) { return str.c_str(); });
 }
 
 bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,

@@ -45,7 +45,6 @@ class Expm1CpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
- private:
   TypeId input_dtype_{kTypeUnknown};
 };
 }  // namespace kernel

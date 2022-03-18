@@ -89,7 +89,7 @@ std::vector<TypeId> NativeCpuKernelMod::GetInputDtypes(const CNodePtr &kernel_no
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     auto dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
-    input_types.emplace_back(dtype);
+    (void)input_types.emplace_back(dtype);
   }
   return input_types;
 }
@@ -98,7 +98,7 @@ std::vector<std::string> NativeCpuKernelMod::GetInputFormats(const CNodePtr &ker
   std::vector<std::string> input_formats;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    input_formats.emplace_back(kOpFormat_DEFAULT);
+    (void)input_formats.emplace_back(kOpFormat_DEFAULT);
   }
   return input_formats;
 }
@@ -108,7 +108,7 @@ std::vector<TypeId> NativeCpuKernelMod::GetOutputDtypes(const CNodePtr &kernel_n
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     auto dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
-    output_types.emplace_back(dtype);
+    (void)output_types.emplace_back(dtype);
   }
   return output_types;
 }
@@ -117,7 +117,7 @@ std::vector<std::string> NativeCpuKernelMod::GetOutputFormats(const CNodePtr &ke
   std::vector<std::string> output_formats;
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    output_formats.emplace_back(kOpFormat_DEFAULT);
+    (void)output_formats.emplace_back(kOpFormat_DEFAULT);
   }
   return output_formats;
 }
@@ -132,7 +132,7 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::strin
       (void)kernel_attrs.insert(kernel_attrs.end(), oplib_support.begin(), oplib_support.end());
     }
     (void)support_map_.emplace(kernel_name, kernel_attrs);
-    initialize_.insert(kernel_name);
+    (void)initialize_.insert(kernel_name);
   }
 
   return support_map_[kernel_name];

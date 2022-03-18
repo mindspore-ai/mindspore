@@ -272,10 +272,10 @@ std::vector<
 
 std::vector<KernelAttr> NMSWithMaskCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::tuple<KernelAttr, NMSWithMaskLFunc, NMSWithMaskIFunc> &tuple_item) {
-                   return std::get<0>(tuple_item);
-                 });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::tuple<KernelAttr, NMSWithMaskLFunc, NMSWithMaskIFunc> &tuple_item) {
+                         return std::get<0>(tuple_item);
+                       });
   return support_list;
 }
 

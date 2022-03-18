@@ -218,8 +218,8 @@ std::vector<KernelAttr> UnaryOpCpuKernelMod::GetOpSupport() {
   }
 
   std::vector<KernelAttr> support_list;
-  std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, UnaryOpCpuFuncCreator> &pair) { return pair.first; });
+  (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, UnaryOpCpuFuncCreator> &pair) { return pair.first; });
   return support_list;
 }
 

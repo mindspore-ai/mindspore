@@ -122,8 +122,8 @@ std::vector<std::pair<KernelAttr, SpaceToDepthCpuKernelMod::SpaceToDepthFunc>> S
 
 std::vector<KernelAttr> SpaceToDepthCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, SpaceToDepthFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, SpaceToDepthFunc> &pair) { return pair.first; });
   return support_list;
 }
 

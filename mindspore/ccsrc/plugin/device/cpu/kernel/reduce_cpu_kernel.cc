@@ -304,8 +304,8 @@ void ReduceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   std::vector<KernelAttr> support_list;
-  std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, SpecializeReduceFuncCreator> &pair) { return pair.first; });
+  (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, SpecializeReduceFuncCreator> &pair) { return pair.first; });
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);

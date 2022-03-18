@@ -298,8 +298,8 @@ void ROIAlignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 std::vector<KernelAttr> ROIAlignCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(kernel_attr_list.begin(), kernel_attr_list.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, SpecializeROIAlignFuncCreator> &pair) { return pair.first; });
+  (void)std::transform(kernel_attr_list.begin(), kernel_attr_list.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, SpecializeROIAlignFuncCreator> &pair) { return pair.first; });
 
   return support_list;
 }

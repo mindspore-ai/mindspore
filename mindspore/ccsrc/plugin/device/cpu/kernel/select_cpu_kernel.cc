@@ -85,8 +85,8 @@ std::vector<std::pair<KernelAttr, SelectCpuKernelMod::SelectFunc>> SelectCpuKern
 
 std::vector<KernelAttr> SelectCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, SelectFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, SelectFunc> &pair) { return pair.first; });
   return support_list;
 }
 

@@ -72,7 +72,6 @@ class AicpuExtInfoHandler {
   static void GetShapeAndType(NotNull<const AicpuShapeAndType *> shape_and_type, NotNull<std::vector<int64_t> *> shape,
                               NotNull<TypeId *> data_type);
 
- private:
   const std::string node_name_;
   const uint32_t input_num_;
   const uint32_t output_num_;

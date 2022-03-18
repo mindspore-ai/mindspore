@@ -119,8 +119,8 @@ std::vector<std::pair<KernelAttr, MaskedSelectGradCpuKernelMod::MaskedSelectGrad
 
 std::vector<KernelAttr> MaskedSelectGradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, MaskedSelectGradFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MaskedSelectGradFunc> &pair) { return pair.first; });
   return support_list;
 }
 

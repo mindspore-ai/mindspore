@@ -86,8 +86,8 @@ std::vector<std::pair<KernelAttr, SmoothL1LossGradCpuKernelMod::SmoothL1LossGrad
 
 std::vector<KernelAttr> SmoothL1LossGradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, SmoothL1LossGradFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, SmoothL1LossGradFunc> &pair) { return pair.first; });
   return support_list;
 }
 

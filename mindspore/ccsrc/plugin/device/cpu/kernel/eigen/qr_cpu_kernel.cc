@@ -107,8 +107,8 @@ std::vector<std::pair<KernelAttr, QRCpuKernelMod::QRFunc>> QRCpuKernelMod::func_
 
 std::vector<KernelAttr> QRCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, QRFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, QRFunc> &pair) { return pair.first; });
   return support_list;
 }
 

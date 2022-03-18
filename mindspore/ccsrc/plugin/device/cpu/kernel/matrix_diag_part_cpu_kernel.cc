@@ -138,8 +138,8 @@ std::vector<std::pair<KernelAttr, MatrixDiagPartCpuKernelMod::MatrixDiagPartFunc
 
 std::vector<KernelAttr> MatrixDiagPartCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, MatrixDiagPartFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MatrixDiagPartFunc> &pair) { return pair.first; });
   return support_list;
 }
 
