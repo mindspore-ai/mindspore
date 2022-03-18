@@ -432,11 +432,11 @@ void DfGraphConvertor::BuildSaveCheckpointGraph() {
   size_t index = 0;
   string name;
 
-  int32_t count_size = std::count_if(vars_.begin(), vars_.end(), [](const auto &it) {
-    return (it.second == nullptr || it.first.find("/") != std::string::npos);
+  size_t count_size = std::count_if(vars_.begin(), vars_.end(), [](const auto &it) {
+    return LongToUlong(it.second == nullptr || it.first.find("/") != std::string::npos);
   });
 
-  (void)save_op.create_dynamic_input_tensors(vars_.size() - static_cast<size_t>(count_size));
+  (void)save_op.create_dynamic_input_tensors(static_cast<uint32_t>(vars_.size() - count_size));
 
   // for each "parameter" in anf graph excluding "input"
   for (const auto &it : vars_) {
@@ -444,7 +444,7 @@ void DfGraphConvertor::BuildSaveCheckpointGraph() {
     if (it.second == nullptr || name.find("/") != std::string::npos) continue;
     Variable variable(name);
     (void)variable.update_output_desc_y(it.second->GetOutputDesc(0));
-    (void)save_op.set_dynamic_input_tensors(index++, variable);
+    (void)save_op.set_dynamic_input_tensors(static_cast<uint32_t>(index++), variable);
 
     graph_inputs.push_back(variable);
 
@@ -818,7 +818,7 @@ void DfGraphConvertor::GetCaseNodeInput(const CNodePtr node, const CNodePtr inpu
       tuple_items->push_back(out_handle_cache_[item.get()]);
     } else {
       MS_LOG(DEBUG) << "Add an empty out handler: " << item->ToString();
-      tuple_items->push_back(OutHandler());
+      tuple_items->emplace_back(OutHandler());
     }
   }
 
@@ -1508,7 +1508,7 @@ void DfGraphConvertor::ConvertMakeTuple(const CNodePtr node) {
     } else if (out_handle_cache_.find(item.get()) != out_handle_cache_.end()) {
       tuple_items->push_back(out_handle_cache_[item.get()]);
     } else {
-      tuple_items->push_back(OutHandler(nullptr, "", item));
+      tuple_items->emplace_back(OutHandler(nullptr, "", item));
     }
   }
 
@@ -1667,7 +1667,7 @@ OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node, const std::stack
       return OutHandler(nullptr, "");
     }
     op_draw_name_[draw_index] = ss.str();
-    return adpt->getOutput(Convert(node), UintToInt(index_stack.top()));
+    return adpt->getOutput(Convert(node), static_cast<int32_t>(index_stack.top()));
   }
 }
 
