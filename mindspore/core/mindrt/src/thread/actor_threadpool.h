@@ -34,6 +34,7 @@ class ActorWorker : public Worker {
   explicit ActorWorker(ThreadPool *pool) : Worker(pool) {}
   void CreateThread() override;
   bool ActorActive();
+  ~ActorWorker() override{};
 
  private:
   void RunWithSpin();

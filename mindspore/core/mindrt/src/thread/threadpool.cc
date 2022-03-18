@@ -63,7 +63,7 @@ void Worker::SetAffinity() {
 #endif
 }
 
-void Worker::InitWorkerMask(const std::vector<int> &core_list, size_t workers_size) {
+void Worker::InitWorkerMask(const std::vector<int> &core_list, const size_t workers_size) {
 #ifdef _WIN32
   static uint32_t windows_core_index = 0;
   core_id_ = windows_core_index++;

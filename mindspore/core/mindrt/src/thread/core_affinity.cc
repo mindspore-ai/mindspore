@@ -302,7 +302,7 @@ int CoreAffinity::InitHardwareCoreInfo() {
   return THREAD_OK;
 }
 
-std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) {
+std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) const {
   std::vector<int> bind_id;
 #ifdef SERVER_INFERENCE
   if (bind_mode == Power_NoBind) {
