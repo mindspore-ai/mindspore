@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,24 +88,24 @@ int GetMaxDivisor(int x, int divisor) {
 }
 
 int GetMaxDivisorStrategy0(int x, int divisor) {
-  if (divisor >= 8 && x % 8 == 0) {
-    return 8;
-  } else if (divisor >= 4 && x % 4 == 0) {
-    return 4;
-  } else if (divisor >= 2 && x % 2 == 0) {
-    return 2;
+  if (divisor >= C8NUM && x % C8NUM == 0) {
+    return C8NUM;
+  } else if (divisor >= C4NUM && x % C4NUM == 0) {
+    return C4NUM;
+  } else if (divisor >= C2NUM && x % C2NUM == 0) {
+    return C2NUM;
   } else {
     return GetMaxDivisor(x, divisor);
   }
 }
 
 int GetMaxDivisorStrategy1(int x, int divisor) {
-  if (divisor >= 8 && x % 8 == 0) {
-    return x / 8;
-  } else if (divisor >= 4 && x % 4 == 0) {
-    return x / 4;
-  } else if (divisor >= 2 && x % 2 == 0) {
-    return x / 2;
+  if (divisor >= C8NUM && x % C8NUM == 0) {
+    return x / C8NUM;
+  } else if (divisor >= C4NUM && x % C4NUM == 0) {
+    return x / C4NUM;
+  } else if (divisor >= C2NUM && x % C2NUM == 0) {
+    return x / C2NUM;
   } else {
     return GetMaxDivisor(x, divisor);
   }
@@ -190,11 +190,11 @@ int GetBroadcastGpuAxis(int ndim, int ori_axis) {
   }
   int axis = 0;
   if (ndim == DIMENSION_1D) {
-    axis = 3;
+    axis = kNHWC_C;
   } else if (ndim == DIMENSION_2D) {
-    axis = ori_axis == 0 ? 0 : 3;
+    axis = ori_axis == kNHWC_N ? kNHWC_N : kNHWC_C;
   } else if (ndim == DIMENSION_3D) {
-    axis = ori_axis == 0 ? 0 : ori_axis == 1 ? 2 : 3;
+    axis = ori_axis == kNHWC_N ? kNHWC_N : ori_axis == kNHWC_H ? kNHWC_W : kNHWC_C;
   } else if (ndim == DIMENSION_4D) {
     axis = ori_axis;
   } else if (ndim > DIMENSION_4D) {
@@ -233,17 +233,17 @@ void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, c
   // scalar
   if (tensor.ElementsNum == 1) {
     if (dst_is_fp16) {
-      dst_fp16[3] = dst_fp16[2] = dst_fp16[1] = dst_fp16[0];
+      dst_fp16[kNHWC_C] = dst_fp16[kNHWC_W] = dst_fp16[kNHWC_H] = dst_fp16[kNHWC_N];
     } else {
-      dst_fp32[3] = dst_fp32[2] = dst_fp32[1] = dst_fp32[0];
+      dst_fp32[kNHWC_C] = dst_fp32[kNHWC_W] = dst_fp32[kNHWC_H] = dst_fp32[kNHWC_N];
     }
   }
 }
 #else
 void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, const GpuTensorInfo &tensor,
                      int data_type) {
-  MS_ASSERT(src);
   MS_ASSERT(dst);
+  MS_ASSERT(src);
   auto src_fp32 = reinterpret_cast<float *>(src);
   auto src_int32 = reinterpret_cast<int32_t *>(src);
   auto dst_fp32 = reinterpret_cast<float *>(dst);
@@ -264,7 +264,7 @@ void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, c
   }
   // scalar
   if (tensor.ElementsNum == 1) {
-    dst_fp32[3] = dst_fp32[2] = dst_fp32[1] = dst_fp32[0];
+    dst_fp32[kNHWC_C] = dst_fp32[kNHWC_W] = dst_fp32[kNHWC_H] = dst_fp32[kNHWC_N];
   }
 }
 #endif
@@ -274,13 +274,13 @@ void PackNCHWToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, c
                      int data_type) {
   MS_ASSERT(src);
   MS_ASSERT(dst);
-  auto src_fp16 = reinterpret_cast<float16_t *>(src);
-  auto src_fp32 = reinterpret_cast<float32_t *>(src);
   auto src_int32 = reinterpret_cast<int32_t *>(src);
-  auto dst_fp16 = reinterpret_cast<float16_t *>(dst);
-  auto dst_fp32 = reinterpret_cast<float32_t *>(dst);
+  auto src_fp32 = reinterpret_cast<float32_t *>(src);
+  auto src_fp16 = reinterpret_cast<float16_t *>(src);
   auto dst_int32 = reinterpret_cast<int32_t *>(dst);
-  for (int n = 0, src_idx = 0; n < tensor.N; n++) {
+  auto dst_fp32 = reinterpret_cast<float32_t *>(dst);
+  auto dst_fp16 = reinterpret_cast<float16_t *>(dst);
+  for (int src_idx = 0, n = 0; n < tensor.N; n++) {
     for (int c = 0; c < tensor.C; ++c) {
       for (int h = 0; h < tensor.D * tensor.H; ++h) {
         for (int w = 0; w < tensor.W; ++w, ++src_idx) {
@@ -299,9 +299,9 @@ void PackNCHWToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, c
   // scalar
   if (tensor.ElementsNum == 1) {
     if (dst_is_fp16) {
-      dst_fp16[3] = dst_fp16[2] = dst_fp16[1] = dst_fp16[0];
+      dst_fp16[kNHWC_N] = dst_fp16[kNHWC_H] = dst_fp16[kNHWC_W] = dst_fp16[kNHWC_C];
     } else {
-      dst_fp32[3] = dst_fp32[2] = dst_fp32[1] = dst_fp32[0];
+      dst_fp32[kNHWC_N] = dst_fp32[kNHWC_H] = dst_fp32[kNHWC_W] = dst_fp32[kNHWC_C];
     }
   }
 }
@@ -330,7 +330,7 @@ void PackNCHWToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, c
   }
   // scalar
   if (tensor.ElementsNum == 1) {
-    dst_fp32[3] = dst_fp32[2] = dst_fp32[1] = dst_fp32[0];
+    dst_fp32[kNHWC_C] = dst_fp32[kNHWC_W] = dst_fp32[kNHWC_H] = dst_fp32[kNHWC_N];
   }
 }
 #endif

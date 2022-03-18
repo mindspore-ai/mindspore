@@ -287,22 +287,22 @@ int BatchNormOpenCLKernel::Initweight() {
   // allocated memory for weight and init value
   scale_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
   if (scale_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
+    MS_LOG(ERROR) << "Malloc scale failed.";
     return RET_ERROR;
   }
   offset_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
   if (offset_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
+    MS_LOG(ERROR) << "Malloc offset failed.";
     return RET_ERROR;
   }
   mean_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
   if (mean_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
+    MS_LOG(ERROR) << "Malloc mean failed.";
     return RET_ERROR;
   }
   variance_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
   if (variance_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
+    MS_LOG(ERROR) << "Malloc variance failed.";
     return RET_ERROR;
   }
 
@@ -310,7 +310,7 @@ int BatchNormOpenCLKernel::Initweight() {
     MS_LOG(ERROR) << "Map Buffer failed.";
     return RET_ERROR;
   }
-  memset(scale_, 1, weight_size);
+  memset(scale_, 0x01, weight_size);
   memset(offset_, 0x00, weight_size);
   memset(mean_, 0x00, weight_size);
   memset(variance_, 0x00, weight_size);
@@ -335,23 +335,23 @@ int BatchNormOpenCLKernel::Prepare() {
   std::string source = batchnorm_source;
   const std::string program_name = "Batch_normalization";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
-    MS_LOG(ERROR) << "Load source failed.";
+    MS_LOG(ERROR) << "Load batchnorm source failed.";
     return RET_ERROR;
   }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Build kernel failed.";
+    MS_LOG(ERROR) << "Build batchnorm kernel failed.";
     return ret;
   }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   ret = Initweight();
   if (ret) {
     MS_LOG(ERROR) << "Initweight failed ";
-    return RET_ERROR;
+    return ret;
   }
   if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
+    MS_LOG(ERROR) << "SetConstArgs failed.";
     return RET_ERROR;
   }
   ret = SetGlobalLocal();

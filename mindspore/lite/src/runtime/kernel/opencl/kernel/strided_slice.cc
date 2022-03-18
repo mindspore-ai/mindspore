@@ -30,6 +30,12 @@ using mindspore::schema::PrimitiveType_SliceFusion;
 using mindspore::schema::PrimitiveType_StridedSlice;
 
 namespace mindspore::kernel {
+namespace {
+const int INPUT_BEGIN = 1;
+const int INPUT_END = 2;
+const int INPUT_STRIDE = 3;
+}  // namespace
+
 int StridedSliceOpenCLKernel::CheckSpecsWithoutShape() {
   if (type() == PrimitiveType_SliceFusion) {
     if (in_tensors_.size() != INPUT_TENSOR_SIZE_3) {
@@ -52,22 +58,23 @@ int StridedSliceOpenCLKernel::CheckSpecsWithoutShape() {
 int StridedSliceOpenCLKernel::CheckSpecs() {
   if (type() == PrimitiveType_SliceFusion) {
     int in_ndim = in_tensors_.front()->shape().size();
-    if (CheckParamLikeTensor("Slice", "begin", in_tensors_.at(SECOND_INPUT), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+    if (CheckParamLikeTensor("Slice", "begin", in_tensors_.at(INPUT_BEGIN), kNumberTypeInt32, {in_ndim}) != RET_OK) {
       return RET_ERROR;
     }
-    if (CheckParamLikeTensor("Slice", "size", in_tensors_.at(THIRD_INPUT), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+    if (CheckParamLikeTensor("Slice", "size", in_tensors_.at(INPUT_END), kNumberTypeInt32, {in_ndim}) != RET_OK) {
       return RET_ERROR;
     }
   } else if (type() == PrimitiveType_StridedSlice) {
     int in_ndim = in_tensors_.front()->shape().size();
-    if (CheckParamLikeTensor("StridedSlice", "begin", in_tensors_.at(SECOND_INPUT), kNumberTypeInt32, {in_ndim}) !=
+    if (CheckParamLikeTensor("StridedSlice", "begin", in_tensors_.at(INPUT_BEGIN), kNumberTypeInt32, {in_ndim}) !=
         RET_OK) {
       return RET_ERROR;
     }
-    if (CheckParamLikeTensor("StridedSlice", "end", in_tensors_.at(2), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+    if (CheckParamLikeTensor("StridedSlice", "end", in_tensors_.at(INPUT_END), kNumberTypeInt32, {in_ndim}) != RET_OK) {
       return RET_ERROR;
     }
-    if (CheckParamLikeTensor("StridedSlice", "stride", in_tensors_.at(3), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+    if (CheckParamLikeTensor("StridedSlice", "stride", in_tensors_.at(INPUT_STRIDE), kNumberTypeInt32, {in_ndim}) !=
+        RET_OK) {
       return RET_ERROR;
     }
   } else {
@@ -122,13 +129,13 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
   io_slices_ = {static_cast<cl_int>(input_info.Slice), static_cast<cl_int>(output_info.Slice)};
 
   if (type() == PrimitiveType_SliceFusion) {
-    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data());
+    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(INPUT_BEGIN)->data());
     MS_ASSERT(begin);
-    auto *size = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
+    auto *size = reinterpret_cast<int32_t *>(in_tensors_.at(INPUT_END)->data());
     MS_ASSERT(size);
     Broadcast2GpuShape(begin, input_info.NDim, begin_.s, DIMENSION_4D, 0);
     Broadcast2GpuShape(size, input_info.NDim, size_.s, DIMENSION_4D, -1);
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < C4NUM; ++i) {
       if (begin_.s[i] < 0) {
         begin_.s[i] += input_shape_.s[i];
       }
@@ -146,18 +153,18 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
       }
     }
   } else {
-    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data());
+    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(INPUT_BEGIN)->data());
     MS_ASSERT(begin);
-    auto *end = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
+    auto *end = reinterpret_cast<int32_t *>(in_tensors_.at(INPUT_END)->data());
     MS_ASSERT(end);
-    auto *stride = reinterpret_cast<int32_t *>(in_tensors_.at(3)->data());
+    auto *stride = reinterpret_cast<int32_t *>(in_tensors_.at(INPUT_STRIDE)->data());
     MS_ASSERT(stride);
     cl_int4 end_ = input_shape_;
     Broadcast2GpuShape(begin, input_info.NDim, begin_.s, DIMENSION_4D, 0);
     Broadcast2GpuShape(end, input_info.NDim, end_.s, DIMENSION_4D);
     Broadcast2GpuShape(stride, input_info.NDim, stride_.s, DIMENSION_4D, 1);
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < C4NUM; ++i) {
       // begin is negative
       if (begin_.s[i] < 0) {
         begin_.s[i] += input_shape_.s[i];
@@ -195,7 +202,7 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
   std::vector<int> size_not_1;
   auto output_shape = out_tensors_.front()->shape();
   std::copy_if(output_shape.begin(), output_shape.end(), std::back_inserter(shape_not_1), [](int x) { return x > 1; });
-  std::copy_if(size_.s, size_.s + 4, std::back_inserter(size_not_1), [](int x) { return x > 1; });
+  std::copy_if(size_.s, size_.s + C4NUM, std::back_inserter(size_not_1), [](int x) { return x > 1; });
   if (shape_not_1 != size_not_1) {
     MS_LOG(ERROR) << "Slice/StridedSlice kernel output shape infer error";
     return RET_ERROR;
@@ -204,7 +211,7 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
 }
 
 int StridedSliceOpenCLKernel::SetConstArgs() {
-  int arg_cn = 2;
+  int arg_cn = CLARGSINDEX2;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
@@ -238,10 +245,10 @@ int StridedSliceOpenCLKernel::SetGlobalLocal() {
 
   const int max_divider = 8;
   auto max_work_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
-  size_t local_c = GetMaxDivisorStrategy0(global_size_[2], max_divider);
+  size_t local_c = GetMaxDivisorStrategy0(global_size_[kNHWC_W], max_divider);
   local_c = std::max<size_t>(local_c, 1);
   size_t local_hw = max_work_group_size / local_c;
-  size_t local_h = std::min(UP_DIV(global_size_[0], 2), local_hw);
+  size_t local_h = std::min(UP_DIV(global_size_[0], kNHWC_W), local_hw);
   size_t local_w = std::min(local_hw / local_h, global_size_[1]);
   local_size_ = {local_h, local_w, local_c};
   AlignGlobalLocal(global_size_, local_size_);

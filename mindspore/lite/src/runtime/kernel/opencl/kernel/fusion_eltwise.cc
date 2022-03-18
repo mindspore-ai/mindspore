@@ -293,22 +293,22 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
         }
         size_t num = tensor_info->ElementsNum;
         size_t size = tensor_info->Image2DSize;
-        void *buffer = allocator->Malloc(size, lite::opencl::MemType::BUF);
-        if (buffer == nullptr) {
+        void *buffer_weight = allocator->Malloc(size, lite::opencl::MemType::BUF);
+        if (buffer_weight == nullptr) {
           MS_LOG(ERROR) << "Malloc failed.";
           return RET_ERROR;
         }
-        if (allocator->MapBuffer(buffer, CL_MAP_WRITE, nullptr, true) == nullptr) {
+        if (allocator->MapBuffer(buffer_weight, CL_MAP_WRITE, nullptr, true) == nullptr) {
           MS_LOG(ERROR) << "Map Buffer failed.";
           return RET_ERROR;
         }
-        memset(buffer, 0x00, size);
-        CopyNumber<float, float>(buffer, tensor->data(), num);
-        if (allocator->UnmapBuffer(buffer) != RET_OK) {
+        memset(buffer_weight, 0x00, size);
+        CopyNumber<float, float>(buffer_weight, tensor->data(), num);
+        if (allocator->UnmapBuffer(buffer_weight) != RET_OK) {
           MS_LOG(ERROR) << "UnmapBuffer failed.";
           return RET_ERROR;
         }
-        buffer_weights_.push_back(buffer);
+        buffer_weights_.push_back(buffer_weight);
       }
     }
   }

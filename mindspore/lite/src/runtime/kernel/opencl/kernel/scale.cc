@@ -33,6 +33,12 @@ using mindspore::lite::opencl::MemType;
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
+namespace {
+const int INPUT_DATA = 0;
+const int INPUT_SCALE = 1;
+const int INPUT_OFFSET = 2;
+}  // namespace
+
 int ScaleOpenCLKernel::CheckSpecs() {
   auto *param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
   if (param->activation_type_ != ActType_No && param->activation_type_ != ActType_Relu &&
@@ -41,9 +47,9 @@ int ScaleOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto *scale_param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
-  auto in_tensor = in_tensors_.at(0);
+  auto in_tensor = in_tensors_.at(INPUT_DATA);
   auto in_shape = in_tensor->shape();
-  auto scale_tensor = in_tensors_.at(1);
+  auto scale_tensor = in_tensors_.at(INPUT_SCALE);
   auto scale_shape = scale_tensor->shape();
   auto axis = scale_param->axis_;
   if (axis < 0) {
@@ -52,8 +58,9 @@ int ScaleOpenCLKernel::CheckSpecs() {
   bool isBroadCast = scale_shape.size() != in_shape.size();
   if (isBroadCast) {
     bool isScalar = scale_tensor->ElementsNum() == 1;
-    bool isScaleC = (in_shape.size() == 4 && axis == 3) || (in_shape.size() == 2 && axis == 1);
-    bool isScaleH = in_shape.size() == 4 && axis == 1;
+    bool isScaleC =
+      (in_shape.size() == DIMENSION_4D && axis == kNHWC_C) || (in_shape.size() == DIMENSION_2D && axis == kNHWC_H);
+    bool isScaleH = in_shape.size() == DIMENSION_4D && axis == kNHWC_H;
     if (isScalar || !(isScaleC || isScaleH)) {
       MS_LOG(WARNING) << "unsupported scale axis " << axis << ", in shape " << in_shape << ", scale shape"
                       << scale_shape;
@@ -83,9 +90,9 @@ void ScaleOpenCLKernel::Image2dGetWorkGroupSize() {
 }
 
 int ScaleOpenCLKernel::InitWeights() {
-  auto *in_tensor = in_tensors_[0];
-  auto *scale_tensor = in_tensors_[1];
-  auto *offset_tensor = in_tensors_[2];
+  auto *in_tensor = in_tensors_[INPUT_DATA];
+  auto *scale_tensor = in_tensors_[INPUT_SCALE];
+  auto *offset_tensor = in_tensors_[INPUT_OFFSET];
   auto scale_dtype = scale_tensor->data_type();
   auto offset_dtype = offset_tensor->data_type();
   if (!weight_vector_flag_ || !scale_tensor->IsConst()) {
@@ -157,9 +164,9 @@ int ScaleOpenCLKernel::InitWeights() {
 int ScaleOpenCLKernel::Prepare() {
   std::string kernel_name;
   auto *scale_param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
-  auto in_tensor = in_tensors_.at(0);
+  auto in_tensor = in_tensors_.at(INPUT_DATA);
   auto in_shape = in_tensor->shape();
-  auto scale_tensor = in_tensors_.at(1);
+  auto scale_tensor = in_tensors_.at(INPUT_SCALE);
   auto scale_shape = scale_tensor->shape();
   axis_ = scale_param->axis_;
   if (axis_ < 0) {
@@ -172,9 +179,10 @@ int ScaleOpenCLKernel::Prepare() {
     } else if (scale_shape.size() == DIMENSION_1D) {
       weight_vector_flag_ = true;
       broadcast_flag_ = true;
-      if ((in_shape.size() == DIMENSION_4D && axis_ == 3) || (in_shape.size() == DIMENSION_2D && axis_ == 1)) {
+      if ((in_shape.size() == DIMENSION_4D && axis_ == kNHWC_C) ||
+          (in_shape.size() == DIMENSION_2D && axis_ == kNHWC_H)) {
         kernel_name = "Scale_C";
-      } else if (in_shape.size() == DIMENSION_4D && axis_ == 1) {
+      } else if (in_shape.size() == DIMENSION_4D && axis_ == kNHWC_H) {
         kernel_name = "Scale_H";
         broadcast_H_flag_ = true;
       } else {
@@ -219,8 +227,8 @@ int ScaleOpenCLKernel::SetKernelArg(int *idx) {
     return RET_ERROR;
   }
   if (weight_vector_flag_) {
-    void *scale = scale_ptr_ == nullptr ? in_tensors_[1]->data() : scale_ptr_;
-    void *offset = offset_ptr_ == nullptr ? in_tensors_[2]->data() : offset_ptr_;
+    void *scale = scale_ptr_ == nullptr ? in_tensors_[INPUT_SCALE]->data() : scale_ptr_;
+    void *offset = offset_ptr_ == nullptr ? in_tensors_[INPUT_OFFSET]->data() : offset_ptr_;
     if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale) != CL_SUCCESS) {
       return RET_ERROR;
     }
@@ -229,18 +237,18 @@ int ScaleOpenCLKernel::SetKernelArg(int *idx) {
     }
   } else {
 #ifdef ENABLE_FP16
-    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-      float scale = static_cast<float *>(in_tensors_[1]->data())[0];
-      float offset = static_cast<float *>(in_tensors_[2]->data())[0];
+    if (in_tensors_[INPUT_SCALE]->data_type() == kNumberTypeFloat32) {
+      float scale = static_cast<float *>(in_tensors_[INPUT_SCALE]->data())[0];
+      float offset = static_cast<float *>(in_tensors_[INPUT_OFFSET]->data())[0];
       if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale) != CL_SUCCESS) {
         return RET_ERROR;
       }
       if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, offset) != CL_SUCCESS) {
         return RET_ERROR;
       }
-    } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
-      float16_t scale = static_cast<float16_t *>(in_tensors_[1]->data())[0];
-      float16_t offset = static_cast<float16_t *>(in_tensors_[2]->data())[0];
+    } else if (in_tensors_[INPUT_SCALE]->data_type() == kNumberTypeFloat16) {
+      float16_t scale = static_cast<float16_t *>(in_tensors_[INPUT_SCALE]->data())[0];
+      float16_t offset = static_cast<float16_t *>(in_tensors_[INPUT_OFFSET]->data())[0];
       if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(scale)) != CL_SUCCESS) {
         return RET_ERROR;
       }
@@ -248,13 +256,13 @@ int ScaleOpenCLKernel::SetKernelArg(int *idx) {
         return RET_ERROR;
       }
     } else {
-      MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[1]->data_type();
+      MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[INPUT_SCALE]->data_type();
       return RET_ERROR;
     }
 #else
-    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-      float scale = static_cast<float *>(in_tensors_[1]->data())[0];
-      float offset = static_cast<float *>(in_tensors_[2]->data())[0];
+    if (in_tensors_[INPUT_SCALE]->data_type() == kNumberTypeFloat32) {
+      float scale = static_cast<float *>(in_tensors_[INPUT_SCALE]->data())[0];
+      float offset = static_cast<float *>(in_tensors_[INPUT_OFFSET]->data())[0];
       if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale) != CL_SUCCESS) {
         return RET_ERROR;
       }
@@ -262,15 +270,15 @@ int ScaleOpenCLKernel::SetKernelArg(int *idx) {
         return RET_ERROR;
       }
     } else {
-      MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[1]->data_type();
+      MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[INPUT_SCALE]->data_type();
       return RET_ERROR;
     }
 #endif
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[INPUT_DATA]->data()) != CL_SUCCESS) {
     return RET_ERROR;
   }
-  cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
+  cl_int2 output_shape{static_cast<int>(global_size_[kNHWC_N]), static_cast<int>(global_size_[kNHWC_H])};
   if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape) != CL_SUCCESS) {
     return RET_ERROR;
   }
@@ -290,12 +298,13 @@ int ScaleOpenCLKernel::Run() {
 
   if (weight_vector_flag_ && broadcast_flag_) {
     if (broadcast_H_flag_) {
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[1]->shape()[0]) != CL_SUCCESS) {
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[INPUT_SCALE]->shape()[0]) != CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
         return RET_ERROR;
       }
     } else {
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, UP_DIV(in_tensors_[1]->shape()[0], C4NUM)) != CL_SUCCESS) {
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, UP_DIV(in_tensors_[INPUT_SCALE]->shape()[0], C4NUM)) !=
+          CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
         return RET_ERROR;
       }

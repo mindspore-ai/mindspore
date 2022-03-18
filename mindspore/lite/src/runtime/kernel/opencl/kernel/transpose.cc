@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,31 +54,31 @@ void TransposeOpenCLKernel::BroadCastPerm() {
   auto *perm = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data());
   int num_axes = in_tensors_.at(1)->shape().at(0);
   if (tensor_size_.NDim == DIMENSION_2D) {
-    perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
-    perm_4d_[1] = 1;
-    perm_4d_[2] = 2;
-    perm_4d_[3] = tensor_size_.AlignAxis(perm[1]);
+    perm_4d_[kNHWC_N] = tensor_size_.AlignAxis(perm[kNHWC_N]);
+    perm_4d_[kNHWC_H] = DIMENSION_1D;
+    perm_4d_[kNHWC_W] = DIMENSION_2D;
+    perm_4d_[kNHWC_C] = tensor_size_.AlignAxis(perm[kNHWC_H]);
     if (num_axes != static_cast<int>(tensor_size_.NDim)) {
-      perm_4d_[0] = 0;
-      perm_4d_[1] = 1;
-      perm_4d_[2] = 2;
-      perm_4d_[3] = 3;
+      perm_4d_[kNHWC_N] = DIMENSION_0D;
+      perm_4d_[kNHWC_H] = DIMENSION_1D;
+      perm_4d_[kNHWC_W] = DIMENSION_2D;
+      perm_4d_[kNHWC_C] = DIMENSION_3D;
     }
   } else if (tensor_size_.NDim == DIMENSION_3D) {
-    perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
-    perm_4d_[1] = 1;
-    perm_4d_[2] = tensor_size_.AlignAxis(perm[1]);
-    perm_4d_[3] = tensor_size_.AlignAxis(perm[2]);
+    perm_4d_[kNHWC_N] = tensor_size_.AlignAxis(perm[kNHWC_N]);
+    perm_4d_[kNHWC_H] = DIMENSION_1D;
+    perm_4d_[kNHWC_W] = tensor_size_.AlignAxis(perm[kNHWC_H]);
+    perm_4d_[kNHWC_C] = tensor_size_.AlignAxis(perm[kNHWC_W]);
   } else if (tensor_size_.NDim == DIMENSION_4D) {
-    perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
-    perm_4d_[1] = tensor_size_.AlignAxis(perm[1]);
-    perm_4d_[2] = tensor_size_.AlignAxis(perm[2]);
-    perm_4d_[3] = tensor_size_.AlignAxis(perm[3]);
+    perm_4d_[kNHWC_N] = tensor_size_.AlignAxis(perm[kNHWC_N]);
+    perm_4d_[kNHWC_H] = tensor_size_.AlignAxis(perm[kNHWC_H]);
+    perm_4d_[kNHWC_W] = tensor_size_.AlignAxis(perm[kNHWC_W]);
+    perm_4d_[kNHWC_C] = tensor_size_.AlignAxis(perm[kNHWC_C]);
   } else {
-    perm_4d_[0] = 0;
-    perm_4d_[1] = 1;
-    perm_4d_[2] = 2;
-    perm_4d_[3] = 3;
+    perm_4d_[kNHWC_N] = DIMENSION_0D;
+    perm_4d_[kNHWC_H] = DIMENSION_1D;
+    perm_4d_[kNHWC_W] = DIMENSION_2D;
+    perm_4d_[kNHWC_C] = DIMENSION_3D;
   }
 }
 
@@ -86,10 +86,12 @@ int TransposeOpenCLKernel::Prepare() {
   BroadCastPerm();
 
   std::string kernel_name = "transpose";
-  if (tensor_size_.N == 1 && perm_4d_[0] == 0 && perm_4d_[1] == 3 && perm_4d_[2] == 1 && perm_4d_[3] == 2) {
+  if (tensor_size_.N == 1 && perm_4d_[kNHWC_N] == DIMENSION_0D && perm_4d_[kNHWC_H] == DIMENSION_3D &&
+      perm_4d_[kNHWC_W] == DIMENSION_1D && perm_4d_[kNHWC_C] == DIMENSION_2D) {
     type_ = TransposeType::AXIS0312;
     kernel_name += "_0312";
-  } else if (tensor_size_.N == 1 && perm_4d_[0] == 0 && perm_4d_[1] == 2 && perm_4d_[2] == 3 && perm_4d_[3] == 1) {
+  } else if (tensor_size_.N == 1 && perm_4d_[kNHWC_N] == 0 && perm_4d_[kNHWC_H] == DIMENSION_2D &&
+             perm_4d_[kNHWC_W] == DIMENSION_3D && perm_4d_[kNHWC_C] == DIMENSION_1D) {
     type_ = TransposeType::AXIS0231;
     kernel_name += "_0231";
   } else {
@@ -98,7 +100,7 @@ int TransposeOpenCLKernel::Prepare() {
   }
 
   if (in_tensors_[0]->shape().size() == static_cast<int>(DIMENSION_4D) &&
-      in_tensors_[0]->shape()[2] * UP_DIV(in_tensors_[0]->shape()[3], C4NUM) >
+      in_tensors_[0]->shape()[kNHWC_W] * UP_DIV(in_tensors_[0]->shape()[kNHWC_C], C4NUM) >
         static_cast<int>(ocl_runtime_->GetMaxImage2DWidth())) {
     // just for input
     kernel_name += "_oversize";
@@ -132,18 +134,18 @@ int TransposeOpenCLKernel::SetConstArgs() {
   size_t h = tensor_size_.H;
   size_t w = tensor_size_.W;
   size_t c = tensor_size_.C;
-  int arg_idx = 2;
+  int arg_idx = CLARGSINDEX2;
   cl_int4 shape = {static_cast<int>(n), static_cast<int>(h), static_cast<int>(w), static_cast<int>(c)};
   if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, shape) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
   if (type_ == TransposeType::GENERAL) {
-    int de_perm[4];  // output to input perm
-    for (int i = 0; i < 4; i++) {
+    int de_perm[C4NUM];  // output to input perm
+    for (int i = 0; i < C4NUM; i++) {
       de_perm[perm_4d_[i]] = i;
     }
-    cl_int4 de_perm_cl = {de_perm[0], de_perm[1], de_perm[2], de_perm[3]};
+    cl_int4 de_perm_cl = {de_perm[kNHWC_N], de_perm[kNHWC_H], de_perm[kNHWC_W], de_perm[kNHWC_C]};
     if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, de_perm_cl) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
@@ -164,7 +166,7 @@ int TransposeOpenCLKernel::SetGlobalLocal() {
   size_t h = tensor_size_.H;
   size_t w = tensor_size_.W;
   size_t c = tensor_size_.C;
-  size_t c4 = UP_DIV(c, 4);
+  size_t c4 = UP_DIV(c, C4NUM);
   local_size_ = {};
   if (type_ == TransposeType::AXIS0312) {  // NHWC -> NCHW
     global_size_ = {UP_DIV(h, C4NUM), w, c4};
