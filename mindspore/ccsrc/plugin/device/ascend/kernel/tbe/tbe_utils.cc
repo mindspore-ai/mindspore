@@ -39,7 +39,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
 #include "securec/include/securec.h"
 #include "include/common/utils/json_operation_utils.h"
-#include "mindspore/ccsrc/debug/common.h"
+#include "mindspore/ccsrc/include/common/debug/common.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {

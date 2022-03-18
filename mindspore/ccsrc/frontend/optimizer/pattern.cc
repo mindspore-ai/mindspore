@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "frontend/optimizer/pattern.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
 namespace opt {

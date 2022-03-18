@@ -22,19 +22,22 @@
 #include <memory>
 #include "utils/ms_context.h"
 #include "include/common/utils/tensorprint_utils.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace context {
-bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr);
-bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force = false);
-void SetHcclOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
-void GetGeOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
-void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options);
-bool InitGe(const std::shared_ptr<MsContext> &inst_context);
-bool FinalizeGe(const std::shared_ptr<MsContext> &inst_context, bool force = false);
-bool PynativeInitGe(const std::shared_ptr<MsContext> &inst_context);
-bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context);
-bool IsGeInited(const std::shared_ptr<MsContext> &inst_context);
+BACKEND_EXPORT bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr);
+BACKEND_EXPORT bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force = false);
+BACKEND_EXPORT void SetHcclOptions(const std::shared_ptr<MsContext> &inst_context,
+                                   std::map<std::string, std::string> *ge_options);
+BACKEND_EXPORT void GetGeOptions(const std::shared_ptr<MsContext> &inst_context,
+                                 std::map<std::string, std::string> *ge_options);
+BACKEND_EXPORT void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options);
+BACKEND_EXPORT bool InitGe(const std::shared_ptr<MsContext> &inst_context);
+BACKEND_EXPORT bool FinalizeGe(const std::shared_ptr<MsContext> &inst_context, bool force = false);
+BACKEND_EXPORT bool PynativeInitGe(const std::shared_ptr<MsContext> &inst_context);
+BACKEND_EXPORT bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context);
+BACKEND_EXPORT bool IsGeInited(const std::shared_ptr<MsContext> &inst_context);
 }  // namespace context
 }  // namespace mindspore
 

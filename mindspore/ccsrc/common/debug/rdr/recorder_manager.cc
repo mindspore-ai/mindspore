@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/rdr/recorder_manager.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #include <utility>
-#include "debug/rdr/base_recorder.h"
-#include "debug/env_config_parser.h"
+#include "include/common/debug/rdr/base_recorder.h"
+#include "include/common/debug/env_config_parser.h"
 
 namespace mindspore {
+RecorderManager &RecorderManager::Instance() {
+  static RecorderManager manager{};
+  manager.UpdateRdrEnable();
+  return manager;
+}
+
 void RecorderManager::UpdateRdrEnable() {
   static bool updated = false;
   if (updated) {
@@ -131,4 +137,12 @@ void RecorderManager::ClearAll() {
   rdr_has_record_mem_ = false;
   MS_LOG(INFO) << "RDR clear all recorders.";
 }
+
+namespace RDR {
+void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
+
+void Snapshot() { mindspore::RecorderManager::Instance().Snapshot(); }
+
+void ResetRecorder() { mindspore::RecorderManager::Instance().ClearAll(); }
+}  // namespace RDR
 }  // namespace mindspore

@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseApplyLazyAdamCpuKernelMod : public SparseOptimizerCpuKernelMod {
+class BACKEND_EXPORT SparseApplyLazyAdamCpuKernelMod : public SparseOptimizerCpuKernelMod {
  public:
   SparseApplyLazyAdamCpuKernelMod() = default;
   ~SparseApplyLazyAdamCpuKernelMod() override = default;

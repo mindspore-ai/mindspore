@@ -144,6 +144,11 @@ const size_t &PsCacheManager::QueryHashTableSize(const std::string &param_name) 
   return iter->second.cache_vocab_size;
 }
 
+PsCacheManager &PsCacheManager::GetInstance() {
+  static PsCacheManager instance{};
+  return instance;
+}
+
 void PsCacheManager::Initialize() {
   MS_LOG(INFO) << "PS cache initialize.";
   if (!Worker::GetInstance().running()) {

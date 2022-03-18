@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/env_config_parser.h"
+#include "include/common/debug/env_config_parser.h"
 #include <algorithm>
 #include <fstream>
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 
@@ -37,6 +37,12 @@ constexpr auto KEY_MEM_REUSE = "mem_reuse";
 }  // namespace
 
 namespace mindspore {
+EnvConfigParser &EnvConfigParser::GetInstance() {
+  static EnvConfigParser instance = EnvConfigParser();
+  instance.Parse();
+  return instance;
+}
+
 #ifdef ENABLE_DUMP_IR
 std::optional<bool> GetRdrEnableFromEnv() {
   // get environment variable to configure RDR

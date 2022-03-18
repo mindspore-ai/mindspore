@@ -19,7 +19,6 @@
 #include <memory>
 #include <string>
 #include "pybind11/pybind11.h"
-#include "pybind_api/api_register.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "base/core_ops.h"
@@ -30,6 +29,7 @@
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/pipeline.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
 // namespace to support composite operators definition

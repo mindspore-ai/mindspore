@@ -21,6 +21,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/ms_utils.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace opt {
@@ -47,7 +48,7 @@ class ConstInputToAttrInfoRegister {
   mindspore::HashSet<size_t> input_attr_set_;
 };
 
-class ConstInputToAttrInfoRegistry {
+class BACKEND_EXPORT ConstInputToAttrInfoRegistry {
  public:
   static ConstInputToAttrInfoRegistry &Instance();
   void Register(const ConstInputToAttrInfoRegister &reg);

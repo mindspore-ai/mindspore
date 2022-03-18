@@ -21,6 +21,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 
 namespace mindspore {
 std::string Vector2String(const std::vector<uint32_t> &v) {
@@ -70,4 +71,17 @@ void StreamExecOrderRecorder::Export() {
   fout.close();
   ChangeFileMode(real_file_path, S_IRUSR);
 }
+
+namespace RDR {
+bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, const std::vector<CNodePtr> &exec_order) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  StreamExecOrderRecorderPtr stream_exec_order_recorder =
+    std::make_shared<StreamExecOrderRecorder>(submodule_name, name, exec_order);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(stream_exec_order_recorder));
+  return ans;
+}
+}  // namespace RDR
 }  // namespace mindspore

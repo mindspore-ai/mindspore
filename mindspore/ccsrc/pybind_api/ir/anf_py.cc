@@ -16,7 +16,7 @@
 #include <string>
 #include "ir/anf.h"
 
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
 // Define python 'RefKey' class.

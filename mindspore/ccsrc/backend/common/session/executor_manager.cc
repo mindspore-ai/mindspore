@@ -17,6 +17,11 @@
 #include "include/common/thread_pool.h"
 namespace mindspore {
 namespace session {
+ExecutorManager &ExecutorManager::Instance() {
+  static ExecutorManager instance{};
+  return instance;
+}
+
 std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &device_name, uint32_t device_id) {
   std::string device_key = device_name + "_" + std::to_string(device_id);
   auto iter = executors_.find(device_key);

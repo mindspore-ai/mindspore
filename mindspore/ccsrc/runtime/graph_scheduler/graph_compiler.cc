@@ -30,13 +30,12 @@
 #include "ir/tensor.h"
 #include "backend/common/optimizer/helper.h"
 #include "base/base_ref_utils.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/dump_proto.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "debug/anf_ir_dump.h"
-#include "debug/rdr/running_data_recorder.h"
+#include "include/common/debug/anf_ir_dump.h"
 #endif
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"

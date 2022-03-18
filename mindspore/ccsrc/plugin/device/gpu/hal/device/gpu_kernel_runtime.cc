@@ -16,7 +16,7 @@
 #include "plugin/device/gpu/hal/device/gpu_kernel_runtime.h"
 #include <algorithm>
 #include <map>
-#include "debug/anf_ir_utils.h"
+#include "include/common/debug/anf_dump_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "plugin/device/gpu/hal/device/gpu_event.h"
@@ -48,8 +48,7 @@
 #include "debug/debug_services.h"
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#include "debug/rdr/recorder_manager.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/mem_address_recorder.h"
 #endif
 

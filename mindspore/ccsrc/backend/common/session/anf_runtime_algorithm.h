@@ -37,6 +37,7 @@
 #include "include/common/utils/contract.h"
 #include "utils/anf_utils.h"
 #include "backend/common/session/kernel_graph.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace session {
@@ -45,7 +46,7 @@ using DeviceAddressPtr = device::DeviceAddressPtr;
 using Address = kernel::Address;
 using AddressPtr = kernel::AddressPtr;
 
-class AnfRuntimeAlgorithm {
+class BACKEND_EXPORT AnfRuntimeAlgorithm {
  public:
   static AnfNodePtr MakeMonadValueNode(const KernelGraphPtr &kg);
   static void KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &former, const AnfNodePtr &latter);

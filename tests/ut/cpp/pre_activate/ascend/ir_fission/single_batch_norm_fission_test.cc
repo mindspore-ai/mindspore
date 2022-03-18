@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/single_batch_norm_fission.h"
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace opt {

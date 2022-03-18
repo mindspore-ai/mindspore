@@ -18,7 +18,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/utils.h"
 #include "kernel/kernel_build_info.h"
 #include "backend/common/optimizer/optimizer.h"

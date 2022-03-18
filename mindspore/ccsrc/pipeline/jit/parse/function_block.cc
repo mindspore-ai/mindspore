@@ -28,7 +28,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
 #include "utils/info.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {

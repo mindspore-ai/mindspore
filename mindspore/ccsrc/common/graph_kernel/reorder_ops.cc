@@ -24,7 +24,7 @@
 #include "utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {

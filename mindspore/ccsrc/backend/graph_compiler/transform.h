@@ -32,6 +32,7 @@
 #include "backend/graph_compiler/segment_runner.h"
 #include "backend/graph_compiler/backend.h"
 #include "backend/graph_compiler/graph_partition.h"
+#include "include/backend/visible.h"
 
 // mindspore namespace is the top level namespace of MindSpore project.
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
@@ -42,14 +43,14 @@ extern const char kGeVm[];
 // compile namespace
 // A sub namespace in ME to support compile related definition.
 namespace compile {
-extern std::vector<PrimitivePtr> nonlinear_ops;
-extern std::vector<PrimitivePtr> control_ops;
-const std::vector<PrimitivePtr> &GetMsNonlinearOps();
+BACKEND_EXPORT extern std::vector<PrimitivePtr> nonlinear_ops;
+BACKEND_EXPORT extern std::vector<PrimitivePtr> control_ops;
+BACKEND_EXPORT const std::vector<PrimitivePtr> &GetMsNonlinearOps();
 FuncGraphPtr WrapPrimitives(const FuncGraphPtr &graph);
 using VmEvalFunc = std::function<BaseRef(const VectorRef &)>;
 using VmEvalFuncPtr = std::shared_ptr<std::function<BaseRef(const VectorRef &)>>;
 
-class CompileGraph {
+class BACKEND_EXPORT CompileGraph {
  public:
   explicit CompileGraph(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list = nonlinear_ops);
 
@@ -110,7 +111,7 @@ class CompileGraph {
 using CompileGraphPtr = std::shared_ptr<CompileGraph>;
 
 // CompileGraphs is used to Convert a graph cluster into instruction lists.
-class CompileGraphs {
+class BACKEND_EXPORT CompileGraphs {
  public:
   explicit CompileGraphs(const BackendPtr &backend, const std::vector<PrimitivePtr> &cut_list = nonlinear_ops);
 
@@ -132,10 +133,10 @@ class CompileGraphs {
   BackendPtr backend_;
 };
 
-BackendPtr CreateBackend();
+BACKEND_EXPORT BackendPtr CreateBackend();
 
 // Set mindRT whether enable. GPU and CPU use mindRT currently, and other hardwares will use it in the future.
-void SetMindRTEnable();
+BACKEND_EXPORT void SetMindRTEnable();
 
 }  // namespace compile
 }  // namespace mindspore

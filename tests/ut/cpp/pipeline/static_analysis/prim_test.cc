@@ -24,7 +24,7 @@
 #include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/static_analysis/helper.h"
 #include "frontend/operator/ops.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "ir/tensor.h"
 #include "utils/symbolic.h"
 #include "base/core_ops.h"

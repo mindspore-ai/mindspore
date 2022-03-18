@@ -29,9 +29,9 @@
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 #include "pipeline/jit/action.h"
 
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"
-#include "frontend/optimizer/cse.h"
+#include "include/common/utils/cse.h"
 #include "include/common/utils/convert_utils.h"
 
 namespace mindspore {

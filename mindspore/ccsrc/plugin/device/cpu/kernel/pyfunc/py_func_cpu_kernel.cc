@@ -22,7 +22,7 @@
 #include "Eigen/src/Core/arch/CUDA/Half.h"
 #include "abstract/utils.h"
 #include "plugin/device/cpu/hal/device/cpu_common.h"
-#include "pybind_api/ir/tensor_py.h"
+#include "include/common/utils/python_adapter.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
@@ -182,7 +182,7 @@ py::tuple RawMemoryToPyObjects(const std::vector<AddressPtr> &inputs, const PyFu
         const tensor::TensorPtr &tensor = input_tensors[i];
         CHECK_RET_WITH_EXCEPT(memcpy_s(tensor->data_c(), tensor->Size(), inputs[i]->addr, inputs[i]->size), EOK,
                               "memcpy failed.");
-        result[i] = tensor::TensorPy::AsNumpy(*tensor);
+        result[i] = python_adapter::PyAdapterCallback::TensorToNumpy(*tensor);
         break;
       }
       default:

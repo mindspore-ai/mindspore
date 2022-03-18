@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 
-#include "debug/rdr/base_recorder.h"
+#include "include/common/debug/rdr/base_recorder.h"
 
 namespace mindspore {
 namespace device {
@@ -44,5 +44,9 @@ class TaskDebugInfoRecorder : public BaseRecorder {
   std::vector<TaskDebugInfoPtr> task_debug_info_;
 };
 using TaskDebugInfoRecorderPtr = std::shared_ptr<TaskDebugInfoRecorder>;
+namespace RDR {
+bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
+                         const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
+}  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_TASK_DEBUG_INFO_RECORDER_H_

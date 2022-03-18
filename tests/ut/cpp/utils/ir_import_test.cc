@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 
 #include "utils/log_adapter.h"
-#include "debug/anf_ir_utils.h"
+#include "pipeline/jit/debug/anf_ir_utils.h"
 #include "pipeline/jit/parse/parse.h"
 #include "ir/manager.h"
 #include "pipeline/jit/static_analysis/prim.h"

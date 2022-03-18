@@ -244,35 +244,7 @@ set(SUB_COMP
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        debug pybind_api
-        profiler ps fl distributed
-        kernel
-        common/mem_reuse
-        backend/common/optimizer
-        backend/common/pass
-        backend/common/session
-        backend/common/somas
-        common/graph_kernel
-        backend/graph_compiler
-        runtime/collective
-        runtime/device
-        runtime/graph_scheduler
-        runtime/hardware
-        runtime/recovery
-        runtime/pynative
-        plugin/device/ascend/hal/device
-        plugin/device/ascend/hal/hardware
-        plugin/device/ascend/hal/hccl_adapter
-        plugin/device/ascend/kernel
-        plugin/device/ascend/optimizer
-        plugin/device/cpu/hal/device
-        plugin/device/cpu/hal/hardware
-        plugin/device/cpu/kernel
-        plugin/device/cpu/optimizer
-        plugin/device/gpu/hal/device
-        plugin/device/gpu/hal/hardware
-        plugin/device/gpu/kernel
-        plugin/device/gpu/optimizer
+        pybind_api
 )
 
 foreach(_comp ${SUB_COMP})
@@ -287,10 +259,12 @@ endforeach()
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 
+add_subdirectory(debug)
 set(COMMON_SUB_COMP
         transform/graph_ir
         utils
         common
+        common/debug
         )
 
 foreach(_comp ${COMMON_SUB_COMP})
@@ -325,6 +299,90 @@ target_link_libraries(mindspore PUBLIC securec mindspore::flatbuffers)
 
 if(NOT WIN32)
   target_link_libraries(mindspore PUBLIC dl)
+endif()
+
+set(BACKEND_SUB_COMP
+        profiler
+        ps
+        fl
+        distributed
+        kernel
+        common/mem_reuse
+        backend/common/optimizer
+        backend/common/pass
+        backend/common/session
+        backend/common/somas
+        common/graph_kernel
+        backend/graph_compiler
+        runtime/collective
+        runtime/device
+        runtime/graph_scheduler
+        runtime/hardware
+        runtime/pynative
+        runtime/recovery
+        plugin/device/ascend/hal/device
+        plugin/device/ascend/hal/hardware
+        plugin/device/ascend/hal/hccl_adapter
+        plugin/device/ascend/kernel
+        plugin/device/ascend/optimizer
+        plugin/device/cpu/hal/device
+        plugin/device/cpu/hal/hardware
+        plugin/device/cpu/kernel
+        plugin/device/cpu/optimizer
+        plugin/device/gpu/hal/device
+        plugin/device/gpu/hal/hardware
+        plugin/device/gpu/kernel
+        plugin/device/gpu/optimizer
+        )
+
+foreach(_comp ${BACKEND_SUB_COMP})
+    add_subdirectory(${_comp})
+    string(REPLACE "/" "_" sub ${_comp})
+    if(TARGET _mindspore_${sub}_obj)
+        list(APPEND BACKEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_${sub}_obj>)
+        add_dependencies(_mindspore_${sub}_obj proto_input)
+        if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+            target_compile_definitions(_mindspore_${sub}_obj PRIVATE BACKEND_DLL)
+        endif()
+    endif()
+endforeach()
+
+set_property(SOURCE ${BACKEND_SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
+add_library(mindspore_backend SHARED ${BACKEND_SUB_OBJECTS_SRC})
+if(MODE_ASCEND_ACL)
+    add_library(mindspore_backend_static STATIC ${BACKEND_SUB_OBJECTS_SRC})
+endif()
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    target_link_libraries(mindspore_backend PRIVATE mindspore::pybind11_module mindspore_debug)
+else()
+    target_link_libraries(mindspore_backend PRIVATE mindspore_debug)
+endif()
+target_link_libraries(mindspore_backend PRIVATE mindspore_core mindspore_common proto_input mindspore::protobuf)
+target_link_libraries(mindspore_backend PRIVATE securec)
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set_target_properties(mindspore_backend PROPERTIES MACOSX_RPATH ON)
+    set_target_properties(mindspore_backend PROPERTIES INSTALL_RPATH @loader_path)
+else()
+    set_target_properties(mindspore_backend PROPERTIES INSTALL_RPATH $ORIGIN)
+endif()
+if(ENABLE_CPU AND NOT WIN32)
+    target_link_libraries(mindspore_backend PRIVATE ps_cache)
+endif()
+if(ENABLE_CPU)
+    target_link_libraries(mindspore_backend PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
+endif()
+if(ENABLE_GPU)
+    message("add gpu lib to mindspore_backend")
+    target_link_libraries(mindspore_backend PRIVATE gpu_cuda_lib gpu_queue cublas cuda_ops
+            ${CUDA_PATH}/lib64/libcurand.so
+            ${CUDNN_LIBRARY_PATH}
+            ${CUDA_PATH}/lib64/libcudart.so
+            ${CUDA_PATH}/lib64/stubs/libcuda.so
+            ${CUDA_PATH}/lib64/libcusolver.so
+            ${CUDA_PATH}/lib64/libcufft.so)
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        target_link_libraries(mindspore_backend PRIVATE mindspore::crypto mindspore::ssl)
+    endif()
 endif()
 
 if(MODE_ASCEND_ALL OR MODE_ASCEND_ACL)
@@ -386,7 +444,7 @@ if(MODE_ASCEND_ALL)
     find_library(OPT_FEATURE opt_feature ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
                 ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
 
-    target_link_libraries(mindspore PUBLIC ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
+    target_link_libraries(mindspore_backend PUBLIC ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
             -Wl,--no-as-needed ${OPTILING} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE} ${PROFILING})
     target_link_libraries(mindspore PUBLIC -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
@@ -437,13 +495,13 @@ set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore PUBLIC mindspore::pybind11_module)
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core
-        mindspore_common)
+        mindspore_common mindspore_backend)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf
         mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::eigen mindspore::json)
     target_link_libraries(mindspore PUBLIC mindspore::event_core ps_cache)
     target_link_libraries(_c_expression PRIVATE -Wl,-all_load mindspore proto_input -Wl,-noall_load mindspore_core
-        mindspore_common)
+        mindspore_common mindspore_backend)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
 else()
     if(ENABLE_CPU AND NOT WIN32)
@@ -455,7 +513,7 @@ else()
         endif()
     endif()
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore proto_input -Wl,--no-whole-archive
-            mindspore_core mindspore_common)
+            mindspore_core mindspore_common mindspore_backend)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
 endif()
 
@@ -468,14 +526,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 if(ENABLE_GPU)
-    message("add gpu lib to c_expression")
-    target_link_libraries(_c_expression PRIVATE gpu_cuda_lib gpu_queue cublas cuda_ops
-                          ${CUDA_PATH}/lib64/libcurand.so
-                          ${CUDNN_LIBRARY_PATH}
-                          ${CUDA_PATH}/lib64/libcudart.so
-                          ${CUDA_PATH}/lib64/stubs/libcuda.so
-                          ${CUDA_PATH}/lib64/libcusolver.so
-                          ${CUDA_PATH}/lib64/libcufft.so)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_link_libraries(_c_expression PRIVATE mindspore::crypto mindspore::ssl)
     endif()
@@ -514,4 +564,3 @@ if(ENABLE_D)
 endif()
 
 add_subdirectory(cxx_api)
-# include(${CMAKE_CURRENT_SOURCE_DIR}/sharedlib.cmake)

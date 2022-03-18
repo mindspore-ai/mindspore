@@ -21,7 +21,7 @@
 #include <regex>
 #include <set>
 
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"

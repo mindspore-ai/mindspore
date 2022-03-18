@@ -22,7 +22,7 @@
 #include "include/common/utils/utils.h"
 #include "profiler/device/profiling.h"
 #include "profiler/device/ascend/pynative_profiling.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
 namespace profiler {

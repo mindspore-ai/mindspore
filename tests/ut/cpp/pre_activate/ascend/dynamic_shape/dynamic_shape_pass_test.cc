@@ -19,8 +19,8 @@
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
 #include "common/backend_common_test.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
 

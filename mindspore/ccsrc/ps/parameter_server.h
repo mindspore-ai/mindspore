@@ -63,16 +63,13 @@
 #include "proto/ps.pb.h"
 #include "ps/core/ps_server_node.h"
 #include "ps/core/node.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
-class ParameterServer {
+class BACKEND_EXPORT ParameterServer {
  public:
-  static ParameterServer &GetInstance() {
-    static ParameterServer instance;
-    return instance;
-  }
-
+  static ParameterServer &GetInstance();
   void Run(const FuncGraphPtr &func_graph);
 
  private:

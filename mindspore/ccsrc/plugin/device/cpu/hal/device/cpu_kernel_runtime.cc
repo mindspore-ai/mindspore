@@ -36,13 +36,12 @@
 #include "utils/profile.h"
 #include "utils/trace_base.h"
 #include "debug/data_dump/cpu_e2e_dump.h"
-#include "debug/env_config_parser.h"
+#include "include/common/debug/env_config_parser.h"
 #ifdef MEM_REUSE_DEBUG
 #include "common/mem_reuse/mem_reuse_checker.h"
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#include "debug/rdr/recorder_manager.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/mem_address_recorder.h"
 #endif
 

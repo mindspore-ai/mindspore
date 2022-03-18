@@ -23,9 +23,9 @@
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "debug/anf_ir_utils.h"
+#include "include/common/debug/anf_dump_utils.h"
 #include "debug/data_dump/dump_utils.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "debug/debugger/debugger.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "proto/debug_graph.pb.h"

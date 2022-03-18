@@ -24,9 +24,9 @@
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "debug/trace.h"
-#include "debug/anf_ir_dump.h"
-#include "pybind_api/api_register.h"
+#include "pipeline/jit/debug/trace.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/pybind_api/api_register.h"
 #include "pybind_api/pybind_patch.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "ir/param_info.h"

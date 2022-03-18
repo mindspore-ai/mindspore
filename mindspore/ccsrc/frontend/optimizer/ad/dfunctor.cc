@@ -32,7 +32,7 @@
 #include "pipeline/jit/action.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/pynative/pynative_execute.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace ad {

@@ -24,6 +24,7 @@
 
 #include "backend/common/optimizer/pass.h"
 #include "backend/common/optimizer/node_pass.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace opt {
@@ -41,7 +42,7 @@ class CacheManager {
 };
 
 // @brief For optimization passes management
-class PassManager {
+class BACKEND_EXPORT PassManager {
  public:
   explicit PassManager(const std::string &name = "pm", bool run_only_once = true)
       : name_(name), passes_{}, run_only_once_(run_only_once), cache_manager_(std::make_shared<CacheManager>()) {}

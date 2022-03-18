@@ -49,6 +49,11 @@ void SignalHandler(int signal) {
   (void)g_communicator_with_server->Stop();
 }
 
+Server &Server::GetInstance() {
+  static Server instance;
+  return instance;
+}
+
 void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const std::vector<RoundConfig> &rounds_config,
                         const CipherConfig &cipher_config, const FuncGraphPtr &func_graph, size_t executor_threshold) {
   MS_EXCEPTION_IF_NULL(func_graph);

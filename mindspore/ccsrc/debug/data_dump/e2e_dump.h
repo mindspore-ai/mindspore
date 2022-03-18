@@ -30,6 +30,7 @@
 #ifdef ENABLE_D
 #include "proto/dump_data.pb.h"
 #endif
+#include "include/backend/visible.h"
 
 using mindspore::kernel::KernelLaunchInfo;
 #ifndef ENABLE_DEBUGGER
@@ -127,7 +128,7 @@ class E2eDump {
   static bool DumpTensorDataIfNeeded(const dump_data_t &dump_tensor_info);
 #endif
 
-  inline static unsigned int starting_graph_id = INT32_MAX;
+  BACKEND_EXPORT inline static unsigned int starting_graph_id = INT32_MAX;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_UTIL_H_

@@ -29,12 +29,13 @@
 #include "ir/graph_utils.h"
 #include "utils/ms_utils.h"
 #include "backend/common/optimizer/helper.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace opt {
 using PatternListType = std::initializer_list<BaseRef>;
 
-class PatternProcessPass : public NodePass {
+class BACKEND_EXPORT PatternProcessPass : public NodePass {
  public:
   explicit PatternProcessPass(const std::string &name = "", bool multigraph = true);
   ~PatternProcessPass() override = default;
@@ -77,7 +78,7 @@ class MultipleOutputPatternProcessPass : public PatternProcessPass {
   EquivPtr child_equiv_;
 };
 
-class GraphOptimizer {
+class BACKEND_EXPORT GraphOptimizer {
  public:
   explicit GraphOptimizer(const std::string &name = "graph_optimizer") : name_(name) {}
   virtual ~GraphOptimizer() = default;

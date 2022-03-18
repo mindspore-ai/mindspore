@@ -18,7 +18,7 @@
 #include <string>
 #include "utils/ms_context.h"
 #include "utils/log_adapter.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
 namespace {

@@ -17,7 +17,7 @@
 #include "ir/value.h"
 #include <string>
 
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {

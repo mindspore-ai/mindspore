@@ -29,7 +29,7 @@
 #include "debug/debugger/debugger.h"
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
 namespace mindspore {

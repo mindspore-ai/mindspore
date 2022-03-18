@@ -24,6 +24,7 @@
 #include "utils/ms_utils.h"
 #include "distributed/constants.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
@@ -37,7 +38,7 @@ using CommunicationGroupPtr = device::CommunicationGroupPtr;
 // The collective communication API.
 // MindSpore uses OpenMPI on CPU, NCCL on GPU, HCCL on Ascend, to achieve distributed training.
 // Besides, MindSpore also has its own communication library which is implemented on the CPU side.
-class CollectiveManager {
+class BACKEND_EXPORT CollectiveManager {
  public:
   ~CollectiveManager();
   DISABLE_COPY_AND_ASSIGN(CollectiveManager);

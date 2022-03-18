@@ -27,7 +27,7 @@ install(
 )
 
 install(
-        TARGETS mindspore_core mindspore_common
+        TARGETS mindspore_core mindspore_common mindspore_backend
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
 )

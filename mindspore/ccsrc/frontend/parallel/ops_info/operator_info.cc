@@ -31,9 +31,66 @@
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/parallel_context.h"
 #include "utils/log_adapter.h"
+#include "include/common/debug/anf_dump_utils.h"
 
 namespace mindspore {
 namespace parallel {
+namespace {
+struct InStrategyValueRegister {
+  InStrategyValueRegister() {
+    AnfDumpHandler::SetInStrategyValueHandler([](const std::shared_ptr<AnfNode> &node) -> ValuePtr {
+      auto operator_info = node->user_data<parallel::OperatorInfo>();
+      if (operator_info == nullptr) {
+        return nullptr;
+      }
+
+      auto in_strategy = operator_info->strategy();
+      if (in_strategy == nullptr) {
+        return nullptr;
+      }
+
+      return MakeValue(in_strategy->GetInputDim());
+    });
+  }
+} in_regist;
+
+struct InStrategyStageValueRegister {
+  InStrategyStageValueRegister() {
+    AnfDumpHandler::SetInStrategyStageValueHandler([](const std::shared_ptr<AnfNode> &node) -> ValuePtr {
+      auto operator_info = node->user_data<parallel::OperatorInfo>();
+      if (operator_info == nullptr) {
+        return nullptr;
+      }
+
+      auto in_strategy = operator_info->strategy();
+      if (in_strategy == nullptr) {
+        return nullptr;
+      }
+
+      return MakeValue(in_strategy->GetInputStage());
+    });
+  }
+} in_stage_regist;
+
+struct OutStrategyValueRegister {
+  OutStrategyValueRegister() {
+    AnfDumpHandler::SetOutStrategyValueHandler([](const std::shared_ptr<AnfNode> &node) -> ValuePtr {
+      auto operator_info = node->user_data<parallel::OperatorInfo>();
+      if (operator_info == nullptr) {
+        return nullptr;
+      }
+
+      auto in_strategy = operator_info->out_strategy();
+      if (in_strategy == nullptr) {
+        return nullptr;
+      }
+
+      return MakeValue(in_strategy->GetInputDim());
+    });
+  }
+} out_regist;
+}  // namespace
+
 std::string StrategyToString(const Strategys &strategy) {
   std::string strategy_str = "";
   strategy_str += "(";

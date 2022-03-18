@@ -32,8 +32,8 @@
 #include "frontend/optimizer/ad/kpynative.h"
 #include "frontend/operator/ops.h"
 #include "utils/info.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/trace.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "pipeline/jit/debug/trace.h"
 
 namespace mindspore {
 namespace ad {

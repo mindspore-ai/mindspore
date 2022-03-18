@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #if defined(_WIN32) || defined(_WIN64)
 #include <stdlib.h>
 #endif
@@ -23,45 +23,13 @@
 #include "utils/hash_map.h"
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
-#include "runtime/device/kernel_info.h"
 #include "ir/graph_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "frontend/parallel/ops_info/operator_info.h"
-#include "pipeline/jit/base.h"
-#include "debug/trace.h"
-#include "debug/anf_dump_utils.h"
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/debug/anf_dump_utils.h"
 
 namespace mindspore {
-const std::string ToShortString(const TypeId &typeId) {
-  std::string label = TypeIdLabel(typeId);
-  std::string prefix = "kNumberType";
-  if (prefix.length() > label.length()) {
-    return label;
-  }
-  auto position = label.find(prefix);
-  // Position is 0 when label begins with prefix
-  if (position != 0) {
-    return label;
-  }
-  auto sub_position = position + prefix.length();
-  if (sub_position >= label.length()) {
-    return label;
-  }
-  return label.substr(sub_position);
-}
-
-void PrintKernelFormatAndType(std::ostringstream &buffer, const std::string &fmt, const TypeId &type,
-                              const std::vector<size_t> &shape) {
-  buffer << "<" << ToShortString(type);
-  if (!fmt.empty()) {
-    buffer << "x" << fmt << shape;
-  }
-  buffer << ">";
-}
-
 void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::AbstractSequencePtr &sequence_abs) {
   if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
@@ -190,10 +158,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     if (i != 0) {
       gsub->buffer << ", ";
     }
-    auto format = AnfAlgo::GetInputFormat(node, i);
-    auto type = AnfAlgo::GetInputDeviceDataType(node, i);
-    auto shape = AnfAlgo::GetInputDeviceShape(node, i);
-    PrintKernelFormatAndType(gsub->buffer, format, type, shape);
+    gsub->buffer << AnfDumpHandler::PrintInputTypeShapeFormat(node, i);
   }
   gsub->buffer << ") -> (";
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
@@ -201,10 +166,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     if (i != 0) {
       gsub->buffer << ", ";
     }
-    auto format = AnfAlgo::GetOutputFormat(node, i);
-    auto type = AnfAlgo::GetOutputDeviceDataType(node, i);
-    auto shape = AnfAlgo::GetOutputDeviceShape(node, i);
-    PrintKernelFormatAndType(gsub->buffer, format, type, shape);
+    gsub->buffer << AnfDumpHandler::PrintOutputTypeShapeFormat(node, i);
   }
   gsub->buffer << ")";
   gsub->buffer << std::endl;
@@ -235,10 +197,7 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
     auto kernel_info = p->kernel_info();
     if (kernel_info != nullptr && kernel_info->has_build_info()) {
       buffer << "  :  ";
-      auto type = AnfAlgo::GetOutputDeviceDataType(p, 0);
-      auto format = AnfAlgo::GetOutputFormat(p, 0);
-      auto shape = AnfAlgo::GetOutputDeviceShape(p, 0);
-      PrintKernelFormatAndType(buffer, format, type, shape);
+      buffer << AnfDumpHandler::PrintOutputTypeShapeFormat(p, 0);
       buffer << "  :  IsWeight:" << std::boolalpha << common::AnfAlgo::IsParameterWeight(parameter_ptr);
     }
     buffer << std::endl;
@@ -376,23 +335,15 @@ void DumpParallelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo
     return;
   }
 
-  auto operator_info = node->user_data<parallel::OperatorInfo>();
-  if (operator_info == nullptr) {
+  ValuePtr in_tmp = AnfDumpHandler::InStrategyValue(node);
+  if (in_tmp == nullptr) {
     return;
   }
-
-  auto in_strategy = operator_info->strategy();
-  if (in_strategy == nullptr) {
-    return;
-  }
-
-  ValuePtr in_tmp = MakeValue(in_strategy->GetInputDim());
   gsub->buffer << " {in_strategy: ";
   gsub->buffer << in_tmp->ToString();
 
-  auto out_strategy = operator_info->out_strategy();
-  if (out_strategy) {
-    ValuePtr out_tmp = MakeValue(out_strategy->GetInputDim());
+  ValuePtr out_tmp = AnfDumpHandler::OutStrategyValue(node);
+  if (out_tmp != nullptr) {
     gsub->buffer << ", out_strategy: ";
     gsub->buffer << out_tmp->ToString();
   }

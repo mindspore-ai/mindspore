@@ -59,8 +59,8 @@
 #include "backend/common/pass/optimize_updatestate.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/data_dump/e2e_dump.h"
 #include "debug/data_dump/dump_json_parser.h"
@@ -88,9 +88,6 @@
 #if ENABLE_CPU && ENABLE_GPU
 #include "ps/util.h"
 #include "ps/ps_cache/ps_cache_manager.h"
-#endif
-#ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
 #endif
 
 namespace mindspore {

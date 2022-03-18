@@ -38,7 +38,8 @@
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
+#include "include/common/debug/rdr/recorder_manager.h"
+#include "debug/rdr/mem_address_recorder.h"
 #endif
 #include "include/common/utils/comm_manager.h"
 #ifdef ENABLE_DEBUGGER

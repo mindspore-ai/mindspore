@@ -25,7 +25,7 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {

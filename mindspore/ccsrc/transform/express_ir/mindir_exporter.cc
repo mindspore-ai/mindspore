@@ -28,7 +28,7 @@
 #include "base/core_ops.h"
 #include "proto/mind_ir.pb.h"
 #include "utils/check_convert_utils.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/dump_proto.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
@@ -38,6 +38,8 @@ namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
 using IntPtr = std::shared_ptr<Int>;
 using UIntPtr = std::shared_ptr<UInt>;
+using ModelProtoPtr = std::shared_ptr<mind_ir::ModelProto>;
+
 // anf type to mindir type map
 static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_type_map = {
   {kNumberTypeBool, mind_ir::TensorProto_DataType_BOOL},

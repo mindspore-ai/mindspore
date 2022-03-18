@@ -63,9 +63,6 @@ class TensorStatDump {
                              const Debugger *debugger);
 
  private:
-  static const char CSV_HEADER[];
-  static const char CSV_FILE_NAME[];
-
   const std::string op_type_;
   const std::string op_name_;
   const std::string task_id_;

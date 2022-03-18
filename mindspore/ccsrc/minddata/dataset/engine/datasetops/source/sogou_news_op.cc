@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace dataset {

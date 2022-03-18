@@ -26,8 +26,8 @@
 #include <vector>
 #include "debug/data_dump/dump_json_parser.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "debug/anf_ir_utils.h"
-#include "debug/common.h"
+#include "include/common/debug/anf_dump_utils.h"
+#include "include/common/debug/common.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"

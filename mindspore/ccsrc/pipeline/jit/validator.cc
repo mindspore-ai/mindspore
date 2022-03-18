@@ -25,7 +25,7 @@
 #include "ir/dtype.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/jit/parse/resolve.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 
 namespace mindspore {
 namespace validator {

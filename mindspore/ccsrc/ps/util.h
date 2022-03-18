@@ -28,6 +28,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/sparse_optimizer_cpu_kernel.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
@@ -44,7 +45,7 @@ struct ParamInitInfo {
 constexpr size_t kNodeInputWeightNameOffset = 1;
 constexpr size_t kNodeInputWeightIndexOffset = 2;
 
-class Util {
+class BACKEND_EXPORT Util {
  public:
   static bool IsRoleOfPServer();
   static bool IsRoleOfScheduler();

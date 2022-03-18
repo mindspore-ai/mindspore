@@ -22,7 +22,7 @@
 #include "distributed/collective/collective_manager.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace distributed {

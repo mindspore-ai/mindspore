@@ -17,7 +17,7 @@
 #include "ir/meta_func_graph.h"
 #include "ir/func_graph.h"
 
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
 py::dict UpdateFuncGraphHyperParams(const FuncGraphPtr &func_graph, const py::dict &params_init) {

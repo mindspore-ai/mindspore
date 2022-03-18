@@ -22,7 +22,7 @@
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "abstract/abstract_function.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 
 namespace mindspore {
 using Shape = abstract::Shape;

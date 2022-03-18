@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEBUG_ANF_IR_DUMP_H_
-#define MINDSPORE_CCSRC_DEBUG_ANF_IR_DUMP_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_ANF_IR_DUMP_H_
+#define MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_ANF_IR_DUMP_H_
 
 #include <string>
 #include <vector>
 #include "ir/dtype/type.h"
 #include "ir/anf.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "utils/hash_set.h"
+#include "include/common/visible.h"
 
 namespace mindspore {
 enum LocDumpMode : int { kOff = 0, kTopStack = 1, kWholeStack = 2, kInValid = 3 };
@@ -37,17 +38,16 @@ struct DumpConfig {
 };
 
 constexpr char PARALLEL_STRATEGY[] = "strategy";
-void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
-            LocDumpMode dump_location = kOff, const std::string &target_file = "");
-void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool dump_full_name = false,
-            LocDumpMode dump_location = kOff);
+COMMON_EXPORT void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
+                          LocDumpMode dump_location = kOff, const std::string &target_file = "");
+COMMON_EXPORT void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool dump_full_name = false,
+                          LocDumpMode dump_location = kOff);
 
-void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node);
+COMMON_EXPORT void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node);
 
-void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
-                  LocDumpMode dump_location = kOff);
-const std::string ToShortString(const TypeId &typeId);
-DumpConfig GetDumpConfig();
+COMMON_EXPORT void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
+                                LocDumpMode dump_location = kOff);
+COMMON_EXPORT DumpConfig GetDumpConfig();
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEBUG_ANF_IR_DUMP_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_ANF_IR_DUMP_H_

@@ -18,7 +18,7 @@
 #include <string>
 #include <fstream>
 #include "utils/file_utils.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "ps/constants.h"
 
 namespace mindspore {

@@ -56,6 +56,15 @@ set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
               ${API_OPS_SRC}
               )
 
+if(ENABLE_D)
+  list(APPEND MSLIB_SRC
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/array.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/map.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/arrangement.cc"
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/shape_util.cc")
+endif()
+
 if(NOT ENABLE_TESTCASES AND NOT BUILD_LITE)
     # users of shared_lib cannot find symbols in indirect dependency
     set(MSLIB_SRC ${MSLIB_SRC} ${CMAKE_SOURCE_DIR}/mindspore/core/utils/status.cc)
@@ -81,8 +90,9 @@ add_library(mindspore_shared_lib SHARED $<TARGET_OBJECTS:mindspore_shared_lib_ob
 if(BUILD_LITE)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
     add_dependencies(mindspore_shared_lib _mindspore_transform_graph_ir_obj)
-elseif(ENABLE_ACL AND NOT ENABLE_D)
-    target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_backend_graph_compiler_obj>)
+elseif(MODE_ASCEND_ACL)
+    target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_backend_graph_compiler_obj>
+            mindspore_backend_static mindspore_debug)
 endif()
 if(NOT BUILD_LITE)
     set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
@@ -90,7 +100,7 @@ endif()
 
 if(ENABLE_D OR ENABLE_GPU)
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core mindspore_common proto_input
+        mindspore_backend mindspore_core mindspore_common proto_input
         mindspore::protobuf)
 else()
     if(BUILD_LITE)

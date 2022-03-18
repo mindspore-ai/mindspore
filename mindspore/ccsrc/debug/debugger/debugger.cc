@@ -27,18 +27,18 @@
 #include <regex>
 #include "debug/debugger/debugger.h"
 #include "debug/data_dump/dump_json_parser.h"
-#include "pipeline/jit/pipeline.h"
+#include "backend/common/session/session_basic.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "include/common/utils/config_manager.h"
-#include "debug/env_config_parser.h"
+#include "include/common/debug/env_config_parser.h"
 #include "include/common/utils/comm_manager.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/anf_ir_utils.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/anf_dump_utils.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/proto_exporter.h"
@@ -64,8 +64,6 @@ namespace mindspore {
 
 static constexpr auto g_chunk_size = 1024 * 1024 * 3;
 static constexpr int32_t heartbeat_period_second = 30;
-DebuggerPtr Debugger::debugger_ = nullptr;
-std::mutex Debugger::instance_lock_;
 
 Debugger::Debugger()
     : grpc_client_(nullptr),
@@ -423,7 +421,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
     // Multiple graph, and not the initial step,
     // stop only when receive the first sub run graph for each step for old runtime
     // if we have stopped for the last kernel before, no need to stop again
-    if (pipeline::GraphExecutorPy::GetDebugTerminate()) {
+    if (Common::GetDebugTerminate()) {
       return;
     }
     if (!(run_level_ == "node" && suspended_at_last_kernel_)) {
@@ -595,7 +593,7 @@ void Debugger::PostExecuteGraphDebugger() {
 void Debugger::PostExecute() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  if (pipeline::GraphExecutorPy::GetDebugTerminate()) {
+  if (Common::GetDebugTerminate()) {
     return;
   }
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
@@ -648,7 +646,7 @@ bool Debugger::ReadNodeDataRequired(const CNodePtr &kernel) const {
 void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
-  if (pipeline::GraphExecutorPy::GetDebugTerminate()) {
+  if (Common::GetDebugTerminate()) {
     return;
   }
   if (debugger_enabled_ && !is_dataset_graph_) {
@@ -1278,7 +1276,7 @@ void Debugger::Exit(bool exit_success) {
   // debugger will notify main thread to exit because main thread can only exit at step boundary.
   MS_LOG(INFO) << "Exit Debugger";
   SetEnableHeartbeat(false);
-  pipeline::GraphExecutorPy::DebugTerminate(true, exit_success);
+  Common::DebugTerminate(true, exit_success);
 }
 
 std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode, const CNodePtr &kernel,

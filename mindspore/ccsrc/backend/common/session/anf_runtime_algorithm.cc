@@ -26,6 +26,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/debug/anf_dump_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "runtime/device/device_address.h"
 #include "backend/common/optimizer/helper.h"
@@ -81,6 +82,41 @@ static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t
     {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {5, 4}, {6, 5}, {7, 6}, {8, 7}, {4, 8}}}},
   {prim::kPrimStridedSliceGrad->name(),
    {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}}};
+
+std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type, const std::vector<size_t> &shape) {
+  std::ostringstream buffer;
+  buffer << "<" << TypeToShortString(type);
+  if (!fmt.empty()) {
+    buffer << "x" << fmt << shape;
+  }
+  buffer << ">";
+  return buffer.str();
+}
+
+struct AnfDumpHandlerRegister {
+  AnfDumpHandlerRegister() {
+    AnfDumpHandler::SetPrintInputTypeShapeFormatHandler(
+      [](const std::shared_ptr<AnfNode> &node, size_t idx) -> std::string {
+        if (node == nullptr) {
+          return "";
+        }
+        auto format = AnfAlgo::GetInputFormat(node, idx);
+        auto type = AnfAlgo::GetInputDeviceDataType(node, idx);
+        auto shape = AnfAlgo::GetInputDeviceShape(node, idx);
+        return PrintKernelFormatAndType(format, type, shape);
+      });
+    AnfDumpHandler::SetPrintOutputTypeShapeFormatHandler(
+      [](const std::shared_ptr<AnfNode> &node, size_t idx) -> std::string {
+        if (node == nullptr) {
+          return "";
+        }
+        auto format = AnfAlgo::GetOutputFormat(node, idx);
+        auto type = AnfAlgo::GetOutputDeviceDataType(node, idx);
+        auto shape = AnfAlgo::GetOutputDeviceShape(node, idx);
+        return PrintKernelFormatAndType(format, type, shape);
+      });
+  }
+} callback_register;
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {

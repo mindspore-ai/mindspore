@@ -285,4 +285,23 @@ if(USE_GLOG)
     target_link_libraries(ut_tests PRIVATE mindspore::glog)
 endif()
 
-target_link_libraries(ut_tests PRIVATE mindspore securec)
+add_library(backend_static STATIC
+        $<TARGET_OBJECTS:_mindspore_common_debug_obj>
+        $<TARGET_OBJECTS:_mindspore_profiler_obj>
+        $<TARGET_OBJECTS:_mindspore_ps_obj>
+        $<TARGET_OBJECTS:_mindspore_distributed_obj>
+        $<TARGET_OBJECTS:_mindspore_kernel_obj>
+        $<TARGET_OBJECTS:_mindspore_common_mem_reuse_obj>
+        $<TARGET_OBJECTS:_mindspore_backend_common_optimizer_obj>
+        $<TARGET_OBJECTS:_mindspore_backend_common_pass_obj>
+        $<TARGET_OBJECTS:_mindspore_backend_common_session_obj>
+        $<TARGET_OBJECTS:_mindspore_backend_common_somas_obj>
+        $<TARGET_OBJECTS:_mindspore_backend_graph_compiler_obj>
+        $<TARGET_OBJECTS:_mindspore_runtime_collective_obj>
+        $<TARGET_OBJECTS:_mindspore_runtime_device_obj>
+        $<TARGET_OBJECTS:_mindspore_runtime_graph_scheduler_obj>
+        $<TARGET_OBJECTS:_mindspore_runtime_hardware_obj>
+        $<TARGET_OBJECTS:_mindspore_runtime_pynative_obj>
+        $<TARGET_OBJECTS:_mindspore_runtime_recovery_obj>)
+target_link_libraries(ut_tests PRIVATE mindspore securec -Wl,--start-group proto_input mindspore::protobuf
+        mindspore_debug backend_static -Wl,--end-group)

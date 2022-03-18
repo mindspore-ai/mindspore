@@ -20,7 +20,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "utils/symbolic.h"
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "include/common/utils/python_adapter.h"
 #ifndef ENABLE_SECURITY
 #include "include/common/utils/summary/event_writer.h"

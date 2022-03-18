@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pybind_api/random_normal/philox_generator.h"
+#include "include/common/utils/philox_generator.h"
 
 namespace mindspore {
 static constexpr uint64_t kShiftNum = 32;
@@ -43,16 +43,16 @@ void PhiloxGenerator::JumpStep(uint64_t step) {
   counter_[3] = static_cast<uint32_t>(max_counter >> kShiftNum);
 }
 
-std::array<uint32_t, gResultNum> PhiloxGenerator::Compute(const std::array<uint32_t, gResultNum> &counter,
+std::array<uint32_t, kResultNum> PhiloxGenerator::Compute(const std::array<uint32_t, kResultNum> &counter,
                                                           const std::array<uint32_t, 2> &key_var) const {
-  std::array<uint32_t, gResultNum> min_value;
-  std::array<uint32_t, gResultNum> max_value;
-  for (size_t i = 0; i < gResultNum; i += 2) {
+  std::array<uint32_t, kResultNum> min_value;
+  std::array<uint32_t, kResultNum> max_value;
+  for (size_t i = 0; i < kResultNum; i += 2) {
     uint64_t temp = static_cast<uint64_t>(keyConstant[i]) * counter[i];
     min_value[i] = static_cast<uint32_t>(temp);
     max_value[i] = static_cast<uint32_t>(temp >> kShiftNum);
   }
-  std::array<uint32_t, gResultNum> result;
+  std::array<uint32_t, kResultNum> result;
   result[0] = (max_value[2] ^ counter[1] ^ key_var[0]);
   result[1] = min_value[2];
   result[2] = (max_value[0] ^ counter[3] ^ key_var[0]);
@@ -60,7 +60,7 @@ std::array<uint32_t, gResultNum> PhiloxGenerator::Compute(const std::array<uint3
   return result;
 }
 
-std::array<uint32_t, gResultNum> PhiloxGenerator::operator()() {
+std::array<uint32_t, kResultNum> PhiloxGenerator::operator()() {
   for (size_t i = 0; i < kGenerateNum; i++) {
     counter_ = Compute(counter_, key_var_);
     key_var_[0] += keyConstant[1];

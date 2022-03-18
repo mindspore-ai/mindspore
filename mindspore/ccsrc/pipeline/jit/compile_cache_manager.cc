@@ -22,9 +22,9 @@
 #include <fstream>
 #include "pipeline/jit/parse/data_converter.h"
 #include "include/common/utils/parallel_context.h"
-#include "debug/common.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/common.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
 #include "utils/system/sha256.h"
 #include "include/common/utils/utils.h"
 

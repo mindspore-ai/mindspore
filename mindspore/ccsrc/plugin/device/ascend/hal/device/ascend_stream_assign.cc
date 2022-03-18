@@ -32,7 +32,7 @@
 #include "include/common/utils/utils.h"
 
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
+#include "debug/rdr/stream_exec_order_recorder.h"
 #endif
 
 namespace mindspore {

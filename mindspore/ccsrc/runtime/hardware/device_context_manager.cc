@@ -18,6 +18,11 @@
 
 namespace mindspore {
 namespace device {
+DeviceContextManager &DeviceContextManager::GetInstance() {
+  static DeviceContextManager instance{};
+  return instance;
+}
+
 void DeviceContextManager::Register(const std::string &device_name, DeviceContextCreator &&device_context_creator) {
   if (device_context_creators_.find(device_name) == device_context_creators_.end()) {
     (void)device_context_creators_.emplace(device_name, device_context_creator);

@@ -128,12 +128,10 @@ void LogWriter::set_exception_handler(const ExceptionHandler &exception_handler)
 }
 
 void LogWriter::set_trace_provider(const TraceProvider &trace_provider) {
-  // todo: delete has_set flag
-  static bool has_set = false;
-  if (!has_set) {
-    MS_LOG(INFO) << "trace provider has been set, skip.";
+  if (trace_provider_ == nullptr) {
     trace_provider_ = trace_provider;
-    has_set = true;
+  } else {
+    MS_LOG(INFO) << "trace provider has been set, skip.";
   }
 }
 

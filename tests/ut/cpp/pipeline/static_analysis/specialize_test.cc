@@ -26,7 +26,7 @@
 #include "utils/log_adapter.h"
 #include "ir/graph_utils.h"
 #include "utils/misc.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "base/core_ops.h"
 
 namespace mindspore {

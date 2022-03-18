@@ -19,7 +19,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "debug/anf_ir_utils.h"
+#include "include/common/debug/anf_dump_utils.h"
 #include "debug/debugger/debugger.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "debug/data_dump/dump_json_parser.h"

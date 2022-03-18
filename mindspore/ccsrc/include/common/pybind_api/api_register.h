@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PYBIND_API_API_REGISTER_H_
-#define PYBIND_API_API_REGISTER_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_
+#define MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_
 
 #include <map>
 #include <string>
@@ -24,6 +24,7 @@
 
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
+#include "include/common/visible.h"
 
 namespace py = pybind11;
 
@@ -31,7 +32,7 @@ namespace mindspore {
 
 using PybindDefineFunc = std::function<void(py::module *)>;
 
-class PybindDefineRegister {
+class COMMON_EXPORT PybindDefineRegister {
  public:
   static void Register(const std::string &name, const PybindDefineFunc &fn) {
     return GetSingleton().RegisterFn(name, fn);
@@ -67,4 +68,4 @@ class PybindDefineRegisterer {
 
 }  // namespace mindspore
 
-#endif  // PYBIND_API_API_REGISTER_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_

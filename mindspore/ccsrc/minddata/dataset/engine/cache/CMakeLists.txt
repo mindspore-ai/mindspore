@@ -75,8 +75,6 @@ if(ENABLE_CACHE)
         engine-cache-server
         _c_dataengine
         _c_mindrecord
-        mindspore
-        proto_input
         mindspore_core
         mindspore::protobuf
         ${CUDNN_LIBRARY_PATH}
@@ -88,7 +86,6 @@ if(ENABLE_CACHE)
         mindspore::grpc++)
   else()
     target_link_libraries(cache_server
-        mindspore
         engine-cache-server
         _c_dataengine
         _c_mindrecord

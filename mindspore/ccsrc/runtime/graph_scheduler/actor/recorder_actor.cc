@@ -18,8 +18,8 @@
 #include <string>
 #include <utility>
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/recorder_manager.h"
-#include "debug/rdr/running_data_recorder.h"
+#include "include/common/debug/rdr/recorder_manager.h"
+#include "debug/rdr/mem_address_recorder.h"
 #endif
 #include "utils/log_adapter.h"
 

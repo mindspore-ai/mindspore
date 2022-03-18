@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 #include "debug/rdr/task_debug_info_recorder.h"
+#include <utility>
 #include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 
 namespace mindspore {
 void TaskDebugInfoRecorder::Export() {
@@ -25,4 +27,18 @@ void TaskDebugInfoRecorder::Export() {
   std::string file_path = realpath.value() + ".ir";
   device::ascend::tasksink::TaskGenerator::DumpTaskInfo(file_path, task_debug_info_);
 }
+
+namespace RDR {
+bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
+                         const std::vector<TaskDebugInfoPtr> &task_debug_info_list) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  TaskDebugInfoRecorderPtr task_debug_info_recorder =
+    std::make_shared<TaskDebugInfoRecorder>(submodule_name, name, task_debug_info_list);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(task_debug_info_recorder));
+  return ans;
+}
+}  // namespace RDR
 }  // namespace mindspore

@@ -33,6 +33,7 @@
 
 #include "ir/anf.h"
 #include "base/base_ref.h"
+#include "include/backend/visible.h"
 
 namespace py = pybind11;
 
@@ -96,7 +97,7 @@ class StructSimuSwitch : public Base {
 std::ostream &operator<<(std::ostream &os, const StructSimuSwitch &other);
 bool operator==(const StructSimuSwitch &lhs, const StructSimuSwitch &rhs);
 
-class FinalVM {
+class BACKEND_EXPORT FinalVM {
  public:
   // Create a VM with the specified instructions and backend.
   explicit FinalVM(const InstSet &insts, const BackendPtr &backend);

@@ -19,6 +19,7 @@
 
 #include "ps/core/scheduler_node.h"
 #include "ps/core/node_info.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
@@ -26,7 +27,7 @@ namespace core {
 // This class is a derived class of SchedulerNode specialized for Parameter Server. It is used to rewrite the specific
 // logic for Parameter Server mode training in SchedulerNode. For example, the Scheduler of Parameter Server will reject
 // the registration request of alive nodes.
-class PSSchedulerNode : public SchedulerNode {
+class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
  public:
   PSSchedulerNode() = default;
   ~PSSchedulerNode() override = default;

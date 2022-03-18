@@ -39,6 +39,7 @@
 #endif
 #include "runtime/hardware/device_context.h"
 #include "backend/common/session/pynative_task_manager.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace runtime {
@@ -96,7 +97,7 @@ struct GraphOutputInfo {
 
 class Executor;
 
-class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
+class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionBasic> {
  public:
   SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
 #if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
@@ -366,8 +367,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 using SessionPtr = std::shared_ptr<session::SessionBasic>;
 using NamedSummaryOutputs = std::map<std::string, std::pair<AnfNodePtr, int>>;
 }  // namespace session
-void DumpGraphExeOrder(const std::string &file_name, const std::string &target_dir,
-                       const std::vector<CNodePtr> &execution_order);
+BACKEND_EXPORT void DumpGraphExeOrder(const std::string &file_name, const std::string &target_dir,
+                                      const std::vector<CNodePtr> &execution_order);
 uint32_t GetRankId();
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H

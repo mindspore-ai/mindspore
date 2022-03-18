@@ -28,7 +28,7 @@
 #include <vector>
 #include "utils/system/base.h"
 #include "utils/log_adapter.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace system {

@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "ir/graph_utils.h"
 #include "proto/debug_graph.pb.h"

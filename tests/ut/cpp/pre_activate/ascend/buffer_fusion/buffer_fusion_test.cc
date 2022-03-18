@@ -16,7 +16,7 @@
 
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "kernel/kernel.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/optimizer/optimizer.h"

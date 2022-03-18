@@ -37,6 +37,7 @@
 #include "ps/core/ps_server_node.h"
 #include "ps/core/ps_scheduler_node.h"
 #include "distributed/cluster/actor_route_table_proxy.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
@@ -49,7 +50,7 @@ constexpr char kDetailedFailureReason[] =
   "https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_gpu.html#openmpi.";
 
 // Node role based cluster built by MindSpore communication framework.
-class ClusterContext {
+class BACKEND_EXPORT ClusterContext {
  public:
   ~ClusterContext();
   DISABLE_COPY_AND_ASSIGN(ClusterContext)

@@ -22,7 +22,7 @@
 #include "nlohmann/json.hpp"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "debug/rdr/base_recorder.h"
+#include "include/common/debug/rdr/base_recorder.h"
 
 using json = nlohmann::json;
 
@@ -98,5 +98,8 @@ class StreamExecOrderRecorder : public BaseRecorder {
   std::vector<ExecNodePtr> exec_order_;
 };
 using StreamExecOrderRecorderPtr = std::shared_ptr<StreamExecOrderRecorder>;
+namespace RDR {
+bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, const std::vector<CNodePtr> &exec_order);
+}  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_STREAM_EXEC_ORDER_RECORDER_H_

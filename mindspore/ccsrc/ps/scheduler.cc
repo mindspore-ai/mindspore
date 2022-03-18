@@ -18,6 +18,11 @@
 
 namespace mindspore {
 namespace ps {
+Scheduler &Scheduler::GetInstance() {
+  static Scheduler instance{};
+  return instance;
+}
+
 void Scheduler::Run() {
   MS_LOG(INFO) << "Start scheduler.";
   PSContext::instance()->cluster_config().scheduler_host = PSContext::instance()->scheduler_host();

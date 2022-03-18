@@ -28,7 +28,6 @@
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/util/status.h"
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
 #include "minddata/dataset/util/rdr.h"
 #endif
 

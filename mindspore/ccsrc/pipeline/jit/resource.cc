@@ -18,7 +18,7 @@
 
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 #include "ir/dtype.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"

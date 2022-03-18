@@ -19,7 +19,7 @@
 #include "backend/common/session/single_kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore::device::ascend {
 void AscendLaunchAtomicClean::FreeDeviceMem(void *addr) { AscendLaunchKernel::FreeDeviceMem(addr); }

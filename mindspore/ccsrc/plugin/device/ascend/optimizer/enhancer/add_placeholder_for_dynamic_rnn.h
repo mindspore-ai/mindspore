@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace opt {
-class InsertPlaceholderForDynamicRNN : public PatternProcessPass {
+class BACKEND_EXPORT InsertPlaceholderForDynamicRNN : public PatternProcessPass {
  public:
   explicit InsertPlaceholderForDynamicRNN(bool multigraph = true)
       : PatternProcessPass("add_placeholder_for_dynamic_rnn", multigraph) {}

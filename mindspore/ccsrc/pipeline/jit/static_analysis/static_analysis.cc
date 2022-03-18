@@ -28,8 +28,8 @@
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
-#include "debug/trace.h"
-#include "debug/anf_ir_dump.h"
+#include "pipeline/jit/debug/trace.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 
 namespace mindspore {

@@ -36,9 +36,9 @@
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include "backend/common/pass/erase_visit_attr.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/dump_proto.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
@@ -48,7 +48,6 @@
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/graph_recorder.h"
-#include "debug/rdr/running_data_recorder.h"
 #endif
 
 namespace mindspore {

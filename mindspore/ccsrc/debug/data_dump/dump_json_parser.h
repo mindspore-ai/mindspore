@@ -22,17 +22,24 @@
 #include <set>
 #include <mutex>
 #include <vector>
+#include <memory>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 #include "backend/common/session/kernel_graph.h"
+#include "include/backend/visible.h"
+
 namespace mindspore {
-class DumpJsonParser {
+class BACKEND_EXPORT DumpJsonParser {
  public:
   static DumpJsonParser &GetInstance() {
-    static DumpJsonParser instance;
-    return instance;
+    std::lock_guard<std::mutex> lock(instance_mutex_);
+    if (instance_ == nullptr) {
+      instance_ = std::shared_ptr<DumpJsonParser>(new DumpJsonParser);
+    }
+    return *instance_;
   }
 
+  ~DumpJsonParser() = default;
   void Parse();
   static bool DumpToFile(const std::string &filename, const void *data, size_t len, const ShapeVector &shape,
                          TypeId type);
@@ -75,8 +82,10 @@ class DumpJsonParser {
 
  private:
   DumpJsonParser() = default;
-  ~DumpJsonParser() = default;
   DISABLE_COPY_AND_ASSIGN(DumpJsonParser)
+
+  inline static std::shared_ptr<DumpJsonParser> instance_ = nullptr;
+  inline static std::mutex instance_mutex_;
 
   std::mutex lock_;
   bool async_dump_enabled_{false};

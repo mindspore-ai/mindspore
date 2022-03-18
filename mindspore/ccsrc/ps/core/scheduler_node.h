@@ -43,12 +43,13 @@
 #include "ps/core/recovery_base.h"
 #include "ps/core/instance_manager.h"
 #include "distributed/cluster/actor_route_table_service.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
 using distributed::cluster::ActorRouteTableService;
-class SchedulerNode : public Node {
+class BACKEND_EXPORT SchedulerNode : public Node {
  public:
   SchedulerNode()
       : server_(nullptr),

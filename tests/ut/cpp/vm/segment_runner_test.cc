@@ -23,7 +23,7 @@
 #include "pipeline/jit/parse/parse.h"
 #include "ir/graph_utils.h"
 #include "pipeline/jit/resource.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 #include "frontend/operator/ops.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "backend/graph_compiler/transform.h"

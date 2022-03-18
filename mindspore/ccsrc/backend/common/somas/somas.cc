@@ -31,9 +31,9 @@
 #endif
 #include "backend/common/optimizer/helper.h"
 #include "utils/ms_context.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
+#include "debug/rdr/string_recorder.h"
 #endif
 #include "include/common/thread_pool.h"
 #ifndef ENABLE_SECURITY

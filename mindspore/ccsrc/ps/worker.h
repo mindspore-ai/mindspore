@@ -40,15 +40,13 @@
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
 #include "ps/ps_context.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
-class Worker {
+class BACKEND_EXPORT Worker {
  public:
-  static Worker &GetInstance() {
-    static Worker instance;
-    return instance;
-  }
+  static Worker &GetInstance();
   using Callback = std::function<void()>;
   using PartitionEmbeddingMessages = std::vector<std::pair<bool, EmbeddingTableLookup>>;
   using PartitionKVMessages = std::vector<std::pair<bool, KVMessage>>;

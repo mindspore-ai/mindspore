@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 
-#include "debug/rdr/base_recorder.h"
+#include "include/common/debug/rdr/base_recorder.h"
 
 namespace mindspore {
 class GraphExecOrderRecorder : public BaseRecorder {
@@ -36,5 +36,10 @@ class GraphExecOrderRecorder : public BaseRecorder {
   std::vector<CNodePtr> exec_order_;
 };
 using GraphExecOrderRecorderPtr = std::shared_ptr<GraphExecOrderRecorder>;
+
+namespace RDR {
+bool RecordGraphExecOrder(const SubModuleId module, const std::string &name,
+                          const std::vector<CNodePtr> &final_exec_order);
+}  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_GRAPH_EXEC_ORDER_RECORDER_H_

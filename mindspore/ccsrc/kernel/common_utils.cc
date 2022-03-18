@@ -34,7 +34,7 @@
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "mindspore/ccsrc/debug/common.h"
+#include "mindspore/ccsrc/include/common/debug/common.h"
 
 namespace mindspore {
 namespace kernel {

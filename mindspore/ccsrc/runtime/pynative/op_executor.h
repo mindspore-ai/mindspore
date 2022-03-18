@@ -30,9 +30,10 @@
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/pynative/op_task.h"
+#include "include/backend/visible.h"
 
 namespace mindspore::runtime {
-class OpExecutor {
+class BACKEND_EXPORT OpExecutor {
  public:
   static OpExecutor &GetInstance();
 

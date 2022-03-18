@@ -28,7 +28,7 @@
 #include "include/common/utils/utils.h"
 #include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
-#include "debug/trace.h"
+#include "pipeline/jit/debug/trace.h"
 
 namespace mindspore {
 namespace abstract {

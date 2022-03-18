@@ -51,11 +51,10 @@
 #include "debug/data_dump/e2e_dump.h"
 #include "debug/debugger/debugger_utils.h"
 #endif
-#include "debug/anf_ir_utils.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/session/ascend_auto_monad.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
 #include "abstract/utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
@@ -67,8 +66,7 @@
 #include "toolchain/adx_datadump_callback.h"
 #include "toolchain/adx_datadump_server.h"
 #ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#include "debug/rdr/recorder_manager.h"
+#include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/graph_recorder.h"
 #endif
 #if ENABLE_CPU && ENABLE_D

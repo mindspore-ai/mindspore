@@ -26,7 +26,7 @@
 #include "ir/graph_utils.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/parse/parse.h"
-#include "debug/anf_ir_utils.h"
+#include "pipeline/jit/debug/anf_ir_utils.h"
 #include "frontend/operator/ops.h"
 
 namespace mindspore {

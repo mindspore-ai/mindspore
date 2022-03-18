@@ -18,13 +18,19 @@
 
 #include <utility>
 
-#include "pybind_api/api_register.h"
+#include "include/common/pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
 #include "utils/shape_utils.h"
 #include "utils/cache_embedding_hashmap_struct.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
 namespace tensor {
+namespace {
+struct TensorToNumpyRegister {
+  TensorToNumpyRegister() { python_adapter::PyAdapterCallback::SetTensorToNumpyHandler(tensor::TensorPy::AsNumpy); }
+} callback_register;
+}  // namespace
 constexpr ssize_t kPyBufItemSize1 = 1;
 constexpr ssize_t kPyBufItemSize2 = 2;
 constexpr ssize_t kPyBufItemSize4 = 4;

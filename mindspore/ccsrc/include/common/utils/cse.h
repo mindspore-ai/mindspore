@@ -16,20 +16,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CSE_H_
+#define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CSE_H_
 
 #include <vector>
 #include <memory>
 #include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/manager.h"
+#include "include/common/visible.h"
 
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 // Common subexpression elimination.
-class CSE {
+class COMMON_EXPORT CSE {
  public:
   CSE() = default;
   virtual ~CSE() = default;
@@ -49,8 +50,8 @@ class CSE {
                  mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> *groups) const;
 };
 
-BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id = false);
+COMMON_EXPORT BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id = false);
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CSE_H_

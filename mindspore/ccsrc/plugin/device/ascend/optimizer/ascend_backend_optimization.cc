@@ -162,12 +162,10 @@
 #include "utils/ms_context.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/context/graph_kernel_flags.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
-#include "debug/draw.h"
-#ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#endif
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
+#include "include/common/debug/draw.h"
+
 namespace mindspore {
 namespace opt {
 namespace {

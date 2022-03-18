@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEBUG_ANF_IR_UTILS_H_
-#define MINDSPORE_CCSRC_DEBUG_ANF_IR_UTILS_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_DEBUG_ANF_IR_UTILS_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_DEBUG_ANF_IR_UTILS_H_
 
 #include <string>
 #include <vector>
@@ -123,8 +123,6 @@ class AnfExporter {
 };
 
 void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph);
-
-std::string GetKernelNodeName(const AnfNodePtr &anf_node);
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEBUG_ANF_IR_UTILS_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_DEBUG_ANF_IR_UTILS_H_

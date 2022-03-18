@@ -35,6 +35,11 @@
 
 namespace mindspore {
 namespace parse {
+namespace {
+struct PyDataToValueRegister {
+  PyDataToValueRegister() { python_adapter::PyAdapterCallback::SetPyDataToValueHandler(data_converter::PyDataToValue); }
+} callback_register;
+}  // namespace
 using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
 using MetaTensor = mindspore::tensor::MetaTensor;

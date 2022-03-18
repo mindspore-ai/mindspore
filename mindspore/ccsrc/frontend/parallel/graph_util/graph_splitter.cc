@@ -26,7 +26,7 @@
 #include "base/core_ops.h"
 #include "mindspore/core/utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
-#include "debug/draw.h"
+#include "include/common/debug/draw.h"
 
 namespace mindspore {
 namespace parallel {

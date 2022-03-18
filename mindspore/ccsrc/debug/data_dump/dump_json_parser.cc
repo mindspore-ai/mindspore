@@ -16,14 +16,14 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include <fstream>
 #include "utils/log_adapter.h"
-#include "debug/common.h"
+#include "include/common/debug/common.h"
 #include "debug/utils.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "debug/data_dump/npy_header.h"
-#include "debug/anf_ir_utils.h"
+#include "include/common/debug/anf_dump_utils.h"
 #include "include/common/utils/comm_manager.h"
 
 namespace {

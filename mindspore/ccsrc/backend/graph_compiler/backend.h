@@ -34,6 +34,7 @@
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/pynative/op_task.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace compile {
@@ -53,7 +54,7 @@ enum SwitchCondStatus {
   kCondAlreadyRun,
 };
 
-class Backend {
+class BACKEND_EXPORT Backend {
  public:
   explicit Backend(const std::string &name);
 
@@ -75,7 +76,7 @@ class Backend {
   bool is_multi_graph_sink_;
 };
 
-class MsBackend : public Backend {
+class BACKEND_EXPORT MsBackend : public Backend {
  public:
   MsBackend(const std::string &name, const std::string &target, uint32_t device_id);
   ~MsBackend() override = default;
@@ -101,7 +102,7 @@ class MsBackend : public Backend {
   mindspore::HashMap<GraphId, LinConvertResult> graph_id_map_;
 };
 
-class MindRTBackend : public Backend {
+class BACKEND_EXPORT MindRTBackend : public Backend {
  public:
   MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id);
   ~MindRTBackend() override = default;

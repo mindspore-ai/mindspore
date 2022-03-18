@@ -45,7 +45,6 @@ int main(int argc, char **argv) {
     std::cerr << rc.ToString() << std::endl;
     return 1;
   }
-  google::InitGoogleLogging(argv[0]);
 #undef google
 #endif
 

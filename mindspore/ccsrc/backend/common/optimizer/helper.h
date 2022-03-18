@@ -26,6 +26,7 @@
 #include "backend/common/session/kernel_graph.h"
 #include "utils/ms_utils.h"
 #include "backend/common/optimizer/pattern_engine.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace opt {
@@ -170,7 +171,7 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &kernel_graph, const AnfN
 tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_ptr, const TypePtr &type_ptr,
                                              size_t data_length);
 
-tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple);
+BACKEND_EXPORT tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple);
 
 bool IsAllNopNode(const session::KernelGraph *const graph);
 
@@ -238,7 +239,7 @@ std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_gra
 int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
 
 // Get custom operator attr input indexes
-void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size_t> *indexes);
+BACKEND_EXPORT void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size_t> *indexes);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_

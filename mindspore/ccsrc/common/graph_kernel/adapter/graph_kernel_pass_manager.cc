@@ -21,7 +21,7 @@
 #include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "utils/ms_context.h"
-#include "debug/anf_ir_dump.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore::graphkernel {
 void GraphKernelPassManager::Add(const opt::PassPtr &pass, unsigned int pass_level, bool supported_device) {

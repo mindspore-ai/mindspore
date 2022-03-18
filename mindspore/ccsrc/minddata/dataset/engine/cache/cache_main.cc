@@ -41,6 +41,54 @@ enum ArgIndex : uint8_t {
 };
 }  // namespace
 
+ms::Status Fork(ds::SharedMessage *msg, int32_t port) {
+  if (msg == nullptr) {
+    return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "msg pointer is nullptr.");
+  }
+  pid_t pid = fork();
+  if (pid > 0) {
+    // Parent and will be responsible for remove the queue on exit.
+    msg->RemoveResourcesOnExit();
+    // Sleep one second and we attach to the msg que
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ms::Status child_rc;
+    auto rc = msg->ReceiveStatus(&child_rc);
+    std::string warning_string;
+    if (rc.IsError()) {
+      return rc;
+    }
+    if (child_rc.IsError()) {
+      return child_rc;
+    }
+    warning_string = child_rc.ToString();
+    std::cout << "Cache server startup completed successfully!\n";
+    std::cout << "The cache server daemon has been created as process id " << pid << " and listening on port " << port
+              << ".\n";
+    if (!warning_string.empty()) std::cout << "WARNING: " << warning_string;
+    std::cout << "\nRecommendation:\nSince the server is detached into its own daemon process, monitor the server "
+                 "logs (under "
+              << ds::DefaultLogDir() << ") for any issues that may happen after startup\n";
+    signal(SIGCHLD, SIG_IGN);  // ignore sig child signal.
+    return ms::Status::OK();
+  } else if (pid == 0) {
+    // Child process will continue from here if daemonize and parent has already exited.
+    // If we are running in the foreground, none of the code in block below will be run.
+    pid_t sid;
+    umask(0);
+    sid = setsid();
+    if (sid < 0) {
+      std::string errMsg = "Failed to setsid(). Errno = " + std::to_string(errno);
+      return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
+    }
+    (void)close(STDIN_FILENO);
+    (void)close(STDOUT_FILENO);
+    (void)close(STDERR_FILENO);
+  }
+  // failed to fork
+  std::string errMsg = "Failed to fork process for cache server. Errno = " + std::to_string(errno);
+  return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
+}
+
 /// Start the server
 /// \param argv
 /// \return Status object
@@ -85,56 +133,13 @@ ms::Status StartServer(int argc, char **argv) {
     }
     ms::g_ms_submodule_log_levels[SUBMODULE_ID] =
       static_cast<int>(strtol(argv[ArgIndex::kLogLevel], nullptr, ds::kDecimal));
-    google::InitGoogleLogging(argv[ArgIndex::kProcessName]);
 #undef google
 #endif
     rc = msg.Create();
     if (rc.IsError()) {
       return rc;
     }
-    pid_t pid = fork();
-    // failed to fork
-    if (pid < 0) {
-      std::string errMsg = "Failed to fork process for cache server. Errno = " + std::to_string(errno);
-      return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
-    } else if (pid > 0) {
-      // Parent and will be responsible for remove the queue on exit.
-      msg.RemoveResourcesOnExit();
-      // Sleep one second and we attach to the msg que
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      ms::Status child_rc;
-      rc = msg.ReceiveStatus(&child_rc);
-      std::string warning_string;
-      if (rc.IsError()) {
-        return rc;
-      }
-      if (child_rc.IsError()) {
-        return child_rc;
-      }
-      warning_string = child_rc.ToString();
-      std::cout << "Cache server startup completed successfully!\n";
-      std::cout << "The cache server daemon has been created as process id " << pid << " and listening on port " << port
-                << ".\n";
-      if (!warning_string.empty()) std::cout << "WARNING: " << warning_string;
-      std::cout << "\nRecommendation:\nSince the server is detached into its own daemon process, monitor the server "
-                   "logs (under "
-                << ds::DefaultLogDir() << ") for any issues that may happen after startup\n";
-      signal(SIGCHLD, SIG_IGN);  // ignore sig child signal.
-      return ms::Status::OK();
-    } else {
-      // Child process will continue from here if daemonize and parent has already exited.
-      // If we are running in the foreground, none of the code in block below will be run.
-      pid_t sid;
-      umask(0);
-      sid = setsid();
-      if (sid < 0) {
-        std::string errMsg = "Failed to setsid(). Errno = " + std::to_string(errno);
-        return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
-      }
-      (void)close(STDIN_FILENO);
-      (void)close(STDOUT_FILENO);
-      (void)close(STDERR_FILENO);
-    }
+    return Fork(&msg, port);
   }
 
   // Create the instance with some sanity checks built in

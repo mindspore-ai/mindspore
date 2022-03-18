@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "debug/anf_dump_utils.h"
+#include "include/common/debug/anf_dump_utils.h"
 #include "abstract/abstract_function.h"
 
 namespace mindspore {
@@ -71,5 +71,33 @@ std::string GetNodeFuncStr(const AnfNodePtr &nd) {
     return oss.str();
   }
   return GetAbstractFuncStr(abs_func);
+}
+
+std::string TypeToShortString(const TypeId &typeId) {
+  std::string label = TypeIdLabel(typeId);
+  std::string prefix = "kNumberType";
+  if (prefix.length() > label.length()) {
+    return label;
+  }
+  auto position = label.find(prefix);
+  // Position is 0 when label begins with prefix
+  if (position != 0) {
+    return label;
+  }
+  auto sub_position = position + prefix.length();
+  if (sub_position >= label.length()) {
+    return label;
+  }
+  return label.substr(sub_position);
+}
+
+std::string GetKernelNodeName(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::string kernel_name = anf_node->fullname_with_scope();
+  if (kernel_name.empty()) {
+    kernel_name = anf_node->ToString();
+  }
+  MS_LOG(DEBUG) << "Full scope kernel name is " << kernel_name << ".";
+  return kernel_name;
 }
 }  // namespace mindspore

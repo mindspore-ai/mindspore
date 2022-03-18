@@ -123,11 +123,6 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   }
   void set_weights_values(const py::dict &weights) { weights_ = weights; }
 #ifdef ENABLE_DEBUGGER
-  static bool GetDebugTerminate() { return debugger_terminate_; }
-  static void DebugTerminate(bool val, bool exit_success) {
-    debugger_terminate_ = val;
-    exit_success_ = exit_success;
-  }
   void TerminateDebugger();
 #endif
 
@@ -153,10 +148,6 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   std::map<std::string, ExecutorInfoPtr> info_;
   static std::shared_ptr<GraphExecutorPy> executor_;
   static std::mutex instance_lock_;
-#ifdef ENABLE_DEBUGGER
-  static bool debugger_terminate_;
-  static bool exit_success_;
-#endif
   std::map<std::string, py::dict> stra_dict_;
   std::string phase_ = "";
   std::map<std::string, std::string> jit_config_;
