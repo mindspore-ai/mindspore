@@ -116,7 +116,7 @@ constexpr char kAttrGradientInputIndex[] = "gradient_input_index";
 //         GradientAccumulationNode
 constexpr char kVirtualNode[] = "VirtualNode";
 
-// This method creates a scalar tensor. Its type is the same as the origin_node's output if use_origin_node is set
+// This method creates a fake tensor. Its type is the same as the origin_node's output if use_origin_node is set
 // true.
 // Normally it is used to connect the edges for send/recv nodes.
 ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_node = nullptr);
@@ -176,19 +176,6 @@ class GraphSplitter {
   // So method GenerateInterProcessOpsForNodeInputs is for generating Send-Recv pair between Node-In and Node-X.
   InterProcessOpEdgesInfo GenerateInterProcessOpsForNodeInputs(const AnfNodePtr &node);
 
-  // The inter-process edge between two nodes should be like this:
-  // input-->Send-->Recv-->peer.
-  // Send node takes 'input' node as one input, its output's abstract is the same as a scalar value tensor's to save
-  // memory. Recv node takes a scalar value tensor as one input, its output's abstract is the same as the 'input'
-  // node's.
-  CNodePtr GenerateSendNode(const InterProcessOpEdge &inter_process_edge);
-  CNodePtr GenerateRecvNode(const InterProcessOpEdge &inter_process_edge);
-
-  // Set attributes for send and recv node. These attributes is used in other stages like graph compiling, rpc route,
-  // etc.
-  void SetSendNodeAttr(const AnfNodePtr &send_node, const InterProcessOpEdge &inter_process_edge);
-  void SetRecvNodeAttr(const AnfNodePtr &recv_node, const InterProcessOpEdge &inter_process_edge);
-
   // Segments will be independent with each other after the graph is cut, so in-degrees and out-degrees of each segment
   // should be connected with control edges in case that the nodes are optimized out.
   std::vector<AnfNodePtr> FindInterProcessInDegree(const std::vector<AnfNodePtr> &nodes,
@@ -198,11 +185,6 @@ class GraphSplitter {
 
   // Judge whether two nodes have the same distributed label.
   bool IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodePtr &node2);
-
-  // This method creates a scalar tensor. Its type is the same as the origin_node's output if use_origin_node is set
-  // true.
-  // Normally it is used to connect the edges for send/recv nodes.
-  ValueNodePtr GenerateMockValueNode(bool use_origin_node, const AnfNodePtr &origin_node = nullptr);
 
   FuncGraphPtr func_graph_;
 
