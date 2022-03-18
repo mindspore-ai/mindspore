@@ -133,7 +133,7 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
   int64_t cur_output_index = 0;
   while (num_split - cur_output_index > divisor) {
     auto tuple_getitem = CreateTupleGetItem(func_graph, base_splitv, nodes_num);
-    base_splitv_outputs.push_back(tuple_getitem);
+    (void)base_splitv_outputs.push_back(tuple_getitem);
     CNodePtr new_splitv = CreateSplitVNode(func_graph, tuple_getitem);
     std::vector<int64_t> size_splits_new(size_splits.begin() + nodes_num * divisor,
                                          size_splits.begin() + (nodes_num + 1) * divisor);
@@ -154,7 +154,7 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
     auto last_node_num_split = num_split - cur_output_index;
     if (last_node_num_split > 1) {
       auto tuple_getitem = CreateTupleGetItem(func_graph, base_splitv, nodes_num);
-      base_splitv_outputs.push_back(tuple_getitem);
+      (void)base_splitv_outputs.push_back(tuple_getitem);
       CNodePtr new_splitv = CreateSplitVNode(func_graph, tuple_getitem);
       std::vector<int64_t> size_splits_new_last(size_splits.begin() + nodes_num * divisor, size_splits.end());
       SetAttrForSplitVNode(new_splitv, size_splits_new_last, split_dim, last_node_num_split);
@@ -168,9 +168,9 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
       size_splits_base.emplace_back(last_split_size);
     } else {
       auto tuple_getitem = CreateTupleGetItem(func_graph, base_splitv, nodes_num);
-      base_splitv_outputs.push_back(tuple_getitem);
+      (void)base_splitv_outputs.push_back(tuple_getitem);
       (void)make_tuple_inputs.emplace_back(tuple_getitem);
-      size_splits_base.emplace_back(size_splits[size_splits.size() - 1]);
+      (void)size_splits_base.emplace_back(size_splits[size_splits.size() - 1]);
     }
     nodes_num++;
   }

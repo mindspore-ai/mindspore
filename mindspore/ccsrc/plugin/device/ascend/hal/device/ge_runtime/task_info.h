@@ -323,7 +323,7 @@ class MemcpyAsyncTaskInfo : public TaskInfo {
   uint64_t dst_max_;
   void *src_;
   uint64_t count_;
-  int32_t kind_;
+  uint32_t kind_;
 };
 
 class StreamSwitchTaskInfo : public TaskInfo {

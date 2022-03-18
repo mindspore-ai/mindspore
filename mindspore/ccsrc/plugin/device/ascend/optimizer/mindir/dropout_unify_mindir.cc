@@ -162,7 +162,7 @@ CNodePtr CreateDynamicShapeCNode(const FuncGraphPtr &func_graph, const AnfNodePt
 
 CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePtr &dropout,
                                    const ValueNodePtr &keep_prob_value, const abstract::ShapePtr &input_shape,
-                                   const bool use_v3, const PatternProcessPass &pass) {
+                                   const bool use_v3, const PatternProcessPass &) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dropout);
   MS_EXCEPTION_IF_NULL(input_shape);
