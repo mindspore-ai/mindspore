@@ -112,10 +112,6 @@ class DebugServices {
     }
   };
   struct MappedFiles {
-    MappedFiles(std::vector<std::string> bin_files, std::map<std::string, std::vector<std::string>> npy_files)
-        : bin_files(bin_files), npy_files(npy_files) {}
-
-    MappedFiles() = default;
     std::vector<std::string> bin_files;
     // key is op_name and value is the vector of matched npy files to that op name.
     std::map<std::string, std::vector<std::string>> npy_files;
@@ -131,7 +127,7 @@ class DebugServices {
   };
 
   struct ProtoDump {
-    bool operator==(ProtoDump obj) {
+    bool operator==(const ProtoDump obj) {
       return (origin_node_name == obj.origin_node_name && dump_name == obj.dump_name && is_output == obj.is_output);
     }
     // name_to_match is the op_name between first and second dot in file_name
@@ -465,9 +461,9 @@ class DebugServices {
   void EmptyCurrentTensor();
 
 #ifdef ONLINE_DBG_MODE
-  bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
-                        const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
-                        TypeId device_type, const std::string &addr_format, size_t slot) const;
+  bool DumpTensorToFile(const std::string &filepath, bool trans_flag, const std::string &host_fmt,
+                        const std::string &addr_format, const std::string &tensor_name, size_t slot,
+                        const std::vector<int64_t> &host_shape, TypeId host_type) const;
 #endif
 
   bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev);
@@ -531,8 +527,6 @@ class DebugServices {
   std::unordered_map<std::string, std::vector<std::string>> overflow_ops_;
   std::string net_name_;
   std::string dump_dir_;
-  // DumpFileMap for each specific dump dir (including rank, graph_id and iteration)
-  DumpFileMap dump_dir_mapped_files_;
   // store history of graphs that have been run (rank_id, graph_id)
   std::map<std::tuple<uint32_t, uint32_t>, std::vector<uint32_t>> graphs_run_history_;
   bool is_sync_mode_{false};

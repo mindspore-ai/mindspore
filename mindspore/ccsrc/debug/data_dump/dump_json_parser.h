@@ -100,7 +100,7 @@ class BACKEND_EXPORT DumpJsonParser {
   std::vector<std::string> cell_dump_kernels_;
   std::set<uint32_t> support_devices_;
   uint32_t op_debug_mode_{0};
-  JsonFileFormat file_format_;
+  JsonFileFormat file_format_{FORMAT_BIN};
   bool trans_flag_{false};
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};

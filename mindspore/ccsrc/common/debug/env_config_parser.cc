@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -287,14 +287,14 @@ void EnvConfigParser::ParseRdrPath(const nlohmann::json &content) {
 void EnvConfigParser::ConfigToString() {
   std::string cur_config;
 #ifdef ENABLE_DUMP_IR
-  cur_config.append("After parsed, ");
-  cur_config.append("rdr_enable: ");
+  (void)cur_config.append("After parsed, ");
+  (void)cur_config.append("rdr_enable: ");
   std::string rdr_enable_flag = rdr_enabled_ ? "1" : "0";
   (void)cur_config.append(rdr_enable_flag);
-  cur_config.append(", rdr mode: ");
-  cur_config.append(std::to_string(rdr_mode_));
-  cur_config.append(", rdr path: ");
-  cur_config.append(rdr_path_);
+  (void)cur_config.append(", rdr mode: ");
+  (void)cur_config.append(std::to_string(rdr_mode_));
+  (void)cur_config.append(", rdr path: ");
+  (void)cur_config.append(rdr_path_);
 #endif
   MS_LOG(INFO) << cur_config;
 }
