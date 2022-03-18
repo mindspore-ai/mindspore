@@ -58,7 +58,7 @@ class CPUDeviceContext : public DeviceContext {
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                    bool is_dynamic_shape = false) const override;
+                    bool is_dynamic_shape) const override;
 
   bool LoadCollectiveCommLib() override;
 

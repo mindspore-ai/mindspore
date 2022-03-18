@@ -29,11 +29,11 @@ namespace device {
 constexpr size_t kAlignBytes = 32;
 
 size_t MemoryManager::GetCommonAlignSize(size_t input_size) {
-  return (input_size + kMemAlignSize + kAlignBytes - 1) / kMemAlignSize * kMemAlignSize;
+  return ((input_size + kMemAlignSize + kAlignBytes - 1) / kMemAlignSize) * kMemAlignSize;
 }
 
 size_t MemoryManager::GetCommunicationAlignSize(size_t input_size) {
-  return (input_size + kMemAlignSize - 1) / kMemAlignSize * kMemAlignSize + kTwiceMemAlignSize;
+  return ((input_size + kMemAlignSize - 1) / kMemAlignSize) * kMemAlignSize + kTwiceMemAlignSize;
 }
 
 void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph &graph) {

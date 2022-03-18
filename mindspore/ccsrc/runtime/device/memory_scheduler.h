@@ -61,7 +61,7 @@ class MemScheduler {
 
   void UpdateHighPriorityMem(const void *key) {
     if (need_record_event_) {
-      high_priority_updated_step_[key].emplace_back(current_step_);
+      (void)high_priority_updated_step_[key].emplace_back(current_step_);
     }
   }
 
@@ -84,7 +84,7 @@ class MemScheduler {
 
   void SetOffload(const void *key) { (void)manual_offload_keys_.insert(key); }
 
-  void AddMemNeedInit(const void *key) { high_priority_mem_need_init_.insert(key); }
+  void AddMemNeedInit(const void *key) { (void)high_priority_mem_need_init_.insert(key); }
 
   void ClearMemNeedInit() { high_priority_mem_need_init_.clear(); }
 

@@ -207,7 +207,7 @@ void MemOffloadStrategy::GenComputeMemEvents() {
       first_event->index = first_get_event->index;
     }
     if ((first_event->type == kInit || first_event->type == kMalloc) && first_event->index < total_step_) {
-      pre_compute_events_[first_event->index].emplace_back(first_event);
+      (void)pre_compute_events_[first_event->index].emplace_back(first_event);
     } else {
       MS_LOG_EXCEPTION << "First event should be init or malloc!";
     }
@@ -226,7 +226,7 @@ void MemOffloadStrategy::GenComputeMemEvents() {
         auto free_or_swap_out_event = std::make_shared<MemEvent>(event_type, pre_index);
         free_or_swap_out_event->key = item.first;
         free_or_swap_out_event->mem_size = first_event->mem_size;
-        post_compute_events_[pre_index].emplace_back(free_or_swap_out_event);
+        (void)post_compute_events_[pre_index].emplace_back(free_or_swap_out_event);
         // avoid swap-in-event follow init-event
         if (i != kFirstGetMemEventIndex || first_event->type != kInit) {
           auto swap_in_event = std::make_shared<MemEvent>(kSwapIn, event->index);
@@ -276,7 +276,7 @@ std::set<size_t> MemOffloadStrategy::GetSwapOutEventIndex(const void *key,
         min_swap_index_before_update = i;
       }
     } else {
-      swap_out_event_index.insert(i);
+      (void)swap_out_event_index.insert(i);
       max_swap_out_step = mem_event->index;
       while (update_steps_index < update_steps.size() && update_steps[update_steps_index] < mem_event->index) {
         ++update_steps_index;
@@ -284,7 +284,7 @@ std::set<size_t> MemOffloadStrategy::GetSwapOutEventIndex(const void *key,
     }
   }
   if (max_swap_out_step <= update_steps[update_steps.size() - 1]) {
-    swap_out_event_index.insert(min_swap_index_before_update);
+    (void)swap_out_event_index.insert(min_swap_index_before_update);
   }
   return swap_out_event_index;
 }
