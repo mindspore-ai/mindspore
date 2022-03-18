@@ -185,13 +185,13 @@ outputFile 指定micro代码生成目录，当前脚本目录下将生成source_
    本教程生成的代码为非并行代码，无需上下文context，可直接设为空。
 
    ```cpp
-     size_t model_size = 0;
-     Context *context = nullptr;
-     session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, model_size, context);
-     if (session == nullptr) {
-         std::cerr << "create lite session failed" << std::endl;
-         return RET_ERROR;
-     }
+     MSContextHandle ms_context_handle = NULL;
+     void int model_size = 0;
+     // read .bin file by ReadBinaryFile;
+     model_buffer = ReadInputData("net.bin", &model_size);
+     MSModelHandle model_handle = MSModelCreate();
+     int ret = MSModelBuild(model_handle, model_buffer, model_size, kMSModelTypeMindIR, ms_context_handle);
+     MSContextDestroy(&ms_context_handle);
    ```
 
 2. **输入数据准备**
@@ -199,68 +199,64 @@ outputFile 指定micro代码生成目录，当前脚本目录下将生成source_
    用户所需要准备的输入数据内存空间，若输入是持久化文件，可通过读文件方式获取。若输入数据已经存在内存中，则此处无需读取，可直接传入数据指针。
 
    ```cpp
-     std::vector<MSTensor *> inputs = session->GetInputs();
-     MSTensor *input = inputs.at(0);
-     if (input == nullptr) {
-         return RET_ERROR;
+     for (size_t i = 0; i < inputs_num; ++i) {
+       void *input_data = MSTensorGetMutableData(inputs_handle.handle_list[i]);
+       memcpy(input_data, inputs_binbuf[i], inputs_size[i]);
+       free(inputs_binbuf[i]);
+       inputs_binbuf[i] = NULL;
      }
-     // Assume we have got input data in memory.
-     memcpy(input->MutableData(), input_buffer, input->Size());
    ```
 
 3. **执行推理**
 
    ```cpp
-     session->RunGraph();
+     MSTensorHandleArray outputs_handle = MSModelGetOutputs(model_handle);
+     MSModelPredict(model_handle, inputs_handle, &outputs_handle, NULL, NULL);
    ```
 
 4. **推理结束获取输出**
 
    ```cpp
-     Vector<String> outputs_name = session->GetOutputTensorNames();
-     for (const auto &name : outputs_name) {
-         auto output = session->GetOutputByTensorName(name);
-         // deal with output
-         ......
+     for (size_t i = 0; i < outputs_handle.handle_num; i++) {
+       MSTensorHandle output = outputs_handle.handle_list[i];
+       PrintTensorHandle(output);
      }
    ```
 
 5. **释放内存session**
 
    ```cpp
-     delete session;
+     MSModelDestroy(&model_handle);
    ```
 
 6. **推理代码整体调用流程**
 
    ```cpp
      // Assume we have got model_buffer data in memory.
-     size_t model_size = 0;
-     Context *context = nullptr;
-     session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, model_size, context);
-     if (session == nullptr) {
-         std::cerr << "create lite session failed" << std::endl;
-         return RET_ERROR;
+     MSContextHandle ms_context_handle = NULL;
+     void int model_size = 0;
+     // read .bin file by ReadBinaryFile;
+     model_buffer = ReadInputData("net.bin", &model_size);
+     MSModelHandle model_handle = MSModelCreate();
+     int ret = MSModelBuild(model_handle, model_buffer, model_size, kMSModelTypeMindIR, ms_context_handle);
+     MSContextDestroy(&ms_context_handle);
+
+     for (size_t i = 0; i < inputs_num; ++i) {
+       void *input_data = MSTensorGetMutableData(inputs_handle.handle_list[i]);
+       memcpy(input_data, inputs_binbuf[i], inputs_size[i]);
+       free(inputs_binbuf[i]);
+       inputs_binbuf[i] = NULL;
      }
 
-     std::vector<MSTensor *> inputs = session->GetInputs();
-     MSTensor *input = inputs.at(0);
-     if (input == nullptr) {
-         return RET_ERROR;
-     }
-     // Assume we have got input data in memory.
-     memcpy(input->MutableData(), input_buffer, input->Size());
+     MSTensorHandleArray outputs_handle = MSModelGetOutputs(model_handle);
+     MSModelPredict(model_handle, inputs_handle, &outputs_handle, NULL, NULL);
 
-     session->RunGraph();
-
-     Vector<String> outputs_name = session->GetOutputTensorNames();
-     for (const auto &name : outputs_name) {
-         auto output = session->GetOutputByTensorName(name);
-         // deal with output
-         ......
+     for (size_t i = 0; i < outputs_handle.handle_num; i++) {
+       MSTensorHandle output = outputs_handle.handle_list[i];
+       PrintTensorHandle(output);
      }
 
-     delete session;
+     MSModelDestroy(&model_handle);
    ```
 
 ## 更多详情

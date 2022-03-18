@@ -21,8 +21,6 @@ set(WRAPPER_SRC
         ${WRAPPER_DIR}/int8/resize_int8_wrapper.c
         ${WRAPPER_DIR}/int8/slice_int8_wrapper.c
         ${WRAPPER_DIR}/int8/batchnorm_int8_wrapper.c
-        ${WRAPPER_DIR}/thread/thread_wrapper.cc
-        ### mindrt
-        ${CORE_DIR}/mindrt/src/thread/threadpool.cc
-        ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
+        ${WRAPPER_DIR}/thread/micro_thread_pool.c
+        ${WRAPPER_DIR}/thread/micro_core_affinity.c
         )

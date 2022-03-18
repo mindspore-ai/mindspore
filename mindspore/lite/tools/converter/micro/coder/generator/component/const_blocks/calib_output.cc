@@ -83,14 +83,19 @@ const char *calib_source = R"RAW(
 #define kToleranceVal 0.0001f
 #define kMaxOutput 5
 #define kMaxTensorSize 400 * 400 * 4
+#define RET_ERROR -1
 
 int ReadCalibData(const char *calib_data_path, CalibTensor **calib_tensor_pointers, int *calib_num) {
   FILE *file = fopen(calib_data_path, "r");
   if (!file) {
     printf("Unable open %s", calib_data_path);
-    return -1;
+    return RET_ERROR;
   }
   CalibTensor *calib_tensors = (CalibTensor *)malloc(kMaxOutput * sizeof(CalibTensor));
+  if(calib_tensors == NULL) {
+    printf("Malloc calib tensors failed.");
+    return RET_ERROR;
+  }
   // read line by line
   char line[kMaxTensorSize];
   char *p;
@@ -103,8 +108,13 @@ int ReadCalibData(const char *calib_data_path, CalibTensor **calib_tensor_pointe
       int j = 0;
       int dims = 0;
       p = strtok(line, " ");
-      calib_tensors[*calib_num].tensor_name = (char *)malloc(strlen(p));
-      memcpy(calib_tensors[*calib_num].tensor_name, p, strlen(p));
+      char* tensor_name = (char *)malloc(strlen(p)+1);
+      if(tensor_name == NULL) {
+        printf("Malloc tensor name failed.");
+        return RET_ERROR;
+      }
+      (void)strcpy(tensor_name, p);
+      calib_tensors[*calib_num].tensor_name = tensor_name;
       while (p != NULL) {
         if (j == 1) {
           dims = atoi(p);
@@ -122,6 +132,10 @@ int ReadCalibData(const char *calib_data_path, CalibTensor **calib_tensor_pointe
       i++;
     } else {
       float *data = (float *)malloc(elements * sizeof(float));
+      if(data == NULL) {
+        printf("Malloc tensor data failed.");
+        return RET_ERROR;
+      }
       p = strtok(line, " ");
       int k = 0;
       while (p != NULL) {
@@ -144,18 +158,18 @@ int ReadCalibData(const char *calib_data_path, CalibTensor **calib_tensor_pointe
 int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int calib_num) {
   if (outputs.handle_num != (size_t)calib_num) {
     printf("error, outputs and calibs size is mismatch\n");
-    return -1;
+    return RET_ERROR;
   }
   float total_error = 0;
   size_t outputs_num = outputs.handle_num;
   for (size_t i = 0; i < outputs_num; ++i) {
     MicroTensor *output = (MicroTensor *)outputs.handle_list[i];
     if (!output || !output->data) {
-      return -1;
+      return RET_ERROR;
     }
     CalibTensor *calib = calib_tensors[0];
     if (!calib || !calib[i].data_) {
-      return -1;
+      return RET_ERROR;
     }
     if (strcmp(output->name, calib[i].tensor_name) != 0) {
       printf("warning, output tensor name is not equal to calib\n");
@@ -163,7 +177,7 @@ int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int
     size_t elements = (size_t)MSTensorGetElementNum(output);
     if (elements != (size_t)calib[i].elemets_num_) {
       printf("error, output elements num is not equal to calib\n");
-      return -1;
+      return RET_ERROR;
     }
     switch (output->type) {
       case kMSDataTypeNumberTypeFloat32: {
@@ -172,7 +186,7 @@ int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int
           if (isnan(float_output[j]) || isinf(float_output[j]) || isnan(calib[i].data_[j]) ||
               isinf(calib[i].data_[j])) {
             printf("error, output data is nan or inf\n");
-            return -1;
+            return RET_ERROR;
           }
           total_error += fabsf(float_output[j] - calib[i].data_[j]);
         }
@@ -207,7 +221,7 @@ int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int
   }
   if (total_error > kToleranceVal) {
     printf("compare outputs failed, total error: %f\n", total_error);
-    return -1;
+    return RET_ERROR;
   }
   printf("compare outputs success, total error: %f\n", total_error);
   return 0;
