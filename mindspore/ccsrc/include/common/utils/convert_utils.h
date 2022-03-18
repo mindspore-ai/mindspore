@@ -79,6 +79,8 @@ std::vector<T> TensorValueToVector(const tensor::TensorPtr &tensor) {
 
 COMMON_EXPORT void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors);
 
+COMMON_EXPORT ValuePtr ShallowCopyTensorValue(const ValuePtr &value);
+
 COMMON_EXPORT size_t CountValueNum(const ValueTuplePtr &value_tuple);
 
 // sparse_attr_map converts CNode{kPrimSparseGetAttr, SparseTensor}

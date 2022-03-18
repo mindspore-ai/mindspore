@@ -270,6 +270,7 @@ class GradExecutor {
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
   void UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph);
   std::vector<size_t> GetGradPositionArgs(const py::object &grad_position);
+  void ShallowCopySensValue(const py::tuple &input_args, bool has_sens, VectorRef *run_args);
   // Manage resource for construct forward graph.
   const std::string &graph_phase() const { return graph_phase_; }
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
