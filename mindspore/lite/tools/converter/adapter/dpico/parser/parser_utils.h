@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ int UnifyConvWeightFormat(const api::FuncGraphPtr &graph, const CNodePtr &cnode,
                           mindspore::Format dst_format, std::set<AnfNodePtr> *has_visited);
 bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded_stream,
                                    google::protobuf::Message *proto);
-int ReadProtoFromText(const char *file, google::protobuf::Message *message);
-int ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *message);
+int ReadProtoFromText(const std::string &file, google::protobuf::Message *message);
+int ReadProtoFromBinaryFile(const std::string &file, google::protobuf::Message *message);
 STATUS ValidateFileStr(const std::string &modelFile, const std::string &fileType);
 }  // namespace lite
 }  // namespace mindspore

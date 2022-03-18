@@ -72,7 +72,8 @@ std::string CalibDataGenerator::GetInputShapesStr(const AnfNodePtrList &graph_in
       return "";
     }
     if (shape_vector.size() == kDims4) {  // transform nchw to nhwc
-      shape_vector = std::vector<int64_t>{shape_vector[0], shape_vector[2], shape_vector[3], shape_vector[1]};
+      shape_vector = std::vector<int64_t>{shape_vector[kNCHW_N], shape_vector[kNCHW_H], shape_vector[kNCHW_W],
+                                          shape_vector[kNCHW_C]};
     }
     for (size_t i = 0; i < shape_vector.size(); i++) {
       auto dim = shape_vector.at(i);
