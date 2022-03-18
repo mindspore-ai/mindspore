@@ -363,6 +363,9 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
       min_value_tuple[i] = out[ATTR_MIN_VALUE];
       max_value_tuple[i] = out[ATTR_MAX_VALUE];
       dyn_value = true;
+    } else {
+      min_value_tuple[i] = out[ATTR_VALUE];
+      max_value_tuple[i] = out[ATTR_VALUE];
     }
 
     // Elements in tuple is tensor, which shape is dynamic.
@@ -370,6 +373,9 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
       min_shape_tuple[i] = out[ATTR_MIN_SHAPE];
       max_shape_tuple[i] = out[ATTR_MAX_SHAPE];
       dyn_shape = true;
+    } else {
+      min_shape_tuple[i] = out[ATTR_SHAPE];
+      max_shape_tuple[i] = out[ATTR_SHAPE];
     }
   }
   dic[ATTR_SHAPE] = shape_tuple;
@@ -438,6 +444,9 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
       min_value_list[i] = out[ATTR_MIN_VALUE];
       max_value_list[i] = out[ATTR_MAX_VALUE];
       dyn_value = true;
+    } else {
+      min_value_list[i] = out[ATTR_VALUE];
+      max_value_list[i] = out[ATTR_VALUE];
     }
 
     // Elements in list is tensor, which shape is dynamic.
@@ -445,6 +454,9 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
       min_shape_list[i] = out[ATTR_MIN_SHAPE];
       max_shape_list[i] = out[ATTR_MAX_SHAPE];
       dyn_shape = true;
+    } else {
+      min_shape_list[i] = out[ATTR_SHAPE];
+      max_shape_list[i] = out[ATTR_SHAPE];
     }
   }
 
