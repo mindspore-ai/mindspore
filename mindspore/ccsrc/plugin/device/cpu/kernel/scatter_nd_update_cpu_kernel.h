@@ -46,6 +46,7 @@ class ScatterUpdateCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
   virtual void *ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &outputs) = 0;
 

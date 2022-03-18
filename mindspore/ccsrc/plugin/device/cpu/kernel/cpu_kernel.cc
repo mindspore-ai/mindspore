@@ -344,10 +344,7 @@ void ParallelLaunch(const std::vector<common::Task> &tasks, Content content) {
   }
 
   size_t task_num = tasks.size();
-  auto func = [&](void *, int task_id, float, float) {
-    tasks[task_id]();
-    return common::SUCCESS;
-  };
+  auto func = [&](void *, int task_id, float, float) { return tasks[task_id](); };
   (void)thread_pool->ParallelLaunch(func, content, task_num);
 }
 
