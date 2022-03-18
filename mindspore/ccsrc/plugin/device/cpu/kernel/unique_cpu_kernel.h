@@ -42,6 +42,64 @@ struct UniqueParam {
   bool need_sort_{true};
 };
 
+template <typename FromType>
+size_t ToSize(FromType input) {
+  return static_cast<size_t>(input);
+}
+
+template <>
+inline size_t ToSize(int input) {
+  return IntToSize(input);
+}
+
+template <>
+inline size_t ToSize(int64_t input) {
+  return LongToSize(input);
+}
+
+template <>
+inline size_t ToSize(float input) {
+  return FloatToSize(input);
+}
+
+template <typename ToType>
+ToType SizeTo(size_t input) {
+  return static_cast<ToType>(input);
+}
+
+template <>
+inline int SizeTo(size_t input) {
+  return SizeToInt(input);
+}
+
+template <>
+inline int64_t SizeTo(size_t input) {
+  return SizeToLong(input);
+}
+
+template <typename DataType>
+bool NotEqual(DataType left, DataType right) {
+  return left != right;
+}
+
+template <>
+inline bool NotEqual(float left, float right) {
+  const float kEps = 1e-30;
+  return abs(left - right) > kEps;
+}
+
+template <typename DataType>
+size_t BucketId(DataType input, size_t bucket_num) {
+  if (input < 0) {
+    input = -input;
+  }
+  size_t data = ToSize<DataType>(input);
+  if (bucket_num < 1) {
+    return data;
+  }
+  return data % bucket_num;
+}
+
 class UniqueCpuKernelMod : public NativeCpuKernelMod {
  public:
   UniqueCpuKernelMod() = default;
@@ -61,18 +119,6 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   size_t output_size_{0};
   bool sorted_{false};
   CNodeWeakPtr node_wpt_;
-
-  template <typename DataType>
-  static size_t BucketId(DataType input, size_t bucket_num) {
-    if (input < 0) {
-      input = -input;
-    }
-    size_t data = static_cast<size_t>(input);
-    if (bucket_num < 1) {
-      return data;
-    }
-    return data % bucket_num;
-  }
 
   template <typename DataType, typename IndexType>
   static void CalculateEachBucketSize(const std::shared_ptr<UniqueParam<DataType, IndexType>> &params,
@@ -161,7 +207,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
         continue;
       }
       bucket->input_[bucket_index] = data;
-      bucket->workspace_idx_[bucket_index] = static_cast<IndexType>(segment_offset + i);
+      bucket->workspace_idx_[bucket_index] = SizeTo<IndexType>(segment_offset + i);
       bucket_data_num[bucket_id]++;
     }
     MS_LOG(DEBUG) << "End";
@@ -252,16 +298,16 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     if (params->input_size_ < 1) {
       return;
     }
-    if (params->need_sort_ && !std::is_same<DataType, float>::value) {
+    if (params->need_sort_) {
       for (size_t i = 0; i < params->input_size_; ++i) {
-        input_idx[i] = static_cast<IndexType>(i);
+        input_idx[i] = SizeTo<IndexType>(i);
       }
       std::sort(input_idx, input_idx + params->input_size_,
                 [&](size_t left, size_t right) { return input[left] < input[right]; });
       DataType last = input[0];
       for (size_t i = 0; i < params->input_size_; ++i) {
         auto curr = input[input_idx[i]];
-        if (i == 0 || curr != last) {
+        if (i == 0 || NotEqual(curr, last)) {
           if (i != 0) {
             j++;
           }
@@ -272,7 +318,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
           inverse_idx[input_idx[i]] = j;
         }
       }
-      params->output_size_ = static_cast<size_t>(j + 1);
+      params->output_size_ = ToSize<IndexType>(j + 1);
     } else {
       std::unordered_map<DataType, IndexType> uniq;
       uniq.reserve(params->input_size_);
@@ -286,7 +332,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
       for (const auto &it : uniq) {
         output[it.second] = it.first;
       }
-      params->output_size_ = static_cast<size_t>(j);
+      params->output_size_ = ToSize<IndexType>(j);
     }
     MS_LOG(DEBUG) << "End";
   }
@@ -325,9 +371,9 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
       if (origin_idx < 0) {
         continue;
       }
-      size_t index = static_cast<size_t>(origin_idx);
+      size_t index = ToSize<IndexType>(origin_idx);
       if (index < result->input_size_) {
-        result->inverse_idx_[index] = bucket->inverse_idx_[i] + offset;
+        result->inverse_idx_[index] = bucket->inverse_idx_[i] + SizeTo<IndexType>(offset);
       }
     }
   }

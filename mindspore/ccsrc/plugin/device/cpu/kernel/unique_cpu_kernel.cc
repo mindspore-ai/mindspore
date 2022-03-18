@@ -19,7 +19,13 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
 constexpr size_t kBucketSortThreshold = 100000;
+constexpr size_t kWorkSpaceNum = 3;
+constexpr size_t kOutputNum = 2;
+constexpr size_t kWorkSpaceIndex = 2;
+}  // namespace
+
 void UniqueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -85,19 +91,19 @@ void UniqueCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the number of inputs should be greater than 0, but got: " << inputs.size();
   }
-  if (workspace.size() < 3) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the number of workspaces should be greater than 2, but got: " << workspace.size();
+  if (workspace.size() < kWorkSpaceNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should not be less than "
+                      << kWorkSpaceNum << ", but got: " << workspace.size();
   }
-  if (outputs.size() < 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the number of outputs should be greater than 1, but got: " << outputs.size();
+  if (outputs.size() < kOutputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should not be less than " << kOutputNum
+                      << ", but got: " << outputs.size();
   }
   auto params = std::make_shared<UniqueParam<DataType, IndexType>>();
   params->input_ = reinterpret_cast<DataType *>(inputs[0]->addr);
   params->input_idx_ = reinterpret_cast<IndexType *>(workspace[0]->addr);
   params->workspace_ = reinterpret_cast<DataType *>(workspace[1]->addr);
-  params->workspace_idx_ = reinterpret_cast<IndexType *>(workspace[2]->addr);
+  params->workspace_idx_ = reinterpret_cast<IndexType *>(workspace[kWorkSpaceIndex]->addr);
   params->output_ = reinterpret_cast<DataType *>(outputs[0]->addr);
   params->inverse_idx_ = reinterpret_cast<IndexType *>(outputs[1]->addr);
   params->input_size_ = input_size_;
