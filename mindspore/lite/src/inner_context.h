@@ -32,6 +32,11 @@
 #endif
 
 namespace mindspore::lite {
+#ifdef ENABLE_MINDRT
+#ifndef OPERATOR_PARALLELISM
+constexpr int kDefaultParallelNum = 2;
+#endif
+#endif
 struct InnerContext : public Context {
  public:
   InnerContext() { InitDeviceFp16(); }
@@ -107,6 +112,8 @@ struct InnerContext : public Context {
   void SetContextDevice(const Context *context);
 
   void InitDeviceFp16();
+
+  int CreateThreadPool();
 
   bool device_and_pkg_support_fp16_ = false;
 

@@ -88,6 +88,10 @@ class SearchSubGraph {
 
  public:
   void SubGraphSplit();
+#ifdef OPERATOR_PARALLELISM
+  void SubGraphSplitByOperator();
+  void InsertNodeBegin(uint32_t index, Subgraph *subgraph, std::vector<size_t> *outputs);
+#endif
 
  private: /* split by output */
   void SubGraphSplitByOutput();

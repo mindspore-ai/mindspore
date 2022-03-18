@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_
 #define MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_
 
+#include <queue>
 #include <new>
 #include <vector>
 #include <unordered_map>
@@ -35,7 +36,9 @@
 #endif
 #endif
 #include "utils/visible.h"
+#include "thread/hqueue.h"
 
+#define USE_HQUEUE
 namespace mindspore {
 constexpr int kDefaultSpinCount = 300000;
 constexpr int kMaxCount = 30000;
@@ -43,6 +46,9 @@ constexpr int kDefaultKernelSpinCount = 3000;
 constexpr int kMinSpinCount = 1;
 constexpr int kDefaultFrequency = 1;
 constexpr float kMaxScale = 1.;
+#ifdef OPERATOR_PARALLELISM
+constexpr size_t MAX_READY_TASK_NR = 4096;
+#endif
 
 enum ThreadStatus {
   kThreadBusy = 0,  // busy, the thread is running task
@@ -66,13 +72,19 @@ typedef struct Task {
   std::atomic_int finished{0};
   std::atomic_int status{THREAD_OK};  // return status, RET_OK
 } Task;
-
+#if OPERATOR_PARALLELISM
+typedef struct TaskMessage {
+  Task *task;
+  int task_id;
+} TaskMessage;
+#endif
+class ThreadPool;
 class Worker {
  public:
-  Worker() = default;
+  explicit Worker(ThreadPool *pool) : pool_(pool) {}
   virtual ~Worker();
   // create thread and start running at the same time
-  void CreateThread();
+  virtual void CreateThread();
   // assign task and then activate thread
   void Active(Task *task, int task_id);
   // activate thread
@@ -100,6 +112,14 @@ class Worker {
   void set_mask(const cpu_set_t &mask) { mask_ = mask; }
   pthread_t handle() { return thread_.native_handle(); }
 #endif
+#ifdef OPERATOR_PARALLELISM
+  inline TaskMessage *GetTaskMessages() { return task_messages_; }
+  inline void SetTaskMessages(TaskMessage *task_messages) { task_messages_ = task_messages; }
+  inline bool RunQueueWorkTask() const;
+#endif
+  bool check_task_nullptr();
+  inline bool get_task_free() const { return task_free_; }
+  inline void set_task_free(bool flag) { task_free_ = flag; }
 
  protected:
   void SetAffinity();
@@ -127,6 +147,11 @@ class Worker {
   int frequency_{kDefaultFrequency};
   int spin_count_{0};
   int max_spin_count_{kMinSpinCount};
+  bool task_free_{true};
+  ThreadPool *pool_{nullptr};
+#ifdef OPERATOR_PARALLELISM
+  TaskMessage *task_messages_{nullptr};
+#endif
 };
 
 class MS_CORE_API ThreadPool {
@@ -154,6 +179,44 @@ class MS_CORE_API ThreadPool {
   void SetWorkerIdMap();
   const std::unordered_map<std::thread::id, size_t> &GetWorkerIdMap() const { return worker_ids_; }
   float GetServerCpuFrequence() const { return server_cpu_frequence; }
+#ifdef OPERATOR_PARALLELISM
+  inline TaskMessage *PopTaskFromQueue() const {
+#ifdef USE_HQUEUE
+    return task_queue_.Dequeue();
+#else
+    std::lock_guard<std::mutex> _l(task_mutex_);
+    if (task_queue_.empty()) {
+      return nullptr;
+    }
+    auto task_message = task_queue_.front();
+    task_queue_.pop();
+    return task_message;
+#endif
+  }
+  inline void PushTaskToQueue(TaskMessage *task_message) const {
+    if (!task_message) {
+      return;
+    }
+#ifdef USE_HQUEUE
+    while (!task_queue_.Enqueue(task_message)) {
+    }
+#else
+    std::lock_guard<std::mutex> _l(task_mutex_);
+    task_queue_.push(task_message);
+#endif
+  }
+  inline bool RunQueueWorkTask() const {
+    auto task_message = PopTaskFromQueue();
+    if (task_message == nullptr) {
+      return false;
+    }
+    auto task = task_message->task;
+    task_message->task = nullptr;
+    task->status |= task->func(task->content, task_message->task_id, 0, 0);
+    (void)++task->finished;
+    return true;
+  }
+#endif
 
  protected:
   ThreadPool() = default;
@@ -164,7 +227,7 @@ class MS_CORE_API ThreadPool {
 
   void SyncRunTask(Task *task, int start_num, int task_num) const;
 
-  void DistributeTask(Task *task, int task_num) const;
+  void DistributeTask(Task *task, int task_num, Worker *curr) const;
   void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
   void ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num, const Worker *curr) const;
 
@@ -180,6 +243,17 @@ class MS_CORE_API ThreadPool {
   int max_spin_count_{kDefaultSpinCount};
   int min_spin_count_{kMinSpinCount};
   float server_cpu_frequence = -1.0f;  // Unit : GHz
+#ifdef OPERATOR_PARALLELISM
+#ifdef USE_HQUEUE
+  mutable HQueue<TaskMessage> task_queue_;
+#else
+  mutable std::mutex task_mutex_;
+  mutable std::queue<TaskMessage *> task_queue_;
+#endif
+#endif
 };
+#ifdef OPERATOR_PARALLELISM
+inline bool Worker::RunQueueWorkTask() const { return pool_->RunQueueWorkTask(); }
+#endif
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_

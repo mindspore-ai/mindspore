@@ -31,9 +31,6 @@
 
 namespace mindspore::lite {
 namespace {
-#ifdef ENABLE_MINDRT
-constexpr int kDefaultParallelNum = 2;
-#endif
 const constexpr int kMaxLiteContextDeviceNums = 2;
 const constexpr int kMaxInnerContextDeviceNums = 3;
 }  // namespace
@@ -111,11 +108,7 @@ void InnerContext::SetContextDevice(const Context *context) {
   return;
 }
 
-int InnerContext::Init() {
-  if (RET_OK != this->IsValid()) {
-    MS_LOG(ERROR) << "Context is not valid";
-    return RET_NOT_SUPPORT;
-  }
+int InnerContext::CreateThreadPool() {
   if (this->thread_pool_ == nullptr) {
     BindMode bind_mode = Power_NoBind;
     if (this->IsCpuEnabled()) {
@@ -123,7 +116,11 @@ int InnerContext::Init() {
     }
 
 #ifdef ENABLE_MINDRT
+#ifdef OPERATOR_PARALLELISM
+    int actor_parallel_thread = this->enable_parallel_ ? (this->thread_num_ > 2 ? (this->thread_num_ / 2) : 1) : 1;
+#else
     int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
+#endif
     if (this->affinity_core_list_.empty()) {
       thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, bind_mode);
       MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
@@ -136,6 +133,18 @@ int InnerContext::Init() {
     thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
     thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode));
 #endif
+  }
+  return RET_OK;
+}
+int InnerContext::Init() {
+  if (this->IsValid() != RET_OK) {
+    MS_LOG(ERROR) << "Context is not valid";
+    return RET_NOT_SUPPORT;
+  }
+
+  if (CreateThreadPool()) {
+    MS_LOG(ERROR) << "CreateThreadPool failed.";
+    return RET_ERROR;
   }
 
   if (this->allocator == nullptr) {

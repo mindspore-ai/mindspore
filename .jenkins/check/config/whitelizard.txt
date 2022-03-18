@@ -3,6 +3,7 @@
 # Scene2: 
 #    file_path:function_name1, function_name2
 #
+mindspore/mindspore/core/mindrt/src/thread/actor_threadpool.cc:mindspore::ActorWorker::RunWithSpin
 mindspore/mindspore/lite/src/ops/primitive_c.cc:mindspore::lite::PrimitiveC::Create
 mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/source/csv_op.cc:mindspore::dataset::CsvOp::CsvParser::InitCsvParser
 mindspore/mindspore/lite/tools/converter/graphdef_transform.cc:mindspore::lite::GraphDefTransform::Transform
