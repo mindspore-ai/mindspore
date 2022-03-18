@@ -450,7 +450,7 @@
         其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： `mindspore.ops.Primitive.shard` 的描述，也可以设置为None，会默认以数据并行执行。
         其余算子的并行策略由输入输出指定的策略推导得到。
 
-        .. note:: 需设置为PyNative模式，并且全自动并行(AUTO_PARALLEL)，同时设置 `set_auto_parallel_context` 中的搜索模式(search mode)为"sharding_propagation"，或半自动并行（SEMI_AUTO_PARALLEL)。
+        .. note:: 需设置为PyNative模式，并且全自动并行(AUTO_PARALLEL)，同时设置 `set_auto_parallel_context` 中的搜索模式(search mode)为"sharding_propagation"。
 
         **参数：**
 

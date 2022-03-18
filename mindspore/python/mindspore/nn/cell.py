@@ -488,7 +488,7 @@ class Cell(Cell_):
 
         Note:
             Only effective in PYNATIVE_MODE and in either ParallelMode.AUTO_PARALLEL with
-            search_mode in auto_parallel_context set as sharding_propagation or ParallelMode.SEMI_AUTO_PARALLEL.
+            search_mode in auto_parallel_context set as sharding_propagation.
 
         Args:
             in_axes (tuple): Define the layout of inputs, each element of the tuple should be a tuple or None. Tuple
@@ -507,23 +507,23 @@ class Cell(Cell_):
             >>> import mindspore.nn as nn
             >>>
             >>> class Block(nn.Cell):
-            >>>   def __init__(self):
-            >>>     self.dense1 = nn.Dense(10, 10)
-            >>>     self.relu = nn.ReLU()
-            >>>     self.dense2 = nn.Dense2(10, 10)
-            >>>   def construct(self, x):
-            >>>     x = self.relu(self.dense2(self.relu(self.dense1(x))))
-            >>>     return x
+            ...   def __init__(self):
+            ...     self.dense1 = nn.Dense(10, 10)
+            ...     self.relu = nn.ReLU()
+            ...     self.dense2 = nn.Dense2(10, 10)
+            ...   def construct(self, x):
+            ...     x = self.relu(self.dense2(self.relu(self.dense1(x))))
+            ...     return x
             >>>
             >>> class example(nn.Cell):
-            >>>   def __init__(self):
-            >>>     self.block1 = Block()
-            >>>     self.block2 = Block()
-            >>>     self.block2.shard(in_axes=(None, (2, 1)), out_axes=(None,))
-            >>>  def construct(self, x):
-            >>>    x = self.block1(x)
-            >>>    x = self.block2(x)
-            >>>    return x
+            ...   def __init__(self):
+            ...     self.block1 = Block()
+            ...     self.block2 = Block()
+            ...     self.block2.shard(in_axes=((2, 1),), out_axes=(None,))
+            ...  def construct(self, x):
+            ...    x = self.block1(x)
+            ...    x = self.block2(x)
+            ...    return x
         """
         shard_fn = Shard()
         fn = shard_fn(self, in_axes, out_axes, device, level)

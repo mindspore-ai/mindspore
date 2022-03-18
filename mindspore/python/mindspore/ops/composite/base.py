@@ -803,8 +803,14 @@ class Shard(Shard_):
 
     def __call__(self, fn, in_axes, out_axes, device="Ascend", level=0):
         if context.get_context("mode") != context.PYNATIVE_MODE or \
-            context.get_auto_parallel_context("parallel_mode") not in ["semi_auto_parallel", "auto_parallel"]:
-            raise AssertionError(f"'Shard' only supports semi_auto/auto parallel under PyNative mode")
+            context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
+            raise AssertionError(f"'Shard' only supports auto parallel under PyNative mode")
+        if context.get_context("device_target") not in ["Ascend"]:
+            raise AssertionError(f"'Shard' now only supports 'Ascend'")
+        if context.get_auto_parallel_context("full_batch"):
+            raise AssertionError(f"'Shard' doesn't support 'full_batch'. Please set 'full_batch' as False")
+        if context.get_auto_parallel_context("search_mode") != "sharding_propagation":
+            raise AssertionError(f"'search_mode' must be 'sharding_propagation' for 'Shard'")
         if not isinstance(in_axes, tuple):
             raise TypeError(f"For 'Shard', the 'in_axes' should be a tuple, but got {type(in_axes).__name__}")
         if not isinstance(out_axes, tuple):

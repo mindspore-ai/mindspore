@@ -32,6 +32,9 @@
 
 namespace mindspore {
 namespace pipeline {
+static const std::set<std::string> ELEMENT_WISE_NODE_ = {"Add",       "BiasAdd",  "ScalarAdd",     "Sub",
+                                                         "ScalarSub", "Mul",      "ScalarMul",     "RealDiv",
+                                                         "ScalarDiv", "FloorDiv", "ScalarFloorDiv"};
 std::string GetWorldGroup() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -238,6 +241,12 @@ bool CheckLayout(const ValueNodePtr &axes, bool *need_default_strategy, size_t *
   return true;
 }
 
+bool IsElementWiseNode(const CNodePtr &cnode) {
+  auto prim = GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(prim);
+  return ELEMENT_WISE_NODE_.find(prim->name()) != ELEMENT_WISE_NODE_.end();
+}
+
 void HandleStrategyForOneHot(std::vector<ValuePtr> *strategy) {
   // onehot needs to set layout for output, modify the strategy with an additional dimension
   auto input_strategy = GetValue<std::vector<int64_t>>(strategy->at(0));
@@ -268,6 +277,47 @@ void HandleStrategyForMatMul(std::vector<ValuePtr> *strategy, const CNodePtr &cn
     }
     strategy->at(0) = MakeValue(left_matrix_strategy);
     strategy->at(1) = MakeValue(right_matrix_strategy);
+  }
+}
+
+void HandleStrategyForElementWiseNode(std::vector<ValuePtr> *strategy, const CNodePtr &cnode) {
+  auto left_strategy = GetValue<std::vector<int64_t>>(strategy->at(0));
+  auto right_strategy = GetValue<std::vector<int64_t>>(strategy->at(1));
+  if (left_strategy.size() != right_strategy.size()) {
+    return;
+  }
+  int64_t strategy_mul = 1;
+  std::for_each(left_strategy.begin(), left_strategy.end(), [&](int64_t const &data) { strategy_mul *= data; });
+  auto left_shape = cnode->input(1)->Shape()->cast<abstract::ShapePtr>();
+  auto left_batch = left_shape->shape()[0];
+  auto right_shape = cnode->input(2)->Shape()->cast<abstract::ShapePtr>();
+  auto right_batch = right_shape->shape()[0];
+
+  if (strategy_mul == 1) {
+    left_strategy = right_strategy;
+  } else {
+    right_strategy = left_strategy;
+  }
+
+  if (left_batch == 1) {
+    left_strategy[0] = 1;
+  }
+  if (right_batch == 1) {
+    right_strategy[0] = 1;
+  }
+  strategy->at(0) = MakeValue(left_strategy);
+  strategy->at(1) = MakeValue(right_strategy);
+}
+
+void HandleSpecialStrategy(std::vector<ValuePtr> *strategy, const CNodePtr &cnode) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimMatMul) || IsPrimitiveCNode(cnode, prim::kPrimBatchMatMul)) {
+    HandleStrategyForMatMul(strategy, cnode);
+  }
+  if (IsPrimitiveCNode(cnode, prim::kPrimOneHot)) {
+    HandleStrategyForOneHot(strategy);
+  }
+  if (IsElementWiseNode(cnode)) {
+    HandleStrategyForElementWiseNode(strategy, cnode);
   }
 }
 
@@ -352,7 +402,6 @@ void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &out_axes,
     auto attrs_temp = prim->attrs();
     ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
     attrs_temp[parallel::OUT_STRATEGY] = strategy;
-    (void)prim->SetAttrs(attrs_temp);
   }
 }
 
@@ -424,12 +473,9 @@ void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_axes, c
   }
   for (auto &cnode : concerned_nodes) {
     auto elements = GetStrategyElements(cnode, parameters, input_strategy);
-    if (IsPrimitiveCNode(cnode, prim::kPrimMatMul) || IsPrimitiveCNode(cnode, prim::kPrimBatchMatMul)) {
-      HandleStrategyForMatMul(&elements, cnode);
-    }
-    if (IsPrimitiveCNode(cnode, prim::kPrimOneHot)) {
-      HandleStrategyForOneHot(&elements);
-    }
+    // Some operators has a special requirements for parallel strategy
+    HandleSpecialStrategy(&elements, cnode);
+    // Set in_strategy
     ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     auto attrs_temp = prim->attrs();
