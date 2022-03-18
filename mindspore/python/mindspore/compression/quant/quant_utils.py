@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Quantization utils."""
+"""
+Quantization utils.
+
+Note: This is an experimental interface that is subject to change and/or deletion.
+"""
 
 import numpy as np
 from mindspore._checkparam import Validator

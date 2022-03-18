@@ -14,4 +14,6 @@
 # ============================================================================
 """
 Compression export module.
+
+Note: This is an experimental interface that is subject to change and/or deletion.
 """

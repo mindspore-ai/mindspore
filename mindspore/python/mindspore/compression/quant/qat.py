@@ -19,6 +19,8 @@ User can use quantization aware to train a model. MindSpore supports quantizatio
 which models quantization errors in both the forward and backward passes using fake-quantization
 operations. Note that the entire computation is carried out in floating point. At the end of quantization
 aware training, MindSpore provides conversion functions to convert the trained model into lower precision.
+
+Note: This is an experimental interface that is subject to change and/or deletion.
 """
 
 import re
@@ -125,11 +127,11 @@ class _AddFakeQuantAfterSubCell(nn.Cell):
         self.fake_quant_act = quant.FakeQuantWithMinMaxObserver(min_init=self.min_init,
                                                                 max_init=self.max_init,
                                                                 ema=True,
-                                                                quant_dtype=kwargs["quant_dtype"],
-                                                                quant_delay=kwargs["quant_delay"],
-                                                                per_channel=kwargs["per_channel"],
-                                                                symmetric=kwargs["symmetric"],
-                                                                narrow_range=kwargs["narrow_range"],
+                                                                quant_dtype=kwargs.get("quant_dtype"),
+                                                                quant_delay=kwargs.get("quant_delay"),
+                                                                per_channel=kwargs.get("per_channel"),
+                                                                symmetric=kwargs.get("symmetric"),
+                                                                narrow_range=kwargs.get("narrow_range"),
                                                                 mode=self.mode)
 
     def construct(self, *data):
