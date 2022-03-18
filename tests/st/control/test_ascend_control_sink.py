@@ -17,6 +17,8 @@ import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
+from mindspore.ops import functional as F
 from mindspore.ops import operations as op
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
@@ -310,3 +312,38 @@ def test_and_or_operation():
     output = net(Tensor(x))
     expect = not np.sum(x)
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_control_flow_ref():
+    """
+    Feature: Control flow graph sinking scenarios.
+    Description: If the return value of subgraph is Ref, should run graph mode with kernelbykernel.
+    Expectation: No exception.
+    """
+    class IFFuncNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.param_a = Parameter(Tensor(1, ms.float32), name="a")
+            self.param_b = Parameter(Tensor(2, ms.float32), name="b")
+            self.one = Tensor(1, ms.float32)
+
+        def subfunc(self, x):
+            if x > 4:
+                return self.param_a
+            return self.param_b
+
+        def construct(self, x):
+            out = self.one
+            F.assign(self.param_a, 3)
+            out += self.subfunc(x)
+            F.assign(self.param_b, 2)
+            return out
+
+    net = IFFuncNet()
+    input_x = Tensor(6, ms.float32)
+    out = net(input_x)
+    assert out == 4
