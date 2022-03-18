@@ -1175,17 +1175,14 @@ EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_
                                    REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD) {
   MS_EXCEPTION_IF_NULL(old_conf);
   AbstractBasePtr abstract = ToAbstract(value, AnalysisContext::DummyContext(), old_conf);
-  AbstractFunctionPtr abs_func = dyn_cast<abstract::AbstractFunction>(abstract);
-  MS_EXCEPTION_IF_NULL(abs_func);
-
   // Create new cnode
   std::vector<AnfNodePtr> input = {NewValueNode(prim::kPrimPartial)};
-  auto func_graph_func = dyn_cast<abstract::FuncGraphAbstractClosure>(abs_func);
+  auto func_graph_func = dyn_cast<abstract::FuncGraphAbstractClosure>(abstract);
   if (func_graph_func != nullptr) {
     FuncGraphPtr fg = func_graph_func->func_graph();
     input.push_back(NewValueNode(fg));
   } else {
-    auto prim_func = dyn_cast<abstract::PrimitiveAbstractClosure>(abs_func);
+    auto prim_func = dyn_cast<abstract::PrimitiveAbstractClosure>(abstract);
     MS_EXCEPTION_IF_NULL(prim_func);
     PrimitivePtr prim = prim_func->prim();
     input.push_back(NewValueNode(prim));

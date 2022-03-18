@@ -1819,3 +1819,42 @@ class CellBackwardHook(PrimitiveWithInfer):
             None.
         """
         self.remove_backward_hook_fn(key)
+
+
+class Format(PrimitiveWithInfer):
+    r"""
+    This operator is used to format a string.
+
+    Note:
+     Current not supported to using by customer.
+     Only support convert str.format() in user code and it will be converted to be Format
+     operation by ME-Compiler automatically.
+
+
+    Inputs:
+     - **input** -
+     string : the string to be formatted.
+     args : the format args.
+
+    Outputs:
+     - **output** - Returns formatted string.
+
+    Supported Platforms:
+     ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['string', 'args'], outputs=['string'])
+
+    def __infer__(self, str_, *var):
+        str_value = str_["value"]
+        var_value = list()
+        if str_value is None and str_["dtype"] is not None:
+            raise ValueError("str.format not support to input a variable.")
+        for item in var:
+            if item["value"] is None and item["dtype"] is not None:
+                raise ValueError("str.format not support to input a variable.")
+            var_value.append(item["value"])
+        value = str_value.format(*var_value)
+        return {'dtype': mstype.string, 'shape': [], 'value': value}
