@@ -25,6 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kSecondInputIndex = 2;
 class BufferAppendCpuKernelMod : public NativeCpuKernelMod {
  public:
   BufferAppendCpuKernelMod() : element_nums_(0), exp_batch_(0), capacity_(0) {}
@@ -37,15 +38,15 @@ class BufferAppendCpuKernelMod : public NativeCpuKernelMod {
     exp_batch_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "exp_batch");
     element_nums_ = shapes.size();
     for (size_t i = 0; i < element_nums_; i++) {
-      exp_element_list.push_back(shapes[i] * UnitSizeInBytes(types[i]->type_id()));
+      exp_element_list.push_back(LongToSize(shapes[i]) * UnitSizeInBytes(types[i]->type_id()));
     }
     // buffer size
     for (auto i : exp_element_list) {
-      input_size_list_.push_back(i * capacity_);
+      input_size_list_.push_back(i * LongToSize(capacity_));
     }
     // exp size
     for (auto i : exp_element_list) {
-      input_size_list_.push_back(i * exp_batch_);
+      input_size_list_.push_back(i * LongToSize(exp_batch_));
     }
     // count and head
     input_size_list_.push_back(sizeof(int));
@@ -54,35 +55,36 @@ class BufferAppendCpuKernelMod : public NativeCpuKernelMod {
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
-    auto count_addr = GetDeviceAddress<int>(inputs, 2 * element_nums_);
-    auto head_addr = GetDeviceAddress<int>(inputs, 2 * element_nums_ + 1);
+    auto count_addr = GetDeviceAddress<int>(inputs, kSecondInputIndex * element_nums_);
+    auto head_addr = GetDeviceAddress<int>(inputs, kSecondInputIndex * element_nums_ + 1);
     int index = 0;
     if (count_addr[0] <= capacity_ - 1 && head_addr[0] == 0) {
       index = count_addr[0];
-      count_addr[0] = index + exp_batch_;
+      count_addr[0] = index + LongToInt(exp_batch_);
       if (count_addr[0] > capacity_) {
-        count_addr[0] = capacity_;
-        head_addr[0] = (exp_batch_ + count_addr[0] - capacity_) % capacity_;
+        count_addr[0] = LongToInt(capacity_);
+        head_addr[0] = (LongToInt(exp_batch_) + count_addr[0] - LongToInt(capacity_)) % LongToInt(capacity_);
       }
     } else {
       index = head_addr[0];
-      head_addr[0] = (exp_batch_ + head_addr[0]) % capacity_;
+      head_addr[0] = (LongToInt(exp_batch_) + head_addr[0]) % LongToInt(capacity_);
     }
     // If exp_batch > (capcity_ - index), goto buffer's head
     int remain_size = (exp_batch_ > (capacity_ - index)) ? LongToInt(capacity_ - index) : LongToInt(exp_batch_);
-    int remap_size = (exp_batch_ > (capacity_ - index)) ? LongToInt(exp_batch_ - capacity_ + index) : 0;
-    auto task = [&](size_t start, size_t end) {
+    int remap_size = (exp_batch_ > (capacity_ - index)) ? LongToInt(exp_batch_ - (capacity_ - index)) : 0;
+    auto task = [this, &inputs, index, remain_size, remap_size](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
         auto exp_addr = GetDeviceAddress<unsigned char>(inputs, i + element_nums_);
         size_t one_exp_len = exp_element_list[i];
         size_t dist_len = one_exp_len;
-        if (memcpy_s(buffer_addr + IntToSize(index) * one_exp_len, one_exp_len * remain_size, exp_addr,
-                     dist_len * remain_size) != EOK) {
+        if (memcpy_s(buffer_addr + IntToSize(index) * one_exp_len, one_exp_len * IntToSize(remain_size), exp_addr,
+                     dist_len * IntToSize(remain_size)) != EOK) {
           MS_LOG(EXCEPTION) << "Launch kernel error: memcpy failed";
         }
         if (remap_size > 0) {
-          if (memcpy_s(buffer_addr, one_exp_len * remap_size, exp_addr, dist_len * remap_size) != EOK) {
+          if (memcpy_s(buffer_addr, one_exp_len * IntToSize(remap_size), exp_addr, dist_len * IntToSize(remap_size)) !=
+              EOK) {
             MS_LOG(EXCEPTION) << "Launch kernel error: memcpy failed";
           }
         }
@@ -93,9 +95,6 @@ class BufferAppendCpuKernelMod : public NativeCpuKernelMod {
   }
 
   void InitKernel(const CNodePtr &kernel_node) { return; }
-
- protected:
-  void InitSizeLists() { return; }
 
  private:
   size_t element_nums_;

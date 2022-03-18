@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 class BufferCPUSampleKernelMod : public NativeCpuKernelMod {
  public:
-  BufferCPUSampleKernelMod() : element_nums_(0), capacity_(0), batch_size_(0), exp_size_(0), seed_(0), unique_(false) {}
+  BufferCPUSampleKernelMod() : element_nums_(0), capacity_(0), batch_size_(0), seed_(0), unique_(false) {}
 
   ~BufferCPUSampleKernelMod() override = default;
   void Init(const CNodePtr &kernel_node) {
@@ -41,21 +41,20 @@ class BufferCPUSampleKernelMod : public NativeCpuKernelMod {
     batch_size_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "batch_size"));
     element_nums_ = shapes.size();
     for (size_t i = 0; i < element_nums_; i++) {
-      exp_element_list.push_back(shapes[i] * UnitSizeInBytes(types[i]->type_id()));
+      exp_element_list.push_back(LongToSize(shapes[i]) * UnitSizeInBytes(types[i]->type_id()));
     }
     // init seed for random_shuffle and uniform distribution
     if (seed_ == 0) {
-      std::srand(time(nullptr));
-      generator_.seed(time(nullptr));
+      std::srand(UlongToUint(LongToUlong(time(nullptr))));
+      generator_.seed(LongToUlong(time(nullptr)));
     } else {
-      std::srand(seed_);
-      generator_.seed(seed_);
+      std::srand(UlongToUint(LongToUlong(seed_)));
+      generator_.seed(LongToUlong(seed_));
     }
     // buffer size
     for (auto i : exp_element_list) {
-      input_size_list_.push_back(i * capacity_);
+      input_size_list_.push_back(i * LongToSize(capacity_));
       output_size_list_.push_back(i * batch_size_);
-      exp_size_ += i;
     }
     // count and head
     input_size_list_.push_back(sizeof(int));
@@ -93,7 +92,7 @@ class BufferCPUSampleKernelMod : public NativeCpuKernelMod {
       }
     }
 
-    auto task = [&](size_t start, size_t end) {
+    auto task = [this, &indexes, &inputs, &outputs](size_t start, size_t end) {
       for (size_t j = start; j < end; j++) {
         size_t index = indexes[j];
         for (size_t i = 0; i < element_nums_; i++) {
@@ -112,16 +111,12 @@ class BufferCPUSampleKernelMod : public NativeCpuKernelMod {
     return true;
   }
 
-  void InitKernel(const CNodePtr &kernel_node) { return; }
-
- protected:
-  void InitSizeLists() { return; }
+  void InitKernel(const CNodePtr &) { return; }
 
  private:
   size_t element_nums_;
   int64_t capacity_;
   size_t batch_size_;
-  int64_t exp_size_;
   int64_t seed_;
   bool unique_;
   std::mt19937 generator_;

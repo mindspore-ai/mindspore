@@ -25,6 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kSecondInputIndex = 2;
 class BufferGetCpuKernelMod : public NativeCpuKernelMod {
  public:
   BufferGetCpuKernelMod() : element_nums_(0), capacity_(0) {}
@@ -36,11 +37,11 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
     capacity_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "capacity");
     element_nums_ = shapes.size();
     for (size_t i = 0; i < element_nums_; i++) {
-      exp_element_list.push_back(shapes[i] * UnitSizeInBytes(types[i]->type_id()));
+      exp_element_list.push_back(LongToSize(shapes[i]) * UnitSizeInBytes(types[i]->type_id()));
     }
     // buffer size
     for (auto i : exp_element_list) {
-      input_size_list_.push_back(i * capacity_);
+      input_size_list_.push_back(i * LongToSize(capacity_));
       output_size_list_.push_back(i);
     }
     // count, head, index
@@ -53,7 +54,7 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) {
     auto count_addr = GetDeviceAddress<int>(inputs, element_nums_);
     auto head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
-    auto index_addr = GetDeviceAddress<int>(inputs, element_nums_ + 2);
+    auto index_addr = GetDeviceAddress<int>(inputs, element_nums_ + kSecondInputIndex);
     int index = index_addr[0];
     if (index_addr[0] < 0) index += count_addr[0];
     if (!(index >= 0 && index < count_addr[0])) {
@@ -66,7 +67,7 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
     } else {
       index -= t;
     }
-    auto task = [&](size_t start, size_t end) {
+    auto task = [this, &inputs, &outputs, index](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
         auto item_addr = GetDeviceAddress<unsigned char>(outputs, i);
@@ -82,9 +83,6 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
   }
 
   void InitKernel(const CNodePtr &kernel_node) { return; }
-
- protected:
-  void InitSizeLists() { return; }
 
  private:
   size_t element_nums_;

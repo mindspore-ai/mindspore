@@ -45,7 +45,7 @@ bool TensorArrayWriteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto index = GetDeviceAddress<int64_t>(inputs, 1);
-  auto value = GetDeviceAddress<unsigned char>(inputs, 2);
+  auto value = GetDeviceAddress<unsigned char>(inputs, kSecondInputIndex);
   MS_EXCEPTION_IF_NULL(handle_addr);
   MS_EXCEPTION_IF_NULL(index);
   MS_EXCEPTION_IF_NULL(value);
