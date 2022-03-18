@@ -266,7 +266,7 @@ std::string CommUtil::ClusterStateToString(const ClusterState &state) {
   if (state < SizeToInt(kClusterState.size())) {
     return kClusterState.at(state);
   } else {
-    return "";
+    return std::to_string(state);
   }
 }
 

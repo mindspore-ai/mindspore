@@ -648,10 +648,17 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
                << ", the node id:" << node_info_.node_id_ << ", the node rank id:" << node_info_.rank_id_
                << " begin send heartbeat to the scheduler!";
   heart_beat_thread_ = std::make_unique<std::thread>([&]() {
+    uint32_t connect_interval = PSContext::instance()->cluster_config().connect_interval;
+    uint32_t heartbeat_interval = PSContext::instance()->cluster_config().heartbeat_interval * 1000;
+    uint32_t reconnect_interval = 0;
+    if (heartbeat_interval > connect_interval) {
+      MS_LOG(WARNING) << "heartbeat_interval [" << heartbeat_interval << "] is larger than connect_interval ["
+                      << connect_interval << "], reset connect_interval to " << heartbeat_interval;
+    }
     while (!is_finish_.load()) {
       if (!Heartbeat(client)) {
         MS_LOG(WARNING) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                        << ", the node id is:" << node_info_.node_id_ << " Send heartbeat timeout!";
+                        << ", the node id is:" << node_info_.node_id_ << " Send heartbeat failed!";
         if (CheckSchedulerTimeout()) {
           MS_LOG(WARNING) << "Scheduler is Timeout, please recovery.";
         }
@@ -659,7 +666,17 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
         UpdateSchedulerTime();
       }
 
-      std::this_thread::sleep_for(std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval));
+      if (!is_already_finished_ && (client->connection_status() == -1)) {
+        if (reconnect_interval > connect_interval) {
+          MS_LOG(WARNING) << "Connection to Scheduler is disconnected, try to reconnect.";
+          reconnect_interval = 0;
+          ConnectToScheduler();
+        } else {
+          reconnect_interval += heartbeat_interval;
+        }
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(heartbeat_interval));
     }
   });
   MS_EXCEPTION_IF_NULL(heart_beat_thread_);
@@ -668,6 +685,9 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
 
 bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
+  if (client->connection_status() != 1) {
+    return false;
+  }
   auto meta = std::make_shared<MessageMeta>();
   MS_EXCEPTION_IF_NULL(meta);
   meta->set_cmd(NodeCommand::HEARTBEAT);
@@ -712,12 +732,13 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
   HeartbeatRespMessage heartbeat_resp_message;
   CHECK_RETURN_TYPE(heartbeat_resp_message.ParseFromArray(data, SizeToInt(size)));
 
-  if (heartbeat_resp_message.cluster_state() != current_cluster_state_) {
+  if (heartbeat_resp_message.cluster_state() != current_cluster_state_ &&
+      current_cluster_state_ != ClusterState::CLUSTER_SCALE_IN &&
+      current_cluster_state_ != ClusterState::CLUSTER_SCALE_OUT) {
     MS_LOG(INFO) << "cluster change state from:" << CommUtil::ClusterStateToString(current_cluster_state_) << " to "
                  << CommUtil::ClusterStateToString(heartbeat_resp_message.cluster_state());
+    UpdateClusterState(heartbeat_resp_message.cluster_state());
   }
-
-  current_cluster_state_ = heartbeat_resp_message.cluster_state();
   MS_LOG(DEBUG) << "The current cluster state from heartbeat:"
                 << CommUtil::ClusterStateToString(current_cluster_state_);
 
@@ -817,7 +838,6 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
   send_meta_message.ParseFromArray(data, SizeToInt(size));
   worker_num_ = send_meta_message.worker_num();
   server_num_ = send_meta_message.server_num();
-
   if (send_meta_message.rank_id() < 0) {
     MS_LOG(EXCEPTION) << "The rank id is wrong.";
   }
@@ -968,10 +988,6 @@ void AbstractNode::ProcessSchedulerRecovery(const std::shared_ptr<TcpConnection>
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  if (is_connected_to_scheduler_.load()) {
-    MS_LOG(WARNING) << "This node has been connected to scheduler.";
-    return;
-  }
   SendMetadataMessage scheduler_recovery_message;
   (void)scheduler_recovery_message.ParseFromArray(data, SizeToInt(size));
   worker_num_ = scheduler_recovery_message.worker_num();
@@ -986,7 +1002,9 @@ void AbstractNode::ProcessSchedulerRecovery(const std::shared_ptr<TcpConnection>
   }
   MS_LOG(INFO) << "[Scheduler Recovery]: Server response message success!.";
 
-  if (!InitClientToScheduler()) {
+  ConnectToScheduler();
+  bool connected = client_to_scheduler_->WaitConnected();
+  if (!connected) {
     MS_LOG(WARNING) << "[Scheduler Recovery]: Server node connect to scheduler timedout!";
   }
 
@@ -994,6 +1012,12 @@ void AbstractNode::ProcessSchedulerRecovery(const std::shared_ptr<TcpConnection>
   std::lock_guard<std::mutex> lock(client_mutex_);
   connected_nodes_.clear();
   MS_LOG(INFO) << "[Scheduler Recovery]: This node connect to scheduler successful!";
+
+  if (cancelSafeModeFn_ && (current_cluster_state_ == ClusterState::CLUSTER_SCALE_IN ||
+                            current_cluster_state_ == ClusterState::CLUSTER_SCALE_OUT)) {
+    MS_LOG(INFO) << "[Scheduler Recovery]: Cancel Safe mode for " << kClusterState.at(current_cluster_state_);
+    cancelSafeModeFn_();
+  }
 
   UpdateClusterState(ClusterState::CLUSTER_SCHEDULER_RECOVERY);
   is_ready_ = false;
@@ -1071,27 +1095,23 @@ bool AbstractNode::InitClientToScheduler() {
         MsException::Instance().SetException();
       }
     });
+  ConnectToScheduler();
+  StartHeartbeatTimer(client_to_scheduler_);
+  MS_LOG(INFO) << "Start heartbeat timer!";
+
+  bool wait_res = client_to_scheduler_->WaitConnected();
+  if (!wait_res) {
+    is_ready_ = true;
+  }
+  return wait_res;
+}
+void AbstractNode::ConnectToScheduler() {
   client_to_scheduler_->Init();
   client_to_scheduler_thread_ = std::make_unique<std::thread>([this]() {
     MS_LOG(INFO) << "The node start a tcp client!";
     client_to_scheduler_->Start();
   });
   client_to_scheduler_thread_->detach();
-
-  client_to_scheduler_->set_connected_callback([&]() { is_connected_to_scheduler_ = true; });
-
-  client_to_scheduler_->set_disconnected_callback([&]() {
-    is_connected_to_scheduler_ = false;
-    std::this_thread::sleep_for(std::chrono::milliseconds(PSContext::instance()->cluster_config().connect_interval));
-    if (is_ready_.load() == false) {
-      client_to_scheduler_->Init();
-    }
-  });
-  bool wait_res = client_to_scheduler_->WaitConnected();
-  if (!wait_res) {
-    is_ready_ = true;
-  }
-  return wait_res;
 }
 
 const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint32_t &rank_id, const NodeRole &role) {

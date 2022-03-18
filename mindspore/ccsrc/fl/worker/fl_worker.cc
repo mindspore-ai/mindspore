@@ -47,6 +47,7 @@ void FLWorker::Run() {
   worker_node_ = std::make_shared<ps::core::WorkerNode>();
   MS_EXCEPTION_IF_NULL(worker_node_);
 
+  worker_node_->SetCancelSafeModeCallBack([this]() -> void { safemode_ = false; });
   worker_node_->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
     Finalize();
     running_ = false;
