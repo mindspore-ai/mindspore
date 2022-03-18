@@ -260,12 +260,6 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   return RET_OK;
 }
 
-// Encoding is therefore just a repeat of this process :
-// - get Symbol to encode
-// - look at current state value
-// - determine nbBits, flush them
-// - determine sub-Range Id
-// - look for Symbol position of same Id : you get your next state
 int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count, uint32_t *frequency,
                           int frequency_count, int table_log) {
   MS_ASSERT(bs != nullptr);

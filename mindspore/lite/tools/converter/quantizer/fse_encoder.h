@@ -44,6 +44,12 @@ class FSEEncoder {
   uint16_t FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, uint16_t state, const uint32_t *delta_bit_count,
                                       const int16_t *delta_state, uint16_t *coding_table);
 
+  // Encoding is therefore just a repeat of this process :
+  // - get Symbol to encode
+  // - look at current state value
+  // - determine nbBits, flush them
+  // - determine sub-Range Id
+  // - look for Symbol position of same Id : you get your next state
   int FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count, uint32_t *frequency, int frequency_count,
                 int table_log);
 
