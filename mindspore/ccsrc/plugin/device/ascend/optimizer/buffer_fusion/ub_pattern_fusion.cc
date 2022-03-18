@@ -187,18 +187,14 @@ void ReplaceOldNode(mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusi
   MS_EXCEPTION_IF_NULL(manager);
   auto buffer_fusion_info = (*buffer_fusion_infos)[fusion_id];
   if (buffer_fusion_info.outputs_list.size() == 1) {  // single output
-    if (kernel_graph != nullptr) {
-      kernel_graph->FrontBackendlMapUpdate(buffer_fusion_info.outputs_list[0], buffer_fusion_kernel);
-    }
+    kernel_graph->FrontBackendlMapUpdate(buffer_fusion_info.outputs_list[0], buffer_fusion_kernel);
     (void)manager->Replace(buffer_fusion_info.outputs_list[0], buffer_fusion_kernel);
     ReplaceInputNodeInOtherFusionScope(buffer_fusion_infos, fusion_id, buffer_fusion_info.outputs_list[0],
                                        buffer_fusion_kernel);
   } else {  // multiple output
     for (size_t index = 0; index < buffer_fusion_info.outputs_list.size(); ++index) {
       auto tuple_item = CreateTupleGetItem(buffer_fusion_kernel, kernel_graph, index);
-      if (kernel_graph != nullptr) {
-        kernel_graph->FrontBackendlMapUpdate(buffer_fusion_info.outputs_list[index], tuple_item);
-      }
+      kernel_graph->FrontBackendlMapUpdate(buffer_fusion_info.outputs_list[index], tuple_item);
       (void)manager->Replace(buffer_fusion_info.outputs_list[index], tuple_item);
       ReplaceInputNodeInOtherFusionScope(buffer_fusion_infos, fusion_id, buffer_fusion_info.outputs_list[index],
                                          tuple_item);

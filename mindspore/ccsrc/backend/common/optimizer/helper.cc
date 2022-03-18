@@ -1022,7 +1022,7 @@ void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size
         MS_LOG(EXCEPTION) << primitive->name() << " found mismatching attr name " << input_names_vec[i]
                           << "in input_names and " << attr_names_vec[i - offset] << " in attr_names";
       }
-      indexes->insert(i);
+      (void)indexes->insert(i);
     }
   }
 }

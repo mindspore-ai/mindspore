@@ -870,7 +870,7 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreatePadNode(
   auto pad = NewCNode(pad_inputs, graph);
   std::vector<std::vector<int64_t>> paddings;
   for (size_t i = 0; i < shape.size(); ++i) {
-    (void)paddings.emplace_back(std::vector<int64_t>{begin[i], static_cast<int64_t>(shape[i]) - begin[i] - size[i]});
+    (void)paddings.emplace_back(std::vector<int64_t>{begin[i], (static_cast<int64_t>(shape[i]) - begin[i]) - size[i]});
   }
   common::AnfAlgo::SetOutputTypeAndDetailShape({dtype}, {shape_base}, pad.get());
   common::AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), pad);

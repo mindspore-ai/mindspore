@@ -262,10 +262,10 @@ void TbeJsonCreator::DeleteDescName(nlohmann::json *desc_jsons) {
   for (auto &desc_json : (*desc_jsons)) {
     if (desc_json.is_array()) {
       for (auto &desc_item : desc_json) {
-        desc_item.erase(kJName);
+        (void)desc_item.erase(kJName);
       }
     } else {
-      desc_json.erase(kJName);
+      (void)desc_json.erase(kJName);
     }
   }
 }

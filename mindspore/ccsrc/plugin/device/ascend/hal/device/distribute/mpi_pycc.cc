@@ -37,10 +37,10 @@ void MpiPycc::CreateGroup(const std::string &group, const std::vector<unsigned i
 
 // cppcheck-suppress syntaxError
 PYBIND11_MODULE(_ascend_mpi, mpi_initializer) {
-  mpi_initializer.def("get_device_id", &MpiPycc::GetDeviceID, "get device id");
-  mpi_initializer.def("get_rank_id", &MpiPycc::GetRankId, "get rank id");
-  mpi_initializer.def("get_rank_size", &MpiPycc::GetRankSize, "get rank size");
-  mpi_initializer.def("create_group", &MpiPycc::CreateGroup, "create group");
+  (void)mpi_initializer.def("get_device_id", &MpiPycc::GetDeviceID, "get device id");
+  (void)mpi_initializer.def("get_rank_id", &MpiPycc::GetRankId, "get rank id");
+  (void)mpi_initializer.def("get_rank_size", &MpiPycc::GetRankSize, "get rank size");
+  (void)mpi_initializer.def("create_group", &MpiPycc::CreateGroup, "create group");
 }
 }  // namespace collective
 }  // namespace ascend
