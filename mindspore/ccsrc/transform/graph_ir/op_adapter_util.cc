@@ -220,7 +220,7 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<AnyValue>) {
     GeShape shape(ge_shape);
     GeTensorDesc desc(shape, ge::FORMAT_NCHW, ge::DT_STRING);
     GeTensor str_tensor(desc);
-    str_tensor.SetData(v);
+    (void)str_tensor.SetData(v);
     return str_tensor;
   } else {
     MS_LOG(WARNING) << "Unsupported value type: " << value->type_name()

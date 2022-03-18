@@ -601,7 +601,7 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
     auto iter_getnext_op = make_shared<ge::op::GetNext>("get_next_tmp");
     std::vector<enum ge::DataType> getnext_types;
     const auto &origin_ge_types = param.ge_types();
-    std::transform(
+    (void)std::transform(
       origin_ge_types.begin(), origin_ge_types.end(), std::back_inserter(getnext_types),
       [](int64_t t_num) -> enum ge::DataType { return static_cast<enum ge::DataType>(t_num); });
     (void)iter_getnext_op->set_attr_output_types(getnext_types);
@@ -766,7 +766,7 @@ void DfGraphConvertor::SetSubgraph(AnfNodePtr node) {
   }
 
   for (size_t i = 1; i < bnode->inputs().size(); i++) {
-    branches->emplace_back(branches_map_[bnode->input(i).get()]);
+    (void)branches->emplace_back(branches_map_[bnode->input(i).get()]);
   }
 
   if (op_cache_.find(node.get()) == op_cache_.end()) {
@@ -780,7 +780,7 @@ void DfGraphConvertor::SetSubgraph(AnfNodePtr node) {
   }
 
   OperatorPtr op = Convert(node);
-  adpt->setSubgraph(op, 0, branches);
+  (void)adpt->setSubgraph(op, 0, branches);
   return;
 }
 
@@ -813,7 +813,7 @@ void DfGraphConvertor::GetCaseNodeInput(const CNodePtr node, const CNodePtr inpu
     auto item = case_inputs[i];
     auto op = Convert(item);
     if (op != nullptr) {
-      tuple_items->emplace_back(OutHandler(op, "", item));
+      (void)tuple_items->emplace_back(OutHandler(op, "", item));
     } else if (out_handle_cache_.find(item.get()) != out_handle_cache_.end()) {
       tuple_items->push_back(out_handle_cache_[item.get()]);
     } else {
@@ -825,8 +825,8 @@ void DfGraphConvertor::GetCaseNodeInput(const CNodePtr node, const CNodePtr inpu
   tuple_out_handle_cache_[make_tuple_node.get()] = tuple_items;
 
   std::shared_ptr<std::vector<AnfNodePtr>> case_input_items = std::make_shared<std::vector<AnfNodePtr>>();
-  case_input_items->emplace_back(case_index_iter);
-  case_input_items->emplace_back(make_tuple_iter);
+  (void)case_input_items->emplace_back(case_index_iter);
+  (void)case_input_items->emplace_back(make_tuple_iter);
   case_input_handle_cache_[node.get()] = case_input_items;
 }
 
@@ -937,8 +937,8 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
 
   // Add const nodes as graph input for some operator work with constant
   MS_LOG(INFO) << "graph const input size: " << graph_const_inputs_.size();
-  std::transform(graph_const_inputs_.begin(), graph_const_inputs_.end(), std::back_inserter(inputs),
-                 [](OperatorPtr x) { return *x; });
+  (void)std::transform(graph_const_inputs_.begin(), graph_const_inputs_.end(), std::back_inserter(inputs),
+                       [](const OperatorPtr &x) { return *x; });
 
   MS_LOG(INFO) << "set graph input num: " << inputs.size();
   (void)df_graph_->SetInputs(inputs);
@@ -1121,7 +1121,7 @@ void DfGraphConvertor::AddEdgeToCache(const AnfNodePtr &src, const AnfNodePtr &d
   if (item == monad_control_edge_cache_.end()) {
     monad_control_edge_cache_[src] = std::set<AnfNodePtr>{dest};
   } else {
-    item->second.insert(dest);
+    (void)item->second.insert(dest);
   }
 }
 
@@ -1504,7 +1504,7 @@ void DfGraphConvertor::ConvertMakeTuple(const CNodePtr node) {
     }
     OperatorPtr op = Convert(item);
     if (op != nullptr) {
-      tuple_items->emplace_back(OutHandler(op, "", item));
+      (void)tuple_items->emplace_back(OutHandler(op, "", item));
     } else if (out_handle_cache_.find(item.get()) != out_handle_cache_.end()) {
       tuple_items->push_back(out_handle_cache_[item.get()]);
     } else {
@@ -1529,7 +1529,7 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr node) {
   auto int64_value = GetValue<int64_t>(input_value);
   OpAdapterPtr adpt = FindAdapter(value_ptr, training_);
   auto op = adpt->generate(value_ptr);
-  adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));
+  (void)adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));
   op_cache_[value_ptr.get()] = op;
 }
 
@@ -1933,7 +1933,7 @@ Status DfGraphConvertor::TryConvertValueNodeToMultiConst(const ValueNodePtr node
       auto const_op = std::make_shared<Constant>(node->fullname_with_scope() + "/const/inputs/" + std::to_string(i));
       (void)const_op->set_attr_value(*ge_tensor);
       (void)const_op->update_output_desc_y(ge_tensor->GetTensorDesc());
-      tuple_items->emplace_back(OutHandler(const_op, ""));
+      (void)tuple_items->emplace_back(OutHandler(const_op, ""));
     } else {
       return FAILED;
     }

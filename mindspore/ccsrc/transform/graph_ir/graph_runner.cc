@@ -211,7 +211,7 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<MeTens
     for (auto &it : ge_outputs) {
       auto tensor = TransformUtil::ConvertGeTensor(it);
       if (tensor != nullptr) {
-        outputs->emplace_back(tensor);
+        (void)outputs->emplace_back(tensor);
       }
     }
     MS_LOG(INFO) << "Return Me tensor outputs num is: " << outputs->size();

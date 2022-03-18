@@ -365,7 +365,7 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const 
 
   // Use memcpy here, not memcpy_s, just because the size of ge_tensor may be bigger than 2GB
   // which is the size limit of memcpy_s
-  memcpy(me_data_ptr, ge_tensor->GetData(), ge_tensor->GetSize());
+  (void)memcpy(me_data_ptr, ge_tensor->GetData(), ge_tensor->GetSize());
 
   return make_shared<MeTensor>(me_tensor);
 }
