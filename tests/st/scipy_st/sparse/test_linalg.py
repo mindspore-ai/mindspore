@@ -311,11 +311,9 @@ def test_cg_grad_pynative(tensor_type, dtype, tol, a, b, grad_a, grad_b):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [128])
 @pytest.mark.parametrize('dtype,error', [(onp.float32, 1e-4)])
-@pytest.mark.parametrize('restart', [1])
-@pytest.mark.parametrize('maxiter', [1])
 @pytest.mark.parametrize('preconditioner', ['random'])
 @pytest.mark.parametrize('solve_method', ['incremental', 'batched'])
-def test_gmres_against_scipy_level1(n, dtype, error, restart, maxiter, preconditioner, solve_method):
+def test_gmres_against_scipy_level1(n, dtype, error, preconditioner, solve_method):
     """
     Feature: ALL TO ALL
     Description: level1 test cases for [N x N] X [N X 1]
@@ -328,17 +326,18 @@ def test_gmres_against_scipy_level1(n, dtype, error, restart, maxiter, precondit
     M = _fetch_preconditioner(preconditioner, a)
     tol = float(onp.finfo(dtype=dtype).eps)
     atol = tol
-    if preconditioner == 'random':
-        restart = n
-        maxiter = None
+    restart = n
+    maxiter = None
     scipy_output, _ = osp.sparse.linalg.gmres(a, b, x0, tol=tol, restart=restart, maxiter=maxiter, M=M, atol=atol)
+    # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
+    M = Tensor(M) if M is not None else M
     ms_output, _ = msp.sparse.linalg.gmres(Tensor(a), Tensor(b), Tensor(x0), tol=tol, restart=restart, maxiter=maxiter,
                                            M=M, atol=atol, solve_method=solve_method)
     assert onp.allclose(scipy_output, ms_output.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -372,8 +371,34 @@ def test_gmres_against_scipy(n, dtype, error, restart, maxiter, preconditioner, 
                                            M=M, atol=atol, solve_method=solve_method)
     assert onp.allclose(scipy_output, ms_output.asnumpy(), rtol=error, atol=error)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('n', [3])
+@pytest.mark.parametrize('dtype,error', [(onp.float32, 1e-4)])
+@pytest.mark.parametrize('preconditioner', ['random'])
+@pytest.mark.parametrize('solve_method', ['incremental', 'batched'])
+def test_gmres_against_graph_scipy(n, dtype, error, preconditioner, solve_method):
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for [N x N] X [N X 1]
+    Expectation: the result match scipy in graph
+    """
+    onp.random.seed(0)
+    a = create_full_rank_matrix((n, n), dtype)
+    b = onp.random.rand(n).astype(dtype)
+    x0 = onp.zeros_like(b).astype(dtype)
+    M = _fetch_preconditioner(preconditioner, a)
+    tol = float(onp.finfo(dtype=dtype).eps)
+    atol = tol
+    restart = n
+    maxiter = None
+    scipy_output, _ = osp.sparse.linalg.gmres(a, b, x0, tol=tol, restart=restart, maxiter=maxiter, M=M, atol=atol)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
+    M = Tensor(M) if M is not None else M
     ms_output, _ = msp.sparse.linalg.gmres(Tensor(a), Tensor(b), Tensor(x0), tol=tol, restart=restart, maxiter=maxiter,
                                            M=M, atol=atol, solve_method=solve_method)
     assert onp.allclose(scipy_output, ms_output.asnumpy(), rtol=error, atol=error)
