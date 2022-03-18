@@ -33,7 +33,7 @@ PriorityItem PriorityTree::ReduceOp(const PriorityItem &lhs, const PriorityItem 
   return PriorityItem(lhs.sum_priority + rhs.sum_priority, std::min(lhs.min_priority, rhs.min_priority));
 }
 
-size_t PriorityTree::GetPrefixSumIdx(float prefix_sum) {
+size_t PriorityTree::GetPrefixSumIdx(float prefix_sum) const {
   size_t idx = 1;
   while (idx < capacity_) {
     const auto &left_priority = buffer_[kNumSubnodes * idx].sum_priority;
@@ -48,7 +48,7 @@ size_t PriorityTree::GetPrefixSumIdx(float prefix_sum) {
   return idx - capacity_;
 }
 
-PriorityReplayBuffer::PriorityReplayBuffer(int seed, float alpha, float beta, size_t capacity,
+PriorityReplayBuffer::PriorityReplayBuffer(uint32_t seed, float alpha, float beta, size_t capacity,
                                            const std::vector<size_t> &schema)
     : alpha_(alpha), beta_(beta), capacity_(capacity), max_priority_(1.0), schema_(schema) {
   random_engine_.seed(seed);
@@ -57,7 +57,7 @@ PriorityReplayBuffer::PriorityReplayBuffer(int seed, float alpha, float beta, si
 }
 
 bool PriorityReplayBuffer::Push(const std::vector<AddressPtr> &items) {
-  fifo_replay_buffer_->Push(items);
+  (void)fifo_replay_buffer_->Push(items);
   auto idx = fifo_replay_buffer_->head();
 
   // Set max priority for the newest item.
@@ -71,7 +71,7 @@ bool PriorityReplayBuffer::UpdatePriorities(const std::vector<size_t> &indices, 
   }
 
   for (size_t i = 0; i < indices.size(); i++) {
-    float priority = pow(priorities[i], alpha_);
+    float priority = static_cast<float>(pow(priorities[i], alpha_));
     if (priority <= 0.0f) {
       MS_LOG(WARNING) << "The priority is " << priority << ". It may lead to converge issue.";
       priority = kMinPriority;
@@ -91,7 +91,7 @@ std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<Addr
   const PriorityItem &root = priority_tree_->Root();
   float sum_priority = root.sum_priority;
   float min_priority = root.min_priority;
-  float size = fifo_replay_buffer_->size();
+  size_t size = fifo_replay_buffer_->size();
   float max_weight = Weight(min_priority, sum_priority, size);
   float segment_len = root.sum_priority / batch_size;
 
@@ -102,27 +102,27 @@ std::tuple<std::vector<size_t>, std::vector<float>, std::vector<std::vector<Addr
     float mass = (dist_(random_engine_) + i) * segment_len;
     size_t idx = priority_tree_->GetPrefixSumIdx(mass);
 
-    indices.emplace_back(idx);
+    (void)indices.emplace_back(idx);
     float priority = priority_tree_->GetByIndex(idx).sum_priority;
 
     if (max_weight <= 0.0f) {
       MS_LOG(WARNING) << "The max priority is " << max_weight << ". It may leads to converge issue.";
       max_weight = kMinPriority;
     }
-    weights.emplace_back(Weight(priority, sum_priority, size) / max_weight);
-    items.emplace_back(fifo_replay_buffer_->GetItem(idx));
+    (void)weights.emplace_back(Weight(priority, sum_priority, size) / max_weight);
+    (void)items.emplace_back(fifo_replay_buffer_->GetItem(idx));
   }
 
   return std::forward_as_tuple(indices, weights, items);
 }
 
-float PriorityReplayBuffer::Weight(float priority, float sum_priority, size_t size) {
+inline float PriorityReplayBuffer::Weight(float priority, float sum_priority, size_t size) const {
   if (sum_priority <= 0.0f) {
     MS_LOG(WARNING) << "The sum priority is " << sum_priority << ". It may leads to converge issue.";
     sum_priority = kMinPriority;
   }
   float sample_prob = priority / sum_priority;
-  float weight = pow(sample_prob * size, -beta_);
+  float weight = static_cast<float>(pow(sample_prob * size, -beta_));
   return weight;
 }
 }  // namespace kernel

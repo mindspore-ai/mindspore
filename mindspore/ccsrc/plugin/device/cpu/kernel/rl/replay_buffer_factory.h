@@ -56,7 +56,7 @@ class ReplayBufferFactory {
   template <typename... _Args>
   std::tuple<int, std::shared_ptr<T>> Create(_Args... args) {
     auto instance = std::make_shared<T>(args...);
-    map_handle_to_instances_.insert(std::make_pair(++handle_, instance));
+    (void)map_handle_to_instances_.insert(std::make_pair(++handle_, instance));
     return std::make_tuple(handle_, instance);
   }
 

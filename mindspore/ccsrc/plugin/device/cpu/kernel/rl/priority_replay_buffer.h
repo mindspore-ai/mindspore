@@ -47,7 +47,7 @@ class PriorityTree : public SegmentTree<PriorityItem> {
   PriorityItem ReduceOp(const PriorityItem &lhs, const PriorityItem &rhs) override;
 
   // Find the minimal index greater than prefix_sum.
-  size_t GetPrefixSumIdx(float prefix_sum);
+  size_t GetPrefixSumIdx(float prefix_sum) const;
 };
 
 // PriorityReplayBuffer is experience container used in Deep Q-Networks.
@@ -57,7 +57,7 @@ class PriorityTree : public SegmentTree<PriorityItem> {
 class PriorityReplayBuffer {
  public:
   // Construct a fixed-length priority replay buffer.
-  PriorityReplayBuffer(int seed, float alpha, float beta, size_t capacity, const std::vector<size_t> &schema);
+  PriorityReplayBuffer(uint32_t seed, float alpha, float beta, size_t capacity, const std::vector<size_t> &schema);
 
   // Push an experience transition to the buffer which will be given the highest priority.
   bool Push(const std::vector<AddressPtr> &items);
@@ -69,7 +69,7 @@ class PriorityReplayBuffer {
   bool UpdatePriorities(const std::vector<size_t> &indices, const std::vector<float> &priorities);
 
  private:
-  inline float Weight(float priority, float sum_priority, size_t size);
+  float Weight(float priority, float sum_priority, size_t size) const;
 
   float alpha_;
   float beta_;

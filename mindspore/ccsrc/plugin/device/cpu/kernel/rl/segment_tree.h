@@ -80,7 +80,6 @@ class SegmentTree {
 
  protected:
   size_t capacity_;
-  size_t size_;
   std::vector<T> buffer_;
 };
 }  // namespace kernel

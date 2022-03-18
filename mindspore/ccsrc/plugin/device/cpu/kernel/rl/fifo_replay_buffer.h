@@ -42,13 +42,13 @@ class FIFOReplayBuffer {
   std::vector<std::vector<AddressPtr>> GetItems(const std::vector<size_t> &indices);
 
   // Get all transitions.
-  const std::vector<AddressPtr> &GetAll();
+  const std::vector<AddressPtr> &GetAll() const;
 
   // Return the latest transition index. It returns -1 if the replay buffer is empty.
-  size_t head() { return head_; }
+  size_t head() const { return head_; }
 
   // Return the valid transitions number.
-  size_t size() { return size_; }
+  size_t size() const { return size_; }
 
  protected:
   size_t capacity_;
