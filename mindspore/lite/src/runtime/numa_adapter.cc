@@ -25,6 +25,12 @@ static constexpr int kSuccess = 0;
 static constexpr int kBitsPerByte = 8;
 static constexpr auto kBitsPerMask = static_cast<int>(sizeof(uint64_t) * kBitsPerByte);
 }  // namespace
+bool NUMAAdapter::Available() const {
+#ifdef MACHINE_LINUX_ARM64
+  return false;
+#endif
+  return available_;
+}
 
 NUMAAdapter::NUMAAdapter() {
   available_ = false;
