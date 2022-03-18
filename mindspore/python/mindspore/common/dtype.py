@@ -301,3 +301,20 @@ def issubclass_(type_, dtype):
     """
     logger.warning("'issubclass_' will be deprecated and removed in a future version.")
     return _issubclass_(type_, dtype)
+
+
+def type_size_in_bytes(dtype):
+    """
+    Return type size in bytes.
+
+    Args:
+        dtype (:class:`mindspore.dtype`): MindSpore dtype.
+
+    Returns:
+        Type size in bytes.
+    """
+
+    if not isinstance(dtype, typing.Type):
+        raise TypeError("The argument `dtype` should be instance of ", typing.Type)
+    return typing.type_size_in_bytes(dtype)
+
