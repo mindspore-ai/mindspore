@@ -57,6 +57,7 @@
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/audio/ir/kernels/treble_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/vol_ir.h"
+#include "minddata/dataset/audio/ir/validators.h"
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 
 namespace mindspore {
@@ -253,8 +254,8 @@ std::shared_ptr<TensorOperation> DCShift::Parse() {
 
 Status CreateDct(mindspore::MSTensor *output, int32_t n_mfcc, int32_t n_mels, NormMode norm) {
   RETURN_UNEXPECTED_IF_NULL(output);
-  CHECK_FAIL_RETURN_UNEXPECTED(n_mfcc > 0, "CreateDct: n_mfcc must be greater than 0, got: " + std::to_string(n_mfcc));
-  CHECK_FAIL_RETURN_UNEXPECTED(n_mels > 0, "CreateDct: n_mels must be greater than 0, got: " + std::to_string(n_mels));
+  RETURN_IF_NOT_OK(ValidateIntScalarPositive("CreateDct", "n_mfcc", n_mfcc));
+  RETURN_IF_NOT_OK(ValidateIntScalarPositive("CreateDct", "n_mels", n_mels));
 
   std::shared_ptr<dataset::Tensor> dct;
   RETURN_IF_NOT_OK(Dct(&dct, n_mfcc, n_mels, norm));
