@@ -304,7 +304,7 @@ class AsyncInferTask {
   }
 
   bool HasResult() { return abstract_ptr_->HasResult(); }
-  int ready() const { return ready_; }
+  int ready() const { return SizeToInt(ready_); }
   std::string thread_id() const { return thread_id_; }
 
   AbstractBasePtr GetResult() {
@@ -413,7 +413,7 @@ class AnalysisResultCacheMgr {
     return instance;
   }
   void Clear();
-  const AnalysisConfigResultCache &GetCache() { return cache_; }
+  const AnalysisConfigResultCache &GetCache() const { return cache_; }
   inline void SetValue(const AnfNodeConfigPtr &conf, const EvalResultPtr &arg) { cache_.set(conf, arg); }
   inline EvalResultPtr GetValue(const AnfNodeConfigPtr &conf) { return cache_.get(conf); }
   void InitSwitchValue(const AnfNodeConfigPtr &conf);

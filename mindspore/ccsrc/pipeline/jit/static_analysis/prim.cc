@@ -660,7 +660,6 @@ void SetValueRange(const AbstractBasePtr &tensor, const py::object &output) {
     output.contains(py::str(ATTR_MIN_VALUE)) ? (py::object)output[ATTR_MIN_VALUE] : (py::object)py::none();
   py::object obj_max =
     output.contains(py::str(ATTR_MAX_VALUE)) ? (py::object)output[ATTR_MAX_VALUE] : (py::object)py::none();
-
   if (!obj_min.is_none() && !obj_max.is_none()) {
     bool converted = true;
     ValuePtr min_value = nullptr;
@@ -1721,7 +1720,8 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     params[0] = global_params_dict;
 
     // Make the local parameters.
-    auto local_dict = dyn_cast<AbstractDictionary>(args_spec_list[2]);  // Local parameters dict.
+    constexpr size_t local_index = 2;
+    auto local_dict = dyn_cast<AbstractDictionary>(args_spec_list[local_index]);  // Local parameters dict.
     MS_EXCEPTION_IF_NULL(local_dict);
     auto filtered_local_dict = FilterParameters(local_dict);
     MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString()

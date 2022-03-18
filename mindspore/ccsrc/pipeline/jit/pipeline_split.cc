@@ -176,17 +176,19 @@ static void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<Anf
           bool is_node_input_flag = !(IsValueNode<mindspore::tensor::Tensor>(cnode->inputs()[input_index]) ||
                                       IsValueNode<ValueList>(cnode->inputs()[input_index]) ||
                                       IsValueNode<ValueTuple>(cnode->inputs()[input_index]));
-          if (find(graph_inputs.begin(), graph_inputs.end(), cnode->inputs()[input_index]) != graph_inputs.end() &&
-              is_node_input_flag && !HasAbstractMonad(cnode->inputs()[input_index])) {
-            auto node_input_iter = find(graph_inputs.begin(), graph_inputs.end(), cnode->inputs()[input_index]);
-            size_t node_input_index = node_input_iter - graph_inputs.begin();
-            if (parameter_index_map.empty() || parameter_index_map.count(node_input_index) == 0) {
-              parameter_index_map[node_input_index] =
-                CreateTupleGetItem(virtual_dataset_node, node_input_index, forward_graph);
-            }
-            manager->SetEdge(cnode, input_index, parameter_index_map[node_input_index]);
-            manager->SetEdge(parameter_index_map[node_input_index], 1, virtual_dataset_node);
+          auto node_input_iter = find(graph_inputs.begin(), graph_inputs.end(), cnode->inputs()[input_index]);
+          bool is_match = node_input_iter != graph_inputs.end() && is_node_input_flag &&
+                          !HasAbstractMonad(cnode->inputs()[input_index]);
+          if (!is_match) {
+            continue;
           }
+          size_t node_input_index = node_input_iter - graph_inputs.begin();
+          if (parameter_index_map.empty() || parameter_index_map.count(node_input_index) == 0) {
+            parameter_index_map[node_input_index] =
+              CreateTupleGetItem(virtual_dataset_node, node_input_index, forward_graph);
+          }
+          manager->SetEdge(cnode, input_index, parameter_index_map[node_input_index]);
+          manager->SetEdge(parameter_index_map[node_input_index], 1, virtual_dataset_node);
         }
       }
     }
@@ -354,6 +356,31 @@ void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &out_axes,
   }
 }
 
+std::vector<ValuePtr> GetStrategyElements(const CNodePtr &cnode, const std::vector<AnfNodePtr> &parameters,
+                                          const std::vector<std::vector<int64_t>> &input_strategy) {
+  auto current_inputs = cnode->inputs();
+  std::vector<ValuePtr> elements;
+  for (size_t i = 1; i < current_inputs.size(); ++i) {
+    auto current_input = current_inputs[i];
+    if (current_input->isa<ValueNode>()) {
+      auto current_value = current_input->cast<ValueNodePtr>()->value();
+      if (!current_value->isa<mindspore::tensor::Tensor>()) {
+        continue;
+      }
+    }
+    auto iter = std::find(parameters.begin(), parameters.end(), current_input);
+    if (iter != parameters.end()) {
+      elements.push_back(MakeValue(input_strategy[iter - parameters.begin()]));
+    } else {
+      auto shape = current_input->Shape()->cast<abstract::ShapePtr>();
+      auto dimension = shape->shape().size();
+      std::vector<int64_t> default_strategy(dimension, 1);
+      elements.push_back(MakeValue(default_strategy));
+    }
+  }
+  return elements;
+}
+
 void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_axes, const int64_t &device_num) {
   auto in_axes_tuple = in_axes->cast<ValueNodePtr>();
   bool need_default_strategy = false;
@@ -396,26 +423,7 @@ void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_axes, c
     }
   }
   for (auto &cnode : concerned_nodes) {
-    auto current_inputs = cnode->inputs();
-    std::vector<ValuePtr> elements;
-    for (size_t i = 1; i < current_inputs.size(); ++i) {
-      auto current_input = current_inputs[i];
-      if (current_input->isa<ValueNode>()) {
-        auto current_value = current_input->cast<ValueNodePtr>()->value();
-        if (!current_value->isa<mindspore::tensor::Tensor>()) {
-          continue;
-        }
-      }
-      auto iter = std::find(parameters.begin(), parameters.end(), current_input);
-      if (iter != parameters.end()) {
-        elements.push_back(MakeValue(input_strategy[iter - parameters.begin()]));
-      } else {
-        auto shape = current_input->Shape()->cast<abstract::ShapePtr>();
-        auto dimension = shape->shape().size();
-        std::vector<int64_t> default_strategy(dimension, 1);
-        elements.push_back(MakeValue(default_strategy));
-      }
-    }
+    auto elements = GetStrategyElements(cnode, parameters, input_strategy);
     if (IsPrimitiveCNode(cnode, prim::kPrimMatMul) || IsPrimitiveCNode(cnode, prim::kPrimBatchMatMul)) {
       HandleStrategyForMatMul(&elements, cnode);
     }

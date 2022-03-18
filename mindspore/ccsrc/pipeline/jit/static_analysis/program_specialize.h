@@ -62,7 +62,7 @@ class ProgramSpecializer {
 
   std::shared_ptr<AnalysisEngine> engine() { return engine_; }
 
-  const AnalysisContextPtr &top_context() { return top_context_; }
+  const AnalysisContextPtr &top_context() const { return top_context_; }
   void PutSpecializedAbstract(const CNodePtr &cnode, const AnfNodePtr &func, const AbstractFunctionPtr &old_abs_func,
                               const AbstractFunctionPtr &new_abs_func);
   AbstractBasePtr GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func);
@@ -144,7 +144,10 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
 
   // Build a value node from parameter if the function graph has special flag to hint it can be done.
   AnfNodePtr BuildSpecializedParameterNode(const CNodePtr &node);
-
+  // Build a value node if ival is a function.
+  AnfNodePtr BuildValueNodeForAbstractFunction(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
+                                               const AttrValueMapPtr &attrs, const AnfNodePtr &cnode,
+                                               const AbstractFunctionPtr &abs);
   // Build a value node if ival is constant and not any-value
   AnfNodePtr BuildPossibleValueNode(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
                                     const AttrValueMapPtr &attrs, const AnfNodePtr &cnode = nullptr);

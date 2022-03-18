@@ -80,7 +80,15 @@ class LoopContext {
   LoopContext(std::stack<Loop> *loops, const FunctionBlockPtr &header, const AnfNodePtr &iterator) : loops_(loops) {
     loops_->emplace(header, iterator, nullptr);
   }
-  ~LoopContext() noexcept { loops_->pop(); }
+  ~LoopContext() {
+    try {
+      (void)loops_->pop();
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Exception when pop. Error info " << e.what();
+    }
+    loops_ = nullptr;
+  }
+
   const FunctionBlockPtr &EndBlock() const { return loops_->top().end; }
 
  private:
