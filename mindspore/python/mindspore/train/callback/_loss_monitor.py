@@ -84,6 +84,14 @@ class LossMonitor(Callback):
         if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
                 cb_params.cur_epoch_num, cur_step_in_epoch + self._has_trained_epoch))
+
+        #In disaster recovery scenario, the cb_params.cur_step_num may be rollback to previous step
+        # and be less than self._last_print_time, so self._last_print_time need to be updated.
+        if self._per_print_times != 0 and (cb_params.cur_step_num <= self._last_print_time):
+            while cb_params.cur_step_num <= self._last_print_time:
+                self._last_print_time -=\
+                    max(self._per_print_times, cb_params.batch_num if cb_params.dataset_sink_mode else 1)
+
         if self._per_print_times != 0 and (cb_params.cur_step_num - self._last_print_time) >= self._per_print_times:
             self._last_print_time = cb_params.cur_step_num
             print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num + self._has_trained_epoch,
