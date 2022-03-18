@@ -32,6 +32,8 @@ class ConvDoubleInFusionPass : public FusionBasePass {
   explicit ConvDoubleInFusionPass(FusionIdAllocatorPtr idAllocator)
       : FusionBasePass("ConvDoubleInFusionPass", idAllocator) {}
   ~ConvDoubleInFusionPass() override = default;
+
+ protected:
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:

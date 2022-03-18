@@ -48,7 +48,7 @@ const int kWeightUnInitScore = 1;
 const int kWeightInitScore = 2;
 const int kFeatureMapBaseScore = 10;
 constexpr auto kPriChoosenFormat = "pri_format";
-enum MatchCountPriority : int {
+enum MatchCountPriority : size_t {
   MATCH_COUNT_PRIORITY_BEGIN = 0,
   MATCH_DTYPE_COUNT = MATCH_COUNT_PRIORITY_BEGIN,
   MATCH_FORMAT_COUNT,

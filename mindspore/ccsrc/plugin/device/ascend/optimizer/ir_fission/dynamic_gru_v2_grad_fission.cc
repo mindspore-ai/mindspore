@@ -172,7 +172,7 @@ AnfNodePtr DynamicGRUV2GradFission::AddTConcatNode(const FuncGraphPtr &func_grap
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
   for (size_t i = 0; i < t_size; i++) {
-    auto gru_hidden_grad_node_i = gru_hidden_grad_nodes[t_size - 1 - i];
+    auto gru_hidden_grad_node_i = gru_hidden_grad_nodes[(t_size - 1) - i];
     MS_EXCEPTION_IF_NULL(gru_hidden_grad_node_i);
     std::vector<AnfNodePtr> gru_hidden_grad_node_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, gru_hidden_grad_node_i, kGRUV2HiddenGradCellOutputNum,

@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_CONV_SINGLE_IN_FUSION_PASS_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_CONV_SINGLE_IN_FUSION_PASS_H_
 
+#include <utility>
 #include "utils/hash_set.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/fusion_base_pass.h"
 #include "ir/anf.h"
@@ -30,8 +31,10 @@ namespace opt {
 class ConvSingleInFusionPass : public FusionBasePass {
  public:
   explicit ConvSingleInFusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("ConvSingleInFusionPass", idAllocator) {}
+      : FusionBasePass("ConvSingleInFusionPass", std::move(idAllocator)) {}
   ~ConvSingleInFusionPass() override = default;
+
+ protected:
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:

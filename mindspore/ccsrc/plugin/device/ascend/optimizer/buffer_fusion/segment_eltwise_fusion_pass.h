@@ -32,6 +32,8 @@ class SegmentEltwiseFusionPass : public FusionBasePass {
   explicit SegmentEltwiseFusionPass(FusionIdAllocatorPtr idAllocator)
       : FusionBasePass("SegmentEltwiseFusionPass", idAllocator) {}
   ~SegmentEltwiseFusionPass() override = default;
+
+ protected:
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:

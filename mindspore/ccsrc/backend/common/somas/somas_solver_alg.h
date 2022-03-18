@@ -44,7 +44,7 @@ namespace somas {
 class Interval {
  public:
   Interval() { m_a_ = m_b_ = 0; }
-  explicit Interval(const SomasSolverTensorDescPtr t) {
+  explicit Interval(const SomasSolverTensorDescPtr &t) {
     m_a_ = t->offset_;
     m_b_ = m_a_ + t->size_;
   }
