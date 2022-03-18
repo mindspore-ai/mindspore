@@ -32,10 +32,10 @@ class MatmulDropoutDoMaskV3AddFusionPass : public FusionBasePass {
   explicit MatmulDropoutDoMaskV3AddFusionPass(FusionIdAllocatorPtr idAllocator)
       : FusionBasePass("MatmulDropoutDoMaskV3AddFusionPass", idAllocator) {}
   ~MatmulDropoutDoMaskV3AddFusionPass() override = default;
-  void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
   void MatchMatmulDropoutDoMaskV3Add(const CNodePtr &cnode, FusedNodeRecord *candidate_fusion);
+  void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 };
 }  // namespace opt
 }  // namespace mindspore

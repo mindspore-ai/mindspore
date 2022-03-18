@@ -591,7 +591,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::Process(c
 
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  manager->Replace(sparse_softmax_node, reduce_node);
+  (void)manager->Replace(sparse_softmax_node, reduce_node);
   return mul_node;
 }
 

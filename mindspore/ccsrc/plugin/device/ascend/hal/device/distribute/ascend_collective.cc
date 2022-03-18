@@ -35,6 +35,7 @@ void HcclCollectiveGroup::FinalizeCollective() {
     if (dlclose(collective_handle_) != 0) {
       MS_LOG(EXCEPTION) << "Closing libascend_collective.so handle failed.";
     }
+    collective_handle_ = nullptr;
   }
 }
 

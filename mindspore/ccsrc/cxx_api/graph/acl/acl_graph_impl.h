@@ -43,7 +43,7 @@ class AclGraphImpl : public GraphCell::GraphImpl {
   Status ConvertToOM();
   Status InitEnv();
   Status FinalizeEnv();
-  Status LoadAclModel(Buffer om_data);
+  Status LoadAclModel(const Buffer om_data);
 
   bool init_flag_;
   bool load_flag_;
