@@ -94,8 +94,8 @@ struct OpContext {
 template <typename T>
 class OpActor : public ActorBase {
  public:
-  explicit OpActor(std::string op_name) : ActorBase(op_name) {}
-  virtual ~OpActor() = default;
+  explicit OpActor(const std::string &op_name) : ActorBase(op_name) {}
+  ~OpActor() override = default;
 
   // The op actor run when receive the input data.
   virtual void RunOpData(OpData<T> *input_data, OpContext<T> *context = nullptr) {}

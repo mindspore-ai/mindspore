@@ -45,6 +45,9 @@ class StackActor : public ControlActor {
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
   void RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context) override;
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
+
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
+
   size_t input_stack_data_num() const { return input_stack_data_num_; }
   size_t input_stack_partials_num() const { return input_stack_partials_num_; }
   size_t input_stack_controls_num() const { return input_stack_controls_num_; }
@@ -54,7 +57,6 @@ class StackActor : public ControlActor {
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
   void EraseInput(const OpContext<DeviceTensor> *const context) override;
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;

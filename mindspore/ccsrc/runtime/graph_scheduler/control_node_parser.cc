@@ -67,7 +67,6 @@ KernelWithIndex FetchRealInputNode(const KernelWithIndex &node_with_index) {
   }
   MS_LOG(EXCEPTION) << "Failed to get real output from node:" << node->DebugString()
                     << " index:" << node_with_index.second;
-  return {};
 }
 
 // Fetch all the output index in the sub-abstract of abstract.
@@ -111,7 +110,6 @@ std::set<size_t> FetchRealIndexByAbstract(const AbstractBasePtr &abstract, std::
         break;
       default:
         MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
-        break;
     }
   } else if (abstract->isa<abstract::AbstractTuple>()) {
     auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
@@ -681,7 +679,6 @@ abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, 
     return FetchAbstractByIndex(sub_abstract, real_index);
   }
   MS_LOG(EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
-  return nullptr;
 }
 
 void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, const std::vector<KernelGraphPtr> &graphs,
@@ -1192,7 +1189,6 @@ bool ControlNodeParser::IsCallInputKernelGraphGroup(const std::string &group_nam
     }
   }
   MS_LOG(EXCEPTION) << "Invalid kernel graph group name:" << group_name;
-  return false;
 }
 
 KernelWithIndex ControlNodeParser::FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index) {
