@@ -107,6 +107,7 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
 }
 
 REG_INFER(Add, PrimType_AddFusion, ArithmeticInferShape)
+REG_INFER(BiasAdd, PrimType_BiasAdd, ArithmeticInferShape)
 REG_INFER(Div, PrimType_DivFusion, ArithmeticInferShape)
 REG_INFER(Eltwise, PrimType_Eltwise, ArithmeticInferShape)
 REG_INFER(FloorDiv, PrimType_FloorDiv, ArithmeticInferShape)
