@@ -48,6 +48,8 @@ from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
 from mindspore.ops.operations.array_ops import Triu
+from mindspore.ops.operations.array_ops import ResizeNearestNeighborV2
+from mindspore.ops.operations._grad_ops import ResizeNearestNeighborV2Grad
 from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
@@ -2636,6 +2638,16 @@ test_case_nn_ops = [
         'block': G.ResizeBilinearGrad(),
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32), Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32)],
         'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32)],
+        'skip': ['backward']}),
+    ('ResizeNearestNeighborV2', {
+        'block': ResizeNearestNeighborV2(),
+        'desc_inputs': [Tensor(np.random.rand(16, 16, 32, 32).astype(np.float32)),
+                        Tensor(np.array([8, 8]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.random.rand(16, 16, 8, 8).astype(np.float32))]}),
+    ('ResizeNearestNeighborV2Grad', {
+        'block': ResizeNearestNeighborV2Grad(),
+        'desc_inputs': [Tensor(np.random.rand(16, 16, 8, 8).astype(np.float32)),
+                        Tensor(np.array([32, 32]).astype(np.int32))],
         'skip': ['backward']}),
     ('ROIAlign', {
         'block': P.ROIAlign(7, 7, 0.03125, 2),

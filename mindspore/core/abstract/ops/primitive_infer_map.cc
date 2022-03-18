@@ -79,6 +79,8 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kNonDeterministicInts = prim::kPrimNonDeterministicInts->name();
   static const auto &kSliceGrad = prim::kPrimSliceGrad->name();
   static const auto &kReshape = prim::kPrimReshape->name();
+  static const auto &kResizeNearestNeighborV2 = prim::kPrimResizeNearestNeighborV2->name();
+  static const auto &kResizeNearestNeighborV2Grad = prim::kPrimResizeNearestNeighborV2Grad->name();
   static const auto &kScatterNd = prim::kPrimScatterNd->name();
   static const auto &kTruncatedNormal = prim::kPrimTruncatedNormal->name();
   static const auto &kFillV2 = prim::kPrimFillV2->name();
@@ -119,6 +121,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
                                          {kTile, ShapeSet{1}},
                                          {kReshape, ShapeSet{1}},
+                                         {kResizeNearestNeighborV2, ShapeSet{1}},
+                                         {kResizeNearestNeighborV2Grad, ShapeSet{1}},
                                          {kScatterNd, ShapeSet{2}},
                                          {kSliceGrad, ShapeSet{2, 3}},
                                          {kFillV2, ShapeSet{0}},
