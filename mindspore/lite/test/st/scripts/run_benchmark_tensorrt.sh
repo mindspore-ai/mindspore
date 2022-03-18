@@ -16,7 +16,7 @@ function Run_Converter() {
     mkdir -p ${ms_models_path}
 
     # Prepare the config file list
-    local tensorrt_cfg_file_list=("$models_tensorrt_config")
+    local tensorrt_cfg_file_list=("$models_tensorrt_config" "$models_nvgpu_posttraining_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
     Convert "${tensorrt_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $x86_fail_not_return
@@ -96,78 +96,89 @@ function Run_TensorRT() {
 
     local line_info model_info spec_acc_limit model_name input_num input_shapes \
             mode model_file input_files output_file data_path acc_limit enableFp16 \
-            run_result config_file_path
+            run_result spec_cosine_limit
+    # Prepare the config file list
+    local tensorrt_cfg_file_list=("$models_tensorrt_config" "$models_nvgpu_posttraining_config")
+    for cfg_file in ${tensorrt_cfg_file_list[*]}; do
+        cfg_file_name=${cfg_file##*/}
+        while read line; do
+            line_info=${line}
+            if [[ $line_info == \#* || $line_info == "" ]]; then
+                continue
+            fi
 
-    while read line; do
-        line_info=${line}
-        if [[ $line_info == \#* || $line_info == "" ]]; then
-            continue
-        fi
+            # model_info     accuracy_limit      run_mode
+            model_info=`echo ${line_info} | awk -F ' ' '{print $1}'`
+            accuracy_info=`echo ${line_info} | awk -F ' ' '{print $2}'`
+            spec_acc_limit=`echo ${accuracy_info} | awk -F ';' '{print $1}'`
+            spec_cosine_limit=`echo ${accuracy_info} | awk -F ';' '{print $2}'`
 
-        # model_info     accuracy_limit      run_mode
-        model_info=`echo ${line_info} | awk -F ' ' '{print $1}'`
-        spec_acc_limit=`echo ${line_info} | awk -F ' ' '{print $2}'`
+            # model_info detail
+            model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
+            input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
+            input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+            mode=`echo ${model_info} | awk -F ';' '{print $5}'`
+            input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
+            if [[ ${model_name##*.} == "caffemodel" ]]; then
+                model_name=${model_name%.*}
+            elif [[ ${cfg_file_name} =~ "_posttraining" ]]; then
+                model_name=${model_name}"_posttraining"
+            fi
 
-        # model_info detail
-        model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
-        input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
-        input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
-        mode=`echo ${model_info} | awk -F ';' '{print $5}'`
-        input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
-        if [[ ${model_name##*.} == "caffemodel" ]]; then
-            model_name=${model_name%.*}
-        fi
+            # converter for distribution models
+            if [[ ${spec_acc_limit} == "CONVERTER" ]]; then
+                echo "Skip ${model_name} ......"
+                continue
+            fi
 
-        # converter for distribution models
-        if [[ ${spec_acc_limit} == "CONVERTER" ]]; then
-            echo "Skip ${model_name} ......"
-            continue
-        fi
+            echo "Benchmarking ${model_name} ......"
+            model_file=${ms_models_path}'/'${model_name}'.ms'
+            input_files=""
+            output_file=""
+            data_path=${models_path}'/input_output/'
+            if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+                input_files=${data_path}'input/'${model_name}'.ms.bin'
+            else
+                for i in $(seq 1 $input_num)
+                do
+                input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$i','
+                done
+            fi
+            output_file=${data_path}'output/'${model_name}'.ms.out'
 
-        echo "Benchmarking ${model_name} ......"
-        model_file=${ms_models_path}'/'${model_name}'.ms'
-        input_files=""
-        output_file=""
-        data_path=${models_path}'/input_output/'
-        if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
-            input_files=${data_path}'input/'${model_name}'.ms.bin'
-        else
-            for i in $(seq 1 $input_num)
-            do
-            input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$i','
-            done
-        fi
-        output_file=${data_path}'output/'${model_name}'.ms.out'
-        config_file_path=${data_path}'input/'${model_name}'.config'
+            # set accuracy limitation
+            acc_limit="0.5"
+            if [[ ${spec_acc_limit} != "" ]]; then
+                acc_limit="${spec_acc_limit}"
+            elif [[ ${mode} == "fp16" ]]; then
+                acc_limit="5"
+            fi
+            # set cosind distance limit
+            cosine_limit="-1.1"
+            if [[ ${spec_cosine_limit} != "" ]]; then
+                cosine_limit="${spec_cosine_limit}"
+            fi
+            # whether enable fp16
+            enableFp16="false"
+            if [[ ${mode} == "fp16" ]]; then
+                enableFp16="true"
+            fi
+            if [[ ${mode} == "offline_resize" ]]; then
+                input_shapes=""
+            fi
 
-        # set accuracy limitation
-        acc_limit="0.5"
-        if [[ ${spec_acc_limit} != "" ]]; then
-            acc_limit="${spec_acc_limit}"
-        elif [[ ${mode} == "fp16" ]]; then
-            acc_limit="5"
-        fi
-        # whether enable fp16
-        enableFp16="false"
-        if [[ ${mode} == "fp16" ]]; then
-            enableFp16="true"
-        fi
-        if [[ ${mode} == "offline_resize" ]]; then
-            input_shapes=""
-        fi
+            # different tensorrt run mode use different cuda command
+            echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --cosineDistanceThreshold=${cosine_limit} --device=GPU' >> "${run_tensorrt_log_file}"
+            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --cosineDistanceThreshold=${cosine_limit} --device=GPU >> ${run_tensorrt_log_file}
 
-        # different tensorrt run mode use different cuda command
-        echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --configFile='${config_file_path}' --device=GPU' >> "${run_tensorrt_log_file}"
-        CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --device=GPU >> ${run_tensorrt_log_file}
-        CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --device=GPU >> ${run_tensorrt_log_file}
+            if [ $? = 0 ]; then
+                run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            else
+                run_result='TensorRT: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            fi
 
-        if [ $? = 0 ]; then
-            run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='TensorRT: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-
-    done < ${models_tensorrt_config}
+        done < ${cfg_file}
+    done
 }
 
 # Print start msg before run testcase
@@ -240,6 +251,8 @@ if [[ ${level} == "level1" ]]; then
 fi
 models_tensorrt_config=${basepath}/../../${config_folder}/models_tensorrt.cfg
 echo ${models_tensorrt_config}
+models_nvgpu_posttraining_config=${basepath}/../../config/models_nvgpu_posttraining.cfg
+echo ${models_nvgpu_posttraining_config}
 
 # Write converter result to temp file
 run_converter_log_file=${basepath}/run_converter_log.txt
