@@ -153,6 +153,7 @@ void Server::InitServerContext() {
 void Server::InitCluster() {
   server_node_ = std::make_shared<ps::core::ServerNode>();
   MS_EXCEPTION_IF_NULL(server_node_);
+  server_node_->SetCancelSafeModeCallBack([this]() -> void { CancelSafeMode(); });
   task_executor_ = std::make_shared<ps::core::TaskExecutor>(kExecutorThreadPoolSize);
   MS_EXCEPTION_IF_NULL(task_executor_);
   if (!InitCommunicatorWithServer()) {

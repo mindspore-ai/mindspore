@@ -122,6 +122,7 @@ void Iteration::MoveToNextIteration(bool is_last_iter_valid, const std::string &
 
   MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == kLeaderServerRank) {
+    std::unique_lock<std::mutex> lock(iter_move_mtx_);
     if (!BroadcastPrepareForNextIterRequest(iteration_num_, is_last_iter_valid, reason)) {
       MS_LOG(ERROR) << "Broadcast prepare for next iteration request failed.";
       return;
@@ -432,7 +433,6 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
     return;
   }
 
-  std::unique_lock<std::mutex> lock(iter_move_mtx_);
   NotifyLeaderMoveToNextIterRequest notify_leader_to_next_iter_req;
   (void)notify_leader_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &rank = notify_leader_to_next_iter_req.rank();
@@ -446,6 +446,7 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
     return;
   }
 
+  std::unique_lock<std::mutex> lock(iter_move_mtx_);
   if (!BroadcastPrepareForNextIterRequest(iter_num, is_last_iter_valid, reason)) {
     MS_LOG(ERROR) << "Broadcast prepare for next iteration request failed.";
     return;
@@ -714,10 +715,6 @@ void Iteration::EndLastIter() {
     iteration_loop_count_++;
     instance_state_ = InstanceState::kFinish;
   }
-
-  std::unique_lock<std::mutex> lock(pinned_mtx_);
-  pinned_iter_num_ = 0;
-  lock.unlock();
 
   SetIterationEnd();
   if (!SummarizeIteration()) {
