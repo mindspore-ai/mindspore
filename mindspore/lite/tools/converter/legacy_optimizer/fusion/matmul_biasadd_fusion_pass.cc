@@ -23,8 +23,8 @@
 #include "tools/common/meta_graph_utils.h"
 namespace {
 constexpr int kNumBiasMatchPathLen = 2;
-constexpr const char *MulName = "MATMUL";
-constexpr const char *BiasName = "BIASADD";
+constexpr std::string_view MulName = "MATMUL";
+constexpr std::string_view BiasName = "BIASADD";
 }  // namespace
 namespace mindspore {
 namespace lite {
@@ -57,11 +57,11 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
     MS_LOG(ERROR) << "MatMul-BiasAdd-Fusion should have two NodeIndex in matchedPair";
     return RET_PARAM_INVALID;
   }
-  auto mul_path_iter = matched_path.find(MulName);
+  auto mul_path_iter = matched_path.find(std::string(MulName));
   MS_ASSERT(mul_path_iter != matched_path.end());
   auto &mul_path = mul_path_iter->second;
   MS_ASSERT(mul_path != nullptr);
-  auto bias_path_iter = matched_path.find(BiasName);
+  auto bias_path_iter = matched_path.find(std::string(BiasName));
   MS_ASSERT(bias_path_iter != matched_path.end());
   auto &bias_path = bias_path_iter->second;
   MS_ASSERT(bias_path != nullptr);
