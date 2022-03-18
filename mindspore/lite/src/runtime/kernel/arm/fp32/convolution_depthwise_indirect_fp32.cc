@@ -37,9 +37,9 @@ ConvolutionDepthwiseIndirectCPUKernel::~ConvolutionDepthwiseIndirectCPUKernel() 
 }
 
 int ConvolutionDepthwiseIndirectCPUKernel::Prepare() {
-  UpdateOriginWeightAndBias();
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  UpdateOriginWeightAndBias();
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_[kWeightIndex];
     CHECK_NULL_RETURN(weight_tensor);
