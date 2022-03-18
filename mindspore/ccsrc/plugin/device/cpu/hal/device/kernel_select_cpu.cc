@@ -239,7 +239,12 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   if (is_akg_op) {
+#ifndef USE_LLVM
+    MS_LOG(EXCEPTION) << "When calling AKG-CPU operator, found LLVM 12.0.1 not installed, please check: "
+                         "https://www.mindspore.cn/install for installing LLVM on MindSpore.";
+#else
     builder->SetKernelType(KernelType::AKG_KERNEL);
+#endif
   } else {
     builder->SetKernelType(KernelType::CPU_KERNEL);
   }

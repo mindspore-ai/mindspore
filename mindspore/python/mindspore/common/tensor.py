@@ -2470,14 +2470,15 @@ class COOTensor(COOTensor_):
         "Init COOTensor"
         self.init_finished = False
         # Directly init a COOTensor from another COOTensor
-        if indices is None and values is None and shape is None and coo_tensor is not None:
+        if coo_tensor is not None:
             if not isinstance(coo_tensor, (COOTensor, COOTensor_)):
-                raise TypeError("If only one input provided, it must be a COOTensor.")
+                raise TypeError(f"Expect input `coo_tensor` to be a COOTensor, but got {type(coo_tensor)}")
+            if not (indices is None and values is None and shape is None):
+                raise TypeError("If input `coo_tensor` is provided, `indices`, `values`, `shapes` should all be `None`")
             COOTensor_.__init__(self, coo_tensor)
         # Init a COOTensor from indices, values and shape
         else:
-            if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
-                raise TypeError("Inputs must follow: COOTensor(Tensor, Tensor, tuple).")
+            validator.check_coo_tensor_input(indices, values, shape)
             validator.check_coo_tensor_shape(indices.shape, values.shape, shape)
             validator.check_coo_tensor_dtype(indices.dtype)
             if not (indices < Tensor(shape)).all() or (indices < 0).any():
@@ -2654,17 +2655,19 @@ class CSRTensor(CSRTensor_):
     """
 
     def __init__(self, indptr=None, indices=None, values=None, shape=None, csr_tensor=None):
+        "Init CSRTensor"
         self.init_finished = False
         # Directly init a CSRTensor from another CSRTensor
-        if indptr is None and indices is None and values is None and shape is None:
+        if csr_tensor is not None:
             if not isinstance(csr_tensor, (CSRTensor, CSRTensor_)):
-                raise TypeError("If only one input provided, it must be a CSRTensor.")
+                raise TypeError(f"Expect input `csr_tensor` to be a CSRTensor, but got {type(csr_tensor)}")
+            if not (indptr is None and indices is None and values is None and shape is None):
+                raise TypeError(
+                    "If input `csr_tensor` is provided, `indptr`, `indices`, `values`, `shapes` should all be `None`")
             CSRTensor_.__init__(self, csr_tensor)
         # Init a CSRTensor from indptr, indices, values and shape
         else:
-            if not (isinstance(indptr, Tensor) and isinstance(indices, Tensor) \
-                    and isinstance(values, Tensor) and isinstance(shape, tuple)):
-                raise TypeError("Inputs must follow: CSRTensor(tensor, tensor, tensor, tuple).")
+            validator.check_csr_tensor_input(indptr, indices, values, shape)
             validator.check_csr_tensor_shape(indptr.shape, indices.shape, values.shape, shape)
             validator.check_csr_tensor_dtype(indptr.dtype, indices.dtype)
             CSRTensor_.__init__(self, indptr, indices, values, shape)
