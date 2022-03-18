@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_DEPTHWISECONV_ELTWISE_FUSION_PASS_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_DEPTHWISECONV_ELTWISE_FUSION_PASS_H_
 
+#include <utility>
+
 #include "utils/hash_set.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/fusion_base_pass.h"
 #include "ir/anf.h"
@@ -30,7 +32,7 @@ namespace opt {
 class DepthwiseConvEltwiseFusionPass : public FusionBasePass {
  public:
   explicit DepthwiseConvEltwiseFusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("DepthwiseConvEltwiseFusionPass", idAllocator) {}
+      : FusionBasePass("DepthwiseConvEltwiseFusionPass", std::move(idAllocator)) {}
   ~DepthwiseConvEltwiseFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 

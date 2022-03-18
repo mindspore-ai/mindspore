@@ -41,7 +41,7 @@ void AscendMemoryPool::Init() {
     if (task_sink) {
       SetMemAllocUintSize(ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH, ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH);
     } else {
-      SetMemAllocUintSize(total_size * kCommonMemoryRatio, total_size * kPersistMemoryRatio);
+      SetMemAllocUintSize(FloatToSize(total_size * kCommonMemoryRatio), FloatToSize(total_size * kPersistMemoryRatio));
     }
   }
 }

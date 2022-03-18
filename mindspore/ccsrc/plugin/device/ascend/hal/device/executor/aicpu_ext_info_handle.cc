@@ -99,7 +99,7 @@ bool AicpuExtInfoHandler::ParseExtShapeType(AicpuExtInfo *aicpu_ext_info) {
 
   auto type = reinterpret_cast<const int32_t *>(aicpu_ext_info->infoMsg);
 
-  if (*type != unknown_type_) {
+  if (*type != static_cast<int32_t>(unknown_type_)) {
     MS_LOG(ERROR) << "Node:" << node_name_ << " parse ext shape type failed as need:" << unknown_type_
                   << " but got:" << *type;
     return false;
@@ -230,8 +230,9 @@ bool AicpuExtInfoHandler::UpdateShapeAndType(const std::vector<int64_t> &shape,
   return true;
 }
 
-void AicpuExtInfoHandler::GetShapeAndType(NotNull<const AicpuShapeAndType *> shape_and_type,
-                                          NotNull<std::vector<int64_t> *> shape, NotNull<TypeId *> data_type) {
+void AicpuExtInfoHandler::GetShapeAndType(const NotNull<const AicpuShapeAndType *> &shape_and_type,
+                                          const NotNull<std::vector<int64_t> *> &shape,
+                                          const NotNull<TypeId *> &data_type) {
   for (int64_t tmpDim : shape_and_type->dims) {
     if (tmpDim == kDimEndFlag) {
       break;

@@ -201,6 +201,7 @@ Status MultiProcess::ReceiveMsg(const CreateBufferCall &create_buffer_call) {
       msg_len = receive_msg_->msg_total_len;
       msg_buffer = create_buffer_call(msg_len);
     }
+    MS_EXCEPTION_IF_NULL(msg_buffer);
     auto ret = memcpy_s(msg_buffer + cur_offset, msg_len - cur_offset, shmat_data_addr_, receive_msg_->msg_len);
     if (ret != EOK) {
       MS_LOG(INFO) << "memcpy_s failed, ret = " << ret;

@@ -49,7 +49,7 @@ class InputToOutputRegistry {
   void Register(const InputToOutputRegister &reg);
   void Register(
     const std::string &op_name, const std::vector<size_t> &input_indices,
-    const PreCheckFunc &pre_check_func = [](const CNodePtr &node) { return true; });
+    const PreCheckFunc &pre_check_func = [](const CNodePtr &) { return true; });
   bool GetRegisterByOpName(const std::string &op_name, InputToOutputRegister *reg) const;
 
  private:

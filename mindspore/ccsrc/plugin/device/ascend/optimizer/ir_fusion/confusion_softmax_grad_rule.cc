@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool NeedFusion(const AnfNodePtr &sum_anf, const AnfNodePtr &input0, const AnfNodePtr &input1) {
+bool NeedFusion(const AnfNodePtr &sum_anf, const AnfNodePtr &input0, const AnfNodePtr &) {
   if (sum_anf == nullptr || !sum_anf->isa<CNode>()) {
     MS_LOG(WARNING) << "Matched ReduceSum is not a CNode!";
     return false;

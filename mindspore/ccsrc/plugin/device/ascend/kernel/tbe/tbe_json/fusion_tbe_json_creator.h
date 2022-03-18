@@ -23,7 +23,7 @@ namespace mindspore::kernel {
 using ANodeFusionDataTypeMap = std::map<const AnfNodePtr, tbe::FusionDataType>;
 class FusionBuildTbeJsonCreator : public TbeJsonCreator {
  public:
-  FusionBuildTbeJsonCreator() : optional_index_(0) {}
+  FusionBuildTbeJsonCreator() : TbeJsonCreator(), optional_index_(0) {}
   ~FusionBuildTbeJsonCreator() override = default;
   bool GenJson(const FusionScopeInfo &fusion_scope_info, nlohmann::json *fusion_json) override;
 
