@@ -125,13 +125,7 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
 #ifndef __APPLE__
     const size_t kCopySize = 16;
     if (size <= kCopySize) {
-      auto ret = memcpy_s(ptr_, size, host_ptr, size);
-      if (ret != EOK) {
-        MS_LOG(ERROR) << "Failed to copy tensor!";
-        return false;
-      } else {
-        return true;
-      }
+      return ((memcpy_s(ptr_, size, host_ptr, size) != EOK) ? false : true);
     }
 #endif
 

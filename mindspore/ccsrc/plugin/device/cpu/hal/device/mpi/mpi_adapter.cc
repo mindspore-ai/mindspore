@@ -20,6 +20,7 @@
 #include <string>
 #include "pybind11/pybind11.h"
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace device {
@@ -131,7 +132,7 @@ void MPIAdapter::Init() {
 }
 
 MPI_Group MPIAdapter::AddGroup(const std::vector<int> &ranks) {
-  if (ranks.size() > static_cast<size_t>(rank_size_) || ranks.empty()) {
+  if (ranks.size() > IntToSize(rank_size_) || ranks.empty()) {
     RAISE_EXCEPTION_WITH_PARAM("input rank size:", ranks.size());
   }
 
@@ -150,7 +151,7 @@ MPI_Group MPIAdapter::AddGroup(const std::vector<int> &ranks) {
   }
 
   MPI_Group group = MPI_GROUP_NULL;
-  MPI_Group_incl(comm_group_world_, ranks.size(), ranks_input.data(), &group);
+  (void)MPI_Group_incl(comm_group_world_, SizeToInt(ranks.size()), ranks_input.data(), &group);
   if (group == MPI_GROUP_NULL) {
     RAISE_EXCEPTION_WITH_PARAM("create mpi group fail!rankid:", rank_id_);
   }
@@ -177,7 +178,7 @@ bool MPIAdapter::ReduceScatter(const float *input, float *output, const std::vec
   }
   std::vector<int> receive_count(ranks_group.size(), 0);
   for (size_t i = 0; i < ranks_group.size(); ++i) {
-    receive_count[i] = data_num;
+    receive_count[i] = SizeToInt(data_num);
   }
 
   auto op = GetMpiOp(op_type);
@@ -209,7 +210,8 @@ bool MPIAdapter::ReduceScatterOverwriteInput(float *input, const std::vector<int
   }
 
   MPI_Win window;
-  auto ret = MPI_Win_create(input, input_data_num * sizeof(float), sizeof(float), MPI_INFO_NULL, comm, &window);
+  auto ret = MPI_Win_create(input, SizeToLong(input_data_num * sizeof(float)), SizeToInt(sizeof(float)), MPI_INFO_NULL,
+                            comm, &window);
   if (ret != MPI_SUCCESS) {
     RAISE_EXCEPTION_WITH_PARAM("mpi window create fail! ret = ", ret);
   }
@@ -220,8 +222,8 @@ bool MPIAdapter::ReduceScatterOverwriteInput(float *input, const std::vector<int
       continue;
     }
     auto op = GetMpiOp(op_type);
-    ret = MPI_Accumulate(input + i * input_data_num, input_data_num, MPI_FLOAT, remote_rank, i * input_data_num,
-                         input_data_num, MPI_FLOAT, op, window);
+    ret = MPI_Accumulate(input + i * input_data_num, SizeToInt(input_data_num), MPI_FLOAT, remote_rank,
+                         SizeToLong(i * input_data_num), SizeToInt(input_data_num), MPI_FLOAT, op, window);
     if (ret != MPI_SUCCESS) {
       RAISE_EXCEPTION_WITH_PARAM("mpi accumulate fail!ret = ", ret);
     }

@@ -287,7 +287,7 @@ kernel::KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::
     if (type_format.second.empty()) {
       type_format.second = kOpFormat_DEFAULT;
     }
-    result.AddInputAttr(type_format.first, type_format.second);
+    (void)result.AddInputAttr(type_format.first, type_format.second);
   }
   // Fill outputs info.
   for (size_t i = 0; i < output_num; ++i) {

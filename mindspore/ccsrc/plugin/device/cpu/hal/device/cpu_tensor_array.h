@@ -34,7 +34,6 @@ class CPUTensorArray : public TensorArray {
   void *CreateMemory(const size_t size) override;
   void ClearMemory(void *addr, const size_t size) override;
 };
-using CPUTensorArray = CPUTensorArray;
 using CPUTensorArrayPtr = std::shared_ptr<CPUTensorArray>;
 }  // namespace cpu
 }  // namespace device
