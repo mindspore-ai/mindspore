@@ -28,7 +28,7 @@ function Run_TensorRT_Mpirun() {
   tar -zxf ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
   tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
   cd ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64/ || exit 1
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
   cp tools/benchmark/benchmark ./ || exit 1
 
   echo "start mpirun models..."
@@ -91,7 +91,7 @@ function Run_TensorRT() {
     tar -zxf ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     cd ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64/ || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
     cp tools/benchmark/benchmark ./ || exit 1
 
     local line_info model_info spec_acc_limit model_name input_num input_shapes \

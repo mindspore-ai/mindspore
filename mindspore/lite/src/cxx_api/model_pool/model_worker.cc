@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/cxx_api/model_pool/model_worker.h"
-#include "src/common/log.h"
+#include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #include "src/common/common.h"
 namespace mindspore {
