@@ -43,9 +43,9 @@ std::unique_ptr<Byte[]> Decrypt(const std::string &lib_path, size_t *, const Byt
 }
 #else
 namespace {
-constexpr size_t MAX_BLOCK_SIZE = 512 * 1024 * 1024;  // Maximum ciphertext segment, units is Byte
-constexpr size_t Byte16 = 16;                         // Byte16
-constexpr unsigned int MAGIC_NUM = 0x7F3A5ED8;        // Magic number
+constexpr size_t MAX_BLOCK_SIZE = 64 * 1024 * 1024;  // Maximum ciphertext segment, units is Byte
+constexpr size_t Byte16 = 16;                        // Byte16
+constexpr unsigned int MAGIC_NUM = 0x7F3A5ED8;       // Magic number
 DynamicLibraryLoader loader;
 }  // namespace
 int32_t ByteToInt(const Byte *byteArray, size_t length) {
@@ -253,7 +253,7 @@ std::unique_ptr<Byte[]> Decrypt(const std::string &lib_path, size_t *decrypt_len
   }
   std::vector<char> block_buf;
   std::vector<char> int_buf(sizeof(int32_t));
-  std::vector<Byte> decrypt_block_buf(MAX_BLOCK_SIZE);
+
   auto decrypt_data = std::make_unique<Byte[]>(data_size);
   int32_t decrypt_block_len;
 
@@ -303,13 +303,19 @@ std::unique_ptr<Byte[]> Decrypt(const std::string &lib_path, size_t *decrypt_len
     }
     block_buf.assign(model_data + offset, model_data + offset + block_size);
     offset += block_buf.size();
-    if (!(BlockDecrypt(decrypt_block_buf.data(), &decrypt_block_len, reinterpret_cast<Byte *>(block_buf.data()),
-                       block_buf.size(), key, static_cast<int32_t>(key_len), dec_mode, tag))) {
-      MS_LOG(ERROR) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
+    Byte *decrypt_block_buf = static_cast<Byte *>(malloc(MAX_BLOCK_SIZE * sizeof(Byte)));
+    if (decrypt_block_buf == nullptr) {
+      MS_LOG(ERROR) << "decrypt_block_buf is nullptr.";
       return nullptr;
     }
-    memcpy(decrypt_data.get() + *decrypt_len, decrypt_block_buf.data(), static_cast<size_t>(decrypt_block_len));
-
+    if (!(BlockDecrypt(decrypt_block_buf, &decrypt_block_len, reinterpret_cast<Byte *>(block_buf.data()),
+                       block_buf.size(), key, static_cast<int32_t>(key_len), dec_mode, tag))) {
+      MS_LOG(ERROR) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
+      free(decrypt_block_buf);
+      return nullptr;
+    }
+    memcpy(decrypt_data.get() + *decrypt_len, decrypt_block_buf, static_cast<size_t>(decrypt_block_len));
+    free(decrypt_block_buf);
     *decrypt_len += static_cast<size_t>(decrypt_block_len);
   }
   ret = loader.Close();
