@@ -1443,7 +1443,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     MS_LOG(DEBUG) << "True_end or false_end will not call after_block, true_block: " << true_block->ToString()
                   << ", true_end: " << true_end->ToString() << ", false_block: " << false_block->ToString()
                   << ", false_end: " << false_end->ToString() << ", after_block: " << after_block->ToString();
-    ignored_latter_call_graphs_.insert(after_block);
+    (void)ignored_latter_call_graphs_.insert(after_block);
   }
   if (true_branch_graphs.second != nullptr && false_branch_graphs.second != nullptr) {
     true_branch_graphs.first = block;

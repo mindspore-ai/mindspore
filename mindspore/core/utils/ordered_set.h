@@ -84,7 +84,7 @@ class OrderedSet {
   OrderedSet &operator=(OrderedSet &&other) = default;
 
   // insert an element to the OrderedSet after the given position.
-  std::pair<iterator, bool> insert(iterator pos, const element_type &e) {
+  std::pair<iterator, bool> insert(const iterator &pos, const element_type &e) {
     auto result = map_.emplace(e, ordered_data_.end());
     if (result.second) {
       result.first->second = ordered_data_.emplace(pos, e);

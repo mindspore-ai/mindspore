@@ -82,9 +82,11 @@ class LoopContext {
   }
   ~LoopContext() {
     try {
-      (void)loops_->pop();
+      loops_->pop();
     } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Exception when pop. Error info " << e.what();
+    } catch (...) {
+      MS_LOG(ERROR) << "Throw exception when pop.";
     }
     loops_ = nullptr;
   }
