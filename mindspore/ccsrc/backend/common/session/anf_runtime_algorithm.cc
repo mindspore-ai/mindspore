@@ -928,14 +928,14 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
 
 static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, std::vector<size_t> *device_shape) {
   if (!max_shape.empty()) {
-    std::transform(max_shape.begin(), max_shape.end(), device_shape->begin(), IntToSize);
+    (void)std::transform(max_shape.begin(), max_shape.end(), device_shape->begin(), IntToSize);
   } else {
     constexpr size_t kDefaultValueForDynamicDim = 16;
     auto tmp_shape = *device_shape;
     auto ConvertNegOneToDefalut = [&kDefaultValueForDynamicDim](size_t size) {
       return static_cast<int64_t>(size) < 0 ? kDefaultValueForDynamicDim : size;
     };
-    std::transform(tmp_shape.begin(), tmp_shape.end(), device_shape->begin(), ConvertNegOneToDefalut);
+    (void)std::transform(tmp_shape.begin(), tmp_shape.end(), device_shape->begin(), ConvertNegOneToDefalut);
   }
 }
 

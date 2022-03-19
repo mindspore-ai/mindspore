@@ -35,7 +35,7 @@ class AscendKernelMod : public KernelMod {
   explicit AscendKernelMod(const AnfNodePtr &anf_node_ptr) : KernelMod(anf_node_ptr) {}
   virtual std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &, uint32_t) = 0;
-  uint32_t block_dim() { return block_dim_; }
+  uint32_t block_dim() const { return block_dim_; }
   uint32_t stream_id() const { return stream_id_; }
   virtual bool NeedDump() {
 #ifndef ENABLE_SECURITY

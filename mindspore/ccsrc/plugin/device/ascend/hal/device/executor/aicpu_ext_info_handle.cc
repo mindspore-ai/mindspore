@@ -120,7 +120,7 @@ bool AicpuExtInfoHandler::ParseExtInputShape(AicpuExtInfo *aicpu_ext_info) {
   auto input = reinterpret_cast<AicpuShapeAndType *>(aicpu_ext_info->infoMsg);
 
   for (uint32_t index = 0; index < input_num_; ++index) {
-    input_shape_and_type_.emplace_back(&input[index]);
+    (void)input_shape_and_type_.emplace_back(&input[index]);
   }
   MS_LOG(INFO) << "Node:" << node_name_ << " parse ext input shape success infoLen=" << aicpu_ext_info->infoLen;
   return true;
@@ -138,7 +138,7 @@ bool AicpuExtInfoHandler::ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info) {
 
   auto output = reinterpret_cast<AicpuShapeAndType *>(aicpu_ext_info->infoMsg);
   for (uint32_t index = 0; index < output_num_; ++index) {
-    output_shape_and_type_.emplace_back(&output[index]);
+    (void)output_shape_and_type_.emplace_back(&output[index]);
   }
   MS_LOG(INFO) << "Node:" << node_name_ << " parse ext output shape success infoLen=" << aicpu_ext_info->infoLen;
   return true;
@@ -237,7 +237,7 @@ void AicpuExtInfoHandler::GetShapeAndType(const NotNull<const AicpuShapeAndType 
     if (tmpDim == kDimEndFlag) {
       break;
     }
-    shape->emplace_back(tmpDim);
+    (void)shape->emplace_back(tmpDim);
     MS_LOG(DEBUG) << "Debug tmpDim:" << tmpDim;
   }
 

@@ -301,8 +301,7 @@ std::vector<size_t> FusionBuildTbeJsonCreator::GetDescOutputIndex(const std::vec
   return desc_output_index;
 }
 
-bool FusionBuildTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
-                                                        nlohmann::json *attrs_json) {
+bool FusionBuildTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &, const OpInfoPtr &, nlohmann::json *) {
   return true;
 }
 
