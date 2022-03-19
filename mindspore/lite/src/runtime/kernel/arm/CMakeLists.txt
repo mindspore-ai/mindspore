@@ -9,10 +9,10 @@ if(NOT MSLITE_ENABLE_RUNTIME_PASS)
 endif()
 
 if(PLATFORM_ARM AND MSLITE_ENABLE_FP16)
-    list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp32/cast_for_converter_fp32.cc)
+    list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp32/cast_for_x86_fp16.cc)
 endif()
 
-add_library(cast_for_converter_mid OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/fp32/cast_for_converter_fp32.cc)
+add_library(cast_for_converter_mid OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/fp32/cast_for_x86_fp16.cc)
 add_dependencies(cast_for_converter_mid fbs_src)
 
 if(MSLITE_ENABLE_INT8)
