@@ -88,8 +88,8 @@ abstract::ShapePtr UpsampleNearest3DGradInferShape(const PrimitivePtr &primitive
 }
 
 TypePtr UpsampleNearest3DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  return CheckAndConvertUtils::CheckTensorTypeValid("dy", input_args[kInputIndex0]->BuildType(), valid_types,
+  const std::set<TypePtr> common_float_types = {kFloat16, kFloat32, kFloat64};
+  return CheckAndConvertUtils::CheckTensorTypeValid("dy", input_args[kInputIndex0]->BuildType(), common_float_types,
                                                     primitive->name());
 }
 }  // namespace
@@ -101,7 +101,6 @@ AbstractBasePtr UpsampleNearest3DGradInfer(const abstract::AnalysisEnginePtr &, 
   auto prim_name = primitive->name();
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   auto infer_types = UpsampleNearest3DGradInferType(primitive, input_args);
   auto infer_shapes = UpsampleNearest3DGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shapes, infer_types);

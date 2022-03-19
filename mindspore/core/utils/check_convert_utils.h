@@ -99,10 +99,22 @@ const std::map<CompareRange, std::pair<std::string, std::string>> kCompareRangeT
 
 class MS_CORE_API CheckAndConvertUtils {
  public:
-  static std::vector<int64_t> CheckPositiveVector(const std::string &arg_name, const std::vector<int64_t> &arg_value,
-                                                  const std::string &prim_name);
-  static std::vector<float> CheckPositiveVector(const std::string &arg_name, const std::vector<float> &arg_value,
-                                                const std::string &prim_name);
+  template <typename T>
+  static std::vector<T> CheckPositiveVector(const std::string &arg_name, const std::vector<T> &arg_value,
+                                            const std::string &prim_name) {
+    std::ostringstream buffer;
+    buffer << "For primitive[" << prim_name << "], the attribute[" << arg_name
+           << "] should be a vector with all positive item. but got [";
+    if (std::any_of(arg_value.begin(), arg_value.end(), [](T item) { return item < T(0); })) {
+      for (auto item : arg_value) {
+        buffer << item << ", ";
+      }
+      buffer << "].";
+      MS_EXCEPTION(ValueError) << buffer.str();
+    }
+
+    return arg_value;
+  }
   static std::string CheckString(const std::string &arg_name, const std::string &arg_value,
                                  const std::set<std::string> &check_list, const std::string &prim_name);
 

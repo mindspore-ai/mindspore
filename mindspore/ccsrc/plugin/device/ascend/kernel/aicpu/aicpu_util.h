@@ -82,6 +82,8 @@ constexpr auto kResizeBilinear = "ResizeBilinear";
 constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kTensorScatterElements = "TensorScatterElements";
 constexpr auto kExtractGlimpse = "ExtractGlimpse";
+constexpr auto kUpsampleNearest3D = "UpsampleNearest3D";
+constexpr auto kUpsampleNearest3DGrad = "UpsampleNearest3DGrad";
 constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";
@@ -123,6 +125,8 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kHistogram, "HistogramD"},
   {kMaxPoolV1, "MaxPool"},
   {kMaxPoolGradV1, "MaxPoolGrad"},
+  {kUpsampleNearest3D, "UpsampleNearest3d"},
+  {kUpsampleNearest3DGrad, "UpsampleNearest3dGrad"},
   {kNameRangeV2, "Range"},
   {kReLUV3, "Relu"},
   {kStack, "Pack"},

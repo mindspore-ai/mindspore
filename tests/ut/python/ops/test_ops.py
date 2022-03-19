@@ -103,6 +103,8 @@ from mindspore.ops.operations.other_ops import BartlettWindow
 from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.ops.operations.nn_ops import SparseApplyAdagradDA
 from mindspore.ops.operations.nn_ops import PSROIPooling
+from mindspore.ops.operations.nn_ops import UpsampleNearest3D
+from mindspore.ops.operations._grad_ops import UpsampleNearest3DGrad
 from mindspore.ops.operations.nn_ops import AvgPoolV1
 from mindspore.ops.operations._grad_ops import AvgPoolGradV1
 from mindspore.ops.operations.nn_ops import MaxPoolV1
@@ -2315,6 +2317,14 @@ test_case_nn_ops = [
         'desc_inputs': [([1, 1, 4, 4, 7], {'dtype': np.int64}),
                         ([1, 1, 2, 2, 3], {'dtype': np.int64}),
                         ([1, 1, 2, 2, 3], {'dtype': np.int64})],
+        'skip': ['backward']}),
+    ('UpsampleNearest3D', {
+        'block': UpsampleNearest3D(output_size=[4, 64, 48], scales=None),
+        'desc_inputs': [([2, 3, 4, 512, 256], {'dtype': np.float32})],
+        'desc_bprop': [([2, 3, 4, 64, 48], {'dtype': np.float32})]}),
+    ('UpsampleNearest3DGrad', {
+        'block': UpsampleNearest3DGrad(input_size=[2, 3, 4, 512, 256], output_size=[4, 64, 48], scales=None),
+        'desc_inputs': [([2, 3, 4, 64, 48], {'dtype': np.float32})],
         'skip': ['backward']}),
     ('CeLU', {
         'block': P.CeLU(),
