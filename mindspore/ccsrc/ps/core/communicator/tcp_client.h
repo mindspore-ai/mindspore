@@ -58,8 +58,6 @@ class TcpClient {
   virtual ~TcpClient();
 
   std::string GetServerAddress() const;
-  void set_disconnected_callback(const OnDisconnected &disconnected);
-  void set_connected_callback(const OnConnected &connected);
   bool WaitConnected(
     const uint32_t &connected_timeout = PSContext::instance()->cluster_config().cluster_available_timeout);
   void Init();
@@ -72,7 +70,7 @@ class TcpClient {
   bool SendMessage(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size);
   void set_timer_callback(const OnTimer &timer);
   const event_base &eventbase() const;
-  void set_disconnected() { disconnected_ = true; }
+  int connection_status() { return connection_status_; }
 
  protected:
   static void SetTcpNoDelay(const evutil_socket_t &fd);
@@ -91,8 +89,6 @@ class TcpClient {
   OnMessage message_callback_;
   TcpMessageHandler message_handler_;
 
-  OnConnected connected_callback_;
-  OnDisconnected disconnected_callback_;
   OnRead read_callback_;
   OnTimeout timeout_callback_;
   OnTimer on_timer_callback_;
@@ -108,8 +104,8 @@ class TcpClient {
 
   std::string server_address_;
   std::uint16_t server_port_;
-  std::atomic<bool> disconnected_;
-  std::atomic<bool> connected_;
+  // -1:disconnected, 0:connecting, 1:connected
+  std::atomic<int> connection_status_;
   // The Configuration file
   Configuration *config_;
 };

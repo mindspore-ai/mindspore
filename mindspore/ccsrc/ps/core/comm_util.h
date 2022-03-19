@@ -86,12 +86,16 @@ constexpr char kLibeventLogPrefix[] = "[libevent log]:";
 
 // Find the corresponding string style of cluster state through the subscript of the enum:ClusterState
 const std::vector<std::string> kClusterState = {
-  "ClUSTER_STARTING",   // Initialization state when the cluster is just started.
-  "CLUSTER_READY",      // The state after all nodes are successfully registered.
-  "CLUSTER_EXIT",       // The state after the cluster exits successfully.
-  "NODE_TIMEOUT",       // When a node has a heartbeat timeout
-  "CLUSTER_SCALE_OUT",  // When the cluster is scale out.
-  "CLUSTER_SCALE_IN"    // When the cluster is scale in.
+  "ClUSTER_STARTING",           // Initialization state when the cluster is just started.
+  "CLUSTER_READY",              // The state after all nodes are successfully registered.
+  "CLUSTER_EXIT",               // The state after the cluster exits successfully.
+  "NODE_TIMEOUT",               // When a node has a heartbeat timeout
+  "CLUSTER_SCALE_OUT",          // When the cluster is scale out.
+  "CLUSTER_SCALE_IN",           // When the cluster is scale in.
+  "CLUSTER_NEW_INSTANCE",       // When the cluster is doing NEW_INSTANCE.
+  "CLUSTER_ENABLE_FLS",         // When the cluster is doing ENABLE_FLS.
+  "CLUSTER_DISABLE_FLS",        // When the cluster is doing DISABLE_FLS.
+  "CLUSTER_SCHEDULER_RECOVERY"  // When the cluster is doing SCHEDULER_RECOVERY.
 };
 
 class CommUtil {

@@ -74,6 +74,7 @@ class AbstractNode : public Node {
   using RequestHandler =
     std::function<void(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                        const DataPtr &data, size_t size)>;
+  using CancelSafeModeFn = std::function<void()>;
 
   bool Broadcast(const NodeRole &node_role, const DataPtr &message, size_t size, int command,
                  const uint32_t &timeout = kCommTimeoutInSeconds);
@@ -158,6 +159,8 @@ class AbstractNode : public Node {
 
   void SetIterationResult(size_t last_iteration, bool is_iteration_valid);
   bool HasIterationFailed(uint32_t iteration_num) const;
+  // register cancel SafeMode function to node
+  void SetCancelSafeModeCallBack(const CancelSafeModeFn &fn) { cancelSafeModeFn_ = fn; }
 
  protected:
   virtual void Register(const std::shared_ptr<TcpClient> &client);
@@ -247,6 +250,7 @@ class AbstractNode : public Node {
 
   bool FlCollectiveWaitInner(const CollectiveMessageMeta &expect_meta, VectorPtr *output, const uint32_t &timeout);
   void OnRecvCollectiveData(const MessageMeta &message_meta, const VectorPtr &data);
+  void ConnectToScheduler();
 
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;
@@ -324,6 +328,7 @@ class AbstractNode : public Node {
 
   size_t failed_iteration_num_ = 0;
   bool iteration_failed_ = false;
+  CancelSafeModeFn cancelSafeModeFn_;
 };
 }  // namespace core
 }  // namespace ps
