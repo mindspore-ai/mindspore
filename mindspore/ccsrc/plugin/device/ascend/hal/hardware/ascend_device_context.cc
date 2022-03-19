@@ -420,7 +420,6 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id() << ", \nerror msg: " << e.what();
   }
 
-  // TODO(dsj): for ms_function running in graph_mode. should be delete later
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     common::AnfAlgo::SetNodeAttr(kAttrMSFunction, MakeValue(true), kernel);
@@ -830,7 +829,6 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  // TODO(dsj): for ms_function running in graph_mode. should be delete later
   if (!is_dynamic_shape || !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
     std::lock_guard<std::mutex> locker(launch_mutex_);
     // launch atomic clean
@@ -845,7 +843,6 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
     MemoryCopyAsync(kernel, real_inputs, outputs);
   } else {
     MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
-    // TODO(dsj): for ms_function running in graph_mode. should be delete later
     if (is_dynamic_shape && !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
       ret = kernel_mod->Launch(real_inputs, workspace, outputs, GetKernelStream(kernel));
       if (!ret) {

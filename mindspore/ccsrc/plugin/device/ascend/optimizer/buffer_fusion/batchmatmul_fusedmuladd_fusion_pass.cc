@@ -23,8 +23,7 @@
 
 namespace mindspore {
 namespace opt {
-void BatchMatmulFusedMulAddFusionPass::MatchBatchMatmulFusedMulAdd(const CNodePtr &cnode,
-                                                                   const session::KernelGraph & /* kernel_graph */,
+void BatchMatmulFusedMulAddFusionPass::MatchBatchMatmulFusedMulAdd(const CNodePtr &cnode, const session::KernelGraph &,
                                                                    FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);

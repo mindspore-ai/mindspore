@@ -36,10 +36,10 @@ AnfNodePtr MatmulBiasaddFusion::CreateMatmulWithBias(const FuncGraphPtr &graph, 
   }
 
   std::vector<AnfNodePtr> inputs;
-  inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(prim::kPrimMatMul->name())));
-  inputs.emplace_back(GetAnfNodeByVar(equiv, x0_));
-  inputs.emplace_back(GetAnfNodeByVar(equiv, x1_));
-  inputs.emplace_back(GetAnfNodeByVar(equiv, x2_));
+  (void)inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(prim::kPrimMatMul->name())));
+  (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x0_));
+  (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x1_));
+  (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x2_));
   auto new_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(node->scope());

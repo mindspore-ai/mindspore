@@ -17,6 +17,7 @@
 #include "kernel/environ_manager.h"
 #include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -89,8 +90,8 @@ bool EnvironMgr::CheckEnvInput(const CNodePtr &kernel_node) const {
   }
 
   // Check the input value.
-  auto value_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 2);
-  auto value_shapes = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+  auto value_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex2);
+  auto value_shapes = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
   if ((value_type_attr == kObjectTypeEnvType) && (!IsScalarTensor(value_type, value_shapes))) {
     MS_LOG(ERROR) << "The input value checks invalid, kernel: " << kernel_node->fullname_with_scope();
     return false;

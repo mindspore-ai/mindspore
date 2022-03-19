@@ -260,12 +260,12 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   // pack all addresses into a vector.
   std::vector<void *> runtimeargs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) -> void * { return input->addr; });
+                       [](const AddressPtr &input) { return input->addr; });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) -> void * { return output->addr; });
+                       [](const AddressPtr &output) { return output->addr; });
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &addr) -> void * { return addr->addr; });
+                         [](const AddressPtr &addr) { return addr->addr; });
   }
 
   if (!tiling_data_.empty() && tiling_data_ptr_ != nullptr) {

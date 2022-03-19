@@ -122,7 +122,6 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
   }
 #endif
 
-  // TODO(sida): do not hide nop op in kernel_by_kernel mode
   if (graph->is_executing_sink()) {
     opt::HideNopNode(graph.get());
   }

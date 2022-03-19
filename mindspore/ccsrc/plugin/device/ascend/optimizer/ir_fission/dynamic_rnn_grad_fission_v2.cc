@@ -564,11 +564,9 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateConcatNodeT1(const FuncGraphPtr &func_
     auto reshape_in0 = NewCNode(reshape_inputs, func_graph);
     std::vector<size_t> shape = {origin_input0_shape[kDim0] * origin_input0_shape[kDim1], origin_input0_shape[kDim2]};
     common::AnfAlgo::SetOutputInferTypeAndShape({origin_input0_dtype}, {shape}, reshape_in0.get());
-    // t_size * batch_size, input_size (t_size = 1)
-    concat_inputs.push_back(reshape_in0);
+    (void)concat_inputs.emplace_back(reshape_in0);
   } else {
-    // t_size, batch_size, input_size (t_size = 1)
-    concat_inputs.push_back(origin_input0);
+    (void)concat_inputs.emplace_back(origin_input0);
   }
 
   auto origin_input4 = dynamic_rnn_grad_cnode->input(kIndex5);

@@ -123,14 +123,12 @@ const AnfNodePtr CustomOpRegInfoToAttr::Process(const FuncGraphPtr &, const AnfN
   if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
-
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-
-  // Only process Custom operator.
   if (!IsPrimitiveCNode(cnode, prim::kPrimCustom)) {
     return nullptr;
   }
+
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   auto func_type = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType);
@@ -148,7 +146,7 @@ const AnfNodePtr CustomOpRegInfoToAttr::Process(const FuncGraphPtr &, const AnfN
   auto attr_names_vec = GetValue<std::vector<std::string>>(attr_names);
   for (const auto &name : attr_names_vec) {
     if (!primitive->HasAttr(name)) {
-      missing_attrs.insert(name);
+      (void)missing_attrs.insert(name);
     }
   }
   if (missing_attrs.empty()) {

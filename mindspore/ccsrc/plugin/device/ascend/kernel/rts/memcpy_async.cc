@@ -38,7 +38,7 @@ MemCpyAsyncKernel::MemCpyAsyncKernel() {}
 
 MemCpyAsyncKernel::~MemCpyAsyncKernel() {}
 
-bool MemCpyAsyncKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /* workspace */,
+bool MemCpyAsyncKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (inputs.size() != 1) {
     MS_LOG(ERROR) << "inputs size is not one";
