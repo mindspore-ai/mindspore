@@ -47,8 +47,8 @@ class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shapes = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shapes = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shapes = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto output_shapes = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     kernel_node_ = kernel_node;
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shapes, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shapes, kernel_name_, "output");
@@ -82,6 +82,15 @@ class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    ResetSizeLists();
+    for (size_t i = 0; i < SHAPE_SIZE; ++i) {
+      input_shape_[i] = 1;
+      output_shape_[i] = 1;
+    }
+    is_null_input_ = false;
+  }
+
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T));
@@ -89,8 +98,8 @@ class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  size_t input_shape_[4] = {1, 1, 1, 1};
-  size_t output_shape_[4] = {1, 1, 1, 1};
+  size_t input_shape_[SHAPE_SIZE] = {1, 1, 1, 1};
+  size_t output_shape_[SHAPE_SIZE] = {1, 1, 1, 1};
   bool is_null_input_ = false;
   std::string kernel_name_;
 };

@@ -222,9 +222,9 @@ def test_dynamic_reshape():
     assert compare(output, output_cmp)
 
 
-class ReduceSumNet(nn.Cell):
+class ReduceSumInputAxisNet(nn.Cell):
     def __init__(self):
-        super(ReduceSumNet, self).__init__()
+        super(ReduceSumInputAxisNet, self).__init__()
         self.reduce = ops.ReduceSum()
 
     def construct(self, x, y):
@@ -234,9 +234,9 @@ class ReduceSumNet(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dynamic_reduce_sum():
+def test_dynamic_reduce_sum_input_axis():
     """
-    Feature: Test ReduceSum.
+    Feature: Test ReduceSum with axis is input.
     Description:  The shape of inputs is dynamic.
     Expectation: Assert that results are consistent with result of the numpy compute
     """
@@ -251,7 +251,7 @@ def test_dynamic_reduce_sum():
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
     dynamic_columns = {column_names[0]: [None, 256]}
     dataset.set_dynamic_columns(columns=dynamic_columns)
-    net = ReduceSumNet()
+    net = ReduceSumInputAxisNet()
     output = dynamic_shape_sink_process(net, dataset)
     # Currently, the parameter axis of ReduceSum operator is dynamic(tensor) is
     # not supported under the fixed shape, so numpy is used for comparison
@@ -287,6 +287,75 @@ def test_dynamic_nop():
     dynamic_columns = {column_names[0]: [None, 1]}
     dataset.set_dynamic_columns(columns=dynamic_columns)
     net = NopNet()
+    output = dynamic_shape_sink_process(net, dataset)
+    output_cmp = fixed_shape_process(net, dataset)
+    assert compare(output, output_cmp)
+
+
+class ReduceSumNet(nn.Cell):
+    def __init__(self, axis=()):
+        super(ReduceSumNet, self).__init__()
+        self.reduce = ops.ReduceSum()
+        self.axis = axis
+
+    def construct(self, x):
+        return self.reduce(x, self.axis)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_reduce_sum():
+    """
+    Feature: Test ReduceSum and its backward.
+    Description:  The shape of inputs is dynamic.
+    Expectation: Assert that results are consistent with result of with fixed shape.
+    """
+    dtype = np.float32
+    data_list = []
+    for i in [2, 96]:
+        data = []
+        data.append(np.random.rand(i, 256).astype(dtype))
+        data.append(np.array(1).astype(np.float32))
+        data_list.append(tuple(data))
+    column_names = get_columns(len(data_list[0]))
+    dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
+    dynamic_columns = {column_names[0]: [None, 256]}
+    dataset.set_dynamic_columns(columns=dynamic_columns)
+    net = GradNetWrtX(ReduceSumNet())
+    output = dynamic_shape_sink_process(net, dataset)
+    output_cmp = fixed_shape_process(net, dataset)
+    assert compare(output, output_cmp)
+
+
+class AddNet(nn.Cell):
+    def construct(self, x, y):
+        return ops.add(x, y)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_add():
+    """
+    Feature: Test add and its backward.
+    Description:  The shape of inputs is dynamic.
+    Expectation: Assert that results are consistent with result of with fixed shape.
+    """
+    dtype = np.float32
+    data_list = []
+    for i in [2, 96]:
+        data = []
+        data.append(np.random.rand(i, 256).astype(dtype))
+        data.append(np.random.rand(i, 256).astype(dtype))
+        data.append(np.random.rand(i, 256).astype(dtype))
+        data_list.append(tuple(data))
+    column_names = get_columns(len(data_list[0]))
+    dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
+    dynamic_columns = {column_names[0]: [None, 256], column_names[1]: [
+        None, 256], column_names[2]: [None, 256]}
+    dataset.set_dynamic_columns(columns=dynamic_columns)
+    net = GradNetWrtX(AddNet())
     output = dynamic_shape_sink_process(net, dataset)
     output_cmp = fixed_shape_process(net, dataset)
     assert compare(output, output_cmp)
