@@ -36,14 +36,14 @@ ops::PrimitiveC *TfliteSplitParser::Parse(const std::unique_ptr<tflite::Operator
     return nullptr;
   }
   auto num_splits = tflite_attr->num_splits;
-  const auto &shape_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(1));
+  const auto &shape_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(SECOND_INPUT));
   if (shape_tensor == nullptr) {
     MS_LOG(ERROR) << "shape_tensor is null";
     return nullptr;
   }
   const auto tensor_shape = shape_tensor->shape;
   std::vector<int64_t> axes;
-  auto ret = GetTfliteData(tflite_op->inputs.at(0), tflite_subgraph->tensors, tflite_model->buffers, &axes);
+  auto ret = GetTfliteData(tflite_op->inputs.at(FIRST_INPUT), tflite_subgraph->tensors, tflite_model->buffers, &axes);
   if (ret != RET_OK && ret != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get axes value failed.";
     return nullptr;

@@ -49,7 +49,7 @@ ops::PrimitiveC *TfliteDeConvParser::Parse(const std::unique_ptr<tflite::Operato
     MS_LOG(ERROR) << "the tflite_op shape is illegal";
     return nullptr;
   }
-  const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(1));
+  const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(SECOND_INPUT));
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";
     return nullptr;
@@ -64,7 +64,7 @@ ops::PrimitiveC *TfliteDeConvParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_kernel_size({weight_shape[kWeightKernelH], weight_shape[kWeightKernelW]});
 
   // calculate pad params
-  const auto &data_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(2));
+  const auto &data_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(THIRD_INPUT));
   std::vector<int64_t> params;
   int status = getPaddingParam(data_tensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
                                weight_shape[kWeightKernelH], weight_shape[kWeightKernelW], &params);

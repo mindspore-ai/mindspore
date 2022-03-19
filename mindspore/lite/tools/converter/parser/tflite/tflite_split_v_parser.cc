@@ -38,20 +38,20 @@ ops::PrimitiveC *TfliteSplitVParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_output_num(tflite_attr->num_splits);
 
   std::vector<int64_t> size_splits;
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, &size_splits)) {
+  if (GetTfliteData(tflite_op->inputs[SECOND_INPUT], tflite_subgraph->tensors, tflite_model->buffers, &size_splits)) {
     MS_LOG(ERROR) << "get spliteV -> sizeSplits failed";
     return nullptr;
   }
   prim->set_size_splits(size_splits);
 
-  const auto &tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(0));
+  const auto &tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(FIRST_INPUT));
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor_shape is null";
     return nullptr;
   }
   auto tensor_shape = tensor->shape;
   std::vector<int64_t> axes;
-  auto ret = GetTfliteData(tflite_op->inputs.at(2), tflite_subgraph->tensors, tflite_model->buffers, &axes);
+  auto ret = GetTfliteData(tflite_op->inputs.at(THIRD_INPUT), tflite_subgraph->tensors, tflite_model->buffers, &axes);
   if (ret != RET_OK && ret != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get axes value failed.";
     return nullptr;

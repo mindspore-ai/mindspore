@@ -30,7 +30,7 @@ ops::PrimitiveC *TFSliceParser::Parse(const tensorflow::NodeDef &tf_op,
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   // begin
   tensorflow::AttrValue attr_value;
-  auto begin_node = GetConstInputNode(tf_node_map, tf_op.input(1));
+  auto begin_node = GetConstInputNode(tf_node_map, tf_op.input(SECOND_INPUT));
   if (begin_node != nullptr) {
     if (!TensorFlowUtils::FindAttrValue(*begin_node, "value", &attr_value)) {
       MS_LOG(ERROR) << "The value attr should be specified";

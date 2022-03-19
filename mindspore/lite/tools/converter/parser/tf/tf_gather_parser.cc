@@ -38,7 +38,7 @@ ops::PrimitiveC *TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
   bool axis_is_set = false;
   if (tf_op.input_size() == 3) {
     axis_is_set = true;
-    auto axis_node = GetConstInputNode(tf_node_map, tf_op.input(2));
+    auto axis_node = GetConstInputNode(tf_node_map, tf_op.input(THIRD_INPUT));
     if (axis_node == nullptr) {
       MS_LOG(ERROR) << "Find Gather input axis failed";
       return nullptr;

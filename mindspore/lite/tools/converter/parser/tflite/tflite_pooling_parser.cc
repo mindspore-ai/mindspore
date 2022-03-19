@@ -47,7 +47,7 @@ ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::Operat
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
   // calculate pad params
-  const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(0));
+  const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(FIRST_INPUT));
   std::vector<int64_t> params;
   int status = getPaddingParam(dataTensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
                                tflite_attr->filter_height, tflite_attr->filter_width, &params);
@@ -84,7 +84,7 @@ ops::PrimitiveC *TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::Operat
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
   // calculate pad params
-  const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(0));
+  const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(FIRST_INPUT));
   std::vector<int64_t> params;
   int status = getPaddingParam(dataTensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
                                tflite_attr->filter_height, tflite_attr->filter_width, &params);

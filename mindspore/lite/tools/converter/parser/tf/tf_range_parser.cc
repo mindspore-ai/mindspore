@@ -32,7 +32,7 @@ ops::PrimitiveC *TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
   if (TensorFlowUtils::FindAttrValue(tf_op, "starts", &attr_value)) {
     prim->set_start(attr_value.i());
   } else {
-    auto input_0_name = TensorFlowUtils::GetFlattenNodeName(tf_op.input(0));
+    auto input_0_name = TensorFlowUtils::GetFlattenNodeName(tf_op.input(FIRST_INPUT));
     if (tf_node_map.find(input_0_name) == tf_node_map.end()) {
       MS_LOG(ERROR) << "not find start node.";
       return nullptr;
@@ -48,7 +48,7 @@ ops::PrimitiveC *TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
   if (TensorFlowUtils::FindAttrValue(tf_op, "limits", &attr_value)) {
     prim->set_limit(attr_value.i());
   } else {
-    auto input_1_name = TensorFlowUtils::GetFlattenNodeName(tf_op.input(1));
+    auto input_1_name = TensorFlowUtils::GetFlattenNodeName(tf_op.input(SECOND_INPUT));
     if (tf_node_map.find(input_1_name) == tf_node_map.end()) {
       MS_LOG(ERROR) << "not find limit node.";
       return nullptr;
@@ -64,7 +64,7 @@ ops::PrimitiveC *TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
   if (TensorFlowUtils::FindAttrValue(tf_op, "deltas", &attr_value)) {
     prim->set_delta(attr_value.i());
   } else {
-    auto input_2_name = TensorFlowUtils::GetFlattenNodeName(tf_op.input(2));
+    auto input_2_name = TensorFlowUtils::GetFlattenNodeName(tf_op.input(THIRD_INPUT));
     if (tf_node_map.find(input_2_name) == tf_node_map.end()) {
       MS_LOG(ERROR) << "not find delta node.";
       return nullptr;

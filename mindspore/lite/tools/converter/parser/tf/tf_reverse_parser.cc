@@ -29,7 +29,7 @@ ops::PrimitiveC *TFReverseParser::Parse(const tensorflow::NodeDef &tf_op,
   auto prim = std::make_unique<ops::ReverseV2>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
-  auto value = GetConstInputNode(tf_node_map, tf_op.input(1));
+  auto value = GetConstInputNode(tf_node_map, tf_op.input(SECOND_INPUT));
   if (value == nullptr) {
     MS_LOG(ERROR) << "Find axis failed";
     return nullptr;

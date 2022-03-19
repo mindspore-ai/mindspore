@@ -30,7 +30,7 @@ ops::PrimitiveC *TfliteSliceParser::Parse(const std::unique_ptr<tflite::Operator
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   std::vector<int64_t> begin;
-  auto ret = GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, &begin);
+  auto ret = GetTfliteData(tflite_op->inputs[SECOND_INPUT], tflite_subgraph->tensors, tflite_model->buffers, &begin);
   if (ret != RET_OK && ret != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get slice -> begin failed";
     return nullptr;

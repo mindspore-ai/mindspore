@@ -49,7 +49,7 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
   }
   prim->set_stride(strides);
 
-  auto weight_node = GetConstInputNode(tf_node_map, tf_op.input(1));
+  auto weight_node = GetConstInputNode(tf_node_map, tf_op.input(SECOND_INPUT));
   if (weight_node != nullptr) {
     std::vector<int64_t> kernels(4);
     if (ParseKernels(*weight_node, format, &kernels) != RET_OK) {

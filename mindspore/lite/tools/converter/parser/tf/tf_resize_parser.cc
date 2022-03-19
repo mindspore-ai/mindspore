@@ -56,7 +56,7 @@ ops::PrimitiveC *TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
   } else {
     prim->set_method(mindspore::ResizeMethod::UNKNOWN);
   }
-  auto size_node = tf_node_map.at(tf_op.input(1));
+  auto size_node = tf_node_map.at(tf_op.input(SECOND_INPUT));
   if (size_node == nullptr) {
     MS_LOG(ERROR) << "Find size input failed.";
     return nullptr;

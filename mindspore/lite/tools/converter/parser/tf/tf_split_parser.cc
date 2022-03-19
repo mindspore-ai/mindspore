@@ -61,7 +61,7 @@ ops::PrimitiveC *TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
   prim->set_axis(splitDim);
 
   if (tf_op.op() == "SplitV") {
-    auto size_splits_node = GetConstInputNode(tf_node_map, tf_op.input(1));
+    auto size_splits_node = GetConstInputNode(tf_node_map, tf_op.input(SECOND_INPUT));
     if (size_splits_node == nullptr) {
       MS_LOG(ERROR) << "Find Split input size_splits failed";
       return nullptr;

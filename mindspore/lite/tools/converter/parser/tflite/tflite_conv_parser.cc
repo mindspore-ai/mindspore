@@ -118,8 +118,8 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
     MS_LOG(ERROR) << "the tflite_op shape is illegal";
     return nullptr;
   }
-  MS_CHECK_TRUE_RET(static_cast<size_t>(tflite_op->inputs[1]) < tflite_subgraph->tensors.size(), nullptr);
-  const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[1]);
+  MS_CHECK_TRUE_RET(static_cast<size_t>(tflite_op->inputs[SECOND_INPUT]) < tflite_subgraph->tensors.size(), nullptr);
+  const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[SECOND_INPUT]);
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";
     return nullptr;
@@ -134,7 +134,7 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
   prim->set_kernel_size({weight_shape[kWeightKernelH], weight_shape[kWeightKernelW]});
 
   // calculate pad params
-  const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs[0]);
+  const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs[FIRST_INPUT]);
   std::vector<int64_t> params;
   int status = GetConvPaddingParam(dataTensor, padMode, prim.get(), &params);
   if (status != RET_OK && status != RET_NO_CHANGE) {
@@ -172,7 +172,7 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
     MS_LOG(ERROR) << "the tflite_op shape is illegal";
     return nullptr;
   }
-  const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(1));
+  const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(SECOND_INPUT));
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";
     return nullptr;
@@ -191,7 +191,7 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
   prim->set_group(weight_shape[kWeightChannelIn] / tflite_attr->depth_multiplier);
 
   // get data tensor
-  const auto &data_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(0));
+  const auto &data_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(FIRST_INPUT));
   if (data_tensor == nullptr) {
     MS_LOG(ERROR) << "data_tensor is nullptr";
     return nullptr;
