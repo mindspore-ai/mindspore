@@ -258,7 +258,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     
         **返回：**
     
-        number，网络训练过程中得到的loss值。
+        Tensor，网络训练过程中得到的loss值。
     
     .. py:method:: check_adasum_enable()
     
@@ -289,7 +289,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     
         **返回：**
     
-        number，网络训练过程中得到的loss值。
+        Tensor，网络训练过程中得到的loss值。
 
     .. py:method:: gradient_freeze_process(*inputs)
     
@@ -301,7 +301,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     
         **返回：**
     
-        number，网络训练过程中得到的loss值。
+        Tensor，网络训练过程中得到的loss值。
 
 .. py:class:: mindspore.boost.BoostTrainOneStepWithLossScaleCell(network, optimizer, scale_sense)
 
@@ -437,7 +437,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **输出：**
 
-    - **Tuple** (Tensor) - adasum处理后更新的权重。
+    - **adasum_parameters** (Tuple(Tensor)) - adasum处理后更新的权重。
 
 .. py:class:: mindspore.boost.DimReduce(network, optimizer, weight, pca_mat_local, n_components, rho, gamma, alpha, sigma, rank, rank_size)
 

@@ -539,6 +539,28 @@
 
         - **ValueError** – 如果 `dst_type` 不是 `mindspore.dtype.float32` ，也不是 `mindspore.dtype.float16`。
 
+    .. py:method:: set_boost(boost_type)
+
+        为了提升网络性能，可以配置boost内的算法让框架自动使能该算法来加速网络训练。
+
+        请确保 `boost_type` 所选择的算法在
+        `algorithm library <https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_ 算法库中。
+
+        .. note:: 部分加速算法可能影响网络精度，请谨慎选择。
+
+        **参数：**
+
+        - **boost_type** (str) – 加速算法。
+
+        **返回：**
+
+        Cell类型，Cell本身。
+
+        **异常：**
+
+        - **ValueError** – 如果 `boost_type` 不在boost算法库内。
+
+
     .. py:method:: trainable_params(recurse=True)
 
         返回Cell的可训练参数。
