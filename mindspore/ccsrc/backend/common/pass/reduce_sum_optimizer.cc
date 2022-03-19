@@ -141,7 +141,7 @@ AnfNodePtr ReduceSumOptimizer::NewAssistValueNode(const CNodePtr &cnode, const K
         for (auto &iter : value_tuple->value()) {
           auto item = GetValue<int64_t>(iter->cast<ScalarPtr>());
           if (item < 0) {
-            axes_value.emplace_back(item + x_shape->shape().size());
+            (void)axes_value.emplace_back(item + x_shape->shape().size());
           } else {
             axes_value.emplace_back(item);
           }

@@ -146,10 +146,10 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
     if (AnfAlgo::GetOutputFormat(cnode, i) == kOpFormat_FRAC_Z) {
       auto output = GetOutputItem(manager, cnode, groups, i);
       if (output != nullptr) {
-        std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                       [](KernelWithIndex node_index) {
-                         return KernelWithIndex{node_index.first, node_index.second - 1};
-                       });
+        (void)std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
+                             [](KernelWithIndex node_index) {
+                               return KernelWithIndex{node_index.first, node_index.second - 1};
+                             });
       }
     }
   }
@@ -205,7 +205,7 @@ bool SetAttrFraczGroup(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       continue;
     }
     auto next_nodes = GetNeighborFraczNodes(manager, node_index.first, node_index.second, groups);
-    std::copy(next_nodes.begin(), next_nodes.end(), std::back_inserter(todo));
+    (void)std::copy(next_nodes.begin(), next_nodes.end(), std::back_inserter(todo));
   }
   return true;
 }
@@ -229,7 +229,7 @@ bool SetAttrFraczGroup(const FuncGraphPtr &func_graph, const ParameterPtr &param
       continue;
     }
     auto next_nodes = GetNeighborFraczNodes(manager, node_index.first, node_index.second, groups);
-    std::copy(next_nodes.begin(), next_nodes.end(), std::back_inserter(todo));
+    (void)std::copy(next_nodes.begin(), next_nodes.end(), std::back_inserter(todo));
   }
   return true;
 }

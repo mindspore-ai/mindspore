@@ -51,8 +51,8 @@ AicpuTask::~AicpuTask() {
 void AicpuTask::Distribute() {
   MS_LOG(INFO) << "InitAicpuTask start.";
   std::vector<void *> io_addrs;
-  io_addrs.insert(io_addrs.end(), task_info_->input_data_addrs().begin(), task_info_->input_data_addrs().end());
-  io_addrs.insert(io_addrs.end(), task_info_->output_data_addrs().begin(), task_info_->output_data_addrs().end());
+  (void)io_addrs.insert(io_addrs.end(), task_info_->input_data_addrs().begin(), task_info_->input_data_addrs().end());
+  (void)io_addrs.insert(io_addrs.end(), task_info_->output_data_addrs().begin(), task_info_->output_data_addrs().end());
   auto io_addrs_num = static_cast<uint32_t>(io_addrs.size());
   auto io_addrs_size = static_cast<uint32_t>(io_addrs_num * sizeof(void *));
   constexpr uint32_t io_addr_offset = sizeof(aicpu::AicpuParamHead);

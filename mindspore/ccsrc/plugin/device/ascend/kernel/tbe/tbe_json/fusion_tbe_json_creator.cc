@@ -210,7 +210,7 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
     optional_input_desc[kJShape] = kJNull;
     optional_input_desc[kJDataType] = 0;
     optional_index_++;
-    input_desc_list_tmp.emplace_back(optional_input_desc);
+    (void)input_desc_list_tmp.emplace_back(optional_input_desc);
   }
   std::vector<nlohmann::json> input_desc_list;
   TbeAdapter::InputOrderPass<nlohmann::json>(cnode, input_desc_list_tmp, &input_desc_list);
@@ -293,7 +293,7 @@ void FusionBuildTbeJsonCreator::GenReusedOutputDesc(const AnfNodePtr &anf_node, 
 std::vector<size_t> FusionBuildTbeJsonCreator::GetDescOutputIndex(const std::vector<int64_t> &output_used_nums) {
   std::vector<size_t> desc_output_index = {};
   for (size_t idx = 0; idx < output_used_nums.size(); ++idx) {
-    desc_output_index.emplace_back(idx);
+    (void)desc_output_index.emplace_back(idx);
     if (output_used_nums[idx] > 1) {
       desc_output_index.emplace_back(idx);
     }

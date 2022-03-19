@@ -21,7 +21,7 @@
 namespace mindspore {
 std::vector<Output> CellBase::operator()(const std::vector<Input> &inputs) const { return Clone()->Construct(inputs); }
 
-ParameterCell::ParameterCell(const ParameterCell &cell) {
+ParameterCell::ParameterCell(const ParameterCell &cell) : Cell<ParameterCell>(cell) {
   auto tmp_ptr = cell.tensor_.Clone();
   tensor_ = *tmp_ptr;
   MSTensor::DestroyTensorPtr(tmp_ptr);
@@ -37,7 +37,7 @@ ParameterCell &ParameterCell::operator=(const ParameterCell &cell) {
   return *this;
 }
 
-ParameterCell::ParameterCell(ParameterCell &&cell) : tensor_(cell.tensor_) {}
+ParameterCell::ParameterCell(ParameterCell &&cell) : Cell<ParameterCell>(cell), tensor_(cell.tensor_) {}
 
 ParameterCell &ParameterCell::operator=(ParameterCell &&cell) {
   if (&cell == this) {
