@@ -84,7 +84,6 @@ bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   auto bias_ret = memcpy_s(wksp + (inputs[1]->size / sizeof(float)), max_size, inputs[2]->addr, inputs[2]->size);
   if (scale_ret != 0 || bias_ret != 0) {
     MS_LOG(EXCEPTION) << "Memcpy_s error.";
-    return false;
   }
   if (is_train) {
     SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);

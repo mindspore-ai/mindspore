@@ -32,6 +32,7 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
   auto x_min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];
   auto x_max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
   ShapeVector p_value;
+  ShapeVector p_value_raw;
   if (input_args.size() == 1) {
     if (!primitive->HasAttr("perm")) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of input_perm is required!";
@@ -40,23 +41,26 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
     auto perm_val = perm->cast<ValueTuplePtr>();
     MS_EXCEPTION_IF_NULL(perm_val);
     auto perm_val_data = perm_val->value();
-    (void)std::transform(std::begin(perm_val_data), std::end(perm_val_data), std::back_inserter(p_value),
+    (void)std::transform(std::begin(perm_val_data), std::end(perm_val_data), std::back_inserter(p_value_raw),
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   } else {
     auto perm_value = input_args[1]->BuildValue();
     MS_EXCEPTION_IF_NULL(perm_value);
     if (perm_value->isa<tensor::Tensor>()) {
-      p_value = CheckAndConvertUtils::CheckTensorIntValue("perm", perm_value, op_name);
+      p_value_raw = CheckAndConvertUtils::CheckTensorIntValue("perm", perm_value, op_name);
     } else {
-      p_value = CheckAndConvertUtils::CheckTupleInt("input[perm]", perm_value, op_name);
+      p_value_raw = CheckAndConvertUtils::CheckTupleInt("input[perm]", perm_value, op_name);
     }
+  }
+  for (auto p : p_value_raw) {
+    p = (p >= 0) ? p : (p_value_raw.size() + p);
+    p_value.emplace_back(p);
   }
   if (x_shape.size() != p_value.size()) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', The dimension of x " << x_shape.size() << " and perm "
                              << p_value.size() << " must be equal.";
   }
   for (auto i : p_value) {
-    (void)CheckAndConvertUtils::CheckInteger("perm element", i, kGreaterEqual, 0, op_name);
     (void)CheckAndConvertUtils::CheckInteger("perm element", i, kLessThan, SizeToLong(p_value.size()), op_name);
   }
   std::vector<int64_t> tmp(p_value);

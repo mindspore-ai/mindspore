@@ -36,8 +36,15 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  auto tmp = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
-  axes_ = {tmp.begin(), tmp.end()};
+  auto perm = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
+  for (auto p : perm) {
+    p = (p >= 0) ? p : (perm.size() + p);
+    if (p < 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value should in [-" << perm.size() << ", "
+                        << (perm.size() - 1) << "], but got " << perm;
+    }
+    axes_.emplace_back(p);
+  }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (axes_.size() > MAX_TRANSPOSE_DIM_SIZE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the max dimension of input is " << MAX_TRANSPOSE_DIM_SIZE
