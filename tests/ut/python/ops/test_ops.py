@@ -53,6 +53,7 @@ from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.ops.operations.nn_ops import PSROIPooling
 from mindspore.ops.operations.nn_ops import MaxPoolV1
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
+from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore._c_expression import security
@@ -1517,6 +1518,11 @@ test_case_math_ops = [
         'block': P.CholeskyInverse(upper=False),
         'desc_inputs': [Tensor(np.array([[2.0, 0.0, 0.0], [4.0, 1.0, 0.0], [-8.0, 1.0, 2.0]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[2.0, 0.0, 0.0], [4.0, 1.0, 0.0], [-8.0, 1.0, 2.0]]).astype(np.float32))]}),
+    ('DenseToCSRSparseMatrix', {
+        'block': DenseToCSRSparseMatrix(),
+        'desc_inputs': [Tensor(np.array([[1, 0], [0, 1]]).astype(np.float32)),
+                        Tensor(np.array([[0, 0], [1, 1]]).astype(np.int32))],
+        'skip': ['backward']}),
     ('Embedding_1', {
         'block': Embedding(vocab_size=10, embedding_size=3),
         'desc_inputs': [Tensor(np.array([0, 2, 2, 7]).astype(np.int32))],
