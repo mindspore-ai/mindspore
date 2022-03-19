@@ -92,7 +92,7 @@ if(BUILD_LITE)
     add_dependencies(mindspore_shared_lib _mindspore_transform_graph_ir_obj)
 elseif(MODE_ASCEND_ACL)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_backend_graph_compiler_obj>
-            mindspore_backend_static mindspore_debug)
+            $<TARGET_OBJECTS:_mindspore_debug_obj> mindspore_backend_static)
 endif()
 if(NOT BUILD_LITE)
     set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
