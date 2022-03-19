@@ -42,7 +42,7 @@ void PriorityReplayBufferCreateCpuKernel::InitKernel(const CNodePtr &kernel_node
   MS_EXCEPTION_IF_CHECK_FAIL(dtypes.size() == shapes.size(), "The dtype and shapes should be same.");
   std::vector<size_t> schema;
   for (size_t i = 0; i < shapes.size(); i++) {
-    size_t num_element = std::accumulate(shapes[i].begin(), shapes[i].end(), 1, std::multiplies<size_t>());
+    size_t num_element = std::accumulate(shapes[i].begin(), shapes[i].end(), 1ULL, std::multiplies<size_t>());
     size_t type_size = GetTypeByte(dtypes[i]);
     schema.push_back(num_element * type_size);
   }
@@ -50,9 +50,9 @@ void PriorityReplayBufferCreateCpuKernel::InitKernel(const CNodePtr &kernel_node
   unsigned int seed = 0;
   std::random_device rd;
   if (seed1 != 0) {
-    seed = IntToUint(seed1);
+    seed = static_cast<unsigned int>(seed1);
   } else if (seed0 != 0) {
-    seed = IntToUint(seed0);
+    seed = static_cast<unsigned int>(seed0);
   } else {
     seed = rd();
   }
@@ -77,7 +77,7 @@ void PriorityReplayBufferPushCpuKernel::InitKernel(const CNodePtr &kernel_node) 
 
 bool PriorityReplayBufferPushCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
-  prioriory_replay_buffer_->Push(inputs);
+  (void)prioriory_replay_buffer_->Push(inputs);
 
   // Return a placeholder in case of dead code eliminate optimization.
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
@@ -87,14 +87,14 @@ bool PriorityReplayBufferPushCpuKernel::Launch(const std::vector<AddressPtr> &in
 
 void PriorityReplayBufferSampleCpuKernel::InitKernel(const CNodePtr &kernel_node) {
   handle_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "handle");
-  batch_size_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "batch_size");
+  batch_size_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "batch_size"));
   const auto &dtypes = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "dtypes");
   const auto &shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
   prioriory_replay_buffer_ = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(prioriory_replay_buffer_);
 
   for (size_t i = 0; i < shapes.size(); i++) {
-    size_t num_element = std::accumulate(shapes[i].begin(), shapes[i].end(), 1, std::multiplies<size_t>());
+    size_t num_element = std::accumulate(shapes[i].begin(), shapes[i].end(), 1ULL, std::multiplies<size_t>());
     size_t type_size = GetTypeByte(dtypes[i]);
     schema_.push_back(num_element * type_size);
   }
@@ -150,7 +150,7 @@ bool PriorityReplayBufferUpdateCpuKernel::Launch(const std::vector<AddressPtr> &
                              "memcpy_s() failed.");
   MS_EXCEPTION_IF_CHECK_FAIL(memcpy_s(priorities.data(), inputs[1]->size, inputs[1]->addr, inputs[1]->size) == EOK,
                              "memcpy_s() failed.");
-  prioriory_replay_buffer_->UpdatePriorities(indices, priorities);
+  (void)prioriory_replay_buffer_->UpdatePriorities(indices, priorities);
 
   // Return a placeholder in case of dead code eliminate optimization.
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);

@@ -82,7 +82,7 @@ class PriorityReplayBufferSampleCpuKernel : public NativeCpuKernelMod {
 
  private:
   int64_t handle_{-1};
-  int64_t batch_size_{0};
+  size_t batch_size_{0};
   std::vector<size_t> schema_;
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };

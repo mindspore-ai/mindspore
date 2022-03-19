@@ -36,7 +36,7 @@ FIFOReplayBuffer::FIFOReplayBuffer(size_t capacity, const std::vector<size_t> &s
 
     void *ptr = device::cpu::CPUMemoryPool::GetInstance().AllocTensorMem(alloc_size);
     AddressPtr item = std::make_shared<Address>(ptr, alloc_size);
-    buffer_.emplace_back(item);
+    (void)buffer_.emplace_back(item);
   }
 }
 
@@ -57,7 +57,7 @@ bool FIFOReplayBuffer::Push(const std::vector<AddressPtr> &inputs) {
   size_ = size_ >= capacity_ ? capacity_ : size_ + 1;
 
   for (size_t i = 0; i < inputs.size(); i++) {
-    void *offset = reinterpret_cast<char *>(buffer_[i]->addr) + head_ * schema_[i];
+    void *offset = reinterpret_cast<uint8_t *>(buffer_[i]->addr) + head_ * schema_[i];
     auto ret = memcpy_s(offset, buffer_[i]->size, inputs[i]->addr, inputs[i]->size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy_s() failed. Error code: " << ret;
@@ -74,7 +74,7 @@ std::vector<AddressPtr> FIFOReplayBuffer::GetItem(size_t idx) {
 
   std::vector<AddressPtr> ret;
   for (size_t i = 0; i < schema_.size(); i++) {
-    void *offset = reinterpret_cast<char *>(buffer_[i]->addr) + schema_[i] * idx;
+    void *offset = reinterpret_cast<uint8_t *>(buffer_[i]->addr) + schema_[i] * idx;
     ret.push_back(std::make_shared<Address>(offset, schema_[i]));
   }
 
@@ -85,12 +85,12 @@ std::vector<std::vector<AddressPtr>> FIFOReplayBuffer::GetItems(const std::vecto
   std::vector<std::vector<AddressPtr>> ret;
   for (const auto &idx : indices) {
     auto item = GetItem(idx);
-    ret.emplace_back(item);
+    (void)ret.emplace_back(item);
   }
 
   return ret;
 }
 
-const std::vector<AddressPtr> &FIFOReplayBuffer::GetAll() { return buffer_; }
+const std::vector<AddressPtr> &FIFOReplayBuffer::GetAll() const { return buffer_; }
 }  // namespace kernel
 }  // namespace mindspore
