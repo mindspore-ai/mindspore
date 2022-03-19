@@ -42,7 +42,7 @@ class EmbeddingLookUpCommGradCpuKernelMod : public NativeCpuKernelMod {
   }
 
  private:
-  int64_t split_num_;
+  size_t split_num_;
 };
 }  // namespace kernel
 }  // namespace mindspore
