@@ -309,6 +309,12 @@ class MS_API Equalize final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
+/// \brief Get the number of input image channels.
+/// \param[in] image Tensor of the image.
+/// \param[out] channels Channels of the image.
+/// \return The status code.
+Status MS_API GetImageNumChannels(const mindspore::MSTensor &image, int *channels);
+
 /// \brief Flip the input image horizontally.
 class MS_API HorizontalFlip final : public TensorTransform {
  public:

@@ -81,6 +81,7 @@
 #include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
 
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/image/image_utils.h"
 #include "utils/log_adapter.h"
 #else
 #include "mindspore/lite/src/common/log_adapter.h"
@@ -384,6 +385,16 @@ std::shared_ptr<TensorOperation> GaussianBlur::Parse() {
 }
 
 #ifndef ENABLE_ANDROID
+// GetImageNumChannels Function.
+Status GetImageNumChannels(const mindspore::MSTensor &image, int *channels) {
+  std::shared_ptr<dataset::Tensor> input;
+  Status rc = Tensor::CreateFromMSTensor(image, &input);
+  if (rc.IsError()) {
+    RETURN_STATUS_UNEXPECTED("GetImageNumChannels: failed to create image tensor.");
+  }
+  return ImageNumChannels(input, channels);
+}
+
 // HorizontalFlip Transform Operation.
 HorizontalFlip::HorizontalFlip() = default;
 

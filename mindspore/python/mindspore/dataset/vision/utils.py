@@ -17,8 +17,10 @@ Interpolation Mode, Resampling Filters
 from enum import Enum, IntEnum
 import numbers
 
-import mindspore._c_dataengine as cde
+import numpy as np
 from PIL import Image
+
+import mindspore._c_dataengine as cde
 
 
 class Inter(IntEnum):
@@ -323,3 +325,29 @@ def parse_padding(padding):
     if isinstance(padding, list):
         padding = tuple(padding)
     return padding
+
+
+def get_image_num_channels(image):
+    """
+    Get the number of input image channels.
+
+    Args:
+        image (Union[numpy.ndarray, PIL.Image.Image]): Image to get the number of channels.
+
+    Returns:
+        int, the number of input image channels.
+
+    Examples:
+        >>> num_channels = vision.get_image_num_channels(image)
+    """
+
+    if isinstance(image, np.ndarray):
+        return cde.get_image_num_channels(cde.Tensor(image))
+
+    if isinstance(image, Image.Image):
+        if hasattr(image, "getbands"):
+            return len(image.getbands())
+
+        return image.channels
+
+    raise TypeError("Input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray, Image.Image, type(image)))
