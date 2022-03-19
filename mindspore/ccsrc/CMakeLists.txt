@@ -259,7 +259,6 @@ endforeach()
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 
-add_subdirectory(debug)
 set(COMMON_SUB_COMP
         transform/graph_ir
         utils
@@ -302,6 +301,7 @@ if(NOT WIN32)
 endif()
 
 set(BACKEND_SUB_COMP
+        debug
         profiler
         ps
         fl
@@ -353,9 +353,7 @@ if(MODE_ASCEND_ACL)
     add_library(mindspore_backend_static STATIC ${BACKEND_SUB_OBJECTS_SRC})
 endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    target_link_libraries(mindspore_backend PRIVATE mindspore::pybind11_module mindspore_debug)
-else()
-    target_link_libraries(mindspore_backend PRIVATE mindspore_debug)
+    target_link_libraries(mindspore_backend PRIVATE mindspore::pybind11_module)
 endif()
 target_link_libraries(mindspore_backend PRIVATE mindspore_core mindspore_common proto_input mindspore::protobuf)
 target_link_libraries(mindspore_backend PRIVATE securec)

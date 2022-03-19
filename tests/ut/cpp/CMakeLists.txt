@@ -286,6 +286,7 @@ if(USE_GLOG)
 endif()
 
 add_library(backend_static STATIC
+        $<TARGET_OBJECTS:_mindspore_debug_obj>
         $<TARGET_OBJECTS:_mindspore_common_debug_obj>
         $<TARGET_OBJECTS:_mindspore_profiler_obj>
         $<TARGET_OBJECTS:_mindspore_ps_obj>
@@ -304,4 +305,4 @@ add_library(backend_static STATIC
         $<TARGET_OBJECTS:_mindspore_runtime_pynative_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_recovery_obj>)
 target_link_libraries(ut_tests PRIVATE mindspore securec -Wl,--start-group proto_input mindspore::protobuf
-        mindspore_debug backend_static -Wl,--end-group)
+        backend_static -Wl,--end-group)
