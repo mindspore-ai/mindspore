@@ -272,42 +272,91 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
   return ret_end_thread;
 }
 
-void TensorPrint::operator()() {
-  prntpb::Print print;
-  if (print_file_path_ == "") {
-    while (true) {
-      acltdtDataset *acl_dataset = acltdtCreateDataset();
+void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
+  int ret = ACL_SUCCESS;
+  acltdtDataset *acl_dataset;
+
+  while (true) {
+    do {
+      acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
+        ret = -1;
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
-      if (acltdtReceiveTensor(acl_handle_, acl_dataset, -1 /* no timeout */) != ACL_SUCCESS) {
+
+      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1 /* no timeout */);
+      if (ret != ACL_SUCCESS) {
         MS_LOG(ERROR) << "AclHandle failed to receive tensor.";
         break;
       }
+
       if (ConvertDataset2Tensor(acl_dataset)) {
+        MS_LOG(ERROR) << "Convert acl_dataset to tensor failed.";
+        ret = -1;
         break;
       }
+    } while (0);
+
+    if (acl_dataset != nullptr && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Std out: AcltdtDestroyDataset failed.";
+      break;
     }
-  } else {
-    ChangeFileMode(print_file_path_, S_IWUSR);
-    std::fstream output(print_file_path_, std::ios::out | std::ios::trunc | std::ios::binary);
-    while (true) {
-      acltdtDataset *acl_dataset = acltdtCreateDataset();
+
+    if (ret != ACL_SUCCESS) {
+      break;
+    }
+  }
+}
+
+void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::string &print_file_path) {
+  prntpb::Print print;
+  ChangeFileMode(print_file_path, S_IWUSR);
+  std::fstream output(print_file_path, std::ios::out | std::ios::trunc | std::ios::binary);
+
+  int ret = ACL_SUCCESS;
+  acltdtDataset *acl_dataset;
+  while (true) {
+    do {
+      acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
+        ret = -1;
         break;
       }
-      if (acltdtReceiveTensor(acl_handle_, acl_dataset, -1 /* no timeout */) != ACL_SUCCESS) {
+
+      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1 /* no timeout */);
+      if (ret != ACL_SUCCESS) {
         MS_LOG(ERROR) << "Acltdt failed to receive tensor.";
         break;
       }
-      if (SaveDataset2File(acl_dataset, print_file_path_, print, &output)) {
+
+      if (SaveDataset2File(acl_dataset, print_file_path, print, &output)) {
+        MS_LOG(ERROR) << "Save acl_dataset to file failed.";
+        ret = -1;
         break;
       }
+    } while (0);
+
+    if (acl_dataset != nullptr && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Out to file: AcltdtDestroyDataset failed.";
+      break;
     }
-    output.close();
-    ChangeFileMode(print_file_path_, S_IRUSR);
+
+    if (ret != ACL_SUCCESS) {
+      break;
+    }
+  }
+
+  output.close();
+  ChangeFileMode(print_file_path, S_IRUSR);
+}
+
+void TensorPrint::operator()() {
+  if (print_file_path_ == "") {
+    TensorPrintStdOut(acl_handle_);
+  } else {
+    TensorPrintOut2File(acl_handle_, print_file_path_);
   }
 }
 #endif
