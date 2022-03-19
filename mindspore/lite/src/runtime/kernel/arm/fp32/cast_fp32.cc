@@ -81,8 +81,8 @@ int CastCPUKernel::CastToFp32(const lite::Tensor *input, lite::Tensor *output, i
 #else
       Fp16ToFloat32(reinterpret_cast<const uint16_t *>(input->data()) + offset,
                     reinterpret_cast<float *>(output_data) + offset, data_num);
-      break;
 #endif
+      break;
     case kNumberTypeInt64:
       Int64ToFloat32(reinterpret_cast<const int64_t *>(input->data()) + offset,
                      reinterpret_cast<float *>(output_data) + offset, data_num);
@@ -209,7 +209,4 @@ REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Cast, LiteKernelCreator<CastCPUK
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)
-#ifdef ENABLE_CONVERTER
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Cast, LiteKernelCreator<CastCPUKernel>)
-#endif
 }  // namespace mindspore::kernel
