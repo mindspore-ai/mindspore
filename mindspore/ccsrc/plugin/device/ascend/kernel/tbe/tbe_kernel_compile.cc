@@ -117,7 +117,7 @@ void ReportToErrorManager(const string &message) {
   }
   const auto &error_code = GetJsonValue<std::string>(exception_message, kErrorCode);
   std::map<std::string, std::string> arg_map;
-  for (auto it = exception_message.begin(); it != exception_message.end(); it++) {
+  for (auto it = exception_message.begin(); it != exception_message.end(); ++it) {
     const std::string arg_key = it.key();
     if (it.key() == kErrorCode) {
       continue;

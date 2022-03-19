@@ -202,7 +202,7 @@ void ReplaceOldNode(mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusi
   }
 }
 
-void GetFusionScopeComputeNodeList(session::KernelGraph *kernel_graph,
+void GetFusionScopeComputeNodeList(const session::KernelGraph *kernel_graph,
                                    mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   MS_EXCEPTION_IF_NULL(kernel_graph);

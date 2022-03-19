@@ -97,7 +97,7 @@ static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>
 }
 
 static void AssignLabelForGotoSwitch(NotNull<std::shared_ptr<session::KernelGraph>> graph,
-                                     NotNull<std::set<std::shared_ptr<session::KernelGraph>> *> memo) {
+                                     const NotNull<std::set<std::shared_ptr<session::KernelGraph>> *> memo) {
   if (memo->find(graph.get()) != memo->end()) {
     return;
   }
