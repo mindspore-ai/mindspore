@@ -69,6 +69,8 @@ class Configuration {
 
   // storage meta data without nodes
   virtual void PersistNodes(const core::ClusterConfig &clusterConfig) const = 0;
+
+  virtual std::string file_path() const = 0;
 };
 }  // namespace core
 }  // namespace ps

@@ -136,6 +136,7 @@ class CommUtil {
   static bool checkCRLTime(const std::string &crlPath);
   static bool CreateDirectory(const std::string &directoryPath);
   static bool CheckHttpUrl(const std::string &http_url);
+  static bool IsFileReadable(const std::string &file);
 
  private:
   static std::random_device rd;

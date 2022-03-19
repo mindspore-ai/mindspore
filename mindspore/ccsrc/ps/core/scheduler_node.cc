@@ -31,12 +31,12 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "[Scheduler start]: 1. Begin to start scheduler node!";
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
+  InitNodeMetaData();
   if (!config_->Initialize()) {
-    MS_LOG(INFO) << "The config file is empty, then init node by context.";
-    InitNodeMetaData();
+    MS_LOG(WARNING) << "The config file is empty.";
   } else {
     if (!RecoverScheduler()) {
-      MS_LOG(WARNING) << "Recover the server node is failed.";
+      MS_LOG(DEBUG) << "Recover the server node is failed.";
     }
   }
 
@@ -299,6 +299,10 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
   SetRegisterConnectionFd(conn, node_id);
 
   if (node_manager_.IsAllNodesRegistered()) {
+    if (!node_manager_.IsAllNodesAlive()) {
+      MS_LOG(ERROR) << "Do not broadcast nodes info because some server nodes are not alive.";
+      return;
+    }
     is_ready_ = true;
     MS_LOG(INFO) << "There are " << node_manager_.worker_num() << " workers and " << node_manager_.server_num()
                  << " servers registered to scheduer, so the scheduler send meta data to worker/server.";
@@ -1329,17 +1333,22 @@ bool SchedulerNode::RecoverScheduler() {
     MS_LOG(INFO) << "The scheduler node is support recovery.";
     scheduler_recovery_ = std::make_unique<SchedulerRecovery>();
     MS_EXCEPTION_IF_NULL(scheduler_recovery_);
-    (void)scheduler_recovery_->Initialize(config_->Get(kKeyRecovery, ""));
-    (void)scheduler_recovery_->InitializeNodes(config_->Get(kKeyRecovery, ""));
-
-    return scheduler_recovery_->Recover();
+    bool ret = scheduler_recovery_->Initialize(config_->Get(kKeyRecovery, ""));
+    bool ret_node = scheduler_recovery_->InitializeNodes(config_->Get(kKeyRecovery, ""));
+    if (ret && ret_node) {
+      MS_LOG(INFO) << "Scheduler recovery initialize successful.";
+      return scheduler_recovery_->Recover();
+    }
   }
   return false;
 }
 
 void SchedulerNode::PersistMetaData() {
   if (scheduler_recovery_ == nullptr) {
-    MS_LOG(WARNING) << "scheduler recovery is null, so don't persist meta data";
+    MS_LOG(WARNING) << "scheduler recovery is null, do not persist meta data.";
+    return;
+  }
+  if (!is_ready_) {
     return;
   }
   if (config_->Exists(kKeyRecovery)) {

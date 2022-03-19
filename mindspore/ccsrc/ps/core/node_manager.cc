@@ -84,24 +84,12 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     const std::string &ip = register_message.ip();
     uint32_t port = register_message.port();
 
-    auto rank_it = std::find_if(registered_nodes_info_.begin(), registered_nodes_info_.end(), [&rank_id](auto item) {
-      bool res = item.second.is_alive == false && item.second.node_role_ == NodeRole::SERVER;
-      if (res) {
-        MS_LOG(INFO) << "The server node id:" << item.first << " rank id:" << item.second.rank_id_ << " is not alive.";
-        rank_id = item.second.rank_id_;
-      }
-      return res;
-    });
-    if (rank_it == registered_nodes_info_.end()) {
-      if (meta->rank_id() != UINT32_MAX && meta->rank_id() < next_server_rank_id_) {
-        rank_id = meta->rank_id();
-        MS_LOG(INFO) << "Use the old rank id:" << rank_id;
-      } else {
-        rank_id = next_server_rank_id_;
-        next_server_rank_id_ += 1;
-      }
+    if (meta->rank_id() != UINT32_MAX && meta->rank_id() < next_server_rank_id_) {
+      rank_id = meta->rank_id();
+      MS_LOG(INFO) << "Use the old rank id:" << rank_id;
     } else {
-      registered_nodes_info_.erase((*rank_it).first);
+      rank_id = next_server_rank_id_;
+      next_server_rank_id_ += 1;
     }
 
     if (rank_id >= meta_data_->server_num) {
@@ -125,25 +113,12 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     const std::string &ip = register_message.ip();
     uint32_t port = register_message.port();
 
-    auto worker_rank_it =
-      std::find_if(registered_nodes_info_.begin(), registered_nodes_info_.end(), [&rank_id](auto item) {
-        bool res = item.second.is_alive == false && item.second.node_role_ == NodeRole::WORKER;
-        if (res) {
-          MS_LOG(INFO) << "The worker node id:" << item.first << " rank id:" << rank_id << " is not alive.";
-          rank_id = item.second.rank_id_;
-        }
-        return res;
-      });
-    if (worker_rank_it == registered_nodes_info_.end()) {
-      if (meta->rank_id() != UINT32_MAX && meta->rank_id() < next_worker_rank_id_) {
-        rank_id = meta->rank_id();
-        MS_LOG(INFO) << "Use the old rank id:" << rank_id;
-      } else {
-        rank_id = next_worker_rank_id_;
-        next_worker_rank_id_ += 1;
-      }
+    if (meta->rank_id() != UINT32_MAX && meta->rank_id() < next_worker_rank_id_) {
+      rank_id = meta->rank_id();
+      MS_LOG(INFO) << "Use the old rank id:" << rank_id;
     } else {
-      registered_nodes_info_.erase((*worker_rank_it).first);
+      rank_id = next_worker_rank_id_;
+      next_worker_rank_id_ += 1;
     }
 
     if (rank_id >= meta_data_->worker_num) {
@@ -254,11 +229,18 @@ void NodeManager::AddScaleOutDoneNode(const std::string &node_id) { scale_out_do
 
 void NodeManager::AddScaleInDoneNode(const std::string &node_id) { scale_in_done_nodes_id_.insert(node_id); }
 
-bool NodeManager::IsAllNodesRegistered() const {
-  uint32_t num = std::count_if(registered_nodes_info_.begin(), registered_nodes_info_.end(),
-                               [](auto item) { return item.second.is_alive == true; });
+bool NodeManager::IsAllNodesAlive() const {
+  uint32_t num = std::count_if(registered_nodes_info_.begin(), registered_nodes_info_.end(), [](auto item) {
+    if (!item.second.is_alive) {
+      MS_LOG(ERROR) << item.second.node_id_ << " is not alive.";
+      return false;
+    }
+    return true;
+  });
   return num == total_node_num_;
 }
+
+bool NodeManager::IsAllNodesRegistered() const { return SizeToUint(registered_nodes_info_.size()) == total_node_num_; }
 
 bool NodeManager::IsAllNodesFinished() const { return SizeToUint(finish_nodes_id_.size()) == total_node_num_; }
 

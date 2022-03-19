@@ -209,9 +209,8 @@ void PSContext::set_rank_id(uint32_t rank_id) const {
 }
 
 void PSContext::set_server_mode(const std::string &server_mode) {
-  if (server_mode != kServerModePS && server_mode != kServerModeFL && server_mode != kServerModeHybrid) {
-    MS_LOG(EXCEPTION) << server_mode << " is invalid. Server mode must be " << kServerModePS << " or " << kServerModeFL
-                      << " or " << kServerModeHybrid;
+  if (server_mode != kServerModePS && server_mode != kServerModeFL) {
+    MS_LOG(EXCEPTION) << server_mode << " is invalid. Server mode must be " << kServerModePS << " or " << kServerModeFL;
     return;
   }
   MS_LOG(INFO) << "Server mode: " << server_mode << " is used for Server and Worker. Scheduler will ignore it.";
