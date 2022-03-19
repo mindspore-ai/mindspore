@@ -55,9 +55,9 @@ class LocalFile : public StorageBase {
   // 1. Create blocks and block metas.
   // 2. Write input data to block files and Generate sha256 sequence for every block file.
   // Write the entire blob data of tensor to the block files on disk:
-  void Write(const InputData &input, const DirtyInfo &dirty_info = {}) override;
+  void Write(const InputData &input, const DirtyInfo &dirty_info) override;
   // Write the entire blob data composed of multiple tensors to the block files on disk:
-  void Write(const std::vector<InputData> &inputs, const DirtyInfo &dirty_info = {}) override;
+  void Write(const std::vector<InputData> &inputs, const DirtyInfo &dirty_info) override;
 
   // The following two methods are override version function for Read:
   // 1.Tamper proof check.

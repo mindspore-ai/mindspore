@@ -143,7 +143,7 @@ bool CollectiveManager::InitDeviceCommGroup(const CommunicationGroupPtr &group, 
   bool init_group_success = false;
   bool init_group_fail = false;
   std::condition_variable thread_blocker;
-  init_group_thread_ = std::make_unique<std::thread>([&] {
+  init_group_thread_ = std::make_unique<std::thread>([&, this] {
     device_ctx_->Initialize();
     if (!group->Initialize(root_info)) {
       MS_LOG(ERROR) << "Initialize group on the device side failed.";

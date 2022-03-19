@@ -48,7 +48,7 @@ void LocalFile::Write(const std::vector<InputData> &inputs, const DirtyInfo &dir
     TransformDirtyInfoToBlockIndices(dirty_info, &block_indices);
 
     for (const auto &block_index : block_indices) {
-      WriteOneBlockFile(block_index, inputs);
+      WriteOneBlockFile(IntToSize(block_index), inputs);
     }
     return;
   }

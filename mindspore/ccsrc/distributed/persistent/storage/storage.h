@@ -43,15 +43,15 @@ class StorageBase {
   virtual ~StorageBase() = default;
 
   // Write input tensor to storage medium or memory buffer.
-  // The parameter dirty_info is optional, indicating that the part of the Tensor that needs to be rewritten to storage,
+  // The parameter dirty_info indicates that the part of the Tensor that needs to be rewritten to storage,
   // for example, some rows of embedding table need to be rewritten to storage, the dirty_info should contain these row
   // numbers.
-  virtual void Write(const InputData &input, const DirtyInfo &dirty_info = {}) {}
+  virtual void Write(const InputData &input, const DirtyInfo &dirty_info) {}
 
   // Write input to storage medium or memory buffer, only support the input composed of multiple tensors with same shape
   // and data type and using same dirty info at present.
-  // The parameter dirty_info is optional, indicating that the part of the Tensor that needs to be rewritten to storage.
-  virtual void Write(const std::vector<InputData> &input, const DirtyInfo &dirty_info = {}) {}
+  // The parameter dirty_info indicates that the part of the Tensor that needs to be rewritten to storage.
+  virtual void Write(const std::vector<InputData> &input, const DirtyInfo &dirty_info) {}
 
   // Read data from the storage medium or memory buffer and merge them into contiguous memory.
   virtual void Read(const OutputData &output) {}

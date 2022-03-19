@@ -42,7 +42,7 @@ class StreamSynchronizer {
     return instance_;
   }
 
-  ~StreamSynchronizer();
+  ~StreamSynchronizer() noexcept;
 
   // Execute synchronization stream with timeout mechanism.
   bool SyncStream(const std::string &device_name, uint32_t timeout = kTimeoutInSeconds);
