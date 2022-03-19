@@ -71,14 +71,14 @@ class ProfilingReporter {
   vector<uint32_t> task_ids_;
   map<string, int> node_name_index_map_;
 
-  bool CheckStreamTaskValid();
+  bool CheckStreamTaskValid() const;
   static uint32_t GetBlockDim(const CNodePtr &node);
   void ConstructNodeNameIndexMap();
   uint32_t GetStreamId(const string &node_name);
   uint32_t GetTaskId(const string &node_name);
   const CNodePtr GetCNode(const std::string &name) const;
 
-  void ReportData(int32_t device_id, unsigned char *data, size_t data_size, const std::string &tag_name);
+  void ReportData(uint32_t device_id, unsigned char *data, size_t data_size, const std::string &tag_name);
   void ReportTask(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type);
   void ReportNode(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, uint32_t tensor_type);
   void BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, uint32_t stream_id, uint32_t task_id);
@@ -97,7 +97,7 @@ class ProfilingReporter {
     } else {
       property->type = static_cast<uint8_t>(MSPROF_MIX_DATA_STRING);
       uint64_t hash_id;
-      (void)ProfilingManager::GetInstance().QueryHashId(device_id, value, &hash_id);
+      ProfilingManager::GetInstance().QueryHashId(device_id, value, &hash_id);
       property->data.hashId = hash_id;
     }
   }

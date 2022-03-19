@@ -98,7 +98,7 @@ float CPUProfiler::SetRuntimeEnd(const std::string op_name, const uint64_t stop_
         MS_LOG(EXCEPTION) << "Op " << op_name << " start time thread id must be equal to end thread id.";
       }
     }
-    iter->second.start_duration.emplace_back(iter->second.tmp_start_duration);
+    (void)iter->second.start_duration.emplace_back(iter->second.tmp_start_duration);
     op_time_elapsed = iter->second.tmp_start_duration.duration;
   }
   return op_time_elapsed;

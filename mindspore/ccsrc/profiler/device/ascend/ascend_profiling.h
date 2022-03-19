@@ -38,19 +38,21 @@ class AscendProfiler : public Profiler {
   void Start();
   bool GetProfilingEnableFlag() const { return enable_flag_; }
   std::string GetProfilingOptions() const { return profiling_options_; }
-  void SaveProfileData() { return; }
-  void ClearInst() { return; }
   uint64_t GetOptionsMask() const;
   aclprofAicoreMetrics GetAicMetrics() const;
   void Finalize() const;
-  bool IsInitialized() { return init_flag_; }
+  bool IsInitialized() const { return init_flag_; }
   void ReportErrorMessage() const;
+
+ protected:
+  void SaveProfileData() { return; }
+  void ClearInst() { return; }
 
  private:
   static std::shared_ptr<AscendProfiler> ascend_profiler_;
   std::string profiling_options_;
-  uint32_t device_id_;
-  aclprofConfig *acl_config_;
+  uint32_t device_id_ = 0;
+  aclprofConfig *acl_config_{nullptr};
 };
 }  // namespace ascend
 }  // namespace profiler

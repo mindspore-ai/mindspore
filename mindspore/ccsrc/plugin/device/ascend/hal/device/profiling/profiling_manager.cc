@@ -260,7 +260,6 @@ void ProfilingManager::QueryHashId(const int32_t &device_id, const std::string &
 
   *hash_id = hash_data.hashId;
 }
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

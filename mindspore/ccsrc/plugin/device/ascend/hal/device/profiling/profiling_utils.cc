@@ -68,7 +68,7 @@ ProfilingTraceInfo ProfilingUtils::GenerateProfilingTrace(const session::KernelG
   auto set_string_converter = [](const std::set<std::string> &str_set) {
     std::ostringstream stream;
     stream << "(";
-    std::copy(str_set.begin(), str_set.end(), std::ostream_iterator<std::string>(stream, ","));
+    (void)std::copy(str_set.begin(), str_set.end(), std::ostream_iterator<std::string>(stream, ","));
     stream << ")";
     return stream.str();
   };
@@ -84,7 +84,7 @@ void ProfilingUtils::GetTraceHccl(const session::KernelGraph &kernel_graph,
   for (const auto &node : kernel_graph.execution_order()) {
     if (common::AnfAlgo::IsCommunicationOp(node)) {
       MS_EXCEPTION_IF_NULL(node);
-      profiling_trace->trace_custom_node.insert(node->fullname_with_scope());
+      (void)profiling_trace->trace_custom_node.insert(node->fullname_with_scope());
       MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id() << " Get hccl node:" << node->fullname_with_scope();
     }
   }
@@ -135,7 +135,7 @@ void ProfilingUtils::GetCNodeOutputRealNode(const std::string &node_name, const 
         continue;
       }
       if (common::AnfAlgo::GetCNodeName(prev_cnode.first) == node_name) {
-        getnext_outputs->insert(cnode->fullname_with_scope());
+        (void)getnext_outputs->insert(cnode->fullname_with_scope());
         MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id()
                      << " Find GetNext Output CNode:" << cnode->fullname_with_scope();
       }
@@ -155,7 +155,7 @@ void ProfilingUtils::GetTraceBpEnd(const session::KernelGraph &kernel_graph, con
     if (!bp_point_str.empty()) {
       MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id()
                    << " Get bp_point from profiling_option:" << bp_point_str;
-      trace_info->trace_bp_end.insert(bp_point_str);
+      (void)trace_info->trace_bp_end.insert(bp_point_str);
       return;
     }
   }
@@ -173,7 +173,7 @@ void ProfilingUtils::GetTraceBpEnd(const session::KernelGraph &kernel_graph, con
         auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(*iter, i);
         auto input_node = input_node_with_index.first;
         MS_EXCEPTION_IF_NULL(input_node);
-        ar_input_node_names.insert(input_node->fullname_with_scope());
+        (void)ar_input_node_names.insert(input_node->fullname_with_scope());
       }
       // start from previous node
       ++iter;
@@ -224,7 +224,7 @@ void ProfilingUtils::GetTraceIterEnd(const session::KernelGraph &kernel_graph, P
     if (common::AnfAlgo::HasNodeAttr(kAttrProfilingIterEnd, node)) {
       MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id()
                    << " Found PROFILING_ITER_END:" << node->fullname_with_scope();
-      trace_info->trace_iter_end.insert(node->fullname_with_scope());
+      (void)trace_info->trace_iter_end.insert(node->fullname_with_scope());
     }
   }
 
@@ -238,7 +238,7 @@ void ProfilingUtils::GetTraceIterEnd(const session::KernelGraph &kernel_graph, P
   if (last_kernel_name.empty()) {
     MS_LOG(WARNING) << "Profiling graph:" << kernel_graph.graph_id() << " No TBE or AKG or HCCL op found in graph";
   } else {
-    trace_info->trace_iter_end.insert(last_kernel_name);
+    (void)trace_info->trace_iter_end.insert(last_kernel_name);
   }
 }
 
@@ -253,7 +253,7 @@ NotNull<CNodePtr> ProfilingUtils::CreateProfilingCNode(const ProfilingContent &p
   abstract::AbstractBasePtr type_none_abstract = std::make_shared<abstract::AbstractNone>();
   auto primitive = std::make_shared<Primitive>(ProfilingUtils::kProfiling);
   std::vector<AnfNodePtr> inputs;
-  inputs.emplace_back(NewValueNode(primitive));
+  (void)inputs.emplace_back(NewValueNode(primitive));
   CNodePtr cnode_ptr = graph_ptr->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), cnode_ptr.get());
@@ -274,9 +274,9 @@ void ProfilingUtils::SaveProfilingPoint(uint32_t graph_id, const std::string &no
   std::shared_ptr<StepPointDesc> point_desc_ptr = std::make_shared<StepPointDesc>(node_name, point_id);
   auto iter = graph_point_.find(graph_id);
   if (iter == graph_point_.end()) {
-    graph_point_.emplace(graph_id, std::vector<std::shared_ptr<StepPointDesc>>{point_desc_ptr});
+    (void)graph_point_.emplace(graph_id, std::vector<std::shared_ptr<StepPointDesc>>{point_desc_ptr});
   } else {
-    iter->second.emplace_back(point_desc_ptr);
+    (void)iter->second.emplace_back(point_desc_ptr);
   }
 }
 
@@ -291,7 +291,7 @@ void ProfilingUtils::InsertProfilingTraceFp(const mindspore::AnfNodePtr &anf_nod
     InsertProfilingTraceJobId(anf_node, graph_ptr, kernel_list);
     ProfilingContent fp_profiling_content = {false, kProfilingFpStartLogId, 0};
     auto fp_profiling_node = CreateProfilingCNodeWithStream(anf_node, fp_profiling_content, graph_ptr);
-    kernel_list->emplace_back(fp_profiling_node);
+    (void)kernel_list->emplace_back(fp_profiling_node);
     // insert ProfDesc
     SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), kProfilingFpStartLogId);
   }
@@ -302,7 +302,7 @@ void ProfilingUtils::InsertProfilingTraceJobId(const AnfNodePtr &anf_node, NotNu
   auto job_id = ProfilingManager::GetInstance().GetJobId();
   ProfilingContent job_profiling_context = {false, job_id, 0};
   auto job_profiling_node = CreateProfilingCNodeWithStream(anf_node, job_profiling_context, graph_ptr);
-  kernel_list->emplace_back(job_profiling_node);
+  (void)kernel_list->emplace_back(job_profiling_node);
 }
 
 CNodePtr ProfilingUtils::CreateProfilingCNodeWithStream(const mindspore::AnfNodePtr &anf_node,
@@ -327,12 +327,12 @@ void ProfilingUtils::InsertProfilingCustomOp(const AnfNodePtr &anf_node, const P
   auto custom_point_id = kDouble * custom_node_index_;
   ProfilingContent front_profiling_content = {false, custom_point_id, 0};
   CNodePtr front_node = CreateProfilingCNodeWithStream(anf_node, front_profiling_content, graph_ptr);
-  kernel_list->insert(kernel_list->end() - 1, front_node);
+  (void)kernel_list->insert(kernel_list->end() - 1, front_node);
   SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), custom_point_id);
 
   ProfilingContent back_profiling_content = {false, custom_point_id + 1, 0};
   CNodePtr back_node = CreateProfilingCNodeWithStream(anf_node, back_profiling_content, graph_ptr);
-  kernel_list->insert(kernel_list->end(), back_node);
+  (void)kernel_list->insert(kernel_list->end(), back_node);
   SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), custom_point_id + 1);
   ++custom_node_index_;
 }
@@ -347,7 +347,7 @@ void ProfilingUtils::InsertProfilingTraceBpEnd(const AnfNodePtr &anf_node,
     MS_LOG(INFO) << "Profiling graph:" << graph_ptr->graph_id() << " Match BpEnd:" << node_name;
     ProfilingContent bp_end_profiling_content = {false, kProfilingBpEndLogId, 0};
     CNodePtr bp_end_node = CreateProfilingCNodeWithStream(anf_node, bp_end_profiling_content, graph_ptr);
-    kernel_list->emplace_back(bp_end_node);
+    (void)kernel_list->emplace_back(bp_end_node);
     SaveProfilingPoint(graph_ptr->graph_id(), node_name, kProfilingBpEndLogId);
   }
 }
@@ -362,7 +362,7 @@ void ProfilingUtils::InsertProfilingTraceIterEnd(const AnfNodePtr &anf_node,
     MS_LOG(INFO) << "Profiling graph:" << graph_ptr->graph_id() << " Match IterEnd:" << full_scope_name;
     ProfilingContent iter_end_profiling_content = {true, kProfilingIterEndLogId, 0};
     auto iter_end_kernel_ptr = CreateProfilingCNodeWithStream(anf_node, iter_end_profiling_content, graph_ptr);
-    kernel_list->emplace_back(iter_end_kernel_ptr);
+    (void)kernel_list->emplace_back(iter_end_kernel_ptr);
     SaveProfilingPoint(graph_ptr->graph_id(), full_scope_name, kProfilingIterEndLogId);
   }
 }
@@ -426,7 +426,7 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
 void ProfilingUtils::SetReportProfilingData(const std::vector<uint32_t> &task_ids,
                                             const std::vector<uint32_t> &stream_ids, uint32_t graph_id) {
   GraphProfilingData report_data = {task_ids, stream_ids, graph_id};
-  report_data_.emplace_back(report_data);
+  (void)report_data_.emplace_back(report_data);
 }
 }  // namespace ascend
 }  // namespace device

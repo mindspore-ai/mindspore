@@ -58,7 +58,7 @@ uint64_t Profiler::GetRealTimeStamp() const {
   int64_t ts = kUSecondInSecond * static_cast<int64_t>(tv.tv_sec);
   ts += static_cast<int64_t>(tv.tv_usec);
   // us timestamp
-  return ts;
+  return (uint64_t)ts;
 }
 
 void Profiler::SetRunTimeData(const std::string &op_name, const float time_elapsed) {
@@ -82,7 +82,7 @@ void Profiler::RecordOneStepStartEndInfo() {
   std::lock_guard<std::mutex> locker(record_mutex_);
   std::string step_end_op_name;
   std::string op_type = "GetNext";
-  uint32_t vector_size = step_start_end_info_vector_.size();
+  uint32_t vector_size = (uint32_t)step_start_end_info_vector_.size();
   step_start_end_info_.iter_start_op_name = step_start_end_info_vector_[0];
   step_start_end_info_.fp_start_op_name = step_start_end_info_vector_[0];
 
@@ -123,8 +123,8 @@ void Profiler::RecordOneStepStartEndInfo() {
       }
       step_start_end_info_.iter_end_op_name = step_start_end_info_vector_[iter_end_op_index];
       // Delete the operator of the current step.
-      step_start_end_info_vector_.erase(step_start_end_info_vector_.begin(),
-                                        step_start_end_info_vector_.begin() + iter_end_op_index + 1);
+      (void)step_start_end_info_vector_.erase(step_start_end_info_vector_.begin(),
+                                              step_start_end_info_vector_.begin() + iter_end_op_index + 1);
     } else {
       step_start_end_info_.fp_start_op_name = step_start_end_info_vector_[1];
       step_start_end_info_.iter_end_op_name = step_start_end_info_vector_[step_start_end_info_vector_.size() - 1];
