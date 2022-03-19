@@ -137,13 +137,13 @@ void PrintInfo(const nlohmann::json &info, const std::string &job_name, const in
   auto message = GetJsonValue<std::string>(info, kMessage);
   if (level == 0) {
     MS_LOG(DEBUG) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == INFO) {
+  } else if (level == static_cast<size_t>(INFO)) {
     MS_LOG(INFO) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == WARNING) {
+  } else if (level == static_cast<size_t>(WARNING)) {
     MS_LOG(WARNING) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == ERROR) {
+  } else if (level == static_cast<size_t>(ERROR)) {
     MS_LOG(ERROR) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == EXCEPTION) {
+  } else if (level == static_cast<size_t>(EXCEPTION)) {
     ReportToErrorManager(message);
   }
 }
@@ -637,7 +637,7 @@ JsonNameMap TbeKernelCompileManager::GetAllSuccessFusion() {
     if (TbeUtils::SearchCache(json_name) != nullptr) {
       (void)success_fusion_ops_.emplace(scope_id, full_name);
     }
-    iter++;
+    (void)iter++;
   }
   return success_fusion_ops_;
 }

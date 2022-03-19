@@ -37,11 +37,11 @@ Status SomasSolverCore::MemoryAllocationSolver() {
   auto start = std::chrono::system_clock::now();
   Status retval = SUCCESS;
   size_t best = SIZE_MAX;
-  size_t best_timing = SIZE_MAX;
   if (all_) {  // loop over all heuristics
     FittingType best_branching = kBest;
     SortingType best_sorting = kGreaterSizeSmallerIndex;
     AlgorithmType best_algorithm = kManyObjects;
+    int64_t best_timing = INT64_MAX;
     uint32_t best_sol = 0;
     size_t worst = 0;
     BuildBlocks();

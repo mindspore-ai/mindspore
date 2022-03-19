@@ -116,7 +116,7 @@ std::vector<int64_t> TbeJsonUtils::GetOutputDeviceShapeForTbeBuild(const AnfNode
   auto format = AnfAlgo::GetOutputFormat(anf_node, real_idx);
   shape = AnfAlgo::GetOutputDeviceShapeForTbeBuild(anf_node, real_idx, format);
   if (shape.empty()) {
-    shape.emplace_back(1);
+    (void)shape.emplace_back(1);
   }
   return shape;
 }

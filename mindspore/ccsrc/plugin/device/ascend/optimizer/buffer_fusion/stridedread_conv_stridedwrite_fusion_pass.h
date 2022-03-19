@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 class StridedReadConvStridedWriteFusionPass : public FusionBasePass {
  public:
-  explicit StridedReadConvStridedWriteFusionPass(FusionIdAllocatorPtr idAllocator)
+  explicit StridedReadConvStridedWriteFusionPass(const FusionIdAllocatorPtr idAllocator)
       : FusionBasePass("StridedReadConvStridedWriteFusionPass", idAllocator) {}
   ~StridedReadConvStridedWriteFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;

@@ -133,7 +133,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracZ(SupportFormat *support_
   if (HasScalarInput()) {
     for (const auto &shape : input_shapes_) {
       if (IsScalarShape(shape)) {
-        input_support_format.emplace_back(kOpFormat_DEFAULT);
+        (void)input_support_format.emplace_back(kOpFormat_DEFAULT);
       } else {
         if (!Is4DShape(shape)) {
           return false;
@@ -141,7 +141,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracZ(SupportFormat *support_
         if (shape[kChannelN] % kAlignmented16 != 0 || shape[kChannelC] % kAlignmented16 != 0) {
           return false;
         }
-        input_support_format.emplace_back(kOpFormat_FRAC_Z);
+        (void)input_support_format.emplace_back(kOpFormat_FRAC_Z);
       }
     }
   } else {
@@ -295,8 +295,8 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportNDC1HWC0(SupportFormat *suppo
     input_support_format.assign(input_num_, kOpFormat_NDC1HWC0);
   }
   GenOutputSupportFormat(kOpFormat_NDC1HWC0, &output_support_format);
-  support_format->input_format.emplace_back(input_support_format);
-  support_format->output_format.emplace_back(output_support_format);
+  (void)support_format->input_format.emplace_back(input_support_format);
+  (void)support_format->output_format.emplace_back(output_support_format);
   return true;
 }
 

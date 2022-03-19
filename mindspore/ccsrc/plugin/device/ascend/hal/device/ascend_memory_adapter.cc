@@ -28,6 +28,8 @@ namespace ascend {
 constexpr float kMSMemoryRatio = 0.9375;        // 15/16
 constexpr float kReservedMemoryRatio = 0.0625;  // 1/16
 constexpr float kHalfRatio = 0.5;
+// The Ascend max available device memory is 32GB.
+constexpr float kAscendMaxDeviceMemory = 32;
 
 bool AscendMemAdapter::Initialize() {
   if (initialized_) {
@@ -158,7 +160,7 @@ uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &t
 
 void AscendMemAdapter::ResetDynamicMemory() { cur_dynamic_mem_offset_ = 0; }
 
-std::string AscendMemAdapter::DevMemStatistics() {
+std::string AscendMemAdapter::DevMemStatistics() const {
   std::ostringstream oss;
   oss << "\nDevice HBM memory size: " << device_hbm_total_size_ / kMBToByte << "M";
   oss << "\nMindSpore Used memory size: " << ms_used_hbm_size_ / kMBToByte << "M";
@@ -170,7 +172,7 @@ std::string AscendMemAdapter::DevMemStatistics() {
   return oss.str();
 }
 
-std::string AscendMemAdapter::DevMemDetailInfo() {
+std::string AscendMemAdapter::DevMemDetailInfo() const {
   std::ostringstream oss;
   oss << "\nMemory Detail Info:";
   oss << "\nStatic Memory Blocks:";
@@ -192,7 +194,7 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() {
   MS_EXCEPTION_IF_NULL(context);
   size_t size_from_context;
   auto max_device_memory = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
-  if (max_device_memory != mindspore::kDefaultMaxDeviceMemory) {
+  if (max_device_memory <= kAscendMaxDeviceMemory) {
     MS_LOG(INFO) << "context max_device_memory:" << max_device_memory;
     size_from_context = FloatToSize(max_device_memory * kGBToByte);
   } else {

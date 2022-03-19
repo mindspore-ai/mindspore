@@ -47,7 +47,8 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
       min_shape[0] /= static_cast<int64_t>(rank_size_t);
       max_shape[0] /= static_cast<int64_t>(rank_size_t);
       ShapeVector shape_tmp;
-      std::transform(output_node_shape.begin(), output_node_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
+      (void)std::transform(output_node_shape.begin(), output_node_shape.end(), std::back_inserter(shape_tmp),
+                           SizeToLong);
       std::vector<BaseShapePtr> shapes(rank_size_t, std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape));
       common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, split.get());
     } else {

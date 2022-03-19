@@ -128,7 +128,6 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr
   MS_EXCEPTION_IF_NULL(num_split);
   if (split_input.empty()) {
     MS_LOG(EXCEPTION) << "The input is empty, can not create splitv node.";
-    return nullptr;
   }
   auto split_v = pass.NewCNode(split_input, graph);
   MS_EXCEPTION_IF_NULL(split_v);
@@ -623,8 +622,8 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
 
     ++input_num_all;
     single_shape[concat_dim] += LongToSize(last_len);
-    max_shape[concat_dim] += (is_dynamic) ? last_len : 0;
-    min_shape[concat_dim] += (is_dynamic) ? last_len : 0;
+    max_shape[concat_dim] += (is_dynamic) ? static_cast<int64_t>(last_len) : 0;
+    min_shape[concat_dim] += (is_dynamic) ? static_cast<int64_t>(last_len) : 0;
   }
 
   std::vector<TypeId> concat_output_dtype = {common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)};
