@@ -56,6 +56,16 @@ class MS_API Context {
   /// \return The current thread number setting.
   int32_t GetThreadNum() const;
 
+  /// \brief Set the parallel number of operators at runtime. Only valid for Lite.
+  ///
+  /// \param[in] parallel_num the parallel number of operators at runtime.
+  void SetInterOpParallelNum(int32_t parallel_num);
+
+  /// \brief Get the current operators parallel number setting. Only valid for Lite.
+  ///
+  /// \return The current operators parallel number setting.
+  int32_t GetInterOpParallelNum() const;
+
   /// \brief Set the thread affinity to CPU cores. Only valid for Lite.
   ///
   /// \param[in] mode: 0: no affinities, 1: big cores first, 2: little cores first

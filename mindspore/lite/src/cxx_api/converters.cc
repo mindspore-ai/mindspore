@@ -19,11 +19,12 @@
 namespace mindspore {
 constexpr static int kMaxNumOfDevices = 3;
 
-void ContextUtils::SetContextAttr(int32_t thread_num, bool enable_parallel,
+void ContextUtils::SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,
                                   const std::vector<int32_t> &affinity_core_list,
                                   const std::shared_ptr<Delegate> &delegate, lite::InnerContext *inner_context,
                                   bool float_mode) {
   inner_context->thread_num_ = thread_num;
+  inner_context->inter_op_parallel_num_ = inter_op_parallel_num;
   inner_context->enable_parallel_ = enable_parallel;
   inner_context->affinity_core_list_ = affinity_core_list;
   inner_context->delegate = delegate;
@@ -82,8 +83,9 @@ lite::InnerContext *ContextUtils::Convert(Context *context) {
     MS_LOG(ERROR) << "Device num, support min: 1, max: " << kMaxNumOfDevices;
     return nullptr;
   }
-  SetContextAttr(context->GetThreadNum(), context->GetEnableParallel(), context->GetThreadAffinityCoreList(),
-                 context->GetDelegate(), inner_context.get(), context->GetMultiModalHW());
+  SetContextAttr(context->GetThreadNum(), context->GetInterOpParallelNum(), context->GetEnableParallel(),
+                 context->GetThreadAffinityCoreList(), context->GetDelegate(), inner_context.get(),
+                 context->GetMultiModalHW());
   inner_context->device_list_.clear();
   Status ret = kLiteError;
   for (auto &device : device_list) {
@@ -135,8 +137,8 @@ lite::InnerContext *ContextUtils::Convert(const ContextC *context_c) {
     MS_LOG(ERROR) << "Device num, support min: 1, max: " << kMaxNumOfDevices;
     return nullptr;
   }
-  SetContextAttr(context_c->thread_num, context_c->enable_parallel, context_c->affinity_core_list, context_c->delegate,
-                 inner_context.get());
+  SetContextAttr(context_c->thread_num, 1, context_c->enable_parallel, context_c->affinity_core_list,
+                 context_c->delegate, inner_context.get());
   inner_context->device_list_.clear();
   Status ret = kLiteError;
   for (auto &device_info_c : device_list) {
