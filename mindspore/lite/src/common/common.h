@@ -66,7 +66,7 @@ static const char *const kMSCacheVocabSize = "vocab_size";
 static const char *const kMSCacheDeviceSize = "device_cache_size";
 static const char *const kMSCacheSerializePath = "serialize_path";
 // config
-#ifdef SERVER_INFERENCE
+#ifdef BFC_MEMORY
 static const char *const kConfigServerInference = "server_inference";
 static const char *const kConfigNUMANodeId = "numa_node_id";
 #endif

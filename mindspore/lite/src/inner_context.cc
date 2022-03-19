@@ -148,7 +148,7 @@ int InnerContext::Init() {
   }
 
   if (this->allocator == nullptr) {
-#ifdef SERVER_INFERENCE
+#ifdef BFC_MEMORY
     this->allocator = std::make_shared<DynamicMemAllocator>(node_id_);
 #else
     this->allocator = mindspore::Allocator::Create();

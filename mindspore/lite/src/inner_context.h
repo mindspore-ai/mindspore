@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include "include/context.h"
-#ifdef SERVER_INFERENCE
+#ifdef BFC_MEMORY
 #include "src/runtime/dynamic_mem_allocator.h"
 #else
 #include "src/runtime/inner_allocator.h"
@@ -91,7 +91,7 @@ struct InnerContext : public Context {
 
   void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
 
-#ifdef SERVER_INFERENCE
+#ifdef BFC_MEMORY
   /// \brief Set NUMA node id.
   ///
   /// \param[in] node Define the NUMA node id.
@@ -117,7 +117,7 @@ struct InnerContext : public Context {
 
   bool device_and_pkg_support_fp16_ = false;
 
-#ifdef SERVER_INFERENCE
+#ifdef BFC_MEMORY
   int node_id_ = -1;
 #endif
 

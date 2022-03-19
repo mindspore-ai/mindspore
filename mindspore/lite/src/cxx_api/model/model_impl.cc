@@ -689,7 +689,7 @@ lite::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) {
     delete context;
     return nullptr;
   }
-#ifdef SERVER_INFERENCE
+#ifdef BFC_MEMORY
   auto iter = config_info_.find(lite::kConfigServerInference);
   if (iter != config_info_.end()) {
     auto numa_iter = iter->second.find(lite::kConfigNUMANodeId);

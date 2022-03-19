@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #endif
-#ifdef SERVER_INFERENCE
+#ifdef BFC_MEMORY
 #include <sys/sysinfo.h>
 #endif
 
@@ -182,7 +182,7 @@ size_t GetMaxMallocSize() {
   return max_malloc_size;
 }
 
-#ifdef SERVER_INFERENCE
+#ifdef BFC_MEMORY
 int64_t GetFreeMemory() {
   struct sysinfo info;
   auto ret = sysinfo(&info);

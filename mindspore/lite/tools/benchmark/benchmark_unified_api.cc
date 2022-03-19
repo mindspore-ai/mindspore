@@ -41,7 +41,7 @@
 #include "include/mpi_sys.h"
 #include "include/mpi_vb.h"
 #endif
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
 #include <thread>
 #endif
 namespace mindspore {
@@ -51,7 +51,7 @@ constexpr int kFrequencyDefault = 3;
 constexpr int kPercentageDivisor = 100;
 constexpr int kDumpInputsAndOutputs = 0;
 constexpr int kDumpOutputs = 2;
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
 constexpr int kMaxRequestNum = 200;
 #endif
 namespace lite {
@@ -221,7 +221,7 @@ int BenchmarkUnifiedApi::LoadInput() {
 }
 
 int BenchmarkUnifiedApi::GenerateInputData() {
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
   if (flags_->enable_parallel_predict_) {
     std::vector<MSTensor> inputs;
     for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
@@ -298,7 +298,7 @@ void BenchmarkUnifiedApi::UpdateConfigInfo() {
 }
 
 int BenchmarkUnifiedApi::ReadInputFile() {
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
   if (flags_->enable_parallel_predict_) {
     std::vector<MSTensor> inputs;
     for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
@@ -486,7 +486,7 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
 
   return RET_OK;
 }
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
 int BenchmarkUnifiedApi::CompareOutputForModelPool(std::vector<mindspore::MSTensor> *outputs) {
   if (outputs->empty()) {
     MS_LOG(ERROR) << "outputs is empty.";
@@ -897,7 +897,7 @@ int BenchmarkUnifiedApi::MarkAccuracy() {
 int BenchmarkUnifiedApi::PrintInputData() {
   for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
     mindspore::MSTensor input;
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
     if (flags_->enable_parallel_predict_) {
       input = all_inputs_[0][i];
     } else {
@@ -947,7 +947,7 @@ int BenchmarkUnifiedApi::PrintInputData() {
   }
   return RET_OK;
 }
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
 int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> context) {
   if (flags_->warm_up_loop_count_ > kMaxRequestNum) {
     MS_LOG(WARNING) << "in parallel predict warm up loop count should less than" << kMaxRequestNum;
@@ -1113,7 +1113,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   }
 
   UpdateConfigInfo();
-#ifdef SERVER_INFERENCE
+#ifdef PARALLEL_INFERENCE
   if (flags_->enable_parallel_predict_) {
     status = RunModelPool(context);
     if (status != RET_OK) {
