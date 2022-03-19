@@ -562,13 +562,13 @@ void TbeKernelSelect::PrintSupportedFormat(const SupportFormat &support_format) 
     auto output_items = support_format.output_format.at(i);
     std::string print_str = "[";
     for (const auto &input : input_items) {
-      print_str.append(input);
-      print_str.append(", ");
+      (void)print_str.append(input);
+      (void)print_str.append(", ");
     }
-    print_str.append("] -->");
+    (void)print_str.append("] -->");
     for (const auto &output : output_items) {
-      print_str.append(output);
-      print_str.append(", ");
+      (void)print_str.append(output);
+      (void)print_str.append(", ");
     }
     MS_LOG(INFO) << "Support format: " << print_str;
   }

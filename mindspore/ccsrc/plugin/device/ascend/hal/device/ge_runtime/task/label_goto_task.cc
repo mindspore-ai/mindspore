@@ -51,6 +51,8 @@ LabelGotoTask::~LabelGotoTask() {
     }
     index_value_ = nullptr;
   }
+  stream_ = nullptr;
+  rt_model_handle_ = nullptr;
 }
 
 void LabelGotoTask::Distribute() {

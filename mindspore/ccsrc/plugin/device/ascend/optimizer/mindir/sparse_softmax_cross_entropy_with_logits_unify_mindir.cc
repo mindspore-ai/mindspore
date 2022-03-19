@@ -281,7 +281,7 @@ CNodePtr CreateExpandDimsPynative(const FuncGraphPtr &graph, const CNodePtr &rea
 
   expand_dims_node->set_scope(real_div_node->scope());
   std::vector<size_t> y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0);
-  y_shape.emplace_back(1);
+  (void)y_shape.emplace_back(1);
   if (AnfUtils::IsShapeDynamic(y_shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
@@ -552,8 +552,8 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
 
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  manager->Replace(sparse_softmax_node, reduce_node);
-  manager->Replace(mul_node, new_mul_node);
+  (void)manager->Replace(sparse_softmax_node, reduce_node);
+  (void)manager->Replace(mul_node, new_mul_node);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                     NewValueNode(MakeValue<bool>(true)), NewValueNode(MakeValue<bool>(true))};
   auto new_depend = graph->NewCNode(inputs);

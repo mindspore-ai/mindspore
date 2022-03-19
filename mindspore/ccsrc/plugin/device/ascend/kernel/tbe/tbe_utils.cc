@@ -221,10 +221,6 @@ void TbeUtils::UpdateCache(const std::string &kernel_name) {
 KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name, const bool is_akg) {
   // search cache.
   KernelMeta *bin_map = KernelMeta::GetInstance();
-  if (bin_map == nullptr) {
-    MS_LOG(INFO) << "kernel cache is invalid.";
-    return nullptr;
-  }
   return bin_map->GetKernelPack(kernel_name, is_akg);
 }
 

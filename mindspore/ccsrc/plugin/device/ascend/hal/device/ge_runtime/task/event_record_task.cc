@@ -38,7 +38,10 @@ EventRecordTask::EventRecordTask(const ModelContext &model_context,
   event_ = event_list[event_id];
 }
 
-EventRecordTask::~EventRecordTask() {}
+EventRecordTask::~EventRecordTask() {
+  stream_ = nullptr;
+  event_ = nullptr;
+}
 
 void EventRecordTask::Distribute() {
   MS_LOG(INFO) << "EventRecordTask Distribute start, stream: " << stream_ << ", event: " << event_
