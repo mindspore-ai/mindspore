@@ -321,7 +321,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     } else if (use_numa_bind_mode_ && numa_node_num_ != 0) {
       numa_node_id = i / (GetCoreNum() / model_pool_context[i]->GetThreadNum() / numa_node_num_);
     } else {
-      numa_node_id = 0;
+      numa_node_id = -1;
     }
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
@@ -333,8 +333,9 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
       MS_LOG(ERROR) << " model thread init failed.";
       return kLiteError;
     }
-    predict_task_queue_->IncreaseWaitModelNum(1, numa_node_id);
-    model_worker_vec_.push_back(std::thread(&ModelWorker::Run, model_worker, numa_node_id, predict_task_queue_));
+    auto task_queue_id = numa_node_id == -1 ? 0 : numa_node_id;
+    predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
+    model_worker_vec_.push_back(std::thread(&ModelWorker::Run, model_worker, task_queue_id, predict_task_queue_));
   }
   if (model_worker != nullptr) {
     model_inputs_ = model_worker->GetInputs();
