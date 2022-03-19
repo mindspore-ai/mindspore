@@ -627,9 +627,9 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
                       << -shape_len << "," << shape_len << ").";
   }
   *axis = *axis < 0 ? shape_len + *axis : *axis;
-  auto temp_axes_size = orig_shape[*axis];
+  auto temp_axes_size = orig_shape[IntToSize(*axis)];
   if (*axis_size == -1) {
-    *axis_size = temp_axes_size;
+    *axis_size = LongToInt(temp_axes_size);
   } else if (*axis_size != temp_axes_size) {
     MS_LOG(EXCEPTION) << "The `axes_size` of each argument in the scope of `vmap` should be equal, but got "
                       << *axis_size << " and " << temp_axes_size << ".";

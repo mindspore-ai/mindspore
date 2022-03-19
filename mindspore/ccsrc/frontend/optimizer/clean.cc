@@ -161,7 +161,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
         return SizeToLong(i);
       }
     }
-    return n_attrs;
+    return SizeToLong(n_attrs);
   }
 
   static CNodePtr NewTupleGetCNode(const AnfNodePtr &cnode, const AnfNodePtr &data_node,

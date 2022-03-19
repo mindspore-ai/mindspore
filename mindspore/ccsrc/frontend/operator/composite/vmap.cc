@@ -110,21 +110,31 @@ CNodePtr VmapMatchOutAxis::GenerateFuncGraphInnerSingleElement(
   return fg_->NewCNode(out_cnode_inputs);
 }
 
+namespace {
+AbstractBasePtrList GetOutAxesAbstractElements(const AbstractBasePtr &out_axes_abstract,
+                                               size_t inputs_abstract_elements_size, bool is_out_axes_tuple) {
+  AbstractBasePtrList out_axes_abstract_elements;
+  if (!is_out_axes_tuple) {
+    return out_axes_abstract_elements;
+  }
+  abstract::AbstractTuplePtr out_axes_abstract_tuple = dyn_cast<abstract::AbstractTuple>(out_axes_abstract);
+  out_axes_abstract_elements = out_axes_abstract_tuple->elements();
+  if (out_axes_abstract_elements.size() != inputs_abstract_elements_size) {
+    MS_LOG(EXCEPTION) << "The length of out_axes and inputs do not match. ";
+  }
+  return out_axes_abstract_elements;
+}
+}  // namespace
+
 CNodePtr VmapMatchOutAxis::GenerateFuncGraphInnerAllTuple(const AnfNodePtr &inputs, const AnfNodePtr &out_axis,
                                                           const AnfNodePtr &axis_size,
                                                           const AbstractBasePtrList &inputs_abstract_elements,
                                                           const AbstractBasePtr &out_axes_abstract) const {
   bool is_out_axes_tuple = out_axes_abstract->isa<abstract::AbstractTuple>();
-  abstract::AbstractTuplePtr out_axes_abstract_tuple = nullptr;
-  AbstractBasePtrList out_axes_abstract_elements;
   auto inputs_abstract_elements_size = inputs_abstract_elements.size();
-  if (is_out_axes_tuple) {
-    out_axes_abstract_tuple = dyn_cast<abstract::AbstractTuple>(out_axes_abstract);
-    out_axes_abstract_elements = out_axes_abstract_tuple->elements();
-    if (out_axes_abstract_elements.size() != inputs_abstract_elements_size) {
-      MS_LOG(EXCEPTION) << "The length of out_axes and inputs do not match. ";
-    }
-  }
+  AbstractBasePtrList out_axes_abstract_elements =
+    GetOutAxesAbstractElements(out_axes_abstract, inputs_abstract_elements_size, is_out_axes_tuple);
+
   std::vector<AnfNodePtr> vals_out_tuple_cnode_inputs;
   (void)vals_out_tuple_cnode_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   constexpr size_t kEachInputsSize = 2;
@@ -206,9 +216,9 @@ FuncGraphPtr VmapMatchOutAxis::GenerateFuncGraph(const AbstractBasePtrList &args
   if (args_spec_list_size != kMetaFGInputSize) {
     MS_LOG(EXCEPTION) << "The number of inputs to VmapMatchOutAxis should be 3, but got " << args_spec_list_size << ".";
   }
-  auto inputs_abstract = args_spec_list[0];
-  auto out_axes_abstract = args_spec_list[1];
-  auto axis_size_abstract = args_spec_list[2];
+  auto inputs_abstract = args_spec_list[kIndex0];
+  auto out_axes_abstract = args_spec_list[kIndex1];
+  auto axis_size_abstract = args_spec_list[kIndex2];
   if (!inputs_abstract->isa<abstract::AbstractTuple>()) {
     MS_LOG(EXCEPTION) << "The first input to VmapMatchOutAxis is vmap_inputs and should be a tuple but got "
                       << inputs_abstract->ToString() << ".";

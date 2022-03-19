@@ -317,6 +317,8 @@ class KPynativeCellImpl : public KPynativeCell {
   void ReplacePrimalParameter(const AnfNodePtrList &weights, bool has_sens_arg);
   // Set sens and weights parameter nodes by user input info
   void SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg);
+  AbstractBasePtr GetGradInputsSpec(const std::vector<size_t> &grad_position, bool grad_inputs,
+                                    AnfNodePtrList *grad_inputs_list);
   // Set return node according to grad flag
   void SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position, bool grad_inputs,
                  bool grad_weights);
@@ -992,40 +994,46 @@ void KPynativeCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool ha
   }
 }
 
+AbstractBasePtr KPynativeCellImpl::GetGradInputsSpec(const std::vector<size_t> &grad_position, bool grad_inputs,
+                                                     AnfNodePtrList *grad_inputs_list) {
+  AbstractBasePtr grad_inputs_spec;
+  auto pos_size = grad_position.size();
+  if (!grad_inputs && pos_size <= 1) {
+    return grad_inputs_spec;
+  }
+  AbstractBasePtrList grad_inputs_abs_list;
+  std::vector<size_t> grad_list;
+  if (grad_inputs) {
+    grad_list.resize(cell_inputs_.size());
+    iota(grad_list.begin(), grad_list.end(), 0);
+  } else if (pos_size > 1) {
+    grad_list = grad_position;
+  }
+  for (size_t i = 0; i < grad_list.size(); ++i) {
+    if (grad_list[i] >= cell_inputs_.size()) {
+      MS_LOG(EXCEPTION) << "Position index " << grad_list[i] << " is exceed input size!";
+    }
+    auto input = cell_inputs_[grad_list[i]];
+    MS_EXCEPTION_IF_NULL(input);
+    auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
+    if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
+      // If input is not used in the network, just return zeros_like() as dout;
+      MS_LOG(WARNING) << "Input is not used in network, input: " << input->ToString();
+      auto dout = BuildZerosLikeNode(tape_, input);
+      grad_inputs_list->push_back(dout);
+    } else {
+      grad_inputs_list->push_back(input_adjoint_iter->second->RealDout());
+    }
+    grad_inputs_abs_list.push_back(grad_inputs_list->back()->abstract());
+  }
+  grad_inputs_spec = std::make_shared<abstract::AbstractTuple>(grad_inputs_abs_list);
+  return grad_inputs_spec;
+}
+
 void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position,
                                   bool grad_inputs, bool grad_weights) {
   AnfNodePtrList grad_inputs_list{NewValueNode(prim::kPrimMakeTuple)};
-  AbstractBasePtr grad_inputs_spec;
-  auto pos_size = grad_position.size();
-  if (grad_inputs || pos_size > 1) {
-    AbstractBasePtrList grad_inputs_abs_list;
-    std::vector<size_t> grad_list;
-    if (grad_inputs) {
-      grad_list.resize(cell_inputs_.size());
-      iota(grad_list.begin(), grad_list.end(), 0);
-    } else if (pos_size > 1) {
-      grad_list = grad_position;
-    }
-    for (size_t i = 0; i < grad_list.size(); ++i) {
-      if (grad_list[i] >= cell_inputs_.size()) {
-        MS_LOG(EXCEPTION) << "Position index " << grad_list[i] << " is exceed input size!";
-      }
-      auto input = cell_inputs_[grad_list[i]];
-      MS_EXCEPTION_IF_NULL(input);
-      auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
-      if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
-        // If input is not used in the network, just return zeros_like() as dout;
-        MS_LOG(WARNING) << "Input is not used in network, input: " << input->ToString();
-        auto dout = BuildZerosLikeNode(tape_, input);
-        grad_inputs_list.push_back(dout);
-      } else {
-        grad_inputs_list.push_back(input_adjoint_iter->second->RealDout());
-      }
-      grad_inputs_abs_list.push_back(grad_inputs_list.back()->abstract());
-    }
-    grad_inputs_spec = std::make_shared<abstract::AbstractTuple>(grad_inputs_abs_list);
-  }
-
+  AbstractBasePtr grad_inputs_spec = GetGradInputsSpec(grad_position, grad_inputs, &grad_inputs_list);
   AnfNodePtrList grad_weights_list{NewValueNode(prim::kPrimMakeTuple)};
   AbstractBasePtr grad_weights_spec;
   if (grad_weights) {
@@ -1056,7 +1064,7 @@ void KPynativeCellImpl::SetOutput(const AnfNodePtrList &weights, const std::vect
       {NewValueNode(prim::kPrimMakeTuple), tape_->NewCNode(grad_inputs_list), tape_->NewCNode(grad_weights_list)});
     tape_output->set_abstract(
       std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{grad_inputs_spec, grad_weights_spec}));
-  } else if (grad_inputs || (pos_size > 1)) {
+  } else if (grad_inputs || (grad_position.size() > 1)) {
     tape_output = tape_->NewCNode(grad_inputs_list);
     tape_output->set_abstract(grad_inputs_spec);
   } else if (grad_weights) {

@@ -114,6 +114,9 @@ void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNod
     return;
   }
   auto group = groups[0];
+  if (group.GetDevNum() == 0) {
+    MS_LOG(EXCEPTION) << "The dev num of group should not be 0.";
+  }
   if (out_shape_element[0] % group.GetDevNum() != 0) {
     MS_LOG(WARNING) << "The output_shape first dim:" << out_shape_element[0]
                     << " cannot be divisible by the repeated size: " << group.GetDevNum()

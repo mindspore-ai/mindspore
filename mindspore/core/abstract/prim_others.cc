@@ -80,7 +80,7 @@ AbstractBasePtr InferImplEnvironCreate(const AnalysisEnginePtr &, const Primitiv
                                        const AbstractBasePtrList &args_spec_list) {
   // args: None.
   CheckArgsSize(primitive->name(), args_spec_list, 0);
-  static AbstractBasePtr abs_env = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
+  static const AbstractBasePtr abs_env = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
   return abs_env;
 }
 
