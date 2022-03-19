@@ -108,6 +108,10 @@ bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
                       << TypeIdLabel(dtype_);
   }
 
+  MS_EXCEPTION_IF_NULL(output_addr);
+  MS_EXCEPTION_IF_NULL(float_dloss_addr);
+  MS_EXCEPTION_IF_NULL(float_output_addr);
+
   size_t batch_size = shape_[0];
   size_t channel = shape_[1];
   size_t in_height = shape_[2];

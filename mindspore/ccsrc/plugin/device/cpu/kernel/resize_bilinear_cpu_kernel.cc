@@ -97,6 +97,9 @@ bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
                       << TypeIdLabel(dtype_);
   }
+  MS_EXCEPTION_IF_NULL(output_addr_T2);
+  MS_EXCEPTION_IF_NULL(float_input_addr);
+  MS_EXCEPTION_IF_NULL(float_output_addr);
 
   size_t batch_size = shape_[0];
   size_t channel = shape_[1];

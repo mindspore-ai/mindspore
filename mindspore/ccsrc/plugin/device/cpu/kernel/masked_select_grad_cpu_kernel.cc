@@ -23,14 +23,17 @@ namespace kernel {
 namespace {
 constexpr size_t kMaskedSelectGradInputsNum = 3;
 constexpr size_t kMaskedSelectGradOutputsNum = 1;
+constexpr size_t kIndexInput = 0;
+constexpr size_t kIndexMask = 1;
+constexpr size_t kIndexGrad = 2;
 }  // namespace
 
 void MaskedSelectGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, INPUT);
-  input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, MASK);
-  grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, GRAD);
+  input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexInput);
+  input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexMask);
+  grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexGrad);
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
   for (const uint64_t &d : output_shape_) {
     tensor_size_ *= d;
@@ -49,9 +52,9 @@ bool MaskedSelectGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
                                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectGradOutputsNum, kernel_name_);
-  auto mask = reinterpret_cast<bool *>(inputs[MASK]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[GRAD]->addr);
-  auto dx = reinterpret_cast<T *>(outputs[INPUT]->addr);
+  auto mask = reinterpret_cast<bool *>(inputs[kIndexMask]->addr);
+  auto grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
+  auto dx = reinterpret_cast<T *>(outputs[kIndexInput]->addr);
 
   auto ret = memset_s(dx, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {

@@ -58,7 +58,7 @@ void BoundingBoxEncodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<FloatImm>()) {
     float mean = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "means");
     for (size_t i = 0; i < coordinate_size; i++) {
-      means_.emplace_back(mean);
+      (void)means_.emplace_back(mean);
     }
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -71,7 +71,7 @@ void BoundingBoxEncodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<FloatImm>()) {
     float std = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "stds");
     for (size_t i = 0; i < coordinate_size; i++) {
-      stds_.emplace_back(std);
+      (void)stds_.emplace_back(std);
     }
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

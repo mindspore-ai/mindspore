@@ -180,12 +180,11 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
     }
   }
 
-  int32_t copy_output_length = 0;
   if (output_length * input_dim_size >= INT_MAX || output_length * input_dim_size < 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output size exceed INT_MAX.";
   }
 
-  copy_output_length = output_length * input_dim_size;
+  int32_t copy_output_length = output_length * input_dim_size;
   (void)memset_s(output, IntToSize(copy_output_length), 0X00, IntToSize(copy_output_length));
   ParseOutputCoordinate(dims, output_length, input_dim_size, input_total_count, tmp_output, output);
 

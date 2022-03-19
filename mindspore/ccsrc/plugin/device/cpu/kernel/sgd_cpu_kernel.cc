@@ -25,6 +25,12 @@ namespace kernel {
 namespace {
 constexpr size_t kSGDInputsNum = 6;
 constexpr size_t kSGDOutputsNum = 1;
+constexpr size_t kIndexParm = 0;
+constexpr size_t kIndexGrad = 1;
+constexpr size_t kIndexLr = 2;
+constexpr size_t kIndexAccum = 3;
+constexpr size_t kIndexMomentum = 4;
+constexpr size_t kIndexStat = 5;
 }  // namespace
 void SGDCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -45,12 +51,12 @@ template <typename T>
 bool SGDCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSGDInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSGDOutputsNum, kernel_name_);
-  auto param = reinterpret_cast<T *>(inputs[PARAM]->addr);
-  auto grad = reinterpret_cast<T *>(inputs[GRAD]->addr);
-  auto lr = reinterpret_cast<T *>(inputs[LR]->addr);
-  auto accum = reinterpret_cast<T *>(inputs[ACCUM]->addr);
-  auto momentum = reinterpret_cast<T *>(inputs[MOMENTUM]->addr);
-  auto stat = reinterpret_cast<T *>(inputs[STAT]->addr);
+  auto param = reinterpret_cast<T *>(inputs[kIndexParm]->addr);
+  auto grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
+  auto lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
+  auto accum = reinterpret_cast<T *>(inputs[kIndexAccum]->addr);
+  auto momentum = reinterpret_cast<T *>(inputs[kIndexMomentum]->addr);
+  auto stat = reinterpret_cast<T *>(inputs[kIndexStat]->addr);
   auto output_param = reinterpret_cast<T *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(T);
 

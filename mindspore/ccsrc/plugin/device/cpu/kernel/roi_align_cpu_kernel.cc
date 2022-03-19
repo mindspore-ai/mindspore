@@ -240,7 +240,7 @@ void ROIAlignCpuKernelFunc<T>::bin_box(int thread_idx, const T *roi_boxes, int r
   const T *roi_box = roi_boxes + (*n) * roi_cols;
   int roi_batch_ind = 0;
   if (roi_cols == ROIS_COLS) {
-    roi_batch_ind = FloatToInt(rint(static_cast<float>(roi_box[0]) + eps));
+    roi_batch_ind = FloatToInt(rintf(static_cast<float>(roi_box[0]) + eps));
     roi_box++;
   }
 

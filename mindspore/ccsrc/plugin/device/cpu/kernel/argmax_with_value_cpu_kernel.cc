@@ -64,9 +64,7 @@ template <typename T>
 bool ArgMaxWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                const std::vector<kernel::AddressPtr> &,
                                                const std::vector<kernel::AddressPtr> &outputs) {
-  if (!check_validation<T>(shape_, num_before_axis_, num_after_axis_, inputs, outputs)) {
-    return false;
-  }
+  (void)check_validation<T>(shape_, num_before_axis_, num_after_axis_, inputs, outputs);
 
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   auto output0 = reinterpret_cast<int32_t *>(outputs[0]->addr);
