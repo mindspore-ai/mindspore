@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_DROPOUTDOMASKV3_FUSION_PASS_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_DROPOUTDOMASKV3_FUSION_PASS_H_
 
+#include <utility>
+
 #include "utils/hash_set.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/fusion_base_pass.h"
 #include "ir/anf.h"
@@ -30,7 +32,7 @@ namespace opt {
 class BatchMatmulDropoutDoMaskV3FusionPass : public FusionBasePass {
  public:
   explicit BatchMatmulDropoutDoMaskV3FusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("BatchMatmulDropoutDoMaskV3FusionPass", idAllocator) {}
+      : FusionBasePass("BatchMatmulDropoutDoMaskV3FusionPass", std::move(idAllocator)) {}
   ~BatchMatmulDropoutDoMaskV3FusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 

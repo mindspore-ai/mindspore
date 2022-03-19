@@ -32,7 +32,7 @@ int MpiPycc::GetDeviceID() { return GetDeviceId(); }
 int MpiPycc::GetRankId(const std::string &group) { return GetRankIdByGroup(group); }
 int MpiPycc::GetRankSize(const std::string &group) { return GetGroupSize(group); }
 void MpiPycc::CreateGroup(const std::string &group, const std::vector<unsigned int> &ranks) {
-  CreateCommForGroup(group, ranks);
+  (void)CreateCommForGroup(group, ranks);
 }
 
 // cppcheck-suppress syntaxError

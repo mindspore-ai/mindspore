@@ -69,8 +69,8 @@ class AicpuExtInfoHandler {
   [[nodiscard]] static bool UpdateShapeAndType(const std::vector<int64_t> &shape,
                                                NotNull<AicpuShapeAndType *> shape_and_type);
 
-  static void GetShapeAndType(NotNull<const AicpuShapeAndType *> shape_and_type, NotNull<std::vector<int64_t> *> shape,
-                              NotNull<TypeId *> data_type);
+  static void GetShapeAndType(const NotNull<const AicpuShapeAndType *> &shape_and_type,
+                              const NotNull<std::vector<int64_t> *> &shape, const NotNull<TypeId *> &data_type);
 
   const std::string node_name_;
   const uint32_t input_num_;
