@@ -128,7 +128,7 @@ void Area::FuseInput(const AreaPtr &input_area) {
   if (iter == inputs_with_relation_.end()) {
     MS_LOG(EXCEPTION) << "The area " << input_area->ToString() << " should be the input of area " << this->ToString();
   }
-  auto input_idx = IntToSize(iter - inputs_with_relation_.begin());
+  auto input_idx = LongToSize(iter - inputs_with_relation_.begin());
 
   if (input_area->is_output_) {
     is_output_ = true;

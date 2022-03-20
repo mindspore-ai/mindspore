@@ -43,11 +43,11 @@ bool UssAtomicAdd::Run(const FuncGraphPtr &func_graph) {
     kernel_graph->set_manager(mng);
   }
 
-  bool changed = false;
+  bool has_change = false;
   std::shared_ptr<AtomicAddChecker> checker =
     std::make_shared<UssChecker>(std::make_shared<Primitive>("UnsortedSegmentSum"));
   if (checker == nullptr) {
-    return changed;
+    return has_change;
   }
 
   auto topo_nodes = TopoSort(kernel_graph->get_return());
@@ -57,14 +57,14 @@ bool UssAtomicAdd::Run(const FuncGraphPtr &func_graph) {
     }
     auto atomic_add_infos = checker->GetAtomicAddInfo();
     InsertAtomicClean(kernel_graph, node, atomic_add_infos, mng);
-    changed = true;
+    has_change = true;
   }
 
-  if (changed) {
+  if (has_change) {
     mng->RemoveRoots();
     mng->KeepRoots({func_graph});
   }
 
-  return changed;
+  return has_change;
 }
 }  // namespace mindspore::graphkernel

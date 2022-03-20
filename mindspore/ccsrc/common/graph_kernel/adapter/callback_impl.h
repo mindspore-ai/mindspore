@@ -28,14 +28,14 @@ class CallbackImpl : public Callback {
   ShapeVector GetOutputShape(const AnfNodePtr &node, size_t i) override;
   ShapeVector GetInputInferShape(const AnfNodePtr &node, size_t i) override;
   ShapeVector GetOutputInferShape(const AnfNodePtr &node, size_t i) override;
-  TypeId GetInputType(const AnfNodePtr &node, size_t i) override;
-  TypeId GetOutputType(const AnfNodePtr &node, size_t i) override;
-  TypeId GetInputInferType(const AnfNodePtr &node, size_t i) override;
-  TypeId GetOutputInferType(const AnfNodePtr &node, size_t i) override;
   std::string GetInputFormat(const AnfNodePtr &node, size_t i) override;
   std::string GetOutputFormat(const AnfNodePtr &node, size_t i) override;
   std::string GetProcessor(const AnfNodePtr &node) override;
   std::string GetTargetFromContext() override;
+  TypeId GetInputType(const AnfNodePtr &node, size_t i) override;
+  TypeId GetOutputType(const AnfNodePtr &node, size_t i) override;
+  TypeId GetInputInferType(const AnfNodePtr &node, size_t i) override;
+  TypeId GetOutputInferType(const AnfNodePtr &node, size_t i) override;
   void SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) override;
   void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
   void SetEmptyKernelInfo(const AnfNodePtr &node) override;

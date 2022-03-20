@@ -42,7 +42,7 @@ class CustomActorNodeManager {
   static CustomActorNodeManager &Instance();
   void Reset() { custom_nodes_map_.clear(); }
   void Register(const AnfNodePtr &node, const RelatedCustomActorNode &custom_nodes) {
-    custom_nodes_map_.emplace(node, custom_nodes);
+    (void)custom_nodes_map_.emplace(node, custom_nodes);
   }
   bool IsRegistered(const AnfNodePtr &node) const { return custom_nodes_map_.find(node) != custom_nodes_map_.end(); }
   const RelatedCustomActorNode &GetCustomActorNodes(const AnfNodePtr &node) const {
