@@ -71,6 +71,7 @@ if(ENABLE_MINDDATA)
             ./fl/*.cc
             ./distributed/persistent/*.cc
             ./distributed/rpc/tcp/*.cc
+            ./distributed/cluster/*.cc
             ./distributed/cluster/topology/*.cc
             ./cxx_api/*.cc
             ./tbe/*.cc
