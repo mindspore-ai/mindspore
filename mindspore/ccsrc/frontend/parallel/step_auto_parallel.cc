@@ -1243,6 +1243,8 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     PrintStrategy(s_strategy);
   }
 
+  (void)IgnoreOperatorsInCostGraph();
+
   return SUCCESS;
 }
 }  // namespace parallel
