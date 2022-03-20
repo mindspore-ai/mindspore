@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_BATCHNORM_PARAMETER_H_
-#define MINDSPORE_NNACL_BATCHNORM_PARAMETER_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_BATCHNORM_PARAMETER_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_BATCHNORM_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -27,6 +27,7 @@ typedef struct BatchNormParameter {
   int units_;
   int channel_;
   bool fused_;
+  bool is_training_;
 } BatchNormParameter;
 
-#endif  // MINDSPORE_NNACL_BATCHNORM_PARAMETER_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_BATCHNORM_PARAMETER_H_

@@ -126,7 +126,7 @@ int BNGradCPUKernel::DoExecute(int task_id) {
         }
       }
       if (thread_num == 1) {
-        backwardAll(x, yt, save_mean, save_var, scale, total, channels, dbias, dscale, dx);
+        backwardAll(x, yt, save_mean, save_var, scale, total, channels, dbias, dscale, dx, (IsTrain()));
       }
       break;
     }
@@ -136,7 +136,7 @@ int BNGradCPUKernel::DoExecute(int task_id) {
     }
     case 2: {
       backwardP2(x + task_id * stride * channels, yt + task_id * stride * channels, save_mean, save_var, dscale, dbias,
-                 scale, count, total, channels, dx + task_id * stride * channels);
+                 scale, count, total, channels, dx + task_id * stride * channels, (IsTrain()));
       break;
     }
     default:
