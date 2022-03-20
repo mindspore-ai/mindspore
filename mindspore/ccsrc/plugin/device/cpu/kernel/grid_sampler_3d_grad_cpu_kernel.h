@@ -77,8 +77,8 @@ class GridSampler3DGradCpuKernelMod : public NativeCpuKernelMod {
   void ComputeTask(T *grad_addr, T *x_addr, T *grid_addr, T *dx_addr, T *dgrid_addr, const size_t &n);
 
   template <typename T>
-  T grid_sampler_compute_source_index_set_grad(T coord, size_t size, std::string padding_mode, bool align_corners,
-                                               T *grad_x);
+  T grid_sampler_compute_source_index_set_grad(T coord, size_t size, const std::string &padding_mode,
+                                               bool align_corners, T *grad_x);
 
   template <typename T>
   T reflect_coordinates_set_grad(T x, int64_t twice_low, int64_t twice_high, T *grad_x);

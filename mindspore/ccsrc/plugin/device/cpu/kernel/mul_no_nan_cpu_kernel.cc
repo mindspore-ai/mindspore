@@ -27,6 +27,7 @@ namespace kernel {
 namespace {
 constexpr size_t kMulNoNanInputsNum = 2;
 constexpr size_t kMulNoNanOutputsNum = 1;
+constexpr size_t kNumber2 = 2;
 #define MULNONAN_COMPUTE_CASE(DTYPE, TYPE, INPUTS, OUTPUTS) \
   case (DTYPE): {                                           \
     LaunchKernel<TYPE>(INPUTS, OUTPUTS);                    \
@@ -79,7 +80,7 @@ void MulNoNanCPUKernelMod::NoBcastCompute(const std::vector<AddressPtr> &inputs,
   size_t in0_elements_nums = inputs[0]->size / sizeof(T);
   size_t in1_elements_nums = inputs[1]->size / sizeof(T);
   size_t out_size = outputs[0]->size / sizeof(T);
-  size_t type = in0_elements_nums == in1_elements_nums ? 0 : (in0_elements_nums == 1 ? 1 : 2);
+  size_t type = in0_elements_nums == in1_elements_nums ? 0 : (in0_elements_nums == 1 ? 1 : kNumber2);
 
   auto task = [output_addr, input_addr_0, input_addr_1, type](size_t start, size_t end) {
     switch (type) {
@@ -88,7 +89,7 @@ void MulNoNanCPUKernelMod::NoBcastCompute(const std::vector<AddressPtr> &inputs,
           if (*(input_addr_1 + i) == static_cast<T>(0)) {
             *(output_addr + i) = static_cast<T>(0);
           } else {
-            *(output_addr + i) = *(input_addr_0 + i) * *(input_addr_1 + i);
+            *(output_addr + i) = static_cast<T>(*(input_addr_0 + i) * *(input_addr_1 + i));
           }
         }
         break;
@@ -108,13 +109,12 @@ void MulNoNanCPUKernelMod::NoBcastCompute(const std::vector<AddressPtr> &inputs,
           }
         } else {
           for (size_t i = start; i < end; ++i) {
-            *(output_addr + i) = *(input_addr_0 + i) * *input_addr_1;
+            *(output_addr + i) = static_cast<T>(*(input_addr_0 + i) * *input_addr_1);
           }
         }
         break;
       default:
         MS_LOG(EXCEPTION) << "Invalid type ";
-        break;
     }
   };
   ParallelLaunchAutoSearch(task, out_size, this, &parallel_search_info_);

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/hsv_to_rgb_cpu_kernel.h"
-#include <cmath>
 #include <vector>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -40,9 +39,10 @@ void HSVToRGBCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T1>
 void HSVToRGBCpuKernelMod::ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1 *b) {
+  const T1 kNumber6 = 6;
   T1 c = s * v;
   T1 m = v - c;
-  T1 dh = h * 6;
+  T1 dh = h * kNumber6;
   T1 rr, gg, bb;
   const int32_t h_category = static_cast<int32_t>(std::floor(dh));
   T1 fmodu = std::abs(dh);
@@ -118,7 +118,7 @@ void HSVToRGBCpuKernelMod::ComputeFloat(void *input, void *output, int64_t pixel
       ConvertOnePixel<T1>(*h, *s, *v, r, g, b);
     }
   };
-  CPUKernelUtils::ParallelFor(shard_hsv_to_rgb, pixel_num);
+  CPUKernelUtils::ParallelFor(shard_hsv_to_rgb, static_cast<size_t>(pixel_num));
 }
 
 void HSVToRGBCpuKernelMod::ComputeHalf(void *input, void *output, int64_t pixel_num) {
@@ -140,7 +140,7 @@ void HSVToRGBCpuKernelMod::ComputeHalf(void *input, void *output, int64_t pixel_
       output_ptr[pixel_stride * i + third_value] = float16(tmp[third_value]);
     }
   };
-  CPUKernelUtils::ParallelFor(shard_hsv_to_rgb, pixel_num);
+  CPUKernelUtils::ParallelFor(shard_hsv_to_rgb, static_cast<size_t>(pixel_num));
 }
 
 bool HSVToRGBCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -161,7 +161,6 @@ bool HSVToRGBCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
       break;
     default:
       MS_LOG(EXCEPTION) << "Input Tensor data type is not surpported.";
-      break;
   }
   return true;
 }

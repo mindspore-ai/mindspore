@@ -61,12 +61,12 @@ class GridSampler3DCpuKernelMod : public NativeCpuKernelMod {
   void ComputeTask(T *x_data_addr, T *grid_data_addr, T *output_data_addr, const size_t &seq);
 
   template <typename T>
-  T grid_sampler_compute_source_index(T coord, int64_t size, std::string padding_mode, bool align_corners);
+  T grid_sampler_compute_source_index(T coord, int64_t size, const std::string &padding_mode, bool align_corners);
 
   template <typename T>
   T reflect_coordinates(T coord, int64_t twice_low, int64_t twice_high);
 
-  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W);
+  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, size_t D, size_t H, size_t W);
 };
 }  // namespace kernel
 }  // namespace mindspore

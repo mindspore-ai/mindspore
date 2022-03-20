@@ -55,13 +55,15 @@ bool LowerBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   auto output_data_addr = reinterpret_cast<O *>(outputs[0]->addr);
   size_t sorted_x_data_column = sorted_x_shape_[1];
   size_t values_data_column = values_shape_[1];
-  auto task = [&](size_t start, size_t end) {
-    for (size_t i = 0; i < values_num_; i++) {
+  auto task = [this, &values_data_addr, &sorted_x_data_addr, &output_data_addr, &sorted_x_data_column,
+               &values_data_column](size_t start, size_t end) {
+    const size_t kTwo = 2;
+    for (size_t i = 0; i < this->values_num_; i++) {
       size_t seq_row = i / values_data_column;
       size_t low = seq_row * sorted_x_data_column;
       size_t up = (seq_row + 1) * sorted_x_data_column - 1;
       while (low <= up) {
-        size_t mid = (low + up) / 2;
+        size_t mid = (low + up) / kTwo;
         if (values_data_addr[i] <= sorted_x_data_addr[mid]) {
           up = mid - 1;
         } else {
