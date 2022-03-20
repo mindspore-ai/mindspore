@@ -746,7 +746,11 @@ void Iteration::EndLastIter() {
   set_loss(0.0f);
   Server::GetInstance().CancelSafeMode();
   iteration_state_cv_.notify_all();
-  MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
+  if (iteration_num_ > ps::PSContext::instance()->fl_iteration_num()) {
+    MS_LOG(WARNING) << "The server's training job is finished.";
+  } else {
+    MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
+  }
 }
 
 bool Iteration::ForciblyMoveToNextIteration() {

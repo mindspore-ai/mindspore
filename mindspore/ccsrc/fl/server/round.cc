@@ -204,7 +204,11 @@ bool Round::IsServerAvailable(std::string *reason) {
   // If the server state is Disable or Finish, refuse the request.
   if (Iteration::GetInstance().instance_state() == InstanceState::kDisable ||
       Iteration::GetInstance().instance_state() == InstanceState::kFinish) {
-    MS_LOG(WARNING) << "The server's training job is disabled or finished, please retry " + name_ + " later.";
+    if (kPrintTimes % kPrintTimesThreshold == 0) {
+      MS_LOG(WARNING) << "The server's training job is disabled or finished, please retry " + name_ + " later.";
+      kPrintTimes = 0;
+    }
+    kPrintTimes += 1;
     *reason = ps::kJobNotAvailable;
     return false;
   }
