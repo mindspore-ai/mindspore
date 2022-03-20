@@ -34,7 +34,7 @@ from mindspore.profiler.common.validator.validate_path import \
 from mindspore.profiler.parser.aicpu_data_parser import DataPreProcessParser
 from mindspore.profiler.parser.framework_parser import FrameworkParser
 from mindspore.profiler.parser.hwts_log_parser import HWTSLogParser
-from mindspore.profiler.parser.integrator import Integrator
+from mindspore.profiler.parser.integrator import Integrator, DeviceTarget
 from mindspore.profiler.parser.integrator import GpuTimelineGenerator, CpuTimelineGenerator, AscendTimelineGenerator
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
 from mindspore.profiler.parser.minddata_parser import MinddataParser
@@ -139,7 +139,8 @@ class Profiler:
     _aicpu_op_output_filename_target = "output_data_preprocess_aicpu_"
     _has_analysed = False
     _has_initialized = False
-    _ascend_profiling_options = {}
+    _ascend_profiling_options = ""
+    _ascend_job_id = ""
 
     def __init__(self, **kwargs):
         if Profiler._has_initialized:
@@ -165,22 +166,28 @@ class Profiler:
             self._cpu_profiler = cpu_profiler.get_instance()
             self._cpu_profiler.init(self._output_path)
 
-        if self._device_target and self._device_target == "CPU":
+        if self._device_target and self._device_target == DeviceTarget.CPU.value:
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                raise RuntimeError("Pynative model is not supported on CPU currently.")
+
             self.start_profile = kwargs.pop("start_profile", True)
             if not isinstance(self.start_profile, bool):
                 raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
                                 f"but got type {type(self.start_profile)}")
 
-        if self._device_target and self._device_target == "GPU":
+        if self._device_target and self._device_target == DeviceTarget.GPU.value:
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                raise RuntimeError("Pynative model is not supported on GPU currently.")
+            self._parse_parameter_for_gpu(**kwargs)
+
             gpu_profiler = c_expression.GPUProfiler
             self._gpu_profiler = gpu_profiler.get_instance()
             self._gpu_profiler.init(self._output_path)
             if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
                 self._dev_id = str(get_rank())
             os.environ['DEVICE_ID'] = self._dev_id
-            self._parse_parameter_for_gpu(**kwargs)
 
-        elif self._device_target and self._device_target == "Ascend":
+        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             self._init_time = int(time.time() * 10000000)
             logger.info("Profiling: profiling init time: %d", self._init_time)
             self._parse_parameter_for_ascend(**kwargs)
@@ -196,6 +203,8 @@ class Profiler:
 
         if self.start_profile:
             self.start()
+        elif context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Pynative model does not support conditional collection of performance data.")
 
     def _construct_profiling_options(self):
         """
@@ -296,7 +305,7 @@ class Profiler:
 
     def _is_offline_parser(self):
         """Return whether offline parser or online parser."""
-        if self._device_target and self._device_target == "Ascend":
+        if self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             return bool(self._ascend_job_id)
         return False
 
@@ -313,13 +322,13 @@ class Profiler:
 
         self._cpu_profiler.stop()
 
-        if self._device_target and self._device_target == "CPU":
+        if self._device_target and self._device_target == DeviceTarget.CPU.value:
             self._cpu_analyse()
 
-        if self._device_target and self._device_target == "GPU":
+        if self._device_target and self._device_target == DeviceTarget.GPU.value:
             self._gpu_analyse()
 
-        elif self._device_target and self._device_target == "Ascend":
+        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             self._ascend_analyse()
         logger.info("Profiling: all the data have been analyzed.")
 
@@ -335,8 +344,12 @@ class Profiler:
         source_path = os.path.join(self._output_path, job_id)
         MinddataParser.execute(source_path, self._output_path, self._rank_id)
 
+        pipeline_parser = MinddataPipelineParser(self._output_path, self._rank_id, self._output_path)
+        logger.info("Profiling: analyzing the minddata pipeline operator and queue.")
+        pipeline_parser.parse()
+
         timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
-                                                    self._rank_size)
+                                                    self._rank_size, context.get_context("mode"))
         timeline_analyser.init_pynative_timeline()
         size_limit = 100 * 1024 * 1024  # 100MB
         timeline_analyser.write_timeline(size_limit)
@@ -571,9 +584,9 @@ class Profiler:
         self._md_profiler.start()
         self._cpu_profiler.step_profiling_enable(True)
 
-        if self._device_target and self._device_target == "GPU":
+        if self._device_target and self._device_target == DeviceTarget.GPU.value:
             self._gpu_profiler.step_profiling_enable(True)
-        elif self._device_target and self._device_target == "Ascend":
+        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             if context.get_context("mode") == context.PYNATIVE_MODE:
                 self._ascend_pynative_start()
             else:
@@ -645,9 +658,9 @@ class Profiler:
         self._md_profiler.stop()
         self._md_profiler.save(self._output_path)
 
-        if self._device_target and self._device_target == "GPU":
+        if self._device_target and self._device_target == DeviceTarget.GPU.value:
             self._gpu_profiler.stop()
-        elif self._device_target and self._device_target == "Ascend":
+        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             if context.get_context("mode") == context.PYNATIVE_MODE:
                 self._pynative_profiler.stop()
             self._ascend_profiler.stop()
@@ -725,7 +738,7 @@ class Profiler:
 
         try:
             size_limit = 100 * 1024 * 1024  # 100MB
-            timeline_generator = CpuTimelineGenerator(self._output_path, 0, 1)
+            timeline_generator = CpuTimelineGenerator(self._output_path, context.get_context("mode"))
             timeline_generator.init_timeline()
             timeline_generator.write_timeline(size_limit)
             timeline_generator.write_timeline_summary()
@@ -746,7 +759,7 @@ class Profiler:
         """
         logger.info("Begin to parse step trace.")
         # construct output path
-        dev_id = self._rank_id if self._device_target == "Ascend" else self._dev_id
+        dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
         step_trace_intermediate_file_path = os.path.join(
             self._output_path,
             f'step_trace_raw_{dev_id}_detail_time.csv'
@@ -758,7 +771,7 @@ class Profiler:
         step_trace_intermediate_file_path = validate_and_normalize_path(step_trace_intermediate_file_path)
         point_info_file_path = validate_and_normalize_path(point_info_file_path)
 
-        if self._device_target and self._device_target == 'GPU':
+        if self._device_target and self._device_target == DeviceTarget.GPU.value:
             input_file_path = os.path.join(self._output_path, f'step_trace_profiling_{self._dev_id}.txt')
             input_file_path = validate_and_normalize_path(input_file_path)
             parser = GpuStepTraceParser(input_dir=input_file_path,
@@ -799,7 +812,8 @@ class Profiler:
             optime_parser (OPComputeTimeParserParser): The parser instance for AI Core
                 operator execution time calculation.
         """
-        timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id, self._rank_size)
+        timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
+                                                    self._rank_size, context.get_context("mode"))
         # Get framework info
         integrator = Integrator(self._output_path, self._rank_id)
         aicore_detail_data = integrator.get_aicore_detail_data()
@@ -831,7 +845,8 @@ class Profiler:
         """Used for gpu, generate timeline info, write to json format file."""
         try:
             size_limit = 100 * 1024 * 1024  # 100MB
-            timeline_generator = GpuTimelineGenerator(self._output_path, self._dev_id, self._rank_size)
+            timeline_generator = GpuTimelineGenerator(self._output_path, self._dev_id, self._rank_size,
+                                                      context.get_context("mode"))
             timeline_generator.init_timeline(reduce_op_type)
             timeline_generator.write_timeline(size_limit)
             timeline_generator.write_timeline_summary()
@@ -1010,7 +1025,7 @@ class Profiler:
         rank_id = ""
         try:
             dev_id = str(context.get_context("device_id"))
-            device_target = context.get_context("device_target")
+            device_target = context.get_context("device_target").lower()
         except ValueError as err:
             logger.error("Profiling: fail to get context, %s", err)
 
@@ -1020,7 +1035,8 @@ class Profiler:
             dev_id = "0"
             logger.warning("Fail to get DEVICE_ID, use 0 instead.")
 
-        if device_target and device_target not in ["Ascend", "GPU", "CPU"]:
+        if device_target and device_target not in [DeviceTarget.ASCEND.value, DeviceTarget.GPU.value,
+                                                   DeviceTarget.CPU.value]:
             msg = "Profiling: unsupported backend: %s" % device_target
             raise RuntimeError(msg)
 
@@ -1031,7 +1047,7 @@ class Profiler:
                            f"use 0 instead.")
 
         self._dev_id = dev_id
-        self._device_target = device_target
+        self._device_target = device_target.lower()
         self._rank_id = rank_id
 
     def _get_output_path(self, kwargs):
