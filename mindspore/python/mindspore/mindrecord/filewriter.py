@@ -102,6 +102,7 @@ class FileWriter:
 
         self._overwrite = overwrite
         self._append = False
+        self._flush = False
         self._header = ShardHeader()
         self._writer = ShardWriter()
         self._generator = None
@@ -316,6 +317,11 @@ class FileWriter:
             self._writer.set_shard_header(self._header)
         if not isinstance(raw_data, list):
             raise ParamTypeError('raw_data', 'list')
+        if self._flush and not self._append:
+            raise RuntimeError("Unexpected error. Not allow to call `write_raw_data` on flushed MindRecord files." \
+                               "When creating new Mindrecord files, please remove `commit` before `write_raw_data`." \
+                               "In other cases, when appending to existing MindRecord files, " \
+                               "please call `open_for_append` first and then `write_raw_data`.")
         for each_raw in raw_data:
             if not isinstance(each_raw, dict):
                 raise ParamTypeError('raw_data item', 'dict')
@@ -392,6 +398,7 @@ class FileWriter:
             MRMGenerateIndexError: If failed to write to database.
             MRMCommitError: If failed to flush data to disk.
         """
+        self._flush = True
         if not self._writer.is_open:
             self._writer.open(self._paths, self._overwrite)
         # permit commit without data
