@@ -361,10 +361,14 @@ Status AutoTune::IsDSaBottleneck(bool *isBottleneck) {
   double usage_avg_last = (avg_size / avg_capacity);
   float empty_freq = 0;
   RETURN_IF_NOT_OK(GetEmptyQueueFrequency(&empty_freq));
-
+  if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
+    MS_LOG(INFO) << "Step # " << cur_step_ << ". Status:";
+  } else {
+    MS_LOG(INFO) << "Epoch #" << cur_epoch_ << ". Status:";
+  }
   // Reporting values
-  MS_LOG(INFO) << "Epoch #" << cur_epoch_ << ", Device Connector Size: " << avg_size
-               << ", Connector Capacity: " << avg_capacity << ", Utilization: " << (usage_avg_last * TO_PERCENT) << "%"
+  MS_LOG(INFO) << "Device Connector Size: " << avg_size << ", Connector Capacity: " << avg_capacity
+               << ", Utilization: " << (usage_avg_last * TO_PERCENT) << "%"
                << ", Empty Freq: " << (empty_freq * TO_PERCENT) << "% ";
   // Decision
   if (usage_avg_last < DEVICE_CONNECTOR_UTIL_THRESHOLD) {
@@ -382,12 +386,16 @@ Status AutoTune::IsDSaBottleneck(bool *isBottleneck) {
 }
 
 Status AutoTune::RequestNumWorkerChange(int32_t op_id, int32_t old_workers, int32_t *num_workers_requested) {
-  int32_t new_workers = old_workers + INCREMENT_WORKER;
-  new_workers = std::min(new_workers, max_workers_);
+  int new_workers = std::min(*num_workers_requested, max_workers_);
   new_workers = std::max(new_workers, MIN_NUM_WORKERS);
   RETURN_IF_NOT_OK(tree_modifier_->AddChangeRequest(op_id, std::make_shared<ChangeNumWorkersRequest>(new_workers)));
-  MS_LOG(WARNING) << "Added request to change \"num_parallel_workers\" of Operator: " << ops_[op_id]->NameWithID()
-                  << "From old value: [" << old_workers << "] to new value: [" << new_workers << "].";
+  if (old_workers == -1) {
+    MS_LOG(WARNING) << "Added request to change \"num_parallel_workers\" of Operator: " << ops_[op_id]->NameWithID()
+                    << "to value: [" << new_workers << "].";
+  } else {
+    MS_LOG(WARNING) << "Added request to change \"num_parallel_workers\" of Operator: " << ops_[op_id]->NameWithID()
+                    << "From old value: [" << old_workers << "] to new value: [" << new_workers << "].";
+  }
   *num_workers_requested = new_workers;
   return Status::OK();
 }
@@ -449,10 +457,12 @@ Status AutoTune::Analyse() {
                       << ") is slow, input connector utilization=" << input_queue_util
                       << ", output connector utilization=" << output_queue_util << ", diff= " << queue_diff << " > "
                       << INPUT_OUTPUT_QUEUE_DIFF_THRESHOLD << " threshold.";
+      requested_workers = num_workers + INCREMENT_WORKER;
       RETURN_IF_NOT_OK(RequestNumWorkerChange(op_id, num_workers, &requested_workers));
     } else if ((cpu_util / num_workers) > MAP_OP_WORKER_HIGH_THRESHOLD) {
       MS_LOG(WARNING) << "Op (" << ops_[op_id]->NameWithID() << ") getting high average worker cpu utilization "
                       << (cpu_util / num_workers) << "% > " << MAP_OP_WORKER_HIGH_THRESHOLD << "% threshold.";
+      requested_workers = num_workers + INCREMENT_WORKER;
       RETURN_IF_NOT_OK(RequestNumWorkerChange(op_id, num_workers, &requested_workers));
     }
     if ((cpu_util / num_workers) < MAP_OP_WORKER_LOW_THRESHOLD &&
