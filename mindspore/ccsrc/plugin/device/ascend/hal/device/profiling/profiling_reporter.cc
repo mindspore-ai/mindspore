@@ -53,7 +53,7 @@ static std::map<string, uint32_t> OpFormat2Index{{kOpFormat_DEFAULT, 1},
                                                  {kOpFormat_DHWNC, 20},
                                                  {kOpFormat_DHWCN, 21}};
 
-bool ProfilingReporter::CheckStreamTaskValid() {
+bool ProfilingReporter::CheckStreamTaskValid() const {
   if (cnode_list_.size() != stream_ids_.size() || cnode_list_.size() != task_ids_.size()) {
     MS_LOG(ERROR) << "CNode size is not equal stream size or not equal task size, "
                      "can not support to report profiling data. CNode size is "
@@ -75,9 +75,9 @@ void ProfilingReporter::ReportTasks() {
     KernelType kernel_type = AnfAlgo::GetKernelType(node);
     auto stream_id = stream_ids_[task_index];
     auto task_id = task_ids_[task_index];
-    (void)ReportTask(node, stream_id, task_id, kernel_type);
-    (void)ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_INPUT);
-    (void)ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_OUTPUT);
+    ReportTask(node, stream_id, task_id, kernel_type);
+    ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_INPUT);
+    ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_OUTPUT);
 
     ++task_index;
   }
@@ -112,7 +112,7 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     MS_EXCEPTION_IF_NULL(kernel_mod);
     // The tag of this function should report all tags, it will be saved to ts_track.data.<device_id>.slice_<index>
     // The first step index set to 1, here keep same with ge
-    rtProfilerTraceEx(1, graph_id_, point->tag(), kernel_mod->stream());
+    (void)rtProfilerTraceEx(1, graph_id_, point->tag(), kernel_mod->stream());
 
     MS_LOG(INFO) << "Report step point, graph id: " << graph_id_ << ", op name: " << point->op_name()
                  << ", stream id: " << GetStreamId(op_name) << ", task id: " << GetTaskId(op_name)
@@ -133,15 +133,15 @@ const CNodePtr ProfilingReporter::GetCNode(const std::string &name) const {
 
 uint32_t ProfilingReporter::GetStreamId(const string &node_name) {
   auto index = node_name_index_map_[node_name];
-  return stream_ids_[index];
+  return stream_ids_[(uint32_t)index];
 }
 
 uint32_t ProfilingReporter::GetTaskId(const string &node_name) {
   auto index = node_name_index_map_[node_name];
-  return task_ids_[index];
+  return task_ids_[(uint32_t)index];
 }
 
-void ProfilingReporter::ReportData(int32_t device_id, unsigned char *data, size_t data_size, const string &tag_name) {
+void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size_t data_size, const string &tag_name) {
   ReporterData report_data{};
   report_data.deviceId = device_id;
   report_data.data = data;
@@ -165,7 +165,7 @@ void ProfilingReporter::ConstructNodeNameIndexMap() {
   size_t task_index = 0;
   for (const auto &node : cnode_list_) {
     MS_EXCEPTION_IF_NULL(node);
-    node_name_index_map_.insert(pair<string, uint32_t>(node->fullname_with_scope(), task_index));
+    node_name_index_map_.insert(pair<string, int>(node->fullname_with_scope(), task_index));
     ++task_index;
   }
 }
@@ -181,8 +181,8 @@ void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_i
                                    KernelType kernel_type) {
   MsprofGeProfTaskData task_info{};
   task_info.taskType = static_cast<uint32_t>(KernelType2TaskTypeEnum[kernel_type]);
-  (void)SetAlternativeValue(&task_info.opName, MSPROF_MIX_DATA_STRING_LEN, node->fullname_with_scope(), device_id_);
-  (void)SetAlternativeValue(&task_info.opType, MSPROF_GE_OP_TYPE_LEN, common::AnfAlgo::GetCNodeName(node), device_id_);
+  SetAlternativeValue(&task_info.opName, MSPROF_MIX_DATA_STRING_LEN, node->fullname_with_scope(), device_id_);
+  SetAlternativeValue(&task_info.opType, MSPROF_GE_OP_TYPE_LEN, common::AnfAlgo::GetCNodeName(node), device_id_);
   // Note: Currently, the profiler supports only static shapes.
   task_info.shapeType = static_cast<uint32_t>(MSPROF_GE_SHAPE_TYPE_STATIC);
   task_info.blockDims = GetBlockDim(node);
@@ -194,7 +194,7 @@ void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_i
   task_info.timeStamp = 0;
   task_info.threadId = 0;
 
-  (void)ReportData(device_id_, reinterpret_cast<unsigned char *>(&task_info), sizeof(task_info), "task_desc_info");
+  ReportData(device_id_, reinterpret_cast<unsigned char *>(&task_info), sizeof(task_info), "task_desc_info");
 }
 
 void ProfilingReporter::ReportNode(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, uint32_t tensor_type) {
@@ -210,15 +210,15 @@ void ProfilingReporter::ReportNode(const CNodePtr &node, uint32_t stream_id, uin
   const size_t batch_size = total_size / MSPROF_GE_TENSOR_DATA_NUM;
   for (size_t i = 0U; i < batch_size; i++) {
     MsprofGeProfTensorData tensor_info{};
-    (void)BuildProfTensorDataCommon(&tensor_info, stream_id, task_id);
+    BuildProfTensorDataCommon(&tensor_info, stream_id, task_id);
     tensor_info.tensorNum = MSPROF_GE_TENSOR_DATA_NUM;
     for (size_t j = 0U; j < MSPROF_GE_TENSOR_DATA_NUM; j++) {
       size_t cur_index = i * MSPROF_GE_TENSOR_DATA_NUM + j;
       MsprofGeTensorData tensor_data{};
-      (void)BuildTensorData(&tensor_data, node, cur_index, tensor_type);
+      BuildTensorData(&tensor_data, node, cur_index, tensor_type);
       tensor_info.tensorData[j] = tensor_data;
     }
-    (void)ReportData(device_id_, reinterpret_cast<unsigned char *>(&tensor_info), sizeof(tensor_info), tag_name);
+    ReportData(device_id_, reinterpret_cast<unsigned char *>(&tensor_info), sizeof(tensor_info), tag_name);
   }
 
   size_t remain_size = total_size % MSPROF_GE_TENSOR_DATA_NUM;
@@ -227,15 +227,15 @@ void ProfilingReporter::ReportNode(const CNodePtr &node, uint32_t stream_id, uin
   }
 
   MsprofGeProfTensorData tensor_info{};
-  (void)BuildProfTensorDataCommon(&tensor_info, stream_id, task_id);
+  BuildProfTensorDataCommon(&tensor_info, stream_id, task_id);
   tensor_info.tensorNum = remain_size;
   for (size_t i = 0U; i < remain_size; ++i) {
     MsprofGeTensorData tensor_data{};
     size_t cur_index = batch_size * MSPROF_GE_TENSOR_DATA_NUM + i;
-    (void)BuildTensorData(&tensor_data, node, cur_index, tensor_type);
+    BuildTensorData(&tensor_data, node, cur_index, tensor_type);
     tensor_info.tensorData[i] = tensor_data;
   }
-  (void)ReportData(device_id_, reinterpret_cast<unsigned char *>(&tensor_info), sizeof(tensor_info), tag_name);
+  ReportData(device_id_, reinterpret_cast<unsigned char *>(&tensor_info), sizeof(tensor_info), tag_name);
 }
 
 void ProfilingReporter::BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, uint32_t stream_id,
@@ -269,7 +269,7 @@ void ProfilingReporter::BuildTensorData(MsprofGeTensorData *tensor_data, const C
 
   tensor_data->format = OpFormat2Index[data_format];
   auto shape_size = std::min(static_cast<uint64_t>(MSPROF_GE_TENSOR_DATA_SHAPE_LEN), shape.size());
-  std::copy(shape.begin(), shape.begin() + shape_size, tensor_data->shape);
+  (void)std::copy(shape.begin(), shape.begin() + shape_size, tensor_data->shape);
 }
 }  // namespace ascend
 }  // namespace device

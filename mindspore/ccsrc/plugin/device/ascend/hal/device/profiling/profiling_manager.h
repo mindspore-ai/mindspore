@@ -84,7 +84,6 @@ class ProfilingManager {
  private:
   uint32_t device_id_;
   MsprofCallback prof_cb_;
-  aclprofConfig *acl_config_;
   ProfilingState cur_state_;
   std::string profiling_path_;
 };
