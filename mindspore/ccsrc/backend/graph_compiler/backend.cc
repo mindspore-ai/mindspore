@@ -315,50 +315,6 @@ void ClearInputDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
   }
 }
 
-std::vector<tensor::TensorPtr> GetRealValueNodeTensorFromGraph(
-  const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &tensors_without_value_node) {
-  std::vector<tensor::TensorPtr> new_input_tensors;
-  if (graph->execution_order().size() != 1) {
-    return new_input_tensors;
-  }
-
-  const auto &node = graph->execution_order().back();
-  auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-  // No value node in graph
-  if (input_num == tensors_without_value_node.size()) {
-    return new_input_tensors;
-  }
-  MS_LOG(DEBUG) << "CNode input num:" << input_num
-                << " tensors_without_value_node size:" << tensors_without_value_node.size();
-
-  std::map<size_t, tensor::TensorPtr> value_node_pos;
-  for (size_t i = 0; i < input_num; ++i) {
-    auto input = common::AnfAlgo::GetInputNode(node, i);
-    MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<ValueNode>()) {
-      auto value_node = input->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      auto value = value_node->value();
-      MS_EXCEPTION_IF_NULL(value);
-      auto tensor = value->cast<tensor::TensorPtr>();
-      (void)value_node_pos.emplace(i, tensor);
-    }
-  }
-
-  size_t cur_input_tensor_index = 0;
-  for (size_t i = 0; i < input_num; ++i) {
-    auto iter = value_node_pos.find(i);
-    if (iter == value_node_pos.end()) {
-      (void)new_input_tensors.emplace_back(tensors_without_value_node[cur_input_tensor_index]);
-      cur_input_tensor_index++;
-    } else {
-      (void)new_input_tensors.emplace_back(iter->second);
-    }
-  }
-  MS_LOG(DEBUG) << "new input tensor size:" << new_input_tensors.size();
-  return new_input_tensors;
-}
-
 bool OpInBlackList(const OpRunInfo &op_run_info) {
   return kOpCacheBlackList.find(op_run_info.op_name) != kOpCacheBlackList.end();
 }
@@ -1263,42 +1219,6 @@ void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const Kernel
   actor_to_graph_compiler_info_.erase(actor_info);
 }
 
-void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph, const OpRunInfo &op_run_info,
-                                     const GraphCompilerInfo *graph_compiler_info) {
-  // Erase value node tensor.
-  std::vector<tensor::TensorPtr> tensors_without_value_node = GetTensorWithoutValueMask(op_run_info);
-  std::vector<tensor::TensorPtr> new_input_tensors = GetRealValueNodeTensorFromGraph(graph, tensors_without_value_node);
-
-  for (auto &tensor : tensors_without_value_node) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    if (tensor->NeedWaitDevice()) {
-      tensor->WaitDevice();
-    }
-  }
-
-  // Run actor DAG.
-  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(graph_compiler_info->name_);
-  MS_EXCEPTION_IF_NULL(actor_set);
-  const auto &input_tensors = op_run_info.input_tensors;
-  runtime::GraphScheduler::GetInstance().Run(actor_set, {}, {tensors_without_value_node},
-                                             new_input_tensors.empty() ? input_tensors : new_input_tensors,
-                                             runtime::GraphExecutionStrategy::kStep);
-
-  // Release the kernel resource.
-  const auto &kernels = graph->execution_order();
-  for (const auto &kernel : kernels) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    if (kOpCacheBlackList.find(common::AnfAlgo::GetCNodeName(kernel)) != kOpCacheBlackList.end()) {
-      auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-      if (kernel_mod) {
-        kernel_mod->ReleaseResource();
-      }
-    }
-  }
-
-  ReleaseForwardOutput(input_tensors);
-}
-
 void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors) {
   // Update forward op output ref counts, release it
   auto ms_context = MsContext::GetInstance();
@@ -1528,12 +1448,7 @@ void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const Devi
   MS_EXCEPTION_IF_NULL(device_context);
   graph_compiler_->BuildSingleOpGraphs({graph}, device_context);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
-  auto actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
   graph_compiler_info->input_tensors_.clear();
-  // Actor::Init() is called in Schedule.
-  // Workspace need to be initialized in Actor::Init().
-  // So `Schedule` need to execute after `CreateKernelWorkspaceDeviceAddress`.
-  runtime::GraphScheduler::GetInstance().Schedule(actor_set);
 }
 
 void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *outputs) {
