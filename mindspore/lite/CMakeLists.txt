@@ -419,6 +419,7 @@ if(MSLITE_ENABLE_ACL)
     endif()
     set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
     set(ASCEND_TOOLKIT_RUNTIME_PATH ${ASCEND_PATH}/ascend-toolkit/latest/fwkacllib/lib64)
+    set(ASCEND_CANN_RUNTIME_PATH ${ASCEND_PATH}/latest/fwkacllib/lib64)
 endif()
 
 set(PKG_NAME_PREFIX mindspore-lite-${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})

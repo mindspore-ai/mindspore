@@ -126,16 +126,26 @@ endif()
 if(ENABLE_D OR ENABLE_ACL)
     # 310 mode
     add_compile_definitions(ENABLE_DVPP_INTERFACE)
-    find_library(acl libascendcl.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(acl_cblas libacl_cblas.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(acl_dvpp libacl_dvpp.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(acl_runtime libruntime.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(ge_compiler libge_compiler.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(libplatform libplatform.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(libcompress libcompress.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(libopskernel libopskernel.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(libaicore_utils libaicore_utils.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(libaicpu_engine_common libaicpu_engine_common.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(acl libascendcl.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
+    find_library(acl_cblas libacl_cblas.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
+    find_library(acl_dvpp libacl_dvpp.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
+    find_library(acl_runtime libruntime.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
+    find_library(ge_compiler libge_compiler.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
+    find_library(libplatform libplatform.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
+    find_library(libcompress libcompress.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
+    find_library(libopskernel libopskernel.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
+    find_library(libaicore_utils libaicore_utils.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
+    find_library(libaicpu_engine_common libaicpu_engine_common.so ${ASCEND_RUNTIME_PATH}
+                ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
 
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--no-as-needed graph ${ge_compiler}
             ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel}
@@ -147,7 +157,8 @@ endif()
 
 # Before build inference
 if(ENABLE_D)
-    find_library(adump_server libadump_server.a ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(adump_server libadump_server.a ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_PATH})
     target_link_libraries(mindspore_shared_lib PRIVATE ${adump_server})
 endif()
 
@@ -167,7 +178,9 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/fwkacllib/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/fwkacllib/lib64)
+        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/fwkacllib/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
         set(MINDSPORE_RPATH
             ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
@@ -175,9 +188,12 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/atc/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/atc/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/atc/lib64)
+        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/atc/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/acllib/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/acllib/lib64)
+        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/acllib/lib64)
+        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/lib64)
     endif()
 
     set_target_properties(mindspore_shared_lib PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})

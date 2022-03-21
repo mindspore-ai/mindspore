@@ -41,7 +41,8 @@ if(ENABLE_D)
         set(ASCEND_PATH /usr/local/Ascend)
         set(ASCEND_TOOLKIT_RUNTIME_PATH ${ASCEND_PATH}/ascend-toolkit/latest/fwkacllib/lib64)
         set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
-        find_library(HCCL hccl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+        set(ASCEND_CANN_RUNTIME_PATH ${ASCEND_PATH}/latest/fwkacllib/lib64)
+        find_library(HCCL hccl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
         file(GLOB_RECURSE ASCEND_COLLECTIVE_LIST "distribute/mpi_collective_group.cc"
                 "distribute/collective_group_wrapper.cc")
         set_property(SOURCE ${ASCEND_COLLECTIVE_LIST}

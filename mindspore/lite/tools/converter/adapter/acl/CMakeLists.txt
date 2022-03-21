@@ -5,6 +5,7 @@ include_directories(${TOP_DIR}/graphengine/ge)
 include_directories(${TOP_DIR}/graphengine/metadef/inc)
 include_directories(${TOP_DIR}/graphengine/inc/framework)
 include_directories(${TOP_DIR}/graphengine/third_party/fwkacllib/inc)
+include_directories(${TOP_DIR}/graphengine/third_party/fwkacllib/inc/aicpu)
 include_directories(${TOP_DIR}/graphengine/third_party/fwkacllib/inc/toolchain)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
