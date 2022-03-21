@@ -105,7 +105,7 @@ bool AicpuOpKernelLoad::GetSoNeedLoadPath(const std::string &so_name, std::strin
     MS_LOG(ERROR) << "Current path [" << cust_kernel_so_path << "] is invalid.";
     return false;
   }
-  auto real_cust_kernel_so_path = cust_kernel_so_path.substr(0, pos) + "/lib/";
+  auto real_cust_kernel_so_path = cust_kernel_so_path.substr(0, pos) + "/";
 
   if (real_cust_kernel_so_path.size() > PATH_MAX) {
     MS_LOG(ERROR) << "Current path [" << real_cust_kernel_so_path << "] is too long.";
