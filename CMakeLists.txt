@@ -19,47 +19,6 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    # find appropriate macosx SDK and set SDKROOT
-    if(NOT DEFINED ENV{SDKROOT})
-        # arm64: macosx11.x
-        # x86_64: macosx10.x, macosx11.x
-        if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
-            set(MACOSX_SDK_REGEX "MacOSX11(\\.\\d+)?")
-        else()
-            set(MACOSX_SDK_REGEX "MacOSX1[01](\\.\\d+)?")
-        endif()
-        exec_program(xcrun ARGS --show-sdk-path OUTPUT_VARIABLE MACOSX_SDK_PATH)
-        get_filename_component(MACOSX_SDK_PATH ${MACOSX_SDK_PATH} DIRECTORY)
-        file(GLOB ALL_SDK_NAME RELATIVE ${MACOSX_SDK_PATH} ${MACOSX_SDK_PATH}/*)
-        # get highest SDK version meets the requirements
-        execute_process(
-            COMMAND bash -c "echo '${ALL_SDK_NAME}' | grep -Eo '${MACOSX_SDK_REGEX}' | sort -n | tail -1 | tr -d '\\n'"
-            OUTPUT_VARIABLE MACOSX_FIND_SDK_NAME
-        )
-        if(NOT MACOSX_FIND_SDK_NAME)
-            message(FATAL_ERROR "can not find appropriate macosx SDK, you may need upgrade xcode")
-        endif()
-        set(ENV{SDKROOT} "${MACOSX_SDK_PATH}/${MACOSX_FIND_SDK_NAME}.sdk")
-    endif()
-    message("macosx sdkroot: $ENV{SDKROOT}")
-    # set macosx deployment target based on SDK
-    if(NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
-        execute_process(
-            COMMAND bash -c "cat $ENV{SDKROOT}/SDKSettings.json | \
-                grep -Eo 'MACOSX_DEPLOYMENT_TARGET\\\":\\\"\\d{2}\\.\\d+' | cut -d '\"' -f 3 | tr -d '\\n'"
-            OUTPUT_VARIABLE MACOSX_FIND_SDK_VERSION
-        )
-        if(NOT MACOSX_FIND_SDK_VERSION)
-            message(FATAL_ERROR "can not find MACOSX_DEPLOYMENT_TARGET in SDKROOT, \
-                please check whether it's a valid SDK path")
-        endif()
-        set(CMAKE_OSX_DEPLOYMENT_TARGET ${MACOSX_FIND_SDK_VERSION} CACHE STRING
-            "minimum macosx deployment target version" FORCE)
-        if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
-            set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0")
-        endif()
-    endif()
-    message("macosx deployment target version: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
     set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -Winconsistent-missing-override -Wno-user-defined-warnings \
         -Wno-return-std-move -Wno-unused-private-field -Wno-unused-lambda-capture -Wno-sign-compare \
         -Wno-overloaded-virtual -Wno-unneeded-internal-declaration -Wno-unused-variable -Wno-pessimizing-move \
