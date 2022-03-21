@@ -146,7 +146,7 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
     AddNewOutputs(func_graph, new_splitv, divisor, &make_tuple_inputs);
     cur_output_index += divisor;
     int64_t split_size = std::accumulate(size_splits_new.begin(), size_splits_new.end(), int64_t(0));
-    size_splits_base.emplace_back(split_size);
+    (void)size_splits_base.emplace_back(split_size);
     nodes_num++;
   }
   // create last splitv or getitem when last_node_num_split == 1
@@ -165,7 +165,7 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
       common::AnfAlgo::SetOutputInferTypeAndShape(last_new_type_ids, last_new_output_shapes, new_splitv.get());
       AddNewOutputs(func_graph, new_splitv, last_node_num_split, &make_tuple_inputs);
       int64_t last_split_size = std::accumulate(size_splits_new_last.begin(), size_splits_new_last.end(), int64_t(0));
-      size_splits_base.emplace_back(last_split_size);
+      (void)size_splits_base.emplace_back(last_split_size);
     } else {
       auto tuple_getitem = CreateTupleGetItem(func_graph, base_splitv, nodes_num);
       (void)base_splitv_outputs.push_back(tuple_getitem);

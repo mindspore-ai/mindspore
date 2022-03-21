@@ -143,7 +143,7 @@ AnfNodePtr ReduceSumOptimizer::NewAssistValueNode(const CNodePtr &cnode, const K
           if (item < 0) {
             (void)axes_value.emplace_back(item + x_shape->shape().size());
           } else {
-            axes_value.emplace_back(item);
+            (void)axes_value.emplace_back(item);
           }
         }
       }

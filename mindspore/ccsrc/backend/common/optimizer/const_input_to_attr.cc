@@ -94,7 +94,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
 }
 
 ConstInputToAttrInfoRegistry &ConstInputToAttrInfoRegistry::Instance() {
-  static ConstInputToAttrInfoRegistry instance;
+  static ConstInputToAttrInfoRegistry instance{};
   return instance;
 }
 
