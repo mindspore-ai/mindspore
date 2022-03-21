@@ -33,7 +33,8 @@ from ..cell import Cell
 from .activation import get_activation
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
-           'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Roll']
+           'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Roll',
+           'Identity']
 
 
 class L1Regularizer(Cell):
@@ -219,6 +220,40 @@ def check_dense_input_shape(x, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(x) < 2:
         raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 2, but got {len(x)}.")
+
+
+class Identity(Cell):
+    """
+    Returns a Tensor with the same shape and contents as input.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
+
+    Outputs:
+        Tensor, the shape of tensor and the data type are the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
+        >>> net = nn.Identity()
+        >>> output = net(x)
+        >>> print(output)
+        [1 2 3 4]
+    """
+
+    def __init__(self):
+        """Initialize Identity."""
+        super(Identity, self).__init__()
+        self.identity = P.Identity()
+
+    def construct(self, x):
+        out = self.identity(x)
+        return out
 
 
 class Dense(Cell):
