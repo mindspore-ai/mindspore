@@ -594,7 +594,7 @@ CNodePtr NeighborExchangeV2Fusion::CreateMiddleConcat(const FuncGraphPtr &graph,
     if (concat_dim == kWDim) {
       concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin(), all_to_all_v_outputs.begin() + 1);
     } else {
-      int64_t bottom_num = AllToAllRealIds(4, recv_rank_ids);
+      int64_t bottom_num = AllToAllRealIds(kRankIdFour, recv_rank_ids);
       concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin() + bottom_num,
                               all_to_all_v_outputs.begin() + bottom_num + 1);
     }

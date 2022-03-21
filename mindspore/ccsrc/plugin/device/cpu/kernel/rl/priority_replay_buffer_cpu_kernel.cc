@@ -119,8 +119,8 @@ bool PriorityReplayBufferSampleCpuKernel::Launch(const std::vector<AddressPtr> &
   for (size_t transition_index = 0; transition_index < samples.size(); transition_index++) {
     const std::vector<AddressPtr> &transition = samples[transition_index];
     for (size_t item_index = 0; item_index < schema_.size(); item_index++) {
-      void *offset =
-        reinterpret_cast<char *>(outputs[item_index + kTransitionIndex]->addr) + schema_[item_index] * transition_index;
+      void *offset = reinterpret_cast<uint8_t *>(outputs[item_index + kTransitionIndex]->addr) +
+                     schema_[item_index] * transition_index;
       MS_EXCEPTION_IF_CHECK_FAIL(memcpy_s(offset, outputs[item_index + kTransitionIndex]->size,
                                           transition[item_index]->addr, transition[item_index]->size) == EOK,
                                  "memcpy_s() failed.");
