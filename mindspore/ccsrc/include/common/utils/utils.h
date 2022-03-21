@@ -350,6 +350,10 @@ constexpr auto kEnvironSetOpName = "EnvironSet";
 constexpr auto kEnvironGetOpName = "EnvironGet";
 constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
 constexpr auto kUpdateStateOpName = "UpdateState";
+constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
+constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
+constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
+constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/mindir/env_op_attr_update.h"
+#include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
 #include <set>
 #include <string>
 #include "include/common/utils/utils.h"
@@ -23,21 +23,22 @@
 
 namespace mindspore {
 namespace opt {
-const AnfNodePtr EnvOpAttrUpdate::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                          const EquivPtr &equiv) const {
+const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                             const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
 
-  static const std::set<std::string> kEnvOpNames = {kEnvironCreateOpName, kEnvironSetOpName, kEnvironGetOpName,
-                                                    kEnvironDestroyAllOpName};
+  static const std::set<std::string> kAICpuOpNames = {
+    kEnvironCreateOpName,        kEnvironSetOpName,         kEnvironGetOpName,           kEnvironDestroyAllOpName,
+    kPriorityReplayBufferCreate, kPriorityReplayBufferPush, kPriorityReplayBufferSample, kPriorityReplayBufferUpdate};
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
 
   if (!node->isa<CNode>()) {
     return node;
   }
   auto kernel_name = common::AnfAlgo::GetCNodeName(node);
-  if (kEnvOpNames.find(kernel_name) != kEnvOpNames.end()) {
+  if (kAICpuOpNames.find(kernel_name) != kAICpuOpNames.end()) {
     common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kEnvOpSoNames), node);
   }
 

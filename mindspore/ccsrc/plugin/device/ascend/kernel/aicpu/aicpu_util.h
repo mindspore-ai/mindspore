@@ -75,14 +75,26 @@ constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";
 constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
+constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
+constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
+constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
+constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
 const std::set<std::string> kCpuKernelOps{kIdentity,     kMaskedSelect,   kMaskedSelectGrad,   kDynamicStitch,
                                           kSearchSorted, kResizeBilinear, kResizeBilinearGrad, kScatterElements};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
-const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask, kEnvironCreate, kEnvironSet, kEnvironGet,
-                                              kEnvironDestroyAll};
+const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
+                                              kEnvironCreate,
+                                              kEnvironSet,
+                                              kEnvironGet,
+                                              kEnvironDestroyAll,
+                                              kPriorityReplayBufferCreate,
+                                              kPriorityReplayBufferPush,
+                                              kPriorityReplayBufferSample,
+                                              kPriorityReplayBufferUpdate};
 const std::set<std::string> kDynamicInputOps{
-  kPrint, kPack, kMeshgrid, kStackInitOpName, kStackDestroyOpName, kStackPushOpName, kStackPopOpName, kDynamicStitch};
+  kPrint,           kPack,           kMeshgrid,      kStackInitOpName,          kStackDestroyOpName,
+  kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number
