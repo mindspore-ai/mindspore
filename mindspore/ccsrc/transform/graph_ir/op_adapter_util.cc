@@ -173,8 +173,6 @@ GeTensor VectorToTensorUtil(const ValuePtr &value) {
   } else {
     MS_LOG(EXCEPTION) << "Unsupported data type of tuple or list elements: " << vec[0]->type_name();
   }
-
-  return GeTensor();
 }
 
 GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<AnyValue>) {
