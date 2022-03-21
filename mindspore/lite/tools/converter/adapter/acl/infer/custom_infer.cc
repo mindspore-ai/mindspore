@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace lite {
+constexpr auto kBase = 10;
 constexpr auto kBufMaxSize = 1024;
 
 Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
@@ -52,11 +53,11 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
   char *save_ptr = nullptr;
   res = strtok_r(buf, delims, &save_ptr);
   while (res != nullptr && id < outputs->size()) {
-    int64_t dims_num = strtol(res, &res, 10);
+    int64_t dims_num = strtol(res, &res, kBase);
     std::vector<int64_t> shape(dims_num);
     for (int64_t j = 0; j < dims_num; j++) {
       res = strtok_r(nullptr, delims, &save_ptr);
-      shape[j] = static_cast<int64_t>(strtol(res, &res, 10));
+      shape[j] = static_cast<int64_t>(strtol(res, &res, kBase));
     }
     (*outputs)[id].SetShape(shape);
     id += 1;

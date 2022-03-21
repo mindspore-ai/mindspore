@@ -30,7 +30,6 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr auto kNameReduceInputNum = 3;
-
 }  // namespace
 
 STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
