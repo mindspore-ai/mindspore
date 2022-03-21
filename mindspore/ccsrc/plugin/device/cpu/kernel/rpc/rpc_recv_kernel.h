@@ -32,6 +32,9 @@ class RpcRecvKernelMod : public RpcKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
+    if (!kernel_func_) {
+      MS_LOG(EXCEPTION) << "Kernel func pointer is not initialized!";
+    }
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
@@ -41,6 +44,13 @@ class RpcRecvKernelMod : public RpcKernelMod {
     if (HasAbstractUMonad(input0) || HasAbstractIOMonad(input0)) {
       recv_monad_ = true;
     }
+
+    auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      MS_LOG(EXCEPTION) << "RpcRecv does not support this kernel data type: " << kernel_attr;
+    }
+    kernel_func_ = func_list_[index].second;
   }
 
  protected:
