@@ -148,15 +148,15 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
     SetCoreType(kernel_build_info->core_type());
     SetOutputDataDesc(kernel_build_info->output_data_desc());
     for (size_t index = 0; index < kernel_build_info->GetInputNum(); ++index) {
-      kernel_build_info_->inputs_device_type_.emplace_back(kernel_build_info->GetInputDeviceType(index));
-      kernel_build_info_->inputs_format_.emplace_back(kernel_build_info->GetInputFormat(index));
-      kernel_build_info_->input_reshape_type_.emplace_back(kernel_build_info->GetInputReshapeType(index));
-      kernel_build_info_->input_value_depend_.emplace_back(kernel_build_info->GetInputValueDepend(index));
+      (void)kernel_build_info_->inputs_device_type_.emplace_back(kernel_build_info->GetInputDeviceType(index));
+      (void)kernel_build_info_->inputs_format_.emplace_back(kernel_build_info->GetInputFormat(index));
+      (void)kernel_build_info_->input_reshape_type_.emplace_back(kernel_build_info->GetInputReshapeType(index));
+      (void)kernel_build_info_->input_value_depend_.emplace_back(kernel_build_info->GetInputValueDepend(index));
     }
     for (size_t index = 0; index < kernel_build_info->GetOutputNum(); ++index) {
-      kernel_build_info_->outputs_device_type_.emplace_back(kernel_build_info->GetOutputDeviceType(index));
-      kernel_build_info_->outputs_format_.emplace_back(kernel_build_info->GetOutputFormat(index));
-      kernel_build_info_->output_reshape_type_.emplace_back(kernel_build_info->GetOutputReshapeType(index));
+      (void)kernel_build_info_->outputs_device_type_.emplace_back(kernel_build_info->GetOutputDeviceType(index));
+      (void)kernel_build_info_->outputs_format_.emplace_back(kernel_build_info->GetOutputFormat(index));
+      (void)kernel_build_info_->output_reshape_type_.emplace_back(kernel_build_info->GetOutputReshapeType(index));
     }
   }
 

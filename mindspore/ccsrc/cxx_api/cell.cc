@@ -37,7 +37,7 @@ ParameterCell &ParameterCell::operator=(const ParameterCell &cell) {
   return *this;
 }
 
-ParameterCell::ParameterCell(ParameterCell &&cell) : Cell<ParameterCell>(cell), tensor_(cell.tensor_) {}
+ParameterCell::ParameterCell(ParameterCell &&cell) : Cell<ParameterCell>(std::move(cell)), tensor_(cell.tensor_) {}
 
 ParameterCell &ParameterCell::operator=(ParameterCell &&cell) {
   if (&cell == this) {
