@@ -165,7 +165,7 @@ bool DistributedCountService::CountReachThreshold(const std::string &name, const
       std::string reason = "Sending querying whether count reaches " + name +
                            " threshold message to leader server failed" + (fl_id.empty() ? "" : " for fl id " + fl_id);
       MS_LOG(WARNING) << reason;
-      return false;
+      return true;
     }
 
     MS_ERROR_IF_NULL_W_RET_VAL(query_cnt_enough_rsp_msg, false);
