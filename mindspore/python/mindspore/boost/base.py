@@ -69,13 +69,17 @@ class OptimizerProcess:
     def __init__(self, opt):
         if isinstance(opt, LARS):
             self.is_lars = True
+            self.single_opt = opt.opt
             self.opt_class = type(opt.opt)
             self.opt_init_args = opt.opt.init_args
             self.lars_init_args = opt.init_args
+            self.learning_rate = opt.opt.init_learning_rate
         else:
             self.is_lars = False
+            self.single_opt = opt
             self.opt_class = type(opt)
             self.opt_init_args = opt.init_args
+            self.learning_rate = opt.init_learning_rate
         self.origin_params = opt.init_params["params"]
 
     def build_params_dict(self, network):
@@ -155,10 +159,13 @@ class OptimizerProcess:
 
     def generate_new_optimizer(self):
         """Generate new optimizer."""
+        if self.learning_rate is None:
+            self.learning_rate = self.single_opt.learning_rate
         if not self.is_lars:
-            opt = self.opt_class(params=self.origin_params, **self.opt_init_args)
+            opt = self.opt_class(params=self.origin_params, learning_rate=self.learning_rate, **self.opt_init_args)
         else:
-            opt = LARS(self.opt_class(params=self.origin_params, **self.opt_init_args), **self.lars_init_args)
+            opt = LARS(self.opt_class(params=self.origin_params, learning_rate=self.learning_rate, \
+                                      **self.opt_init_args), **self.lars_init_args)
 
         return opt
 

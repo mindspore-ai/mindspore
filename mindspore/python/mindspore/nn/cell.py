@@ -137,6 +137,7 @@ class Cell(Cell_):
         self._auto_parallel_compile_and_run = False
         self.cast = Cast()
         self._has_config_recompute = False
+        self._user_parameters = []
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -1154,6 +1155,27 @@ class Cell(Cell_):
 
         Validator.check_str_by_regular(prefix)
         for name, param in self.parameters_and_names(expand=recurse):
+            if prefix != '':
+                param.is_init = False
+            param.name = prefix + name
+
+    def _update_local_parameters_name(self, prefix='', recurse=True):
+        """
+        Updates the names of local parameters with given prefix string.
+
+        Adds the given prefix to the names of local parameters.
+
+        Local parameters means the parameters without user input.
+
+        Args:
+            prefix (str): The prefix string. Default: ''.
+            recurse (bool): Whether contains the parameters of subcells. Default: True.
+        """
+
+        Validator.check_str_by_regular(prefix)
+        for name, param in self.parameters_and_names(expand=recurse):
+            if name in self._user_parameters:
+                continue
             if prefix != '':
                 param.is_init = False
             param.name = prefix + name

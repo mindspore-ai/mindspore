@@ -59,33 +59,45 @@ class FreezeOpt(Cell):
             self.opt_class = type(opt.opt)
             self.opt_init_args = opt.opt.init_args
             self.lars_init_args = opt.init_args
+            self.single_opt = opt.opt
             self.parameters = opt.opt.parameters
+            self.learning_rate = opt.opt.init_learning_rate
+            self.dynamic_lr = opt.opt.dynamic_lr
         else:
             self.is_lars = False
             self.opt_class = type(opt)
             self.opt_init_args = opt.init_args
+            self.single_opt = opt
             self.parameters = opt.parameters
-        self.opts = []
+            self.learning_rate = opt.init_learning_rate
+            self.dynamic_lr = opt.dynamic_lr
 
+        self.opts = []
         if train_parameter_groups is None:
-            groups_num = 10
+            self.groups_num = 10
             step = 6
             parameters = opt.parameters
-            para_groups = (parameters[(i * step):] for i in range(groups_num))
-            self.opts = [self._generate_new_optimizer(
-                params) for params in para_groups]
+            train_parameter_groups = (tuple(parameters[(i * step):]) for i in range(self.groups_num))
         else:
             if not isinstance(train_parameter_groups, (tuple, list)):
                 raise TypeError(
                     "The specified 'train_parameter_groups' should be tuple or list")
-            for params in train_parameter_groups:
-                if not isinstance(params, (tuple, list)):
-                    raise TypeError("The each element of 'train_parameter_groups' should be tuple or list "
-                                    "to store the Parameter")
+            self.groups_num = len(train_parameter_groups)
 
-                # generate one-to-one opt corresponding to the parameter group
-                self.opts.append(self._generate_new_optimizer(params))
+        self._init_train_strategy(train_strategy)
+        self._create_new_group_learning_rate()
 
+        self.opt_index = 0
+        for params in train_parameter_groups:
+            if not isinstance(params, (tuple, list)):
+                raise TypeError("The each element of 'train_parameter_groups' should be tuple or list "
+                                "to store the Parameter")
+            # generate one-to-one opt corresponding to the parameter group
+            self.opts.append(self._generate_new_optimizer(params))
+            self.opt_index += 1
+
+    def _init_train_strategy(self, train_strategy):
+        """Init train strategy for gradient freeze."""
         if isinstance(train_strategy, (tuple, list)):
             for ele in train_strategy:
                 if not isinstance(ele, int):
@@ -103,13 +115,32 @@ class FreezeOpt(Cell):
             raise TypeError(
                 "The specified 'train_strategy' should be None, tuple, list or Tensor")
 
+    def _create_new_group_learning_rate(self):
+        """Create new learning rate for different global step."""
+        self.dynamic_learning_rate = [[] for _ in range(self.groups_num)]
+        if self.learning_rate is None:
+            self.learning_rate = self.single_opt.learning_rate
+            return
+        if self.dynamic_lr and isinstance(self.learning_rate, list) and isinstance(self.train_strategy, Tensor):
+            train_strategy = list(self.train_strategy.asnumpy())
+            if len(self.learning_rate) <= len(train_strategy):
+                for i, lr in enumerate(self.learning_rate):
+                    self.dynamic_learning_rate[train_strategy[i]].append(lr)
+
     def _generate_new_optimizer(self, params):
         """Generate new optimizer."""
-        if not self.is_lars:
-            opt = self.opt_class(params=params, **self.opt_init_args)
+        if self.dynamic_learning_rate[self.opt_index]:
+            lr = self.dynamic_learning_rate[self.opt_index]
         else:
-            opt = LARS(self.opt_class(params=params, **self.opt_init_args),
+            lr = self.learning_rate
+        if not self.is_lars:
+            opt = self.opt_class(params=params, learning_rate=lr, **self.opt_init_args)
+            opt._update_local_parameters_name("boost_{}".format(self.opt_index)) # pylint: disable=W0212
+        else:
+            opt = LARS(self.opt_class(params=params, learning_rate=lr, **self.opt_init_args),
                        **self.lars_init_args)
+            opt.opt._update_local_parameters_name("boost_{}".format(self.opt_index)) # pylint: disable=W0212
+            opt._update_local_parameters_name("boost_{}".format(self.opt_index)) # pylint: disable=W0212
         return opt
 
 
