@@ -26,16 +26,8 @@
 
 namespace mindspore {
 namespace kernel {
-class Address;
 struct KernelLaunchInfo;
-using AddressPtr = std::shared_ptr<Address>;
 }  // namespace kernel
-using AddressPtrList = std::vector<kernel::AddressPtr>;
-struct MemInfo {
-  AddressPtrList *inputs_;
-  AddressPtrList *workspaces_;
-  AddressPtrList *outputs_;
-};
 class MemAddressRecorder : public BaseRecorder {
  public:
   MemAddressRecorder() {}

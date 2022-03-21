@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace {
-std::string MemInfo2String(const std::string &label, const AddressPtrList &info) {
+std::string MemInfo2String(const std::string &label, const kernel::AddressPtrList &info) {
   std::ostringstream ss;
   ss << label << " " << info.size() << std::endl;
   for (size_t i = 0; i < info.size(); i++) {
