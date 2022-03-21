@@ -21,6 +21,7 @@
 #include <mutex>
 #include <set>
 #include "abstract/abstract_value.h"
+#include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
 #include "utils/symbolic.h"
@@ -287,6 +288,20 @@ AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, 
   return possible_func;
 }
 
+void CheckInterpretedObject(const AbstractBasePtr &abs) {
+  static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
+  static const auto use_fallback = (support_fallback != "0");
+  if (!use_fallback) {
+    return;
+  }
+  auto value = abs->BuildValue();
+  if (value->isa<parse::InterpretedObject>()) {
+    MS_LOG(ERROR) << "Do not support " << value->ToString() << ". "
+                  << "\nIf you are using third-party modules, you can try setting: "
+                  << "'export MS_DEV_SUPPORT_MODULES=module1,module2,...'.";
+  }
+}
+
 EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cnode);
@@ -298,6 +313,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
 
   AbstractFunctionPtr func = dyn_cast<AbstractFunction>(possible_func);
   if (func == nullptr) {
+    CheckInterpretedObject(possible_func);
     MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << possible_func->ToString() << ".";
     MS_LOG(ERROR) << "It's called at: " << cnode->DebugString();
     MS_EXCEPTION(ValueError) << "This may be not defined, or it can't be a operator. Please check code.";

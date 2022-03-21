@@ -15,6 +15,7 @@
 """ test graph fallback """
 import pytest
 import numpy as np
+import numpy.random as rand
 from mindspore import ms_function, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -547,3 +548,18 @@ def test_np_slice():
         return Tensor(b)
     res = np_slice()
     assert np.all(res.asnumpy() == np.array([1, 2, 3, 4]))
+
+
+def test_np_random():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy.random module in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_random():
+        a = rand.randint(100, size=(5))
+        b = a[1:5]
+        return Tensor(b)
+    res = np_random()
+    print(res)
