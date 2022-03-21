@@ -250,7 +250,7 @@ int GruCPUKernel::Run() {
   int check_seq_len = gru_param_->seq_len_;
 
   if (in_tensors_.size() == 6) {
-    auto seq_len = reinterpret_cast<int *>(in_tensors_.at(5)->data());
+    auto seq_len = reinterpret_cast<int *>(in_tensors_.at(DIMENSION_5D)->data());
     CHECK_NULL_RETURN(seq_len);
     if (!std::equal(seq_len + 1, seq_len + gru_param_->batch_, seq_len)) {
       MS_LOG(ERROR) << "different batch seq_len is currently not supported";

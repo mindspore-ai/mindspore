@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
+#include "nnacl/op_base.h"
+
 #include "experiment/kernel/convolution_fp32.h"
 
 namespace mindspore::kernel {
 ConvolutionCPUFp32::ConvolutionCPUFp32(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors,
                                        std::vector<lite::Tensor *> out_tensors, const lite::Context *ctx)
     : InnerKernel(parameter, in_tensors, out_tensors, ctx) {
-  TensorC *in[4];
+  TensorC *in[C4NUM];
   size_t insize = 0;
-  for (; insize < in_tensors.size() && insize < 4; insize++) {
+  for (; insize < in_tensors.size() && insize < C4NUM; insize++) {
     in[insize] = &in_tensors[insize]->TensorC();
   }
 
@@ -56,5 +58,4 @@ int ConvolutionCPUFp32::PreProcess() {
 int ConvolutionCPUFp32::Run() { return kernel->compute(kernel); }
 
 int ConvolutionCPUFp32::PostProcess() { return kernel->compute(kernel); }
-
 }  // namespace mindspore::kernel
