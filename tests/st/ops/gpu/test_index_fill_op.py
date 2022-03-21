@@ -103,22 +103,6 @@ def test_index_fill_dim_type(dim_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('value, data_type', [(10, np.int64), (10., np.float32)])
-def test_index_fill_scalar(value, data_type):
-    """
-    Feature: IndexFill
-    Description:  test cases for IndexFill operator with scalar input.
-    Expectation: the result match numpy.
-    """
-    dim = 0
-    x_np = np.random.randint(20, size=(5, 5, 5)).astype(data_type)
-    index_np = np.random.randint(low=0, high=5, size=4).astype(np.int32)
-    assert compare_with_numpy(x_np, dim, index_np, value)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('dim', [0, 1])
 @pytest.mark.parametrize('data_type', [np.int32])
 def test_index_fill_error(dim, data_type):

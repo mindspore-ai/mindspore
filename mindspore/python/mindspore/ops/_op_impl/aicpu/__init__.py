@@ -40,6 +40,7 @@ from .exp import _exp_aicpu
 from .expm1 import _expm1_aicpu
 from .identity import _identity_aicpu
 from .identity_n import _identity_n_aicpu
+from .index_fill import _index_fill_aicpu
 from .edit_distance import _edit_distance_aicpu
 from .unique_with_pad import _unique_with_pad_aicpu
 from .bartlett_window import _bartlett_window_aicpu
