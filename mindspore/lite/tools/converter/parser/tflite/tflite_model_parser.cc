@@ -704,6 +704,7 @@ STATUS TfliteModelParser::ConvertConstTensor(const std::unique_ptr<tflite::Tenso
         return RET_ERROR;
       }
     } else {
+      MS_CHECK_TRUE_MSG(tensor_info->Size() == data.size(), RET_ERROR, "invalid const tensor data.");
       if (memcpy_s(tensor_data, tensor_info->Size(), data.data(), data.size()) != EOK) {
         MS_LOG(ERROR) << "memcpy failed.";
         return RET_ERROR;
