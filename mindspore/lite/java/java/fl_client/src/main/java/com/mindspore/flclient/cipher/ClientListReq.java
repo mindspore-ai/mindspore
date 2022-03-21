@@ -126,6 +126,11 @@ public class ClientListReq {
                 retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
+            if (Common.isSeverJobFinished(responseData)) {
+                LOGGER.info(Common.addTag("[getClientList] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist."));
+                retCode = ResponseCode.SystemError;
+                return FLClientStatus.FAILED;
+            }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             LOGGER.info(Common.addTag("getClientList responseData size: " + responseData.length));
             ReturnClientList clientListRsp = ReturnClientList.getRootAsReturnClientList(buffer);

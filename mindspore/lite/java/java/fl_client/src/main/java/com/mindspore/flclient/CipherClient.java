@@ -506,12 +506,10 @@ public class CipherClient {
         try {
             byte[] responseData = flCommunication.syncRequest(url + "/exchangeKeys", msg);
             if (!Common.isSeverReady(responseData)) {
-                LOGGER.info(Common.addTag("[requestExchangeKeys] the server is not ready now, need wait some time and" +
-                        " " +
-                        "request again"));
-                nextRequestTime = Common.getNextReqTime();
-                retCode = ResponseCode.OutOfTime;
-                return FLClientStatus.RESTART;
+                return serverNotReady("requestExchangeKeys");
+            }
+            if (Common.isSeverJobFinished(responseData)) {
+               return serverJobFinished("requestExchangeKeys");
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             ResponseExchangeKeys responseExchangeKeys = ResponseExchangeKeys.getRootAsResponseExchangeKeys(buffer);
@@ -588,11 +586,10 @@ public class CipherClient {
         try {
             byte[] responseData = flCommunication.syncRequest(url + "/getKeys", msg);
             if (!Common.isSeverReady(responseData)) {
-                LOGGER.info(Common.addTag("[getExchangeKeys] the server is not ready now, need wait some time and " +
-                        "request again"));
-                nextRequestTime = Common.getNextReqTime();
-                retCode = ResponseCode.OutOfTime;
-                return FLClientStatus.RESTART;
+                return serverNotReady("getExchangeKeys");
+            }
+            if (Common.isSeverJobFinished(responseData)) {
+                return serverJobFinished("getExchangeKeys");
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             ReturnExchangeKeys returnExchangeKeys = ReturnExchangeKeys.getRootAsReturnExchangeKeys(buffer);
@@ -838,11 +835,10 @@ public class CipherClient {
                         flParameter.getDomainName());
                 byte[] responseData = flCommunication.syncRequest(url + "/shareSecrets", msg);
                 if (!Common.isSeverReady(responseData)) {
-                    LOGGER.info(Common.addTag("[requestShareSecrets] the server is not ready now, need wait some time" +
-                            " and request again"));
-                    nextRequestTime = Common.getNextReqTime();
-                    retCode = ResponseCode.OutOfTime;
-                    return FLClientStatus.RESTART;
+                    return serverNotReady("requestShareSecrets");
+                }
+                if (Common.isSeverJobFinished(responseData)) {
+                    return serverJobFinished("requestShareSecrets");
                 }
                 ByteBuffer buffer = ByteBuffer.wrap(responseData);
                 ResponseShareSecrets responseShareSecrets = ResponseShareSecrets.getRootAsResponseShareSecrets(buffer);
@@ -917,11 +913,10 @@ public class CipherClient {
         try {
             byte[] responseData = flCommunication.syncRequest(url + "/getSecrets", msg);
             if (!Common.isSeverReady(responseData)) {
-                LOGGER.info(Common.addTag("[getShareSecrets] the server is not ready now, need wait some time and " +
-                        "request again"));
-                nextRequestTime = Common.getNextReqTime();
-                retCode = ResponseCode.OutOfTime;
-                return FLClientStatus.RESTART;
+                return serverNotReady("getShareSecrets");
+            }
+            if (Common.isSeverJobFinished(responseData)) {
+                return serverJobFinished("getShareSecrets");
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             ReturnShareSecrets returnShareSecrets = ReturnShareSecrets.getRootAsReturnShareSecrets(buffer);
@@ -1266,11 +1261,10 @@ public class CipherClient {
             byte[] responseData = flCommunication.syncRequest(url + "/pushListSign", msg);
 
             if (!Common.isSeverReady(responseData)) {
-                LOGGER.info(Common.addTag("[sendClientListSign] the server is not ready now, need wait some time and " +
-                        "request again"));
-                nextRequestTime = Common.getNextReqTime();
-                retCode = ResponseCode.OutOfTime;
-                return FLClientStatus.RESTART;
+                return serverNotReady("sendClientListSign");
+            }
+            if (Common.isSeverJobFinished(responseData)) {
+                return serverJobFinished("sendClientListSign");
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             ResponseClientListSign responseClientListSign =
@@ -1336,11 +1330,10 @@ public class CipherClient {
             byte[] responseData = flCommunication.syncRequest(url + "/getListSign", msg);
 
             if (!Common.isSeverReady(responseData)) {
-                LOGGER.info(Common.addTag("[getAllClientListSign] the server is not ready now, need wait some time " +
-                        "and request again"));
-                nextRequestTime = Common.getNextReqTime();
-                retCode = ResponseCode.OutOfTime;
-                return FLClientStatus.RESTART;
+               return serverNotReady("getAllClientListSign");
+            }
+            if (Common.isSeverJobFinished(responseData)) {
+                return serverJobFinished("getAllClientListSign");
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             ReturnAllClientListSign returnAllClientList =
@@ -1482,5 +1475,18 @@ public class CipherClient {
             return true;
         }
         return false;
+    }
+
+    private FLClientStatus serverNotReady(String logTag) {
+        LOGGER.info(Common.addTag("[" + logTag +"] the server is not ready now, need wait some time and request again"));
+        nextRequestTime = Common.getNextReqTime();
+        retCode = ResponseCode.OutOfTime;
+        return FLClientStatus.RESTART;
+    }
+
+    private FLClientStatus serverJobFinished(String logTag) {
+        LOGGER.info(Common.addTag("[" + logTag + "] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist."));
+        retCode = ResponseCode.SystemError;
+        return FLClientStatus.FAILED;
     }
 }
