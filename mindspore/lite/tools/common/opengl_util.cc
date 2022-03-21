@@ -136,6 +136,10 @@ namespace mindspore {
 namespace OpenGL {
 OpenGLRuntime::OpenGLRuntime() {}
 OpenGLRuntime::~OpenGLRuntime() {}
+constexpr int kC4Align = 4;
+constexpr int kWidthIndex = 0;
+constexpr int kHeightIndex = 1;
+constexpr int kChannelIndex = 2;
 
 bool OpenGLRuntime::Init() {
   MS_LOG(INFO) << "Rt Init Begin";
@@ -331,7 +335,7 @@ GLuint OpenGLRuntime::GLCreateTexture(int w, int h, int c, GLenum TextrueFormat,
 
     int realW = w;
     int realH = h;
-    int realD = UP_DIV(c, 4);
+    int realD = UP_DIV(c, kC4Align);
     glTexStorage3D(target, 1, TextrueFormat, realW, realH, realD);
     OPENGL_CHECK_ERROR;
   } else if (target == GL_TEXTURE_2D) {
@@ -351,7 +355,7 @@ GLuint OpenGLRuntime::GLCreateTexture(int w, int h, int c, GLenum TextrueFormat,
     glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     OPENGL_CHECK_ERROR;
 
-    int realW = w * UP_DIV(c, 4);
+    int realW = w * UP_DIV(c, kC4Align);
     int realH = h;
     glTexStorage2D(target, 1, TextrueFormat, realW, realH);
     OPENGL_CHECK_ERROR;
@@ -383,15 +387,15 @@ bool OpenGLRuntime::CopyDeviceTextureToSSBO(GLuint textureID, GLuint ssboBufferI
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BIND_INDEX_1, ssboBufferID);
 
   // set uniform values
-  int width = m_texture_pool_[textureID].first[0];
-  int height = m_texture_pool_[textureID].first[1];
-  int channel = m_texture_pool_[textureID].first[2];
+  int width = m_texture_pool_[textureID].first[kWidthIndex];
+  int height = m_texture_pool_[textureID].first[kHeightIndex];
+  int channel = m_texture_pool_[textureID].first[kChannelIndex];
 
   glUniform1i(BIND_INDEX_2, width);
   glUniform1i(BIND_INDEX_3, height);
   glUniform1i(BIND_INDEX_4, channel);
 
-  int c_4 = UP_DIV(channel, 4);
+  int c_4 = UP_DIV(channel, kC4Align);
   int gLocalSize[3] = {4, 4, 1};
   glDispatchCompute(UP_DIV(width, gLocalSize[FIRST_INPUT]), UP_DIV(height, gLocalSize[SECOND_INPUT]),
                     UP_DIV(c_4, gLocalSize[THIRD_INPUT]));
@@ -421,15 +425,15 @@ bool OpenGLRuntime::CopyDeviceSSBOToTexture(GLuint ssboBufferID, GLuint textureI
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BIND_INDEX_1, ssboBufferID);
 
   // set uniform values
-  int width = m_texture_pool_[textureID].first[0];
-  int height = m_texture_pool_[textureID].first[1];
-  int channel = m_texture_pool_[textureID].first[2];
+  int width = m_texture_pool_[textureID].first[kWidthIndex];
+  int height = m_texture_pool_[textureID].first[kHeightIndex];
+  int channel = m_texture_pool_[textureID].first[kChannelIndex];
 
   glUniform1i(BIND_INDEX_2, width);
   glUniform1i(BIND_INDEX_3, height);
   glUniform1i(BIND_INDEX_4, channel);
 
-  int c_4 = UP_DIV(channel, 4);
+  int c_4 = UP_DIV(channel, kC4Align);
   int gLocalSize[3] = {4, 4, 1};
   glDispatchCompute(UP_DIV(width, gLocalSize[FIRST_INPUT]), UP_DIV(height, gLocalSize[SECOND_INPUT]),
                     UP_DIV(c_4, gLocalSize[THIRD_INPUT]));
@@ -448,9 +452,9 @@ GLuint OpenGLRuntime::CopyHostToDeviceTexture(void *hostData, int width, int hei
 }
 
 void *OpenGLRuntime::CopyDeviceTextureToHost(GLuint textureID) {
-  int width = m_texture_pool_[textureID].first[0];
-  int height = m_texture_pool_[textureID].first[1];
-  int channel = m_texture_pool_[textureID].first[2];
+  int width = m_texture_pool_[textureID].first[kWidthIndex];
+  int height = m_texture_pool_[textureID].first[kHeightIndex];
+  int channel = m_texture_pool_[textureID].first[kChannelIndex];
 
   auto ssboBufferID = GLCreateSSBO(sizeof(float) * width * height * channel);
   CopyDeviceTextureToSSBO(textureID, ssboBufferID);
