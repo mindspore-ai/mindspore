@@ -76,7 +76,7 @@ class ParameterEliminator {
 
   static std::pair<FuncGraphPtr, std::vector<CNodePtr>> SearchFuncGraphCallers(const FuncGraphPtr &func_graph) {
     for (const auto &fg : func_graph->func_graphs_used_total()) {
-      if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
+      if (fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
         continue;
       }
       const auto &parameters = fg->parameters();

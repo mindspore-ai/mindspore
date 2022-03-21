@@ -103,7 +103,8 @@ class SpecializeOnGraphArguments : public AnfVisitor {
     }
 
     auto inp0_fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    if (inp0_fg == nullptr || inp0_fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || inp0_fg->recursive()) {
+    if (inp0_fg == nullptr || inp0_fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) ||
+        inp0_fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || inp0_fg->recursive()) {
       return nullptr;
     }
     std::vector<ValuePtr> need_eliminated_args;

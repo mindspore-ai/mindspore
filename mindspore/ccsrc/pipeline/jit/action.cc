@@ -1404,7 +1404,7 @@ static std::vector<ActionItem> CommonPipeline() {
 
 std::vector<ActionItem> GePipeline() {
   auto actions = CommonPipeline();
-  // optimize
+  // Optimize
   (void)actions.emplace_back(std::make_pair("optimize", GeOptimizeAction));
   // Add opt-stage python pass stub
   (void)actions.emplace_back(std::make_pair("py_opt", OptActionGePyStub));
@@ -1422,7 +1422,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
   if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
     actions = CommonPipeline();
 
-    // optimize
+    // Optimize
     (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
 
     // Add opt-stage python pass stub
@@ -1430,10 +1430,10 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
 
     (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
 
-    // eliminate forward cnode for grad graph
+    // Eliminate forward cnode for grad graph
     (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
 
-    // eliminate the virtual mirror node
+    // Eliminate the virtual mirror node
     (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
 
     (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
@@ -1453,10 +1453,10 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     }
   }
 #endif
-  // compile the ANF graph
+  // Compile the ANF graph
   (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
 
-  // to execute the graph
+  // Execute the graph
   (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
 
   return actions;
@@ -1473,9 +1473,9 @@ std::vector<ActionItem> MindIRPipeline() {
   // Set funcGraph loaded from MindIR to resource.
   (void)actions.emplace_back(std::make_pair("load_mindir", SetMindIRGraphAction));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
-  // compile the ANF graph
+  // Compile the ANF graph
   (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
-  // to execute the graph
+  // Execute the graph
   (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
   return actions;
 }

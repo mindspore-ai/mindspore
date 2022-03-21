@@ -24,6 +24,7 @@
 #include <sstream>
 #include <algorithm>
 #include <unordered_set>
+#include <unordered_map>
 #include "utils/hash_map.h"
 #include "pybind_api/pybind_patch.h"
 #include "pipeline/jit/parse/resolve.h"
@@ -79,7 +80,7 @@ void Parser::BuildMethodMap() {
   stmt_method_map_["If"] = &Parser::ParseIf;
   stmt_method_map_["Assign"] = &Parser::ParseAssign;
   stmt_method_map_["While"] = &Parser::ParseWhile;
-  stmt_method_map_["For"] = &Parser::ParseFor;
+  stmt_method_map_["For"] = &Parser::ParseForUnroll;
   stmt_method_map_["FunctionDef"] = &Parser::ParseFunctionDef;
   stmt_method_map_["AugAssign"] = &Parser::ParseAugAssign;
   stmt_method_map_["Global"] = &Parser::ParseGlobal;
@@ -147,6 +148,96 @@ void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseFunction
   }
 }
 
+void Parser::LiftRolledBodyGraphFV() {
+  for (auto &rolled_call_pair : rolled_body_calls_) {
+    auto rolled_call_cnode = rolled_call_pair.first;
+    auto rolled_graph = rolled_call_pair.second->func_graph();
+    MS_EXCEPTION_IF_NULL(rolled_graph);
+    // auto lifted_graph = LiftingClone(rolled_graph);
+    std::vector<std::pair<CNodePtr, size_t>> free_variables;
+    std::vector<AnfNodePtr> nodes =
+      TopoSort(rolled_graph->get_return(), SuccIncoming, [&rolled_graph](const AnfNodePtr &node) -> IncludeType {
+        MS_EXCEPTION_IF_NULL(node);
+        // Not follow FV's inputs.
+        if (node->func_graph() != nullptr && node->func_graph() != rolled_graph) {
+          return NOFOLLOW;
+        }
+        return FOLLOW;
+      });
+    for (auto &node : nodes) {
+      // Only check Non-FV CNode.
+      auto cnode = dyn_cast<CNode>(node);
+      if (cnode == nullptr || cnode->func_graph() != rolled_graph) {
+        continue;
+      }
+
+      for (size_t i = 0; i < cnode->inputs().size(); ++i) {
+        auto &input = cnode->input(i);
+        if (input->func_graph() != nullptr && input->func_graph() != rolled_graph) {
+          free_variables.emplace_back(std::pair(cnode, i));
+          constexpr auto recur_2 = 2;
+          MS_LOG(DEBUG) << "Found FV: input[" << i << "] of " << cnode->DebugString(recur_2);
+        }
+      }
+    }
+    for (auto &free_node_pair : free_variables) {
+      auto &cnode = free_node_pair.first;
+      auto index = free_node_pair.second;
+      // Move the free variable to parent.
+      auto &free_node = cnode->input(index);
+      rolled_call_cnode->add_input(free_node);
+      // Change the free variable to the parameter.
+      auto parameter = rolled_graph->add_parameter();
+      cnode->set_input(index, parameter);
+      constexpr auto recur_2 = 2;
+      MS_LOG(DEBUG) << "Change FV: " << cnode->DebugString(recur_2);
+    }
+  }
+}
+
+namespace {
+void TransformParallelCallFormerToMiddle(const FuncGraphPtr &former_call_graph, const FuncGraphPtr &latter_call_graph,
+                                         size_t middle_graph_output_cnode_size, bool use_arguments_pack) {
+  // The 'former_graph_output' is middle graph call.
+  auto former_graph_output = former_call_graph->output();
+  MS_EXCEPTION_IF_NULL(former_graph_output);
+  std::vector<AnfNodePtr> inputs({NewValueNode(latter_call_graph)});
+  if (use_arguments_pack) {
+    for (size_t i = 0; i < middle_graph_output_cnode_size - 1; ++i) {
+      auto getitem_input = former_call_graph->NewCNodeInOrder(
+        {NewValueNode(prim::kPrimTupleGetItem), former_graph_output, NewValueNode(SizeToLong(i))});
+      (void)inputs.emplace_back(getitem_input);
+    }
+  } else {
+    (void)inputs.emplace_back(former_graph_output);
+  }
+  auto new_output = former_call_graph->NewCNodeInOrder(std::move(inputs));
+  former_call_graph->set_output(new_output);
+}
+
+bool TransformParallelCallMiddleToLatter(const FuncGraphPtr &middle_call_graph,
+                                         const CNodePtr &middle_graph_output_cnode,
+                                         const AnfNodePtr &middle_graph_dependency_node,
+                                         size_t middle_graph_output_cnode_size) {
+  bool use_arguments_pack = false;
+  constexpr auto output_inputs_num = 2;
+  AnfNodePtr new_middle_graph_output = nullptr;
+  if (middle_graph_output_cnode_size == output_inputs_num) {  // Only one argument.
+    new_middle_graph_output = middle_graph_output_cnode->input(1);
+  } else {  // More than one argument, pack them with tuple.
+    use_arguments_pack = true;
+    middle_graph_output_cnode->set_input(0, NewValueNode(prim::kPrimMakeTuple));
+    new_middle_graph_output = middle_graph_output_cnode;
+  }
+  // Adjust the middle funcgraph output with Depend.
+  if (middle_graph_dependency_node != nullptr) {
+    new_middle_graph_output = middle_graph_output_cnode->func_graph()->NewCNode(
+      {NewValueNode(prim::kPrimDepend), new_middle_graph_output, middle_graph_dependency_node});
+  }
+  middle_call_graph->set_output(new_middle_graph_output);
+  return use_arguments_pack;
+}
+
 bool IsDependOfIsolatedNodes(const AnfNodePtr &node) {
   if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
     return false;
@@ -161,12 +252,29 @@ bool IsDependOfIsolatedNodes(const AnfNodePtr &node) {
   return sort_rhs_first;
 }
 
+std::pair<CNodePtr, AnfNodePtr> GetRealMiddleOutputNodes(const FuncGraphPtr &middle_call_graph) {
+  auto middle_graph_output = middle_call_graph->output();
+  if (middle_graph_output == nullptr) {
+    MS_LOG(EXCEPTION) << "middle_graph_output is null, middle_call_graph: " << middle_call_graph->ToString();
+  }
+  auto middle_graph_output_cnode = dyn_cast<CNode>(middle_graph_output);
+  MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
+  // If latter_call_graph is not the tail call in middle funcgraph, keep the dependency node for later use.
+  AnfNodePtr middle_graph_dependency_node = nullptr;
+  if (IsDependOfIsolatedNodes(middle_graph_output_cnode)) {
+    auto middle_graph_real_output_cnode = dyn_cast<CNode>(middle_graph_output_cnode->input(1));
+    // Get the dependency node;
+    constexpr auto dependency_node_index = 2;
+    middle_graph_dependency_node = middle_graph_output_cnode->input(dependency_node_index);
+    MS_EXCEPTION_IF_NULL(middle_graph_real_output_cnode);
+    middle_graph_output_cnode = middle_graph_real_output_cnode;
+  }
+  return {middle_graph_output_cnode, middle_graph_dependency_node};
+}
+}  // namespace
+
 // Transform tail call to parallel call.
 void Parser::TransformParallelCall() {
-  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_PARALLEL_CALL") == "1");
-  if (!transform_tail_call_to_parallel_call) {
-    return;
-  }
   std::unordered_set<FuncGraphPtr> latter_call_graphs_set;
   for (auto &call_graphs_pair : parallel_call_graphs_) {
     MS_EXCEPTION_IF_NULL(call_graphs_pair.first);
@@ -182,45 +290,16 @@ void Parser::TransformParallelCall() {
     constexpr auto recur_3 = 3;
     MS_LOG(DEBUG) << "Tail call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
                   << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
-    auto middle_graph_output = middle_call_graph->output();
-    if (middle_graph_output == nullptr) {
-      MS_LOG(EXCEPTION) << "middle_graph_output is null, middle_call_graph: " << middle_call_graph->ToString();
-    }
-    auto middle_graph_output_cnode = dyn_cast<CNode>(middle_graph_output);
-    MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
-    // If latter_call_graph is not the tail call in middle funcgraph, keep the dependency node for later use.
-    AnfNodePtr middle_graph_dependency_node = nullptr;
-    if (IsDependOfIsolatedNodes(middle_graph_output_cnode)) {
-      auto middle_graph_real_output_cnode = dyn_cast<CNode>(middle_graph_output_cnode->input(1));
-      // Get the dependency node;
-      constexpr auto dependency_node_index = 2;
-      middle_graph_dependency_node = middle_graph_output_cnode->input(dependency_node_index);
-      MS_EXCEPTION_IF_NULL(middle_graph_real_output_cnode);
-      middle_graph_output_cnode = middle_graph_real_output_cnode;
-    }
+    auto [middle_graph_output_cnode, middle_graph_dependency_node] = GetRealMiddleOutputNodes(middle_call_graph);
     auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
     if (middle_graph_output_cnode_size <= 1) {
       constexpr auto recur_2 = 2;
       MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
       continue;
     }
-    bool use_arguments_pack = false;
     auto latter_graph_node = middle_graph_output_cnode->input(0);
-    constexpr auto output_inputs_num = 2;
-    AnfNodePtr new_middle_graph_output = nullptr;
-    if (middle_graph_output_cnode_size == output_inputs_num) {  // Only one argument.
-      new_middle_graph_output = middle_graph_output_cnode->input(1);
-    } else {  // More than one argument, pack them with tuple.
-      middle_graph_output_cnode->set_input(0, NewValueNode(prim::kPrimMakeTuple));
-      new_middle_graph_output = middle_graph_output_cnode;
-      use_arguments_pack = true;
-    }
-    // Adjust the middle funcgraph output with Depend.
-    if (middle_graph_dependency_node != nullptr) {
-      new_middle_graph_output = middle_graph_output_cnode->func_graph()->NewCNode(
-        {NewValueNode(prim::kPrimDepend), new_middle_graph_output, middle_graph_dependency_node});
-    }
-    middle_call_graph->set_output(new_middle_graph_output);
+    bool use_arguments_pack = TransformParallelCallMiddleToLatter(
+      middle_call_graph, middle_graph_output_cnode, middle_graph_dependency_node, middle_graph_output_cnode_size);
 
     // Transform the call of {former_graph -> middle_graph}.
     auto latter_call_graph = GetValueNode<FuncGraphPtr>(latter_graph_node);
@@ -234,24 +313,14 @@ void Parser::TransformParallelCall() {
       continue;
     }
     (void)latter_call_graphs_set.emplace(latter_call_graph);
-    auto former_graph_output = former_call_graph->output();
-    MS_EXCEPTION_IF_NULL(former_graph_output);
-    std::vector<AnfNodePtr> inputs({latter_graph_node});
-    if (use_arguments_pack) {
-      for (size_t i = 0; i < middle_graph_output_cnode_size - 1; ++i) {
-        auto getitem_input = former_call_graph->NewCNodeInOrder(
-          {NewValueNode(prim::kPrimTupleGetItem), former_graph_output, NewValueNode(SizeToLong(i))});
-        (void)inputs.emplace_back(getitem_input);
-      }
-    } else {
-      (void)inputs.emplace_back(former_graph_output);
-    }
-    auto new_output = former_call_graph->NewCNodeInOrder(std::move(inputs));
-    former_call_graph->set_output(new_output);
+    TransformParallelCallFormerToMiddle(former_call_graph, latter_call_graph, middle_graph_output_cnode_size,
+                                        use_arguments_pack);
 
     MS_LOG(DEBUG) << "Parallel call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
                   << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
   }
+
+  LiftRolledBodyGraphFV();
 }
 
 FuncGraphPtr Parser::ParseFuncGraph() {
@@ -1409,7 +1478,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   // If the return_ is set, it has its own continuation block
   if (true_end->func_graph()->get_return() == nullptr) {
     true_end->Jump(after_block, {});
-    if (ignored_latter_call_graphs_.find(true_end) == ignored_latter_call_graphs_.end()) {
+    if (ignored_if_latter_call_graphs_.find(true_end) == ignored_if_latter_call_graphs_.end()) {
       true_branch_graphs.second = true_end;
     } else {
       MS_LOG(DEBUG) << "Ignore the true_end block for transform to parallem call, true_block: "
@@ -1427,7 +1496,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   // If the return_ is set, it has its own continuation block
   if (false_end->func_graph()->get_return() == nullptr) {
     false_end->Jump(after_block, {});
-    if (ignored_latter_call_graphs_.find(false_end) == ignored_latter_call_graphs_.end()) {
+    if (ignored_if_latter_call_graphs_.find(false_end) == ignored_if_latter_call_graphs_.end()) {
       false_branch_graphs.second = false_end;
     } else {
       MS_LOG(DEBUG) << "Ignore the false_end block for transform to parallem call, false_block: "
@@ -1443,9 +1512,11 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     MS_LOG(DEBUG) << "True_end or false_end will not call after_block, true_block: " << true_block->ToString()
                   << ", true_end: " << true_end->ToString() << ", false_block: " << false_block->ToString()
                   << ", false_end: " << false_end->ToString() << ", after_block: " << after_block->ToString();
-    (void)ignored_latter_call_graphs_.insert(after_block);
+    (void)ignored_if_latter_call_graphs_.insert(after_block);
   }
-  if (true_branch_graphs.second != nullptr && false_branch_graphs.second != nullptr) {
+  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_PARALLEL_CALL") == "1");
+  if (transform_tail_call_to_parallel_call && true_branch_graphs.second != nullptr &&
+      false_branch_graphs.second != nullptr) {
     true_branch_graphs.first = block;
     (void)parallel_call_graphs_.emplace_back(true_branch_graphs);
     MS_LOG(DEBUG) << "Record tail call graphs, true: {former: " << true_branch_graphs.first->func_graph()->ToString()
@@ -1775,6 +1846,200 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   MS_EXCEPTION_IF_NULL(after_body_block->func_graph());
   if (after_body_block->func_graph()->get_return() == nullptr) {
     after_body_block->Jump(header_block, {loop_var_inc});
+  }
+
+  header_block->Mature();
+  after_block->Mature();
+  auto &end_block = loop_context.EndBlock();
+  if (end_block) {
+    // end_block exists if we encounter 'break' in loop body.
+    after_block->Jump(end_block, {});
+    end_block->Mature();
+    return end_block;
+  }
+  // No 'break', no end_block.
+  return after_block;
+}
+
+// Implement unroll for statement with tuple/getitem.
+FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py::object &node) {
+  static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
+  if (transform_for_half_unroll_call) {
+    return ParseForRepeat(block, node);
+  }
+  MS_LOG(DEBUG) << "Process ast For by loop variable";
+  MS_EXCEPTION_IF_NULL(block);
+  AnfNodePtr op_len = block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
+  AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
+
+  // Get variable name of 'x' in statement 'for x in xs'
+  py::object target_node = python_adapter::GetPyObjAttr(node, "target");
+
+  // Create statement 'len(xs)'
+  py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
+  AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
+  MS_EXCEPTION_IF_NULL(iter_node);
+  // Generate node for loop count and convert it to tensor, to make the loop not unroll
+  CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
+  FunctionBlockPtr header_block = GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
+  MS_EXCEPTION_IF_NULL(header_block);
+  // Create loop variable 'i'
+  ParameterPtr loop_var = header_block->func_graph()->add_parameter();
+
+  std::string less_module_name = "mindspore.ops.composite.multitype_ops.less_impl";
+  ValuePtr less_op = prim::GetPythonOps("less", less_module_name);
+  CNodePtr cond_node = header_block->func_graph()->NewCNodeInOrder({NewValueNode(less_op), loop_var, scalar_len});
+
+  // Generate the body of the for statement
+  FunctionBlockPtr body_block = GenerateBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
+  MS_EXCEPTION_IF_NULL(body_block);
+  body_block->AddPrevBlock(header_block);
+  // Create 'x = xs[i]'
+  auto body_func_graph = body_block->func_graph();
+  CNodePtr target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
+  WriteAssignVars(body_block, target_node, target_var);
+
+  // Create 'i = i + 1'
+  std::string add_module_name = "mindspore.ops.composite.multitype_ops.add_impl";
+  ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
+  CNodePtr loop_var_inc =
+    body_func_graph->NewCNodeInOrder({NewValueNode(add_op), loop_var, NewValueNode(static_cast<int64_t>(1))});
+  body_block->WriteVariable(loop_var->name(), loop_var_inc);
+
+  // Link the variable name with the target
+  auto it_info = std::make_shared<TraceIterator>(loop_var_inc->debug_info());
+  loop_var->debug_info()->set_trace_info(it_info);
+
+  FunctionBlockPtr after_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceForAfter>(block->func_graph()->debug_info()));
+    after_block = MakeFunctionBlock(*this);
+  }
+  MS_EXCEPTION_IF_NULL(after_block);
+  after_block->AddPrevBlock(header_block);
+  block->Jump(header_block, {NewValueNode(static_cast<int64_t>(0))});
+  body_block->Mature();
+
+  header_block->ConditionalJump(cond_node, body_block, after_block);
+
+  // Parse loop body statements with loop context.
+  LoopContext loop_context{&loops_, header_block, loop_var_inc};
+  py::object body_node = python_adapter::GetPyObjAttr(node, "body");
+  FunctionBlockPtr after_body_block = ParseStatements(body_block, body_node);
+  if (after_body_block->func_graph()->get_return() == nullptr) {
+    after_body_block->Jump(header_block, {loop_var_inc});
+  }
+
+  header_block->Mature();
+  after_block->Mature();
+  auto &end_block = loop_context.EndBlock();
+  if (end_block) {
+    // end_block exists if we encounter 'break' in loop body.
+    after_block->Jump(end_block, {});
+    end_block->Mature();
+    return end_block;
+  }
+  // No 'break', no end_block.
+  return after_block;
+}
+
+FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast For by loop variable";
+  MS_EXCEPTION_IF_NULL(block);
+  FunctionBlockPtr header_block = GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
+  MS_EXCEPTION_IF_NULL(header_block);
+
+  // Create statement 'len(xs)'
+  py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
+  AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
+  MS_EXCEPTION_IF_NULL(iter_node);
+  // Generate node for loop count and convert it to tensor, to make the loop not unroll
+  // CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
+  ParameterPtr header_iter_param = header_block->func_graph()->add_parameter();
+  AnfNodePtr header_len = header_block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
+  CNodePtr scalar_len = header_block->func_graph()->NewCNodeInOrder({header_len, header_iter_param});
+
+  // Create loop variable 'i'
+  ParameterPtr loop_var = header_block->func_graph()->add_parameter();
+  // Create loop condition 'i < len(xs)'
+  std::string less_module_name = "mindspore.ops.composite.multitype_ops.less_impl";
+  ValuePtr less_op = prim::GetPythonOps("less", less_module_name);
+  CNodePtr cond_node = header_block->func_graph()->NewCNodeInOrder({NewValueNode(less_op), loop_var, scalar_len});
+
+  // Generate the body of the for statement
+  FunctionBlockPtr body_block = GenerateBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
+  MS_EXCEPTION_IF_NULL(body_block);
+  body_block->AddPrevBlock(header_block);
+  // ParameterPtr body_iter_param = body_block->func_graph()->add_parameter();
+  // Create 'x = xs[i]'
+  auto body_func_graph = body_block->func_graph();
+  AnfNodePtr body_getitem = body_block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
+  CNodePtr target_var = body_func_graph->NewCNodeInOrder({body_getitem, header_iter_param, loop_var});
+
+  // Get variable name of 'x' in statement 'for x in xs'
+  py::object target_node = python_adapter::GetPyObjAttr(node, "target");
+  WriteAssignVars(body_block, target_node, target_var);
+
+  // Create 'i = i + 1'
+  std::string add_module_name = "mindspore.ops.composite.multitype_ops.add_impl";
+  ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
+  CNodePtr loop_var_inc =
+    body_func_graph->NewCNodeInOrder({NewValueNode(add_op), loop_var, NewValueNode(static_cast<int64_t>(1))});
+  body_block->WriteVariable(loop_var->name(), loop_var_inc);
+
+  // Link the variable name with the target
+  auto it_info = std::make_shared<TraceIterator>(loop_var_inc->debug_info());
+  loop_var->debug_info()->set_trace_info(it_info);
+
+  FunctionBlockPtr after_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceForAfter>(block->func_graph()->debug_info()));
+    after_block = MakeFunctionBlock(*this);
+  }
+  MS_EXCEPTION_IF_NULL(after_block);
+  after_block->AddPrevBlock(header_block);
+  block->Jump(header_block, {iter_node, NewValueNode(static_cast<int64_t>(0))});
+  body_block->Mature();
+  header_block->ConditionalJump(cond_node, body_block, after_block);
+
+  // Generate the body of the for statement
+  FunctionBlockPtr rolled_body_block =
+    GenerateBlock(std::make_shared<TraceForRolledBody>(body_block->func_graph()->debug_info()));
+  MS_EXCEPTION_IF_NULL(rolled_body_block);
+  rolled_body_block->AddPrevBlock(body_block);
+
+  rolled_body_block->Mature();
+  body_block->Jump(rolled_body_block, {});
+  auto rolled_body_call = dyn_cast<CNode>(body_block->func_graph()->output());
+
+  // Parse loop body statements with loop context.
+  LoopContext loop_context{&loops_, header_block, loop_var_inc};
+  py::object body_node = python_adapter::GetPyObjAttr(node, "body");
+  FunctionBlockPtr after_body_block = ParseStatements(rolled_body_block, body_node);
+  MS_LOG(DEBUG) << "Finish rolled block, after_body_block: " << after_body_block->ToString()
+                << ", rolled_body_block: " << rolled_body_block->ToString();
+  if (after_body_block->func_graph()->get_return() == nullptr) {
+    after_body_block->Jump(header_block, {header_iter_param, loop_var_inc});
+  }
+
+  // Record the former/middle/latter graphs for later transforming.
+  static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
+  if (transform_for_half_unroll_call) {
+    std::pair<FunctionBlockPtr, FunctionBlockPtr> loop_graphs;
+    loop_graphs.first = body_block;
+    loop_graphs.second = after_body_block;
+    parallel_call_graphs_.emplace_back(loop_graphs);
+    MS_LOG(DEBUG) << "Record tail call graphs, loop: {former: " << loop_graphs.first->func_graph()->ToString()
+                  << ", middle: " << loop_graphs.second->func_graph()->ToString() << "}";
+    // Record the rolled body function, for later lifting operation.
+    if (rolled_body_call != nullptr) {
+      rolled_body_calls_.emplace_back(std::pair(rolled_body_call, rolled_body_block));
+      constexpr int recursive_level = 2;
+      MS_LOG(DEBUG) << "Record rolled body call: {CNode: " << rolled_body_call->DebugString(recursive_level)
+                    << ", rolled_graph: " << rolled_body_block->ToString() << "}";
+    }
+    auto rolled_body_func_graph = rolled_body_block->func_graph();
+    rolled_body_func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   }
 
   header_block->Mature();

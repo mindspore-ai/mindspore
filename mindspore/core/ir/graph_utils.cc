@@ -237,8 +237,8 @@ std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &
   if (node == nullptr) {
     return vecs;
   }
-  if (node->isa<CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode != nullptr) {
     auto &inputs = cnode->inputs();
     // Check if free variables used.
     for (const auto &input : inputs) {
