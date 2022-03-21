@@ -12,12 +12,29 @@ mindspore.nn.Adagrad
 
     .. math::
         \begin{array}{ll} \\
-            h_{t+1} = h_{t} + g*g\\
-            w_{t+1} = w_{t} - lr*\frac{1}{\sqrt{h_{t+1}}}*g
-        \end{array}
+            &\newline
+            &\hline \\
+            &\textbf{Parameters}: \text{learning rate } \gamma, \:  \text{ params } w_0, \:
+                \: \text{ weight decay } \lambda, \\
+            &\hspace{12mm} \text{ initial accumulator value } state\_sum\\
+            &\textbf{Init}: state\_sum_0 \leftarrow 0 \\[-1.ex]
+            &\newline
+            &\hline \\
+            &\textbf{for} \: t=1 \: \textbf{to} \: \ldots \: \textbf{do} \\
+            &\hspace{5mm}g_t  \leftarrow  \nabla_{w} f_t (w_{t-1}) \\
+            &\hspace{5mm} \textbf{if} \: \lambda \neq 0 \\
+            &\hspace{10mm} g_t \leftarrow g_t + \lambda w_{t-1} \\
+            &\hspace{5mm}state\_sum_t  \leftarrow  state\_sum_{t-1} + g^2_t \\
+            &\hspace{5mm}w_t \leftarrow w_{t-1}- \gamma*\frac{g_t}{\sqrt{state\_sum_t} + \epsilon} \\
+            &\newline
+            &\hline \\
+            &\bf{return} \:  w_t \\[-1.ex]
+            &\newline
+            &\hline \\
+       \end{array}
 
-    :math:`h` 表示梯度平方的累积和，:math:`g` 表示 `grads` 。
-    :math:`lr` 代表 `learning_rate`，:math:`w` 代表 `params` 。
+    :math:`state\_sum` 表示梯度平方的累积和 :math:`accum` ，:math:`g` 表示 `grads` ，:math:`\lambda` 代表 `weight_decay`  。
+    :math:`\gamma` 代表 `learning_rate`，:math:`w` 代表 `params` 。
 
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst

@@ -9,15 +9,15 @@ mindspore.nn.ProximalAdagrad
     请参阅论文 `Efficient Learning using Forward-Backward Splitting <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_。
 
     .. math::
-        accum_{t+1} = accum_{t} + grad * grad
+        accum_{t+1} = accum_{t} + g * g
 
     .. math::
-        \text{prox_v} = var_{t} - lr * grad * \frac{1}{\sqrt{accum_{t+1}}}
+        \text{prox_v} = w_{t} - \gamma * g * \frac{1}{\sqrt{accum_{t+1}}}
 
     .. math::
-        var_{t+1} = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
+        w_{t+1} = \frac{sign(\text{prox_v})}{1 + \gamma * l2} * \max(\left| \text{prox_v} \right| - \gamma * l1, 0)
 
-    其中，grad、lr、var、accum和t分别表示 `grads`, `learning_rate`, `params` 、累加器和当前step。
+    其中， :math:`g` 、 :math:`\gamma` 、 :math:`w` 、 :math:`accum` 和 :math:`t` 分别表示 `grads` 、 `learning_rate` 、 `params` 、累加器和当前step。
 
     .. note::
         .. include:: mindspore.nn.optim_note_sparse.rst

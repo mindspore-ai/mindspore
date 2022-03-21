@@ -48,24 +48,24 @@ class Adagrad(Optimizer):
     The updating Pseudo codes are as follows,
 
     .. math::
-       \begin{aligned}
-            &\hline \\
-            &\textbf{Input}      : lr \text{ (learning rate)}, \: w_0 \text{ (params)}, \: f(w)
-                \text{ (objective)}, \: \lambda \text{ (weight decay)},                          \\
-            &\hspace{12mm}    accum \text{ (initial accumulator value)} \\
-            &\textbf{Initialize} :  state\_sum_0 \leftarrow 0.1                             \\[-1.ex]
+       \begin{aligned} \\
             &\newline
             &\hline \\
-            &\textbf{for} \: t=1 \: \textbf{to} \: \ldots \: \textbf{do}                         \\
-            &\hspace{5mm}g_t           \leftarrow   \nabla_{w} f_t (w_{t-1})           \\
-            &\hspace{5mm} \textbf{if} \: \lambda \neq 0                                          \\
-            &\hspace{10mm} g_t \leftarrow g_t + \lambda w_{t-1}                             \\
-            &\hspace{5mm}state\_sum_t  \leftarrow  state\_sum_{t-1} + g^2_t                      \\
-            &\hspace{5mm}w_t \leftarrow
-                w_{t-1}- lr \frac{g_t}{\sqrt{state\_sum_t}}            \\
+            &\textbf{Parameters}: \text{learning rate } \gamma, \:  \text{ params } w_0, \:
+                \: \text{ weight decay } \lambda, \\
+            &\hspace{12mm} \text{ initial accumulator value } state\_sum\\
+            &\textbf{Init}: state\_sum_0 \leftarrow 0 \\[-1.ex]
             &\newline
             &\hline \\
-            &\bf{return} \:  w_t                                                     \\[-1.ex]
+            &\textbf{for} \: t=1 \: \textbf{to} \: \ldots \: \textbf{do} \\
+            &\hspace{5mm}g_t  \leftarrow  \nabla_{w} f_t (w_{t-1}) \\
+            &\hspace{5mm} \textbf{if} \: \lambda \neq 0 \\
+            &\hspace{10mm} g_t \leftarrow g_t + \lambda w_{t-1} \\
+            &\hspace{5mm}state\_sum_t  \leftarrow  state\_sum_{t-1} + g^2_t \\
+            &\hspace{5mm}w_t \leftarrow w_{t-1}- \gamma*\frac{g_t}{\sqrt{state\_sum_t} + \epsilon} \\
+            &\newline
+            &\hline \\
+            &\bf{return} \:  w_t \\[-1.ex]
             &\newline
             &\hline \\
        \end{aligned}

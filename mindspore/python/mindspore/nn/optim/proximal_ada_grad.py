@@ -61,16 +61,16 @@ class ProximalAdagrad(Optimizer):
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
 
     .. math::
-        accum_{t+1} = accum_{t} + grad * grad
+        accum_{t+1} = accum_{t} + g * g
 
     .. math::
-        \text{prox_v} = var_{t} - lr * grad * \frac{1}{\sqrt{accum_{t+1}}}
+        \text{prox_v} = w_{t} - \gamma * g * \frac{1}{\sqrt{accum_{t+1}}}
 
     .. math::
-        var_{t+1} = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
+        w_{t+1} = \frac{sign(\text{prox_v})}{1 + \gamma * l2} * \max(\left| \text{prox_v} \right| - \gamma * l1, 0)
 
-    Here : where grad, lr, var, accum and t denote the `grads`, `learning_rate`, `params`, accumulation and current
-    step respectively.
+    Here : where :math:`g` , :math:`\gamma`, :math:`w` , :math:`accum` and :math:`t` denote the `grads`,
+    `learning_rate`, `params`, accumulation and current step respectively.
 
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse

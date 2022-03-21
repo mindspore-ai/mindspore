@@ -10,14 +10,39 @@ mindspore.nn.Adam
     公式如下：
 
     .. math::
-        \begin{array}{ll} \\
-            m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
-            v_{t+1} = \beta_2 * v_{t} + (1 - \beta_2) * g * g \\
-            l = \alpha * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
-            w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
+        \begin{array}{l}
+            &\newline
+            &\hline \\
+            &\textbf{Parameters}: \: 1^{\text {st }}\text {moment vector} \: m , \: 2^{\text {nd}} \:
+             \text{moment vector} \: v , \\
+            &\:\text{gradients } g, \: \text{learning rate} \: \gamma, \text
+             { exponential decay rates for the moment estimates} \: \beta_{1} \: \beta_{2} , \\
+            &\:\text {parameter vector} \: w_{0}, \:\text{timestep} \: t , \text{ weight decay } \lambda \\
+            &\textbf{Init}: m_{0} \leftarrow 0, \: v_{0} \leftarrow 0, \: t \leftarrow 0, \:
+             \text{init parameter vector} \: w_{0} \\[-1.ex]
+            &\newline
+            &\hline \\
+            &\textbf{while} \: w_{t} \: \text{not converged} \: \textbf{do} \\
+            &\hspace{5mm}\boldsymbol{g}_{t} \leftarrow \nabla_{w} \boldsymbol{f}_{t}\left(\boldsymbol{w}_{t-1}\right) \\
+            &\hspace{5mm}\textbf {if } \lambda \neq 0 \\
+            &\hspace{10mm}\boldsymbol{g}_{t} \leftarrow \boldsymbol{g}_{t}+\lambda \boldsymbol{w}_{t-1} \\
+            &\hspace{5mm}\boldsymbol{m}_{t} \leftarrow \beta_{1} \boldsymbol{m}_{t-1}+\left(1-\beta_{1}\right)
+             \boldsymbol{g}_{t} \\
+            &\hspace{5mm}\boldsymbol{v}_{t} \leftarrow \beta_{2} \boldsymbol{v}_{t-1}+\left(1-\beta_{2}\right)
+             \boldsymbol{g}_{t}^{2} \\
+            &\hspace{5mm}\hat{\boldsymbol{m}}_{t} \leftarrow \boldsymbol{m}_{t} /\left(1-\beta_{1}^{t}\right) \\
+            &\hspace{5mm}\hat{\boldsymbol{v}}_{t} \leftarrow \boldsymbol{v}_{t} /\left(1-\beta_{2}^{t}\right) \\
+            &\hspace{5mm}\boldsymbol{w}_{t} \leftarrow \boldsymbol{w}_{t-1}-\gamma \hat{\boldsymbol{m}}_{t}
+             /(\sqrt{\hat{\boldsymbol{v}}_{t}}+\epsilon) \\
+            &\textbf{end while} \\[-1.ex]
+            &\newline
+            &\hline \\[-1.ex]
+            &\textbf{return} \:  \boldsymbol{w}_{t} \\[-1.ex]
+            &\newline
+            &\hline \\[-1.ex]
         \end{array}
 
-    :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表 `gradients` ，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power` ，:math:`\alpha` 代表 `learning_rate` ，:math:`w` 代表 `params` ，:math:`\epsilon` 代表 `eps` 。
+    :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表梯度 `gradients` ，:math:`\gamma` 代表学习率 `learning_rate` ，:math:`\beta_1, \beta_2` 代表衰减速率 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1` 和 `beta2` 的t次方 ， :math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps` 。
 
     .. note::
         .. include:: mindspore.nn.optim_note_sparse.rst

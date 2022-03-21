@@ -12,19 +12,20 @@ mindspore.nn.thor
     更新公式如下：
 
     .. math::
-        \begin{array}{ll} \\
-            A_i = a_i{a_i}^T \\
-            G_i = D_{s_i}{ D_{s_i}}^T \\
-            m_i = \beta * m_i + ({G_i^{(k)}}+\lambda I)^{-1}) g_i ({\overline A_{i-1}^{(k)}}+\lambda I)^{-1} \\
-            w_i = w_i - \alpha * m_i \\
+        \begin{array}{ll}
+          & \textbf{Parameter:} \: \text{the learning rate } \gamma\text{, the damping parameter }\lambda \\
+          & \textbf{Init:} \: \lambda \leftarrow 0 \\
+          & A_{i-1}=\mathbb{E}\left[a_{i-1} a_{i-1}^{T}\right] \\
+          & G_{i}=\mathbb{E}\left[D_{s_i} D_{s_i}^{T}\right] \\
+          & w_{i}^{(k+1)} \leftarrow w_{i}^{(k)}-\gamma\left(\left(A_{i-1}^{(k)}+\lambda I\right)^{-1}
+            \otimes\left(G_{i}^{(k)}+\lambda I\right)^{-1}\right) \nabla_{w_{i}} J^{(k)}
         \end{array}
 
-    :math:`D_{s_i}` 表示第i层输出的loss函数的导数。
     :math:`a_{i-1}` 表示第i层的输入，它是上一层的激活。
-    :math:`\beta` 表示动量， :math:`I` 代表单位矩阵。
-    :math:`\overline A` 表示矩阵A的转置。
-    :math:`\lambda` 表示'damping'， :math:`g_i` 表示第i层的梯度。
-    :math:`\otimes` 表示克罗内克尔积， :math:`\alpha` 表示学习率。
+    :math:`D_{s_i}` 表示第i层输出的loss函数的导数。
+    :math:`I` 代表单位矩阵。
+    :math:`\lambda` 表示 :math:`damping` 参数， :math:`g_i` 表示第i层的梯度。
+    :math:`\otimes` 表示克罗内克尔积， :math:`\gamma` 表示学习率。
 
     .. note::
         在分离参数组时，如果权重衰减为正，则每个组的权重衰减将应用于参数。当不分离参数组时，如果 `weight_decay` 为正数，则API中的 `weight_decay` 将应用于名称中没有'beta'或 'gamma'的参数。

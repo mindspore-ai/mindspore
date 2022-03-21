@@ -197,17 +197,42 @@ class Adam(Optimizer):
     The updating formulas are as follows,
 
     .. math::
-        \begin{gather*}
-            m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
-            v_{t+1} = \beta_2 * v_{t} + (1 - \beta_2) * g * g \\
-            l = \alpha * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
-            w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
-        \end{gather*}
+        \begin{array}{l}
+            &\newline
+            &\hline \\
+            &\textbf{Parameters}: \: 1^{\text {st }}\text {moment vector} \: m , \: 2^{\text {nd}} \:
+             \text{moment vector} \: v , \\
+            &\:\text{gradients } g, \: \text{learning rate} \: \gamma, \text
+             { exponential decay rates for the moment estimates} \: \beta_{1} \: \beta_{2} , \\
+            &\:\text {parameter vector} \: w_{0}, \:\text{timestep} \: t , \text{ weight decay } \lambda \\
+            &\textbf{Init}: m_{0} \leftarrow 0, \: v_{0} \leftarrow 0, \: t \leftarrow 0, \:
+             \text{init parameter vector} \: w_{0} \\[-1.ex]
+            &\newline
+            &\hline \\
+            &\textbf{while} \: w_{t} \: \text{not converged} \: \textbf{do} \\
+            &\hspace{5mm}\boldsymbol{g}_{t} \leftarrow \nabla_{w} \boldsymbol{f}_{t}\left(\boldsymbol{w}_{t-1}\right) \\
+            &\hspace{5mm}\textbf {if } \lambda \neq 0 \\
+            &\hspace{10mm}\boldsymbol{g}_{t} \leftarrow \boldsymbol{g}_{t}+\lambda \boldsymbol{w}_{t-1} \\
+            &\hspace{5mm}\boldsymbol{m}_{t} \leftarrow \beta_{1} \boldsymbol{m}_{t-1}+\left(1-\beta_{1}\right)
+             \boldsymbol{g}_{t} \\
+            &\hspace{5mm}\boldsymbol{v}_{t} \leftarrow \beta_{2} \boldsymbol{v}_{t-1}+\left(1-\beta_{2}\right)
+             \boldsymbol{g}_{t}^{2} \\
+            &\hspace{5mm}\hat{\boldsymbol{m}}_{t} \leftarrow \boldsymbol{m}_{t} /\left(1-\beta_{1}^{t}\right) \\
+            &\hspace{5mm}\hat{\boldsymbol{v}}_{t} \leftarrow \boldsymbol{v}_{t} /\left(1-\beta_{2}^{t}\right) \\
+            &\hspace{5mm}\boldsymbol{w}_{t} \leftarrow \boldsymbol{w}_{t-1}-\gamma \hat{\boldsymbol{m}}_{t}
+             /(\sqrt{\hat{\boldsymbol{v}}_{t}}+\epsilon) \\
+            &\textbf{end while} \\[-1.ex]
+            &\newline
+            &\hline \\[-1.ex]
+            &\textbf{return} \:  \boldsymbol{w}_{t} \\[-1.ex]
+            &\newline
+            &\hline \\[-1.ex]
+        \end{array}
 
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
-    :math:`g` represents `gradients`, :math:`l` represents scaling factor, :math:`\beta_1, \beta_2` represent
-    `beta1` and `beta2`, :math:`t` represents the current step while :math:`beta_1^t` and :math:`beta_2^t` represent
-    `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `params`,
+    :math:`g` represents `gradients`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
+    :math:`t` represents the current step while :math:`beta_1^t` and :math:`beta_2^t` represent
+    `beta1_power` and `beta2_power`, :math:`\gamma` represents `learning_rate`, :math:`w` represents `params`,
     :math:`\epsilon` represents `eps`.
 
     Note:
@@ -398,24 +423,41 @@ class AdamWeightDecay(Optimizer):
     Implements the Adam algorithm with weight decay.
 
     .. math::
-        \begin{array}{ll} \\
-            m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
-            v_{t+1} = \beta_2 * v_{t} + (1 - \beta_2) * g * g \\
-            update = \frac{m_{t+1}}{\sqrt{v_{t+1}} + eps} \\
-            update =
-            \begin{cases}
-                update + weight\_decay * w_{t}
-                    & \text{ if } weight\_decay > 0 \\
-                update
-                    & \text{ otherwise }
-            \end{cases} \\
-            w_{t+1}  = w_{t} - lr * update
+        \begin{array}{l}
+            &\newline
+            &\hline \\
+            &\textbf{Parameters}: \: 1^{\text {st }}\text {moment vector} \: m , \: 2^{\text {nd}} \:
+             \text{moment vector} \: v , \\
+            &\: gradients \: g, \: \text{learning rate} \: \gamma,
+             \text {exponential decay rates for the moment estimates} \: \beta_{1} \: \beta_{2} , \\
+            &\:\text {parameter vector} \: w_{0}, \:\text{timestep} \: t, \: \text{weight decay} \: \lambda \\
+            &\textbf{Init}:  m_{0} \leftarrow 0, \: v_{0} \leftarrow 0, \: t \leftarrow 0, \:
+             \text{init parameter vector} \: w_{0} \\[-1.ex]
+            &\newline
+            &\hline \\
+            &\textbf{repeat} \\
+            &\hspace{5mm} t \leftarrow t+1 \\
+            &\hspace{5mm}\boldsymbol{g}_{t} \leftarrow \nabla f_{t}\left(\boldsymbol{w}_{t-1}\right) \\
+            &\hspace{5mm}\boldsymbol{m}_{t} \leftarrow \beta_{1} \boldsymbol{m}_{t-1}+\left(1-\beta_{1}\right)
+             \boldsymbol{g}_{t} \\
+            &\hspace{5mm}\boldsymbol{v}_{t} \leftarrow \beta_{2} \boldsymbol{v}_{t-1}+\left(1-\beta_{2}\right)
+             \boldsymbol{g}_{t}^{2} \\
+            &\hspace{5mm}\hat{\boldsymbol{m}}_{t} \leftarrow \boldsymbol{m}_{t} /\left(1-\beta_{1}^{t}\right) \\
+            &\hspace{5mm}\hat{\boldsymbol{v}}_{t} \leftarrow \boldsymbol{v}_{t} /\left(1-\beta_{2}^{t}\right) \\
+            &\hspace{5mm}\boldsymbol{w}_{t} \leftarrow \boldsymbol{w}_{t-1}-\left(\gamma \hat{\boldsymbol{m}}_{t}
+             /\left(\sqrt{\hat{\boldsymbol{v}}_{t}}+\epsilon\right)+\lambda \boldsymbol{w}_{t-1}\right) \\
+            &\textbf{until}\text { stopping criterion is met } \\[-1.ex]
+            &\newline
+            &\hline \\[-1.ex]
+            &\textbf{return} \: \boldsymbol{w}_{t} \\[-1.ex]
+            &\newline
+            &\hline \\[-1.ex]
         \end{array}
 
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
-    :math:`g` represents `gradients`, :math:`lr` represents `learning_rate`,
+    :math:`g` represents `gradients`, :math:`\gamma` represents `learning_rate`,
     :math:`\beta_1, \beta_2` represent `beta1` and `beta2`, :math:`t` represents the current step,
-    :math:`w` represents `params`.
+    :math:`w` represents `params`, :math:`\gamma` represents `weight_decay`.
 
     Note:
         There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used

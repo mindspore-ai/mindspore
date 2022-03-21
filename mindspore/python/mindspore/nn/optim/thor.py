@@ -257,19 +257,20 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
     The updating formulas are as follows,
 
     .. math::
-        \begin{array}{ll} \\
-            A_i = a_i{a_i}^T \\
-            G_i = D_{s_i}{ D_{s_i}}^T \\
-            m_i = \beta * m_i + ({G_i^{(k)}}+\lambda I)^{-1}) g_i ({\overline A_{i-1}^{(k)}}+\lambda I)^{-1} \\
-            w_i = w_i - \alpha * m_i \\
+        \begin{array}{ll}
+          & \textbf{Parameter:} \: \text{the learning rate } \gamma\text{, the damping parameter }\lambda \\
+          & \textbf{Init:} \: \lambda \leftarrow 0 \\
+          & A_{i-1}=\mathbb{E}\left[a_{i-1} a_{i-1}^{T}\right] \\
+          & G_{i}=\mathbb{E}\left[D_{s_i} D_{s_i}^{T}\right] \\
+          & w_{i}^{(k+1)} \leftarrow w_{i}^{(k)}-\gamma\left(\left(A_{i-1}^{(k)}+\lambda I\right)^{-1}
+            \otimes\left(G_{i}^{(k)}+\lambda I\right)^{-1}\right) \nabla_{w_{i}} J^{(k)}
         \end{array}
 
-    :math:`D_{s_i}` represents the derivative of the loss function of the output of the i-th layer,
     :math:`a_{i-1}` represents the input of i-th layer,and which is the activations of previous layer,
-    :math:`\beta` represents momentum, :math:`I` represents the identity matrix,
-    :math:`\overline A` represents the transpose of matrix A,
-    :math:`\lambda` represents 'damping', :math:`g_i` represents gradients of the i-th layer,
-    :math:`\otimes` represents Kronecker product, :math:`\alpha` represents 'learning rate'
+    :math:`D_{s_i}` represents the derivative of the loss function of the output of the i-th layer,
+    :math:`I` represents the identity matrix,
+    :math:`\lambda` represents :math:`damping`, :math:`g_i` represents gradients of the i-th layer,
+    :math:`\otimes` represents Kronecker product, :math:`\gamma` represents 'learning rate'
 
     Args:
         net (Cell): The training network.
