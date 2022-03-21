@@ -71,7 +71,7 @@ typedef struct Task {
   std::atomic_int finished{0};
   std::atomic_int status{THREAD_OK};  // return status, RET_OK
 } Task;
-#if OPERATOR_PARALLELISM
+#ifdef OPERATOR_PARALLELISM
 typedef struct TaskMessage {
   Task *task;
   int task_id;

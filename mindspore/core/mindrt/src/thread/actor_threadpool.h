@@ -26,7 +26,9 @@
 #include "thread/core_affinity.h"
 #include "actor/actor.h"
 #include "thread/hqueue.h"
+#ifndef USE_HQUEUE
 #define USE_HQUEUE
+#endif
 namespace mindspore {
 class ActorThreadPool;
 class ActorWorker : public Worker {

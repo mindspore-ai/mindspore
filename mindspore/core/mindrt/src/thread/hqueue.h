@@ -186,7 +186,7 @@ class HQueue {
   std::atomic<Pointer> qhead;
   std::atomic<Pointer> qtail;
   std::vector<HQNode<T> *> nodes;
-  int32_t queue_size;
+  int32_t queue_size{};
   std::atomic<int32_t> free_index;
 };
 }  // namespace mindspore
