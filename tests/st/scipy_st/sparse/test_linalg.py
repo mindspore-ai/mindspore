@@ -78,9 +78,8 @@ def test_cg_against_scipy(tensor_type, dtype, tol, shape, preconditioner, maxite
     context.set_context(mode=context.GRAPH_MODE)
     msp_res_sta = msp.sparse.linalg.cg(a, b, M=m, maxiter=maxiter, atol=tol, tol=tol)
 
-    kw = {"atol": tol, "rtol": tol}
-    onp.testing.assert_allclose(osp_res[0], msp_res_dyn[0].asnumpy(), **kw)
-    onp.testing.assert_allclose(osp_res[0], msp_res_sta[0].asnumpy(), **kw)
+    onp.testing.assert_allclose(osp_res[0], msp_res_dyn[0].asnumpy(), rtol=tol, atol=tol)
+    onp.testing.assert_allclose(osp_res[0], msp_res_sta[0].asnumpy(), rtol=tol, atol=tol)
     assert osp_res[1] == msp_res_dyn[1].asnumpy().item()
     assert osp_res[1] == msp_res_sta[1].asnumpy().item()
 
@@ -110,9 +109,9 @@ def test_cg_against_numpy(dtype, shape):
     context.set_context(mode=context.GRAPH_MODE)
     actual_sta, _ = msp.sparse.linalg.cg(Tensor(a), Tensor(b))
 
-    kw = {"atol": 1e-5, "rtol": 1e-5}
-    onp.testing.assert_allclose(expected, actual_dyn.asnumpy(), **kw)
-    onp.testing.assert_allclose(expected, actual_sta.asnumpy(), **kw)
+    tol = 1e-5
+    onp.testing.assert_allclose(expected, actual_dyn.asnumpy(), rtol=tol, atol=tol)
+    onp.testing.assert_allclose(expected, actual_sta.asnumpy(), rtol=tol, atol=tol)
 
 
 @pytest.mark.level0
@@ -155,9 +154,8 @@ def test_cg_against_scipy_graph(tensor_type, dtype, tol, shape, preconditioner, 
     context.set_context(mode=context.GRAPH_MODE)
     msp_res_sta = Net()(a, b, m, maxiter, tol)
 
-    kw = {"atol": tol, "rtol": tol}
-    onp.testing.assert_allclose(osp_res[0], msp_res_dyn[0].asnumpy(), **kw)
-    onp.testing.assert_allclose(osp_res[0], msp_res_sta[0].asnumpy(), **kw)
+    onp.testing.assert_allclose(osp_res[0], msp_res_dyn[0].asnumpy(), rtol=tol, atol=tol)
+    onp.testing.assert_allclose(osp_res[0], msp_res_sta[0].asnumpy(), rtol=tol, atol=tol)
     assert osp_res[1] == msp_res_dyn[1].asnumpy().item()
     assert osp_res[1] == msp_res_sta[1].asnumpy().item()
 
@@ -166,6 +164,7 @@ def test_cg_against_scipy_graph(tensor_type, dtype, tol, shape, preconditioner, 
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('flatten', [True, False])
 @pytest.mark.parametrize('tensor_type, dtype, tol', [('Tensor', onp.float32, 1e-5), ('Tensor', onp.float64, 1e-8),
                                                      ('CSRTensor', onp.float32, 1e-5)])
 @pytest.mark.parametrize('a, b, grad_a, grad_b', [
@@ -196,7 +195,7 @@ def test_cg_against_scipy_graph(tensor_type, dtype, tol, shape, preconditioner, 
       [-0.14053766, 0.00313851, 0.02536103, 0.01889718, -0.07065797]],
      [0.23398106, 0.31016481, 0.29870068, -0.09782316, 0.43852141]),
 ])
-def test_cg_grad(tensor_type, dtype, tol, a, b, grad_a, grad_b):
+def test_cg_grad(flatten, tensor_type, dtype, tol, a, b, grad_a, grad_b):
     """
     Feature: ALL TO ALL
     Description: test cases for grad implementation of cg in graph mode
@@ -205,18 +204,17 @@ def test_cg_grad(tensor_type, dtype, tol, a, b, grad_a, grad_b):
     if tensor_type == "CSRTensor" and get_platform() != "linux":
         return
     context.set_context(mode=context.GRAPH_MODE)
-
+    shape = (len(b),) if flatten else (len(b), 1)
     a = to_tensor((a, tensor_type), dtype)
-    b = Tensor(onp.array(b, dtype=dtype))
+    b = Tensor(onp.array(b, dtype=dtype).reshape(shape))
     expect_grad_a = onp.array(grad_a, dtype=dtype)
-    expect_grad_b = onp.array(grad_b, dtype=dtype)
-    kw = {"atol": tol, "rtol": tol}
+    expect_grad_b = onp.array(grad_b, dtype=dtype).reshape(shape)
 
     # Function
     grad_net = ops.GradOperation(get_all=True)(msp.sparse.linalg.cg)
     grad_a, grad_b = grad_net(a, b)[:2]
-    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), **kw)
-    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), **kw)
+    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), rtol=tol, atol=tol)
+    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), rtol=tol, atol=tol)
 
     # Cell
     class Net(nn.Cell):
@@ -231,8 +229,8 @@ def test_cg_grad(tensor_type, dtype, tol, a, b, grad_a, grad_b):
 
     grad_net = ops.GradOperation(get_all=True)(Net())
     grad_a, grad_b = grad_net(a, b)[:2]
-    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), **kw)
-    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), **kw)
+    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), rtol=tol, atol=tol)
+    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), rtol=tol, atol=tol)
 
 
 @pytest.mark.level0
@@ -280,13 +278,12 @@ def test_cg_grad_pynative(tensor_type, dtype, tol, a, b, grad_a, grad_b):
     b = Tensor(onp.array(b, dtype=dtype))
     expect_grad_a = onp.array(grad_a, dtype=dtype)
     expect_grad_b = onp.array(grad_b, dtype=dtype)
-    kw = {"atol": tol, "rtol": tol}
 
     # Function
     grad_net = ops.GradOperation(get_all=True)(msp.sparse.linalg.cg)
     grad_a, grad_b = grad_net(a, b)[:2]
-    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), **kw)
-    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), **kw)
+    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), rtol=tol, atol=tol)
+    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), rtol=tol, atol=tol)
 
     # Cell
     class Net(nn.Cell):
@@ -301,8 +298,8 @@ def test_cg_grad_pynative(tensor_type, dtype, tol, a, b, grad_a, grad_b):
 
     grad_net = ops.GradOperation(get_all=True)(Net())
     grad_a, grad_b = grad_net(a, b)[:2]
-    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), **kw)
-    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), **kw)
+    onp.testing.assert_allclose(expect_grad_a, to_ndarray(grad_a), rtol=tol, atol=tol)
+    onp.testing.assert_allclose(expect_grad_b, to_ndarray(grad_b), rtol=tol, atol=tol)
 
 
 @pytest.mark.level1

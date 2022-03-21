@@ -163,14 +163,13 @@ def _sparse_check(func_name, a, m, b, x0):
             return mnp.zeros_like(b)  # x0 same as b
         # Type
         _mstype_check(func_name, arg, mstype.tensor_type, arg_name)
-        # Shape
-        if (arg.ndim != 1 and arg.ndim != 2) or (arg.ndim == 2 and arg.shape[1] != 1):
-            _raise_value_error(
-                "For: '", func_name, "', the shape of '", arg_name, "' should be like (N,) or (N, 1), bug got ",
-                arg.shape, ".")
         # DType
         _dtype_check(func_name, arg, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], arg_name)
-        return arg.ravel()
+        # Shape
+        if (arg.ndim != 1 and arg.ndim != 2) or (arg.ndim == 2 and arg.shape[1] != 1):
+            _raise_value_error("For: '", func_name, "', the shape of '", arg_name,
+                               "' should be like (N,) or (N, 1), bug got ", arg.shape, ".")
+        return arg
 
     b = _check_right(b, 'b')
     x0 = _check_right(x0, 'x0')
@@ -198,6 +197,9 @@ def _sparse_check(func_name, a, m, b, x0):
 
     a = _check_left(a, 'A')
     m = _check_left(m, 'M')
+
+    b = b.flatten()
+    x0 = x0.flatten()
     if F.dtype(b) in (mstype.int32, mstype.int64):
         b = F.cast(b, mstype.float64)
         x0 = F.cast(x0, mstype.float64)
