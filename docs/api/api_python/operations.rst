@@ -323,11 +323,10 @@ operations中的Primitive算子在使用前需要实例化。
 注意，以下列表中的接口需要先配置好通信环境变量。
 
 针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `Ascend指导文档 \
-<https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/
-distributed_training_ascend.html#id12>`_ 。
+<https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ascend.html#id12>`_ 。
 
 针对GPU设备，用户需要准备host文件和mpi，详见 `GPU指导文档 \
-<https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_gpu.html#id6>`_ 。
+<https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_gpu.html#id6>`_ 。
 
 .. mscnplatformautosummary::
     :toctree: ops
