@@ -29,12 +29,15 @@ constexpr size_t kEmbeddingLookupCommGradOutputsNum = 1;
 void EmbeddingLookUpCommGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  split_num_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "split_num");
-  MS_LOG(INFO) << "split_num: " << split_num_;
+  auto split_num = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "split_num");
+  split_num_ = LongToSize(split_num);
+  MS_LOG(INFO) << "split_num: " << split_num;
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (split_num_ == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' should be greater than 0, but got 0.";
+  if (split_num <= 0 || split_num_ == 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' should be greater than 0, but got "
+                      << split_num;
   }
+  split_num_ = LongToSize(split_num);
   if (input_shape.size() < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of input should be at least 1-D, but got: " << input_shape.size() << "-D";
@@ -69,10 +72,11 @@ bool EmbeddingLookUpCommGradCpuKernelMod::Launch(const std::vector<kernel::Addre
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no: " << ret;
   }
   const std::vector<int> &rank_group = {0, 1, 2, 3, 4, 5, 6, 7};
-  size_t input_split_lens = input_size / LongToSize(split_num_) / sizeof(float_t);
-  size_t output_split_lens = output_size / LongToSize(split_num_) / sizeof(float_t);
-  for (int64_t i = 0; i < split_num_; i++) {
-    MPIAllGather(input_addr + i * input_split_lens, output_addr + i * output_split_lens, rank_group, input_split_lens);
+  size_t input_split_lens = input_size / split_num_ / sizeof(float_t);
+  size_t output_split_lens = output_size / split_num_ / sizeof(float_t);
+  for (size_t i = 0; i < split_num_; ++i) {
+    (void)MPIAllGather(input_addr + i * input_split_lens, output_addr + i * output_split_lens, rank_group,
+                       input_split_lens);
   }
   const uint64_t kUSecondInSecond = 1000000;
 #if defined(_WIN32) || defined(_WIN64)

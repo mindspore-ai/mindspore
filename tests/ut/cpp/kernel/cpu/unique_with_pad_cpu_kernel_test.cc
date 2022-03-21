@@ -36,20 +36,21 @@ class UniqueWithPadCpuKernelTest : public UT::Common {
     outputs_.clear();
   }
 
-  AddressPtr CreateKernelAddress(void *addr) {
+  AddressPtr CreateKernelAddress(void *addr, size_t size) {
     auto kernel_addr = std::make_shared<Address>();
     kernel_addr->addr = addr;
+    kernel_addr->size = size;
     return kernel_addr;
   }
 
-  void CreateAddress() {
-    inputs_.push_back(CreateKernelAddress(x_.data()));
-    inputs_.push_back(CreateKernelAddress(&pad_dim_));
-    outputs_.push_back(CreateKernelAddress(out_.data()));
-    outputs_.push_back(CreateKernelAddress(idx_.data()));
-    workspace_.push_back(CreateKernelAddress(workspace_idx_.data()));
-    workspace_.push_back(CreateKernelAddress(workspace_idx_.data()));
-    workspace_.push_back(CreateKernelAddress(workspace_idx_.data()));
+  void CreateAddress(size_t type_size) {
+    inputs_.push_back(CreateKernelAddress(x_.data(), x_.size() * type_size));
+    inputs_.push_back(CreateKernelAddress(&pad_dim_, type_size));
+    outputs_.push_back(CreateKernelAddress(out_.data(), out_.size() * type_size));
+    outputs_.push_back(CreateKernelAddress(idx_.data(), idx_.size() * type_size));
+    workspace_.push_back(CreateKernelAddress(workspace_idx_.data(), workspace_idx_.size() * type_size));
+    workspace_.push_back(CreateKernelAddress(workspace_idx_.data(), workspace_idx_.size() * type_size));
+    workspace_.push_back(CreateKernelAddress(workspace_idx_.data(), workspace_idx_.size() * type_size));
   }
 
   std::vector<int64_t> x_;
@@ -69,7 +70,7 @@ TEST_F(UniqueWithPadCpuKernelTest, compute_test) {
   out_ = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
   idx_ = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
   workspace_idx_ = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-  CreateAddress();
+  CreateAddress(sizeof(int64_t));
   unique_with_pad_->Launch(inputs_, workspace_, outputs_);
 
   // check compute result

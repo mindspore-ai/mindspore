@@ -19,11 +19,6 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kUniqueWithPadInputsNum = 2;
-constexpr size_t kUniqueWithPadOutputsNum = 2;
-}  // namespace
-
 bool UniqueWithPadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &workspace,
                                        const std::vector<kernel::AddressPtr> &outputs) {
@@ -31,29 +26,19 @@ bool UniqueWithPadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniqueWithPadOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
     UniqueCpuKernelMod::LaunchKernel<int, int>(inputs, workspace, outputs);
-    PadOutput<int>(inputs, outputs);
+    PadOutput<int>(inputs, outputs, output_size_);
   } else if (dtype_ == kNumberTypeInt64) {
     UniqueCpuKernelMod::LaunchKernel<int64_t, int64_t>(inputs, workspace, outputs);
-    PadOutput<int64_t>(inputs, outputs);
+    PadOutput<int64_t>(inputs, outputs, output_size_);
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16) {
     UniqueCpuKernelMod::LaunchKernel<float, int>(inputs, workspace, outputs);
-    PadOutput<float>(inputs, outputs);
+    PadOutput<float>(inputs, outputs, output_size_);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of input should be float16, float32, int32, or int64, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
-}
-
-template <typename T>
-void UniqueWithPadCpuKernelMod::PadOutput(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) const {
-  auto pad_num = *reinterpret_cast<T *>(inputs[1]->addr);
-  auto *out = reinterpret_cast<T *>(outputs[0]->addr);
-  for (size_t i = output_size_; i < input_size_; ++i) {
-    out[i] = pad_num;
-  }
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UniqueWithPad, UniqueWithPadCpuKernelMod);

@@ -23,12 +23,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kSizeFloat32 = sizeof(float);
-constexpr size_t kSizeFloat16 = sizeof(float16);
-constexpr size_t kScalarIndex = 0;
-constexpr size_t kFusedCastAdamWeightDecayInputNum = 10;
-constexpr size_t kFusedCastAdamWeightDecayOutputNum = 3;
-
 class FusedCastAdamWeightDecayCpuKernelMod : public NativeCpuKernelMod {
  public:
   FusedCastAdamWeightDecayCpuKernelMod() = default;
@@ -79,7 +73,6 @@ class FusedCastAdamWeightDecayCpuKernelMod : public NativeCpuKernelMod {
   size_t elem_num_{0};
   TypeId var_dtype_{kTypeUnknown};
   TypeId gradient_dtype_{kTypeUnknown};
-  enum input_list_ { VAR, M, V, LR, BETA1, BETA2, EPSILON, DECAY, GRAD, GLOBAL_NORM };
 };
 }  // namespace kernel
 }  // namespace mindspore

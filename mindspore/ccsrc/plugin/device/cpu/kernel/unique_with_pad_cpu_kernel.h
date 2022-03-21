@@ -54,8 +54,21 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
   }
 
  private:
+  inline static constexpr size_t kUniqueWithPadInputsNum = 2;
+  inline static constexpr size_t kUniqueWithPadOutputsNum = 2;
+
   template <typename T>
-  void PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  static void PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, size_t start) {
+    if (inputs.size() < kUniqueWithPadInputsNum || outputs.size() < kUniqueWithPadOutputsNum) {
+      return;
+    }
+    auto pad_num = *reinterpret_cast<T *>(inputs[1]->addr);
+    auto *out = reinterpret_cast<T *>(outputs[0]->addr);
+    size_t length = outputs[0]->size / sizeof(T);
+    for (size_t i = start; i < length; ++i) {
+      out[i] = pad_num;
+    }
+  }
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -185,7 +185,7 @@ void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<A
   CPUKernelUtils::ParallelFor(task, exp_avg_sq_col_elem_num, kBatchSize);
 
   // calc update
-  task = [&](size_t start, size_t end) {
+  task = [&, this](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       size_t row_i = i % row_dim_size;
       size_t col_i = i / row_dim_size % col_dim_size;
@@ -229,8 +229,8 @@ void FusedAdaFactorCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   }
 
   std::function<void(size_t, size_t)> task;
-  // update = grad * grad + eps[0]
-  task = [&](size_t start, size_t end) {
+  // calc update
+  task = [&, this](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       auto tmp = static_cast<float>(grad[i]) * global_norm_reciprocal_;
       update[i] = tmp * tmp + epsilon[0];
@@ -242,7 +242,7 @@ void FusedAdaFactorCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
     FactorUpdate<T>(update, inputs, workspaces);
   } else {
     // no factor
-    task = [&](size_t start, size_t end) {
+    task = [&, this](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
         auto tmp = static_cast<float>(exp_avg_sq[i]) * beta2t + update[i] * one_minus_beta2t;
         tmp = std::max(tmp, kEps);
@@ -263,7 +263,7 @@ void FusedAdaFactorCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   auto update_rms = CalcRMS(update, elem_num_);
   auto update_rms_threshold = update_rms / clip_threshold;
   auto update_coff = learning_rate / std::max(update_rms_threshold, 1.0f);
-  task = [&](size_t start, size_t end) {
+  task = [&, this](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       update[i] = update[i] * update_coff;
       if (enable_first_moment_) {

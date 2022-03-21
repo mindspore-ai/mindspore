@@ -27,8 +27,18 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kSizeFloat32 = sizeof(float);
 constexpr size_t kAdamDeltaInputsNum = 9;
 constexpr size_t kAdamDeltaOutputsNum = 1;
+constexpr size_t kMIndex = 0;
+constexpr size_t kVIndex = 1;
+constexpr size_t kBeta1PowIndex = 2;
+constexpr size_t kBeta2PowIndex = 3;
+constexpr size_t kLRIndex = 4;
+constexpr size_t kBeta1Index = 5;
+constexpr size_t kBeta2Index = 6;
+constexpr size_t kEpsIndex = 7;
+constexpr size_t kGradIndex = 8;
 }  // namespace
 
 template <typename T>
@@ -61,9 +71,9 @@ void AdamDeltaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> delta_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  std::vector<size_t> m_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> v_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<size_t> grad_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 8);
+  std::vector<size_t> m_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kMIndex);
+  std::vector<size_t> v_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kVIndex);
+  std::vector<size_t> grad_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kGradIndex);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (!IsSameShape(delta_shape, m_shape)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -101,8 +111,9 @@ void AdamDeltaCpuKernelMod::CheckParams(const std::vector<kernel::AddressPtr> &i
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamDeltaInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamDeltaOutputsNum, kernel_name_);
 
-  size_t elem_size = elem_num_ * 4;
-  std::vector<size_t> expect_sizes = {elem_size, elem_size, 4, 4, 4, 4, 4, 4, elem_size};
+  size_t elem_size = elem_num_ * kSizeFloat32;
+  std::vector<size_t> expect_sizes = {elem_size,    elem_size,    kSizeFloat32, kSizeFloat32, kSizeFloat32,
+                                      kSizeFloat32, kSizeFloat32, kSizeFloat32, elem_size};
   std::vector<std::string> input_names = {"m",     "v",     "beta1_power", "beta2_power", "lr",
                                           "beta1", "beta2", "epsilon",     "grad"};
   for (size_t i = 0; i < kAdamDeltaInputsNum; ++i) {
@@ -125,18 +136,18 @@ bool AdamDeltaCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   CheckParams(inputs, outputs);
-  auto m = reinterpret_cast<float *>(inputs[0]->addr);
-  auto v = reinterpret_cast<float *>(inputs[1]->addr);
-  auto beta1_power = reinterpret_cast<float *>(inputs[2]->addr)[0];
+  auto m = reinterpret_cast<float *>(inputs[kMIndex]->addr);
+  auto v = reinterpret_cast<float *>(inputs[kVIndex]->addr);
+  auto beta1_power = reinterpret_cast<float *>(inputs[kBeta1PowIndex]->addr)[0];
   if (beta1_power == 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' should not be 1.";
   }
-  auto beta2_power = reinterpret_cast<float *>(inputs[3]->addr)[0];
-  auto lr = reinterpret_cast<float *>(inputs[4]->addr)[0];
-  auto beta1 = reinterpret_cast<float *>(inputs[5]->addr)[0];
-  auto beta2 = reinterpret_cast<float *>(inputs[6]->addr)[0];
-  auto epsilon = reinterpret_cast<float *>(inputs[7]->addr)[0];
-  auto grad = reinterpret_cast<float *>(inputs[8]->addr);
+  auto beta2_power = reinterpret_cast<float *>(inputs[kBeta2PowIndex]->addr)[0];
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[0];
+  auto beta1 = reinterpret_cast<float *>(inputs[kBeta1Index]->addr)[0];
+  auto beta2 = reinterpret_cast<float *>(inputs[kBeta2Index]->addr)[0];
+  auto epsilon = reinterpret_cast<float *>(inputs[kEpsIndex]->addr)[0];
+  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
   auto delta = reinterpret_cast<float *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(m);
   MS_EXCEPTION_IF_NULL(v);
