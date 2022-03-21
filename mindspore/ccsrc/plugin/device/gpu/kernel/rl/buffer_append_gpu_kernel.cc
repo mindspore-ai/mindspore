@@ -24,6 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kDouble = 2;
+
 BufferAppendKernelMod::BufferAppendKernelMod() : element_nums_(0), exp_batch_(0), capacity_(0) {}
 
 BufferAppendKernelMod::~BufferAppendKernelMod() {}
@@ -60,8 +62,8 @@ void BufferAppendKernelMod::InitSizeLists() { return; }
 
 bool BufferAppendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &, void *stream) {
-  int *count_addr = GetDeviceAddress<int>(inputs, 2 * element_nums_);
-  int *head_addr = GetDeviceAddress<int>(inputs, 2 * element_nums_ + 1);
+  int *count_addr = GetDeviceAddress<int>(inputs, kDouble * element_nums_);
+  int *head_addr = GetDeviceAddress<int>(inputs, kDouble * element_nums_ + 1);
   int *index_addr = GetDeviceAddress<int>(workspace, 0);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   IncreaseCount(capacity_, LongToInt(exp_batch_), count_addr, head_addr, index_addr, cuda_stream);
