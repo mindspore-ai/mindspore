@@ -33,7 +33,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
                       const std::shared_ptr<std::vector<size_t>> &index_list, bool is_training,
-                      const std::vector<std::vector<size_t>> &shared_tensors_ops) {
+                      const std::vector<std::vector<size_t>> &param_users_ops_index) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(eli_list);
   MS_EXCEPTION_IF_NULL(index_list);
@@ -46,7 +46,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   GenerateEliminatedOperatorStrategyForward(graph, ops, input_tensor_names, index_list, no_stra_op_list);
   GenerateEliminatedOperatorStrategyBackward(ops, input_tensor_names, no_stra_op_list);
   GenerateRemainingOperatorStrategy(graph, ops, input_tensor_names, index_list, no_stra_op_list);
-  ModifySharingTensorOps(ops, shared_tensors_ops);
+  ModifyParamSharingOpsStrategy(ops, param_users_ops_index);
 
   for (auto &op : ops) {
     // Set user-defined strategy
@@ -603,21 +603,35 @@ void GeneratePartitionedOperatorStrategy(const std::shared_ptr<Graph> &graph,
   }
 }
 
-void ModifySharingTensorOps(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                            const std::vector<std::vector<size_t>> &shared_tensors_ops) {
-  for (auto tensor : shared_tensors_ops) {
+void ModifyParamSharingOpsStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                   const std::vector<std::vector<size_t>> &param_users_ops_index) {
+  for (auto tensor : param_users_ops_index) {
     for (auto op_i : tensor) {
-      Dimensions str_gather_a;
-      if (ops[op_i]->type() == GATHERV2) {  // It should be the operator to copy | main op > elemwise op
-        str_gather_a = ops[op_i]
-                         ->selected_strategy()
-                         ->GetInputDim()[0];  // Instead of 0 we should put the index of input sharing the tensor
+      if (ops[op_i]->type() == GATHERV2) {
         for (auto op_j : tensor) {
-          if (op_i != op_j && IsStrictElementWise(ops, op_j)) {
-            Strategys stra = GenerateStrategiesFromStrategy(ops, op_j, str_gather_a);
-            StrategyPtr sp = std::make_shared<Strategy>(0, stra);
-            MS_LOG(INFO) << "Changing strategy of " << ops[op_j]->name() << " with " << ops[op_i]->name();
-            ops[op_j]->SetSelectedStrategyAndCost(sp, ops[op_j]->selected_cost());
+          if (op_i != op_j) {
+            Dimensions str_j;
+            if (ops[op_j]->type() == CAST) {
+              str_j = ops[op_j]->selected_strategy()->GetInputDim()[0];
+            } else if (ops[op_j]->type() == MATMUL) {
+              str_j = ops[op_j]->selected_strategy()->GetInputDim()[1];
+            } else {
+              continue;
+            }
+            Strategys strategies;
+            Dimensions str1, str2;
+            str1 = str_j;
+            size_t num_device_used = 1;
+            for (size_t i = 0; i < str_j.size(); i++) {
+              num_device_used *= str_j[i];
+            }
+            str2.push_back(g_device_manager->DeviceNum() / num_device_used);
+            str2.push_back(1);
+            strategies.push_back(str1);
+            strategies.push_back(str2);
+            StrategyPtr sp = std::make_shared<Strategy>(0, strategies);
+            MS_LOG(INFO) << "Changing strategy of " << ops[op_i]->name() << " with " << ops[op_j]->name();
+            ops[op_i]->SetSelectedStrategyAndCost(sp, ops[op_i]->selected_cost());
           }
         }
       }

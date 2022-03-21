@@ -63,11 +63,10 @@ void ModifyInputsTensorNameListIfOperatorInfoCreated(const std::string &name, co
 size_t FindOperatorIndexById(const std::string &unique_id,
                              const std::vector<std::vector<std::string>> &input_tensor_names);
 
-void AddSharedTensorWhenMultiUsers(
+void AddUsersUniqueIdWhenSharingParameter(
   const std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>> &parameter_users_info);
 
-std::vector<std::vector<size_t>> GetSharedTensorsOps(
-  const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+std::vector<std::vector<size_t>> GetIndexOfOpsSharingInputTensor(
   const std::vector<std::vector<std::string>> &shared_tensors_ops_names,
   const std::vector<std::vector<std::string>> &input_tensor_names);
 }  // namespace parallel
