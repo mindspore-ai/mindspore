@@ -80,7 +80,7 @@ bool TCPClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
     } else {
       break;
     }
-    usleep(sleep_in_us);
+    (void)usleep(sleep_in_us);
   }
   return rt;
 }

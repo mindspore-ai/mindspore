@@ -78,13 +78,19 @@ static const char URL_IP_PORT_SEPARATOR[] = ":";
 static const char TCP_RECV_EVLOOP_THREADNAME[] = "RECV_EVENT_LOOP";
 static const char TCP_SEND_EVLOOP_THREADNAME[] = "SEND_EVENT_LOOP";
 
-constexpr int RPC_ERROR = -1;
 constexpr int RPC_OK = 0;
+constexpr int RPC_ERROR = -1;
+
+constexpr int IO_RW_OK = 1;
+constexpr int IO_RW_ERROR = -1;
 
 constexpr int IP_LEN_MAX = 128;
 
 // Kill the process for safe exiting.
-inline void KillProcess(const std::string &ret) { (void)raise(SIGKILL); }
+inline void KillProcess(const std::string &ret) {
+  MS_LOG(ERROR) << ret;
+  (void)raise(SIGKILL);
+}
 
 /*
  * The MessageHeader contains the stats info about the message body.

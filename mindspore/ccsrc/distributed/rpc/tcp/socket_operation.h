@@ -74,12 +74,12 @@ class SocketOperation {
   virtual ssize_t ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) = 0;
 
   // Try to receive messages up to totalRecvLen (for message header).
-  virtual int Receive(Connection *connection, char *recvBuf, uint32_t totalRecvLen, uint32_t *recvLen) = 0;
+  virtual int Receive(Connection *connection, char *recvBuf, size_t totalRecvLen, size_t *recvLen) = 0;
 
   // Receive message (for message body).
-  virtual int ReceiveMessage(Connection *connection, struct msghdr *recvMsg, uint32_t recvLen) = 0;
+  virtual int ReceiveMessage(Connection *connection, struct msghdr *recvMsg, size_t totalRecvLen, size_t *recvLen) = 0;
 
-  virtual ssize_t SendMessage(Connection *connection, struct msghdr *sendMsg, size_t *sendLen) = 0;
+  virtual int SendMessage(Connection *connection, struct msghdr *sendMsg, size_t totalSendLen, size_t *sendLen) = 0;
 
   // Handle connect and connected events.
   virtual void NewConnEventHandler(void *context) = 0;

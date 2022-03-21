@@ -68,7 +68,7 @@ class EventLoop {
 
   // Add task (eg. send message, reconnect etc.) to task queue of the event loop.
   // These tasks are executed asynchronously.
-  ssize_t AddTask(std::function<int()> &&task);
+  size_t AddTask(std::function<int()> &&task);
 
   // Set event handler for events(read/write/..) occurred on the socket fd.
   int SetEventHandler(int sock_fd, uint32_t events, EventHandler handler, void *data);

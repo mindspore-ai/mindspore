@@ -139,9 +139,11 @@ int DoSend(Connection *conn) {
       conn->send_message_queue.pop();
     }
 
-    int sendLen = conn->socket_operation->SendMessage(conn, &conn->send_kernel_msg, &conn->total_send_len);
-    if (sendLen > 0) {
+    size_t sendLen = 0;
+    int retval = conn->socket_operation->SendMessage(conn, &conn->send_kernel_msg, conn->total_send_len, &sendLen);
+    if (retval == IO_RW_OK && sendLen > 0) {
       total_send_bytes += sendLen;
+      conn->total_send_len -= sendLen;
       if (conn->total_send_len == 0) {
         // update metrics
         conn->send_metrics->UpdateError(false);
@@ -150,7 +152,7 @@ int DoSend(Connection *conn) {
         delete conn->send_message;
         conn->send_message = nullptr;
       }
-    } else if (sendLen == 0) {
+    } else if (retval == IO_RW_OK && sendLen == 0) {
       // EAGAIN
       (void)conn->recv_event_loop->UpdateEpollEvent(conn->socket_fd, EPOLLOUT | EPOLLIN | EPOLLHUP | EPOLLERR);
       break;
@@ -372,7 +374,8 @@ ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
   if (sync) {
     return task();
   } else {
-    return send_event_loop_->AddTask(task);
+    send_event_loop_->AddTask(task);
+    return true;
   }
 }
 

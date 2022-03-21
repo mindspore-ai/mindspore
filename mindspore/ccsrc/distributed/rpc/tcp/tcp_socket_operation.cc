@@ -25,7 +25,7 @@ ssize_t TCPSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, u
   return recv(connection->socket_fd, recvBuf, recvLen, MSG_PEEK);
 }
 
-int TCPSocketOperation::Receive(Connection *connection, char *recvBuf, uint32_t totalRecvLen, uint32_t *recvLen) {
+int TCPSocketOperation::Receive(Connection *connection, char *recvBuf, size_t totalRecvLen, size_t *recvLen) {
   char *curRecvBuf = recvBuf;
   int fd = connection->socket_fd;
 
@@ -33,41 +33,40 @@ int TCPSocketOperation::Receive(Connection *connection, char *recvBuf, uint32_t 
   while (*recvLen != totalRecvLen) {
     ssize_t retval = recv(fd, curRecvBuf, totalRecvLen - *recvLen, static_cast<int>(0));
     if (retval > 0) {
-      *recvLen += static_cast<uint32_t>(retval);
+      *recvLen += retval;
       if (*recvLen == totalRecvLen) {
-        return UintToInt(totalRecvLen);
+        return IO_RW_OK;
       }
       curRecvBuf = curRecvBuf + retval;
       // Failed to receive message.
     } else if (retval < 0) {
       if (EAGAIN == errno) {
-        return UintToInt(*recvLen);
+        return IO_RW_OK;
       } else if (ECONNRESET == errno || ECONNABORTED == errno || ENOTCONN == errno || EPIPE == errno) {
         connection->error_code = errno;
-        return -1;
+        return IO_RW_ERROR;
       } else {
-        return UintToInt(*recvLen);
+        return IO_RW_OK;
       }
     } else {
       connection->error_code = errno;
-      return -1;
+      return IO_RW_ERROR;
     }
   }
-  return UintToInt(*recvLen);
+  return IO_RW_OK;
 }
 
-int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *recvMsg, uint32_t recvLen) {
-  ssize_t totalRecvLen = recvLen;
-
+int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *recvMsg, size_t totalRecvLen,
+                                       size_t *recvLen) {
   if (totalRecvLen == 0) {
-    return 0;
+    return IO_RW_OK;
   }
 
-  while (totalRecvLen) {
+  while (*recvLen < totalRecvLen) {
     auto retval = recvmsg(connection->socket_fd, recvMsg, 0);
     if (retval > 0) {
-      totalRecvLen -= retval;
-      if (totalRecvLen == 0) {
+      *recvLen += retval;
+      if (*recvLen == totalRecvLen) {
         recvMsg->msg_iovlen = 0;
         break;
       }
@@ -76,7 +75,7 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
       if (iovlen > 0) {
         size_t tmpLen = 0;
         for (unsigned int i = 0; i < iovlen; ++i) {
-          if (recvMsg->msg_iov[i].iov_len + tmpLen <= (size_t)retval) {
+          if (recvMsg->msg_iov[i].iov_len + tmpLen <= static_cast<size_t>(retval)) {
             tmpLen += recvMsg->msg_iov[i].iov_len;
           } else {
             recvMsg->msg_iov[i].iov_len -= IntToSize(retval - tmpLen);
@@ -90,49 +89,47 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
         }
       }
     } else if (retval == 0) {
-      return -1;
+      return IO_RW_ERROR;
     } else {
       if (EAGAIN == errno) {
-        return UintToInt(recvLen - totalRecvLen);
+        return IO_RW_OK;
       } else if (ECONNRESET == errno || ECONNABORTED == errno || ENOTCONN == errno || EPIPE == errno) {
         connection->error_code = errno;
-        return -1;
+        return IO_RW_ERROR;
       } else {
-        return UintToInt(recvLen - totalRecvLen);
+        return IO_RW_OK;
       }
     }
   }
-  return UintToInt(recvLen);
+  return IO_RW_OK;
 }
 
-ssize_t TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendMsg, size_t *sendLen) {
+int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendMsg, size_t totalSendLen,
+                                    size_t *sendLen) {
   int eagainCount = EAGAIN_RETRY;
-  size_t totalLen = *sendLen;
-  ssize_t unsendLen = static_cast<ssize_t>(*sendLen);
 
-  while (*sendLen != 0) {
+  while (*sendLen != totalSendLen) {
     auto retval = sendmsg(connection->socket_fd, sendMsg, MSG_NOSIGNAL);
     if (retval < 0) {
       --eagainCount;
       if (errno != EAGAIN) {
         connection->error_code = errno;
-        unsendLen = -1;
-        break;
+        return IO_RW_ERROR;
       } else if (eagainCount == 0) {
-        unsendLen = 0;
+        *sendLen = 0;
         break;
       }
     } else {
-      *sendLen -= retval;
+      *sendLen += retval;
 
-      if (*sendLen == 0) {
+      if (*sendLen == totalSendLen) {
         sendMsg->msg_iovlen = 0;
         break;
       }
 
       size_t tmpBytes = 0;
       for (unsigned int i = 0; i < sendMsg->msg_iovlen; ++i) {
-        if (sendMsg->msg_iov[i].iov_len + tmpBytes < IntToSize(retval)) {
+        if (sendMsg->msg_iov[i].iov_len + tmpBytes < static_cast<size_t>(retval)) {
           tmpBytes += sendMsg->msg_iov[i].iov_len;
         } else {
           sendMsg->msg_iov[i].iov_len -= (retval - tmpBytes);
@@ -147,10 +144,7 @@ ssize_t TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *s
       eagainCount = EAGAIN_RETRY;
     }
   }
-  if (unsendLen > 0) {
-    unsendLen = totalLen - *sendLen;
-  }
-  return unsendLen;
+  return IO_RW_OK;
 }
 
 void TCPSocketOperation::Close(Connection *connection) {
