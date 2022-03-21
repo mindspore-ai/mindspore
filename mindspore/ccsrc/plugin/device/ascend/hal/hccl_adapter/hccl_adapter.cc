@@ -29,10 +29,10 @@
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/hccl_adapter/converter.h"
 
-static constexpr const char *kHcclPluginFileName = "libhccl_plugin.so";
-static constexpr const char *kHcclDeployModeEnv = "DEPLOY_MODE";
-static constexpr const char *kHcclAlgoEnv = "HCCL_ALGO";
-static constexpr const char *kHcclAlgoOption = "HCCL_algorithm";
+static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
+static constexpr const auto kHcclDeployModeEnv = "DEPLOY_MODE";
+static constexpr const auto kHcclAlgoEnv = "HCCL_ALGO";
+static constexpr const auto kHcclAlgoOption = "HCCL_algorithm";
 
 #define CHECK_SYMBOL_NULL(symbol)                                                    \
   if ((symbol) == nullptr) {                                                         \
