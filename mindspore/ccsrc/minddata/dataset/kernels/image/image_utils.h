@@ -71,6 +71,12 @@ int GetCVBorderType(BorderType type);
 /// \return The status code.
 Status ImageNumChannels(const std::shared_ptr<Tensor> &image, int *channels);
 
+/// \brief Get the size of input image.
+/// \param[in] image Tensor of the image.
+/// \param[out] size Size of the image as [height, width].
+/// \return The status code.
+Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<uint32_t> &size);  // NOLINT
+
 /// \brief Returns the check result of tensor rank and tensor shape
 /// \param[in] tensor: The input tensor need to check
 /// \param[in] channel: The channel index of tensor shape.

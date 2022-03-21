@@ -17,6 +17,7 @@
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/include/dataset/vision.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::BorderType;
@@ -1354,4 +1355,33 @@ TEST_F(MindDataTestPipeline, TestGetImageNumChannelsInValidInput) {
   auto input_tensor_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
   int channels = 0;
   ASSERT_FALSE(vision::GetImageNumChannels(input_tensor_ms, &channels));
+}
+
+/// Feature: GetImageSize
+/// Description: test GetImageSize with pipeline mode
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestGetImageSizePipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetImageSizePipeline.";
+
+  std::shared_ptr<Tensor> input_tensor;
+  std::vector<float> input_vector = {3, 4, 2, 5, 1, 34, 4, 5, 2, 5, 7, 3, 12, 1, 5, 6, 3 ,2};
+  ASSERT_OK(Tensor::CreateFromVector(input_vector, TensorShape({3, 2, 3}), &input_tensor));
+  auto size = std::vector<uint32_t>(2);
+  ASSERT_OK(ImageSize(input_tensor, size));
+  std::vector<uint32_t> expected = {3, 2};
+
+  ASSERT_EQ(size, expected);
+}
+
+/// Feature: GetImageSize
+/// Description: test GetImageSize with invalid input
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestGetImageSizeInValidInput) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetImageSizeInValidInput.";
+
+  std::shared_ptr<Tensor> input_tensor;
+  std::vector<int> input_vector = {3, 4, 2, 5, 1, 3, 4, 5, 2, 5, 7, 3};
+  ASSERT_OK(Tensor::CreateFromVector(input_vector, TensorShape({12}), &input_tensor));
+  auto size = std::vector<uint32_t>(2);
+  ASSERT_FALSE(ImageSize(input_tensor, size));
 }

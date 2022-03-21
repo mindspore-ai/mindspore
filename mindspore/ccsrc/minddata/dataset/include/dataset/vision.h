@@ -315,6 +315,12 @@ class MS_API Equalize final : public TensorTransform {
 /// \return The status code.
 Status MS_API GetImageNumChannels(const mindspore::MSTensor &image, int *channels);
 
+/// \brief Get the size of input image.
+/// \param[in] image Tensor of the image.
+/// \param[out] size Size of the image as [height, width].
+/// \return The status code.
+Status MS_API GetImageSize(const mindspore::MSTensor &image, std::vector<uint32_t> &size);  // NOLINT
+
 /// \brief Flip the input image horizontally.
 class MS_API HorizontalFlip final : public TensorTransform {
  public:

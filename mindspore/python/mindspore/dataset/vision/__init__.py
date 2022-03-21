@@ -34,4 +34,5 @@ Descriptions of common data processing terms are as follows:
 from . import c_transforms
 from . import py_transforms
 from . import transforms
-from .utils import Inter, Border, ConvertMode, ImageBatchFormat, SliceMode, AutoAugmentPolicy, get_image_num_channels
+from .utils import Inter, Border, ConvertMode, ImageBatchFormat, SliceMode, AutoAugmentPolicy, get_image_num_channels,\
+    get_image_size
