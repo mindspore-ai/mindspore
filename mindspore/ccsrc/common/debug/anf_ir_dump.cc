@@ -218,7 +218,6 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   auto cnode = dyn_cast<CNode>(node);
   if (cnode == nullptr) {
     MS_LOG(EXCEPTION) << "Parameter \'node\' should be a CNode";
-    return;
   }
   AnfNodePtr op = cnode->input(0);
   MS_EXCEPTION_IF_NULL(op);

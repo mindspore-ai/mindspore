@@ -47,13 +47,13 @@ class COMMON_EXPORT Common {
   static bool FileExists(const std::string &filepath);
   static bool CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path, std::string *value);
   static std::string GetCompilerCachePath();
+  static std::string GetUserDefineCachePath();
   static bool GetDebugTerminate();
   static bool GetDebugExitSuccess();
   static void DebugTerminate(bool val, bool exit_success);
 
  private:
   static bool IsEveryFilenameValid(const std::string &path, size_t length_limit, const std::string &error_message);
-  static std::string GetUserDefineCachePath();
 
   inline static bool debugger_terminate_ = false;
   inline static bool exit_success_ = false;

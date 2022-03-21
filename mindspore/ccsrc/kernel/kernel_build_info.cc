@@ -91,8 +91,9 @@ size_t KernelBuildInfo::GetInputNum() const { return inputs_format_.size(); }
 size_t KernelBuildInfo::GetOutputNum() const { return outputs_format_.size(); }
 
 size_t KernelBuildInfo::GetOutputNumWithoutMonad() const {
-  return std::count_if(outputs_device_type_.begin(), outputs_device_type_.end(),
-                       [](TypeId type) { return type != TypeId::kObjectTypeUMonad; });
+  const auto count = std::count_if(outputs_device_type_.begin(), outputs_device_type_.end(),
+                                   [](TypeId type) { return type != TypeId::kObjectTypeUMonad; });
+  return static_cast<size_t>(count);
 }
 
 std::string KernelBuildInfo::GetInputReshapeType(size_t input_index) const {

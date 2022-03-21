@@ -33,8 +33,8 @@ namespace mindspore {
 namespace {
 API_FACTORY_REG(GraphCell::GraphImpl, AscendGraphImpl);
 
-constexpr const char *kHcclEnable = "MS_ENABLE_HCCL";
-constexpr const char *kHcclGroupFile = "PARA_GROUP_FILE";
+constexpr auto kHcclEnable = "MS_ENABLE_HCCL";
+constexpr auto kHcclGroupFile = "PARA_GROUP_FILE";
 
 void InitHccl() {
   auto ms_context = MsContext::GetInstance();
