@@ -166,7 +166,7 @@ void TbeKernelSelect::GetAgnosticPatternKernelInfo(const OpInfo &op_info) {
 void TbeKernelSelect::GetBroadcastPatternKernelInfo(const OpInfo &op_info) {
   auto broadcast_selecter = TbeKernelBroadCastSelecter(cnode_ptr_);
   SupportFormat support_format;
-  broadcast_selecter.GetShapeInfo(&support_format);
+  (void)broadcast_selecter.GetShapeInfo(&support_format);
   (void)broadcast_selecter.IsBroadCastSupport5HD(&support_format);
   (void)broadcast_selecter.IsBroadCastSupportFracZ(&support_format);
   (void)broadcast_selecter.IsBroadCastSupportC1HWNCoC0(&support_format);
@@ -386,7 +386,7 @@ void TbeKernelSelect::CreateNewOpIOInfo(const mindspore::kernel::OpIOInfo &op_io
   std::vector<std::string> dtype_new;
   auto dtype = op_io_info.dtypes();
   for (size_t i = 0; i < support_format_item.size(); ++i) {
-    dtype_new.insert(dtype_new.end(), dtype.begin(), dtype.end());
+    (void)dtype_new.insert(dtype_new.end(), dtype.begin(), dtype.end());
   }
   op_io_info_new->set_dtypes(dtype_new);
   // format
@@ -524,12 +524,14 @@ void TbeKernelSelect::CreateNewOpInfo(const mindspore::kernel::OpInfo &op_info,
     op_info_new->ClearOutputs();
     for (size_t i = 0; i < op_info.inputs_ptr().size(); ++i) {
       auto input_new = std::make_shared<OpIOInfo>();
-      CreateNewOpIOInfo(*(op_info.inputs_ptr().at(i)), inputs.at(i).dtypes, inputs.at(i).formats, input_new.get());
+      const auto &inputs_ptr = op_info.inputs_ptr();
+      CreateNewOpIOInfo(*(inputs_ptr.at(i)), inputs.at(i).dtypes, inputs.at(i).formats, input_new.get());
       op_info_new->add_inputs_ptr(input_new);
     }
     for (size_t i = 0; i < op_info.outputs_ptr().size(); ++i) {
       auto output_new = std::make_shared<OpIOInfo>();
-      CreateNewOpIOInfo(*op_info.outputs_ptr().at(i), outputs.at(i).dtypes, outputs.at(i).formats, output_new.get());
+      const auto &outputs_ptr = op_info.outputs_ptr();
+      CreateNewOpIOInfo(*(outputs_ptr.at(i)), outputs.at(i).dtypes, outputs.at(i).formats, output_new.get());
       op_info_new->add_outputs_ptr(output_new);
     }
   }
