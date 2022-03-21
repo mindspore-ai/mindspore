@@ -47,7 +47,8 @@ std::array<uint32_t, kResultNum> PhiloxGenerator::Compute(const std::array<uint3
                                                           const std::array<uint32_t, 2> &key_var) const {
   std::array<uint32_t, kResultNum> min_value;
   std::array<uint32_t, kResultNum> max_value;
-  for (size_t i = 0; i < kResultNum; i += 2) {
+  constexpr auto step = 2;
+  for (size_t i = 0; i < kResultNum; i += step) {
     uint64_t temp = static_cast<uint64_t>(keyConstant[i]) * counter[i];
     min_value[i] = static_cast<uint32_t>(temp);
     max_value[i] = static_cast<uint32_t>(temp >> kShiftNum);

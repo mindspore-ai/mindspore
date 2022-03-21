@@ -30,7 +30,7 @@ class ScopedLongRunningHook {
   ScopedLongRunningHook() = default;
   virtual ~ScopedLongRunningHook() = default;
   virtual void Enter() = 0;
-  virtual void Leave() = 0;
+  virtual void Leave() noexcept = 0;
 };
 using ScopedLongRunningHookPtr = std::unique_ptr<ScopedLongRunningHook>;
 

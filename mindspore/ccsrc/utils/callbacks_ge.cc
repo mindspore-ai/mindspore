@@ -109,9 +109,9 @@ uint32_t CheckpointSaveCallback(uint32_t graph_id, const std::map<std::string, g
   py::bool_ ret = python_adapter::CallPyFn(PYTHON_MOD_CALLBACK_MODULE, PYTHON_FUN_PROCESS_CHECKPOINT, parameter_list);
   auto bool_ret = py::cast<bool>(ret);
 
-  uint32_t status = Status::SUCCESS;
+  uint32_t status = IntToUint(Status::SUCCESS);
   if (!bool_ret) {
-    status = Status::FAILED;
+    status = IntToUint(Status::FAILED);
     MS_LOG(ERROR) << "Python checkpoint return false during callback";
   }
   return status;
@@ -178,10 +178,10 @@ uint32_t SummarySaveCallback(uint32_t graph_id, const std::map<std::string, ge::
   auto bool_ret = py::cast<bool>(ret);
   if (!bool_ret) {
     MS_LOG(ERROR) << "Python checkpoint return false during callback";
-    return Status::FAILED;
+    return IntToUint(Status::FAILED);
   }
   MS_LOG(DEBUG) << "End the summary save callback function.";
-  return Status::SUCCESS;
+  return IntToUint(Status::SUCCESS);
 }
 }  // namespace callbacks
 }  // namespace mindspore

@@ -233,15 +233,15 @@ static ValueNameToConverterVector value_name_to_converter = {
      return interpreted_object->obj();
    }},
   // None
-  {None::kTypeId, [](const ValuePtr &value) -> py::object { return py::none(); }},
+  {None::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
   // AnyValue
-  {AnyValue::kTypeId, [](const ValuePtr &value) -> py::object { return py::none(); }},
+  {AnyValue::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
   // FuncGraph
-  {FuncGraph::kTypeId, [](const ValuePtr &value) -> py::object { return py::none(); }},
+  {FuncGraph::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
   // Monad
-  {Monad::kTypeId, [](const ValuePtr &value) -> py::object { return py::none(); }},
+  {Monad::kTypeId, [](const ValuePtr &) -> py::object { return py::none(); }},
   // Ellipsis
-  {Ellipsis::kTypeId, [](const ValuePtr &value) -> py::object { return py::ellipsis(); }}};
+  {Ellipsis::kTypeId, [](const ValuePtr &) -> py::object { return py::ellipsis(); }}};
 
 py::object ValueToPyData(const ValuePtr &value) {
   if (value == nullptr) {

@@ -33,7 +33,7 @@ class GilScopedLongRunningHook : public ScopedLongRunningHook {
       release_ = std::make_unique<py::gil_scoped_release>();
     }
   }
-  void Leave() override { release_ = nullptr; }
+  void Leave() noexcept override { release_ = nullptr; }
 
  private:
   std::unique_ptr<py::gil_scoped_release> release_;

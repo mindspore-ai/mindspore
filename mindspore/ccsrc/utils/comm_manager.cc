@@ -35,13 +35,13 @@ class DefaultCommManager : public CommManager {
   ~DefaultCommManager() override = default;
 
   bool CreateGroupSync(const string &, const std::vector<unsigned int> &) const override { return true; }
-  bool GetRankID(const string &group, unsigned int *rank_id) const override { return true; }
-  bool GetRankSize(const string &group, unsigned int *rank_size) const override {
+  bool GetRankID(const string &, unsigned int *) const override { return true; }
+  bool GetRankSize(const string &, unsigned int *rank_size) const override {
     *rank_size = kNoCommDlibRankSize;
     return true;
   }
 
-  bool DestroyGroup(const string &group) const override { return true; }
+  bool DestroyGroup(const string &) const override { return true; }
 
   uint32_t GetRank() override { return 0; }
 };
@@ -53,7 +53,7 @@ bool CommManager::Register(const std::string &name, const std::shared_ptr<CommMa
     return false;
   }
 
-  GetInstanceMap().emplace(name, instance);
+  (void)GetInstanceMap().emplace(name, instance);
   return true;
 }
 
