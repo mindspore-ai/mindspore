@@ -39,7 +39,7 @@ from .utils_const import _raise_value_error, _empty, _max, _min, \
     _tuple_setitem
 from .array_ops import ravel, concatenate, broadcast_arrays, reshape, broadcast_to, flip, \
     apply_along_axis, where, moveaxis
-from .dtypes import nan, pi, dtype_map
+from .dtypes import nan, pi
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32
@@ -380,6 +380,7 @@ def full(shape, fill_value, dtype=None):
     return _convert_64_to_32(empty_compile(dtype, shape))
 
 
+@constexpr
 def _generate_shapes(shape):
     """Generate shapes for randn and rand."""
     if not shape:
@@ -392,31 +393,28 @@ def _generate_shapes(shape):
         elif isinstance(shape[0], tuple):
             size = shape[0]
         else:
-            raise TypeError("If the length of the argument 'shape' is 1, the type of the argument 'shape' must be "
-                            "one of ['int', 'list', 'tuple'], but got {}.".format(type(shape[0])))
+            _raise_type_error("If the length of the argument 'shape' is 1, the type of the argument 'shape' must be "
+                              "one of ['int', 'list', 'tuple'], but got ", shape[0])
     else:
-        for index, value in enumerate(shape):
+        for value in shape:
             if not isinstance(value, int):
-                raise TypeError("If the length of the argument 'shape' is > 1, the type of the argument 'shape' must "
-                                "all be int, but got {} at index {}.".format(type(value), index))
+                _raise_type_error("If the length of the argument 'shape' is > 1, the type of the argument 'shape' must "
+                                  "all be int, but got ", value)
         size = shape
     return size
 
 
+@constexpr
 def _check_rand_type(dtype):
     """Check type for randn and rand"""
     type_list = ['float', 'float16', 'float32', 'float64']
     if isinstance(dtype, str):
         if dtype not in type_list:
-            raise ValueError("If the argument 'dtype' is str, it must be one of {}, but got {}."
-                             .format(type_list, dtype))
-        try:
-            dtype = dtype_map[dtype]
-        except KeyError:
-            raise KeyError("Unsupported dtype {}.".format(dtype))
+            _raise_value_error("If the argument 'dtype' is str, it must be one of ['float', 'float16', 'float32', "
+                               "'float64'], but got ", dtype)
     elif dtype not in (mstype.float64, mstype.float32, mstype.float16):
-        raise ValueError("The argument 'dtype' must be 'mindspore.float64', 'mindspore.float32' or "
-                         "'mindspore.float16', but got {}.".format(dtype))
+        _raise_value_error("The argument 'dtype' must be 'mindspore.float64', 'mindspore.float32' or "
+                           "'mindspore.float16', but got ", dtype)
 
 
 def randn(*shape, dtype=mstype.float32):
@@ -534,32 +532,28 @@ def randint(minval, maxval=None, shape=None, dtype=mstype.int32):
         [9 1 2]]
     """
     if not isinstance(minval, int):
-        raise TypeError("For mindspore.numpy.randint, the type of the argument 'minval' must be int, "
-                        "but got {}.".format(type(minval)))
+        _raise_type_error("For mindspore.numpy.randint, the type of the argument 'minval' must be int, "
+                          "but got ", minval)
     if maxval is None:
         if minval <= 0:
-            raise ValueError("For mindspore.numpy.randint, the argument 'minval' must be > 0 when the argument "
-                             "'maxval' is None, but got {}.".format(minval))
+            _raise_value_error("For mindspore.numpy.randint, the argument 'minval' must be > 0 when the argument "
+                               "'maxval' is None, but got ", minval)
         maxval = minval
         minval = 0
     else:
         if not isinstance(maxval, int):
-            raise TypeError("For mindspore.numpy.randint, the type of the argument 'maxval' must be int, "
-                            "but got {}.".format(type(maxval)))
+            _raise_type_error("For mindspore.numpy.randint, the type of the argument 'maxval' must be int, "
+                              "but got ", maxval)
         if minval >= maxval:
-            raise ValueError("For mindspore.numpy.randint, the value of 'minval' must be greater than the value of "
-                             "'maxval', but got 'minval': {} and 'maxval': {}.".format(minval, maxval))
+            _raise_value_error("For mindspore.numpy.randint, the value of 'minval' must be greater than the "
+                               "value of 'maxval'.")
     if isinstance(dtype, str):
         if dtype not in ('int', 'int8', 'int16', 'int32', 'int64'):
-            raise ValueError("For 'mindspore.numpy.randint', if the argument 'dtype' is str, it must be one of "
-                             "['int', 'int8', 'int16', 'int32', 'int64'], but got {}.".format(dtype))
-        try:
-            dtype = dtype_map[dtype]
-        except KeyError:
-            raise KeyError("Unsupported dtype {}.".format(dtype))
+            _raise_value_error("For 'mindspore.numpy.randint', if the argument 'dtype' is str, it must be one of "
+                               "['int', 'int8', 'int16', 'int32', 'int64'], but got ", dtype)
     elif dtype not in (mstype.int64, mstype.int32, mstype.int16, mstype.int8):
-        raise ValueError("For 'mindspore.numpy.randint', the argument 'dtype' must be 'mindspore.int64', "
-                         "'mindspore.int32', 'mindspore.int16' or 'mindspore.int8', but got {}.".format(dtype))
+        _raise_value_error("For 'mindspore.numpy.randint', the argument 'dtype' must be 'mindspore.int64', "
+                           "'mindspore.int32', 'mindspore.int16' or 'mindspore.int8', but got ", dtype)
     if shape is None:
         shape = (1,)
     else:
@@ -569,7 +563,9 @@ def randint(minval, maxval=None, shape=None, dtype=mstype.int32):
         uniformint = P.UniformInt(seed=seed)
     else:
         uniformint = P.UniformInt()
-    return uniformint(shape, Tensor(minval, mstype.int32), Tensor(maxval, mstype.int32)).astype(dtype)
+    t_min = _type_convert(Tensor, minval).astype(dtype)
+    t_max = _type_convert(Tensor, maxval).astype(dtype)
+    return uniformint(shape, t_min, t_max).astype(dtype)
 
 
 def arange(start, stop=None, step=None, dtype=None):
