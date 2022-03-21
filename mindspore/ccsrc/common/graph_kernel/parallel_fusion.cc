@@ -626,7 +626,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::Searc
   std::vector<size_t> indices;
   for (size_t i = 0; i < cs.size(); ++i) {
     if (cs[i]) {
-      origin_indices[cs[i]] = i;
+      origin_indices[cs[i]] = SizeToInt(i);
       indices.push_back(i);
     }
   }
@@ -646,7 +646,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::Searc
 
   std::map<AnfNodePtr, int> sorted_indices;
   for (size_t i = 0; i < candidates.size(); ++i) {
-    sorted_indices[candidates[i]] = i;
+    sorted_indices[candidates[i]] = SizeToInt(i);
   }
 
   return DoSearchInSortedCandidates(cs.size(), candidates, &origin_indices, &sorted_indices);

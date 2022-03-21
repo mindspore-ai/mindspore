@@ -54,7 +54,7 @@ std::set<int64_t> GetUniqReduceAxes(const AnfNodePtr &node, bool is_ascend = fal
   if (axis_vec.empty()) {
     axis_vec.resize(src_shape_vec.size());
     for (size_t i = 0; i < src_shape_vec.size(); ++i) {
-      axis_vec[i] = i;
+      axis_vec[i] = SizeToLong(i);
     }
   } else {
     (void)std::transform(axis_vec.begin(), axis_vec.end(), axis_vec.begin(), [&src_shape_vec](int64_t axis) -> int64_t {

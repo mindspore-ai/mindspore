@@ -44,7 +44,7 @@ void InsertDepend(const FuncGraphPtr &g, const AnfNodePtr &prev, const AnfNodePt
   MS_EXCEPTION_IF_NULL(prev);
   MS_EXCEPTION_IF_NULL(next);
   MS_EXCEPTION_IF_NULL(depend_nodes);
-  static std::set<DependPair, DependPairCmp> added_set;
+  static std::set<DependPair, DependPairCmp> added_set = std::set<DependPair, DependPairCmp>();
 
   DependPair cur_pair = std::make_pair(prev, next);
   if (added_set.count(cur_pair) > 0) {
@@ -56,7 +56,7 @@ void InsertDepend(const FuncGraphPtr &g, const AnfNodePtr &prev, const AnfNodePt
     std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), next, prev});
   MS_EXCEPTION_IF_NULL(depend_node);
   depend_nodes->push_back(depend_node);
-  added_set.insert(cur_pair);
+  (void)added_set.insert(cur_pair);
 }
 
 bool LinkInternalOp(const FuncGraphPtr &g, const AnfNodePtr &node, AnfNodePtrList *depend_nodes) {
@@ -127,7 +127,7 @@ bool LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList
   }
 
   for (auto depend_index : dynamic_shape_depends) {
-    auto prev = common::AnfAlgo::GetPrevNodeOutput(cnode, depend_index);
+    auto prev = common::AnfAlgo::GetPrevNodeOutput(cnode, LongToSize(depend_index));
     const auto &prev_node = prev.first;
     if (prev_node == nullptr || !CustomActorNodeManager::Instance().IsRegistered(prev_node)) {
       continue;
@@ -174,7 +174,7 @@ void AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList &depend_nodes
   // New MakeTuple node
   auto mk_inputs = AnfNodePtrList{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())),
                                   return_node->input(kFirstDataInputIndex)};
-  mk_inputs.insert(mk_inputs.end(), depend_nodes.begin(), depend_nodes.end());
+  (void)mk_inputs.insert(mk_inputs.end(), depend_nodes.begin(), depend_nodes.end());
   auto make_tuple_node = g->NewCNode(mk_inputs);
 
   // Get first element item form that maketuple and return.
