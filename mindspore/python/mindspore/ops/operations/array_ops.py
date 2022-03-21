@@ -2832,8 +2832,18 @@ class Stack(PrimitiveWithInfer):
             for i in range(len(value['min_value'])):
                 cur_min_value = value['min_value'][i]
                 cur_max_value = value['max_value'][i]
-                min_value_array.append(np.array(cur_min_value))
-                max_value_array.append(np.array(cur_max_value))
+                if (cur_min_value is None or cur_max_value is None):
+                    return out
+                if isinstance(cur_min_value, Tensor_):
+                    cur_min_value = cur_min_value.asnumpy()
+                elif isinstance(cur_min_value, tuple):
+                    cur_min_value = np.array(cur_min_value)
+                if isinstance(cur_max_value, Tensor_):
+                    cur_max_value = cur_max_value.asnumpy()
+                elif isinstance(cur_max_value, tuple):
+                    cur_max_value = np.array(cur_max_value)
+                min_value_array.append(cur_min_value)
+                max_value_array.append(cur_max_value)
             infered_min_value = np.stack(min_value_array, axis=self.axis)
             infered_max_value = np.stack(max_value_array, axis=self.axis)
             infered_min_value = tuple(infered_min_value.tolist())
