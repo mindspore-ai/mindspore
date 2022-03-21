@@ -23,7 +23,7 @@ namespace mindspore {
 namespace lite {
 const int ms_version_major = 1;
 const int ms_version_minor = 6;
-const int ms_version_revision = 1;
+const int ms_version_revision = 2;
 
 /// \brief Global method to get a version string.
 ///
