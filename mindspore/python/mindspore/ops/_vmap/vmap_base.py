@@ -20,7 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from .._register_for_op import Registry
-from ..composite import HyperMap, _VmapGeneralPreprocess
+from ..composite import _VmapGeneralPreprocess
 from ..primitive import Primitive
 from ...common import Tensor
 
@@ -87,77 +87,24 @@ def vmap_bind_all_none(inputs):
 vmap_general_preprocess = _VmapGeneralPreprocess()
 
 
-def vmap_general_rule(prim, axis_size):
-    """
-    When the primitive does not registered the relevant specific VmapRule, it attempts to get
-    this the general rule. The general rule is combining loop and stack operators to simulate
-    the behavior of Vmap. Noted that, general rules does not guarantee the correctness of
-    execution results.
-    Currently, only the following types of primitives are supported:
-    1、 Most calculation operations, whose inputs are tensors, scalars or both of them.
-       (If all elements in a tuple are scalars, it is also considered scalar.)
-    2、 Operators with indefinite inputs length, such as `AddN`, whose inputs is wrapped into a tuple.
-    In other words, we do not support any tuple wrapped variables except for the special cases
-    listed above.
-    """
+def vmap_unstack(dim, val):
+    return P.Unstack(dim)(val)
 
-    if isinstance(prim, str):
-        prim_name = prim
-        prim = Primitive(prim)
+
+def vmap_general_output_process(output):
+    """ Match output to axis 0"""
+    vals_out_tuple = ()
+    if isinstance(output[0], tuple):
+        for res in zip(**output):
+            if not isinstance(res[0], Tensor):
+                _raise_value_error("The output of the operator is not of the Tensor type, "
+                                   "a specific vmap rule is required.")
+            out = F.stack(res)
+            vals_out_tuple = vals_out_tuple + ((out, 0),)
     else:
-        prim_name = prim.name
-    common_map = HyperMap()
-
-    def loop_stack(*args):
-        is_all_none, result = vmap_general_preprocess(prim, *args)
-        if is_all_none:
-            return result
-
-        wrapped_tuple = False
-        # Handle case such as args:(((A, 0), (B, 1)),)
-        if len(args) == 1 and isinstance(args[0][-1], tuple):
-            wrapped_tuple = True
-            args = args[0]
-
-        vals_in_tuple = ()
-        for val_in in args:
-            val, dim = val_in
-            out = ()
-            if dim is None:
-                # Handle case such as args:(..., (A, None), (1, None), ...)
-                for _ in range(axis_size):
-                    out = out + (val,)
-            else:
-                if isinstance(val, Tensor):
-                    # Handle case such as args:(..., (A, 0), (B, 1), ...)
-                    out = P.Unstack(dim)(val)
-                else:
-                    _raise_value_error("A variable of type other than `Tensor` is accepted, "
-                                       "but the source axis is not `None`")
-
-            vals_in_tuple = vals_in_tuple + (out,)
-
-        if wrapped_tuple:
-            output = ()
-            for sub_tuple in zip(*vals_in_tuple):
-                out = prim(sub_tuple)
-                output = output + (out,)
-        else:
-            output = common_map(prim, *vals_in_tuple)
-
-        vals_out_tuple = ()
-        if isinstance(output[0], tuple):
-            for res in zip(**output):
-                if not isinstance(res[0], Tensor):
-                    _raise_value_error("The output of the operator is not of the Tensor type, "
-                                       "a specific vmap rule is required for op: ", prim_name)
-                out = F.stack(res)
-                vals_out_tuple = vals_out_tuple + ((out, 0),)
-        else:
-            out = F.stack(output)
-            vals_out_tuple = vals_out_tuple + (out, 0)
-        return vals_out_tuple
-    return loop_stack
+        out = F.stack(output)
+        vals_out_tuple = vals_out_tuple + (out, 0)
+    return vals_out_tuple
 
 
 def vmap_monad_rule(prim, axis_size):

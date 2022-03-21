@@ -145,10 +145,6 @@ py::function PrimitivePy::GetVmapRuleFunction(const bool is_side_effect, int axi
     return fn;
   } else {
     auto fn = GetVmapRuleFunctionByObj(python_obj_, axis_size);
-    if (!fn || py::isinstance<py::none>(fn)) {
-      MS_LOG(DEBUG) << "Fail to find vmap rule function for " << this->name() << ", try to get the vmap general rule";
-      fn = GetVmapGeneralRuleByObj(python_obj_, is_side_effect, axis_size);
-    }
     return fn;
   }
 }

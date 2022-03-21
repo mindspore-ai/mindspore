@@ -47,12 +47,6 @@ COMMON_EXPORT py::tuple ConvertDatatoPyTuple(const VectorRef &args);
 COMMON_EXPORT py::function GetVmapRuleFunctionByObj(const py::object &obj, int axis_size);
 
 COMMON_EXPORT py::function GetVmapRuleFunction(const std::string &name, int axis_size);
-
-COMMON_EXPORT py::function GetVmapGeneralRuleFunction(const std::string &name, const bool is_side_effect = false,
-                                                      int axis_size = 0);
-
-COMMON_EXPORT py::function GetVmapGeneralRuleByObj(const py::object &obj, const bool is_side_effect = false,
-                                                   int axis_size = 0);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_PRIMITIVE_UTILS_H_
