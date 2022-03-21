@@ -60,7 +60,7 @@ class ConvBiasFusionInoutTest : public ConvFusionInoutTest {
     prim->Init();
     auto bias_primitive = NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim.release()));
     MS_CHECK_TRUE_RET(bias_primitive != nullptr, nullptr);
-    auto bias = AddParameter(graph, oc_, {oc_}, kNumberTypeFloat32, name + "_bias");
+    auto bias = AddParameter(graph, oc_ * sizeof(float), {oc_}, kNumberTypeFloat32, name + "_bias");
     auto bias_add = graph->NewCNode({bias_primitive, input, bias});
     MS_CHECK_TRUE_MSG(bias_add != nullptr, nullptr, "create BiasAdd failed");
     bias_add->set_fullname_with_scope(name);

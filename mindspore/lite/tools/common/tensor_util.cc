@@ -96,6 +96,7 @@ tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std
     MS_LOG(ERROR) << "input tensor data is nullptr";
     return nullptr;
   }
+  MS_CHECK_TRUE_MSG(tensor_info->Size() == data_size, nullptr, "invalid const tensor");
   auto ret = memcpy_s(tensor_info->data_c(), tensor_info->data().nbytes(), data, data_size);
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s error : " << ret;
@@ -147,6 +148,7 @@ int SetTensorData(const tensor::TensorPtr &tensor_info, const void *data, size_t
     MS_LOG(ERROR) << "data is nullptr.";
     return RET_ERROR;
   }
+  MS_CHECK_TRUE_MSG(tensor_info->Size() == data_size, RET_ERROR, "invalid const tensor");
   auto ret = memcpy_s(tensor_info->data_c(), tensor_info->data().nbytes(), data, data_size);
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s error : " << ret;
