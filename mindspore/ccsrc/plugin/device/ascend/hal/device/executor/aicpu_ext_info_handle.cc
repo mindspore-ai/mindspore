@@ -152,7 +152,7 @@ bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const No
 
   auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, input_index);
   std::vector<int64_t> tmp_shape;
-  std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(tmp_shape), SizeToLong);
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(tmp_shape), SizeToLong);
   if (input_index >= input_shape_and_type_.size()) {
     MS_LOG(ERROR) << "Invalid input_index: " << input_index
                   << " the size of input_shape_and_type_ is: " << input_shape_and_type_.size();

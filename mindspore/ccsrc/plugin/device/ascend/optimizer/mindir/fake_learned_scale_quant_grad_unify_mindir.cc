@@ -103,8 +103,8 @@ void FakeLearnedScaleQuantPerChannelGradUnifyMindIR::CreateOutputsOfLSQPerChanne
   }
   std::vector<AnfNodePtr> lsq_perchannel_grad_d_inputs = {
     NewValueNode(std::make_shared<Primitive>(kFakeLearnedScaleQuantPerChannelGradDOpName)),
-    lsq_perchannel_grad_inputs[1], lsq_perchannel_grad_inputs[2], lsq_perchannel_grad_inputs[3],
-    lsq_perchannel_grad_inputs[4]};
+    lsq_perchannel_grad_inputs[kIndex1], lsq_perchannel_grad_inputs[kIndex2], lsq_perchannel_grad_inputs[kIndex3],
+    lsq_perchannel_grad_inputs[kIndex4]};
   auto lsq_perchannel_grad_d = NewCNode(lsq_perchannel_grad_d_inputs, graph);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_grad_d);
   lsq_perchannel_grad_d->set_scope(lsq_perchannel_grad_node->scope());
