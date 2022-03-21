@@ -2202,6 +2202,14 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   return MakeInterpretNode(block, value_node, script_text);
 }
 
+bool Parser::IsTensorType(const AnfNodePtr &node, const std::string &script_text) const {
+  if (node->interpret_internal_type() && script_text.find("(") == std::string::npos) {
+    MS_LOG(DEBUG) << "The Tensor is present as type.";
+    return true;
+  }
+  return false;
+}
+
 AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                                      const string &script_text) {
   MS_EXCEPTION_IF_NULL(block);
@@ -2209,6 +2217,9 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   // Check if script_text is in global/local params.
   py::dict global_dict = block->global_py_params();
   auto [keys, values] = block->local_py_params();
+  if (IsTensorType(value_node, script_text)) {
+    return value_node;
+  }
   bool is_special_node = value_node->interpret_special_type();
   if (IsScriptInParams(script_text, global_dict, keys, block->func_graph()) && !is_special_node) {
     return value_node;
