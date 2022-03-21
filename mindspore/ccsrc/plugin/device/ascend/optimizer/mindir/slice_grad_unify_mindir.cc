@@ -98,7 +98,7 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
   }
   std::vector<std::vector<int64_t>> paddings;
   for (size_t i = 0; i < x_shape.size(); ++i) {
-    paddings.emplace_back(std::vector<int64_t>{begins[i], x_shape[i] - begins[i] - sizes[i]});
+    paddings.emplace_back(std::vector<int64_t>{begins[i], (x_shape[i] - begins[i] - sizes[i])});
   }
   common::AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), pad);
   common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(std::vector<std::string>{"x"}), pad);

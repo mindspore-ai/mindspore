@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 class SegmentEltwiseFusionPass : public FusionBasePass {
  public:
-  explicit SegmentEltwiseFusionPass(FusionIdAllocatorPtr idAllocator)
+  explicit SegmentEltwiseFusionPass(const FusionIdAllocatorPtr &idAllocator)
       : FusionBasePass("SegmentEltwiseFusionPass", idAllocator) {}
   ~SegmentEltwiseFusionPass() override = default;
 
