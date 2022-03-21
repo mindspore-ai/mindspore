@@ -513,7 +513,7 @@ class DebugServices {
 
   void CheckWatchpointProgress(size_t tensor_list_size);
 
-  size_t GetProcessedTensorCount() { return tensor_processed_count_; }
+  size_t GetProcessedTensorCount() const { return tensor_processed_count_; }
 
  private:
   std::mutex lock_;

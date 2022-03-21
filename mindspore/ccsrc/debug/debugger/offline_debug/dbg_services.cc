@@ -29,12 +29,16 @@ DbgServices::DbgServices() { debug_services_ = std::make_shared<DebugServices>()
 DbgServices::DbgServices(const DbgServices &other) {
   MS_LOG(INFO) << "cpp DbgServices object is created via copy";
   debug_services_ = other.debug_services_;
+  check_wp_in_progress_ = other.check_wp_in_progress_;
+  total_tensor_count_ = other.total_tensor_count_;
 }
 
 DbgServices &DbgServices::operator=(const DbgServices &other) {
   MS_LOG(INFO) << "cpp DbgServices object is being assigned a different state";
   if (this != &other) {
     debug_services_ = other.debug_services_;
+    check_wp_in_progress_ = other.check_wp_in_progress_;
+    total_tensor_count_ = other.total_tensor_count_;
   }
   return *this;
 }

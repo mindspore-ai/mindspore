@@ -592,7 +592,7 @@ void DebugServices::CheckWatchpointsForTensor(
     // in offline mode remove the need for the data
     tensor.reset();
 #endif
-    tensor_processed_count_.fetch_add(1, std::memory_order_relaxed);
+    (void)tensor_processed_count_.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
