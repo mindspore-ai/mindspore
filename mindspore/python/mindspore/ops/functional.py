@@ -618,25 +618,50 @@ def arange(start=0, stop=None, step=1, rtype=None):
         start, stop = 0, start
 
     arg_map = {"start": start, "stop": stop, "step": step}
-    for arg in arg_map:
-        try:
-            arg_value = arg_map[arg]
-        except KeyError:
-            raise KeyError("Unsupported key {}, the key must be one of ['start', 'stop', 'step'].".format(arg_value))
+    for arg in ("start", "stop", "step"):
+        arg_value = arg_map.get(arg)
         if not isinstance(arg_value, int) and not isinstance(arg_value, float):
-            raise TypeError("For mindspore.ops.range, the argument '{}' must be int or float, but got {}."
-                            .format(arg, type(arg_value)))
+            _raise_arange_type_error(arg, arg_value)
     if start >= stop:
-        raise ValueError("For mindspore.ops.range, the argument 'start' must be < 'stop', but got 'start': {}, "
-                         "'stop': {}.".format(start, stop))
+        _raise_arange_value_error(start, stop)
 
     if rtype is None:
-        data = np.arange(start, stop, step)
-        if data.dtype == int:
-            rtype = mstype.int32
-        else:
+        if isinstance(start, float) or isinstance(stop, float) or isinstance(step, float):
             rtype = mstype.float32
-    return Tensor(np.arange(start, stop, step), dtype=rtype)
+        else:
+            rtype = mstype.int32
+    data = _arange(start, stop, step)
+    return _make_tensor(data, rtype)
+
+
+@constexpr
+def _make_tensor(data, rtype):
+    """Make Tensor"""
+    return Tensor(data, dtype=rtype)
+
+
+@constexpr
+def _arange(start, stop, step):
+    """Arange compute"""
+    return np.arange(start, stop, step)
+
+
+@constexpr
+def _raise_arange_type_error(arg, arg_value):
+    """
+    Raise TypeError in both graph/pynative mode.
+    """
+    raise TypeError("For mindspore.ops.arange, the argument '{}' must be int or float, but got {}."
+                    .format(arg, type(arg_value)))
+
+
+@constexpr
+def _raise_arange_value_error(start, stop):
+    """
+    Raise TypeError in both graph/pynative mode
+    """
+    raise ValueError("For mindspore.ops.arange, the argument 'start' must be < 'stop', but got 'start': {}, "
+                     "'stop': {}.".format(start, stop))
 
 
 def narrow(inputs, axis, start, length):
