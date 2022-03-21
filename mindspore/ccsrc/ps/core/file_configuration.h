@@ -89,6 +89,8 @@ class BACKEND_EXPORT FileConfiguration : public Configuration {
 
   void PersistNodes(const core::ClusterConfig &clusterConfig) const override;
 
+  std::string file_path() const override;
+
  private:
   // The path of the configuration file.
   std::string file_path_;

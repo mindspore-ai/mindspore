@@ -137,6 +137,8 @@ class NodeManager {
   // Determine whether all nodes that need to be persisted are in persistence.
   bool IsAllNodeInPersisting();
 
+  bool IsAllNodesAlive() const;
+
  private:
   std::mutex node_mutex_;
   std::mutex cluster_mutex_;

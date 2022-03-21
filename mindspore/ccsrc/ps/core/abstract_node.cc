@@ -693,12 +693,7 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
   HeartbeatRespMessage heartbeat_resp_message;
   CHECK_RETURN_TYPE(heartbeat_resp_message.ParseFromArray(data, SizeToInt(size)));
 
-  if (heartbeat_resp_message.cluster_state() != current_cluster_state_) {
-    MS_LOG(INFO) << "cluster change state from:" << CommUtil::ClusterStateToString(current_cluster_state_) << " to "
-                 << CommUtil::ClusterStateToString(heartbeat_resp_message.cluster_state());
-  }
-
-  current_cluster_state_ = heartbeat_resp_message.cluster_state();
+  UpdateClusterState(heartbeat_resp_message.cluster_state());
   MS_LOG(DEBUG) << "The current cluster state from heartbeat:"
                 << CommUtil::ClusterStateToString(current_cluster_state_);
 
@@ -1338,11 +1333,10 @@ bool AbstractNode::Recover() {
     MS_LOG(INFO) << "The node is support recovery.";
     node_recovery_ = std::make_unique<NodeRecovery>(this);
     MS_EXCEPTION_IF_NULL(node_recovery_);
-    if (!node_recovery_->Initialize(config_->Get(kKeyRecovery, ""))) {
-      MS_LOG(ERROR) << "Initializing node recovery failed.";
-      return false;
+    if (node_recovery_->Initialize(config_->Get(kKeyRecovery, ""))) {
+      MS_LOG(INFO) << "Initializing node recovery success.";
+      return node_recovery_->Recover();
     }
-    return node_recovery_->Recover();
   }
   return false;
 }
@@ -1419,8 +1413,16 @@ void AbstractNode::CreateTcpServer() {
 
 void AbstractNode::UpdateClusterState(const ClusterState &state) {
   std::lock_guard<std::mutex> lock(cluster_state_mutex_);
+  std::string state_str = CommUtil::ClusterStateToString(state);
+  if (state_str.empty()) {
+    return;
+  }
+
+  if (state == current_cluster_state_) {
+    return;
+  }
   MS_LOG(INFO) << "[state]: Cluster state change from:" << CommUtil::ClusterStateToString(current_cluster_state_)
-               << " to " << CommUtil::ClusterStateToString(state);
+               << " to " << state_str;
   current_cluster_state_ = state;
 }
 

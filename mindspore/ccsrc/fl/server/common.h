@@ -242,6 +242,7 @@ constexpr auto kCtxGetKeysClientList = "get_keys_client_list";
 constexpr auto kCtxFedAvgTotalDataSize = "fed_avg_total_data_size";
 constexpr auto kCtxCipherPrimer = "cipher_primer";
 constexpr auto kCurrentIteration = "current_iteration";
+constexpr auto kInstanceState = "instance_state";
 const char PYTHON_MOD_SERIALIZE_MODULE[] = "mindspore.train.serialization";
 const char PYTHON_MOD_SAFE_WEIGHT[] = "_save_weight";
 
@@ -295,6 +296,31 @@ enum class ResultCode {
   // If there's error happened, return kFail.
   kFail
 };
+
+inline std::string GetInstanceStateStr(const InstanceState &instance_state) {
+  switch (instance_state) {
+    case InstanceState::kRunning:
+      return "kRunning";
+    case InstanceState::kFinish:
+      return "kFinish";
+    case InstanceState::kDisable:
+      return "kDisable";
+    default:
+      MS_LOG(EXCEPTION) << "InstanceState " << instance_state << " is not supported.";
+  }
+}
+
+inline InstanceState GetInstanceState(const std::string &instance_state) {
+  if (instance_state == "kRunning") {
+    return InstanceState::kRunning;
+  } else if (instance_state == "kFinish") {
+    return InstanceState::kFinish;
+  } else if (instance_state == "kDisable") {
+    return InstanceState::kDisable;
+  }
+
+  MS_LOG(EXCEPTION) << "InstanceState " << instance_state << " is not supported.";
+}
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

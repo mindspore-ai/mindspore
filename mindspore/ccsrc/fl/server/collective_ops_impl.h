@@ -64,7 +64,7 @@ class CollectiveOpsImpl {
   void Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node);
 
   template <typename T>
-  bool AllReduce(const std::string &data_name, const void *sendbuff, void *recvbuff, size_t count);
+  bool AllReduce(const std::string &data_name, void *sendbuff, void *recvbuff, size_t count);
 
   template <typename T>
   bool AllGather(const void *sendbuff, void *recvbuff, size_t send_count,

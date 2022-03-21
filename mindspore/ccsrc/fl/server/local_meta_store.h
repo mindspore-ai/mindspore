@@ -79,6 +79,10 @@ class LocalMetaStore {
   void set_curr_iter_num(size_t num);
   const size_t curr_iter_num();
 
+  void set_curr_instance_state(InstanceState instance_state);
+
+  const InstanceState curr_instance_state();
+
   const void put_aggregation_feature_map(const std::string &name, const Feature &feature);
 
   std::unordered_map<std::string, Feature> &aggregation_feature_map();
@@ -96,7 +100,7 @@ class LocalMetaStore {
   // This mutex makes sure that the operations on key_to_meta_ is threadsafe.
   std::mutex mtx_;
   size_t curr_iter_num_{0};
-
+  InstanceState instance_state_;
   // aggregation_feature_map_ stores model meta data with weight name and size which will be Aggregated.
   std::unordered_map<std::string, Feature> aggregation_feature_map_;
 };

@@ -515,6 +515,7 @@ void Server::Recover() {
   // Set the recovery handler to Iteration.
   MS_EXCEPTION_IF_NULL(iteration_);
   iteration_->set_recovery_handler(server_recovery_);
+  iteration_->set_instance_state(LocalMetaStore::GetInstance().curr_instance_state());
 }
 
 void Server::ProcessBeforeScalingOut() {

@@ -57,17 +57,7 @@ void RoundKernel::set_stop_timer_cb(const StopTimerCb &timer_stopper) { stop_tim
 
 void RoundKernel::SendResponseMsg(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
                                   size_t len) {
-  if (message == nullptr) {
-    MS_LOG(WARNING) << "The message handler is nullptr.";
-    return;
-  }
-  if (data == nullptr || len == 0) {
-    std::string reason = "The output of the round " + name_ + " is empty.";
-    MS_LOG(WARNING) << reason;
-    if (!message->SendResponse(reason.c_str(), reason.size())) {
-      MS_LOG(WARNING) << "Sending response failed.";
-      return;
-    }
+  if (!verifyResponse(message, data, len)) {
     return;
   }
   IncreaseTotalClientNum();
@@ -79,17 +69,7 @@ void RoundKernel::SendResponseMsg(const std::shared_ptr<ps::core::MessageHandler
 
 void RoundKernel::SendResponseMsgInference(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
                                            size_t len, ps::core::RefBufferRelCallback cb) {
-  if (message == nullptr) {
-    MS_LOG(WARNING) << "The message handler is nullptr.";
-    return;
-  }
-  if (data == nullptr || len == 0) {
-    std::string reason = "The output of the round " + name_ + " is empty.";
-    MS_LOG(WARNING) << reason;
-    if (!message->SendResponse(reason.c_str(), reason.size())) {
-      MS_LOG(WARNING) << "Sending response failed.";
-      return;
-    }
+  if (!verifyResponse(message, data, len)) {
     return;
   }
   IncreaseTotalClientNum();
@@ -97,6 +77,23 @@ void RoundKernel::SendResponseMsgInference(const std::shared_ptr<ps::core::Messa
     MS_LOG(WARNING) << "Sending response failed.";
     return;
   }
+}
+
+bool RoundKernel::verifyResponse(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
+                                 size_t len) {
+  if (message == nullptr) {
+    MS_LOG(WARNING) << "The message handler is nullptr.";
+    return false;
+  }
+  if (data == nullptr || len == 0) {
+    std::string reason = "The output of the round " + name_ + " is empty.";
+    MS_LOG(WARNING) << reason;
+    if (!message->SendResponse(reason.c_str(), reason.size())) {
+      MS_LOG(WARNING) << "Sending response failed.";
+    }
+    return false;
+  }
+  return true;
 }
 
 void RoundKernel::IncreaseTotalClientNum() { total_client_num_ += 1; }

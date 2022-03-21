@@ -151,7 +151,7 @@ void Iteration::SetIterationRunning() {
     server_node_->BroadcastEvent(static_cast<uint32_t>(ps::UserDefineEvent::kIterationRunning));
     if (server_recovery_ != nullptr) {
       // Save data to the persistent storage in case the recovery happens at the beginning.
-      if (!server_recovery_->Save(iteration_num_)) {
+      if (!server_recovery_->Save(iteration_num_, instance_state_)) {
         MS_LOG(WARNING) << "Save recovery data failed.";
       }
     }
@@ -207,7 +207,8 @@ bool Iteration::ReInitForUpdatingHyperParams(const std::vector<RoundConfig> &upd
     for (const auto &round : rounds_) {
       if (updated_round.name == round->name()) {
         MS_LOG(INFO) << "Reinitialize for round " << round->name();
-        if (!round->ReInitForUpdatingHyperParams(updated_round.threshold_count, updated_round.time_window)) {
+        if (!round->ReInitForUpdatingHyperParams(updated_round.threshold_count, updated_round.time_window,
+                                                 server_node_->server_num())) {
           MS_LOG(ERROR) << "Reinitializing for round " << round->name() << " failed.";
           return false;
         }
@@ -735,7 +736,7 @@ void Iteration::EndLastIter() {
   if (server_node_->rank_id() == kLeaderServerRank) {
     // Save current iteration number for recovery.
     MS_ERROR_IF_NULL_WO_RET_VAL(server_recovery_);
-    if (!server_recovery_->Save(iteration_num_)) {
+    if (!server_recovery_->Save(iteration_num_, instance_state_)) {
       MS_LOG(WARNING) << "Can't save current iteration number into persistent storage.";
     }
   }
@@ -748,7 +749,11 @@ void Iteration::EndLastIter() {
   set_loss(0.0f);
   Server::GetInstance().CancelSafeMode();
   iteration_state_cv_.notify_all();
-  MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
+  if (iteration_num_ > ps::PSContext::instance()->fl_iteration_num()) {
+    MS_LOG(WARNING) << "The server's training job is finished.";
+  } else {
+    MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
+  }
 }
 
 bool Iteration::ForciblyMoveToNextIteration() {
@@ -913,6 +918,11 @@ void Iteration::UpdateRoundClientUploadLoss(const std::shared_ptr<std::vector<un
   (void)end_last_iter_rsp.ParseFromArray(client_info_rsp_msg->data(), SizeToInt(client_info_rsp_msg->size()));
 
   set_loss(loss_ + end_last_iter_rsp.upload_loss());
+}
+
+void Iteration::set_instance_state(InstanceState state) {
+  instance_state_ = state;
+  MS_LOG(INFO) << "Server instance state is " << GetInstanceStateStr(instance_state_);
 }
 }  // namespace server
 }  // namespace fl

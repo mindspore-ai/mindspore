@@ -23,10 +23,10 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace {
-const char *kCollectivePhaseRing = "ring";
-const char *kCollectivePhaseGather = "gather";
-const char *kCollectivePhaseReduce = "reduce";
-const char *kCollectivePhaseBroadcast = "broadcast";
+const char kCollectivePhaseRing[] = "ring";
+const char kCollectivePhaseGather[] = "gather";
+const char kCollectivePhaseReduce[] = "reduce";
+const char kCollectivePhaseBroadcast[] = "broadcast";
 }  // namespace
 
 void CollectiveOpsImpl::Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node) {
@@ -292,7 +292,7 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const std::string &data_name, c
 }
 
 template <typename T>
-bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff, size_t send_count) {
+bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *recvbuff, size_t send_count) {
   MS_ERROR_IF_NULL_W_RET_VAL(node_, false);
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
   MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
@@ -411,7 +411,7 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t c
 }
 
 template <typename T>
-bool CollectiveOpsImpl::AllReduce(const std::string &data_name, const void *sendbuff, void *recvbuff, size_t count) {
+bool CollectiveOpsImpl::AllReduce(const std::string &data_name, void *sendbuff, void *recvbuff, size_t count) {
   // The collective communication API does not support calling Send and Recv concurrently with multiple threads;
   std::unique_lock<std::mutex> lock(mtx_);
   MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
@@ -441,7 +441,7 @@ bool CollectiveOpsImpl::AllReduce(const std::string &data_name, const void *send
 }
 
 template <typename T>
-bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *const recvbuff, size_t send_count,
+bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *recvbuff, size_t send_count,
                                   const std::shared_ptr<ps::core::AbstractNode> &node) {
   std::unique_lock<std::mutex> lock(mtx_);
   MS_ERROR_IF_NULL_W_RET_VAL(node, false);
@@ -476,7 +476,7 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *const recvbuff, si
 }
 
 template <typename T>
-bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *const recvbuff, size_t count, uint32_t root,
+bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t count, uint32_t root,
                                   const std::shared_ptr<ps::core::AbstractNode> &node,
                                   const CommunicationGroupInfo &group_info) {
   std::unique_lock<std::mutex> lock(mtx_);
@@ -515,11 +515,11 @@ bool CollectiveOpsImpl::ReInitForScaling() {
   return true;
 }
 
-template bool CollectiveOpsImpl::AllReduce<float>(const std::string &data_name, const void *sendbuff, void *recvbuff,
+template bool CollectiveOpsImpl::AllReduce<float>(const std::string &data_name, void *sendbuff, void *recvbuff,
                                                   size_t count);
-template bool CollectiveOpsImpl::AllReduce<size_t>(const std::string &data_name, const void *sendbuff, void *recvbuff,
+template bool CollectiveOpsImpl::AllReduce<size_t>(const std::string &data_name, void *sendbuff, void *recvbuff,
                                                    size_t count);
-template bool CollectiveOpsImpl::AllReduce<int>(const std::string &data_name, const void *sendbuff, void *recvbuff,
+template bool CollectiveOpsImpl::AllReduce<int>(const std::string &data_name, void *sendbuff, void *recvbuff,
                                                 size_t count);
 
 template bool CollectiveOpsImpl::AllGather<float>(const void *sendbuff, void *recvbuff, size_t send_count,
