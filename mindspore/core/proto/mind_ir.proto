@@ -38,6 +38,9 @@ message AttributeProto {
     FUNCGRAPHCLOSURE = 27;
     PARTIALCLOSURE = 28;
     UNIONFUNCCLOSURE = 29;
+    CSR_TENSOR= 30;
+    COO_TENSOR= 31;
+    ROW_TENSOR= 32;
   }
   optional string name = 1;
   optional float f = 2;
