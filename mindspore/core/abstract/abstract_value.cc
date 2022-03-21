@@ -35,7 +35,7 @@ AbstractBase::TraceNodeProvider AbstractBase::trace_node_provider_ = nullptr;
 
 std::string JoinSupplementaryInfo(const AbstractBasePtr &abstract1, const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
-  oss << "\nFor more details, please refer to the FAQ at https://www.mindspore.cn.\n"
+  oss << "\nFor more details, please refer to https://www.mindspore.cn/search?inputValue=Type%20Join%20Failed\n"
       << "This: " << abstract1->ToString() << ", other: " << abstract2->ToString();
   // Get trace info of node.
   AnfNodePtr node = nullptr;
@@ -74,7 +74,7 @@ inline void ShapeJoinLogging(const BaseShapePtr &shape1, const BaseShapePtr &sha
 
 std::string ExtractLoggingInfo(const std::string &info) {
   // Extract log information based on the keyword "Type Join Failed" or "Shape Join Failed"
-  std::regex e("(Type Join Failed|Shape Join Failed).*?\n.*?(https://www.mindspore.cn)");
+  std::regex e("(Type Join Failed|Shape Join Failed).*?\n.*?(Type%20Join%20Failed)");
   std::smatch result;
   bool found = std::regex_search(info, result, e);
   if (found) {
