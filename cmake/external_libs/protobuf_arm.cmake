@@ -44,6 +44,12 @@ else()
     set(MD5 "1a6274bc4a65b55a6fa70e264d796490")
 endif()
 
+if(BUILD_LITE)
+  set(PROTOBUF_PATCH_ROOT ${TOP_DIR}/third_party/patch/protobuf)
+else()
+  set(PROTOBUF_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/protobuf)
+endif()
+
 mindspore_add_pkg(protobuf_arm
         VER 3.13.0
         LIBS protobuf
@@ -56,7 +62,8 @@ mindspore_add_pkg(protobuf_arm
         -DCMAKE_BUILD_TYPE=Release
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-        -Dprotobuf_WITH_ZLIB=OFF)
+        -Dprotobuf_WITH_ZLIB=OFF
+        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
 
 include_directories(${protobuf_arm_INC})
 add_library(mindspore::protobuf_arm ALIAS protobuf_arm::protobuf)

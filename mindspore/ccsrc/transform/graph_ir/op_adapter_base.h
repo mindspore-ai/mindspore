@@ -106,7 +106,7 @@ class BaseOpAdapter {
   virtual ~BaseOpAdapter() {}
   virtual OperatorPtr generate(const AnfNodePtr &anf) = 0;
   virtual OperatorPtr generate(const std::string &type) { return std::make_shared<ge::Operator>(type); }
-  virtual int setSubgraph(const OperatorPtr &op, int index, std::shared_ptr<std::vector<DfGraph>> branches) = 0;
+  virtual int setSubgraph(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OperatorPtr &input) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OutHandler &handle) = 0;
   virtual int setInput(const OperatorPtr &op, int index,
