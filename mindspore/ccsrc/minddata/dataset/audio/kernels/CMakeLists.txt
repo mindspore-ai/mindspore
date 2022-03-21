@@ -45,6 +45,7 @@ add_library(audio-kernels OBJECT
         time_masking_op.cc
         time_stretch_op.cc
         treble_biquad_op.cc
+        vad_op.cc
         vol_op.cc
         )
 

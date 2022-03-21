@@ -193,6 +193,7 @@ constexpr char kSpectrogramOp[] = "SpectrogramOp";
 constexpr char kTimeMaskingOp[] = "TimeMaskingOp";
 constexpr char kTimeStretchOp[] = "TimeStretchOp";
 constexpr char kTrebleBiquadOp[] = "TrebleBiquadOp";
+constexpr char kVadOp[] = "VadOp";
 constexpr char kVolOp[] = "VolOp";
 
 // data

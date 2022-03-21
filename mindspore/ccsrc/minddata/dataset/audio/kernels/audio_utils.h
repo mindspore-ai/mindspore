@@ -1725,6 +1725,306 @@ Status GriffinLim(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
                   int32_t win_length, int32_t hop_length, WindowType window_type, float power, float momentum,
                   int32_t length, bool rand_init, std::mt19937 rnd);
 
+/// \brief Calculate measure for VAD.
+template <typename T>
+Status Measure(int32_t measure_len_ws, int32_t index, const Eigen::MatrixXd &samples, Eigen::MatrixXd *spectrum,
+               Eigen::MatrixXd *noise_spectrum, const std::vector<T> &spectrum_window, int32_t spectrum_start,
+               int32_t spectrum_end, const std::vector<T> &cepstrum_window, int32_t cepstrum_start,
+               int32_t cepstrum_end, T noise_reduction_amount, T measure_smooth_time_mult, T noise_up_time_mult,
+               T noise_down_time_mult, int32_t index_ns, int32_t boot_count, float *meas) {
+  RETURN_UNEXPECTED_IF_NULL(spectrum);
+  RETURN_UNEXPECTED_IF_NULL(noise_spectrum);
+  RETURN_UNEXPECTED_IF_NULL(meas);
+  CHECK_FAIL_RETURN_UNEXPECTED(spectrum->cols() == noise_spectrum->cols(),
+                               "Measure: the number of columns of spectrum must be equal to noise_spectrum.");
+  int samples_len_ns = samples.cols();
+  CHECK_FAIL_RETURN_UNEXPECTED(samples_len_ns != 0, "Measure: the number of columns of samples cannot be zero.");
+  int dft_len_ws = spectrum->cols();
+  std::vector<float> dft_buf(dft_len_ws, 0);
+  for (int ind = 0; ind < measure_len_ws; ind++) {
+    int index_new = (ind == 0) ? index_ns : ((index_ns + ind) % samples_len_ns);
+    dft_buf[ind] = samples(index, index_new) * spectrum_window[ind];
+  }
+
+  // use fft from eigen to calculate rfft
+  Eigen::FFT<float> fft;
+  std::vector<std::complex<float>> rfft_res;
+  fft.fwd(rfft_res, dft_buf);
+  // truncate redundant information in fft
+  int rfft_len = rfft_res.size() - (rfft_res.size() - 1) / 2;
+  rfft_res.resize(rfft_len);
+
+  float mult = (boot_count >= 0) ? (static_cast<float>(boot_count) / (1.0 + boot_count))
+                                 : static_cast<float>(measure_smooth_time_mult);
+  std::vector<float> dft_buf_abs(spectrum_end - spectrum_start);
+  for (int i = 0; i < spectrum_end - spectrum_start; i++) {
+    auto dba_i = std::abs(rfft_res[i + spectrum_start]);
+    // inplace revise spectrum
+    (*spectrum)(index, spectrum_start + i) *= mult;
+    (*spectrum)(index, spectrum_start + i) += dba_i * (1 - mult);
+
+    dba_i = std::pow((*spectrum)(index, spectrum_start + i), TWO);
+
+    float mult2 = 0;
+    // new mult
+    if (boot_count >= 0) {
+      mult2 = 0;
+    } else {
+      if (dba_i > (*noise_spectrum)(index, spectrum_start + i)) {
+        mult2 = noise_up_time_mult;
+      } else {
+        mult2 = noise_down_time_mult;
+      }
+    }
+    // inplace revise noise spectrum
+    (*noise_spectrum)(index, spectrum_start + i) *= mult2;
+    (*noise_spectrum)(index, spectrum_start + i) += dba_i * (1 - mult2);
+
+    dba_i = dba_i - noise_reduction_amount * (*noise_spectrum)(index, spectrum_start + i);
+    dba_i = dba_i <= 0 ? 0 : std::sqrt(dba_i);
+
+    dft_buf_abs.push_back(dba_i);
+  }
+
+  // cepstrum_buf
+  std::vector<float> cepstrum_buf(dft_len_ws >> 1, 0);
+  for (int i = 0; i < spectrum_end - spectrum_start; i++) {
+    cepstrum_buf[spectrum_start + i] = dft_buf_abs[i] * cepstrum_window[i];
+  }
+  std::vector<std::complex<float>> rfft_res2;
+  fft.fwd(rfft_res2, cepstrum_buf);
+  rfft_len = rfft_res2.size() - (rfft_res.size() - 1) / TWO;
+  rfft_res2.resize(rfft_len);
+
+  float result = 0;
+  for (int i = cepstrum_start; i < cepstrum_end; i++) {
+    result += std::pow(std::abs(rfft_res2[i]), TWO);
+  }
+
+  result = result > 0 ? std::log(result / (cepstrum_end - cepstrum_start)) : INT_MIN;
+  int base = 21;
+  *meas = static_cast<float>(std::max(0.0f, base + result));
+  return Status::OK();
+}
+
+/// \brief Update parameters in VAD calculation.
+inline Status UpdateVadParams(int32_t *samples_index_ns, int32_t *pos, const int32_t samples_len_ns,
+                              int32_t *measure_timer_ns, const int32_t measure_period_ns, int32_t *measures_index,
+                              const int32_t measures_len, int32_t *boot_count, const int32_t boot_count_max,
+                              bool has_triggered, const int32_t num_measures_to_flush, int32_t *flushed_len_ns) {
+  RETURN_UNEXPECTED_IF_NULL(samples_index_ns);
+  RETURN_UNEXPECTED_IF_NULL(pos);
+  RETURN_UNEXPECTED_IF_NULL(measure_timer_ns);
+  RETURN_UNEXPECTED_IF_NULL(measures_index);
+  RETURN_UNEXPECTED_IF_NULL(boot_count);
+  RETURN_UNEXPECTED_IF_NULL(flushed_len_ns);
+
+  *samples_index_ns = *samples_index_ns + 1;
+  *pos += 1;
+  CHECK_FAIL_RETURN_UNEXPECTED(measures_len != 0, "UpdateVadParams: the length of measures cannot be zero.");
+  CHECK_FAIL_RETURN_UNEXPECTED(samples_len_ns != 0,
+                               "UpdateVadParams: the number of columns of samples cannot be zero.");
+  *samples_index_ns = *samples_index_ns == samples_len_ns ? 0 : *samples_index_ns;
+  if (*measure_timer_ns == 0) {
+    *measure_timer_ns = measure_period_ns;
+    *measures_index += 1;
+    *measures_index = *measures_index % measures_len;
+    *boot_count = (*boot_count >= 0) && (*boot_count == boot_count_max) ? -1 : *boot_count + 1;
+  }
+  if (has_triggered) {
+    *flushed_len_ns = (measures_len - num_measures_to_flush) * measure_period_ns;
+    *samples_index_ns = (*samples_index_ns + *flushed_len_ns) % samples_len_ns;
+  }
+  return Status::OK();
+}
+
+/// \brief Init spectrum window and cepstrum window for VAD.
+inline Status FlushMeasures(int measures_len, int measures_index, const int row_ind, const Eigen::MatrixXd &measures,
+                            float trigger_level, int gap_len, int *num_measures_to_flush) {
+  RETURN_UNEXPECTED_IF_NULL(num_measures_to_flush);
+
+  int n = measures_len, k = measures_index;
+  int j_trigger = n, j_zero = n, j = 0;
+  for (int j = 0; j < n; j++) {
+    if ((measures(row_ind, k) >= trigger_level) && (j <= (j_trigger + gap_len))) {
+      j_trigger = j;
+      j_zero = j_trigger;
+    } else if ((measures(row_ind, k) == 0) && (j_trigger >= j_zero)) {
+      j_zero = j;
+    }
+    k = (k + n - 1) % n;
+  }
+  j = std::min(j, j_zero);
+  *num_measures_to_flush = std::min(std::max((*num_measures_to_flush), j), n);
+
+  return Status::OK();
+}
+
+/// \brief Init spectrum window and cepstrum window for Vad.
+template <typename T>
+Status InitWindows(std::vector<T> *spectrum_window, std::vector<T> *cepstrum_window) {
+  RETURN_UNEXPECTED_IF_NULL(spectrum_window);
+  RETURN_UNEXPECTED_IF_NULL(cepstrum_window);
+
+  float half = 0.5;
+  for (int i = 0; i < spectrum_window->size(); i++) {
+    auto hann = half - half * std::cos(static_cast<T>(i) / spectrum_window->size() * PI * TWO);
+    (*spectrum_window)[i] *= hann;
+  }
+
+  for (int i = 0; i < cepstrum_window->size(); i++) {
+    auto hann = half - half * std::cos(static_cast<T>(i) / cepstrum_window->size() * PI * TWO);
+    (*cepstrum_window)[i] *= hann;
+  }
+  return Status::OK();
+}
+
+/// \brief Voice activity detector.
+/// \param input/output Tensor of shape <..., time>.
+/// \param sample_rate Sample rate of audio signal.
+/// \param trigger_level The measurement level used to trigger activity detection.
+/// \param trigger_time The time constant (in seconds) used to help ignore short sounds.
+/// \param search_time The amount of audio (in seconds) to search for quieter/shorter sounds to include prior to
+///     the detected trigger point.
+/// \param allowed_gap The allowed gap (in seconds) between quiteter/shorter sounds to include prior to the
+///     detected trigger point.
+/// \param pre_trigger_time The amount of audio (in seconds) to preserve before the trigger point and any found
+///     quieter/shorter bursts.
+/// \param boot_time The time for the initial noise estimate.
+/// \param noise_up_time Time constant used by the adaptive noise estimator, when the noise level is increasing.
+/// \param noise_down_time Time constant used by the adaptive noise estimator, when the noise level is decreasing.
+/// \param noise_reduction_amount The amount of noise reduction used in the detection algorithm.
+/// \param measure_freq The frequency of the algorithm’s processing.
+/// \param measure_duration The duration of measurement.
+/// \param measure_smooth_time The time constant used to smooth spectral measurements.
+/// \param hp_filter_freq The "Brick-wall" frequency of high-pass filter applied at the input to the detector
+///     algorithm.
+/// \param lp_filter_freq The "Brick-wall" frequency of low-pass filter applied at the input to the detector
+///     algorithm.
+/// \param hp_lifter_freq The "Brick-wall" frequency of high-pass lifter applied at the input to the detector
+///     algorithm.
+/// \param lp_lifter_freq The "Brick-wall" frequency of low-pass lifter applied at the input to the detector
+///     algorithm.
+/// \return Status code.
+template <typename T>
+Status Vad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int sample_rate, T trigger_level,
+           T trigger_time, T search_time, T allowed_gap, T pre_trigger_time, T boot_time, T noise_up_time,
+           T noise_down_time, T noise_reduction_amount, T measure_freq, T measure_duration, T measure_smooth_time,
+           T hp_filter_freq, T lp_filter_freq, T hp_lifter_freq, T lp_lifter_freq) {
+  const int measure_len_ws = static_cast<int>(sample_rate * measure_duration + 0.5);
+  const int measure_len_ns = measure_len_ws;
+
+  int dft_len_ws = 16;
+  for (; dft_len_ws < measure_len_ws;) {
+    dft_len_ws *= TWO;
+  }
+
+  CHECK_FAIL_RETURN_UNEXPECTED(measure_freq != 0, "Vad: measure_freq cannot be zero.");
+  const int measure_period_ns = static_cast<int>(sample_rate / measure_freq + 0.5);
+  const int measures_len = std::ceil(search_time * measure_freq);
+  const int search_pre_trigger_len_ns = static_cast<int>(measures_len * measure_period_ns);
+  const int gap_len = static_cast<int>(allowed_gap * measure_freq + 0.5);
+  const int fixed_pre_trigger_len_ns = static_cast<int>(pre_trigger_time * sample_rate + 0.5);
+  const int samples_len_ns = fixed_pre_trigger_len_ns + search_pre_trigger_len_ns + measure_len_ns;
+
+  CHECK_FAIL_RETURN_UNEXPECTED(sample_rate != 0, "Vad: sample_rate cannot be zero.");
+  auto spectrum_start = static_cast<int>(hp_filter_freq / sample_rate * dft_len_ws + 0.5);
+  spectrum_start = std::max(spectrum_start, 1);
+  auto spectrum_end = static_cast<int>(lp_filter_freq / sample_rate * dft_len_ws + 0.5);
+  spectrum_end = std::min(spectrum_end, dft_len_ws / TWO);
+  CHECK_FAIL_RETURN_UNEXPECTED(spectrum_end > spectrum_start,
+                               "Vad: the end of spectrum must be greater than the start. Check if `hp_filter_freq` is "
+                               "too large or `lp_filter_freq` is too small.");
+
+  CHECK_FAIL_RETURN_UNEXPECTED(lp_lifter_freq != 0, "Vad: lp_lifter_freq cannot be zero.");
+  CHECK_FAIL_RETURN_UNEXPECTED(hp_lifter_freq != 0, "Vad: hp_lifter_freq cannot be zero.");
+  int cepstrum_start = std::ceil(sample_rate * 0.5 / lp_lifter_freq);
+  int cepstrum_end = std::floor(sample_rate * 0.5 / hp_lifter_freq);
+  cepstrum_end = std::min(cepstrum_end, dft_len_ws / (TWO * TWO));
+  CHECK_FAIL_RETURN_UNEXPECTED(cepstrum_end > cepstrum_start,
+                               "Vad: the end of cepstrum must be greater than the start. Check if `hp_lifter_freq` is "
+                               "too large or `lp_lifter_freq` is too small.");
+  // init spectrum & cepstrum window
+  std::vector<T> spectrum_window(measure_len_ws, static_cast<T>(TWO / std::sqrt(static_cast<T>(measure_len_ws))));
+  std::vector<T> cepstrum_window(spectrum_end - spectrum_start,
+                                 static_cast<T>(TWO / std::sqrt(static_cast<T>(spectrum_end) - spectrum_start)));
+  RETURN_IF_NOT_OK(InitWindows<T>(&spectrum_window, &cepstrum_window));
+
+  T noise_up_time_mult = std::exp(-1.0 / (noise_up_time * measure_freq));
+  T noise_down_time_mult = std::exp(-1.0 / (noise_down_time * measure_freq));
+  T measure_smooth_time_mult = std::exp(-1.0 / (measure_smooth_time * measure_freq));
+  T trigger_meas_time_mult = std::exp(-1.0 / (trigger_time * measure_freq));
+
+  auto boot_count_max = static_cast<int>(boot_time * measure_freq - 0.5);
+  auto measure_timer_ns = measure_len_ns;
+  int boot_count = 0, measures_index = 0, flushed_len_ns = 0, samples_index_ns = 0;
+
+  // pack batch
+  TensorShape input_shape = input->shape();
+  TensorShape to_shape({input->Size() / input_shape[-1], input_shape[-1]});
+  RETURN_IF_NOT_OK(input->Reshape(to_shape));
+  int n_channels = to_shape[0], ilen = to_shape[1];
+  std::vector<T> mean_meas(n_channels, 0);
+  Eigen::MatrixXd samples = Eigen::MatrixXd::Zero(n_channels, samples_len_ns);
+  Eigen::MatrixXd spectrum = Eigen::MatrixXd::Zero(n_channels, dft_len_ws);
+  Eigen::MatrixXd noise_spectrum = Eigen::MatrixXd::Zero(n_channels, dft_len_ws);
+  Eigen::MatrixXd measures = Eigen::MatrixXd::Zero(n_channels, measures_len);
+
+  bool has_triggered = false;
+  int num_measures_to_flush = 0, pos = 0;
+
+  // convert input to eigen mat
+  auto wave_ptr = &*input->begin<T>();
+  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> waveform_t(wave_ptr, ilen, n_channels);
+  auto waveform = waveform_t.transpose();
+  while ((pos < ilen) && (!has_triggered)) {
+    measure_timer_ns -= 1;
+    for (int i = 0; i < n_channels; i++) {
+      samples(i, samples_index_ns) = waveform(i, pos);
+
+      if (measure_timer_ns == 0) {
+        int index_ns = (samples_index_ns + samples_len_ns - measure_len_ns) % samples_len_ns;
+        // measure
+        float meas = 0;
+        RETURN_IF_NOT_OK(Measure(measure_len_ws, i, samples, &spectrum, &noise_spectrum, spectrum_window,
+                                 spectrum_start, spectrum_end, cepstrum_window, cepstrum_start, cepstrum_end,
+                                 noise_reduction_amount, measure_smooth_time_mult, noise_up_time_mult,
+                                 noise_down_time_mult, index_ns, boot_count, &meas));
+        measures(i, measures_index) = meas;
+        mean_meas[i] = mean_meas[i] * trigger_meas_time_mult + meas * (1.0 - trigger_meas_time_mult);
+
+        has_triggered = has_triggered || (mean_meas[i] >= trigger_level);
+        if (has_triggered) {
+          RETURN_IF_NOT_OK(
+            FlushMeasures(measures_len, measures_index, i, measures, trigger_level, gap_len, &num_measures_to_flush));
+        }
+      }
+    }
+    RETURN_IF_NOT_OK(UpdateVadParams(&samples_index_ns, &pos, samples_len_ns, &measure_timer_ns, measure_period_ns,
+                                     &measures_index, measures_len, &boot_count, boot_count_max, has_triggered,
+                                     num_measures_to_flush, &flushed_len_ns));
+  }
+
+  // results truncate
+  int new_col_ind = pos - samples_len_ns + flushed_len_ns;
+  if (new_col_ind < (-1 * waveform.cols())) {
+    new_col_ind = 0;
+  } else if (new_col_ind < 0) {
+    new_col_ind += ilen;
+  }
+  int new_cols = ilen - new_col_ind;
+  auto res = waveform.rightCols(new_cols);
+  // unpack
+  std::shared_ptr<Tensor> res_tensor;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat_res = res.transpose();
+  std::vector<T> res_vec(mat_res.data(), mat_res.data() + mat_res.size());
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(res_vec, TensorShape({n_channels, new_cols}), &res_tensor));
+  auto reshape_vec = input_shape.AsVector();
+  reshape_vec[input_shape.Size() - 1] = new_cols;
+  RETURN_IF_NOT_OK(res_tensor->Reshape(TensorShape(reshape_vec)));
+  *output = res_tensor;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

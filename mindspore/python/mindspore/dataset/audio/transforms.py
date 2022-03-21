@@ -31,7 +31,7 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_highpass_biquad, check_inverse_mel_scale, check_lfilter, check_lowpass_biquad, check_magphase, \
     check_mask_along_axis, check_mask_along_axis_iid, check_masking, check_mel_scale, check_mu_law_coding, \
     check_overdrive, check_phase_vocoder, check_phaser, check_riaa_biquad, check_sliding_window_cmn, \
-    check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
+    check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, check_vad, check_vol
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import TensorOperation
 
@@ -1765,6 +1765,81 @@ class TrebleBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.TrebleBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.quality_factor)
+
+
+class Vad(AudioTensorOperation):
+    """
+    Attempt to trim silent background sounds from the end of the voice recording.
+
+    Args:
+        sample_rate (int): Sample rate of audio signal.
+        trigger_level (float, optional): The measurement level used to trigger activity detection (default=7.0).
+        trigger_time (float, optional): The time constant (in seconds) used to help ignore short sounds (default=0.25).
+        search_time (float, optional): The amount of audio (in seconds) to search for quieter/shorter sounds to include
+            prior to the detected trigger point (default=1.0).
+        allowed_gap (float, optional): The allowed gap (in seconds) between quiteter/shorter sounds to include prior to
+            the detected trigger point (default=0.25).
+        pre_trigger_time (float, optional): The amount of audio (in seconds) to preserve before the trigger point and
+            any found quieter/shorter bursts (default=0.0).
+        boot_time (float, optional): The time for the initial noise estimate (default=0.35).
+        noise_up_time (float, optional): Time constant used by the adaptive noise estimator, when the noise level is
+            increasing (default=0.1).
+        noise_down_time (float, optional): Time constant used by the adaptive noise estimator, when the noise level is
+            decreasing (default=0.01).
+        noise_reduction_amount (float, optional): The amount of noise reduction used in the detection algorithm
+            (default=1.35).
+        measure_freq (float, optional): The frequency of the algorithm’s processing (default=20.0).
+        measure_duration (float, optional): The duration of measurement (default=None, use twice the measurement
+            period).
+        measure_smooth_time (float, optional): The time constant used to smooth spectral measurements (default=0.4).
+        hp_filter_freq (float, optional): The "Brick-wall" frequency of high-pass filter applied at the input to the
+            detector algorithm (default=50.0).
+        lp_filter_freq (float, optional): The "Brick-wall" frequency of low-pass filter applied at the input to the
+            detector algorithm (default=6000.0).
+        hp_lifter_freq (float, optional): The "Brick-wall" frequency of high-pass lifter applied at the input to the
+            detector algorithm (default=150.0).
+        lp_lifter_freq (float, optional): The "Brick-wall" frequency of low-pass lifter applied at the input to the
+            detector algorithm (default=2000.0).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([2, 1000])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Vad(sample_rate=600)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_vad
+    def __init__(self, sample_rate, trigger_level=7.0, trigger_time=0.25, search_time=1.0, allowed_gap=0.25,
+                 pre_trigger_time=0.0, boot_time=0.35, noise_up_time=0.1, noise_down_time=0.01,
+                 noise_reduction_amount=1.35, measure_freq=20.0, measure_duration=None, measure_smooth_time=0.4,
+                 hp_filter_freq=50.0, lp_filter_freq=6000.0, hp_lifter_freq=150.0, lp_lifter_freq=2000.0):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.trigger_level = trigger_level
+        self.trigger_time = trigger_time
+        self.search_time = search_time
+        self.allowed_gap = allowed_gap
+        self.pre_trigger_time = pre_trigger_time
+        self.boot_time = boot_time
+        self.noise_up_time = noise_up_time
+        self.noise_down_time = noise_down_time
+        self.noise_reduction_amount = noise_reduction_amount
+        self.measure_freq = measure_freq
+        self.measure_duration = measure_duration if measure_duration else 2.0 / measure_freq
+        self.measure_smooth_time = measure_smooth_time
+        self.hp_filter_freq = hp_filter_freq
+        self.lp_filter_freq = lp_filter_freq
+        self.hp_lifter_freq = hp_lifter_freq
+        self.lp_lifter_freq = lp_lifter_freq
+
+    def parse(self):
+        return cde.VadOperation(self.sample_rate, self.trigger_level, self.trigger_time, self.search_time,
+                                self.allowed_gap, self.pre_trigger_time, self.boot_time, self.noise_up_time,
+                                self.noise_down_time, self.noise_reduction_amount, self.measure_freq,
+                                self.measure_duration, self.measure_smooth_time, self.hp_filter_freq,
+                                self.lp_filter_freq, self.hp_lifter_freq, self.lp_lifter_freq)
 
 
 DE_C_GAIN_TYPE = {GainType.AMPLITUDE: cde.GainType.DE_GAIN_TYPE_AMPLITUDE,

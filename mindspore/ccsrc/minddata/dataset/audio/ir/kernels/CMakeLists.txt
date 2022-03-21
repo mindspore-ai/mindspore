@@ -44,6 +44,7 @@ add_library(audio-ir-kernels OBJECT
         time_masking_ir.cc
         time_stretch_ir.cc
         treble_biquad_ir.cc
+        vad_ir.cc
         vol_ir.cc
         )
 

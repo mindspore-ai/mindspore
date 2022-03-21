@@ -1144,6 +1144,209 @@ TEST_F(MindDataTestPipeline, TestGriffinLimWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Vad.
+/// Description: test pipeline.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestVadPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVadPipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 1000}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto vad = audio::Vad(600);
+  ds = ds->Map({vad});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expected = {2, 660};
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema2 = Schema();
+  ASSERT_OK(schema2->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1000}));
+  std::shared_ptr<Dataset> ds2 = RandomData(50, schema2);
+  EXPECT_NE(ds2, nullptr);
+  ds2 = ds2->SetNumWorkers(4);
+  EXPECT_NE(ds2, nullptr);
+  auto vad2 = audio::Vad(1600);
+  ds2 = ds2->Map({vad2});
+  EXPECT_NE(ds2, nullptr);
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  EXPECT_NE(ds2, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row2;
+  ASSERT_OK(iter2->GetNextRow(&row2));
+  std::vector<int64_t> expected2 = {760};
+  i = 0;
+  while (row2.size() != 0) {
+    auto col = row2["waveform"];
+    ASSERT_EQ(col.Shape(), expected2);
+    ASSERT_EQ(col.Shape().size(), 1);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter2->GetNextRow(&row2));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+}
+
+/// Feature: Vad.
+/// Description: test some invalid parameters.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestVadWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVadWrongArgs.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 1000}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  // invalid sample rate
+  auto vad_op = audio::Vad(-10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid search_time
+  vad_op = audio::Vad(100, 7.0, 0.25, -1.0);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid allowed_gap
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid pre_trigger_time
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid boot_time
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid noise_up_time
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid noise_down_time
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid noise_up_time and noise_down_time
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, 0.2);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid noise_reduction_amount
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, 0.01, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid measure_freq
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, 0.01, 1.35, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid measure_duration
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, 0.01, 1.35, 20.0, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid measure_smooth_time
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, 0.01, 1.35, 20.0, 0.0, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid hp_filter_freq
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, 0.01, 1.35, 20.0, 0.0, 0.4, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid lp_filter_freq
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, 0.01, 1.35, 20.0, 0.0, 0.4, 50, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid hp_lifter_freq
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, 0.01, 1.35, 20.0, 0.0, 0.4, 50, 6000.0, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid lp_lifter_freq
+  vad_op = audio::Vad(100, 7.0, 0.25, 1.0, 0.25, 0.0, 0.35, 0.1, 0.01, 1.35, 20.0, 0.0, 0.4, 50, 6000.0, 150.0, -10);
+  ds = ds->Map({vad_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestVolPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVolPipeline.";
   // Original waveform

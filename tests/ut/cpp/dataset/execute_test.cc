@@ -1456,7 +1456,6 @@ TEST_F(MindDataTestExecute, TestFadeWithBool) {
   EXPECT_TRUE(s01.IsOk());
 }
 
-
 /// Feature: GriffinLim
 /// Description: test basic usage of GriffinLim
 /// Expectation: success
@@ -1479,6 +1478,27 @@ TEST_F(MindDataTestExecute, TestGriffinLimDefaultValue) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: Vad
+/// Description: test basic usage of Vad
+/// Expectation: success
+TEST_F(MindDataTestExecute, TestVadDefaultValue) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestVadDefaultValue.";
+  // Random waveform
+  std::mt19937 gen;
+  std::normal_distribution<float> distribution(1.0, 0.5);
+  std::vector<float> vec;
+  for (int i = 0; i < 1000; ++i){
+    vec.push_back(distribution(gen));
+  }
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(vec, TensorShape({1, 1000}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> vad_op = std::make_shared<audio::Vad>(1600);
+  // apply vad
+  mindspore::dataset::Execute trans({vad_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
 
 TEST_F(MindDataTestExecute, TestVolDefalutValue) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestVolDefalutValue.";

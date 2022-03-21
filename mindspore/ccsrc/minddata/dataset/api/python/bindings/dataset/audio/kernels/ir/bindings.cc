@@ -62,6 +62,7 @@
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/audio/ir/kernels/treble_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/vad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/vol_ir.h"
 
 namespace mindspore {
@@ -589,6 +590,23 @@ PYBIND_REGISTER(
         return treble_biquad;
       }));
   }));
+
+PYBIND_REGISTER(VadOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::VadOperation, TensorOperation, std::shared_ptr<audio::VadOperation>>(
+                    *m, "VadOperation")
+                    .def(py::init([](int32_t sample_rate, float trigger_level, float trigger_time, float search_time,
+                                     float allowed_gap, float pre_trigger_time, float boot_time, float noise_up_time,
+                                     float noise_down_time, float noise_reduction_amount, float measure_freq,
+                                     float measure_duration, float measure_smooth_time, float hp_filter_freq,
+                                     float lp_filter_freq, float hp_lifter_freq, float lp_lifter_freq) {
+                      auto vad = std::make_shared<audio::VadOperation>(
+                        sample_rate, trigger_level, trigger_time, search_time, allowed_gap, pre_trigger_time, boot_time,
+                        noise_up_time, noise_down_time, noise_reduction_amount, measure_freq, measure_duration,
+                        measure_smooth_time, hp_filter_freq, lp_filter_freq, hp_lifter_freq, lp_lifter_freq);
+                      THROW_IF_ERROR(vad->ValidateParams());
+                      return vad;
+                    }));
+                }));
 
 PYBIND_REGISTER(VolOperation, 1, ([](const py::module *m) {
                   (void)py::class_<audio::VolOperation, TensorOperation, std::shared_ptr<audio::VolOperation>>(
