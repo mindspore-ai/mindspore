@@ -63,7 +63,7 @@ inline static std::string GetDlErrorMsg() {
 template <class T>
 static T DlsymWithCast(void *handle, const char *symbol_name) {
 #ifndef _WIN32
-  T symbol = reinterpret_cast<T>(dlsym(handle, symbol_name));
+  T symbol = reinterpret_cast<T>(reinterpret_cast<intptr_t>(dlsym(handle, symbol_name)));
 #else
   T symbol = reinterpret_cast<T>(GetProcAddress(reinterpret_cast<HINSTANCE__ *>(handle), symbol_name));
 #endif
