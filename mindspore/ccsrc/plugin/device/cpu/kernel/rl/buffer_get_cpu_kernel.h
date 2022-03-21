@@ -82,7 +82,7 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
     return true;
   }
 
-  void InitKernel(const CNodePtr &kernel_node) { return; }
+  void InitKernel(const CNodePtr &) { return; }
 
  private:
   size_t element_nums_;

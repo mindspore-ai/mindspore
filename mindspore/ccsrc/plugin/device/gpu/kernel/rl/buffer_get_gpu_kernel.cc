@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kSecondInputIndex = 2;
 BufferGetKernelMod::BufferGetKernelMod() : element_nums_(0), capacity_(0) {}
 
 BufferGetKernelMod::~BufferGetKernelMod() {}
@@ -58,7 +59,7 @@ bool BufferGetKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
                                 const std::vector<AddressPtr> &outputs, void *stream) {
   int *count_addr = GetDeviceAddress<int>(inputs, element_nums_);
   int *head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
-  int *origin_index_addr = GetDeviceAddress<int>(inputs, element_nums_ + 2);
+  int *origin_index_addr = GetDeviceAddress<int>(inputs, element_nums_ + kSecondInputIndex);
   int *index_addr = GetDeviceAddress<int>(workspace, 0);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   ReMappingIndex(count_addr, head_addr, origin_index_addr, index_addr, cuda_stream);
