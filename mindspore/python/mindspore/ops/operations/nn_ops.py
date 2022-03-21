@@ -5155,8 +5155,8 @@ class BinaryCrossEntropy(Primitive):
           And it must have the same shape and data type as `logits`. Default: None.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
-        Otherwise, the output is a scalar.
+        Tensor, has the same dtype as `logits`. if `reduction` is 'none', then it has the same shape as `logits`.
+        Otherwise, it is a scalar Tensor.
 
     Raises:
         TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.
