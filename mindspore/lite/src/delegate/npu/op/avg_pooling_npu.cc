@@ -31,9 +31,11 @@ int AvgPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
   auto stride_h = static_cast<int>(*(pooling_prim->strides()->begin()));
   auto stride_w = static_cast<int>(*(pooling_prim->strides()->begin() + 1));
   auto pad_u = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_UP));
+  auto pad_d = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_DOWN));
   auto pad_l = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_LEFT));
-  if (pad_u > stride_h || pad_l > stride_w) {
-    MS_LOG(WARNING) << "Npu pooling does not support pad > stride.";
+  auto pad_r = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_RIGHT));
+  if (pad_u < 0 || pad_d < 0 || pad_l < 0 || pad_r < 0 || pad_u > stride_h || pad_l > stride_w) {
+    MS_LOG(WARNING) << "Npu pooling does not support pad < 0 or pad > stride.";
     return RET_NOT_SUPPORT;
   }
   auto input_shape = in_tensors.front().Shape();
