@@ -63,6 +63,8 @@ include_directories(${LITE_DIR}/build) ## flatbuffers
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     link_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/${ANDROID_ABI}/)
+elseif(MACHINE_LINUX_ARM64)
+    link_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/linux_aarch64/)
 else()
     link_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/linux_x86/)
 endif()

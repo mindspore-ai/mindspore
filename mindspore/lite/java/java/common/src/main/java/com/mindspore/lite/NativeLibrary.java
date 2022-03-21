@@ -3,6 +3,7 @@ package com.mindspore.lite;
 
 import java.io.*;
 import java.util.Locale;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.IOUtils;
@@ -10,15 +11,17 @@ import org.apache.commons.io.IOUtils;
 public class NativeLibrary {
     private static final Logger LOGGER = Logger.getLogger(NativeLibrary.class.toString());
 
+    private static final String GLOG_LIBNAME = "glog";
     private static final String MINDSPORE_LITE_LIBNAME = "mindspore-lite";
     private static final String MINDSPORE_LITE_JNI_LIBNAME = "mindspore-lite-jni";
 
     private static final String MINDSPORE_LITE_LIBS = "mindspore_lite_libs";
 
     public static void load() {
-        if (isLoaded() || tryLoadLibrary()) {
+        if (isLoaded()) {
             return;
         }
+        loadLib(makeResourceDir(MINDSPORE_LITE_LIBS), makeResourceName("lib" + GLOG_LIBNAME + ".so.0"));
         loadLib(makeResourceDir(MINDSPORE_LITE_LIBS), makeResourceName("lib" + MINDSPORE_LITE_LIBNAME + ".so"));
         loadLib(makeResourceDir(MINDSPORE_LITE_LIBS), makeResourceName("lib" + MINDSPORE_LITE_JNI_LIBNAME + ".so"));
     }
@@ -46,10 +49,15 @@ public class NativeLibrary {
     }
 
     private static void loadLib(String jniResourceDir, String jniResourceName) {
+        LOGGER.info("start load jniResourceName: " + jniResourceName);
         final Integer BUFFER_SIZE = 8024;
         final String TMPDIR_PROPERTY = "java.io.tmpdir";
         try {
             InputStream in = NativeLibrary.class.getClassLoader().getResourceAsStream(jniResourceName);
+            if (in == null || in.available() == 0) {
+                LOGGER.severe(String.format("jni file: %s not exist.", jniResourceName));
+                return;
+            }
             String tmpPath = System.getProperty(TMPDIR_PROPERTY) + "/" + jniResourceDir;
             File fileOutDir = new File(tmpPath);
             if (!fileOutDir.exists()) {

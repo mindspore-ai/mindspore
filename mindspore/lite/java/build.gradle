@@ -20,6 +20,11 @@ allprojects {
 
 apply plugin: 'java'
 
+test {
+    testLogging.showStandardStreams = true
+    testLogging.exceptionFormat = 'full'
+}
+
 dependencies {
     testImplementation 'junit:junit:4.13'
     implementation project(':common')
@@ -42,4 +47,5 @@ task releaseJar(type: Jar) {
     from('src/main/resources')
     destinationDirectory = file('build/lib/jar')
 }
+
 releaseJar.dependsOn(build)
