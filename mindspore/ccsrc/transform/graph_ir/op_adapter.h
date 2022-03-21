@@ -190,7 +190,7 @@ class OpAdapter : public BaseOpAdapter {
   const mindspore::HashMap<int, OutputDesc> &getOutputMap() override { return output_map_; }
   const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
 
-  Status SetOpSubgraphFunc(const OperatorPtr &op, int index, std::shared_ptr<std::vector<DfGraph>> branches) {
+  Status SetOpSubgraphFunc(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) {
     return impl_->SetOpSubgraphFunc(op, index, branches);
   }
 
