@@ -49,6 +49,7 @@ class AscendMemAdapter {
   std::string DevMemDetailInfo() const;
 
  private:
+  AscendMemAdapter() = default;
   struct MemoryBlock {
     MemoryBlock(void *ptr, const size_t size, const std::string &tag) {
       mem_ptr = ptr;
