@@ -128,6 +128,8 @@ class Parser {
   FunctionBlockPtr ParseFor(const FunctionBlockPtr &block, const py::object &node);
   FunctionBlockPtr ParseForIter(const FunctionBlockPtr &block, const py::object &node);
   FunctionBlockPtr ParseForLoop(const FunctionBlockPtr &block, const py::object &node);
+  FunctionBlockPtr ParseForUnroll(const FunctionBlockPtr &block, const py::object &node);
+  FunctionBlockPtr ParseForRepeat(const FunctionBlockPtr &block, const py::object &node);
   // Process a function def statement
   FunctionBlockPtr ParseFunctionDef(const FunctionBlockPtr &block, const py::object &node);
   // Process a augment assign
@@ -200,6 +202,7 @@ class Parser {
 
   // Transform tail call to parallel call.
   void TransformParallelCall();
+  void LiftRolledBodyGraphFV();
 
   // If Tensor is present as type, not Tensor(xxx), should not make InterpretNode.
   bool IsTensorType(const AnfNodePtr &node, const std::string &script_text) const;
@@ -322,8 +325,12 @@ class Parser {
   string support_fallback_;
 
   // The func graphs to transform tail call ir to independent call ir.
+  // Contains: {former_graph, middle_graph}, latter_graph is no need.
   std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> parallel_call_graphs_;
-  std::set<FunctionBlockPtr> ignored_latter_call_graphs_;
+  // The rolled_body callers info. for later lifting operation.
+  std::vector<std::pair<CNodePtr, FunctionBlockPtr>> rolled_body_calls_;
+  // Add exception for if parallel transform.
+  std::set<FunctionBlockPtr> ignored_if_latter_call_graphs_;
 };
 
 // AST node type define code to ast

@@ -162,6 +162,14 @@ class TraceForBody : public TraceInfo {
   TraceInfoPtr clone() override { return std::make_shared<TraceForBody>(*this); }
 };
 
+class TraceForRolledBody : public TraceInfo {
+ public:
+  explicit TraceForRolledBody(const DebugInfoPtr &info) : TraceInfo(info) {}
+  ~TraceForRolledBody() override = default;
+  MS_DECLARE_TRACE_NAME_SYMBOL("for_rolled_body", "R-");
+  TraceInfoPtr clone() override { return std::make_shared<TraceForRolledBody>(*this); }
+};
+
 class TraceForAfter : public TraceInfo {
  public:
   explicit TraceForAfter(const DebugInfoPtr &info) : TraceInfo(info) {}

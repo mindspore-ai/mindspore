@@ -329,8 +329,8 @@ class IncorporateGetitem : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsValueNode<Int64Imm>})(node);
-    if (node->func_graph() == nullptr || idx_ == -1 || fg_ == nullptr || fg_->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) ||
-        fg_->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+    if (node->func_graph() == nullptr || idx_ == -1 || fg_ == nullptr || fg_->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) ||
+        fg_->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg_->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
       return nullptr;
     }
 
@@ -533,8 +533,8 @@ class IncorporateGetitemDepend : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsValueNode<Int64Imm>})(node);
-    if (node->func_graph() == nullptr || idx_ == -1 || fg_ == nullptr || fg_->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) ||
-        fg_->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+    if (node->func_graph() == nullptr || idx_ == -1 || fg_ == nullptr || fg_->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) ||
+        fg_->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg_->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
       return nullptr;
     }
 
