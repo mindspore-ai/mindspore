@@ -225,7 +225,7 @@ mindspore.Tensor
 
         维度与输入张量的相同的Tensor。输出张量的维度必须遵守广播规则。广播规则指输出张量的维度需要扩展为输入张量的维度，如果目标张量的维度大于输入张量的维度，则不满足广播规则。
 
-    .. py:method:: expand_dims(axis):
+    .. py:method:: expand_dims(axis)
 
         沿指定轴扩展Tensor维度。
 
@@ -424,7 +424,7 @@ mindspore.Tensor
 
         - **TypeError** - 参数具有前面未指定的类型。
 
-    .. py:method:: narrow(axis, start, length):
+    .. py:method:: narrow(axis, start, length)
 
         沿指定轴，指定起始位置获取指定长度的Tensor。
 
