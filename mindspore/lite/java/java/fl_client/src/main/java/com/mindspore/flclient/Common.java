@@ -328,17 +328,33 @@ public class Common {
                 LOGGER.info(Common.addTag("[isSeverReady] the server does not return the current iteration."));
             }
             return false;
-        } else if (messageStr.contains(JOB_NOT_AVAILABLE)) {
-            LOGGER.info(Common.addTag("[isSeverReady] " + JOB_NOT_AVAILABLE + ", need wait some time and request " +
-                    "again"));
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Check whether the job of server is finished based on the message returned by the server.
+     *
+     * @param message the message returned by the server..
+     * @return boolean value, true indicates the job of server is finished, false indicates the job of server is not finished.
+     */
+    public static boolean isSeverJobFinished(byte[] message) {
+        if (message == null) {
+            LOGGER.severe(Common.addTag("[isSeverJobFinished] the input argument <message> is null, please check!"));
+            throw new IllegalArgumentException();
+        }
+        String messageStr = new String(message);
+        if (messageStr.contains(JOB_NOT_AVAILABLE)) {
+            LOGGER.info(Common.addTag("[isSeverJobFinished] " + JOB_NOT_AVAILABLE + ", will stop the task and exist."));
             if (messageStr.split(":").length == 2) {
                 iteration = Integer.parseInt(messageStr.split(":")[1]);
             } else {
-                LOGGER.info(Common.addTag("[isSeverReady] the server does not return the current iteration."));
+                LOGGER.info(Common.addTag("[isSeverJobFinished] the server does not return the current iteration."));
             }
-            return false;
-        } else {
             return true;
+        } else {
+            return false;
         }
     }
 
