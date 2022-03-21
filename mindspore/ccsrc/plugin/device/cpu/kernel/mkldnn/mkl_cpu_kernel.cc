@@ -45,13 +45,13 @@ void GeneratePaddingForPadMode(const PaddingInfo &padding_info, std::vector<int6
         FloatToLong(std::ceil(LongToDouble(len) / LongToDouble(padding_info.stride[i]))) * padding_info.stride[i] - len;
       int64_t padding_r = pad[r_index] + padding_iv;
       if (padding_r > pad[r_index] && padding_r < padding_info.kernel_size[i]) {
-        (void)padding_info.padding_r->push_back(padding_r);
-        (void)padding_info.padding_invalid->push_back(LongToFloat(padding_iv));
+        padding_info.padding_r->push_back(padding_r);
+        padding_info.padding_invalid->push_back(LongToFloat(padding_iv));
         continue;
       }
-      (void)padding_info.padding_invalid->push_back(LongToFloat(0.0));
+      padding_info.padding_invalid->push_back(LongToFloat(0.0));
     }
-    (void)padding_info.padding_r->push_back(pad[r_index]);
+    padding_info.padding_r->push_back(pad[r_index]);
   }
 }
 }  // namespace
@@ -78,13 +78,13 @@ void MKLCpuKernelMod::GetPadding(const CNodePtr &kernel_node, const std::vector<
       int64_t effective_k = (SizeToLong(padding_info.kernel_size[i]) - 1) * padding_info.dilation[i] + 1;
       int64_t pad_along = std::max(int64_t(0), (out - 1) * padding_info.stride[i] + effective_k - wh);
       int64_t pad = pad_along / 2;
-      (void)padding_info.padding_l->push_back(pad);
-      (void)padding_info.padding_r->push_back(pad_along - pad);
+      padding_info.padding_l->push_back(pad);
+      padding_info.padding_r->push_back(pad_along - pad);
     }
   } else if (padding_info.pad_mode == PAD_MODE_LOWER_VALID || padding_info.pad_mode == PAD_MODE_UPPER_VALID) {
     for (size_t i = 0; i < dim_exclude_nc; ++i) {
-      (void)padding_info.padding_l->push_back(0);
-      (void)padding_info.padding_r->push_back(0);
+      padding_info.padding_l->push_back(0);
+      padding_info.padding_r->push_back(0);
     }
   } else {
     std::vector<int64_t> pad = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, PAD_LIST);

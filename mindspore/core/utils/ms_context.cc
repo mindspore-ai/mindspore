@@ -103,7 +103,9 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_RECOVERY, false);
 
   uint32_t kDefaultRuntimeNumThreads = 30;
-  set_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS, kDefaultRuntimeNumThreads);
+  uint32_t cpu_core_num = std::thread::hardware_concurrency() - 1;
+  uint32_t runtime_num_threads_default = std::min(cpu_core_num, kDefaultRuntimeNumThreads);
+  set_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS, runtime_num_threads_default);
 
   backend_policy_ = policy_map_[policy];
 }
