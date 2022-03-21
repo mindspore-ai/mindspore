@@ -30,7 +30,7 @@ ops::PrimitiveC *TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite:
 
   prim->set_axis(1);
   prim->set_use_axis(false);
-  prim->set_has_bias(tflite_op->inputs.size() > 2 && tflite_op->inputs.at(2) != -1);
+  prim->set_has_bias(tflite_op->inputs.size() > kInputSize1 && tflite_op->inputs.at(THIRD_INPUT) != -1);
 
   const auto &tflite_attr = tflite_op->builtin_options.AsFullyConnectedOptions();
   if (tflite_attr == nullptr) {

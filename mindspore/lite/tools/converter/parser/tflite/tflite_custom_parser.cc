@@ -165,7 +165,7 @@ ops::PrimitiveC *TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_att
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   std::vector<int64_t> fft_length;
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, &fft_length)) {
+  if (GetTfliteData(tflite_op->inputs[SECOND_INPUT], tflite_subgraph->tensors, tflite_model->buffers, &fft_length)) {
     MS_LOG(ERROR) << "rfft -> fftLength get failed";
     return nullptr;
   }

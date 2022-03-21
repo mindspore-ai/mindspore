@@ -110,8 +110,8 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore
   if (pad_mode == mindspore::PadMode::SAME) {
     auto shape = tensor->shape;
     MS_CHECK_TRUE_RET(shape.size() == DIMENSION_4D, RET_ERROR);
-    int H_input = shape.at(1);
-    int W_input = shape.at(2);
+    int H_input = shape.at(kNHWC_H);
+    int W_input = shape.at(kNHWC_W);
     if (strideH == 0) {
       MS_LOG(ERROR) << "strideH is zero";
       return RET_ERROR;

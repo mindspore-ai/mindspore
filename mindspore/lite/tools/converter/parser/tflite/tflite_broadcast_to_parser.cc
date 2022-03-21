@@ -31,7 +31,7 @@ ops::PrimitiveC *TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::Op
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   std::vector<int64_t> dst_shape;
-  if (GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, &dst_shape)) {
+  if (GetTfliteData(tflite_op->inputs.at(SECOND_INPUT), tflite_subgraph->tensors, tflite_model->buffers, &dst_shape)) {
     MS_LOG(ERROR) << "get broadCastTo -> dst_shape failed";
     return nullptr;
   }
