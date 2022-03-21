@@ -25,6 +25,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_AddFusion;
+using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
 namespace {
@@ -255,5 +256,6 @@ int QuantizedAddCPUKernel::Run() {
   return ret;
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BiasAdd, LiteKernelCreator<QuantizedAddCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_AddFusion, LiteKernelCreator<QuantizedAddCPUKernel>)
 }  // namespace mindspore::kernel
