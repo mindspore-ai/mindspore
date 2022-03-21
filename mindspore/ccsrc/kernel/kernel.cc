@@ -95,7 +95,7 @@ void KernelMod::InferShape() {
         tuple_elements->set_value(out_tensor);
       }
     }
-    common::AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input, i);
+    common::AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input);
   }
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
   cnode->set_abstract(eval_result);

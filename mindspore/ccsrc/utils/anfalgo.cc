@@ -1422,7 +1422,7 @@ bool AnfAlgo::IsHostKernel(const CNodePtr &kernel_node) {
 }
 
 void AnfAlgo::AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &cnode_input,
-                         const AnfNodePtr &real_input, size_t index) {
+                         const AnfNodePtr &real_input) {
   if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {
     // cppcheck-suppress unreadVariable
     auto lock = AnfUtils::GetAbstractLock(real_input.get());

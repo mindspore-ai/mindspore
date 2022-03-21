@@ -1050,7 +1050,7 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
         }
       }
     }
-    common::AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input, i);
+    common::AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input);
   }
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
   node->set_abstract(eval_result);

@@ -64,7 +64,7 @@ class SquaredDifferenceOpGpuKernelMod : public NativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    need_broadcast_ = IsBroadcast(input_shape1, input_shape2);
+    need_broadcast_ = common::AnfAlgo::IsTensorBroadcast(input_shape1, input_shape2);
     if (need_broadcast_ && output_shape.size() > MAX_DIMS) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be greater than " << MAX_DIMS
                         << ", but got " << output_shape.size();
@@ -135,18 +135,6 @@ class SquaredDifferenceOpGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  bool IsBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
-    if (lhs.size() != rhs.size()) {
-      return true;
-    }
-    for (size_t i = 0; i < lhs.size(); i++) {
-      if (lhs[i] != rhs[i]) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   BroadcastOpType op_type_;
   bool need_broadcast_;
   bool is_comp_op_;

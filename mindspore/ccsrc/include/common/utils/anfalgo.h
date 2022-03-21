@@ -170,7 +170,7 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsHostKernel(const CNodePtr &node);
   // return true if use cnode_input's abstract, false if use real_input's abstract
   static void AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &cnode_input,
-                         const AnfNodePtr &real_input, size_t index);
+                         const AnfNodePtr &real_input);
   // Find real input nodes.
   static void GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *result,
                                    std::set<AnfNodePtr> *visited);
