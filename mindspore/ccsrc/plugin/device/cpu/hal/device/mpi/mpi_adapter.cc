@@ -236,7 +236,7 @@ bool MPIAdapter::ReduceScatterOverwriteInput(float *input, const std::vector<int
       exception_msg << "output buffer size " << output_size << " < input size " << data_size;
       RAISE_EXCEPTION(exception_msg.str());
     }
-    auto copy_ret = memcpy_s(output, output_size, input + scatter_index * input_data_num, data_size);
+    auto copy_ret = memcpy_s(output, output_size, input + (IntToSize(scatter_index)) * input_data_num, data_size);
     if (copy_ret != 0) {
       RAISE_EXCEPTION_WITH_PARAM("copy output memory fail!ret = ", copy_ret);
     }
@@ -260,7 +260,7 @@ bool MPIAdapter::AllGather(const float *input, float *output, const std::vector<
   if (comm == MPI_COMM_NULL) {
     RAISE_EXCEPTION_WITH_PARAM("create mpi comm fail! rankid:", rank_id_);
   }
-  auto ret = MPI_Allgather(input, data_num, MPI_FLOAT, output, data_num, MPI_FLOAT, comm);
+  auto ret = MPI_Allgather(input, SizeToInt(data_num), MPI_FLOAT, output, SizeToInt(data_num), MPI_FLOAT, comm);
   if (ret != MPI_SUCCESS) {
     RAISE_EXCEPTION_WITH_PARAM("mpi allgater fail!ret = ", ret);
   }
