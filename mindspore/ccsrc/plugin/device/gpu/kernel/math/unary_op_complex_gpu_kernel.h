@@ -39,21 +39,21 @@ class UnaryOpComplexGpuKernelMod : public NativeGpuKernelMod {
 
     S *output_addr = GetDeviceAddress<S>(outputs, 0);
     switch (unary_op_type_) {
-      case UNARY_OP_REAL: {
+      case cukernel::UNARY_OP_REAL: {
         if constexpr (!std::is_same<S, utils::Complex<float>>::value &&
                       !std::is_same<S, utils::Complex<double>>::value) {
           Real(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         }
         break;
       }
-      case UNARY_OP_IMAG: {
+      case cukernel::UNARY_OP_IMAG: {
         if constexpr (!std::is_same<S, utils::Complex<float>>::value &&
                       !std::is_same<S, utils::Complex<double>>::value) {
           Imag(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         }
         break;
       }
-      case UNARY_OP_CONJ: {
+      case cukernel::UNARY_OP_CONJ: {
         if constexpr (std::is_same<T, S>::value && !std::is_same<T, bool>::value) {
           Conj(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         }
@@ -112,8 +112,8 @@ class UnaryOpComplexGpuKernelMod : public NativeGpuKernelMod {
  private:
   void GetOpType(const CNodePtr &kernel_node) {
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    static std::map<std::string, UnaryOptype> kComplexSupportedTypeMap = {
-      {"Real", UNARY_OP_REAL}, {"Imag", UNARY_OP_IMAG}, {"Conj", UNARY_OP_CONJ}};
+    static std::map<std::string, cukernel::UnaryOptype> kComplexSupportedTypeMap = {
+      {"Real", cukernel::UNARY_OP_REAL}, {"Imag", cukernel::UNARY_OP_IMAG}, {"Conj", cukernel::UNARY_OP_CONJ}};
     auto iter = kComplexSupportedTypeMap.find(kernel_name);
     if (iter != kComplexSupportedTypeMap.end()) {
       unary_op_type_ = iter->second;
@@ -128,7 +128,7 @@ class UnaryOpComplexGpuKernelMod : public NativeGpuKernelMod {
   size_t output_size_;
   size_t workspace_size_;
   bool is_null_input_;
-  UnaryOptype unary_op_type_;
+  cukernel::UnaryOptype unary_op_type_;
 };
 }  // namespace kernel
 }  // namespace mindspore
