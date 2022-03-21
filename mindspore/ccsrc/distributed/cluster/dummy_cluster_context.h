@@ -26,12 +26,13 @@
 #include "distributed/constants.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
 namespace cluster {
 // The dummy cluster context interface. This class is for ut test and windows compiling.
-class ClusterContext {
+class BACKEND_EXPORT ClusterContext {
  public:
   ~ClusterContext() = default;
   DISABLE_COPY_AND_ASSIGN(ClusterContext)

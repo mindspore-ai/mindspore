@@ -26,6 +26,7 @@
 #include "ir/value.h"
 #include "ir/graph_utils.h"
 #include "base/base.h"
+#include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
 #include "distributed/constants.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
@@ -101,6 +102,16 @@ using InterProcessOpEdgesInfo = std::map<InterProcessOpEdge, InterProcessOpPair>
 constexpr char kAttrUpdateParameter[] = "update_parameter";
 constexpr char kAttrParameterInputIndex[] = "parameter_input_index";
 constexpr char kAttrGradientInputIndex[] = "gradient_input_index";
+constexpr char kAttrIndicesInputIndex[] = "indices_input_index";
+
+constexpr char kAttrGradientType[] = "gradient_type";
+constexpr char kDenseGradient[] = "dense_gradient";
+constexpr char kSparseGradient[] = "sparse_gradient";
+// The accumulator operator names for different gradient types.
+const std::map<std::string, std::string> kGradTypeToAccumOpName = {
+  {kDenseGradient, kAddNOpName},
+  {kSparseGradient, kConcatOpName},
+};
 
 // Node which is not physically on this process should be created for splitting graph implementation. This could be
 // considered as a virtual node which will be elimimated after splitting graph. For example, for server in PS mode, some
@@ -204,22 +215,26 @@ using GraphSplitterPtr = std::shared_ptr<GraphSplitter>;
 class DistributedExecutionMode {
  public:
   // Pass the dyed graph, node labels, process's role and rank id to construct execution mode.
-  explicit DistributedExecutionMode(const FuncGraphPtr &func_graph, uint32_t rank_id, const std::string &role)
-      : func_graph_(func_graph), rank_id_(rank_id), role_(role) {}
+  explicit DistributedExecutionMode(const FuncGraphPtr &func_graph, NodeLabels *node_labels, uint32_t rank_id,
+                                    const std::string &role)
+      : func_graph_(func_graph), node_labels_(node_labels), rank_id_(rank_id), role_(role) {}
   virtual ~DistributedExecutionMode() = default;
 
   // Prebuild the distributed graph to prepare for splitting graph. For example,adding extra accumulation nodes, replace
   // gradient input of optimizer nodes, dying new created nodes so that common split implementation could applied.
   // Input 'node_labels' represents node labels of the origin graph. This method could modify this map.
-  virtual void PreBuildDistributedGraph(NodeLabels *node_labels) {}
+  virtual void PreBuildDistributedGraph() {}
 
   // Postbuild the distributed graph after splitting graph. For example, adding extra edges to the split graph.
   // Input 'node_labels' represents node labels of the split graph.
   // Input 'comm_edges' represents the inter-process edges generated after splitting the graph.
-  virtual void PostBuildDistributedGraph(const NodeLabels &node_labels, const InterProcessOpEdgesInfo &comm_edges) {}
+  virtual void PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {}
 
  protected:
   FuncGraphPtr func_graph_;
+
+  // The node label set by graph splitter. It could be modified by DistributedExecutionMode.
+  NodeLabels *node_labels_;
 
   // Rank id and node role of this process. They are used to dye graph with different labels, help build split graph,
   // etc.
@@ -233,24 +248,40 @@ constexpr uint32_t kMinGradAccumWorkerNum = 2;
 // The execution of Parameter Server mode.
 class ParameterServerMode : public DistributedExecutionMode {
  public:
-  explicit ParameterServerMode(const FuncGraphPtr &func_graph, uint32_t rank_id, const std::string &role)
-      : DistributedExecutionMode(func_graph, rank_id, role) {}
+  explicit ParameterServerMode(const FuncGraphPtr &func_graph, NodeLabels *node_labels, uint32_t rank_id,
+                               const std::string &role)
+      : DistributedExecutionMode(func_graph, node_labels, rank_id, role) {}
   ~ParameterServerMode() = default;
 
-  void PreBuildDistributedGraph(NodeLabels *node_labels) override;
-  void PostBuildDistributedGraph(const NodeLabels &node_labels, const InterProcessOpEdgesInfo &comm_edges) override;
+  void PreBuildDistributedGraph() override;
+  void PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) override;
 
  private:
+  // Process optimizers split to the parameter server.
+  void ProcessForSplittedOptimizer();
+
   // Filter out all optimizer nodes which are set on parameter server from the graph.
   std::vector<CNodePtr> FilterServerAwareOptimizerList(const std::vector<AnfNodePtr> &nodes);
 
-  // Create node with multiple inputs whose number is the worker number in PS mode.
-  // 'node_name' represents the name of the node to be created.
+  // Create gradients accumulator with mean operator for the given optimizer. It could be sparse or dense gradients.
+  // 'total_gradient_number' represents how many workers' gradients will be accumulated for this optimizer.
+  // The return value is a pair of accumulation node to RealDiv node.
+  std::pair<CNodePtr, CNodePtr> CreateNodesForGradAccumulation(const AnfNodePtr &gradient_input,
+                                                               size_t gradient_input_index,
+                                                               const std::string &gradient_type,
+                                                               size_t total_gradient_number);
+
+  // Normally after gradients accumulation, the mean value should be calculated.
+  CNodePtr CreateGradMeanNode(const AnfNodePtr &gradient, size_t divisor);
+
+  // Create node with multiple inputs. Some of the inputs could be fake nodes.
+  // 'many_to_one_node_name' represents the name of the node to be created.
   // 'real_input' represents the input which is already in the func_graph_. Other inputs will be created as this input.
-  // 'index_of_real_input': the input index of 'real_input' of this new created node: 'node_name'.
-  // 'worker_num': the worker number in this PS cluster.
-  CNodePtr CreateNodeForMultipleWorker(NodeLabels *node_labels, const std::string &node_name,
-                                       const AnfNodePtr &real_input, size_t index_of_real_input, uint32_t worker_num);
+  // 'index_of_real_input': the input index of 'real_input' of this new created node: 'many_to_one_node_name'.
+  // 'total_inputs_number': the total inputs number of the created node.
+  CNodePtr CreateNodeWithInterProcessEdgeOnPServer(const std::string &many_to_one_node_name,
+                                                   const AnfNodePtr &real_input, size_t index_of_real_input,
+                                                   uint32_t total_inputs_number);
 };
 }  // namespace parallel
 }  // namespace mindspore
