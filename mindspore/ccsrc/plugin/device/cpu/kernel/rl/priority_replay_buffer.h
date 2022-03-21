@@ -69,7 +69,7 @@ class PriorityReplayBuffer {
   bool UpdatePriorities(const std::vector<size_t> &indices, const std::vector<float> &priorities);
 
  private:
-  float Weight(float priority, float sum_priority, size_t size) const;
+  inline float Weight(float priority, float sum_priority, size_t size) const;
 
   float alpha_;
   float beta_;
