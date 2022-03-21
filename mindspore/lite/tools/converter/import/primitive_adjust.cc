@@ -548,6 +548,24 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
+
+int MoveAttrBatchNorm(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+  MS_ASSERT(value_node != nullptr);
+  auto src_prim = GetValueNode<PrimitivePtr>(value_node);
+  if (src_prim == nullptr) {
+    MS_LOG(ERROR) << "value node is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto dst_prim = std::make_shared<ops::FusedBatchNorm>();
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
+  dst_prim->SetAttrs(src_prim->attrs());
+  bool is_training = GetValue<bool>(src_prim->GetAttr(ops::kIsTraining));
+  dst_prim->set_mode(static_cast<int64_t>(is_training));
+  value_node->set_value(dst_prim);
+  return lite::RET_OK;
+}
 }  // namespace
 
 bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
@@ -620,7 +638,7 @@ REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGradGpu, MoveAttrPoolGrad)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGradCpu, MoveAttrPoolGrad)
 REGIST_PRIMITIVE_ADJUST(kNameBatchMatMul, MoveAttrMapCommon<ops::MatMulFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameMatMul, MoveAttrMapCommon<ops::MatMulFusion>)
-REGIST_PRIMITIVE_ADJUST(kNameBatchNorm, MoveAttrMapCommon<ops::FusedBatchNorm>)
+REGIST_PRIMITIVE_ADJUST(kNameBatchNorm, MoveAttrBatchNorm)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropFilter, MoveAttrMapCommon<ops::Conv2DBackpropFilterFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropInput, MoveAttrMapCommon<ops::Conv2DBackpropInputFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2D, MoveAttrMapConv2D)
