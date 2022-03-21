@@ -27,7 +27,7 @@ class MemcpyRtsDynamicKernel : public DynamicKernel {
   MemcpyRtsDynamicKernel(void *stream, const CNodePtr &cnode_ptr, void *dst, uint32_t dest_max, void *src,
                          uint32_t count)
       : DynamicKernel(stream, cnode_ptr), dst_(dst), dest_max_(dest_max), src_(src), count_(count) {}
-  ~MemcpyRtsDynamicKernel() override = default;
+  ~MemcpyRtsDynamicKernel() override;
 
   void UpdateArgs() override {}
   void Execute() override;

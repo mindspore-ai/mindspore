@@ -46,6 +46,10 @@ AicpuTask::AicpuTask(const ModelContext &model_context, const std::shared_ptr<Ai
 AicpuTask::~AicpuTask() {
   ReleaseRtMem(&args_);
   ReleaseRtMem(&ext_info_);
+  stream_ = nullptr;
+  args_ = nullptr;
+  ext_info_ = nullptr;
+  input_output_addr_ = nullptr;
 }
 
 void AicpuTask::Distribute() {

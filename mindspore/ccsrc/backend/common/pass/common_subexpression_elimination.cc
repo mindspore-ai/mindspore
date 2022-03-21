@@ -17,6 +17,8 @@
 
 #include <memory>
 #include <vector>
+#include <map>
+#include <utility>
 #include "runtime/device/kernel_info.h"
 #include "base/core_ops.h"
 #include "utils/flags.h"

@@ -28,6 +28,7 @@ void HcclDynamicKernel::UpdateArgs() {}
 void HcclDynamicKernel::Execute() {}
 void HcclDynamicKernel::PostExecute() {}
 
+MemcpyRtsDynamicKernel::~MemcpyRtsDynamicKernel() {}
 void MemcpyRtsDynamicKernel::Execute() {}
 
 void ProfilingRtsDynamicKernel::Execute() {}
