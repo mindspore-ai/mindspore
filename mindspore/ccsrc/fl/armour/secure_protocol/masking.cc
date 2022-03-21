@@ -52,7 +52,7 @@ int Masking::GetMasking(std::vector<float> *noise, int noise_len, const uint8_t 
 
   for (int i = 0; i < noise_len; i++) {
     auto value = *(reinterpret_cast<int32_t *>(encrypt_data.data()) + i);
-    noise->emplace_back(static_cast<float>(value) / INT32_MAX);
+    (void)noise->emplace_back(static_cast<float>(value) / INT32_MAX);
   }
   return 0;
 }
