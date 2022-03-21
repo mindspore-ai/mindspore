@@ -8,7 +8,7 @@ mindspore.set_dump
     target为 `Cell <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_ 或 `Primitive <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/ops/mindspore.ops.Primitive.html#mindspore.ops.Primitive>`_ 的实例。请注意，此API仅在开启异步Dump功能且Dump配置文件中的 `dump_mode` 字段为"2"时生效。有关详细信息，请参阅 `Dump功能文档 <https://mindspore.cn/docs/programming_guide/zh-CN/master/dump_in_graph_mode.html>`_ 。默认状态下，Cell和Primitive实例不使能Dump数据功能。
 
     .. Warning::
-        此API还在实验阶段，后续可能修改或删除。
+        此类中的所有API均为实验版本，将来可能更改或者删除。
 
     .. Note::
         - 此API只在Ascend后端的图模式有效。
