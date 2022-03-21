@@ -106,7 +106,7 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     }
     MS_LOG(INFO) << "Add the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
     graph_manager_.AddSavedGraphs(std::to_string(it->id_));
-    (void)sess_->AddGraph(it->id_, *(it->graph_ptr_), it->options_);
+    (void)sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
   }
 #endif
 }
@@ -150,7 +150,7 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
       MS_LOG(ERROR) << "The GE session is null, can't run the graph!";
       return Status::FAILED;
     }
-    ge::Status ret = sess_->RunGraph(wrap_ptr->id_, ge_inputs, ge_outputs);
+    ge::Status ret = sess_->RunGraph(static_cast<uint32_t>(wrap_ptr->id_), ge_inputs, ge_outputs);
     if (ret != ge::GRAPH_SUCCESS) {
       MS_LOG(ERROR) << "Call GE RunGraph Failed, ret is: " << ret;
       return Status::FAILED;

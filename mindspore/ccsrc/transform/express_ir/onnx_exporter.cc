@@ -236,7 +236,8 @@ uint32_t Fp32ToFp16(float value) {
   const unsigned int FP16_E = 16 - 1 - FP16_M;
 
   uint32_t fp32_bits;
-  std::memcpy(reinterpret_cast<std::byte *>(&fp32_bits), reinterpret_cast<std::byte *>(&value), sizeof(value));
+  memcpy_s(reinterpret_cast<std::byte *>(&fp32_bits), sizeof(fp32_bits), reinterpret_cast<std::byte *>(&value),
+           sizeof(value));
 
   uint32_t mantissa = fp32_bits & FieldMask(FP32_M);
   uint32_t fp32_exp_mask = FieldMask(FP32_E);
@@ -623,8 +624,8 @@ struct LoopConditionInfo {
   condition expression before and inside Loop subgraph)
   The only while loop form supported currently is the one used in GNMT v2's Beam Search. Python example:
     i = begin
-    while i < end:
-        # ...
+    while i < end
+        ...
         i += step
   To enable proper support for arbitrary while loop contitions, condition calculation should be duplicated inside the
   Loop supgraph. But exporting the same ops twice with different names is not currently supported.
@@ -2808,7 +2809,7 @@ void MakeLSTMWeight(const std::string &input, const std::string &output, const s
   auto split_o_name = output + "__concat_o";
   auto split_f_name = output + "__concat_f";
   auto split_c_name = output + "__concat_c";
-  int64_t hidden_size = output_shape[1] / 4;
+  int64_t hidden_size = output_shape[kOneNum] / kFourNum;
   AddSplitOp(reshaped_name, {split_i_name, split_f_name, split_c_name, split_o_name},
              {hidden_size, hidden_size, hidden_size, hidden_size}, 1, graph_proto);
 
