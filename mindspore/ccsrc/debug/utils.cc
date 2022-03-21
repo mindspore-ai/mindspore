@@ -58,7 +58,7 @@ bool CheckStoi(int64_t *const output_digit, const std::string &input_str) {
 
 void CheckStringMatch(size_t start, size_t end, std::string *matched_str, const std::string &input_str) {
   if (start != std::string::npos && end != std::string::npos && end > start && start + 1 < input_str.length()) {
-    *matched_str = input_str.substr(start + 1, end - start - 1);
+    *matched_str = input_str.substr(start + 1, end - (start + 1));
   }
 }
 }  // namespace mindspore

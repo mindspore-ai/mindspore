@@ -124,15 +124,14 @@ bool E2eDump::IsDeviceTargetGPU() {
  * Runtime category: Old runtime, MindRT.
  * Description: This function is for dumping tensor in memory to disk in GPU machine.
  */
-void E2eDump::DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
-                               const device::DeviceAddress &addr, const ShapeVector &int_shapes,
-                               const TypeId &host_type, const TypeId &device_type, bool trans_flag, size_t slot,
-                               const Debugger *debugger) {
+void E2eDump::DumpGPUMemToFile(const Debugger *debugger, const std::string &file_path, bool trans_flag,
+                               const device::DeviceAddress &addr, const std::string &original_kernel_name, size_t slot,
+                               const ShapeVector &int_shapes, const TypeId &host_type) {
 #ifdef ENABLE_DEBUGGER
   auto format = kOpFormat_DEFAULT;
   MS_EXCEPTION_IF_NULL(debugger);
-  auto ret = debugger->DumpTensorToFile(original_kernel_name, trans_flag, file_path, format, int_shapes, host_type,
-                                        device_type, addr.format(), slot);
+  auto ret = debugger->DumpTensorToFile(file_path, trans_flag, format, addr.format(), original_kernel_name, slot,
+                                        int_shapes, host_type);
   if (!ret) {
     MS_LOG(INFO) << "DumpTensorToFile Failed: flag:" << trans_flag << ", path:" << file_path
                  << ", host_format:" << format;
@@ -189,7 +188,6 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     ShapeVector int_shapes;
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes), trans_flag);
     auto type = common::AnfAlgo::GetOutputInferDataType(node, j);
-    auto device_type = AnfAlgo::GetOutputDeviceDataType(node, j);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint32_t task_id = 0;
@@ -205,8 +203,7 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     }
     if (DumpJsonParser::GetInstance().IsTensorDump()) {
       if (IsDeviceTargetGPU()) {
-        DumpGPUMemToFile(file_path, GetKernelNodeName(node), *addr, int_shapes, type, device_type, trans_flag, j,
-                         debugger);
+        DumpGPUMemToFile(debugger, file_path, trans_flag, *addr, GetKernelNodeName(node), j, int_shapes, type);
       } else {
         DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
       }
@@ -312,7 +309,6 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     ShapeVector int_shapes;
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
     auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
-    auto device_type = AnfAlgo::GetOutputDeviceDataType(input, index);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint64_t timestamp = GetTimeStamp();
@@ -329,7 +325,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     }
     if (DumpJsonParser::GetInstance().IsTensorDump()) {
       if (IsDeviceTargetGPU()) {
-        DumpGPUMemToFile(file_path, tensor_name, *addr, int_shapes, type, device_type, trans_flag, slot, debugger);
+        DumpGPUMemToFile(debugger, file_path, trans_flag, *addr, tensor_name, slot, int_shapes, type);
       } else if (Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
         // load address from launch_info when it's Ascend Kernel by kernel mode.
         auto ascend_device_addr = CreateAscendDeviceAddress(launch_info, j, type);
@@ -402,7 +398,6 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   ShapeVector int_shapes;
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes), trans_flag);
   auto type = common::AnfAlgo::GetOutputInferDataType(anf_node, output_index);
-  auto device_type = AnfAlgo::GetOutputDeviceDataType(anf_node, output_index);
   uint64_t timestamp = GetTimeStamp();
   uint32_t task_id = 0;
   uint32_t stream_id = 0;
@@ -414,7 +409,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
       (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (dump_json_parser.IsTensorDump()) {
-      DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
+      DumpGPUMemToFile(debugger, file_path, trans_flag, *addr, node_name, 0, int_shapes, type);
     }
   } else {
     DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
@@ -457,7 +452,7 @@ void E2eDump::DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::str
       (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (dump_json_parser.IsTensorDump()) {
-      DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
+      DumpGPUMemToFile(debugger, file_path, trans_flag, *addr, node_name, 0, int_shapes, type);
     }
   } else {
     DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
@@ -771,7 +766,9 @@ void E2eDump::DumpTensorToFile(const std::string &dump_path, const debugger::dum
     // If the total tensor size is less than 1Mb, do it in single thread.
     ConvertFormatForTensors(&dump_tensor_vec, 0, dump_tensor_vec.size() - 1);
   } else {
-    auto default_num_workers = std::max<uint32_t>(1, std::thread::hardware_concurrency() / 4);
+    // In multi_thread process, we only use 1/4 of the total concurrent threads.
+    uint32_t ratio_divider = 4;
+    auto default_num_workers = std::max<uint32_t>(1, std::thread::hardware_concurrency() / ratio_divider);
     auto num_threads = std::min<uint32_t>(default_num_workers, dump_tensor_vec.size());
     uint32_t task_size = dump_tensor_vec.size() / num_threads;
     uint32_t remainder = dump_tensor_vec.size() % num_threads;

@@ -365,10 +365,10 @@ void DumpJsonParser::ParseDumpMode(const nlohmann::json &content) {
   MS_EXCEPTION_IF_NULL(context);
   CheckJsonUnsignedType(content, kDumpMode);
   dump_mode_ = content;
-  if (dump_mode_ < DUMP_ALL || dump_mode_ > DUMP_KERNELS_WITH_FLAG) {
+  if (dump_mode_ > static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
     MS_LOG(EXCEPTION) << "Dump config parse failed, dump_mode should be 0, 1 or 2, but got " << dump_mode_;
   }
-  if (dump_mode_ == DUMP_KERNELS_WITH_FLAG) {
+  if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
     if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice || e2e_dump_enabled_) {
       MS_LOG(EXCEPTION) << "Cell dump is only supported in Ascend async dump. Please set dump_mode to 0 or 1.";
     }
@@ -537,7 +537,7 @@ void DumpJsonParser::ParseInputOutput(const nlohmann::json &content) {
 
 void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
   CheckJsonArrayType(content, kKernels);
-  if (dump_mode_ != DUMP_KERNEL) {
+  if (dump_mode_ != static_cast<uint32_t>(DUMP_KERNEL)) {
     MS_LOG(INFO) << "Dump config field <" << kKernels << "> is not used as the dump mode is not 1.";
     return;
   }
@@ -688,7 +688,7 @@ void DumpJsonParser::MatchKernel(const std::string &kernel_name) {
 }
 
 void DumpJsonParser::PrintUnusedKernel() {
-  if ((!e2e_dump_enabled_ && !async_dump_enabled_) || dump_mode_ != DUMP_KERNEL) {
+  if ((!e2e_dump_enabled_ && !async_dump_enabled_) || dump_mode_ != static_cast<uint32_t>(DUMP_KERNEL)) {
     return;
   }
   for (const auto &iter : kernels_) {
@@ -748,7 +748,7 @@ bool DumpJsonParser::OutputNeedDump() const {
  * Description: Obtain the cell dump flag of each operators in the given kernel graph.
  */
 void DumpJsonParser::GetCellDumpFlag(const session::KernelGraph &kernel_graph) {
-  if (dump_mode_ != DUMP_KERNELS_WITH_FLAG) {
+  if (dump_mode_ != static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
     return;
   }
   for (const auto &kernel : kernel_graph.execution_order()) {

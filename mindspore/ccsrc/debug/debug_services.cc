@@ -43,8 +43,8 @@
 
 namespace mindspore {
 namespace {
-static constexpr const char *constant_prefix = "Default--data-";
-static constexpr const char *kNpyExt = ".npy";
+static constexpr const char constant_prefix[] = "Default--data-";
+static constexpr const char kNpyExt[] = ".npy";
 constexpr float ms_to_s = 1000.0;
 constexpr int precision = 2;
 static constexpr int32_t wp_progress_period = 300;
@@ -1155,8 +1155,8 @@ void DebugServices::ProcessConvertList(const DumpFileMap &dump_dir_mapped_files,
   }
   // Add the already converted npy files to result_list
   if (npy_files.find(prefix_dump_file_name) != npy_files.end()) {
-    std::copy(npy_files[prefix_dump_file_name].begin(), npy_files[prefix_dump_file_name].end(),
-              std::inserter(*result_list, result_list->end()));
+    (void)std::copy(npy_files[prefix_dump_file_name].begin(), npy_files[prefix_dump_file_name].end(),
+                    std::inserter(*result_list, result_list->end()));
   }
 }
 
@@ -1535,7 +1535,6 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     bool is_cst = false;
     // prefix_dump_to_check is node name used to find corresponding dump file.
     std::string prefix_dump_to_check = GetNodeNameWithoutScope(dump_style_kernel_name);
-
     // if node name has prefix of "Default--data-", consider as constant, search in cst folder
     if (prefix_dump_to_check.length() > (unsigned)strlen(constant_prefix) &&
         prefix_dump_to_check.substr(0, (unsigned)strlen(constant_prefix)).compare(constant_prefix) == 0) {
@@ -1837,12 +1836,11 @@ std::shared_ptr<TensorData> DebugServices::GetTensor(const std::string &tensor_n
 void DebugServices::EmptyCurrentTensor() { tensor_loader_->EmptyCurrentTensor(); }
 
 #ifdef ONLINE_DBG_MODE
-bool DebugServices::DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
-                                     const std::string &host_fmt, const std::vector<int64_t> &host_shape,
-                                     TypeId host_type, TypeId device_type, const std::string &addr_format,
-                                     size_t slot) const {
-  return tensor_loader_->DumpTensorToFile(tensor_name, trans_flag, filepath, host_fmt, host_shape, host_type,
-                                          device_type, addr_format, slot);
+bool DebugServices::DumpTensorToFile(const std::string &filepath, bool trans_flag, const std::string &host_fmt,
+                                     const std::string &addr_format, const std::string &tensor_name, size_t slot,
+                                     const std::vector<int64_t> &host_shape, TypeId host_type) const {
+  return tensor_loader_->DumpTensorToFile(filepath, trans_flag, host_fmt, addr_format, tensor_name, slot, host_shape,
+                                          host_type);
 }
 #endif
 
@@ -2130,7 +2128,6 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
   }
   size_t third_dot = file_name.rfind(".", fourth_dot - 1);
   size_t second_dot = file_name.rfind(".", third_dot - 1);
-
   // check if dots were found
   if (first_dot == std::string::npos || second_dot == std::string::npos || third_dot == std::string::npos ||
       fourth_dot == std::string::npos) {

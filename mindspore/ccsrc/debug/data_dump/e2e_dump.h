@@ -105,10 +105,9 @@ class E2eDump {
 
   static void DumpParameters(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
 
-  static void DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
-                               const device::DeviceAddress &addr, const ShapeVector &int_shapes,
-                               const TypeId &host_type, const TypeId &device_type, bool trans_flag, size_t slot,
-                               const Debugger *debugger);
+  static void DumpGPUMemToFile(const Debugger *debugger, const std::string &file_path, bool trans_flag,
+                               const device::DeviceAddress &addr, const std::string &original_kernel_name, size_t slot,
+                               const ShapeVector &int_shapes, const TypeId &host_type);
   static bool IsDeviceTargetGPU();
   static void DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
                                 bool trans_flag, const Debugger *debugger);

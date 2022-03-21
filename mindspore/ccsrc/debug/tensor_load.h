@@ -244,9 +244,9 @@ class TensorLoader {
    * Runtime category: Old runtime, MindRT.
    * Description: Load tensor data from debugger backend cache (tensor_list_map_) and dump to file in npy format.
    */
-  bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
-                        const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
-                        TypeId device_type, const std::string &addr_format, size_t slot) {
+  bool DumpTensorToFile(const std::string &filepath, bool trans_flag, const std::string &host_fmt,
+                        const std::string &addr_format, const std::string &tensor_name, size_t slot,
+                        const std::vector<int64_t> &host_shape, TypeId host_type) {
     if (filepath.empty()) {
       MS_LOG(ERROR) << "Dump file path is null!";
       return false;

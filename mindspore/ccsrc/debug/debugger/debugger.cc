@@ -369,7 +369,6 @@ void Debugger::StoreRunGraphIdList(uint32_t graph_id) {
   // collect rungrap_ids to update step number in multigraph case for GPU old runtime
   if (!rungraph_id_list_.size()) {
     rungraph_id_list_.push_back(graph_id);
-
   } else {
     if (std::find(rungraph_id_list_.begin(), rungraph_id_list_.end(), graph_id) == rungraph_id_list_.end()) {
       rungraph_id_list_.push_back(graph_id);
@@ -1336,11 +1335,11 @@ void Debugger::SendWatchpoints(const std::list<WatchpointHit> &points) {
   }
 }
 
-bool Debugger::DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
-                                const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
-                                TypeId device_type, const std::string &addr_format, size_t slot) const {
-  return debug_services_.get()->DumpTensorToFile(tensor_name, trans_flag, filepath, host_fmt, host_shape, host_type,
-                                                 device_type, addr_format, slot);
+bool Debugger::DumpTensorToFile(const std::string &filepath, bool trans_flag, const std::string &host_fmt,
+                                const std::string &addr_format, const std::string &tensor_name, size_t slot,
+                                const std::vector<int64_t> &host_shape, TypeId host_type) const {
+  return debug_services_.get()->DumpTensorToFile(filepath, trans_flag, host_fmt, addr_format, tensor_name, slot,
+                                                 host_shape, host_type);
 }
 
 bool Debugger::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
@@ -1574,7 +1573,6 @@ void Debugger::LoadSingleParameterMindRT(const AnfNodePtr &node) {
   // Keep_prev is True for parameters.
   // force update for parameters.
   bool ret = device_addr->LoadMemToHost(tensor_name, 0, format, int_shapes, type, 0, true, root_graph_id, true);
-
   if (!ret) {
     MS_LOG(ERROR) << "LoadMemToHost:"
                   << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
