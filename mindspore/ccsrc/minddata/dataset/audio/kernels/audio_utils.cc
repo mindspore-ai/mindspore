@@ -1769,5 +1769,286 @@ Status ComputeDeltas(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   RETURN_IF_NOT_OK((*output)->Reshape(raw_shape));
   return Status::OK();
 }
+
+/// \brief IRFFT.
+Status IRFFT(const Eigen::MatrixXcd &stft_matrix, Eigen::MatrixXd *inverse) {
+  int32_t n = 2 * (stft_matrix.rows() - 1);
+  int32_t s = stft_matrix.rows() - 1;
+  Eigen::FFT<double> fft;
+  for (int k = 0; k < stft_matrix.cols(); ++k) {
+    Eigen::VectorXcd output_complex(n);
+    // pad input
+    Eigen::VectorXcd input(n);
+    input.head(s + 1) = stft_matrix.col(k);
+    auto reverse_pad = stft_matrix.col(k).segment(1, s - 1).colwise().reverse().conjugate();
+    input.segment(s + 1, s - 1) = reverse_pad;
+    fft.inv(output_complex, input);
+    Eigen::VectorXd output_real = output_complex.real().eval();
+    inverse->col(k) = Eigen::Map<Eigen::MatrixXd>(output_real.data(), n, 1);
+  }
+  return Status::OK();
+}
+
+/// \brief Overlap Add
+Status OverlapAdd(Eigen::VectorXd *out_buf, const Eigen::MatrixXd &win_inverse_stft, int32_t hop_lengh) {
+  int32_t n_fft = win_inverse_stft.rows();
+  for (int frame = 0; frame < win_inverse_stft.cols(); frame++) {
+    int32_t sample = frame * hop_lengh;
+    out_buf->middleRows(sample, n_fft) += win_inverse_stft.col(frame);
+  }
+  return Status::OK();
+}
+
+/// \brief Window Sum Square
+Status WindowSumSquare(const Eigen::MatrixXf &window_matrix, Eigen::VectorXf *win_sum_square, const int32_t n_frames,
+                       int32_t n_fft, int32_t hop_length) {
+  Eigen::MatrixXf win_norm = window_matrix.array().pow(2);
+  // window sum square fill
+  int32_t n = n_fft + hop_length * (n_frames - 1);
+  // check n_fft
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    n_fft == win_norm.rows(),
+    "GriffinLim: n_fft must be equal to the length of the window during window sum square calculation.");
+  for (int ind = 0; ind < n_frames; ind++) {
+    int sample = ind * hop_length;
+    int end_ss = std::min(n, sample + n_fft);
+    int end_win = std::max(0, std::min(n_fft, n - sample));
+    win_sum_square->segment(sample, end_ss - sample) += win_norm.col(0).head(end_win);
+  }
+  return Status::OK();
+}
+
+/// \brief ISTFT.
+/// \param input: Complex matrix of eigen, shape of <freq, time>.
+/// \param output: Tensor of shape <time>.
+/// \param n_fft: Size of Fourier transform.
+/// \param hop_length: The distance between neighboring sliding window frames.
+/// \param win_length: The size of window frame and STFT filter.
+/// \param window_type: The type of window function.
+/// \param center:  Whether input was padded on both sides so that the `t`-th frame is centered at time
+///     `t * hop_length`.
+/// \param normalized: Whether the STFT was normalized.
+/// \param onesided: Whether the STFT was onesided.
+/// \param length: The amount to trim the signal by (i.e. the original signal length).
+/// \return Status code.
+template <typename T>
+Status ISTFT(const Eigen::MatrixXcd &stft_matrix, std::shared_ptr<Tensor> *output, int32_t n_fft, int32_t hop_length,
+             int32_t win_length, WindowType window_type, bool center, bool normalized, bool onesided, int32_t length) {
+  // check input
+  CHECK_FAIL_RETURN_UNEXPECTED(n_fft == ((stft_matrix.rows() - 1) * 2),
+                               "GriffinLim: the frequency of the input should equal to n_fft / 2 + 1");
+
+  // window
+  std::shared_ptr<Tensor> ifft_window_tensor;
+  RETURN_IF_NOT_OK(Window(&ifft_window_tensor, window_type, win_length));
+  if (win_length == 1) {
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT32), &ifft_window_tensor));
+    auto win = ifft_window_tensor->begin<float>();
+    *(win) = 1;
+  }
+  // pad window to match n_fft, and add a broadcasting axis
+  std::shared_ptr<Tensor> ifft_window_pad;
+  ifft_window_pad = ifft_window_tensor;
+  if (win_length < n_fft) {
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({n_fft}), DataType(DataType::DE_FLOAT32), &ifft_window_pad));
+    int pad_left = (n_fft - win_length) / 2;
+    int pad_right = n_fft - win_length - pad_left;
+    RETURN_IF_NOT_OK(Pad<float>(ifft_window_tensor, &ifft_window_pad, pad_left, pad_right, BorderType::kConstant));
+  }
+
+  int32_t n_frames = 0;
+  if ((length != 0) && (hop_length != 0)) {
+    int32_t padded_length = center ? (length + n_fft) : length;
+    n_frames = std::min(static_cast<int32_t>(stft_matrix.cols()),
+                        static_cast<int32_t>(std::ceil(static_cast<float>(padded_length) / hop_length)));
+  } else {
+    n_frames = stft_matrix.cols();
+  }
+  int32_t expected_signal_len = n_fft + hop_length * (n_frames - 1);
+  Eigen::VectorXd y(expected_signal_len);
+  y.setZero();
+
+  // constrain STFT block sizes to 256 KB
+  int32_t max_mem_block = std::pow(2, 8) * std::pow(2, 10);
+  int32_t n_columns = max_mem_block / (stft_matrix.rows() * sizeof(T) * TWO);
+  n_columns = std::max(n_columns, 1);
+
+  // turn window to eigen matrix
+  auto data_ptr = &*ifft_window_pad->begin<float>();
+  Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> ifft_window_matrix(data_ptr,
+                                                                                      ifft_window_pad->shape()[0], 1);
+  for (int bl_s = 0, frame = 0; bl_s < n_frames;) {
+    int bl_t = std::min(bl_s + n_columns, n_frames);
+    // calculate ifft
+    Eigen::MatrixXcd stft_temp = stft_matrix.middleCols(bl_s, bl_t - bl_s).eval();
+    Eigen::MatrixXd inverse(TWO * (stft_temp.rows() - 1), stft_temp.cols());
+    inverse.setZero();
+    RETURN_IF_NOT_OK(IRFFT(stft_temp, &inverse));
+    auto ytmp = ifft_window_matrix.template cast<double>().replicate(1, inverse.cols()).cwiseProduct(inverse);
+    RETURN_IF_NOT_OK(OverlapAdd(&y, ytmp, hop_length));
+    frame += bl_t - bl_s;
+    bl_s += n_columns;
+  }
+  // normalize by sum of squared window
+  int32_t n = n_fft + hop_length * (n_frames - 1);
+  Eigen::VectorXf ifft_win_sum(n);
+  ifft_win_sum.setZero();
+  RETURN_IF_NOT_OK(WindowSumSquare(ifft_window_matrix, &ifft_win_sum, n_frames, n_fft, hop_length));
+
+  for (int32_t ind = 0; ind < y.rows(); ind++) {
+    if (ifft_win_sum[ind] > std::numeric_limits<float>::min()) {
+      y[ind] /= ifft_win_sum[ind];
+    }
+  }
+
+  std::shared_ptr<Tensor> res_tensor;
+  if (length == 0 && center) {
+    int32_t y_start = n_fft / 2;
+    int32_t y_end = y.rows() - y_start;
+    auto tmp = y.middleRows(y_start, y_end - y_start);
+    std::vector<T> y_res(tmp.data(), tmp.data() + tmp.rows() * tmp.cols());
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(y_res, TensorShape({tmp.size()}), &res_tensor));
+  } else {
+    int32_t start = center ? n_fft / 2 : 0;
+    auto tmp = y.tail(y.rows() - start);
+    // fix length
+    std::vector<T> y_res(tmp.data(), tmp.data() + tmp.rows() * tmp.cols());
+    if (length > y_res.size()) {
+      while (y_res.size() != length) {
+        y_res.push_back(0);
+      }
+    } else if (length < tmp.rows()) {
+      while (y_res.size() != length) {
+        y_res.pop_back();
+      }
+    }
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(y_res, TensorShape({length}), &res_tensor));
+  }
+  *output = res_tensor;
+  return Status::OK();
+}
+
+template <typename T>
+Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft,
+                      int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type, float power,
+                      float momentum, int32_t length, bool rand_init, std::mt19937 rnd) {
+  // pack
+  TensorShape shape = input->shape();
+  TensorShape new_shape({input->Size() / shape[-1] / shape[-2], shape[-2], shape[-1]});
+  RETURN_IF_NOT_OK(input->Reshape(new_shape));
+  // power
+  CHECK_FAIL_RETURN_UNEXPECTED(power != 0, "GriffinLim: power can not be zero.");
+  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+    *itr = pow(*itr, 1 / power);
+  }
+  // window
+  std::shared_ptr<Tensor> fft_window_tensor;
+  RETURN_IF_NOT_OK(Window(&fft_window_tensor, window_type, win_length));
+  if (win_length == 1) {
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_FLOAT32), &fft_window_tensor));
+    auto win = fft_window_tensor->begin<float>();
+    *(win) = 1;
+  }
+  std::shared_ptr<Tensor> final_results;
+  for (int dim = 0; dim < new_shape[0]; dim++) {
+    // init complex phase
+    Eigen::MatrixXcd angles(shape[(-1) * TWO], shape[-1]);
+    if (rand_init) {
+      // static std::default_random_engine e;
+      std::uniform_real_distribution<double> dist(0, 1);
+      angles = angles.unaryExpr(
+        [&dist, &rnd](std::complex<double> value) { return std::complex<double>(dist(rnd), dist(rnd)); });
+    } else {
+      angles = angles.unaryExpr([](std::complex<double> value) { return std::complex<double>(1, 0); });
+    }
+    // slice and squeeze the first dim
+    std::shared_ptr<Tensor> spec_tensor_slice;
+    RETURN_IF_NOT_OK(input->Slice(
+      &spec_tensor_slice,
+      std::vector<SliceOption>({SliceOption(std::vector<dsize_t>{dim}), SliceOption(true), SliceOption(true)})));
+    TensorShape new_slice_shape({shape[-2], shape[-1]});
+    RETURN_IF_NOT_OK(spec_tensor_slice->Reshape(new_slice_shape));
+    // turn tensor into eigen MatrixXd
+    auto data_ptr = &*spec_tensor_slice->begin<T>();
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> spec_matrix_transpose(data_ptr, shape[-1],
+                                                                                       shape[(-1) * TWO]);
+    Eigen::MatrixXd spec_matrix = spec_matrix_transpose.transpose().template cast<double>();
+    auto stft_complex = angles.cwiseProduct(spec_matrix);
+
+    // init tprev zero mat
+    Eigen::MatrixXcd tprev(shape[(-1) * TWO], shape[-1]);
+    Eigen::MatrixXcd rebuilt(shape[(-1) * TWO], shape[-1]);
+    tprev.setZero();
+    rebuilt.setZero();
+    for (int iter = 0; iter < n_iter; iter++) {
+      // istft
+      std::shared_ptr<Tensor> inverse;
+      RETURN_IF_NOT_OK(
+        ISTFT<T>(stft_complex, &inverse, n_fft, hop_length, win_length, window_type, true, false, true, length));
+      // stft
+      std::shared_ptr<Tensor> stft_out;
+      RETURN_IF_NOT_OK(SpectrogramImpl<T>(inverse, &stft_out, 0, window_type, n_fft, hop_length, win_length, 0, false,
+                                          true, BorderType::kReflect, true));
+
+      rebuilt.transposeInPlace();
+      Tensor::TensorIterator<T> itr = stft_out->begin<T>();
+      rebuilt = rebuilt.unaryExpr([&itr](std::complex<double> value) {
+        T real = *(itr++);
+        T img = *(itr++);
+        return std::complex<double>(real, img);
+      });
+      rebuilt.transposeInPlace();
+      angles = rebuilt.array();
+
+      if (momentum != 0) {
+        tprev = tprev * ((momentum) / (1 + momentum));
+        angles = angles.array() - tprev.array();
+      }
+
+      float eps = 1e-16;
+      auto angles_abs = angles.cwiseAbs().eval();
+      angles_abs.array() += eps;
+      angles = angles.array() / angles_abs.array();
+      tprev = rebuilt.array();
+    }
+
+    // istft calculate final phase
+    auto stft_complex_fin = angles.cwiseProduct(spec_matrix);
+    std::shared_ptr<Tensor> waveform;
+    RETURN_IF_NOT_OK(
+      ISTFT<T>(stft_complex_fin, &waveform, n_fft, hop_length, win_length, window_type, true, false, true, length));
+
+    if (shape.Rank() == TWO) {
+      // do not expand dim
+      final_results = waveform;
+      continue;
+    }
+
+    if (final_results != nullptr) {
+      RETURN_IF_NOT_OK(final_results->InsertTensor({dim}, waveform));
+    } else {
+      RETURN_IF_NOT_OK(
+        Tensor::CreateEmpty(TensorShape({new_shape[0], waveform->shape()[0]}), waveform->type(), &final_results));
+      RETURN_IF_NOT_OK(final_results->InsertTensor({dim}, waveform));
+    }
+  }
+  *output = final_results;
+  return Status::OK();
+}
+
+Status GriffinLim(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft, int32_t n_iter,
+                  int32_t win_length, int32_t hop_length, WindowType window_type, float power, float momentum,
+                  int32_t length, bool rand_init, std::mt19937 rnd) {
+  std::shared_ptr<Tensor> input_tensor;
+  if (input->type() != DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+    return GriffinLimImpl<float>(input_tensor, output, n_fft, n_iter, win_length, hop_length, window_type, power,
+                                 momentum, length, rand_init, rnd);
+  } else {
+    input_tensor = input;
+    return GriffinLimImpl<double>(input_tensor, output, n_fft, n_iter, win_length, hop_length, window_type, power,
+                                  momentum, length, rand_init, rnd);
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

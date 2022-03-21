@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 
 #include <Eigen/Dense>
+#include <unsupported/Eigen/FFT>
 
 #include <algorithm>
 #include <cmath>
@@ -1468,6 +1469,24 @@ Status Dither(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   RETURN_IF_NOT_OK(input->Reshape(shape));
   return Status::OK();
 }
+
+/// \brief Apply GriffinLim to calculate waveform from linear scalar amplitude spectrogram.
+/// \param input Tensor of shape <..., freq, time>.
+/// \param output Tensor of shape <..., time>.
+/// \param n_fft Size of FFT.
+/// \param n_iter Number of iteration for phase recovery.
+/// \param win_length Window size for GriffinLim.
+/// \param hop_length Length of hop between STFT windows.
+/// \param window_type Window type for GriffinLim.
+/// \param power Exponent for the magnitude spectrogram.
+/// \param momentum The momentum for fast GriffinLim.
+/// \param length Length of the expected output waveform.
+/// \param rand_init Flag for random phase initialization or all-zero phase initialization.
+/// \param rnd Random generator.
+/// \return Status code.
+Status GriffinLim(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft, int32_t n_iter,
+                  int32_t win_length, int32_t hop_length, WindowType window_type, float power, float momentum,
+                  int32_t length, bool rand_init, std::mt19937 rnd);
 
 }  // namespace dataset
 }  // namespace mindspore

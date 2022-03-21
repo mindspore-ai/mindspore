@@ -28,11 +28,11 @@ from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolati
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
-    check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_highpass_biquad, \
-    check_lfilter, check_lowpass_biquad, check_magphase, check_mask_along_axis, check_mask_along_axis_iid, \
-    check_masking, check_mel_scale, check_mu_law_coding, check_overdrive, check_phase_vocoder, check_phaser, \
-    check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, check_spectrogram, check_time_stretch, \
-    check_treble_biquad, check_vol
+    check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_griffin_lim, \
+    check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, check_mask_along_axis, \
+    check_mask_along_axis_iid, check_masking, check_mel_scale, check_mu_law_coding, check_overdrive, \
+    check_phase_vocoder, check_phaser, check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, \
+    check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -927,6 +927,59 @@ class Gain(AudioTensorOperation):
 
     def parse(self):
         return cde.GainOperation(self.gain_db)
+
+
+class GriffinLim(AudioTensorOperation):
+    r"""
+    Approximate magnitude spectrogram inversion using the GriffinLim algorithm.
+
+    .. math::
+        x(n)=\frac{\sum_{m=-\infty}^{\infty} w(m S-n) y_{w}(m S, n)}{\sum_{m=-\infty}^{\infty} w^{2}(m S-n)}
+
+    where w represents the window function, y represents the reconstructed signal of each frame and x represents the
+    whole signal.
+
+    Args:
+        n_fft (int, optional): Size of FFT (default=400).
+        n_iter (int, optional): Number of iteration for phase recovery (default=32).
+        win_length (int, optional): Window size for GriffinLim (default=None, will be set to n_fft).
+        hop_length (int, optional): Length of hop between STFT windows (default=None, will be set to win_length // 2).
+        window_type (WindowType, optional): Window type for GriffinLim, which can be WindowType.BARTLETT,
+            WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN or WindowType.KAISER (default=WindowType.HANN).
+            Currently kaiser window is not supported on macOS.
+        power (float, optional): Exponent for the magnitude spectrogram (default=2.0).
+        momentum (float, optional): The momentum for fast Griffin-Lim (default=0.99).
+        length (int, optional): Length of the expected output waveform (default=None, will be set to the value of last
+            dimension of the stft matrix).
+        rand_init (bool, optional): Flag for random phase initialization or all-zero phase initialization
+            (default=True).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([201, 6])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.GriffinLim(n_fft=400)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_griffin_lim
+    def __init__(self, n_fft=400, n_iter=32, win_length=None, hop_length=None, window_type=WindowType.HANN,
+                 power=2, momentum=0.99, length=None, rand_init=True):
+        self.n_fft = n_fft
+        self.n_iter = n_iter
+        self.win_length = win_length if win_length else self.n_fft
+        self.hop_length = hop_length if hop_length else self.win_length // 2
+        self.window_type = window_type
+        self.power = power
+        self.momentum = momentum
+        self.length = length if length else 0
+        self.rand_init = rand_init
+
+    def parse(self):
+        return cde.GriffinLimOperation(self.n_fft, self.n_iter, self.win_length, self.hop_length,
+                                       DE_C_WINDOW_TYPE.get(self.window_type), self.power, self.momentum, self.length,
+                                       self.rand_init)
 
 
 class HighpassBiquad(AudioTensorOperation):

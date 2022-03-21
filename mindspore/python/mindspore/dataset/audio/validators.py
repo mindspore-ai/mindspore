@@ -621,6 +621,42 @@ def check_fade(method):
     return new_method
 
 
+def check_griffin_lim(method):
+    """Wrapper method to check the parameters of GriffinLim."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [n_fft, n_iter, win_length, hop_length, window_type, power, momentum, length,
+         rand_init], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(n_fft, (int,), "n_fft")
+        check_pos_int32(n_fft, "n_fft")
+        type_check(n_iter, (int,), "n_iter")
+        check_pos_int32(n_iter, "n_iter")
+        if win_length is not None:
+            type_check(win_length, (int,), "win_length")
+            check_non_negative_int32(win_length, "win_length")
+            if win_length > n_fft:
+                raise ValueError(
+                    "Input win_length should be no more than n_fft, but got win_length: {0} and n_fft: {1}.".format(
+                        win_length, n_fft))
+        if hop_length is not None:
+            type_check(hop_length, (int,), "hop_length")
+            check_non_negative_int32(hop_length, "hop_length")
+        type_check(window_type, (WindowType,), "window_type")
+        type_check(power, (int, float), "power")
+        check_pos_float32(power, "power")
+        type_check(momentum, (int, float), "momentum")
+        check_non_negative_float32(momentum, "momentum")
+        if length is not None:
+            type_check(length, (int,), "length")
+            check_non_negative_int32(length, "length")
+        type_check(rand_init, (bool,), "rand_init")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_vol(method):
     """Wrapper method to check the parameters of Vol."""
 
