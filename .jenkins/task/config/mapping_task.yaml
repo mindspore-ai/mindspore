@@ -19,6 +19,9 @@ MS_ALL:
     mindspore/ccsrc/cxx_api
     mindspore/ccsrc/backend
 MS_CLOUD:
+    mindspore/python
+    mindspore/ccsrc/frontend
+    mindspore/ccsrc/runtime
     tests/st
 MS_LITE:
     mindspore/lite/
