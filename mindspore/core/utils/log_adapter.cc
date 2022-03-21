@@ -23,6 +23,7 @@
 #include <map>
 #include <iomanip>
 #include <thread>
+#include <vector>
 #include "utils/convert_utils_base.h"
 
 // namespace to support utils module definition
@@ -164,7 +165,7 @@ void LogWriter::operator<(const LogStream &stream) const noexcept {
   msg << stream.sstream_->rdbuf();
   OutputLog(msg);
 }
-
+#ifndef BUILD_LITE_INFERENCE
 void LogWriter::operator^(const LogStream &stream) const {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
@@ -189,6 +190,7 @@ void LogWriter::operator^(const LogStream &stream) const {
   }
   throw std::runtime_error(oss.str());
 }
+#endif
 
 static inline std::string GetEnv(const std::string &envvar) {
   const char *value = std::getenv(envvar.c_str());
@@ -547,11 +549,17 @@ MS_CORE_API void common_log_init(void) {
     FLAGS_logtostderr = true;
   } else if (logtostderr == "0") {
     if (mindspore::GetEnv("GLOG_log_dir").empty()) {
+#ifndef BUILD_LITE_INFERENCE
       MS_LOG(ERROR) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
       // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
       exit(EXIT_FAILURE);
+#else
+      MS_LOG(WARNING) << "`GLOG_log_dir` is empty, log will be printed to stderr.";
+      FLAGS_logtostderr = true;
+#endif
     } else {
       // Set log dir from GLOG_log_dir with RANK_ID or OMPI_COMM_WORLD_RANK.
+#ifndef BUILD_LITE_INFERENCE
       const std::string rank_id = mindspore::GetEnv("RANK_ID");
       const std::string gpu_rank_id = mindspore::GetEnv("OMPI_COMM_WORLD_RANK");
       std::string rank = "0";
@@ -561,6 +569,9 @@ MS_CORE_API void common_log_init(void) {
         rank = gpu_rank_id;
       }
       FLAGS_log_dir = mindspore::GetEnv("GLOG_log_dir") + "/rank_" + rank + "/logs";
+#else
+      FLAGS_log_dir = mindspore::GetEnv("GLOG_log_dir");
+#endif
     }
   }
 
