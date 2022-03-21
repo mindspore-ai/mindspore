@@ -127,7 +127,6 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr
   MS_EXCEPTION_IF_NULL(num_split);
   if (split_input.empty()) {
     MS_LOG(EXCEPTION) << "The input is empty, can not create splitv node.";
-    return nullptr;
   }
   auto split_v = pass.NewCNode(split_input, graph);
   MS_EXCEPTION_IF_NULL(split_v);
@@ -150,7 +149,7 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr
   } else {
     common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
   }
-  common::AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue<int64_t>(split_dim), split_v);
+  common::AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue<int64_t>(SizeToLong(split_dim)), split_v);
   common::AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue<int64_t>(*num_split), split_v);
   common::AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue<std::vector<int64_t>>(size_splits), split_v);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), split_v);
@@ -562,9 +561,9 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateLeftRightConcat(const FuncGraphPtr
                               all_to_all_v_outputs.begin() + input_num + AllToAllRealIds(1, recv_rank_ids));
   }
 
-  std::vector<TypeId> concat_output_dtype = {
-    common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0)};
-  auto concat = CreateConcatNode(graph, concat_input, kHDim, input_num);
+  std::vector<TypeId> concat_output_dtype = {common::AnfAlgo::GetOutputInferDataType(
+    all_to_all_v_outputs[LongToSize(AllToAllRealIds(middle_ids, recv_rank_ids))], 0)};
+  auto concat = CreateConcatNode(graph, concat_input, SizeToLong(kHDim), input_num);
   if (is_dynamic) {
     ShapeVector shape;
     std::transform(single_shape.begin(), single_shape.end(), std::back_inserter(shape), SizeToLong);
@@ -614,7 +613,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
       (void)concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin(),
                                     all_to_all_v_outputs.begin() + 1);
     } else {
-      int64_t bottom_num = AllToAllRealIds(4, recv_rank_ids);
+      int64_t bottom_num = AllToAllRealIds(kRankIdFour, recv_rank_ids);
       (void)concat_input_all.insert(concat_input_all.end(), all_to_all_v_outputs.begin() + bottom_num,
                                     all_to_all_v_outputs.begin() + bottom_num + 1);
     }

@@ -131,7 +131,7 @@ std::string GetOpDebugLevel() {
 }
 
 nlohmann::json TbeUtils::GenSocInfo() {
-  static nlohmann::json soc_info_json;
+  static nlohmann::json soc_info_json = nlohmann::json();
   if (!soc_info_json.empty()) {
     return soc_info_json;
   }
