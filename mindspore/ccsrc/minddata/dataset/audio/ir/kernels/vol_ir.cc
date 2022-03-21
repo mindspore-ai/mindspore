@@ -16,6 +16,7 @@
 
 #include "minddata/dataset/audio/ir/kernels/vol_ir.h"
 
+#include "minddata/dataset/audio/ir/validators.h"
 #include "minddata/dataset/audio/kernels/vol_op.h"
 
 namespace mindspore {
@@ -29,13 +30,12 @@ VolOperation::~VolOperation() = default;
 std::string VolOperation::Name() const { return kVolOperation; }
 
 Status VolOperation::ValidateParams() {
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    !(gain_type_ == GainType::kPower && gain_ <= 0),
-    "Vol: gain must be greater than 0 when gain_type is Power, but got: " + std::to_string(gain_));
-
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    !(gain_type_ == GainType::kAmplitude && gain_ < 0),
-    "Vol: gain must be greater than or equal to 0 when gain_type is Amplitude, but got: " + std::to_string(gain_));
+  if (gain_type_ == GainType::kAmplitude) {
+    RETURN_IF_NOT_OK(ValidateFloatScalarNonNegative("Vol", "gain", gain_));
+  }
+  if (gain_type_ == GainType::kPower) {
+    RETURN_IF_NOT_OK(ValidateFloatScalarPositive("Vol", "gain", gain_));
+  }
   return Status::OK();
 }
 
