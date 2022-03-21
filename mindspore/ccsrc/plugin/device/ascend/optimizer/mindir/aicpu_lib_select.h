@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_ENV_OP_ATTR_UPDATE_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_ENV_OP_ATTR_UPDATE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_AICPU_LIB_SELECT_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_AICPU_LIB_SELECT_H_
 
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class EnvOpAttrUpdate : public PatternProcessPass {
+class AICpuLibSelectPass : public PatternProcessPass {
  public:
-  explicit EnvOpAttrUpdate(bool multigraph = true) : PatternProcessPass("env_op_attr_update", multigraph) {}
-  ~EnvOpAttrUpdate() override = default;
+  explicit AICpuLibSelectPass(bool multigraph = true) : PatternProcessPass("env_op_attr_update", multigraph) {}
+  ~AICpuLibSelectPass() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_ENV_OP_ATTR_UPDATE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_AICPU_LIB_SELECT_H_
