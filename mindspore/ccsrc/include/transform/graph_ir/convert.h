@@ -173,8 +173,8 @@ class COMMON_EXPORT DfGraphConvertor {
   void SetNodeInput(AnfNodePtr node);
   void SetOpControlInput(const AnfNodePtr &node);
   void UpdateOpDesc(AnfNodePtr node);
-  void SetSubgraph(AnfNodePtr node);
-  void ProcessSubgraph(AnfNodePtr node, const std::vector<AnfNodePtr> &inputs);
+  void SetSubgraph(const AnfNodePtr &node);
+  void ProcessSubgraph(const AnfNodePtr &node, const std::vector<AnfNodePtr> &inputs);
   void BuildSaveCheckpointGraph();
   void DrawCNode(const CNodePtr node, const OpAdapterPtr adpt);
   void UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;

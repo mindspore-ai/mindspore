@@ -44,6 +44,12 @@ else()
     set(MD5 "1a6274bc4a65b55a6fa70e264d796490")
 endif()
 
+if(BUILD_LITE)
+  set(PROTOBUF_PATCH_ROOT ${TOP_DIR}/third_party/patch/protobuf)
+else()
+  set(PROTOBUF_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/protobuf)
+endif()
+
 mindspore_add_pkg(protobuf
         VER 3.13.0
         LIBS protobuf
@@ -51,7 +57,8 @@ mindspore_add_pkg(protobuf
         URL ${REQ_URL}
         MD5 ${MD5}
         CMAKE_PATH cmake/
-        CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release)
+        CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
+        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
 
 include_directories(${protobuf_INC})
 add_library(mindspore::protobuf ALIAS protobuf::protobuf)

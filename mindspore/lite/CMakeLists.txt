@@ -580,6 +580,7 @@ if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_RUNTIME_GLOG)
 endif()
 
 if(MSLITE_ENABLE_CONVERTER)
+    find_package(Patch)
     include(${TOP_DIR}/cmake/external_libs/opencv.cmake)
     include_directories(${PYTHON_INCLUDE_DIRS})
     include(${TOP_DIR}/cmake/external_libs/eigen.cmake)

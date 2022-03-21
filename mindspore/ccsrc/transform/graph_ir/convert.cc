@@ -398,7 +398,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
 // convert all parameter need initialize to variable
 DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
   size_t input_idx = 0;
-  if (error_ != 0) {
+  if (error_ != SUCCESS) {
     return *this;
   }
   if (anf_graph_ == nullptr || anf_graph_->output() == nullptr) {
@@ -481,7 +481,7 @@ void DfGraphConvertor::BuildSaveCheckpointGraph() {
 #endif
 
 DfGraphConvertor &DfGraphConvertor::GenerateBroadcastGraph(const TensorOrderMap &tensors) {
-  if (error_ != 0) {
+  if (error_ != SUCCESS) {
     return *this;
   }
   if (anf_graph_ == nullptr || anf_graph_->output() == nullptr) {
@@ -538,7 +538,7 @@ DfGraphConvertor &DfGraphConvertor::GenerateBroadcastGraph(const TensorOrderMap 
 }
 
 DfGraphConvertor &DfGraphConvertor::GenerateCheckpointGraph() {
-  if (error_ != 0) {
+  if (error_ != SUCCESS) {
     MS_LOG(ERROR) << "Generate checkpoint graph failed, found error code " << error_ << ".";
     return *this;
   }
@@ -559,7 +559,7 @@ DfGraphConvertor &DfGraphConvertor::GenerateCheckpointGraph() {
 }
 
 DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
-  if (error_ != 0) {
+  if (error_ != SUCCESS) {
     return *this;
   }
   if (anf_graph_ == nullptr || anf_graph_->output() == nullptr) {
@@ -588,7 +588,7 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
   for (auto &it : nodes) {
     (void)Convert(it);
-    if (this->error_ != 0) {
+    if (this->error_ != SUCCESS) {
       MS_LOG(ERROR) << "failed to convert node: " << it->DebugString() << ".";
     }
   }
@@ -737,7 +737,7 @@ void SetupDatasetIterGetNextNode(const OperatorPtr &op) {
   return;
 }
 
-void DfGraphConvertor::SetSubgraph(AnfNodePtr node) {
+void DfGraphConvertor::SetSubgraph(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return;
   }
@@ -850,7 +850,7 @@ void DfGraphConvertor::UpdateTupleOutCache() {
 DfGraphConvertor &DfGraphConvertor::BuildGraph() {
   SetupDatasetIterGetNextNode(dataset_iter_getnext_);
 
-  if (error_ != 0) {
+  if (error_ != SUCCESS) {
     return *this;
   }
 
@@ -877,7 +877,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
     UpdateOpDesc(it);
   }
 
-  if (error_ == 0) {
+  if (error_ == SUCCESS) {
     df_graph_ = make_shared<DfGraph>(anf_graph_->ToString());
   } else {
     return *this;
@@ -1416,7 +1416,7 @@ void DfGraphConvertor::SetNodeInput(const AnfNodePtr node) {
   DfGraphConvertor::SetOpInput(adpt, cnode);
 }
 
-void DfGraphConvertor::ProcessSubgraph(AnfNodePtr node, const std::vector<AnfNodePtr> &inputs) {
+void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const std::vector<AnfNodePtr> &inputs) {
   if (!node->isa<CNode>() || GetCNodeFuncName(node->cast<CNodePtr>()) != "Partial") {
     return;
   }

@@ -408,7 +408,7 @@ std::string TransformUtil::PrintGeTensor(const GeTensorPtr ge_tensor) {
   }
 
   MS_LOG(INFO) << "Ge Tensor data type is : " << static_cast<int>(ge_tensor->GetTensorDesc().GetDataType());
-  switch (ge_tensor->GetTensorDesc().GetDataType()) {
+  switch (static_cast<int>(ge_tensor->GetTensorDesc().GetDataType())) {
     case GeDataType::DT_UINT32:
       ret = PrintVector(MakeVector<uint32_t>(ge_tensor->GetData(), ge_tensor->GetSize()));
       break;

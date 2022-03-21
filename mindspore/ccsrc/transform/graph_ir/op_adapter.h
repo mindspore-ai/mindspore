@@ -194,7 +194,7 @@ class OpAdapter : public BaseOpAdapter {
     return impl_->SetOpSubgraphFunc(op, index, branches);
   }
 
-  int setSubgraph(const OperatorPtr &op, int index, std::shared_ptr<std::vector<DfGraph>> branches) override {
+  int setSubgraph(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) override {
     return static_cast<int>(SetOpSubgraphFunc(op, index, branches));
   }
 
