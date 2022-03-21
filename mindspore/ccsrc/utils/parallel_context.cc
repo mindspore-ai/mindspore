@@ -302,7 +302,6 @@ void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func
   auto ret = param_shapes.try_emplace(param_node->name(), shape);
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "The shape for parameter name " << param_node->name() << " is existed";
-    return;
   }
 
   MS_LOG(DEBUG) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
