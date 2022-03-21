@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ constexpr auto kNameAtanh = "Atanh";
 class MIND_API Atanh : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Atanh);
-  Atanh() : BaseOperator(kNameAtanh) { InitIOName({"x"}, {"output"}); }
+  Atanh() : BaseOperator(kNameAtanh) { InitIOName({"x"}, {"y"}); }
   void Init() {}
 };
 abstract::AbstractBasePtr AtanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

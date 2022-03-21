@@ -129,6 +129,7 @@ from .zeros_like import _zeros_like_aicpu
 from .ones_like import _ones_like_aicpu
 from .concat import _concat_aicpu
 from .grid_sampler_3d import _grid_sampler_3d_aicpu
+from .atanh import _atanh_aicpu
 from .grid_sampler_3d_grad import _grid_sampler_3d_grad_aicpu
 from .environ_create import _environ_create_aicpu
 from .environ_set import _environ_set_aicpu
