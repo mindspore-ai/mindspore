@@ -122,20 +122,19 @@ def vmap_general_rule(prim, axis_size):
         vals_in_tuple = ()
         for val_in in args:
             val, dim = val_in
-            if isinstance(val, Tensor):
-                # Handle case such as args:(..., (A, 0), (B, 1), ...)
-                if dim is None:
-                    val = _broadcast_by_axis(val, 0, axis_size)
-                    dim = 0
-                out = P.Unstack(dim)(val)
-            else:
-                # Handle scalar case such as args:(..., (1, None), ...)
-                if dim is not None:
-                    _raise_value_error("A variable of type other than `Tensor` is accepted, "
-                                       "but the source axis is not `None`")
-                out = ()
+            out = ()
+            if dim is None:
+                # Handle case such as args:(..., (A, None), (1, None), ...)
                 for _ in range(axis_size):
                     out = out + (val,)
+            else:
+                if isinstance(val, Tensor):
+                    # Handle case such as args:(..., (A, 0), (B, 1), ...)
+                    out = P.Unstack(dim)(val)
+                else:
+                    _raise_value_error("A variable of type other than `Tensor` is accepted, "
+                                       "but the source axis is not `None`")
+
             vals_in_tuple = vals_in_tuple + (out,)
 
         if wrapped_tuple:

@@ -139,7 +139,7 @@ void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
 }
 
 py::function PrimitivePy::GetVmapRuleFunction(const bool is_side_effect, int axis_size) {
-  static const char *const get_vmap_rule_func_name = "get_vmap_rule";
+  constexpr char get_vmap_rule_func_name[] = "get_vmap_rule";
   if (py::hasattr(python_obj_, get_vmap_rule_func_name)) {
     py::function fn = python_obj_.attr(get_vmap_rule_func_name)().cast<py::function>();
     return fn;

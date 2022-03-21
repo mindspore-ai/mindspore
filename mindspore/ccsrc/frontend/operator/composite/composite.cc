@@ -848,23 +848,23 @@ ValuePtr CheckAxes(const AbstractBasePtr &axes_abs, const bool &is_in_axes = fal
       ValueSequencePtr in_axes_seq = dyn_cast<ValueSequence>(axes_value);
       int in_axes_size = SizeToInt(in_axes_seq->size());
       if (nparam != in_axes_size) {
-        MS_LOG(EXCEPTION) << "When vmap`s `" << axes_name
-                          << "` is a tuple or list, and its size must be equal to the number of arguments of `fn`: "
+        MS_LOG(EXCEPTION) << "When vmap`s '" << axes_name
+                          << "' is a tuple or list, and its size must be equal to the number of arguments of 'fn': "
                           << nparam << ", but got size: " << in_axes_size << ".";
       }
     }
     bool elem_all_none = IsAxesAllNone(axes_value);
     if (elem_all_none) {
-      MS_LOG(EXCEPTION) << "The `" << axes_name << "` of `vmap` cannot be all None, but got " << axes_value->ToString()
+      MS_LOG(EXCEPTION) << "The '" << axes_name << "' of 'vmap' cannot be all None, but got " << axes_value->ToString()
                         << ".";
     }
   } else {
     axes_value = axes_abs->BuildValue();
     MS_EXCEPTION_IF_NULL(axes_value);
     if (axes_value->isa<None>()) {
-      MS_LOG(EXCEPTION) << "The `" << axes_name << "` of `vmap` cannot be a single None.";
+      MS_LOG(EXCEPTION) << "The '" << axes_name << "' of 'vmap' cannot be a single None.";
     } else if (!axes_value->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << "The axis in vmap`s `" << axes_name << "` can only be of type Int or None, but got "
+      MS_LOG(EXCEPTION) << "The axis in vmap`s '" << axes_name << "' can only be of type Int or None, but got "
                         << axes_abs->ToString() << ".";
     }
   }
@@ -892,7 +892,7 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 
   auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
   if (real_fn == nullptr) {
-    MS_LOG(EXCEPTION) << "'VmapOperation' arg0 " << fn->ToString() << " cast to `FuncGraphAbstractClosure` failed.";
+    MS_LOG(EXCEPTION) << "'VmapOperation' arg0 " << fn->ToString() << " cast to 'FuncGraphAbstractClosure' failed.";
   }
 
   FuncGraphPtr orig_graph = real_fn->func_graph();
