@@ -46,7 +46,6 @@ std::shared_ptr<ge::Session> GraphRunner::NewSession(const SessionOptions &sess_
     ret = std::make_shared<ge::Session>(sess_options);
     if (ret == nullptr) {
       MS_LOG(EXCEPTION) << "Create GE session failed!";
-      return nullptr;
     }
     MS_LOG(INFO) << "Create new GE session success!";
     return ret;
@@ -79,12 +78,10 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     // register the callback function
     if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "register callback failed!";
-      return;
     }
 
     if (sess_->RegisterCallBackFunc(callbacks::kSummary, callbacks::SummarySaveCallback) != ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "register summary callback failed!";
-      return;
     }
   }
 #endif
