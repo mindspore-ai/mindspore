@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_LAUNCH_TRANSDATA_H_
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_LAUNCH_TRANSDATA_H_
 
+#include <utility>
 #include <vector>
 #include <memory>
 #include <string>
@@ -32,9 +33,9 @@ class AscendLaunchTransData : public AscendLaunchKernel {
         total_size_(total_size),
         transdata_graph_(nullptr),
         input_addr_(nullptr),
-        src_format_(src_format),
-        dst_format_(dst_format),
-        shape_(host_shape) {}
+        src_format_(std::move(src_format)),
+        dst_format_(std::move(dst_format)),
+        shape_(std::move(host_shape)) {}
 
   ~AscendLaunchTransData() override = default;
 
