@@ -39,9 +39,8 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
     ofs << "    debug_utils.c.o\n";
   }
   if (config->support_parallel()) {
-    ofs << "    thread_wrapper.cc.o\n"
-           "    core_affinity.cc.o\n"
-           "    threadpool.cc.o\n";
+    ofs << "    micro_core_affinity.c.o\n"
+           "    micro_thread_pool.c.o\n";
   }
   ofs << ")\n";
   std::set<std::string> kernel_cmake_asm_set_files = ctx->asm_files();

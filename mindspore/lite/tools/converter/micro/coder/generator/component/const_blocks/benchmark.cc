@@ -46,6 +46,8 @@ const char benchmark_source[] = R"RAW(
 #include <stdlib.h>
 #include <string.h>
 
+#define kMaxThreadNum 4
+
 void usage() {
   printf(
     "-- mindspore benchmark params usage:\n"
@@ -133,8 +135,8 @@ int main(int argc, const char **argv) {
   MSContextHandle ms_context_handle = NULL;
   if (argc >= 7) {
     int thread_num = atoi(argv[5]);
-    if (thread_num < 1) {
-      printf("Thread number error! It should be greater than 0\n");
+    if (thread_num < 1 || thread_num > kMaxThreadNum) {
+      printf("Thread number error! It should be greater than 0 and less than 5\n");
       return -1;
     }
     int bind_mode = atoi(argv[6]);
@@ -198,10 +200,6 @@ int main(int argc, const char **argv) {
   if (!outputs_handle.handle_list) {
     printf("MSModelGetOutputs failed, ret: %d", ret);
     return ret;
-  }
-  for (size_t i = 0; i < outputs_handle.handle_num; ++i) {
-    MSTensorHandle tensor = outputs_handle.handle_list[i];
-    inputs_size[i] = (int)MSTensorGetDataSize(tensor);
   }
   if (argc >= 4) {
     int loop_count = atoi(argv[3]);

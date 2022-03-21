@@ -19,7 +19,7 @@ include_directories(${NNACL_DIR}/../)
 include_directories(${LITE_DIR})
 
 #include coder
-if(NOT MSVC)
+if(NOT MSVC OR NOT WIN32 OR NOT APPLE)
     include(${TOP_DIR}/cmake/external_libs/cmsis.cmake)
     include(${MICRO_DIR}/cmake/package_wrapper.cmake)
     add_subdirectory(wrapper)

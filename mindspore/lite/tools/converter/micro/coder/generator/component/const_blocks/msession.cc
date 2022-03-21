@@ -19,26 +19,27 @@
 namespace mindspore::lite::micro {
 const char model_runtime_other_source[] = R"RAW(
 void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs) {
-  for (int i = 0; i < inputs.handle_num; i++) {
-    if (inputs.handle_list) {
-      MicroTensor *micro_tensor = inputs.handle_list[i];
-      if (!micro_tensor) {
-        continue;
-      }
-      if (micro_tensor->data) {
-        free(micro_tensor[i].data);
-        micro_tensor->data = NULL;
-      }
-      if (micro_tensor->shape) {
-        free(micro_tensor->shape);
-        micro_tensor->shape = NULL;
-      }
-      free(micro_tensor);
-      micro_tensor = NULL;
-      free(inputs.handle_list);
-      inputs.handle_list = NULL;
-    }
+  if (inputs.handle_list == NULL) {
+    return;
   }
+  for (int i = 0; i < inputs.handle_num; i++) {
+    MicroTensor *micro_tensor = inputs.handle_list[i];
+    if (!micro_tensor) {
+      continue;
+    }
+    if (micro_tensor->data) {
+      free(micro_tensor->data);
+      micro_tensor->data = NULL;
+    }
+    if (micro_tensor->shape) {
+      free(micro_tensor->shape);
+      micro_tensor->shape = NULL;
+    }
+    free(micro_tensor);
+    micro_tensor = NULL;
+  }
+  free(inputs.handle_list);
+  inputs.handle_list = NULL;
 }
 
 MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, MSTensorHandleArray *outputs,
