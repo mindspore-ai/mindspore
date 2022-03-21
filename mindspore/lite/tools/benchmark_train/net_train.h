@@ -134,7 +134,7 @@ class MS_API NetTrain {
   // call GenerateRandomData to fill inputTensors
   int GenerateInputData(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
 
-  int GenerateRandomData(size_t size, void *data);
+  int GenerateRandomData(mindspore::tensor::MSTensor *tensor);
 
   int ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
   int CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, int train_session, int epochs,
