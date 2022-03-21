@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 int SplitBaseCPUKernel::UpdateThreadNumPass() {
   if (thread_cost_context_ == nullptr && num_unit_ > 0) {
     thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
@@ -122,7 +122,7 @@ int SplitBaseCPUKernel::ReSize() {
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(param->split_count_, param->num_split_), RET_ERROR);
   num_unit_ = param->split_count_ * param->num_split_;
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   if (UpdateThreadNumPass() != RET_OK) {
     return RET_ERROR;
   }

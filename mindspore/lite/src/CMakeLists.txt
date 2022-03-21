@@ -153,7 +153,6 @@ if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
     set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/thread_cost_model.cc
         )
 endif()
 

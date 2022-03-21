@@ -43,7 +43,7 @@ int SoftmaxCPUKernel::Prepare() {
   return ReSize();
 }
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 int SoftmaxCPUKernel::UpdateThreadNumPass() {
   if (thread_cost_context_ == nullptr) {
     thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
@@ -91,7 +91,7 @@ int SoftmaxCPUKernel::ReSize() {
     }
   }
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   if (UpdateThreadNumPass() != RET_OK) {
     return RET_ERROR;
   }
