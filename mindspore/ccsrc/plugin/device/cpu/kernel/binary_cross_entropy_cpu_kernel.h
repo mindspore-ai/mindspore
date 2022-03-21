@@ -41,7 +41,7 @@ class BinaryCrossEntropyCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchToScalar(const int &input_size, const int &reduction, T *loss, T *tmp_loss) const;
+  void LaunchToScalar(const int &input_size, const ReductionType &reduction, T *loss, T *tmp_loss) const;
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
