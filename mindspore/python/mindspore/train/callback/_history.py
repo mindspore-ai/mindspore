@@ -18,6 +18,7 @@ import numpy as np
 from mindspore.common.tensor import Tensor
 from ._callback import Callback
 
+
 class History(Callback):
     """
     Records the network outputs information into a `History` object.

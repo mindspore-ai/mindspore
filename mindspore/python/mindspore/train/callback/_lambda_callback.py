@@ -16,6 +16,7 @@
 
 from ._callback import Callback
 
+
 class LambdaCallback(Callback):
     """
     Callback for creating simple, custom callbacks.

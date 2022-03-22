@@ -10,7 +10,7 @@ mindspore.ops.arange
     - **start** (Union[int, float]) - 指定范围的起始值，范围包含该值。类型为int或float。
     - **stop** (Union[int, float]) - 指定范围的结束值，范围不包含该值。类型为int或float。
     - **step** (Union[int, float]) - 指定取值的间隔。类型为int或float。
-    - **rtype** (Union[mindspore.dtype，str]) - 指定返回数据的类型，如果不指定，则会根据 `start` 、 `stop` 、 `step` 的值推断类型。
+    - **rtype** (Union[mindspore.dtype, str]) - 指定返回数据的类型，如果不指定，则会根据 `start` 、 `stop` 、 `step` 的值推断类型。
 
     **返回：**
 

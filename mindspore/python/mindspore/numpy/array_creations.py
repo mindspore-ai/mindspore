@@ -432,7 +432,7 @@ def randn(*shape, dtype=mstype.float32):
 
     Returns:
         Tensor, with the designated shape and dtype, filled with a sample (or samples)
-            from the "standard normal" distribution.
+        from the "standard normal" distribution.
 
     Raises:
         TypeError: If input arguments have types not specified above.
@@ -472,7 +472,7 @@ def rand(*shape, dtype=mstype.float32):
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the
-    uniform distribution on the interval :math:`[0, 1)`.
+        uniform distribution on the interval :math:`[0, 1)`.
 
     Raises:
         TypeError: If input arguments have types not specified above.
@@ -503,7 +503,7 @@ def randint(minval, maxval=None, shape=None, dtype=mstype.int32):
     """
     Return random integers from minval (inclusive) to maxval (exclusive). Return random integers from the
     discrete uniform distribution of the specified dtype in the “half-open” interval :math:`[minval, maxval)`.
-    If maxval is None (the default), then results are from [0, maxval).
+    If maxval is None (the default), the value range will be [0, minval), in this case, minval must be greater than 0.
 
     Args:
         minval(Union[int]): Start value of interval. The interval includes this value. When `maxval`
