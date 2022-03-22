@@ -533,7 +533,7 @@ bool InferenceOptPrepareAction(const ResourcePtr &res) {
 }
 
 bool EliminateUnusedParameterAction(const ResourcePtr &res) {
-  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_PARALLEL_CALL") == "1");
+  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") == "1");
   if (!transform_tail_call_to_parallel_call) {
     return true;
   }

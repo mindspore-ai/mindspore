@@ -126,8 +126,6 @@ class Parser {
   FunctionBlockPtr ParseWhile(const FunctionBlockPtr &block, const py::object &node);
   // Process a for statement
   FunctionBlockPtr ParseFor(const FunctionBlockPtr &block, const py::object &node);
-  FunctionBlockPtr ParseForIter(const FunctionBlockPtr &block, const py::object &node);
-  FunctionBlockPtr ParseForLoop(const FunctionBlockPtr &block, const py::object &node);
   FunctionBlockPtr ParseForUnroll(const FunctionBlockPtr &block, const py::object &node);
   FunctionBlockPtr ParseForRepeat(const FunctionBlockPtr &block, const py::object &node);
   // Process a function def statement
@@ -299,7 +297,6 @@ class Parser {
   }
   // Return a make tuple for input elements list
   AnfNodePtr GenerateMakeTuple(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &element_nodes);
-  int64_t GetForTransToWhileLoop();
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
@@ -321,7 +318,6 @@ class Parser {
   std::map<std::string, ExprFunc> expr_method_map_;
   // Save current loops to support 'continue', 'break' statement.
   std::stack<Loop> loops_;
-  string max_for_loop_count_str_;
   string support_fallback_;
 
   // The func graphs to transform tail call ir to independent call ir.
