@@ -27,6 +27,7 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "kernel/oplib/oplib.h"
+#include "common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttr;
@@ -1002,11 +1003,7 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
   kernel_json_ = nlohmann::json();
   std::vector<AnfNodePtr> node_list, input_list, output_list;
   FuncGraphPtr fg = std::get<0>(BuildGraphFromNodes({c_node}));
-  FuncGraphManagerPtr mng = fg->manager();
-  if (mng == nullptr) {
-    mng = Manage(fg, false);
-    fg->set_manager(mng);
-  }
+  FuncGraphManagerPtr mng = GkUtils::GetFuncGraphManager(fg);
   auto out_cnode = fg->output()->cast<CNodePtr>();
   if (out_cnode == nullptr) {
     MS_LOG(ERROR) << "Wrong graph generated for kernel [" << c_node->fullname_with_scope()
@@ -1029,6 +1026,25 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
     parameter->set_abstract(vnode->abstract());
     parameter->set_kernel_info(vnode->kernel_info_ptr());
     (void)mng->Replace(vnode, parameter);
+  }
+
+  // add new parameter for the same inputs
+  std::set<AnfNodePtr> inputs_set;
+  bool changed = false;
+  for (size_t i = 1; i < out_cnode->size(); i++) {
+    auto inp = out_cnode->input(i);
+    if (inputs_set.count(inp) == 0) {
+      (void)inputs_set.insert(inp);
+    } else {
+      auto p = fg->add_parameter();
+      p->set_abstract(inp->abstract());
+      p->set_kernel_info(inp->kernel_info_ptr());
+      out_cnode->set_input(i, p);
+      changed = true;
+    }
+  }
+  if (changed) {
+    GkUtils::UpdateFuncGraphManager(mng, fg);
   }
 
   node_list.push_back(out_cnode);

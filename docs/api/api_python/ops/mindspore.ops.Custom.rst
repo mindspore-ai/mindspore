@@ -9,6 +9,18 @@ mindspore.ops.Custom
 
     .. warning::这是一个实验性接口，后续可能删除或修改。
 
+    .. note::
+
+    不同自定义算子的函数类型（func_type)支持的平台类型不同。每种类型支持的平台如下：
+
+    - "hybrid": ["Ascend", "GPU"].
+    - "akg": ["Ascend", "GPU"].
+    - "tbe": ["Ascend"].
+    - "aot": ["GPU", "CPU"].
+    - "pyfunc": ["CPU"].
+    - "julia": ["CPU"].
+    - "aicpu": ["Ascend"].
+
     **参数：**
 
     - **func** (Union[function, str]) - 自定义算子的函数表达。
