@@ -71,9 +71,10 @@ void UpdateParameterShapeFromInputTensor(const AnfNodePtr &input_node, const ten
   }
 
   auto shape = input_tensor->shape();
-  std::vector<size_t> shape_tmp;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), IntToSize);
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
+  std::vector<size_t> update_shape;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(update_shape), IntToSize);
+  MS_LOG(DEBUG) << "Update input node shape to:" << update_shape;
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {update_shape},
                                               input_node.get());
 }
 

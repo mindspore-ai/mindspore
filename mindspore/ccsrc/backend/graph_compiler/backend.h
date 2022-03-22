@@ -163,10 +163,6 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
   void EraseSingleOpCache(const ActorInfo &actor_info, const KernelGraphPtr &graph);
 
-  // Run op immediately when the single_op_cache hit and the queue of OpExecutor is empty in PyNative mode.
-  void RunSingleOpGraph(const KernelGraphPtr &graph, const OpRunInfo &op_run_info,
-                        const GraphCompilerInfo *graph_compiler_info);
-
   // Execute OpBuildTask and OpRunTask when the OpExecutor queue is full in PyNative mode.
   void BatchBuildCallback();
 
