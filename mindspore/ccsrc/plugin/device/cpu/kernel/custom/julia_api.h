@@ -98,6 +98,9 @@ typedef struct _jl_array_t jl_array_t;
  */
 class JuliaAPI {
  public:
+  JuliaAPI(const JuliaAPI &) = delete;
+  JuliaAPI &operator=(const JuliaAPI &) = delete;
+
   static JuliaAPI *GetInstance() {
     static JuliaAPI julia_api;
     return &julia_api;
@@ -161,30 +164,34 @@ class JuliaAPI {
   }
 
  private:
-  JuliaAPI() { clear(); }
+  JuliaAPI() { Clear(); }
   ~JuliaAPI() {
-#if !defined(_WIN32) && !defined(_WIN64)
     if (handle_ != nullptr) {
-      // ready to break the loop in the julia thread
-      stop_ = true;
-      // notify loop continue, which will stop the loop, then julia thread finished.
-      c_.notify_one();
-      // join the julia thread
-      if (t_.joinable()) {
-        try {
-          t_.join();
-        } catch (const std::exception &e) {
-          MS_LOG(ERROR) << "Try to join the julia thread failed! Error message is " << e.what();
-        }
+      try {
+        FinishJuliaThread();
+      } catch (...) {
+        // exit
       }
+#if !defined(_WIN32) && !defined(_WIN64)
       // close the handle of julia shared library
       (void)dlclose(handle_);
-    }
-    clear();
 #endif
+    }
+    Clear();
   }
 
-  void clear() {
+  void FinishJuliaThread() {
+    // ready to break the loop in the julia thread
+    stop_ = true;
+    // notify loop continue, which will stop the loop, then julia thread finished.
+    c_.notify_one();
+    // join the julia thread
+    if (t_.joinable()) {
+      t_.join();
+    }
+  }
+
+  void Clear() noexcept {
     handle_ = nullptr;
     jl_eval_string_ = nullptr;
     jl_get_global_ = nullptr;
@@ -259,7 +266,7 @@ class JuliaAPI {
     return suc;
   }
 
-  void ErrorMsg(jl_value_t *ex) {
+  void ErrorMsg(jl_value_t *ex) const {
     auto errtype = JlTypeOfStr(ex);
     MS_LOG(ERROR) << "Got a julia error! Err type: " << errtype;
     jl_module_t *base = reinterpret_cast<jl_module_t *>(JlEvalString("Main.Base"));
