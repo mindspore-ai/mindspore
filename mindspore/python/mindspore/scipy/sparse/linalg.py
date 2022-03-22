@@ -72,128 +72,157 @@ def _high_precision_cho_solve(a, b, data_type=mstype.float64):
     return y.astype(data_type)
 
 
-class BatchedGmres(nn.Cell):
+def _batch_gmres(A, x0, b, tol, atol, restart, maxiter, M):
     """
-    Implements a single restart of GMRES. The ``restart``-dimensional Krylov subspace
-    This implementation solves a dense linear problem instead of building
-    a QR factorization during the Arnoldi process.
+    batched gmres: solve the least squares problem from scratch at the end of each GMRES iteration.
+    It does not allow for early termination, but has much less overhead on GPUs.
     """
-
-    def __init__(self, A, M):
-        super(BatchedGmres, self).__init__()
-        self.A = A
-        self.M = M
-
-    def construct(self, b, x0=None, tol=1e-5, atol=0.0, restart=20, maxiter=None):
-        # Constant tensor which avoids loop unrolling
-        _INT_ZERO = _to_tensor(0)
-
-        A = _normalize_matvec(self.A)
-        M = _normalize_matvec(self.M)
-        dtype = b.dtype
-        _, b_norm = _safe_normalize(b)
-        atol = mnp.maximum(tol * b_norm, _to_tensor(atol), dtype=dtype)
-        residual = M(b - A(x0))
+    # Constant tensor which avoids loop unrolling
+    _INT_ZERO = _to_tensor(0)
+    dtype = b.dtype
+    _, b_norm = _safe_normalize(b)
+    atol = mnp.maximum(tol * b_norm, _to_tensor(atol), dtype=dtype)
+    residual = M(b - A(x0))
+    unit_residual, residual_norm = _safe_normalize(residual)
+    k = _INT_ZERO
+    x = x0
+    while k < maxiter and residual_norm > atol:
+        pad_width = ((0, 0),) * unit_residual.ndim + ((0, restart),)
+        V = mnp.pad(unit_residual[..., None], pad_width=pad_width)
+        H = mnp.eye(restart, restart + 1, dtype=dtype)
+        k_iter = _INT_ZERO
+        breakdown = _to_tensor(False)
+        while k_iter < restart and mnp.logical_not(breakdown):
+            V, H, breakdown = arnoldi_iteration(k_iter, A, M, V, H)
+            k_iter += 1
+        beta_vec = mnp.zeros((restart + 1,), dtype=dtype)
+        beta_vec[0] = residual_norm
+        y = _high_precision_cho_solve(H, beta_vec, data_type=dtype)
+        dx = mnp.dot(V[..., :-1], y)
+        x = x + dx
+        residual = M(b - A(x))
         unit_residual, residual_norm = _safe_normalize(residual)
+        k += 1
+    return x, F.select(residual_norm > atol, k, _INT_ZERO)
+
+
+def _incremental_gmres(A, x0, b, tol, atol, restart, maxiter, M):
+    """
+    incremental gmres: builds a QR decomposition for the Krylov subspace incrementally during
+    the GMRES process using Givens rotations. This improves numerical stability and gives a free estimate of
+    the residual norm that allows for early termination within a single "restart".
+    """
+    _INT_ZERO = _to_tensor(0)
+    _, b_norm = _safe_normalize(b)
+    atol = mnp.maximum(tol * b_norm, atol)
+
+    Mb = M(b)
+    _, Mb_norm = _safe_normalize(Mb)
+    ptol = Mb_norm * mnp.minimum(1.0, atol / b_norm)
+
+    r = M(b - A(x0))
+    r, r_norm = _safe_normalize(r)
+
+    iters = _INT_ZERO
+    while iters < maxiter and r_norm > atol:
+        V = mnp.pad(r[..., None], ((0, 0),) * r.ndim + ((0, restart),))
+        dtype = mnp.result_type(b)
+        # Use eye() to avoid constructing a singular matrix in case of early
+        # Termination
+        R = mnp.eye(restart, restart + 1, dtype=dtype)
+        givens = mnp.zeros((restart, 2), dtype=dtype)
+        beta_vec = mnp.zeros((restart + 1), dtype=dtype)
+        beta_vec[0] = r_norm
+
         k = _INT_ZERO
-        x = x0
-        while k < maxiter and residual_norm > atol:
-            pad_width = ((0, 0),) * unit_residual.ndim + ((0, restart),)
-            V = mnp.pad(unit_residual[..., None], pad_width=pad_width)
-            H = mnp.eye(restart, restart + 1, dtype=dtype)
-            k_iter = _INT_ZERO
-            breakdown = _to_tensor(False)
-            while k_iter < restart and mnp.logical_not(breakdown):
-                V, H, breakdown = arnoldi_iteration(k_iter, A, M, V, H)
-                k_iter += 1
-            beta_vec = mnp.zeros((restart + 1,), dtype=dtype)
-            beta_vec[0] = residual_norm
-            y = _high_precision_cho_solve(H, beta_vec, data_type=dtype)
-            dx = mnp.dot(V[..., :-1], y)
-            x = x + dx
-            residual = M(b - A(x))
-            unit_residual, residual_norm = _safe_normalize(residual)
+        err = r_norm
+        while mnp.logical_and(mnp.less(k, restart), mnp.less(ptol, err)):
+            V, R, _ = arnoldi_iteration(k, A, M, V, R)
+            # Givens rotation
+            row_k = R[k, :].copy()
+            i = _INT_ZERO
+            while i < k:
+                row_k = rotate_vectors(row_k, i, givens[i, 0], givens[i, 1])
+                i += 1
+
+            if row_k[k + 1] == 0:
+                givens[k, 0] = 1
+                givens[k, 1] = 0
+            else:
+                increase = mnp.absolute(row_k[k]) < mnp.absolute(row_k[k + 1])
+                t = mnp.where(increase, -row_k[k] / row_k[k + 1], -row_k[k + 1] / row_k[k])
+                r = 1 / F.sqrt(1 + mnp.absolute(t) ** 2)
+                givens[k, 0] = mnp.where(increase, r * t, r)
+                givens[k, 1] = mnp.where(increase, r, r * t)
+
+            R[k, :] = rotate_vectors(row_k, k, givens[k, 0], givens[k, 1])
+            beta_vec = rotate_vectors(beta_vec, k, givens[k, 0], givens[k, 1])
+            err = mnp.absolute(beta_vec[k + 1])
             k += 1
 
-        return x, F.select(residual_norm > atol, k, _INT_ZERO)
+        y = solve_triangular(R[:, :-1], beta_vec[:-1], trans='T', lower=True)
+        dx = mnp.dot(V[:, :-1], y)
+
+        x = x0 + dx
+        r = M(b - A(x))
+        r, r_norm = _safe_normalize(r)
+        x0 = x
+        iters += 1
+    return x0, F.select(r_norm > atol, iters, _INT_ZERO)
 
 
-class IterativeGmres(nn.Cell):
+class GMRES(nn.Cell):
     """
-    Implements a iterative GMRES. While building the ``restart``-dimensional
-    Krylov subspace iteratively using Givens Rotation method, the algorithm
-    constructs a Triangular matrix R which could be more easily solved.
+    Given given A and b, GMRES solves the linear system:
+
+    .. math::
+        A x = b
     """
 
-    def __init__(self, A, M):
-        super(IterativeGmres, self).__init__()
+    def __init__(self, A, M, solve_method):
+        super(GMRES, self).__init__()
         self.A = A
         self.M = M
+        self.solve_method = solve_method
 
     def construct(self, b, x0, tol, atol, restart, maxiter):
         # Constant tensor which avoids loop unrolling
-        _INT_ZERO = _to_tensor(0)
-
         A = _normalize_matvec(self.A)
         M = _normalize_matvec(self.M)
+        x = x0
+        info = _to_tensor(0)
+        if self.solve_method == 'batched':
+            x, info = _batch_gmres(A, x0, b, tol, atol, restart, maxiter, M)
+        elif self.solve_method == "incremental":
+            x, info = _incremental_gmres(A, x0, b, tol, atol, restart, maxiter, M)
+        else:
+            _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got ", self.solve_method,
+                               ".")
+        return x, info
 
-        _, b_norm = _safe_normalize(b)
-        atol = mnp.maximum(tol * b_norm, atol)
 
-        Mb = M(b)
-        _, Mb_norm = _safe_normalize(Mb)
-        ptol = Mb_norm * mnp.minimum(1.0, atol / b_norm)
+class GMRESV2(nn.Cell):
+    """
+    This is a new version of GMRES, which contains all parameters in a graph.
+    """
 
-        r = M(b - A(x0))
-        r, r_norm = _safe_normalize(r)
+    def __init__(self, solve_method):
+        super(GMRESV2, self).__init__()
+        self.solve_method = solve_method
 
-        iters = _INT_ZERO
-        while iters < maxiter and r_norm > atol:
-            V = mnp.pad(r[..., None], ((0, 0),) * r.ndim + ((0, restart),))
-            dtype = mnp.result_type(b)
-            # use eye() to avoid constructing a singular matrix in case of early
-            # termination
-            R = mnp.eye(restart, restart + 1, dtype=dtype)
-            givens = mnp.zeros((restart, 2), dtype=dtype)
-            beta_vec = mnp.zeros((restart + 1), dtype=dtype)
-            beta_vec[0] = r_norm
-
-            k = _INT_ZERO
-            err = r_norm
-            while mnp.logical_and(mnp.less(k, restart), mnp.less(ptol, err)):
-                V, R, _ = arnoldi_iteration(k, A, M, V, R)
-                # givens rotation
-                row_k = R[k, :].copy()
-                i = _INT_ZERO
-                while i < k:
-                    row_k = rotate_vectors(row_k, i, givens[i, 0], givens[i, 1])
-                    i += 1
-
-                if row_k[k + 1] == 0:
-                    givens[k, 0] = 1
-                    givens[k, 1] = 0
-                else:
-                    increase = mnp.absolute(row_k[k]) < mnp.absolute(row_k[k + 1])
-                    t = mnp.where(increase, -row_k[k] / row_k[k + 1], -row_k[k + 1] / row_k[k])
-                    r = 1 / F.sqrt(1 + mnp.absolute(t) ** 2)
-                    givens[k, 0] = mnp.where(increase, r * t, r)
-                    givens[k, 1] = mnp.where(increase, r, r * t)
-
-                R[k, :] = rotate_vectors(row_k, k, givens[k, 0], givens[k, 1])
-                beta_vec = rotate_vectors(beta_vec, k, givens[k, 0], givens[k, 1])
-                err = mnp.absolute(beta_vec[k + 1])
-                k += 1
-
-            y = solve_triangular(R[:, :-1], beta_vec[:-1], trans='T', lower=True)
-            dx = mnp.dot(V[:, :-1], y)
-
-            x = x0 + dx
-            r = M(b - A(x))
-            r, r_norm = _safe_normalize(r)
-            x0 = x
-            iters += 1
-
-        return x0, F.select(r_norm > atol, iters, _INT_ZERO)
+    def construct(self, A, b, x0, tol, atol, restart, maxiter, M):
+        A = _normalize_matvec(A)
+        M = _normalize_matvec(M)
+        x = x0
+        info = _to_tensor(0)
+        if self.solve_method == 'batched':
+            x, info = _batch_gmres(A, x0, b, tol, atol, restart, maxiter, M)
+        elif self.solve_method == "incremental":
+            x, info = _incremental_gmres(A, x0, b, tol, atol, restart, maxiter, M)
+        else:
+            _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got ", self.solve_method,
+                               ".")
+        return x, info
 
 
 def gmres(A, b, x0=None, *, tol=1e-5, restart=20, maxiter=None,
@@ -292,13 +321,10 @@ def gmres(A, b, x0=None, *, tol=1e-5, restart=20, maxiter=None,
     _value_check(func_name, callback_type, None, 'callback_type', op='is', fmt='todo')
     if restart > size:
         restart = size
-
-    if solve_method == 'incremental':
-        x, info = IterativeGmres(A, M)(b, x0, tol, atol, restart, maxiter)
-    elif solve_method == 'batched':
-        x, info = BatchedGmres(A, M)(b, x0, tol, atol, restart, maxiter)
+    if not is_within_graph(A):
+        x, info = GMRES(A, M, solve_method)(b, x0, tol, atol, restart, maxiter)
     else:
-        _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got ", solve_method, ".")
+        x, info = GMRESV2(solve_method)(A, b, x0, tol, atol, restart, maxiter, M)
     return x, info
 
 
