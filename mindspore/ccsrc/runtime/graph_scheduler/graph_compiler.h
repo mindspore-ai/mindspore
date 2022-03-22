@@ -29,6 +29,7 @@
 #include "backend/common/session/session_basic.h"
 #include "backend/common/session/session_factory.h"
 #include "ir/tensor.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 using device::DeviceContext;
@@ -55,7 +56,7 @@ using KernelMapPosition = std::map<KernelWithIndex, std::vector<size_t>, session
 // The origin parameters order is used to correspond to the input args.
 // The origin outputs order is used to correspond to the output args.
 // The need_erase means need erase this GraphCompilerInfo object after run actor set.
-struct GraphCompilerInfo {
+struct BACKEND_EXPORT GraphCompilerInfo {
   GraphCompilerInfo(const std::vector<KernelGraphPtr> &graphs, const std::vector<DeviceContext *> &device_contexts,
                     const std::vector<std::vector<int64_t> *> &tensors_mask,
                     const std::vector<std::vector<TensorPtr> *> &input_tensors,
