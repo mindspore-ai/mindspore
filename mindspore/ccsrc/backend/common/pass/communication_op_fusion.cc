@@ -185,6 +185,8 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
   if (parallel_mode == parallel::kDataParallel && op_name_ == kAllReduceOpName) {
     auto threshold = parallel_context->dp_fusion_threshold_mb();
     GetAllReduceSplitSegment(communication_op_info.communication_op_nodes, threshold, segment_index);
+    MS_LOG(INFO) << "The split threshold for AllReduce is " << threshold << ", the segment num is "
+                 << segment_index->size();
   }
   return CheckSegments(communication_op_node_size, segment_index);
 }

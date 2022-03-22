@@ -34,11 +34,11 @@ class BatchMatmulFusedMulAddFusionPass : public FusionBasePass {
     PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::BatchMatmulFusedMulAddFusionPass);
   }
   ~BatchMatmulFusedMulAddFusionPass() override = default;
+  void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
   void MatchBatchMatmulFusedMulAdd(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
                                    FusedNodeRecord *candidate_fusion);
-  void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 };
 }  // namespace opt
 }  // namespace mindspore
