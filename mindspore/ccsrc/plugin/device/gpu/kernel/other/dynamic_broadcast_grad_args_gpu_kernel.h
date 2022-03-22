@@ -78,6 +78,7 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public NativeGpuKernelMod {
     input_size_list_.push_back(s1_size);
     output_size_list_.push_back(r0_shape[0] * sizeof(S));
     output_size_list_.push_back(r1_shape[0] * sizeof(S));
+    is_need_updateop_ = true;
     return true;
   }
   void ResetResource() noexcept override {

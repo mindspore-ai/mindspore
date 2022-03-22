@@ -554,6 +554,8 @@ constexpr auto kAttrGroupRankIds = "group_rank_ids";
 
 // TODO(dsj): for ms_function running in graph_mode. should be delete later
 constexpr auto kAttrMSFunction = "ms_function_graph";
+// for single_op_compile_and_run condition and set_context GraphMode. should be delete later
+constexpr auto kAttrSingleOpCompile = "compile_and_run_in_single_op";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";

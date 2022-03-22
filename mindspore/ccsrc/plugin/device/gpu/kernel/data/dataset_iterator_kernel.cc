@@ -62,6 +62,8 @@ bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
     output_size_list_.push_back(bytes);
   }
 
+  is_need_updateop_ = true;
+
 #ifndef ENABLE_SECURITY
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);

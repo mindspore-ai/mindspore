@@ -40,6 +40,7 @@ void UniqueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (common::AnfAlgo::HasNodeAttr(SORTED, kernel_node)) {
     sorted_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, SORTED);
   }
+  is_need_updateop_ = true;
 }
 
 void UniqueCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
@@ -63,6 +64,7 @@ bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                       << "', the dtype of input should be float16, float32, int32, or int64, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
+
   if (!node_wpt_.expired()) {
     auto node_ = node_wpt_.lock();
     if (!node_) {

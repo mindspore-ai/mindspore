@@ -89,6 +89,7 @@ class DynamicBroadcastToGpuKernelMod : public NativeGpuKernelMod {
     }
 
     InitSizeLists();
+    is_need_updateop_ = true;
     return true;
   }
   void ResetResource() noexcept override {

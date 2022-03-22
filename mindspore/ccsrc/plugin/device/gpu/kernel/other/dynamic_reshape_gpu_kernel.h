@@ -68,7 +68,7 @@ class DynamicReshapeKernelMod : public NativeGpuKernelMod {
     size_t output_size =
       std::accumulate(output_shape.begin(), output_shape.end(), data_type_size_, std::multiplies<size_t>());
     output_size_list_.push_back(output_size);
-
+    is_need_updateop_ = true;
     return true;
   }
   void ResetResource() noexcept override {

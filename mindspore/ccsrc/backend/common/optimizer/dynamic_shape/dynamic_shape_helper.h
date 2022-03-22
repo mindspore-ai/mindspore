@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_DYNAMIC_SHAPE_ASCEND_DYNAMIC_SHAPE_HELPER_H
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_DYNAMIC_SHAPE_ASCEND_DYNAMIC_SHAPE_HELPER_H
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H
+#define MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H
 
 #include <string>
 #include "ir/anf.h"
@@ -23,13 +23,11 @@
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore::opt::dynamic_shape {
-bool IsGeneralOp(const BaseRef &n);
-bool IsDynamicOp(const BaseRef &n);
-bool IsInheritedDynamicOp(const BaseRef &n);
+bool IsRealCNode(const BaseRef &n);
+bool IsNeedUpdateOp(const AnfNodePtr &node);
 AnfNodePtr GenInferNode(const AnfNodePtr &node, bool fake_flag = false);
-AnfNodePtr GenInitNode(const AnfNodePtr &node);
-AnfNodePtr GenUpdateNode(const AnfNodePtr &node, bool just_sync_flag = false);
-bool IsDynUpdate(const AnfNodePtr &node);
+AnfNodePtr GenInitNode(const AnfNodePtr &node, bool fake_flag = false);
+AnfNodePtr GenUpdateNode(const AnfNodePtr &node);
 
 struct RelatedCustomActorNode {
   AnfNodePtr infer_node;
@@ -60,4 +58,4 @@ class CustomActorNodeManager {
   OrderedMap<AnfNodePtr, RelatedCustomActorNode> custom_nodes_map_;
 };
 }  // namespace mindspore::opt::dynamic_shape
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_DYNAMIC_SHAPE_ASCEND_DYNAMIC_SHAPE_HELPER_H
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H

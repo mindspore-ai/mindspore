@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 #include <string>
+#include "utils/ms_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "plugin/device/ascend/optimizer/dynamic_shape/ascend_dynamic_shape_helper.h"
-#include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
+#include "backend/common/optimizer/common_backend_optimization.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
+#include "include/common/utils/anfalgo.h"
 #include "common/backend_common_test.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
@@ -52,9 +54,16 @@ CNodePtr TestCreateCNode(const KernelGraphPtr &g, const std::string &prim_name, 
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "Cannot create cnode!";
   }
+  if (prim_name != "TupleGetItem" && prim_name != "MakeTuple") {
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cnode);
+  }
+
   cnode->set_abstract(abstract);
   auto cnode_kernel_info = std::make_shared<device::KernelInfo>();
-  cnode_kernel_info->set_kernel_mod(std::make_shared<kernel::TbeKernelMod>(std::make_shared<kernel::KernelPack>()));
+  auto anf_node = cnode->cast<AnfNodePtr>();
+  MS_EXCEPTION_IF_NULL(anf_node);
+  cnode_kernel_info->set_kernel_mod(
+    std::make_shared<kernel::TbeKernelMod>(std::make_shared<kernel::KernelPack>(), anf_node));
   cnode->set_kernel_info(cnode_kernel_info);
   return cnode;
 }
@@ -128,6 +137,9 @@ class TestDynamicShapePass : public BackendCommon {
 ///                       \       /    \    /   \    |
 ///                        depend      depend   depend
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_0) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -140,7 +152,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_0) {
   before_fg->set_output(before_a_node);
 
   // run pass
-  AscendDynamicShapeConvert(before_fg);
+  DynamicShapeConvertPass(before_fg);
 
   // construct after graph
   auto after_fg = std::make_shared<session::KernelGraph>();
@@ -174,6 +186,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_0) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
@@ -186,6 +199,9 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_0) {
 ///       \    /  \     /
 ///       depend  depend
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_1) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -196,7 +212,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_1) {
   before_fg->set_output(before_a_node);
 
   // run pass
-  AscendDynamicShapeConvert(before_fg);
+  DynamicShapeConvertPass(before_fg);
 
   // construct after graph
   auto after_fg = std::make_shared<session::KernelGraph>();
@@ -205,7 +221,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_1) {
   auto after_a_node =
     TestCreateCNode(after_fg, "A", AnfNodePtrList{after_p}, TestCreateTensor(kFloat32, std::vector<int64_t>{1, 10}));
 
-  auto infer_a = dynamic_shape::GenInferNode(after_a_node, true);
+  auto infer_a = dynamic_shape::GenInferNode(after_a_node);
   auto init_a = dynamic_shape::GenInitNode(after_a_node);
 
   auto depend0 = TestCreateDepend(after_fg, AnfNodePtrList{init_a, infer_a});
@@ -219,6 +235,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_1) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
@@ -245,6 +262,9 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_1) {
 ///                \  /            Depend
 ///               MakeTuple
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_2) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -265,7 +285,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_2) {
   before_fg->set_output(before_make_tuple);
 
   // run pass
-  AscendDynamicShapeConvert(before_fg);
+  DynamicShapeConvertPass(before_fg);
 
   // construct after graph
   auto after_fg = std::make_shared<session::KernelGraph>();
@@ -307,12 +327,16 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_2) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
 /// Description: Complecate case case.
 /// Expectation: Graph as expected.
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -345,7 +369,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
   before_fg->set_output(before_make_tuple);
 
   // run pass
-  AscendDynamicShapeConvert(before_fg);
+  DynamicShapeConvertPass(before_fg);
 
   // construct after graph
   auto after_fg = std::make_shared<session::KernelGraph>();
@@ -377,7 +401,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
 
   auto after_make_tuple = TestCreateMakeTuple(after_fg, AnfNodePtrList{after_c, after_e});
 
-  auto infer_a = dynamic_shape::GenInferNode(after_a, true);
+  auto infer_a = dynamic_shape::GenInferNode(after_a);
   auto init_a = dynamic_shape::GenInitNode(after_a);
 
   auto infer_tuple = dynamic_shape::GenInferNode(after_tuple);
@@ -397,7 +421,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
   auto init_de = dynamic_shape::GenInitNode(after_dync_end);
   auto update_de = dynamic_shape::GenUpdateNode(after_dync_end);
 
-  auto infer_e = dynamic_shape::GenInferNode(after_e, true);
+  auto infer_e = dynamic_shape::GenInferNode(after_e);
   auto init_e = dynamic_shape::GenInitNode(after_e);
 
   auto depend0 = TestCreateDepend(after_fg, AnfNodePtrList{init_a, infer_a});
@@ -444,6 +468,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
@@ -464,6 +489,9 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
 ///               \     /  \       /    \    /   \    |
 ///               depend    depend      depend   depend
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_depend) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -479,7 +507,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_depend) {
   before_fg->set_output(before_depend_node);
 
   // run pass
-  AscendDynamicShapeConvert(before_fg);
+  DynamicShapeConvertPass(before_fg);
 
   // construct after graph
   auto after_fg = std::make_shared<session::KernelGraph>();
@@ -522,6 +550,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_depend) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
@@ -547,6 +576,9 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_depend) {
 ///                                                                    |      /
 ///                                                                     depend
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_monad) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -569,7 +601,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_monad) {
   before_fg->set_output(before_depend_node);
 
   // run pass
-  AscendDynamicShapeConvert(before_fg);
+  DynamicShapeConvertPass(before_fg);
 
   // construct after graph
   auto after_fg = std::make_shared<session::KernelGraph>();
@@ -612,12 +644,16 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_monad) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
 /// Description: Need sync case(contain op such as Tile...).
 /// Expectation: Graph as expected.
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -641,7 +677,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
   before_fg->set_output(before_add_node);
 
   // run pass
-  AscendDynamicShapeConvert(before_fg);
+  DynamicShapeConvertPass(before_fg);
 
   // construct after graph
   auto after_fg = std::make_shared<session::KernelGraph>();
@@ -669,17 +705,17 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
   auto infer_tile1 = dynamic_shape::GenInferNode(after_tile1_node);
   auto init_tile1 = dynamic_shape::GenInitNode(after_tile1_node);
 
-  auto infer_a = dynamic_shape::GenInferNode(after_a_node, true);
+  auto infer_a = dynamic_shape::GenInferNode(after_a_node);
   auto init_a = dynamic_shape::GenInitNode(after_a_node);
 
-  auto infer_b = dynamic_shape::GenInferNode(after_b_node, true);
+  auto infer_b = dynamic_shape::GenInferNode(after_b_node);
   auto init_b = dynamic_shape::GenInitNode(after_b_node);
-  auto update_b = dynamic_shape::GenUpdateNode(after_b_node, true);
+  auto update_b = dynamic_shape::GenUpdateNode(after_b_node);
 
-  auto infer_tile2 = dynamic_shape::GenInferNode(after_tile2_node, true);
+  auto infer_tile2 = dynamic_shape::GenInferNode(after_tile2_node);
   auto init_tile2 = dynamic_shape::GenInitNode(after_tile2_node);
 
-  auto infer_add = dynamic_shape::GenInferNode(after_add_node, true);
+  auto infer_add = dynamic_shape::GenInferNode(after_add_node);
   auto init_add = dynamic_shape::GenInitNode(after_add_node);
 
   auto depend0 = TestCreateDepend(after_fg, AnfNodePtrList{init_uniq, infer_uniq});
@@ -721,6 +757,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
+  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 }  // namespace opt
 }  // namespace mindspore

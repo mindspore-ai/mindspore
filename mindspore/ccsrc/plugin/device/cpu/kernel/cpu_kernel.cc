@@ -80,6 +80,7 @@ void NativeCpuKernelMod::Init(const CNodePtr &kernel_node) {
     cnode_ptr_ = kernel_node;
   }
 
+  workspace_size_list_.clear();
   InitKernel(kernel_node);
   InitInputOutputSize(kernel_node);
 }

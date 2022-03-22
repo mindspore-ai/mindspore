@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/dynamic_shape/link_custom_op.h"
+#include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
 
 #include <memory>
 #include <vector>
@@ -23,7 +23,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
-#include "plugin/device/ascend/optimizer/dynamic_shape/ascend_dynamic_shape_helper.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {
@@ -72,7 +72,7 @@ bool LinkInternalOp(const FuncGraphPtr &g, const AnfNodePtr &node, AnfNodePtrLis
     changed = true;
   }
 
-  if (IsDynUpdate(custom_nodes.update_node)) {
+  if (IsNeedUpdateOp(node) && custom_nodes.update_node != nullptr) {
     InsertDepend(g, node, custom_nodes.update_node, depend_nodes);  // link launch => update
     changed = true;
   }
@@ -93,19 +93,31 @@ bool LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *d
   for (size_t i = 0; i < input_num; ++i) {
     auto prev = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
     const auto &prev_node = prev.first;
-    if (prev_node == nullptr || !CustomActorNodeManager::Instance().IsRegistered(prev_node)) {
+    if (prev_node == nullptr) {
+      continue;
+    }
+    if (!CustomActorNodeManager::Instance().IsRegistered(prev_node)) {
       continue;
     }
     auto prev_custom_nodes = CustomActorNodeManager::Instance().GetCustomActorNodes(prev_node);
     if (prev_custom_nodes.infer_node != nullptr) {
-      InsertDepend(g, prev_custom_nodes.infer_node, custom_nodes.infer_node,
-                   depend_nodes);  // link prev.infer => curr.infer
+      // link prev.infer => curr.infer
+      InsertDepend(g, prev_custom_nodes.infer_node, custom_nodes.infer_node, depend_nodes);
       changed = true;
     }
-    if (IsDynUpdate(prev_custom_nodes.update_node)) {
-      InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node,
-                   depend_nodes);  // link prev.update => curr.infer
-      changed = true;
+
+    if (IsNeedUpdateOp(prev_node)) {
+      if (prev_custom_nodes.update_node != nullptr) {
+        // link prev.update => curr.infer
+        InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node, depend_nodes);
+        changed = true;
+      } else {
+        // for CPU, its Updateop is in Launch function, so its update_node is set to nullptr, for reduce the time cast
+        // of send messages between actors
+        // link prev.launch => curr.infer
+        InsertDepend(g, prev_node, custom_nodes.infer_node, depend_nodes);
+        changed = true;
+      }
     }
   }
   return changed;
@@ -135,14 +147,21 @@ bool LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList
 
     // If previous node is dynamic, so it was already link.
     auto prev_custom_nodes = CustomActorNodeManager::Instance().GetCustomActorNodes(prev_node);
-    if (IsDynUpdate(prev_custom_nodes.update_node)) {
+    if (IsNeedUpdateOp(prev_node)) {
       continue;
     }
-    // 1. Link prev_node => prev_node.update if its update is just sync.
-    InsertDepend(g, prev_node, prev_custom_nodes.update_node, depend_nodes);
-    // 1. Link prev_node => prev_node.update if its update is just sync.
-    // 2. Link prev_node.update => cur_node.infer.
-    InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node, depend_nodes);
+    if (prev_custom_nodes.update_node != nullptr) {
+      // 1. Link prev_node => prev_node.update if its update is just sync.
+      InsertDepend(g, prev_node, prev_custom_nodes.update_node, depend_nodes);
+      // 2. Link prev_node.update => cur_node.infer.
+      InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node, depend_nodes);
+    } else {
+      // for CPU, its Updateop is in Launch function, so its update_node is set to nullptr, for reduce the time cast of
+      // send messages between actors
+      // Link prev_node.launch => cur_node.infer.
+      InsertDepend(g, prev_node, custom_nodes.infer_node, depend_nodes);
+    }
+
     changed = true;
   }
   return changed;

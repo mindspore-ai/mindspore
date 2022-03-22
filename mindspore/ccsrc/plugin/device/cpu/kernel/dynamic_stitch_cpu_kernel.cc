@@ -157,6 +157,7 @@ void DynamicStitchCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   kernel_func_ = func_list_[index].second;
+  is_need_updateop_ = true;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, DynamicStitch, DynamicStitchCpuKernelMod);

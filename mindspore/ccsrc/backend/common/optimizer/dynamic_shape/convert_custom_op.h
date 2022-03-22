@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_DYNAMIC_SHAPE_CONVERT_INHERITED_DYNAMIC_OP_H
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_DYNAMIC_SHAPE_CONVERT_INHERITED_DYNAMIC_OP_H
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_CONVERT_CUSTOM_OP_H
+#define MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_CONVERT_CUSTOM_OP_H
 
 #include "ir/anf.h"
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore::opt::dynamic_shape {
-class ConvertInheritedDynamicOp : public PatternProcessPass {
+class ConvertCustomOp : public Pass {
  public:
-  explicit ConvertInheritedDynamicOp(bool multigraph = true)
-      : PatternProcessPass("convert_inherited_dynamic_op", multigraph) {}
-  ~ConvertInheritedDynamicOp() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  ConvertCustomOp() : Pass("convert_custom_op") {}
+  ~ConvertCustomOp() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
+
+ private:
+  void ConvertCustomOpForNode(const AnfNodePtr &node) const;
 };
 }  // namespace mindspore::opt::dynamic_shape
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_DYNAMIC_SHAPE_CONVERT_GENERAL_OP_H
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_CONVERT_CUSTOM_OP_H

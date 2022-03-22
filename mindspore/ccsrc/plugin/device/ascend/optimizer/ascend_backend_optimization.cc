@@ -153,10 +153,6 @@
 #include "plugin/device/ascend/optimizer/mindir/bn_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/all_to_all_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/neighbor_exchange_v2_unify_mindir.h"
-#include "plugin/device/ascend/optimizer/dynamic_shape/convert_dynamic_op.h"
-#include "plugin/device/ascend/optimizer/dynamic_shape/convert_general_op.h"
-#include "plugin/device/ascend/optimizer/dynamic_shape/convert_inherited_dynamic_op.h"
-#include "plugin/device/ascend/optimizer/dynamic_shape/link_custom_op.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "utils/ms_context.h"
@@ -618,35 +614,6 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &graph) {
   if (save_graphs) {
     std::string file_name = "hwopt_d_after_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph);
-  }
-#endif
-}
-void AscendDynamicShapeConvert(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#ifdef ENABLE_DUMP_IR
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    std::string file_name =
-      "hwopt_d_before_dynamic_shape_convert_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph);
-    DumpIRProto(kernel_graph, "before_dynamic_shape_convert_hwopt_" + std::to_string(kernel_graph->graph_id()));
-  }
-#endif
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto dynamic_shape_convert_pm = std::make_shared<opt::PassManager>("dynamic_shape_convert_pm");
-  dynamic_shape_convert_pm->AddPass(std::make_shared<opt::dynamic_shape::ConvertDynamicOp>());
-  dynamic_shape_convert_pm->AddPass(std::make_shared<opt::dynamic_shape::ConvertGeneralOp>());
-  dynamic_shape_convert_pm->AddPass(std::make_shared<opt::dynamic_shape::ConvertInheritedDynamicOp>());
-  dynamic_shape_convert_pm->AddPass(std::make_shared<opt::dynamic_shape::LinkCustomOp>());
-  optimizer->AddPassManager(dynamic_shape_convert_pm);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  if (save_graphs) {
-    std::string file_name =
-      "hwopt_d_after_dynamic_shape_convert_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph);
   }
 #endif
 }

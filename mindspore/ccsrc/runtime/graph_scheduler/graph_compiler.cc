@@ -556,6 +556,11 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
 
   UpdateRefCountForGraphOutput(outputs_with_index);
   AnfAlgo::UpdateGraphValidRefPair(graph);
+
+  const std::vector<CNodePtr> &kernels = graph->execution_order();
+  for (const auto &kernel : kernels) {
+    common::AnfAlgo::SetNodeAttr(kAttrSingleOpCompile, MakeValue(true), kernel);
+  }
   return graph->graph_id();
 }
 
