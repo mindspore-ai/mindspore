@@ -851,7 +851,7 @@ Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 
 Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t fade_in_len,
             int32_t fade_out_len, FadeShape fade_shape) {
-  if (DataType::DE_INT8 <= input->type().value() && input->type().value() <= DataType::DE_FLOAT32) {
+  if (DataType::DE_BOOL <= input->type().value() && input->type().value() <= DataType::DE_FLOAT32) {
     std::shared_ptr<Tensor> waveform;
     RETURN_IF_NOT_OK(TypeCast(input, &waveform, DataType(DataType::DE_FLOAT32)));
     RETURN_IF_NOT_OK(Fade<float>(waveform, output, fade_in_len, fade_out_len, fade_shape));
