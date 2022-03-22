@@ -1883,7 +1883,7 @@ class NLLLossGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, reduction="mean"):
         """Initialize NLLLoss"""
-        self.init_prim_io_names(inputs=['x', 'target', "weight"], outputs=['loss'])
+        self.init_prim_io_names(inputs=['x', 'loss_grad', 'target', 'weight', 'total_weight'], outputs=['x_grad'])
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.add_prim_attr('reduction', self.reduction)
 

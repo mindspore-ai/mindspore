@@ -139,9 +139,11 @@
 #include "nnacl/infer/affine_infer.h"
 #include "nnacl/infer/attention_infer.h"
 #include "nnacl/infer/scatter_nd_update_infer.h"
+#include "nnacl/infer/nllloss.h"
+#include "nnacl/infer/nllloss_grad.h"
 
-InferShape g_infer_func[PrimType_MAX * sizeof(InferShape)] = {0};
-InferShape g_inner_op_infer_func[(PrimType_InnerOpMax - PrimType_InnerOpMin) * sizeof(InferShape)] = {0};
+InferShape g_infer_func[PrimType_MAX] = {0};
+InferShape g_inner_op_infer_func[PrimType_InnerOpMax - PrimType_InnerOpMin] = {0};
 void RegAllInferFunc1() {
   g_infer_func[PrimType_NONE] = NULL;
   g_infer_func[PrimType_Abs] = CommonInferShape;
@@ -350,6 +352,8 @@ void RegAllInferFunc3() {
   g_infer_func[PrimType_Attention] = AttentionInferShape;
   g_infer_func[PrimType_LSTMGrad] = NULL;
   g_infer_func[PrimType_ScatterNdUpdate] = ScatterNdUpdateInferShape;
+  g_infer_func[PrimType_NLLLoss] = NLLLossInferShape;
+  g_infer_func[PrimType_NLLLossGrad] = NLLLossGradInferShape;
 
   // fused operators.
   g_inner_op_infer_func[PrimType_Inner_ShapeFusion - PrimType_InnerOpMin] = ShapeFusionInferShape;

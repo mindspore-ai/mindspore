@@ -74,7 +74,7 @@ class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
   }
 
  private:
-  void InitFields(const CNodePtr &kernel_node);
+  void InitPoolingGradFields(const CNodePtr &kernel_node);
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
   void ComputeMaxValueIndex(void *src, void *dst, void *work_array) const;
 

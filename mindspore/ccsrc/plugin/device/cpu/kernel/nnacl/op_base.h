@@ -483,8 +483,10 @@ enum PrimType {
   PrimType_LSTMGradData = 204,
   PrimType_LSTMGradWeight = 205,
   PrimType_RandomNormal = 206,
+  PrimType_NLLLoss = 207,
+  PrimType_NLLLossGrad = 208,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_RandomNormal + 1,
+  PrimType_MAX = PrimType_NLLLossGrad + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,
@@ -531,6 +533,7 @@ typedef struct QuantMulArg {
   int right_shift_;
 } QuantMulArg;
 
+typedef enum ReductionType { Reduction_Sum, Reduction_Mean, Reduction_None } ReductionType;
 typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
 typedef enum PadMode { Pad_pad, Pad_same, Pad_valid } PadMode;
 typedef enum RoundingMode { Rounding_No, Rounding_Away_from_zero, Rounding_Up } RoundingMode;

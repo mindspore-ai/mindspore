@@ -77,4 +77,4 @@ class LstmCpuKernelMod : public MKLCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_CPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_CPU_KERNEL_H_

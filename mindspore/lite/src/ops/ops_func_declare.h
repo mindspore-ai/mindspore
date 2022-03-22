@@ -254,6 +254,8 @@
 #include "ops/reduce_scatter.h"
 #include "ops/dynamic_quant.h"
 #include "ops/random_normal.h"
+#include "ops/nllloss.h"
+#include "ops/grad/nllloss_grad.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);
@@ -475,6 +477,8 @@ FUNC_MSOP2SCHEMAOP_DECLARE(AllGather)
 FUNC_MSOP2SCHEMAOP_DECLARE(ReduceScatter)
 FUNC_MSOP2SCHEMAOP_DECLARE(DynamicQuant)
 FUNC_MSOP2SCHEMAOP_DECLARE(RandomNormal)
+FUNC_MSOP2SCHEMAOP_DECLARE(NLLLoss)
+FUNC_MSOP2SCHEMAOP_DECLARE(NLLLossGrad)
 #endif
 }  // namespace mindspore::lite::ops
 #else

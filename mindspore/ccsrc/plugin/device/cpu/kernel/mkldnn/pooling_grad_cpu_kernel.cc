@@ -38,7 +38,7 @@ void PoolingGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   }
 }
 
-void PoolingGradCpuKernelMod::InitFields(const CNodePtr &kernel_node) {
+void PoolingGradCpuKernelMod::InitPoolingGradFields(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
@@ -62,7 +62,7 @@ void PoolingGradCpuKernelMod::InitFields(const CNodePtr &kernel_node) {
 
 void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  InitFields(kernel_node);
+  InitPoolingGradFields(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   const size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
@@ -77,7 +77,7 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (src_dim == SHAPE_5D && format != NCDHW) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format" << format;
   }
-  const std::string pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
+  const auto pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   const auto kernel_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
   const auto strides_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   if (kernel_include_nc.size() != src_dim) {
