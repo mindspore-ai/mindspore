@@ -57,20 +57,26 @@ void KernelMod::InferShape() {
   AbstractBasePtrList args_spec_list;
   auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
   auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
+  bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
   for (size_t i = 0; i < input_size; i++) {
-    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
-    auto real_input = input_node_with_index.first;
+    AnfNodePtr real_input = nullptr;
+    size_t real_input_index = 0;
+    if (real_input_nodes_.count(i) > 0) {
+      real_input = real_input_nodes_[i].first.lock();
+      real_input_index = real_input_nodes_[i].second;
+    } else {
+      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
+      real_input = input_node_with_index.first;
+      real_input_index = input_node_with_index.second;
+    }
     MS_EXCEPTION_IF_NULL(real_input);
-    auto cnode_input = cnode->input(i + 1);
-    MS_EXCEPTION_IF_NULL(cnode_input);
-    InferShapeForNopNode(real_input);
+    if (skip_nop_node) {
+      InferShapeForNopNode(real_input);
+    }
     if (depend_list_.find(i) != depend_list_.end()) {
-      auto pre_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
-      bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
-      auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, i, skip_nop_node);
-      std::vector<int64_t> shapes =
-        trans::GetRuntimePaddingShape(pre_node_with_index.first, pre_node_with_index.second);
-      auto host_type = common::AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
+      auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, skip_nop_node);
+      auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
+      auto host_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
       auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
       MS_EXCEPTION_IF_NULL(out_tensor);
       // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
@@ -88,14 +94,14 @@ void KernelMod::InferShape() {
       if (real_abs->isa<abstract::AbstractTensor>()) {
         real_abs->set_value(out_tensor);
       } else if (real_abs->isa<abstract::AbstractTuple>()) {
-        auto tuple_get_item_index = common::AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
         auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
         MS_EXCEPTION_IF_NULL(abstract_tuple);
-        auto tuple_elements = abstract_tuple->elements()[tuple_get_item_index];
+        MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abstract_tuple->elements().size()), "Index is out of range.");
+        auto tuple_elements = abstract_tuple->elements()[real_input_index];
         tuple_elements->set_value(out_tensor);
       }
     }
-    common::AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input);
+    common::AnfAlgo::AddArgList(&args_spec_list, real_input, real_input_index);
   }
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
   cnode->set_abstract(eval_result);

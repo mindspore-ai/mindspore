@@ -105,7 +105,7 @@ void DynamicKernel::InferShape() {
         tuple_elements->set_value(out_tensor);
       }
     }
-    common::AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input);
+    common::AnfAlgo::AddArgList(&args_spec_list, real_input, input_node_with_index.second);
   }
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
   cnode->set_abstract(eval_result);

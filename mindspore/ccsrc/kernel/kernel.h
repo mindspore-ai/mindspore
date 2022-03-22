@@ -20,6 +20,7 @@
 #include <memory>
 #include <map>
 #include <set>
+#include <utility>
 #include "nlohmann/json.hpp"
 #include "ir/anf.h"
 #include "ir/dtype.h"
@@ -222,6 +223,10 @@ class KernelMod {
   // set true if need to update output's shape after launch in dynamic_shape, like Unique
   virtual bool IsNeedUpdateOp() { return is_need_updateop_; }
 
+  void InsertRealInputNode(const AnfNodePtr &pre_node, size_t pre_node_out_index, size_t input_index) {
+    real_input_nodes_[input_index] = {pre_node, pre_node_out_index};
+  }
+
  protected:
   void InferShape();
   void GetDepndLists(const CNodePtr &cnode);
@@ -249,6 +254,11 @@ class KernelMod {
   std::vector<AddressPtr> inputs_addr_;
   std::vector<AddressPtr> workspaces_addr_;
   std::vector<AddressPtr> outputs_addr_;
+
+  // HashMap <input_index, pair<pre_node, pre_node_output_index>> is used to record the real input node to infer the
+  // dynamic shape information of the nodes located at the boundary of the graph partition, such as heterogeneous
+  // scenario and so on.
+  mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> real_input_nodes_;
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 }  // namespace kernel
