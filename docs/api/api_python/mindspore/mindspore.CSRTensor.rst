@@ -8,6 +8,7 @@ mindspore.CSRTensor
 
     .. note::
         这是一个实验特性，在未来可能会发生API的变化。
+        如果values或indices的长度超出了indptr所指定的取值范围，超出部分的行为将没有定义。
 
     **参数：**
 
