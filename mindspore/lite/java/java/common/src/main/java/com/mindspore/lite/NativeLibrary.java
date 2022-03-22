@@ -2,11 +2,7 @@ package com.mindspore.lite;
 
 
 import java.io.*;
-import java.util.Locale;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.apache.commons.io.IOUtils;
 
 public class NativeLibrary {
     private static final Logger LOGGER = Logger.getLogger(NativeLibrary.class.toString());
@@ -15,82 +11,81 @@ public class NativeLibrary {
     private static final String MINDSPORE_LITE_LIBNAME = "mindspore-lite";
     private static final String MINDSPORE_LITE_JNI_LIBNAME = "mindspore-lite-jni";
 
-    private static final String MINDSPORE_LITE_LIBS = "mindspore_lite_libs";
-
     public static void load() {
-        if (isLoaded()) {
+        if (isLibLoaded()) {
+            LOGGER.info("Native lib has been loaded.");
             return;
         }
-        loadLib(makeResourceDir(MINDSPORE_LITE_LIBS), makeResourceName("lib" + GLOG_LIBNAME + ".so.0"));
-        loadLib(makeResourceDir(MINDSPORE_LITE_LIBS), makeResourceName("lib" + MINDSPORE_LITE_LIBNAME + ".so"));
-        loadLib(makeResourceDir(MINDSPORE_LITE_LIBS), makeResourceName("lib" + MINDSPORE_LITE_JNI_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + GLOG_LIBNAME + ".so.0"));
+        loadLib(makeResourceName("lib" + MINDSPORE_LITE_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + MINDSPORE_LITE_JNI_LIBNAME + ".so"));
     }
 
-    private static boolean tryLoadLibrary() {
-        try {
-            System.loadLibrary(MINDSPORE_LITE_LIBNAME);
-            System.loadLibrary(MINDSPORE_LITE_JNI_LIBNAME);
-            LOGGER.info("LoadLibrary: success");
-            return true;
-        } catch (UnsatisfiedLinkError e) {
-            LOGGER.warning("tryLoadLibraryFailed: " + e.getMessage());
-            return false;
-        }
-    }
-
-    private static boolean isLoaded() {
+    private static boolean isLibLoaded() {
         try {
             Version.version();
-            LOGGER.info("isLoaded: true");
-            return true;
         } catch (UnsatisfiedLinkError e) {
             return false;
         }
+        return true;
     }
 
-    private static void loadLib(String jniResourceDir, String jniResourceName) {
-        LOGGER.info("start load jniResourceName: " + jniResourceName);
-        final Integer BUFFER_SIZE = 8024;
-        final String TMPDIR_PROPERTY = "java.io.tmpdir";
+    private static void loadLib(String libResourceName) {
+        LOGGER.info("start load libResourceName: " + libResourceName);
+        final InputStream libResource = NativeLibrary.class.getClassLoader().getResourceAsStream(libResourceName);
+        if (libResource == null) {
+            LOGGER.warning(String.format("lib file: %s not exist.", libResourceName));
+            return;
+        }
         try {
-            InputStream in = NativeLibrary.class.getClassLoader().getResourceAsStream(jniResourceName);
-            if (in == null || in.available() == 0) {
-                LOGGER.severe(String.format("jni file: %s not exist.", jniResourceName));
-                return;
-            }
-            String tmpPath = System.getProperty(TMPDIR_PROPERTY) + "/" + jniResourceDir;
-            File fileOutDir = new File(tmpPath);
-            if (!fileOutDir.exists()) {
-                fileOutDir.mkdirs();
-            }
-            File fileOut = new File(tmpPath + jniResourceName.substring(jniResourceName.lastIndexOf("/") + 1));
-            if (!fileOut.exists()) {
-                fileOut.createNewFile();
-            }
+            final File tmpDir = mkTmpDir();
+            String libName = libResourceName.substring(libResourceName.lastIndexOf("/") + 1);
+            tmpDir.deleteOnExit();
 
-            OutputStream out = new FileOutputStream(fileOut);
-            IOUtils.copy(in, out, BUFFER_SIZE);
-            in.close();
-            out.close();
-            System.load(fileOut.getAbsolutePath());
-            LOGGER.info(String.format("load file: %s success.", fileOut.getAbsolutePath()));
+            //copy file to tmpFile
+            final File tmpFile = new File(tmpDir.getCanonicalPath(), libName);
+            tmpFile.deleteOnExit();
+            LOGGER.info(String.format("extract %d bytes to %s", copyLib(libResource, tmpFile), tmpFile));
+            System.load(tmpFile.toString());
         } catch (IOException e) {
-            throw new UnsatisfiedLinkError(String.format(
-                    "Unable to extract native library into a temporary file (%s)", e.getMessage()));
+            throw new UnsatisfiedLinkError(
+                    String.format("extract library into tmp file (%s) failed.", e.toString()));
         }
     }
 
-    /**
-     * get native lib dir, eg. temp/linux_x86_64
-     * @param dir
-     * @return
-     */
-    private static String makeResourceDir(String dir) {
-        return dir + "/" + String.format("linux_%s/", architecture());
+    private static long copyLib(InputStream libResource, File tmpFile) throws IOException{
+        try (FileOutputStream outputStream = new FileOutputStream(tmpFile);) {
+            // 1MB
+            byte[] buffer = new byte[1 << 20];
+            long byteCnt = 0;
+            int n = 0;
+            while ((n = libResource.read(buffer)) >= 0) {
+                outputStream.write(buffer, 0, n);
+                byteCnt += n;
+            }
+            return byteCnt;
+        } finally {
+            libResource.close();
+        }
+    }
+
+
+    private static File mkTmpDir() {
+        final String MINDSPORE_LITE_LIBS = "mindspore_lite_libs-";
+        Long timestamp = System.currentTimeMillis();
+        String dirName = MINDSPORE_LITE_LIBS + timestamp + "-";
+        for (int i = 0; i < 10; i++) {
+            File tmpDir = new File(new File(System.getProperty("java.io.tmpdir")), dirName + i);
+            if (tmpDir.mkdir()) {
+                return tmpDir;
+            }
+        }
+        throw new IllegalStateException("create tmp dir failed, dirName: " + dirName);
     }
 
     /**
      * get native lib file name, eg. com/mindspore/lite/linux_x86_64/libmindspore-lite.so
+     *
      * @param basename
      * @return
      */
