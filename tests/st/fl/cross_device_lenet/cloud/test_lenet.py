@@ -62,6 +62,13 @@ parser.add_argument("--sign_eps", type=float, default=100)
 parser.add_argument("--sign_thr_ratio", type=float, default=0.6)
 parser.add_argument("--sign_global_lr", type=float, default=0.1)
 parser.add_argument("--sign_dim_out", type=int, default=0)
+parser.add_argument("--global_iteration_time_window", type=int, default=3600000)
+# parameters for "compression"
+parser.add_argument("--upload_compress_type", type=str, default="NO_COMPRESS",
+                    choices=["NO_COMPRESS", "DIFF_SPARSE_QUANT"])
+parser.add_argument("--upload_sparse_rate", type=float, default=0.5)
+parser.add_argument("--download_compress_type", type=str, default="NO_COMPRESS",
+                    choices=["NO_COMPRESS", "QUANT"])
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -98,6 +105,10 @@ sign_eps = args.sign_eps
 sign_thr_ratio = args.sign_thr_ratio
 sign_global_lr = args.sign_global_lr
 sign_dim_out = args.sign_dim_out
+global_iteration_time_window = args.global_iteration_time_window
+upload_compress_type = args.upload_compress_type
+upload_sparse_rate = args.upload_sparse_rate
+download_compress_type = args.download_compress_type
 
 ctx = {
     "enable_fl": True,
@@ -133,7 +144,11 @@ ctx = {
     "sign_eps": sign_eps,
     "sign_thr_ratio": sign_thr_ratio,
     "sign_global_lr": sign_global_lr,
-    "sign_dim_out": sign_dim_out
+    "sign_dim_out": sign_dim_out,
+    "global_iteration_time_window": global_iteration_time_window,
+    "upload_compress_type": upload_compress_type,
+    "upload_sparse_rate": upload_sparse_rate,
+    "download_compress_type": download_compress_type,
 }
 
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
