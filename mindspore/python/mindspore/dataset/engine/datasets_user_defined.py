@@ -188,8 +188,8 @@ class SamplerFn:
                 try:
                     worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid)
                 except Exception:
-                    raise RuntimeError("Init multiprocessing.Queue() failed, This might be caused by insufficient shm,"
-                                       + " and the recommended shm size is at least 5 GB.")
+                    raise RuntimeError("Init multiprocessing.Queue() failed, This might be caused by insufficient shm, "
+                                       "and the recommended shm size is at least 5 GB.")
                 worker.daemon = True
                 # When multi processes fork a subprocess, the lock of the main process is copied to the subprocess,
                 # which may cause deadlock. Therefore, the subprocess startup is performed in che initialization phase.
@@ -328,6 +328,19 @@ def _ignore_sigint(is_multiprocessing):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
+def _main_process_already_exit(eof, is_multiprocessing, idx_queue, result_queue, ppid):
+    """
+    Judge whether main process already exit.
+    """
+    if eof.is_set() or (is_multiprocessing and platform.system().lower() != 'windows' and
+                        not _PythonMultiprocessing.process_still_alive(ppid)):
+        if is_multiprocessing:
+            idx_queue.cancel_join_thread()
+            result_queue.cancel_join_thread()
+        return True
+    return False
+
+
 def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiprocessing, ppid=-1):
     """
     Multithread or multiprocess generator worker process loop.
@@ -341,10 +354,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
         try:
             idx = idx_queue.get(timeout=1)
         except queue.Empty:
-            if eof.is_set() or (is_multiprocessing and not _PythonMultiprocessing.process_still_alive(ppid)):
-                if is_multiprocessing:
-                    idx_queue.cancel_join_thread()
-                    result_queue.cancel_join_thread()
+            if _main_process_already_exit(eof, is_multiprocessing, idx_queue, result_queue, ppid) is True:
                 return
             # If end-of-file (eof) is not set, continue to get data from idx_queue
             continue
@@ -369,10 +379,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
             try:
                 result_queue.put(result, timeout=5)
             except queue.Full:
-                if eof.is_set() or (is_multiprocessing and not _PythonMultiprocessing.process_still_alive(ppid)):
-                    if is_multiprocessing:
-                        idx_queue.cancel_join_thread()
-                        result_queue.cancel_join_thread()
+                if _main_process_already_exit(eof, is_multiprocessing, idx_queue, result_queue, ppid) is True:
                     return
                 # If eof is not set, continue to put data to result_queue
                 continue
@@ -715,10 +722,10 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             if total_memory_maybe_used / sys_memory_free > 0.85:
                 valid_num_worker = math.floor(sys_memory_free * 0.85 / valid_num_shards / process_memory)
                 valid_num_worker = 1 if valid_num_worker <= 0 else valid_num_worker
-                info = "GeneratorDataset num_parallel_workers: " + str(self.num_parallel_workers) + \
-                       " is too large which maybe cause a lot of memory occupation (>85%) or out of memory(OOM) " \
-                       "during multi process running. Therefore, it is recommended to reduce num_parallel_workers to " \
-                       + str(valid_num_worker) + " or smaller."
+                info = "GeneratorDataset's num_parallel_workers: {} is too large which may cause a lot of memory " \
+                       "occupation (>85%) or out of memory(OOM) during multiprocessing. Therefore, it is recommended " \
+                       "to reduce num_parallel_workers to {} or smaller.".format(self.num_parallel_workers,
+                                                                                 valid_num_worker)
                 logger.warning(info)
 
 

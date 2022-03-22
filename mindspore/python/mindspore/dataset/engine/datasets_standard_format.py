@@ -195,26 +195,25 @@ class MindDataset(MappableDataset, UnionBaseDataset):
                  shard_id=None, sampler=None, padded_sample=None, num_padded=None, num_samples=None, cache=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle_to_bool(shuffle), num_shards=num_shards, shard_id=shard_id, cache=cache)
-        if shuffle is not None and not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like 'Shuffle.GLOBAL' or "
-                            "'Shuffle.FILES' or 'Shuffle.INFILE'.")
         if num_samples and shuffle in (Shuffle.FILES, Shuffle.INFILE):
             raise ValueError("'Shuffle.FILES' or 'Shuffle.INFILE' and 'num_samples' "
                              "cannot be specified at the same time.")
         self.shuffle_option = shuffle
+        self.load_dataset = True
         if isinstance(dataset_files, list):
             self.load_dataset = False
-        else:
-            self.load_dataset = True
 
-        self.dataset_files = ""
+        self.dataset_files = dataset_files
         if platform.system().lower() == "windows":
             if isinstance(dataset_files, list):
-                self.dataset_files = [item.replace("\\", "/") for item in dataset_files]
+                file_tuple = []
+                for item in dataset_files:
+                    item.replace("\\", "/")
+                    file_tuple.append(item)
+                self.dataset_files = file_tuple
             else:
                 self.dataset_files = dataset_files.replace("\\", "/")
-        else:
-            self.dataset_files = dataset_files
+
         self.columns_list = replace_none(columns_list, [])
 
         if shuffle is False:
