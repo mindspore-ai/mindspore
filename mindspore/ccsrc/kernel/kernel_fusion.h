@@ -27,11 +27,11 @@ namespace kernel {
  * @brief fuse op and return a callable mod
  */
 struct FusionScopeInfo {
-  FusionScopeInfo(int64_t id, const std::string &f_name, std::string core_type, std::vector<AnfNodePtr> in,
+  FusionScopeInfo(int64_t id, std::string f_name, std::string core_type, std::vector<AnfNodePtr> in,
                   std::vector<AnfNodePtr> comp, std::vector<AnfNodePtr> out)
       : scope_id(id),
-        full_name(f_name),
-        core_type(core_type),
+        full_name(std::move(f_name)),
+        core_type(std::move(core_type)),
         input_nodes(std::move(in)),
         compute_nodes(std::move(comp)),
         output_nodes(std::move(out)) {}

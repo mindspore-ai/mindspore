@@ -146,23 +146,7 @@ FusionType GetFusionTypeByName(const std::string &name) {
   return iter->first;
 }
 
-std::string GetCompilerCachePath() {
-  static std::string config_path = "";
-  if (config_path != "") {
-    return config_path;
-  }
-  const char *value = ::getenv(kCOMPILER_CACHE_PATH);
-  if (value == nullptr) {
-    config_path = "./";
-  } else {
-    config_path = std::string(value);
-    (void)FileUtils::CreateNotExistDirs(config_path);
-    if (config_path[config_path.length() - 1] != '/') {
-      config_path += "/";
-    }
-  }
-  return config_path;
-}
+std::string GetCompilerCachePath() { return Common::GetUserDefineCachePath(); }
 
 void KernelMeta::Initialize() {
   auto config_path = GetCompilerCachePath();
@@ -1003,12 +987,12 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
 }
 
 KernelAttr &KernelAttr::AddInputAttr(const TypeId &ms_type, const std::string &format) {
-  input_type_.emplace_back(ms_type, format);
+  (void)input_type_.emplace_back(ms_type, format);
   return *this;
 }
 
 KernelAttr &KernelAttr::AddOutputAttr(const TypeId &ms_type, const std::string &format) {
-  output_type_.emplace_back(ms_type, format);
+  (void)output_type_.emplace_back(ms_type, format);
   return *this;
 }
 
@@ -1106,10 +1090,10 @@ KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info) {
   MS_EXCEPTION_IF_NULL(build_info);
   KernelAttr kernel_attr;
   for (size_t i = 0; i < build_info->GetInputNum(); i++) {
-    kernel_attr.AddInputAttr(build_info->GetInputDeviceType(i), build_info->GetInputFormat(i));
+    (void)kernel_attr.AddInputAttr(build_info->GetInputDeviceType(i), build_info->GetInputFormat(i));
   }
   for (size_t j = 0; j < build_info->GetOutputNum(); j++) {
-    kernel_attr.AddOutputAttr(build_info->GetOutputDeviceType(j), build_info->GetOutputFormat(j));
+    (void)kernel_attr.AddOutputAttr(build_info->GetOutputDeviceType(j), build_info->GetOutputFormat(j));
   }
   return kernel_attr;
 }
