@@ -33,8 +33,6 @@ class ConvSingleInFusionPass : public FusionBasePass {
   explicit ConvSingleInFusionPass(FusionIdAllocatorPtr idAllocator)
       : FusionBasePass("ConvSingleInFusionPass", std::move(idAllocator)) {}
   ~ConvSingleInFusionPass() override = default;
-
- protected:
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:

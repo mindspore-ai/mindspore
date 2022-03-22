@@ -64,7 +64,7 @@ const BaseRef BatchToSpaceNDAttrUpdate::DefinePattern() const {
 }
 
 const AnfNodePtr BatchToSpaceNDAttrUpdate::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                   const EquivPtr &equiv) const {
+                                                   const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
