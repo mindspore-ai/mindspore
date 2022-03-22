@@ -187,7 +187,7 @@ AnfNodePtr MatchOutAxis(const AnfNodePtr &expanded_vmap_node, int parameters_siz
   return NewValueNode(vmap_post_fg);
 }
 
-FuncGraphPtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resource, int axis_size) {
+AnfNodePtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resource, int axis_size) {
   // Set a child scope named "vmap_'PrimitiveName'" for the vmap rule function,
   // and add "VmapRule" to the front.
   constexpr char vmap_rule_scope[] = "VmapRule/";
@@ -200,6 +200,7 @@ FuncGraphPtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBaseP
   // Firstly we parse the python VmapRules function registered for specific primitive. If failed, get
   // the vmap general rule.
   FuncGraphPtr vmap_rule_fg = nullptr;
+  AnfNodePtr vmap_rule_node = nullptr;
   py::function vmap_rule_fn;
   bool is_side_effect = false;
   if (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_MEM)) {
@@ -207,6 +208,8 @@ FuncGraphPtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBaseP
   } else if (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_IO) && prim->name() != prim::kPrimPrint->name()) {
     MS_LOG(EXCEPTION) << prim->name() << " is a GRAPH_FLAG_SIDE_EFFECT_IO prim, vmap dont support currently.";
   }
+
+  // Get vmap rule for specific primitive.
   if (prim->is_base()) {
     vmap_rule_fn = GetVmapRuleFunction(prim->name(), axis_size);
   } else {
@@ -215,25 +218,33 @@ FuncGraphPtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBaseP
       vmap_rule_fn = GetVmapRuleFunction(prim->name(), axis_size);
     }
   }
+
+  // If vmap rule for specific primitive not found, get vmap general rule.
   if (!vmap_rule_fn || py::isinstance<py::none>(vmap_rule_fn)) {
     MS_LOG(DEBUG) << "Fail to find vmap rule function for " << prim->name() << ", try to get the general vmap rule.";
-    vmap_rule_fn = GetVmapGeneralRuleFunction(prim->name(), is_side_effect, axis_size);
+    if (is_side_effect) {
+      vmap_rule_fn = python_adapter::GetPyFn("mindspore.ops._vmap", "vmap_monad_rule")(prim->name(), axis_size);
+    } else {
+      vmap_rule_node =
+        NewValueNode(std::make_shared<prim::VmapGeneralRule>("VmapGeneralRule", prim, static_cast<int64_t>(axis_size)));
+    }
   }
-  if (!vmap_rule_fn || py::isinstance<py::none>(vmap_rule_fn)) {
-    MS_LOG(EXCEPTION) << "Fail to find vmap rule function for " << prim->name() << ".";
-  }
-  vmap_rule_fg = parse::ParsePythonCode(vmap_rule_fn);
-  if (vmap_rule_fg == nullptr) {
-    MS_LOG(EXCEPTION) << "Fail to parse vmap rule function for " << prim->name() << ".";
-  }
-  auto vmap_rule_flag = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_PROPAGATE);
-  if (vmap_rule_flag) {
-    vmap_rule_fg->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
-  }
-  pipeline::ResourceBasePtr res = (resource != nullptr) ? resource : std::make_shared<pipeline::Resource>();
-  (void)parse::ResolveFuncGraph(vmap_rule_fg, res);
 
-  return vmap_rule_fg;
+  if (vmap_rule_node == nullptr) {
+    vmap_rule_fg = parse::ParsePythonCode(vmap_rule_fn);
+    if (vmap_rule_fg == nullptr) {
+      MS_LOG(EXCEPTION) << "Fail to parse vmap rule function for " << prim->name() << ".";
+    }
+    auto vmap_rule_flag = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_PROPAGATE);
+    if (vmap_rule_flag) {
+      vmap_rule_fg->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
+    }
+    pipeline::ResourceBasePtr res = (resource != nullptr) ? resource : std::make_shared<pipeline::Resource>();
+    (void)parse::ResolveFuncGraph(vmap_rule_fg, res);
+    vmap_rule_node = NewValueNode(vmap_rule_fg);
+  }
+
+  return vmap_rule_node;
 }
 
 AnfNodePtr ExpandVmapPrimitive(const AnfNodePtr &vnode, const pipeline::ResourceBasePtr &resource, int axis_size) {
@@ -246,12 +257,12 @@ AnfNodePtr ExpandVmapPrimitive(const AnfNodePtr &vnode, const pipeline::Resource
   if (throughtout_op.count(prim->name())) {
     return vnode;
   } else {
-    FuncGraphPtr prim_vmap_rule = GetVmapRule(prim, resource, axis_size);
+    AnfNodePtr prim_vmap_rule = GetVmapRule(prim, resource, axis_size);
     if (prim_vmap_rule == nullptr) {
       MS_LOG(EXCEPTION) << "Primitive " << prim->name() << " transform to VmapRule failed. NodeInfo: "
                         << trace::GetDebugInfo(prim_vmap_rule->debug_info()) << ".";
     }
-    return NewValueNode(prim_vmap_rule);
+    return prim_vmap_rule;
   }
   return nullptr;
 }

@@ -25,6 +25,12 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
+using CNodeInpusList = std::vector<std::vector<AnfNodePtr>>;
+using InputsAbstractList = std::vector<std::vector<abstract::AbstractBasePtr>>;
+constexpr int64_t kValIndex = 0;
+constexpr int64_t kDimIndex = 1;
+constexpr char kVmapFunctionModelName[] = "mindspore.ops._vmap";
+constexpr char kNumpyModelName[] = "mindspore.numpy";
 class VmapMatchOutAxis : public MetaFuncGraph {
  public:
   explicit VmapMatchOutAxis(const std::string &name) : MetaFuncGraph(name), fg_(std::make_shared<FuncGraph>()) {}
@@ -54,6 +60,23 @@ class VmapGeneralPreprocess : public MetaFuncGraph {
   MS_DECLARE_PARENT(VmapGeneralPreprocess, MetaFuncGraph);
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+};
+
+class VmapGeneralRule : public MetaFuncGraph {
+ public:
+  explicit VmapGeneralRule(const std::string &name, const PrimitivePtr &prim, int64_t axis_size)
+      : MetaFuncGraph(name), prim_(prim), axis_size_(axis_size) {}
+  ~VmapGeneralRule() override = default;
+  MS_DECLARE_PARENT(VmapGeneralRule, MetaFuncGraph);
+
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+
+ private:
+  CNodeInpusList ConstructMapInput(const InputsAbstractList &tuple_elements_abstract, bool wrapped_tuple,
+                                   int64_t args_size);
+  PrimitivePtr prim_{nullptr};
+  int64_t axis_size_ = 0;
+  FuncGraphPtr fg_{nullptr};
 };
 }  // namespace prim
 }  // namespace mindspore

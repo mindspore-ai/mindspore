@@ -14,6 +14,8 @@
 # ============================================================================
 
 """vmap impl."""
-from .vmap_base import get_vmap_rule, vmap_general_rule, vmap_monad_rule, _broadcast_by_axis, vmap_bind_all_none
+from .vmap_base import get_vmap_rule, vmap_monad_rule, _broadcast_by_axis, vmap_bind_all_none,\
+    vmap_unstack, vmap_general_output_process
 
-__all__ = ['get_vmap_rule', 'vmap_general_rule', 'vmap_monad_rule', '_broadcast_by_axis', 'vmap_bind_all_none']
+__all__ = ['get_vmap_rule', 'vmap_monad_rule', '_broadcast_by_axis', 'vmap_bind_all_none',
+           'vmap_unstack', 'vmap_general_output_process']
