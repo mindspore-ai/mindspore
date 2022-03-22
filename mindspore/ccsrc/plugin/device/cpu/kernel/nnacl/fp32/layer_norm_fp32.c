@@ -18,11 +18,12 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *square_mean) {
+int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *variance) {
   if (num <= 0) {
     return NNACL_ERR;
   }
   int index = 0;
+  float square_mean = 0.f;
 #ifdef ENABLE_NEON
   float32x4_t sum = vdupq_n_f32(0);
   float32x4_t square_sum = vdupq_n_f32(0);
@@ -33,14 +34,15 @@ int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *square
     square_sum = vaddq_f32(square_sum, squarev);
   }
   *mean = sum[0] + sum[1] + sum[2] + sum[3];
-  *square_mean = square_sum[0] + square_sum[1] + square_sum[2] + square_sum[3];
+  square_mean = square_sum[0] + square_sum[1] + square_sum[2] + square_sum[3];
 #endif
   for (; index < num; index++) {
     *mean += src[index];
-    *square_mean += src[index] * src[index];
+    square_mean += src[index] * src[index];
   }
   *mean /= (float)num;
-  *square_mean /= (float)num;
+  square_mean /= (float)num;
+  *variance = square_mean - (*mean) * (*mean);
   return NNACL_OK;
 }
 
@@ -68,7 +70,7 @@ void LayerNormGammaAndBeta(float *dst, const float *src, const float *gamma_data
 }
 
 int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_data, float *dst_data, float *out_mean,
-              float *out_deno, const LayerNormParameter *param, size_t task_id) {
+              float *out_variance, const LayerNormParameter *param, size_t task_id) {
   if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -80,18 +82,18 @@ int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_
     const float *src_norm = src_data + i * param->norm_inner_size_;
     float *dst_norm = dst_data + i * param->norm_inner_size_;
     float cur_mean = 0.0f;
-    float cur_deno = 0.0f;
-    int ret = LayerNormMeanAndSquare(src_norm, param->norm_inner_size_, &cur_mean, &cur_deno);
+    float cur_variance = 0.0f;
+    int ret = LayerNormMeanAndSquare(src_norm, param->norm_inner_size_, &cur_mean, &cur_variance);
     if (ret != NNACL_OK) {
       return NNACL_ERR;
     }
     if (out_mean != NULL) {
       out_mean[i] = cur_mean;
     }
-    if (out_deno != NULL) {
-      out_deno[i] = cur_deno;
+    if (out_variance != NULL) {
+      out_variance[i] = cur_variance;
     }
-    const float deno = 1 / sqrtf(cur_deno - cur_mean * cur_mean + param->epsilon_);
+    const float deno = 1 / sqrtf(cur_variance + param->epsilon_);
     if (param->norm_outer_size_ <= param->params_outer_size_) {
       for (int x = 0; x < param->norm_inner_size_ / param->params_inner_size_; x++) {
         const float *src_param = src_norm + x * param->params_inner_size_;
