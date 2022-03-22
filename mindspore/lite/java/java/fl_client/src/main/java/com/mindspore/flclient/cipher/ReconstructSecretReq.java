@@ -141,6 +141,11 @@ public class ReconstructSecretReq {
                     retCode = ResponseCode.OutOfTime;
                     return FLClientStatus.RESTART;
                 }
+                if (Common.isSeverJobFinished(responseData)) {
+                    LOGGER.info(Common.addTag("[sendReconstructSecret] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist."));
+                    retCode = ResponseCode.SystemError;
+                    return FLClientStatus.FAILED;
+                }
                 ByteBuffer buffer = ByteBuffer.wrap(responseData);
                 ReconstructSecret reconstructSecretRsp = ReconstructSecret.getRootAsReconstructSecret(buffer);
                 return judgeSendReconstructSecrets(reconstructSecretRsp);

@@ -377,6 +377,7 @@ public class SyncFLJob {
         FLClientStatus status;
         FLLiteClient flLiteClient = new FLLiteClient();
         status = flLiteClient.getModel();
+        Common.freeSession();
         return status;
     }
 
