@@ -201,23 +201,27 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
   }
 
   std::unordered_map<std::string, size_t> feature_map;
-  auto upload_feature_map = update_model_req->feature_map();
-  MS_ERROR_IF_NULL_W_RET_VAL(upload_feature_map, ResultCode::kFail);
-  for (uint32_t i = 0; i < upload_feature_map->size(); i++) {
-    const auto &item = upload_feature_map->Get(i);
-    MS_ERROR_IF_NULL_W_RET_VAL(item, ResultCode::kFail);
-    MS_ERROR_IF_NULL_W_RET_VAL(item->weight_fullname(), ResultCode::kFail);
-    MS_ERROR_IF_NULL_W_RET_VAL(item->data(), ResultCode::kFail);
+  if (ps::PSContext::instance()->upload_compress_type() != kDiffSparseQuant) {
+    auto upload_feature_map = update_model_req->feature_map();
+    MS_ERROR_IF_NULL_W_RET_VAL(upload_feature_map, ResultCode::kFail);
+    for (uint32_t i = 0; i < upload_feature_map->size(); i++) {
+      const auto &item = upload_feature_map->Get(i);
+      MS_ERROR_IF_NULL_W_RET_VAL(item, ResultCode::kFail);
+      MS_ERROR_IF_NULL_W_RET_VAL(item->weight_fullname(), ResultCode::kFail);
+      MS_ERROR_IF_NULL_W_RET_VAL(item->data(), ResultCode::kFail);
 
-    std::string weight_full_name = item->weight_fullname()->str();
-    size_t weight_size = item->data()->size() * sizeof(float);
-    feature_map[weight_full_name] = weight_size;
+      std::string weight_full_name = item->weight_fullname()->str();
+      size_t weight_size = item->data()->size() * sizeof(float);
+      feature_map[weight_full_name] = weight_size;
+    }
   }
 
   bool verifyFeatureMapIsSuccess;
   if (ps::PSContext::instance()->encrypt_type() == ps::kDSEncryptType && update_model_req->sign() != 0) {
     MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->index_array(), ResultCode::kFail);
     verifyFeatureMapIsSuccess = VerifySignDSFeatureMap(feature_map, update_model_req);
+  } else if (ps::PSContext::instance()->upload_compress_type() == kDiffSparseQuant) {
+    verifyFeatureMapIsSuccess = VerifyUploadCompressFeatureMap(update_model_req);
   } else {
     verifyFeatureMapIsSuccess = LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map);
   }
@@ -280,6 +284,45 @@ bool UpdateModelKernel::VerifySignDSFeatureMap(const std::unordered_map<std::str
   return true;
 }
 
+bool UpdateModelKernel::VerifyUploadCompressFeatureMap(const schema::RequestUpdateModel *update_model_req) {
+  auto &aggregation_feature_map_ = LocalMetaStore::GetInstance().aggregation_feature_map();
+  auto upload_sparse_rate = update_model_req->upload_sparse_rate();
+  if (upload_sparse_rate != ps::PSContext::instance()->upload_sparse_rate()) {
+    MS_LOG(WARNING) << "The upload_sparse_rate must be equal to the setting in context.";
+    return false;
+  }
+  auto fbs_name_vec = update_model_req->name_vec();
+  if (fbs_name_vec == nullptr) {
+    MS_LOG(WARNING) << "The name_vec is null.";
+    return false;
+  }
+  if (fbs_name_vec->size() == 0) {
+    MS_LOG(WARNING) << "The size of name_vec must be larger than 0.";
+    return false;
+  }
+  if (fbs_name_vec->size() > aggregation_feature_map_.size()) {
+    MS_LOG(WARNING) << "The size of name_vec must be smaller than model in server.";
+    return false;
+  }
+  for (size_t i = 0; i < fbs_name_vec->size(); ++i) {
+    std::string name = fbs_name_vec->Get(i)->str();
+    if (aggregation_feature_map_.count(name) == 0) {
+      MS_LOG(WARNING) << "The upload name: " << name << " is not in model in server.";
+      return false;
+    }
+  }
+  auto fbs_compress_feature_map = update_model_req->compress_feature_map();
+  if (fbs_compress_feature_map == nullptr) {
+    MS_LOG(WARNING) << "The upload compress feature map is null.";
+    return false;
+  }
+  if (fbs_compress_feature_map->size() == 0) {
+    MS_LOG(WARNING) << "The upload compress feature map is empty.";
+    return false;
+  }
+  return true;
+}
+
 ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_model_req,
                                           const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta) {
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, ResultCode::kFail);
@@ -292,6 +335,8 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
   std::map<std::string, UploadData> feature_map;
   if (ps::PSContext::instance()->encrypt_type() == ps::kDSEncryptType) {
     feature_map = ParseSignDSFeatureMap(update_model_req, data_size, &weight_map);
+  } else if (ps::PSContext::instance()->upload_compress_type() == kDiffSparseQuant) {
+    feature_map = ParseUploadCompressFeatureMap(update_model_req, data_size, &weight_map);
   } else {
     feature_map = ParseFeatureMap(update_model_req);
   }
@@ -394,6 +439,89 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseSignDSFeatureMap(
     upload_data[kNewWeight].size = weight_size;
     feature_map[weight_full_name] = upload_data;
   }
+  return feature_map;
+}
+
+std::map<std::string, UploadData> UpdateModelKernel::ParseUploadCompressFeatureMap(
+  const schema::RequestUpdateModel *update_model_req, size_t data_size,
+  std::map<std::string, std::vector<float>> *weight_map) {
+  MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, {});
+  std::map<std::string, UploadData> feature_map;
+  schema::CompressType upload_compress_type = update_model_req->upload_compress_type();
+  upload_compress_type =
+    mindspore::fl::compression::DecodeExecutor::GetInstance().GetCompressType(upload_compress_type);
+  MS_LOG(INFO) << "This schema upload compress type is: " << upload_compress_type;
+  if (upload_compress_type != schema::CompressType_NO_COMPRESS) {
+    MS_LOG(INFO) << "This upload compress type is DIFF_SPARSE_QUANT.";
+    feature_map = DecodeFeatureMap(weight_map, update_model_req, upload_compress_type, data_size);
+    return feature_map;
+  }
+  MS_LOG(INFO) << "This upload compress type is NO_COMPRESS.";
+  // Some clients upload origin weights.
+  auto fbs_feature_map = update_model_req->feature_map();
+  MS_ERROR_IF_NULL_W_RET_VAL(fbs_feature_map, feature_map);
+  for (uint32_t i = 0; i < fbs_feature_map->size(); i++) {
+    std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
+    float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());
+    size_t weight_size = fbs_feature_map->Get(i)->data()->size() * sizeof(float);
+    UploadData upload_data;
+    upload_data[kNewWeight].addr = weight_data;
+    upload_data[kNewWeight].size = weight_size;
+    feature_map[weight_full_name] = upload_data;
+  }
+  return feature_map;
+}
+
+std::map<std::string, UploadData> UpdateModelKernel::DecodeFeatureMap(
+  std::map<std::string, std::vector<float>> *weight_map, const schema::RequestUpdateModel *update_model_req,
+  schema::CompressType upload_compress_type, size_t data_size) {
+  std::map<std::string, UploadData> feature_map;
+
+  // Get and set decode hyper parameters.
+  auto seed = update_model_req->iteration();
+  MS_LOG(INFO) << "The seed for compression is: " << seed;
+  auto upload_sparse_rate = update_model_req->upload_sparse_rate();
+  MS_LOG(INFO) << "The upload_sparse_rate for compression is: " << upload_sparse_rate;
+  // Get name vector.
+  auto fbs_name_vec = update_model_req->name_vec();
+  std::vector<std::string> name_vec;
+  for (size_t i = 0; i < fbs_name_vec->size(); ++i) {
+    name_vec.emplace_back(fbs_name_vec->Get(i)->str());
+  }
+
+  // Parameter process for decode.
+  auto fbs_compress_feature_map = update_model_req->compress_feature_map();
+  std::vector<mindspore::fl::compression::CompressFeatureMap> compress_feature_maps;
+  for (size_t i = 0; i < fbs_compress_feature_map->size(); ++i) {
+    mindspore::fl::compression::CompressFeatureMap compress_feature_map;
+    int8_t *compress_weight_data = const_cast<int8_t *>(fbs_compress_feature_map->Get(i)->compress_data()->data());
+    size_t compress_weight_size = fbs_compress_feature_map->Get(i)->compress_data()->size();
+    MS_LOG(INFO) << "The compress weight size: " << compress_weight_size;
+    for (size_t j = 0; j < compress_weight_size; ++j) {
+      compress_feature_map.compress_data.emplace_back(compress_weight_data[j]);
+    }
+    compress_feature_map.min_val = fbs_compress_feature_map->Get(i)->min_val();
+    compress_feature_map.max_val = fbs_compress_feature_map->Get(i)->max_val();
+    MS_LOG(INFO) << "Min value: " << compress_feature_map.min_val;
+    MS_LOG(INFO) << "Max value: " << compress_feature_map.max_val;
+    compress_feature_maps.emplace_back(compress_feature_map);
+  }
+
+  // Decode.
+  bool status = mindspore::fl::compression::DecodeExecutor::GetInstance().Decode(
+    weight_map, compress_feature_maps, upload_compress_type, upload_sparse_rate, seed, name_vec, data_size);
+  if (status) {
+    for (size_t i = 0; i < name_vec.size(); ++i) {
+      std::string weight_full_name = name_vec[i];
+      size_t weight_size = (*weight_map)[weight_full_name].size() * sizeof(float);
+      UploadData upload_data;
+      upload_data[kNewWeight].addr = (*weight_map)[weight_full_name].data();
+      upload_data[kNewWeight].size = weight_size;
+      feature_map[weight_full_name] = upload_data;
+    }
+    return feature_map;
+  }
+  MS_LOG(WARNING) << "Decode failed!";
   return feature_map;
 }
 

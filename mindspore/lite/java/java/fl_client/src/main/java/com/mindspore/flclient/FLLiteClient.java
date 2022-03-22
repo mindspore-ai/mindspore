@@ -105,6 +105,16 @@ public class FLLiteClient {
         batchSize = flPlan.miniBatch();
         String serverMod = flPlan.serverMode();
         localFLParameter.setServerMod(serverMod);
+        // Get and set hyper parameters for compression.
+        byte uploadCompressType = flJob.uploadCompressType();
+        LOGGER.info(Common.addTag("[startFLJob] [compression] uploadCompressType: " + uploadCompressType));
+        localFLParameter.setUploadCompressType(uploadCompressType);
+        float uploadSparseRate = flJob.uploadSparseRate();
+        LOGGER.info(Common.addTag("[startFLJob] [compression] uploadSparseRate: " + uploadSparseRate));
+        localFLParameter.setUploadSparseRatio(uploadSparseRate);
+        int seed = flJob.iteration();
+        LOGGER.info(Common.addTag("[startFLJob] [compression] seed: " + seed));
+        localFLParameter.setSeed(seed);
         if (Common.checkFLName(flParameter.getFlName())) {
             deprecatedSetBatchSize(batchSize);
         } else {
@@ -446,7 +456,7 @@ public class FLLiteClient {
         return status;
     }
 
-    private Map<String, float[]> getFeatureMap() {
+    public Map<String, float[]> getFeatureMap() {
         Map<String, float[]> featureMap = new HashMap<>();
         if (Common.checkFLName(flParameter.getFlName())) {
             featureMap = deprecatedGetFeatureMap();
@@ -530,8 +540,7 @@ public class FLLiteClient {
                         localFLParameter.getEncryptLevel().toString() + "> : " + curStatus));
                 return curStatus;
             case DP_ENCRYPT:
-                // get the feature map before train
-                oldFeatureMap = getFeatureMap();
+                oldFeatureMap = localFLParameter.getOldFeatureMap();
                 curStatus = secureProtocol.setDPParameter(iteration, dpEps, dpDelta, dpNormClipAdapt, oldFeatureMap);
                 retCode = ResponseCode.SUCCEED;
                 if (curStatus != FLClientStatus.SUCCESS) {
@@ -542,8 +551,7 @@ public class FLLiteClient {
                 LOGGER.info(Common.addTag("[Encrypt] set parameters for DP_ENCRYPT!"));
                 return FLClientStatus.SUCCESS;
             case SIGNDS:
-                // get the feature map before train
-                oldFeatureMap = getFeatureMap();
+                oldFeatureMap = localFLParameter.getOldFeatureMap();
                 curStatus = secureProtocol.setDSParameter(signK, signEps, signThrRatio, signGlobalLr, signDimOut, oldFeatureMap);
                 retCode = ResponseCode.SUCCEED;
                 if (curStatus != FLClientStatus.SUCCESS) {

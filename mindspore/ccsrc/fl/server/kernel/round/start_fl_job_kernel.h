@@ -25,6 +25,9 @@
 #include "fl/server/executor.h"
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
+#include "schema/fl_job_generated.h"
+#include "schema/cipher_generated.h"
+#include "fl/compression/encode_executor.h"
 
 namespace mindspore {
 namespace fl {
@@ -56,7 +59,8 @@ class StartFLJobKernel : public RoundKernel {
   // Distributed count service counts for startFLJob.
   ResultCode CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestFLJob *start_fl_job_req);
 
-  void StartFLJob(const std::shared_ptr<FBBuilder> &fbb);
+  void StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta,
+                  const schema::RequestFLJob *start_fl_job_req);
 
   bool JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestFLJob *start_fl_job_req);
 
@@ -65,7 +69,9 @@ class StartFLJobKernel : public RoundKernel {
   // Build response for startFLJob round no matter success or failure.
   void BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                           const std::string &reason, const bool is_selected, const std::string &next_req_time,
-                          std::map<std::string, AddressPtr> feature_maps = {});
+                          const std::map<std::string, AddressPtr> &feature_maps = {},
+                          const schema::CompressType &compressType = schema::CompressType_NO_COMPRESS,
+                          const std::map<std::string, AddressPtr> &compress_feature_maps = {});
 
   // The executor is for getting the initial model for startFLJob request.
   Executor *executor_;

@@ -92,7 +92,7 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req,
     return;
   }
   auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
-  std::map<std::string, AddressPtr> feature_maps;
+  std::map<std::string, AddressPtr> feature_maps = {};
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
   size_t get_model_iter = IntToSize(get_model_req->iteration());
   const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
@@ -110,6 +110,7 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req,
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return;
   }
+
   IncreaseAcceptClientNum();
   auto real_get_model_iter = get_model_iter;
   if (iter_to_model.count(get_model_iter) == 0) {
@@ -118,12 +119,37 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req,
                   << " is invalid. Current iteration is " << std::to_string(current_iter);
     real_get_model_iter = latest_iter_num;
   }
-  auto cache = ModelStore::GetInstance().GetModelResponseCache(name_, current_iter, real_get_model_iter);
+  auto download_compress_types = get_model_req->download_compress_types();
+  schema::CompressType compressType =
+    mindspore::fl::compression::CompressExecutor::GetInstance().GetCompressType(download_compress_types);
+  std::string compress_type;
+  if (compressType == schema::CompressType_QUANT) {
+    compress_type = kQuant;
+  } else {
+    compress_type = kNoCompress;
+  }
+  auto cache = ModelStore::GetInstance().GetModelResponseCache(name_, current_iter, real_get_model_iter, compress_type);
   if (cache == nullptr) {
-    feature_maps = ModelStore::GetInstance().GetModelByIterNum(real_get_model_iter);
+    // Only download compress weights if client support.
+    std::map<std::string, AddressPtr> compress_feature_maps = {};
+    if (compressType == schema::CompressType_NO_COMPRESS) {
+      feature_maps = ModelStore::GetInstance().GetModelByIterNum(real_get_model_iter);
+    } else {
+      auto compressExecutor = mindspore::fl::compression::CompressExecutor::GetInstance();
+      if (compressExecutor.EnableCompressWeight(compressType)) {
+        const auto &iter_to_compress_model = ModelStore::GetInstance().iteration_to_compress_model();
+        if (iter_to_compress_model.count(get_model_iter) == 0) {
+          MS_LOG(DEBUG) << "The iteration of GetCompressModel request " << std::to_string(get_model_iter)
+                        << " is invalid. Current iteration is " << std::to_string(current_iter);
+          compress_feature_maps = ModelStore::GetInstance().GetCompressModelByIterNum(latest_iter_num, compressType);
+        } else {
+          compress_feature_maps = ModelStore::GetInstance().GetCompressModelByIterNum(get_model_iter, compressType);
+        }
+      }
+    }
     BuildGetModelRsp(fbb, schema::ResponseCode_SUCCEED, "Get model for iteration " + std::to_string(get_model_iter),
-                     current_iter, feature_maps, std::to_string(next_req_time));
-    cache = ModelStore::GetInstance().StoreModelResponseCache(name_, current_iter, real_get_model_iter,
+                     current_iter, feature_maps, std::to_string(next_req_time), compressType, compress_feature_maps);
+    cache = ModelStore::GetInstance().StoreModelResponseCache(name_, current_iter, real_get_model_iter, compress_type,
                                                               fbb->GetBufferPointer(), fbb->GetSize());
     if (cache == nullptr) {
       SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
@@ -131,7 +157,7 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req,
     }
   }
   SendResponseMsgInference(message, cache->data(), cache->size(), ModelStore::GetInstance().RelModelResponseCache);
-  MS_LOG(DEBUG) << "GetModel last iteratin is valid or not: " << Iteration::GetInstance().is_last_iteration_valid()
+  MS_LOG(DEBUG) << "GetModel last iteration is valid or not: " << Iteration::GetInstance().is_last_iteration_valid()
                 << ", next request time is " << next_req_time << ", current iteration is " << current_iter;
   return;
 }
@@ -139,7 +165,8 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req,
 void GetModelKernel::BuildGetModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                                       const std::string &reason, const size_t iter,
                                       const std::map<std::string, AddressPtr> &feature_maps,
-                                      const std::string &timestamp) {
+                                      const std::string &timestamp, const schema::CompressType &compressType,
+                                      const std::map<std::string, AddressPtr> &compress_feature_maps) {
   if (fbb == nullptr) {
     MS_LOG(ERROR) << "Input fbb is nullptr.";
     return;
@@ -156,12 +183,40 @@ void GetModelKernel::BuildGetModelRsp(const std::shared_ptr<FBBuilder> &fbb, con
   }
   auto fbs_feature_maps_vector = fbb->CreateVector(fbs_feature_maps);
 
+  // construct compress feature maps with fbs
+  std::vector<flatbuffers::Offset<schema::CompressFeatureMap>> fbs_compress_feature_maps;
+  for (const auto &compress_feature_map : compress_feature_maps) {
+    if (compress_feature_map.first.find(kMinVal) != string::npos ||
+        compress_feature_map.first.find(kMaxVal) != string::npos) {
+      continue;
+    }
+    auto fbs_compress_weight_fullname = fbb->CreateString(compress_feature_map.first);
+    auto fbs_compress_weight_data = fbb->CreateVector(reinterpret_cast<int8_t *>(compress_feature_map.second->addr),
+                                                      compress_feature_map.second->size / sizeof(int8_t));
+
+    const std::string min_val_name = compress_feature_map.first + "." + kMinVal;
+    const std::string max_val_name = compress_feature_map.first + "." + kMaxVal;
+
+    const AddressPtr min_val_ptr = compress_feature_maps.at(min_val_name);
+    const AddressPtr max_val_ptr = compress_feature_maps.at(max_val_name);
+
+    float *fbs_min_val_ptr = reinterpret_cast<float *>(min_val_ptr->addr);
+    float *fbs_max_val_ptr = reinterpret_cast<float *>(max_val_ptr->addr);
+    auto fbs_compress_feature_map = schema::CreateCompressFeatureMap(
+      *(fbb.get()), fbs_compress_weight_fullname, fbs_compress_weight_data, *fbs_min_val_ptr, *fbs_max_val_ptr);
+
+    fbs_compress_feature_maps.push_back(fbs_compress_feature_map);
+  }
+  auto fbs_compress_feature_maps_vector = fbb->CreateVector(fbs_compress_feature_maps);
+
   schema::ResponseGetModelBuilder rsp_get_model_builder(*(fbb.get()));
   rsp_get_model_builder.add_retcode(static_cast<int>(retcode));
   rsp_get_model_builder.add_reason(fbs_reason);
   rsp_get_model_builder.add_iteration(static_cast<int>(iter));
   rsp_get_model_builder.add_feature_map(fbs_feature_maps_vector);
   rsp_get_model_builder.add_timestamp(fbs_timestamp);
+  rsp_get_model_builder.add_download_compress_type(compressType);
+  rsp_get_model_builder.add_compress_feature_map(fbs_compress_feature_maps_vector);
   auto rsp_get_model = rsp_get_model_builder.Finish();
   fbb->Finish(rsp_get_model);
   return;

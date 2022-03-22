@@ -18,6 +18,7 @@ package com.mindspore.flclient;
 
 import com.google.flatbuffers.FlatBufferBuilder;
 
+import com.mindspore.flclient.compression.DecodeExecutor;
 import com.mindspore.flclient.model.AlInferBert;
 import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
@@ -29,6 +30,7 @@ import com.mindspore.flclient.model.TrainLenet;
 import com.mindspore.flclient.pki.PkiBean;
 import com.mindspore.flclient.pki.PkiUtil;
 
+import mindspore.schema.*;
 import mindspore.schema.FLPlan;
 import mindspore.schema.FeatureMap;
 import mindspore.schema.RequestFLJob;
@@ -38,6 +40,7 @@ import mindspore.schema.ResponseFLJob;
 import java.io.IOException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import static com.mindspore.flclient.LocalFLParameter.ALBERT;
@@ -119,6 +122,7 @@ public class StartFLJob {
                     .iteration(iteration)
                     .signData(pkiBean.getSignData())
                     .certificateChain(pkiBean.getCertificates())
+                    .downloadCompressTypesBuilder(flParameter.getDownloadCompressTypes())
                     .build();
         }
         return builder.flName(flParameter.getFlName())
@@ -126,6 +130,7 @@ public class StartFLJob {
                 .id(localFLParameter.getFlID())
                 .dataSize(dataSize)
                 .iteration(iteration)
+                .downloadCompressTypesBuilder(flParameter.getDownloadCompressTypes())
                 .build();
     }
 
@@ -151,8 +156,9 @@ public class StartFLJob {
             ArrayList<FeatureMap> albertFeatureMaps = new ArrayList<FeatureMap>();
             ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
             featureSize = 0;
-            for (int i = 0; i < fmCount; i++) {
-                FeatureMap feature = flJob.featureMap(i);
+            List<FeatureMap> featureMapList = parseFeatureMapList(flJob);
+            for (int i = 0; i < featureMapList.size(); i++) {
+                FeatureMap feature = featureMapList.get(i);
                 if (feature == null) {
                     LOGGER.severe(Common.addTag("[startFLJob] the feature returned from server is null"));
                     return FLClientStatus.FAILED;
@@ -233,12 +239,14 @@ public class StartFLJob {
 
     private FLClientStatus deprecatedParseResponseLenet(ResponseFLJob flJob) {
         FLClientStatus status;
-        int fmCount = flJob.featureMapLength();
-        ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
         updateFeatureName.clear();
         featureSize = 0;
-        for (int i = 0; i < fmCount; i++) {
-            FeatureMap feature = flJob.featureMap(i);
+        List<FeatureMap> featureMapList = parseFeatureMapList(flJob);
+
+        ArrayList<FeatureMap> featureMaps = new ArrayList<>();
+
+        for (int i = 0; i < featureMapList.size(); i++) {
+            FeatureMap feature = featureMapList.get(i);
             if (feature == null) {
                 LOGGER.severe(Common.addTag("[startFLJob] the feature returned from server is null"));
                 return FLClientStatus.FAILED;
@@ -267,6 +275,24 @@ public class StartFLJob {
         return FLClientStatus.SUCCESS;
     }
 
+    private List<FeatureMap> parseFeatureMapList(ResponseFLJob flJob) {
+        List<FeatureMap> featureMaps;
+        byte compressType = flJob.downloadCompressType();
+        if (flJob.downloadCompressType() == mindspore.schema.CompressType.NO_COMPRESS) {
+            LOGGER.info(Common.addTag("[parseFeatureMapList] create no compress feature map."));
+            featureMaps = new ArrayList<>();
+            for (int i = 0; i < flJob.featureMapLength(); i++) {
+                featureMaps.add(flJob.featureMap(i));
+            }
+        } else {
+            List<CompressFeatureMap> compressFeatureMapList = new ArrayList<>();
+            for (int i = 0; i < flJob.compressFeatureMapLength(); i++) {
+                compressFeatureMapList.add(flJob.compressFeatureMap(i));
+            }
+            featureMaps = DecodeExecutor.getInstance().deCompressWeight(compressType, compressFeatureMapList);
+        }
+        return featureMaps;
+    }
 
     private FLClientStatus hybridFeatures(ResponseFLJob flJob) {
         FLClientStatus status;
@@ -275,8 +301,23 @@ public class StartFLJob {
         ArrayList<FeatureMap> trainFeatureMaps = new ArrayList<FeatureMap>();
         ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
         featureSize = 0;
+        List<FeatureMap> featureMaps;
+        byte compressType = flJob.downloadCompressType();
+        if (compressType == CompressType.NO_COMPRESS) {
+            featureMaps = new ArrayList<>();
+            for (int i = 0; i < fmCount; i++) {
+                featureMaps.add(flJob.featureMap(i));
+            }
+        } else {
+            List<CompressFeatureMap> compressFeatureMapList = new ArrayList<>();
+            for (int i = 0; i < flJob.compressFeatureMapLength(); i++) {
+                compressFeatureMapList.add(flJob.compressFeatureMap(i));
+            }
+            featureMaps = DecodeExecutor.getInstance().deCompressWeight(compressType, compressFeatureMapList);
+            fmCount = featureMaps.size();
+        }
         for (int i = 0; i < fmCount; i++) {
-            FeatureMap feature = flJob.featureMap(i);
+            FeatureMap feature = featureMaps.get(i);
             if (feature == null) {
                 LOGGER.severe(Common.addTag("[startFLJob] the feature returned from server is null"));
                 retCode = ResponseCode.SystemError;
@@ -335,8 +376,23 @@ public class StartFLJob {
         int fmCount = flJob.featureMapLength();
         ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
         featureSize = 0;
+        byte compressType = flJob.downloadCompressType();
+        List<FeatureMap> parseFeatureMaps;
+        if (compressType == CompressType.NO_COMPRESS) {
+            parseFeatureMaps = new ArrayList<>();
+            for (int i = 0; i < fmCount; i++) {
+                parseFeatureMaps.add(flJob.featureMap(i));
+            }
+        } else {
+            List<CompressFeatureMap> compressFeatureMapList = new ArrayList<>();
+            for (int i = 0; i < flJob.compressFeatureMapLength(); i++) {
+                compressFeatureMapList.add(flJob.compressFeatureMap(i));
+            }
+            parseFeatureMaps = DecodeExecutor.getInstance().deCompressWeight(compressType, compressFeatureMapList);
+            fmCount = parseFeatureMaps.size();
+        }
         for (int i = 0; i < fmCount; i++) {
-            FeatureMap feature = flJob.featureMap(i);
+            FeatureMap feature = parseFeatureMaps.get(i);
             if (feature == null) {
                 LOGGER.severe(Common.addTag("[startFLJob] the feature returned from server is null"));
                 retCode = ResponseCode.SystemError;
@@ -437,8 +493,8 @@ public class StartFLJob {
 
         switch (responseRetCode) {
             case (ResponseCode.SUCCEED):
-                if (flJob.featureMapLength() <= 0) {
-                    LOGGER.severe(Common.addTag("[startFLJob] the feature size get from server is zero"));
+                if (flJob.downloadCompressType() == CompressType.NO_COMPRESS && flJob.featureMapLength() <= 0) {
+                    LOGGER.warning(Common.addTag("[startFLJob] the feature size get from server is zero"));
                     retCode = ResponseCode.SystemError;
                     return FLClientStatus.FAILED;
                 }
@@ -484,6 +540,7 @@ public class StartFLJob {
         private int equipCertOffset = 0;
         private int equipCACertOffset = 0;
         private int rootCertOffset = 0;
+        private int downloadCompressTypesOffset = 0;
 
         public RequestStartFLJobBuilder() {
             builder = new FlatBufferBuilder();
@@ -598,6 +655,17 @@ public class StartFLJob {
             return this;
         }
 
+        private RequestStartFLJobBuilder downloadCompressTypesBuilder(byte[] downloadCompressTypes) {
+            if (downloadCompressTypes == null || downloadCompressTypes.length == 0) {
+                LOGGER.severe(Common.addTag("[StartFLJob] the parameter of <downloadCompressTypes> is null or empty," +
+                        " please check!"));
+                throw new IllegalArgumentException();
+            }
+            this.downloadCompressTypesOffset = RequestFLJob.createDownloadCompressTypesVector(builder,
+                    downloadCompressTypes);
+            return this;
+        }
+
         /**
          * build protobuffer
          *
@@ -615,6 +683,7 @@ public class StartFLJob {
             RequestFLJob.addEquipCaCert(builder, equipCACertOffset);
             RequestFLJob.addEquipCert(builder, equipCertOffset);
             RequestFLJob.addKeyAttestation(builder, keyAttestationOffset);
+            RequestFLJob.addDownloadCompressTypes(builder, downloadCompressTypesOffset);
             int root = RequestFLJob.endRequestFLJob(builder);
             builder.finish(root);
             return builder.sizedByteArray();

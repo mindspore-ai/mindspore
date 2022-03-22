@@ -51,6 +51,8 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_reconstruct.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_shares.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_unmask.cc")
+    list(REMOVE_ITEM _FL_SRC_FILES "compression/decode_executor.cc")
+    list(REMOVE_ITEM _FL_SRC_FILES "compression/encode_executor.cc")
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")

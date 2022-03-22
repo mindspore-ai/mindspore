@@ -590,6 +590,7 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
 
     if (LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map)) {
       ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+      ModelStore::GetInstance().StoreCompressModelByIterNum(iteration_num_, model);
       iteration_result_ = IterationResult::kSuccess;
       MS_LOG(INFO) << "Iteration " << iteration_num_ << " is successfully finished.";
     } else {
@@ -601,6 +602,7 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
     size_t latest_iter_num = iter_to_model.rbegin()->first;
     const auto &model = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
     ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+    ModelStore::GetInstance().StoreCompressModelByIterNum(iteration_num_, model);
     iteration_result_ = IterationResult::kFail;
     MS_LOG(WARNING) << "Iteration " << iteration_num_ << " is invalid. Reason: " << reason;
   }

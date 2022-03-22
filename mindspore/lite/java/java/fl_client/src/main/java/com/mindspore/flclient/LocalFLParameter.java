@@ -22,6 +22,7 @@ import org.bouncycastle.math.ec.rfc7748.X25519;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -83,6 +84,10 @@ public class LocalFLParameter {
     private MSConfig msConfig = new MSConfig();
     private boolean useSSL = true;
     private float lr = 0.1f;
+    private Map<String, float[]> oldFeatureMap;
+    private byte uploadCompressType = 0;
+    private int seed = 0;
+    private float uploadSparseRatio = 0.08f;
 
 
     private LocalFLParameter() {
@@ -249,5 +254,37 @@ public class LocalFLParameter {
 
     public void setLr(float lr) {
         this.lr = lr;
+    }
+
+    public Map<String, float[]> getOldFeatureMap() {
+        return oldFeatureMap;
+    }
+
+    public void setOldFeatureMap(Map<String, float[]> oldFeatureMap) {
+        this.oldFeatureMap = oldFeatureMap;
+    }
+
+    public byte getUploadCompressType() {
+        return uploadCompressType;
+    }
+
+    public void setUploadCompressType(byte uploadCompressType) {
+        this.uploadCompressType = uploadCompressType;
+    }
+
+    public int getSeed() {
+        return seed;
+    }
+
+    public void setSeed(int seed) {
+        this.seed = seed;
+    }
+
+    public float getUploadSparseRatio() {
+        return uploadSparseRatio;
+    }
+
+    public void setUploadSparseRatio(float uploadSparseRatio) {
+        this.uploadSparseRatio = uploadSparseRatio;
     }
 }

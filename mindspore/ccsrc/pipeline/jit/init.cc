@@ -507,6 +507,12 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_global_iteration_time_window", &PSContext::set_global_iteration_time_window,
          "Set global iteration time window.")
     .def("global_iteration_time_window", &PSContext::global_iteration_time_window, "Get global iteration time window.")
+    .def("set_upload_compress_type", &PSContext::set_upload_compress_type, "Set upload compress type.")
+    .def("upload_compress_type", &PSContext::upload_compress_type, "Get upload compress type.")
+    .def("set_upload_sparse_rate", &PSContext::set_upload_sparse_rate, "Set upload sparse rate.")
+    .def("upload_sparse_rate", &PSContext::upload_sparse_rate, "Get upload sparse rate.")
+    .def("set_download_compress_type", &PSContext::set_download_compress_type, "Set download compress type.")
+    .def("download_compress_type", &PSContext::download_compress_type, "Get download compress type.")
     .def("set_checkpoint_dir", &PSContext::set_checkpoint_dir, "Set server checkpoint directory.")
     .def("checkpoint_dir", &PSContext::checkpoint_dir, "Server checkpoint directory.");
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");

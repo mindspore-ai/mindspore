@@ -30,6 +30,9 @@
 #ifdef ENABLE_ARMOUR
 #include "fl/armour/cipher/cipher_meta_storage.h"
 #endif
+#include "fl/compression/decode_executor.h"
+#include "schema/fl_job_generated.h"
+#include "schema/cipher_generated.h"
 
 namespace mindspore {
 namespace fl {
@@ -64,8 +67,12 @@ class UpdateModelKernel : public RoundKernel {
   std::map<std::string, UploadData> ParseSignDSFeatureMap(const schema::RequestUpdateModel *update_model_req,
                                                           size_t data_size,
                                                           std::map<std::string, std::vector<float>> *weight_map);
+  std::map<std::string, UploadData> ParseUploadCompressFeatureMap(
+    const schema::RequestUpdateModel *update_model_req, size_t data_size,
+    std::map<std::string, std::vector<float>> *weight_map);
   bool VerifySignDSFeatureMap(const std::unordered_map<std::string, size_t> &model,
                               const schema::RequestUpdateModel *update_model_req);
+  bool VerifyUploadCompressFeatureMap(const schema::RequestUpdateModel *update_model_req);
   ResultCode CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
                                  const schema::RequestUpdateModel *update_model_req);
   sigVerifyResult VerifySignature(const schema::RequestUpdateModel *update_model_req);
@@ -78,6 +85,11 @@ class UpdateModelKernel : public RoundKernel {
 
   // The time window of one iteration.
   size_t iteration_time_window_{0};
+
+  // Decode functions of compression.
+  std::map<std::string, UploadData> DecodeFeatureMap(std::map<std::string, std::vector<float>> *weight_map,
+                                                     const schema::RequestUpdateModel *update_model_req,
+                                                     schema::CompressType upload_compress_type, size_t data_size);
 };
 }  // namespace kernel
 }  // namespace server

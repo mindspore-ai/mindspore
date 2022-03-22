@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include "fl/server/executor.h"
+#include "pipeline/jit/parse/parse.h"
 #include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
@@ -33,6 +34,10 @@ void ModelStore::Initialize(uint32_t rank_id, uint32_t max_count) {
   max_model_count_ = max_count;
   initial_model_ = AssignNewModelMemory();
   iteration_to_model_[kInitIterationNum] = initial_model_;
+  std::map<std::string, AddressPtr> model = Executor::GetInstance().GetModel();
+  for (const auto &item : mindspore::fl::compression::kCompressTypeMap) {
+    iteration_to_compress_model_[kInitIterationNum][item.first] = AssignNewCompressModelMemory(item.first, model);
+  }
   model_size_ = ComputeModelSize();
   MS_LOG(INFO) << "Model store checkpoint dir is: " << ps::PSContext::instance()->checkpoint_dir();
 }
@@ -101,6 +106,24 @@ std::map<std::string, AddressPtr> ModelStore::GetModelByIterNum(size_t iteration
   return model;
 }
 
+std::map<std::string, AddressPtr> ModelStore::GetCompressModelByIterNum(size_t iteration,
+                                                                        schema::CompressType compressType) {
+  std::unique_lock<std::mutex> lock(model_mtx_);
+  std::map<std::string, AddressPtr> compressModel = {};
+  if (iteration_to_compress_model_.count(iteration) == 0) {
+    MS_LOG(ERROR) << "Compress Model for iteration " << iteration << " is not stored.";
+    return compressModel;
+  }
+  std::map<schema::CompressType, std::shared_ptr<MemoryRegister>> compress_model_map =
+    iteration_to_compress_model_[iteration];
+  if (compress_model_map.count(compressType) == 0) {
+    MS_LOG(ERROR) << "Compress Model for compress type " << compressType << " is not stored.";
+    return compressModel;
+  }
+  compressModel = iteration_to_compress_model_[iteration][compressType]->addresses();
+  return compressModel;
+}
+
 void ModelStore::Reset() {
   std::unique_lock<std::mutex> lock(model_mtx_);
   initial_model_ = iteration_to_model_.rbegin()->second;
@@ -112,6 +135,11 @@ void ModelStore::Reset() {
 const std::map<size_t, std::shared_ptr<MemoryRegister>> &ModelStore::iteration_to_model() {
   std::unique_lock<std::mutex> lock(model_mtx_);
   return iteration_to_model_;
+}
+
+const std::map<size_t, CompressTypeMap> &ModelStore::iteration_to_compress_model() {
+  std::unique_lock<std::mutex> lock(model_mtx_);
+  return iteration_to_compress_model_;
 }
 
 size_t ModelStore::model_size() const { return model_size_; }
@@ -144,6 +172,86 @@ std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() {
     memory_register->RegisterArray(weight_name, &weight_data, weight_size);
   }
   return memory_register;
+}
+
+std::shared_ptr<MemoryRegister> ModelStore::AssignNewCompressModelMemory(
+  schema::CompressType compressType, const std::map<std::string, AddressPtr> &model) {
+  if (model.empty()) {
+    MS_LOG(EXCEPTION) << "Model feature map is empty.";
+    return nullptr;
+  }
+  std::map<string, std::vector<float>> feature_maps;
+  for (auto &feature_map : model) {
+    auto weight_fullname = feature_map.first;
+    auto weight_data = reinterpret_cast<float *>(feature_map.second->addr);
+    std::vector<float> weight_data_vector{weight_data, weight_data + feature_map.second->size / sizeof(float)};
+    feature_maps[weight_fullname] = weight_data_vector;
+  }
+
+  std::map<std::string, mindspore::fl::compression::CompressWeight> compressWeights;
+  bool status = mindspore::fl::compression::CompressExecutor::GetInstance().construct_compress_weight(
+    &compressWeights, feature_maps, compressType);
+  if (!status) {
+    MS_LOG(ERROR) << "Encode failed!";
+    return nullptr;
+  }
+
+  // Assign new memory for the compress model.
+  std::shared_ptr<MemoryRegister> memory_register = std::make_shared<MemoryRegister>();
+  MS_ERROR_IF_NULL_W_RET_VAL(memory_register, nullptr);
+  MS_LOG(INFO) << "Register compressWeight for compressType: " << schema::EnumNameCompressType(compressType);
+
+  for (const auto &compressWeight : compressWeights) {
+    if (compressType == schema::CompressType_QUANT) {
+      std::string compress_weight_name = compressWeight.first;
+      std::string min_val_name = compress_weight_name + "." + kMinVal;
+      std::string max_val_name = compress_weight_name + "." + kMaxVal;
+      size_t compress_weight_size = compressWeight.second.compress_data_len * sizeof(int8_t);
+      auto compress_weight_data = std::make_unique<char[]>(compress_weight_size);
+      auto src_data_size = compress_weight_size;
+      auto dst_data_size = compress_weight_size;
+      int ret =
+        memcpy_s(compress_weight_data.get(), dst_data_size, compressWeight.second.compress_data.data(), src_data_size);
+      if (ret != 0) {
+        MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+        return nullptr;
+      }
+      memory_register->RegisterArray(compress_weight_name, &compress_weight_data, compress_weight_size);
+      size_t float_size = 1;
+      auto min_val_ptr = std::make_unique<float>(compressWeight.second.min_val);
+      auto max_val_ptr = std::make_unique<float>(compressWeight.second.max_val);
+
+      memory_register->RegisterParameter(min_val_name, &min_val_ptr, float_size);
+      memory_register->RegisterParameter(max_val_name, &max_val_ptr, float_size);
+    }
+  }
+  return memory_register;
+}
+
+void ModelStore::StoreCompressModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &new_model) {
+  std::unique_lock<std::mutex> lock(model_mtx_);
+  if (iteration_to_compress_model_.count(iteration) != 0) {
+    MS_LOG(WARNING) << "Compress Model for iteration " << iteration << " is already stored";
+    return;
+  }
+  if (new_model.empty()) {
+    MS_LOG(ERROR) << "Compress Model feature map is empty.";
+    return;
+  }
+
+  iteration_to_compress_model_[iteration] = {};
+  if (iteration_to_compress_model_.size() >= max_model_count_) {
+    auto compress_model_map = iteration_to_compress_model_.begin()->second;
+    compress_model_map.clear();
+    (void)iteration_to_compress_model_.erase(iteration_to_compress_model_.begin());
+  }
+
+  for (const auto &item : mindspore::fl::compression::kCompressTypeMap) {
+    auto memory_register = AssignNewCompressModelMemory(item.first, new_model);
+    MS_ERROR_IF_NULL_WO_RET_VAL(memory_register);
+    iteration_to_compress_model_[iteration][item.first] = memory_register;
+  }
+  return;
 }
 
 size_t ModelStore::ComputeModelSize() {
@@ -179,13 +287,15 @@ void ModelStore::RelModelResponseCache(const void *data, size_t datalen, void *e
 
 std::shared_ptr<std::vector<uint8_t>> ModelStore::GetModelResponseCache(const string &round_name,
                                                                         size_t cur_iteration_num,
-                                                                        size_t model_iteration_num) {
+                                                                        size_t model_iteration_num,
+                                                                        const std::string &compress_type) {
   std::unique_lock<std::mutex> lock(model_response_cache_lock_);
-  auto it = std::find_if(model_response_cache_.begin(), model_response_cache_.end(),
-                         [&round_name, cur_iteration_num, model_iteration_num](const HttpResponseModelCache &item) {
-                           return item.round_name == round_name && item.cur_iteration_num == cur_iteration_num &&
-                                  item.model_iteration_num == model_iteration_num;
-                         });
+  auto it = std::find_if(
+    model_response_cache_.begin(), model_response_cache_.end(),
+    [&round_name, cur_iteration_num, model_iteration_num, &compress_type](const HttpResponseModelCache &item) {
+      return item.round_name == round_name && item.cur_iteration_num == cur_iteration_num &&
+             item.model_iteration_num == model_iteration_num && item.compress_type == compress_type;
+    });
   if (it == model_response_cache_.end()) {
     return nullptr;
   }
@@ -196,14 +306,16 @@ std::shared_ptr<std::vector<uint8_t>> ModelStore::GetModelResponseCache(const st
 
 std::shared_ptr<std::vector<uint8_t>> ModelStore::StoreModelResponseCache(const string &round_name,
                                                                           size_t cur_iteration_num,
-                                                                          size_t model_iteration_num, const void *data,
-                                                                          size_t datalen) {
+                                                                          size_t model_iteration_num,
+                                                                          const std::string &compress_type,
+                                                                          const void *data, size_t datalen) {
   std::unique_lock<std::mutex> lock(model_response_cache_lock_);
-  auto it = std::find_if(model_response_cache_.begin(), model_response_cache_.end(),
-                         [&round_name, cur_iteration_num, model_iteration_num](const HttpResponseModelCache &item) {
-                           return item.round_name == round_name && item.cur_iteration_num == cur_iteration_num &&
-                                  item.model_iteration_num == model_iteration_num;
-                         });
+  auto it = std::find_if(
+    model_response_cache_.begin(), model_response_cache_.end(),
+    [&round_name, cur_iteration_num, model_iteration_num, &compress_type](const HttpResponseModelCache &item) {
+      return item.round_name == round_name && item.cur_iteration_num == cur_iteration_num &&
+             item.model_iteration_num == model_iteration_num && item.compress_type == compress_type;
+    });
   if (it != model_response_cache_.end()) {
     it->reference_count += 1;
     total_add_reference_count += 1;
@@ -223,6 +335,7 @@ std::shared_ptr<std::vector<uint8_t>> ModelStore::StoreModelResponseCache(const 
   item.round_name = round_name;
   item.cur_iteration_num = cur_iteration_num;
   item.model_iteration_num = model_iteration_num;
+  item.compress_type = compress_type;
   item.cache = cache;
   item.reference_count = 1;
   total_add_reference_count += 1;

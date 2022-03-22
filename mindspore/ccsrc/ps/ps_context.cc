@@ -549,6 +549,19 @@ void PSContext::set_global_iteration_time_window(const uint64_t &global_iteratio
 
 uint64_t PSContext::global_iteration_time_window() const { return global_iteration_time_window_; }
 
+void PSContext::set_upload_compress_type(const std::string &upload_compress_type) {
+  upload_compress_type_ = upload_compress_type;
+}
+std::string PSContext::upload_compress_type() const { return upload_compress_type_; }
+
+void PSContext::set_upload_sparse_rate(float upload_sparse_rate) { upload_sparse_rate_ = upload_sparse_rate; }
+float PSContext::upload_sparse_rate() const { return upload_sparse_rate_; }
+
+void PSContext::set_download_compress_type(const std::string &download_compress_type) {
+  download_compress_type_ = download_compress_type;
+}
+std::string PSContext::download_compress_type() const { return download_compress_type_; }
+
 std::string PSContext::checkpoint_dir() const { return checkpoint_dir_; }
 
 void PSContext::set_checkpoint_dir(const std::string &checkpoint_dir) { checkpoint_dir_ = checkpoint_dir; }

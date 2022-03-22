@@ -47,6 +47,16 @@ table FeatureMap{
   weight_fullname:string;
   data:[float];
 }
+
+enum CompressType:byte {NO_COMPRESS = 0, DIFF_SPARSE_QUANT = 1, QUANT = 2}
+
+table CompressFeatureMap{
+  weight_fullname:string;
+  compress_data:[int8];
+  min_val:float;
+  max_val:float;
+}
+
 table RequestFLJob{
   fl_name:string;
   fl_id:string;
@@ -58,6 +68,7 @@ table RequestFLJob{
   equip_cert:string;
   equip_ca_cert:string;
   root_cert:string;
+  download_compress_types:[CompressType];
 }
 table ResponseFLJob {
   retcode:int;
@@ -68,6 +79,10 @@ table ResponseFLJob {
   fl_plan_config:FLPlan;
   feature_map:[FeatureMap];
   timestamp:string;
+  upload_compress_type:CompressType;
+  upload_sparse_rate:float;
+  download_compress_type:CompressType;
+  compress_feature_map:[CompressFeatureMap];
 }
 
 table FLPlan {
@@ -94,6 +109,10 @@ table RequestUpdateModel{
   upload_loss:float;
   sign:int;
   index_array:[int];
+  compress_feature_map:[CompressFeatureMap];
+  upload_compress_type:CompressType;
+  upload_sparse_rate:float;
+  name_vec:[string];
 }
 
 table ResponseUpdateModel{
@@ -132,6 +151,7 @@ table RequestGetModel{
   fl_name:string;
   iteration:int;
   timestamp:string;
+  download_compress_types:[CompressType];
 }
 table ResponseGetModel{
   retcode:int;
@@ -139,6 +159,8 @@ table ResponseGetModel{
   iteration:int;
   feature_map:[FeatureMap];
   timestamp:string;
+  download_compress_type:CompressType;
+  compress_feature_map:[CompressFeatureMap];
 }
 
 table RequestAsyncGetModel{
