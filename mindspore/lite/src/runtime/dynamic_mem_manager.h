@@ -59,7 +59,6 @@ class MemOperator {
 
  private:
   int node_id_ = -1;
-  int64_t least_free_memory_ = 0;
   // all data blocks
   size_t block_count_ = 0;
   int64_t garbage_block_;
