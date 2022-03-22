@@ -339,7 +339,7 @@
 
         **返回：**
 
-        - **handle** – 与hook_fn函数对应的handle对象。
+        `mindspore.common.hook_handle.HookHandle` 类型，与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
 
         **异常：**
 
@@ -362,7 +362,7 @@
 
         **返回：**
 
-        - **handle** – 与hook_fn函数对应的handle对象。
+        `mindspore.common.hook_handle.HookHandle` 类型，与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
 
         **异常：**
 
@@ -385,7 +385,7 @@
 
         **返回：**
 
-        - **handle** – 与hook_fn函数对应的handle对象。
+        `mindspore.common.hook_handle.HookHandle` 类型，与 `hook_fn` 函数对应的 `handle` 对象。可通过调用 `handle.remove()` 来删除添加的 `hook_fn` 函数。
 
         **异常：**
 
