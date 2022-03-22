@@ -37,15 +37,18 @@ static constexpr int kInvalidIndex = -1;
 // invalid numa node id
 static constexpr int kInvalidNodeId = -1;
 static constexpr int kInvalidRefCount = -1;
-static constexpr float kDefaultMemoryLeastRatio = 0.1;
-
 size_t Rounded(size_t size) { return (size + kMemAlginSize - 1) & (~(kMemAlginSize - 1)); }
 }  // namespace
 
 void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_size) {
   int64_t allocate_tmp_size = static_cast<int64_t>(rounded_size < kAllocUnitSize ? kAllocUnitSize : rounded_size);
+  static const auto kMaxMallocSize = static_cast<int64_t>(lite::GetMaxMallocSize());
+  if (allocate_tmp_size > kMaxMallocSize) {
+    MS_LOG(ERROR) << "request invalid memory size " << allocate_tmp_size << ", total: " << kMaxMallocSize;
+    return nullptr;
+  }
+
   int64_t free_count = 0;
-  int64_t left = 0;
   if (node_id >= 0) {
     // allocate memory from numa node
     MemoryInfo mem_info = numa_instance_->GetNodeSize(node_id);
@@ -53,20 +56,10 @@ void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_s
   } else {
     free_count = lite::GetFreeMemory();
   }
-
-  if (MS_UNLIKELY(static_cast<int64_t>(rounded_size) >= free_count)) {
-    MS_LOG(ERROR) << "No enough memory left!node_id: " << node_id << ", request: " << rounded_size
-                  << ", free: " << free_count << ", least free request: " << least_free_memory_;
-    return nullptr;
-  }
-  if (free_count < allocate_tmp_size) {
-    allocate_tmp_size = rounded_size;
-  }
-  left = free_count - allocate_tmp_size;
-  if (left <= least_free_memory_) {
-    MS_LOG(ERROR) << "No enough memory left!node_id: " << node_id << ", request: " << rounded_size
-                  << ", free: " << free_count << ", least free request: " << least_free_memory_;
-    return nullptr;
+  MS_LOG(DEBUG) << "node_id " << node_id << ", request " << allocate_tmp_size << ", free memory " << free_count;
+  if (MS_UNLIKELY(allocate_tmp_size >= free_count)) {
+    MS_LOG(WARNING) << "No enough memory left!node_id: " << node_id << ", request: " << allocate_tmp_size
+                    << ", free: " << free_count;
   }
   *allocate_size = allocate_tmp_size;
   void *data = nullptr;
@@ -78,13 +71,15 @@ void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_s
   } else {
     auto ret = posix_memalign(&data, kMemAlginSize, static_cast<size_t>(allocate_tmp_size));
     if (MS_UNLIKELY(ret != 0)) {
-      MS_LOG(ERROR) << "posix_memalign failed!ret: " << ret;
+      MS_LOG(ERROR) << "posix_memalign failed!ret: " << ret << ", node_id: " << node_id
+                    << ", request: " << allocate_tmp_size << ", free: " << free_count;
       return nullptr;
     }
   }
 #endif
   if (MS_UNLIKELY(data == nullptr)) {
-    MS_LOG(ERROR) << "malloc data failed!";
+    MS_LOG(ERROR) << "malloc data failed!node_id: " << node_id << ", request: " << allocate_tmp_size
+                  << ", free: " << free_count;
     return nullptr;
   }
 
@@ -232,14 +227,6 @@ MemOperator::MemOperator(int node_id) {
   numa_instance_ = NUMAAdapter::GetInstance();
   if (node_id >= 0 && numa_instance_->Available()) {
     node_id_ = node_id;
-    auto mem_info = numa_instance_->GetNodeSize(node_id_);
-    if (mem_info.total <= 0) {
-      return;
-    }
-    least_free_memory_ = mem_info.total * kDefaultMemoryLeastRatio;
-  } else {
-    auto total = lite::GetMaxMallocSize();
-    least_free_memory_ = total * kDefaultMemoryLeastRatio;
   }
 
   blocks_.resize(kBlockSize);
