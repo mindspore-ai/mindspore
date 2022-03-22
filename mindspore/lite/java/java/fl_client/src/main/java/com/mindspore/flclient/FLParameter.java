@@ -44,7 +44,7 @@ public class FLParameter {
     /**
      * The timeout interval for communication on the device, time unit: seconds.
      */
-    public static final int TIME_OUT = 100;
+    public static final int TIME_OUT = 30;
 
     /**
      * The waiting time of repeated requests, time unit: milliseconds.
@@ -407,9 +407,9 @@ public class FLParameter {
     }
 
     public void setTimeOut(int timeOut) {
-        if (timeOut <= 0) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <timeOut> <= 0, it should be > 0, please " +
-                    "set it before using"));
+        if (timeOut <= 0 || timeOut > 100) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <timeOut: " + timeOut + " (unit: s)> is not " +
+                    "valid, it should be > 0s and <= 100s, please set a valid value before using"));
             throw new IllegalArgumentException();
         }
         this.timeOut = timeOut;
@@ -420,9 +420,9 @@ public class FLParameter {
     }
 
     public void setSleepTime(int sleepTime) {
-        if (sleepTime <= 0) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <sleepTime> <= 0, it should be > 0, please " +
-                    "set it before using"));
+        if (sleepTime <= 0 || sleepTime > 100000) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <sleepTime: " + sleepTime + " (unit: ms)> is " +
+                    "not valid, it should be > 0ms and <= 100000ms, please set a valid value before using"));
             throw new IllegalArgumentException();
         }
         this.sleepTime = sleepTime;

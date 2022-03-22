@@ -117,8 +117,6 @@ public class FLLiteClient {
         localFLParameter.setSeed(seed);
         if (Common.checkFLName(flParameter.getFlName())) {
             deprecatedSetBatchSize(batchSize);
-        } else {
-            LOGGER.info(Common.addTag("[startFLJob] not set <batchSize> for client: " + batchSize));
         }
         LOGGER.info(Common.addTag("[startFLJob] the GlobalParameter <serverMod> from server: " + serverMod));
         LOGGER.info(Common.addTag("[startFLJob] the GlobalParameter <iterations> from server: " + iterations));
@@ -283,6 +281,9 @@ public class FLLiteClient {
                 retCode = ResponseCode.OutOfTime;
                 return status;
             }
+            if (Common.isSeverJobFinished(message)) {
+                return serverJobFinished("startFLJob");
+            }
             LOGGER.info(Common.addTag("[startFLJob] the response message length: " + message.length));
             Common.endTime(start, "single startFLJob");
             ByteBuffer buffer = ByteBuffer.wrap(message);
@@ -401,6 +402,9 @@ public class FLLiteClient {
                 retCode = ResponseCode.OutOfTime;
                 return status;
             }
+            if (Common.isSeverJobFinished(message)) {
+                return serverJobFinished("updateModel");
+            }
             LOGGER.info(Common.addTag("[updateModel] the response message length: " + message.length));
             Common.endTime(start, "single updateModel");
             ByteBuffer debugBuffer = ByteBuffer.wrap(message);
@@ -438,6 +442,9 @@ public class FLLiteClient {
                 status = FLClientStatus.WAIT;
                 retCode = ResponseCode.SucNotReady;
                 return status;
+            }
+            if (Common.isSeverJobFinished(message)) {
+                return serverJobFinished("getModel");
             }
             LOGGER.info(Common.addTag("[getModel] the response message length: " + message.length));
             Common.endTime(start, "single getModel");
@@ -855,5 +862,11 @@ public class FLLiteClient {
             LOGGER.info(Common.addTag("[evaluate] evaluate acc: " + acc));
         }
         return status;
+    }
+
+    private FLClientStatus serverJobFinished(String logTag) {
+        LOGGER.info(Common.addTag("[" + logTag + "] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist."));
+        retCode = ResponseCode.SystemError;
+        return FLClientStatus.FAILED;
     }
 }
