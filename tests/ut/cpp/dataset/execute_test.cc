@@ -1420,6 +1420,21 @@ TEST_F(MindDataTestExecute, TestFadeWithInvalidArg) {
   EXPECT_FALSE(s04.IsOk());
 }
 
+/// Feature: Fade
+/// Description: test Fade with bool type
+/// Expectation: success.
+TEST_F(MindDataTestExecute, TestFadeWithBool) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestFadeWithBool.";
+  std::vector<bool> waveform = {1, 0, 1, 1, 1, 1, 1, 1};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, 8}), &input));
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade1 = std::make_shared<audio::Fade>(5, 6, FadeShape::kLinear);
+  mindspore::dataset::Execute Transform01({fade1});
+  Status s01 = Transform01(input_01, &input_01);
+  EXPECT_TRUE(s01.IsOk());
+}
+
 TEST_F(MindDataTestExecute, TestVolDefalutValue) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestVolDefalutValue.";
   std::shared_ptr<Tensor> input_tensor_;
