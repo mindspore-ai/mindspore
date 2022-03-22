@@ -34,8 +34,6 @@ class Conv2DBackpropEltwiseEltwiseFusionPass : public FusionBasePass {
     PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::Conv2DBackpropEltwiseFusionPass);
   }
   ~Conv2DBackpropEltwiseEltwiseFusionPass() override = default;
-
- protected:
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
