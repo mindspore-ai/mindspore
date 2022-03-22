@@ -74,7 +74,7 @@ bool FillRandoms(PhiloxGenerator generator, float *output, int64_t vet_size, int
       max_length = kResultNum * sizeof(float);
       mem_ret = memcpy_s(&output[i], max_length, &outputResult[0], max_length);
     } else {
-      max_length = LongToSize((vet_size - i) * sizeof(float));
+      max_length = LongToSize(vet_size - i) * sizeof(float);
       mem_ret = memcpy_s(&output[i], max_length, &outputResult[0], max_length);
     }
     if (mem_ret != EOK) {

@@ -284,8 +284,8 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
-
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1 /* no timeout */);
+      // no timeout
+      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
       if (ret != ACL_SUCCESS) {
         MS_LOG(ERROR) << "AclHandle failed to receive tensor.";
         break;
@@ -323,8 +323,8 @@ void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::strin
         ret = -1;
         break;
       }
-
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1 /* no timeout */);
+      // no timeout
+      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
       if (ret != ACL_SUCCESS) {
         MS_LOG(ERROR) << "Acltdt failed to receive tensor.";
         break;

@@ -153,7 +153,6 @@ void Parser::LiftRolledBodyGraphFV() {
     auto rolled_call_cnode = rolled_call_pair.first;
     auto rolled_graph = rolled_call_pair.second->func_graph();
     MS_EXCEPTION_IF_NULL(rolled_graph);
-    // auto lifted_graph = LiftingClone(rolled_graph);
     std::vector<std::pair<CNodePtr, size_t>> free_variables;
     std::vector<AnfNodePtr> nodes =
       TopoSort(rolled_graph->get_return(), SuccIncoming, [&rolled_graph](const AnfNodePtr &node) -> IncludeType {
@@ -174,7 +173,7 @@ void Parser::LiftRolledBodyGraphFV() {
       for (size_t i = 0; i < cnode->inputs().size(); ++i) {
         auto &input = cnode->input(i);
         if (input->func_graph() != nullptr && input->func_graph() != rolled_graph) {
-          free_variables.emplace_back(std::pair(cnode, i));
+          (void)free_variables.emplace_back(std::pair(cnode, i));
           constexpr auto recur_2 = 2;
           MS_LOG(DEBUG) << "Found FV: input[" << i << "] of " << cnode->DebugString(recur_2);
         }
@@ -1954,7 +1953,6 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
   MS_EXCEPTION_IF_NULL(iter_node);
   // Generate node for loop count and convert it to tensor, to make the loop not unroll
-  // CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
   ParameterPtr header_iter_param = header_block->func_graph()->add_parameter();
   AnfNodePtr header_len = header_block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
   CNodePtr scalar_len = header_block->func_graph()->NewCNodeInOrder({header_len, header_iter_param});
@@ -1970,7 +1968,6 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   FunctionBlockPtr body_block = GenerateBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
   MS_EXCEPTION_IF_NULL(body_block);
   body_block->AddPrevBlock(header_block);
-  // ParameterPtr body_iter_param = body_block->func_graph()->add_parameter();
   // Create 'x = xs[i]'
   auto body_func_graph = body_block->func_graph();
   AnfNodePtr body_getitem = body_block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
@@ -2028,12 +2025,12 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
     std::pair<FunctionBlockPtr, FunctionBlockPtr> loop_graphs;
     loop_graphs.first = body_block;
     loop_graphs.second = after_body_block;
-    parallel_call_graphs_.emplace_back(loop_graphs);
+    (void)parallel_call_graphs_.emplace_back(loop_graphs);
     MS_LOG(DEBUG) << "Record tail call graphs, loop: {former: " << loop_graphs.first->func_graph()->ToString()
                   << ", middle: " << loop_graphs.second->func_graph()->ToString() << "}";
     // Record the rolled body function, for later lifting operation.
     if (rolled_body_call != nullptr) {
-      rolled_body_calls_.emplace_back(std::pair(rolled_body_call, rolled_body_block));
+      (void)rolled_body_calls_.emplace_back(std::pair(rolled_body_call, rolled_body_block));
       constexpr int recursive_level = 2;
       MS_LOG(DEBUG) << "Record rolled body call: {CNode: " << rolled_body_call->DebugString(recursive_level)
                     << ", rolled_graph: " << rolled_body_block->ToString() << "}";
