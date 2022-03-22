@@ -23,6 +23,7 @@
 #include <utility>
 #include <thread>
 #include <algorithm>
+#include <map>
 #include "utils/hash_map.h"
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/device/device_address.h"
@@ -47,8 +48,14 @@ constexpr int kSuccess = 0;
 constexpr int kFailure = 1;
 
 enum class GraphExecutionStrategy {
-  kPipeline,  // The actor running is triggered only by data.
-  kStep       // The actor running need be triggered by control in addition.
+  kPipeline,                   // The actor running is triggered only by data.
+  kStep,                       // The actor running need be triggered by control in addition.
+  kPipelineWithExecutionOrder  // The actor running is triggered by data with the persistent execution order.
+};
+static const std::map<GraphExecutionStrategy, std::string> kGraphExecutionStrategyStr = {
+  {GraphExecutionStrategy::kPipeline, "pipeline"},
+  {GraphExecutionStrategy::kStep, "step"},
+  {GraphExecutionStrategy::kPipelineWithExecutionOrder, "pipeline_with_execution_order"},
 };
 
 const char kDataPrepareActorNameSuffix[] = "_DataPrepareActor";
