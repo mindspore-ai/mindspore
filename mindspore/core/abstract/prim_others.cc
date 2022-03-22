@@ -387,6 +387,9 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
     MS_EXCEPTION(TypeError) << "The first dimension of indices must be the same with the first dimension of values "
                             << values_shp[0] << ", but got " << indices_shp[0];
   }
+  if (indices_shp[1] != kSizeTwo) {
+    MS_EXCEPTION(ValueError) << "COOTensor only support " << kSizeTwo << " dimensions, but got " << indices_shp[1];
+  }
 
   for (const auto &elem_type : dense_shape->ElementsType()) {
     if (!elem_type->isa<Int>()) {
@@ -396,6 +399,9 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
   auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(dense_shape_value);
   auto shp = dense_shape_value->value();
+  if (*std::min_element(std::begin(shp), std::end(shp)) <= 0) {
+    MS_EXCEPTION(ValueError) << "The element of dense_shape must positive integer.";
+  }
   ShapeVector dense_shape_vec;
   (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
                        [](const ValuePtr &e) -> int64_t {
