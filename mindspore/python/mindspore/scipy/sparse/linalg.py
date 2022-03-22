@@ -72,7 +72,7 @@ def _high_precision_cho_solve(a, b, data_type=mstype.float64):
     return y.astype(data_type)
 
 
-def _batch_gmres(A, x0, b, tol, atol, restart, maxiter, M):
+def _batch_gmres(A, b, x0, tol, restart, maxiter, M, atol):
     """
     batched gmres: solve the least squares problem from scratch at the end of each GMRES iteration.
     It does not allow for early termination, but has much less overhead on GPUs.
@@ -106,7 +106,7 @@ def _batch_gmres(A, x0, b, tol, atol, restart, maxiter, M):
     return x, F.select(residual_norm > atol, k, _INT_ZERO)
 
 
-def _incremental_gmres(A, x0, b, tol, atol, restart, maxiter, M):
+def _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol):
     """
     incremental gmres: builds a QR decomposition for the Krylov subspace incrementally during
     the GMRES process using Givens rotations. This improves numerical stability and gives a free estimate of
@@ -139,7 +139,7 @@ def _incremental_gmres(A, x0, b, tol, atol, restart, maxiter, M):
         while mnp.logical_and(mnp.less(k, restart), mnp.less(ptol, err)):
             V, R, _ = arnoldi_iteration(k, A, M, V, R)
             # Givens rotation
-            row_k = R[k, :].copy()
+            row_k = R[k, :]
             i = _INT_ZERO
             while i < k:
                 row_k = rotate_vectors(row_k, i, givens[i, 0], givens[i, 1])
@@ -185,16 +185,16 @@ class GMRES(nn.Cell):
         self.M = M
         self.solve_method = solve_method
 
-    def construct(self, b, x0, tol, atol, restart, maxiter):
+    def construct(self, b, x0, tol, restart, maxiter, atol):
         # Constant tensor which avoids loop unrolling
         A = _normalize_matvec(self.A)
         M = _normalize_matvec(self.M)
         x = x0
         info = _to_tensor(0)
         if self.solve_method == 'batched':
-            x, info = _batch_gmres(A, x0, b, tol, atol, restart, maxiter, M)
+            x, info = _batch_gmres(A, b, x0, tol, restart, maxiter, M, atol)
         elif self.solve_method == "incremental":
-            x, info = _incremental_gmres(A, x0, b, tol, atol, restart, maxiter, M)
+            x, info = _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol)
         else:
             _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got ", self.solve_method,
                                ".")
@@ -210,19 +210,37 @@ class GMRESV2(nn.Cell):
         super(GMRESV2, self).__init__()
         self.solve_method = solve_method
 
-    def construct(self, A, b, x0, tol, atol, restart, maxiter, M):
+    def construct(self, A, b, x0, tol, restart, maxiter, M, atol):
         A = _normalize_matvec(A)
         M = _normalize_matvec(M)
         x = x0
         info = _to_tensor(0)
         if self.solve_method == 'batched':
-            x, info = _batch_gmres(A, x0, b, tol, atol, restart, maxiter, M)
+            x, info = _batch_gmres(A, b, x0, tol, restart, maxiter, M, atol)
         elif self.solve_method == "incremental":
-            x, info = _incremental_gmres(A, x0, b, tol, atol, restart, maxiter, M)
+            x, info = _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol)
         else:
             _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got ", self.solve_method,
                                ".")
         return x, info
+
+    def bprop(self, A, b, x0, tol, restart, maxiter, M, atol, out, dout):
+        """
+        Derivatives of `gmres` are implemented via implicit differentiation with
+        another `gmres` solve, rather than by differentiating *through* the solver.
+        They will be accurate only if both solves converge.
+        """
+        n = b.shape[0]
+        if not isinstance(M, (Tensor, CSRTensor)):
+            M = F.eye(n, n, b.dtype)
+        grad_b, _ = self.construct(A.T, dout[0], x0, tol, restart, maxiter, M, atol)
+        if isinstance(A, CSRTensor):
+            grad_a_dense = -1 * F.reshape(grad_b, (n, 1)) * F.reshape(out[0], (1, n))
+            values = F.csr_gather(A.indptr, A.indices, grad_a_dense, A.shape)
+            grad_a = CSRTensor(A.indptr, A.indices, values, A.shape)
+        else:
+            grad_a = -1 * F.reshape(grad_b, (n, 1)) * F.reshape(out[0], (1, n))
+        return grad_a, grad_b, zeros_like(x0), zeros_like(tol), zeros_like(atol), zeros_like(maxiter), zeros_like(M)
 
 
 def gmres(A, b, x0=None, *, tol=1e-5, restart=20, maxiter=None,
@@ -322,10 +340,41 @@ def gmres(A, b, x0=None, *, tol=1e-5, restart=20, maxiter=None,
     if restart > size:
         restart = size
     if not is_within_graph(A):
-        x, info = GMRES(A, M, solve_method)(b, x0, tol, atol, restart, maxiter)
+        x, info = GMRES(A, M, solve_method)(b, x0, tol, restart, maxiter, atol)
     else:
-        x, info = GMRESV2(solve_method)(A, b, x0, tol, atol, restart, maxiter, M)
+        x, info = GMRESV2(solve_method)(A, b, x0, tol, restart, maxiter, M, atol)
     return x, info
+
+
+def _cg(A, b, x0, tol, atol, maxiter, M):
+    """
+    Figure 2.5 from Barrett R, et al. 'Templates for the sulution of linear systems:
+    building blocks for iterative methods', 1994, pg. 12-14
+    """
+    # Constant tensor which avoids loop unrolling
+    _INT_ZERO = _to_tensor(0)
+    atol_ = mnp.maximum(atol, tol * _norm(b))
+
+    r = b - A(x0)
+    z = p = M(r)
+    rho = mnp.dot(r, z)
+    k = _INT_ZERO
+    x = x0
+    while k < maxiter and _norm(r) > atol_:
+        q = A(p)
+        alpha = rho / mnp.dot(p, q)
+        x = x + alpha * p
+        r = r - alpha * q
+
+        z = M(r)
+        rho_ = mnp.dot(r, z)
+        beta = rho_ / rho
+        p = z + beta * p
+        rho = rho_
+
+        k += 1
+
+    return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
 
 
 class CG(nn.Cell):
@@ -339,34 +388,9 @@ class CG(nn.Cell):
         self.M = M
 
     def construct(self, b, x0, tol, atol, maxiter):
-        # Constant tensor which avoids loop unrolling
-        _INT_ZERO = _to_tensor(0)
-
         A = _normalize_matvec(self.A)
         M = _normalize_matvec(self.M)
-
-        atol_ = mnp.maximum(atol, tol * _norm(b))
-
-        r = b - A(x0)
-        z = p = M(r)
-        rho = mnp.dot(r, z)
-        k = _INT_ZERO
-        x = x0
-        while k < maxiter and _norm(r) > atol_:
-            q = A(p)
-            alpha = rho / mnp.dot(p, q)
-            x = x + alpha * p
-            r = r - alpha * q
-
-            z = M(r)
-            rho_ = mnp.dot(r, z)
-            beta = rho_ / rho
-            p = z + beta * p
-            rho = rho_
-
-            k += 1
-
-        return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
+        return _cg(A, b, x0, tol, atol, maxiter, M)
 
 
 class CGv2(nn.Cell):
@@ -378,34 +402,9 @@ class CGv2(nn.Cell):
         super(CGv2, self).__init__()
 
     def construct(self, A, b, x0, tol, atol, maxiter, M):
-        # Constant tensor which avoids loop unrolling
-        _INT_ZERO = _to_tensor(0)
-
         A = _normalize_matvec(A)
         M = _normalize_matvec(M)
-
-        atol_ = mnp.maximum(atol, tol * _norm(b))
-
-        r = b - A(x0)
-        z = p = M(r)
-        rho = mnp.dot(r, z)
-        k = _INT_ZERO
-        x = x0
-        while k < maxiter and _norm(r) > atol_:
-            q = A(p)
-            alpha = rho / mnp.dot(p, q)
-            x = x + alpha * p
-            r = r - alpha * q
-
-            z = M(r)
-            rho_ = mnp.dot(r, z)
-            beta = rho_ / rho
-            p = z + beta * p
-            rho = rho_
-
-            k += 1
-
-        return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
+        return _cg(A, b, x0, tol, atol, maxiter, M)
 
     def bprop(self, A, b, x0, tol, atol, maxiter, M, out, dout):
         """
