@@ -117,23 +117,12 @@ int MatMulTensorRT::PreprocessMatMulInputs(nvinfer1::INetworkDefinition *network
       return RET_ERROR;
     }
   } else if (tensorrt_in_tensors_.size() == 1) {
-    nvinfer1::ITensor *weight = nullptr;
-    int weight_index = in_tensors_[1].Data() != nullptr ? 1 : 0;
-    if (in_tensors_[weight_index].Shape().size() <
-        static_cast<size_t>(tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims)) {
-      weight = ConvertTensorWithExpandDims(network, in_tensors_[weight_index],
-                                           in_tensors_[1 - weight_index].Shape().size(), op_name_);
-    } else if (in_tensors_[weight_index].Shape().size() ==
-               static_cast<size_t>(tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims)) {
-      weight = ConvertConstantTensor(network, in_tensors_[weight_index], op_name_);
-    } else {
-      MS_LOG(ERROR) << "input tensor shape is invalid for " << op_name_;
-      return RET_ERROR;
-    }
+    auto weight = ProcessWeightTensor(network);
     if (weight == nullptr) {
       MS_LOG(ERROR) << "create constant weight tensor failed for " << op_name_;
       return RET_ERROR;
     }
+    int weight_index = in_tensors_[1].Data() != nullptr ? 1 : 0;
     ITensorHelper *weight_helper = (weight_index == 1) ? matmul_b : matmul_a;
     ITensorHelper *var_helper = (weight_index == 1) ? matmul_a : matmul_b;
     weight_helper->trt_tensor_ = weight;
@@ -148,6 +137,23 @@ int MatMulTensorRT::PreprocessMatMulInputs(nvinfer1::INetworkDefinition *network
     return RET_ERROR;
   }
   return RET_OK;
+}
+
+nvinfer1::ITensor *MatMulTensorRT::ProcessWeightTensor(nvinfer1::INetworkDefinition *network) {
+  nvinfer1::ITensor *weight = nullptr;
+  int weight_index = in_tensors_[1].Data() != nullptr ? 1 : 0;
+  if (in_tensors_[weight_index].Shape().size() <
+      static_cast<size_t>(tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims)) {
+    weight = ConvertTensorWithExpandDims(network, in_tensors_[weight_index],
+                                         in_tensors_[1 - weight_index].Shape().size(), op_name_);
+  } else if (in_tensors_[weight_index].Shape().size() ==
+             static_cast<size_t>(tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims)) {
+    weight = ConvertConstantTensor(network, in_tensors_[weight_index], op_name_);
+  } else {
+    MS_LOG(ERROR) << "input tensor shape is invalid for " << op_name_;
+    return nullptr;
+  }
+  return weight;
 }
 
 nvinfer1::ITensor *MatMulTensorRT::AddAsMatmul(nvinfer1::INetworkDefinition *network) {

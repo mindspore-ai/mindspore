@@ -39,6 +39,8 @@ class MatMulTensorRT : public TensorRTOp {
  private:
   int PreprocessMatMulInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *matmul_a, ITensorHelper *matmul_b);
 
+  nvinfer1::ITensor *ProcessWeightTensor(nvinfer1::INetworkDefinition *network);
+
   nvinfer1::ITensor *AddAsMatmul(nvinfer1::INetworkDefinition *network);
 
   nvinfer1::ITensor *AddAsFullConnect(nvinfer1::INetworkDefinition *network);
