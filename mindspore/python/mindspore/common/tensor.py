@@ -2621,6 +2621,7 @@ class CSRTensor(CSRTensor_):
 
     Note:
         This is an experimental feature and is subjected to change.
+        If the length of values or indices exceeds the range indicated by indptr, its behavior will be undefined.
 
     Args:
         indptr (Tensor): 1-D Tensor of size `shape[0] + 1`, which indicates the
