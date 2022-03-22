@@ -84,3 +84,58 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         find_required_package(FLEX)
     endif()
 endif()
+
+# for macos, find appropriate macosx SDK then set SDKROOT and MACOSX_DEPLOYMENT_TARGET
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    if(NOT DEFINED ENV{SDKROOT})
+        # arm64: macosx11.x
+        # x86_64: macosx10.x, macosx11.x
+        if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
+            set(MACOSX_SDK_REGEX "MacOSX11(\\.\\d+)?")
+        else()
+            set(MACOSX_SDK_REGEX "MacOSX1[01](\\.\\d+)?")
+        endif()
+        set(MACOSX_XCODE_SDK_PATH "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs")
+        set(MACOSX_CLT_SDK_PATH "/Library/Developer/CommandLineTools/SDKs")
+        set(MACOSX_SDK_SEARCH_PATHS "${MACOSX_XCODE_SDK_PATH}/*" "${MACOSX_CLT_SDK_PATH}/*")
+        file(GLOB ALL_SDK_NAME ${MACOSX_SDK_SEARCH_PATHS})
+        # get highest SDK version meets the requirements
+        execute_process(
+            COMMAND bash -c "echo '${ALL_SDK_NAME}' | grep -Eo '${MACOSX_SDK_REGEX}' | sort -n | tail -1 | tr -d '\\n'"
+            OUTPUT_VARIABLE MACOSX_FIND_SDK_NAME
+        )
+        if(NOT MACOSX_FIND_SDK_NAME)
+            message(FATAL_ERROR
+                "can not find appropriate macosx SDK, find in ${ALL_SDK_NAME}, you may set SDKROOT manually"
+            )
+        endif()
+        if(IS_DIRECTORY "${MACOSX_XCODE_SDK_PATH}/${MACOSX_FIND_SDK_NAME}.sdk")
+            set(ENV{SDKROOT} "${MACOSX_XCODE_SDK_PATH}/${MACOSX_FIND_SDK_NAME}.sdk")
+        else()
+            set(ENV{SDKROOT} "${MACOSX_CLT_SDK_PATH}/${MACOSX_FIND_SDK_NAME}.sdk")
+        endif()
+    endif()
+    message("macosx sdkroot: $ENV{SDKROOT}")
+    # set macosx deployment target based on SDK
+    if(NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
+        execute_process(
+            COMMAND bash -c "cat $ENV{SDKROOT}/SDKSettings.json | \
+                grep -Eo 'MACOSX_DEPLOYMENT_TARGET\\\":\\\"\\d{2}\\.\\d+' | cut -d '\"' -f 3 | tr -d '\\n'"
+            OUTPUT_VARIABLE MACOSX_FIND_SDK_VERSION
+        )
+        if(NOT MACOSX_FIND_SDK_VERSION)
+            message(FATAL_ERROR "can not find MACOSX_DEPLOYMENT_TARGET in SDKROOT, \
+                please check whether it's a valid SDK path")
+        endif()
+
+        if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
+            set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0")
+        elseif(${MACOSX_FIND_SDK_VERSION} VERSION_LESS "10.15")
+            set(CMAKE_OSX_DEPLOYMENT_TARGET ${MACOSX_FIND_SDK_VERSION} CACHE STRING
+                "minimum macosx deployment target version" FORCE)
+        else()
+            set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
+        endif()
+    endif()
+    message("macosx deployment target version: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+endif()
