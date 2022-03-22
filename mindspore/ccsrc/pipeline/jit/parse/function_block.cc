@@ -107,20 +107,25 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
   }
 }
 
-// Read variable from predecessors
-AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
-  MS_LOG(DEBUG) << "Read begin, var: " << var_name << ", block: " << ToString();
-  // Get var node if it is found
+AnfNodePtr FunctionBlock::ReadLocalVariable(const std::string &var_name) {
   auto found = assigned_vars_.find(var_name);
   if (found != assigned_vars_.end()) {
     auto &node = found->second.first;
     MS_EXCEPTION_IF_NULL(node);
     // Mark the variable as used.
     found->second.second = true;
-    auto iter = resolve_to_removable_phis_.find(node);
-    if (iter != resolve_to_removable_phis_.end()) {
-      return iter->second;
-    }
+    MS_LOG(DEBUG) << "Found var: " << var_name << ", as: " << node->DebugString();
+    return node;
+  }
+  return nullptr;
+}
+
+// Read variable from predecessors
+AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
+  MS_LOG(DEBUG) << "Read begin, var: " << var_name << ", block: " << ToString();
+  // Get var node if it is found
+  auto node = ReadLocalVariable(var_name);
+  if (node != nullptr) {
     return node;
   }
   // Get var from predecessor block, if can't get then make a resolve node to it
@@ -166,6 +171,13 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   WriteVariable(var_name, phi_param);
   if (matured_) {
     SetPhiArgument(phi_param);
+  }
+  // In SetPhiArgument/CollectRemovablePhi, this phi may be set as removable and set it as
+  // real node, so check it again.
+  MS_LOG(DEBUG) << "Read again, var: " << var_name << ", block: " << ToString();
+  node = ReadLocalVariable(var_name);
+  if (node != nullptr) {
+    return node;
   }
   return phi_param;
 }
@@ -412,7 +424,6 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
     // Replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."
     WriteVariable(var_name, arg_node);
     removable_phis_[phi] = arg_node;
-    resolve_to_removable_phis_[arg_node] = phi;
     // The following equal to statement "The φ-function defining v1, which now reads φ(v2, v1), is optimized
     // recursively". check if phi1 is assigned with this phi before, then phi1 can be replaced with arg_node.
     for (auto &prev : prev_blocks_) {

@@ -155,12 +155,6 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   // Keep all removable phis which will be removed in one pass.
   mindspore::HashMap<ParameterPtr, AnfNodePtr> removable_phis_;
 
-  // Keep the map for the resolve node to the removable phi node.
-  // For the case that ReadVariable returns a phi node although this phi node
-  // generated in the prev block is identified as removable. The other blocks
-  // should find this phi node.
-  mindspore::HashMap<AnfNodePtr, ParameterPtr> resolve_to_removable_phis_;
-
   // Hold declared global variables in function
   std::set<std::string> global_vars_;
 
@@ -185,6 +179,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   //         break
   //    x = x - 1   #This after block is a dead block
   bool is_dead_block_{false};
+
+  AnfNodePtr ReadLocalVariable(const std::string &var_name);
 };
 }  // namespace parse
 }  // namespace mindspore
