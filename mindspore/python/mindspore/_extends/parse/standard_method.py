@@ -1530,6 +1530,7 @@ def narrow(x, axis, start, length):
     """
     return F.narrow(x, axis, start, length)
 
+
 def view(x, *shape):
     """Reshape tensor, if shape is -1, reshape tensor into one dimension"""
     shape = check_view_shape(shape)
@@ -1601,6 +1602,7 @@ def csr_to_dense(x):
 
 @constexpr
 def empty_tensor(dtype):
+    """Return empty tensor"""
     return Tensor([], dtype)
 
 
@@ -1876,6 +1878,7 @@ def list_append(self_, item):
 
 
 def list_insert(self_, index, obj):
+    """Insert into list"""
     return _insert(self_, index, obj)
 
 #################
