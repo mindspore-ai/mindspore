@@ -200,6 +200,8 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   std::shared_ptr<DumpDataBuilder> LoadDumpDataBuilder(const std::string &node_name);
 
   void ClearDumpDataBuilder(const std::string &node_name);
+
+  void WaitForWriteFileFinished();
 #endif
 
  private:
