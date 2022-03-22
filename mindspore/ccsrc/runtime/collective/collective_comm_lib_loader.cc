@@ -29,7 +29,6 @@ bool CollectiveCommLibLoader::Initialize() {
 #endif
   if (collective_comm_lib_ptr_ == nullptr) {
     MS_LOG(EXCEPTION) << "Loading " + comm_lib_name_ + " failed. Error: " + err_msg;
-    return false;
   }
   return true;
 }
@@ -40,12 +39,10 @@ bool CollectiveCommLibLoader::Finalize() {
 #ifndef _WIN32
   if (dlclose(collective_comm_lib_ptr_) != 0) {
     MS_LOG(EXCEPTION) << "Closing " + comm_lib_name_ + " handle failed. Error: " + GetDlErrorMsg();
-    return false;
   }
 #else
   if (!FreeLibrary(reinterpret_cast<HINSTANCE__ *>(collective_comm_lib_ptr_))) {
     MS_LOG(EXCEPTION) << "Closing " + comm_lib_name_ + " handle failed. Error: " + std::to_string(GetLastError());
-    return false;
   }
 #endif
   return true;
