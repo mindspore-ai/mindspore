@@ -36,6 +36,7 @@
 #include "plugin/device/ascend/hal/device/ascend_bucket.h"
 #include "common/util/error_manager/error_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
+#include "backend/common/optimizer/common_backend_optimization.h"
 
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -407,7 +408,7 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     } else if (graph->is_dynamic_shape() && IsGraphMode()) {
       device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
       SetAtomicCleanToNodes(graph);  // graph mode may can do it too, instead of update execorder
-      opt::AscendDynamicShapeConvert(graph);
+      opt::DynamicShapeConvertPass(graph);
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
       AssignOutputNopNodeDeviceAddress(graph);
       LaunchDeviceLibrary();

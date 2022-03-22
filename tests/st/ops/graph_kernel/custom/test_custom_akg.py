@@ -333,7 +333,6 @@ def irbuilder_case():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -347,7 +346,6 @@ def test_irbuilder_ascend_graph_mode():
     irbuilder_case()
 
 
-@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_DYNAMIC_SHAPE_CONVERT_GENERAL_OP_H
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_DYNAMIC_SHAPE_CONVERT_GENERAL_OP_H
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_LINK_CUSTOM_OP_H
+#define MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_LINK_CUSTOM_OP_H
 
 #include "ir/anf.h"
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore::opt::dynamic_shape {
-class ConvertGeneralOp : public PatternProcessPass {
+class LinkCustomOp : public Pass {
  public:
-  explicit ConvertGeneralOp(bool multigraph = true) : PatternProcessPass("convert_general_op", multigraph) {}
-  ~ConvertGeneralOp() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  LinkCustomOp() : Pass("link_custom_op") {}
+  ~LinkCustomOp() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::opt::dynamic_shape
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_DYNAMIC_SHAPE_CONVERT_GENERAL_OP_H
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_LINK_CUSTOM_OP_H

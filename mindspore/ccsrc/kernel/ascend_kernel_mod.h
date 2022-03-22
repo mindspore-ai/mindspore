@@ -47,6 +47,7 @@ class AscendKernelMod : public KernelMod {
 #endif
   }
   void UpdateOp() override;
+  bool IsNeedUpdateOp() override;
 
   void InitDynamicKernel(const CNodePtr &cnode_ptr, void *stream) {
     if (dynamic_kernel_ == nullptr) {

@@ -14,30 +14,49 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/dynamic_shape/convert_dynamic_op.h"
+#include "backend/common/optimizer/dynamic_shape/convert_custom_op.h"
 
 #include <memory>
+#include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
-#include "plugin/device/ascend/optimizer/dynamic_shape/ascend_dynamic_shape_helper.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {
-const BaseRef ConvertDynamicOp::DefinePattern() const {
-  VarPtr X = std::make_shared<CondVar>(IsDynamicOp);
-  return BaseRef({X});
+bool ConvertCustomOp::Run(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto node_list = TopoSort(func_graph->get_return());
+  for (const auto &node : node_list) {
+    if (!IsRealCNode(node)) {
+      continue;
+    }
+    ConvertCustomOpForNode(node);
+  }
+  return true;
 }
 
-const AnfNodePtr ConvertDynamicOp::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(graph);
+void ConvertCustomOp::ConvertCustomOpForNode(const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
-  auto infer_node = GenInferNode(node);
-  auto init_node = GenInitNode(node);
-  auto update_node = GenUpdateNode(node);
+  bool is_dynamic_node = common::AnfAlgo::IsDynamicShape(node);
+  AnfNodePtr infer_node = nullptr;
+  AnfNodePtr init_node = nullptr;
+  AnfNodePtr update_node = nullptr;
+  if (is_dynamic_node) {
+    infer_node = GenInferNode(node);
+    init_node = GenInitNode(node);
+  }
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kCPUDevice) {
+    update_node = GenUpdateNode(node);
+  }
+
   RelatedCustomActorNode custom_nodes = {infer_node, init_node, update_node};
   CustomActorNodeManager::Instance().Register(node, custom_nodes);
-  return node;
 }
 }  // namespace opt::dynamic_shape
 }  // namespace mindspore

@@ -77,7 +77,7 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
     }
 
     InitSizeLists();
-
+    is_need_updateop_ = true;
     return true;
   }
 

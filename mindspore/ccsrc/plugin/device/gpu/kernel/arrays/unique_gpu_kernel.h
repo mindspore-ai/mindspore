@@ -61,6 +61,7 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
     input_shapes.emplace_back(shape);
     helper_ptr_->CalMemSize(input_shapes, output_shapes);
     InitSizeLists();
+    is_need_updateop_ = true;
     return true;
   }
 

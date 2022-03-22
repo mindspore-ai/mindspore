@@ -62,6 +62,8 @@ class CPUDeviceContext : public DeviceContext {
 
   bool LoadCollectiveCommLib() override;
 
+  bool LaunchCustomFunc(const AnfNodePtr &kernel) const override;
+
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
 

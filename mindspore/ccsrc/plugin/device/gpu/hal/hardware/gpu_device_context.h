@@ -78,6 +78,10 @@ class GPUDeviceContext : public DeviceContext {
 
   bool LoadCollectiveCommLib() override;
 
+  void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const override;
+
+  bool LaunchCustomFunc(const AnfNodePtr &kernel) const override;
+
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
   bool InitDevice();

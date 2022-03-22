@@ -219,6 +219,8 @@ class KernelMod {
   void set_stream(StreamType stream) { stream_ = stream; }
   StreamType stream() const { return stream_; }
   void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
+  // set true if need to update output's shape after launch in dynamic_shape, like Unique
+  virtual bool IsNeedUpdateOp() { return is_need_updateop_; }
 
  protected:
   void InferShape();
@@ -238,6 +240,7 @@ class KernelMod {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   std::set<uint32_t> depend_list_;
+  bool is_need_updateop_ = false;
 
  private:
   void InferShapeForNopNode(const AnfNodePtr &input_node);

@@ -37,6 +37,7 @@
 #include "profiler/device/gpu/gpu_profiling_utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "backend/common/optimizer/common_backend_optimization.h"
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/mem_address_recorder.h"
@@ -265,6 +266,14 @@ void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   device::gpu::AssignGpuStream(graph);
 }
 
+void GPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (graph->is_dynamic_shape() && ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    opt::DynamicShapeConvertPass(graph);
+  }
+}
+
 void GPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   // Operator fusion optimization.
@@ -421,8 +430,21 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
   MS_EXCEPTION_IF_NULL(gpu_kernel);
 
-  gpu_kernel->InferOp();
-  gpu_kernel->InitOp();
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
+      common::AnfAlgo::GetBooleanAttr(kernel, kAttrSingleOpCompile)) {
+    gpu_kernel->InferOp();
+    gpu_kernel->InitOp();
+  }
+}
+
+bool GPUDeviceContext::LaunchCustomFunc(const AnfNodePtr &kernel) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto custom_func = AnfUtils::GetCustomFunc(kernel);
+  if (!BindDeviceToCurrentThread()) {
+    return false;
+  }
+  custom_func(nullptr);
+  return true;
 }
 
 bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
@@ -436,6 +458,7 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   bool ret = true;
+
 #ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
@@ -466,7 +489,8 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   }
 
   // Processing after execution of dynamic kernel to update output shape.
-  if (is_dynamic_shape) {
+  if (is_dynamic_shape && (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
+                           common::AnfAlgo::GetBooleanAttr(kernel, kAttrSingleOpCompile))) {
     kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(gpu_kernel);
     gpu_kernel->UpdateOp();

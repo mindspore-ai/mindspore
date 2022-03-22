@@ -17,6 +17,7 @@
 #include "kernel/ascend_kernel_mod.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/rt.h"
+#include "include/common/utils/anfalgo.h"
 namespace mindspore {
 namespace kernel {
 void AscendKernelMod::UpdateOp() {
@@ -26,6 +27,19 @@ void AscendKernelMod::UpdateOp() {
   if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {
     MS_LOG(EXCEPTION) << "Call runtime rtStreamSynchronize failed.";
   }
+}
+
+bool AscendKernelMod::IsNeedUpdateOp() {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
+  if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
+    is_need_updateop_ = true;
+  }
+  return is_need_updateop_;
 }
 }  // namespace kernel
 }  // namespace mindspore

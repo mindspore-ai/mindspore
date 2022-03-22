@@ -30,6 +30,7 @@ void SubAndFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  is_need_updateop_ = true;
 }
 
 bool SubAndFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

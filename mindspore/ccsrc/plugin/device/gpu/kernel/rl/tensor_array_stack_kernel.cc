@@ -55,6 +55,7 @@ bool TensorArrayStackKernelMod::Init(const CNodePtr &kernel_node) {
     value_size_ = ele_size_ * LongToSize(size);
   }
   InitSizeLists();
+  is_need_updateop_ = true;
   return true;
 }
 

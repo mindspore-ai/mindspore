@@ -41,6 +41,7 @@ void PadAndShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                   << cum_sum_arr_shape.size() << ".";
   }
   cum_sum_size_ = cum_sum_arr_shape[0];
+  is_need_updateop_ = true;
 }
 
 bool PadAndShiftCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

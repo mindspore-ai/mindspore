@@ -66,6 +66,7 @@ class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
     InitSizeLists();
     alignment_ = GetAlignments(common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAlignment));
     kernel_node_ = kernel_node;
+    is_need_updateop_ = true;
     return true;
   }
 
