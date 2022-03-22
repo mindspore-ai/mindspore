@@ -39,9 +39,37 @@ enum ArgIndex : uint8_t {
   kDemonize = 6,
   kMemoryCapRatio = 7
 };
-}  // namespace
 
-ms::Status Fork(ds::SharedMessage *msg, int32_t port) {
+ms::Status BuildServer(ds::CacheServer::Builder *builder, ds::SharedMessage *msg, int32_t port, bool daemonize) {
+  if (msg == nullptr) {
+    return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "msg pointer is nullptr.");
+  }
+  if (builder == nullptr) {
+    return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "builder pointer is nullptr.");
+  }
+  // Create the instance with some sanity checks built in
+  ms::Status rc = builder->Build();
+  // Dump the summary
+  MS_LOG(INFO) << "Cache server has started successfully and is listening on port " << port << std::endl;
+  MS_LOG(INFO) << builder << std::endl;
+  if (rc.IsOk()) {
+    if (daemonize && !rc.ToString().empty()) {
+      // If we have adjusted the number of workers provided by users, use the message queue to send the warning
+      // message if this is the child daemon.
+      (void)msg->SendStatus(rc);
+    }
+    // If all goes well, kick off the threads. Loop forever and never return unless error.
+    ds::CacheServer &cs = ds::CacheServer::GetInstance();
+    rc = cs.Run(msg->GetMsgQueueId());
+  } else if (daemonize) {
+    // If we didn't pass the sanity check to at least create the instance, use
+    // the message queue to return the error message if this is the child daemon.
+    return msg->SendStatus(rc);
+  }
+  return rc;
+}
+
+ms::Status Fork(ds::CacheServer::Builder *builder, ds::SharedMessage *msg, int32_t port) {
   if (msg == nullptr) {
     return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "msg pointer is nullptr.");
   }
@@ -64,7 +92,9 @@ ms::Status Fork(ds::SharedMessage *msg, int32_t port) {
     std::cout << "Cache server startup completed successfully!\n";
     std::cout << "The cache server daemon has been created as process id " << pid << " and listening on port " << port
               << ".\n";
-    if (!warning_string.empty()) std::cout << "WARNING: " << warning_string;
+    if (!warning_string.empty() && warning_string != ms::Status::OK().ToString()) {
+      std::cout << "WARNING: " << warning_string;
+    }
     std::cout << "\nRecommendation:\nSince the server is detached into its own daemon process, monitor the server "
                  "logs (under "
               << ds::DefaultLogDir() << ") for any issues that may happen after startup\n";
@@ -83,11 +113,13 @@ ms::Status Fork(ds::SharedMessage *msg, int32_t port) {
     (void)close(STDIN_FILENO);
     (void)close(STDOUT_FILENO);
     (void)close(STDERR_FILENO);
+    return BuildServer(builder, msg, port, true);
   }
   // failed to fork
   std::string errMsg = "Failed to fork process for cache server. Errno = " + std::to_string(errno);
   return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
 }
+}  // namespace
 
 /// Start the server
 /// \param argv
@@ -139,29 +171,10 @@ ms::Status StartServer(int argc, char **argv) {
     if (rc.IsError()) {
       return rc;
     }
-    return Fork(&msg, port);
+    return Fork(&builder, &msg, port);
   }
 
-  // Create the instance with some sanity checks built in
-  rc = builder.Build();
-  // Dump the summary
-  MS_LOG(INFO) << "Cache server has started successfully and is listening on port " << port << std::endl;
-  MS_LOG(INFO) << builder << std::endl;
-  if (rc.IsOk()) {
-    if (daemonize && !rc.ToString().empty()) {
-      // If we have adjusted the number of workers provided by users, use the message queue to send the warning
-      // message if this is the child daemon.
-      (void)msg.SendStatus(rc);
-    }
-    // If all goes well, kick off the threads. Loop forever and never return unless error.
-    ds::CacheServer &cs = ds::CacheServer::GetInstance();
-    rc = cs.Run(msg.GetMsgQueueId());
-  } else if (daemonize) {
-    // If we didn't pass the sanity check to at least create the instance, use
-    // the message queue to return the error message if this is the child daemon.
-    return msg.SendStatus(rc);
-  }
-  return rc;
+  return BuildServer(&builder, &msg, port, daemonize);
 }
 
 int main(int argc, char **argv) {
