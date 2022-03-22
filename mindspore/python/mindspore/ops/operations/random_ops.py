@@ -391,6 +391,63 @@ class Poisson(PrimitiveWithInfer):
         return out
 
 
+class RandomPoisson(Primitive):
+    r"""
+    Produces random non-negative  values i, distributed according to discrete probability function:
+
+    .. math::
+        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!},
+
+    Args:
+         seed (int): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
+            the seed is set by the given seed. Otherwise, it is seeded by a random seed.
+         seed2 (int): An optional int. Defaults to 0. A second seed to avoid seed collision.
+         dtype (mindspore.dtype): The type of output. Its value must be mindspore.int64. Default: mindspore.int64.
+
+    Inputs:
+        - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
+          mindspore.int32 and mindspore.int64.
+        - **rate** (Tensor) - μ parameter the distribution was constructed with. The parameter defines mean number
+          of occurrences of the event. Its type must be one of the following types:
+          mindspore.float16, mindspore.float32 mindspore.float64,mindspore.int32 and mindspore.int64.
+
+    Outputs:
+        Tensor. Its shape is spcified by the input `shape`. Its type is spcified by `rate`.
+
+    Raises:
+        TypeError: If `shape` is not a Tensor.
+        TypeError: If `dtype` and input tensor type are not allowed.
+        ValueError: If `shape` elements are not positive.
+        ValueError: If `shape` has less than 2 elements.
+        ValueError: If `shape` is not a 1-D tensor.
+        ValueError: If the number of elements of output is more than 1000000.
+
+    Supported Platforms:
+        ``Ascend````CPU``
+
+    Examples:
+        >>> shape = Tensor(np.array([2, 3]), mstype.int32)
+        >>> rate = Tensor(np.array([2]), mstype.int32)
+        >>> seed = 0
+        >>> seed2 = 0
+        >>> random_poisson = ops.RandomPoisson(seed=seed, seed2=seed2)
+        >>> output = random_poisson(shape,rate)
+        >>> print(output.shape)
+        (2, 3)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0, seed2=0, dtype=mstype.int64):
+        """Initialize Poisson"""
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=['shape', 'rate'], outputs=['output'])
+        Validator.check_value_type('seed', seed, [int], self.name)
+        Validator.check_value_type('seed2', seed2, [int], self.name)
+        valid_values = (mstype.int64, mstype.int32, mstype.float16, mstype.float32, mstype.float64)
+        Validator.check_type_name("dtype", dtype, valid_values, self.name)
+
+
+
 class UniformInt(PrimitiveWithInfer):
     r"""
     Produces random integer values i, uniformly distributed on the closed interval [minval, maxval), that is,
