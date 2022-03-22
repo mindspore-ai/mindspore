@@ -30,7 +30,7 @@ mindspore.nn.ProximalAdagrad
 
       .. include:: mindspore.nn.optim_group_param.rst
       .. include:: mindspore.nn.optim_group_lr.rst
-      .. include:: mindspore.nn.optim_group_weight_decay.rst
+      .. include:: mindspore.nn.optim_group_dynamic_weight_decay.rst
       .. include:: mindspore.nn.optim_group_gc.rst
       .. include:: mindspore.nn.optim_group_order.rst
 
@@ -46,7 +46,9 @@ mindspore.nn.ProximalAdagrad
 
     .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
-    - **weight_decay** (Union[float, int]) - 要乘以权重的权重衰减值，必须为零或正值。默认值：0.0。
+    - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
+    
+      .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
 
     **输入：**
 
