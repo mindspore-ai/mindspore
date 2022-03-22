@@ -141,7 +141,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   size_t pad_index = param_num;
 
   for (; pad_index < total_num; ++pad_index) {
-    parameters_indexes.emplace_back(0);
+    (void)parameters_indexes.emplace_back(0);
   }
 
   for (size_t j = 0; j < input_num; ++j) {
@@ -163,7 +163,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < output_num; ++i) {
     auto param_output = parameters_indexes.at(input_num + i);
     if (param_output == 1) {
-      output_indexes.emplace_back(i);
+      (void)output_indexes.emplace_back(i);
       MS_LOG(DEBUG) << "Atomic clear output index: " << i;
     }
   }
@@ -178,7 +178,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   for (size_t k = 0; k < workspace_num; ++k) {
     auto param_workspace = parameters_indexes.at(input_num + output_num + k);
     if (param_workspace == 1) {
-      workspace_indexes.emplace_back(k);
+      (void)workspace_indexes.emplace_back(k);
       MS_LOG(DEBUG) << "Atomic clear workspace index: " << k;
     }
   }
@@ -212,7 +212,7 @@ std::vector<size_t> GetClearSize(const CNodePtr &pre_node) {
     auto output_men_size = kernel_mod->GetOutputSizeList();
     for (auto index : output_indexes) {
       auto clean_item = (output_men_size.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize;
-      clean_size_list.emplace_back(clean_item);
+      (void)clean_size_list.emplace_back(clean_item);
     }
   }
   // clean workspace
@@ -221,7 +221,7 @@ std::vector<size_t> GetClearSize(const CNodePtr &pre_node) {
     auto workspace_men_sizes = kernel_mod->GetWorkspaceSizeList();
     for (const auto &index : workspace_indexes) {
       auto clean_item = (workspace_men_sizes.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize;
-      clean_size_list.emplace_back(clean_item);
+      (void)clean_size_list.emplace_back(clean_item);
     }
   }
   MS_LOG(INFO) << "Clear output size:" << clean_size_list.size() << ",pre_node:" << pre_node->fullname_with_scope();
@@ -235,7 +235,7 @@ CNodePtr NewAtomicOp(const CNodePtr &pre_node, const std::vector<AnfNodePtr> &fu
   auto new_value_node = NewValueNode(clear_zero_prim);
   MS_EXCEPTION_IF_NULL(new_value_node);
   std::vector<AnfNodePtr> inputs = {new_value_node};
-  inputs.insert(inputs.end(), fusion_clear_inputs.begin(), fusion_clear_inputs.end());
+  (void)inputs.insert(inputs.end(), fusion_clear_inputs.begin(), fusion_clear_inputs.end());
   auto func_graph = pre_node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -262,7 +262,7 @@ void InsertFusionAtomicOp(const CNodePtr &first_clear_node, const std::vector<An
   MS_LOG(DEBUG) << "The AtomicClean currently does not support dynamic shape.";
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(false), clear_zero);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), clear_zero);
-  (*clean_ops)[first_clear_node].emplace_back(clear_zero);
+  (void)(*clean_ops)[first_clear_node].emplace_back(clear_zero);
 }
 
 void InsertAtomicOpForNormalOp(const mindspore::CNodePtr &pre_node, CleanOpsMap *clean_ops) {
@@ -275,7 +275,7 @@ void InsertAtomicOpForNormalOp(const mindspore::CNodePtr &pre_node, CleanOpsMap 
   MS_LOG(DEBUG) << "The AtomicClean currently does not support dynamic shape.";
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(false), clear_zero);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), clear_zero);
-  (*clean_ops)[pre_node].emplace_back(clear_zero);
+  (void)(*clean_ops)[pre_node].emplace_back(clear_zero);
 }
 
 void SpecialAkgOps(const std::string &op_name, const CNodePtr &node, CleanOpsMap *clean_ops) {
@@ -299,13 +299,13 @@ void SpecialAkgOps(const std::string &op_name, const CNodePtr &node, CleanOpsMap
     AbstractBasePtr abstract = std::make_shared<abstract::AbstractNone>();
     MS_EXCEPTION_IF_NULL(abstract);
     common::AnfAlgo::SetNodeAttr("input_names", MakeValue(std::vector<std::string>({"x"})), clear_zero);
-    SelectKernelInfo(clear_zero);
+    (void)SelectKernelInfo(clear_zero);
     // set the distinction label of clear same with anf
     AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(node.get()), clear_zero.get());
     MS_LOG(DEBUG) << "The AtomicClean currently does not support dynamic shape.";
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(false), clear_zero);
     common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), clear_zero);
-    (*clean_ops)[node].emplace_back(clear_zero);
+    (void)(*clean_ops)[node].emplace_back(clear_zero);
   }
 }
 
@@ -333,8 +333,8 @@ void ProcessAtomicFusion(const std::vector<CNodePtr> &kernels, CleanOpsMap *clea
         if (fusion_clear_inputs.empty()) {
           first_node = anf_node;
         }
-        clean_size_list.insert(clean_size_list.end(), clean_sizes.begin(), clean_sizes.end());
-        fusion_clear_inputs.emplace_back(anf_node);
+        (void)clean_size_list.insert(clean_size_list.end(), clean_sizes.begin(), clean_sizes.end());
+        (void)fusion_clear_inputs.emplace_back(anf_node);
         MS_LOG(DEBUG) << "The fusion_clear_inputs size: " << fusion_clear_inputs.size()
                       << ", clean_size_list: " << clean_size_list.size();
       }
@@ -418,7 +418,7 @@ void TagNeedInsertAtomicAttr(const std::vector<CNodePtr> &nodes) {
       auto indexes = comm_input_info_map[anf_node];
       if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, anf_node)) {
         auto output_indexes = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(anf_node, kAttrAtomicOutputIndexs);
-        std::copy(indexes.begin(), indexes.end(), std::back_inserter(output_indexes));
+        (void)std::copy(indexes.begin(), indexes.end(), std::back_inserter(output_indexes));
         std::set<size_t> tmp(output_indexes.begin(), output_indexes.end());
         indexes.assign(tmp.begin(), tmp.end());
       }
@@ -436,7 +436,7 @@ std::vector<CNodePtr> GatherAllAtomicOps(const CleanOpsMap &node_maps) {
   while (iter != node_maps.end()) {
     auto tmp = iter->second;
     (void)std::copy(tmp.begin(), tmp.end(), std::back_inserter(all_atomics));
-    iter++;
+    (void)iter++;
   }
   return all_atomics;
 }
@@ -450,7 +450,7 @@ void InsertAtomicCleanOps(const std::vector<CNodePtr> &nodes, CleanOpsMap *maps)
   InsertAtomicOps(nodes, maps);
   std::vector<CNodePtr> all_atomics = GatherAllAtomicOps(*maps);
   // build atomic
-  KernelBuild(all_atomics);
+  (void)KernelBuild(all_atomics);
 }
 
 void InsertAtomicCleanOps(const KernelGraphPtr &kernel_graph) {
