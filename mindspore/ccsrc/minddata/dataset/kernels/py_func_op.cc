@@ -127,8 +127,11 @@ Status PyFuncOp::CastOutput(const py::object &ret_py_obj, TensorRow *output) {
 
 Status PyFuncOp::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
-  if (py_func_ptr_.attr("to_json")) {
-    args = nlohmann::json::parse(py_func_ptr_.attr("to_json")().cast<std::string>());
+  {
+    py::gil_scoped_acquire gil_acquire;
+    if (py_func_ptr_.attr("to_json")) {
+      args = nlohmann::json::parse(py_func_ptr_.attr("to_json")().cast<std::string>());
+    }
   }
   *out_json = args;
   return Status::OK();

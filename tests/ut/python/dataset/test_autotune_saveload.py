@@ -32,9 +32,9 @@ def data_pipeline_same(file1, file2):
     assert file2.exists()
     with file1.open() as f1, file2.open() as f2:
         pipeline1 = json.load(f1)
-        pipeline1 = pipeline1["pipeline"] if "pipeline" in pipeline1 else pipeline1
+        pipeline1 = pipeline1["tree"] if "tree" in pipeline1 else pipeline1
         pipeline2 = json.load(f2)
-        pipeline2 = pipeline2["pipeline"] if "pipeline" in pipeline2 else pipeline2
+        pipeline2 = pipeline2["tree"] if "tree" in pipeline2 else pipeline2
         return pipeline1 == pipeline2
 
 
