@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import pytest
 from mindspore import context
 from mindspore import Tensor, nn
@@ -21,8 +20,8 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
-context.set_context(device_target="Ascend")
 
+# Although we don't transform for to while any more, we keep this test case.
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -53,7 +52,6 @@ def test_single_for_01():
     y = Tensor([5], mstype.int32)
     z = Tensor([4], mstype.int32)
 
-    os.environ['MS_DEV_FOR_TO_WHILE_LOOP'] = '1'
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     for_net = SingleForNet()
@@ -67,7 +65,6 @@ def test_single_for_01():
     net = GradNet(for_net)
     pynative_forward_res = for_net(x, y, z)
     pynative_backward_res = net(x, y, z)
-    os.environ['MS_DEV_FOR_TO_WHILE_LOOP'] = ''
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
