@@ -3484,6 +3484,7 @@ class GetNext(Primitive):
         >>> import mindspore
         >>> from mindspore import ops
         >>> from mindspore import dataset as ds
+        >>> from mindspore.common import dtype as mstype
         >>> data_path = "/path/to/MNIST_Data/train/"
         >>> train_dataset = ds.MnistDataset(data_path, num_samples=10)
         >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
@@ -3493,7 +3494,7 @@ class GetNext(Primitive):
         >>> get_next = ops.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
         >>> data, label = get_next()
         >>> relu = ops.ReLU()
-        >>> result = relu(data).asnumpy()
+        >>> result = relu(data.astype(mstype.float32))
         >>> print(result.shape)
         (28, 28, 1)
     """
