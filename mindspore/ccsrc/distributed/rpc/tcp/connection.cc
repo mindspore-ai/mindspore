@@ -324,7 +324,7 @@ std::string Connection::GenerateHttpMessage(MessageBase *msg) {
 
 void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseUrl, bool isHttpKmsg) {
   if (msg->type == MessageBase::Type::KMSG) {
-    size_t index = 0;
+    int index = 0;
     if (!isHttpKmsg) {
       send_to = msg->to;
       send_from = msg->from;
@@ -372,7 +372,7 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
     send_io_vec[index].iov_len = msg->body.size();
     ++index;
     send_kernel_msg.msg_iov = send_io_vec;
-    send_kernel_msg.msg_iovlen = IntToSize(index);
+    send_kernel_msg.msg_iovlen = index;
     total_send_len = UlongToUint(msg->body.size());
     send_message = msg;
 
@@ -429,7 +429,7 @@ int Connection::AddConnnectEventHandler() {
 
 bool Connection::ParseMessage() {
   int retval = 0;
-  uint32_t recvLen = 0;
+  size_t recvLen = 0;
   char *recvBuf = nullptr;
 
   switch (recv_state) {
@@ -437,7 +437,7 @@ bool Connection::ParseMessage() {
     case State::kMsgHeader:
       recvBuf = reinterpret_cast<char *>(&recv_msg_header) + recv_len;
       retval = socket_operation->Receive(this, recvBuf, sizeof(MessageHeader) - recv_len, &recvLen);
-      if (retval < 0) {
+      if (retval != IO_RW_OK) {
         state = ConnectionState::kDisconnecting;
         recv_len += recvLen;
         return false;
@@ -463,13 +463,14 @@ bool Connection::ParseMessage() {
 
     // Parse message body.
     case State::kBody:
-      retval = socket_operation->ReceiveMessage(this, &recv_kernel_msg, total_recv_len);
-      if (retval != static_cast<int>(total_recv_len)) {
-        if (retval < 0) {
+      recvLen = 0;
+      retval = socket_operation->ReceiveMessage(this, &recv_kernel_msg, total_recv_len, &recvLen);
+      if (recvLen != total_recv_len) {
+        if (retval != IO_RW_OK) {
           state = ConnectionState::kDisconnecting;
           return false;
         }
-        total_recv_len -= IntToSize(retval);
+        total_recv_len -= recvLen;
         return false;
       }
       recv_state = State::kMsgHeader;
