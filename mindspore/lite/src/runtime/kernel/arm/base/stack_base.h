@@ -35,7 +35,7 @@ class StackBaseCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
   int StackExecute(int task_id);
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   int UpdateThreadNumPass();
 #endif
 

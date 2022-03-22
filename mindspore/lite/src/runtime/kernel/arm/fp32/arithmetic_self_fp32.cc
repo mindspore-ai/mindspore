@@ -28,7 +28,7 @@ struct TYPE_FUNC_INFO {
   ArithmeticSelfFunc func_ = nullptr;
 };
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 const std::map<int, float> arithmetic_self_compute_cost_map_ = {
   // {schema::PrimitiveType_Abs, 0.5f},
   // {schema::PrimitiveType_Cos, 1.0f},
@@ -48,7 +48,7 @@ const std::map<int, float> arithmetic_self_compute_cost_map_ = {
 #endif
 }  // namespace
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 int ArithmeticSelfCPUKernel::UpdateThreadNumPass() {
   if (thread_cost_context_ == nullptr && arithmetic_self_compute_cost_map_.count(type_) > 0) {
     thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
@@ -108,7 +108,7 @@ int ArithmeticSelfCPUKernel::Prepare() {
 }
 
 int ArithmeticSelfCPUKernel::ReSize() {
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   if (UpdateThreadNumPass() != RET_OK) {
     return RET_ERROR;
   }

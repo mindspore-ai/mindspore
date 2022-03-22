@@ -34,7 +34,7 @@ using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
 namespace {
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 const std::map<int, float> activation_compute_cost_map_ = {
   {schema::ActivationType_RELU, 1.806f},        // dataNum about 100k
   {schema::ActivationType_RELU6, 1.806f},       // dataNum about 100k
@@ -47,7 +47,7 @@ const std::map<int, float> activation_compute_cost_map_ = {
 #endif
 }  // namespace
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 int ActivationCPUKernel::UpdateThreadNumPass() {
   if (thread_cost_context_ == nullptr && activation_compute_cost_map_.count(type_) > 0) {
     thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
@@ -96,7 +96,7 @@ int ActivationCPUKernel::Prepare() {
 }
 
 int ActivationCPUKernel::ReSize() {
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   if (UpdateThreadNumPass() != RET_OK) {
     return RET_ERROR;
   }

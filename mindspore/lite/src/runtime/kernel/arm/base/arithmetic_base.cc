@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 namespace {
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 const std::map<std::pair<int, int>, float> arithmetic_compute_cost_map_ = {
   {{schema::PrimitiveType_MulFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
   {{schema::PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
@@ -332,7 +332,7 @@ void ArithmeticBaseCPUKernel::ComputeOfflineInfo() {
 
 int ArithmeticBaseCPUKernel::ChooseThreadCuttingstrategy() {
   auto total_num = out_tensors_.front()->ElementsNum();
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   if (UpdateThreadNumPass() != RET_OK) {
     return RET_ERROR;
   }
@@ -449,7 +449,7 @@ void ArithmeticBaseCPUKernel::ComputeOffset(int task_id) {
   }
 }
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 int ArithmeticBaseCPUKernel::UpdateThreadNumPass() {
   std::pair<int, int> fusion_type = std::make_pair(primitive_type_, param_->activation_type_);
   if (thread_cost_context_ == nullptr && arithmetic_compute_cost_map_.count(fusion_type) > 0) {

@@ -64,7 +64,7 @@ void StridedSliceCPUKernel::InitFastRunParam() {
 
   outer_ == 1 ? (parallel_on_split_axis_ = true) : (parallel_on_outer_ = true);
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   if (UpdateThreadNumPass() != RET_OK) {
     MS_LOG(ERROR) << "thread num update thread file.";
     return;
@@ -75,7 +75,7 @@ void StridedSliceCPUKernel::InitFastRunParam() {
     parallel_on_split_axis_ ? UP_DIV(out_shape[split_axis_], thread_num_) : UP_DIV(outer_, thread_num_);
 }
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 int StridedSliceCPUKernel::UpdateThreadNumPass() {
   if (thread_cost_context_ == nullptr) {
     thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();

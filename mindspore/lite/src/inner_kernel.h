@@ -32,7 +32,7 @@
 #include "include/api/context.h"
 #include "include/api/kernel.h"
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 #include "src/thread_cost_model.h"
 #endif
 
@@ -59,7 +59,7 @@ class InnerKernel : public Kernel {
       FreeWorkspace();
     }
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
     if (thread_cost_context_ != nullptr) {
       free(thread_cost_context_);
       thread_cost_context_ = nullptr;
@@ -207,7 +207,7 @@ class InnerKernel : public Kernel {
   const lite::Context *ms_context_ = nullptr;
 
   int thread_num_ = 1;
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   lite::ThreadCostContext *thread_cost_context_ = nullptr;
 #endif
 };

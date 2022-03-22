@@ -89,7 +89,7 @@ class ArithmeticBaseCPUKernel : public InnerKernel {
   int BroadCastConstTensor();
   void ComputeOfflineInfo();
   int ChooseThreadCuttingstrategy();
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   int UpdateThreadNumPass();
 #endif
   void ComputeOffset(int task_id);

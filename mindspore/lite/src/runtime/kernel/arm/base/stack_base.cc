@@ -54,7 +54,7 @@ static inline int GetOuterSize(const std::vector<int> &in_shape, int axis) {
   return outer_size;
 }
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 int StackBaseCPUKernel::UpdateThreadNumPass() {
   if (thread_cost_context_ == nullptr) {
     thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
@@ -88,7 +88,7 @@ int StackBaseCPUKernel::ReSize() {
     outer_size_ = GetOuterSize(input0_shape, axis_);
   }
 
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   if (UpdateThreadNumPass() != RET_OK) {
     return RET_ERROR;
   }
