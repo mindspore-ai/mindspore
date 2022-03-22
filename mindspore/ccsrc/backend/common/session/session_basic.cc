@@ -1236,6 +1236,7 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
     MS_EXCEPTION_IF_NULL(new_cnode);
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
+    new_cnode->set_parallel(cnode->is_parallel());
     if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
       new_cnode->set_fullname_with_scope(cnode->input(kFirstDataInputIndex)->fullname_with_scope());
     }
@@ -1374,6 +1375,11 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(parameter_index);
   size_t index = 0;
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  bool is_parallel_forward_ms_function =
+    !graph->is_bprop() && (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
   for (const auto &input_node : graph->input_nodes()) {
     auto params = common::AnfAlgo::GetAllOutput(input_node);
     for (const auto &param : params) {
@@ -1386,13 +1392,14 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
       // Check shape of input and parameter
       const auto &input_shape = input->shape();
       const auto &param_shape = common::AnfAlgo::GetOutputInferShape(param, 0);
-      if (input_shape.size() != param_shape.size()) {
+      if (!is_parallel_forward_ms_function && input_shape.size() != param_shape.size()) {
         MS_LOG(EXCEPTION) << "Shape size of input tensor(" << input_shape << ") and parameter(" << param_shape
                           << ") are different, input index: " << index << ", parameter: " << param->DebugString();
       }
       bool is_dynamic = param->Shape()->IsDynamic();
       for (size_t i = 0; i < input_shape.size(); i += 1) {
-        if (input_shape[i] < 0 || (static_cast<size_t>(input_shape[i]) != param_shape[i] && !is_dynamic)) {
+        if (input_shape[i] < 0 || (!is_parallel_forward_ms_function &&
+                                   static_cast<size_t>(input_shape[i]) != param_shape[i] && !is_dynamic)) {
           MS_LOG(EXCEPTION) << "Input tensor shape(" << input_shape << ") and parameter shape(" << param_shape
                             << ") are different, input index: " << index << ", parameter: " << param->DebugString();
         }
@@ -2648,7 +2655,29 @@ std::vector<uint32_t> GenerateBucketSizeList(const KernelGraphPtr &graph, const 
     if (grads_count == 0) {
       MS_LOG(EXCEPTION) << "Bprop graph has no grad";
     }
-    return {grads_count};
+    uint32_t remove_number = 0;
+    auto parallel_context = parallel::ParallelContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(parallel_context);
+    auto parallel_mode = parallel_context->parallel_mode();
+    if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {
+      auto ret = graph->get_return();
+      auto current_node = ret->cast<CNodePtr>();
+      while (IsPrimitiveCNode(current_node->input(1), prim::kPrimMakeTuple)) {
+        current_node = current_node->input(1)->cast<CNodePtr>();
+      }
+      auto inputs = current_node->inputs();
+      for (size_t i = 1; i < inputs.size(); ++i) {
+        auto node = inputs[i];
+        if (!node->isa<CNode>()) {
+          continue;
+        }
+        auto cnode = node->cast<CNodePtr>();
+        if (cnode->is_parallel()) {
+          remove_number += 1;
+        }
+      }
+    }
+    return {grads_count - remove_number};
   }
 
   std::vector<uint32_t> bucket_size_list;
@@ -2705,7 +2734,8 @@ void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::Devi
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
-  if (!pynative_mode || parallel_mode != parallel::kDataParallel) {
+  if (!pynative_mode || (parallel_mode != parallel::kDataParallel && parallel_mode != parallel::kSemiAutoParallel &&
+                         parallel_mode != parallel::kAutoParallel)) {
     return;
   }
   SetGraphBpropAttr(graph);
@@ -2747,7 +2777,8 @@ void SessionBasic::AddGradAddrToBucket(const GraphId &graph_id, const std::vecto
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
-  if (parallel_mode != parallel::kDataParallel) {
+  if (parallel_mode != parallel::kDataParallel && parallel_mode != parallel::kAutoParallel &&
+      parallel_mode != parallel::kSemiAutoParallel) {
     return;
   }
 

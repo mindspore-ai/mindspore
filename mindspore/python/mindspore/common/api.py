@@ -35,6 +35,7 @@ from .tensor import COOTensor as MsCOOTensor
 from .initializer import initializer
 from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, COOTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
+from ..parallel._tensor import _load_tensor_by_layout
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
     _get_parameter_broadcast, _get_pipeline_stages
@@ -263,7 +264,12 @@ class _MindsporeFunctionExecutor:
             for states in states_tuple:
                 for param, state in zip(params, states):
                     if param.shape != state.shape:
-                        state.set_data(initializer(state.init, param.shape), True)
+                        if state.has_init:
+                            state.set_data(initializer("zeros", param.shape), True)
+                        else:
+                            layout = obj.parameter_layout_dict[param.name]
+                            new_tensor = _load_tensor_by_layout(state.data, layout)
+                            state.set_data(new_tensor, True)
         _pynative_executor.get_top_cell().parameter_layout_dict = obj.parameter_layout_dict
 
     def compile(self, args_list, method_name):

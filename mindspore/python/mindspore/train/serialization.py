@@ -300,7 +300,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         param_list = []
         for (key, value) in param_dict.items():
             each_param = {"name": key}
-            param_data = Tensor(value.data)
+            param_data = Tensor(value.data.asnumpy())
 
             # in automatic model parallel scenario, some parameters were split to all the devices,
             # which should be combined before saving
@@ -422,7 +422,7 @@ def load(file_name, **kwargs):
         dec_key = Validator.check_isinstance('dec_key', kwargs['dec_key'], bytes)
         dec_mode = 'AES-GCM'
         if 'dec_mode' in kwargs.keys():
-            dec_mode = Validator.check_isinstance('dec_mode', kwargs['dec_mode'], str)
+            dec_mode = Validator.check_isinstance('dec_mode', kwargs.get('dec_mode'), str)
         graph = load_mindir(file_name, dec_key=dec_key, key_len=len(dec_key), dec_mode=dec_mode)
     else:
         graph = load_mindir(file_name)

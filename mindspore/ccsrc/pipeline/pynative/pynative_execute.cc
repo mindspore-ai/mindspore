@@ -2712,7 +2712,11 @@ void GradExecutor::MarkMsFunctionNodes(const pipeline::ResourcePtr &resource) {
   auto grads = ret_cnode->input(1)->cast<CNodePtr>();
   for (size_t i = 1; i < grads->inputs().size(); i++) {
     if (in_ms_function[i - 1]) {
-      auto cnode = grads->input(i)->cast<CNodePtr>();
+      auto node = grads->input(i);
+      if (!node->isa<CNode>()) {
+        continue;
+      }
+      auto cnode = node->cast<CNodePtr>();
       cnode->set_parallel(true);
     }
   }
