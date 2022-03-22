@@ -51,8 +51,7 @@ class MatmulOptPlugin : public TensorRTPlugin {
   int bias_index_{-1};  // -1 means no bias, otherwise should be 2
   cublasHandle_t cublas_handle_{nullptr};
   cublasOperation_t operations_[2]{CUBLAS_OP_N, CUBLAS_OP_N};
-  cudaDataType_t data_types_[3]{CUDA_R_32F, CUDA_R_32F, CUDA_R_32F};
-  cublasComputeType_t type_compute_;
+  cudaDataType data_types_[4]{CUDA_R_32F, CUDA_R_32F, CUDA_R_32F, CUDA_R_32F};
 };
 
 class MatmulOptPluginCreater : public TensorRTPluginCreater {
