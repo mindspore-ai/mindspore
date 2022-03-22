@@ -58,9 +58,9 @@ int ArgMinMaxInt8CPUKernel::Prepare() {
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
   CHECK_LESS_RETURN(out_quant_args.size(), 1);
+  out_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   out_quant_arg_->scale_ = out_quant_args.front().scale;
   out_quant_arg_->zp_ = out_quant_args.front().zeroPoint;
-  out_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (out_quant_arg_ == nullptr) {
     MS_LOG(ERROR) << "Malloc QuantArg for argmin or argmax int8 op failed!";
     return RET_ERROR;
@@ -98,6 +98,10 @@ int ArgMinMaxInt8CPUKernel::Run() {
 
   const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->MutableData());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
+  int8_t *output_value = nullptr;
+  if (out_tensors_.size() == C2NUM) {
+    output_value = reinterpret_cast<int8_t *>(out_tensors_.at(C1NUM)->MallocData());
+  }
   CHECK_NULL_RETURN(input_data);
   CHECK_NULL_RETURN(output_data);
   auto in_shape = input->shape();
@@ -105,23 +109,23 @@ int ArgMinMaxInt8CPUKernel::Run() {
   CHECK_NULL_RETURN(in_shape.data());
   CHECK_NULL_RETURN(param);
   if (param->topk_ == 1) {
-    Int8ArgMinMaxQuant(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+    Int8ArgMinMaxQuant(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
     return RET_OK;
   }
   CHECK_NULL_RETURN(in_quant_arg_);
   CHECK_NULL_RETURN(out_quant_arg_);
   switch (param->axis_) {
     case 0:
-      Int8ArgMinMaxDim0(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+      Int8ArgMinMaxDim0(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
       break;
     case 1:
-      Int8ArgMinMaxDim1(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+      Int8ArgMinMaxDim1(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
       break;
     case 2:
-      Int8ArgMinMaxDim2(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+      Int8ArgMinMaxDim2(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
       break;
     case 3:
-      Int8ArgMinMaxDim3(input_data, output_data, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+      Int8ArgMinMaxDim3(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
       break;
     default:
       MS_LOG(ERROR) << "axis is invalid";

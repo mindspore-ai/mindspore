@@ -31,8 +31,24 @@ void CalcParameter(const int *shape, int dims_number, int axis, int *pre_axis_co
   }
 }
 
-void DoArgMinMaxQuant(const int8_t *input, int8_t *output, const ArgMinMaxParameter *param, int pre_axis_count,
-                      int axis_count, int after_axis_count, const QuantArg *in_quant_arg,
+void SetOutputValue(float value, int32_t index, int8_t *output1, int8_t *output2, int offset,
+                    float output_inverse_scale, float output_zp, bool out_value) {
+  if (output2) {
+    int32_t *output1_index = (int32_t *)output1;
+    output1_index[offset] = index;
+    output2[offset] = value * output_inverse_scale + output_zp;
+  } else {
+    if (out_value) {
+      output1[offset] = value * output_inverse_scale + output_zp;
+    } else {
+      int32_t *output1_index = (int32_t *)output1;
+      output1_index[offset] = index;
+    }
+  }
+}
+
+void DoArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, const ArgMinMaxParameter *param,
+                      int pre_axis_count, int axis_count, int after_axis_count, const QuantArg *in_quant_arg,
                       const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
@@ -46,7 +62,7 @@ void DoArgMinMaxQuant(const int8_t *input, int8_t *output, const ArgMinMaxParame
       if (!param->get_max_) {
         value = FLT_MAX;
       }
-      float index = 0.0f;
+      int32_t index = 0.0f;
       for (int k = 0; k < axis_count; ++k) {
         float value_tmp = input[input_offset + k * after_axis_count + j] * in_quant_arg->scale_ + bias;
         if (param->get_max_) {
@@ -61,19 +77,21 @@ void DoArgMinMaxQuant(const int8_t *input, int8_t *output, const ArgMinMaxParame
           }
         }
       }
-      float real_out = out_value ? value : index;
-      output[output_offset + j] = real_out * output_inverse_scale + output_zp;
+      SetOutputValue(value, index, output1, output2, output_offset + j, output_inverse_scale, output_zp, out_value);
+      // float real_out = out_value ? value : index;
+      // output[output_offset + j] = real_out * output_inverse_scale + output_zp;
     }
   }
 }
 
-void Int8ArgMinMaxQuant(const int8_t *input, int8_t *output, const int *in_shape, const ArgMinMaxParameter *param,
-                        const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+void Int8ArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                        const ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   int pre_axis_count = 1;
   int axis_count = 1;
   int after_axis_count = 1;
   CalcParameter(in_shape, param->dims_size_, param->axis_, &pre_axis_count, &axis_count, &after_axis_count);
-  DoArgMinMaxQuant(input, output, param, pre_axis_count, axis_count, after_axis_count, in_quant_arg, out_quant_arg);
+  DoArgMinMaxQuant(input, output1, output2, param, pre_axis_count, axis_count, after_axis_count, in_quant_arg,
+                   out_quant_arg);
   return;
 }
 
@@ -89,8 +107,8 @@ int8_t GetInt8Output(float real_out, float output_inverse_scale, int32_t output_
   return real_out * output_inverse_scale + output_zp;
 }
 
-void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                       ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -109,14 +127,16 @@ void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output, const int *in_shape,
 
     for (int j = 0; j < param->topk_; ++j) {
       int out_offset = j * param->out_strides_[0] + i;
-      float real_out = out_value ? param->arg_elements_[j].data_.f_data_ : param->arg_elements_[j].index_;
-      output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
+      SetOutputValue(param->arg_elements_[j].data_.f_data_, param->arg_elements_[j].index_, output1, output2,
+                     out_offset, output_inverse_scale, output_zp, out_value);
+      // float real_out = out_value ? param->arg_elements_[j].data_.f_data_ : param->arg_elements_[j].index_;
+      // output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
     }
   }
 }
 
-void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                       ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -139,15 +159,17 @@ void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output, const int *in_shape,
 
       for (int k = 0; k < param->topk_; ++k) {
         int out_offset = out_dim0_offset + j + k * param->out_strides_[1];
-        float real_out = out_value ? param->arg_elements_[k].data_.f_data_ : param->arg_elements_[k].index_;
-        output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
+        SetOutputValue(param->arg_elements_[j].data_.f_data_, param->arg_elements_[j].index_, output1, output2,
+                       out_offset, output_inverse_scale, output_zp, out_value);
+        // float real_out = out_value ? param->arg_elements_[k].data_.f_data_ : param->arg_elements_[k].index_;
+        // output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
       }
     }
   }
 }
 
-void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                       ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -173,16 +195,18 @@ void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output, const int *in_shape,
         }
         for (int l = 0; l < param->topk_; ++l) {
           int out_offset = out_dim1_offset + k + l * param->out_strides_[2];
-          float real_out = out_value ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
-          output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
+          SetOutputValue(param->arg_elements_[j].data_.f_data_, param->arg_elements_[j].index_, output1, output2,
+                         out_offset, output_inverse_scale, output_zp, out_value);
+          // float real_out = out_value ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
+          // output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
         }
       }
     }
   }
 }
 
-void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                       ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -211,8 +235,10 @@ void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output, const int *in_shape,
         }
         for (int l = 0; l < param->topk_; ++l) {
           int out_offset = out_dim2_offset + l;
-          float real_out = out_value ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
-          output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
+          SetOutputValue(param->arg_elements_[j].data_.f_data_, param->arg_elements_[j].index_, output1, output2,
+                         out_offset, output_inverse_scale, output_zp, out_value);
+          // float real_out = out_value ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
+          // output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
         }
       }
     }

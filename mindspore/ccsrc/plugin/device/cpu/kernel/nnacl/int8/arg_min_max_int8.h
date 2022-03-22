@@ -23,16 +23,16 @@
 extern "C" {
 #endif
 
-void Int8ArgMinMaxQuant(const int8_t *input, int8_t *output, const int *in_shape, const ArgMinMaxParameter *param,
-                        const QuantArg *in_quant, const QuantArg *out_quant);
-void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       const QuantArg *in_quant, const QuantArg *out_quant);
-void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       const QuantArg *in_quant, const QuantArg *out_quant);
-void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       const QuantArg *in_quant, const QuantArg *out_quant);
-void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       const QuantArg *in_quant, const QuantArg *out_quant);
+void Int8ArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                        const ArgMinMaxParameter *param, const QuantArg *in_quant, const QuantArg *out_quant);
+void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                       ArgMinMaxParameter *param, const QuantArg *in_quant, const QuantArg *out_quant);
+void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                       ArgMinMaxParameter *param, const QuantArg *in_quant, const QuantArg *out_quant);
+void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                       ArgMinMaxParameter *param, const QuantArg *in_quant, const QuantArg *out_quant);
+void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+                       ArgMinMaxParameter *param, const QuantArg *in_quant, const QuantArg *out_quant);
 
 #ifdef __cplusplus
 }
