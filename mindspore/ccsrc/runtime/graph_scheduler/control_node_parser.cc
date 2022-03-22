@@ -1869,6 +1869,7 @@ void ControlNodeParser::ParseKernelGraphGroup(const KernelGraphToDeviceContext &
 
         kernel_graphs_to_group_info_[kernel_graph] = kernel_graph_group_info;
         if (kernel_graph_group_info->need_stack_) {
+          MS_LOG(DEBUG) << "Add call input kernel graph:" << kernel_graph->ToString();
           (void)call_input_kernel_graphs_.emplace(kernel_graph.get());
         }
       }
@@ -1876,6 +1877,7 @@ void ControlNodeParser::ParseKernelGraphGroup(const KernelGraphToDeviceContext &
       for (const auto &graph : kernel_graph_group_info->graphs_) {
         kernel_graph_group_info->group_name_ += ("_" + std::to_string(graph->graph_id()));
       }
+      MS_LOG(DEBUG) << "Add kernel graph info for group:" << kernel_graph_group_info->group_name_;
       (void)kernel_graph_group_infos_.emplace(kernel_graph_group_info);
     }
   }
