@@ -58,10 +58,10 @@ void ReorderLstmWeights(float *dst, const float *src, int nof_martices, int col,
 
 void LstmGradDoInputStep(const float *output_gate, float *cell_state, float *prev_cell_state, float *cell_gate,
                          float *input_gate, float *forget_gate, float *dY, float *dC, float *dH, float **dA, float *dX,
-                         float *weights, float *workspace, const LstmGradParameter *lstm_param);
+                         float *w, float *v, float *workspace, const LstmGradParameter *lstm_param);
 
-void LstmGradDoWeightStep(float *input_t, float *prev_hidden_state, float *dA, float *dW, float *workspace,
-                          const LstmGradParameter *lstm_param);
+void LstmGradDoWeightStep(float *input_t, float *prev_hidden_state, float *dA, float *dW, float *dV, float *dB,
+                          float *workspace, const LstmGradParameter *lstm_param);
 #ifdef __cplusplus
 }
 #endif

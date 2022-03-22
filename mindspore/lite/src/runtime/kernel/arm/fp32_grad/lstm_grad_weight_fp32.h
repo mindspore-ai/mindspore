@@ -23,8 +23,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int LSTMGRADWEIGHT_MAX_WORKSPACE_SIZE = 100000;
-constexpr int LSTMGRADWEIGHT_MAX_WEIGHTS_SIZE = 100000;
 class LSTMGradWeightCPUKernel : public InnerKernel {
  public:
   explicit LSTMGradWeightCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -39,12 +37,12 @@ class LSTMGradWeightCPUKernel : public InnerKernel {
   int DoGrad(int thread_id);
 
  private:
-  int LstmBackpropUnidirectional(float *output, bool is_backward);
+  int LstmBackpropUnidirectional(bool is_backward, float *dw, float *dv, float *db);
 
   int InitParam();
   int MallocRunBuffer();
   void FreeRunBuffer();
-  void ReorderLstmWeightGrad(float *dst, float *src, bool has_bias);
+  void ReorderLstmWeightGrad(float *dst, float *src, LstmGradParameter *param);
 
   static const int input_index = 0;
   static const int hidden_input_index = 1;
@@ -65,7 +63,11 @@ class LSTMGradWeightCPUKernel : public InnerKernel {
   bool state_is_vec_ = false;
   int input_thread_count_ = 0;
   int input_thread_stride_ = 0;
-
+  float *input_ = nullptr;
+  float *hidden_input_data_ = nullptr;
+  float *intermediate_data_ = nullptr;
+  float *dW_ = nullptr;
+  float *dA_ = nullptr;
   LstmGradParameter *lstm_param_ = nullptr;
 };
 }  // namespace kernel

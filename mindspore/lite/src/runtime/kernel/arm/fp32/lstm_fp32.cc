@@ -74,6 +74,7 @@ void LstmCPUKernel::FreeRunBuffer() {
   if (output_need_packed_) {
     ms_context_->allocator->Free(buffer_[avx_state_output_index]);
   }
+  ms_context_->allocator->Free(buffer_[tmp_hidden_output_index]);
 }
 
 int LstmCPUKernel::InitInputWeightBias() {
@@ -91,10 +92,16 @@ int LstmCPUKernel::InitInputWeightBias() {
   const int *weights_order = (in_tensors_.size() == mindir_input_tensors) ? weights_order_IFOG : nullptr;
   auto weight_i = in_tensors_.at(i_index);
   auto weight_i_data = reinterpret_cast<float *>(weight_i->data());
-  CHECK_NULL_RETURN(weight_i_data);
-  PackLstmWeight(weight_i_ptr_, weight_i_data, weight_batch_, lstm_param_->input_size_, lstm_param_->hidden_size_,
-                 lstm_param_->input_col_align_, weights_order);
 
+  CHECK_NULL_RETURN(weight_i_data);
+  int cw_size = (lstm_param_->input_size_ * lstm_param_->hidden_size_);
+  int hh_size = (lstm_param_->hidden_size_ * lstm_param_->hidden_size_);
+  int b_size = (lstm_param_->hidden_size_);
+  bool has_bias = (weight_batch_ * (cw_size + hh_size) < weight_i->ElementsNum()) ? true : false;
+  int stride = (gpu_orig_state_) ? gate_num * (cw_size + hh_size) : gate_num * (cw_size);
+  PackLstmWeightWithStride(weight_i_ptr_, weight_i_data, weight_batch_, lstm_param_->input_size_,
+                           lstm_param_->hidden_size_, lstm_param_->input_col_align_, lstm_param_->bidirectional_,
+                           stride, weights_order);
   // input bias
   input_bias_ = reinterpret_cast<float *>(malloc(weight_batch_ * lstm_param_->input_col_align_ * sizeof(float)));
   if (input_bias_ == nullptr) {
@@ -103,18 +110,19 @@ int LstmCPUKernel::InitInputWeightBias() {
   }
   memset(input_bias_, 0, weight_batch_ * lstm_param_->input_col_align_ * sizeof(float));
 
-  float *bias_data = nullptr;
-  int offset = gate_num * lstm_param_->hidden_size_ * (lstm_param_->input_size_ + lstm_param_->hidden_size_);
-  if (weight_i->ElementsNum() > offset) {
-    bias_data = weight_i_data + offset;
-  }
+  int offset = weight_batch_ * (cw_size + hh_size);
+  float *bias_data = (has_bias) ? weight_i_data + offset : nullptr;
+  int dir_mul = lstm_param_->bidirectional_ ? 2 : 1;
+  int b_stride = (gpu_orig_state_) ? gate_num * (dir_mul * b_size) : gate_num * (b_size);
   if (in_tensors_.size() > mindir_input_tensors) {
     bias_data = reinterpret_cast<float *>(in_tensors_.at(onnx_bias_index)->data());
-  }
-
-  if (bias_data != nullptr) {
     PackLstmBias(input_bias_, bias_data, weight_batch_, lstm_param_->hidden_size_, lstm_param_->input_col_align_,
                  lstm_param_->bidirectional_, weights_order);
+  } else {
+    if (bias_data != nullptr) {
+      PackLstmBiasWithStride(input_bias_, bias_data, weight_batch_, lstm_param_->hidden_size_,
+                             lstm_param_->input_col_align_, lstm_param_->bidirectional_, b_stride, weights_order);
+    }
   }
   return RET_OK;
 }
@@ -124,14 +132,23 @@ int LstmCPUKernel::InitStateWeightBias() {
   // state -- row: batch; col: hidden_size
   // weight -- row: hidden_size; col: hidden_size, need transpose
   // result -- row: batch; col: hidden_size
-  int weight_i_size = gate_num * lstm_param_->hidden_size_ * lstm_param_->input_size_;
+  int weight_i_size = weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
   int h_index = (in_tensors_.size() == mindir_input_tensors) ? combined_weights_index : onnx_weight_h_index;
   auto weight_h = in_tensors_.at(h_index);
   auto weight_h_data = (reinterpret_cast<float *>(weight_h->data()));
-  if (in_tensors_.size() == mindir_input_tensors) {
-    weight_h_data += weight_i_size;
-  }
 
+  int cw_size = (lstm_param_->input_size_ * lstm_param_->hidden_size_);
+  int hh_size = (lstm_param_->hidden_size_ * lstm_param_->hidden_size_);
+  int b_size = (lstm_param_->hidden_size_);
+  int stride = (gpu_orig_state_) ? gate_num * (cw_size + hh_size) : gate_num * (hh_size);
+
+  if (in_tensors_.size() == mindir_input_tensors) {
+    if (gpu_orig_state_) {
+      weight_h_data += gate_num * cw_size;
+    } else {
+      weight_h_data += weight_i_size;
+    }
+  }
   CHECK_NULL_RETURN(weight_h_data);
   if (!state_is_vec_) {
     weight_h_ptr_ = reinterpret_cast<float *>(
@@ -141,8 +158,9 @@ int LstmCPUKernel::InitStateWeightBias() {
       return RET_ERROR;
     }
     const int *weights_order = (in_tensors_.size() == mindir_input_tensors) ? weights_order_IFOG : nullptr;
-    PackLstmWeight(weight_h_ptr_, weight_h_data, weight_batch_, lstm_param_->hidden_size_, lstm_param_->hidden_size_,
-                   lstm_param_->state_col_align_, weights_order);
+    PackLstmWeightWithStride(weight_h_ptr_, weight_h_data, weight_batch_, lstm_param_->hidden_size_,
+                             lstm_param_->hidden_size_, lstm_param_->state_col_align_, lstm_param_->bidirectional_,
+                             stride, weights_order);
   } else {
 #ifdef ENABLE_AVX
     weight_h_ptr_ = reinterpret_cast<float *>(
@@ -162,8 +180,8 @@ int LstmCPUKernel::InitStateWeightBias() {
   }
 
   // state bias
-  int weight_h_size = gate_num * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
-  int bias_size = gate_num * lstm_param_->hidden_size_;
+  int weight_h_size = weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
+  int bias_size = weight_batch_ * lstm_param_->hidden_size_;
   state_bias_ = reinterpret_cast<float *>(malloc(weight_batch_ * lstm_param_->state_col_align_ * sizeof(float)));
   if (state_bias_ == nullptr) {
     MS_LOG(ERROR) << "LstmCPUKernel malloc state_bias_ error.";
@@ -179,9 +197,13 @@ int LstmCPUKernel::InitStateWeightBias() {
                  lstm_param_->bidirectional_, nullptr);
   } else if (weight_h->ElementsNum() - weight_i_size - weight_h_size - C2NUM * bias_size == 0) {
     // mindir from device "GPU", secend bias is also present order IFOG
-    float *state_bias = weight_h_data + weight_h_size + bias_size;
-    PackLstmBias(state_bias_, state_bias, weight_batch_, lstm_param_->hidden_size_, lstm_param_->state_col_align_,
-                 lstm_param_->bidirectional_, weights_order_IFOG);
+    int dir_mul = lstm_param_->bidirectional_ ? 2 : 1;
+    int bias_offset =
+      (gpu_orig_state_) ? gate_num * ((dir_mul - 1) * cw_size + dir_mul * hh_size + b_size) : weight_h_size + bias_size;
+    float *state_bias = weight_h_data + bias_offset;
+    int b_stride = (gpu_orig_state_) ? gate_num * (b_size * C2NUM) : gate_num * b_size;
+    PackLstmBiasWithStride(state_bias_, state_bias, weight_batch_, lstm_param_->hidden_size_,
+                           lstm_param_->state_col_align_, lstm_param_->bidirectional_, b_stride, weights_order_IFOG);
   }
   return RET_OK;
 }
@@ -202,11 +224,25 @@ int LstmCPUKernel::InitParam() {
   } else {
     lstm_param_->hidden_size_ = w_shape.at(SECOND_INPUT) / gate_num;
   }
-
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? 2 * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
   weight_batch_ = lstm_param_->bidirectional_ ? 2 * gate_num : gate_num;
   state_is_vec_ = lstm_param_->batch_ == 1;
+  // determine FB origin
+  gpu_orig_state_ = false;
+  if (in_tensors_.size() == mindir_input_tensors) {
+    gpu_orig_state_ = gpu_orig_cfg_;
+    auto weight_t = in_tensors_.at(combined_weights_index);
+    int cw_size = (lstm_param_->input_size_ * lstm_param_->hidden_size_);
+    int hh_size = (lstm_param_->hidden_size_ * lstm_param_->hidden_size_);
+    int b_size = (lstm_param_->hidden_size_);
+    bool has_bias = (weight_batch_ * (cw_size + hh_size) < weight_t->ElementsNum()) ? true : false;
+    // if bias exist we can determine the gpu_orig_state_
+    if (has_bias) {
+      gpu_orig_state_ =
+        (weight_batch_ * (cw_size + hh_size + C2NUM * b_size) == weight_t->ElementsNum()) ? true : false;
+    }
+  }
 
 #ifdef ENABLE_AVX
   row_tile_ = C6NUM;
@@ -279,7 +315,7 @@ int LstmCPUKernel::MallocRunBuffer() {
   buffer_[packed_input_index] = reinterpret_cast<float *>(
     ms_context_->allocator->Malloc(lstm_param_->input_row_align_ * lstm_param_->input_size_ * sizeof(float)));
   if (buffer_[packed_input_index] == nullptr) {
-    MS_LOG(ERROR) << "LstmCPUKernel malloc input * weight left matirx error.";
+    MS_LOG(ERROR) << "LstmCPUKernel malloc input * weight left matrix error.";
     return RET_ERROR;
   }
 
@@ -338,6 +374,16 @@ int LstmCPUKernel::MallocRunBuffer() {
     }
   }
 #endif
+
+  buffer_[tmp_hidden_output_index] = nullptr;
+  if (!(in_tensors_.size() > mindir_input_tensors)) {
+    auto buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
+    buffer_[tmp_hidden_output_index] = reinterpret_cast<float *>(ms_context_->allocator->Malloc(buffer_size));
+    if (buffer_[tmp_hidden_output_index] == nullptr) {
+      MS_LOG(ERROR) << "LstmCPUKernel malloc state_buffer for hidden error.";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
@@ -367,7 +413,7 @@ int LstmInputMulWeightRun(void *cdata, int task_id, float, float) {
 
 int LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_i, const float *weight_h,
                                       const float *input_bias, const float *state_bias, float *hidden_state,
-                                      float *cell_state, bool is_backward) {
+                                      float *cell_state, float *intermediate_states, bool is_backward) {
   float *gate = buffer_[input_gate_index];
   for (int i = 0; i < gate_num; i++) {
     weight_loop_ = weight_i + lstm_param_->input_size_ * lstm_param_->input_col_align_ * i;
@@ -383,30 +429,46 @@ int LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_i, cons
   float *forget_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * 2;
   float *cell_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * 3;
   float *output_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_;
+  float *tmp = buffer_[tmp_hidden_output_index];
+  int dir_mult = lstm_param_->bidirectional_ ? 2 : 1;
   for (int t = 0; t < lstm_param_->seq_len_; t++) {
     int real_t = is_backward ? lstm_param_->seq_len_ - t - 1 : t;
     float *input_gate_t = input_gate + lstm_param_->batch_ * lstm_param_->hidden_size_ * real_t;
     float *forget_gate_t = forget_gate + lstm_param_->batch_ * lstm_param_->hidden_size_ * real_t;
     float *cell_gate_t = cell_gate + lstm_param_->batch_ * lstm_param_->hidden_size_ * real_t;
     float *output_gate_t = output_gate + lstm_param_->batch_ * lstm_param_->hidden_size_ * real_t;
-    float *output_ptr = output + real_t * lstm_param_->output_step_;
+    // if ONNX
+    if (in_tensors_.size() > mindir_input_tensors) {
+      // Sequence, DirMul, Batch, Hidden
+      float *output_ptr = output + real_t * lstm_param_->output_step_;
 
-    LstmStepUnit(output_ptr, input_gate_t, forget_gate_t, cell_gate_t, output_gate_t, weight_h, state_bias,
-                 hidden_state, cell_state, buffer_, lstm_param_);
-    if (IsTrain() && IsTrainable()) {
+      LstmStepUnit(output_ptr, input_gate_t, forget_gate_t, cell_gate_t, output_gate_t, weight_h, state_bias,
+                   hidden_state, cell_state, buffer_, lstm_param_);
+    } else {
+      // Sequence, Batch, DirMul, Hidden
+      LstmStepUnit(tmp, input_gate_t, forget_gate_t, cell_gate_t, output_gate_t, weight_h, state_bias, hidden_state,
+                   cell_state, buffer_, lstm_param_);
+      int seq_offset = real_t * lstm_param_->batch_ * dir_mult * lstm_param_->hidden_size_;
+      for (int b = 0; b < lstm_param_->batch_; b++) {
+        int batch_offset = b * dir_mult * lstm_param_->hidden_size_;
+        float *output_ptr = output + seq_offset + batch_offset;
+        memcpy(output_ptr, tmp + b * lstm_param_->hidden_size_, lstm_param_->hidden_size_ * sizeof(float));
+      }
+    }
+    if (intermediate_states) {
       RecordStates(hidden_state, cell_state, input_gate_t, output_gate_t, forget_gate_t, cell_gate_t,
-                   is_backward ? real_t : t);
+                   intermediate_states, real_t);
     }
   }
   return RET_OK;
 }
 
 void LstmCPUKernel::RecordStates(float *hidden_state, float *cell_state, float *input_gate, float *output_gate,
-                                 float *forget_gate, float *cell_gate, int step) {
-  float *states = reinterpret_cast<float *>(out_tensors_[out_intermediate_states_index]->data());
+                                 float *forget_gate, float *cell_gate, float *intermediate_states, int step) {
+  float *states = intermediate_states;
   auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
-  auto stride = step * state_size;
-  auto seq_stride = lstm_param_->seq_len_ * state_size;
+  auto stride = step * lstm_param_->output_step_;
+  auto seq_stride = lstm_param_->seq_len_ * lstm_param_->output_step_;
   memcpy(states + stride, hidden_state, state_size * sizeof(float));
   stride += seq_stride;
   memcpy(states + stride, cell_state, state_size * sizeof(float));
@@ -425,8 +487,12 @@ int LstmCPUKernel::InnerExecute(float *output, const float *input, float *hidden
   // buffer_[packed_input_index] : store packed input
   PackLstmInput(input, buffer_[packed_input_index], lstm_param_->seq_len_ * lstm_param_->batch_,
                 lstm_param_->input_size_);
-  auto ret =
-    LstmUnidirectional(output, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_, hidden_state, cell_state, false);
+  float *intermediate_states = nullptr;
+  if (IsTrain() && IsTrainable()) {
+    intermediate_states = reinterpret_cast<float *>(out_tensors_[out_intermediate_states_index]->data());
+  }
+  auto ret = LstmUnidirectional(output, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_, hidden_state,
+                                cell_state, intermediate_states, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Lstm unidirectional calculation error.";
     return RET_ERROR;
@@ -441,11 +507,17 @@ int LstmCPUKernel::InnerExecute(float *output, const float *input, float *hidden
     const float *backward_input_bias = input_bias_ + gate_num * lstm_param_->input_col_align_;
     const float *backward_state_bias = state_bias_ + gate_num * lstm_param_->state_col_align_;
     float *backward_output = output + lstm_param_->batch_ * lstm_param_->hidden_size_;
+    if (in_tensors_.size() == mindir_input_tensors) {
+      backward_output = output + lstm_param_->hidden_size_;
+    }
     float *backward_cell_state = cell_state + lstm_param_->batch_ * lstm_param_->hidden_size_;
     float *backward_hidden_state = hidden_state + lstm_param_->batch_ * lstm_param_->hidden_size_;
-
-    ret = LstmUnidirectional(backward_output, backward_weight_i, backward_weight_h, backward_input_bias,
-                             backward_state_bias, backward_hidden_state, backward_cell_state, true);
+    if (intermediate_states) {
+      intermediate_states += lstm_param_->batch_ * lstm_param_->hidden_size_;
+    }
+    ret =
+      LstmUnidirectional(backward_output, backward_weight_i, backward_weight_h, backward_input_bias,
+                         backward_state_bias, backward_hidden_state, backward_cell_state, intermediate_states, true);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Lstm bidirectional calculation error.";
       return RET_ERROR;

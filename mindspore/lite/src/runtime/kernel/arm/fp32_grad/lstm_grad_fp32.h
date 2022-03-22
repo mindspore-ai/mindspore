@@ -23,8 +23,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int LSTMGRAD_MAX_WORKSPACE_SIZE = 100000;
-constexpr int LSTMGRAD_MAX_WEIGHTS_SIZE = 100000;
 class LSTMGradCPUKernel : public InnerKernel {
  public:
   explicit LSTMGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -39,7 +37,7 @@ class LSTMGradCPUKernel : public InnerKernel {
   int DoGrad(int thread_id);
 
  private:
-  int LstmBackpropUnidirectional(bool is_backward);
+  int LstmBackpropUnidirectional(bool is_backward, float *w, float *v, float *dw, float *dv, float *db);
 
   int InitParam();
   int MallocRunBuffer();
@@ -72,6 +70,20 @@ class LSTMGradCPUKernel : public InnerKernel {
   bool state_is_vec_ = false;
   int input_thread_count_ = 0;
   int input_thread_stride_ = 0;
+
+  float *cell_input_data_ = nullptr;
+  float *hidden_input_data_ = nullptr;
+  float *dh_out_ = nullptr;
+  float *dc_out_ = nullptr;
+  float *intermediate_data_ = nullptr;
+  float *dC_ = nullptr;
+  float *dH_ = nullptr;
+  float *dY_ = nullptr;
+  float *dW_ = nullptr;
+  float *dX_ = nullptr;
+  float *weights_ = nullptr;
+  float *input_ = nullptr;
+  float *curr_dy_ = nullptr;
 
   LstmGradParameter *lstm_param_ = nullptr;
 };
