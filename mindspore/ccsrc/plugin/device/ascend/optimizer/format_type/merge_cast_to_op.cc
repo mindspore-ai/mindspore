@@ -68,7 +68,7 @@ bool GetNextNodeAndCastIndex(const FuncGraphPtr &graph, const AnfNodePtr &node, 
   }
   auto node_pair = output_node_list->at(0);
   *next_node = node_pair.first;
-  *cast_index = static_cast<size_t>(node_pair.second - 1);
+  *cast_index = IntToSize(node_pair.second - 1);
   return true;
 }
 

@@ -22,6 +22,11 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+MemcpyRtsDynamicKernel::~MemcpyRtsDynamicKernel() {
+  dst_ = nullptr;
+  src_ = nullptr;
+}
+
 void MemcpyRtsDynamicKernel::Execute() {
   auto status = aclrtMemcpyAsync(dst_, dest_max_, src_, count_, ACL_MEMCPY_DEVICE_TO_DEVICE, stream_);
   if (status != RT_ERROR_NONE) {
