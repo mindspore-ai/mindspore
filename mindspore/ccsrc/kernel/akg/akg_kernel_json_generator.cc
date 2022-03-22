@@ -1066,6 +1066,7 @@ void ComputeCapability::GetComputeCapability() {
 #ifdef ENABLE_GPU
   if (Callback::Instance()->GetTargetFromContext() != kGPUDevice) {
     this->compute_capability_ = "Unknown";
+    return;
   }
   int a, b;
   auto ret = cuDeviceGetAttribute(&a, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);

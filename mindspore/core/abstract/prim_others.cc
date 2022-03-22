@@ -384,8 +384,8 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
                             << " dimension tensor";
   }
   if (indices_shp[0] != values_shp[0]) {
-    MS_EXCEPTION(TypeError) << "The first dimension of indices must be the same with the first dimension of values "
-                            << values_shp[0] << ", but got " << indices_shp[0];
+    MS_EXCEPTION(TypeError) << "Indices and values must equal in their shape, but got indices shape: " << indices_shp[0]
+                            << ", values shape: " << values_shp[0];
   }
   if (indices_shp[1] != kSizeTwo) {
     MS_EXCEPTION(ValueError) << "COOTensor only support " << kSizeTwo << " dimensions, but got " << indices_shp[1];
@@ -393,7 +393,7 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
 
   for (const auto &elem_type : dense_shape->ElementsType()) {
     if (!elem_type->isa<Int>()) {
-      MS_EXCEPTION(TypeError) << "The element type of dense_shape must be Int, but got " << elem_type->ToString();
+      MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << elem_type->ToString();
     }
   }
   auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
@@ -413,9 +413,8 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
                             << indices_shp[1] << ", but got " << dense_shape_vec.size();
   }
   for (auto dense_shape_elem : dense_shape_vec) {
-    if (dense_shape_elem < 0) {
-      MS_EXCEPTION(TypeError) << "The element of dense_shape must be positive, but got "
-                              << dense_shape_value->ToString();
+    if (dense_shape_elem <= 0) {
+      MS_EXCEPTION(TypeError) << "The element of shape must be positive, but got " << dense_shape_value->ToString();
     }
   }
   auto ret = std::make_shared<AbstractCOOTensor>(values->element()->BuildType(), dense_shape_vec);
@@ -711,7 +710,7 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
     MS_EXCEPTION(ValueError) << "Indptr must have length (1 + shape[0]), but got: " << indptr_shp[0];
   }
   for (size_t i = 0; i < shape_vec.size(); ++i) {
-    if (shape_vec[i] < 0) {
+    if (shape_vec[i] <= 0) {
       MS_EXCEPTION(TypeError) << "The element of shape must be positive, but got " << shape_value->ToString();
     }
     if ((i > 1) && (shape_vec[i] != values_shp[i - 1])) {

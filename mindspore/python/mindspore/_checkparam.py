@@ -860,10 +860,32 @@ class Validator:
         return dtype in supported_dtypes or not context.get_context('device_target') == device
 
     @staticmethod
+    def check_sparse_tensor_input(indices, values, shape):
+        """Common input check for SparseTensors."""
+        if not isinstance(indices, Tensor_):
+            raise TypeError(f"indices should be Tensor, but got {type(indices)}.")
+        if not isinstance(values, Tensor_):
+            raise TypeError(f"values should be Tensor, but got {type(values)}.")
+        if not isinstance(shape, tuple):
+            raise TypeError(f"shape should be tuple, but got {type(shape)}.")
+
+    @staticmethod
+    def check_csr_tensor_input(indptr, indices, values, shape):
+        """Checks inputs type for CSRTensor."""
+        if not isinstance(indptr, Tensor_):
+            raise TypeError(f"indptr should be Tensor, but got {type(indices)}.")
+        Validator.check_sparse_tensor_input(indices, values, shape)
+
+    @staticmethod
     def check_csr_tensor_shape(indptr_shp, indices_shp, values_shp, csr_shp):
         """Checks input tensors' shapes for CSRTensor."""
         if len(csr_shp) != 2:
             raise ValueError("Currently only supports 2-dimensional csr tensor.")
+        for item in csr_shp:
+            if item <= 0:
+                raise ValueError(f"The element of shape must be positive, but got {item}")
+            if not isinstance(item, int):
+                raise TypeError(f"The element type of shape must be int, but got {type(item)}")
         if len(values_shp) != 1:
             raise ValueError(f"Values must be a 1-dimensional tensor, but got a {len(values_shp)} dimension tensor.")
         if len(indices_shp) != 1:
@@ -872,6 +894,10 @@ class Validator:
             raise ValueError(f"Indptr must be a 1-dimensional tensor, but got a {len(indptr_shp)} dimension tensor.")
         if csr_shp[0] + 1 != indptr_shp[0]:
             raise ValueError(f"Indptr must have length (1 + shape[0]), but got: {indptr_shp[0]}")
+        if indices_shp[0] != values_shp[0]:
+            err_msg1 = "Indices and values must equal in their shape, "
+            err_msg2 = f"but got indices shape: {indices_shp[0]}, values shape: {values_shp[0]}."
+            raise ValueError(err_msg1 + err_msg2)
 
     @staticmethod
     def check_csr_tensor_dtype(indptr_dtype, indices_dtype):
@@ -882,10 +908,20 @@ class Validator:
             raise TypeError("Indices must have integer data type.")
 
     @staticmethod
+    def check_coo_tensor_input(indices, values, shape):
+        """Checks inputs type for COOTensor."""
+        Validator.check_sparse_tensor_input(indices, values, shape)
+
+    @staticmethod
     def check_coo_tensor_shape(indices_shp, values_shp, coo_shp):
         """Checks input tensors' shapes for COOTensor."""
         if len(coo_shp) != 2:
             raise ValueError("Currently only supports 2-dimensional coo tensor.")
+        for item in coo_shp:
+            if item <= 0:
+                raise ValueError(f"The element of shape must be positive, but got {item}")
+            if not isinstance(item, int):
+                raise TypeError(f"The element type of shape must be int, but got {type(item)}")
         if len(indices_shp) != 2:
             raise ValueError(f"Indices must be a 2-dimensional tensor, but got a {len(indices_shp)} dimension tensor.")
         if len(values_shp) != 1:
