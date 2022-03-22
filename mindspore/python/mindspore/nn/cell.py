@@ -1019,6 +1019,12 @@ class Cell(Cell_):
         """
         Defines the computation to be performed. This method must be overridden by all subclasses.
 
+        Note: The inputs are currently not supported for both tuple and non-tuple types.
+
+        Args:
+            inputs (tuple): Tuple of variable parameters.
+            kwargs (dict): Dictionary of variable keyword parameters.
+
         Returns:
             Tensor, returns the computed result.
         """
