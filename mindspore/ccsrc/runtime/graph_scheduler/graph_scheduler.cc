@@ -492,11 +492,13 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
       }
       scheduler_->graph_output_to_actor_.clear();
       scheduler_->copy_actors_.clear();
+      scheduler_->execution_order_running_ = false;
     }
   };
   // cppcheck-suppress unreadVariable
   ScopeCleaner cleaner(this);
-  MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor begin.";
+  MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_
+               << ") transforms actor begin, strategy:" << kGraphExecutionStrategyStr.at(graph_compiler_info.strategy_);
   if (graph_compiler_info.graphs_.size() == 0) {
     MS_LOG(EXCEPTION) << "The number of graphs is zero.";
   }
@@ -504,6 +506,10 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
     MS_LOG(EXCEPTION) << "The number of graphs is not equal to the number of device contexts.";
   }
 
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipelineWithExecutionOrder) {
+    execution_order_running_ = true;
+    graph_compiler_info.strategy_ = GraphExecutionStrategy::kPipeline;
+  }
   PersistDeviceTensor(graph_compiler_info);
   const auto &actor_set = Build(graph_compiler_info);
   MS_EXCEPTION_IF_NULL(actor_set);
@@ -761,8 +767,10 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
       std::vector<CNodePtr> communication_nodes;
       const auto &group_name = (parser->IsInited() ? parser->FetchGroupNameByKernelGraph(graph) : default_group_name);
       LinkDataArrowInNonSinkMode(graph, graph_compiler_info, &auto_monad_actors, &communication_nodes);
-      group_name_to_communication_nodes[group_name].insert(group_name_to_communication_nodes[group_name].end(),
-                                                           communication_nodes.begin(), communication_nodes.end());
+      group_name_to_communication_nodes[group_name].first.insert(
+        group_name_to_communication_nodes[group_name].first.end(), communication_nodes.begin(),
+        communication_nodes.end());
+      (void)group_name_to_communication_nodes[group_name].second.emplace_back(graph);
     }
   }
 
@@ -1645,9 +1653,16 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
                                             const std::vector<AbstractActor *> &auto_monad_actors,
                                             const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
+  // Link the control arrow by the execution order.
+  if (execution_order_running_) {
+    for (auto &graph : graph_compiler_info.graphs_) {
+      LinkControlArrowByExecutionOrder(graph);
+    }
+  }
+
   for (const auto &communication_nodes : communication_node_groups) {
     // Link the control arrows by the communication nodes to ensure communication nodes running order.
-    LinkControlArrowByCommunicationNode(communication_nodes.second, graph_compiler_info);
+    LinkControlArrowByCommunicationNode(communication_nodes.second.first, communication_nodes.second.second);
   }
 
   // Auto monad actor may modify the device tensor store.
@@ -1775,8 +1790,20 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
   }
 }
 
+void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto &execution_order = graph->execution_order();
+  for (size_t i = 1; i < execution_order.size(); ++i) {
+    auto from_actor = FetchActor(execution_order[i - 1]->fullname_with_scope());
+    auto to_actor = FetchActor(execution_order[i]->fullname_with_scope());
+    if ((from_actor != nullptr) && (to_actor != nullptr)) {
+      AddControlArrow(from_actor, to_actor);
+    }
+  }
+}
+
 void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
-                                                         const GraphCompilerInfo &graph_compiler_info) {
+                                                         const std::vector<KernelGraphPtr> &graphs) {
   const size_t kCommunicationNodesMinNum = 2;
   if (communication_nodes.size() < kCommunicationNodesMinNum) {
     return;
@@ -1793,15 +1820,9 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
 
   // Ensure all actors execute orderly to optimize the execution performance in the multi device scenario currently.
   // Using the multi stream to optimize the performance in the future.
-  for (auto &graph : graph_compiler_info.graphs_) {
-    MS_EXCEPTION_IF_NULL(graph);
-    auto &execution_order = graph->execution_order();
-    for (size_t i = 1; i < execution_order.size(); ++i) {
-      auto from_actor = FetchActor(execution_order[i - 1]->fullname_with_scope());
-      auto to_actor = FetchActor(execution_order[i]->fullname_with_scope());
-      if ((from_actor != nullptr) && (to_actor != nullptr)) {
-        AddControlArrow(from_actor, to_actor);
-      }
+  if (!execution_order_running_) {
+    for (auto &graph : graphs) {
+      LinkControlArrowByExecutionOrder(graph);
     }
   }
 }
@@ -2279,7 +2300,10 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   auto first_graph_id = kernel_graphs.front()->graph_id();
   MS_EXCEPTION_IF_NULL(kernel_graphs.back());
   auto last_graph_id = kernel_graphs.back()->graph_id();
-  std::string strategy = (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) ? "pipeline" : "step";
+  std::string strategy = kGraphExecutionStrategyStr.at(graph_compiler_info.strategy_);
+  if (execution_order_running_) {
+    strategy = "pipeline_with_excution_order";
+  }
   std::string save_name = "actor_set_" + strategy + "_kernel_graph_" + std::to_string(first_graph_id);
   if (last_graph_id != first_graph_id) {
     save_name = save_name + "-" + std::to_string(last_graph_id);
