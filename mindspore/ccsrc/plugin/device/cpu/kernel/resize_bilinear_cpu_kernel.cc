@@ -44,8 +44,8 @@ void ResizeBilinearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
-  size_t out_height = size_[0];
-  size_t out_width = size_[1];
+  size_t out_height = LongToSize(size_[0]);
+  size_t out_width = LongToSize(size_[1]);
   height_scale = Scaling(in_height, out_height, align_corners_);
   width_scale = Scaling(in_width, out_width, align_corners_);
 }
@@ -105,8 +105,8 @@ bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   size_t channel = shape_[1];
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
-  size_t out_height = size_[0];
-  size_t out_width = size_[1];
+  size_t out_height = LongToSize(size_[0]);
+  size_t out_width = LongToSize(size_[1]);
   size_t out_hw_size = out_height * out_width;
   size_t in_hw_size = in_height * in_width;
   size_t bhwc_size = in_hw_size * channel * batch_size;

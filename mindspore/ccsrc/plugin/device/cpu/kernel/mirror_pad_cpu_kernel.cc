@@ -177,31 +177,30 @@ void MirrorPadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     int64_t matchval_y_index = padded_y;
     int64_t matchval_channel_index = padded_channel;
     int64_t matchval_batch_index = padded_batch;
-    int64_t equiv_block_num = 0;
 
     // update matching index in original tensor across all 4 dims
     if ((padded_x < ap1_x) || (padded_x > ap2_x)) {
       int64_t x_dist = (padded_x < ap1_x) ? (ap1_x - padded_x) : (padded_x - ap2_x);
-      matchval_x_index = (padded_x < ap1_x) ? (ap1_x + x_dist - mode) : (ap2_x - x_dist + mode);
+      matchval_x_index = (padded_x < ap1_x) ? ((ap1_x + x_dist) - mode) : ((ap2_x - x_dist) + mode);
     }
     if ((padded_y < ap1_y) || (padded_y > ap2_y)) {
       int64_t y_dist = (padded_y < ap1_y) ? (ap1_y - padded_y) : (padded_y - ap2_y);
-      matchval_y_index = (padded_y < ap1_y) ? (ap1_y + y_dist - mode) : (ap2_y - y_dist + mode);
+      matchval_y_index = (padded_y < ap1_y) ? ((ap1_y + y_dist) - mode) : ((ap2_y - y_dist) + mode);
     }
     if ((padded_channel < ap1_channel) || (padded_channel > ap2_channel)) {
       int64_t channel_dist =
         (padded_channel < ap1_channel) ? (ap1_channel - padded_channel) : (padded_channel - ap2_channel);
       matchval_channel_index =
-        (padded_channel < ap1_channel) ? (ap1_channel + channel_dist - mode) : (ap2_channel - channel_dist + mode);
+        (padded_channel < ap1_channel) ? ((ap1_channel + channel_dist) - mode) : ((ap2_channel - channel_dist) + mode);
     }
     if ((padded_batch < ap1_batch) || (padded_batch > ap2_batch)) {
       int64_t batch_dist = (padded_batch < ap1_batch) ? (ap1_batch - padded_batch) : (padded_batch - ap2_batch);
       matchval_batch_index =
-        (padded_batch < ap1_batch) ? (ap1_batch + batch_dist - mode) : (ap2_batch - batch_dist + mode);
+        (padded_batch < ap1_batch) ? ((ap1_batch + batch_dist) - mode) : ((ap2_batch - batch_dist) + mode);
     }
 
     // calculate equivalent block in input
-    equiv_block_num =
+    int64_t equiv_block_num =
       ((matchval_batch_index - paddings[BATCH]) * old_channel) + (matchval_channel_index - paddings[CHANNEL]);
 
     // copy data from equiv block and adjusted x and y values in unpadded tensor

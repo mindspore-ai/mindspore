@@ -95,7 +95,7 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     output_shape_.push_back(SizeToLong(x));
   }
 
-  for (int i = 0; i < 2; i++) {
+  for (size_t i = 0; i < 2; i++) {
     workspace_size_ *= output_shape[i];
     workspace_size_ *= input_shape[i + 2];
   }
@@ -195,10 +195,10 @@ void MirrorPadGradCpuKernelMod::MirrorPadGrad_Width_Height(const size_t size, co
     // copy position's own value into output
     dx[pos] = interim_dy[(dx_block_num * dy_height + grad_y) * dy_width + grad_x];
 
-    int64_t x_dist_1 = (ap1_x - grad_x - mode);
-    int64_t y_dist_1 = (ap1_y - grad_y - mode);
-    int64_t x_dist_2 = (ap2_x - grad_x + mode);
-    int64_t y_dist_2 = (ap2_y - grad_y + mode);
+    int64_t x_dist_1 = ((ap1_x - grad_x) - mode);
+    int64_t y_dist_1 = ((ap1_y - grad_y) - mode);
+    int64_t x_dist_2 = ((ap2_x - grad_x) + mode);
+    int64_t y_dist_2 = ((ap2_y - grad_y) + mode);
     int64_t axis_dist[] = {x_dist_1, x_dist_2, y_dist_1, y_dist_2};
     int64_t anch_point[] = {ap1_x, ap2_x, ap1_y, ap2_y};
     bool x_axis_check[] = {true, true, false, false};  // true - update X , false - update Y
@@ -272,8 +272,7 @@ void MirrorPadGradCpuKernelMod::MirrorPadGradBatchChannel(const size_t size, T1 
     const int64_t equiv_dy_batch = interim_batch + paddings[BATCH];
     int64_t target_batch = 0;
     int64_t target_channel = 0;
-    int64_t equiv_block_num = 0;
-    equiv_block_num = ((equiv_dy_batch * dy_channels) + equiv_dy_channel);
+    int64_t equiv_block_num = ((equiv_dy_batch * dy_channels) + equiv_dy_channel);
     // generate values to sweep over all possible mirrored points
     int64_t batch_offsets[] = {2 * (ap1_batch - equiv_dy_batch) - mode, 0, 2 * (ap2_batch - equiv_dy_batch) + mode};
     int64_t channel_offsets[] = {2 * (ap1_channel - equiv_dy_channel) - mode, 0,

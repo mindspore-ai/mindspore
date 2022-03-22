@@ -28,8 +28,7 @@ constexpr size_t kPadElemSize = 2;
 void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<std::vector<int64_t>> paddings_ =
-    common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
+  paddings_ = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -53,8 +52,8 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   for (size_t i = 0; i < input_rank_; i++) {
     input_size_ *= input_shape_[i];
-    output_size_ *=
-      (input_shape_[i] + flattened_paddings_[kPadElemSize * i] + flattened_paddings_[(kPadElemSize * i) + 1]);
+    output_size_ *= (input_shape_[i] + IntToSize(flattened_paddings_[kPadElemSize * i]) +
+                     IntToSize(flattened_paddings_[(kPadElemSize * i) + 1]));
   }
 
   if (input_rank_ < 1) {
@@ -70,7 +69,8 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   strides_.resize(input_rank_);
   strides_[input_rank_ - 1] = 1;
   for (int32_t i = input_rank_ - 2; i >= 0; i--) {
-    strides_[i] = output_shape[i + 1] * strides_[i + 1];
+    size_t ind = IntToSize(i);
+    strides_[ind] = output_shape[ind + 1] * strides_[ind + 1];
   }
 }
 
@@ -109,7 +109,8 @@ bool PadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
       for (size_t i = input_rank_; i >= 1; i--) {
         size_t unravel_dimension = input_shape_[i - 1];
         size_t unraveled_index = linear_index % unravel_dimension;
-        padded_linear_index += ((unraveled_index + flattened_paddings_[kPadElemSize * (i - 1)]) * strides_[i - 1]);
+        padded_linear_index +=
+          ((unraveled_index + IntToSize(flattened_paddings_[kPadElemSize * (i - 1)])) * strides_[i - 1]);
         linear_index -= unraveled_index;
         linear_index /= unravel_dimension;
       }

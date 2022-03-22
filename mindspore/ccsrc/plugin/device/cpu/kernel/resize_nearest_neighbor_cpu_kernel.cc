@@ -48,8 +48,8 @@ void ResizeNearestNeighborCpuKernelMod::InitKernel(const CNodePtr &kernel_node) 
   channel_ = input_shape[1];
   in_height_ = input_shape[2];
   in_width_ = input_shape[3];
-  out_height_ = output_size[0];
-  out_width_ = output_size[1];
+  out_height_ = LongToSize(output_size[0]);
+  out_width_ = LongToSize(output_size[1]);
   height_scale_ = Scaling(in_height_, out_height_, align_corners_);
   width_scale_ = Scaling(in_width_, out_width_, align_corners_);
   output_size_ = batch_size_ * channel_ * out_height_ * out_width_;
