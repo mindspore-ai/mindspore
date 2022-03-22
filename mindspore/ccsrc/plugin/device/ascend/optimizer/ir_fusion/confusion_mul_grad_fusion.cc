@@ -153,7 +153,7 @@ const AnfNodePtr ConfusionMulGradFusion::Process(const FuncGraphPtr &graph, cons
 
   auto manage = graph->manager();
   MS_EXCEPTION_IF_NULL(manage);
-  manage->Replace(mul0, fusion_node_outputs[0]);
+  (void)manage->Replace(mul0, fusion_node_outputs[0]);
   return fusion_node_outputs[1];
 }
 }  // namespace opt

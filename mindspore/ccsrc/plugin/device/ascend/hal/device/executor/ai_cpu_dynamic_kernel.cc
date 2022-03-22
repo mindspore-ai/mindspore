@@ -165,7 +165,7 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
 
   MS_EXCEPTION_IF_NULL(ext_info_handler_);
   for (size_t i = 0; i < input_num_; ++i) {
-    if (!ext_info_handler_->UpdateInputShapeAndType(i, NOT_NULL(cnode))) {
+    if (!ext_info_handler_->UpdateInputShapeAndType(LongToInt(i), NOT_NULL(cnode))) {
       MS_LOG(ERROR) << "Update input shape failed, cnode:" << cnode->fullname_with_scope() << " input:" << i;
       return false;
     }
@@ -173,7 +173,7 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
 
   if (common::AnfAlgo::IsDynamicShape(cnode) && unknow_type_ != DEPEND_COMPUTE) {
     for (size_t i = 0; i < output_num_; ++i) {
-      if (!ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode))) {
+      if (!ext_info_handler_->UpdateOutputShapeAndType(LongToInt(i), NOT_NULL(cnode))) {
         MS_LOG(ERROR) << "Update output shape failed, cnode:" << cnode->fullname_with_scope() << " output:" << i;
         return false;
       }
@@ -234,7 +234,7 @@ void AiCpuDynamicKernel::PostExecute() {
   }
   if (common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info. Op name: " << cnode->fullname_with_scope();
-    UpdateOutputShapeFromExtInfo();
+    (void)UpdateOutputShapeFromExtInfo();
   }
 }
 }  // namespace ascend

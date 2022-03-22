@@ -108,7 +108,7 @@ AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const Ker
   return new_node;
 }
 
-// create a new assist value node to deal with the following two case:
+// create a new assist value node to deal with the following two case
 // 1: the axis_input is empty, the new tensor of the new value node should be 'range(shape.size())',
 // the shape is the first input'shape of ReduceSum;
 // 2: the value of axis_input contain the value less 0,
