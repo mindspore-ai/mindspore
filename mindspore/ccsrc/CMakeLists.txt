@@ -285,15 +285,6 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore_common PRIVATE mindspore::pybind11_module)
 endif()
 
-if(ENABLE_DEBUGGER)
-    # debugger: link grpc
-    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-        target_link_libraries(mindspore PUBLIC mindspore::grpc++)
-    else()
-        target_link_libraries(mindspore PUBLIC -Wl,--no-as-needed mindspore::grpc++)
-    endif()
-endif()
-
 target_link_libraries(mindspore PUBLIC securec mindspore::flatbuffers)
 
 if(NOT WIN32)
@@ -363,9 +354,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 else()
     set_target_properties(mindspore_backend PROPERTIES INSTALL_RPATH $ORIGIN)
 endif()
-if(ENABLE_CPU AND NOT WIN32)
-    target_link_libraries(mindspore_backend PRIVATE ps_cache)
-endif()
+
 if(ENABLE_CPU)
     target_link_libraries(mindspore_backend PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
 endif()
@@ -381,6 +370,23 @@ if(ENABLE_GPU)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_link_libraries(mindspore_backend PRIVATE mindspore::crypto mindspore::ssl)
     endif()
+endif()
+
+if(ENABLE_DEBUGGER)
+    # debugger: link grpc
+    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        target_link_libraries(mindspore_backend PRIVATE mindspore::grpc++)
+    else()
+        target_link_libraries(mindspore_backend PRIVATE -Wl,--no-as-needed mindspore::grpc++)
+    endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    target_link_libraries(mindspore_backend PRIVATE mindspore::event mindspore::event_pthreads mindspore::event_openssl
+            mindspore::event_core ps_cache)
+elseif(ENABLE_CPU AND NOT WIN32)
+    target_link_libraries(mindspore_backend PRIVATE mindspore::event mindspore::event_pthreads mindspore::event_openssl
+            -Wl,--no-as-needed mindspore::event_core ps_cache)
 endif()
 
 if(MODE_ASCEND_ALL OR MODE_ASCEND_ACL)
@@ -495,17 +501,13 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core
         mindspore_common mindspore_backend)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf
-        mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::eigen mindspore::json)
-    target_link_libraries(mindspore PUBLIC mindspore::event_core ps_cache)
+    target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf mindspore::eigen mindspore::json)
     target_link_libraries(_c_expression PRIVATE -Wl,-all_load mindspore proto_input -Wl,-noall_load mindspore_core
         mindspore_common mindspore_backend)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
 else()
     if(ENABLE_CPU AND NOT WIN32)
-        target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf
-            mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::eigen mindspore::json)
-        target_link_libraries(mindspore PUBLIC -Wl,--no-as-needed mindspore::event_core ps_cache)
+        target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf mindspore::eigen mindspore::json)
         if(${ENABLE_IBVERBS} STREQUAL "ON")
             target_link_libraries(mindspore PUBLIC ibverbs rdmacm)
         endif()

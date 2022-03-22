@@ -310,3 +310,4 @@ add_library(backend_static STATIC
         $<TARGET_OBJECTS:_mindspore_runtime_recovery_obj>)
 target_link_libraries(ut_tests PRIVATE mindspore securec -Wl,--start-group proto_input mindspore::protobuf
         backend_static -Wl,--end-group)
+target_link_libraries(ut_tests PRIVATE mindspore::grpc++)
