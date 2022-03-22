@@ -178,7 +178,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   for (size_t k = 0; k < workspace_num; ++k) {
     auto param_workspace = parameters_indexes.at(input_num + output_num + k);
     if (param_workspace == 1) {
-      workspace_indexes.emplace_back(k);
+      (void)workspace_indexes.emplace_back(k);
       MS_LOG(DEBUG) << "Atomic clear workspace index: " << k;
     }
   }

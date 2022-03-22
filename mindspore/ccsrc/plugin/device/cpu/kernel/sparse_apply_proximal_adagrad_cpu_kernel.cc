@@ -24,6 +24,17 @@ namespace {
 constexpr size_t kSparseApplyProximalAdagradInputsNum = 7;
 constexpr size_t kSparseApplyProximalAdagradWorkspaceSize = 4;
 constexpr char kKernelName[] = "SparseApplyProximalAdagrad";
+constexpr size_t kVarIndex = 0;
+constexpr size_t kAccIndex = 1;
+constexpr size_t kLRIndex = 2;
+constexpr size_t kL1Index = 3;
+constexpr size_t kL2Index = 4;
+constexpr size_t kGradIndex = 5;
+constexpr size_t kIndicesIndex = 6;
+constexpr size_t kWorkSpaceIndex0 = 0;
+constexpr size_t kWorkSpaceIndex1 = 1;
+constexpr size_t kWorkSpaceIndex2 = 2;
+constexpr size_t kWorkSpaceIndex3 = 3;
 
 template <typename T>
 void ComputeProximalAdagrad(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
@@ -84,13 +95,13 @@ void SparseApplyProximalAdagradCpuKernelMod::InitInputOutputSize(const CNodePtr 
 void SparseApplyProximalAdagradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  std::vector<size_t> accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  std::vector<size_t> lr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  std::vector<size_t> l1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-  std::vector<size_t> l2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-  std::vector<size_t> grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
-  std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
+  std::vector<size_t> var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kVarIndex);
+  std::vector<size_t> accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kAccIndex);
+  std::vector<size_t> lr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLRIndex);
+  std::vector<size_t> l1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kL1Index);
+  std::vector<size_t> l2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kL2Index);
+  std::vector<size_t> grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kGradIndex);
+  std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndicesIndex);
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of 'var' should be at least 1-D, but got scalar or None.";
@@ -142,23 +153,23 @@ void SparseApplyProximalAdagradCpuKernelMod::InitKernel(const CNodePtr &kernel_n
                       << "', 'l2' should be a scalar,and dimension of 'l2' should be 0,but got the dimension of 'l2': "
                       << Vector2Str(l2_shape);
   }
-  indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 6);
+  indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndicesIndex);
 }
 
 template <typename T>
 void SparseApplyProximalAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                           const std::vector<kernel::AddressPtr> &workspace) const {
-  auto var = reinterpret_cast<float *>(inputs[0]->addr);
-  auto accum = reinterpret_cast<float *>(inputs[1]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[2]->addr)[0];
-  auto l1 = reinterpret_cast<float *>(inputs[3]->addr)[0];
-  auto l2 = reinterpret_cast<float *>(inputs[4]->addr)[0];
-  auto grad = reinterpret_cast<float *>(inputs[5]->addr);
-  auto indices = reinterpret_cast<T *>(inputs[6]->addr);
-  auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto new_indices = reinterpret_cast<T *>(workspace[1]->addr);
-  auto workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
+  auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->addr);
+  auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[0];
+  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->addr)[0];
+  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->addr)[0];
+  auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
+  auto indices = reinterpret_cast<T *>(inputs[kIndicesIndex]->addr);
+  auto new_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex0]->addr);
+  auto new_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex1]->addr);
+  auto workspace_grad = reinterpret_cast<float *>(workspace[kWorkSpaceIndex2]->addr);
+  auto workspace_indices = reinterpret_cast<T *>(workspace[kWorkSpaceIndex3]->addr);
 
   SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
   SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});

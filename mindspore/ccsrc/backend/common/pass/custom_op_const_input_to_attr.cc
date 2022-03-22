@@ -28,17 +28,14 @@ const AnfNodePtr CustomOpConstInputToAttr::Process(const FuncGraphPtr &, const A
   if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
-
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (!IsPrimitiveCNode(cnode, prim::kPrimCustom)) {
     return nullptr;
   }
 
-  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(primitive);
   mindspore::HashSet<size_t> attr_indices;
-  GetCustomOpAttrIndex(primitive, &attr_indices);
+  GetCustomOpAttrIndex(common::AnfAlgo::GetCNodePrimitive(cnode), &attr_indices);
   if (attr_indices.empty()) {
     return nullptr;
   }
