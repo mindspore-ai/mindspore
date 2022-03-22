@@ -36,6 +36,8 @@ AclGraphImpl::~AclGraphImpl() {
     (void)FinalizeEnv();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "AclGraphImpl destructor run failed, error message : " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "AclGraphImpl destructor run failed, unknown error occurred.";
   }
 }
 
