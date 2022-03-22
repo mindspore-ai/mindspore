@@ -399,6 +399,7 @@ class GetNextSingleOp(Cell):
         >>> import mindspore
         >>> from mindspore import ops, nn
         >>> from mindspore import dataset as ds
+        >>> from mindspore.common import dtype as mstype
         >>>
         >>> data_path =  "/path/to/MNIST_Data/train/"
         >>> train_dataset = ds.MnistDataset(data_path, num_samples=10)
@@ -409,7 +410,7 @@ class GetNextSingleOp(Cell):
         >>> get_next_single_op_net = nn.GetNextSingleOp(dataset_types, dataset_shapes, queue_name)
         >>> data, label = get_next_single_op_net()
         >>> relu = ops.ReLU()
-        >>> result = relu(data).asnumpy()
+        >>> result = relu(data.astype(mstype.float32))
         >>> print(result.shape)
         (28, 28, 1)
     """
