@@ -33,8 +33,9 @@ ValueNodePtr ConvFusionInoutTest::CreateConvPrimitiveValue() {
 CNodePtr ConvFusionInoutTest::AddConv(const FuncGraphPtr &graph, const AnfNodePtr &input, const std::string &name) {
   auto conv_primitive = CreateConvPrimitiveValue();
   MS_CHECK_TRUE_RET(conv_primitive != nullptr, nullptr);
-  auto weight = AddParameter(graph, ic_ * oc_ * kh_ * kw_, {oc_, kh_, kw_, ic_}, kNumberTypeFloat32, name + "_weight");
-  auto bias = AddParameter(graph, oc_, {oc_}, kNumberTypeFloat32, name + "_bias");
+  auto weight = AddParameter(graph, ic_ * oc_ * kh_ * kw_ * sizeof(float), {oc_, kh_, kw_, ic_}, kNumberTypeFloat32,
+                             name + "_weight");
+  auto bias = AddParameter(graph, oc_ * sizeof(float), {oc_}, kNumberTypeFloat32, name + "_bias");
   auto conv = graph->NewCNode({conv_primitive, input, weight, bias});
   MS_CHECK_TRUE_MSG(conv != nullptr, nullptr, "create Conv2d failed");
   conv->set_fullname_with_scope(name);
