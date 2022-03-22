@@ -292,7 +292,6 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
       }
 
       if (ConvertDataset2Tensor(acl_dataset)) {
-        MS_LOG(ERROR) << "Convert acl_dataset to tensor failed.";
         ret = -1;
         break;
       }
@@ -332,7 +331,6 @@ void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::strin
       }
 
       if (SaveDataset2File(acl_dataset, print_file_path, print, &output)) {
-        MS_LOG(ERROR) << "Save acl_dataset to file failed.";
         ret = -1;
         break;
       }
