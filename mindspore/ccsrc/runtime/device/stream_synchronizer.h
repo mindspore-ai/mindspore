@@ -25,6 +25,7 @@
 #include <condition_variable>
 
 #include "runtime/hardware/device_context.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
@@ -32,24 +33,31 @@ constexpr uint32_t kTimeoutInSeconds = 30;
 
 // Execute synchronization stream with timeout mechanism. Typical application scenarios: it is used to monitor
 // distributed data parallel training scenarios and whether a process exits unexpectedly.
-class StreamSynchronizer {
+class BACKEND_EXPORT StreamSynchronizer {
  public:
   static std::shared_ptr<StreamSynchronizer> &GetInstance() {
     std::lock_guard<std::mutex> lock(instance_lock_);
     if (instance_ == nullptr) {
       instance_.reset(new (std::nothrow) StreamSynchronizer());
+      MS_EXCEPTION_IF_NULL(instance_);
+      instance_->Initialize();
     }
     return instance_;
   }
 
-  ~StreamSynchronizer() noexcept;
+  ~StreamSynchronizer() = default;
 
   // Execute synchronization stream with timeout mechanism.
   bool SyncStream(const std::string &device_name, uint32_t timeout = kTimeoutInSeconds);
 
+  // Initialize stream synchronizer, Create a thread to actually execute the synchronization stream task.
+  void Initialize();
+
+  // Finalize stream synchronizer, wait worker_thread_ finish.
+  void Finalize();
+
  private:
-  // Create a thread to actually execute the synchronization stream task.
-  StreamSynchronizer() { worker_thread_ = std::thread(&StreamSynchronizer::DoSyncStreamTask, this); }
+  StreamSynchronizer() = default;
 
   DISABLE_COPY_AND_ASSIGN(StreamSynchronizer);
 

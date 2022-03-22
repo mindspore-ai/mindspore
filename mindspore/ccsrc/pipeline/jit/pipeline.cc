@@ -60,6 +60,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/pynative/op_executor.h"
+#include "runtime/device/stream_synchronizer.h"
 
 #ifndef ENABLE_SECURITY
 #ifdef ENABLE_D
@@ -1602,6 +1603,10 @@ void ClearResAtexit() {
   MS_LOG(INFO) << "Start clear kernel runtime...";
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
   MS_LOG(INFO) << "End clear kernel runtime.";
+
+  MS_LOG(INFO) << "Start Finalize StreamSynchronizer...";
+  device::StreamSynchronizer::GetInstance()->Finalize();
+  MS_LOG(INFO) << "End Finalize StreamSynchronizer...";
 
   PrimitivePy::ClearHookRes();
   ad::g_k_prims.clear();

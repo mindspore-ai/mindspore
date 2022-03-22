@@ -24,7 +24,16 @@ namespace device {
 std::mutex StreamSynchronizer::instance_lock_;
 std::shared_ptr<StreamSynchronizer> StreamSynchronizer::instance_ = nullptr;
 
-StreamSynchronizer::~StreamSynchronizer() noexcept {
+void StreamSynchronizer::Initialize() {
+  // Non disaster recovery mode does not need to start thread and timeout mechanisms.
+  if (!runtime::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
+    return;
+  }
+
+  worker_thread_ = std::thread(&StreamSynchronizer::DoSyncStreamTask, this);
+}
+
+void StreamSynchronizer::Finalize() {
   {
     std::unique_lock<std::mutex> lock(task_mutex_);
     stop_ = true;
