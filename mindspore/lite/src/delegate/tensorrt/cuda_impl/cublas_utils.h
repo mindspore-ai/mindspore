@@ -47,9 +47,8 @@ void Cublas2DTranspose(const float *in_addr, float *out_addr, const int *params,
 // a: m * k, b: k * n, c: m * n
 // params order: m, n, k
 // operations order: trans_a, trans_b
-// data_types: type_a, type_b, type_c
+// data_types: type_a, type_b, type_c, compute type
 void CublasMM1Batch(const void *a_addr, const void *b_addr, void *c_addr, const int *params,
-                    const cublasOperation_t *operations, const cudaDataType_t *data_types,
-                    cublasComputeType_t type_compute, cublasHandle_t cublas_handle);
+                    const cublasOperation_t *operations, const cudaDataType *data_types, cublasHandle_t cublas_handle);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_CUBLAS_UTILS_H_

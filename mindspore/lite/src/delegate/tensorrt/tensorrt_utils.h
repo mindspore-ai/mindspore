@@ -65,7 +65,7 @@ std::vector<int64_t> NHWC2NCHW(std::vector<int64_t> nhwc_shape);
 
 nvinfer1::DataType ConvertDataType(DataType type_id);
 
-cudaDataType_t ConvertDataType(nvinfer1::DataType type_id);
+cudaDataType ConvertDataType(nvinfer1::DataType type_id);
 
 nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input);
 
