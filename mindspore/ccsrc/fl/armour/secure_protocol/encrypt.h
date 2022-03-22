@@ -33,9 +33,9 @@ enum AES_MODE {
   AES_CBC = 0,
   AES_CTR = 1,
 };
-class SymmetricEncrypt : Encrypt {};
+class SymmetricEncrypt : public Encrypt {};
 
-class AESEncrypt : SymmetricEncrypt {
+class AESEncrypt : public SymmetricEncrypt {
  public:
   AESEncrypt(const uint8_t *key, int key_len, const uint8_t *ivec, int ivec_len, AES_MODE mode);
   ~AESEncrypt();

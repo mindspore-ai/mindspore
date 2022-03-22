@@ -118,7 +118,7 @@ int AESEncrypt::evp_aes_encrypt(const uint8_t *data, const int len, const uint8_
       EVP_CIPHER_CTX_free(ctx);
       return -1;
     }
-    EVP_CIPHER_CTX_set_padding(ctx, EVP_PADDING_PKCS7);
+    (void)EVP_CIPHER_CTX_set_padding(ctx, EVP_PADDING_PKCS7);
   } else if (aes_mode_ == AES_CTR) {
     switch (priv_key_len_) {
       case KEY_LENGTH_16:

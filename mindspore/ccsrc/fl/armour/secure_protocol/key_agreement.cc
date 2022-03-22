@@ -15,6 +15,7 @@
  */
 
 #include "fl/armour/secure_protocol/key_agreement.h"
+#include "fl/server/common.h"
 
 namespace mindspore {
 namespace armour {
@@ -128,8 +129,8 @@ int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned c
     EVP_PKEY_CTX_free(ctx);
     return -1;
   }
-  if (!PKCS5_PBKDF2_HMAC(reinterpret_cast<char *>(secret), len, salt, salt_len, ITERATION, EVP_sha256(), key_len,
-                         exchangeKey)) {
+  if (!PKCS5_PBKDF2_HMAC(reinterpret_cast<char *>(secret), SizeToInt(len), salt, salt_len, ITERATION, EVP_sha256(),
+                         key_len, exchangeKey)) {
     OPENSSL_free(secret);
     EVP_PKEY_CTX_free(ctx);
     return -1;
