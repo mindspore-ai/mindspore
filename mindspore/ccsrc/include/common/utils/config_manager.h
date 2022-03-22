@@ -95,7 +95,7 @@ class COMMON_EXPORT ConfigManager {
   void set_iter_num(const std::string &queue_name, const int64_t num) {
     queue_name_ = queue_name;
     iter_num_ = num;
-    queue_info_map[queue_name_] = num;
+    queue_info_map[queue_name_] = static_cast<int16_t>(num);
   }
 
   std::string dataset_phase() const { return dataset_phase_; }

@@ -81,11 +81,11 @@ class EnsuresAccess<T, R, std::enable_if_t<std::is_pointer_v<std::remove_cv_t<T>
 };
 
 template <typename T>
-struct IsSharedPtr : std::false_type {};
+struct IsSharedPtr : public std::false_type {};
 template <typename T>
-struct IsSharedPtr<std::shared_ptr<T>> : std::true_type {};
+struct IsSharedPtr<std::shared_ptr<T>> : public std::true_type {};
 template <typename T>
-struct IsSharedPtr<const std::shared_ptr<T> &> : std::true_type {};
+struct IsSharedPtr<const std::shared_ptr<T> &> : public std::true_type {};
 
 template <class T, class R>
 class EnsuresAccess<T, R, std::enable_if_t<IsSharedPtr<T>::value>> {

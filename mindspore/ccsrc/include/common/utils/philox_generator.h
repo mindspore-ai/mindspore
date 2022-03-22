@@ -20,6 +20,7 @@
 #include <math.h>
 #include <array>
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 #include "include/common/visible.h"
 
 namespace mindspore {
@@ -65,7 +66,7 @@ template <class T>
 bool FillRandoms(PhiloxGenerator generator, float *output, int64_t vet_size, int64_t thread_Id) {
   T distribution;
   errno_t mem_ret;
-  generator.JumpStep((vet_size * thread_Id + kResultNum - 1) / kResultNum);
+  generator.JumpStep(LongToSize((vet_size * thread_Id + kResultNum - 1) / kResultNum));
   for (int32_t i = 0; i < vet_size; i += kResultNum) {
     auto outputResult = distribution(&generator);
     size_t max_length = 0;
@@ -73,7 +74,7 @@ bool FillRandoms(PhiloxGenerator generator, float *output, int64_t vet_size, int
       max_length = kResultNum * sizeof(float);
       mem_ret = memcpy_s(&output[i], max_length, &outputResult[0], max_length);
     } else {
-      max_length = (vet_size - i) * sizeof(float);
+      max_length = LongToSize((vet_size - i) * sizeof(float));
       mem_ret = memcpy_s(&output[i], max_length, &outputResult[0], max_length);
     }
     if (mem_ret != EOK) {

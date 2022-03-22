@@ -38,7 +38,6 @@
 namespace mindspore {
 namespace tensor {
 class Tensor;
-using TensorPtr = std::shared_ptr<Tensor>;
 }  // namespace tensor
 
 COMMON_EXPORT bool BaseRefToBool(const BaseRef &in, bool *out);
