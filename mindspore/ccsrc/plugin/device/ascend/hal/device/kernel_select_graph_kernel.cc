@@ -119,7 +119,7 @@ std::vector<int64_t> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, c
   std::vector<int64_t> frac_nz_axis = axis;
   auto shape_len = ori_shape.size();
   for (size_t i = 0; i < axis.size(); ++i) {
-    auto axis_idx = (frac_nz_axis[i] + shape_len) % shape_len;
+    auto axis_idx = (static_cast<size_t>(frac_nz_axis[i]) + shape_len) % shape_len;
     if (axis_idx == shape_len - kIndex1) {
       frac_nz_axis[i] = static_cast<int64_t>(axis_idx) - static_cast<int64_t>(kIndex1);
       frac_nz_axis.push_back(axis_idx + kIndex2);
