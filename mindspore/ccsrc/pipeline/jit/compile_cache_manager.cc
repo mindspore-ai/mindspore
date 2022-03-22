@@ -27,6 +27,7 @@
 #include "include/common/debug/dump_proto.h"
 #include "utils/system/sha256.h"
 #include "include/common/utils/utils.h"
+#include "frontend/parallel/step_parallel.h"
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_context.h"
@@ -44,6 +45,7 @@ constexpr char kDepFilesHashPath[] = "compile_dependency.hash";
 constexpr char kRoleServer[] = "server_";
 constexpr char kRolePServer[] = "pserver_";
 constexpr char kRolePScheduler[] = "pscheduler_";
+constexpr char kGroupCkptFileName[] = "group.ckpt";
 
 std::string GetUserDefinedCachePath() {
   auto user_defined_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
@@ -105,6 +107,8 @@ std::string GetDepFilesHashPath() {
   static const std::string dep_files_hash_path = GetCompileCacheDir() + "/" + GetRole() + kDepFilesHashPath;
   return dep_files_hash_path;
 }
+
+std::string GetGroupCkptSavePath() { return GetCompileCacheDir() + "/" + kGroupCkptFileName; }
 
 std::string GetCompileDepFilesHash(const py::list &dep_files) {
   MS_LOG(DEBUG) << "Dependency files size: " << dep_files.size();
@@ -180,6 +184,23 @@ bool ExportDepFilesHash(const std::string &compile_cache_dep_files_hash) {
   ChangeFileMode(realpath.value(), S_IRUSR);
   return true;
 }
+
+bool CreateParallelGroupsByCkptFile() {
+  static const std::string group_ckpt_save_path = GetGroupCkptSavePath();
+  auto realpath = Common::CreatePrefixPath(group_ckpt_save_path, true);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path of file " << group_ckpt_save_path << " failed.";
+    return false;
+  }
+  std::ifstream f(realpath.value());
+  bool file_is_good = f.good();
+  f.close();
+  if (!file_is_good) {
+    MS_LOG(ERROR) << "Open the group checkpoint file " << realpath.value() << " failed.";
+    return false;
+  }
+  return parallel::CreateGroupsByCkptFile(group_ckpt_save_path);
+}
 }  // namespace
 
 void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg) const {
@@ -236,6 +257,10 @@ FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   bool has_parallel_info = false;
   if ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel)) {
+    if (!CreateParallelGroupsByCkptFile()) {
+      MS_LOG(WARNING) << "Failed to create the parallel groups info. Execute all the compilation actions.";
+      return nullptr;
+    }
     has_parallel_info = true;
   }
   // Load the compilation cache file.
@@ -267,6 +292,13 @@ FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &
     DumpIR("cache_loaded_graph_" + std::to_string(compile_cache_id_) + ".ir", fg);
   }
   return fg;
+}
+
+void CompileCacheManager::InitParallelGroupCkptSaveFile() {
+  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel)) {
+    parallel::ParallelContext::GetInstance()->set_group_ckpt_save_file(GetGroupCkptSavePath());
+  }
 }
 }  // namespace pipeline
 }  // namespace mindspore
