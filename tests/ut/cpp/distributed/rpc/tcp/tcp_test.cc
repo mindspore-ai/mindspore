@@ -75,16 +75,17 @@ class TCPTest : public UT::Common {
   void SetUp() {}
   void TearDown() {}
 
-  std::unique_ptr<MessageBase> CreateMessage(const std::string &serverUrl, const std::string &client_url);
+  std::unique_ptr<MessageBase> CreateMessage(const std::string &serverUrl, const std::string &client_url,
+                                             size_t msg_size = 100);
 
   bool CheckRecvNum(int expectedRecvNum, int _timeout);
   bool CheckExitNum(int expectedExitNum, int _timeout);
 };
 
-std::unique_ptr<MessageBase> TCPTest::CreateMessage(const std::string &serverUrl, const std::string &clientUrl) {
+std::unique_ptr<MessageBase> TCPTest::CreateMessage(const std::string &serverUrl, const std::string &clientUrl,
+                                                    size_t msg_size) {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
-  size_t len = 100;
-  std::string data(len, 'A');
+  std::string data(msg_size, 'A');
   message->name = "testname";
   message->from = AID("client", clientUrl);
   message->to = AID("server", serverUrl);
@@ -264,6 +265,48 @@ TEST_F(TCPTest, SendSyncMessage) {
 
   WaitForDataMsg(1, 5);
   EXPECT_EQ(1, GetDataMsgNum());
+
+  // Destroy
+  client->Disconnect(server_url);
+  client->Finalize();
+  server->Finalize();
+}
+
+/// Feature: test sending large messages.
+/// Description: start a socket server and send several large messages to it.
+/// Expectation: the server received these large messages sented from client.
+TEST_F(TCPTest, SendLargeMessages) {
+  Init();
+
+  // Start the tcp server.
+  auto server_url = "127.0.0.1:8081";
+  std::unique_ptr<TCPServer> server = std::make_unique<TCPServer>();
+  bool ret = server->Initialize(server_url);
+  ASSERT_TRUE(ret);
+
+  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> void { IncrDataMsgNum(1); });
+
+  // Start the tcp client.
+  auto client_url = "127.0.0.1:1234";
+  std::unique_ptr<TCPClient> client = std::make_unique<TCPClient>();
+  ret = client->Initialize();
+  ASSERT_TRUE(ret);
+
+  // Send the message.
+  client->Connect(server_url);
+
+  size_t msg_cnt = 100;
+  size_t large_msg_size = 102400;
+  for (int i = 0; i < msg_cnt; ++i) {
+    auto message = CreateMessage(server_url, client_url, large_msg_size);
+    client->SendAsync(std::move(message));
+  }
+
+  // Wait timeout: 15s
+  WaitForDataMsg(msg_cnt, 15);
+
+  // Check result
+  EXPECT_EQ(msg_cnt, GetDataMsgNum());
 
   // Destroy
   client->Disconnect(server_url);
