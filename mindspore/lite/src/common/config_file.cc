@@ -100,6 +100,7 @@ int GetAllSectionInfoFromConfigFile(const std::string &file,
     line_count++;
     if (line_count >= kMaxLineCount || valid_line_count >= kMaxValidLineCount) {
       MS_LOG(ERROR) << "config too many lines!";
+      ifs.close();
       return RET_ERROR;
     }
     lite::Trim(&line);

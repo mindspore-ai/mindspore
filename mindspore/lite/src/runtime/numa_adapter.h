@@ -18,8 +18,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_NUMA_ADAPTER_H_
 #include <cstdint>
 #include <cstddef>
-#include <vector>
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace mindspore {
 namespace numa {
@@ -32,7 +33,6 @@ struct NUMAInterface {
   int (*numa_available)(void);
   int (*numa_num_configured_nodes)(void);
   int (*numa_num_task_cpus)();
-  int (*numa_node_to_cpus)(int node, struct bitmask *mask);
   struct bitmask *(*numa_allocate_nodemask)(void);
   struct bitmask *(*numa_bitmask_clearall)(struct bitmask *);
   struct bitmask *(*numa_bitmask_setbit)(struct bitmask *, unsigned int);
@@ -57,7 +57,7 @@ class NUMAAdapter {
 
   NUMAAdapter();
   ~NUMAAdapter();
-  bool Available() const;
+  inline bool Available() const { return available_; }
   void Bind(int node_id);
   void *Malloc(int node_id, size_t size);
   void Free(void *data, size_t size);
@@ -70,6 +70,7 @@ class NUMAAdapter {
   void *handle_;  // numa.so handle
   bool available_ = false;
   NUMAInterface numa_interfaces_;
+  std::unordered_map<int, std::vector<int>> node_cpu_list_;
 };
 }  // namespace numa
 }  // namespace mindspore
