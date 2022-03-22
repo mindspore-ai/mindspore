@@ -440,9 +440,9 @@ mindspore.Tensor
             - **TypeError** - axis不是int类型。
             - **TypeError** - start不是int类型。
             - **TypeError** - length不是int类型。
-            - **ValueError** - axis超出Tensor的维度范围。
-            - **ValueError** - start超出Tensor的维度范围。
-            - **ValueError** - start+length超出Tensor的维度范围。
+            - **ValueError** - axis取值不在[0, ndim-1]范围内。
+            - **ValueError** - start取值不在[0, shape[axis]-1]范围内。
+            - **ValueError** - start+length超出Tensor的维度范围shape[axis]-1。
 
     .. py:method:: nbytes
         :property:

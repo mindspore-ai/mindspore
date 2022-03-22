@@ -860,7 +860,12 @@ class Tensor(Tensor_):
             - output (Tensors) - The narrowed tensor.
 
         Raises:
-            TypeError: If the input is not a tensor or tuple or list of tensors.
+            TypeError: axis is not integer.
+            TypeError: start is not integer.
+            TypeError: length is not integer.
+            ValueError: axis is not in the range of [0, ndim-1].
+            ValueError: start is not in the range of [0, shape[axis]-1].
+            ValueError: start+length is greater than shape[axis]-1.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
