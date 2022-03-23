@@ -21,6 +21,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     CONFIGURE_COMMAND ./config no-zlib no-shared
     PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
     PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
+    PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-0778.patch
   )
   include_directories(${openssl_INC})
   add_library(mindspore::ssl ALIAS openssl::ssl)
