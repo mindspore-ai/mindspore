@@ -48,12 +48,12 @@ struct SplitInfo {
 
 typedef enum { CUT_N, CUT_H, CUT_W, CUT_C_IN, CUT_C_OUT, CUT_NONE } CuttingStragedy;
 
-std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t input_h,
+std::vector<int64_t> GetSplitPadList(const api::SharedPtr<ops::Conv2DFusion> &ori_conv_prim, int64_t input_h,
                                      int64_t input_w);
 
 bool IsConv2D(const AnfNodePtr &node);
 
-std::shared_ptr<ops::Conv2DFusion> CopyConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr);
+api::SharedPtr<ops::Conv2DFusion> CopyConvPrim(const api::SharedPtr<ops::Conv2DFusion> &ori_attr);
 
 bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &conv_nodes, SplitInfo *split_info);
 

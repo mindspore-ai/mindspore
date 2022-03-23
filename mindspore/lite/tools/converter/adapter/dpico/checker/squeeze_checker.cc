@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace dpico {
-bool SqueezeChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool SqueezeChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   std::vector<ShapeVector> output_shapes;
   if (GetBoolAttr(op, dpico::kInferDone)) {
     if (GetOutputShapesFromCNode(op, &output_shapes) != RET_OK) {

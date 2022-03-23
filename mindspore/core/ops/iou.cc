@@ -17,6 +17,9 @@
 #include "ops/iou.h"
 #include <algorithm>
 #include <set>
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -75,6 +78,8 @@ TypePtr IOUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(IOU, PrimitiveC, BaseOperator);
 AbstractBasePtr IOUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   auto type = IOUInferType(primitive, input_args);

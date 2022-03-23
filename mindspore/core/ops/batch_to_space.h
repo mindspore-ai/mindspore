@@ -19,22 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchToSpace = "BatchToSpace";
 /// \brief Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 /// Refer to Python API @ref mindspore.ops.BatchToSpace for more details.
-class MS_CORE_API BatchToSpace : public PrimitiveC {
+class MIND_API BatchToSpace : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(BatchToSpace);
   /// \brief Constructor.
-  BatchToSpace() : PrimitiveC(kNameBatchToSpace) {}
-  /// \brief Destructor.
-  ~BatchToSpace() = default;
-  MS_DECLARE_PARENT(BatchToSpace, PrimitiveC);
+  BatchToSpace() : BaseOperator(kNameBatchToSpace) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BatchToSpace for the inputs.
   void Init(const std::vector<int64_t> &block_size, const std::vector<std::vector<int64_t>> &crops);
   /// \brief Set block_size.
@@ -51,8 +48,8 @@ class MS_CORE_API BatchToSpace : public PrimitiveC {
   std::vector<std::vector<int64_t>> get_crops() const;
 };
 
-AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/mapper/activation_mapper.h"
 #include <map>
 #include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
+#include "tools/converter/adapter/acl/common/utils.h"
 #include "ops/elu.h"
 #include "ops/gelu.h"
 #include "ops/leaky_relu.h"
@@ -26,11 +28,13 @@
 #include "ops/sigmoid.h"
 #include "ops/tanh.h"
 #include "nnacl/op_base.h"
+#include "src/common/log_util.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
 STATUS ActivationMapper::Mapper(const CNodePtr &cnode) {
-  static std::map<ActivationType, PrimitivePtr> activation_type_map = {
+  static std::map<ActivationType, BaseOperatorPtr> activation_type_map = {
     {mindspore::ELU, std::make_shared<ops::Elu>()},
     {mindspore::GELU, std::make_shared<ops::GeLU>()},
     {mindspore::RELU, std::make_shared<ops::ReLU>()},
@@ -44,17 +48,19 @@ STATUS ActivationMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Get primitive from cnode failed.";
     return lite::RET_ERROR;
   }
-  auto activate_prim = dynamic_cast<ops::Activation *>(src_prim.get());
+  auto activate_prim = mindspore::api::MakeShared<mindspore::ops::Activation>(src_prim);
   MS_CHECK_TRUE_MSG(activate_prim != nullptr, lite::RET_ERROR, "Dynamic cast activation failed.");
   PrimitivePtr dst_prim = nullptr;
   ActivationType type = activate_prim->get_activation_type();
   if (activation_type_map.find(type) != activation_type_map.end()) {
-    dst_prim = activation_type_map[type];
+    auto dest_op = activation_type_map[type];
+    MS_CHECK_TRUE_MSG(dest_op != nullptr, lite::RET_ERROR, "Activation op failed.");
+    dst_prim = dest_op->GetPrim();
   } else {
     MS_LOG(ERROR) << "Type " << static_cast<int>(type) << " is unsupported.";
     return lite::RET_ERROR;
   }
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "Dst prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
   return lite::RET_OK;

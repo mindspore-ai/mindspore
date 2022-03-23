@@ -20,6 +20,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -79,6 +80,8 @@ TuplePtr SoftmaxCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(SoftmaxCrossEntropyWithLogits, PrimitiveC, BaseOperator);
 AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = SoftmaxCrossEntropyWithLogitsInferType(primitive, input_args);

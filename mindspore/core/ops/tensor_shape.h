@@ -15,15 +15,16 @@
  */
 #ifndef MINDSPORE_CORE_OPS_TENSOR_SHAPE_H_
 #define MINDSPORE_CORE_OPS_TENSOR_SHAPE_H_
-#include "ops/primitive_c.h"
-#include "base/core_ops.h"
+
+#include "ops/base_operator.h"
+
 namespace mindspore {
 namespace ops {
-class TensorShape : public PrimitiveC {
+constexpr auto kNameTensorShape = "TensorShape";
+class MIND_API TensorShape : public BaseOperator {
  public:
-  TensorShape() : PrimitiveC(prim::kPrimTensorShape->name()) {}
-  ~TensorShape() = default;
-  MS_DECLARE_PARENT(TensorShape, PrimitiveC);
+  MIND_API_BASE_MEMBER(TensorShape);
+  TensorShape() : BaseOperator(kNameTensorShape) {}
 };
 }  // namespace ops
 }  // namespace mindspore

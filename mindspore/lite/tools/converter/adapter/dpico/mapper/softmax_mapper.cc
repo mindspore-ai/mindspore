@@ -25,13 +25,13 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS SoftmaxMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS SoftmaxMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto softmax_prim = utils::cast<std::shared_ptr<ops::Softmax>>(prim);
+  auto softmax_prim = api::utils::cast<api::SharedPtr<ops::Softmax>>(prim);
   MS_ASSERT(softmax_prim != nullptr);
 
   auto softmax_operator = std::make_unique<mapper::SoftmaxOperator>();

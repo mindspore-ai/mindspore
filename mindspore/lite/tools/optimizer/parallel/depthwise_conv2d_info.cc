@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/parallel/depthwise_conv2d_info.h"
 #include <memory>
 #include <vector>
@@ -31,6 +32,7 @@
 #include "ops/split_with_overlap.h"
 #include "src/tensor.h"
 #include "tools/optimizer/parallel/spliter.h"
+#include "ops/op_utils.h"
 
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
@@ -205,7 +207,7 @@ bool DepthwiseConv2DInfo::CheckSplitOutputs(const std::vector<AnfNodePtr> &featu
   return true;
 }
 
-void DepthwiseConv2DInfo::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+void DepthwiseConv2DInfo::AdJustConvPrim(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                                          int64_t *visited_in_channel, int64_t *visited_out_channel,
                                          int64_t *visited_group, int output_conv_index) {
   MS_ASSERT(conv_prim != nullptr && visited_in_channel != nullptr);
@@ -268,15 +270,17 @@ void DepthwiseConv2DInfo::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion
   }
 }
 
-void DepthwiseConv2DInfo::AdJustInputs(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+void DepthwiseConv2DInfo::AdJustInputs(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                                        const std::vector<AnfNodePtr> &feature_split_outputs,
                                        const std::vector<AnfNodePtr> &kernel_split_outputs,
                                        const std::vector<AnfNodePtr> &bias_split_outputs, int output_conv_index) {
   MS_ASSERT(conv_prim != nullptr);
+  auto conv_prim_c = conv_prim->GetPrim();
+  MS_ASSERT(conv_prim_c != nullptr);
   std::vector<AnfNodePtr> tmp_outputs;
   std::string conv_cnode_name = cnode_->fullname_with_scope();
   bool has_bias = cnode_->size() > kBiasIndex + 1;
-  std::vector<AnfNodePtr> conv_inputs = {NewValueNode(conv_prim)};
+  std::vector<AnfNodePtr> conv_inputs = {NewValueNode(conv_prim_c)};
   if (split_mode_ == SplitN || split_mode_ == SplitH) {
     conv_inputs.push_back(feature_split_outputs.at(output_conv_index));
     conv_inputs.push_back(cnode_->input(kWeightIndex + 1));
@@ -306,7 +310,7 @@ void DepthwiseConv2DInfo::AdJustInputs(const std::shared_ptr<ops::Conv2DFusion> 
   parallel_output_nodes_.push_back(tmp_outputs[0]);
 }
 
-int DepthwiseConv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+int DepthwiseConv2DInfo::ConstructOutputCNodes(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                                                const std::vector<AnfNodePtr> &feature_split_outputs,
                                                const std::vector<AnfNodePtr> &kernel_split_outputs,
                                                const std::vector<AnfNodePtr> &bias_split_outputs) {
@@ -333,7 +337,7 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
                                                      std::vector<AnfNodePtr> *split_outputs, size_t split_dim,
                                                      size_t split_num, const std::vector<int64_t> &splits) {
   MS_ASSERT(orig_node != nullptr && split_outputs != nullptr);
-  auto depth_wise_conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  auto depth_wise_conv_prim = ops::GetOperator<ops::Conv2DFusion>(cnode_->input(kAnfPrimitiveIndex));
   MS_ASSERT(depth_wise_conv_prim != nullptr);
   auto ori_node_name = ori_node->fullname_with_scope();
   auto graph_node_input_shapes = Spliter::GetInstance()->graph_node_input_shapes();
@@ -353,6 +357,8 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
   // prim of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
   MS_CHECK_TRUE_RET(split_prim != nullptr, nullptr);
+  auto split_prim_c = split_prim->GetPrim();
+  MS_CHECK_TRUE_RET(split_prim_c != nullptr, nullptr);
   std::vector<int64_t> new_splits = splits;
   MS_CHECK_TRUE_RET(input_shape.size() > static_cast<size_t>(split_dim), nullptr);
   if (split_mode_ == SplitH) {
@@ -380,7 +386,7 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
   std::vector<AnfNodePtr> split_inputs;
   // ori_conv_node must only have one feature input
   split_inputs.push_back(ori_node->input(input_index + 1));
-  auto split_cnode = func_graph_->NewCNode(split_prim, split_inputs);
+  auto split_cnode = func_graph_->NewCNode(split_prim_c, split_inputs);
   if (split_cnode == nullptr) {
     MS_LOG(ERROR) << name_ << " : Failed to create split node.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -491,7 +497,7 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
     }
   }
   name_ = input_op_name;
-  auto depth_wise_conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  auto depth_wise_conv_prim = ops::GetOperator<ops::Conv2DFusion>(cnode_->input(kAnfPrimitiveIndex));
   MS_ASSERT(depth_wise_conv_prim != nullptr);
   return ConstructOutputCNodes(depth_wise_conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs);
 }

@@ -19,21 +19,18 @@
 #include <memory>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Returns a complex Tensor from the real and imaginary part.
 /// Refer to Python API @ref mindspore.ops.Complex for more details.
-class MS_CORE_API Complex : public PrimitiveC {
+class MIND_API Complex : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Complex);
   /// \brief Constructor.
-  Complex() : PrimitiveC(prim::kPrimSquare->name()) { InitIOName({"s", "input_imag"}, {"output"}); }
-  /// \brief Destructor.
-  ~Complex() = default;
-  MS_DECLARE_PARENT(Complex, PrimitiveC);
+  Complex() : BaseOperator("Square") { InitIOName({"s", "input_imag"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Complex for the inputs.
   void Init() {}
 };

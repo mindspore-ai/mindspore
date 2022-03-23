@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFPackParser::Parse(const tensorflow::NodeDef &tf_op,
-                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                     std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFPackParser::Parse(const tensorflow::NodeDef &tf_op,
+                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                  std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Stack>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
@@ -43,7 +43,7 @@ ops::PrimitiveC *TFPackParser::Parse(const tensorflow::NodeDef &tf_op,
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfPackParser("Pack", new TFPackParser());

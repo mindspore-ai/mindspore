@@ -20,25 +20,23 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSigmoidCrossEntropyWithLogitsGrad = "SigmoidCrossEntropyWithLogitsGrad";
-class MS_CORE_API SigmoidCrossEntropyWithLogitsGrad : public PrimitiveC {
+class MIND_API SigmoidCrossEntropyWithLogitsGrad : public BaseOperator {
  public:
-  SigmoidCrossEntropyWithLogitsGrad() : PrimitiveC(kNameSigmoidCrossEntropyWithLogitsGrad) {
+  MIND_API_BASE_MEMBER(SigmoidCrossEntropyWithLogitsGrad);
+  SigmoidCrossEntropyWithLogitsGrad() : BaseOperator(kNameSigmoidCrossEntropyWithLogitsGrad) {
     InitIOName({"x", "y", "dout"}, {"x_grad"});
   }
-  ~SigmoidCrossEntropyWithLogitsGrad() = default;
-  MS_DECLARE_PARENT(SigmoidCrossEntropyWithLogitsGrad, PrimitiveC);
   void Init() const {}
 };
-AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSigmoidCrossEntropyWithLogitsGradPtr = std::shared_ptr<SigmoidCrossEntropyWithLogitsGrad>;
 }  // namespace ops
 }  // namespace mindspore

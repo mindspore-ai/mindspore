@@ -18,6 +18,9 @@
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/tensor_construct_utils.h"
+#include "abstract/dshape.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -82,6 +85,8 @@ abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
     std::vector<abstract::BaseShapePtr>{y_indices_shape_list, y_values_shape_list, y_shape_shape_list});
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Coalesce, PrimitiveC, BaseOperator);
 AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 3;

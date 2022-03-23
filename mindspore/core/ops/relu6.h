@@ -19,28 +19,26 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReLU6 = prim::kReLU6;
+constexpr auto kNameReLU6 = "ReLU6";
 /// \brief Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.ReLU6 for more details.
-class MS_CORE_API ReLU6 : public PrimitiveC {
+class MIND_API ReLU6 : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ReLU6);
   /// \brief Constructor.
-  ReLU6() : PrimitiveC(kNameReLU6) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~ReLU6() = default;
-  MS_DECLARE_PARENT(ReLU6, PrimitiveC);
+  ReLU6() : BaseOperator(kNameReLU6) { InitIOName({"x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
 
-AbstractBasePtr ReLU6Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ReLU6Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_RELU6_H_

@@ -27,6 +27,7 @@
 #include "src/common/log_adapter.h"
 #include "ops/primitive_c.h"
 #include "mindspore/core/utils/check_convert_utils.h"
+#include "tools/converter/parser/parser_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -36,7 +37,7 @@ class CaffeNodeParser {
 
   virtual ~CaffeNodeParser() {}
 
-  virtual ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  virtual PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
     return nullptr;
   }
 

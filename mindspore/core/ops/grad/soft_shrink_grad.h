@@ -21,21 +21,19 @@
 #include <vector>
 #include <string>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftShrinkGrad = "SoftShrinkGrad";
-class MS_CORE_API SoftShrinkGrad : public PrimitiveC {
+class MIND_API SoftShrinkGrad : public BaseOperator {
  public:
-  SoftShrinkGrad() : PrimitiveC(kNameSoftShrinkGrad) { InitIOName({"input_grad", "input_x"}, {"output"}); }
-  ~SoftShrinkGrad() = default;
-  MS_DECLARE_PARENT(SoftShrinkGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(SoftShrinkGrad);
+  SoftShrinkGrad() : BaseOperator(kNameSoftShrinkGrad) { InitIOName({"input_grad", "input_x"}, {"output"}); }
 };
-AbstractBasePtr SoftShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SoftShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SOFTSHRINK_GRAD_H_

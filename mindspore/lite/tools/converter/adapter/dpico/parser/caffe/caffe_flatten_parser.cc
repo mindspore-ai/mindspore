@@ -21,8 +21,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Flatten>();
+BaseOperatorPtr CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Flatten>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -30,14 +30,14 @@ ops::PrimitiveC *CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, c
   const caffe::FlattenParameter &flatten_param = proto.flatten_param();
 
   if (flatten_param.has_axis()) {
-    prim->AddAttr(dpico::kStartAxis, MakeValue<int32_t>(flatten_param.axis()));
+    prim->AddAttr(dpico::kStartAxis, api::MakeValue<int64_t>(flatten_param.axis()));
   }
 
   if (flatten_param.has_end_axis()) {
-    prim->AddAttr(dpico::kEndAxis, MakeValue<int32_t>(flatten_param.end_axis()));
+    prim->AddAttr(dpico::kEndAxis, api::MakeValue<int64_t>(flatten_param.end_axis()));
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_CaffeFlattenParser("Flatten", new CaffeFlattenParser());

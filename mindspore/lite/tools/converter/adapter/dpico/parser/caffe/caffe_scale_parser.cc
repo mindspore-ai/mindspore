@@ -36,8 +36,8 @@ STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index)
   return RET_OK;
 }
 
-ops::PrimitiveC *CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::ScaleFusion>();
+BaseOperatorPtr CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::ScaleFusion>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -60,13 +60,13 @@ ops::PrimitiveC *CaffeScaleParser::Parse(const caffe::LayerParameter &proto, con
   }
 
   if (scaleParam.has_bias_term()) {
-    (void)prim->AddAttr(dpico::kBiasTerm, MakeValue<bool>(scaleParam.bias_term()));
+    (void)prim->AddAttr(dpico::kBiasTerm, api::MakeValue<bool>(scaleParam.bias_term()));
   }
 
   if (scaleParam.has_num_axes()) {
-    (void)prim->AddAttr(dpico::kNumAxes, MakeValue<uint32_t>(scaleParam.num_axes()));
+    (void)prim->AddAttr(dpico::kNumAxes, api::MakeValue<int64_t>(scaleParam.num_axes()));
   }
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeScaleParser("Scale", new CaffeScaleParser());

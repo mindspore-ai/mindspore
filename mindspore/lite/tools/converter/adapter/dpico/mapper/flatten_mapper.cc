@@ -25,13 +25,13 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS FlattenMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS FlattenMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto flatten_prim = utils::cast<std::shared_ptr<ops::Flatten>>(prim);
+  auto flatten_prim = api::utils::cast<api::SharedPtr<ops::Flatten>>(prim);
   MS_ASSERT(flatten_prim != nullptr);
 
   auto flatten_operator = std::make_unique<mapper::FlattenOperator>();
@@ -47,10 +47,11 @@ STATUS FlattenMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *b
 
   flatten_operator->SetOpType(mapper::OpType::FLATTEN);
   if (flatten_prim->GetAttr(kStartAxis) != nullptr) {
-    flatten_operator->SetFlattenStartAxis(GetValue<int32_t>(flatten_prim->GetAttr(kStartAxis)));
+    flatten_operator->SetFlattenStartAxis(
+      static_cast<int32_t>(api::GetValue<int64_t>(flatten_prim->GetAttr(kStartAxis))));
   }
   if (flatten_prim->GetAttr(kEndAxis) != nullptr) {
-    flatten_operator->SetFlattenEndAxis(GetValue<int32_t>(flatten_prim->GetAttr(kEndAxis)));
+    flatten_operator->SetFlattenEndAxis(static_cast<int32_t>(api::GetValue<int64_t>(flatten_prim->GetAttr(kEndAxis))));
   }
 
   base_operators->push_back(std::move(flatten_operator));

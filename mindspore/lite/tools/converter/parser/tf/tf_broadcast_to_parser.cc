@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFBroadcastToParser::Parse(const tensorflow::NodeDef &tf_op,
-                                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                            std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFBroadcastToParser::Parse(const tensorflow::NodeDef &tf_op,
+                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                         std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::BroadcastTo>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (tf_op.input_size() == 1) {
@@ -37,7 +37,7 @@ ops::PrimitiveC *TFBroadcastToParser::Parse(const tensorflow::NodeDef &tf_op,
       MS_LOG(ERROR) << "add op input failed";
       return nullptr;
     }
-    return prim.release();
+    return prim->GetPrim();
   } else {
     MS_LOG(ERROR) << "broadcast_to has " << tf_op.input_size() << " inputs, invalid";
     return nullptr;

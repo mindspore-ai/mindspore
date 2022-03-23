@@ -29,7 +29,7 @@ class CaffeDeconvolutionParser : public CaffeNodeParser {
   CaffeDeconvolutionParser() : CaffeNodeParser("deconvolution") {}
   ~CaffeDeconvolutionParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

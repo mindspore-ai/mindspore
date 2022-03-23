@@ -19,22 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCummax = "Cummax";
-class Cummax : public PrimitiveC {
+class MIND_API Cummax : public BaseOperator {
  public:
-  Cummax() : PrimitiveC(kNameCummax) { InitIOName({"x"}, {"y", "indices"}); }
-  ~Cummax() = default;
-  MS_DECLARE_PARENT(Cummax, PrimitiveC);
+  MIND_API_BASE_MEMBER(Cummax);
+  Cummax() : BaseOperator(kNameCummax) { InitIOName({"x"}, {"y", "indices"}); }
 };
-AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCummaxPtr = std::shared_ptr<Cummax>;
 }  // namespace ops
 }  // namespace mindspore

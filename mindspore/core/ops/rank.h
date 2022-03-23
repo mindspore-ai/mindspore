@@ -19,27 +19,23 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRank = "Rank";
 /// \brief Returns the rank of a tensor. Refer to Python API @ref mindspore.ops.Rank for more details.
-class MS_CORE_API Rank : public PrimitiveC {
+class MIND_API Rank : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Rank);
   /// \brief Constructor.
-  Rank() : PrimitiveC(kNameRank) { auto prim_name = name(); }
-  /// \brief Destructor.
-  ~Rank() = default;
-  MS_DECLARE_PARENT(Rank, PrimitiveC);
+  Rank() : BaseOperator(kNameRank) { auto prim_name = name(); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Rank for the inputs.
   void Init() const {}
 };
-AbstractBasePtr RankInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr RankInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_RANK_H_

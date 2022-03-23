@@ -17,9 +17,11 @@
 #include "ops/grad/div_grad.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(DivGrad, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameDivGrad, DivGrad);
 }  // namespace ops
 }  // namespace mindspore

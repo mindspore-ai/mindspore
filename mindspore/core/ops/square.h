@@ -20,20 +20,17 @@
 #include <vector>
 #include <set>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Returns square of a tensor element-wise. Refer to Python API @ref mindspore.ops.Square for more details.
-class MS_CORE_API Square : public PrimitiveC {
+class MIND_API Square : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Square);
   /// \brief Constructor.
-  Square() : PrimitiveC(prim::kPrimSquare->name()) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Square() = default;
-  MS_DECLARE_PARENT(Square, PrimitiveC);
+  Square() : BaseOperator("Square") { InitIOName({"input_x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };

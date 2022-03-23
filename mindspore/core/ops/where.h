@@ -19,30 +19,25 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameWhere = "Where";
 /// \brief Where defined the operator prototype of selecting values which meet condition.
-class MS_CORE_API Where : public PrimitiveC {
+class MIND_API Where : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Where);
   /// \brief Constructor.
-  Where() : PrimitiveC(kNameWhere) { InitIOName({"condition"}, {"output"}); }
-
-  /// \brief Destructor.
-  ~Where() = default;
-
-  MS_DECLARE_PARENT(Where, PrimitiveC);
+  Where() : BaseOperator(kNameWhere) { InitIOName({"condition"}, {"output"}); }
 
   /// \brief Method to init the op's attributes
   void Init() const {}
 };
 
-AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

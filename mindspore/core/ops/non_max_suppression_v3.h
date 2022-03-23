@@ -22,26 +22,22 @@
 #include <string>
 #include <memory>
 #include <algorithm>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/primitive_infer_map.h"
-#include "abstract/abstract_value.h"
-#include "abstract/dshape.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNonMaxSuppressionV3 = "NonMaxSuppressionV3";
-class NonMaxSuppressionV3 : public PrimitiveC {
+class NonMaxSuppressionV3 : public BaseOperator {
  public:
-  NonMaxSuppressionV3() : PrimitiveC(kNameNonMaxSuppressionV3) {
+  MIND_API_BASE_MEMBER(NonMaxSuppressionV3);
+  NonMaxSuppressionV3() : BaseOperator(kNameNonMaxSuppressionV3) {
     InitIOName({"boxes", "score", "max_output_size", "iou_threshold", "score_threshold"}, {"selected_indices"});
   }
-  ~NonMaxSuppressionV3() = default;
-  MS_DECLARE_PARENT(NonMaxSuppressionV3, PrimitiveC);
 };
-AbstractBasePtr NonMaxSuppressionV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr NonMaxSuppressionV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimNonMaxSuppressionV3Ptr = std::shared_ptr<NonMaxSuppressionV3>;
 }  // namespace ops
 }  // namespace mindspore

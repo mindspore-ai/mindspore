@@ -21,23 +21,18 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "ir/anf.h"
+
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCustom = "Custom";
 /// \brief Custom defined user-defined operator prototype.
-class MS_CORE_API Custom : public PrimitiveC {
+class MIND_API Custom : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Custom);
   /// \brief Constructor.
-  Custom() : PrimitiveC(kNameCustom) {}
-
-  /// \brief Destructor.
-  ~Custom() override = default;
-
-  MS_DECLARE_PARENT(Custom, PrimitiveC);
+  Custom() : BaseOperator(kNameCustom) {}
 
   /// \brief Method to init the op's attributes.
   ///

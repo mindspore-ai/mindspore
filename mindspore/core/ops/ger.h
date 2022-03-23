@@ -21,26 +21,23 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGer = "Ger";
 /// \brief Ger product of `x1` and `x2`. Calculate the outer product of two one-dimensional arrays.
 /// Refer to Python API @ref mindspore.ops.Ger for more details.
-class MS_CORE_API Ger : public PrimitiveC {
+class MIND_API Ger : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Ger);
   /// \brief Constructor.
-  Ger() : PrimitiveC(kNameGer) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Ger() = default;
-  MS_DECLARE_PARENT(Ger, PrimitiveC);
+  Ger() : BaseOperator(kNameGer) { InitIOName({"x", "y"}, {"output"}); }
 };
 
-AbstractBasePtr GerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr GerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimGerPtr = std::shared_ptr<Ger>;
 }  // namespace ops
 }  // namespace mindspore

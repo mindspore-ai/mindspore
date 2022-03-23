@@ -18,22 +18,17 @@
 #define MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_FUSION_H_
 #include <vector>
 #include "ops/grad/conv2d_backprop_input.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropInputFusion = "Conv2DBackpropInputFusion";
 /// \brief Conv2DBackpropInputFusion defined Conv2DBackpropInput operator prototype of lite.
-class MS_CORE_API Conv2DBackpropInputFusion : public Conv2DBackpropInput {
+class MIND_API Conv2DBackpropInputFusion : public Conv2DBackpropInput {
  public:
+  MIND_API_BASE_MEMBER(Conv2DBackpropInputFusion);
   /// \brief Constructor.
   Conv2DBackpropInputFusion() : Conv2DBackpropInput(kNameConv2DBackpropInputFusion) {}
-
-  /// \brief Destructor.
-  ~Conv2DBackpropInputFusion() = default;
-
-  MS_DECLARE_PARENT(Conv2DBackpropInputFusion, Conv2DBackpropInput);
 
   /// \brief Method to init the op's attributes.
   ///

@@ -27,7 +27,7 @@ class OnnxMatmulParser : public OnnxNodeParser {
   OnnxMatmulParser() : OnnxNodeParser("MatMul") {}
   ~OnnxMatmulParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

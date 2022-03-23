@@ -19,27 +19,23 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaskedFill = "MaskedFill";
 /// \brief Fills elements of self tensor with value where mask is True.
 /// Refer to Python API @ref mindspore.ops.MaskedFill for more details.
-class MaskedFill : public PrimitiveC {
+class MaskedFill : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(MaskedFill);
   /// \brief Constructor.
-  MaskedFill() : PrimitiveC(kNameMaskedFill) { InitIOName({"input", "mask", "value"}, {"output"}); }
-  /// \brief Destructor.
-  ~MaskedFill() = default;
-  MS_DECLARE_PARENT(MaskedFill, PrimitiveC);
+  MaskedFill() : BaseOperator(kNameMaskedFill) { InitIOName({"input", "mask", "value"}, {"output"}); }
 };
 
-AbstractBasePtr MaskedFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MaskedFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_MASKED_FILL_H_

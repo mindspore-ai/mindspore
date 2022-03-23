@@ -19,11 +19,12 @@
 #include <vector>
 #include "common/op_attr.h"
 #include "ops/custom.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeBiasParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeBiasParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -31,13 +32,13 @@ ops::PrimitiveC *CaffeBiasParser::Parse(const caffe::LayerParameter &proto, cons
   prim->set_type("Bias");
   const caffe::BiasParameter &biasParam = proto.bias_param();
   if (biasParam.has_axis()) {
-    prim->AddAttr(ops::kAxis, MakeValue<int32_t>(biasParam.axis()));
+    prim->AddAttr(ops::kAxis, api::MakeValue<int64_t>(biasParam.axis()));
   }
   if (biasParam.has_num_axes()) {
-    prim->AddAttr(dpico::kNumAxes, MakeValue<int32_t>(biasParam.num_axes()));
+    prim->AddAttr(dpico::kNumAxes, api::MakeValue<int64_t>(biasParam.num_axes()));
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeBiasParser("Bias", new CaffeBiasParser());

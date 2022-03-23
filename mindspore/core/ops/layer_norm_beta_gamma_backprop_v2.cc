@@ -21,6 +21,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -45,10 +46,12 @@ TypePtr LayerNormBetaGammaBackpropV2InferType(const PrimitivePtr &prim,
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(LayerNormBetaGammaBackpropV2, PrimitiveC, BaseOperator);
 void LayerNormBetaGammaBackpropV2::Init(const std::vector<int64_t> &shape_gamma) { set_shape_gamma(shape_gamma); }
 
 void LayerNormBetaGammaBackpropV2::set_shape_gamma(const std::vector<int64_t> &shape_gamma) {
-  (void)AddAttr(kShapeGamma, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kShapeGamma, shape_gamma, name())));
+  (void)AddAttr(kShapeGamma,
+                api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kShapeGamma, shape_gamma, name())));
 }
 
 std::vector<int64_t> LayerNormBetaGammaBackpropV2::get_shape_gamma() const {

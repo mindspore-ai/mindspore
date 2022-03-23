@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/slice_prepose_pass.h"
 #include <vector>
 #include <memory>
@@ -116,32 +118,32 @@ bool IsScalarNode(const AnfNodePtr &nodePtr) {
   return false;
 }
 
-std::shared_ptr<mindspore::ops::SliceFusion> GetSlice(const CNodePtr &cnode) {
+api::SharedPtr<mindspore::ops::SliceFusion> GetSlice(const CNodePtr &cnode) {
   if (cnode == nullptr) {
     return nullptr;
   }
-  return GetValueNode<std::shared_ptr<mindspore::ops::SliceFusion>>(cnode->input(0));
+  return ops::GetOperator<mindspore::ops::SliceFusion>(cnode->input(0));
 }
 
-std::shared_ptr<mindspore::ops::Softmax> GetSoftmax(const CNodePtr &cnode) {
+api::SharedPtr<mindspore::ops::Softmax> GetSoftmax(const CNodePtr &cnode) {
   if (cnode == nullptr) {
     return nullptr;
   }
-  return GetValueNode<std::shared_ptr<mindspore::ops::Softmax>>(cnode->input(0));
+  return ops::GetOperator<mindspore::ops::Softmax>(cnode->input(0));
 }
 
-std::shared_ptr<mindspore::ops::Reshape> GetReshape(const CNodePtr &cnode) {
+api::SharedPtr<mindspore::ops::Reshape> GetReshape(const CNodePtr &cnode) {
   if (cnode == nullptr) {
     return nullptr;
   }
-  return GetValueNode<std::shared_ptr<mindspore::ops::Reshape>>(cnode->input(0));
+  return ops::GetOperator<mindspore::ops::Reshape>(cnode->input(0));
 }
 
-std::shared_ptr<mindspore::ops::FullConnection> GetFc(const CNodePtr &cnode) {
+api::SharedPtr<mindspore::ops::FullConnection> GetFc(const CNodePtr &cnode) {
   if (cnode == nullptr) {
     return nullptr;
   }
-  return GetValueNode<std::shared_ptr<mindspore::ops::FullConnection>>(cnode->input(0));
+  return ops::GetOperator<mindspore::ops::FullConnection>(cnode->input(0));
 }
 
 std::vector<int> GetTransposePerm(const CNodePtr &node) {
@@ -227,8 +229,10 @@ ValueNodePtr SlicePreposePass::CreateSliceValueNode(const std::vector<int64_t> &
   MS_ASSERT(slice_cnode != nullptr);
   auto new_slice = std::make_shared<mindspore::ops::SliceFusion>();
   MS_CHECK_TRUE_MSG(new_slice != nullptr, nullptr, "new_slice is nullptr");
+  auto new_slice_c = new_slice->GetPrim();
+  MS_CHECK_TRUE_MSG(new_slice_c != nullptr, nullptr, "new_slice_c is nullptr");
   new_slice->set_axes(axes);
-  ValueNodePtr value_node = NewValueNode(new_slice);
+  ValueNodePtr value_node = NewValueNode(new_slice_c);
   MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "NewValueNode Failed");
   return value_node;
 }
@@ -236,14 +240,16 @@ ValueNodePtr SlicePreposePass::CreateSliceValueNode(const std::vector<int64_t> &
 ValueNodePtr SlicePreposePass::CopySliceValueNode(const CNodePtr &slice_cnode) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(slice_cnode != nullptr);
-  auto slice_c = GetValueNode<std::shared_ptr<mindspore::ops::SliceFusion>>(slice_cnode->input(0));
+  auto slice_c = ops::GetOperator<mindspore::ops::SliceFusion>(slice_cnode->input(0));
   if (slice_c == nullptr) {
     MS_LOG(ERROR) << "slice node is nullptr";
     return nullptr;
   }
-  auto new_slice_c = std::make_shared<mindspore::ops::SliceFusion>();
+  auto new_slice = std::make_shared<mindspore::ops::SliceFusion>();
+  MS_CHECK_TRUE_MSG(new_slice != nullptr, nullptr, "new_slice_c is nullptr");
+  auto new_slice_c = new_slice->GetPrim();
   MS_CHECK_TRUE_MSG(new_slice_c != nullptr, nullptr, "new_slice_c is nullptr");
-  new_slice_c->set_axes(slice_c->get_axes());
+  new_slice->set_axes(new_slice->get_axes());
   ValueNodePtr value_node = NewValueNode(new_slice_c);
   MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "NewValueNode Failed");
   return value_node;
@@ -376,7 +382,9 @@ CNodePtr SlicePreposePass::CreateReshapeCNode(const FuncGraphPtr &graph, const s
     MS_LOG(ERROR) << "primitive_c is nullptr";
     return nullptr;
   }
-  ValueNodePtr value_node = NewValueNode(new_reshape);
+  auto new_reshape_c = new_reshape->GetPrim();
+  MS_CHECK_TRUE_MSG(new_reshape_c != nullptr, nullptr, "new_reshape_c is nullptr");
+  ValueNodePtr value_node = NewValueNode(new_reshape_c);
   if (value_node == nullptr) {
     return nullptr;
   }

@@ -18,21 +18,18 @@
 #define MINDSPORE_CORE_OPS_TENSOR_ARRAY_READ_H_
 #include <vector>
 #include <string>
-#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-
 constexpr auto kNameTensorArrayRead = "TensorArrayRead";
 
 /// \brief Assert defined TensorArrayRead operator prototype of lite.
-class MS_CORE_API TensorArrayRead : public PrimitiveC {
+class MIND_API TensorArrayRead : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TensorArrayRead);
   /// \brief Constructor.
-  TensorArrayRead() : PrimitiveC(kNameTensorArrayRead) { InitIOName({"handle", "index", "flow_in"}, {"tensor"}); }
-  /// \brief Destructor.
-  ~TensorArrayRead() = default;
-  MS_DECLARE_PARENT(TensorArrayRead, PrimitiveC);
+  TensorArrayRead() : BaseOperator(kNameTensorArrayRead) { InitIOName({"handle", "index", "flow_in"}, {"tensor"}); }
   /// \brief Method to init the op's attributes.
   void Init() const {}
 };

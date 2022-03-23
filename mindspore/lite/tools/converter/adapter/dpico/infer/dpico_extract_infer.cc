@@ -23,7 +23,7 @@
 #include "utils/log_adapter.h"
 #include "common/infer_util.h"
 #include "include/errorcode.h"
-#include "ops/op_utils.h"
+#include "ops/op_name.h"
 #include "include/registry/register_kernel_interface.h"
 
 using mindspore::kernel::KernelInterface;

@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/scale_base_fusion.h"
 #include <memory>
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quant_param_holder.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 int ScaleBaseFusion::CalNewCnodeScale(const CNodePtr &curr_cnode,
@@ -116,7 +118,7 @@ bool ScaleBaseFusion::CheckCurrCnodeProper(const CNodePtr &scale_cnode) const {
     return false;
   }
 
-  auto scale_prim = GetValueNode<std::shared_ptr<ops::ScaleFusion>>(scale_cnode->input(0));
+  auto scale_prim = ops::GetOperator<ops::ScaleFusion>(scale_cnode->input(0));
   MS_CHECK_TRUE_RET(scale_prim != nullptr, false);
   auto axis_attr = scale_prim->GetAttr(ops::kAxis);
   MS_CHECK_TRUE_RET(axis_attr != nullptr, false);

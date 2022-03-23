@@ -30,11 +30,11 @@ struct Subgraph {
   int32_t graph_id;
   bool is_supported;
   OmNetType om_net_type;
-  CNodePtrList cnodes;
+  api::CNodePtrList cnodes;
   std::vector<ShapeVector> inputs_dims;
   std::vector<ShapeVector> outputs_dims;
   std::vector<int> outputs_format;
-  Subgraph(size_t input_id, bool input_flag, OmNetType input_type, CNodePtrList input_cnodes)
+  Subgraph(size_t input_id, bool input_flag, OmNetType input_type, api::CNodePtrList input_cnodes)
       : graph_id(input_id), is_supported(input_flag), om_net_type(input_type), cnodes(std::move(input_cnodes)) {}
 };
 

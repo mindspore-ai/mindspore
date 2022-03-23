@@ -19,15 +19,18 @@
 #include "ops/concat.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Concat, PrimitiveC, BaseOperator);
 void Concat::Init(const int64_t axis) { this->set_axis(axis); }
 int64_t Concat::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
   return GetValue<int64_t>(value_ptr);
 }
 
-void Concat::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void Concat::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
 REGISTER_PRIMITIVE_C(kNameConcat, Concat);
 }  // namespace ops

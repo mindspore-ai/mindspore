@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/calibrator.h"
 #include <utility>
 #include "tools/converter/preprocess/image_preprocess.h"
@@ -25,7 +26,7 @@
 namespace mindspore::lite::quant {
 namespace {
 constexpr int kDefaultBinNumber = 2048;
-}
+}  // namespace
 int Calibrator::RecordMaxMinValue(const std::vector<float> &data,
                                   const std::unique_ptr<DataDistribution> &diverg_info) {
   auto ret = diverg_info->RecordMaxMinValueArray(data);

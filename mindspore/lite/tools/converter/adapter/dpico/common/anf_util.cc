@@ -19,117 +19,126 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <map>
+#include <algorithm>
+#include "third_party/securec/include/securec.h"
 #include "common/op_enum.h"
 #include "common/op_attr.h"
 #include "common/string_util.h"
 #include "ops/custom.h"
+#include "ops/tuple_get_item.h"
 #include "ops/transpose.h"
-#include "nnacl/op_base.h"
+#include "common/check_base.h"
 
 namespace mindspore {
 namespace dpico {
 namespace {
+const std::map<TypeId, size_t> kTypeMap = {
+  {kNumberTypeBool, 1},       {kNumberTypeInt, 4},     {kNumberTypeInt8, 1},    {kNumberTypeInt16, 2},
+  {kNumberTypeInt32, 4},      {kNumberTypeInt64, 8},   {kNumberTypeUInt, 4},    {kNumberTypeUInt8, 1},
+  {kNumberTypeUInt16, 2},     {kNumberTypeUInt32, 4},  {kNumberTypeUInt64, 8},  {kNumberTypeFloat, 4},
+  {kNumberTypeFloat16, 2},    {kNumberTypeFloat32, 4}, {kNumberTypeFloat64, 8}, {kNumberTypeComplex64, 8},
+  {kNumberTypeComplex128, 16}};
 constexpr size_t kTupleGetItemInputSize = 3;
 constexpr size_t kInputNodeOutputIndexInTupleGetItem = 2;
 using PrimitiveCPtr = std::shared_ptr<ops::PrimitiveC>;
+size_t TypeIdSize(const TypeId data_type) {
+  const size_t unsupported_type_error = 0;
+  auto iter = kTypeMap.find(data_type);
+  if (iter != kTypeMap.end()) {
+    return iter->second;
+  }
+  return unsupported_type_error;
+}
 }  // namespace
-bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type) {
+bool CheckPrimitiveType(const api::AnfNodePtr &node, const api::PrimitivePtr &primitive_type) {
   if (node == nullptr) {
     return false;
   }
-  if (node->isa<CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
+  if (node->isa<api::CNode>()) {
+    auto cnode = node->cast<api::CNodePtr>();
     return IsPrimitive(cnode->input(0), primitive_type);
-  } else if (node->isa<ValueNode>()) {
+  } else if (node->isa<api::ValueNode>()) {
     return IsPrimitive(node, primitive_type);
   }
   return false;
 }
 
-STATUS GetPrimitiveType(const AnfNodePtr &node, std::string *name) {
+STATUS GetPrimitiveType(const api::AnfNodePtr &node, std::string *name) {
   if (name == nullptr) {
     MS_LOG(ERROR) << "name is nulltr.";
     return RET_ERROR;
   }
-  if (node->isa<CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
-    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (node->isa<api::CNode>()) {
+    auto cnode = node->cast<api::CNodePtr>();
+    auto primitive = api::GetValueNode<api::PrimitivePtr>(cnode->input(0));
     if (primitive == nullptr) {
       MS_LOG(ERROR) << "primitive is nullptr. " << cnode->fullname_with_scope();
       return RET_ERROR;
     }
-    if (CheckPrimitiveType(node, prim::kPrimCustom)) {
-      auto custom_prim = utils::cast<std::shared_ptr<ops::Custom>>(primitive);
-      MS_ASSERT(custom_prim != nullptr);
+    if (CheckPrimitiveType(node, api::MakeShared<ops::Custom>())) {
+      auto custom_prim = api::utils::cast<api::SharedPtr<ops::Custom>>(primitive);
+      MS_CHECK_TRUE_MSG(custom_prim != nullptr, RET_ERROR, "custom op is nullptr.");
       *name = custom_prim->get_type();
       return RET_OK;
     } else {
       *name = primitive->name();
       return RET_OK;
     }
-  } else if (node->isa<ValueNode>()) {
-    auto fn_value = GetValueNode<PrimitivePtr>(node);
+  } else if (node->isa<api::ValueNode>()) {
+    auto fn_value = api::GetValueNode<api::PrimitivePtr>(node);
     *name = fn_value->name();
     return RET_OK;
   }
   MS_LOG(ERROR) << "There is no name for this node";
   return RET_ERROR;
 }
-STATUS GetShapeVectorFromParameter(const AnfNodePtr &anode, ShapeVector *shape_vector) {
+STATUS GetShapeVectorFromParameter(const api::AnfNodePtr &anode, ShapeVector *shape_vector) {
   if (shape_vector == nullptr) {
     MS_LOG(ERROR) << "shape vector is nullptr.";
     return RET_ERROR;
   }
-  if (!utils::isa<ParameterPtr>(anode)) {
+  if (!api::utils::isa<api::Parameter>(anode)) {
     MS_LOG(ERROR) << "anode should be parameter node. ";
     return RET_ERROR;
   }
-  auto param_node = anode->cast<ParameterPtr>();
+  auto param_node = anode->cast<api::ParameterPtr>();
   auto abstract_base = param_node->abstract();
   if (abstract_base == nullptr) {
     MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
     return lite::RET_PARAM_INVALID;
   }
-  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+  if (!api::utils::isa<api::AbstractTensorPtr>(abstract_base)) {
     MS_LOG(ERROR) << "Abstract of parameter should be abstract tensor, " << param_node->name();
     return lite::RET_INPUT_TENSOR_ERROR;
   }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  auto abstract_tensor = api::utils::cast<api::AbstractTensorPtr>(abstract_base);
   MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
-  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
+  if (!api::utils::isa<api::ShapePtr>(abstract_tensor->shape())) {
     MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << param_node->name();
     return lite::RET_PARAM_INVALID;
   }
-  *shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
+  *shape_vector = api::utils::cast<api::ShapePtr>(abstract_tensor->shape())->shape();
   return RET_OK;
 }
-std::vector<int> CastToInt(const ValuePtr &value) {
+std::vector<int> CastToInt(const api::ValuePtr &value) {
   if (value == nullptr) {
     MS_LOG(WARNING) << "valueptr is nullptr.";
     return {};
   }
   std::vector<int> cur_value = {};
-  if (utils::isa<ValueSequeuePtr>(value)) {
-    if (!value->cast<ValueSequeuePtr>()->value().empty()) {
-      if (value->cast<ValueSequeuePtr>()->value().front()->type()->number_type() == kNumberTypeInt64) {
-        auto origin_value = GetValue<std::vector<int64_t>>(value);
-        for (size_t index = 0; index < origin_value.size(); ++index) {
-          cur_value.push_back(static_cast<int>(origin_value[index]));
-        }
-      } else {
-        cur_value = GetValue<std::vector<int>>(value);
-      }
+  if (api::utils::isa<api::ValueSequencePtr>(value)) {
+    if (!value->cast<api::ValueSequencePtr>()->value().empty()) {
+      auto origin_value = api::GetValue<std::vector<int64_t>>(value);
+      (void)std::transform(origin_value.begin(), origin_value.end(), std::back_inserter(cur_value),
+                           [](int64_t index) { return static_cast<int32_t>(index); });
     }
   } else {
-    if (value->type()->number_type() == kNumberTypeInt64) {
-      cur_value.push_back(static_cast<int>(GetValue<int64_t>(value)));
-    } else {
-      cur_value.push_back(GetValue<int>(value));
-    }
+    cur_value.push_back(static_cast<int>(api::GetValue<int64_t>(value)));
   }
   return cur_value;
 }
-size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
+size_t GetTupleGetItemOutIndex(const api::CNodePtr &tuple_get_item) {
   MS_ASSERT(tuple_get_item != nullptr);
   if (tuple_get_item->size() != kTupleGetItemInputSize) {
     MS_LOG(ERROR) << "The node tuple_get_item must have 2 inputs!";
@@ -137,7 +146,7 @@ size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   }
   auto output_index_value_node = tuple_get_item->input(kInputNodeOutputIndexInTupleGetItem);
   MS_ASSERT(output_index_value_node != nullptr);
-  auto value_node = output_index_value_node->cast<ValueNodePtr>();
+  auto value_node = output_index_value_node->cast<api::ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto value_vec = CastToInt(value_node->value());
   if (value_vec.empty()) {
@@ -146,19 +155,19 @@ size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   }
   return IntToSize(value_vec.front());
 }
-STATUS GetOutputShapesFromCNode(const CNodePtr &cnode, std::vector<ShapeVector> *output_shapes) {
-  AbstractBasePtr abstract = nullptr;
-  if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
+STATUS GetOutputShapesFromCNode(const api::CNodePtr &cnode, std::vector<ShapeVector> *output_shapes) {
+  api::AbstractBasePtr abstract = nullptr;
+  if (CheckPrimitiveType(cnode, api::MakeShared<ops::TupleGetItem>())) {
     auto tuple_inputs = cnode->inputs();
     MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
     auto get_item_input_cnode = tuple_inputs.at(1);
     MS_ASSERT(get_item_input_cnode != nullptr);
     auto idx = GetTupleGetItemOutIndex(cnode);
-    if (!utils::isa<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
+    if (!api::utils::isa<api::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
       MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple";
       return RET_ERROR;
     }
-    auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract());
+    auto abstract_tuple = api::utils::cast<api::AbstractTuplePtr>(get_item_input_cnode->abstract());
     auto abstract_list = abstract_tuple->elements();
     if (abstract_list.size() <= idx) {
       MS_LOG(ERROR) << "AbstractTuple's size is smaller than expect";
@@ -172,8 +181,8 @@ STATUS GetOutputShapesFromCNode(const CNodePtr &cnode, std::vector<ShapeVector> 
     MS_LOG(ERROR) << "abstract cnode is nullptr. " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
-    auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract);
+  if (api::utils::isa<api::AbstractTuplePtr>(abstract)) {
+    auto abstract_tuple = api::utils::cast<api::AbstractTuplePtr>(abstract);
     auto abstract_list = abstract_tuple->elements();
     for (const auto &elem : abstract_list) {
       ShapeVector shape_vector;
@@ -203,7 +212,7 @@ STATUS GetOutputShapesFromCNode(const CNodePtr &cnode, std::vector<ShapeVector> 
   return RET_OK;
 }
 
-STATUS GetInputShapeFromCNode(const mindspore::CNodePtr &cnode, size_t input_idx, ShapeVector *shape) {
+STATUS GetInputShapeFromCNode(const api::CNodePtr &cnode, size_t input_idx, ShapeVector *shape) {
   if (shape == nullptr) {
     MS_LOG(ERROR) << "shape is nullptr.";
     return RET_ERROR;
@@ -220,7 +229,7 @@ STATUS GetInputShapeFromCNode(const mindspore::CNodePtr &cnode, size_t input_idx
   return RET_OK;
 }
 
-STATUS FetchShapeFromAbstract(const abstract::AbstractBasePtr &abstract, ShapeVector *shape) {
+STATUS FetchShapeFromAbstract(const api::AbstractBasePtr &abstract, ShapeVector *shape) {
   if (shape == nullptr) {
     MS_LOG(ERROR) << "shape is nullptr.";
     return RET_ERROR;
@@ -229,19 +238,19 @@ STATUS FetchShapeFromAbstract(const abstract::AbstractBasePtr &abstract, ShapeVe
     MS_LOG(ERROR) << "abstract of cnode is invalid.";
     return RET_ERROR;
   }
-  if (!utils::isa<abstract::AbstractTensor>(abstract)) {
+  if (!api::utils::isa<api::AbstractTensor>(abstract)) {
     MS_LOG(ERROR) << "abstract of cnode is invalid.";
     return RET_ERROR;
   }
-  auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
-  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
+  auto abstract_tensor = abstract->cast<api::AbstractTensorPtr>();
+  if (!api::utils::isa<api::ShapePtr>(abstract_tensor->shape())) {
     MS_LOG(ERROR) << "shape of cnode's output is invalid.";
     return RET_ERROR;
   }
-  *shape = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
+  *shape = api::utils::cast<api::ShapePtr>(abstract_tensor->shape())->shape();
   return RET_OK;
 }
-STATUS FetchTypeIdFromAbstract(const abstract::AbstractBasePtr &abstract, TypeId *type_id) {
+STATUS FetchTypeIdFromAbstract(const api::AbstractBasePtr &abstract, TypeId *type_id) {
   if (type_id == nullptr) {
     MS_LOG(ERROR) << "type id is nullptr.";
     return RET_ERROR;
@@ -250,16 +259,16 @@ STATUS FetchTypeIdFromAbstract(const abstract::AbstractBasePtr &abstract, TypeId
     MS_LOG(ERROR) << "abstract of cnode is invalid.";
     return RET_ERROR;
   }
-  if (!utils::isa<abstract::AbstractTensor>(abstract)) {
+  if (!api::utils::isa<api::AbstractTensor>(abstract)) {
     MS_LOG(ERROR) << "abstract of cnode is invalid.";
     return RET_ERROR;
   }
-  auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
+  auto abstract_tensor = abstract->cast<api::AbstractTensorPtr>();
   if (abstract_tensor->element() == nullptr) {
     MS_LOG(ERROR) << "element of abstract_tensor is nullptr.";
     return RET_ERROR;
   }
-  auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+  auto type_ptr = abstract_tensor->element()->type();
   if (type_ptr == nullptr) {
     MS_LOG(ERROR) << "type_ptr of abstract_tensor is nullptr.";
     return RET_ERROR;
@@ -268,18 +277,18 @@ STATUS FetchTypeIdFromAbstract(const abstract::AbstractBasePtr &abstract, TypeId
   return RET_OK;
 }
 
-int GetAnfNodeOutputShape(const AnfNodePtr &input, ShapeVector *shape_vector) {
+int GetAnfNodeOutputShape(const api::AnfNodePtr &input, ShapeVector *shape_vector) {
   if (shape_vector == nullptr) {
     MS_LOG(ERROR) << "shape vector is nullptr." << input->fullname_with_scope();
     return RET_ERROR;
   }
-  if (utils::isa<ParameterPtr>(input)) {
+  if (api::utils::isa<api::ParameterPtr>(input)) {
     if (GetShapeVectorFromParameter(input, shape_vector) != RET_OK) {
       MS_LOG(ERROR) << "get output shape for preprocessor failed. " << input->fullname_with_scope();
       return RET_ERROR;
     }
-  } else if (utils::isa<CNodePtr>(input)) {
-    auto input_cnode = input->cast<CNodePtr>();
+  } else if (api::utils::isa<api::CNodePtr>(input)) {
+    auto input_cnode = input->cast<api::CNodePtr>();
     std::vector<ShapeVector> output_shapes;
     if (GetOutputShapesFromCNode(input_cnode, &output_shapes) != RET_OK) {
       MS_LOG(ERROR) << "get output shapes from cnode failed. " << input_cnode->fullname_with_scope();
@@ -318,27 +327,27 @@ std::string TypeIdToString(TypeId type_id) {
   return type_str;
 }
 
-bool CheckInputs(const CNodePtr &cnode) {
+bool CheckInputs(const api::CNodePtr &cnode) {
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "cnode is nullptr.";
     return false;
   }
-  if (std::any_of(cnode->inputs().begin(), cnode->inputs().end(),
-                  [](const AnfNodePtr &anf_node) { return anf_node == nullptr; })) {
+  auto inputs = cnode->inputs();
+  if (std::any_of(inputs.begin(), inputs.end(), [](const api::AnfNodePtr &anf_node) { return anf_node == nullptr; })) {
     MS_LOG(ERROR) << "input is nullptr.";
     return false;
   }
   return true;
 }
-std::string GetCustomOutputName(const AnfNodePtr &node) {
+std::string GetCustomOutputName(const api::AnfNodePtr &node) {
   std::string output_name;
-  auto input_cnode = node->cast<CNodePtr>();
+  auto input_cnode = node->cast<api::CNodePtr>();
   if (input_cnode == nullptr) {
     MS_LOG(ERROR) << "custom node should be cnode. " << node->fullname_with_scope();
     return "";
   }
   if (input_cnode->GetAttr(kOutputsNames) != nullptr) {
-    auto output_names = GetValue<std::vector<std::string>>(input_cnode->GetAttr(kOutputsNames));
+    auto output_names = api::GetValue<std::vector<std::string>>(input_cnode->GetAttr(kOutputsNames));
     if (output_names.size() == 1) {
       output_name = output_names.at(0);
     } else {
@@ -349,19 +358,19 @@ std::string GetCustomOutputName(const AnfNodePtr &node) {
   }
   return output_name;
 }
-tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std::vector<int64_t> &shape,
-                                   TypeId data_type) {
-  tensor::TensorPtr tensor_info = nullptr;
-  if (shape.empty() && data_size == abstract::TypeIdSize(data_type)) {
+api::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std::vector<int64_t> &shape,
+                                TypeId data_type) {
+  api::TensorPtr tensor_info = nullptr;
+  if (shape.empty() && data_size == TypeIdSize(data_type)) {
     ShapeVector scalar_shape = {1};
-    tensor_info = std::make_shared<tensor::Tensor>(data_type, scalar_shape);
+    tensor_info = api::MakeShared<api::Tensor>(data_type, scalar_shape);
     if (tensor_info == nullptr) {
       MS_LOG(ERROR) << "new tensor init failed";
       return nullptr;
     }
     tensor_info->set_shape({});
   } else {
-    tensor_info = std::make_shared<tensor::Tensor>(data_type, shape);
+    tensor_info = api::MakeShared<api::Tensor>(data_type, shape);
     if (tensor_info == nullptr) {
       MS_LOG(ERROR) << "new tensor init failed";
       return nullptr;
@@ -374,7 +383,7 @@ tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std
     MS_LOG(ERROR) << "input tensor data is nullptr";
     return nullptr;
   }
-  auto ret = memcpy_s(tensor_info->data_c(), tensor_info->data().nbytes(), data, data_size);
+  auto ret = memcpy_s(tensor_info->data(), tensor_info->Size(), data, data_size);
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s error : " << ret;
     return nullptr;
@@ -382,7 +391,7 @@ tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std
   return tensor_info;
 }
 
-AbstractBasePtr CreateTensorAbstract(const std::vector<int64_t> &shape, TypeId data_type) {
+api::AbstractBasePtr CreateTensorAbstract(const std::vector<int64_t> &shape, TypeId data_type) {
   auto tensor_info = dpico::CreateTensorInfo(nullptr, 0, shape, data_type);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "Create tensor info failed";
@@ -396,7 +405,7 @@ AbstractBasePtr CreateTensorAbstract(const std::vector<int64_t> &shape, TypeId d
   return abstract;
 }
 
-int InitParameterFromTensorInfo(const ParameterPtr &param_node, const tensor::TensorPtr &tensor_info) {
+int InitParameterFromTensorInfo(const api::ParameterPtr &param_node, const api::TensorPtr &tensor_info) {
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "tensor info is nullptr.";
     return RET_ERROR;
@@ -411,7 +420,7 @@ int InitParameterFromTensorInfo(const ParameterPtr &param_node, const tensor::Te
   return RET_OK;
 }
 
-abstract::AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
+api::AbstractBasePtr GetCNodeInputAbstract(const api::CNodePtr &cnode, size_t index) {
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "CNodePtr is nullptr";
     return nullptr;
@@ -427,23 +436,23 @@ abstract::AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t in
     return nullptr;
   }
 
-  abstract::AbstractBasePtr abstract = nullptr;
-  if (utils::isa<ParameterPtr>(input)) {
-    auto parameter = input->cast<ParameterPtr>();
+  api::AbstractBasePtr abstract = nullptr;
+  if (api::utils::isa<api::ParameterPtr>(input)) {
+    auto parameter = input->cast<api::ParameterPtr>();
     abstract = parameter->abstract();
-  } else if (utils::isa<CNodePtr>(input)) {
-    auto input_cnode = input->cast<CNodePtr>();
-    if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
+  } else if (api::utils::isa<api::CNodePtr>(input)) {
+    auto input_cnode = input->cast<api::CNodePtr>();
+    if (CheckPrimitiveType(input_cnode, api::MakeShared<ops::TupleGetItem>())) {
       auto tuple_inputs = input_cnode->inputs();
       MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
       auto get_item_input_cnode = tuple_inputs.at(1);
       MS_ASSERT(get_item_input_cnode != nullptr);
       auto idx = GetTupleGetItemOutIndex(input_cnode);
-      if (!utils::isa<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
+      if (!api::utils::isa<api::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
         MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple";
         return nullptr;
       }
-      auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract());
+      auto abstract_tuple = api::utils::cast<api::AbstractTuplePtr>(get_item_input_cnode->abstract());
       auto abstract_list = abstract_tuple->elements();
       if (abstract_list.size() <= idx) {
         MS_LOG(ERROR) << "AbstractTuple's size is smaller than expect";
@@ -460,24 +469,24 @@ abstract::AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t in
   return abstract;
 }
 
-abstract::AbstractBasePtr GetAbstractFromAnfNode(const AnfNodePtr &node) {
-  AbstractBasePtr abstract = nullptr;
-  if (utils::isa<ParameterPtr>(node)) {
-    auto parameter = node->cast<ParameterPtr>();
+api::AbstractBasePtr GetAbstractFromAnfNode(const api::AnfNodePtr &node) {
+  api::AbstractBasePtr abstract = nullptr;
+  if (api::utils::isa<api::ParameterPtr>(node)) {
+    auto parameter = node->cast<api::ParameterPtr>();
     abstract = parameter->abstract();
-  } else if (utils::isa<CNodePtr>(node)) {
-    auto cnode = node->cast<CNodePtr>();
-    if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
+  } else if (api::utils::isa<api::CNodePtr>(node)) {
+    auto cnode = node->cast<api::CNodePtr>();
+    if (CheckPrimitiveType(cnode, api::MakeShared<ops::TupleGetItem>())) {
       auto tuple_inputs = cnode->inputs();
       MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
       auto get_item_input_cnode = tuple_inputs.at(1);
       MS_ASSERT(get_item_input_cnode != nullptr);
       auto idx = GetTupleGetItemOutIndex(cnode);
-      if (!utils::isa<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
+      if (!api::utils::isa<api::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
         MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple";
         return nullptr;
       }
-      auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract());
+      auto abstract_tuple = api::utils::cast<api::AbstractTuplePtr>(get_item_input_cnode->abstract());
       auto abstract_list = abstract_tuple->elements();
       if (abstract_list.size() <= idx) {
         MS_LOG(ERROR) << "AbstractTuple's size is smaller than expect";
@@ -491,8 +500,8 @@ abstract::AbstractBasePtr GetAbstractFromAnfNode(const AnfNodePtr &node) {
   return abstract;
 }
 
-ParameterPtr BuildIntValueParameterNode(const api::FuncGraphPtr &func_graph, const int32_t &data,
-                                        const std::string &node_name) {
+api::ParameterPtr BuildIntValueParameterNode(const api::FuncGraphPtr &func_graph, const int32_t &data,
+                                             const std::string &node_name) {
   MS_ASSERT(func_graph != nullptr);
   auto param_node = func_graph->add_parameter();
   param_node->set_name(node_name);
@@ -511,8 +520,8 @@ ParameterPtr BuildIntValueParameterNode(const api::FuncGraphPtr &func_graph, con
   return param_node;
 }
 
-ParameterPtr BuildIntVecParameterNode(const api::FuncGraphPtr &func_graph, const std::vector<int32_t> &data,
-                                      const std::string &node_name) {
+api::ParameterPtr BuildIntVecParameterNode(const api::FuncGraphPtr &func_graph, const std::vector<int32_t> &data,
+                                           const std::string &node_name) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(data.size() != 0);
   auto param_node = func_graph->add_parameter();
@@ -534,8 +543,9 @@ ParameterPtr BuildIntVecParameterNode(const api::FuncGraphPtr &func_graph, const
   return param_node;
 }
 
-ParameterPtr BuildIntVec2DParameterNode(const api::FuncGraphPtr &func_graph,
-                                        const std::vector<std::vector<int32_t>> &data, const std::string &node_name) {
+api::ParameterPtr BuildIntVec2DParameterNode(const api::FuncGraphPtr &func_graph,
+                                             const std::vector<std::vector<int32_t>> &data,
+                                             const std::string &node_name) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(data.size() != 0);
   auto param_node = func_graph->add_parameter();
@@ -564,8 +574,8 @@ ParameterPtr BuildIntVec2DParameterNode(const api::FuncGraphPtr &func_graph,
   return param_node;
 }
 
-ParameterPtr BuildFloatValueParameterNode(const api::FuncGraphPtr &func_graph, const float &data,
-                                          const std::string &node_name) {
+api::ParameterPtr BuildFloatValueParameterNode(const api::FuncGraphPtr &func_graph, const float &data,
+                                               const std::string &node_name) {
   MS_ASSERT(func_graph != nullptr);
   auto param_node = func_graph->add_parameter();
   param_node->set_name(node_name);
@@ -583,15 +593,15 @@ ParameterPtr BuildFloatValueParameterNode(const api::FuncGraphPtr &func_graph, c
   return param_node;
 }
 
-CNodePtr GenTransposeNode(const api::FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
-                          const std::vector<int> &perm, const std::string &cnode_name) {
+api::CNodePtr GenTransposeNode(const api::FuncGraphPtr &func_graph, const api::AnfNodePtr &input_node,
+                               const std::vector<int> &perm, const std::string &cnode_name) {
   MS_ASSERT(func_graph != nullptr && input_node != nullptr);
   auto perm_node = BuildIntVecParameterNode(func_graph, perm, cnode_name + "_perm");
   if (perm_node == nullptr) {
     MS_LOG(ERROR) << "new perm_node error";
     return nullptr;
   }
-  auto trans_prim = std::make_shared<ops::Transpose>();
+  auto trans_prim = api::MakeShared<ops::Transpose>();
   if (trans_prim == nullptr) {
     MS_LOG(ERROR) << "new trans_prim failed";
     return nullptr;
@@ -612,12 +622,12 @@ CNodePtr GenTransposeNode(const api::FuncGraphPtr &func_graph, const AnfNodePtr 
   return cnode;
 }
 
-tensor::TensorPtr GetTensorInfo(const AnfNodePtr &node) {
+api::TensorPtr GetTensorInfo(const api::AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);
-  if (!utils::isa<ParameterPtr>(node)) {
-    if (utils::isa<ValueNodePtr>(node)) {
-      auto valueNode = node->cast<ValueNodePtr>();
-      auto value = std::dynamic_pointer_cast<tensor::Tensor>(valueNode->value());
+  if (!api::utils::isa<api::ParameterPtr>(node)) {
+    if (api::utils::isa<api::ValueNodePtr>(node)) {
+      auto valueNode = node->cast<api::ValueNodePtr>();
+      auto value = valueNode->value()->cast<api::TensorPtr>();
       if (value != nullptr) {
         return value;
       }
@@ -625,53 +635,42 @@ tensor::TensorPtr GetTensorInfo(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "get lite param value node neither parameter node or value node";
     return nullptr;
   }
-  auto param = node->cast<ParameterPtr>();
+  auto param = node->cast<api::ParameterPtr>();
   if (param == nullptr) {
     MS_LOG(ERROR) << "param is nullptr.";
     return nullptr;
   }
-  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param->default_param());
+  auto tensor_info = param->default_param()->cast<api::TensorPtr>();
   return tensor_info;
 }
 
-std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value) {
+std::vector<std::vector<int>> CastToVec2DInt(const api::ValuePtr &value) {
   if (value == nullptr) {
     MS_LOG(WARNING) << "valueptr is nullptr.";
     return {};
   }
 
   std::vector<std::vector<int>> result_value;
-  if (utils::isa<ValueSequeuePtr>(value)) {
-    if (value->cast<ValueSequeuePtr>()
-          ->value()
-          .front()
-          ->cast<ValueSequeuePtr>()
-          ->value()
-          .front()
-          ->type()
-          ->number_type() == kNumberTypeInt64) {
-      auto origin_value = GetValue<std::vector<std::vector<int64_t>>>(value);
-      for (size_t i = 0; i < origin_value.size(); ++i) {
-        std::vector<int> cur_value;
-        for (size_t j = 0; j < origin_value.at(i).size(); ++j) {
-          cur_value.push_back(static_cast<int>(origin_value[i][j]));
-        }
-        result_value.push_back(cur_value);
+  if (api::utils::isa<api::ValueSequencePtr>(value)) {
+    auto origin_value = api::GetValue<std::vector<std::vector<int64_t>>>(value);
+    for (auto &vec : origin_value) {
+      std::vector<int> cur_value;
+      for (size_t j = 0; j < vec.size(); ++j) {
+        cur_value.push_back(static_cast<int>(vec[j]));
       }
-    } else {
-      result_value = GetValue<std::vector<std::vector<int>>>(value);
+      result_value.push_back(cur_value);
     }
   }
   return result_value;
 }
 
-bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name) {
-  auto cnode = node->cast<CNodePtr>();
+bool GetBoolAttr(const api::AnfNodePtr &node, const std::string &attr_name) {
+  auto cnode = node->cast<api::CNodePtr>();
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "cur node is not a cnode. " << node->fullname_with_scope();
     return false;
   }
-  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr:" << cnode->fullname_with_scope();
     return false;
@@ -681,10 +680,10 @@ bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name) {
     MS_LOG(ERROR) << "There is no attr named " << attr_name << " for node " << cnode->fullname_with_scope();
     return false;
   }
-  return GetValue<bool>(value_ptr);
+  return api::GetValue<bool>(value_ptr);
 }
 
-STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, ShapeVector *shape_vector) {
+STATUS GetDataTypeAndShape(const api::ParameterPtr &param_node, TypeId *data_type, ShapeVector *shape_vector) {
   if (param_node == nullptr) {
     MS_LOG(ERROR) << "param node is nullptr.";
     return RET_ERROR;
@@ -702,24 +701,24 @@ STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, Sh
     MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
     return RET_ERROR;
   }
-  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+  if (!api::utils::isa<api::AbstractTensorPtr>(abstract_base)) {
     MS_LOG(ERROR) << "Abstract of parameter should be abstract tensor, " << param_node->name();
     return RET_ERROR;
   }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  auto abstract_tensor = api::utils::cast<api::AbstractTensorPtr>(abstract_base);
   MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
-  auto typePtr = abstract_tensor->element()->GetTypeTrack();
+  auto typePtr = abstract_tensor->element()->type();
   MS_ASSERT(typePtr != nullptr);
   *data_type = typePtr->type_id();
-  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
+  if (!api::utils::isa<api::ShapePtr>(abstract_tensor->shape())) {
     MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << param_node->name();
     return RET_ERROR;
   }
-  *shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
+  *shape_vector = api::utils::cast<api::ShapePtr>(abstract_tensor->shape())->shape();
   return RET_OK;
 }
 
-STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, ShapeVector *shape_vector, size_t *offset) {
+STATUS GetShapeVectorFromStringTensor(const api::TensorPtr &tensor_info, ShapeVector *shape_vector, size_t *offset) {
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "tensor info is nullptr.";
     return RET_ERROR;
@@ -738,7 +737,7 @@ STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, Shap
     return RET_ERROR;
   }
   shape_vector->clear();
-  auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
+  auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data());
   std::string shape_str;
   std::string shape_size_str;
   *offset = 0;

@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -52,6 +53,7 @@ TypePtr RealDivInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(RealDiv, PrimitiveC, BaseOperator);
 AbstractBasePtr RealDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(RealDivInferShape(primitive, input_args), RealDivInferType(primitive, input_args));

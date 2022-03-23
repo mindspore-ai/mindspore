@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include <string>
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {

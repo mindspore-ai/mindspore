@@ -15,14 +15,17 @@
  */
 
 #include <set>
+#include <utility>
 #include "ops/topk.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(TopK, PrimitiveC, BaseOperator);
 void TopK::Init(const bool sorted) { this->set_sorted(sorted); }
-void TopK::set_sorted(const bool sorted) { (void)this->AddAttr(kSorted, MakeValue(sorted)); }
+void TopK::set_sorted(const bool sorted) { (void)this->AddAttr(kSorted, api::MakeValue(sorted)); }
 
 bool TopK::get_sorted() const {
   auto value_ptr = this->GetAttr(kSorted);

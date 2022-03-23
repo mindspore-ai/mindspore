@@ -69,11 +69,6 @@ enum ReduceType : int64_t {
   REDUCE_UNKNOW = 7,
 };
 
-enum PoolMode : int64_t {
-  MAX_POOLING = 0,
-  MEAN_POOLING = 1,
-};
-
 enum GateOrderMode : int64_t { RZH = 0, ZRH = 1 };
 
 template <typename T>

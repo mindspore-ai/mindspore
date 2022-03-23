@@ -17,22 +17,19 @@
 #ifndef MINDSPORE_CORE_OPS_IS_FINITE_H_
 #define MINDSPORE_CORE_OPS_IS_FINITE_H_
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIsFinite = "IsFinite";
 /// \brief Determines which elements are finite for each position.
 /// Refer to Python API @ref mindspore.ops.IsFinite for more details.
-class MS_CORE_API IsFinite : public PrimitiveC {
+class MIND_API IsFinite : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(IsFinite);
   /// \brief Constructor.
-  IsFinite() : PrimitiveC(kNameIsFinite) {}
-  /// \brief Destructor.
-  ~IsFinite() = default;
-  MS_DECLARE_PARENT(IsFinite, PrimitiveC);
+  IsFinite() : BaseOperator(kNameIsFinite) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.IsFinite for the inputs.
   void Init() const {}
 };

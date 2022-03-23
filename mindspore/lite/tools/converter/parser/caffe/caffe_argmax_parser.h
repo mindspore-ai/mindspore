@@ -28,7 +28,7 @@ class CaffeArgMaxParser : public CaffeNodeParser {
   CaffeArgMaxParser() : CaffeNodeParser("argmax") {}
   ~CaffeArgMaxParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

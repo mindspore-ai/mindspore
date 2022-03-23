@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/fullconnected_fusion.h"
 #include <memory>
 #include <vector>
@@ -22,8 +23,10 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quant_param_holder.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
+
 namespace {
 constexpr size_t kFcWeightIndex = 2;
 constexpr size_t kFcParameterDims = 2;
@@ -190,10 +193,12 @@ bool IsPrimitiveProper(const CNodePtr &curr_fc_cnode, const CNodePtr &prev_fc_cn
       MS_LOG(INFO) << pre_fc_weight_node->fullname_with_scope() << "'s weight is not parameter";
       return false;
     }
-    auto primc = utils::cast<std::shared_ptr<mindspore::ops::FullConnection>>(prev_primc);
-    MS_ASSERT(primc != nullptr);
-    if (primc->GetAttr(ops::kActivationType) != nullptr) {
-      auto activate_type = primc->get_activation_type();
+    auto full_prim = api::MakeShared<mindspore::ops::FullConnection>(prev_primc);
+    MS_ASSERT(full_prim != nullptr);
+    auto full_prim_c = full_prim->GetPrim();
+    MS_ASSERT(full_prim_c != nullptr);
+    if (full_prim_c->GetAttr(ops::kActivationType) != nullptr) {
+      auto activate_type = full_prim->get_activation_type();
       if (activate_type != NO_ACTIVATION) {
         MS_LOG(INFO) << pre_fc_weight_node->fullname_with_scope() << " has activation operator";
         return false;

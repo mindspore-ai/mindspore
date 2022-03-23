@@ -19,12 +19,14 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(EinsumGrad, PrimitiveC, BaseOperator);
 void EinsumGrad::Init(const std::string equation) { this->set_equation(equation); }
 
-void EinsumGrad::set_equation(const std::string equation) { (void)this->AddAttr(kEquation, MakeValue(equation)); }
+void EinsumGrad::set_equation(const std::string equation) { (void)this->AddAttr(kEquation, api::MakeValue(equation)); }
 
 std::string EinsumGrad::get_equation() const {
   auto value_ptr = this->GetAttr(kEquation);

@@ -22,24 +22,20 @@
 #include <string>
 #include <memory>
 #include <algorithm>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/primitive_infer_map.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLSTM = "LSTM";
 /// \brief Performs the Long Short-Term Memory (LSTM) on the input.
 /// Refer to Python API @ref mindspore.ops.LSTM for more details.
-class MS_CORE_API LSTM : public PrimitiveC {
+class MIND_API LSTM : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LSTM);
   /// \brief Constructor.
-  LSTM() : PrimitiveC(kNameLSTM) {}
-  /// \brief Destructor.
-  ~LSTM() = default;
-  MS_DECLARE_PARENT(LSTM, PrimitiveC);
+  LSTM() : BaseOperator(kNameLSTM) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LSTM for the inputs.
   void Init(const int64_t input_size, const int64_t hidden_size, const int64_t num_layers, const bool has_bias,
             const float dropout, const bool bidirectional = false, const float zoneout_cell = 0.0f,
@@ -103,8 +99,8 @@ class MS_CORE_API LSTM : public PrimitiveC {
   /// \return good_ld.
   int64_t get_good_ld(const int64_t dim, const int64_t type_size);
 };
-AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

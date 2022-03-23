@@ -27,11 +27,13 @@ namespace mindspore {
 namespace lite {
 constexpr int kTfPoolStrideListSize = 4;
 constexpr int kTfPoolKernelListSize = 4;
-ops::PrimitiveC *TFMaxPoolParser::Parse(const tensorflow::NodeDef &tf_op,
-                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                        std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFMaxPoolParser::Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::MaxPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   if (TensorFlowUtils::FindAttrValue(tf_op, "padding", &attr_value)) {
     if (attr_value.s() == "VALID") {
@@ -42,7 +44,7 @@ ops::PrimitiveC *TFMaxPoolParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "strides", &attr_value)) {
     const auto &stride_list = attr_value.list();
@@ -69,14 +71,15 @@ ops::PrimitiveC *TFMaxPoolParser::Parse(const tensorflow::NodeDef &tf_op,
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFAvgPoolParser::Parse(const tensorflow::NodeDef &tf_op,
-                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                        std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFAvgPoolParser::Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::AvgPoolFusion>();
-
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   if (TensorFlowUtils::FindAttrValue(tf_op, "padding", &attr_value)) {
     if (attr_value.s() == "VALID") {
@@ -87,7 +90,7 @@ ops::PrimitiveC *TFAvgPoolParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "strides", &attr_value)) {
     const auto &stride_list = attr_value.list();
@@ -114,7 +117,7 @@ ops::PrimitiveC *TFAvgPoolParser::Parse(const tensorflow::NodeDef &tf_op,
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfMaxPoolParser("MaxPool", new TFMaxPoolParser());

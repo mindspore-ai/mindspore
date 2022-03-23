@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/tf_gelu_fusion.h"
 #include "ops/op_utils.h"
 #include "nnacl/op_base.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace opt {

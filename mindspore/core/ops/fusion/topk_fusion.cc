@@ -17,18 +17,20 @@
 #include "ops/fusion/topk_fusion.h"
 #include <string>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(TopKFusion, PrimitiveC, TopK);
 void TopKFusion::Init(const bool sorted, const int64_t axis, const int64_t largest) {
   this->set_axis(axis);
   this->set_largest(largest);
   this->set_sorted(sorted);
 }
 
-void TopKFusion::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void TopKFusion::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
-void TopKFusion::set_largest(const int64_t largest) { (void)this->AddAttr(kLargest, MakeValue(largest)); }
+void TopKFusion::set_largest(const int64_t largest) { (void)this->AddAttr(kLargest, api::MakeValue(largest)); }
 
 int64_t TopKFusion::get_axis() const {
   auto value_ptr = GetAttr(kAxis);

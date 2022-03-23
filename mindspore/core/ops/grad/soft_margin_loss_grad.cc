@@ -19,6 +19,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -54,6 +55,7 @@ TypePtr SoftMarginLossGradInferType(const PrimitivePtr &primitive, const std::ve
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(SoftMarginLossGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr SoftMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(SoftMarginLossGradInferShape(primitive, input_args),

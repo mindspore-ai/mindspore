@@ -17,12 +17,14 @@
 #include "ops/fusion/tile_fusion.h"
 #include <string>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(TileFusion, PrimitiveC, Tile);
 void TileFusion::Init(const std::vector<int64_t> &dims) { this->set_dims(dims); }
 
-void TileFusion::set_dims(const std::vector<int64_t> &dims) { (void)this->AddAttr(kDims, MakeValue(dims)); }
+void TileFusion::set_dims(const std::vector<int64_t> &dims) { (void)this->AddAttr(kDims, api::MakeValue(dims)); }
 
 std::vector<int64_t> TileFusion::get_dims() const {
   auto value_ptr = GetAttr(kDims);

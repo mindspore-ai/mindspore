@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
 #include <memory>
 #include "ops/batch_norm.h"
@@ -24,6 +25,7 @@
 #include "tools/common/tensor_util.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -314,7 +316,12 @@ bool BatchNormToScaleFusion::Run(const FuncGraphPtr &func_graph) {
     int64_t axis = input_shape_.size() == DIMENSION_4D ? -1 : 1;
     scale_primitive->set_axis(axis);
     scale_primitive->set_activation_type(ActivationType::NO_ACTIVATION);
-    auto scale_node = func_graph->NewCNode(scale_primitive, {cnode->input(1), new_weight_param, new_bias_param});
+    auto scale_primitive_c = scale_primitive->GetPrim();
+    if (scale_primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new scale primitive_c failed";
+      return false;
+    }
+    auto scale_node = func_graph->NewCNode(scale_primitive_c, {cnode->input(1), new_weight_param, new_bias_param});
     scale_node->set_abstract(cnode->abstract());
     (void)manager->Replace(cnode, scale_node);
   }

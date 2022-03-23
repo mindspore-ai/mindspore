@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_RELU_PARSER_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_RELU_PARSER_H
+#define USE_DEPRECATED_API
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
@@ -27,7 +28,7 @@ class OnnxReluParser : public OnnxNodeParser {
   OnnxReluParser() : OnnxNodeParser("Relu") {}
   ~OnnxReluParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
 class OnnxLeakyReluParser : public OnnxNodeParser {
@@ -35,7 +36,7 @@ class OnnxLeakyReluParser : public OnnxNodeParser {
   OnnxLeakyReluParser() : OnnxNodeParser("LeakyRelu") {}
   ~OnnxLeakyReluParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
 class OnnxPReluParser : public OnnxNodeParser {
@@ -43,7 +44,7 @@ class OnnxPReluParser : public OnnxNodeParser {
   OnnxPReluParser() : OnnxNodeParser("Prelu") {}
   ~OnnxPReluParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
 class OnnxEluParser : public OnnxNodeParser {
@@ -51,7 +52,7 @@ class OnnxEluParser : public OnnxNodeParser {
   OnnxEluParser() : OnnxNodeParser("Elu") {}
   ~OnnxEluParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
 class OnnxTanhParser : public OnnxNodeParser {
@@ -59,7 +60,7 @@ class OnnxTanhParser : public OnnxNodeParser {
   OnnxTanhParser() : OnnxNodeParser("Tanh") {}
   ~OnnxTanhParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
 class OnnxSigmoidParser : public OnnxNodeParser {
@@ -67,7 +68,7 @@ class OnnxSigmoidParser : public OnnxNodeParser {
   OnnxSigmoidParser() : OnnxNodeParser("Sigmoid") {}
   ~OnnxSigmoidParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
 class OnnxHardSigmoidParser : public OnnxNodeParser {
@@ -75,7 +76,7 @@ class OnnxHardSigmoidParser : public OnnxNodeParser {
   OnnxHardSigmoidParser() : OnnxNodeParser("HardSigmoid") {}
   ~OnnxHardSigmoidParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
 class OnnxSoftPlusParser : public OnnxNodeParser {
@@ -83,7 +84,7 @@ class OnnxSoftPlusParser : public OnnxNodeParser {
   OnnxSoftPlusParser() : OnnxNodeParser("Softplus") {}
   ~OnnxSoftPlusParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
 }  // namespace lite

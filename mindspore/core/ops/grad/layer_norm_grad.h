@@ -20,19 +20,17 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLayerNormGrad = prim::kLayerNormGrad;
-class MS_CORE_API LayerNormGrad : public PrimitiveC {
+constexpr auto kNameLayerNormGrad = "LayerNormGrad";
+class MIND_API LayerNormGrad : public BaseOperator {
  public:
-  LayerNormGrad() : PrimitiveC(kNameLayerNormGrad) {}
-  explicit LayerNormGrad(const std::string k_name) : PrimitiveC(k_name) {}
-  ~LayerNormGrad() = default;
-  MS_DECLARE_PARENT(LayerNormGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(LayerNormGrad);
+  LayerNormGrad() : BaseOperator(kNameLayerNormGrad) {}
+  explicit LayerNormGrad(const std::string k_name) : BaseOperator(k_name) {}
   void Init(const int64_t begin_norm_axis = 1, const int64_t begin_params_axis = 1);
   void set_begin_norm_axis(const int64_t begin_norm_axis);
   void set_begin_params_axis(const int64_t begin_params_axis);
@@ -40,8 +38,8 @@ class MS_CORE_API LayerNormGrad : public PrimitiveC {
   int64_t get_begin_params_axis() const;
 };
 
-AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

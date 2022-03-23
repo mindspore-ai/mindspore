@@ -17,6 +17,9 @@
 #include <string>
 #include <set>
 #include <map>
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -41,6 +44,8 @@ TypePtr HSigmoidInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(HSigmoid, PrimitiveC, BaseOperator);
 AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(HSigmoidInferType(primitive, input_args),

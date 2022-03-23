@@ -21,22 +21,20 @@
 #include <string>
 #include <memory>
 
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
+
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2D = "Conv2D";
 /// \brief 2D convolution layer. Refer to Python API @ref mindspore.ops.Conv2D for more details.
-class MS_CORE_API Conv2D : public PrimitiveC {
+class MIND_API Conv2D : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Conv2D);
   /// \brief Constructor.
-  Conv2D() : PrimitiveC(kNameConv2D) { InitIOName({"x", "w"}, {"output"}); }
-  explicit Conv2D(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "w"}, {"output"}); }
-  /// \brief Destructor.
-  ~Conv2D() = default;
-  MS_DECLARE_PARENT(Conv2D, PrimitiveC);
+  Conv2D() : BaseOperator(kNameConv2D) { InitIOName({"x", "w"}, {"output"}); }
+  explicit Conv2D(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "w"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Conv2D for the inputs.
   void Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0},
@@ -97,8 +95,8 @@ class MS_CORE_API Conv2D : public PrimitiveC {
   /// \return format.
   Format get_format() const;
 };
-AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONV2D_H_

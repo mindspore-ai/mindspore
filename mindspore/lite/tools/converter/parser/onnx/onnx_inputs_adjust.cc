@@ -25,6 +25,7 @@
 #include "nnacl/op_base.h"
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore::lite {
 namespace {
@@ -324,7 +325,7 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(!cnode->inputs().empty(), lite::RET_ERROR);
   auto node = cnode->input(0);
   MS_ASSERT(node != nullptr);
-  auto resize_prim = GetValueNode<std::shared_ptr<ops::Resize>>(node);
+  auto resize_prim = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(node);
   if (resize_prim == nullptr) {
     MS_LOG(ERROR) << "cnode is invalid.";
     return lite::RET_ERROR;
@@ -386,7 +387,9 @@ STATUS AdjustRandomNormal(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
   if (cnode->size() != 1) {
     return RET_OK;
   }
-  auto prim = GetValueNode<std::shared_ptr<ops::RandomNormal>>(cnode->input(0));
+  auto random_normal_node = ops::GetOperator<ops::RandomNormal>(cnode->input(0));
+  MS_CHECK_TRUE_RET(random_normal_node != nullptr, RET_ERROR);
+  auto prim = random_normal_node->GetPrim();
   MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
   MS_CHECK_TRUE_RET(prim->GetAttr(ops::kDataType) != nullptr, RET_ERROR);
   TypeId data_type = static_cast<TypeId>(GetValue<int>(prim->GetAttr(ops::kDataType)));

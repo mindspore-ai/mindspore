@@ -20,6 +20,7 @@
 #include "abstract/param_validator.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -53,6 +54,7 @@ TypePtr FastGeLUGradInferType(const PrimitivePtr &prim, const std::vector<Abstra
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(FastGeLUGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr FastGeLUGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = FastGeLUGradInferType(primitive, input_args);

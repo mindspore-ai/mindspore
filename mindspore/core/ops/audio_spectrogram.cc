@@ -23,24 +23,28 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(AudioSpectrogram, PrimitiveC, BaseOperator);
 void AudioSpectrogram::set_window_size(const int64_t window_size) {
-  (void)this->AddAttr(kWindowSize, MakeValue(window_size));
+  (void)this->AddAttr(kWindowSize, api::MakeValue(window_size));
 }
 int64_t AudioSpectrogram::get_window_size() const {
   auto value_ptr = GetAttr(kWindowSize);
   return GetValue<int64_t>(value_ptr);
 }
 
-void AudioSpectrogram::set_stride(const int64_t stride) { (void)this->AddAttr(kStride, MakeValue(stride)); }
+void AudioSpectrogram::set_stride(const int64_t stride) { (void)this->AddAttr(kStride, api::MakeValue(stride)); }
 int64_t AudioSpectrogram::get_stride() const {
   auto value_ptr = GetAttr(kStride);
   return GetValue<int64_t>(value_ptr);
 }
 
-void AudioSpectrogram::set_mag_square(const bool mag_square) { (void)this->AddAttr(kMagSquare, MakeValue(mag_square)); }
+void AudioSpectrogram::set_mag_square(const bool mag_square) {
+  (void)this->AddAttr(kMagSquare, api::MakeValue(mag_square));
+}
 bool AudioSpectrogram::get_mag_square() const {
   auto value_ptr = GetAttr(kMagSquare);
   return GetValue<bool>(value_ptr);

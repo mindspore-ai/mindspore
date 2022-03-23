@@ -18,23 +18,20 @@
 #define MINDSPORE_CORE_OPS_TENSOR_ARRAY_WRITE_H_
 #include <vector>
 #include <string>
-#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-
 constexpr auto kNameTensorArrayWrite = "TensorArrayWrite";
 
 /// \brief Assert defined TensorArrayWrite operator prototype of lite.
-class MS_CORE_API TensorArrayWrite : public PrimitiveC {
+class MIND_API TensorArrayWrite : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TensorArrayWrite);
   /// \brief Constructor.
-  TensorArrayWrite() : PrimitiveC(kNameTensorArrayWrite) {
+  TensorArrayWrite() : BaseOperator(kNameTensorArrayWrite) {
     InitIOName({"handle", "index", "value", "flow_in"}, {"flow_out"});
   }
-  /// \brief Destructor.
-  ~TensorArrayWrite() = default;
-  MS_DECLARE_PARENT(TensorArrayWrite, PrimitiveC);
   /// \brief Method to init the op's attributes.
   void Init() const {}
 };

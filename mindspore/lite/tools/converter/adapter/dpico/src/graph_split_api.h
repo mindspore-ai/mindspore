@@ -20,7 +20,7 @@
 #include <memory>
 #include <map>
 #include <vector>
-#include "api/ir/func_graph_manager.h"
+#include "mindapi/ir/common.h"
 
 namespace mindspore {
 namespace dpico {
@@ -28,8 +28,8 @@ struct Subgraph;
 struct GraphSplitInfo;
 
 int GraphSplit(const std::vector<api::FuncGraphPtr> &func_graphs, GraphSplitInfo *graph_split_info);
-AnfNodePtrList GetSubgraphInputs(const Subgraph &subgraph, const api::FuncGraphPtr &func_graph);
-AnfNodePtrList GetSubgraphOutputs(const Subgraph &subgraph, const api::FuncGraphManagerPtr &manager);
+api::AnfNodePtrList GetSubgraphInputs(const Subgraph &subgraph, const api::FuncGraphPtr &func_graph);
+api::AnfNodePtrList GetSubgraphOutputs(const Subgraph &subgraph, const api::FuncGraphManagerPtr &manager);
 int FillSubgraphOutputsFormat(Subgraph *subgraph, const api::FuncGraphPtr &func_graph);
 }  // namespace dpico
 }  // namespace mindspore

@@ -29,9 +29,9 @@ class TFNegParser : public TFNodeParser {
   TFNegParser() = default;
   ~TFNegParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 }  // namespace lite
 }  // namespace mindspore

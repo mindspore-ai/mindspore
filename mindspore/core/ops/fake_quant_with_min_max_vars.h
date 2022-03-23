@@ -18,22 +18,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFakeQuantWithMinMaxVars = "FakeQuantWithMinMaxVars";
 /// \brief Fake-quantize the input by minimum and maximum.
 /// Refer to Python API @ref mindspore.ops.FakeQuantWithMinMaxVars for more details.
-class MS_CORE_API FakeQuantWithMinMaxVars : public PrimitiveC {
+class MIND_API FakeQuantWithMinMaxVars : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(FakeQuantWithMinMaxVars);
   /// \brief Constructor.
-  FakeQuantWithMinMaxVars() : PrimitiveC(kNameFakeQuantWithMinMaxVars) {}
-  /// \brief Destructor.
-  ~FakeQuantWithMinMaxVars() = default;
-  MS_DECLARE_PARENT(FakeQuantWithMinMaxVars, PrimitiveC);
+  FakeQuantWithMinMaxVars() : BaseOperator(kNameFakeQuantWithMinMaxVars) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FakeQuantWithMinMaxVars for the inputs.
   void Init(const bool narrow_range = false, const int64_t num_bits = 8);
   /// \brief Set narrow_range.
@@ -49,8 +46,9 @@ class MS_CORE_API FakeQuantWithMinMaxVars : public PrimitiveC {
   /// \return num_bits.
   int64_t get_num_bits() const;
 };
-AbstractBasePtr FakeQuantWithMinMaxVarsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr FakeQuantWithMinMaxVarsInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -19,8 +19,11 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "common/check_base.h"
 #include "common/op_attr.h"
 #include "ops/custom.h"
+#include "ops/op_name.h"
+#include "third_party/securec/include/securec.h"
 
 namespace mindspore {
 namespace lite {
@@ -35,7 +38,7 @@ STATUS SetExtractAxis(const caffe::ExtractParameter &extract_param, ops::Custom 
   } else if (extract_param.has_slice_dim()) {
     axis = static_cast<int32_t>(extract_param.slice_dim());
   }
-  prim->AddAttr(ops::kAxis, MakeValue<int32_t>(axis));
+  prim->AddAttr(ops::kAxis, api::MakeValue<int64_t>(axis));
 
   std::vector<uint8_t> axis_attr(sizeof(int32_t));
   if (memcpy_s(axis_attr.data(), axis_attr.size() * sizeof(uint8_t), &axis, sizeof(int32_t)) != EOK) {
@@ -54,7 +57,7 @@ STATUS SetExtractSlicePointBegin(const caffe::ExtractParameter &extract_param, o
   if (extract_param.has_slice_point_begin()) {
     slice_point_begin = extract_param.slice_point_begin();
   }
-  prim->AddAttr(dpico::kSlicePointBegin, MakeValue<uint32_t>(slice_point_begin));
+  prim->AddAttr(dpico::kSlicePointBegin, api::MakeValue<int64_t>(slice_point_begin));
 
   std::vector<uint8_t> slice_point_begin_attr(sizeof(uint32_t));
   if (memcpy_s(slice_point_begin_attr.data(), slice_point_begin_attr.size() * sizeof(uint8_t), &slice_point_begin,
@@ -74,7 +77,7 @@ STATUS SetExtractSlicePointEnd(const caffe::ExtractParameter &extract_param, ops
   if (extract_param.has_slice_point_end()) {
     slice_point_end = extract_param.slice_point_end();
   }
-  prim->AddAttr(dpico::kSlicePointEnd, MakeValue<uint32_t>(slice_point_end));
+  prim->AddAttr(dpico::kSlicePointEnd, api::MakeValue<int64_t>(slice_point_end));
 
   std::vector<uint8_t> slice_point_end_attr(sizeof(uint32_t));
   if (memcpy_s(slice_point_end_attr.data(), slice_point_end_attr.size() * sizeof(uint8_t), &slice_point_end,
@@ -86,8 +89,8 @@ STATUS SetExtractSlicePointEnd(const caffe::ExtractParameter &extract_param, ops
   return RET_OK;
 }
 }  // namespace
-ops::PrimitiveC *CaffeExtractParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeExtractParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -110,7 +113,7 @@ ops::PrimitiveC *CaffeExtractParser::Parse(const caffe::LayerParameter &proto, c
   }
 
   prim->set_attr(custom_attrs);
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeExtractParser("Extract", new CaffeExtractParser());

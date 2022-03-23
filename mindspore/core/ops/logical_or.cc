@@ -23,6 +23,7 @@
 #include "ops/logical_or.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -44,6 +45,7 @@ TypePtr LogicalOrInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(LogicalOr, PrimitiveC, BaseOperator);
 AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

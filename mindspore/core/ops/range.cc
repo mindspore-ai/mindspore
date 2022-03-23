@@ -22,28 +22,30 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void Range::set_d_type(const int64_t d_type) { (void)this->AddAttr(kDType, MakeValue(d_type)); }
+MIND_API_BASE_IMPL(Range, PrimitiveC, BaseOperator);
+void Range::set_d_type(const int64_t d_type) { (void)this->AddAttr(kDType, api::MakeValue(d_type)); }
 
 int64_t Range::get_d_type() const {
   auto value_ptr = GetAttr(kDType);
   return GetValue<int64_t>(value_ptr);
 }
 
-void Range::set_start(const int64_t start) { (void)this->AddAttr(kStart, MakeValue(start)); }
+void Range::set_start(const int64_t start) { (void)this->AddAttr(kStart, api::MakeValue(start)); }
 
 int64_t Range::get_start() const { return GetValue<int64_t>(GetAttr(kStart)); }
 
-void Range::set_limit(const int64_t limit) { (void)this->AddAttr(kLimit, MakeValue(limit)); }
+void Range::set_limit(const int64_t limit) { (void)this->AddAttr(kLimit, api::MakeValue(limit)); }
 
 int64_t Range::get_limit() const {
   auto value_ptr = GetAttr(kLimit);
   return GetValue<int64_t>(value_ptr);
 }
 
-void Range::set_delta(const int64_t delta) { (void)this->AddAttr(kDelta, MakeValue(delta)); }
+void Range::set_delta(const int64_t delta) { (void)this->AddAttr(kDelta, api::MakeValue(delta)); }
 
 int64_t Range::get_delta() const {
   auto value_ptr = GetAttr(kDelta);

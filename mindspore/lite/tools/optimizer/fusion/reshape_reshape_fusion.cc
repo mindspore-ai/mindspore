@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/reshape_reshape_fusion.h"
 #include "ops/op_utils.h"
 #include "ops/reshape.h"
@@ -50,7 +51,9 @@ const AnfNodePtr ReshapeReshapeFusion::Process(const FuncGraphPtr &func_graph, c
     MS_LOG(ERROR) << "Build reshape primitive failed.";
     return nullptr;
   }
-  auto value_node = NewValueNode(reshape_prim);
+  auto reshape_prim_c = reshape_prim->GetPrim();
+  MS_CHECK_TRUE_RET(reshape_prim_c != nullptr, nullptr);
+  auto value_node = NewValueNode(reshape_prim_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   auto input = utils::cast<AnfNodePtr>((*equiv)[reshape_input_]);
   auto shape = utils::cast<AnfNodePtr>((*equiv)[reshape_shape_]);

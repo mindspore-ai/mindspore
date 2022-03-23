@@ -20,18 +20,20 @@
 #include <memory>
 #include <vector>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void Activation::set_alpha(const float alpha) { (void)this->AddAttr(kAlpha, MakeValue(alpha)); }
+MIND_API_BASE_IMPL(Activation, PrimitiveC, BaseOperator);
+void Activation::set_alpha(const float alpha) { (void)this->AddAttr(kAlpha, api::MakeValue(alpha)); }
 
-void Activation::set_min_val(const float min_val) { (void)this->AddAttr(kMinVal, MakeValue(min_val)); }
+void Activation::set_min_val(const float min_val) { (void)this->AddAttr(kMinVal, api::MakeValue(min_val)); }
 
-void Activation::set_max_val(const float max_val) { (void)this->AddAttr(kMaxVal, MakeValue(max_val)); }
+void Activation::set_max_val(const float max_val) { (void)this->AddAttr(kMaxVal, api::MakeValue(max_val)); }
 
 void Activation::set_activation_type(const ActivationType &activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 float Activation::get_alpha() const {
@@ -54,7 +56,7 @@ ActivationType Activation::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-void Activation::set_approximate(bool approximate) { (void)this->AddAttr(kApproximate, MakeValue(approximate)); }
+void Activation::set_approximate(bool approximate) { (void)this->AddAttr(kApproximate, api::MakeValue(approximate)); }
 
 bool Activation::get_approximate() const {
   auto value_ptr = this->GetAttr(kApproximate);

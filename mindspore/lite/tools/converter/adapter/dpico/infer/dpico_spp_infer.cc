@@ -18,12 +18,12 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <cmath>
 #include "common/op_enum.h"
 #include "common/op_attr.h"
 #include "utils/log_adapter.h"
 #include "common/infer_util.h"
 #include "include/errorcode.h"
-#include "ops/op_utils.h"
 #include "include/registry/register_kernel_interface.h"
 
 using mindspore::kernel::KernelInterface;
@@ -95,7 +95,7 @@ Status DpicoSppInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::v
     MS_LOG(ERROR) << "input_shape should have 4 dims, but in fact it's " << input_shape.size();
     return kLiteError;
   }
-  ShapeVector output_shape;
+  std::vector<int64_t> output_shape;
   output_shape.push_back(input_shape.at(0));
   int64_t output_planes_size = 0;
   for (int64_t i = 0; i < pyramid_height; i++) {  // spp output plane size is 1 * 1, 2 * 2, 4 * 4, ...

@@ -15,13 +15,18 @@
  */
 
 #include "ops/base_operator.h"
-
 #include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(BaseOperator, PrimitiveC, api::Primitive);
 BaseOperator::BaseOperator(const std::string &name) : api::Primitive(std::make_shared<PrimitiveC>(name)) {}
 
+PrimitiveCPtr BaseOperator::GetPrim() {
+  PrimitiveCPtr res = std::dynamic_pointer_cast<PrimitiveC>(impl_);
+  return res;
+}
 void BaseOperator::InitIOName(const std::vector<std::string> &inputs_name,
                               const std::vector<std::string> &outputs_name) {
   (void)AddAttr("input_names", api::MakeValue(inputs_name));

@@ -27,9 +27,9 @@ namespace {
 constexpr int kTFlitePadInputSize = 3;
 constexpr int kTFlitePaddingIndex = 1;
 }  // namespace
-ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                        const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::PadFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -89,7 +89,7 @@ ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT>
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tflitePadParser(tflite::BuiltinOperator_PAD, new TflitePadParser());

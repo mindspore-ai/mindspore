@@ -17,14 +17,16 @@
 #include "ops/fusion/sub_fusion.h"
 #include <string>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(SubFusion, PrimitiveC, Sub);
 void SubFusion::Init(const ActivationType &activation_type) { this->set_activation_type(activation_type); }
 
 void SubFusion::set_activation_type(const ActivationType &activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 ActivationType SubFusion::get_activation_type() const {

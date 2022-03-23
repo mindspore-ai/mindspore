@@ -20,8 +20,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Concat>();
+BaseOperatorPtr CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Concat>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -46,7 +46,7 @@ ops::PrimitiveC *CaffeConcatParser::Parse(const caffe::LayerParameter &proto, co
   }
   prim->set_axis(axis);
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeConcatParser("Concat", new CaffeConcatParser());

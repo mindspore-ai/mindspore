@@ -24,6 +24,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -53,6 +54,7 @@ TypePtr SoftShrinkInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(SoftShrink, PrimitiveC, BaseOperator);
 AbstractBasePtr SoftShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(SoftShrinkInferType(primitive, input_args),

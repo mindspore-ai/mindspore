@@ -20,6 +20,8 @@
 #include "common/anf_util.h"
 #include "common/op_enum.h"
 #include "common/check_base.h"
+#include "ops/fusion/conv2d_fusion.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
 
 namespace mindspore {
 namespace dpico {
@@ -33,10 +35,10 @@ constexpr int kMaxDilationAndKernelProd = 15;
 constexpr int kConvUpperBound = 2048;
 constexpr float kCoefficient = 16.0;
 
-bool CheckOutChannel(const PrimitivePtr &primitive) {
+bool CheckOutChannel(const api::PrimitivePtr &primitive) {
   auto out_channel_ptr = primitive->GetAttr(ops::kOutChannel);
   if (out_channel_ptr != nullptr) {
-    auto out_channel_data = GetValue<int64_t>(out_channel_ptr);
+    auto out_channel_data = api::GetValue<int64_t>(out_channel_ptr);
     if (out_channel_data < 1 || out_channel_data > kMaxNumOutput) {
       MS_LOG(WARNING) << "out_channel:" << out_channel_data << " is unsupported by dpico.";
       return false;
@@ -44,10 +46,10 @@ bool CheckOutChannel(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckGroup(const PrimitivePtr &primitive) {
+bool CheckGroup(const api::PrimitivePtr &primitive) {
   auto group_ptr = primitive->GetAttr(ops::kGroup);
   if (group_ptr != nullptr) {
-    auto group_data = GetValue<int64_t>(group_ptr);
+    auto group_data = api::GetValue<int64_t>(group_ptr);
     if (group_data < 1 || group_data > kMaxGroupNum) {
       MS_LOG(WARNING) << "group:" << group_data << " is unsupported by dpico.";
       return false;
@@ -55,10 +57,10 @@ bool CheckGroup(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckPadList(const PrimitivePtr &primitive) {
+bool CheckPadList(const api::PrimitivePtr &primitive) {
   auto pad_ptr = primitive->GetAttr(ops::kPadList);
   if (pad_ptr != nullptr) {
-    auto pad_data = GetValue<std::vector<int64_t>>(pad_ptr);
+    auto pad_data = api::GetValue<std::vector<int64_t>>(pad_ptr);
     if (pad_data.size() > kDims3) {
       if (pad_data[0] < 0 || pad_data[0] > kMaxPadSize || pad_data[1] < 0 || pad_data[1] > kMaxPadSize ||
           pad_data[kAxis2] < 0 || pad_data[kAxis2] > kMaxPadSize || pad_data[kAxis3] < 0 ||
@@ -70,10 +72,10 @@ bool CheckPadList(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckKernelSize(const PrimitivePtr &primitive) {
+bool CheckKernelSize(const api::PrimitivePtr &primitive) {
   auto kernel_ptr = primitive->GetAttr(ops::kKernelSize);
   if (kernel_ptr != nullptr) {
-    auto kernel_data = GetValue<std::vector<int64_t>>(kernel_ptr);
+    auto kernel_data = api::GetValue<std::vector<int64_t>>(kernel_ptr);
     if (kernel_data.size() > 1) {
       if (kernel_data[0] < 1 || kernel_data[0] > kMaxKernelSize || kernel_data[1] < 1 ||
           kernel_data[1] > kMaxKernelSize) {
@@ -84,10 +86,10 @@ bool CheckKernelSize(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckStride(const PrimitivePtr &primitive) {
+bool CheckStride(const api::PrimitivePtr &primitive) {
   auto stride_ptr = primitive->GetAttr(ops::kStride);
   if (stride_ptr != nullptr) {
-    auto stride_data = GetValue<std::vector<int64_t>>(stride_ptr);
+    auto stride_data = api::GetValue<std::vector<int64_t>>(stride_ptr);
     if (stride_data.size() > 1) {
       if (stride_data[0] < 1 || stride_data[0] > kMaxStrideSize || stride_data[1] < 1 ||
           stride_data[1] > kMaxStrideSize) {
@@ -99,10 +101,10 @@ bool CheckStride(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckDilation(const PrimitivePtr &primitive) {
+bool CheckDilation(const api::PrimitivePtr &primitive) {
   auto dilation_ptr = primitive->GetAttr(ops::kDilation);
   if (dilation_ptr != nullptr) {
-    auto dilation_data = GetValue<std::vector<int64_t>>(dilation_ptr);
+    auto dilation_data = api::GetValue<std::vector<int64_t>>(dilation_ptr);
     if (dilation_data.size() > 1) {
       if (dilation_data[0] < 1 || dilation_data[0] > kMaxDilationSize || dilation_data[1] < 1 ||
           dilation_data[1] > kMaxDilationSize) {
@@ -114,15 +116,15 @@ bool CheckDilation(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckAttr(CNodePtr op, const PrimitivePtr &primitive, int64_t input_w) {
+bool CheckAttr(const api::CNodePtr &op, const api::PrimitivePtr &primitive, int64_t input_w) {
   auto dilation_ptr = primitive->GetAttr(ops::kDilation);
   auto kernel_ptr = primitive->GetAttr(ops::kKernelSize);
   auto stride_ptr = primitive->GetAttr(ops::kStride);
   auto output_paddings_ptr = primitive->GetAttr(ops::kOutputPaddings);
 
   if (dilation_ptr != nullptr && kernel_ptr != nullptr) {
-    auto kernel_data = GetValue<std::vector<int64_t>>(kernel_ptr);
-    auto dilation_data = GetValue<std::vector<int64_t>>(dilation_ptr);
+    auto kernel_data = api::GetValue<std::vector<int64_t>>(kernel_ptr);
+    auto dilation_data = api::GetValue<std::vector<int64_t>>(dilation_ptr);
     if ((kernel_data[0] - 1) * dilation_data[0] + 1 > kMaxDilationAndKernelProd ||
         (kernel_data[1] - 1) * dilation_data[1] + 1 > kMaxDilationAndKernelProd) {
       MS_LOG(WARNING) << "kernel should satisfy ((kernel - 1) * dilation + 1) less than 15";
@@ -130,15 +132,15 @@ bool CheckAttr(CNodePtr op, const PrimitivePtr &primitive, int64_t input_w) {
     }
   }
   if (stride_ptr != nullptr && kernel_ptr != nullptr) {
-    auto kernel_data = GetValue<std::vector<int64_t>>(kernel_ptr);
-    auto stride_data = GetValue<std::vector<int64_t>>(stride_ptr);
-    if (CheckPrimitiveType(op, prim::kPrimConv2DFusion)) {
+    auto kernel_data = api::GetValue<std::vector<int64_t>>(kernel_ptr);
+    auto stride_data = api::GetValue<std::vector<int64_t>>(stride_ptr);
+    if (CheckPrimitiveType(op, api::MakeShared<ops::Conv2DFusion>())) {
       if (kernel_data[0] > kConvUpperBound / (input_w / (kCoefficient * stride_data[1]) * stride_data[1])) {
         MS_LOG(WARNING) << "kernel and stride should satisfy kernel_h <= 2048 / (w / (16 * stride) * stride) "
                         << op->fullname_with_scope();
         return false;
       }
-    } else if (CheckPrimitiveType(op, prim::kPrimConv2dTransposeFusion)) {
+    } else if (CheckPrimitiveType(op, api::MakeShared<ops::Conv2dTransposeFusion>())) {
       MS_CHECK_TRUE_MSG(input_w != 0, false, "input_w should be 0.");
       if (kernel_data[0] > (kMaxNumOutput / input_w - 1.0) * stride_data[0] + 1.0) {
         MS_LOG(WARNING) << "kernel and stride should satisfy kernel_h <= (32768 / w - 1) * stride + 1.0 "
@@ -148,8 +150,8 @@ bool CheckAttr(CNodePtr op, const PrimitivePtr &primitive, int64_t input_w) {
     }
   }
 
-  if (output_paddings_ptr != nullptr && CheckPrimitiveType(op, prim::kPrimConv2dTransposeFusion)) {
-    auto output_paddings = GetValue<std::vector<int64_t>>(output_paddings_ptr);
+  if (output_paddings_ptr != nullptr && CheckPrimitiveType(op, api::MakeShared<ops::Conv2dTransposeFusion>())) {
+    auto output_paddings = api::GetValue<std::vector<int64_t>>(output_paddings_ptr);
     if (std::find_if_not(output_paddings.begin(), output_paddings.end(),
                          [](int64_t output_padding) { return output_padding == 0; }) != output_paddings.end()) {
       MS_LOG(WARNING) << "output_padding attr only support 0 by dpico. " << op->fullname_with_scope();
@@ -160,8 +162,8 @@ bool CheckAttr(CNodePtr op, const PrimitivePtr &primitive, int64_t input_w) {
 }
 }  // namespace
 
-bool Conv2DFusionChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+bool Conv2DFusionChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;

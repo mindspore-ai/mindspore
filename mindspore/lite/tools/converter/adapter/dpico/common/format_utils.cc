@@ -17,6 +17,10 @@
 #include "common/format_utils.h"
 #include <set>
 #include <string>
+#include "ops/tuple_get_item.h"
+#include "ops/depend.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
 #include "ops/batch_norm.h"
 #include "ops/batch_to_space.h"
 #include "ops/bias_add.h"
@@ -54,11 +58,11 @@ const std::set<std::string> kAssignedFormatOpSet = {
 
 const std::set<std::string> &GetAssignedFormatOpSet() { return kAssignedFormatOpSet; }
 
-bool IsSpecialType(const mindspore::CNodePtr &cnode) {
-  return CheckPrimitiveType(cnode, mindspore::prim::kPrimTupleGetItem) ||
-         CheckPrimitiveType(cnode, mindspore::prim::kPrimDepend) ||
-         CheckPrimitiveType(cnode, mindspore::prim::kPrimMakeTuple) ||
-         CheckPrimitiveType(cnode, mindspore::prim::kPrimReturn);
+bool IsSpecialType(const api::CNodePtr &cnode) {
+  return CheckPrimitiveType(cnode, api::MakeShared<ops::TupleGetItem>()) ||
+         CheckPrimitiveType(cnode, api::MakeShared<ops::Depend>()) ||
+         CheckPrimitiveType(cnode, api::MakeShared<ops::MakeTuple>()) ||
+         CheckPrimitiveType(cnode, api::MakeShared<ops::Return>());
 }
 
 std::string FormatEnumToString(mindspore::Format format) {

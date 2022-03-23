@@ -19,23 +19,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSpaceToDepth = "SpaceToDepth";
 /// \brief Rearranges blocks of spatial data into depth.
 /// Refer to Python API @ref mindspore.ops.SpaceToDepth for more details.
-class MS_CORE_API SpaceToDepth : public PrimitiveC {
+class MIND_API SpaceToDepth : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SpaceToDepth);
   /// \brief Constructor.
-  SpaceToDepth() : PrimitiveC(kNameSpaceToDepth) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~SpaceToDepth() = default;
-  MS_DECLARE_PARENT(SpaceToDepth, PrimitiveC);
+  SpaceToDepth() : BaseOperator(kNameSpaceToDepth) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SpaceToDepth for the inputs.
   void Init(const int64_t block_size, const Format &format = NCHW);
   /// \brief Set block_size.
@@ -51,8 +48,8 @@ class MS_CORE_API SpaceToDepth : public PrimitiveC {
   /// \return format.
   Format get_format() const;
 };
-AbstractBasePtr SpaceToDepthInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SpaceToDepthInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SpaceToDepth_H_

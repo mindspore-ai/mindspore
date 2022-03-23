@@ -19,27 +19,23 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatrixDiagPart = "MatrixDiagPartV3";
 /// \brief get the specified part of the inner most diag matrix of a matrix, fill with padding value .
 /// Refer to Python API @ref mindspore.ops.MatrixDiagPart for more details.
-class MatrixDiagPartV3 : public PrimitiveC {
+class MatrixDiagPartV3 : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(MatrixDiagPartV3);
   /// \brief Constructor.
-  MatrixDiagPartV3() : PrimitiveC(kNameMatrixDiagPart) { InitIOName({"input", "k", "padding_value"}, {"output"}); }
-  /// \brief Destructor.
-  ~MatrixDiagPartV3() = default;
-  MS_DECLARE_PARENT(MatrixDiagPartV3, PrimitiveC);
+  MatrixDiagPartV3() : BaseOperator(kNameMatrixDiagPart) { InitIOName({"input", "k", "padding_value"}, {"output"}); }
 };
 
-AbstractBasePtr MatrixDiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MatrixDiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_MATRIX_DIAG_PART_H_

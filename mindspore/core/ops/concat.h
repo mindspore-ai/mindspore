@@ -19,23 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConcat = "Concat";
 /// \brief Connect tensor in the specified axis.
 /// Refer to Python API @ref mindspore.ops.Concat for more details.
-class MS_CORE_API Concat : public PrimitiveC {
+class MIND_API Concat : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Concat);
   /// \brief Constructor.
-  Concat() : PrimitiveC(kNameConcat) {}
-  /// \brief Destructor.
-  ~Concat() = default;
-  MS_DECLARE_PARENT(Concat, PrimitiveC);
+  Concat() : BaseOperator(kNameConcat) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Concat for the inputs.
   void Init(const int64_t axis = 0);
   /// \brief Set axis.
@@ -45,8 +41,8 @@ class MS_CORE_API Concat : public PrimitiveC {
   /// \return axis.
   int64_t get_axis() const;
 };
-AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONCAT_H_

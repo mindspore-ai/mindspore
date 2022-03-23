@@ -15,9 +15,12 @@
  */
 
 #include "ops/depend.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Depend, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameDepend, Depend);
 }  // namespace ops
 }  // namespace mindspore

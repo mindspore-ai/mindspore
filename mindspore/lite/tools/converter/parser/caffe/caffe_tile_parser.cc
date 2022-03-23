@@ -22,9 +22,11 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeTileParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeTileParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::TileFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
 
   const caffe::TileParameter &tile_param = proto.tile_param();
   std::vector<int64_t> dims;
@@ -45,9 +47,9 @@ ops::PrimitiveC *CaffeTileParser::Parse(const caffe::LayerParameter &proto, cons
   }
   auto value_ptr = MakeValue(multiples);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim->AddAttr("multiples", value_ptr);
+  prim_c->AddAttr("multiples", value_ptr);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeTileParser("Tile", new CaffeTileParser());

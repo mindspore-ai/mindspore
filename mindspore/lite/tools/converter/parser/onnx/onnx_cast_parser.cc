@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Cast>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -35,11 +35,13 @@ ops::PrimitiveC *OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const
       if (dst_type == kNumberTypeFloat64) {
         dst_type = kNumberTypeFloat32;
       }
-      prim->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
+      auto prim_c = prim->GetPrim();
+      MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+      prim_c->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxCastParser("Cast", new OnnxCastParser());

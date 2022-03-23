@@ -25,11 +25,12 @@
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
+#include "ops/op_utils.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore {
 namespace opt {
-std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t input_h,
+std::vector<int64_t> GetSplitPadList(const api::SharedPtr<ops::Conv2DFusion> &ori_conv_prim, int64_t input_h,
                                      int64_t input_w) {
   if (ori_conv_prim == nullptr) {
     MS_LOG(DEBUG) << "input Conv2DFusion is nullptr";
@@ -114,7 +115,7 @@ bool CalSplitOutputShape(int64_t splited_axis_value, const SplitInfo *split_info
 }
 
 bool CalSplitInShape(const std::vector<std::vector<ShapeVector>> &node_in_out_shapes, const SplitInfo *split_info,
-                     const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, size_t index_node,
+                     const api::SharedPtr<ops::Conv2DFusion> &ori_conv_prim, size_t index_node,
                      std::vector<std::vector<int64_t>> *split_axis_inputs_shape,
                      std::vector<std::vector<int64_t>> *split_axis_reduce_inputs_shape) {
   MS_ASSERT(split_info != nullptr && ori_conv_prim != nullptr && split_axis_inputs_shape != nullptr &&
@@ -180,10 +181,12 @@ bool IsConv2D(const AnfNodePtr &node) {
   return (CheckPrimitiveType(node, prim::kPrimConv2D) || CheckPrimitiveType(node, prim::kPrimConv2DFusion));
 }
 
-std::shared_ptr<ops::Conv2DFusion> CopyConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim) {
+api::SharedPtr<ops::Conv2DFusion> CopyConvPrim(const api::SharedPtr<ops::Conv2DFusion> &ori_conv_prim) {
   MS_CHECK_TRUE_MSG(ori_conv_prim != nullptr, nullptr, "input Conv2DFusion is nullptr");
-  auto new_prim = std::make_shared<ops::Conv2DFusion>();
+  auto new_prim = api::MakeShared<ops::Conv2DFusion>();
   MS_CHECK_TRUE_MSG(new_prim != nullptr, nullptr, "create Conv2DFusion return nullptr");
+  auto new_prim_c = new_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(new_prim_c != nullptr, nullptr, "create primic return nullptr");
   new_prim->set_pad(ori_conv_prim->get_pad());
   new_prim->set_in_channel(ori_conv_prim->get_in_channel());
   new_prim->set_out_channel(ori_conv_prim->get_out_channel());
@@ -203,7 +206,7 @@ std::shared_ptr<ops::Conv2DFusion> CopyConvPrim(const std::shared_ptr<ops::Conv2
   auto is_depth_value = ori_conv_prim->GetAttr(ops::kIsDepthWise);
   if (is_depth_value != nullptr) {
     bool is_depth_wise = GetValue<bool>(is_depth_value);
-    new_prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(is_depth_wise));
+    new_prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(is_depth_wise));
   }
   return new_prim;
 }
@@ -260,7 +263,7 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
   while (index_node < node_size) {
     auto conv_cnode = conv_nodes[index_node]->cast<CNodePtr>();
     MS_ASSERT(conv_cnode != nullptr);
-    auto ori_conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(conv_cnode->input(kAnfPrimitiveIndex));
+    auto ori_conv_prim = ops::GetOperator<ops::Conv2DFusion>(conv_cnode->input(kAnfPrimitiveIndex));
     MS_CHECK_TRUE_RET(ori_conv_prim != nullptr, false);
     if (!CalSplitInShape(node_in_out_shapes, split_info, ori_conv_prim, index_node, &split_axis_inputs_shape,
                          &split_axis_reduce_inputs_shape)) {
@@ -332,10 +335,12 @@ AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePt
 
   auto concat_prim = std::make_shared<ops::Concat>();
   MS_CHECK_TRUE_MSG(concat_prim != nullptr, nullptr, "create ops::Concat return nullptr");
+  auto concat_prim_c = concat_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(concat_prim_c != nullptr, nullptr, "create ops::concat_prim_c return nullptr");
   concat_prim->set_axis(split_info.axis);
 
   // the inputs of concate are from the outputs of conv
-  auto concate_primitive = NewValueNode(concat_prim);
+  auto concate_primitive = NewValueNode(concat_prim_c);
   MS_CHECK_TRUE_MSG(concate_primitive != nullptr, nullptr, "create concate_primitive return nullptr");
   std::vector<AnfNodePtr> concate_inputs = {concate_primitive};
   for (size_t i = 0; i < static_cast<size_t>(nodes_num); i++) {
@@ -364,6 +369,8 @@ bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
   // attr of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
   MS_CHECK_TRUE_MSG(split_prim != nullptr, false, "create ops::SplitWithOverlap return nullptr");
+  auto split_prim_c = split_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(split_prim != nullptr, false, "create ops::split_prim_c return nullptr");
   split_prim->set_split_dim(split_info.axis);
   split_prim->set_number_split(split_info.out_num);
   split_prim->set_ratio(split_info.size_splits);
@@ -372,7 +379,7 @@ bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
   auto conv_cnode = conv_node->cast<CNodePtr>();
 
   // the inputs of split is from the inputs of conv
-  auto split_primitive = NewValueNode(split_prim);
+  auto split_primitive = NewValueNode(split_prim_c);
   MS_CHECK_TRUE_MSG(split_primitive != nullptr, false, "create split_primitive return nullptr");
   std::vector<AnfNodePtr> split_inputs = {split_primitive};
 

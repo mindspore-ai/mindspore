@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/format/to_format_base.h"
 #include <set>
 #include "ops/op_utils.h"

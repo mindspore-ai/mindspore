@@ -15,11 +15,15 @@
  */
 
 #include "ops/squeeze.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void Squeeze::Init(const std::vector<int64_t> &axis) { set_axis(axis); }
-void Squeeze::set_axis(const std::vector<int64_t> &axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
+void Squeeze::set_axis(const std::vector<int64_t> &axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 std::vector<int64_t> Squeeze::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
 
 namespace {
@@ -81,6 +85,8 @@ TypePtr SqueezeInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   return input_args[0]->BuildType();
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Squeeze, PrimitiveC, BaseOperator);
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   const size_t x_index = 0;

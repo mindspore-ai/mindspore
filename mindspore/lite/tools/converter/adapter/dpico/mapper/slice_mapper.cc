@@ -21,19 +21,18 @@
 #include <vector>
 #include "common/anf_util.h"
 #include "common/op_enum.h"
-#include "ops/op_utils.h"
 #include "ops/split.h"
 #include "op/slice_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS SliceMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                        const CNodePtrList &output_cnodes) {
+STATUS SliceMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                        const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto split_prim = utils::cast<std::shared_ptr<ops::Split>>(prim);
+  auto split_prim = api::utils::cast<api::SharedPtr<ops::Split>>(prim);
   MS_ASSERT(split_prim != nullptr);
 
   auto slice_operator = std::make_unique<mapper::SliceOperator>();
@@ -80,10 +79,12 @@ STATUS SliceMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *bas
       MS_LOG(ERROR) << "split sizes is invalid, which is not larger than 0 and less than uint32_max";
       return RET_ERROR;
     }
-    std::vector<uint32_t> sizes_u(sizes.begin(), sizes.end());
+    std::vector<uint32_t> sizes_u;
+    (void)std::transform(sizes.begin(), sizes.end(), std::back_inserter(sizes_u),
+                         [](int64_t size) { return static_cast<uint32_t>(size); });
     uint32_t slice_point_cnt = 0;
     for (size_t i = 0; i < sizes_u.size() - 1; i++) {
-      if (sizes_u.at(i) >= static_cast<uint32_t>(shape[split_axis]) - slice_point_cnt) {
+      if (sizes_u.at(i) >= (static_cast<uint32_t>(shape[split_axis]) - slice_point_cnt)) {
         MS_LOG(ERROR) << "split sizes is invalid, which is larger than the related dim.";
         return RET_ERROR;
       }
@@ -97,7 +98,7 @@ STATUS SliceMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *bas
       MS_LOG(ERROR) << "cannot determine split points.";
       return RET_ERROR;
     }
-    auto output_num = GetValue<int64_t>(split_prim->GetAttr(ops::kOutputNum));
+    auto output_num = api::GetValue<int64_t>(split_prim->GetAttr(ops::kOutputNum));
     if (shape[split_axis] % output_num != 0) {
       MS_LOG(ERROR) << "split op is invalid, which input shape cannot be splited.";
       return RET_ERROR;

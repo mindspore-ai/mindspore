@@ -17,6 +17,7 @@
 #include "ops/grad/bn_training_reduce_grad.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -44,9 +45,10 @@ TypePtr BNTrainingReduceGradInferType(const PrimitivePtr &prim, const std::vecto
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(BNTrainingReduceGrad, PrimitiveC, BaseOperator);
 void BNTrainingReduceGrad::Init(const float epsilon) { this->set_epsilon(epsilon); }
 
-void BNTrainingReduceGrad::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, MakeValue(epsilon)); }
+void BNTrainingReduceGrad::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
 
 float BNTrainingReduceGrad::get_epsilon() const {
   auto value_ptr = GetAttr(kEpsilon);

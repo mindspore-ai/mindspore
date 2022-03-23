@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -45,6 +46,8 @@ TypePtr TanInferType(const PrimitivePtr &primitive, const std::vector<AbstractBa
   return x_dtype;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Tan, PrimitiveC, BaseOperator);
 AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

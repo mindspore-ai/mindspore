@@ -17,6 +17,8 @@
 #include "ops/square.h"
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -138,6 +140,8 @@ ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
   return result_tensor;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Square, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Square, prim::kPrimSquare, SquareInfer, SquareInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

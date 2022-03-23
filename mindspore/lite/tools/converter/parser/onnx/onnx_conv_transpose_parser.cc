@@ -45,10 +45,12 @@ STATUS OnnxDeConvParser::ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t
   return RET_OK;
 }
 
-ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   MS_CHECK_GE(onnx_node.input_size(), kInputSize1, nullptr);
   auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   prim->set_pad({0, 0, 0, 0});
   mindspore::PadMode pad_mode = mindspore::PadMode::PAD;
   std::vector<int64_t> kernel, dilate, stride, pads, output_paddings;
@@ -58,7 +60,7 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
     MS_LOG(ERROR) << "Parse onnx attribute failed.";
     return nullptr;
   }
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_group(group);
   prim->set_pad_mode(pad_mode);
 
@@ -67,7 +69,7 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
     return nullptr;
   }
   if (conv1d) {
-    prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCW));
+    prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCW));
   }
   if (!dilate.empty()) {
     prim->set_dilation(dilate);
@@ -112,11 +114,11 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
     prim->set_out_channel(weight_shape[1] * group);
 
     if (group != 1 && weight_shape[1] == 1) {
-      prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+      prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxDeConvParser("ConvTranspose", new OnnxDeConvParser());

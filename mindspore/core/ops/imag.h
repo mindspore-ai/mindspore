@@ -19,21 +19,18 @@
 #include <memory>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Returns a Tensor that is the imag part of the input.
 /// Refer to Python API @ref mindspore.ops.Imag for more details.
-class MS_CORE_API Imag : public PrimitiveC {
+class MIND_API Imag : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Imag);
   /// \brief Constructor.
-  Imag() : PrimitiveC(prim::kPrimImag->name()) { InitIOName({"input"}, {"output"}); }
-  /// \brief Destructor.
-  ~Imag() = default;
-  MS_DECLARE_PARENT(Imag, PrimitiveC);
+  Imag() : BaseOperator("Imag") { InitIOName({"input"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Imag for the inputs.
   void Init() {}
 };

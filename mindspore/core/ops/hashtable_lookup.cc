@@ -19,9 +19,11 @@
 
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(HashtableLookup, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameHashtableLookup, HashtableLookup);
 }  // namespace ops
 }  // namespace mindspore

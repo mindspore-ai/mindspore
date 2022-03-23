@@ -15,9 +15,12 @@
  */
 
 #include "ops/make_tuple.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(MakeTuple, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMakeTuple, MakeTuple);
 }  // namespace ops
 }  // namespace mindspore

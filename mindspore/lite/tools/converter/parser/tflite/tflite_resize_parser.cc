@@ -24,9 +24,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                        const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_GE(tflite_op->inputs.size(), kInputSize1, nullptr);
   auto prim = std::make_unique<ops::Resize>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -67,7 +67,7 @@ ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::Operato
     if (tfliteAttr->half_pixel_centers) {
       prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::HALF_PIXEL);
       prim->set_cubic_coeff(-0.5f);
-      prim->AddAttr("half_pixel_centers", MakeValue(true));
+      prim->AddAttr("half_pixel_centers", api::MakeValue(true));
     }
     prim->set_method(mindspore::ResizeMethod::NEAREST);
     prim->set_nearest_mode(mindspore::NearestMode::NORMAL);
@@ -88,7 +88,7 @@ ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::Operato
     prim->set_new_width(dims.at(1));
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteResizeBilinearParser(tflite::BuiltinOperator_RESIZE_BILINEAR, new TfliteResizeParser());

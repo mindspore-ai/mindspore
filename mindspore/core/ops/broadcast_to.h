@@ -20,22 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Broadcasts input tensor to a given shape.
 /// Refer to Python API @ref mindspore.ops.BroadcastTo for more details.
-class MS_CORE_API BroadcastTo : public PrimitiveC {
+class MIND_API BroadcastTo : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(BroadcastTo);
   /// \brief Constructor.
-  BroadcastTo() : PrimitiveC(prim::kPrimBroadcastTo->name()) {}
-  /// \brief Destructor.
-  ~BroadcastTo() = default;
-  MS_DECLARE_PARENT(BroadcastTo, PrimitiveC);
+  BroadcastTo() : BaseOperator("BroadcastTo") {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BroadcastTo for the inputs.
   void Init(const std::vector<int64_t> &shape);
   /// \brief Set shape.
@@ -46,8 +42,8 @@ class MS_CORE_API BroadcastTo : public PrimitiveC {
   std::vector<int64_t> get_shape() const;
 };
 
-AbstractBasePtr BroadcastToInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BroadcastToInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

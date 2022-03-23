@@ -20,23 +20,21 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyAdaMax = "ApplyAdaMax";
-class ApplyAdaMax : public PrimitiveC {
+class MIND_API ApplyAdaMax : public BaseOperator {
  public:
-  ApplyAdaMax() : PrimitiveC(kNameApplyAdaMax) {
+  MIND_API_BASE_MEMBER(ApplyAdaMax);
+  ApplyAdaMax() : BaseOperator(kNameApplyAdaMax) {
     InitIOName({"var", "m", "v", "beta1_power", "lr", "beta1", "beta2", "epsilon", "grad"}, {"var", "m", "v"});
   }
-  ~ApplyAdaMax() = default;
-  MS_DECLARE_PARENT(ApplyAdaMax, PrimitiveC);
 };
-AbstractBasePtr ApplyAdaMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyAdaMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimApplyAdaMaxPtr = std::shared_ptr<ApplyAdaMax>;
 }  // namespace ops

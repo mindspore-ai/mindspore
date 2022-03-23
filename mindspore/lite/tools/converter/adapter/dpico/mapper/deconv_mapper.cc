@@ -28,13 +28,13 @@ constexpr int kDeconvKernelSize = 2;
 constexpr int kDeconvStrideSize = 2;
 constexpr int kDeconvDilationSize = 2;
 constexpr int kDeconvPadListSize = 4;
-STATUS DeconvMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                         const CNodePtrList &output_cnodes) {
+STATUS DeconvMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                         const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto deconv_prim = utils::cast<std::shared_ptr<ops::Conv2dTransposeFusion>>(prim);
+  auto deconv_prim = api::utils::cast<api::SharedPtr<ops::Conv2dTransposeFusion>>(prim);
   MS_ASSERT(deconv_prim != nullptr);
   auto kernel_size = deconv_prim->get_kernel_size();
   auto stride = deconv_prim->get_stride();

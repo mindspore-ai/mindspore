@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -31,7 +32,7 @@ void FakeQuantWithMinMaxVars::Init(const bool narrow_range, const int64_t num_bi
 }
 
 void FakeQuantWithMinMaxVars::set_narrow_range(const bool narrow_range) {
-  (void)this->AddAttr(kNarrowRange, MakeValue(narrow_range));
+  (void)this->AddAttr(kNarrowRange, api::MakeValue(narrow_range));
 }
 
 bool FakeQuantWithMinMaxVars::get_narrow_range() const {
@@ -40,7 +41,7 @@ bool FakeQuantWithMinMaxVars::get_narrow_range() const {
 }
 
 void FakeQuantWithMinMaxVars::set_num_bits(const int64_t num_bits) {
-  (void)this->AddAttr(kNumBits, MakeValue(num_bits));
+  (void)this->AddAttr(kNumBits, api::MakeValue(num_bits));
 }
 
 int64_t FakeQuantWithMinMaxVars::get_num_bits() const {
@@ -48,6 +49,7 @@ int64_t FakeQuantWithMinMaxVars::get_num_bits() const {
   return GetValue<int64_t>(value_ptr);
 }
 
+MIND_API_BASE_IMPL(FakeQuantWithMinMaxVars, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameFakeQuantWithMinMaxVars, FakeQuantWithMinMaxVars);
 }  // namespace ops
 }  // namespace mindspore

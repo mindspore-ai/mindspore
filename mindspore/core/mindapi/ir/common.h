@@ -47,5 +47,9 @@ using FuncGraphPtr = SharedPtr<FuncGraph>;
 
 class FuncGraphManager;
 using FuncGraphManagerPtr = SharedPtr<FuncGraphManager>;
+
+class CNode;
+using CNodePtr = SharedPtr<CNode>;
+using CNodePtrList = std::vector<CNodePtr>;
 }  // namespace mindspore::api
 #endif  // MINDSPORE_CORE_MINDAPI_IR_COMMON_H_

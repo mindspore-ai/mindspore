@@ -25,9 +25,11 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(FillV2, PrimitiveC, BaseOperator);
 abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "Input[0] only support tensor!";

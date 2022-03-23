@@ -18,22 +18,20 @@
 #define MINDSPORE_CORE_OPS_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
 #include <memory>
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseSoftmaxCrossEntropyWithLogits = "SparseSoftmaxCrossEntropyWithLogits";
 /// \brief Computes the softmax cross-entropy value between logits and sparse encoding labels.
 /// Refer to Python API @ref mindspore.ops.SparseSoftmaxCrossEntropyWithLogits for more details.
-class MS_CORE_API SparseSoftmaxCrossEntropyWithLogits : public PrimitiveC {
+class MIND_API SparseSoftmaxCrossEntropyWithLogits : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SparseSoftmaxCrossEntropyWithLogits);
   /// \brief Constructor.
-  SparseSoftmaxCrossEntropyWithLogits() : PrimitiveC(kNameSparseSoftmaxCrossEntropyWithLogits) {}
-  /// \brief Destructor.
-  ~SparseSoftmaxCrossEntropyWithLogits() = default;
-  MS_DECLARE_PARENT(SparseSoftmaxCrossEntropyWithLogits, PrimitiveC);
+  SparseSoftmaxCrossEntropyWithLogits() : BaseOperator(kNameSparseSoftmaxCrossEntropyWithLogits) {}
   /// \brief Init.
   /// Refer to the parameters of python API @ref mindspore.ops.SparseSoftmaxCrossEntropyWithLogits for the inputs.
   void Init(const bool is_grad = false);
@@ -44,9 +42,9 @@ class MS_CORE_API SparseSoftmaxCrossEntropyWithLogits : public PrimitiveC {
   /// \return is_grad.
   bool get_is_grad() const;
 };
-AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &,
-                                                         const PrimitivePtr &primitive,
-                                                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

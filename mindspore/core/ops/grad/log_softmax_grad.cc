@@ -17,6 +17,7 @@
 #include "ops/grad/log_softmax_grad.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -51,9 +52,10 @@ TypePtr LogSoftmaxGradInferType(const PrimitivePtr &prim, const std::vector<Abst
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(LogSoftmaxGrad, PrimitiveC, BaseOperator);
 void LogSoftmaxGrad::Init(const int64_t axis) { this->set_axis(axis); }
 
-void LogSoftmaxGrad::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void LogSoftmaxGrad::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t LogSoftmaxGrad::get_axis() const {
   auto value_ptr = GetAttr(kAxis);

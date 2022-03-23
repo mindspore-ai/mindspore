@@ -21,10 +21,10 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxWhereParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxWhereParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Where>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxWhereParser("Where", new OnnxWhereParser());

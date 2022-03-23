@@ -18,30 +18,25 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHashtableLookup = "HashtableLookup";
 /// \brief HashtableLookup defined HashtableLookup operator prototype.
-class MS_CORE_API HashtableLookup : public PrimitiveC {
+class MIND_API HashtableLookup : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(HashtableLookup);
   /// \brief Constructor.
-  HashtableLookup() : PrimitiveC(kNameHashtableLookup) {}
-
-  /// \brief Destructor.
-  ~HashtableLookup() = default;
-
-  MS_DECLARE_PARENT(HashtableLookup, PrimitiveC);
+  HashtableLookup() : BaseOperator(kNameHashtableLookup) {}
 
   /// \brief Method to init the op's attributes.
   void Init() const {}
 };
 
-AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

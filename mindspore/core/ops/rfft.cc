@@ -18,15 +18,17 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void Rfft::Init(const int64_t fft_length) { this->set_fft_length(fft_length); }
 
-void Rfft::set_fft_length(const int64_t fft_length) { (void)this->AddAttr(kFftLength, MakeValue(fft_length)); }
+void Rfft::set_fft_length(const int64_t fft_length) { (void)this->AddAttr(kFftLength, api::MakeValue(fft_length)); }
 
 int64_t Rfft::get_fft_length() const { return GetValue<int64_t>(GetAttr(kFftLength)); }
 
+MIND_API_BASE_IMPL(Rfft, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameRfft, Rfft);
 }  // namespace ops
 }  // namespace mindspore

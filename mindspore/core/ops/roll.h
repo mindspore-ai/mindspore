@@ -19,25 +19,22 @@
 #include <memory>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRoll = "Roll";
 /// \brief Rolls the elements of a tensor along an axis.
-class Roll : public PrimitiveC {
+class Roll : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Roll);
   /// \brief Constructor.
-  Roll() : PrimitiveC(kNameRoll) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Roll() = default;
-  MS_DECLARE_PARENT(Roll, PrimitiveC);
+  Roll() : BaseOperator(kNameRoll) { InitIOName({"input_x"}, {"output"}); }
 };
 
-AbstractBasePtr RollInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr RollInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_ROLL_H_

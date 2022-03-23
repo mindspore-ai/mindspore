@@ -20,26 +20,24 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSlice = "Slice";
 /// \brief Slices a tensor in the specified shape. Refer to Python API @ref mindspore.ops.Slice for more details.
-class MS_CORE_API Slice : public PrimitiveC {
+class MIND_API Slice : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Slice);
   /// \brief Constructor.
-  Slice() : PrimitiveC(kNameSlice) { InitIOName({"x", "begin", "size"}, {"output"}); }
-  /// \brief Destructor.
-  ~Slice() = default;
-  MS_DECLARE_PARENT(Slice, PrimitiveC);
+  Slice() : BaseOperator(kNameSlice) { InitIOName({"x", "begin", "size"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSlicePtr = std::shared_ptr<Slice>;
 }  // namespace ops
 }  // namespace mindspore

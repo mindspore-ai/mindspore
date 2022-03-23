@@ -46,7 +46,7 @@ class CaffeModelParser : public converter::ModelParser {
   STATUS ConvertLayers();
 
   static STATUS ConvertLayerQuantParams(const caffe::LayerParameter &layer, const caffe::LayerParameter &weight,
-                                        ops::PrimitiveC *primitive_c);
+                                        PrimitiveCPtr primitive_c);
 
   STATUS ConvertBlobs(const caffe::LayerParameter &layer, std::vector<ParameterPtr> *const_parameters);
 

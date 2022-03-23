@@ -24,6 +24,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -71,6 +72,8 @@ TypePtr BiasAddGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_x_type, prim_name);
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(BiasAddGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(BiasAddGradInferShape(primitive, input_args),

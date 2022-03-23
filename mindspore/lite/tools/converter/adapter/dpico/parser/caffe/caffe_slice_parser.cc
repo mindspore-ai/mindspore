@@ -23,8 +23,8 @@ namespace lite {
 namespace {
 const int kDefaultAxis = 1;
 }  // namespace
-ops::PrimitiveC *CaffeSliceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Split>();
+BaseOperatorPtr CaffeSliceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Split>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -53,7 +53,7 @@ ops::PrimitiveC *CaffeSliceParser::Parse(const caffe::LayerParameter &proto, con
     prim->set_axis(kDefaultAxis);
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeSliceParser("Slice", new CaffeSliceParser());

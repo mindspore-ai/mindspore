@@ -19,21 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamekBNTrainingReduce = "BNTrainingReduce";
-class BNTrainingReduce : public PrimitiveC {
+class MIND_API BNTrainingReduce : public BaseOperator {
  public:
-  BNTrainingReduce() : PrimitiveC(kNamekBNTrainingReduce) { InitIOName({"x"}, {"sum", "square_sum"}); }
-  ~BNTrainingReduce() = default;
-  MS_DECLARE_PARENT(BNTrainingReduce, PrimitiveC);
+  MIND_API_BASE_MEMBER(BNTrainingReduce);
+  BNTrainingReduce() : BaseOperator(kNamekBNTrainingReduce) { InitIOName({"x"}, {"sum", "square_sum"}); }
 };
-AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBNTrainingReduce = std::shared_ptr<BNTrainingReduce>;
 }  // namespace ops
 }  // namespace mindspore

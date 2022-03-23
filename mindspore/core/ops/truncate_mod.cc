@@ -25,6 +25,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -62,6 +63,7 @@ TypePtr TruncateModInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(TruncateMod, PrimitiveC, BaseOperator);
 AbstractBasePtr TruncateModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   auto shape = TruncateModInferShape(primitive, input_args);

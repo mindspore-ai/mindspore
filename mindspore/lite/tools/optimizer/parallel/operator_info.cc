@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/parallel/operator_info.h"
 #include <algorithm>
 #include "tools/optimizer/parallel/split_strategy.h"
@@ -24,6 +25,7 @@
 #include "base/core_ops.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -119,7 +121,9 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(index);
     MS_CHECK_TRUE_RET(abstract_scalar != nullptr, lite::RET_ERROR);
     idx->set_abstract(abstract_scalar);
-    auto tuple_getitem = func_graph_->NewCNode({NewValueNode(std::make_shared<ops::TupleGetItem>()), node, idx});
+    auto tuple_node = std::make_shared<ops::TupleGetItem>();
+    auto tuple_prim_c = tuple_node->GetPrim();
+    auto tuple_getitem = func_graph_->NewCNode({NewValueNode(tuple_prim_c), node, idx});
     if (tuple_getitem == nullptr) {
       MS_LOG(ERROR) << name_ << " : Failed to create output nodes.";
       return lite::RET_ERROR;
@@ -142,8 +146,10 @@ AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std:
   }
   auto concat_prim = std::make_shared<ops::Concat>();
   MS_CHECK_TRUE_RET(concat_prim != nullptr, nullptr);
+  auto concat_prim_c = concat_prim->GetPrim();
+  MS_CHECK_TRUE_RET(concat_prim_c != nullptr, nullptr);
   concat_prim->set_axis(concat_dim);
-  auto value_node = NewValueNode(concat_prim);
+  auto value_node = NewValueNode(concat_prim_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> concat_inputs = {value_node};
   (void)std::transform(input_nodes.begin(), input_nodes.end(), std::back_inserter(concat_inputs),
@@ -170,7 +176,9 @@ AnfNodePtr OperatorInfo::CreateReduceNode(const CNodePtr &orig_node, const std::
   // addup inputs element-wise
   auto addn_prim = std::make_shared<ops::AddN>();
   MS_CHECK_TRUE_RET(addn_prim != nullptr, nullptr);
-  auto value_node = NewValueNode(addn_prim);
+  auto addn_prim_c = addn_prim->GetPrim();
+  MS_CHECK_TRUE_RET(addn_prim_c != nullptr, nullptr);
+  auto value_node = NewValueNode(addn_prim_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> addn_inputs = {value_node};
   (void)std::transform(input_nodes.begin(), input_nodes.end(), std::back_inserter(addn_inputs),

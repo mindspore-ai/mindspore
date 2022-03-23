@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFRandomStandardNormalParser::Parse(const tensorflow::NodeDef &tf_op,
-                                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                                     std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFRandomStandardNormalParser::Parse(const tensorflow::NodeDef &tf_op,
+                                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                                  std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::RandomStandardNormal>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
@@ -46,7 +46,7 @@ ops::PrimitiveC *TFRandomStandardNormalParser::Parse(const tensorflow::NodeDef &
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 TFNodeRegistrar g_tfRandomStandardNormalParser("RandomStandardNormal", new TFRandomStandardNormalParser());
 }  // namespace lite

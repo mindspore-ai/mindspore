@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteWhileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = std::make_unique<While>();
+PrimitiveCPtr TfliteWhileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                       const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_shared<While>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   const auto &tflite_attr = tflite_op->builtin_options.AsWhileOptions();
@@ -37,7 +37,7 @@ ops::PrimitiveC *TfliteWhileParser::Parse(const std::unique_ptr<tflite::Operator
   prim->set_cond_subgraph_index(tflite_attr->cond_subgraph_index);
   prim->set_body_subgraph_index(tflite_attr->body_subgraph_index);
 
-  return prim.release();
+  return prim;
 }
 
 TfliteNodeRegister g_tfliteWhileParser(tflite::BuiltinOperator_WHILE, new TfliteWhileParser());

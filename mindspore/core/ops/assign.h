@@ -19,21 +19,18 @@
 #include <memory>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAssign = "Assign";
 /// \brief Assigns Parameter with a value. Refer to Python API @ref mindspore.ops.Assign for more details.
-class MS_CORE_API Assign : public PrimitiveC {
+class MIND_API Assign : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Assign);
   /// \brief Constructor.
-  Assign() : PrimitiveC(kNameAssign) { InitIOName({"ref", "value"}, {"output"}); }
-  /// \brief Destructor.
-  ~Assign() = default;
-  MS_DECLARE_PARENT(Assign, PrimitiveC);
+  Assign() : BaseOperator(kNameAssign) { InitIOName({"ref", "value"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Assign for the inputs.
   void Init() const {}
 };

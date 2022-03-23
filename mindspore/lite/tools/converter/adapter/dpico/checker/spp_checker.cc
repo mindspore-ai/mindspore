@@ -20,14 +20,14 @@
 
 namespace mindspore {
 namespace dpico {
-bool SppChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+bool SppChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   if (primitive->GetAttr(dpico::kPoolMethod) != nullptr) {
-    auto pool_method = GetValue<int32_t>(primitive->GetAttr(dpico::kPoolMethod));
+    auto pool_method = api::GetValue<int64_t>(primitive->GetAttr(dpico::kPoolMethod));
     if (pool_method != 0 && pool_method != 1) {
       MS_LOG(WARNING) << "only supports max && ave pool by dpico. " << op->fullname_with_scope();
       return false;

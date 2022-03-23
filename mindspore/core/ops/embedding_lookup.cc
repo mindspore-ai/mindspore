@@ -19,13 +19,15 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(EmbeddingLookup, PrimitiveC, BaseOperator);
 void EmbeddingLookup::Init(const bool setattr_flag) { this->set_setattr_flag(setattr_flag); }
 
 void EmbeddingLookup::set_setattr_flag(const bool setattr_flag) {
-  (void)this->AddAttr(kSetattrFlag, MakeValue(setattr_flag));
+  (void)this->AddAttr(kSetattrFlag, api::MakeValue(setattr_flag));
 }
 
 bool EmbeddingLookup::get_setattr_flag() const {

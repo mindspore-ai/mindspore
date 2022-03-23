@@ -24,8 +24,8 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS RnnMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                      const CNodePtrList &output_cnodes) {
+STATUS RnnMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                      const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -42,25 +42,25 @@ STATUS RnnMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_
   }
 
   if (prim->GetAttr(kNumOutput) != nullptr) {
-    rnn_operator->SetRecurrentNumOutput(GetValue<uint32_t>(prim->GetAttr(kNumOutput)));
+    rnn_operator->SetRecurrentNumOutput(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumOutput))));
   }
   if (prim->GetAttr(kExposeHidden) != nullptr) {
-    rnn_operator->SetRecurrentExposeHidden(GetValue<bool>(prim->GetAttr(kExposeHidden)));
+    rnn_operator->SetRecurrentExposeHidden(api::GetValue<bool>(prim->GetAttr(kExposeHidden)));
   }
   if (prim->GetAttr(kOutputLastFrameFlag) != nullptr) {
-    rnn_operator->SetOutputLastFrameFlag(GetValue<bool>(prim->GetAttr(kOutputLastFrameFlag)));
+    rnn_operator->SetOutputLastFrameFlag(api::GetValue<bool>(prim->GetAttr(kOutputLastFrameFlag)));
   }
   if (prim->GetAttr(kInitialHOnlineFlag) != nullptr) {
-    rnn_operator->SetInitialHOnlineFlag(GetValue<bool>(prim->GetAttr(kInitialHOnlineFlag)));
+    rnn_operator->SetInitialHOnlineFlag(api::GetValue<bool>(prim->GetAttr(kInitialHOnlineFlag)));
   }
   if (prim->GetAttr(kUseDefaultInitialHFlag) != nullptr) {
-    rnn_operator->SetUseDefaultInitialHFlag(GetValue<bool>(prim->GetAttr(kUseDefaultInitialHFlag)));
+    rnn_operator->SetUseDefaultInitialHFlag(api::GetValue<bool>(prim->GetAttr(kUseDefaultInitialHFlag)));
   }
   if (prim->GetAttr(kKeepDirectionDimFlag) != nullptr) {
-    rnn_operator->SetKeepDirectionDimFlag(GetValue<bool>(prim->GetAttr(kKeepDirectionDimFlag)));
+    rnn_operator->SetKeepDirectionDimFlag(api::GetValue<bool>(prim->GetAttr(kKeepDirectionDimFlag)));
   }
   if (prim->GetAttr(kHasOutputGateFlag) != nullptr) {
-    rnn_operator->SetHasOutputGateFlag(GetValue<bool>(prim->GetAttr(kHasOutputGateFlag)));
+    rnn_operator->SetHasOutputGateFlag(api::GetValue<bool>(prim->GetAttr(kHasOutputGateFlag)));
   }
   if (SetRecurrentDataInfo(cnode, rnn_operator.get()) != RET_OK) {
     MS_LOG(ERROR) << "set rnn data info failed.";

@@ -17,10 +17,14 @@
 #include "ops/fusion/embedding_lookup_fusion.h"
 #include <string>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void EmbeddingLookupFusion::set_max_norm(const float max_norm) { (void)this->AddAttr(kMaxNorm, MakeValue(max_norm)); }
+MIND_API_BASE_IMPL(EmbeddingLookupFusion, PrimitiveC, BaseOperator);
+void EmbeddingLookupFusion::set_max_norm(const float max_norm) {
+  (void)this->AddAttr(kMaxNorm, api::MakeValue(max_norm));
+}
 float EmbeddingLookupFusion::get_max_norm() const {
   auto value_ptr = GetAttr(kMaxNorm);
   MS_EXCEPTION_IF_NULL(value_ptr);

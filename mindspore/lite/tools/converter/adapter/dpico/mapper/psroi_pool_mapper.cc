@@ -24,8 +24,8 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS PsRoiPoolMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                            const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS PsRoiPoolMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                            const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -44,13 +44,13 @@ STATUS PsRoiPoolMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> 
 
   psroi_pool_operator->SetOpType(mapper::OpType::PSROI);
   if (prim->GetAttr(kSpatialScale) != nullptr) {
-    psroi_pool_operator->SetPsroiSpatialScale(GetValue<float>(prim->GetAttr(kSpatialScale)));
+    psroi_pool_operator->SetPsroiSpatialScale(api::GetValue<float>(prim->GetAttr(kSpatialScale)));
   }
   if (prim->GetAttr(kOutputDim) != nullptr) {
-    psroi_pool_operator->SetPsroiOutputDim(GetValue<int32_t>(prim->GetAttr(kOutputDim)));
+    psroi_pool_operator->SetPsroiOutputDim(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(kOutputDim))));
   }
   if (prim->GetAttr(kGroupSize) != nullptr) {
-    psroi_pool_operator->SetPsroiGroupSize(GetValue<int32_t>(prim->GetAttr(kGroupSize)));
+    psroi_pool_operator->SetPsroiGroupSize(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(kGroupSize))));
   }
 
   base_operators->push_back(std::move(psroi_pool_operator));

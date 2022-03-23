@@ -18,19 +18,18 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "ops/op_utils.h"
 #include "ops/clip.h"
 #include "op/clip_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS ClipMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                       const CNodePtrList &output_cnodes) {
+STATUS ClipMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                       const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto clip_prim = utils::cast<std::shared_ptr<ops::Clip>>(prim);
+  auto clip_prim = api::utils::cast<api::SharedPtr<ops::Clip>>(prim);
   MS_ASSERT(clip_prim != nullptr);
 
   auto clip_operator = std::make_unique<mapper::ClipOperator>();

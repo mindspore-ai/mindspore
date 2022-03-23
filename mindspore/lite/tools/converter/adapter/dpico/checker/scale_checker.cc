@@ -26,20 +26,20 @@ namespace {
 constexpr int kNegativeAxisCorrespondZero = -4;
 constexpr int kNegativeAxisCorrespondOne = -3;
 }  // namespace
-bool ScaleChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool ScaleChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, 1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
 
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   auto axis_ptr = primitive->GetAttr(ops::kAxis);
   if (axis_ptr != nullptr) {
-    auto axis_data = GetValue<int64_t>(axis_ptr);
+    auto axis_data = api::GetValue<int64_t>(axis_ptr);
     std::unordered_set<int64_t> range = {1, kNegativeAxisCorrespondOne, 0, kNegativeAxisCorrespondZero};
     if (range.find(axis_data) == range.end()) {
       MS_LOG(WARNING) << "axis val only supports 1/-3/0/-4 by dpico. " << op->fullname_with_scope();

@@ -21,9 +21,12 @@
 #include "ops/batch_norm.h"
 #include "abstract/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(BatchNorm, PrimitiveC, BaseOperator);
 void BatchNorm::Init(const bool is_training, const float epsilon, const float momentum, const Format &format) {
   set_is_training(is_training);
   set_epsilon(epsilon);
@@ -31,21 +34,23 @@ void BatchNorm::Init(const bool is_training, const float epsilon, const float mo
   set_momentum(momentum);
 }
 
-void BatchNorm::set_is_training(const bool is_training) { (void)this->AddAttr(kIsTraining, MakeValue(is_training)); }
+void BatchNorm::set_is_training(const bool is_training) {
+  (void)this->AddAttr(kIsTraining, api::MakeValue(is_training));
+}
 
 void BatchNorm::set_epsilon(const float epsilon) {
   CheckAndConvertUtils::CheckInRange<float>(kEpsilon, epsilon, kIncludeBoth, {0.0, 1.0}, this->name());
-  (void)this->AddAttr(kEpsilon, MakeValue(epsilon));
+  (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon));
 }
 
 void BatchNorm::set_format(const Format &format) {
   int64_t f = format;
-  (void)this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, api::MakeValue(f));
 }
 
 void BatchNorm::set_momentum(const float momentun) {
   CheckAndConvertUtils::CheckInRange<float>(kMomentum, momentun, kIncludeBoth, {0.0, 1.0}, this->name());
-  (void)this->AddAttr(kMomentum, MakeValue(momentun));
+  (void)this->AddAttr(kMomentum, api::MakeValue(momentun));
 }
 
 float BatchNorm::get_momentum() const {

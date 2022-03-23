@@ -17,12 +17,14 @@
 #include "ops/all_gather.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(AllGather, PrimitiveC, BaseOperator);
 void AllGather::set_group(const string &group) {
   std::string g = group;
-  (void)this->AddAttr(kGroup, MakeValue(g));
+  (void)this->AddAttr(kGroup, api::MakeValue(g));
 }
 std::string AllGather::get_group() const {
   auto value_ptr = GetAttr(kGroup);
@@ -30,7 +32,7 @@ std::string AllGather::get_group() const {
 }
 
 void AllGather::set_rank_size(int rank_size) {
-  (void)this->AddAttr(kRankSize, MakeValue(static_cast<int64_t>(rank_size)));
+  (void)this->AddAttr(kRankSize, api::MakeValue(static_cast<int64_t>(rank_size)));
 }
 int AllGather::get_rank_size() const {
   auto value_ptr = GetAttr(kRankSize);

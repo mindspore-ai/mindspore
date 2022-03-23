@@ -17,6 +17,7 @@
 #include "ops/apply_centered_rms_prop.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -106,6 +107,8 @@ TypePtr ApplyCenteredRMSPropInferType(const PrimitivePtr &primitive, const std::
   return var_dtype;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(ApplyCenteredRMSProp, PrimitiveC, BaseOperator);
 AbstractBasePtr ApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = ApplyCenteredRMSPropInferType(primitive, input_args);

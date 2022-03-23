@@ -15,15 +15,20 @@
  */
 
 #include "ops/stack.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void Stack::set_axis(const int64_t axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
+void Stack::set_axis(const int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t Stack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 void Stack::Init(const int64_t axis) { this->set_axis(axis); }
 
+MIND_API_BASE_IMPL(Stack, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameStack, Stack);
 }  // namespace ops
 }  // namespace mindspore

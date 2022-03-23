@@ -28,7 +28,7 @@ class CaffeSliceParser : public CaffeNodeParser {
   CaffeSliceParser() : CaffeNodeParser("slice") {}
   ~CaffeSliceParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

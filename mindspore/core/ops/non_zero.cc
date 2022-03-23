@@ -16,9 +16,12 @@
 
 #include <memory>
 #include "ops/non_zero.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(NonZero, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameNonZero, NonZero);
 }  // namespace ops
 }  // namespace mindspore

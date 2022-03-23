@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-#include <set>
 #include "ops/prelu.h"
+#include <set>
+#include <map>
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(PReLU, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNamePReLU, PReLU);
 }  // namespace ops
 }  // namespace mindspore

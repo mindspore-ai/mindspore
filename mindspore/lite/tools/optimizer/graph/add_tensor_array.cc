@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/add_tensor_array.h"
 #include <vector>
 #include <memory>
@@ -84,7 +85,9 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
     MS_LOG(ERROR) << "make_tuple_prim_ptr is nullptr";
     return lite::RET_NULL_PTR;
   }
-  auto make_tuple_vnode = NewValueNode(make_tuple_prim_ptr);
+  auto make_tuple_prim_c = make_tuple_prim_ptr->GetPrim();
+  MS_CHECK_TRUE_RET(make_tuple_prim_c != nullptr, lite::RET_NULL_PTR);
+  auto make_tuple_vnode = NewValueNode(make_tuple_prim_c);
   MS_CHECK_TRUE_RET(make_tuple_vnode != nullptr, lite::RET_NULL_PTR);
   auto make_tuple_cnode = func_graph->NewCNode({make_tuple_vnode, output_node, tensor_array_write_node});
   if (make_tuple_cnode == nullptr) {
@@ -99,7 +102,9 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
     MS_LOG(ERROR) << "return_prim_ptr is nullptr";
     return lite::RET_NULL_PTR;
   }
-  auto return_value_node = NewValueNode(return_prim_ptr);
+  auto return_prim_c = return_prim_ptr->GetPrim();
+  MS_CHECK_TRUE_RET(return_prim_c != nullptr, lite::RET_NULL_PTR);
+  auto return_value_node = NewValueNode(return_prim_c);
   MS_CHECK_TRUE_RET(return_value_node != nullptr, lite::RET_NULL_PTR);
   auto new_return_node = func_graph->NewCNode({return_value_node, make_tuple_cnode});
   MS_CHECK_TRUE_RET(new_return_node != nullptr, lite::RET_NULL_PTR);
@@ -165,12 +170,14 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
   // tensor_array
   auto tensor_array = std::make_shared<ops::TensorArray>();
   MS_CHECK_TRUE_RET(tensor_array != nullptr, nullptr);
+  auto tensor_array_c = tensor_array->GetPrim();
+  MS_CHECK_TRUE_RET(tensor_array_c != nullptr, nullptr);
   std::vector<int> element_shape;
   std::for_each(tensor_info->shape().begin(), tensor_info->shape().end(),
                 [&element_shape](int64_t v) { element_shape.push_back(static_cast<int>(v)); });
   tensor_array->set_element_shape(element_shape);
   tensor_array->set_data_type(tensor_info->data_type());
-  auto tensor_array_vnode = NewValueNode(tensor_array);
+  auto tensor_array_vnode = NewValueNode(tensor_array_c);
   MS_CHECK_TRUE_RET(tensor_array_vnode != nullptr, nullptr);
   auto num_tensors_vnode = NewValueNode(kDefaultNumTensors);
   MS_CHECK_TRUE_RET(num_tensors_vnode != nullptr, nullptr);
@@ -182,7 +189,9 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
   // {"handle", "index", "flow_in"} -> {"tensor"}
   auto tensor_array_read = std::make_shared<ops::TensorArrayRead>();
   MS_CHECK_TRUE_RET(tensor_array_read != nullptr, nullptr);
-  auto tensor_array_read_vnode = NewValueNode(tensor_array_read);
+  auto tensor_array_read_c = tensor_array_read->GetPrim();
+  MS_CHECK_TRUE_RET(tensor_array_read_c != nullptr, nullptr);
+  auto tensor_array_read_vnode = NewValueNode(tensor_array_read_c);
   MS_CHECK_TRUE_RET(tensor_array_read_vnode != nullptr, nullptr);
   auto read_index_vnode = NewValueNode(kDefaultIndex);
   MS_CHECK_TRUE_RET(read_index_vnode != nullptr, nullptr);
@@ -198,7 +207,9 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
   // {"handle", "index", "value", "flow_in"} -> {"flow_out"}
   auto tensor_array_write = std::make_shared<ops::TensorArrayWrite>();
   MS_CHECK_TRUE_RET(tensor_array_write != nullptr, nullptr);
-  auto tensor_array_write_vnode = NewValueNode(tensor_array_write);
+  auto tensor_array_write_c = tensor_array_write->GetPrim();
+  MS_CHECK_TRUE_RET(tensor_array_write_c != nullptr, nullptr);
+  auto tensor_array_write_vnode = NewValueNode(tensor_array_write_c);
   MS_CHECK_TRUE_RET(tensor_array_write_vnode != nullptr, nullptr);
   auto write_index_vnode = NewValueNode(kDefaultIndex);
   MS_CHECK_TRUE_RET(write_index_vnode != nullptr, nullptr);

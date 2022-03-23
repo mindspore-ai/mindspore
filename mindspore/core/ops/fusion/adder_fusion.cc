@@ -16,9 +16,11 @@
 
 #include "ops/fusion/adder_fusion.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(AdderFusion, PrimitiveC, Adder);
 void AdderFusion::Init(const int64_t in_channel, const int64_t out_channel, const std::vector<int64_t> &kernel_size,
                        const PadMode &pad_mode, const std::vector<int64_t> &stride,
                        const std::vector<int64_t> &pad_list, const std::vector<int64_t> &dilation, const int64_t group,
@@ -37,7 +39,7 @@ void AdderFusion::Init(const int64_t in_channel, const int64_t out_channel, cons
 
 void AdderFusion::set_activation_type(const ActivationType activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 ActivationType AdderFusion::get_activation_type() const {

@@ -18,33 +18,33 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include "mindapi/ir/tensor.h"
 #include "common/op_attr.h"
-#include "ops/op_utils.h"
 #include "op/normalize_operator.h"
 
 namespace mindspore {
 namespace dpico {
 namespace {
-STATUS SetNormalizeDataInfo(const CNodePtr &cnode, mapper::NormalizeOperator *normalize_operator) {
+STATUS SetNormalizeDataInfo(const api::CNodePtr &cnode, mapper::NormalizeOperator *normalize_operator) {
   if (normalize_operator == nullptr) {
     MS_LOG(ERROR) << "normalize_operator is nullptr.";
     return RET_ERROR;
   }
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
-    AnfNodePtr input_node = cnode->input(i);
-    if (utils::isa<CNode>(input_node)) {
+    api::AnfNodePtr input_node = cnode->input(i);
+    if (api::utils::isa<api::CNode>(input_node)) {
       MS_LOG(INFO) << "cnode don't have blobs";
       continue;
     }
-    if (utils::isa<ParameterPtr>(input_node)) {
-      auto input_param_node = input_node->cast<ParameterPtr>();
+    if (api::utils::isa<api::ParameterPtr>(input_node)) {
+      auto input_param_node = input_node->cast<api::ParameterPtr>();
       if (!input_param_node->has_default()) {
         MS_LOG(INFO) << "graph input don't have blobs";
         continue;
       }
-      auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(input_param_node->default_param());
+      auto tensor_info = input_param_node->default_param()->cast<api::TensorPtr>();
       if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
-        auto raw_datas = static_cast<float *>(tensor_info->data_c());
+        auto raw_datas = static_cast<float *>(tensor_info->data());
         auto elem_count = tensor_info->DataSize();
         normalize_operator->SetNormScaleVec(std::vector<float>(raw_datas, raw_datas + elem_count));
       } else {
@@ -56,8 +56,8 @@ STATUS SetNormalizeDataInfo(const CNodePtr &cnode, mapper::NormalizeOperator *no
   return RET_OK;
 }
 }  // namespace
-STATUS NormalizeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                            const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS NormalizeMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                            const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -76,16 +76,16 @@ STATUS NormalizeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> 
 
   normalize_operator->SetOpType(mapper::OpType::NORMALIZE);
   if (prim->GetAttr(dpico::kAcrossSpatial) != nullptr) {
-    normalize_operator->SetNormAcrossSpatial(GetValue<bool>(prim->GetAttr(dpico::kAcrossSpatial)));
+    normalize_operator->SetNormAcrossSpatial(api::GetValue<bool>(prim->GetAttr(dpico::kAcrossSpatial)));
   }
   if (prim->GetAttr(dpico::kChannelShared) != nullptr) {
-    normalize_operator->SetNormChannelShared(GetValue<bool>(prim->GetAttr(dpico::kChannelShared)));
+    normalize_operator->SetNormChannelShared(api::GetValue<bool>(prim->GetAttr(dpico::kChannelShared)));
   }
   if (prim->GetAttr(dpico::kSqrtA) != nullptr) {
-    normalize_operator->SetNormAlpha(GetValue<float>(prim->GetAttr(dpico::kSqrtA)));
+    normalize_operator->SetNormAlpha(api::GetValue<float>(prim->GetAttr(dpico::kSqrtA)));
   }
   if (prim->GetAttr(ops::kEps) != nullptr) {
-    normalize_operator->SetNormEps(GetValue<float>(prim->GetAttr(ops::kEps)));
+    normalize_operator->SetNormEps(api::GetValue<float>(prim->GetAttr(ops::kEps)));
   }
 
   if (SetNormalizeDataInfo(cnode, normalize_operator.get()) != RET_OK) {

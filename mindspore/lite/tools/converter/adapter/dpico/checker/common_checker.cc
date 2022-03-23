@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace dpico {
-bool CommonChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool CommonChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, 1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;

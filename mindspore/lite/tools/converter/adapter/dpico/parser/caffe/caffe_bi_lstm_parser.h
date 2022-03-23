@@ -28,7 +28,7 @@ class CaffeBiLstmParser : public CaffeNodeParser {
   CaffeBiLstmParser() : CaffeNodeParser("BiLstm") {}
   ~CaffeBiLstmParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  BaseOperatorPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

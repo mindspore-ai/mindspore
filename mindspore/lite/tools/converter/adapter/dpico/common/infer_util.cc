@@ -17,7 +17,7 @@
 #include "common/infer_util.h"
 #include <iostream>
 #include <vector>
-#include "utils/log_adapter.h"
+#include "mindapi/base/logging.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_ERROR;

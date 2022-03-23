@@ -16,28 +16,28 @@
 
 #include "checker/log_checker.h"
 #include <vector>
-#include <string>
 #include <limits>
+#include <cmath>
 #include "common/op_enum.h"
 
 namespace mindspore {
 namespace dpico {
-bool LogChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool LogChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, kInputIndex1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
 
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   auto base_ptr = primitive->GetAttr(ops::kBase);
   if (base_ptr != nullptr) {
-    auto base_data = GetValue<float>(base_ptr);  // support -1.0 && any positive num but 1.0
-    if (fabs(base_data + 1.0) <= std::numeric_limits<float>::epsilon() ||
-        (base_data > 0 && fabs(base_data - 1.0) > std::numeric_limits<float>::epsilon())) {
+    auto base_data = api::GetValue<float>(base_ptr);  // support -1.0 && any positive num but 1.0
+    if (std::fabs(base_data + 1.0) <= std::numeric_limits<float>::epsilon() ||
+        (base_data > 0 && std::fabs(base_data - 1.0) > std::numeric_limits<float>::epsilon())) {
       return true;
     } else {
       MS_LOG(WARNING) << "base val only supports -1.0 or any positive num but 1.0 " << op->fullname_with_scope();

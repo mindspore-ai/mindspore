@@ -17,12 +17,14 @@
 #include "ops/all.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(All, PrimitiveC, BaseOperator);
 void All::Init(const int64_t keep_dims) { this->set_keep_dims(keep_dims); }
 
-void All::set_keep_dims(const int64_t keep_dims) { (void)this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
+void All::set_keep_dims(const int64_t keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }
 
 int64_t All::get_keep_dims() const {
   auto value_ptr = GetAttr(kKeepDims);

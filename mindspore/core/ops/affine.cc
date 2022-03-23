@@ -17,8 +17,11 @@
 #include "ops/affine.h"
 #include <vector>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Affine, PrimitiveC, BaseOperator);
 void Affine::Init(const std::vector<int64_t> &contexts, int64_t output_dim, bool transpose_a, bool transpose_b) {
   this->set_context(contexts);
   this->set_output_dim(output_dim);
@@ -27,17 +30,17 @@ void Affine::Init(const std::vector<int64_t> &contexts, int64_t output_dim, bool
 }
 
 void Affine::set_context(const std::vector<int64_t> &context) {
-  (void)this->AddAttr(kAffineContext, MakeValue(context));
+  (void)this->AddAttr(kAffineContext, api::MakeValue(context));
 }
 
-void Affine::set_output_dim(int64_t output_dim) { (void)this->AddAttr(kAffineOutputDim, MakeValue(output_dim)); }
+void Affine::set_output_dim(int64_t output_dim) { (void)this->AddAttr(kAffineOutputDim, api::MakeValue(output_dim)); }
 
-void Affine::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, MakeValue(transpose_a)); }
+void Affine::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, api::MakeValue(transpose_a)); }
 
-void Affine::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, MakeValue(transpose_b)); }
+void Affine::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, api::MakeValue(transpose_b)); }
 
 void Affine::set_activation_type(const ActivationType &activation_type) {
-  (void)this->AddAttr(kActivationType, MakeValue(static_cast<int64_t>(activation_type)));
+  (void)this->AddAttr(kActivationType, api::MakeValue(static_cast<int64_t>(activation_type)));
 }
 
 bool Affine::get_transpose_a() const {

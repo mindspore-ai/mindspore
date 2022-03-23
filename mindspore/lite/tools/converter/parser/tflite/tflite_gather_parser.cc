@@ -22,11 +22,13 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteGatherParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteGatherParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                        const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Gather>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
 
   const auto &tflite_attr = tflite_op->builtin_options.AsGatherOptions();
   if (tflite_attr == nullptr) {
@@ -35,9 +37,9 @@ ops::PrimitiveC *TfliteGatherParser::Parse(const std::unique_ptr<tflite::Operato
   }
   auto axis_value = MakeValue(static_cast<int32_t>(tflite_attr->axis));
   MS_CHECK_TRUE_RET(axis_value != nullptr, nullptr);
-  prim->AddAttr("axis", axis_value);
+  prim_c->AddAttr("axis", axis_value);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteGatherParser(tflite::BuiltinOperator_GATHER, new TfliteGatherParser());

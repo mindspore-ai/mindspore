@@ -16,23 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_ACTIVATION_H_
 #define MINDSPORE_CORE_OPS_ACTIVATION_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameActivation = "Activation";
 /// \brief Activation defined Activation operator prototype of lite.
-class MS_CORE_API Activation : public PrimitiveC {
+class MIND_API Activation : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Activation);
   /// \brief Constructor.
-  Activation() : PrimitiveC(kNameActivation) {}
-
-  /// \brief Destructor.
-  ~Activation() = default;
-
-  MS_DECLARE_PARENT(Activation, PrimitiveC);
+  Activation() : BaseOperator(kNameActivation) {}
 
   /// \brief Method to init the op's attributes.
   ///

@@ -36,8 +36,9 @@ CNodePtr NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
     MS_LOG(ERROR) << "create reshape failed.";
     return nullptr;
   }
-  reshape_prim->set_attr("shape", MakeValue(shape));
-  ValueNodePtr value_node = NewValueNode(reshape_prim);
+  auto prim_c = reshape_prim->GetPrim();
+  prim_c->set_attr("shape", MakeValue(shape));
+  ValueNodePtr value_node = NewValueNode(prim_c);
   MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "create valuenode return nullptr");
   auto new_parameter =
     opt::BuildIntVecParameterNode(func_graph, shape, input_node->fullname_with_scope() + "_reshape/shape");

@@ -23,6 +23,7 @@
 #include "ops/grad/resize_nearest_neighbor_grad.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -60,6 +61,8 @@ TypePtr ResizeNearestNeighborGradInferType(const PrimitivePtr &prim, const std::
   return input_args[0]->BuildType();
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(ResizeNearestNeighborGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr ResizeNearestNeighborGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();

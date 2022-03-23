@@ -22,10 +22,10 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxIfParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<If>();
+PrimitiveCPtr OnnxIfParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_shared<If>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim;
 }
 
 OnnxNodeRegistrar g_onnxIfParser("If", new OnnxIfParser());

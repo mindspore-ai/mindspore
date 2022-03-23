@@ -35,16 +35,18 @@ class UnifyFormatToNHWC {
   bool Run(const api::FuncGraphPtr &func_graph);
 
  private:
-  STATUS InsertPostTransNode(const api::FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
-  STATUS InsertPreTransNode(const api::FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
-  STATUS GenNewInput(const api::FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm, bool before,
-                     size_t index = 0);
+  STATUS InsertPostTransNode(const api::FuncGraphPtr &func_graph, const api::CNodePtr &cnode,
+                             const std::vector<int> &perm);
+  STATUS InsertPreTransNode(const api::FuncGraphPtr &func_graph, const api::CNodePtr &cnode,
+                            const std::vector<int> &perm);
+  STATUS GenNewInput(const api::FuncGraphPtr &func_graph, const api::CNodePtr &cnode, const std::vector<int> &perm,
+                     bool before, size_t index = 0);
   bool BasicProcess(const api::FuncGraphPtr &func_graph, bool main_graph);
-  void GetTransNodeFormatType(const CNodePtr &cnode, dpico::TransTypePair *trans_info);
+  void GetTransNodeFormatType(const api::CNodePtr &cnode, dpico::TransTypePair *trans_info);
   STATUS HandleGraphInput(const api::FuncGraphPtr &func_graph);
-  STATUS HandleGraphNode(const api::FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  STATUS ConvWeightFormatTrans(const api::FuncGraphPtr &graph, std::set<AnfNodePtr> *has_visited);
-  std::map<api::FuncGraphPtr, std::vector<AnfNodePtr>> sub_inputs_map_;
+  STATUS HandleGraphNode(const api::FuncGraphPtr &func_graph, const api::CNodePtr &cnode);
+  STATUS ConvWeightFormatTrans(const api::FuncGraphPtr &graph, std::set<api::AnfNodePtr> *has_visited);
+  std::map<api::FuncGraphPtr, std::vector<api::AnfNodePtr>> sub_inputs_map_;
 };
 }  // namespace lite
 }  // namespace mindspore

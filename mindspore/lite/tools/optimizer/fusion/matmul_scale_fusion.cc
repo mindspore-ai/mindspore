@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/matmul_scale_fusion.h"
 #include <memory>
 #include <vector>
@@ -21,6 +22,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quant_param_holder.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -50,7 +52,7 @@ int MatMulScaleFusion::CalNewBiasImpl(float *curr_weight_data, float *curr_bias_
 
 int MatMulScaleFusion::CalNewScaleImpl(float *curr_weight_data, std::vector<int64_t> prev_weight_shape,
                                        float *prev_weight_data, const AnfNodePtr &prim) const {
-  auto matmul_prim = GetValueNode<std::shared_ptr<ops::MatMul>>(prim);
+  auto matmul_prim = ops::GetOperator<ops::MatMul>(prim);
   auto trans_attr = matmul_prim->GetAttr(ops::kTransposeB);
   MS_CHECK_TRUE_RET(trans_attr != nullptr, RET_ERROR);
   bool transpose_b = matmul_prim->get_transpose_b();

@@ -20,17 +20,19 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/shared_ptr.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
+using BaseOperatorPtr = api::SharedPtr<ops::BaseOperator>;
 class NodeParserTest {
  public:
   NodeParserTest() = default;
 
   virtual ~NodeParserTest() {}
 
-  virtual ops::PrimitiveC *Parse() { return nullptr; }
+  virtual BaseOperatorPtr Parse() { return nullptr; }
 };
 using NodeParserTestPtr = std::shared_ptr<NodeParserTest>;
 

@@ -28,7 +28,7 @@ class CaffeScaleParser : public CaffeNodeParser {
   CaffeScaleParser() : CaffeNodeParser("scale") {}
   ~CaffeScaleParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 
  private:
   STATUS GetAxisIndex(const int32_t &axis, uint32_t *axis_index);

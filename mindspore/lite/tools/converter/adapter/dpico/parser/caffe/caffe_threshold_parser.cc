@@ -22,8 +22,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeThresholdParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeThresholdParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -33,11 +33,11 @@ ops::PrimitiveC *CaffeThresholdParser::Parse(const caffe::LayerParameter &proto,
   if (proto.has_threshold_param()) {
     const caffe::ThresholdParameter &threshold_param = proto.threshold_param();
     if (threshold_param.has_threshold()) {
-      prim->AddAttr(dpico::kThreshold, MakeValue<float>(threshold_param.threshold()));
+      prim->AddAttr(dpico::kThreshold, api::MakeValue<float>(threshold_param.threshold()));
     }
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeThresholdParser("Threshold", new CaffeThresholdParser());

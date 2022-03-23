@@ -163,7 +163,8 @@ FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::s
       MS_LOG(ERROR) << "GetReturnPrim return nullptr";
       return nullptr;
     }
-    auto value_node = NewValueNode(return_prim_ptr);
+    auto return_prim_c = return_prim_ptr->GetPrim();
+    auto value_node = NewValueNode(return_prim_c);
     MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
     std::vector<AnfNodePtr> op_inputs{value_node, node};  // If subgraph only has one output tensor
     auto return_cnode = graph->NewCNode(op_inputs);

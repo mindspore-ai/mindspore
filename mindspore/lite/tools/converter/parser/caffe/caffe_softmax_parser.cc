@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Softmax>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -34,7 +34,7 @@ ops::PrimitiveC *CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, c
     prim->set_axis({1});
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeSoftmaxParser("Softmax", new CaffeSoftmaxParser());

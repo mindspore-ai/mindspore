@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "mindspore/lite/tools/converter/quantizer/insert_quant_node_manager.h"
 #include <memory>
 #include <set>
@@ -43,8 +44,10 @@ ValueNodePtr InsertQuantNodeManager::NewQuantCastValueNode(int src_type, int dst
     quant_params_holder->set_input_quant_param(i, quant_params_in);
     quant_params_holder->set_output_quant_param(i, quant_params_in);
   }
-  prim_c->AddAttr("quant_params", quant_params_holder);
-  return NewValueNode(prim_c);
+  auto prim = prim_c->GetPrim();
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
+  prim->AddAttr("quant_params", quant_params_holder);
+  return NewValueNode(prim);
 }
 
 int InsertQuantNodeManager::InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t input_index,
@@ -164,9 +167,10 @@ int InsertQuantNodeManager::InsertQuantDtypeCastNode(const FuncGraphPtr &graph) 
 
 int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode,
                                                         size_t index) {
-  auto primitive_c = std::make_shared<ops::DynamicQuant>();
-  primitive_c->set_dst_type(dst_type_);
-  primitive_c->set_symmetric(symmetric_);
+  auto primitive = std::make_shared<ops::DynamicQuant>();
+  auto primitive_c = primitive->GetPrim();
+  primitive->set_dst_type(dst_type_);
+  primitive->set_symmetric(symmetric_);
   auto dynamic_quant_cnode = graph->NewCNode(primitive_c, {cnode->input(index)});
   auto name = cnode->fullname_with_scope() + "_dynamic_cast_node_" + to_string(index);
   dynamic_quant_cnode->set_fullname_with_scope(name);

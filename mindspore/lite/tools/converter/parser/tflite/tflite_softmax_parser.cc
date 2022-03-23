@@ -22,15 +22,15 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Softmax>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_axis({-1});
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteSoftmaxParser(tflite::BuiltinOperator_SOFTMAX, new TfliteSoftmaxParser());

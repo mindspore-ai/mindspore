@@ -22,24 +22,20 @@
 #include <string>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyGradientDescent = "ApplyGradientDescent";
-class ApplyGradientDescent : public PrimitiveC {
+class MIND_API ApplyGradientDescent : public BaseOperator {
  public:
-  ApplyGradientDescent() : PrimitiveC(kNameApplyGradientDescent) { InitIOName({"var", "alpha", "delta"}, {"var"}); }
-
-  ~ApplyGradientDescent() = default;
-
-  MS_DECLARE_PARENT(ApplyGradientDescent, PrimitiveC);
+  MIND_API_BASE_MEMBER(ApplyGradientDescent);
+  ApplyGradientDescent() : BaseOperator(kNameApplyGradientDescent) { InitIOName({"var", "alpha", "delta"}, {"var"}); }
 };
 
-AbstractBasePtr ApplyGradientDescentInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyGradientDescentInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimApplyGradientDescentPtr = std::shared_ptr<ApplyGradientDescent>;
 }  // namespace ops

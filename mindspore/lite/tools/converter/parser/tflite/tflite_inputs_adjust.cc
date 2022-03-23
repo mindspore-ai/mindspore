@@ -40,7 +40,7 @@ bool CheckResize(const CNodePtr &cnode) {
   if (!opt::CheckPrimitiveType(cnode, prim::kPrimResize)) {
     return false;
   }
-  auto prim_resize = GetValueNode<std::shared_ptr<ops::Resize>>(cnode->input(0));
+  auto prim_resize = ops::GetOperator<ops::Resize>(cnode->input(0));
   if (prim_resize == nullptr || prim_resize->GetAttr(ops::kNewHeight) == nullptr ||
       prim_resize->GetAttr(ops::kNewWidth) == nullptr) {
     return false;

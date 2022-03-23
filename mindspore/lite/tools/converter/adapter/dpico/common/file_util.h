@@ -31,7 +31,7 @@
 #include <fstream>
 #include <map>
 #include "include/errorcode.h"
-#include "utils/log_adapter.h"
+#include "mindapi/base/logging.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;

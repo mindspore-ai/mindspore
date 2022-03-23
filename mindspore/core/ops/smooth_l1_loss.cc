@@ -22,15 +22,17 @@
 #include "ops/smooth_l1_loss.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(SmoothL1Loss, PrimitiveC, BaseOperator);
 void SmoothL1Loss::Init(const float beta) { this->set_beta(beta); }
-void SmoothL1Loss::set_beta(const float beta) { (void)this->AddAttr(kBeta, MakeValue(beta)); }
+void SmoothL1Loss::set_beta(const float beta) { (void)this->AddAttr(kBeta, api::MakeValue(beta)); }
 
 float SmoothL1Loss::get_beta() const {
   auto value_ptr = this->GetAttr(kBeta);
-  return GetValue<int32_t>(value_ptr);
+  return GetValue<float>(value_ptr);
 }
 
 namespace {

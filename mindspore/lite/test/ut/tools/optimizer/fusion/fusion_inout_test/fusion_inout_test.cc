@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/fusion_inout_test.h"
 #include <memory>
 #include "src/common/log_adapter.h"
@@ -101,7 +102,9 @@ CNodePtr FusionInoutTest::AddReturn(const FuncGraphPtr &graph, const std::vector
       MS_LOG(ERROR) << "new MakeTuple failed";
       return nullptr;
     }
-    auto return_input_cnode = graph->NewCNode(make_tuple_prim_ptr, return_inputs);
+    auto prim_c = make_tuple_prim_ptr->GetPrim();
+    MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
+    auto return_input_cnode = graph->NewCNode(prim_c, return_inputs);
     if (return_input_cnode == nullptr) {
       MS_LOG(ERROR) << "new make tuple cnode failed";
       return nullptr;
@@ -112,7 +115,9 @@ CNodePtr FusionInoutTest::AddReturn(const FuncGraphPtr &graph, const std::vector
 
   auto return_prim = std::make_shared<ops::Return>();
   MS_CHECK_TRUE_MSG(return_prim != nullptr, nullptr, "create return primitivec failed");
-  auto return_cnode = graph->NewCNode(return_prim, {return_input});
+  auto return_prim_c = return_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(return_prim_c != nullptr, nullptr, "prim_c is nullptr");
+  auto return_cnode = graph->NewCNode(return_prim_c, {return_input});
   MS_CHECK_TRUE_MSG(return_cnode != nullptr, nullptr, "create Return failed");
   return_cnode->set_fullname_with_scope("Return");
   graph->set_return(return_cnode);

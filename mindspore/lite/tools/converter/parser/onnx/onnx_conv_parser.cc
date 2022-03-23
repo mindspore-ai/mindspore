@@ -21,6 +21,7 @@
 #include <string>
 #include "ops/fusion/conv2d_fusion.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::lite {
 STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, int64_t group,
@@ -116,9 +117,11 @@ STATUS OnnxConvParser::ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t *
   return RET_OK;
 }
 
-ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Conv2DFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   prim->set_pad({0, 0, 0, 0});
   mindspore::Format format = mindspore::Format::NCHW;
   mindspore::PadMode pad_mode = mindspore::PadMode::PAD;
@@ -131,7 +134,7 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
     MS_LOG(ERROR) << "Parse onnx attribute failed.";
     return nullptr;
   }
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
   prim->set_pad_mode(pad_mode);
   prim->set_group(group);
 
@@ -140,7 +143,7 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
     return nullptr;
   }
   if (conv1d) {
-    prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCW));
+    prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCW));
   }
   prim->set_dilation({1, 1});
   if (!dilation.empty()) {
@@ -173,10 +176,10 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
   }
 
   if (group == channel_in && channel_in == channel_out) {
-    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxConvParser("Conv", new OnnxConvParser());

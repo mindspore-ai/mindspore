@@ -24,33 +24,33 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                      const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU);
   prim->set_min_val(0);
   prim->set_max_val(FLT_MAX);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                       const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::RELU6);
   prim->set_min_val(0);
   prim->set_max_val(kValueThreshold6);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                              const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
@@ -59,47 +59,47 @@ ops::PrimitiveC *TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::Oper
   MS_CHECK_TRUE_MSG(tflite_attr != nullptr, nullptr, "Get LeakyRelu attr failed.");
   prim->set_alpha(tflite_attr->alpha);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TflitePReLUParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TflitePReLUParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                       const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::PReLUFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_channel_shared(true);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TfliteTanhParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteTanhParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                      const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::TANH);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TfliteHardSwishParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                              const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteHardSwishParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::HSWISH);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TfliteLogisticParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteLogisticParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::SIGMOID);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_TfliteReluParser(tflite::BuiltinOperator_RELU, new TfliteReluParser());

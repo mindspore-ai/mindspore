@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_tuplegetitem_fusion.h"
 #include <memory>
 #include "tools/optimizer/common/gllo_utils.h"

@@ -17,12 +17,15 @@
 #include "ops/fusion/slice_fusion.h"
 #include <string>
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(SliceFusion, PrimitiveC, BaseOperator);
 void SliceFusion::Init(const std::vector<int64_t> &axes) { this->set_axes(axes); }
 
-void SliceFusion::set_axes(const std::vector<int64_t> &axes) { (void)this->AddAttr(kAxes, MakeValue(axes)); }
+void SliceFusion::set_axes(const std::vector<int64_t> &axes) { (void)this->AddAttr(kAxes, api::MakeValue(axes)); }
 
 std::vector<int64_t> SliceFusion::get_axes() const {
   auto value_ptr = GetAttr(kAxes);

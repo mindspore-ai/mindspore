@@ -18,10 +18,19 @@
 #include "common/common_test.h"
 #include "ut/tools/converter/registry/parser/model_parser_test.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "mindspore/core/ir/anf.h"
+#include "mindapi/ir/func_graph.h"
 
 using mindspore::converter::ConverterParameters;
 using mindspore::converter::kFmkTypeCaffe;
 namespace mindspore {
+namespace {
+FuncGraphPtr ConvertGraph(api::FuncGraphPtr func_graph) {
+  auto impl = func_graph->impl();
+  return std::dynamic_pointer_cast<FuncGraph>(impl);
+}
+}  // namespace
+
 class ModelParserRegistryTest : public mindspore::CommonTest {
  public:
   ModelParserRegistryTest() = default;
@@ -40,7 +49,8 @@ TEST_F(ModelParserRegistryTest, TestRegistry) {
   ConverterParameters converter_parameters;
   auto func_graph = model_parser->Parse(converter_parameters);
   ASSERT_NE(func_graph, nullptr);
-  auto node_list = func_graph->TopoSort(func_graph->get_return());
+  auto graph = ConvertGraph(func_graph);
+  auto node_list = graph->TopoSort(graph->get_return());
   std::vector<AnfNodePtr> cnode_list;
   for (auto &node : node_list) {
     if (node->isa<CNode>()) {

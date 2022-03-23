@@ -19,27 +19,24 @@
 #include <vector>
 #include <memory>
 #include <set>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRsqrt = "Rsqrt";
 /// \brief Computes reciprocal of square root of input tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Rsqrt for more details.
-class MS_CORE_API Rsqrt : public PrimitiveC {
+class MIND_API Rsqrt : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Rsqrt);
   /// \brief Constructor.
-  Rsqrt() : PrimitiveC(kNameRsqrt) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Rsqrt() = default;
-  MS_DECLARE_PARENT(Rsqrt, PrimitiveC);
+  Rsqrt() : BaseOperator(kNameRsqrt) { InitIOName({"x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr RsqrtInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr RsqrtInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimRsqrtPtr = std::shared_ptr<Rsqrt>;
 }  // namespace ops
 }  // namespace mindspore

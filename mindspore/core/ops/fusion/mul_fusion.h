@@ -17,22 +17,17 @@
 #ifndef MINDSPORE_CORE_OPS_MUL_FUSION_H_
 #define MINDSPORE_CORE_OPS_MUL_FUSION_H_
 #include "ops/mul.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMulFusion = "MulFusion";
 /// \brief MulFusion defined Mul operator prototype of lite.
-class MS_CORE_API MulFusion : public Mul {
+class MIND_API MulFusion : public Mul {
  public:
+  MIND_API_BASE_MEMBER(MulFusion);
   /// \brief Constructor.
   MulFusion() : Mul(kNameMulFusion) { InitIOName({"x", "y"}, {"output"}); }
-
-  /// \brief Destructor.
-  ~MulFusion() = default;
-
-  MS_DECLARE_PARENT(MulFusion, Mul);
 
   /// \brief Method to init the op's attributes.
   ///

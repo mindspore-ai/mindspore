@@ -22,24 +22,20 @@
 #include <string>
 #include <memory>
 #include <algorithm>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/primitive_infer_map.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSqueeze = "Squeeze";
 /// \brief Returns a tensor with the same data type but dimensions of 1 are removed based on axis.
 /// Refer to Python API @ref mindspore.ops.Squeeze for more details.
-class MS_CORE_API Squeeze : public PrimitiveC {
+class MIND_API Squeeze : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Squeeze);
   /// \brief Constructor.
-  Squeeze() : PrimitiveC(kNameSqueeze) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Squeeze() = default;
-  MS_DECLARE_PARENT(Squeeze, PrimitiveC);
+  Squeeze() : BaseOperator(kNameSqueeze) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Squeeze for the inputs.
   void Init(const std::vector<int64_t> &axis = {});
   /// \brief Set axis.
@@ -50,8 +46,8 @@ class MS_CORE_API Squeeze : public PrimitiveC {
   std::vector<int64_t> get_axis() const;
 };
 
-AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

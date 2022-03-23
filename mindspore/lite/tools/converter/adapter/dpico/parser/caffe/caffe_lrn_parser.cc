@@ -17,13 +17,13 @@
 #include "parser/caffe/caffe_lrn_parser.h"
 #include <memory>
 #include "common/op_attr.h"
-#include "ops/op_utils.h"
 #include "ops/lrn.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeLRNParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::LRN>();
+BaseOperatorPtr CaffeLRNParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::LRN>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -49,9 +49,9 @@ ops::PrimitiveC *CaffeLRNParser::Parse(const caffe::LayerParameter &proto, const
     }
     if (lrnParam.has_norm_region()) {
       if (lrnParam.norm_region() == caffe::LRNParameter_NormRegion::LRNParameter_NormRegion_WITHIN_CHANNEL) {
-        prim->AddAttr(ops::kNormRegion, MakeValue("WITHIN_CHANNEL"));
+        prim->AddAttr(ops::kNormRegion, api::MakeValue("WITHIN_CHANNEL"));
       } else if (lrnParam.norm_region() == caffe::LRNParameter_NormRegion::LRNParameter_NormRegion_ACROSS_CHANNELS) {
-        prim->AddAttr(ops::kNormRegion, MakeValue("ACROSS_CHANNELS"));
+        prim->AddAttr(ops::kNormRegion, api::MakeValue("ACROSS_CHANNELS"));
       } else {
         MS_LOG(ERROR) << "invalid norm region param. " << lrnParam.norm_region();
         return nullptr;
@@ -69,8 +69,8 @@ ops::PrimitiveC *CaffeLRNParser::Parse(const caffe::LayerParameter &proto, const
   prim->set_alpha(alpha);
   int two_sides = 2;
   prim->set_depth_radius(size / two_sides);
-  prim->AddAttr(dpico::kLrnK, MakeValue<float>(k));
-  return prim.release();
+  prim->AddAttr(dpico::kLrnK, api::MakeValue<float>(k));
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeLRNParser("LRN", new CaffeLRNParser());

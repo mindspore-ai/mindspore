@@ -22,11 +22,11 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto,
-                                                const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::FullConnection>();
-
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   prim->set_activation_type(mindspore::ActivationType::NO_ACTIVATION);
 
   const caffe::InnerProductParameter &innerProductParam = proto.inner_product_param();
@@ -37,7 +37,7 @@ ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &pro
   int64_t num_output = static_cast<int64_t>(innerProductParam.num_output());
   auto value_ptr = MakeValue(num_output);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim->AddAttr(ops::kNumOutput, value_ptr);
+  prim_c->AddAttr(ops::kNumOutput, value_ptr);
 
   if (innerProductParam.axis() == 1) {
     prim->set_axis(1);
@@ -50,7 +50,7 @@ ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &pro
     prim->set_has_bias(true);
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeInnerProductParser("InnerProduct", new CaffeInnerProductParser());

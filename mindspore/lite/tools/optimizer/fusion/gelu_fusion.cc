@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/gelu_fusion.h"
 #include <memory>
 #include <string>
@@ -34,11 +35,13 @@ CNodePtr GeLUFusion::CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNod
   MS_ASSERT(func_graph != nullptr && node != nullptr && equiv != nullptr);
   auto gelu_prim = std::make_shared<ops::Activation>();
   MS_CHECK_TRUE_RET(gelu_prim != nullptr, nullptr);
+  auto gelu_prim_c = gelu_prim->GetPrim();
+  MS_CHECK_TRUE_RET(gelu_prim_c != nullptr, nullptr);
   gelu_prim->set_activation_type(mindspore::GELU);
   gelu_prim->set_approximate(approximate_);
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
   MS_ASSERT(input_node != nullptr);
-  auto gelu_cnode = func_graph->NewCNode(gelu_prim, {input_node});
+  auto gelu_cnode = func_graph->NewCNode(gelu_prim_c, {input_node});
   MS_CHECK_TRUE_RET(gelu_cnode != nullptr, nullptr);
   gelu_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_gelu");
   if (node->abstract() != nullptr) {

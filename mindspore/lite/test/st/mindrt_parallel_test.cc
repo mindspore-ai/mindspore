@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "gtest/gtest.h"
 #include "common/common_test.h"
 #include "include/errorcode.h"

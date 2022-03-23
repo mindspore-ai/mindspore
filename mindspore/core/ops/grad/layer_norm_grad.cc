@@ -17,9 +17,11 @@
 #include "ops/grad/layer_norm_grad.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(LayerNormGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   // Inputs: five tensors(y_backprob, x, variance, mean, gamma).
@@ -43,10 +45,10 @@ void LayerNormGrad::Init(const int64_t begin_norm_axis, const int64_t begin_para
   this->set_begin_params_axis(begin_params_axis);
 }
 void LayerNormGrad::set_begin_norm_axis(const int64_t begin_norm_axis) {
-  (void)this->AddAttr(kBeginNormAxis, MakeValue(begin_norm_axis));
+  (void)this->AddAttr(kBeginNormAxis, api::MakeValue(begin_norm_axis));
 }
 void LayerNormGrad::set_begin_params_axis(const int64_t begin_params_axis) {
-  (void)this->AddAttr(kBeginParamsAxis, MakeValue(begin_params_axis));
+  (void)this->AddAttr(kBeginParamsAxis, api::MakeValue(begin_params_axis));
 }
 int64_t LayerNormGrad::get_begin_norm_axis() const {
   auto value_ptr = this->GetAttr(kBeginNormAxis);

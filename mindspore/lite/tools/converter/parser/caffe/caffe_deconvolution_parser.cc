@@ -22,15 +22,16 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto,
-                                                 const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
-
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+
   prim->set_pad({0, 0, 0, 0});
   auto value_ptr = MakeValue<int64_t>(mindspore::Format::NCHW);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
   prim->set_pad_mode(mindspore::PadMode::PAD);
   prim->set_output_paddings({0, 0});
 
@@ -87,14 +88,14 @@ ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &pr
   if (group != 1) {
     auto bool_ptr = MakeValue<bool>(true);
     MS_CHECK_TRUE_RET(bool_ptr != nullptr, nullptr);
-    prim->AddAttr(ops::kIsDepthWise, bool_ptr);
+    prim_c->AddAttr(ops::kIsDepthWise, bool_ptr);
   }
 
   int fmk_type = converter::FmkType::kFmkTypeCaffe;
   auto fmk_type_ptr = MakeValue(fmk_type);
   MS_CHECK_TRUE_RET(fmk_type_ptr != nullptr, nullptr);
-  prim->AddAttr(ops::kFmkType, fmk_type_ptr);
-  return prim.release();
+  prim_c->AddAttr(ops::kFmkType, fmk_type_ptr);
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeDeconvolutionParser("Deconvolution", new CaffeDeconvolutionParser());

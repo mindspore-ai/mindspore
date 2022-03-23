@@ -20,25 +20,23 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-class LayerNormBetaGammaBackpropV2 : public PrimitiveC {
+class LayerNormBetaGammaBackpropV2 : public BaseOperator {
  public:
-  LayerNormBetaGammaBackpropV2() : PrimitiveC(prim::kPrimLayerNormBetaGammaBackpropV2->name()) {}
-  ~LayerNormBetaGammaBackpropV2() = default;
-  MS_DECLARE_PARENT(LayerNormBetaGammaBackpropV2, PrimitiveC);
+  MIND_API_BASE_MEMBER(LayerNormBetaGammaBackpropV2);
+  LayerNormBetaGammaBackpropV2() : BaseOperator("LayerNormBetaGammaBackpropV2") {}
   void Init(const std::vector<int64_t> &shape_gamma);
   void set_shape_gamma(const std::vector<int64_t> &shape_gamma);
   std::vector<int64_t> get_shape_gamma() const;
 };
 
-AbstractBasePtr LayerNormBetaGammaBackpropV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LayerNormBetaGammaBackpropV2Infer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

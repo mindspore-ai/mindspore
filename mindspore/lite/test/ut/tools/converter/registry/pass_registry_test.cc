@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include <map>
 #include <string>
 #include <vector>
@@ -27,11 +28,18 @@
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ut/tools/converter/registry/parser/model_parser_test.h"
+#include "ops/op_utils.h"
 
 using mindspore::converter::ConverterParameters;
 using mindspore::converter::kFmkTypeCaffe;
 using mindspore::registry::POSITION_BEGIN;
 namespace mindspore {
+namespace {
+FuncGraphPtr ConvertGraph(api::FuncGraphPtr func_graph) {
+  auto impl = func_graph->impl();
+  return std::dynamic_pointer_cast<FuncGraph>(impl);
+}
+}  // namespace
 class PassRegistryTest : public mindspore::CommonTest {
  public:
   PassRegistryTest() = default;
@@ -59,7 +67,7 @@ class Test1Fusion : public registry::PassBase {
     if (!opt::CheckPrimitiveType(cnode, prim::kPrimAddFusion)) {
       return false;
     }
-    auto primc = GetValueNode<std::shared_ptr<ops::AddFusion>>(cnode->input(0));
+    auto primc = mindspore::ops::GetOperator<ops::AddFusion>(cnode->input(0));
     if (primc == nullptr) {
       return false;
     }
@@ -76,7 +84,7 @@ class Test1Fusion : public registry::PassBase {
         return false;
       }
       auto input_cnode = input->cast<CNodePtr>();
-      auto add_primc = GetValueNode<std::shared_ptr<ops::AddFusion>>(input_cnode->input(0));
+      auto add_primc = mindspore::ops::GetOperator<ops::AddFusion>(input_cnode->input(0));
       if (add_primc == nullptr) {
         return false;
       }
@@ -94,11 +102,12 @@ class Test1Fusion : public registry::PassBase {
     if (func_graph == nullptr) {
       return false;
     }
-    auto manager = api::FuncGraphManager::Manage(func_graph);
+    auto graph = ConvertGraph(func_graph);
+    auto manager = Manage(graph);
     if (manager == nullptr) {
       return false;
     }
-    auto node_list = api::FuncGraph::TopoSort(func_graph->get_return());
+    auto node_list = TopoSort(graph->get_return());
     for (auto &node : node_list) {
       if (!utils::isa<CNode>(node)) {
         continue;
@@ -120,7 +129,8 @@ class Test1Fusion : public registry::PassBase {
         }
       }
       auto primc = std::make_shared<ops::AddN>();
-      auto new_cnode = func_graph->NewCNode(primc, inputs);
+      auto primc_c = primc->GetPrim();
+      auto new_cnode = graph->NewCNode(primc_c, inputs);
       new_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
       new_cnode->set_abstract(cnode->abstract()->Clone());
       manager->Replace(node, new_cnode);
@@ -133,7 +143,7 @@ class Test1Fusion : public registry::PassBase {
 class Test2Fusion : public registry::PassBase {
  public:
   Test2Fusion() : PassBase("Test2Fusion") {}
-  AnfNodePtr CreateCustomOp(const api::FuncGraphPtr func_graph, const CNodePtr &cnode) {
+  AnfNodePtr CreateCustomOp(const FuncGraphPtr func_graph, const CNodePtr &cnode) {
     if (func_graph == nullptr || cnode == nullptr) {
       return nullptr;
     }
@@ -141,6 +151,7 @@ class Test2Fusion : public registry::PassBase {
     if (primc == nullptr) {
       return nullptr;
     }
+    auto primc_c = primc->GetPrim();
     primc->set_type("Custom_AddN");
     std::map<std::string, std::vector<uint8_t>> custom_attrs;
     std::string input_num = std::to_string(cnode->size() - 1);
@@ -152,7 +163,7 @@ class Test2Fusion : public registry::PassBase {
     primc->set_attr(custom_attrs);
     auto inputs = cnode->inputs();
     inputs.erase(inputs.begin());
-    auto custom_cnode = func_graph->NewCNode(primc, inputs);
+    auto custom_cnode = func_graph->NewCNode(primc_c, inputs);
     custom_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
     custom_cnode->set_abstract(cnode->abstract()->Clone());
     return custom_cnode;
@@ -162,11 +173,12 @@ class Test2Fusion : public registry::PassBase {
     if (func_graph == nullptr) {
       return false;
     }
-    auto manager = api::FuncGraphManager::Manage(func_graph);
+    auto graph = ConvertGraph(func_graph);
+    auto manager = Manage(graph);
     if (manager == nullptr) {
       return false;
     }
-    auto node_list = TopoSort(func_graph->get_return());
+    auto node_list = TopoSort(graph->get_return());
     for (auto &node : node_list) {
       if (!utils::isa<CNode>(node)) {
         continue;
@@ -175,7 +187,7 @@ class Test2Fusion : public registry::PassBase {
         continue;
       }
       auto cnode = node->cast<CNodePtr>();
-      auto custome_cnode = CreateCustomOp(func_graph, cnode);
+      auto custome_cnode = CreateCustomOp(graph, cnode);
       if (custome_cnode == nullptr) {
         return false;
       }
@@ -207,7 +219,8 @@ TEST_F(PassRegistryTest, TestRegistry) {
     ASSERT_EQ(ret, true);
   }
   std::vector<CNodePtr> cnode_list;
-  auto node_list = api::FuncGraph::TopoSort(func_graph_->get_return());
+  auto graph = ConvertGraph(func_graph_);
+  auto node_list = TopoSort(graph->get_return());
   for (auto &node : node_list) {
     ASSERT_NE(node, nullptr);
     if (node->isa<CNode>()) {
@@ -217,7 +230,7 @@ TEST_F(PassRegistryTest, TestRegistry) {
   ASSERT_EQ(cnode_list.size(), 2);
   bool is_custom = opt::CheckPrimitiveType(cnode_list.front(), prim::kPrimCustom);
   ASSERT_EQ(is_custom, true);
-  auto custome_prim = GetValueNode<std::shared_ptr<ops::Custom>>(cnode_list.front()->input(0));
+  auto custome_prim = mindspore::ops::GetOperator<ops::Custom>(cnode_list.front()->input(0));
   ASSERT_NE(custome_prim, nullptr);
   auto type = custome_prim->get_type();
   ASSERT_EQ(type, std::string("Custom_AddN"));

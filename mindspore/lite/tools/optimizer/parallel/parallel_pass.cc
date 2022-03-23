@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/parallel/parallel_pass.h"
 #include "include/errorcode.h"
 #include "ir/tensor.h"
 #include "tools/optimizer/parallel/operator_info_register.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
 
 namespace {
 constexpr auto kAnfPrimitiveIndex = 0;
-}
+}  // namespace
 
 bool ParallelPass::IsParallelCareNode(const AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);

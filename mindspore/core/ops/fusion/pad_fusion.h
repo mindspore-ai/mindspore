@@ -17,22 +17,17 @@
 #ifndef MINDSPORE_CORE_OPS_PAD_FUSION_H_
 #define MINDSPORE_CORE_OPS_PAD_FUSION_H_
 #include "ops/pad.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePadFusion = "PadFusion";
 /// \brief PadFusion defined Pad operator prototype of lite.
-class MS_CORE_API PadFusion : public Pad {
+class MIND_API PadFusion : public Pad {
  public:
+  MIND_API_BASE_MEMBER(PadFusion);
   /// \brief Constructor.
   PadFusion() : Pad(kNamePadFusion) { InitIOName({"x"}, {"y"}); }
-
-  /// \brief Destructor.
-  ~PadFusion() = default;
-
-  MS_DECLARE_PARENT(PadFusion, Pad);
 
   /// \brief Method to init the op's attributes.
   ///

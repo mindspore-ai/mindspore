@@ -20,27 +20,24 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalOr = "LogicalOr";
 /// \brief Computes the "logical OR" of two tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.LogicalOr for more details.
-class MS_CORE_API LogicalOr : public PrimitiveC {
+class MIND_API LogicalOr : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LogicalOr);
   /// \brief Constructor.
-  LogicalOr() : PrimitiveC(kNameLogicalOr) { InitIOName({"x1", "x2"}, {"y"}); }
-  /// \brief Destructor.
-  ~LogicalOr() = default;
-  MS_DECLARE_PARENT(LogicalOr, PrimitiveC);
+  LogicalOr() : BaseOperator(kNameLogicalOr) { InitIOName({"x1", "x2"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogicalOr for the inputs.
   void Init() const {}
 };
-AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimLogicalOrPtr = std::shared_ptr<LogicalOr>;
 }  // namespace ops
 }  // namespace mindspore

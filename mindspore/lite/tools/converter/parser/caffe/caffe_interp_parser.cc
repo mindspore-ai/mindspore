@@ -21,10 +21,12 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Resize>();
-
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+
   prim->set_method(mindspore::ResizeMethod::LINEAR);
   prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
 
@@ -48,9 +50,9 @@ ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, co
   }
 
   if (interp_param.has_zoom_factor()) {
-    prim->AddAttr("zoom_factor", MakeValue(interp_param.zoom_factor()));
+    prim_c->AddAttr("zoom_factor", MakeValue(interp_param.zoom_factor()));
   }
-  return prim.release();
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeInterpParser("Interp", new CaffeInterpParser());

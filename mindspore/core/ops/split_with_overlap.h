@@ -18,20 +18,17 @@
 #define MINDSPORE_CORE_OPS_SPLIT_WITH_OVERLAP_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
+
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSplitWithOverlap = "SplitWithOverlap";
 /// \brief All defined All operator prototype of lite.
-class MS_CORE_API SplitWithOverlap : public PrimitiveC {
+class MIND_API SplitWithOverlap : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SplitWithOverlap);
   /// \brief Constructor.
-  SplitWithOverlap() : PrimitiveC(kNameSplitWithOverlap) {}
-
-  /// \brief Destructor.
-  ~SplitWithOverlap() = default;
-  MS_DECLARE_PARENT(SplitWithOverlap, PrimitiveC);
+  SplitWithOverlap() : BaseOperator(kNameSplitWithOverlap) {}
 
   /// \brief Method to init the op's attributes.
   ///

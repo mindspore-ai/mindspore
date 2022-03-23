@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include <list>
 #include <string>
@@ -21,6 +22,7 @@
 #include <set>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
+#include "api/ir/func_graph.h"
 
 namespace mindspore::lite::quant {
 WeightQuantizer::~WeightQuantizer() {
@@ -89,7 +91,7 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
   CHECK_NULL_RETURN(cnode);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
-  auto manager = api::FuncGraphManager::Manage(func_graph, true);
+  auto manager = deprecated::api::FuncGraphManager::Manage(func_graph, true);
   CHECK_NULL_RETURN(manager);
   for (auto idx : weight_indices) {
     auto input = cnode->input(idx);

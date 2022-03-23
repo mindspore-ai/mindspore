@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace dpico {
-bool FullConnectionChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool FullConnectionChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, 1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
@@ -43,13 +43,13 @@ bool FullConnectionChecker::Check(CNodePtr op, int32_t output_num, mindspore::Fo
     return false;
   }
 
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   if (primitive->GetAttr(kNumOutput) != nullptr) {
-    auto num_output = GetValue<uint32_t>(primitive->GetAttr(kNumOutput));
+    auto num_output = api::GetValue<int64_t>(primitive->GetAttr(kNumOutput));
     if (num_output > kMaxNumOutput) {
       MS_LOG(WARNING) << "num_output val:" << num_output << " should be less than " << kMaxNumOutput << " "
                       << op->fullname_with_scope();

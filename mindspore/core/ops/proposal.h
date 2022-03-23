@@ -18,18 +18,16 @@
 #define MINDSPORE_CORE_OPS_PROPOSAL_H_
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameProposal = "Proposal";
-class MS_CORE_API Proposal : public PrimitiveC {
+class MIND_API Proposal : public BaseOperator {
  public:
-  Proposal() : PrimitiveC(kNameProposal) {}
-  ~Proposal() = default;
-  MS_DECLARE_PARENT(Proposal, PrimitiveC);
+  MIND_API_BASE_MEMBER(Proposal);
+  Proposal() : BaseOperator(kNameProposal) {}
 
   void Init(const float feat_stride, const float base_size, const float min_size, const std::vector<float> &ratio,
             const std::vector<float> &scale, const int64_t pre_nms_topn, const int64_t post_nms_topn,

@@ -20,6 +20,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -69,6 +70,7 @@ TypePtr MaskedFillInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(MaskedFill, PrimitiveC, BaseOperator);
 AbstractBasePtr MaskedFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(MaskedFillInferType(primitive, input_args),

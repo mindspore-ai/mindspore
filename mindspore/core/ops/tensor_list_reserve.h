@@ -17,23 +17,18 @@
 #ifndef MINDSPORE_CORE_OPS_TENSOR_LIST_RESERVE_H_
 #define MINDSPORE_CORE_OPS_TENSOR_LIST_RESERVE_H_
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListReserve = "TensorListReserve";
 /// \brief TensorListReserve defined TensorListReserve operator prototype of lite.
-class MS_CORE_API TensorListReserve : public PrimitiveC {
+class MIND_API TensorListReserve : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TensorListReserve);
   /// \brief Constructor.
-  TensorListReserve() : PrimitiveC(kNameTensorListReserve) {}
-
-  /// \brief Destructor.
-  ~TensorListReserve() = default;
-
-  MS_DECLARE_PARENT(TensorListReserve, PrimitiveC);
+  TensorListReserve() : BaseOperator(kNameTensorListReserve) {}
 
   /// \brief Method to init the op's attributes.
   ///

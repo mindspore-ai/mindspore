@@ -21,10 +21,10 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxAdderParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxAdderParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::AdderFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxAdderParser("adder_f", new OnnxAdderParser());

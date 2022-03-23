@@ -23,10 +23,12 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void LogSoftmax::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+MIND_API_BASE_IMPL(LogSoftmax, PrimitiveC, BaseOperator);
+void LogSoftmax::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t LogSoftmax::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 

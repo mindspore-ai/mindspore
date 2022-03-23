@@ -19,26 +19,23 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHShrink = "HShrink";
 /// \brief Applies the hard shrinkage function element-wise.
 /// Refer to Python API @ref mindspore.ops.HShrink for more details.
-class MS_CORE_API HShrink : public PrimitiveC {
+class MIND_API HShrink : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(HShrink);
   /// \brief Constructor.
-  HShrink() : PrimitiveC(kNameHShrink) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~HShrink() = default;
-  MS_DECLARE_PARENT(HShrink, PrimitiveC);
+  HShrink() : BaseOperator(kNameHShrink) { InitIOName({"input_x"}, {"output"}); }
 };
 
-AbstractBasePtr HShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr HShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_HSHRINK_H

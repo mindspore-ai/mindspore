@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_tuple_activation_fusion.h"
 #include <memory>
 #include "ops/fusion/activation.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 const BaseRef ConvTupleActivationFusion::DefinePattern() const {
@@ -50,9 +52,11 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
   if (!CheckPrimitiveType(act_node, prim::kPrimActivation)) {
     return nullptr;
   }
-  auto act_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(act_node->input(0));
+  auto act_prim = ops::GetOperator<mindspore::ops::Activation>(act_node->input(0));
   MS_ASSERT(act_prim != nullptr);
-  if (act_prim->GetAttr(ops::kActivationType) == nullptr ||
+  auto act_prim_c = act_prim->GetPrim();
+  MS_ASSERT(act_prim_c != nullptr);
+  if (act_prim_c->GetAttr(ops::kActivationType) == nullptr ||
       (act_prim->get_activation_type() != mindspore::RELU && act_prim->get_activation_type() != mindspore::RELU6)) {
     return nullptr;
   }
@@ -73,10 +77,13 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
       return nullptr;
     }
     if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
-      auto primc = GetValueNode<std::shared_ptr<mindspore::ops::Conv2DFusion>>(conv_cnode->input(0));
-      MS_ASSERT(primc != nullptr);
-      if (primc->GetAttr(ops::kActivationType) == nullptr || primc->get_activation_type() == mindspore::NO_ACTIVATION) {
-        primc->set_activation_type(act_prim->get_activation_type());
+      auto conv_prim = ops::GetOperator<mindspore::ops::Conv2DFusion>(conv_cnode->input(0));
+      MS_ASSERT(conv_prim != nullptr);
+      auto conv_prim_c = conv_prim->GetPrim();
+      MS_ASSERT(conv_prim_c != nullptr);
+      if (conv_prim_c->GetAttr(ops::kActivationType) == nullptr ||
+          conv_prim->get_activation_type() == mindspore::NO_ACTIVATION) {
+        conv_prim->set_activation_type(act_prim->get_activation_type());
         conv_node->set_abstract(act_node->abstract());
         return conv_node;
       }

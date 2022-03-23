@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/node_infershape.h"
 #include <memory>
 #include <vector>
@@ -28,6 +29,7 @@
 #include "src/registry/kernel_interface_registry.h"
 #include "tools/optimizer/graph/lite_tensor_extractor.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {

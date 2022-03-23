@@ -18,18 +18,16 @@
 #define MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchNormGrad = "BatchNormGrad";
-class MS_CORE_API BatchNormGrad : public PrimitiveC {
+class MIND_API BatchNormGrad : public BaseOperator {
  public:
-  BatchNormGrad() : PrimitiveC(kNameBatchNormGrad) {}
-  ~BatchNormGrad() = default;
-  MS_DECLARE_PARENT(BatchNormGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(BatchNormGrad);
+  BatchNormGrad() : BaseOperator(kNameBatchNormGrad) {}
   void Init(const bool is_training = false, const float epsilon = 1e-05);
   void set_is_training(const bool is_training);
   void set_epsilon(const float epsilon);
@@ -37,8 +35,8 @@ class MS_CORE_API BatchNormGrad : public PrimitiveC {
   float get_epsilon() const;
 };
 
-AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

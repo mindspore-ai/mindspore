@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::LRN>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   int64_t size = 0;
@@ -47,7 +47,7 @@ ops::PrimitiveC *OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const 
   alpha /= size;
   prim->set_alpha(alpha);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxLrnxParser("Lrn", new OnnxLrnParser());

@@ -19,10 +19,11 @@
 
 #include <set>
 #include <string>
-#include "ir/anf.h"
+#include "mindapi/ir/common.h"
+#include "mindapi/ir/anf.h"
 #include "include/api/format.h"
-#include "api/ir/func_graph.h"
-#include "utils/log_adapter.h"
+#include "mindapi/ir/func_graph.h"
+#include "mindapi/base/logging.h"
 #include "include/errorcode.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "google/protobuf/text_format.h"
@@ -32,8 +33,8 @@ namespace mindspore {
 namespace lite {
 void GetAllFuncGraph(const api::FuncGraphPtr &func_graph, std::set<api::FuncGraphPtr> *all_func_graphs);
 int PostAdjust(const std::set<api::FuncGraphPtr> &all_func_graphs);
-int UnifyConvWeightFormat(const api::FuncGraphPtr &graph, const CNodePtr &cnode, mindspore::Format src_format,
-                          mindspore::Format dst_format, std::set<AnfNodePtr> *has_visited);
+int UnifyConvWeightFormat(const api::FuncGraphPtr &graph, const api::CNodePtr &cnode, mindspore::Format src_format,
+                          mindspore::Format dst_format, std::set<api::AnfNodePtr> *has_visited);
 bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded_stream,
                                    google::protobuf::Message *proto);
 int ReadProtoFromText(const std::string &file, google::protobuf::Message *message);

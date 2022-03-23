@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/multi_head_attention_fusion.h"
 #include <functional>
 #include <utility>
@@ -262,7 +264,9 @@ CNodePtr MultiHeadAttentionFusion::CreateMultiHeadAttentionNode(const FuncGraphP
     MS_LOG(ERROR) << "Build attention primitive failed.";
     return nullptr;
   }
-  auto value_node = NewValueNode(attention_prim);
+  auto attention_prim_c = attention_prim->GetPrim();
+  MS_CHECK_TRUE_RET(attention_prim_c != nullptr, nullptr);
+  auto value_node = NewValueNode(attention_prim_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   auto input_q = utils::cast<AnfNodePtr>((*equiv)[input_q_]);
   auto input_k = utils::cast<AnfNodePtr>((*equiv)[input_k_]);
@@ -358,7 +362,9 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
     MS_LOG(ERROR) << "Build attention primitive failed.";
     return nullptr;
   }
-  auto value_node = NewValueNode(attention_prim);
+  auto attention_prim_c = attention_prim->GetPrim();
+  MS_CHECK_TRUE_RET(attention_prim_c != nullptr, nullptr);
+  auto value_node = NewValueNode(attention_prim_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   auto input_q = utils::cast<AnfNodePtr>((*equiv)[input_q_]);
   auto input_k = utils::cast<AnfNodePtr>((*equiv)[input_k_]);

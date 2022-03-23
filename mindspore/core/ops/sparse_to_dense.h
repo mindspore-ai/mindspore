@@ -18,27 +18,25 @@
 #define MINDSPORE_CORE_OPS_SPARSE_TO_DENSE_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseToDense = "SparseToDense";
 /// \brief Converts a sparse representation into a dense tensor.
 /// Refer to Python API @ref mindspore.ops.SparseToDense for more details.
-class MS_CORE_API SparseToDense : public PrimitiveC {
+class MIND_API SparseToDense : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SparseToDense);
   /// \brief Constructor.
-  SparseToDense() : PrimitiveC(kNameSparseToDense) { InitIOName({"indices", "values", "dense_shape"}, {"output"}); }
-  /// \brief Destructor.
-  ~SparseToDense() = default;
-  MS_DECLARE_PARENT(SparseToDense, PrimitiveC);
+  SparseToDense() : BaseOperator(kNameSparseToDense) { InitIOName({"indices", "values", "dense_shape"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

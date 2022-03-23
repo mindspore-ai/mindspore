@@ -16,8 +16,8 @@
 
 #include "checker/activation_checker.h"
 #include <vector>
-#include <string>
 #include <unordered_set>
+#include "mindapi/base/types.h"
 #include "common/op_enum.h"
 
 namespace mindspore {
@@ -27,12 +27,12 @@ const std::unordered_set<ActivationType> kSupportedActivationTypes = {
   ActivationType::RELU, ActivationType::RELU6,  ActivationType::LEAKY_RELU, ActivationType::SIGMOID,
   ActivationType::TANH, ActivationType::HSWISH, ActivationType::HARD_TANH,  ActivationType::ELU};
 }  // namespace
-bool ActivationChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool ActivationChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, 1, format, kMaxInputWOf4Dims)) {
     MS_LOG(INFO) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
@@ -42,7 +42,7 @@ bool ActivationChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format
     MS_LOG(ERROR) << "kActivationType attr is nullptr.";
     return false;
   }
-  auto activation_type = static_cast<mindspore::ActivationType>(GetValue<int64_t>(value_ptr));
+  auto activation_type = static_cast<mindspore::ActivationType>(api::GetValue<int64_t>(value_ptr));
   if (kSupportedActivationTypes.find(activation_type) == kSupportedActivationTypes.end()) {
     MS_LOG(WARNING) << "Not supported activation type: " << activation_type << ", will turn it to custom op. "
                     << op->fullname_with_scope();

@@ -27,7 +27,7 @@ namespace dpico {
 namespace {
 constexpr int kMaxReshapeInputW = 65536;
 }  // namespace
-bool ReshapeChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool ReshapeChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   std::vector<int64_t> input_shape;
   if (GetInputShapeFromCNode(op, kInputIndex1, &input_shape) == RET_OK && !input_shape.empty()) {
     int64_t input_w;
@@ -40,7 +40,7 @@ bool ReshapeChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format fo
       return false;
     }
   }
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
@@ -53,7 +53,7 @@ bool ReshapeChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format fo
 
   DataInfo data_info;
   std::vector<int64_t> shape_data;
-  auto shape_ptr = primitive->GetAttr(kShape);
+  auto shape_ptr = primitive->GetAttr(ops::kShape);
   if (op->inputs().size() > kInputIndex2 && FetchDataFromParameterNode(op, kInputIndex2, &data_info) == lite::RET_OK) {
     if (data_info.data_type_ != kNumberTypeInt32) {
       MS_LOG(ERROR) << "data_type not correct";
@@ -72,19 +72,19 @@ bool ReshapeChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format fo
     (void)std::transform(data, data + data_size, std::back_inserter(shape_data),
                          [](const int32_t &value) { return static_cast<int64_t>(value); });
   } else if (shape_ptr != nullptr) {
-    shape_data = GetValue<std::vector<int64_t>>(shape_ptr);
+    shape_data = api::GetValue<std::vector<int64_t>>(shape_ptr);
   } else {
     MS_LOG(ERROR) << "can't get shape value. " << op->fullname_with_scope();
     return false;
   }
-  primitive->AddAttr(kShape, MakeValue(shape_data));
+  primitive->AddAttr(ops::kShape, api::MakeValue(shape_data));
 
-  auto param_ptr = op->input(kInputIndex2)->cast<ParameterPtr>();
+  auto param_ptr = op->input(kInputIndex2)->cast<api::ParameterPtr>();
   if (param_ptr == nullptr) {
     MS_LOG(ERROR) << "param_ptr is nullptr. " << op->fullname_with_scope();
     return false;
   }
-  auto param_value = std::dynamic_pointer_cast<tensor::Tensor>(param_ptr->default_param());
+  auto param_value = param_ptr->default_param()->cast<api::TensorPtr>();
   if (param_value == nullptr) {
     MS_LOG(ERROR) << "param_value is nullptr." << op->fullname_with_scope();
     return false;

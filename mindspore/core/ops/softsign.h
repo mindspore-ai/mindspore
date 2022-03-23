@@ -19,19 +19,16 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftsign = "Softsign";
-class Softsign : public PrimitiveC {
+class MIND_API Softsign : public BaseOperator {
  public:
-  Softsign() : PrimitiveC(kNameSoftsign) { InitIOName({"x"}, {"output"}); }
-  ~Softsign() = default;
-  MS_DECLARE_PARENT(Softsign, PrimitiveC);
+  MIND_API_BASE_MEMBER(Softsign);
+  Softsign() : BaseOperator(kNameSoftsign) { InitIOName({"x"}, {"output"}); }
   void Init() {}
 };
 }  // namespace ops

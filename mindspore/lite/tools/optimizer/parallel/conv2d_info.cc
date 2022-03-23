@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/parallel/conv2d_info.h"
 #include <memory>
 #include <vector>
@@ -29,6 +30,7 @@
 #include "tools/optimizer/parallel/spliter.h"
 #include "tools/optimizer/fisson/fisson_util.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
@@ -91,7 +93,7 @@ int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
 }
 
 int Conv2DInfo::CheckIfSplit() {
-  auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  auto conv_prim = ops::GetOperator<ops::Conv2DFusion>(cnode_->input(kAnfPrimitiveIndex));
   MS_ASSERT(conv_prim != nullptr);
   auto strides = conv_prim->get_stride();
   std::vector<int64_t> weight_shape;
@@ -154,11 +156,13 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
   auto input_shapes = input_shape_iter->second;
   auto input_shape = input_shapes.front();
 
-  auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  auto conv_prim = ops::GetOperator<ops::Conv2DFusion>(cnode_->input(kAnfPrimitiveIndex));
   MS_ASSERT(conv_prim != nullptr);
   // prim of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
   MS_CHECK_TRUE_RET(split_prim != nullptr, nullptr);
+  auto split_prim_c = split_prim->GetPrim();
+  MS_CHECK_TRUE_RET(split_prim_c != nullptr, nullptr);
   std::vector<int64_t> new_splits = splits;
   if (split_mode_ == SplitH) {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
@@ -183,7 +187,7 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
   split_prim->set_number_split(split_num);
   split_prim->set_ratio(new_splits);
 
-  auto split_primitive = NewValueNode(split_prim);
+  auto split_primitive = NewValueNode(split_prim_c);
   MS_CHECK_TRUE_MSG(split_primitive != nullptr, nullptr, "create SplitWithOverlap return nullptr");
   std::vector<AnfNodePtr> split_inputs = {split_primitive};
   // ori_conv_node must only have one input
@@ -258,12 +262,12 @@ int Conv2DInfo::InferParallelCNodes() {
   }
   name_ = orig_name;
   parallel_output_nodes_.clear();
-  auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  auto conv_prim = ops::GetOperator<ops::Conv2DFusion>(cnode_->input(kAnfPrimitiveIndex));
   MS_ASSERT(conv_prim != nullptr);
   return ConstructOutputCNodes(conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs);
 }
 
-std::shared_ptr<ops::Conv2DFusion> Conv2DInfo::GetNewConvPrimitive(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+std::shared_ptr<ops::Conv2DFusion> Conv2DInfo::GetNewConvPrimitive(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                                                                    size_t dev_index, int cin_sum, int cout_sum) {
   auto prim = std::make_shared<ops::Conv2DFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -319,7 +323,7 @@ std::shared_ptr<ops::Conv2DFusion> Conv2DInfo::GetNewConvPrimitive(const std::sh
   return prim;
 }
 
-int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+int Conv2DInfo::ConstructOutputCNodes(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                                       const std::vector<AnfNodePtr> &feature_split_outputs,
                                       const std::vector<AnfNodePtr> &kernel_split_outputs,
                                       const std::vector<AnfNodePtr> &bias_split_outputs) {
@@ -343,6 +347,8 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
       MS_LOG(ERROR) << "Get new convolution primitive failed.";
       return RET_ERROR;
     }
+    auto prim_c = prim->GetPrim();
+    MS_CHECK_TRUE_RET(prim_c != nullptr, RET_ERROR);
     std::vector<AnfNodePtr> conv_inputs;
     // if split Cout, feature will not be splited
     if (split_mode_ == SplitCOUT) {
@@ -363,7 +369,8 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
         conv_inputs.push_back(cnode_->input(kAnfConvBias));
       }
     }
-    auto conv_cnode = func_graph_->NewCNode(prim, conv_inputs);
+
+    auto conv_cnode = func_graph_->NewCNode(prim_c, conv_inputs);
     if (conv_cnode == nullptr) {
       MS_LOG(ERROR) << name_ << " : Failed to create parallel Conv2D node " << i;
       return lite::RET_ERROR;

@@ -19,26 +19,23 @@
 #include <memory>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSplitV = "SplitV";
 /// \brief Splits the input tensor into num_split tensors along the given dimension.
 /// Refer to Python API @ref mindspore.ops.SplitV for more details.
-class SplitV : public PrimitiveC {
+class SplitV : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SplitV);
   /// \brief Constructor.
-  SplitV() : PrimitiveC(kNameSplitV) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~SplitV() = default;
-  MS_DECLARE_PARENT(SplitV, PrimitiveC);
+  SplitV() : BaseOperator(kNameSplitV) { InitIOName({"input_x"}, {"output"}); }
 };
 
-AbstractBasePtr SplitVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SplitVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_Split_V_H_

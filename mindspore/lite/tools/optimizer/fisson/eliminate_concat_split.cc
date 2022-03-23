@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include "tools/common/node_util.h"
 #include "tools/optimizer/fisson/eliminate_concat_split.h"
 #include "schema/inner/model_generated.h"
 #include "include/common/utils/utils.h"
@@ -28,6 +29,7 @@
 #include "tools/optimizer/parallel/spliter.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -72,9 +74,9 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
 
   size_t pre_inputs_size = pre_cnode->inputs().size();
   auto pre_inputs_node_size = static_cast<int64_t>(pre_inputs_size - 1);
-  auto pre_prim = GetValueNode<std::shared_ptr<ops::Concat>>(pre_cnode->input(kAnfPrimitiveIndex));
+  auto pre_prim = ops::GetOperator<mindspore::ops::Concat>(pre_cnode->input(kAnfPrimitiveIndex));
   MS_CHECK_TRUE_MSG(pre_prim != nullptr, lite::RET_ERROR, "pre_cnode is not a ops::Concat");
-  auto prim = GetValueNode<std::shared_ptr<ops::SplitWithOverlap>>(cnode->input(kAnfPrimitiveIndex));
+  auto prim = ops::GetOperator<mindspore::ops::SplitWithOverlap>(cnode->input(kAnfPrimitiveIndex));
   MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "cnode is not a ops::SplitWithOverlap");
   if (prim->get_number_split() != pre_inputs_node_size) {
     return RET_OK;
@@ -138,7 +140,8 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
 const BaseRef EliminateConcatSplit::DefinePattern() const {
   auto concat_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimConcat>);
   CHECK_NULL_RETURN(concat_var);
-  auto split_prim = std::make_shared<ops::SplitWithOverlap>();
+  ops::SplitWithOverlap split_node;
+  auto split_prim = split_node.GetPrim();
   CHECK_NULL_RETURN(split_prim);
   return VectorRef({split_prim, concat_var});
 }

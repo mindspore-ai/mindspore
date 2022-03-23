@@ -24,6 +24,7 @@
 #include "utils/tensor_construct_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -77,6 +78,8 @@ TypePtr BNTrainingReduceInferType(const PrimitivePtr &primitive, const std::vect
   return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, input_type});
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(BNTrainingReduce, PrimitiveC, BaseOperator);
 AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

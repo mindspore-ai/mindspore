@@ -18,6 +18,7 @@
 #include <set>
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -56,6 +57,7 @@ TypePtr SliceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(SliceGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr SliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(SliceGradInferShape(primitive, input_args), SliceGradInferType(primitive, input_args));

@@ -18,22 +18,20 @@
 #define MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_H_
 #include <memory>
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSmoothL1Loss = "SmoothL1Loss";
 /// \brief Computes smooth L1 loss, a robust L1 loss.
 /// Refer to Python API @ref mindspore.ops.SmoothL1Loss for more details.
-class MS_CORE_API SmoothL1Loss : public PrimitiveC {
+class MIND_API SmoothL1Loss : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SmoothL1Loss);
   /// \brief Constructor.
-  SmoothL1Loss() : PrimitiveC(kNameSmoothL1Loss) { InitIOName({"prediction", "target"}, {"output"}); }
-  /// \brief Destructor.
-  ~SmoothL1Loss() = default;
-  MS_DECLARE_PARENT(SmoothL1Loss, PrimitiveC);
+  SmoothL1Loss() : BaseOperator(kNameSmoothL1Loss) { InitIOName({"prediction", "target"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SmoothL1Loss for the inputs.
   void Init(const float beta);
   /// \brief Set beta.
@@ -43,8 +41,8 @@ class MS_CORE_API SmoothL1Loss : public PrimitiveC {
   /// \return beta.
   float get_beta() const;
 };
-AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSmoothL1LossPtr = std::shared_ptr<SmoothL1Loss>;
 }  // namespace ops
 }  // namespace mindspore

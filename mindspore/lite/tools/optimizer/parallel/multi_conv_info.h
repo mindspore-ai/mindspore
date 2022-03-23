@@ -35,7 +35,7 @@ class MultiConvSplit : public MultiNodeSplit {
 
   virtual AnfNodePtr SplitMultiConv(const AnfNodePtr &node) = 0;
 
-  virtual void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+  virtual void AdJustConvPrim(const api::SharedPtr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
                               int output_conv_index) = 0;
 
   virtual AnfNodePtr MultiConvNHSplit(const AnfNodePtr &node);
@@ -73,7 +73,7 @@ class MultiConvSplitN final : public MultiConvSplit {
   ~MultiConvSplitN() = default;
   AnfNodePtr SplitMultiConv(const AnfNodePtr &node) override;
 
-  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+  void AdJustConvPrim(const api::SharedPtr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
                       int output_conv_index) override {}
 };
 
@@ -84,7 +84,7 @@ class MultiConvSplitCIN final : public MultiConvSplit {
   ~MultiConvSplitCIN() = default;
   AnfNodePtr SplitMultiConv(const AnfNodePtr &node) override;
 
-  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+  void AdJustConvPrim(const api::SharedPtr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
                       int output_conv_index) override {}
 };
 
@@ -96,7 +96,7 @@ class MultiConvSplitCOUT final : public MultiConvSplit {
   ~MultiConvSplitCOUT() = default;
   AnfNodePtr SplitMultiConv(const AnfNodePtr &node) override;
 
-  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+  void AdJustConvPrim(const api::SharedPtr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
                       int output_conv_index) override {}
 };
 
@@ -107,7 +107,7 @@ class MultiConvSplitH final : public MultiConvSplit {
   ~MultiConvSplitH() = default;
   AnfNodePtr SplitMultiConv(const AnfNodePtr &node) override;
 
-  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
+  void AdJustConvPrim(const api::SharedPtr<ops::Conv2DFusion> &ori_attr, const ShapeVector &input_shape,
                       int output_conv_index) override;
 };
 

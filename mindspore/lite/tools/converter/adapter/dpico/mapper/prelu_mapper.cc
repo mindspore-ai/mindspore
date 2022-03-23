@@ -19,7 +19,6 @@
 #include <utility>
 #include <vector>
 #include "common/op_enum.h"
-#include "ops/op_utils.h"
 #include "common/fetch_content.h"
 #include "common/anf_util.h"
 #include "ops/fusion/prelu_fusion.h"
@@ -28,20 +27,21 @@
 namespace mindspore {
 namespace dpico {
 namespace {
-STATUS SetPReluDataInfo(const CNodePtr &cnode, const PrimitivePtr &prim, mapper::PreluOperator *prelu_operator) {
+STATUS SetPReluDataInfo(const api::CNodePtr &cnode, const api::PrimitivePtr &prim,
+                        mapper::PreluOperator *prelu_operator) {
   if (prim->GetAttr(ops::kSlope) != nullptr) {
-    prelu_operator->SetAlphaNegVec(GetValue<std::vector<float>>(prim->GetAttr(ops::kSlope)));
+    prelu_operator->SetAlphaNegVec(api::GetValue<std::vector<float>>(prim->GetAttr(ops::kSlope)));
   } else if (cnode->inputs().size() > kInputIndex2) {
     auto input_anode = cnode->input(kInputIndex2);
-    if (utils::isa<ParameterPtr>(input_anode)) {
-      auto input_param_node = input_anode->cast<ParameterPtr>();
+    if (api::utils::isa<api::ParameterPtr>(input_anode)) {
+      auto input_param_node = input_anode->cast<api::ParameterPtr>();
       if (input_param_node == nullptr) {
         MS_LOG(ERROR) << input_param_node->fullname_with_scope() << " is nullptr.";
         return RET_ERROR;
       }
-      auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(input_param_node->default_param());
+      auto tensor_info = input_param_node->default_param()->cast<api::TensorPtr>();
       if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
-        auto raw_datas = static_cast<float *>(tensor_info->data_c());
+        auto raw_datas = static_cast<float *>(tensor_info->data());
         auto elem_count = tensor_info->DataSize();
         prelu_operator->SetAlphaNegVec(std::vector<float>(raw_datas, raw_datas + elem_count));
       } else {
@@ -53,13 +53,13 @@ STATUS SetPReluDataInfo(const CNodePtr &cnode, const PrimitivePtr &prim, mapper:
   return RET_OK;
 }
 }  // namespace
-STATUS PReluMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                        const CNodePtrList &output_cnodes) {
+STATUS PReluMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                        const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto prelu_prim = utils::cast<std::shared_ptr<ops::PReLUFusion>>(prim);
+  auto prelu_prim = api::utils::cast<api::SharedPtr<ops::PReLUFusion>>(prim);
   MS_ASSERT(prelu_prim != nullptr);
 
   auto prelu_operator = std::make_unique<mapper::PreluOperator>();

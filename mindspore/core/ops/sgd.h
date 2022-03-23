@@ -18,22 +18,19 @@
 #define MINDSPORE_CORE_OPS_SGD_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSGD = "SGD";
 /// \brief Computes the stochastic gradient descent.
 /// Refer to Python API @ref mindspore.ops.SGD for more details.
-class MS_CORE_API SGD : public PrimitiveC {
+class MIND_API SGD : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SGD);
   /// \brief Constructor.
-  SGD() : PrimitiveC(kNameSGD) {}
-  /// \brief Destructor.
-  ~SGD() = default;
-  MS_DECLARE_PARENT(SGD, PrimitiveC);
+  SGD() : BaseOperator(kNameSGD) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SGD for the inputs.
   void Init(const float dampening = 0.0, const float weight_decay = 0.0, const bool nesterov = false);
   /// \brief Set dampening.
@@ -55,8 +52,8 @@ class MS_CORE_API SGD : public PrimitiveC {
   /// \return nesterov.
   bool get_nesterov() const;
 };
-AbstractBasePtr SGDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SGDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSGD = std::shared_ptr<SGD>;
 }  // namespace ops
 }  // namespace mindspore

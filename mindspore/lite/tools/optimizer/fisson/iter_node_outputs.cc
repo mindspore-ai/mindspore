@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fisson/iter_node_outputs.h"
 #include "tools/optimizer/parallel/spliter.h"
 #include "nnacl/op_base.h"

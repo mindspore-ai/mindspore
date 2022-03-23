@@ -19,9 +19,11 @@
 #include "ops/crop_and_resize.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(CropAndResize, PrimitiveC, BaseOperator);
 void CropAndResize::Init(ResizeMethod method, float extrapolation_value) {
   this->set_method(method);
   this->set_extrapolation_value(extrapolation_value);
@@ -29,11 +31,11 @@ void CropAndResize::Init(ResizeMethod method, float extrapolation_value) {
 
 void CropAndResize::set_method(ResizeMethod method) {
   auto swi = (int64_t)method;
-  (void)this->AddAttr(kMethod, MakeValue(swi));
+  (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 
 void CropAndResize::set_extrapolation_value(float extrapolation_value) {
-  (void)this->AddAttr(kExtrapolationValue, MakeValue(extrapolation_value));
+  (void)this->AddAttr(kExtrapolationValue, api::MakeValue(extrapolation_value));
 }
 
 ResizeMethod CropAndResize::get_method() const {

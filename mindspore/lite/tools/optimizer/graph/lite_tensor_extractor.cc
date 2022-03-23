@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/lite_tensor_extractor.h"
 #include <memory>
 #include <vector>

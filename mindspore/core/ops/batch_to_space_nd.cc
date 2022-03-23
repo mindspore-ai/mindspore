@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -94,6 +95,7 @@ TypePtr BatchToSpaceNDInferType(const std::vector<AbstractBasePtr> &input_args) 
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(BatchToSpaceND, PrimitiveC, BaseOperator);
 void BatchToSpaceND::set_crops(std::vector<std::vector<int64_t>> crops) {
   const int64_t crop_size = 2;
   (void)CheckAndConvertUtils::CheckInteger(kCrops, SizeToLong(crops.size()), kEqual, crop_size, this->name());
@@ -106,7 +108,7 @@ void BatchToSpaceND::set_crops(std::vector<std::vector<int64_t>> crops) {
       (void)CheckAndConvertUtils::CheckInteger(kCrops, crops[i][j], kGreaterEqual, 0, this->name());
     }
   }
-  (void)this->AddAttr(kCrops, MakeValue(crops));
+  (void)this->AddAttr(kCrops, api::MakeValue(crops));
 }
 
 std::vector<std::vector<int64_t>> BatchToSpaceND::get_crops() const {
@@ -120,7 +122,7 @@ void BatchToSpaceND::set_block_shape(std::vector<int64_t> block_shape) {
   for (size_t i = 0; i < block_shape.size(); i++) {
     (void)CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape[i], kGreaterEqual, 1, this->name());
   }
-  (void)this->AddAttr(kBlockShape, MakeValue(block_shape));
+  (void)this->AddAttr(kBlockShape, api::MakeValue(block_shape));
 }
 
 std::vector<int64_t> BatchToSpaceND::get_block_shape() const {

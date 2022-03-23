@@ -23,11 +23,13 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
-                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                     std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
+                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                  std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Cast>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   auto dst_type = TensorFlowUtils::ParseAttrDataType(tf_op, "DstT");
   if (dst_type == kTypeUnknown) {
     MS_LOG(ERROR) << "Get attr DstT failed";
@@ -36,7 +38,7 @@ ops::PrimitiveC *TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
   if (dst_type == kNumberTypeInt64) {
     dst_type = kNumberTypeInt32;
   }
-  prim->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
+  prim_c->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
@@ -44,7 +46,7 @@ ops::PrimitiveC *TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfCastParser("Cast", new TFCastParser());

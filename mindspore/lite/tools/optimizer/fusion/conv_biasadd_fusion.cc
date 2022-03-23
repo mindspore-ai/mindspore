@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include <functional>
 #include <memory>
@@ -21,6 +22,8 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore::opt {
 namespace {

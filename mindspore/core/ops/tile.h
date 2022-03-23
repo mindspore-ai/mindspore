@@ -21,27 +21,24 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameTile = prim::kTile;
+constexpr auto kNameTile = "Tile";
 /// \brief Replicates a tensor with given multiples times. Refer to Python API @ref mindspore.ops.Tile for more details.
-class MS_CORE_API Tile : public PrimitiveC {
+class MIND_API Tile : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Tile);
   /// \brief Constructor.
-  Tile() : PrimitiveC(kNameTile) { InitIOName({"x", "multiples"}, {"output"}); }
-  explicit Tile(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "multiples"}, {"output"}); }
-  /// \brief Destructor.
-  ~Tile() = default;
-  MS_DECLARE_PARENT(Tile, PrimitiveC);
+  Tile() : BaseOperator(kNameTile) { InitIOName({"x", "multiples"}, {"output"}); }
+  explicit Tile(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "multiples"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define USE_DEPRECATED_API
 #include "tools/converter/parser/parser_utils.h"
 #include <algorithm>
 #include <memory>
@@ -24,6 +25,7 @@
 #include "ops/apply_momentum.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/fusion/conv2d_backprop_input_fusion.h"
 #include "ops/sgd.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/conv1d_inout_adjust.h"
@@ -34,6 +36,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/format/to_format_base.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::lite {
 namespace {

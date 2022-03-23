@@ -21,24 +21,21 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief 3D Average pooling operation. Refer to Python API @ref mindspore.ops.AvgPool3D for more details.
-class MS_CORE_API AvgPool3D : public PrimitiveC {
+class MIND_API AvgPool3D : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(AvgPool3D);
   /// \brief Constructor.
-  AvgPool3D() : PrimitiveC(prim::kPrimAvgPool3D->name()) { InitIOName({"input"}, {"output"}); }
-  /// \brief Destructor.
-  ~AvgPool3D() = default;
-  MS_DECLARE_PARENT(AvgPool3D, PrimitiveC);
+  AvgPool3D() : BaseOperator("AvgPool3D") { InitIOName({"input"}, {"output"}); }
 };
 
-AbstractBasePtr AvgPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AvgPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

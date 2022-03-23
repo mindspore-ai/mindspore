@@ -20,18 +20,17 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDetectionPostProcess = "DetectionPostProcess";
-class MS_CORE_API DetectionPostProcess : public PrimitiveC {
+class MIND_API DetectionPostProcess : public BaseOperator {
  public:
-  DetectionPostProcess() : PrimitiveC(kNameDetectionPostProcess) {}
-  ~DetectionPostProcess() = default;
-  MS_DECLARE_PARENT(DetectionPostProcess, PrimitiveC);
+  MIND_API_BASE_MEMBER(DetectionPostProcess);
+  DetectionPostProcess() : BaseOperator(kNameDetectionPostProcess) {}
   void Init(const int64_t inputSize, const std::vector<float> &scale, const float NmsIouThreshold,
             const float NmsScoreThreshold, const int64_t MaxDetections, const int64_t DetectionsPerClass,
             const int64_t MaxClassesPerDetection, const int64_t NumClasses, const bool UseRegularNms,
@@ -62,8 +61,8 @@ class MS_CORE_API DetectionPostProcess : public PrimitiveC {
   bool get_out_quantized() const;
   Format get_format() const;
 };
-AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

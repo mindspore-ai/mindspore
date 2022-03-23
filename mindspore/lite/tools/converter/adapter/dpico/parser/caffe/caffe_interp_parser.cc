@@ -18,13 +18,13 @@
 #include <memory>
 #include "include/registry/converter_context.h"
 #include "common/op_attr.h"
-#include "ops/op_utils.h"
 #include "ops/resize.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Resize>();
+BaseOperatorPtr CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Resize>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -52,23 +52,23 @@ ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, co
   }
 
   if (interp_param.has_zoom_factor()) {
-    prim->AddAttr(dpico::kZoomFactor, MakeValue<int32_t>(interp_param.zoom_factor()));
+    prim->AddAttr(dpico::kZoomFactor, api::MakeValue<int64_t>(interp_param.zoom_factor()));
   }
 
   if (interp_param.has_shrink_factor()) {
-    prim->AddAttr(dpico::kShrinkFactor, MakeValue<int32_t>(interp_param.shrink_factor()));
+    prim->AddAttr(dpico::kShrinkFactor, api::MakeValue<int64_t>(interp_param.shrink_factor()));
   }
 
   if (interp_param.has_pad_beg()) {
-    prim->AddAttr(dpico::kPadBeg, MakeValue<int32_t>(interp_param.pad_beg()));
+    prim->AddAttr(dpico::kPadBeg, api::MakeValue<int64_t>(interp_param.pad_beg()));
   }
 
   if (interp_param.has_pad_end()) {
-    prim->AddAttr(dpico::kPadEnd, MakeValue<int32_t>(interp_param.pad_end()));
+    prim->AddAttr(dpico::kPadEnd, api::MakeValue<int64_t>(interp_param.pad_end()));
   }
   int fmk_type = converter::FmkType::kFmkTypeCaffe;
-  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
-  return prim.release();
+  prim->AddAttr(ops::kFmkType, api::MakeValue(static_cast<int64_t>(fmk_type)));
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeInterpParser("Interp", new CaffeInterpParser());

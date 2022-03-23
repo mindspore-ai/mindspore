@@ -19,23 +19,20 @@
 #include <memory>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAddcmul = "Addcmul";
-class Addcmul : public PrimitiveC {
+class MIND_API Addcmul : public BaseOperator {
  public:
-  Addcmul() : PrimitiveC(kNameAddcmul) { InitIOName({"input_data", "x1", "x2", "value"}, {"output"}); }
-  ~Addcmul() = default;
-  MS_DECLARE_PARENT(Addcmul, PrimitiveC);
+  MIND_API_BASE_MEMBER(Addcmul);
+  Addcmul() : BaseOperator(kNameAddcmul) { InitIOName({"input_data", "x1", "x2", "value"}, {"output"}); }
 };
 
-AbstractBasePtr AddcmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AddcmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAddcmulPtr = std::shared_ptr<Addcmul>;
 }  // namespace ops
 }  // namespace mindspore

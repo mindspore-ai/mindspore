@@ -24,7 +24,7 @@
 namespace mindspore::lite::micro {
 namespace {
 constexpr int kRoundUp = 2;
-}
+}  // namespace
 Conv2DBaseCoder::~Conv2DBaseCoder() {
   FreeConvQuantParams();
   conv_param_ = nullptr;

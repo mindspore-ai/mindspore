@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/affine_fusion.h"
 #include <memory>
 #include <vector>
@@ -23,6 +25,7 @@
 #include "ops/mat_mul.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 constexpr auto kInputWithBiasNum = 4;
@@ -60,8 +63,10 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
-  auto matmul_prim = GetValueNode<std::shared_ptr<ops::MatMul>>(matmul_node->input(kAnfPrimitiveIndex));
+  auto matmul_prim = ops::GetOperator<ops::MatMul>(matmul_node->input(kAnfPrimitiveIndex));
   MS_CHECK_TRUE_RET(matmul_prim != nullptr, nullptr);
+  auto matmul_prim_c = matmul_prim->GetPrim();
+  MS_CHECK_TRUE_RET(matmul_prim_c != nullptr, nullptr);
   // splice
   AnfNodePtr pre_node = matmul_node->input(1);
   if (!CheckPrimitiveType(pre_node, prim::kPrimSplice)) {
@@ -78,7 +83,7 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
   if (IsMarkedTrainOp(splice_node)) {
     return nullptr;
   }
-  auto splice_prim = GetValueNode<std::shared_ptr<ops::Splice>>(splice_node->input(kAnfPrimitiveIndex));
+  auto splice_prim = ops::GetOperator<ops::Splice>(splice_node->input(kAnfPrimitiveIndex));
   MS_CHECK_TRUE_RET(splice_prim != nullptr, nullptr);
   /**
    * Affine attribute:
@@ -90,6 +95,8 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
   // new primitive
   auto affine_prim = std::make_shared<ops::Affine>();
   MS_CHECK_TRUE_RET(affine_prim != nullptr, nullptr);
+  auto affine_prim_c = affine_prim->GetPrim();
+  MS_CHECK_TRUE_RET(affine_prim_c != nullptr, nullptr);
   // copy splice attr to affine
   MS_CHECK_TRUE_RET(splice_prim->GetAttr(ops::kSpliceContext) != nullptr, nullptr);
   affine_prim->set_context(splice_prim->get_context());
@@ -103,7 +110,7 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     affine_prim->set_transpose_b(matmul_prim->get_transpose_b());
   }
   // construct affine node
-  auto affine_value_node = NewValueNode(affine_prim);
+  auto affine_value_node = NewValueNode(affine_prim_c);
   MS_CHECK_TRUE_RET(affine_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> affine_inputs = {affine_value_node, splice_node->input(1),
                                            matmul_node->input(kInputIndexTwo)};

@@ -22,15 +22,15 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeBnllParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeBnllParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
   }
   prim->set_type("Bnll");
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeBnllParser("BNLL", new CaffeBnllParser());

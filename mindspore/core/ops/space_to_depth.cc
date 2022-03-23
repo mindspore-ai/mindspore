@@ -15,9 +15,13 @@
  */
 
 #include "ops/space_to_depth.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(SpaceToDepth, PrimitiveC, BaseOperator);
 void SpaceToDepth::Init(const int64_t block_size, const Format &format) {
   this->set_block_size(block_size);
   this->set_format(format);
@@ -25,7 +29,7 @@ void SpaceToDepth::Init(const int64_t block_size, const Format &format) {
 
 void SpaceToDepth::set_block_size(const int64_t block_size) {
   CheckAndConvertUtils::Check(kBlockSize, block_size, kGreaterEqual, 2, this->name());
-  (void)AddAttr(kBlockSize, MakeValue(block_size));
+  (void)AddAttr(kBlockSize, api::MakeValue(block_size));
 }
 
 int64_t SpaceToDepth::get_block_size() const {
@@ -35,7 +39,7 @@ int64_t SpaceToDepth::get_block_size() const {
 
 void SpaceToDepth::set_format(const Format &format) {
   int64_t f = format;
-  (void)this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, api::MakeValue(f));
 }
 
 Format SpaceToDepth::get_format() const {

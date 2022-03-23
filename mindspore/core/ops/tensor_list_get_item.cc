@@ -17,13 +17,15 @@
 #include "ops/tensor_list_get_item.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(TensorListGetItem, PrimitiveC, BaseOperator);
 void TensorListGetItem::Init(const int64_t element_dtype) { this->set_element_dtype(element_dtype); }
 
 void TensorListGetItem::set_element_dtype(const int64_t element_dtype) {
-  (void)this->AddAttr(kElement_dtype, MakeValue(element_dtype));
+  (void)this->AddAttr(kElement_dtype, api::MakeValue(element_dtype));
 }
 
 int64_t TensorListGetItem::get_element_dtype() const {

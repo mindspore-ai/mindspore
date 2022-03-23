@@ -22,9 +22,11 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ResizeGrad, PrimitiveC, BaseOperator);
 void ResizeGrad::Init(const ResizeMethod method, const bool align_corners) {
   this->set_method(method);
   this->set_align_corners(align_corners);
@@ -32,11 +34,11 @@ void ResizeGrad::Init(const ResizeMethod method, const bool align_corners) {
 
 void ResizeGrad::set_method(const ResizeMethod method) {
   auto swi = (int64_t)method;
-  (void)this->AddAttr(kMethod, MakeValue(swi));
+  (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 
 void ResizeGrad::set_align_corners(const bool align_corners) {
-  (void)this->AddAttr(kAlignCorners, MakeValue(align_corners));
+  (void)this->AddAttr(kAlignCorners, api::MakeValue(align_corners));
 }
 
 ResizeMethod ResizeGrad::get_method() const {

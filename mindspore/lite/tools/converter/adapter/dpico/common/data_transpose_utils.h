@@ -18,9 +18,9 @@
 #define DPICO_COMMON_DATA_TRANSPOSE_UTILS_H
 
 #include <vector>
-#include "include/api/format.h"
-#include "ir/tensor.h"
-#include "utils/log_adapter.h"
+#include "mindapi/base/format.h"
+#include "mindapi/ir/tensor.h"
+#include "mindapi/base/logging.h"
 #include "include/errorcode.h"
 #include "common/op_enum.h"
 using mindspore::lite::RET_ERROR;
@@ -79,7 +79,7 @@ STATUS NCHW2NHWC(T *src_data, T *dst_data, std::vector<int32_t> shape) {
   return RET_OK;
 }
 
-STATUS TransFilterFormat(const mindspore::tensor::TensorPtr &tensor, mindspore::Format src_format,
+STATUS TransFilterFormat(const mindspore::api::TensorPtr &tensor, mindspore::Format src_format,
                          mindspore::Format dst_format);
 
 void TransposeMatrix(float *matrix, int row, int col);

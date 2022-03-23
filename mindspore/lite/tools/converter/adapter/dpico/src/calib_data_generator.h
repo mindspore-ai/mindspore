@@ -25,9 +25,10 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include "third_party/securec/include/securec.h"
 #include "include/registry/converter_context.h"
 #include "common/data_transpose_utils.h"
-#include "ir/anf.h"
+#include "mindapi/ir/anf.h"
 #include "include/errorcode.h"
 #include "common/check_base.h"
 
@@ -49,15 +50,15 @@ struct DumpOpInfo {
 class CalibDataGenerator {
  public:
   explicit CalibDataGenerator(int dump_level = 0,
-                              const std::map<AnfNodePtr, std::pair<CNodePtr, int>> &control_flow_inputs = {})
+                              const std::map<api::AnfNodePtr, std::pair<api::CNodePtr, int>> &control_flow_inputs = {})
       : dump_level_(dump_level), control_flow_inputs_(control_flow_inputs) {}
   ~CalibDataGenerator() = default;
-  int Run(const AnfNodePtrList &graph_inputs, const AnfNodePtrList &nodes);
+  int Run(const api::AnfNodePtrList &graph_inputs, const api::AnfNodePtrList &nodes);
 
  private:
   int GenerateDumpConfig(const std::string &dump_cfg_path, const std::vector<DumpOpInfo> &dump_infos);
-  std::string GetInputShapesStr(const AnfNodePtrList &graph_inputs);
-  std::vector<std::string> GetInDataFileList(const AnfNodePtrList &graph_inputs);
+  std::string GetInputShapesStr(const api::AnfNodePtrList &graph_inputs);
+  std::vector<std::string> GetInDataFileList(const api::AnfNodePtrList &graph_inputs);
   int DumpKernelsData(const std::string &dump_cfg_path, const std::vector<std::string> &in_data_file_list,
                       const std::string &input_shapes_str);
   STATUS ParseAttrFromFilename(struct OpAttr *op_attr, const std::string &file_name, bool is_input);
@@ -123,7 +124,7 @@ class CalibDataGenerator {
     return RET_OK;
   }
   int dump_level_;
-  std::map<AnfNodePtr, std::pair<CNodePtr, int>> control_flow_inputs_;
+  std::map<api::AnfNodePtr, std::pair<api::CNodePtr, int>> control_flow_inputs_;
 };
 }  // namespace dpico
 }  // namespace mindspore

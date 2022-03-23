@@ -17,17 +17,15 @@
 #include "mapper/spp_mapper.h"
 #include <memory>
 #include <utility>
-#include <algorithm>
 #include <vector>
 #include "common/op_attr.h"
 #include "common/anf_util.h"
-#include "ops/op_utils.h"
 #include "op/spp_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS SppMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                      const CNodePtrList &output_cnodes) {
+STATUS SppMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                      const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -47,10 +45,10 @@ STATUS SppMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_
   spp_operator->SetOpType(mapper::OpType::SPPPOOLING);
 
   if (prim->GetAttr(dpico::kPyramidHeight) != nullptr) {
-    spp_operator->SetPyramidHeight(static_cast<int32_t>(GetValue<uint32_t>(prim->GetAttr(dpico::kPyramidHeight))));
+    spp_operator->SetPyramidHeight(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(dpico::kPyramidHeight))));
   }
   if (prim->GetAttr(dpico::kPoolMethod) != nullptr) {
-    auto pool_method = GetValue<int32_t>(prim->GetAttr(dpico::kPoolMethod));
+    auto pool_method = api::GetValue<int64_t>(prim->GetAttr(dpico::kPoolMethod));
     if (pool_method == 0) {
       spp_operator->SetSppType(mapper::OpType::POOLINGMAX);
     } else if (pool_method == 1) {

@@ -21,6 +21,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -67,6 +68,7 @@ TypePtr LerpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(Lerp, PrimitiveC, BaseOperator);
 AbstractBasePtr LerpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(LerpInferType(primitive, input_args),

@@ -23,9 +23,12 @@
 #include "ops/assign.h"
 #include "ops/op_utils.h"
 #include "ir/dtype/ref.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Assign, PrimitiveC, BaseOperator);
 abstract::ShapePtr AssignInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();

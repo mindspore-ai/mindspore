@@ -22,9 +22,11 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Reshape>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   std::vector<int32_t> shape;
   shape.clear();
   if (onnx_node.input_size() != 2) {
@@ -34,12 +36,12 @@ ops::PrimitiveC *OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, co
         for (int i = 0; i < onnx_node_attr.ints_size(); ++i) {
           shape.push_back(static_cast<int>(onnx_node_attr.ints(i)));
         }
-        prim->AddAttr("shape", MakeValue(shape));
+        prim_c->AddAttr("shape", MakeValue(shape));
       }
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxReshapeParser("Reshape", new OnnxReshapeParser());

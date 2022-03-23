@@ -20,23 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSliceFusion = "SliceFusion";
 /// \brief SliceFusion defined Slice operator prototype of lite.
-class MS_CORE_API SliceFusion : public PrimitiveC {
+class MIND_API SliceFusion : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SliceFusion);
   /// \brief Constructor.
-  SliceFusion() : PrimitiveC(kNameSliceFusion) { InitIOName({"x", "begin", "size"}, {"output"}); }
-
-  /// \brief Destructor.
-  ~SliceFusion() = default;
-
-  MS_DECLARE_PARENT(SliceFusion, PrimitiveC);
+  SliceFusion() : BaseOperator(kNameSliceFusion) { InitIOName({"x", "begin", "size"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///
@@ -53,8 +48,8 @@ class MS_CORE_API SliceFusion : public PrimitiveC {
   /// \return axes.
   std::vector<int64_t> get_axes() const;
 };
-AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

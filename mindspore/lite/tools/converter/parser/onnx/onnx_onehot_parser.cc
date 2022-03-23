@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxOneHotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxOneHotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::OneHot>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -31,7 +31,7 @@ ops::PrimitiveC *OnnxOneHotParser::Parse(const onnx::GraphProto &onnx_graph, con
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxOneHotParser("OneHot", new OnnxOneHotParser());

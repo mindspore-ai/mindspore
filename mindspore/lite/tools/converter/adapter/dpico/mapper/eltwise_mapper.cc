@@ -18,15 +18,15 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "ops/op_utils.h"
 #include "common/op_attr.h"
 #include "common/anf_util.h"
 #include "op/eltwise_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS EltwiseMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS EltwiseMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -48,7 +48,7 @@ STATUS EltwiseMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *b
     MS_LOG(ERROR) << "eltwise op should have mode attr. " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  auto eltwise_mode = static_cast<EltwiseMode>(GetValue<int64_t>(prim->GetAttr(ops::kMode)));
+  auto eltwise_mode = static_cast<EltwiseMode>(api::GetValue<int64_t>(prim->GetAttr(ops::kMode)));
   switch (eltwise_mode) {
     case mindspore::EltwiseMode::PROD:
       eltwise_operator->SetEltwiseOp(mapper::BinaryMathOp::MUL_OP);
@@ -65,7 +65,7 @@ STATUS EltwiseMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *b
   }
 
   if (prim->GetAttr(dpico::kCoeffs) != nullptr) {
-    eltwise_operator->SetEltCoeffVec(GetValue<std::vector<float>>(prim->GetAttr(dpico::kCoeffs)));
+    eltwise_operator->SetEltCoeffVec(api::GetValue<std::vector<float>>(prim->GetAttr(dpico::kCoeffs)));
   }
 
   base_operators->push_back(std::move(eltwise_operator));

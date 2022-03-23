@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/affine_activation_fusion.h"
 #include <memory>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/fusion/activation.h"
 #include "ops/affine.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 const BaseRef AffineActivationFusion::DefinePattern() const {
@@ -51,7 +53,7 @@ const AnfNodePtr AffineActivationFusion::Process(const FuncGraphPtr &func_graph,
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
-  auto activation_prim = GetValueNode<std::shared_ptr<ops::Activation>>(activation_node->input(kAnfPrimitiveIndex));
+  auto activation_prim = ops::GetOperator<ops::Activation>(activation_node->input(kAnfPrimitiveIndex));
   MS_ASSERT(activation_prim != nullptr);
   AnfNodePtr pre_node = activation_node->input(1);
   if (!CheckPrimitiveType(pre_node, prim::kPrimAffine)) {
@@ -68,7 +70,7 @@ const AnfNodePtr AffineActivationFusion::Process(const FuncGraphPtr &func_graph,
   if (IsMarkedTrainOp(affine_node)) {
     return nullptr;
   }
-  auto affine_prim = GetValueNode<std::shared_ptr<ops::Affine>>(affine_node->input(kAnfPrimitiveIndex));
+  auto affine_prim = ops::GetOperator<ops::Affine>(affine_node->input(kAnfPrimitiveIndex));
   MS_ASSERT(affine_prim != nullptr);
 
   if (!activation_prim->HasAttr(ops::kActivationType)) {

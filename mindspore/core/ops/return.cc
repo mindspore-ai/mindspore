@@ -15,9 +15,12 @@
  */
 
 #include "ops/return.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Return, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameReturn, Return);
 }  // namespace ops
 }  // namespace mindspore

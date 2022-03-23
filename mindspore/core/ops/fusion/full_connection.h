@@ -20,23 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFullConnection = "FullConnection";
 /// \brief FullConnection defined FullConnection operator prototype of lite.
-class MS_CORE_API FullConnection : public PrimitiveC {
+class MIND_API FullConnection : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(FullConnection);
   /// \brief Constructor.
-  FullConnection() : PrimitiveC(kNameFullConnection) { InitIOName({"x1", "x2", "b"}, {"output"}); }
-
-  /// \brief Destructor.
-  ~FullConnection() = default;
-
-  MS_DECLARE_PARENT(FullConnection, PrimitiveC);
+  FullConnection() : BaseOperator(kNameFullConnection) { InitIOName({"x1", "x2", "b"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///
@@ -86,8 +81,8 @@ class MS_CORE_API FullConnection : public PrimitiveC {
   /// \return activation type.
   ActivationType get_activation_type() const;
 };
-AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

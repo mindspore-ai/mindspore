@@ -22,18 +22,19 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void DepthToSpace::set_block_size(const int64_t block_size) {
   CheckAndConvertUtils::Check(kBlockSize, block_size, kGreaterEqual, 2, this->name());
-  (void)this->AddAttr(kBlockSize, MakeValue(block_size));
+  (void)this->AddAttr(kBlockSize, api::MakeValue(block_size));
 }
 
 int64_t DepthToSpace::get_block_size() const { return GetValue<int64_t>(GetAttr(kBlockSize)); }
 void DepthToSpace::set_format(const Format &format) {
   int64_t f = format;
-  (void)this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, api::MakeValue(f));
 }
 
 Format DepthToSpace::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
@@ -112,6 +113,7 @@ TypePtr DepthToSpaceInferType(const PrimitivePtr &prim, const std::vector<Abstra
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(DepthToSpace, PrimitiveC, BaseOperator);
 AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = DepthToSpaceInferType(primitive, input_args);

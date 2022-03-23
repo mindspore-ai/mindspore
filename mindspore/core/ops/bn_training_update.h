@@ -22,25 +22,23 @@
 #include <vector>
 #include <string>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBNTrainingUpdate = "BNTrainingUpdate";
-class MS_CORE_API BNTrainingUpdate : public PrimitiveC {
+class MIND_API BNTrainingUpdate : public BaseOperator {
  public:
-  BNTrainingUpdate() : PrimitiveC(kNameBNTrainingUpdate) {
+  MIND_API_BASE_MEMBER(BNTrainingUpdate);
+  BNTrainingUpdate() : BaseOperator(kNameBNTrainingUpdate) {
     InitIOName({"x", "sum", "square_sum", "scale", "b", "mean", "variance"},
                {"y", "running_mean", "running_variance", "save_mean", "save_inv_variance"});
   }
-  ~BNTrainingUpdate() = default;
-  MS_DECLARE_PARENT(BNTrainingUpdate, PrimitiveC);
 };
 
-AbstractBasePtr BNTrainingUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BNTrainingUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimBNTrainingUpdatePtr = std::shared_ptr<BNTrainingUpdate>;
 }  // namespace ops

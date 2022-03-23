@@ -26,6 +26,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -58,6 +59,7 @@ TypePtr HSigmoidGradInferType(const PrimitivePtr &prim, const std::vector<Abstra
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(HSigmoidGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr HSigmoidGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(HSigmoidGradInferType(primitive, input_args),

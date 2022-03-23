@@ -20,6 +20,8 @@
 
 #include "ops/grad/conv2d_backprop_filter.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -100,6 +102,7 @@ TypePtr Conv2DBackpropFilterInferType(const PrimitivePtr &prim, const std::vecto
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(Conv2DBackpropFilter, PrimitiveC, BaseOperator);
 void Conv2DBackpropFilter::Init(const int64_t out_channel, const std::vector<int64_t> &kernel_size,
                                 const PadMode &pad_mode, const std::vector<int64_t> &pad_list, const int64_t mode,
                                 const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,
@@ -121,7 +124,7 @@ void Conv2DBackpropFilter::Init(const int64_t out_channel, const std::vector<int
 }
 
 void Conv2DBackpropFilter::set_out_channel(const int64_t out_channel) {
-  (void)this->AddAttr(kOutChannel, MakeValue(out_channel));
+  (void)this->AddAttr(kOutChannel, api::MakeValue(out_channel));
 }
 
 int64_t Conv2DBackpropFilter::get_out_channel() const {
@@ -131,7 +134,7 @@ int64_t Conv2DBackpropFilter::get_out_channel() const {
 }
 
 void Conv2DBackpropFilter::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  (void)this->AddAttr(kKernelSize, MakeValue(kernel_size));
+  (void)this->AddAttr(kKernelSize, api::MakeValue(kernel_size));
 }
 
 std::vector<int64_t> Conv2DBackpropFilter::get_kernel_size() const {
@@ -142,7 +145,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_kernel_size() const {
 
 void Conv2DBackpropFilter::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
-  (void)this->AddAttr(kPadMode, MakeValue(swi));
+  (void)this->AddAttr(kPadMode, api::MakeValue(swi));
 }
 
 PadMode Conv2DBackpropFilter::get_pad_mode() const {
@@ -152,7 +155,7 @@ PadMode Conv2DBackpropFilter::get_pad_mode() const {
 }
 
 void Conv2DBackpropFilter::set_pad_list(const std::vector<int64_t> &pad_list) {
-  (void)this->AddAttr(kPadList, MakeValue(pad_list));
+  (void)this->AddAttr(kPadList, api::MakeValue(pad_list));
 }
 
 std::vector<int64_t> Conv2DBackpropFilter::get_pad_list() const {
@@ -161,7 +164,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_pad_list() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Conv2DBackpropFilter::set_mode(const int64_t mode) { (void)this->AddAttr(kMode, MakeValue(mode)); }
+void Conv2DBackpropFilter::set_mode(const int64_t mode) { (void)this->AddAttr(kMode, api::MakeValue(mode)); }
 
 int64_t Conv2DBackpropFilter::get_mode() const {
   auto value_ptr = GetAttr(kMode);
@@ -170,7 +173,7 @@ int64_t Conv2DBackpropFilter::get_mode() const {
 }
 
 void Conv2DBackpropFilter::set_stride(const std::vector<int64_t> &stride) {
-  (void)this->AddAttr(kStride, MakeValue(stride));
+  (void)this->AddAttr(kStride, api::MakeValue(stride));
 }
 
 std::vector<int64_t> Conv2DBackpropFilter::get_stride() const {
@@ -180,7 +183,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_stride() const {
 }
 
 void Conv2DBackpropFilter::set_dilation(const std::vector<int64_t> &dilation) {
-  (void)this->AddAttr(kDilation, MakeValue(dilation));
+  (void)this->AddAttr(kDilation, api::MakeValue(dilation));
 }
 
 std::vector<int64_t> Conv2DBackpropFilter::get_dilation() const {
@@ -189,7 +192,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_dilation() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Conv2DBackpropFilter::set_group(const int64_t group) { (void)this->AddAttr(kGroup, MakeValue(group)); }
+void Conv2DBackpropFilter::set_group(const int64_t group) { (void)this->AddAttr(kGroup, api::MakeValue(group)); }
 
 int64_t Conv2DBackpropFilter::get_group() const {
   auto value_ptr = GetAttr(kGroup);
@@ -199,7 +202,7 @@ int64_t Conv2DBackpropFilter::get_group() const {
 
 void Conv2DBackpropFilter::set_format(const Format &format) {
   int64_t swi = format;
-  (void)this->AddAttr(kFormat, MakeValue(swi));
+  (void)this->AddAttr(kFormat, api::MakeValue(swi));
 }
 
 Format Conv2DBackpropFilter::get_format() const {

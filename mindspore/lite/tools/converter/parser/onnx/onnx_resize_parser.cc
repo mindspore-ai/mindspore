@@ -25,10 +25,12 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Resize>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_nearest_mode(mindspore::NearestMode::ROUND_HALF_DOWN);
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -79,7 +81,7 @@ ops::PrimitiveC *OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, con
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxResizeParser("Resize", new OnnxResizeParser());

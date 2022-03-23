@@ -136,7 +136,9 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
       MS_LOG(ERROR) << "new MakeTuple failed";
       return nullptr;
     }
-    auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
+    auto make_tuple_prim_c = make_tuple_prim_ptr->GetPrim();
+    MS_CHECK_TRUE_MSG(make_tuple_prim_c != nullptr, nullptr, "Failed to create make_tuple_prim_c.");
+    auto make_tuple_prim = NewValueNode(make_tuple_prim_c);
     MS_CHECK_TRUE_MSG(make_tuple_prim != nullptr, nullptr, "Failed to create value node.");
     make_tuple_inputs.insert(make_tuple_inputs.begin(), make_tuple_prim);
     auto make_tuple_cnode = after_fg->NewCNode(make_tuple_inputs);
@@ -147,7 +149,9 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
       MS_LOG(ERROR) << "new Return failed";
       return nullptr;
     }
-    auto value_node = NewValueNode(return_prim_ptr);
+    auto return_prim_c = return_prim_ptr->GetPrim();
+    MS_CHECK_TRUE_MSG(return_prim_c != nullptr, nullptr, "Failed to create return_prim_c.");
+    auto value_node = NewValueNode(return_prim_c);
     MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "Failed to create value node.");
     std::vector<AnfNodePtr> op_inputs = {value_node, make_tuple_cnode};
     auto cnode = after_fg->NewCNode(op_inputs);
@@ -160,7 +164,9 @@ FuncGraphPtr MindIRControlFlowAdjust::AddAfterFuncGraph(const FuncGraphPtr &fg,
       MS_LOG(ERROR) << "new Return failed";
       return nullptr;
     }
-    auto value_node = NewValueNode(return_prim_ptr);
+    auto return_prim_c = return_prim_ptr->GetPrim();
+    MS_CHECK_TRUE_MSG(return_prim_c != nullptr, nullptr, "Failed to create return_prim_c.");
+    auto value_node = NewValueNode(return_prim_c);
     MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "Failed to create value node.");
     std::vector<AnfNodePtr> op_inputs{value_node, after_fg->get_inputs().front()};
     auto return_cnode = after_fg->NewCNode(op_inputs);

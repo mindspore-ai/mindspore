@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace dpico {
 namespace {
-bool CheckInputShapeForMatrix(const CNodePtr &cnode, const PrimitivePtr &primitive) {
+bool CheckInputShapeForMatrix(const api::CNodePtr &cnode, const api::PrimitivePtr &primitive) {
   ShapeVector input_1_shape;
   ShapeVector input_2_shape;
   if (GetInputShapeFromCNode(cnode, kInputIndex1, &input_1_shape) != RET_OK ||
@@ -43,13 +43,13 @@ bool CheckInputShapeForMatrix(const CNodePtr &cnode, const PrimitivePtr &primiti
         }
       }
     }
-    primitive->AddAttr(kDim1, MakeValue<uint32_t>(input_1_shape.at(input_1_shape.size() - kInputIndex2)));
-    primitive->AddAttr(kDim2, MakeValue<uint32_t>(input_1_shape.at(input_1_shape.size() - 1)));
-    primitive->AddAttr(kDim3, MakeValue<uint32_t>(input_2_shape.at(input_2_shape.size() - kInputIndex2)));
+    primitive->AddAttr(kDim1, api::MakeValue<int64_t>(input_1_shape.at(input_1_shape.size() - kInputIndex2)));
+    primitive->AddAttr(kDim2, api::MakeValue<int64_t>(input_1_shape.at(input_1_shape.size() - 1)));
+    primitive->AddAttr(kDim3, api::MakeValue<int64_t>(input_2_shape.at(input_2_shape.size() - kInputIndex2)));
   }
   return true;
 }
-bool CheckInputShapeForFc(const CNodePtr &cnode) {
+bool CheckInputShapeForFc(const api::CNodePtr &cnode) {
   ShapeVector input_shape;
   if (GetInputShapeFromCNode(cnode, kInputIndex1, &input_shape) == RET_OK) {
     return input_shape.size() == dpico::kDims2 && input_shape.at(0) == 1;
@@ -57,18 +57,18 @@ bool CheckInputShapeForFc(const CNodePtr &cnode) {
   return false;
 }
 }  // namespace
-bool MatMulChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool MatMulChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, 1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr." << op->fullname_with_scope();
     return false;
   }
   if (primitive->GetAttr(ops::kTransposeA) != nullptr) {
-    auto transpose_a = GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
+    auto transpose_a = api::GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
     if (transpose_a) {
       return false;
     }
@@ -79,9 +79,9 @@ bool MatMulChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format for
   }
   bool transpose_b = false;
   if (primitive->GetAttr(ops::kTransposeB) != nullptr) {
-    transpose_b = GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
+    transpose_b = api::GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
   } else {
-    primitive->AddAttr(ops::kTransposeB, MakeValue<bool>(false));
+    primitive->AddAttr(ops::kTransposeB, api::MakeValue<bool>(false));
   }
   if (!HasOfflineData(op->input(kInputIndex1))) {
     if (!HasOfflineData(op->input(kInputIndex2))) {
@@ -89,14 +89,14 @@ bool MatMulChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format for
         if (!CheckInputShapeForMatrix(op, primitive)) {
           return false;
         }
-        primitive->AddAttr(kOperatorType, MakeValue("Matrix"));
+        primitive->AddAttr(kOperatorType, api::MakeValue("Matrix"));
         return true;
       } else {
         return false;
       }
     } else {
       if (CheckInputShapeForFc(op)) {
-        primitive->AddAttr(kOperatorType, MakeValue("FullConnection"));
+        primitive->AddAttr(kOperatorType, api::MakeValue("FullConnection"));
         return true;
       } else {
         MS_LOG(WARNING) << "only supports input N = 1 by dpico. " << op->fullname_with_scope();

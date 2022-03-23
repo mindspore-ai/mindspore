@@ -23,6 +23,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -77,6 +78,7 @@ TuplePtr ApplyAdagradV2InferType(const PrimitivePtr &prim, const std::vector<Abs
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(ApplyAdagradV2, PrimitiveC, BaseOperator);
 AbstractBasePtr ApplyAdagradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

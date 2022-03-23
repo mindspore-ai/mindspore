@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/dynamic_quantizer.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"

@@ -18,25 +18,21 @@
 #define MINDSPORE_CORE_OPS_AFFINE_H_
 #include <vector>
 #include <string>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-
 constexpr auto kNameAffine = "Affine";
 constexpr auto kAffineContext = "context";
 constexpr auto kAffineOutputDim = "output_dim";
 
 /// \brief Assert defined Affine operator prototype of lite.
-class MS_CORE_API Affine : public PrimitiveC {
+class MIND_API Affine : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Affine);
   /// \brief Constructor.
-  Affine() : PrimitiveC(kNameAffine) { InitIOName({"x1", "x2"}, {"outputs"}); }
-  /// \brief Destructor.
-  ~Affine() = default;
-  MS_DECLARE_PARENT(Affine, PrimitiveC);
+  Affine() : BaseOperator(kNameAffine) { InitIOName({"x1", "x2"}, {"outputs"}); }
   /// \brief Method to init the op's attributes.
   void Init(const std::vector<int64_t> &contexts, int64_t output_dim, bool transpose_a = false,
             bool transpose_b = false);

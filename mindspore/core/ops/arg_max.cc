@@ -15,6 +15,10 @@
  */
 
 #include "ops/arg_max.h"
+#include "mindapi/ir/type.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -23,15 +27,17 @@ void ArgMax::Init(const int64_t axis, const TypeId output_type) {
   set_output_type(output_type);
 }
 
-void ArgMax::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
-void ArgMax::set_output_type(const TypeId output_type) { (void)this->AddAttr(kOutputType, TypeIdToType(output_type)); }
+void ArgMax::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+void ArgMax::set_output_type(const TypeId output_type) {
+  (void)this->AddAttr(kOutputType, api::Type::GetType(output_type));
+}
 
 int64_t ArgMax::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 TypeId ArgMax::get_output_type() const {
-  auto type_ptr = GetAttr(kOutputType)->cast<TensorTypePtr>()->element();
+  auto type_ptr = GetAttr(kOutputType)->cast<api::TensorTypePtr>()->element();
   return type_ptr->type_id();
 }
-
+MIND_API_BASE_IMPL(ArgMax, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameArgMax, ArgMax);
 }  // namespace ops
 }  // namespace mindspore

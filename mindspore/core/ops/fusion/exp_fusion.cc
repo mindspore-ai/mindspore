@@ -20,20 +20,22 @@
 #include <memory>
 #include <vector>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ExpFusion, PrimitiveC, Exp);
 void ExpFusion::Init(const float base, const float scale, const float shift) {
   this->set_base(base);
   this->set_scale(scale);
   this->set_shift(shift);
 }
 
-void ExpFusion::set_base(const float base) { (void)this->AddAttr(kBase, MakeValue(base)); }
+void ExpFusion::set_base(const float base) { (void)this->AddAttr(kBase, api::MakeValue(base)); }
 
-void ExpFusion::set_scale(const float scale) { (void)this->AddAttr(kScale, MakeValue(scale)); }
+void ExpFusion::set_scale(const float scale) { (void)this->AddAttr(kScale, api::MakeValue(scale)); }
 
-void ExpFusion::set_shift(const float shift) { (void)this->AddAttr(kShift, MakeValue(shift)); }
+void ExpFusion::set_shift(const float shift) { (void)this->AddAttr(kShift, api::MakeValue(shift)); }
 
 float ExpFusion::get_base() const {
   auto value_ptr = GetAttr(kBase);

@@ -19,28 +19,25 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRound = "Round";
 /// \brief Returns half to even of a tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Round for more details.
-class MS_CORE_API Round : public PrimitiveC {
+class MIND_API Round : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Round);
   /// \brief Constructor.
-  Round() : PrimitiveC(kNameRound) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Round() = default;
-  MS_DECLARE_PARENT(Round, PrimitiveC);
+  Round() : BaseOperator(kNameRound) { InitIOName({"input_x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
 
-AbstractBasePtr RoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr RoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimRoundPtr = std::shared_ptr<Round>;
 }  // namespace ops
 }  // namespace mindspore

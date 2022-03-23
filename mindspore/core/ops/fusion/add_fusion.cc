@@ -22,12 +22,14 @@
 #include <map>
 
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void AddFusion::set_activation_type(const ActivationType activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 ActivationType AddFusion::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
@@ -35,6 +37,7 @@ ActivationType AddFusion::get_activation_type() const {
 }
 void AddFusion::Init(const ActivationType activation_type) { this->set_activation_type(activation_type); }
 
+MIND_API_BASE_IMPL(AddFusion, PrimitiveC, Add);
 REGISTER_PRIMITIVE_C(kNameAddFusion, AddFusion);
 }  // namespace ops
 }  // namespace mindspore

@@ -22,19 +22,19 @@
 
 namespace mindspore {
 namespace dpico {
-bool ReverseChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool ReverseChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, kInputIndex1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
 
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   if (primitive->GetAttr(ops::kAxis) != nullptr) {
-    auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr(ops::kAxis));
+    auto axis = api::GetValue<std::vector<int64_t>>(primitive->GetAttr(ops::kAxis));
     if (axis.size() != 1) {
       MS_LOG(WARNING) << "reverse's axis size only supports 1 by dpico. " << op->fullname_with_scope();
       return false;

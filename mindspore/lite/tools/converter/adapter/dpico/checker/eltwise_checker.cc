@@ -23,16 +23,16 @@ namespace mindspore {
 namespace dpico {
 namespace {
 constexpr int kModeSize = 3;
-}
-bool EltwiseChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+}  // namespace
+bool EltwiseChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   auto mode_ptr = primitive->GetAttr(ops::kMode);
   if (mode_ptr != nullptr) {
-    auto mode_data = GetValue<int64_t>(mode_ptr);
+    auto mode_data = api::GetValue<int64_t>(mode_ptr);
     if (mode_data >= kModeSize) {  // only prod(0), sum(1), max(2) is supported
       MS_LOG(WARNING) << "mode only supports 0/1/2 " << op->fullname_with_scope();
       return false;

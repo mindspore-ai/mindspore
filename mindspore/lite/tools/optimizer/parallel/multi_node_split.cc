@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/parallel/multi_node_split.h"
 #include "tools/optimizer/parallel/multi_conv_info.h"
 #include "nnacl/op_base.h"

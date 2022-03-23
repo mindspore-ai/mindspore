@@ -19,22 +19,20 @@
 
 #include <memory>
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSliceGrad = "SliceGrad";
-class MS_CORE_API SliceGrad : public PrimitiveC {
+class MIND_API SliceGrad : public BaseOperator {
  public:
-  SliceGrad() : PrimitiveC(kNameSliceGrad) { InitIOName({"dy", "x", "begin", "size"}, {"output"}); }
-  ~SliceGrad() = default;
-  MS_DECLARE_PARENT(SliceGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(SliceGrad);
+  SliceGrad() : BaseOperator(kNameSliceGrad) { InitIOName({"dy", "x", "begin", "size"}, {"output"}); }
   void Init() {}
 };
-AbstractBasePtr SliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSliceGradPtr = std::shared_ptr<SliceGrad>;
 }  // namespace ops
 }  // namespace mindspore

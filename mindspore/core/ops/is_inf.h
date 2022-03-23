@@ -19,23 +19,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIsInf = "IsInf";
-class IsInf : public PrimitiveC {
+class MIND_API IsInf : public BaseOperator {
  public:
-  IsInf() : PrimitiveC(kNameIsInf) { InitIOName({"x"}, {"y"}); }
-  ~IsInf() = default;
-  MS_DECLARE_PARENT(IsInf, PrimitiveC);
+  MIND_API_BASE_MEMBER(IsInf);
+  IsInf() : BaseOperator(kNameIsInf) { InitIOName({"x"}, {"y"}); }
 };
 
-AbstractBasePtr IsInfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr IsInfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimIsInfPtr = std::shared_ptr<IsInf>;
 }  // namespace ops
 }  // namespace mindspore

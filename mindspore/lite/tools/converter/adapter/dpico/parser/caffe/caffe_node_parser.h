@@ -21,16 +21,17 @@
 #include <utility>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 #include "google/protobuf/message.h"
 #include "./pico_caffe.pb.h"
 #include "common/anf_util.h"
-#include "utils/check_convert_utils.h"
-#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
 
 using mindspore::lite::STATUS;
 
 namespace mindspore {
 namespace lite {
+using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
 constexpr int kNums2 = 2;
 constexpr int kNums4 = 4;
 class CaffeNodeParser {
@@ -39,7 +40,7 @@ class CaffeNodeParser {
 
   virtual ~CaffeNodeParser() = default;
 
-  virtual ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  virtual BaseOperatorPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
     return nullptr;
   }
 

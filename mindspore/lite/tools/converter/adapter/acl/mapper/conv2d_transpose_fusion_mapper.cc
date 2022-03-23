@@ -22,6 +22,7 @@
 #include "include/registry/converter_context.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {

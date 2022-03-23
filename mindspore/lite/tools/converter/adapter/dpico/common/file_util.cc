@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+#include "common/file_util.h"
 #include <vector>
 #include <string>
 #include <fstream>
 #include <climits>
 #include <memory>
-#include "utils/log_adapter.h"
-#include "common/file_util.h"
+#include <cstring>
+#include "mindapi/base/logging.h"
 
 namespace mindspore {
 namespace dpico {
@@ -69,7 +70,7 @@ std::string RealPath(const char *path) {
     MS_LOG(ERROR) << "path is nullptr";
     return "";
   }
-  if ((strlen(path)) >= PATH_MAX) {
+  if ((std::strlen(path)) >= PATH_MAX) {
     MS_LOG(ERROR) << "path is too long";
     return "";
   }
@@ -152,7 +153,7 @@ int RemoveDir(const std::string &path) {
     struct dirent *dt = nullptr;
     dt = readdir(d);
     while (dt != nullptr) {
-      if (strcmp(dt->d_name, "..") != 0 && strcmp(dt->d_name, ".") != 0) {
+      if (std::strcmp(dt->d_name, "..") != 0 && std::strcmp(dt->d_name, ".") != 0) {
         struct stat st {};
         auto file_name = str_path + std::string(dt->d_name);
         stat(file_name.c_str(), &st);

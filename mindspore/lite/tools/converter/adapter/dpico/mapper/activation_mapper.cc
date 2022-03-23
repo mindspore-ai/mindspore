@@ -20,7 +20,6 @@
 #include <utility>
 #include <unordered_map>
 #include "common/op_attr.h"
-#include "ops/op_utils.h"
 #include "ops/fusion/activation.h"
 #include "op/relu_operator.h"
 #include "op/sigmoid_operator.h"
@@ -33,7 +32,7 @@ namespace mindspore {
 namespace dpico {
 namespace {
 constexpr float kNum6 = 6.0;
-std::unique_ptr<mapper::AfOperator> ReluMapFunc(const std::shared_ptr<ops::Activation> &activation_prim) {
+std::unique_ptr<mapper::AfOperator> ReluMapFunc(const api::SharedPtr<ops::Activation> &activation_prim) {
   auto activation_operator = std::make_unique<mapper::ReluOperator>();
   if (activation_operator == nullptr) {
     MS_LOG(ERROR) << "relu operator is nullptr. ";
@@ -46,7 +45,7 @@ std::unique_ptr<mapper::AfOperator> ReluMapFunc(const std::shared_ptr<ops::Activ
   return std::move(activation_operator);
 }
 
-std::unique_ptr<mapper::AfOperator> Relu6MapFunc(const std::shared_ptr<ops::Activation> &activation_prim) {
+std::unique_ptr<mapper::AfOperator> Relu6MapFunc(const api::SharedPtr<ops::Activation> &activation_prim) {
   auto activation_operator = std::make_unique<mapper::ClipOperator>();
   if (activation_operator == nullptr) {
     MS_LOG(ERROR) << "relu operator is nullptr. ";
@@ -61,7 +60,7 @@ std::unique_ptr<mapper::AfOperator> Relu6MapFunc(const std::shared_ptr<ops::Acti
   return std::move(activation_operator);
 }
 
-std::unique_ptr<mapper::AfOperator> HardTanhMapFunc(const std::shared_ptr<ops::Activation> &activation_prim) {
+std::unique_ptr<mapper::AfOperator> HardTanhMapFunc(const api::SharedPtr<ops::Activation> &activation_prim) {
   auto activation_operator = std::make_unique<mapper::ClipOperator>();
   if (activation_operator == nullptr) {
     MS_LOG(ERROR) << "relu operator is nullptr. ";
@@ -72,7 +71,7 @@ std::unique_ptr<mapper::AfOperator> HardTanhMapFunc(const std::shared_ptr<ops::A
   return std::move(activation_operator);
 }
 
-std::unique_ptr<mapper::AfOperator> SigmoidMapFunc(const std::shared_ptr<ops::Activation> &activation_prim) {
+std::unique_ptr<mapper::AfOperator> SigmoidMapFunc(const api::SharedPtr<ops::Activation> &activation_prim) {
   auto activation_operator = std::make_unique<mapper::SigmoidOperator>();
   if (activation_operator == nullptr) {
     MS_LOG(ERROR) << "sigmoid operator is nullptr. ";
@@ -82,7 +81,7 @@ std::unique_ptr<mapper::AfOperator> SigmoidMapFunc(const std::shared_ptr<ops::Ac
   return std::move(activation_operator);
 }
 
-std::unique_ptr<mapper::AfOperator> TanhMapFunc(const std::shared_ptr<ops::Activation> &activation_prim) {
+std::unique_ptr<mapper::AfOperator> TanhMapFunc(const api::SharedPtr<ops::Activation> &activation_prim) {
   auto activation_operator = std::make_unique<mapper::TanhOperator>();
   if (activation_operator == nullptr) {
     MS_LOG(ERROR) << "tanh operator is nullptr. ";
@@ -91,7 +90,7 @@ std::unique_ptr<mapper::AfOperator> TanhMapFunc(const std::shared_ptr<ops::Activ
   return std::move(activation_operator);
 }
 
-std::unique_ptr<mapper::AfOperator> HswishMapFunc(const std::shared_ptr<ops::Activation> &activation_prim) {
+std::unique_ptr<mapper::AfOperator> HswishMapFunc(const api::SharedPtr<ops::Activation> &activation_prim) {
   auto activation_operator = std::make_unique<mapper::HswishOperator>();
   if (activation_operator == nullptr) {
     MS_LOG(ERROR) << "hswish operator is nullptr. ";
@@ -100,12 +99,12 @@ std::unique_ptr<mapper::AfOperator> HswishMapFunc(const std::shared_ptr<ops::Act
   activation_operator->SetOpType(mapper::OpType::HSWISH);
   if (activation_prim->GetAttr(dpico::kNegativeSlope) != nullptr) {
     static_cast<mapper::HswishOperator *>(activation_operator.get())
-      ->SetHswishSlope(GetValue<float>(activation_prim->GetAttr(dpico::kNegativeSlope)));
+      ->SetHswishSlope(api::GetValue<float>(activation_prim->GetAttr(dpico::kNegativeSlope)));
   }
   return std::move(activation_operator);
 }
 
-std::unique_ptr<mapper::AfOperator> EluMapFunc(const std::shared_ptr<ops::Activation> &activation_prim) {
+std::unique_ptr<mapper::AfOperator> EluMapFunc(const api::SharedPtr<ops::Activation> &activation_prim) {
   auto activation_operator = std::make_unique<mapper::EluOperator>();
   if (activation_operator == nullptr) {
     MS_LOG(ERROR) << "elu operator is nullptr. ";
@@ -114,13 +113,13 @@ std::unique_ptr<mapper::AfOperator> EluMapFunc(const std::shared_ptr<ops::Activa
   activation_operator->SetOpType(mapper::OpType::ELU);
   if (activation_prim->GetAttr(ops::kAlpha) != nullptr) {
     static_cast<mapper::EluOperator *>(activation_operator.get())
-      ->SetEluAlpha(GetValue<float>(activation_prim->GetAttr(ops::kAlpha)));
+      ->SetEluAlpha(api::GetValue<float>(activation_prim->GetAttr(ops::kAlpha)));
   }
   return std::move(activation_operator);
 }
 
 using ActivationMapFunc =
-  std::unique_ptr<mapper::AfOperator> (*)(const std::shared_ptr<ops::Activation> &activation_prim);
+  std::unique_ptr<mapper::AfOperator> (*)(const api::SharedPtr<ops::Activation> &activation_prim);
 const std::unordered_map<ActivationType, ActivationMapFunc> kActivationMapFuncs = {
   {ActivationType::RELU, &ReluMapFunc},       {ActivationType::LEAKY_RELU, &ReluMapFunc},
   {ActivationType::RELU6, &Relu6MapFunc},     {ActivationType::HARD_TANH, &HardTanhMapFunc},
@@ -128,13 +127,13 @@ const std::unordered_map<ActivationType, ActivationMapFunc> kActivationMapFuncs 
   {ActivationType::HSWISH, &HswishMapFunc},   {ActivationType::ELU, &EluMapFunc}};
 }  // namespace
 
-STATUS ActivationMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                             const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS ActivationMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                             const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto activation_prim = utils::cast<std::shared_ptr<ops::Activation>>(prim);
+  auto activation_prim = api::utils::cast<api::SharedPtr<ops::Activation>>(prim);
   MS_ASSERT(activation_prim != nullptr);
 
   auto activation_type = activation_prim->get_activation_type();

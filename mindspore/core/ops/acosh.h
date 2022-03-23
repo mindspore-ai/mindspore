@@ -22,28 +22,23 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAcosh = "Acosh";
 /// \brief Computes arccosh of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.Acosh for more details.
-class Acosh : public PrimitiveC {
+class MIND_API Acosh : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Acosh);
   /// \brief Constructor.
-  Acosh() : PrimitiveC(kNameAcosh) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Acosh() = default;
-
-  MS_DECLARE_PARENT(Acosh, PrimitiveC);
+  Acosh() : BaseOperator(kNameAcosh) { InitIOName({"x"}, {"y"}); }
 };
 
-AbstractBasePtr AcoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AcoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimAcoshPtr = std::shared_ptr<Acosh>;
 }  // namespace ops

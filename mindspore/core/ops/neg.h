@@ -18,28 +18,25 @@
 #define MINDSPORE_CORE_OPS_NEG_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameNeg = prim::kNeg;
+constexpr auto kNameNeg = "Neg";
 /// \brief Returns a tensor with negative values of the input tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Neg for more details.
-class MS_CORE_API Neg : public PrimitiveC {
+class MIND_API Neg : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Neg);
   /// \brief Constructor.
-  Neg() : PrimitiveC(prim::kPrimNeg->name()) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Neg() = default;
-  MS_DECLARE_PARENT(Neg, PrimitiveC);
+  Neg() : BaseOperator("Neg") { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Neg for the inputs.
   void Init() const {}
 };
 
-AbstractBasePtr NegInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr NegInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

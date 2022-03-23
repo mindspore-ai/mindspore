@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
 #include <cmath>
 #include <string>
@@ -34,6 +35,8 @@
 #include "securec/include/securec.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "tools/optimizer/common/format_utils.h"
+#include "ops/op_utils.h"
 
 using std::string;
 using std::vector;
@@ -382,7 +385,7 @@ int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &wei
 int GetMatMulPreferredDim(const PrimitivePtr &primitive, int input_index, const std::vector<int> &dims) {
   size_t last_first_index = dims.size() - 1;
   size_t last_second_index = dims.size() - 2;
-  auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMulFusion>>();
+  auto matmul_prim = api::MakeShared<ops::MatMul>(primitive);
   MS_ASSERT(matmul_prim != nullptr);
   // For MatMul A
   if (input_index == 0) {
@@ -404,7 +407,7 @@ int GetMatMulPreferredDim(const PrimitivePtr &primitive, int input_index, const 
 }
 
 int GetDeConvPreferredDim(const PrimitivePtr &primitive, const std::vector<int> &dims) {
-  auto prim = primitive->cast<std::shared_ptr<ops::Conv2DTranspose>>();
+  auto prim = api::MakeShared<ops::Conv2DTranspose>(primitive);
   MS_ASSERT(prim != nullptr);
   // For MatMul A
   if (prim->get_in_channel() == prim->get_group() && prim->get_out_channel() == prim->get_group()) {

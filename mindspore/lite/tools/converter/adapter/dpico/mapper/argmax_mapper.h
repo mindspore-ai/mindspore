@@ -28,8 +28,8 @@ class ArgMaxMapper : public OpMapper {
  public:
   ArgMaxMapper() : OpMapper("ArgMax") {}
   ~ArgMaxMapper() override = default;
-  STATUS Map(const CNodePtr &node, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-             const CNodePtrList &output_cnodes) override;
+  STATUS Map(const api::CNodePtr &node, std::vector<BaseOperatorPtr> *base_operators, const api::PrimitivePtr &prim,
+             const api::CNodePtrList &output_cnodes) override;
 };
 }  // namespace dpico
 }  // namespace mindspore

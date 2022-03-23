@@ -18,25 +18,22 @@
 #define MINDSPORE_CORE_OPS_ERFINV_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameErfinv = "Erfinv";
 /// \brief Computes the inverse error function of input. Refer to Python API @ref mindspore.ops.Erfinv for more details.
-class Erfinv : public PrimitiveC {
+class MIND_API Erfinv : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Erfinv);
   /// \brief Constructor.
-  Erfinv() : PrimitiveC(kNameErfinv) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Erfinv() = default;
-  MS_DECLARE_PARENT(Erfinv, PrimitiveC);
+  Erfinv() : BaseOperator(kNameErfinv) { InitIOName({"input_x"}, {"output"}); }
 };
 
-AbstractBasePtr ErfinvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ErfinvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

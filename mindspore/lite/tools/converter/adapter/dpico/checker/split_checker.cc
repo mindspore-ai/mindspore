@@ -20,16 +20,16 @@
 
 namespace mindspore {
 namespace dpico {
-bool SplitChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool SplitChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (output_num > kMaxTopNum) {
     MS_LOG(WARNING) << op->fullname_with_scope() << "'s output num " << output_num << " is greater than " << kMaxTopNum;
     return false;
   }
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     return false;
   }
-  return primitive->GetAttr(ops::kAxis) != nullptr && GetValue<int64_t>(primitive->GetAttr(ops::kAxis)) != 0;
+  return primitive->GetAttr(ops::kAxis) != nullptr && api::GetValue<int64_t>(primitive->GetAttr(ops::kAxis)) != 0;
 }
 
 OpCheckerRegistrar g_SplitChecker("Split", new SplitChecker());

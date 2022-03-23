@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/add_concat_activation_fusion.h"
 #include <memory>
 #include "ops/concat.h"
@@ -21,6 +22,7 @@
 #include "ops/fusion/add_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 const BaseRef AddConcatActivationFusion::DefinePattern() const {
@@ -60,10 +62,10 @@ const AnfNodePtr AddConcatActivationFusion::Process(const FuncGraphPtr &func_gra
     return nullptr;
   }
   auto right_add_cnode = right_add_node->cast<CNodePtr>();
-  auto right_add_prim = GetValueNode<std::shared_ptr<ops::AddFusion>>(right_add_cnode->input(0));
+  auto right_add_prim = ops::GetOperator<ops::AddFusion>(right_add_cnode->input(0));
   MS_CHECK_TRUE_RET(right_add_prim != nullptr, nullptr);
   if (right_add_prim->GetAttr(ops::kActivationType) == nullptr) {
-    right_add_prim->AddAttr(ops::kActivationType, MakeValue<int64_t>(ActivationType::NO_ACTIVATION));
+    right_add_prim->AddAttr(ops::kActivationType, api::MakeValue<int64_t>(ActivationType::NO_ACTIVATION));
   }
   if (right_add_prim->get_activation_type() != ActivationType::NO_ACTIVATION) {
     MS_LOG(INFO) << "right add node has activation";
@@ -76,17 +78,16 @@ const AnfNodePtr AddConcatActivationFusion::Process(const FuncGraphPtr &func_gra
     return nullptr;
   }
   auto left_add_cnode = left_add_node->cast<CNodePtr>();
-  auto left_add_prim = GetValueNode<std::shared_ptr<ops::AddFusion>>(left_add_cnode->input(0));
+  auto left_add_prim = ops::GetOperator<ops::AddFusion>(left_add_cnode->input(0));
   MS_CHECK_TRUE_RET(left_add_prim != nullptr, nullptr);
   if (left_add_prim->GetAttr(ops::kActivationType) == nullptr) {
-    left_add_prim->AddAttr(ops::kActivationType, MakeValue<int64_t>(ActivationType::NO_ACTIVATION));
+    left_add_prim->AddAttr(ops::kActivationType, api::MakeValue<int64_t>(ActivationType::NO_ACTIVATION));
   }
   if (left_add_prim->get_activation_type() != ActivationType::NO_ACTIVATION) {
     MS_LOG(INFO) << "left add node has activation";
     return nullptr;
   }
-
-  auto act_prim = GetValueNode<std::shared_ptr<ops::Activation>>(act_cnode->input(0));
+  auto act_prim = ops::GetOperator<ops::Activation>(act_cnode->input(0));
   MS_CHECK_TRUE_RET(act_prim != nullptr, nullptr);
   if (act_prim->GetAttr(ops::kActivationType) != nullptr) {
     right_add_prim->set_activation_type(act_prim->get_activation_type());

@@ -26,6 +26,9 @@
 #include "ops/primitive_c.h"
 #include "mindspore/core/utils/check_convert_utils.h"
 #include "nnacl/op_base.h"
+#include "tools/converter/parser/parser_utils.h"
+#include "ops/op_utils.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
@@ -35,9 +38,9 @@ class TFNodeParser {
 
   virtual ~TFNodeParser() = default;
 
-  virtual ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                 std::vector<std::string> *inputs, int *output_size) {
+  virtual PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                              const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                              std::vector<std::string> *inputs, int *output_size) {
     return nullptr;
   }
 

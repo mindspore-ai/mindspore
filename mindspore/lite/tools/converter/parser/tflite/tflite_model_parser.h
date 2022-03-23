@@ -70,7 +70,7 @@ class TfliteModelParser : public converter::ModelParser {
                                     const CNodePtr &dst_cnode, std::unordered_map<int, AnfNodePtr> *anf_node_map);
   static STATUS ConvertOpQuantParams(const std::unique_ptr<tflite::OperatorT> &op,
                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                     ops::PrimitiveC *primitive_c);
+                                     PrimitiveCPtr primitive_c);
   static STATUS SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
                                     std::vector<QuantParamT> *quant_params, int round_type = 1);
   STATUS TfliteOpVerify(const std::unique_ptr<tflite::SubGraphT> &subgraph, const size_t operator_codes_size,

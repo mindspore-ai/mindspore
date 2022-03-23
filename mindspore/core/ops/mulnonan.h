@@ -20,23 +20,21 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMulNoNan = prim::kMulNoNan;
-class MulNoNan : public PrimitiveC {
+constexpr auto kNameMulNoNan = "MulNoNan";
+class MulNoNan : public BaseOperator {
  public:
-  MulNoNan() : PrimitiveC(kNameMulNoNan) { InitIOName({"x", "y"}, {"output"}); }
-  explicit MulNoNan(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }
-  ~MulNoNan() = default;
-  MS_DECLARE_PARENT(MulNoNan, PrimitiveC);
+  MIND_API_BASE_MEMBER(MulNoNan);
+  MulNoNan() : BaseOperator(kNameMulNoNan) { InitIOName({"x", "y"}, {"output"}); }
+  explicit MulNoNan(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
   void Init() {}
 };
-AbstractBasePtr MulNoNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MulNoNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimMulNoNanPtr = std::shared_ptr<MulNoNan>;
 }  // namespace ops
 }  // namespace mindspore

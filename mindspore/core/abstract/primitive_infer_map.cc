@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "abstract/primitive_infer_map.h"
 #include <string>
 #include <vector>

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Clip>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_min(-FLT_MAX);
@@ -35,7 +35,7 @@ ops::PrimitiveC *OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxClipParser("Clip", new OnnxClipParser());

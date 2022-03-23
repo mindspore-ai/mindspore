@@ -25,6 +25,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -67,6 +68,7 @@ TypePtr FloorDivInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(FloorDiv, PrimitiveC, BaseOperator);
 AbstractBasePtr FloorDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

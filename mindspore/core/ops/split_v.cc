@@ -20,6 +20,8 @@
 #include "ops/op_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -96,6 +98,7 @@ TuplePtr SplitVInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(SplitV, PrimitiveC, BaseOperator);
 AbstractBasePtr SplitVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

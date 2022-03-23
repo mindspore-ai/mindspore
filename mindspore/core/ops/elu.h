@@ -18,22 +18,18 @@
 #define MINDSPORE_CORE_OPS_ELU_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameElu = "Elu";
 /// \brief Calculate exponential linearity. Refer to Python API @ref mindspore.ops.Elu for more details.
-class MS_CORE_API Elu : public PrimitiveC {
+class MIND_API Elu : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Elu);
   /// \brief Constructor.
-  Elu() : PrimitiveC(kNameElu) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Elu() = default;
-  MS_DECLARE_PARENT(Elu, PrimitiveC);
+  Elu() : BaseOperator(kNameElu) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Elu for the inputs.
   void Init(const float alpha = 0.0);
   /// \brief Set alpha.
@@ -43,8 +39,8 @@ class MS_CORE_API Elu : public PrimitiveC {
   /// \return alpha.
   float get_alpha() const;
 };
-AbstractBasePtr EluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr EluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimElu = std::shared_ptr<Elu>;
 }  // namespace ops
 }  // namespace mindspore

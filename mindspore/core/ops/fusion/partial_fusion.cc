@@ -16,12 +16,14 @@
 
 #include "ops/fusion/partial_fusion.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(PartialFusion, PrimitiveC, BaseOperator);
 void PartialFusion::Init(const int64_t sub_graph_index) { this->set_sub_graph_index(sub_graph_index); }
 void PartialFusion::set_sub_graph_index(const int64_t sub_graph_index) {
-  (void)this->AddAttr(kSubGraphIndex, MakeValue(sub_graph_index));
+  (void)this->AddAttr(kSubGraphIndex, api::MakeValue(sub_graph_index));
 }
 int64_t PartialFusion::get_sub_graph_index() const {
   auto value_ptr = GetAttr(kSubGraphIndex);

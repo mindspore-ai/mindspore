@@ -17,6 +17,10 @@
 #include <set>
 
 #include "ops/non_max_suppression_v3.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "abstract/dshape.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -105,6 +109,8 @@ TypePtr NonMaxSuppressionV3InferType(const PrimitivePtr &prim, const std::vector
   return max_output_size_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(NonMaxSuppressionV3, PrimitiveC, BaseOperator);
 AbstractBasePtr NonMaxSuppressionV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

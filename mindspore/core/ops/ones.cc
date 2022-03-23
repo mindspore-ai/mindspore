@@ -21,6 +21,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -73,6 +74,8 @@ ValuePtr OnesInferValue(const PrimitivePtr &prim, const std::vector<AbstractBase
   return TensorConstructUtils::CreateOnesTensor(out_type, out_shape);
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Ones, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Ones, prim::kPrimOnes, OnesInfer, OnesInferValue, false);
 }  // namespace ops
 }  // namespace mindspore

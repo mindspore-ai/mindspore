@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/scale_scale_fusion.h"
 #include <functional>
 #include <memory>
@@ -23,6 +24,7 @@
 #include "ops/fusion/scale_fusion.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -50,9 +52,11 @@ bool ScaleScaleFusion::CheckScaleNode(const CNodePtr &scale_cnode) const {
     return false;
   }
   MS_CHECK_TRUE_RET(scale_cnode->size() >= kScaleNoBiasLen, false);
-  auto scale_prim = GetValueNode<std::shared_ptr<ops::ScaleFusion>>(scale_cnode->input(FIRST_INPUT));
+  auto scale_prim = ops::GetOperator<ops::ScaleFusion>(scale_cnode->input(FIRST_INPUT));
   MS_CHECK_TRUE_RET(scale_prim != nullptr, false);
-  auto quant_attr = scale_prim->GetAttr("quant_params");
+  auto scale_prim_c = scale_prim->GetPrim();
+  MS_CHECK_TRUE_RET(scale_prim_c != nullptr, false);
+  auto quant_attr = scale_prim_c->GetAttr("quant_params");
   if (quant_attr != nullptr) {
     auto quant_param_holder = quant_attr->cast<lite::QuantParamHolderPtr>();
     MS_CHECK_TRUE_RET(quant_param_holder != nullptr, false);
@@ -92,12 +96,16 @@ int ScaleScaleFusion::GetInputParamsAndTensors(const CNodePtr &up_scale_cnode, c
   }
   MS_CHECK_TRUE_RET(!scale_input_shape_.empty(), lite::RET_ERROR);
 
-  auto up_scale_prim = GetValueNode<std::shared_ptr<ops::ScaleFusion>>(up_scale_cnode->input(FIRST_INPUT));
-  MS_CHECK_TRUE_RET(up_scale_prim != nullptr && up_scale_prim->GetAttr(ops::kAxis), lite::RET_ERROR);
+  auto up_scale_prim = ops::GetOperator<ops::ScaleFusion>(up_scale_cnode->input(FIRST_INPUT));
+  MS_CHECK_TRUE_RET(up_scale_prim != nullptr, lite::RET_ERROR);
+  auto up_scale_prim_c = up_scale_prim->GetPrim();
+  MS_CHECK_TRUE_RET(up_scale_prim_c != nullptr && up_scale_prim_c->GetAttr(ops::kAxis), lite::RET_ERROR);
   auto axis = up_scale_prim->get_axis();
   up_scale_axis_ = axis < 0 ? axis + scale_input_shape_.size() : axis;
-  auto down_scale_prim = GetValueNode<std::shared_ptr<ops::ScaleFusion>>(down_scale_cnode->input(FIRST_INPUT));
-  MS_CHECK_TRUE_RET(down_scale_prim != nullptr && down_scale_prim->GetAttr(ops::kAxis), lite::RET_ERROR);
+  auto down_scale_prim = ops::GetOperator<ops::ScaleFusion>(down_scale_cnode->input(FIRST_INPUT));
+  MS_CHECK_TRUE_RET(down_scale_prim != nullptr, lite::RET_ERROR);
+  auto down_scale_prim_c = down_scale_prim->GetPrim();
+  MS_CHECK_TRUE_RET(down_scale_prim_c != nullptr && down_scale_prim_c->GetAttr(ops::kAxis), lite::RET_ERROR);
   axis = down_scale_prim->get_axis();
   down_scale_axis_ = axis < 0 ? axis + scale_input_shape_.size() : axis;
 
@@ -282,9 +290,11 @@ const AnfNodePtr ScaleScaleFusion::Process(const FuncGraphPtr &func_graph, const
   if (!CheckScaleNode(up_scale_cnode) || !CheckScaleNode(down_scale_cnode)) {
     return nullptr;
   }
-  auto scale_prim = GetValueNode<std::shared_ptr<ops::ScaleFusion>>(up_scale_cnode->input(FIRST_INPUT));
+  auto scale_prim = ops::GetOperator<ops::ScaleFusion>(up_scale_cnode->input(FIRST_INPUT));
   MS_CHECK_TRUE_RET(scale_prim != nullptr, nullptr);
-  if (scale_prim->GetAttr(ops::kActivationType) != nullptr && scale_prim->get_activation_type() != NO_ACTIVATION) {
+  auto scale_prim_c = scale_prim->GetPrim();
+  MS_CHECK_TRUE_RET(scale_prim_c != nullptr, nullptr);
+  if (scale_prim_c->GetAttr(ops::kActivationType) != nullptr && scale_prim->get_activation_type() != NO_ACTIVATION) {
     return nullptr;
   }
 
@@ -297,8 +307,10 @@ const AnfNodePtr ScaleScaleFusion::Process(const FuncGraphPtr &func_graph, const
     MS_LOG(ERROR) << "Generate new weight parameter node failed.";
     return nullptr;
   }
-  auto down_scale_prim = GetValueNode<std::shared_ptr<ops::ScaleFusion>>(down_scale_cnode->input(FIRST_INPUT));
-  MS_CHECK_TRUE_RET(down_scale_prim != nullptr && down_scale_prim->GetAttr(ops::kAxis) != nullptr, nullptr);
+  auto down_scale_prim = ops::GetOperator<ops::ScaleFusion>(down_scale_cnode->input(FIRST_INPUT));
+  MS_CHECK_TRUE_RET(down_scale_prim != nullptr, nullptr);
+  auto down_scale_prim_c = down_scale_prim->GetPrim();
+  MS_CHECK_TRUE_RET(down_scale_prim_c != nullptr && down_scale_prim_c->GetAttr(ops::kAxis) != nullptr, nullptr);
   down_scale_prim->set_axis(MSMIN(up_scale_axis_, down_scale_axis_));
 
   auto manager = func_graph->manager();

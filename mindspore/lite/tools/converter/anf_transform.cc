@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/anf_transform.h"
 #include <memory>
 #include <string>

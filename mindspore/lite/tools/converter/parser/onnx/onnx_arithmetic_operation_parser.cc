@@ -48,61 +48,61 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::AddFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxSubParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxSubParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::SubFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxDivParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxDivParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::DivFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxMulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxMulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::MulFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxEqualParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxEqualParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Equal>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxLessParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxLessParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Less>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxGreaterParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxGreaterParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Greater>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxFloorParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxFloorParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Floor>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxAbsParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxAbsParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Abs>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxExpParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxExpParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::ExpFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -110,110 +110,110 @@ ops::PrimitiveC *OnnxExpParser::Parse(const onnx::GraphProto &onnx_graph, const 
   prim->set_scale(1.0);
   prim->set_shift(0.0);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxCosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxCosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Cos>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxCeilParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxCeilParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Ceil>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxLogParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxLogParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Log>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxAtanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxAtanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Atan>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxAsinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxAsinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Asin>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxAndParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxAndParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::LogicalAnd>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxOrParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxOrParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::LogicalOr>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxNotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxNotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::LogicalNot>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxNegParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxNegParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Neg>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxRoundParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxRoundParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Round>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxSinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxSinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Sin>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxTanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxTanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Tan>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxSqrtParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxSqrtParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Sqrt>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxPowParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxPowParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::PowFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   prim->set_scale(1.0);
   prim->set_shift(0.0);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxMinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxMinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Minimum>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxMaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxMaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Maximum>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxEltwiseParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxEltwiseParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Eltwise>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -224,13 +224,13 @@ ops::PrimitiveC *OnnxEltwiseParser::Parse(const onnx::GraphProto &onnx_graph, co
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxReciprocalParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxReciprocalParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Reciprocal>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxAddParser("Add", new OnnxAddParser());

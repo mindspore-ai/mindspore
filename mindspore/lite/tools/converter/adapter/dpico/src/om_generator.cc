@@ -20,6 +20,9 @@
 #include <algorithm>
 #include <numeric>
 #include <unordered_map>
+#include "ops/tuple_get_item.h"
+#include "ops/custom.h"
+#include "ops/make_tuple.h"
 #include "common/anf_util.h"
 #include "common/string_util.h"
 #include "mapper/op_mapper_registry.h"
@@ -35,29 +38,28 @@ namespace {
 const std::unordered_map<TypeId, std::string> kMapperSupportedTypes = {
   {kNumberTypeUInt8, "U8"},   {kNumberTypeInt8, "S8"},      {kNumberTypeInt16, "S16"},
   {kNumberTypeUInt16, "U16"}, {kNumberTypeFloat16, "FP16"}, {kNumberTypeFloat32, "FP32"}};
-CNodePtrList GetOutputCNodes(const api::FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
+api::CNodePtrList GetOutputCNodes(const api::FuncGraphManagerPtr &manager, const api::AnfNodePtr &node) {
   MS_CHECK_TRUE_MSG(manager != nullptr && node != nullptr, {}, "obtain nullptr input parameter.");
-  CNodePtrList output_cnodes;
-  auto node_map = manager->node_users();
-  auto &node_users = node_map[node];
+  api::CNodePtrList output_cnodes;
+  auto node_users = manager->GetUsers(node);
   if (node_users.size() == 1) {
-    auto output_cnode = node_users.begin()->first->cast<CNodePtr>();
+    auto output_cnode = node_users.begin()->first->cast<api::CNodePtr>();
     if (output_cnode != nullptr) {
       output_cnodes.emplace_back(output_cnode);
     }
   } else {
-    std::map<int, CNodePtr> output_cnode_ptr_map;
+    std::map<int, api::CNodePtr> output_cnode_ptr_map;
     bool has_tuple_get_item = false;
     for (const auto &node_user : node_users) {
-      auto output_cnode = node_user.first->cast<CNodePtr>();
+      auto output_cnode = node_user.first->cast<api::CNodePtr>();
       if (output_cnode != nullptr) {
-        if (CheckPrimitiveType(output_cnode, prim::kPrimTupleGetItem)) {
+        if (CheckPrimitiveType(output_cnode, api::MakeShared<ops::TupleGetItem>())) {
           has_tuple_get_item = true;
           auto last_input_idx = output_cnode->inputs().size() - 1;
           auto anode = output_cnode->input(last_input_idx);
           MS_CHECK_TRUE_MSG(anode != nullptr, {},
                             output_cnode->fullname_with_scope() << " input(" << last_input_idx << ") is nullptr.");
-          auto value_node = anode->cast<ValueNodePtr>();
+          auto value_node = anode->cast<api::ValueNodePtr>();
           MS_CHECK_TRUE_MSG(value_node != nullptr, {}, "value node is nullptr. " << anode->fullname_with_scope());
           auto value_ptr = value_node->value();
           MS_CHECK_TRUE_MSG(value_ptr != nullptr, {}, "value ptr is nullptr. " << anode->fullname_with_scope());
@@ -73,7 +75,7 @@ CNodePtrList GetOutputCNodes(const api::FuncGraphManagerPtr &manager, const AnfN
     }
     if (has_tuple_get_item) {
       (void)std::transform(output_cnode_ptr_map.begin(), output_cnode_ptr_map.end(), std::back_inserter(output_cnodes),
-                           [](const std::pair<int, CNodePtr> &iter) { return iter.second; });
+                           [](const std::pair<int, api::CNodePtr> &iter) { return iter.second; });
     }
   }
   return output_cnodes;
@@ -89,12 +91,11 @@ std::string GetOutNodesStr(const api::FuncGraphManagerPtr &manager, const Subgra
     out_nodes_str.push_back(';');
   }
   auto subgraph_outputs = GetSubgraphOutputs(sub_graph, manager);
-  auto node_map = manager->node_users();
-  AnfNodePtrList report_nodes;
+  api::AnfNodePtrList report_nodes;
   for (const auto &output : subgraph_outputs) {
-    auto node_users = node_map[output];
+    auto node_users = manager->GetUsers(output);
     for (const auto &node_user : node_users) {
-      auto output_cnode = node_user.first->cast<CNodePtr>();
+      auto output_cnode = node_user.first->cast<api::CNodePtr>();
       if (output_cnode == nullptr) {
         continue;
       }
@@ -104,17 +105,17 @@ std::string GetOutNodesStr(const api::FuncGraphManagerPtr &manager, const Subgra
     }
   }
   out_nodes_str = std::accumulate(report_nodes.begin(), report_nodes.end(), out_nodes_str,
-                                  [](const std::string &res, const AnfNodePtr &anf_node_ptr) {
+                                  [](const std::string &res, const api::AnfNodePtr &anf_node_ptr) {
                                     return res + anf_node_ptr->fullname_with_scope() + ":0;";
                                   });
   return out_nodes_str;
 }
-std::string GetInputTypeStr(const AnfNodePtrList &subgraph_inputs,
+std::string GetInputTypeStr(const api::AnfNodePtrList &subgraph_inputs,
                             const std::unordered_map<std::string, std::string> &mapper_config) {
   std::string input_type_str;
   for (const auto &input : subgraph_inputs) {
     auto node_name = input->fullname_with_scope();
-    if (CheckPrimitiveType(input, prim::kPrimCustom)) {
+    if (CheckPrimitiveType(input, api::MakeShared<ops::Custom>())) {
       node_name = GetCustomOutputName(input);
       MS_CHECK_TRUE_MSG(!node_name.empty(), {}, "get custom node origin name failed." << input->fullname_with_scope());
     }
@@ -140,7 +141,7 @@ std::string GetInputTypeStr(const AnfNodePtrList &subgraph_inputs,
   }
   return input_type_str;
 }
-STATUS ConfigImageList(const AnfNodePtrList &subgraph_inputs, std::ofstream *mapper_ofs) {
+STATUS ConfigImageList(const api::AnfNodePtrList &subgraph_inputs, std::ofstream *mapper_ofs) {
   MS_CHECK_TRUE_MSG(mapper_ofs != nullptr, RET_ERROR, "mapper_ofs is nullptr.");
   auto image_lists = MapperConfigParser::GetInstance()->GetImageLists();
   if (image_lists.empty()) {
@@ -157,7 +158,7 @@ STATUS ConfigImageList(const AnfNodePtrList &subgraph_inputs, std::ofstream *map
       mapper_ofs->close();
       return RET_ERROR;
     }
-    if (CheckPrimitiveType(input, prim::kPrimCustom)) {
+    if (CheckPrimitiveType(input, api::MakeShared<ops::Custom>())) {
       node_name = GetCustomOutputName(input);
       if (node_name.empty()) {
         MS_LOG(ERROR) << "get custom node origin name failed." << input->fullname_with_scope();
@@ -177,7 +178,7 @@ STATUS ConfigImageList(const AnfNodePtrList &subgraph_inputs, std::ofstream *map
 }
 }  // namespace
 
-int OmGenerator::GenerateAippConfig(const std::string &aipp_cfg_path, const AnfNodePtrList &subgraph_inputs) {
+int OmGenerator::GenerateAippConfig(const std::string &aipp_cfg_path, const api::AnfNodePtrList &subgraph_inputs) {
   auto aipp_modules = MapperConfigParser::GetInstance()->GetAippModules();
   bool need_aipp_cfg = false;
   std::ofstream aipp_ofs;
@@ -218,7 +219,7 @@ int OmGenerator::GenerateAippConfig(const std::string &aipp_cfg_path, const AnfN
 int OmGenerator::GenerateMapperConfig(const api::FuncGraphPtr &func_graph, const Subgraph &sub_graph, int custom_id,
                                       const std::string &mapper_cfg_path) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr.");
-  auto manager = func_graph->get_manager();
+  auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "funcgraph manager is nullptr.");
   auto mapper_config = MapperConfigParser::GetInstance()->GetCommonConfig();
   MS_CHECK_TRUE_MSG(!mapper_config.empty(), RET_ERROR, "mapper config is empty.");
@@ -271,7 +272,8 @@ int OmGenerator::GenerateMapperConfig(const api::FuncGraphPtr &func_graph, const
   return RET_OK;
 }
 
-int OmGenerator::TransformSubGraphInputs(const AnfNodePtrList &inputs, std::vector<BaseOperatorPtr> *base_operators) {
+int OmGenerator::TransformSubGraphInputs(const api::AnfNodePtrList &inputs,
+                                         std::vector<BaseOperatorPtr> *base_operators) {
   MS_CHECK_TRUE_MSG(!inputs.empty(), RET_ERROR, "subgraph inputs shouldn't be empty.");
   MS_CHECK_TRUE_MSG(base_operators != nullptr, RET_ERROR, "base_operators is nullptr.");
   for (const auto &input : inputs) {
@@ -282,7 +284,7 @@ int OmGenerator::TransformSubGraphInputs(const AnfNodePtrList &inputs, std::vect
     preprocess_operator->SetDimOrderFormat(mapper::DimOrderFormat::NCHW_FORMAT);
 
     auto op_name = input->fullname_with_scope();
-    if (CheckPrimitiveType(input, prim::kPrimCustom)) {
+    if (CheckPrimitiveType(input, api::MakeShared<ops::Custom>())) {
       op_name = GetCustomOutputName(input);
       MS_CHECK_TRUE_MSG(!op_name.empty(), RET_ERROR,
                         "get custom node output name failed." << input->fullname_with_scope());
@@ -303,16 +305,17 @@ int OmGenerator::TransformSubGraphInputs(const AnfNodePtrList &inputs, std::vect
   return RET_OK;
 }
 
-int OmGenerator::TransformSubGraphCNodes(const api::FuncGraphManagerPtr &manager, const CNodePtrList &cnodes,
+int OmGenerator::TransformSubGraphCNodes(const api::FuncGraphManagerPtr &manager, const api::CNodePtrList &cnodes,
                                          std::vector<BaseOperatorPtr> *base_operators) {
   MS_CHECK_TRUE_MSG(!cnodes.empty(), RET_ERROR, "subgraph inputs shouldn't be empty.");
   MS_CHECK_TRUE_MSG(base_operators != nullptr, RET_ERROR, "base_operators is nullptr.");
   for (const auto &cnode : cnodes) {
-    MS_CHECK_TRUE_MSG(utils::isa<CNodePtr>(cnode), RET_ERROR, "cur node should be a cnode");
-    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_CHECK_TRUE_MSG(api::utils::isa<api::CNodePtr>(cnode), RET_ERROR, "cur node should be a cnode");
+    auto primitive = api::GetValueNode<api::PrimitivePtr>(cnode->input(0));
     MS_CHECK_TRUE_MSG(primitive != nullptr, RET_ERROR,
                       "invalid anf node, which don't have primitive. " << cnode->fullname_with_scope());
-    if (CheckPrimitiveType(cnode, prim::kPrimMakeTuple) || CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
+    if (CheckPrimitiveType(cnode, api::MakeShared<ops::MakeTuple>()) ||
+        CheckPrimitiveType(cnode, api::MakeShared<ops::TupleGetItem>())) {
       MS_LOG(DEBUG) << "MakeTuple and TupleGetItem don't need to transform.";
       continue;
     }
@@ -338,7 +341,7 @@ int OmGenerator::TransformSubGraphCNodes(const api::FuncGraphManagerPtr &manager
 int OmGenerator::Run(const api::FuncGraphPtr &func_graph, const Subgraph &sub_graph, int custom_id,
                      mapper::ModelCoreInfo *om_model_info, bool use_origin_config) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr && om_model_info != nullptr, RET_ERROR, "obtain nullptr input parameter.");
-  auto manager = func_graph->get_manager();
+  auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "funcgraph manager is nullptr.");
   std::string mapper_cfg_path;
   if (!use_origin_config) {

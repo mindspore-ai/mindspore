@@ -21,10 +21,13 @@
 #include <algorithm>
 
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
 // gather
+MIND_API_BASE_IMPL(Gather, PrimitiveC, BaseOperator);
 AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

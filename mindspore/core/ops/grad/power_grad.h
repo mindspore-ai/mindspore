@@ -20,18 +20,16 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePowerGrad = "PowerGrad";
-class MS_CORE_API PowerGrad : public PrimitiveC {
+class MIND_API PowerGrad : public BaseOperator {
  public:
-  PowerGrad() : PrimitiveC(kNamePowerGrad) {}
-  ~PowerGrad() = default;
-  MS_DECLARE_PARENT(PowerGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(PowerGrad);
+  PowerGrad() : BaseOperator(kNamePowerGrad) {}
   void Init(const float power, const float scale, const float shift);
   void set_power(const float power);
   void set_scale(const float scale);

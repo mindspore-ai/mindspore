@@ -23,6 +23,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -54,6 +55,8 @@ TypePtr ExpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Exp, PrimitiveC, BaseOperator);
 AbstractBasePtr ExpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(ExpInferShape(primitive, input_args), ExpInferType(primitive, input_args));

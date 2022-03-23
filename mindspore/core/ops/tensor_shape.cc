@@ -18,8 +18,12 @@
 #include <memory>
 #include "ops/dynamic_shape.h"
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(TensorShape, PrimitiveC, BaseOperator);
 abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args) {
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());

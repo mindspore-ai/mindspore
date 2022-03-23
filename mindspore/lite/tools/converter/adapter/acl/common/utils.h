@@ -18,13 +18,17 @@
 #define TOOLS_CONVERTER_ADAPTER_ACL_COMMON_COMMON_UTILS_H
 
 #include <vector>
+#include <memory>
 #include <string>
 #include "include/errorcode.h"
 #include "ir/anf.h"
 #include "ir/dtype/type_id.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace lite {
+using BaseOperatorPtr = std::shared_ptr<mindspore::ops::BaseOperator>;
+
 namespace acl {
 STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int64_t> *shape_vector);
 

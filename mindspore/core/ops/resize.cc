@@ -22,9 +22,11 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Resize, PrimitiveC, BaseOperator);
 void Resize::Init(const Format format, const ResizeMethod method, const int64_t new_height, const int64_t new_width,
                   const bool preserve_aspect_ratio, const CoordinateTransformMode coordinate_transform_mode,
                   const float cubic_coeff, const int64_t exclude_outside, const float extrapolation_value,
@@ -42,40 +44,40 @@ void Resize::Init(const Format format, const ResizeMethod method, const int64_t 
 }
 void Resize::set_format(const Format format) {
   int64_t swi = format;
-  (void)this->AddAttr(kFormat, MakeValue(swi));
+  (void)this->AddAttr(kFormat, api::MakeValue(swi));
 }
 
 void Resize::set_method(const ResizeMethod method) {
   auto swi = (int64_t)method;
-  (void)this->AddAttr(kMethod, MakeValue(swi));
+  (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 
-void Resize::set_new_height(const int64_t new_height) { (void)this->AddAttr(kNewHeight, MakeValue(new_height)); }
+void Resize::set_new_height(const int64_t new_height) { (void)this->AddAttr(kNewHeight, api::MakeValue(new_height)); }
 
-void Resize::set_new_width(const int64_t new_width) { (void)this->AddAttr(kNewWidth, MakeValue(new_width)); }
+void Resize::set_new_width(const int64_t new_width) { (void)this->AddAttr(kNewWidth, api::MakeValue(new_width)); }
 
 void Resize::set_preserve_aspect_ratio(const bool preserve_aspect_ratio) {
-  (void)this->AddAttr(kPreserveAspectRatio, MakeValue(preserve_aspect_ratio));
+  (void)this->AddAttr(kPreserveAspectRatio, api::MakeValue(preserve_aspect_ratio));
 }
 
 void Resize::set_coordinate_transform_mode(const CoordinateTransformMode coordinate_transform_mode) {
   int64_t swi = coordinate_transform_mode;
-  (void)this->AddAttr(kCoordinateTransformMode, MakeValue(swi));
+  (void)this->AddAttr(kCoordinateTransformMode, api::MakeValue(swi));
 }
 
-void Resize::set_cubic_coeff(const float cubic_coeff) { (void)this->AddAttr(kCubicCoeff, MakeValue(cubic_coeff)); }
+void Resize::set_cubic_coeff(const float cubic_coeff) { (void)this->AddAttr(kCubicCoeff, api::MakeValue(cubic_coeff)); }
 
 void Resize::set_exclude_outside(const int64_t exclude_outside) {
-  (void)this->AddAttr(kExcludeOutside, MakeValue(exclude_outside));
+  (void)this->AddAttr(kExcludeOutside, api::MakeValue(exclude_outside));
 }
 
 void Resize::set_extrapolation_value(const float extrapolation_value) {
-  (void)this->AddAttr(kExtrapolationValue, MakeValue(extrapolation_value));
+  (void)this->AddAttr(kExtrapolationValue, api::MakeValue(extrapolation_value));
 }
 
 void Resize::set_nearest_mode(const NearestMode nearest_mode) {
   int64_t swi = (int64_t)nearest_mode;
-  (void)this->AddAttr(kNearestMode, MakeValue(swi));
+  (void)this->AddAttr(kNearestMode, api::MakeValue(swi));
 }
 
 Format Resize::get_format() const {

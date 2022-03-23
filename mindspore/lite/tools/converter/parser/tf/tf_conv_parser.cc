@@ -21,19 +21,22 @@
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
 #include "tools/converter/parser/tf/tf_util.h"
 #include "ops/fusion/conv2d_fusion.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
-                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                     std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
+                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                  std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Conv2DFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   prim->set_pad({0, 0, 0, 0});
   prim->set_group(1);
 
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
 
   std::vector<int64_t> dilations(2);
   if (ParseDilations(tf_op, format, &dilations) != RET_OK) {
@@ -74,7 +77,7 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     }
     prim->set_pad_list(explicit_paddings);
   }
-  prim->AddAttr(ops::kIsOriginalPadMode, MakeValue<bool>(is_original_pad_mode));
+  prim_c->AddAttr(ops::kIsOriginalPadMode, MakeValue<bool>(is_original_pad_mode));
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
@@ -82,14 +85,14 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
   if (tf_op.op() == "DepthwiseConv2dNative") {
-    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
     if (prim->GetAttr(ops::kInChannel) != nullptr) {
       prim->set_group(prim->get_in_channel());
       prim->set_out_channel(prim->get_in_channel());
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfConvParser("Conv2D", new TFConvParser());

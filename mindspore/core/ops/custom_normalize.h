@@ -18,23 +18,21 @@
 #include <memory>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCustomNormalize = "CustomNormalize";
-class MS_CORE_API CustomNormalize : public PrimitiveC {
+class MIND_API CustomNormalize : public BaseOperator {
  public:
-  CustomNormalize() : PrimitiveC(kNameCustomNormalize) {}
-  ~CustomNormalize() = default;
-  MS_DECLARE_PARENT(CustomNormalize, PrimitiveC);
+  MIND_API_BASE_MEMBER(CustomNormalize);
+  CustomNormalize() : BaseOperator(kNameCustomNormalize) {}
   void Init() const {}
 };
 
-AbstractBasePtr CustomNormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CustomNormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

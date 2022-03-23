@@ -20,22 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReverseV2 = "ReverseV2";
 /// \brief Reverses specific dimensions of a tensor.
 /// Refer to Python API @ref mindspore.ops.ReverseV2 for more details.
-class MS_CORE_API ReverseV2 : public PrimitiveC {
+class MIND_API ReverseV2 : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ReverseV2);
   /// \brief Constructor.
-  ReverseV2() : PrimitiveC(kNameReverseV2) {}
-  /// \brief Destructor.
-  ~ReverseV2() = default;
-  MS_DECLARE_PARENT(ReverseV2, PrimitiveC);
+  ReverseV2() : BaseOperator(kNameReverseV2) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ReverseV2 for the inputs.
   void Init(const std::vector<int64_t> &axis);
   /// \brief Set axis.
@@ -46,8 +44,8 @@ class MS_CORE_API ReverseV2 : public PrimitiveC {
   std::vector<int64_t> get_axis() const;
 };
 
-AbstractBasePtr ReverseV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ReverseV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

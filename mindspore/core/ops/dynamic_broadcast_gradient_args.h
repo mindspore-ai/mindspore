@@ -18,20 +18,21 @@
 #define MINDSPORE_CORE_OPS_DYNAMIC_BROADCAST_GRADIENT_ARGS_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API DynamicBroadcastGradientArgs : public PrimitiveC {
+constexpr auto kNameDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
+class MIND_API DynamicBroadcastGradientArgs : public BaseOperator {
  public:
-  DynamicBroadcastGradientArgs() : PrimitiveC(prim::kPrimDynamicBroadcastGradientArgs->name()) {}
-  ~DynamicBroadcastGradientArgs() = default;
-  MS_DECLARE_PARENT(DynamicBroadcastGradientArgs, PrimitiveC);
+  MIND_API_BASE_MEMBER(DynamicBroadcastGradientArgs);
+  DynamicBroadcastGradientArgs() : BaseOperator(kNameDynamicBroadcastGradientArgs) {}
   void Init() const {}
 };
-AbstractBasePtr DynamicBroadcastGradientArgsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DynamicBroadcastGradientArgsInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -17,22 +17,26 @@
 #include "ops/skip_gram.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void SkipGram::set_include_all_grams(const bool include_all_grams) {
-  (void)AddAttr(kIncludeALLGrams, MakeValue(include_all_grams));
+  (void)AddAttr(kIncludeALLGrams, api::MakeValue(include_all_grams));
 }
 bool SkipGram::get_include_all_grams() const {
   auto value_ptr = this->GetAttr(kIncludeALLGrams);
   return GetValue<bool>(value_ptr);
 }
-void SkipGram::set_max_skip_size(const int64_t max_skip_size) { (void)AddAttr(kMaxSkipSize, MakeValue(max_skip_size)); }
+void SkipGram::set_max_skip_size(const int64_t max_skip_size) {
+  (void)AddAttr(kMaxSkipSize, api::MakeValue(max_skip_size));
+}
 int64_t SkipGram::get_max_skip_size() const {
   auto value_ptr = this->GetAttr(kMaxSkipSize);
   return GetValue<int64_t>(value_ptr);
 }
-void SkipGram::set_ngram_size(const int64_t ngram_size) { (void)AddAttr(kNgramSize, MakeValue(ngram_size)); }
+void SkipGram::set_ngram_size(const int64_t ngram_size) { (void)AddAttr(kNgramSize, api::MakeValue(ngram_size)); }
 int64_t SkipGram::get_ngram_size() const {
   auto value_ptr = this->GetAttr(kNgramSize);
   return GetValue<int64_t>(value_ptr);
@@ -43,6 +47,7 @@ void SkipGram::Init(const bool include_all_grams, const int64_t max_skip_size, c
   this->set_ngram_size(ngram_size);
 }
 
+MIND_API_BASE_IMPL(SkipGram, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSkipGram, SkipGram);
 }  // namespace ops
 }  // namespace mindspore

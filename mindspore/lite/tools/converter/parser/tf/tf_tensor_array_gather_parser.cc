@@ -23,11 +23,11 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFTensorArrayGatherParser::Parse(const tensorflow::NodeDef &tf_op,
-                                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                                  std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFTensorArrayGatherParser::Parse(const tensorflow::NodeDef &tf_op,
+                                               const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                               std::vector<std::string> *inputs, int *output_size) {
   MS_LOG(DEBUG) << "TF TensorArrayGatherParser";
-  auto prim = std::make_unique<TensorArrayGatherV3>();
+  auto prim = std::make_shared<TensorArrayGatherV3>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr";
     return nullptr;
@@ -36,7 +36,7 @@ ops::PrimitiveC *TFTensorArrayGatherParser::Parse(const tensorflow::NodeDef &tf_
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
-  return prim.release();
+  return prim;
 }
 TFNodeRegistrar g_tfTensorArrayGatherParser("TensorArrayGatherV3", new TFTensorArrayGatherParser());
 }  // namespace lite

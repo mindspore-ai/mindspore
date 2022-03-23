@@ -19,23 +19,18 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePriorBox = "PriorBox";
 /// \brief PriorBox defined PriorBox operator prototype of lite.
-class MS_CORE_API PriorBox : public PrimitiveC {
+class MIND_API PriorBox : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(PriorBox);
   /// \brief Constructor.
-  PriorBox() : PrimitiveC(kNamePriorBox) {}
-
-  /// \brief Destructor.
-  ~PriorBox() = default;
-
-  MS_DECLARE_PARENT(PriorBox, PrimitiveC);
+  PriorBox() : BaseOperator(kNamePriorBox) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -168,8 +163,8 @@ class MS_CORE_API PriorBox : public PrimitiveC {
   float get_offset() const;
 };
 
-AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -19,21 +19,18 @@
 #include <memory>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Returns a Tensor that is the real part of the input.
 /// Refer to Python API @ref mindspore.ops.Real for more details.
-class MS_CORE_API Real : public PrimitiveC {
+class MIND_API Real : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Real);
   /// \brief Constructor.
-  Real() : PrimitiveC(prim::kPrimReal->name()) { InitIOName({"input"}, {"output"}); }
-  /// \brief Destructor.
-  ~Real() = default;
-  MS_DECLARE_PARENT(Real, PrimitiveC);
+  Real() : BaseOperator("Real") { InitIOName({"input"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Real for the inputs.
   void Init() {}
 };

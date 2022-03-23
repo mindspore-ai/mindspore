@@ -21,22 +21,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPool = "AvgPool";
 /// \brief Average pooling operation. Refer to Python API @ref mindspore.ops.AvgPool for more details.
-class MS_CORE_API AvgPool : public PrimitiveC {
+class MIND_API AvgPool : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(AvgPool);
   /// \brief Constructor.
-  AvgPool() : PrimitiveC(kNameAvgPool) { InitIOName({"x"}, {"output"}); }
-  explicit AvgPool(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~AvgPool() = default;
-  MS_DECLARE_PARENT(AvgPool, PrimitiveC);
+  AvgPool() : BaseOperator(kNameAvgPool) { InitIOName({"x"}, {"output"}); }
+  explicit AvgPool(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.AvgPool for the inputs.
   void Init(const std::vector<int64_t> &kernel_size = {1}, const std::vector<int64_t> &stride = {1},
             const PadMode &pad_mode = VALID, const Format &format = NCHW,
@@ -80,8 +78,8 @@ class MS_CORE_API AvgPool : public PrimitiveC {
   RoundMode get_round_mode() const;
 };
 
-AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

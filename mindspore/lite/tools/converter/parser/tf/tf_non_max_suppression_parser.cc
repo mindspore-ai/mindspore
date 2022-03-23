@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFNonMaxSuppressionParser::Parse(const tensorflow::NodeDef &tf_op,
-                                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                                  std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFNonMaxSuppressionParser::Parse(const tensorflow::NodeDef &tf_op,
+                                               const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                               std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::NonMaxSuppression>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_center_point_box(0);
@@ -38,7 +38,7 @@ ops::PrimitiveC *TFNonMaxSuppressionParser::Parse(const tensorflow::NodeDef &tf_
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 TFNodeRegistrar g_tfNonMaxSuppressionV3Parser("NonMaxSuppressionV3", new TFNonMaxSuppressionParser());
 }  // namespace lite

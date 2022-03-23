@@ -27,7 +27,7 @@ class OnnxTransposeParser : public OnnxNodeParser {
   OnnxTransposeParser() : OnnxNodeParser("Transpose") {}
   ~OnnxTransposeParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

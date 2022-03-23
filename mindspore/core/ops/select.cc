@@ -18,6 +18,8 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "utils/tensor_construct_utils.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
 namespace {
@@ -194,6 +196,8 @@ ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
   return result_tensor;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Select, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Select, prim::kPrimSelect, SelectInfer, SelectInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

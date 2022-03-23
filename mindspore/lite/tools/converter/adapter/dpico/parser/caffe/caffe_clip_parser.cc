@@ -21,8 +21,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeClipParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Clip>();
+BaseOperatorPtr CaffeClipParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Clip>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -34,7 +34,7 @@ ops::PrimitiveC *CaffeClipParser::Parse(const caffe::LayerParameter &proto, cons
   if (clipParam.has_max()) {
     prim->set_max(clipParam.max());
   }
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeClipParser("Clip", new CaffeClipParser());

@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/import/primitive_adjust.h"
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
+#include "ops/op_utils.h"
 #include "ops/batch_norm.h"
 #include "ops/elu.h"
 #include "ops/fused_batch_norm.h"
@@ -226,7 +228,8 @@ int MoveAttrMapCommon(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<T>();
+  T dst_node;
+  auto dst_prim = dst_node.GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
@@ -241,7 +244,8 @@ int MoveAttrMapActivation(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto act_prim = std::make_shared<ops::Activation>();
+  ops::Activation act_node;
+  auto act_prim = act_node.GetPrim();
   MS_CHECK_TRUE_MSG(act_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   act_prim->SetAttrs(src_prim->attrs());
   auto iter = activation_map.find(src_prim->name());
@@ -249,7 +253,7 @@ int MoveAttrMapActivation(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "activation mode is unsupported.";
     return lite::RET_ERROR;
   }
-  act_prim->set_activation_type(iter->second);
+  act_node.set_activation_type(iter->second);
   value_node->set_value(act_prim);
   return lite::RET_OK;
 }
@@ -262,7 +266,8 @@ int MoveAttrMapActivationGrad(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto act_grad_prim = std::make_shared<ops::ActivationGrad>();
+  ops::ActivationGrad act_grad_node;
+  auto act_grad_prim = act_grad_node.GetPrim();
   MS_CHECK_TRUE_MSG(act_grad_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   act_grad_prim->SetAttrs(src_prim->attrs());
   auto iter = activation_map.find(src_prim->name());
@@ -270,7 +275,7 @@ int MoveAttrMapActivationGrad(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "activation mode is unsupported.";
     return lite::RET_ERROR;
   }
-  act_grad_prim->set_activation_type(iter->second);
+  act_grad_node.set_activation_type(iter->second);
   value_node->set_value(act_grad_prim);
   return lite::RET_OK;
 }
@@ -284,7 +289,8 @@ int MoveAttrMapReduce(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<ops::ReduceFusion>();
+  ops::ReduceFusion dst_node;
+  auto dst_prim = dst_node.GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   auto iter = reduce_map.find(src_prim->name());
@@ -292,8 +298,8 @@ int MoveAttrMapReduce(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "reduce mode is unsupported.";
     return lite::RET_ERROR;
   }
-  dst_prim->set_mode(iter->second);
-  dst_prim->set_coeff(1.0f);
+  dst_node.set_mode(iter->second);
+  dst_node.set_coeff(1.0f);
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
@@ -330,9 +336,11 @@ int MoveAttrMapConv2D(const CNodePtr &cnode) {
   }
   PrimitivePtr dst_prim{nullptr};
   if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2D)) {
-    dst_prim = std::make_shared<ops::Conv2DFusion>();
+    ops::Conv2DFusion node;
+    dst_prim = node.GetPrim();
   } else if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DTranspose)) {
-    dst_prim = std::make_shared<ops::Conv2dTransposeFusion>();
+    ops::Conv2dTransposeFusion node;
+    dst_prim = node.GetPrim();
   }
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
@@ -368,10 +376,12 @@ int MoveAttrPool(const CNodePtr &cnode) {
   }
   PrimitivePtr dst_prim = nullptr;
   if (src_prim->name() == kNameAvgPool) {
-    dst_prim = std::make_shared<ops::AvgPoolFusion>();
+    ops::AvgPoolFusion dst_node;
+    dst_prim = dst_node.GetPrim();
     MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   } else if (src_prim->name() == kNameMaxPool) {
-    dst_prim = std::make_shared<ops::MaxPoolFusion>();
+    ops::MaxPoolFusion dst_node;
+    dst_prim = dst_node.GetPrim();
     MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   } else {
     MS_LOG(ERROR) << "unsupported pooling type.";
@@ -405,10 +415,12 @@ int MoveAttrPoolGrad(const CNodePtr &cnode) {
   PrimitivePtr dst_prim = nullptr;
   if (src_prim->name() == kNameAvgPoolGrad || src_prim->name() == kNameAvgPoolGradGpu ||
       src_prim->name() == kNameAvgPoolGradCpu) {
-    dst_prim = std::make_shared<ops::AvgPoolGrad>();
+    ops::AvgPoolGrad dst_node;
+    dst_prim = dst_node.GetPrim();
     MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   } else if (src_prim->name() == kNameMaxPoolGrad) {
-    dst_prim = std::make_shared<ops::MaxPoolGrad>();
+    ops::MaxPoolGrad dst_node;
+    dst_prim = dst_node.GetPrim();
     MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   } else {
     MS_LOG(ERROR) << "unsupported pooling type.";
@@ -438,7 +450,8 @@ int MoveAttrMapAdder(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<ops::AdderFusion>();
+  ops::AdderFusion dst_node;
+  auto dst_prim = dst_node.GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   auto status = AdjustConvAttr(dst_prim);
@@ -459,12 +472,13 @@ int MoveAttrMapLayerNorm(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<ops::LayerNormFusion>();
+  ops::LayerNormFusion dst_node;
+  auto dst_prim = dst_node.GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
-  dst_prim->set_elementwise_affine(true);
+  dst_node.set_elementwise_affine(true);
   if (dst_prim->GetAttr(ops::kEpsilon) == nullptr) {
-    dst_prim->set_epsilon(1e-7);
+    dst_node.set_epsilon(1e-7);
   }
   value_node->set_value(dst_prim);
   return lite::RET_OK;
@@ -479,19 +493,20 @@ int MoveAttrMapResize(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<ops::Resize>();
+  ops::Resize dst_node;
+  auto dst_prim = dst_node.GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   auto size = GetValue<std::vector<int64_t>>(src_prim->GetAttr(ops::kSize));
   MS_CHECK_TRUE_MSG(size.size() > 1, RET_ERROR, "out of range.");
-  dst_prim->set_new_height(size[0]);
-  dst_prim->set_new_width(size[1]);
+  dst_node.set_new_height(size[0]);
+  dst_node.set_new_width(size[1]);
   if (src_prim->GetAttr(ops::kAlignCorners) != nullptr && GetValue<bool>(src_prim->GetAttr(ops::kAlignCorners))) {
-    dst_prim->set_coordinate_transform_mode(mindspore::ALIGN_CORNERS);
+    dst_node.set_coordinate_transform_mode(mindspore::ALIGN_CORNERS);
   }
   if (src_prim->name() == kNameResizeBilinear) {
-    dst_prim->set_method(ResizeMethod::LINEAR);
+    dst_node.set_method(ResizeMethod::LINEAR);
   } else if (src_prim->name() == kNameResizeNearestNeighbor) {
-    dst_prim->set_method(ResizeMethod::NEAREST);
+    dst_node.set_method(ResizeMethod::NEAREST);
   }
   value_node->set_value(dst_prim);
   return lite::RET_OK;
@@ -506,7 +521,8 @@ int MoveAttrSlice(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<ops::SliceFusion>();
+  ops::SliceFusion dst_node;
+  auto dst_prim = dst_node.GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   auto begin = GetValueNode<ValuePtr>(cnode->input(opt::kInputIndexTwo));
   auto begin_value = GetValue<std::vector<int64_t>>(begin);
@@ -515,7 +531,7 @@ int MoveAttrSlice(const CNodePtr &cnode) {
   for (size_t i = 0; i < begin_value.size(); i++) {
     axes[i] = static_cast<int64_t>(i);
   }
-  dst_prim->set_axes(axes);
+  dst_node.set_axes(axes);
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
   return lite::RET_OK;
@@ -530,13 +546,14 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto dst_prim = std::make_shared<ops::ResizeGrad>();
+  ops::ResizeGrad dst_node;
+  auto dst_prim = dst_node.GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
 
   if (src_prim->name() == kNameResizeBilinearGrad) {
-    dst_prim->set_method(ResizeMethod::LINEAR);
+    dst_node.set_method(ResizeMethod::LINEAR);
   } else if (src_prim->name() == kNameResizeNearestNeighborGrad) {
-    dst_prim->set_method(ResizeMethod::NEAREST);
+    dst_node.set_method(ResizeMethod::NEAREST);
   } else {
     MS_LOG(ERROR) << "Resize grad method " << src_prim->name() << "is not supported";
     return lite::RET_ERROR;
@@ -544,7 +561,7 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
   MS_CHECK_TRUE_MSG(src_prim->GetAttr(ops::kAlignCorners) != nullptr, RET_NULL_PTR,
                     "src_prim->GetAttr(ops::kAlignCorners) is nullptr.");
   auto align_corners = GetValue<bool>(src_prim->GetAttr(ops::kAlignCorners));
-  dst_prim->set_align_corners(align_corners);
+  dst_node.set_align_corners(align_corners);
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
@@ -560,10 +577,12 @@ int MoveAttrBatchNorm(const CNodePtr &cnode) {
   }
   auto dst_prim = std::make_shared<ops::FusedBatchNorm>();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
-  dst_prim->SetAttrs(src_prim->attrs());
+  auto dst_prim_c = dst_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(dst_prim_c != nullptr, RET_NULL_PTR, "dst_prim_c is nullptr.");
+  dst_prim_c->SetAttrs(src_prim->attrs());
   bool is_training = GetValue<bool>(src_prim->GetAttr(ops::kIsTraining));
   dst_prim->set_mode(static_cast<int64_t>(is_training));
-  value_node->set_value(dst_prim);
+  value_node->set_value(dst_prim_c);
   return lite::RET_OK;
 }
 }  // namespace

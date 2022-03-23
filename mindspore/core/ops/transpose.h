@@ -18,27 +18,25 @@
 #define MINDSPORE_CORE_OPS_TRANSPOSE_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameTranspose = prim::kTranspose;
+constexpr auto kNameTranspose = "Transpose";
 /// \brief Permutes the dimensions of the input tensor according to input permutation.
 /// Refer to Python API @ref mindspore.ops.Transpose for more details.
-class MS_CORE_API Transpose : public PrimitiveC {
+class MIND_API Transpose : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Transpose);
   /// \brief Constructor.
-  Transpose() : PrimitiveC(prim::kTranspose) { InitIOName({"x", "perm"}, {"output"}); }
-  /// \brief Destructor.
-  ~Transpose() = default;
-  MS_DECLARE_PARENT(Transpose, PrimitiveC);
+  Transpose() : BaseOperator(kNameTranspose) { InitIOName({"x", "perm"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

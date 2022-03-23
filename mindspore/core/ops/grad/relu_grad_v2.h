@@ -19,19 +19,16 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReLUGradV2 = prim::kReLUGradV2;
-class MS_CORE_API ReLUGradV2 : public PrimitiveC {
+constexpr auto kNameReLUGradV2 = "ReLUGradV2";
+class MIND_API ReLUGradV2 : public BaseOperator {
  public:
-  ReLUGradV2() : PrimitiveC(prim::kPrimReluGradV2->name()) { InitIOName({"x"}, {"output"}); }
-  ~ReLUGradV2() = default;
-  MS_DECLARE_PARENT(ReLUGradV2, PrimitiveC);
+  MIND_API_BASE_MEMBER(ReLUGradV2);
+  ReLUGradV2() : BaseOperator(kNameReLUGradV2) { InitIOName({"x"}, {"output"}); }
   void Init() const {}
 };
 }  // namespace ops

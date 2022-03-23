@@ -17,6 +17,7 @@
 #include "ops/sigmoid_cross_entropy_with_logits.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -62,6 +63,8 @@ TypePtr SigmoidCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
   return logits_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(SigmoidCrossEntropyWithLogits, PrimitiveC, BaseOperator);
 AbstractBasePtr SigmoidCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = SigmoidCrossEntropyWithLogitsInferType(primitive, input_args);

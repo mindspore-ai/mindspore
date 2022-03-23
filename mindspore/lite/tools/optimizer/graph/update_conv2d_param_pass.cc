@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
 #include <memory>
 #include <utility>
 #include <vector>
 #include "ops/fusion/conv2d_fusion.h"
 #include "mindspore/lite/include/errorcode.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {

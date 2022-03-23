@@ -15,15 +15,20 @@
  */
 
 #include "ops/pack.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void Pack::set_axis(const int64_t &axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
+void Pack::set_axis(const int64_t &axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t Pack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 void Pack::Init(const int64_t &axis) { this->set_axis(axis); }
 
+MIND_API_BASE_IMPL(Pack, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNamePack, Pack);
 }  // namespace ops
 }  // namespace mindspore

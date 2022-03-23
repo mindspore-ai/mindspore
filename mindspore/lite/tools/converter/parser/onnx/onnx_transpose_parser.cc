@@ -22,9 +22,11 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxTransposeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxTransposeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Transpose>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   std::vector<int32_t> perm;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
@@ -37,8 +39,8 @@ ops::PrimitiveC *OnnxTransposeParser::Parse(const onnx::GraphProto &onnx_graph, 
   }
   auto perm_value = MakeValue(perm);
   MS_CHECK_TRUE_MSG(perm_value != nullptr, nullptr, "MakeValue failed");
-  prim->AddAttr("perm", perm_value);
-  return prim.release();
+  prim_c->AddAttr("perm", perm_value);
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxTransposeParser("Transpose", new OnnxTransposeParser());

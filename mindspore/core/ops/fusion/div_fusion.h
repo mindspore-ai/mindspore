@@ -17,22 +17,17 @@
 #ifndef MINDSPORE_CORE_OPS_DIV_FUSION_H_
 #define MINDSPORE_CORE_OPS_DIV_FUSION_H_
 #include "ops/div.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDivFusion = "DivFusion";
 /// \brief DivFusion defined Div operator prototype of lite.
-class MS_CORE_API DivFusion : public Div {
+class MIND_API DivFusion : public Div {
  public:
+  MIND_API_BASE_MEMBER(DivFusion);
   /// \brief Constructor.
   DivFusion() : Div(kNameDivFusion) {}
-
-  /// \brief Destructor.
-  ~DivFusion() = default;
-
-  MS_DECLARE_PARENT(DivFusion, Div);
 
   /// \brief Method to init the op's attributes.
   ///

@@ -93,11 +93,11 @@ class MS_CORE_API OpPrimCRegisterHelper {
   int id_{0};
 };
 
-#define REGISTER_PRIMITIVE_C(kname, primc)               \
-  std::shared_ptr<PrimitiveC> GetDefaultPrimC##primc() { \
-    auto out = std::make_shared<primc>();                \
-    return out;                                          \
-  }                                                      \
+#define REGISTER_PRIMITIVE_C(kname, primc)                    \
+  std::shared_ptr<PrimitiveC> GetDefaultPrimC##primc() {      \
+    primc out;                                                \
+    return std::dynamic_pointer_cast<PrimitiveC>(out.impl()); \
+  }                                                           \
   OpPrimCRegisterHelper primc_gen_##kname(kname, GetDefaultPrimC##primc);
 }  // namespace ops
 }  // namespace mindspore

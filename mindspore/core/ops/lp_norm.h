@@ -19,22 +19,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLpNorm = "LpNorm";
-class LpNorm : public PrimitiveC {
+class LpNorm : public BaseOperator {
  public:
-  LpNorm() : PrimitiveC(kNameLpNorm) { InitIOName({"input"}, {"output"}); }
-  ~LpNorm() = default;
-  MS_DECLARE_PARENT(LpNorm, PrimitiveC);
+  MIND_API_BASE_MEMBER(LpNorm);
+  LpNorm() : BaseOperator(kNameLpNorm) { InitIOName({"input"}, {"output"}); }
 };
 
-AbstractBasePtr LpNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LpNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimLpNormPtr = std::shared_ptr<LpNorm>;
 }  // namespace ops

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "backend/common/optimizer/node_pass.h"
 #include <unordered_set>
 #include <deque>

@@ -22,12 +22,14 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                      const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(!tflite_op->outputs.empty(), nullptr);
   auto prim = std::make_unique<ops::Cast>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
 
   const auto &out_tensor = tflite_subgraph->tensors[tflite_op->outputs.front()];
   if (out_tensor == nullptr) {
@@ -37,9 +39,9 @@ ops::PrimitiveC *TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT
   auto dstT = GetTfliteDataType(out_tensor->type);
   auto value_dst = MakeValue(static_cast<int32_t>(dstT));
   MS_CHECK_TRUE_RET(value_dst != nullptr, nullptr);
-  prim->AddAttr("to", value_dst);
+  prim_c->AddAttr("to", value_dst);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteCastParser(tflite::BuiltinOperator_CAST, new TfliteCastParser());

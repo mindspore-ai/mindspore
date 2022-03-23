@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.h"
 #include <functional>
 #include <utility>
@@ -217,11 +219,13 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
   MS_ASSERT(func_graph != nullptr && equiv != nullptr);
   auto attention_prim = BuildAttentionPrim(equiv);
   MS_CHECK_TRUE_RET(attention_prim != nullptr, nullptr);
-  if (SetQuantParamForAttentionNode(attention_prim, equiv) != lite::RET_OK) {
+  auto attention_prim_c = attention_prim->GetPrim();
+  MS_CHECK_TRUE_RET(attention_prim_c != nullptr, nullptr);
+  if (SetQuantParamForAttentionNode(attention_prim_c, equiv) != lite::RET_OK) {
     MS_LOG(ERROR) << "set quant param for attehtion node failed.";
     return nullptr;
   }
-  auto value_node = NewValueNode(attention_prim);
+  auto value_node = NewValueNode(attention_prim_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   auto input_q = utils::cast<AnfNodePtr>((*equiv)[input_q_]);
   auto input_k = utils::cast<AnfNodePtr>((*equiv)[input_k_]);
@@ -231,26 +235,28 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
   auto weight_q = utils::cast<AnfNodePtr>((*equiv)[weight_q_]);
   auto transpose_prim = std::make_shared<ops::Transpose>();
   MS_CHECK_TRUE_RET(transpose_prim != nullptr, nullptr);
+  auto transpose_prim_c = transpose_prim->GetPrim();
+  MS_CHECK_TRUE_RET(transpose_prim_c != nullptr, nullptr);
   auto transpose_perm = BuildIntVecParameterNode(func_graph, {1, 0}, "transpose" + base_name + "_perm");
   MS_CHECK_TRUE_RET(transpose_perm != nullptr, nullptr);
-  auto weight_q_transpose = func_graph->NewCNode(transpose_prim, {weight_q, transpose_perm});
+  auto weight_q_transpose = func_graph->NewCNode(transpose_prim_c, {weight_q, transpose_perm});
   MS_CHECK_TRUE_RET(weight_q_transpose != nullptr, nullptr);
   weight_q_transpose->set_fullname_with_scope("transpose_wq" + base_name);
 
   auto weight_k = utils::cast<AnfNodePtr>((*equiv)[weight_k_]);
-  auto weight_k_transpose = func_graph->NewCNode(transpose_prim, {weight_k, transpose_perm});
+  auto weight_k_transpose = func_graph->NewCNode(transpose_prim_c, {weight_k, transpose_perm});
   MS_CHECK_TRUE_RET(weight_k_transpose != nullptr, nullptr);
   weight_k_transpose->set_fullname_with_scope("transpose_wk" + base_name);
 
   auto weight_v = utils::cast<AnfNodePtr>((*equiv)[weight_v_]);
-  auto weight_v_transpose = func_graph->NewCNode(transpose_prim, {weight_v, transpose_perm});
+  auto weight_v_transpose = func_graph->NewCNode(transpose_prim_c, {weight_v, transpose_perm});
   MS_CHECK_TRUE_RET(weight_v_transpose != nullptr, nullptr);
   weight_v_transpose->set_fullname_with_scope("transpose_wv" + base_name);
 
   auto weight_p = utils::cast<AnfNodePtr>((*equiv)[weight_p_]);
 
   auto weight_o = utils::cast<AnfNodePtr>((*equiv)[weight_o_]);
-  auto weight_o_transpose = func_graph->NewCNode(transpose_prim, {weight_o, transpose_perm});
+  auto weight_o_transpose = func_graph->NewCNode(transpose_prim_c, {weight_o, transpose_perm});
   MS_CHECK_TRUE_RET(weight_o_transpose != nullptr, nullptr);
   weight_o_transpose->set_fullname_with_scope("transpose_wo" + base_name);
 

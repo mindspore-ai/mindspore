@@ -18,6 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include "mindapi/base/types.h"
 #include "include/registry/converter_context.h"
 #include "common/fetch_content.h"
 #include "common/anf_util.h"
@@ -26,7 +27,7 @@
 namespace mindspore {
 namespace dpico {
 namespace {
-STATUS GetAxesSet(const CNodePtr &op, const ShapeVector &input_shape, const PrimitivePtr &primitive,
+STATUS GetAxesSet(const api::CNodePtr &op, const ShapeVector &input_shape, const api::PrimitivePtr &primitive,
                   std::set<int32_t> *axes_set) {
   if (axes_set == nullptr) {
     MS_LOG(ERROR) << "axes_set is nullptr. " << op->fullname_with_scope();
@@ -51,18 +52,19 @@ STATUS GetAxesSet(const CNodePtr &op, const ShapeVector &input_shape, const Prim
     (void)std::transform(data, data + data_size, std::inserter(*axes_set, axes_set->begin()),
                          [input_shape](int32_t value) { return (value + input_shape.size()) % input_shape.size(); });
   } else if (primitive->GetAttr(ops::kAxes) != nullptr) {
-    auto axes = GetValue<std::vector<int32_t>>(primitive->GetAttr(ops::kAxes));
-    (void)std::transform(axes.begin(), axes.end(), std::inserter(*axes_set, axes_set->begin()),
-                         [input_shape](int32_t value) { return (value + input_shape.size()) % input_shape.size(); });
+    auto axes = api::GetValue<std::vector<int64_t>>(primitive->GetAttr(ops::kAxes));
+    (void)std::transform(
+      axes.begin(), axes.end(), std::inserter(*axes_set, axes_set->begin()),
+      [input_shape](int64_t value) { return (static_cast<size_t>(value) + input_shape.size()) % input_shape.size(); });
   }
   return RET_OK;
 }
 
-bool CheckAttr(const CNodePtr &op, mindspore::Format format, const PrimitivePtr &primitive,
+bool CheckAttr(const api::CNodePtr &op, mindspore::Format format, const api::PrimitivePtr &primitive,
                const ShapeVector &input_shape) {
   bool keep_dims = true;
   if (primitive->GetAttr(ops::kKeepDims) != nullptr) {
-    keep_dims = GetValue<bool>(primitive->GetAttr(ops::kKeepDims));
+    keep_dims = api::GetValue<bool>(primitive->GetAttr(ops::kKeepDims));
   }
   std::set<int32_t> axes_set;
   if (GetAxesSet(op, input_shape, primitive, &axes_set) != RET_OK) {
@@ -71,7 +73,7 @@ bool CheckAttr(const CNodePtr &op, mindspore::Format format, const PrimitivePtr 
   }
   // special process when cnode is from caffe
   if (primitive->GetAttr(ops::kFmkType) != nullptr) {
-    auto fmk_type = static_cast<converter::FmkType>(GetValue<int>(primitive->GetAttr(ops::kFmkType)));
+    auto fmk_type = static_cast<converter::FmkType>(api::GetValue<int64_t>(primitive->GetAttr(ops::kFmkType)));
     if (fmk_type == converter::kFmkTypeCaffe) {
       return true;
     }
@@ -86,15 +88,15 @@ bool CheckAttr(const CNodePtr &op, mindspore::Format format, const PrimitivePtr 
   return true;
 }
 }  // namespace
-bool ReduceChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+bool ReduceChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   auto mode_ptr = primitive->GetAttr(ops::kMode);
   if (mode_ptr != nullptr) {
-    auto reduce_mode = static_cast<ReduceMode>(GetValue<int64_t>(mode_ptr));
+    auto reduce_mode = static_cast<ReduceMode>(api::GetValue<int64_t>(mode_ptr));
     if (reduce_mode < ReduceMode::Reduce_Mean || reduce_mode >= ReduceMode::Reduce_All) {
       MS_LOG(WARNING) << "unsupported reduce mode " << reduce_mode << " " << op->fullname_with_scope();
       return false;

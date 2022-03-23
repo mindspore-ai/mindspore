@@ -20,24 +20,19 @@
 #include <memory>
 
 #include "ops/grad/conv2d_backprop_filter.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropFilterFusion = "Conv2DBackpropFilterFusion";
 /// \brief Conv2DBackpropFilterFusion defined Conv2DBackpropFilter operator prototype of lite.
-class MS_CORE_API Conv2DBackpropFilterFusion : public Conv2DBackpropFilter {
+class MIND_API Conv2DBackpropFilterFusion : public Conv2DBackpropFilter {
  public:
+  MIND_API_BASE_MEMBER(Conv2DBackpropFilterFusion);
   /// \brief Constructor.
   Conv2DBackpropFilterFusion() : Conv2DBackpropFilter(kNameConv2DBackpropFilterFusion) {
     InitIOName({"out_backprop", "input", "filter_sizes"}, {"output"});
   }
-
-  /// \brief Destructor.
-  ~Conv2DBackpropFilterFusion() = default;
-
-  MS_DECLARE_PARENT(Conv2DBackpropFilterFusion, Conv2DBackpropFilter);
 
   /// \brief Method to init the op's attributes.
   ///

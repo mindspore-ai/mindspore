@@ -20,18 +20,17 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceScatter = "ReduceScatter";
-class MS_CORE_API ReduceScatter : public PrimitiveC {
+class MIND_API ReduceScatter : public BaseOperator {
  public:
-  ReduceScatter() : PrimitiveC(kNameReduceScatter) { InitIOName({"input_x"}, {"output"}); }
-  ~ReduceScatter() = default;
-  MS_DECLARE_PARENT(ReduceScatter, PrimitiveC);
+  MIND_API_BASE_MEMBER(ReduceScatter);
+  ReduceScatter() : BaseOperator(kNameReduceScatter) { InitIOName({"input_x"}, {"output"}); }
   void Init() {}
   void set_group(const std::string &format);
   std::string get_group() const;

@@ -21,13 +21,16 @@
 #include <memory>
 
 #include "ops/assert.h"
+#include "mindapi/src/helper.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Assert, PrimitiveC, BaseOperator);
 void Assert::Init(const int64_t summarize) { set_summarize(summarize); }
 
-void Assert::set_summarize(const int64_t summarize) { (void)this->AddAttr(kSummarize, MakeValue(summarize)); }
+void Assert::set_summarize(const int64_t summarize) { (void)this->AddAttr(kSummarize, api::MakeValue(summarize)); }
 
 int64_t Assert::get_summarize() const {
   auto value_ptr = GetAttr(kSummarize);

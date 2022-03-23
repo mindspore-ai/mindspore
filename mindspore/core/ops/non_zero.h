@@ -17,22 +17,19 @@
 #ifndef MINDSPORE_CORE_OPS_NON_ZERO_H_
 #define MINDSPORE_CORE_OPS_NON_ZERO_H_
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNonZero = "NonZero";
 /// \brief Calculate tensor not zero index, by default.
 /// Refer to Python API @ref mindspore.ops.NonZero for more details.
-class MS_CORE_API NonZero : public PrimitiveC {
+class MIND_API NonZero : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(NonZero);
   /// \brief Constructor.
-  NonZero() : PrimitiveC(kNameNonZero) {}
-  /// \brief Destructor.
-  ~NonZero() = default;
-  MS_DECLARE_PARENT(NonZero, PrimitiveC);
+  NonZero() : BaseOperator(kNameNonZero) {}
 };
 }  // namespace ops
 }  // namespace mindspore

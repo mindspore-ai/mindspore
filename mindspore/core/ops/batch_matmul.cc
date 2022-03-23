@@ -23,6 +23,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -134,14 +135,15 @@ TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(BatchMatmul, PrimitiveC, BaseOperator);
 void BatchMatmul::Init(bool transpose_a, bool transpose_b) {
   set_transpose_a(transpose_a);
   set_transpose_b(transpose_b);
 }
 
-void BatchMatmul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, MakeValue(transpose_a)); }
+void BatchMatmul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, api::MakeValue(transpose_a)); }
 
-void BatchMatmul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, MakeValue(transpose_b)); }
+void BatchMatmul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, api::MakeValue(transpose_b)); }
 
 bool BatchMatmul::get_transpose_a() const {
   auto value_ptr = GetAttr(kTransposeA);

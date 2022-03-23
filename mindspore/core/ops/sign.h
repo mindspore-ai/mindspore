@@ -19,18 +19,15 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSign = "Sign";
-class Sign : public PrimitiveC {
+class Sign : public BaseOperator {
  public:
-  Sign() : PrimitiveC(kNameSign) { InitIOName({"x"}, {"y"}); }
-  ~Sign() = default;
-  MS_DECLARE_PARENT(Sign, PrimitiveC);
+  MIND_API_BASE_MEMBER(Sign);
+  Sign() : BaseOperator(kNameSign) { InitIOName({"x"}, {"y"}); }
 };
 }  // namespace ops
 }  // namespace mindspore

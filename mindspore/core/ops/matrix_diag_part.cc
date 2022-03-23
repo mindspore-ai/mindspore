@@ -19,6 +19,8 @@
 #include "abstract/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -50,6 +52,7 @@ TypePtr MatrixDiagPartInferType(const PrimitivePtr &prim, const std::vector<Abst
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(MatrixDiagPartV3, PrimitiveC, BaseOperator);
 AbstractBasePtr MatrixDiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(MatrixDiagPartInferShape(primitive, input_args),

@@ -20,23 +20,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBinaryCrossEntropy = "BinaryCrossEntropy";
 /// \brief Computes the binary cross entropy between the logits and the labels.
 /// Refer to Python API @ref mindspore.ops.BinaryCrossEntropy for more details.
-class MS_CORE_API BinaryCrossEntropy : public PrimitiveC {
+class MIND_API BinaryCrossEntropy : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(BinaryCrossEntropy);
   /// \brief Constructor.
-  BinaryCrossEntropy() : PrimitiveC(kNameBinaryCrossEntropy) { InitIOName({"x", "y", "weight"}, {"output"}); }
-  /// \brief Destructor.
-  ~BinaryCrossEntropy() = default;
-  MS_DECLARE_PARENT(BinaryCrossEntropy, PrimitiveC);
+  BinaryCrossEntropy() : BaseOperator(kNameBinaryCrossEntropy) { InitIOName({"x", "y", "weight"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BinaryCrossEntropy for the inputs.
   void Init(const Reduction &reduction = MEAN);
   /// \brief Set reduction.
@@ -46,8 +42,9 @@ class MS_CORE_API BinaryCrossEntropy : public PrimitiveC {
   /// \return reduction.
   Reduction get_reduction() const;
 };
-AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimBinaryCrossEntropyPtr = std::shared_ptr<BinaryCrossEntropy>;
 }  // namespace ops

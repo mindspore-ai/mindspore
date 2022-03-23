@@ -18,6 +18,9 @@
 #include <set>
 #include <map>
 #include <string>
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -41,6 +44,8 @@ TypePtr SigmoidInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   return x_dtype;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Sigmoid, PrimitiveC, BaseOperator);
 AbstractBasePtr SigmoidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

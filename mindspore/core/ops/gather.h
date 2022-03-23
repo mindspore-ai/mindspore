@@ -20,22 +20,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGather = "Gather";
 /// \brief Returns a slice of the input tensor based on the specified indices and axis.
 /// Refer to Python API @ref mindspore.ops.Gather for more details.
-class MS_CORE_API Gather : public PrimitiveC {
+class MIND_API Gather : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Gather);
   /// \brief Constructor.
-  Gather() : PrimitiveC(kNameGather) { InitIOName({"param", "indices", "axis"}, {"output"}); }
-  /// \brief Destructor.
-  ~Gather() = default;
-  MS_DECLARE_PARENT(Gather, PrimitiveC);
+  Gather() : BaseOperator(kNameGather) { InitIOName({"param", "indices", "axis"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Gather for the inputs.
   void Init() const {}
 };

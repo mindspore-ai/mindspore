@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include <memory>
 #include <string>

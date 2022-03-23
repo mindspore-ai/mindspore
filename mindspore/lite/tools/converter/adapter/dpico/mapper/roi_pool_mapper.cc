@@ -18,19 +18,18 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "ops/op_utils.h"
 #include "ops/roi_pooling.h"
 #include "op/roi_pool_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS RoiPoolMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS RoiPoolMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto roi_pool_prim = utils::cast<std::shared_ptr<ops::ROIPooling>>(prim);
+  auto roi_pool_prim = api::utils::cast<api::SharedPtr<ops::ROIPooling>>(prim);
   MS_ASSERT(roi_pool_prim != nullptr);
 
   auto roi_pool_operator = std::make_unique<mapper::RoiPoolOperator>();

@@ -20,22 +20,17 @@
 #include <memory>
 
 #include "ops/avg_pool.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPoolFusion = "AvgPoolFusion";
 /// \brief AvgPoolFusion defined AvgPool operator prototype of lite.
-class MS_CORE_API AvgPoolFusion : public AvgPool {
+class MIND_API AvgPoolFusion : public AvgPool {
  public:
+  MIND_API_BASE_MEMBER(AvgPoolFusion);
   /// \brief Constructor.
   AvgPoolFusion() : AvgPool(kNameAvgPoolFusion) { InitIOName({"x"}, {"output"}); }
-
-  /// \brief Destructor.
-  ~AvgPoolFusion() = default;
-
-  MS_DECLARE_PARENT(AvgPoolFusion, AvgPool);
 
   /// \brief Method to init the op's attributes.
   ///
@@ -75,8 +70,8 @@ class MS_CORE_API AvgPoolFusion : public AvgPool {
   ActivationType get_activation_type() const;
 };
 
-AbstractBasePtr AvgPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AvgPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 #include "common/data_transpose_utils.h"
-#include <memory>
 #include <string>
 #include <utility>
 #include <unordered_map>
 #include <vector>
+#include <numeric>
+#include "third_party/securec/include/securec.h"
 #include "common/check_base.h"
+#include "common/float16.h"
+#include "mindapi/base/logging.h"
 
 namespace mindspore {
 namespace dpico {
@@ -51,7 +54,7 @@ void MoveData(float *matrix, int idx, int row, int col) {  // idx is from the ne
 }  // namespace
 
 int DeduceDimConvertion(mindspore::Format src_format, mindspore::Format dst_format, std::vector<int> *perm) {
-  MS_ASSERT(perm != nullptr);
+  MS_CHECK_TRUE_MSG(perm != nullptr, RET_ERROR, "perm is nullptr.");
   if (kTensorFormatMap.find(src_format) == kTensorFormatMap.end() ||
       kTensorFormatMap.find(dst_format) == kTensorFormatMap.end()) {
     MS_LOG(ERROR) << "src_format or dst_format is error.";
@@ -121,9 +124,9 @@ STATUS TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_sha
 }
 
 template <typename T>
-STATUS DoTransposeData(const tensor::TensorPtr &tensor, mindspore::Format src_format, mindspore::Format dst_format) {
+STATUS DoTransposeData(const api::TensorPtr &tensor, mindspore::Format src_format, mindspore::Format dst_format) {
   MS_ASSERT(tensor != nullptr);
-  auto origin_shape = tensor->shape_c();
+  auto origin_shape = tensor->shape();
   if (origin_shape.size() != kDims4) {
     MS_LOG(ERROR) << "Filter dim-num is not supported, dim-num: " << origin_shape.size();
     return lite::RET_ERROR;
@@ -159,7 +162,7 @@ STATUS DoTransposeData(const tensor::TensorPtr &tensor, mindspore::Format src_fo
   }
   std::vector<T> buf(count);
 
-  auto origin_weight_data = tensor->data_c();
+  auto origin_weight_data = tensor->data();
   if (origin_weight_data == nullptr) {
     MS_LOG(ERROR) << "origin_weight_data is nullptr.";
     return RET_ERROR;
@@ -173,7 +176,7 @@ STATUS DoTransposeData(const tensor::TensorPtr &tensor, mindspore::Format src_fo
     MS_LOG(ERROR) << "tensor size shouldn't be 0";
     return RET_ERROR;
   }
-  if (memcpy_s(tensor->data_c(), tensor->Size(), buf.data(), count * sizeof(T)) != EOK) {
+  if (memcpy_s(tensor->data(), tensor->Size(), buf.data(), count * sizeof(T)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";
     return RET_ERROR;
   }
@@ -181,12 +184,12 @@ STATUS DoTransposeData(const tensor::TensorPtr &tensor, mindspore::Format src_fo
   return RET_OK;
 }
 
-STATUS TransFilterFormat(const tensor::TensorPtr &tensor, mindspore::Format src_format, mindspore::Format dst_format) {
+STATUS TransFilterFormat(const api::TensorPtr &tensor, mindspore::Format src_format, mindspore::Format dst_format) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is nullptr.";
     return RET_ERROR;
   }
-  std::unordered_map<TypeId, std::function<STATUS(const tensor::TensorPtr &, mindspore::Format, mindspore::Format)>>
+  std::unordered_map<TypeId, std::function<STATUS(const api::TensorPtr &, mindspore::Format, mindspore::Format)>>
     trans_func = {{kNumberTypeFloat32, DoTransposeData<float>},
                   {kNumberTypeUInt8, DoTransposeData<uint8_t>},
                   {kNumberTypeInt8, DoTransposeData<int8_t>},

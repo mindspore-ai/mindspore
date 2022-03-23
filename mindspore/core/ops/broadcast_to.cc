@@ -16,6 +16,9 @@
 
 #include <set>
 #include "ops/broadcast_to.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -73,11 +76,12 @@ TypePtr BroadcastToInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(BroadcastTo, PrimitiveC, BaseOperator);
 void BroadcastTo::Init(const std::vector<int64_t> &shape) { set_shape(shape); }
 
 void BroadcastTo::set_shape(const std::vector<int64_t> &shape) {
   (void)CheckAndConvertUtils::CheckInteger(kShapeSize, SizeToLong(shape.size()), kGreaterThan, 0, name());
-  (void)AddAttr(kShape, MakeValue(shape));
+  (void)AddAttr(kShape, api::MakeValue(shape));
 }
 
 std::vector<int64_t> BroadcastTo::get_shape() const {

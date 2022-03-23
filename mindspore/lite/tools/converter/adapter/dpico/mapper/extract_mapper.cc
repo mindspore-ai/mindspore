@@ -18,15 +18,14 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "ops/op_utils.h"
 #include "common/anf_util.h"
 #include "common/op_attr.h"
 #include "op/extract_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS ExtractMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS ExtractMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -44,13 +43,13 @@ STATUS ExtractMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *b
 
   extract_operator->SetOpType(mapper::OpType::EXTRACT);
   if (prim->GetAttr(dpico::kSlicePointBegin) != nullptr) {
-    extract_operator->SetSlicePointBegin(GetValue<uint32_t>(prim->GetAttr(dpico::kSlicePointBegin)));
+    extract_operator->SetSlicePointBegin(api::GetValue<int64_t>(prim->GetAttr(dpico::kSlicePointBegin)));
   }
   if (prim->GetAttr(dpico::kSlicePointEnd) != nullptr) {
-    extract_operator->SetSlicePointEnd(GetValue<uint32_t>(prim->GetAttr(dpico::kSlicePointEnd)));
+    extract_operator->SetSlicePointEnd(api::GetValue<int64_t>(prim->GetAttr(dpico::kSlicePointEnd)));
   }
   if (prim->GetAttr(ops::kAxis) != nullptr) {
-    extract_operator->SetAxis(GetValue<int32_t>(prim->GetAttr(ops::kAxis)));
+    extract_operator->SetAxis(api::GetValue<int64_t>(prim->GetAttr(ops::kAxis)));
   }
   base_operators->push_back(std::move(extract_operator));
   return RET_OK;

@@ -99,12 +99,12 @@ STATUS GetVectorChannel(const std::vector<int64_t> &shape, int64_t *channel) {
   return RET_OK;
 }
 
-bool HasOfflineData(const AnfNodePtr &node) {
-  auto param = node->cast<ParameterPtr>();
+bool HasOfflineData(const api::AnfNodePtr &node) {
+  auto param = node->cast<api::ParameterPtr>();
   return param != nullptr && param->has_default();
 }
 
-bool CheckInputW(const CNodePtr &op, size_t index, mindspore::Format format, int limit_w) {
+bool CheckInputW(const api::CNodePtr &op, size_t index, mindspore::Format format, int limit_w) {
   if (index >= op->inputs().size()) {
     MS_LOG(ERROR) << "index:" << index << " is greater than " << op->fullname_with_scope()
                   << " inputs size:" << op->inputs().size();

@@ -19,9 +19,11 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ScatterNd, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameScatterNd, ScatterNd);
 }  // namespace ops
 }  // namespace mindspore

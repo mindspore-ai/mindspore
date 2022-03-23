@@ -18,20 +18,19 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "ops/op_utils.h"
 #include "common/anf_util.h"
 #include "ops/reverse_v2.h"
 #include "op/reverse_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS ReverseMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS ReverseMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto reverse_prim = utils::cast<std::shared_ptr<ops::ReverseV2>>(prim);
+  auto reverse_prim = api::utils::cast<api::SharedPtr<ops::ReverseV2>>(prim);
   MS_ASSERT(reverse_prim != nullptr);
 
   auto reverse_operator = std::make_unique<mapper::ReverseOperator>();

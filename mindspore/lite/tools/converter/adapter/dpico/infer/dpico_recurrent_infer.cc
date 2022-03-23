@@ -31,7 +31,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kGateNum2 = 2;
-}
+}  // namespace
 std::shared_ptr<KernelInterface> DpicoRecurrentInferCreater() {
   std::shared_ptr<KernelInterface> infer = std::make_shared<DpicoRecurrentInterface>();
   if (infer == nullptr) {

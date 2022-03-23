@@ -19,19 +19,18 @@
 #include <utility>
 #include <algorithm>
 #include <vector>
-#include "ops/op_utils.h"
 #include "ops/crop.h"
 #include "op/crop_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS CropMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                       const CNodePtrList &output_cnodes) {
+STATUS CropMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                       const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto crop_prim = utils::cast<std::shared_ptr<ops::Crop>>(prim);
+  auto crop_prim = api::utils::cast<api::SharedPtr<ops::Crop>>(prim);
   MS_ASSERT(crop_prim != nullptr);
 
   auto crop_operator = std::make_unique<mapper::CropOperator>();

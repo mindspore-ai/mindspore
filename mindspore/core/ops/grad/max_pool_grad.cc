@@ -16,9 +16,12 @@
 
 #include "ops/grad/max_pool_grad.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(MaxPoolGrad, PrimitiveC, PoolGrad);
 REGISTER_PRIMITIVE_C(kNameMaxPoolGrad, MaxPoolGrad);
 }  // namespace ops
 }  // namespace mindspore

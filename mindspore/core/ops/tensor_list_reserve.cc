@@ -17,20 +17,22 @@
 #include "ops/tensor_list_reserve.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(TensorListReserve, PrimitiveC, BaseOperator);
 void TensorListReserve::Init(const int64_t element_dtype, const int64_t shape_type) {
   this->set_element_dtype(element_dtype);
   this->set_shape_type(shape_type);
 }
 
 void TensorListReserve::set_element_dtype(const int64_t element_dtype) {
-  (void)this->AddAttr(kElement_dtype, MakeValue(element_dtype));
+  (void)this->AddAttr(kElement_dtype, api::MakeValue(element_dtype));
 }
 
 void TensorListReserve::set_shape_type(const int64_t shape_type) {
-  (void)this->AddAttr(kShapeType, MakeValue(shape_type));
+  (void)this->AddAttr(kShapeType, api::MakeValue(shape_type));
 }
 
 int64_t TensorListReserve::get_element_dtype() const {

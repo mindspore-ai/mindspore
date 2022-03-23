@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Resize>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_method(mindspore::ResizeMethod::NEAREST);  // use bilinear method
@@ -41,7 +41,7 @@ ops::PrimitiveC *OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, c
   }
   prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxUpsampleParser("Upsample", new OnnxUpsampleParser());

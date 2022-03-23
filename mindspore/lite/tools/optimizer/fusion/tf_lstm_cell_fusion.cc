@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
 #include <memory>
 #include "ops/lstm.h"
@@ -357,10 +359,12 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
   MS_ASSERT(equiv != nullptr);
   auto lstm_prim = std::make_shared<ops::LSTM>();
   MS_CHECK_TRUE_RET(lstm_prim != nullptr, nullptr);
+  auto lstm_prim_c = lstm_prim->GetPrim();
+  MS_CHECK_TRUE_RET(lstm_prim_c != nullptr, nullptr);
   lstm_prim->set_bidirectional(false);
   lstm_prim->set_zoneout_cell(zoneout_cell);
   lstm_prim->set_zoneout_hidden(zoneout_hidden);
-  auto value_node = NewValueNode(lstm_prim);
+  auto value_node = NewValueNode(lstm_prim_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
 
   auto &vars = while_input_vars_;

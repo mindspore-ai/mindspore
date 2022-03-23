@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include <vector>
 #include <deque>
@@ -79,7 +80,7 @@ void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *ou
 
 namespace {
 constexpr int kBytesPerInt = 4;
-}
+}  // namespace
 
 void ConvertTensorList(const MetaGraphT *graph, uint32_t index, bool *convert_succ,
                        std::vector<Tensor *> *lite_tensors) {

@@ -16,23 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_PARTIAL_FUSION_H_
 #define MINDSPORE_CORE_OPS_PARTIAL_FUSION_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePartialFusion = "PartialFusion";
 /// \brief PartialFusion defined Partial operator prototype of lite.
-class MS_CORE_API PartialFusion : public PrimitiveC {
+class MIND_API PartialFusion : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(PartialFusion);
   /// \brief Constructor.
-  PartialFusion() : PrimitiveC(kNamePartialFusion) {}
-
-  /// \brief Destructor.
-  ~PartialFusion() = default;
-
-  MS_DECLARE_PARENT(PartialFusion, PrimitiveC);
+  PartialFusion() : BaseOperator(kNamePartialFusion) {}
 
   /// \brief Method to init the op's attributes.
   ///

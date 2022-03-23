@@ -18,24 +18,22 @@
 #define MINDSPORE_CORE_OPS_NEIGHBOREXCHANGEV2_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNeighborExchangeV2 = "NeighborExchangeV2";
-class MS_CORE_API NeighborExchangeV2 : public PrimitiveC {
+class MIND_API NeighborExchangeV2 : public BaseOperator {
  public:
-  NeighborExchangeV2() : PrimitiveC(kNameNeighborExchangeV2) {}
-  ~NeighborExchangeV2() = default;
-  MS_DECLARE_PARENT(NeighborExchangeV2, PrimitiveC);
+  MIND_API_BASE_MEMBER(NeighborExchangeV2);
+  NeighborExchangeV2() : BaseOperator(kNameNeighborExchangeV2) {}
   void Init() {}
 };
 using kPrimNeighborExchangeV2Ptr = std::shared_ptr<NeighborExchangeV2>;
 
-AbstractBasePtr NeighborExchangeV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr NeighborExchangeV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

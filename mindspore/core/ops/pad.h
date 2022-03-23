@@ -20,22 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePad = "Pad";
 /// \brief Pads the input tensor according to the paddings. Refer to Python API @ref mindspore.ops.Pad for more details.
-class MS_CORE_API Pad : public PrimitiveC {
+class MIND_API Pad : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Pad);
   /// \brief Constructor.
-  Pad() : PrimitiveC(kNamePad) { InitIOName({"x"}, {"y"}); }
-  explicit Pad(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Pad() = default;
-  MS_DECLARE_PARENT(Pad, PrimitiveC);
+  Pad() : BaseOperator(kNamePad) { InitIOName({"x"}, {"y"}); }
+  explicit Pad(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Pad for the inputs.
   void Init(const std::vector<std::vector<int64_t>> &paddings);
   /// \brief Set paddings.
@@ -45,8 +43,8 @@ class MS_CORE_API Pad : public PrimitiveC {
   /// \return paddings.
   std::vector<std::vector<int64_t>> get_paddings() const;
 };
-AbstractBasePtr PadInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr PadInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

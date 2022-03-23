@@ -20,22 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-class DynamicBroadcastTo : public PrimitiveC {
+class DynamicBroadcastTo : public BaseOperator {
  public:
-  DynamicBroadcastTo() : PrimitiveC(prim::kPrimDynamicBroadcastTo->name()) { InitIOName({"x", "shape"}, {"y"}); }
-  ~DynamicBroadcastTo() = default;
-  MS_DECLARE_PARENT(DynamicBroadcastTo, PrimitiveC);
+  MIND_API_BASE_MEMBER(DynamicBroadcastTo);
+  DynamicBroadcastTo() : BaseOperator("DynamicBroadcastTo") { InitIOName({"x", "shape"}, {"y"}); }
   void Init() {}
 };
 
-AbstractBasePtr DynamicBroadcastToInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DynamicBroadcastToInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimDynamicBroadcastToPtr = std::shared_ptr<DynamicBroadcastTo>;
 }  // namespace ops
 }  // namespace mindspore

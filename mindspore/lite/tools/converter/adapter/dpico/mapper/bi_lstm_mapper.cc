@@ -24,8 +24,8 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS BiLstmMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                         const CNodePtrList &output_cnodes) {
+STATUS BiLstmMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                         const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -42,13 +42,13 @@ STATUS BiLstmMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *ba
   }
 
   if (prim->GetAttr(kNumOutput) != nullptr) {
-    bi_lstm_operator->SetRecurrentNumOutput(GetValue<uint32_t>(prim->GetAttr(kNumOutput)));
+    bi_lstm_operator->SetRecurrentNumOutput(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumOutput))));
   }
   if (prim->GetAttr(kExposeHidden) != nullptr) {
-    bi_lstm_operator->SetRecurrentExposeHidden(GetValue<bool>(prim->GetAttr(kExposeHidden)));
+    bi_lstm_operator->SetRecurrentExposeHidden(api::GetValue<bool>(prim->GetAttr(kExposeHidden)));
   }
   if (prim->GetAttr(kOutputChannel) != nullptr) {
-    bi_lstm_operator->SetOutputChannel(GetValue<uint32_t>(prim->GetAttr(kOutputChannel)));
+    bi_lstm_operator->SetOutputChannel(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kOutputChannel))));
   }
   bi_lstm_operator->SetRecurrentContFlag(true);
   if (SetRecurrentDataInfo(cnode, bi_lstm_operator.get()) != RET_OK) {

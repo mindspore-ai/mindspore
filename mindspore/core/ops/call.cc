@@ -16,9 +16,11 @@
 
 #include "ops/call.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Call, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameCall, Call);
 }  // namespace ops
 }  // namespace mindspore

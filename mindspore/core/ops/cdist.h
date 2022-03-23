@@ -22,26 +22,23 @@
 #include <set>
 #include <map>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCdist = "Cdist";
 /// \brief Computes batched the p norm distance between each pair of the two collections of row vectors.
 /// Refer to Python API @ref mindspore.ops.Cdist for more details.
-class MS_CORE_API Cdist : public PrimitiveC {
+class MIND_API Cdist : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Cdist);
   /// \brief Constructor.
-  Cdist() : PrimitiveC(kNameCdist) { InitIOName({"input_x", "input_y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Cdist() = default;
-  MS_DECLARE_PARENT(Cdist, PrimitiveC);
+  Cdist() : BaseOperator(kNameCdist) { InitIOName({"input_x", "input_y"}, {"output"}); }
 };
 
-AbstractBasePtr CdistInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CdistInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

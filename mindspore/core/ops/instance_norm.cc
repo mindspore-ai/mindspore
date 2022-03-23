@@ -23,12 +23,15 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(InstanceNorm, PrimitiveC, BaseOperator);
 void InstanceNorm::Init(const float epsilon) { this->set_epsilon(epsilon); }
 
-void InstanceNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, MakeValue(epsilon)); }
+void InstanceNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
 float InstanceNorm::get_epsilon() const {
   auto value_ptr = GetAttr(kEpsilon);
   return GetValue<float>(value_ptr);

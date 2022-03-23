@@ -15,15 +15,20 @@
  */
 
 #include "ops/custom.h"
+#include <memory>
+#include <map>
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Custom, PrimitiveC, BaseOperator);
 void Custom::Init(const std::string &type, const std::map<std::string, std::vector<uint8_t>> &attrs) {
   this->set_type(type);
   this->set_attr(attrs);
 }
 
-void Custom::set_type(const std::string &type) { (void)this->AddAttr(kType, MakeValue(type)); }
+void Custom::set_type(const std::string &type) { (void)this->AddAttr(kType, api::MakeValue(type)); }
 
 std::string Custom::get_type() const {
   auto value_ptr = this->GetAttr(kType);
@@ -31,17 +36,17 @@ std::string Custom::get_type() const {
 }
 
 void Custom::set_attr(const std::map<std::string, std::vector<uint8_t>> &attrs) {
-  ValuePtrList value_ptr_list;
+  api::ValuePtrList value_ptr_list;
   for (const auto &attr : attrs) {
-    (void)value_ptr_list.emplace_back(MakeValue<std::string>(attr.first));
-    (void)value_ptr_list.emplace_back(MakeValue<std::vector<uint8_t>>(attr.second));
+    (void)value_ptr_list.emplace_back(api::MakeValue<std::string>(attr.first));
+    (void)value_ptr_list.emplace_back(api::MakeValue<std::vector<uint8_t>>(attr.second));
   }
-  (void)this->AddAttr(kAttr, MakeValue(value_ptr_list));
+  (void)this->AddAttr(kAttr, api::MakeValue(value_ptr_list));
 }
 
 std::map<std::string, std::vector<uint8_t>> Custom::get_attr() const {
   std::map<std::string, std::vector<uint8_t>> attrs;
-  auto value_ptr_list = GetValue<ValuePtrList>(this->GetAttr(kAttr));
+  auto value_ptr_list = GetValue<api::ValuePtrList>(this->GetAttr(kAttr));
   for (size_t i = 0; i < value_ptr_list.size(); i += 2) {
     auto key = GetValue<std::string>(value_ptr_list[i]);
     auto value = GetValue<std::vector<uint8_t>>(value_ptr_list[i + 1]);

@@ -22,12 +22,12 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::ExpandDims>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteExpandDimsParser(tflite::BuiltinOperator_EXPAND_DIMS, new TfliteExpandDimsParser());

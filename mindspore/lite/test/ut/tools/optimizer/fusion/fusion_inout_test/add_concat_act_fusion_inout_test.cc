@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include <string>
 #include <memory>
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/fusion_inout_test.h"
@@ -29,7 +31,7 @@
 namespace mindspore {
 namespace {
 constexpr size_t kAddInputTensorWSize = 128;
-}
+}  // namespace
 class ConcatActFusionInoutTest : public FusionInoutTest {
  public:
   ConcatActFusionInoutTest() = default;
@@ -75,8 +77,10 @@ class ConcatActFusionInoutTest : public FusionInoutTest {
       AddParameter(graph_, 0, {add_left_h_, add_left_w_}, kNumberTypeFloat32, "graph_" + name + "_input2");
     auto prim = std::make_unique<ops::AddFusion>();
     MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create AddFusion primitivec failed");
+    auto prim_c = prim->GetPrim();
+    MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
     prim->Init(ActivationType::NO_ACTIVATION);
-    auto add_primitive = NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim.release()));
+    auto add_primitive = NewValueNode(prim_c);
     MS_CHECK_TRUE_RET(add_primitive != nullptr, nullptr);
     auto add_fusion = graph->NewCNode({add_primitive, input1, input2});
     MS_CHECK_TRUE_MSG(add_fusion != nullptr, nullptr, "create AddFusion failed");
@@ -88,9 +92,11 @@ class ConcatActFusionInoutTest : public FusionInoutTest {
                      const std::string &name) {
     auto concat_primitive = std::make_unique<ops::Concat>();
     MS_CHECK_TRUE_MSG(concat_primitive != nullptr, nullptr, "create concat primitivec failed");
+    auto prim_c = concat_primitive->GetPrim();
+    MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
     concat_primitive->Init();
     concat_primitive->set_axis(1);
-    auto concat_primc = NewValueNode(std::shared_ptr<ops::PrimitiveC>(concat_primitive.release()));
+    auto concat_primc = NewValueNode(prim_c);
     MS_CHECK_TRUE_RET(concat_primc != nullptr, nullptr);
     auto concat = graph->NewCNode({concat_primc, input1, input2});
     MS_CHECK_TRUE_MSG(concat != nullptr, nullptr, "create Concat failed");
@@ -101,9 +107,11 @@ class ConcatActFusionInoutTest : public FusionInoutTest {
   CNodePtr AddAct(const FuncGraphPtr &graph, const AnfNodePtr &input, const std::string &name) {
     auto prim = std::make_unique<ops::Activation>();
     MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create Act primitivec failed");
+    auto prim_c = prim->GetPrim();
+    MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
     prim->Init();
     prim->set_activation_type(ActivationType::RELU6);
-    auto act_primitive = NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim.release()));
+    auto act_primitive = NewValueNode(prim_c);
     MS_CHECK_TRUE_RET(act_primitive != nullptr, nullptr);
     auto act = graph->NewCNode({act_primitive, input});
     MS_CHECK_TRUE_MSG(act != nullptr, nullptr, "create Act failed");

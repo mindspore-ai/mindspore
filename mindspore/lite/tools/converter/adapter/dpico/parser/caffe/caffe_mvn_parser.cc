@@ -19,11 +19,12 @@
 #include <vector>
 #include "common/op_attr.h"
 #include "ops/custom.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeMvnParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeMvnParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -33,17 +34,17 @@ ops::PrimitiveC *CaffeMvnParser::Parse(const caffe::LayerParameter &proto, const
   if (proto.has_mvn_param()) {
     const caffe::MVNParameter &mvn_parameter = proto.mvn_param();
     if (mvn_parameter.has_eps()) {
-      prim->AddAttr(ops::kEps, MakeValue<float>(mvn_parameter.eps()));
+      prim->AddAttr(ops::kEps, api::MakeValue<float>(mvn_parameter.eps()));
     }
     if (mvn_parameter.has_across_channels()) {
-      prim->AddAttr(dpico::kAcrossChannels, MakeValue<bool>(mvn_parameter.across_channels()));
+      prim->AddAttr(dpico::kAcrossChannels, api::MakeValue<bool>(mvn_parameter.across_channels()));
     }
     if (mvn_parameter.has_normalize_variance()) {
-      prim->AddAttr(dpico::kNormalizeVariance, MakeValue<bool>(mvn_parameter.normalize_variance()));
+      prim->AddAttr(dpico::kNormalizeVariance, api::MakeValue<bool>(mvn_parameter.normalize_variance()));
     }
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeMvnParser("MVN", new CaffeMvnParser());

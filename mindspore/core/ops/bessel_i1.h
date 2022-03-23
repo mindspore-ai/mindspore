@@ -21,22 +21,20 @@
 #include <string>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBesselI1 = "BesselI1";
-class BesselI1 : public PrimitiveC {
+class MIND_API BesselI1 : public BaseOperator {
  public:
-  BesselI1() : PrimitiveC(kNameBesselI1) { InitIOName({"x"}, {"y"}); }
-  ~BesselI1() = default;
-  MS_DECLARE_PARENT(BesselI1, PrimitiveC);
+  MIND_API_BASE_MEMBER(BesselI1);
+  BesselI1() : BaseOperator(kNameBesselI1) { InitIOName({"x"}, {"y"}); }
 };
 
-AbstractBasePtr BesselI1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BesselI1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_Bessel_I1_H_

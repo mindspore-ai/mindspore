@@ -25,6 +25,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -54,10 +55,12 @@ TypePtr EluInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   return x_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Elu, PrimitiveC, BaseOperator);
 void Elu::Init(const float alpha) { this->set_alpha(alpha); }
 
 void Elu::set_alpha(const float alpha) {
-  (void)AddAttr(kAlpha, MakeValue(CheckAndConvertUtils::CheckValue<float>(kAlpha, alpha, kEqual, 1.0, name())));
+  (void)AddAttr(kAlpha, api::MakeValue(CheckAndConvertUtils::CheckValue<float>(kAlpha, alpha, kEqual, 1.0, name())));
 }
 
 float Elu::get_alpha() const {

@@ -16,18 +16,16 @@
 
 #ifndef MINDSPORE_CORE_OPS_GRAD_SQRT_GRAD_H_
 #define MINDSPORE_CORE_OPS_GRAD_SQRT_GRAD_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSqrtGrad = "SqrtGrad";
-class MS_CORE_API SqrtGrad : public PrimitiveC {
+class MIND_API SqrtGrad : public BaseOperator {
  public:
-  SqrtGrad() : PrimitiveC(kNameSqrtGrad) { InitIOName({"out_backprop", "input"}, {"output"}); }
-  ~SqrtGrad() = default;
-  MS_DECLARE_PARENT(SqrtGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(SqrtGrad);
+  SqrtGrad() : BaseOperator(kNameSqrtGrad) { InitIOName({"out_backprop", "input"}, {"output"}); }
   void Init() const {}
 };
 }  // namespace ops

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/converter/parser/unused_node_remove_pass.h"
 #include <deque>
 #include <unordered_set>

@@ -25,6 +25,8 @@
 #include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
 namespace {
@@ -45,6 +47,8 @@ TypePtr XlogyInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   return input_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Xlogy, PrimitiveC, BaseOperator);
 AbstractBasePtr XlogyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

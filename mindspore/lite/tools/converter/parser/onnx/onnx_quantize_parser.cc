@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::QuantDTypeCast>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (onnx_node.op_type() == "Int8Quantize") {
@@ -35,7 +35,7 @@ ops::PrimitiveC *OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, c
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxInt8QuantizeParser("Int8Quantize", new OnnxQuantizeParser());

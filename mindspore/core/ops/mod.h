@@ -18,27 +18,24 @@
 #define MINDSPORE_CORE_OPS_MOD_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMod = "Mod";
 /// \brief Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Mod for more details.
-class MS_CORE_API Mod : public PrimitiveC {
+class MIND_API Mod : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Mod);
   /// \brief Constructor.
-  Mod() : PrimitiveC(kNameMod) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Mod() = default;
-  MS_DECLARE_PARENT(Mod, PrimitiveC);
+  Mod() : BaseOperator(kNameMod) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Mod for the inputs.
   void Init() const {}
 };
-AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimModPtr = std::shared_ptr<Mod>;
 }  // namespace ops
 }  // namespace mindspore

@@ -22,11 +22,12 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void SpaceToBatch::set_paddings(const std::vector<std::vector<int64_t>> &paddings) {
-  (void)this->AddAttr(kPaddings, MakeValue(paddings));
+  (void)this->AddAttr(kPaddings, api::MakeValue(paddings));
   int64_t h = SizeToLong(paddings.size());
   int64_t w = SizeToLong(paddings[0].size());
   std::vector<int64_t> temp_w = {2, 2};
@@ -43,7 +44,7 @@ std::vector<std::vector<int64_t>> SpaceToBatch::get_paddings() const {
   return GetValue<std::vector<std::vector<int64_t>>>(value_ptr);
 }
 void SpaceToBatch::set_block_size(const std::vector<int64_t> block_size) {
-  (void)this->AddAttr(kBlockSize, MakeValue(block_size));
+  (void)this->AddAttr(kBlockSize, api::MakeValue(block_size));
 }
 
 std::vector<int64_t> SpaceToBatch::get_block_size() const {
@@ -55,6 +56,7 @@ void SpaceToBatch::Init(const std::vector<int64_t> block_size, const std::vector
   this->set_block_size(block_size);
 }
 
+MIND_API_BASE_IMPL(SpaceToBatch, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSpaceToBatch, SpaceToBatch);
 }  // namespace ops
 }  // namespace mindspore

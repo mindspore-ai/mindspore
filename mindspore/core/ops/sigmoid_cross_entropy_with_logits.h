@@ -21,29 +21,28 @@
 #include <string>
 #include <set>
 #include <map>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSigmoidCrossEntropyWithLogits = "SigmoidCrossEntropyWithLogits";
 /// \brief Uses the given logits to compute sigmoid cross entropy between the logits and the label.
 /// Refer to Python API @ref mindspore.ops.SigmoidCrossEntropyWithLogits for more details.
-class MS_CORE_API SigmoidCrossEntropyWithLogits : public PrimitiveC {
+class MIND_API SigmoidCrossEntropyWithLogits : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SigmoidCrossEntropyWithLogits);
   /// \brief Constructor.
-  SigmoidCrossEntropyWithLogits() : PrimitiveC(kNameSigmoidCrossEntropyWithLogits) {
+  SigmoidCrossEntropyWithLogits() : BaseOperator(kNameSigmoidCrossEntropyWithLogits) {
     InitIOName({"predict", "target"}, {"loss"});
   }
-  /// \brief Destructor.
-  ~SigmoidCrossEntropyWithLogits() = default;
-  MS_DECLARE_PARENT(SigmoidCrossEntropyWithLogits, PrimitiveC);
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr SigmoidCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SigmoidCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSigmoidCrossEntropyWithLogitsPtr = std::shared_ptr<SigmoidCrossEntropyWithLogits>;
 }  // namespace ops
 }  // namespace mindspore

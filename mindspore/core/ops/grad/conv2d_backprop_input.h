@@ -21,20 +21,19 @@
 #include <string>
 #include <memory>
 
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
+
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropInput = "Conv2DBackpropInput";
-class MS_CORE_API Conv2DBackpropInput : public PrimitiveC {
+class MIND_API Conv2DBackpropInput : public BaseOperator {
  public:
-  explicit Conv2DBackpropInput(const std::string &k_name = kNameConv2DBackpropInput) : PrimitiveC(k_name) {
+  MIND_API_BASE_MEMBER(Conv2DBackpropInput);
+  explicit Conv2DBackpropInput(const std::string &k_name = kNameConv2DBackpropInput) : BaseOperator(k_name) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});
   }
-  ~Conv2DBackpropInput() = default;
-  MS_DECLARE_PARENT(Conv2DBackpropInput, PrimitiveC);
   void Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0},
             const std::vector<int64_t> &stride = {1, 1, 1, 1}, const std::vector<int64_t> &dilation = {1, 1, 1, 1},
@@ -60,8 +59,8 @@ class MS_CORE_API Conv2DBackpropInput : public PrimitiveC {
   Format get_format() const;
   std::vector<int64_t> get_pad_list() const;
 };
-AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_H_

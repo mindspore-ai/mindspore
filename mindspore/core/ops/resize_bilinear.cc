@@ -22,15 +22,17 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void ResizeBilinear::set_size(const std::vector<int64_t> &size) { (void)this->AddAttr(kSize, MakeValue(size)); }
+MIND_API_BASE_IMPL(ResizeBilinear, PrimitiveC, BaseOperator);
+void ResizeBilinear::set_size(const std::vector<int64_t> &size) { (void)this->AddAttr(kSize, api::MakeValue(size)); }
 
 std::vector<int64_t> ResizeBilinear::get_size() const { return GetValue<std::vector<int64_t>>(GetAttr(kSize)); }
 
 void ResizeBilinear::set_align_corners(const bool align_corners) {
-  (void)this->AddAttr(kAlignCorners, MakeValue(align_corners));
+  (void)this->AddAttr(kAlignCorners, api::MakeValue(align_corners));
 }
 
 bool ResizeBilinear::get_align_corners() const {

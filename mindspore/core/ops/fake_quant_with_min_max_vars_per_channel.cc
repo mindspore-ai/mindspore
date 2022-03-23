@@ -16,19 +16,22 @@
 
 #include "ops/fake_quant_with_min_max_vars_per_channel.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(FakeQuantWithMinMaxVarsPerChannel, PrimitiveC, BaseOperator);
 void FakeQuantWithMinMaxVarsPerChannel::Init(const int64_t num_bits, const bool narrow_range) {
   this->set_num_bits(num_bits);
   this->set_narrow_range(narrow_range);
 }
 void FakeQuantWithMinMaxVarsPerChannel::set_num_bits(const int64_t num_bits) {
   (void)CheckAndConvertUtils::CheckInteger(kNumBits, num_bits, kGreaterThan, 0, this->name());
-  (void)this->AddAttr(kNumBits, MakeValue(num_bits));
+  (void)this->AddAttr(kNumBits, api::MakeValue(num_bits));
 }
 void FakeQuantWithMinMaxVarsPerChannel::set_narrow_range(const bool narrow_range) {
-  (void)this->AddAttr(kNarrowRange, MakeValue(narrow_range));
+  (void)this->AddAttr(kNarrowRange, api::MakeValue(narrow_range));
 }
 int64_t FakeQuantWithMinMaxVarsPerChannel::get_num_bits() const {
   auto value_ptr = GetAttr(kNumBits);

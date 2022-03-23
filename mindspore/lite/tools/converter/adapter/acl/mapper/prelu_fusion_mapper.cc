@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/mapper/prelu_fusion_mapper.h"
 #include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
 STATUS PReluFusionMapper::Mapper(const CNodePtr &cnode) {
-  auto dst_prim = std::make_shared<ops::PReLU>();
+  ops::PReLU prelu_op;
+  auto dst_prim = prelu_op.GetPrim();
   if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "PReluFusion mapper failed.";
     return RET_ERROR;

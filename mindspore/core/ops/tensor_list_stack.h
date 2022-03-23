@@ -18,23 +18,19 @@
 #define MINDSPORE_CORE_OPS_TENSOR_LIST_STACK_H_
 #include <memory>
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListStack = "TensorListStack";
 /// \brief TensorListStack defined TensorListStack operator prototype of lite.
-class MS_CORE_API TensorListStack : public PrimitiveC {
+class MIND_API TensorListStack : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TensorListStack);
   /// \brief Constructor.
-  TensorListStack() : PrimitiveC(kNameTensorListStack) {}
-
-  /// \brief Destructor.
-  ~TensorListStack() = default;
-
-  MS_DECLARE_PARENT(TensorListStack, PrimitiveC);
+  TensorListStack() : BaseOperator(kNameTensorListStack) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -59,8 +55,8 @@ class MS_CORE_API TensorListStack : public PrimitiveC {
   int64_t get_element_dtype() const;
 };
 
-AbstractBasePtr TensorListStackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr TensorListStackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

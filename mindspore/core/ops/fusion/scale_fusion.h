@@ -17,22 +17,17 @@
 #ifndef MINDSPORE_CORE_OPS_SCALE_FUSION_H_
 #define MINDSPORE_CORE_OPS_SCALE_FUSION_H_
 #include "ops/scale.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScaleFusion = "ScaleFusion";
 /// \brief ScaleFusion defined Scale operator prototype of lite.
-class MS_CORE_API ScaleFusion : public Scale {
+class MIND_API ScaleFusion : public Scale {
  public:
+  MIND_API_BASE_MEMBER(ScaleFusion);
   /// \brief Constructor.
   ScaleFusion() : Scale(kNameScaleFusion) {}
-
-  /// \brief Destructor.
-  ~ScaleFusion() = default;
-
-  MS_DECLARE_PARENT(ScaleFusion, Scale);
 
   /// \brief Method to init the op's attributes.
   ///

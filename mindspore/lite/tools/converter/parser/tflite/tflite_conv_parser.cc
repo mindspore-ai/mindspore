@@ -92,9 +92,9 @@ STATUS GetConvPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, minds
   return RET_OK;
 }
 }  // namespace
-ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                      const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Conv2DFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -144,12 +144,12 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
     prim->set_pad_list(params);
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                    const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Conv2DFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -218,9 +218,11 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
   }
   auto value_ptr = MakeValue<bool>(true);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim->AddAttr(ops::kIsDepthWise, value_ptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  prim_c->AddAttr(ops::kIsDepthWise, value_ptr);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteConv2DParser(tflite::BuiltinOperator_CONV_2D, new TfliteConvParser());

@@ -33,8 +33,8 @@ STATUS StridedSliceMapper::Mapper(const CNodePtr &cnode) {
   }
 
   auto attr_val = src_prim->GetAttr(ops::kFmkType);
-  int fmk_type = attr_val != nullptr ? GetValue<int>(attr_val) : converter::kFmkTypeTf;
-  if (fmk_type == converter::kFmkTypeOnnx) {
+  int64_t fmk_type = attr_val != nullptr ? GetValue<int64_t>(attr_val) : converter::kFmkTypeTf;
+  if (static_cast<converter::FmkType>(fmk_type) == converter::kFmkTypeOnnx) {
     auto dst_prim = std::make_shared<acl::StridedSliceV2>();
     MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "dst_prim is nullptr.");
     dst_prim->SetAttrs(src_prim->attrs());

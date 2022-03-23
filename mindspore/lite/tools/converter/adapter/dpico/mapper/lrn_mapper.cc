@@ -25,13 +25,13 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS LrnMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                      const CNodePtrList &output_cnodes) {
+STATUS LrnMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                      const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto lrn_prim = utils::cast<std::shared_ptr<ops::LRN>>(prim);
+  auto lrn_prim = api::utils::cast<api::SharedPtr<ops::LRN>>(prim);
   MS_ASSERT(lrn_prim != nullptr);
 
   auto lrn_operator = std::make_unique<mapper::LrnOperator>();
@@ -51,7 +51,7 @@ STATUS LrnMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_
   lrn_operator->SetLrnAlpha(lrn_prim->get_alpha() * local_size);
   lrn_operator->SetLrnBeta(lrn_prim->get_beta());
   if (lrn_prim->GetAttr(kLrnK) != nullptr) {
-    lrn_operator->SetLrnK(GetValue<float>(lrn_prim->GetAttr(kLrnK)));
+    lrn_operator->SetLrnK(api::GetValue<float>(lrn_prim->GetAttr(kLrnK)));
   }
   if (PushOfflineArgs(cnode, lrn_operator.get(), 1) != RET_OK) {
     MS_LOG(ERROR) << "push offline args failed. " << cnode->fullname_with_scope();

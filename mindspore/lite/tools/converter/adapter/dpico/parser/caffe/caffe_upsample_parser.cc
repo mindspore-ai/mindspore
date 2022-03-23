@@ -18,17 +18,18 @@
 #include <memory>
 #include <map>
 #include <string>
-#include "./op_enum_public.h"
 #include "common/op_attr.h"
 #include "ops/custom.h"
+#include "ops/op_name.h"
+#include "third_party/securec/include/securec.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
 constexpr float kDefaultScaleVal = 2.0;
-}
-ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+}  // namespace
+BaseOperatorPtr CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -44,7 +45,7 @@ ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, 
     }
     if (upsample_param.upsample_h()) {
       uint32_t upsample_h = upsample_param.upsample_h();
-      prim->AddAttr(dpico::kUpsampleH, MakeValue<uint32_t>(upsample_h));
+      prim->AddAttr(dpico::kUpsampleH, api::MakeValue<int64_t>(upsample_h));
 
       std::vector<uint8_t> upsample_h_attr(sizeof(uint32_t));
       if (memcpy_s(upsample_h_attr.data(), upsample_h_attr.size() * sizeof(uint8_t), &upsample_h, sizeof(uint32_t)) !=
@@ -56,7 +57,7 @@ ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, 
     }
     if (upsample_param.upsample_w()) {
       uint32_t upsample_w = upsample_param.upsample_w();
-      prim->AddAttr(dpico::kUpsampleH, MakeValue<uint32_t>(upsample_w));
+      prim->AddAttr(dpico::kUpsampleH, api::MakeValue<int64_t>(upsample_w));
 
       std::vector<uint8_t> upsample_w_attr(sizeof(uint32_t));
       if (memcpy_s(upsample_w_attr.data(), upsample_w_attr.size() * sizeof(uint8_t), &upsample_w, sizeof(uint32_t)) !=
@@ -70,10 +71,10 @@ ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, 
       auto mode = upsample_param.interpolation_mode();
       switch (mode) {
         case caffe::UpsampleParameter_InterpolationMode_NEAREST:
-          prim->AddAttr(dpico::kInterpolationMode, MakeValue<std::string>(dpico::kNearest));
+          prim->AddAttr(dpico::kInterpolationMode, api::MakeValue<std::string>(dpico::kNearest));
           break;
         case caffe::UpsampleParameter_InterpolationMode_BILINEAR:
-          prim->AddAttr(dpico::kInterpolationMode, MakeValue<std::string>(dpico::kBilinear));
+          prim->AddAttr(dpico::kInterpolationMode, api::MakeValue<std::string>(dpico::kBilinear));
           break;
         default:
           MS_LOG(ERROR) << "current interpolation mode is not supported. " << mode;
@@ -82,7 +83,7 @@ ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, 
     }
   }
 
-  prim->AddAttr(ops::kScale, MakeValue<float>(scale));
+  prim->AddAttr(ops::kScale, api::MakeValue<float>(scale));
   std::vector<uint8_t> scale_attr(sizeof(float));
   if (memcpy_s(scale_attr.data(), scale_attr.size() * sizeof(uint8_t), &scale, sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";
@@ -90,7 +91,7 @@ ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, 
   }
   custom_attrs[ops::kScale] = scale_attr;
   prim->set_attr(custom_attrs);
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeUpsampleParser("Upsample", new CaffeUpsampleParser());

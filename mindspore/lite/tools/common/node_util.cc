@@ -389,7 +389,9 @@ bool IsMakeTuple(const AnfNodePtr &node) {
 ValueNodePtr GetPartialFusionPrim() {
   auto partial_prim = std::make_shared<mindspore::ops::PartialFusion>();
   MS_CHECK_TRUE_MSG(partial_prim != nullptr, nullptr, "partial_prim is nullptr");
-  ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
+  auto partial_prim_c = partial_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(partial_prim_c != nullptr, nullptr, "partial_prim_c is nullptr");
+  ValueNodePtr partial_anf_prim = NewValueNode(partial_prim_c);
   MS_CHECK_TRUE_MSG(partial_anf_prim != nullptr, nullptr, "partial_anf_prim is nullptr");
   return partial_anf_prim;
 }
@@ -397,7 +399,9 @@ ValueNodePtr GetPartialFusionPrim() {
 ValueNodePtr GetSwitchAnfPrim() {
   auto switch_prim = std::make_shared<mindspore::ops::Switch>();
   MS_CHECK_TRUE_MSG(switch_prim != nullptr, nullptr, "switch_prim is nullptr");
-  ValueNodePtr switch_anf_prim = NewValueNode(switch_prim);
+  auto switch_prim_c = switch_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(switch_prim_c != nullptr, nullptr, "switch_prim_c is nullptr");
+  ValueNodePtr switch_anf_prim = NewValueNode(switch_prim_c);
   MS_CHECK_TRUE_MSG(switch_prim != nullptr, nullptr, "switch_prim is nullptr");
   return switch_anf_prim;
 }
@@ -405,7 +409,9 @@ ValueNodePtr GetSwitchAnfPrim() {
 ValueNodePtr GetCallAnfPrim() {
   auto call_prim = std::make_shared<mindspore::ops::Call>();
   MS_CHECK_TRUE_MSG(call_prim != nullptr, nullptr, "call_prim is nullptr");
-  ValueNodePtr call_anf_prim = NewValueNode(call_prim);
+  auto call_prim_c = call_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(call_prim_c != nullptr, nullptr, "call_prim_c is nullptr");
+  ValueNodePtr call_anf_prim = NewValueNode(call_prim_c);
   MS_CHECK_TRUE_MSG(call_anf_prim != nullptr, nullptr, "call_anf_prim is nullptr");
   return call_anf_prim;
 }

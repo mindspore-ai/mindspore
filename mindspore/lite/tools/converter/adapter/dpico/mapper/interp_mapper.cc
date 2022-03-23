@@ -19,20 +19,19 @@
 #include <utility>
 #include <vector>
 #include "common/op_attr.h"
-#include "ops/op_utils.h"
 #include "common/anf_util.h"
 #include "ops/resize.h"
 #include "op/interp_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS InterpMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                         const CNodePtrList &output_cnodes) {
+STATUS InterpMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                         const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto interp_prim = utils::cast<std::shared_ptr<ops::Resize>>(prim);
+  auto interp_prim = api::utils::cast<api::SharedPtr<ops::Resize>>(prim);
   MS_ASSERT(interp_prim != nullptr);
 
   auto interp_operator = std::make_unique<mapper::InterpOperator>();
@@ -54,16 +53,16 @@ STATUS InterpMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *ba
     interp_operator->SetInterpWidth(static_cast<int32_t>(interp_prim->get_new_width()));
   }
   if (prim->GetAttr(dpico::kZoomFactor) != nullptr) {
-    interp_operator->SetInterpZoom(GetValue<int32_t>(prim->GetAttr(dpico::kZoomFactor)));
+    interp_operator->SetInterpZoom(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(dpico::kZoomFactor))));
   }
   if (prim->GetAttr(dpico::kShrinkFactor) != nullptr) {
-    interp_operator->SetInterpShrink(GetValue<int32_t>(prim->GetAttr(dpico::kShrinkFactor)));
+    interp_operator->SetInterpShrink(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(dpico::kShrinkFactor))));
   }
   if (prim->GetAttr(dpico::kPadBeg) != nullptr) {
-    interp_operator->SetInterpPadBeg(GetValue<int32_t>(prim->GetAttr(dpico::kPadBeg)));
+    interp_operator->SetInterpPadBeg(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(dpico::kPadBeg))));
   }
   if (prim->GetAttr(dpico::kPadEnd) != nullptr) {
-    interp_operator->SetInterpPadEnd(GetValue<int32_t>(prim->GetAttr(dpico::kPadEnd)));
+    interp_operator->SetInterpPadEnd(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(dpico::kPadEnd))));
   }
 
   base_operators->push_back(std::move(interp_operator));

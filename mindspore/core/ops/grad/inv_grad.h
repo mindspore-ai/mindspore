@@ -19,23 +19,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameInvGrad = "InvGrad";
-class InvGrad : public PrimitiveC {
+class InvGrad : public BaseOperator {
  public:
-  InvGrad() : PrimitiveC(kNameInvGrad) { InitIOName({"x", "grad"}, {"y"}); }
-  ~InvGrad() = default;
-  MS_DECLARE_PARENT(InvGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(InvGrad);
+  InvGrad() : BaseOperator(kNameInvGrad) { InitIOName({"x", "grad"}, {"y"}); }
 };
 
-AbstractBasePtr InvGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr InvGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimInvGrad = std::shared_ptr<InvGrad>;
 }  // namespace ops
 }  // namespace mindspore

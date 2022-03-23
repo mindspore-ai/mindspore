@@ -17,6 +17,7 @@
 #include "ops/layer_norm.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,6 +36,7 @@ ShapeVector CalLayerNormMeanAndVarShape(int64_t begin_norm_axis, const ShapeVect
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(LayerNorm, PrimitiveC, BaseOperator);
 AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   // Inputs: three tensors(x, gamma, beta).
@@ -129,12 +131,12 @@ void LayerNorm::Init(const int64_t begin_norm_axis, const int64_t begin_params_a
   this->set_epsilon(epsilon);
 }
 void LayerNorm::set_begin_norm_axis(const int64_t begin_norm_axis) {
-  (void)this->AddAttr(kBeginNormAxis, MakeValue(begin_norm_axis));
+  (void)this->AddAttr(kBeginNormAxis, api::MakeValue(begin_norm_axis));
 }
 void LayerNorm::set_begin_params_axis(const int64_t begin_params_axis) {
-  (void)this->AddAttr(kBeginParamsAxis, MakeValue(begin_params_axis));
+  (void)this->AddAttr(kBeginParamsAxis, api::MakeValue(begin_params_axis));
 }
-void LayerNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, MakeValue(epsilon)); }
+void LayerNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
 
 int64_t LayerNorm::get_begin_norm_axis() const {
   auto value_ptr = this->GetAttr(kBeginNormAxis);

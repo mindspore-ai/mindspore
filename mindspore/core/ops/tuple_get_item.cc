@@ -15,9 +15,12 @@
  */
 
 #include "ops/tuple_get_item.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(TupleGetItem, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameTupleGetItem, TupleGetItem);
 }  // namespace ops
 }  // namespace mindspore

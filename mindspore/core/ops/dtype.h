@@ -20,21 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Returns the data type of the input tensor as mindspore.dtype.
 /// Refer to Python API @ref mindspore.ops.DType for more details.
-class MS_CORE_API DType : public PrimitiveC {
+class MIND_API DType : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(DType);
   /// \brief Constructor.
-  DType() : PrimitiveC(prim::kPrimDType->name()) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~DType() = default;
-  MS_DECLARE_PARENT(DType, PrimitiveC);
+  DType() : BaseOperator("DType") { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DType for the inputs.
   void Init() const {}
 };

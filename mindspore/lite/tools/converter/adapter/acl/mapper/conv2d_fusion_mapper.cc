@@ -19,6 +19,7 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "src/common/log_util.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -36,7 +37,8 @@ STATUS Conv2DFusionMapper::Mapper(const CNodePtr &cnode) {
   }
   PrimitivePtr dst_prim = nullptr;
   if (!is_depth_wise) {
-    dst_prim = std::make_shared<ops::Conv2D>();
+    ops::Conv2D conv2d_op;
+    dst_prim = conv2d_op.GetPrim();
   } else {
     dst_prim = std::make_shared<acl::DepthwiseConv2dNative>();
   }

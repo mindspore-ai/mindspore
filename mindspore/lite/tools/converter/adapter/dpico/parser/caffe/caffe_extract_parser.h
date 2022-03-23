@@ -28,7 +28,7 @@ class CaffeExtractParser : public CaffeNodeParser {
   CaffeExtractParser() : CaffeNodeParser("extract") {}
   ~CaffeExtractParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  BaseOperatorPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

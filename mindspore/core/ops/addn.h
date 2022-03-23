@@ -18,27 +18,24 @@
 #define MINDSPORE_CORE_OPS_ADDN_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAddN = "AddN";
 /// \brief Computes addition of all input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.AddN for more details.
-class MS_CORE_API AddN : public PrimitiveC {
+class MIND_API AddN : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(AddN);
   /// \brief Constructor.
-  AddN() : PrimitiveC(kNameAddN) { InitIOName({"inputs"}, {"sum"}); }
-  /// \brief Destructor.
-  ~AddN() = default;
-  MS_DECLARE_PARENT(AddN, PrimitiveC);
+  AddN() : BaseOperator(kNameAddN) { InitIOName({"inputs"}, {"sum"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.AddN for the inputs.
   void Init() const {}
 };
-AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

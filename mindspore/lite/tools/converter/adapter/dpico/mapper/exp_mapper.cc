@@ -20,19 +20,18 @@
 #include <vector>
 #include "common/anf_util.h"
 #include "common/op_enum.h"
-#include "ops/op_utils.h"
 #include "ops/fusion/exp_fusion.h"
 #include "op/exp_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS ExpMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                      const CNodePtrList &output_cnodes) {
+STATUS ExpMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                      const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto exp_prim = utils::cast<std::shared_ptr<ops::ExpFusion>>(prim);
+  auto exp_prim = api::utils::cast<api::SharedPtr<ops::ExpFusion>>(prim);
   MS_ASSERT(exp_prim != nullptr);
 
   auto exp_operator = std::make_unique<mapper::ExpOperator>();

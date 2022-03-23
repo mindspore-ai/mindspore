@@ -18,20 +18,22 @@
 
 #include "ops/fused_batch_norm.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(FusedBatchNorm, PrimitiveC, BaseOperator);
 void FusedBatchNorm::Init(const int64_t mode, const float epsilon, const float momentum) {
   this->set_mode(mode);
   this->set_epsilon(epsilon);
   this->set_momentum(momentum);
 }
 
-void FusedBatchNorm::set_mode(const int64_t mode) { (void)this->AddAttr(kMode, MakeValue(mode)); }
+void FusedBatchNorm::set_mode(const int64_t mode) { (void)this->AddAttr(kMode, api::MakeValue(mode)); }
 
-void FusedBatchNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, MakeValue(epsilon)); }
+void FusedBatchNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
 
-void FusedBatchNorm::set_momentum(const float momentum) { (void)this->AddAttr(kMomentum, MakeValue(momentum)); }
+void FusedBatchNorm::set_momentum(const float momentum) { (void)this->AddAttr(kMomentum, api::MakeValue(momentum)); }
 
 int64_t FusedBatchNorm::get_mode() const {
   auto value_ptr = this->GetAttr(kMode);

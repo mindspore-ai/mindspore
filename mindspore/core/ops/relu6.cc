@@ -22,6 +22,7 @@
 #include "ops/relu6.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -51,6 +52,8 @@ TypePtr ReLU6InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(ReLU6, PrimitiveC, BaseOperator);
 AbstractBasePtr ReLU6Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(ReLU6InferShape(primitive, input_args), ReLU6InferType(primitive, input_args));

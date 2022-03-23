@@ -19,25 +19,21 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLog = prim::kLog;
+constexpr auto kNameLog = "Log";
 /// \brief Returns the natural logarithm of a tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Log for more details.
-class MS_CORE_API Log : public PrimitiveC {
+class MIND_API Log : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Log);
   /// \brief Constructor.
-  Log() : PrimitiveC(prim::kPrimLog->name()) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Log() = default;
-  MS_DECLARE_PARENT(Log, PrimitiveC);
+  Log() : BaseOperator("Log") { InitIOName({"x"}, {"y"}); }
 };
-AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LOG_H_

@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteSpaceToDepthParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteSpaceToDepthParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                              const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::SpaceToDepth>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -38,7 +38,7 @@ ops::PrimitiveC *TfliteSpaceToDepthParser::Parse(const std::unique_ptr<tflite::O
   }
   prim->set_block_size(tflite_attr->block_size);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteSpaceToDepthParser(tflite::BuiltinOperator_SPACE_TO_DEPTH, new TfliteSpaceToDepthParser());

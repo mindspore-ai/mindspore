@@ -18,19 +18,16 @@
 #define MINDSPORE_CORE_OPS_GLU_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameGLU = prim::kGLU;
-class MS_CORE_API GLU : public PrimitiveC {
+constexpr auto kNameGLU = "GLU";
+class MIND_API GLU : public BaseOperator {
  public:
-  GLU() : PrimitiveC(kNameGLU) { InitIOName({"x"}, {"output"}); }
-  ~GLU() = default;
-  MS_DECLARE_PARENT(GLU, PrimitiveC);
+  MIND_API_BASE_MEMBER(GLU);
+  GLU() : BaseOperator(kNameGLU) { InitIOName({"x"}, {"output"}); }
   void Init(int64_t axis);
   void set_axis(int64_t axis);
   int64_t get_axis() const;

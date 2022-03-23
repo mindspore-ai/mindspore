@@ -19,18 +19,17 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGroupConv2DGradInput = "GroupConv2DGradInput";
-class MS_CORE_API GroupConv2DGradInput : public PrimitiveC {
+class MIND_API GroupConv2DGradInput : public BaseOperator {
  public:
-  GroupConv2DGradInput() : PrimitiveC(kNameGroupConv2DGradInput) {}
-  ~GroupConv2DGradInput() = default;
-  MS_DECLARE_PARENT(GroupConv2DGradInput, PrimitiveC);
+  MIND_API_BASE_MEMBER(GroupConv2DGradInput);
+  GroupConv2DGradInput() : BaseOperator(kNameGroupConv2DGradInput) {}
   void Init(const int64_t &in_channel, const int64_t &out_channel, const std::vector<int64_t> &kernel_size,
             const PadMode &pad_mode, const std::vector<int64_t> &pad_list, const std::vector<int64_t> &stride,
             const std::vector<int64_t> &dilation, const int64_t &group, const std::vector<int64_t> &input_shape,
@@ -65,8 +64,8 @@ class MS_CORE_API GroupConv2DGradInput : public PrimitiveC {
   ActivationType get_activation_type() const;
   bool get_has_bias() const;
 };
-AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

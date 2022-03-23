@@ -37,7 +37,7 @@ STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index)
   return RET_OK;
 }
 
-ops::PrimitiveC *CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::ScaleFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -58,7 +58,7 @@ ops::PrimitiveC *CaffeScaleParser::Parse(const caffe::LayerParameter &proto, con
     prim->set_axis(axis_index);
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeScaleParser("Scale", new CaffeScaleParser());

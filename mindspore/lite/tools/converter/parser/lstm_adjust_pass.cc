@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define USE_DEPRECATED_API
 #include "tools/converter/parser/lstm_adjust_pass.h"
 #include "ops/lstm.h"
 #include "ops/reshape.h"
@@ -139,7 +139,7 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
     return RET_ERROR;
   }
   MS_CHECK_TRUE_MSG(lstm_cnode->input(0) != nullptr, RET_ERROR, "lstm_cnode->input(0) is nullptr.");
-  auto primitive_c = GetValueNode<std::shared_ptr<mindspore::ops::LSTM>>(lstm_cnode->input(0));
+  auto primitive_c = ops::GetOperator<mindspore::ops::LSTM>(lstm_cnode->input(0));
   if (primitive_c == nullptr) {
     return RET_ERROR;
   }
@@ -279,15 +279,19 @@ bool LstmAdjustPass::Run(const FuncGraphPtr &func_graph) {
     auto get_item_name = cnode->fullname_with_scope();
     auto transpose_prim = std::make_shared<ops::Transpose>();
     MS_CHECK_TRUE_MSG(transpose_prim != nullptr, false, "transpose_prim is nullptr.");
+    auto transpose_prim_c = transpose_prim->GetPrim();
+    MS_CHECK_TRUE_MSG(transpose_prim_c != nullptr, false, "transpose_prim_c is nullptr.");
     std::vector<int> perm_value = {0, kOutputBatchIndex, 1, kOutputHiddenIndex};
     auto transpose_perm = BuildIntVecParameterNode(func_graph, perm_value, "transpose_" + get_item_name + "_perm");
-    auto new_transpose_node = func_graph->NewCNode(transpose_prim, {cnode, transpose_perm});
+    auto new_transpose_node = func_graph->NewCNode(transpose_prim_c, {cnode, transpose_perm});
     MS_CHECK_TRUE_MSG(new_transpose_node != nullptr, false, "New transpose node failed.");
 
     auto reshape_prim = std::make_shared<ops::Reshape>();
     MS_CHECK_TRUE_MSG(reshape_prim != nullptr, false, "reshape_prim is nullptr.");
+    auto reshape_prim_c = reshape_prim->GetPrim();
+    MS_CHECK_TRUE_MSG(reshape_prim_c != nullptr, false, "reshape_prim_c is nullptr.");
     auto reshape_perm = BuildIntVecParameterNode(func_graph, {0, 0, -1}, "reshape_" + get_item_name + "_perm");
-    auto new_reshape_node = func_graph->NewCNode(reshape_prim, {new_transpose_node, reshape_perm});
+    auto new_reshape_node = func_graph->NewCNode(reshape_prim_c, {new_transpose_node, reshape_perm});
     MS_CHECK_TRUE_MSG(new_reshape_node != nullptr, false, "New reshape node failed.");
     (void)manager->Replace(cnode, new_reshape_node);
   }

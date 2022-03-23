@@ -26,6 +26,8 @@
 #include "abstract/abstract_value.h"
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
 namespace {
@@ -61,6 +63,8 @@ TypePtr XdivyInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   return input_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Xdivy, PrimitiveC, BaseOperator);
 AbstractBasePtr XdivyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   auto shape = XdivyInferShape(primitive, input_args);

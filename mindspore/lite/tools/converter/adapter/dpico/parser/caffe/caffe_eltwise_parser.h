@@ -27,7 +27,7 @@ class CaffeEltwiseParser : public CaffeNodeParser {
   CaffeEltwiseParser() : CaffeNodeParser("eltwise") {}
   ~CaffeEltwiseParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  BaseOperatorPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

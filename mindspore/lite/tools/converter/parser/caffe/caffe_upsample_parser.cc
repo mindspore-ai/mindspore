@@ -23,10 +23,11 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Resize>();
-
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   prim->set_method(mindspore::ResizeMethod::NEAREST);
   prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
   const caffe::UpsampleParameter &upsample_param = proto.upsample_param();
@@ -37,10 +38,10 @@ ops::PrimitiveC *CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, 
       return nullptr;
     }
     std::vector<float> scales = {1, scale, scale, 1};
-    prim->AddAttr("scale", MakeValue(scales));
+    prim_c->AddAttr("scale", MakeValue(scales));
   }
-  prim->AddAttr(ops::kOriginalOpName, MakeValue("Upsample"));
-  return prim.release();
+  prim_c->AddAttr(ops::kOriginalOpName, MakeValue("Upsample"));
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeUpsampleParser("Upsample", new CaffeUpsampleParser());

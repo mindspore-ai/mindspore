@@ -24,10 +24,12 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::AvgPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_pad_mode(mindspore::PadMode::PAD);
   mindspore::RoundMode round_mode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
@@ -94,14 +96,16 @@ ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
   }
 
   int fmk_type = converter::FmkType::kFmkTypeOnnx;
-  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
-  return prim.release();
+  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::MaxPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   mindspore::RoundMode round_mode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
   std::vector<int64_t> strides;
@@ -166,8 +170,8 @@ ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
   prim->set_global(onnx_node.op_type() == "GlobalMaxPool");
 
   int fmk_type = converter::FmkType::kFmkTypeOnnx;
-  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
-  return prim.release();
+  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxAveragePoolParser("AveragePool", new OnnxAvgPoolParser());

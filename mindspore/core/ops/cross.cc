@@ -23,6 +23,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -102,5 +103,7 @@ AbstractBasePtr CrossInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
 
 REGISTER_PRIMITIVE_EVAL_IMPL(Cross, prim::kPrimCross, CrossInfer, nullptr, true);
 }  // namespace
+
+MIND_API_BASE_IMPL(Cross, PrimitiveC, BaseOperator);
 }  // namespace ops
 }  // namespace mindspore

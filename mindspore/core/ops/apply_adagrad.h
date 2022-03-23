@@ -22,22 +22,20 @@
 #include <vector>
 #include <string>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyAdagrad = "ApplyAdagrad";
-class ApplyAdagrad : public PrimitiveC {
+class MIND_API ApplyAdagrad : public BaseOperator {
  public:
-  ApplyAdagrad() : PrimitiveC(kNameApplyAdagrad) { InitIOName({"var", "accum", "lr", "grad"}, {"var", "accum"}); }
-  ~ApplyAdagrad() = default;
-  MS_DECLARE_PARENT(ApplyAdagrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(ApplyAdagrad);
+  ApplyAdagrad() : BaseOperator(kNameApplyAdagrad) { InitIOName({"var", "accum", "lr", "grad"}, {"var", "accum"}); }
 };
 
-AbstractBasePtr ApplyAdagradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyAdagradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimApplyAdagradPtr = std::shared_ptr<ApplyAdagrad>;
 }  // namespace ops

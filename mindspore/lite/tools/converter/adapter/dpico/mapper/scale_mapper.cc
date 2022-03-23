@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace dpico {
 namespace {
-STATUS SetScaleDataInfo(const CNodePtr &cnode, mapper::ScaleOperator *scale_operator) {
+STATUS SetScaleDataInfo(const api::CNodePtr &cnode, mapper::ScaleOperator *scale_operator) {
   if (scale_operator == nullptr) {
     MS_LOG(ERROR) << "scale_operator is nullptr.";
     return RET_ERROR;
@@ -35,13 +35,13 @@ STATUS SetScaleDataInfo(const CNodePtr &cnode, mapper::ScaleOperator *scale_oper
   for (size_t i = 2; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
-    auto param_node = input_node->cast<ParameterPtr>();
+    auto param_node = input_node->cast<api::ParameterPtr>();
     if (param_node == nullptr || !param_node->has_default()) {
       continue;
     }
-    auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
+    auto tensor_info = param_node->default_param()->cast<api::TensorPtr>();
     if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
-      auto data = reinterpret_cast<float *>(tensor_info->data_c());
+      auto data = reinterpret_cast<float *>(tensor_info->data());
       MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
       if (i == kInputIndex2) {
         scale_operator->SetScaleWeightPtr(data);
@@ -69,13 +69,13 @@ STATUS SetScaleDataInfo(const CNodePtr &cnode, mapper::ScaleOperator *scale_oper
   return RET_OK;
 }
 }  // namespace
-STATUS ScaleMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                        const CNodePtrList &output_cnodes) {
+STATUS ScaleMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                        const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto scale_prim = utils::cast<std::shared_ptr<ops::Scale>>(prim);
+  auto scale_prim = api::utils::cast<api::SharedPtr<ops::Scale>>(prim);
   MS_ASSERT(scale_prim != nullptr);
 
   auto scale_operator = std::make_unique<mapper::ScaleOperator>();
@@ -92,10 +92,10 @@ STATUS ScaleMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *bas
   scale_operator->SetOpType(mapper::OpType::SCALE);
   scale_operator->SetAxis(static_cast<int32_t>(scale_prim->get_axis()));
   if (scale_prim->GetAttr(kBiasTerm) != nullptr) {
-    scale_operator->SetScaleBiasFlag(GetValue<bool>(scale_prim->GetAttr(kBiasTerm)));
+    scale_operator->SetScaleBiasFlag(api::GetValue<bool>(scale_prim->GetAttr(kBiasTerm)));
   }
   if (scale_prim->GetAttr(kNumAxes) != nullptr) {
-    scale_operator->SetScaleNumAxes(GetValue<uint32_t>(scale_prim->GetAttr(kNumAxes)));
+    scale_operator->SetScaleNumAxes(static_cast<int32_t>(api::GetValue<int64_t>(scale_prim->GetAttr(kNumAxes))));
   }
 
   if (SetScaleDataInfo(cnode, scale_operator.get()) != RET_OK) {

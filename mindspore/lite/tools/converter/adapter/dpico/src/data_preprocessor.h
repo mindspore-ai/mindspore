@@ -26,8 +26,8 @@
 #include "common/data_transpose_utils.h"
 #include "include/errorcode.h"
 #include "common/op_enum.h"
-#include "ir/dtype/type_id.h"
-#include "ir/anf.h"
+#include "mindapi/base/type_id.h"
+#include "mindapi/ir/anf.h"
 #include "src/mapper_config_parser.h"
 #include "opencv2/core/mat.hpp"
 #include "common/check_base.h"
@@ -39,7 +39,7 @@ namespace dpico {
 class DataPreprocessor {
  public:
   static DataPreprocessor *GetInstance();
-  int Run(const AnfNodePtrList &inputs);
+  int Run(const api::AnfNodePtrList &inputs);
   const std::string &GetPreprocessedDataDir() const { return preprocessed_data_dir_; }
   size_t GetBatchSize() const { return batch_size_; }
 

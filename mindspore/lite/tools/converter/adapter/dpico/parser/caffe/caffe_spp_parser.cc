@@ -21,26 +21,27 @@
 #include <vector>
 #include "common/op_attr.h"
 #include "ops/custom.h"
+#include "third_party/securec/include/securec.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeSppParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeSppParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
   }
   prim->set_type("Spp");
 
-  int pool_method = 0;
+  int64_t pool_method = 0;
   if (proto.has_spp_param()) {
     const caffe::SPPParameter &spp_param = proto.spp_param();
     if (spp_param.has_pool()) {
-      pool_method = static_cast<int>(spp_param.pool());
+      pool_method = static_cast<int64_t>(spp_param.pool());
     }
     if (spp_param.has_pyramid_height()) {
-      auto pyramid_height = spp_param.pyramid_height();
-      prim->AddAttr(dpico::kPyramidHeight, MakeValue<uint32_t>(pyramid_height));
+      uint32_t pyramid_height = spp_param.pyramid_height();
+      prim->AddAttr(dpico::kPyramidHeight, api::MakeValue<int64_t>(static_cast<int64_t>(pyramid_height)));
       std::map<std::string, std::vector<uint8_t>> custom_attrs;
       std::vector<uint8_t> pyramid_height_attr(sizeof(uint32_t));
       if (memcpy_s(pyramid_height_attr.data(), pyramid_height_attr.size() * sizeof(uint8_t), &pyramid_height,
@@ -55,9 +56,9 @@ ops::PrimitiveC *CaffeSppParser::Parse(const caffe::LayerParameter &proto, const
       return nullptr;
     }
   }
-  prim->AddAttr(dpico::kPoolMethod, MakeValue(pool_method));
+  prim->AddAttr(dpico::kPoolMethod, api::MakeValue(pool_method));
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeSppParser("SPP", new CaffeSppParser());

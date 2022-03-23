@@ -31,9 +31,9 @@ class TfliteAddParser : public TfliteNodeParser {
 
   ~TfliteAddParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteSubParser : public TfliteNodeParser {
@@ -42,9 +42,9 @@ class TfliteSubParser : public TfliteNodeParser {
 
   ~TfliteSubParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteMulParser : public TfliteNodeParser {
@@ -53,9 +53,9 @@ class TfliteMulParser : public TfliteNodeParser {
 
   ~TfliteMulParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteDivParser : public TfliteNodeParser {
@@ -64,9 +64,9 @@ class TfliteDivParser : public TfliteNodeParser {
 
   ~TfliteDivParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteFloorDivParser : public TfliteNodeParser {
@@ -75,9 +75,9 @@ class TfliteFloorDivParser : public TfliteNodeParser {
 
   ~TfliteFloorDivParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteFloorModParser : public TfliteNodeParser {
@@ -86,9 +86,9 @@ class TfliteFloorModParser : public TfliteNodeParser {
 
   ~TfliteFloorModParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TflitePowParser : public TfliteNodeParser {
@@ -97,9 +97,9 @@ class TflitePowParser : public TfliteNodeParser {
 
   ~TflitePowParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteSquaredDifferenceParser : public TfliteNodeParser {
@@ -108,9 +108,9 @@ class TfliteSquaredDifferenceParser : public TfliteNodeParser {
 
   ~TfliteSquaredDifferenceParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteMaximumParser : public TfliteNodeParser {
@@ -119,9 +119,9 @@ class TfliteMaximumParser : public TfliteNodeParser {
 
   ~TfliteMaximumParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteMinimumParser : public TfliteNodeParser {
@@ -130,9 +130,9 @@ class TfliteMinimumParser : public TfliteNodeParser {
 
   ~TfliteMinimumParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteAbsParser : public TfliteNodeParser {
@@ -141,9 +141,9 @@ class TfliteAbsParser : public TfliteNodeParser {
 
   ~TfliteAbsParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteExpParser : public TfliteNodeParser {
@@ -152,9 +152,9 @@ class TfliteExpParser : public TfliteNodeParser {
 
   ~TfliteExpParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteSqrtParser : public TfliteNodeParser {
@@ -163,9 +163,9 @@ class TfliteSqrtParser : public TfliteNodeParser {
 
   ~TfliteSqrtParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteRsqrtParser : public TfliteNodeParser {
@@ -174,9 +174,9 @@ class TfliteRsqrtParser : public TfliteNodeParser {
 
   ~TfliteRsqrtParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteSquareParser : public TfliteNodeParser {
@@ -185,9 +185,9 @@ class TfliteSquareParser : public TfliteNodeParser {
 
   ~TfliteSquareParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteSinParser : public TfliteNodeParser {
@@ -196,9 +196,9 @@ class TfliteSinParser : public TfliteNodeParser {
 
   ~TfliteSinParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteCosParser : public TfliteNodeParser {
@@ -207,9 +207,9 @@ class TfliteCosParser : public TfliteNodeParser {
 
   ~TfliteCosParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteLogParser : public TfliteNodeParser {
@@ -218,9 +218,9 @@ class TfliteLogParser : public TfliteNodeParser {
 
   ~TfliteLogParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteRoundParser : public TfliteNodeParser {
@@ -229,9 +229,9 @@ class TfliteRoundParser : public TfliteNodeParser {
 
   ~TfliteRoundParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteCeilParser : public TfliteNodeParser {
@@ -240,9 +240,9 @@ class TfliteCeilParser : public TfliteNodeParser {
 
   ~TfliteCeilParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteFloorParser : public TfliteNodeParser {
@@ -251,9 +251,9 @@ class TfliteFloorParser : public TfliteNodeParser {
 
   ~TfliteFloorParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteNegParser : public TfliteNodeParser {
@@ -262,9 +262,9 @@ class TfliteNegParser : public TfliteNodeParser {
 
   ~TfliteNegParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteEqualParser : public TfliteNodeParser {
@@ -273,9 +273,9 @@ class TfliteEqualParser : public TfliteNodeParser {
 
   ~TfliteEqualParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteNotEqualParser : public TfliteNodeParser {
@@ -284,9 +284,9 @@ class TfliteNotEqualParser : public TfliteNodeParser {
 
   ~TfliteNotEqualParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteGreaterParser : public TfliteNodeParser {
@@ -295,9 +295,9 @@ class TfliteGreaterParser : public TfliteNodeParser {
 
   ~TfliteGreaterParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteGreaterEqualParser : public TfliteNodeParser {
@@ -306,9 +306,9 @@ class TfliteGreaterEqualParser : public TfliteNodeParser {
 
   ~TfliteGreaterEqualParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteLessParser : public TfliteNodeParser {
@@ -317,9 +317,9 @@ class TfliteLessParser : public TfliteNodeParser {
 
   ~TfliteLessParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 class TfliteLessEqualParser : public TfliteNodeParser {
@@ -328,9 +328,9 @@ class TfliteLessEqualParser : public TfliteNodeParser {
 
   ~TfliteLessEqualParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 
 }  // namespace lite

@@ -16,9 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_UNIQUE_H_
 #define MINDSPORE_CORE_OPS_UNIQUE_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
@@ -26,13 +25,11 @@ constexpr auto kNameUnique = "Unique";
 /// \brief Returns the unique elements of input tensor and also returns a tensor containing
 /// the index of each value of input tensor corresponding to the output unique tensor.
 /// Refer to Python API @ref mindspore.ops.Unique for more details.
-class MS_CORE_API Unique : public PrimitiveC {
+class MIND_API Unique : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Unique);
   /// \brief Constructor.
-  Unique() : PrimitiveC(kNameUnique) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Unique() = default;
-  MS_DECLARE_PARENT(Unique, PrimitiveC);
+  Unique() : BaseOperator(kNameUnique) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };

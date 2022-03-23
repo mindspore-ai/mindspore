@@ -20,23 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameInstanceNorm = "InstanceNorm";
 /// \brief InstanceNorm defined the InstanceNorm operator prototype.
-class MS_CORE_API InstanceNorm : public PrimitiveC {
+class MIND_API InstanceNorm : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(InstanceNorm);
   /// \brief Constructor.
-  InstanceNorm() : PrimitiveC(kNameInstanceNorm) {}
-
-  /// \brief Destructor.
-  ~InstanceNorm() = default;
-
-  MS_DECLARE_PARENT(InstanceNorm, PrimitiveC);
+  InstanceNorm() : BaseOperator(kNameInstanceNorm) {}
 
   /// \brief Method to init the op's attributes
   ///

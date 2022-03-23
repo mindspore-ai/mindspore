@@ -20,27 +20,24 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalAnd = "LogicalAnd";
 /// \brief Computes the "logical AND" of two tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.LogicalAnd for more details.
-class MS_CORE_API LogicalAnd : public PrimitiveC {
+class MIND_API LogicalAnd : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LogicalAnd);
   /// \brief Constructor.
-  LogicalAnd() : PrimitiveC(kNameLogicalAnd) { InitIOName({"x1", "x2"}, {"y"}); }
-  /// \brief Destructor.
-  ~LogicalAnd() = default;
-  MS_DECLARE_PARENT(LogicalAnd, PrimitiveC);
+  LogicalAnd() : BaseOperator(kNameLogicalAnd) { InitIOName({"x1", "x2"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogicalAnd for the inputs.
   void Init() const {}
 };
-AbstractBasePtr LogicalAndInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LogicalAndInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimLogicalAndPtr = std::shared_ptr<LogicalAnd>;
 }  // namespace ops
 }  // namespace mindspore

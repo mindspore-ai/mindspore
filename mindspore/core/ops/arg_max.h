@@ -20,24 +20,21 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/type_id.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMax = "Argmax";
 /// \brief Returns the indices of the maximum value of a tensor across the axis.
 /// Refer to Python API @ref mindspore.ops.Argmax for more details.
-class MS_CORE_API ArgMax : public PrimitiveC {
+class MIND_API ArgMax : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ArgMax);
   /// \brief Constructor.
-  ArgMax() : PrimitiveC(kNameArgMax) { InitIOName({"x"}, {"output"}); }
-  explicit ArgMax(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~ArgMax() = default;
-  MS_DECLARE_PARENT(ArgMax, PrimitiveC);
+  ArgMax() : BaseOperator(kNameArgMax) { InitIOName({"x"}, {"output"}); }
+  explicit ArgMax(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Argmax for the inputs.
   void Init(const int64_t axis = -1, const TypeId output_type = kNumberTypeInt32);
   /// \brief Set axis.
@@ -54,8 +51,8 @@ class MS_CORE_API ArgMax : public PrimitiveC {
   /// \return output_type.
   TypeId get_output_type() const;
 };
-AbstractBasePtr ArgMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ArgMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

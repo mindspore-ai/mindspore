@@ -22,22 +22,20 @@
 #include <set>
 #include <map>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCdistGrad = "CdistGrad";
-class MS_CORE_API CdistGrad : public PrimitiveC {
+class MIND_API CdistGrad : public BaseOperator {
  public:
-  CdistGrad() : PrimitiveC(kNameCdistGrad) { InitIOName({"grad", "input_x", "input_y", "cdist"}, {"output"}); }
-  ~CdistGrad() = default;
-  MS_DECLARE_PARENT(CdistGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(CdistGrad);
+  CdistGrad() : BaseOperator(kNameCdistGrad) { InitIOName({"grad", "input_x", "input_y", "cdist"}, {"output"}); }
 };
 
-AbstractBasePtr CdistGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CdistGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

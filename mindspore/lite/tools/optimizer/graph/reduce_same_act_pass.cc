@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/reduce_same_act_pass.h"
 #include "ops/op_utils.h"
 #include "src/common/utils.h"
@@ -25,7 +26,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kMinUsersSize = 2;
-}
+}  // namespace
 bool ReduceSameActPass::Run(const FuncGraphPtr &func_graph) {
   auto node_list = TopoSort(func_graph->get_return());
   auto manager = Manage(func_graph, true);
@@ -56,7 +57,7 @@ bool ReduceSameActPass::Run(const FuncGraphPtr &func_graph) {
       if (post_cnode == nullptr) {
         return false;
       }
-      auto primitive_c = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(post_cnode->input(0));
+      auto primitive_c = ops::GetOperator<mindspore::ops::Activation>(post_cnode->input(0));
       if (primitive_c == nullptr) {
         return false;
       }

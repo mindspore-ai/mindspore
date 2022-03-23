@@ -21,20 +21,19 @@
 #include <algorithm>
 #include "common/op_attr.h"
 #include "common/op_enum.h"
-#include "ops/op_utils.h"
 #include "common/fetch_content.h"
 #include "ops/reshape.h"
 #include "op/reshape_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS ReshapeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS ReshapeMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto reshape_prim = utils::cast<std::shared_ptr<ops::Reshape>>(prim);
+  auto reshape_prim = api::utils::cast<api::SharedPtr<ops::Reshape>>(prim);
   MS_ASSERT(reshape_prim != nullptr);
 
   auto reshape_operator = std::make_unique<mapper::ReshapeOperator>();
@@ -72,7 +71,7 @@ STATUS ReshapeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *b
                          [](const int32_t &value) { return static_cast<int32_t>(value); });
     reshape_operator->SetReshapeDimVec(dims);
   } else if (reshape_prim->GetAttr(ops::kShape) != nullptr) {
-    auto shape = GetValue<std::vector<int64_t>>(reshape_prim->GetAttr(ops::kShape));
+    auto shape = api::GetValue<std::vector<int64_t>>(reshape_prim->GetAttr(ops::kShape));
     std::vector<int> dims;
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(dims),
                          [](const int64_t &value) { return static_cast<int32_t>(value); });
@@ -82,13 +81,13 @@ STATUS ReshapeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *b
     return RET_ERROR;
   }
   if (prim->GetAttr(ops::kAxis) != nullptr) {
-    auto axis = GetValue<int32_t>(reshape_prim->GetAttr(ops::kAxis));
+    auto axis = static_cast<int32_t>(api::GetValue<int64_t>(reshape_prim->GetAttr(ops::kAxis)));
     reshape_operator->SetAxis(axis);
   } else {
     reshape_operator->SetAxis(0);
   }
   if (prim->GetAttr(kNumAxes) != nullptr) {
-    auto num_axes = GetValue<int32_t>(reshape_prim->GetAttr(kNumAxes));
+    auto num_axes = static_cast<int32_t>(api::GetValue<int64_t>(reshape_prim->GetAttr(kNumAxes)));
     reshape_operator->SetReshapeNumAxes(num_axes);
   }
   if (PushOfflineArgs(cnode, reshape_operator.get(), 1) != RET_OK) {

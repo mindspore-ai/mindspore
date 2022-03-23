@@ -18,27 +18,24 @@
 #define MINDSPORE_CORE_OPS_EXPAND_DIMS_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExpandDims = "ExpandDims";
 /// \brief Adds an additional dimension to ‘input_x` at the given axis.
 /// Refer to Python API @ref mindspore.ops.ExpandDims for more details.
-class MS_CORE_API ExpandDims : public PrimitiveC {
+class MIND_API ExpandDims : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ExpandDims);
   /// \brief Constructor.
-  ExpandDims() : PrimitiveC(kNameExpandDims) { InitIOName({"x", "axis"}, {"output"}); }
-  /// \brief Destructor.
-  ~ExpandDims() = default;
-  MS_DECLARE_PARENT(ExpandDims, PrimitiveC);
+  ExpandDims() : BaseOperator(kNameExpandDims) { InitIOName({"x", "axis"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ExpandDims for the inputs.
   void Init() const {}
 };
-AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimExpandDims = std::shared_ptr<ExpandDims>;
 }  // namespace ops
 }  // namespace mindspore

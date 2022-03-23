@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/format/delete_redundant_transpose.h"
 #include <vector>
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {

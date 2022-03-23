@@ -21,6 +21,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -77,6 +78,8 @@ ValuePtr ZerosInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
   return TensorConstructUtils::CreateZerosTensor(out_type, out_shape);
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Zeros, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Zeros, prim::kPrimZeros, ZerosInfer, ZerosInferValue, false);
 }  // namespace ops
 }  // namespace mindspore

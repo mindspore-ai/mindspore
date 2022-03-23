@@ -23,8 +23,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeGruParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeGruParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -34,26 +34,26 @@ ops::PrimitiveC *CaffeGruParser::Parse(const caffe::LayerParameter &proto, const
   if (proto.has_recurrent_param()) {
     const auto &gru_param = proto.recurrent_param();
     if (gru_param.has_num_output()) {
-      prim->AddAttr(dpico::kNumOutput, MakeValue<uint32_t>(gru_param.num_output()));
+      prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(gru_param.num_output()));
     }
     if (gru_param.has_expose_hidden()) {
-      prim->AddAttr(dpico::kExposeHidden, MakeValue<bool>(gru_param.expose_hidden()));
-      prim->AddAttr(dpico::kOutputLastFrameFlag, MakeValue<bool>(gru_param.expose_hidden()));
-      prim->AddAttr(dpico::kInitialHOnlineFlag, MakeValue<bool>(gru_param.expose_hidden()));
-      prim->AddAttr(dpico::kUseDefaultInitialHFlag, MakeValue<bool>(!gru_param.expose_hidden()));
+      prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(gru_param.expose_hidden()));
+      prim->AddAttr(dpico::kOutputLastFrameFlag, api::MakeValue<bool>(gru_param.expose_hidden()));
+      prim->AddAttr(dpico::kInitialHOnlineFlag, api::MakeValue<bool>(gru_param.expose_hidden()));
+      prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(!gru_param.expose_hidden()));
     } else {
-      prim->AddAttr(dpico::kUseDefaultInitialHFlag, MakeValue<bool>(true));
+      prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(true));
     }
   }
 
   // set default value
-  prim->AddAttr(dpico::kHasSplitHWeightFlag, MakeValue<bool>(true));
-  prim->AddAttr(dpico::kHasSplitBiasFlag, MakeValue<bool>(false));
-  prim->AddAttr(dpico::kGruWeightOrderZrhFlag, MakeValue<bool>(false));
-  prim->AddAttr(dpico::kOnnxModeOutFlag, MakeValue<bool>(false));
-  prim->AddAttr(dpico::kKeepDirectionDimFlag, MakeValue<bool>(false));
+  prim->AddAttr(dpico::kHasSplitHWeightFlag, api::MakeValue<bool>(true));
+  prim->AddAttr(dpico::kHasSplitBiasFlag, api::MakeValue<bool>(false));
+  prim->AddAttr(dpico::kGruWeightOrderZrhFlag, api::MakeValue<bool>(false));
+  prim->AddAttr(dpico::kOnnxModeOutFlag, api::MakeValue<bool>(false));
+  prim->AddAttr(dpico::kKeepDirectionDimFlag, api::MakeValue<bool>(false));
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeGruParser("GRU", new CaffeGruParser());

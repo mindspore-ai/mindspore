@@ -22,25 +22,22 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "abstract/abstract_value.h"
-#include "abstract/dshape.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCoalesce = "Coalesce";
-class Coalesce : public PrimitiveC {
+class MIND_API Coalesce : public BaseOperator {
  public:
-  Coalesce() : PrimitiveC(kNameCoalesce) {
+  MIND_API_BASE_MEMBER(Coalesce);
+  Coalesce() : BaseOperator(kNameCoalesce) {
     InitIOName({"x_indices", "x_values", "x_shape"}, {"y_indices", "y_values", "y_shape"});
   }
-  ~Coalesce() = default;
-  MS_DECLARE_PARENT(Coalesce, PrimitiveC);
 };
 
-AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCoalescePtr = std::shared_ptr<Coalesce>;
 }  // namespace ops
 }  // namespace mindspore

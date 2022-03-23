@@ -18,9 +18,11 @@
 #include <string>
 #include <memory>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ScaleFusion, PrimitiveC, Scale);
 void ScaleFusion::Init(const int64_t axis, const ActivationType &activation_type) {
   this->set_axis(axis);
   this->set_activation_type(activation_type);
@@ -28,7 +30,7 @@ void ScaleFusion::Init(const int64_t axis, const ActivationType &activation_type
 
 void ScaleFusion::set_activation_type(const ActivationType &activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 ActivationType ScaleFusion::get_activation_type() const {

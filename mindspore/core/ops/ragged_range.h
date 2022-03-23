@@ -19,21 +19,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRaggedRange = "RaggedRange";
 /// \brief RaggedRange operator prototype.
-class MS_CORE_API RaggedRange : public PrimitiveC {
+class MIND_API RaggedRange : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(RaggedRange);
   /// \brief Constructor
-  RaggedRange() : PrimitiveC(kNameRaggedRange) {}
-  /// \brief Destructor
-  ~RaggedRange() = default;
-  MS_DECLARE_PARENT(RaggedRange, PrimitiveC);
+  RaggedRange() : BaseOperator(kNameRaggedRange) {}
   /// \brief Method to init the op.
   void Init() const {}
 };

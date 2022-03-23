@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/mapper/arithmetic_mapper.h"
 #include <memory>
 #include <map>
 #include <string>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
+#include "tools/converter/adapter/acl/common/utils.h"
 #include "src/common/log_util.h"
 #include "ops/real_div.h"
+#include "ops/op_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
-static const std::map<std::string, PrimitivePtr> kDivTypeMap = {{"Div", std::make_shared<ops::Div>()},
-                                                                {"RealDiv", std::make_shared<ops::RealDiv>()}};
+static const std::map<std::string, BaseOperatorPtr> kDivTypeMap = {{"Div", std::make_shared<ops::Div>()},
+                                                                   {"RealDiv", std::make_shared<ops::RealDiv>()}};
 
 STATUS AddFusionMapper::Mapper(const CNodePtr &cnode) {
-  auto dst_prim = std::make_shared<ops::Add>();
+  ops::Add op_add;
+  auto dst_prim = op_add.GetPrim();
   if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "AddFusion mapper failed.";
     return RET_ERROR;
@@ -51,7 +56,9 @@ STATUS DivFusionMapper::Mapper(const CNodePtr &cnode) {
   }
   PrimitivePtr dst_prim = nullptr;
   if (kDivTypeMap.find(original_name) != kDivTypeMap.end()) {
-    dst_prim = kDivTypeMap.at(original_name);
+    auto dst_op = kDivTypeMap.at(original_name);
+    MS_CHECK_TRUE_MSG(dst_op != nullptr, lite::RET_ERROR, "Div op is nullptr.");
+    dst_prim = dst_op->GetPrim();
   }
   CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
@@ -60,7 +67,8 @@ STATUS DivFusionMapper::Mapper(const CNodePtr &cnode) {
 }
 
 STATUS MulFusionMapper::Mapper(const CNodePtr &cnode) {
-  auto dst_prim = std::make_shared<ops::Mul>();
+  ops::Mul mul_op;
+  auto dst_prim = mul_op.GetPrim();
   if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "MulFusion mapper failed.";
     return RET_ERROR;
@@ -69,7 +77,8 @@ STATUS MulFusionMapper::Mapper(const CNodePtr &cnode) {
 }
 
 STATUS PowFusionMapper::Mapper(const CNodePtr &cnode) {
-  auto dst_prim = std::make_shared<ops::Pow>();
+  ops::Pow pow_op;
+  auto dst_prim = pow_op.GetPrim();
   if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "PowFusion mapper failed.";
     return RET_ERROR;
@@ -78,7 +87,8 @@ STATUS PowFusionMapper::Mapper(const CNodePtr &cnode) {
 }
 
 STATUS SubFusionMapper::Mapper(const CNodePtr &cnode) {
-  auto dst_prim = std::make_shared<ops::Sub>();
+  ops::Sub sub_op;
+  auto dst_prim = sub_op.GetPrim();
   if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "SubFusion mapper failed.";
     return RET_ERROR;

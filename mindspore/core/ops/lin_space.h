@@ -19,22 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLinSpace = "LinSpace";
 /// \brief Returns a Tensor whose value is evenly spaced in the interval start and stop (including start and stop).
 /// Refer to Python API @ref mindspore.ops.LinSpace for more details.
-class MS_CORE_API LinSpace : public PrimitiveC {
+class MIND_API LinSpace : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LinSpace);
   /// \brief Constructor.
-  LinSpace() : PrimitiveC(kNameLinSpace) { InitIOName({"start", "stop", "num"}, {"output"}); }
-  /// \brief Destructor.
-  ~LinSpace() = default;
-  MS_DECLARE_PARENT(LinSpace, PrimitiveC);
+  LinSpace() : BaseOperator(kNameLinSpace) { InitIOName({"start", "stop", "num"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -92,7 +92,7 @@ class TFModelParser : public converter::ModelParser {
   STATUS ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGraphPtr> &first_func_map,
                                     const std::map<CNodePtr, FuncGraphPtr> &second_func_map);
 
-  static STATUS ConvertQuantParams(const size_t &input_size, const size_t &output_size, ops::PrimitiveC *primitive_c);
+  static STATUS ConvertQuantParams(const size_t &input_size, const size_t &output_size, PrimitiveCPtr primitive_c);
 
   static STATUS MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_nodes, const FuncGraphPtr &anf_graph);
 

@@ -18,27 +18,25 @@
 #define MINDSPORE_CORE_OPS_SQUARED_DIFFERENCE_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSquaredDifference = "SquaredDifference";
 /// \brief Subtracts the second input tensor from the first input tensor element-wise and returns square of it.
 /// Refer to Python API @ref mindspore.ops.SquaredDifference for more details.
-class MS_CORE_API SquaredDifference : public PrimitiveC {
+class MIND_API SquaredDifference : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SquaredDifference);
   /// \brief Constructor.
-  SquaredDifference() : PrimitiveC(kNameSquaredDifference) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~SquaredDifference() = default;
-  MS_DECLARE_PARENT(SquaredDifference, PrimitiveC);
+  SquaredDifference() : BaseOperator(kNameSquaredDifference) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSquaredDifferencePtr = std::shared_ptr<SquaredDifference>;
 }  // namespace ops
 }  // namespace mindspore

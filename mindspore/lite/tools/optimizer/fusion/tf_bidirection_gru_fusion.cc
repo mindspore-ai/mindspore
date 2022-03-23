@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
 #include <memory>
 #include <functional>
@@ -27,6 +29,7 @@
 #include "include/common/utils/utils.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -566,8 +569,10 @@ CNodePtr TfBidirectionGruFusion::GetStackedHiddenState(const FuncGraphPtr &func_
   MS_ASSERT(bw_init_state != nullptr);
   auto stack_prim = std::make_shared<ops::Stack>();
   MS_CHECK_TRUE_RET(stack_prim != nullptr, nullptr);
+  auto stack_prim_c = stack_prim->GetPrim();
+  MS_CHECK_TRUE_RET(stack_prim_c != nullptr, nullptr);
   stack_prim->set_axis(0);
-  auto value_node = NewValueNode(stack_prim);
+  auto value_node = NewValueNode(stack_prim_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> new_node_inputs = {value_node, fw_init_state, bw_init_state};
   auto new_node = func_graph->NewCNode(new_node_inputs);
@@ -587,8 +592,10 @@ CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &fu
   MS_ASSERT(equiv != nullptr);
   auto gru_prim = std::make_shared<ops::GRU>();
   MS_CHECK_TRUE_RET(gru_prim != nullptr, nullptr);
+  auto gru_prim_c = gru_prim->GetPrim();
+  MS_CHECK_TRUE_RET(gru_prim_c != nullptr, nullptr);
   gru_prim->set_bidirectional(true);
-  auto value_node = NewValueNode(gru_prim);
+  auto value_node = NewValueNode(gru_prim_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
 
   auto fw_gate_kernel = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[var_offset]]);
@@ -686,9 +693,11 @@ CNodePtr TfBidirectionGruFusion::GetPostProcessNode(const FuncGraphPtr &func_gra
   MS_ASSERT(gru_output != nullptr);
   auto split_prim = std::make_shared<ops::Split>();
   MS_CHECK_TRUE_RET(split_prim != nullptr, nullptr);
+  auto split_prim_c = split_prim->GetPrim();
+  MS_CHECK_TRUE_RET(split_prim_c != nullptr, nullptr);
   split_prim->set_output_num(2);
   split_prim->set_axis(1);
-  auto split_value_node = NewValueNode(split_prim);
+  auto split_value_node = NewValueNode(split_prim_c);
   MS_CHECK_TRUE_RET(split_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> new_node_inputs = {split_value_node, gru_output};
   auto split_new_node = func_graph->NewCNode(new_node_inputs);
@@ -709,8 +718,10 @@ CNodePtr TfBidirectionGruFusion::GetPostProcessNode(const FuncGraphPtr &func_gra
 
   auto concat_prim = std::make_shared<ops::Concat>();
   MS_CHECK_TRUE_RET(concat_prim != nullptr, nullptr);
+  auto concat_prim_c = concat_prim->GetPrim();
+  MS_CHECK_TRUE_RET(concat_prim_c != nullptr, nullptr);
   concat_prim->set_axis(3);
-  auto concat_value_node = NewValueNode(concat_prim);
+  auto concat_value_node = NewValueNode(concat_prim_c);
   MS_CHECK_TRUE_RET(concat_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> concat_new_node_inputs = {concat_value_node, split_out1, split_out2};
   auto concat_new_node = func_graph->NewCNode(concat_new_node_inputs);
@@ -722,8 +733,10 @@ CNodePtr TfBidirectionGruFusion::GetPostProcessNode(const FuncGraphPtr &func_gra
 
   auto squeeze_prim = std::make_shared<ops::Squeeze>();
   MS_CHECK_TRUE_RET(squeeze_prim != nullptr, nullptr);
+  auto squeeze_prim_c = squeeze_prim->GetPrim();
+  MS_CHECK_TRUE_RET(squeeze_prim_c != nullptr, nullptr);
   squeeze_prim->set_axis(std::vector<int64_t>{1});
-  auto squeeze_value_node = NewValueNode(squeeze_prim);
+  auto squeeze_value_node = NewValueNode(squeeze_prim_c);
   MS_CHECK_TRUE_RET(squeeze_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> squeeze_new_node_inputs = {squeeze_value_node, concat_new_node};
   auto squeeze_new_node = func_graph->NewCNode(squeeze_new_node_inputs);
@@ -737,7 +750,9 @@ CNodePtr TfBidirectionGruFusion::GetPostProcessNode(const FuncGraphPtr &func_gra
   MS_CHECK_TRUE_RET(transpose_prim != nullptr, nullptr);
   auto transpose_perm = BuildIntVecParameterNode(func_graph, {1, 0, 2}, "transpose_" + base_name + "_perm");
   MS_CHECK_TRUE_RET(transpose_perm != nullptr, nullptr);
-  auto transpose_new_node = func_graph->NewCNode(transpose_prim, {squeeze_new_node, transpose_perm});
+  auto transpose_prim_c = transpose_prim->GetPrim();
+  MS_CHECK_TRUE_RET(transpose_prim_c != nullptr, nullptr);
+  auto transpose_new_node = func_graph->NewCNode(transpose_prim_c, {squeeze_new_node, transpose_perm});
   MS_CHECK_TRUE_RET(transpose_new_node != nullptr, nullptr);
   transpose_new_node->set_fullname_with_scope("transpose_" + base_name);
   if (gru_output->abstract() != nullptr) {

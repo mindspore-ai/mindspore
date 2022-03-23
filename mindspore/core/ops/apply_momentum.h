@@ -22,24 +22,21 @@
 #include <set>
 #include <map>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyMomentum = "ApplyMomentum";
 /// \brief Optimizer that implements the Momentum algorithm.
 /// Refer to Python API @ref mindspore.ops.ApplyMomentum for more details.
-class MS_CORE_API ApplyMomentum : public PrimitiveC {
+class MIND_API ApplyMomentum : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ApplyMomentum);
   /// \brief Constructor.
-  ApplyMomentum() : PrimitiveC(kNameApplyMomentum) {
+  ApplyMomentum() : BaseOperator(kNameApplyMomentum) {
     InitIOName({"var", "accum", "lr", "grad", "momentum"}, {"var", "accum"});
   }
-  /// \brief Destructor.
-  ~ApplyMomentum() = default;
-  MS_DECLARE_PARENT(ApplyMomentum, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ApplyMomentum for the inputs.
   void Init(const bool use_nesterov = false, const bool use_locking = false, const float gradient_scale = 1.0);
   /// \brief Set use_nesterov.
@@ -61,8 +58,8 @@ class MS_CORE_API ApplyMomentum : public PrimitiveC {
   /// \return gradient_scale.
   float get_gradient_scale() const;
 };
-AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyMomentumPtr = std::shared_ptr<ApplyMomentum>;
 }  // namespace ops
 }  // namespace mindspore

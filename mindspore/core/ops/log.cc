@@ -23,6 +23,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -59,6 +60,7 @@ TypePtr LogInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(Log, PrimitiveC, BaseOperator);
 AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(LogInferShape(primitive, input_args), LogInferType(primitive, input_args));

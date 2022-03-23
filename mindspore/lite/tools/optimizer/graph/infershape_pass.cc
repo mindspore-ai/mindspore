@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {

@@ -17,18 +17,16 @@
 #define MINDSPORE_CORE_OPS_SUB_GRAD_H_
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSubGrad = "SubGrad";
-class MS_CORE_API SubGrad : public PrimitiveC {
+class MIND_API SubGrad : public BaseOperator {
  public:
-  SubGrad() : PrimitiveC(kNameSubGrad) {}
-  ~SubGrad() = default;
-  MS_DECLARE_PARENT(SubGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(SubGrad);
+  SubGrad() : BaseOperator(kNameSubGrad) {}
   void Init() const {}
 };
 

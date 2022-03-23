@@ -29,9 +29,9 @@ class TFAddParser : public TFNodeParser {
   TFAddParser() = default;
   ~TFAddParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFSubParser : public TFNodeParser {
@@ -39,9 +39,9 @@ class TFSubParser : public TFNodeParser {
   TFSubParser() = default;
   ~TFSubParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFMulParser : public TFNodeParser {
@@ -49,9 +49,9 @@ class TFMulParser : public TFNodeParser {
   TFMulParser() = default;
   ~TFMulParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFDivParser : public TFNodeParser {
@@ -59,9 +59,9 @@ class TFDivParser : public TFNodeParser {
   TFDivParser() = default;
   ~TFDivParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFMaximumParser : public TFNodeParser {
@@ -69,9 +69,9 @@ class TFMaximumParser : public TFNodeParser {
   TFMaximumParser() = default;
   ~TFMaximumParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFMinimumParser : public TFNodeParser {
@@ -79,9 +79,9 @@ class TFMinimumParser : public TFNodeParser {
   TFMinimumParser() = default;
   ~TFMinimumParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFGreaterParser : public TFNodeParser {
@@ -89,9 +89,9 @@ class TFGreaterParser : public TFNodeParser {
   TFGreaterParser() = default;
   ~TFGreaterParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFGreaterEqualParser : public TFNodeParser {
@@ -99,9 +99,9 @@ class TFGreaterEqualParser : public TFNodeParser {
   TFGreaterEqualParser() = default;
   ~TFGreaterEqualParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFLessParser : public TFNodeParser {
@@ -109,9 +109,9 @@ class TFLessParser : public TFNodeParser {
   TFLessParser() = default;
   ~TFLessParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFLessEqualParser : public TFNodeParser {
@@ -119,9 +119,9 @@ class TFLessEqualParser : public TFNodeParser {
   TFLessEqualParser() = default;
   ~TFLessEqualParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFEqualParser : public TFNodeParser {
@@ -129,9 +129,9 @@ class TFEqualParser : public TFNodeParser {
   TFEqualParser() = default;
   ~TFEqualParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFNotEqualParser : public TFNodeParser {
@@ -139,9 +139,9 @@ class TFNotEqualParser : public TFNodeParser {
   TFNotEqualParser() = default;
   ~TFNotEqualParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFSquaredDifferenceParser : public TFNodeParser {
@@ -149,9 +149,9 @@ class TFSquaredDifferenceParser : public TFNodeParser {
   TFSquaredDifferenceParser() = default;
   ~TFSquaredDifferenceParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFRsqrtParser : public TFNodeParser {
@@ -159,9 +159,9 @@ class TFRsqrtParser : public TFNodeParser {
   TFRsqrtParser() = default;
   ~TFRsqrtParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFRoundParser : public TFNodeParser {
@@ -169,9 +169,9 @@ class TFRoundParser : public TFNodeParser {
   TFRoundParser() = default;
   ~TFRoundParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFCeilParser : public TFNodeParser {
@@ -179,9 +179,9 @@ class TFCeilParser : public TFNodeParser {
   TFCeilParser() = default;
   ~TFCeilParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFExpParser : public TFNodeParser {
@@ -189,9 +189,9 @@ class TFExpParser : public TFNodeParser {
   TFExpParser() = default;
   ~TFExpParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFFloorParser : public TFNodeParser {
@@ -199,9 +199,9 @@ class TFFloorParser : public TFNodeParser {
   TFFloorParser() = default;
   ~TFFloorParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFFloorDivParser : public TFNodeParser {
@@ -209,9 +209,9 @@ class TFFloorDivParser : public TFNodeParser {
   TFFloorDivParser() = default;
   ~TFFloorDivParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFFloorModParser : public TFNodeParser {
@@ -219,9 +219,9 @@ class TFFloorModParser : public TFNodeParser {
   TFFloorModParser() = default;
   ~TFFloorModParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFLogParser : public TFNodeParser {
@@ -229,9 +229,9 @@ class TFLogParser : public TFNodeParser {
   TFLogParser() = default;
   ~TFLogParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFSqrtParser : public TFNodeParser {
@@ -239,9 +239,9 @@ class TFSqrtParser : public TFNodeParser {
   TFSqrtParser() = default;
   ~TFSqrtParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFCosParser : public TFNodeParser {
@@ -249,9 +249,9 @@ class TFCosParser : public TFNodeParser {
   TFCosParser() = default;
   ~TFCosParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFSinParser : public TFNodeParser {
@@ -259,9 +259,9 @@ class TFSinParser : public TFNodeParser {
   TFSinParser() = default;
   ~TFSinParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFSquareParser : public TFNodeParser {
@@ -269,9 +269,9 @@ class TFSquareParser : public TFNodeParser {
   TFSquareParser() = default;
   ~TFSquareParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFPowParser : public TFNodeParser {
@@ -279,9 +279,9 @@ class TFPowParser : public TFNodeParser {
   TFPowParser() = default;
   ~TFPowParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFAbsParser : public TFNodeParser {
@@ -289,9 +289,9 @@ class TFAbsParser : public TFNodeParser {
   TFAbsParser() = default;
   ~TFAbsParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 }  // namespace lite
 }  // namespace mindspore

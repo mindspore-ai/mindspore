@@ -16,9 +16,11 @@
 
 #include "ops/grad/avg_pool_grad.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(AvgPoolGrad, PrimitiveC, PoolGrad);
 REGISTER_PRIMITIVE_C(kNameAvgPoolGrad, AvgPoolGrad);
 }  // namespace ops
 }  // namespace mindspore

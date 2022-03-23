@@ -15,15 +15,15 @@
  */
 #ifndef MINDSPORE_CORE_OPS_DYNAMIC_SHAPE_H_
 #define MINDSPORE_CORE_OPS_DYNAMIC_SHAPE_H_
-#include "ops/primitive_c.h"
-#include "base/core_ops.h"
+#include "ops/base_operator.h"
+
 namespace mindspore {
 namespace ops {
-class DynamicShape : public PrimitiveC {
+constexpr auto kNameDynamicShape = "DynamicShape";
+class MIND_API DynamicShape : public BaseOperator {
  public:
-  DynamicShape() : PrimitiveC(prim::kPrimDynamicShape->name()) {}
-  ~DynamicShape() = default;
-  MS_DECLARE_PARENT(DynamicShape, PrimitiveC);
+  MIND_API_BASE_MEMBER(DynamicShape);
+  DynamicShape() : BaseOperator(kNameDynamicShape) {}
 };
 }  // namespace ops
 }  // namespace mindspore

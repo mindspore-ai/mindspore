@@ -20,29 +20,26 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSub = prim::kSub;
+constexpr auto kNameSub = "Sub";
 /// \brief Subtracts the second input tensor from the first input tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Sub for more details.
-class MS_CORE_API Sub : public PrimitiveC {
+class MIND_API Sub : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Sub);
   /// \brief Constructor.
-  Sub() : PrimitiveC(kNameSub) { InitIOName({"x", "y"}, {"output"}); }
-  explicit Sub(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Sub() = default;
-  MS_DECLARE_PARENT(Sub, PrimitiveC);
+  Sub() : BaseOperator(kNameSub) { InitIOName({"x", "y"}, {"output"}); }
+  explicit Sub(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
 
-AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -26,7 +26,7 @@ class MvnChecker : public OpChecker {
  public:
   MvnChecker() : OpChecker("Mvn") {}
   ~MvnChecker() override = default;
-  bool Check(CNodePtr op, int32_t output_num, mindspore::Format format) override;
+  bool Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) override;
 };
 }  // namespace dpico
 }  // namespace mindspore

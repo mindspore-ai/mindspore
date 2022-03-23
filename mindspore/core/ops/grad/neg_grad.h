@@ -22,20 +22,16 @@
 #include <string>
 #include <memory>
 #include <algorithm>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/primitive_infer_map.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNegGrad = "NegGrad";
-class MS_CORE_API NegGrad : public PrimitiveC {
+class MIND_API NegGrad : public BaseOperator {
  public:
-  NegGrad() : PrimitiveC(kNameNegGrad) {}
-  ~NegGrad() = default;
-  MS_DECLARE_PARENT(NegGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(NegGrad);
+  NegGrad() : BaseOperator(kNameNegGrad) {}
   void Init() const {}
 };
 }  // namespace ops

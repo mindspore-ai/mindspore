@@ -17,6 +17,7 @@
 #if defined(__linux__) && !defined(Debug)
 #include <csignal>
 #endif
+#define USE_DEPRECATED_API
 #include "tools/converter/converter.h"
 
 #if defined(__linux__) && !defined(Debug)

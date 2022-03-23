@@ -18,26 +18,24 @@
 #define MINDSPORE_CORE_OPS_TAN_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTan = "Tan";
 /// \brief Computes tangent of x element-wise. Refer to Python API @ref mindspore.ops.Tan for more details.
-class MS_CORE_API Tan : public PrimitiveC {
+class MIND_API Tan : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Tan);
   /// \brief Constructor.
-  Tan() : PrimitiveC(kNameTan) {}
-  /// \brief Destructor.
-  ~Tan() = default;
-  MS_DECLARE_PARENT(Tan, PrimitiveC);
+  Tan() : BaseOperator(kNameTan) {}
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimTanPtr = std::shared_ptr<Tan>;
 }  // namespace ops
 }  // namespace mindspore

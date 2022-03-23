@@ -18,21 +18,18 @@
 #define MINDSPORE_CORE_OPS_TENSOR_ARRAY_H_
 #include <vector>
 #include <string>
-#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-
 constexpr auto kNameTensorArray = "TensorArray";
 
 /// \brief Assert defined TensorArray operator prototype of lite.
-class MS_CORE_API TensorArray : public PrimitiveC {
+class MIND_API TensorArray : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TensorArray);
   /// \brief Constructor.
-  TensorArray() : PrimitiveC(kNameTensorArray) { InitIOName({"size"}, {"handle", "flow"}); }
-  /// \brief Destructor.
-  ~TensorArray() = default;
-  MS_DECLARE_PARENT(TensorArray, PrimitiveC);
+  TensorArray() : BaseOperator(kNameTensorArray) { InitIOName({"size"}, {"handle", "flow"}); }
   /// \brief Method to init the op's attributes.
   void Init(bool dynamic_size, bool identical_element_shapes, const std::vector<int> &element_shape, int data_type);
   /// \brief Method to set dynamic_size attributes.

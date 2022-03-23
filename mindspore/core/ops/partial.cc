@@ -16,9 +16,11 @@
 
 #include "ops/partial.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Partial, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNamePartial, Partial);
 }  // namespace ops
 }  // namespace mindspore

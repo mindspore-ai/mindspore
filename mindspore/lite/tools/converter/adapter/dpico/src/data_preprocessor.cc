@@ -284,7 +284,7 @@ int DataPreprocessor::GenerateInputBinFromImages(const std::string &raw_data_pat
   }
   return RET_OK;
 }
-int DataPreprocessor::Run(const AnfNodePtrList &inputs) {
+int DataPreprocessor::Run(const api::AnfNodePtrList &inputs) {
   if (inputs.empty()) {
     MS_LOG(ERROR) << "graph inputs shouldn't be empty.";
     return RET_ERROR;
@@ -298,7 +298,7 @@ int DataPreprocessor::Run(const AnfNodePtrList &inputs) {
       MS_LOG(ERROR) << "current op don't exist in image_lists. " << op_name;
       return RET_ERROR;
     }
-    auto param_node = input->cast<ParameterPtr>();
+    auto param_node = input->cast<api::ParameterPtr>();
     if (param_node == nullptr) {
       MS_LOG(ERROR) << "graph input node should be parameter ptr. " << input->fullname_with_scope();
       return RET_ERROR;

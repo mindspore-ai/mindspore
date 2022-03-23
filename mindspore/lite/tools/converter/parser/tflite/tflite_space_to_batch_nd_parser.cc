@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_GE(tflite_op->inputs.size(), kInputSize2, nullptr);
   auto prim = std::make_unique<ops::SpaceToBatchND>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -44,7 +44,7 @@ ops::PrimitiveC *TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite:
   }
   prim->set_paddings(paddings);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteSpaceToBatchNDParser(tflite::BuiltinOperator_SPACE_TO_BATCH_ND,

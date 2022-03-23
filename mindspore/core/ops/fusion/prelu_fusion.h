@@ -19,22 +19,17 @@
 #include <vector>
 
 #include "ops/prelu.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePReLUFusion = "PReLUFusion";
 /// \brief PReLUFusion defined PReLU operator prototype of lite.
-class MS_CORE_API PReLUFusion : public PReLU {
+class MIND_API PReLUFusion : public PReLU {
  public:
+  MIND_API_BASE_MEMBER(PReLUFusion);
   /// \brief Constructor.
   PReLUFusion() : PReLU(kNamePReLUFusion) {}
-
-  /// \brief Destructor.
-  ~PReLUFusion() = default;
-
-  MS_DECLARE_PARENT(PReLUFusion, PReLU);
 
   /// \brief Method to init the op's attributes.
   ///

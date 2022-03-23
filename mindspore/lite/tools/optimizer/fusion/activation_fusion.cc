@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/activation_fusion.h"
 #include <memory>
 #include <vector>
@@ -26,9 +27,9 @@
 namespace mindspore {
 namespace opt {
 STATUS DoFusion(CNodePtr cur_cnode, const CNodePtr &pre_cnode) {
-  auto cur_act_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(cur_cnode->input(0));
+  auto cur_act_prim = ops::GetOperator<mindspore::ops::Activation>(cur_cnode->input(0));
   MS_ASSERT(cur_act_prim != nullptr);
-  auto pre_act_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(pre_cnode->input(0));
+  auto pre_act_prim = ops::GetOperator<mindspore::ops::Activation>(pre_cnode->input(0));
   MS_ASSERT(pre_act_prim != nullptr);
   MS_CHECK_TRUE_MSG(cur_act_prim->GetAttr(ops::kActivationType) != nullptr, false, "Get activation type failed.");
   MS_CHECK_TRUE_MSG(pre_act_prim->GetAttr(ops::kActivationType) != nullptr, false, "Get activation type failed.");

@@ -31,6 +31,9 @@
 #include "tools/converter/parser/tflite/tflite_util.h"
 #include "ops/primitive_c.h"
 #include "src/common/log_util.h"
+#include "tools/converter/parser/parser_utils.h"
+#include "ops/op_utils.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
@@ -40,9 +43,9 @@ class TfliteNodeParser {
 
   virtual ~TfliteNodeParser() = default;
 
-  virtual ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  virtual PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                              const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
     return nullptr;
   }
 

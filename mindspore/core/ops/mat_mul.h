@@ -19,24 +19,20 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "abstract/dshape.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatMul = "MatMul";
 /// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.MatMul for more details.
-class MS_CORE_API MatMul : public PrimitiveC {
+class MIND_API MatMul : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(MatMul);
   /// \brief Constructor.
-  MatMul() : PrimitiveC(kNameMatMul) { InitIOName({"x1", "x2"}, {"output"}); }
-  explicit MatMul(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "x2"}, {"output"}); }
-  /// \brief Destructor.
-  ~MatMul() = default;
-  MS_DECLARE_PARENT(MatMul, PrimitiveC);
+  MatMul() : BaseOperator(kNameMatMul) { InitIOName({"x1", "x2"}, {"output"}); }
+  explicit MatMul(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "x2"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MatMul for the inputs.
   void Init(bool transpose_a = false, bool transpose_b = false);
   /// \brief Set transpose_a.

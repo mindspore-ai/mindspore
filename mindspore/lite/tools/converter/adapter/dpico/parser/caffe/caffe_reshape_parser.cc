@@ -17,13 +17,13 @@
 #include "parser/caffe/caffe_reshape_parser.h"
 #include <memory>
 #include "common/op_attr.h"
-#include "ops/op_utils.h"
 #include "ops/reshape.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Reshape>();
+BaseOperatorPtr CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Reshape>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -38,17 +38,17 @@ ops::PrimitiveC *CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, c
   for (int i = 0; i < blob_shape.dim_size(); i++) {
     shape.push_back(blob_shape.dim(i));
   }
-  prim->AddAttr(ops::kShape, MakeValue(shape));
+  prim->AddAttr(ops::kShape, api::MakeValue(shape));
 
   if (reshapeParam.has_axis()) {
-    prim->AddAttr(ops::kAxis, MakeValue(static_cast<int32_t>(reshapeParam.axis())));
+    prim->AddAttr(ops::kAxis, api::MakeValue(reshapeParam.axis()));
   }
 
   if (reshapeParam.has_num_axes()) {
-    prim->AddAttr(dpico::kNumAxes, MakeValue(static_cast<int32_t>(reshapeParam.num_axes())));
+    prim->AddAttr(dpico::kNumAxes, api::MakeValue(reshapeParam.num_axes()));
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeReshapeParser("Reshape", new CaffeReshapeParser());

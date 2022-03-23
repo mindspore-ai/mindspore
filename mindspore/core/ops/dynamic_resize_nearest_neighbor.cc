@@ -23,6 +23,7 @@
 #include "ops/dynamic_resize_nearest_neighbor.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -118,6 +119,8 @@ TypePtr DynamicResizeNearestNeighborInferType(const PrimitivePtr &prim,
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(DynamicResizeNearestNeighbor, PrimitiveC, BaseOperator);
 AbstractBasePtr DynamicResizeNearestNeighborInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();

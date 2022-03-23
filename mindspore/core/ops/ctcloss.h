@@ -18,26 +18,23 @@
 #define MINDSPORE_CORE_OPS_CTCLOSS_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
 /// Refer to Python API @ref mindspore.ops.CTCLoss for more details.
-class MS_CORE_API CTCLoss : public PrimitiveC {
+class MIND_API CTCLoss : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(CTCLoss);
   /// \brief Constructor.
-  CTCLoss() : PrimitiveC(prim::kPrimCTCLoss->name()) {}
-  /// \brief Destructor.
-  ~CTCLoss() = default;
-  MS_DECLARE_PARENT(CTCLoss, PrimitiveC);
+  CTCLoss() : BaseOperator("CTCLoss") {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CTCLoss for the inputs.
   void Init() const {}
 };
-AbstractBasePtr CTCLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CTCLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

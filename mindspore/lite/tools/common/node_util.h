@@ -27,6 +27,7 @@
 #include "src/tensor.h"
 #include "include/errorcode.h"
 #include "securec/include/securec.h"
+#include "ops/primitive_c.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {

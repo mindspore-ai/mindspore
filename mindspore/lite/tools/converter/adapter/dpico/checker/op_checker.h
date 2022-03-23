@@ -23,9 +23,12 @@
 #include <memory>
 #include <map>
 #include <unordered_map>
+#include "mindapi/base/format.h"
 #include "include/errorcode.h"
-#include "ir/anf.h"
-#include "ops/op_utils.h"
+#include "mindapi/ir/anf.h"
+#include "mindapi/base/logging.h"
+#include "ops/op_name.h"
+
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::STATUS;
@@ -35,7 +38,7 @@ class OpChecker {
  public:
   explicit OpChecker(std::string node_name) : name(std::move(node_name)) {}
   virtual ~OpChecker() = default;
-  virtual bool Check(CNodePtr op, int32_t output_num, mindspore::Format format) = 0;
+  virtual bool Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) = 0;
 
  protected:
   const std::string name;
@@ -44,8 +47,8 @@ class OpChecker {
 STATUS GetWidth(const std::vector<int64_t> &shape, mindspore::Format format, int64_t *width);
 STATUS GetTensorChannel(const std::vector<int64_t> &shape, mindspore::Format format, int64_t *channel);
 STATUS GetVectorChannel(const std::vector<int64_t> &shape, int64_t *channel);
-bool HasOfflineData(const AnfNodePtr &node);
-bool CheckInputW(const CNodePtr &op, size_t index, mindspore::Format format, int limit_w);
+bool HasOfflineData(const api::AnfNodePtr &node);
+bool CheckInputW(const api::CNodePtr &op, size_t index, mindspore::Format format, int limit_w);
 
 class OpCheckerRegistry {
  public:

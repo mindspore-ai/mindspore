@@ -18,22 +18,20 @@
 #define MINDSPORE_CORE_OPS_EXPM1_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExpm1 = "Expm1";
-class Expm1 : public PrimitiveC {
+class MIND_API Expm1 : public BaseOperator {
  public:
-  Expm1() : PrimitiveC(kNameExpm1) { InitIOName({"x"}, {"output"}); }
-  ~Expm1() = default;
-  MS_DECLARE_PARENT(Expm1, PrimitiveC);
+  MIND_API_BASE_MEMBER(Expm1);
+  Expm1() : BaseOperator(kNameExpm1) { InitIOName({"x"}, {"output"}); }
   void Init() {}
 };
-AbstractBasePtr Expm1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr Expm1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimExpm1Ptr = std::shared_ptr<Expm1>;
 }  // namespace ops
 }  // namespace mindspore

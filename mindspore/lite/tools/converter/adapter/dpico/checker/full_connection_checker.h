@@ -26,7 +26,7 @@ class FullConnectionChecker : public OpChecker {
  public:
   FullConnectionChecker() : OpChecker("FullConnection") {}
   ~FullConnectionChecker() override = default;
-  bool Check(CNodePtr op, int32_t output_num, mindspore::Format format) override;
+  bool Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) override;
 };
 }  // namespace dpico
 }  // namespace mindspore

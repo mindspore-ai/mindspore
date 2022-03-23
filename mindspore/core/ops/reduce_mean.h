@@ -20,22 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
+
 #include "ops/reduce.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceMean = "ReduceMean";
 /// \brief Reduces a dimension of a tensor by averaging all elements in the dimension.
 /// Refer to Python API @ref mindspore.ops.ReduceMean for more details.
-class MS_CORE_API ReduceMean : public Reduce {
+class MIND_API ReduceMean : public Reduce {
  public:
+  MIND_API_BASE_MEMBER(ReduceMean);
   /// \brief Constructor.
   ReduceMean() : Reduce(kNameReduceMean) { InitIOName({"input_x", "axis"}, {"y"}); }
-  /// \brief Destructor.
-  ~ReduceMean() = default;
-  MS_DECLARE_PARENT(ReduceMean, Reduce);
 };
 }  // namespace ops
 }  // namespace mindspore

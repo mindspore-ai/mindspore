@@ -22,6 +22,10 @@
 #include <unordered_set>
 #include <algorithm>
 #include <utility>
+#include "ops/cast.h"
+#include "ops/transpose.h"
+#include "ops/return.h"
+#include "ops/depend.h"
 #include "common/format_utils.h"
 #include "common/anf_util.h"
 #include "common/string_util.h"
@@ -39,11 +43,11 @@ namespace mindspore {
 namespace dpico {
 namespace {
 const size_t kMinimumNumbOfSegments = 1;
-bool CheckInputDimSize(const CNodePtr &cnode) {
+bool CheckInputDimSize(const api::CNodePtr &cnode) {
   for (size_t i = 0; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
-    if (!utils::isa<CNodePtr>(input_node) &&
-        (input_node->cast<ParameterPtr>() == nullptr || input_node->cast<ParameterPtr>()->has_default())) {
+    if (!api::utils::isa<api::CNodePtr>(input_node) &&
+        (input_node->cast<api::ParameterPtr>() == nullptr || input_node->cast<api::ParameterPtr>()->has_default())) {
       continue;
     }
     ShapeVector shape_vector;
@@ -58,12 +62,12 @@ bool CheckInputDimSize(const CNodePtr &cnode) {
   return true;
 }
 
-bool CheckOpHasInferred(const CNodePtr &cnode) {
+bool CheckOpHasInferred(const api::CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   if (GetBoolAttr(cnode, kInferDone)) {
     return true;
   }
-  if (!CheckPrimitiveType(cnode, prim::kPrimTranspose)) {
+  if (!CheckPrimitiveType(cnode, api::MakeShared<ops::Transpose>())) {
     return false;
   }
   auto abstract = cnode->abstract();
@@ -75,27 +79,27 @@ bool CheckOpHasInferred(const CNodePtr &cnode) {
   return !shape.empty() && std::all_of(shape.begin(), shape.end(), [](int64_t dim) { return dim > 0; });
 }
 
-STATUS AddDumpKernels(const api::FuncGraphPtr &func_graph, const Subgraph &subgraph, AnfNodePtrList *dump_kernels,
-                      std::map<AnfNodePtr, std::pair<CNodePtr, int>> *param_to_cnode) {
+STATUS AddDumpKernels(const api::FuncGraphPtr &func_graph, const Subgraph &subgraph, api::AnfNodePtrList *dump_kernels,
+                      std::map<api::AnfNodePtr, std::pair<api::CNodePtr, int>> *param_to_cnode) {
   MS_ASSERT(func_graph != nullptr && dump_kernels != nullptr && param_to_cnode != nullptr);
   auto subgraph_inputs = GetSubgraphInputs(subgraph, func_graph);
   MS_CHECK_TRUE_MSG(!subgraph_inputs.empty(), RET_ERROR,
                     "get subgraph inputs failed. subgraph id is " << subgraph.graph_id);
   dump_kernels->insert(dump_kernels->end(), subgraph_inputs.begin(), subgraph_inputs.end());
   bool is_main_graph =
-    func_graph->get_attr(kIsMainGraph) != nullptr && GetValue<bool>(func_graph->get_attr(kIsMainGraph));
+    func_graph->get_attr(kIsMainGraph) != nullptr && api::GetValue<bool>(func_graph->get_attr(kIsMainGraph));
   if (is_main_graph) {
     return RET_OK;
   }
   for (const auto &node : subgraph_inputs) {
-    if (!utils::isa<Parameter>(node)) {
+    if (!api::utils::isa<api::Parameter>(node)) {
       continue;
     }
     if (param_to_cnode->find(node) != param_to_cnode->end()) {
       continue;
     }
     for (const auto &inner_cnode : subgraph.cnodes) {
-      MS_CHECK_TRUE_MSG(utils::isa<CNodePtr>(inner_cnode), RET_ERROR, "inner cnode is nullptr");
+      MS_CHECK_TRUE_MSG(api::utils::isa<api::CNodePtr>(inner_cnode), RET_ERROR, "inner cnode is nullptr");
       auto cnode_inputs = inner_cnode->inputs();
       auto iter = std::find(cnode_inputs.begin(), cnode_inputs.end(), node);
       if (iter == cnode_inputs.end()) {
@@ -112,11 +116,11 @@ STATUS ModifyGraphInputDataType(const Subgraph &subgraph, const api::FuncGraphPt
   for (size_t i = 0; i < subgraph_inputs.size(); i++) {
     auto input = subgraph_inputs.at(i);
     auto input_node_name = input->fullname_with_scope();
-    auto param = input->cast<ParameterPtr>();
+    auto param = input->cast<api::ParameterPtr>();
     if (param != nullptr && !param->has_default()) {  // only for graph input parameter node
       auto param_abstract = param->abstract();
       MS_CHECK_TRUE_MSG(param_abstract != nullptr, RET_ERROR, "param_abstract is nullptr");
-      auto abstractScalar = param_abstract->cast<abstract::AbstractTensorPtr>();
+      auto abstractScalar = param_abstract->cast<api::AbstractTensorPtr>();
       MS_CHECK_TRUE_MSG(abstractScalar != nullptr, RET_ERROR, "abstractScalar is nullptr");
       auto element = abstractScalar->element();
       MS_CHECK_TRUE_MSG(element != nullptr, RET_ERROR, "element is nullptr");
@@ -129,19 +133,19 @@ STATUS ModifyGraphInputDataType(const Subgraph &subgraph, const api::FuncGraphPt
                         "can't find \"" << input_node_name << "\" in om model input infos.");
       switch (correspond_info_iter->type) {
         case mapper::OpDataType::OP_DTYPE_S8:
-          element->set_type(kInt8);
+          element->set_type(api::Type::GetType(kNumberTypeInt8));
           break;
         case mapper::OpDataType::OP_DTYPE_U8:
-          element->set_type(kUInt8);
+          element->set_type(api::Type::GetType(kNumberTypeUInt8));
           break;
         case mapper::OpDataType::OP_DTYPE_S16:
-          element->set_type(kInt16);
+          element->set_type(api::Type::GetType(kNumberTypeInt16));
           break;
         case mapper::OpDataType::OP_DTYPE_U16:
-          element->set_type(kUInt16);
+          element->set_type(api::Type::GetType(kNumberTypeUInt16));
           break;
         case mapper::OpDataType::OP_DTYPE_F32:
-          element->set_type(kFloat32);
+          element->set_type(api::Type::GetType(kNumberTypeFloat32));
           break;
         default:
           MS_LOG(ERROR) << "current op type is unsupported. " << om_model_info->inputInfos.at(i).type;
@@ -156,7 +160,7 @@ void PrintUnsupportedOps(const std::map<std::string, std::vector<std::string>> &
                          size_t unsupported_ops_size, const api::FuncGraphPtr &func_graph) {
   if (!unsupported_ops.empty()) {
     if (func_graph->get_attr(kGraphName) != nullptr) {
-      auto func_graph_name = GetValue<std::string>(func_graph->get_attr(kGraphName));
+      auto func_graph_name = api::GetValue<std::string>(func_graph->get_attr(kGraphName));
       MS_LOG(WARNING) << "func_graph: " << func_graph_name;
     }
     MS_LOG(WARNING) << "there are " << unsupported_ops_size << " unsupported ops in this net.";
@@ -173,22 +177,33 @@ void PrintUnsupportedOps(const std::map<std::string, std::vector<std::string>> &
 #endif
 }  // namespace
 STATUS DpicoPass::InitDpicoConfigInfo() {
+  dpico_config_path_ = "./dpico.cfg";
+  bool use_default_config = true;
   auto config_info = converter::ConverterContext::GetConfigInfo("dpico");
-  MS_CHECK_TRUE_MSG(!config_info.empty(), RET_ERROR, "there is no [dpico] in config file.");
-  MS_CHECK_TRUE_MSG(config_info.find("dpico_config_path") != config_info.end(), RET_ERROR,
-                    "there is no dpico_config_path in [dpico] config section.");
-  dpico_config_path_ = config_info.at("dpico_config_path");
-  MS_CHECK_TRUE_MSG(!dpico_config_path_.empty(), RET_ERROR, "dpico_config_path content is empty in [dpico] section.");
-  if (config_info.find("save_temporary_files") != config_info.end()) {
-    auto save_temp_file_str = config_info.at("save_temporary_files");
-    if (save_temp_file_str == "on") {
-      save_tmp_files_ = true;
-    } else if (save_temp_file_str == "off") {
-      save_tmp_files_ = false;
-    } else {
-      MS_LOG(WARNING) << "invalid [save_temporary_files] value, will consider it as off.";
-      save_tmp_files_ = false;
+  if (!config_info.empty()) {
+    if (config_info.find("dpico_config_path") != config_info.end()) {
+      dpico_config_path_ = config_info.at("dpico_config_path");
+      use_default_config = false;
     }
+    if (config_info.find("save_temporary_files") != config_info.end()) {
+      auto save_temp_file_str = config_info.at("save_temporary_files");
+      if (save_temp_file_str == "on") {
+        save_tmp_files_ = true;
+      } else if (save_temp_file_str == "off") {
+        save_tmp_files_ = false;
+      } else {
+        MS_LOG(WARNING) << "invalid [save_temporary_files] value, will consider it as off.";
+        save_tmp_files_ = false;
+      }
+    }
+  }
+  if (use_default_config) {
+    MS_LOG(WARNING)
+      << R"(there is no "dpico_config_path" in the converter config file, will use the default value: "./dpico.cfg")";
+  }
+  if (AccessFile(dpico_config_path_, F_OK) != 0) {
+    MS_LOG(ERROR) << "File not exist: " << dpico_config_path_;
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -201,9 +216,9 @@ void DpicoPass::FetchFuncGraphs(const api::FuncGraphPtr &func_graph) {
   }
   auto node_list = api::FuncGraph::TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
-    auto inner_fg = api::FuncGraph::GetFuncGraphFromAnfNode(node);
-    if (inner_fg != nullptr) {
-      FetchFuncGraphs(inner_fg);
+    auto fg = api::GetValueNode<api::FuncGraphPtr>(node);
+    if (fg != nullptr) {
+      FetchFuncGraphs(fg);
     }
   }
 }
@@ -212,7 +227,7 @@ STATUS DpicoPass::CheckDynamicInputShape(const api::FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto graph_inputs = func_graph->get_inputs();
   for (const auto &node : graph_inputs) {
-    auto graph_input = node->cast<ParameterPtr>();
+    auto graph_input = node->cast<api::ParameterPtr>();
     MS_CHECK_TRUE_MSG(graph_input != nullptr, RET_ERROR, "graph_input is nullptr.");
     ShapeVector shape_vector;
     if (GetShapeVectorFromParameter(graph_input, &shape_vector) != RET_OK) {
@@ -242,11 +257,11 @@ STATUS DpicoPass::MarkNodes(const api::FuncGraphPtr &func_graph) {
   std::map<std::string, std::vector<std::string>> unsupported_ops;
   size_t unsupported_ops_size = 0;
   for (auto &node : node_list) {
-    auto cnode = node->cast<CNodePtr>();
+    auto cnode = node->cast<api::CNodePtr>();
     if (cnode == nullptr) {
       continue;
     }
-    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    auto primitive = api::GetValueNode<api::PrimitivePtr>(cnode->input(0));
     MS_CHECK_TRUE_MSG(primitive != nullptr, RET_ERROR, "primitive is nullptr:" << cnode->fullname_with_scope());
     std::string op_type_name;
     if (GetPrimitiveType(cnode, &op_type_name) != RET_OK) {
@@ -258,29 +273,29 @@ STATUS DpicoPass::MarkNodes(const api::FuncGraphPtr &func_graph) {
     bool is_supported = false;
     if (IsSpecialType(cnode)) {
       auto cnode_inputs = cnode->inputs();
-      is_supported = CheckPrimitiveType(cnode, prim::kPrimReturn) || CheckPrimitiveType(cnode, prim::kPrimDepend)
+      is_supported = CheckPrimitiveType(cnode, api::MakeShared<ops::Return>()) ||
+                         CheckPrimitiveType(cnode, api::MakeShared<ops::Depend>())
                        ? false
-                       : std::all_of(cnode_inputs.begin(), cnode_inputs.end(), [](const AnfNodePtr &node) {
-                           return !utils::isa<CNode>(node) || GetBoolAttr(node, kIsMapperSupported);
+                       : std::all_of(cnode_inputs.begin(), cnode_inputs.end(), [](const api::AnfNodePtr &node) {
+                           return !api::utils::isa<api::CNode>(node) || GetBoolAttr(node, kIsMapperSupported);
                          });
     } else {
       auto op_checker = OpCheckerRegistry::GetInstance()->GetOpChecker(op_type_name);
       if (op_checker != nullptr) {
-        auto node_map = manager->node_users();
-        auto &node_users = node_map[cnode];
+        auto node_users = manager->GetUsers(cnode);
         is_supported = CheckInputDimSize(cnode) && op_checker->Check(cnode, node_users.size(), mindspore::Format::NCHW);
       }
       is_supported = is_supported && CheckOpHasInferred(cnode);
-      is_supported =
-        is_supported && (CheckPrimitiveType(cnode, prim::kPrimCast)
-                           ? utils::isa<CNode>(cnode->input(1)) && GetBoolAttr(cnode->input(1), kIsMapperSupported)
-                           : true);
+      is_supported = is_supported && (CheckPrimitiveType(cnode, api::MakeShared<ops::Cast>())
+                                        ? api::utils::isa<api::CNode>(cnode->input(1)) &&
+                                            GetBoolAttr(cnode->input(1), kIsMapperSupported)
+                                        : true);
     }
-    if (!is_supported && !CheckPrimitiveType(cnode, prim::kPrimReturn)) {
+    if (!is_supported && !CheckPrimitiveType(cnode, api::MakeShared<ops::Return>())) {
       unsupported_ops[op_type_name].push_back(cnode->fullname_with_scope());
       unsupported_ops_size++;
     }
-    primitive->AddAttr(kIsMapperSupported, MakeValue(is_supported));
+    primitive->AddAttr(kIsMapperSupported, api::MakeValue<bool>(is_supported));
   }
 #ifdef Debug
   PrintUnsupportedOps(unsupported_ops, unsupported_ops_size, func_graph);
@@ -297,7 +312,7 @@ STATUS DpicoPass::ParseMapperConfig(const api::FuncGraphPtr &func_graph) {
   std::vector<std::string> graph_input_names;
   auto inputs = func_graph->get_inputs();
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(graph_input_names),
-                       [](const AnfNodePtr &anode) { return anode->fullname_with_scope(); });
+                       [](const api::AnfNodePtr &anode) { return anode->fullname_with_scope(); });
 
   if (MapperConfigParser::GetInstance()->Parse(dpico_config_path_, graph_input_names) != RET_OK) {
     MS_LOG(ERROR) << "parse mapper config file failed.";
@@ -320,8 +335,8 @@ STATUS DpicoPass::DataPrepare(const api::FuncGraphPtr &func_graph, bool *use_ori
       return RET_ERROR;
     }
 
-    AnfNodePtrList dump_kernels;
-    std::map<AnfNodePtr, std::pair<CNodePtr, int>> param_to_cnode;
+    api::AnfNodePtrList dump_kernels;
+    std::map<api::AnfNodePtr, std::pair<api::CNodePtr, int>> param_to_cnode;
     for (auto &graph : func_graphs_) {
       for (auto &subgraph : graph_split_info_.subgraphs_map[graph]) {
         if (!subgraph.is_supported) {
@@ -333,8 +348,9 @@ STATUS DpicoPass::DataPrepare(const api::FuncGraphPtr &func_graph, bool *use_ori
         }
       }
     }
-    if (param_to_cnode.empty() && std::all_of(dump_kernels.begin(), dump_kernels.end(),
-                                              [](const AnfNodePtr &node) { return utils::isa<Parameter>(node); })) {
+    if (param_to_cnode.empty() &&
+        std::all_of(dump_kernels.begin(), dump_kernels.end(),
+                    [](const api::AnfNodePtr &node) { return api::utils::isa<api::Parameter>(node); })) {
       MS_LOG(DEBUG) << "required tensors are all graph inputs, which do not need to dump data.";
       return RET_OK;
     }
@@ -430,7 +446,7 @@ STATUS DpicoPass::RemoveTemporaryFiles() {
 
 bool DpicoPass::Execute(const api::FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
-  func_graph->set_attr(kIsMainGraph, MakeValue<bool>(true));
+  func_graph->set_attr(kIsMainGraph, api::MakeValue<bool>(true));
   FetchFuncGraphs(func_graph);
   auto status = CheckDynamicInputShape(func_graph);
   if (status == RET_NO_CHANGE) {

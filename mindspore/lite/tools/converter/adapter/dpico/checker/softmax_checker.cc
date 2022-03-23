@@ -48,19 +48,19 @@ bool CheckVectorAndTensorChannel(const std::vector<int64_t> &input_shape, mindsp
   return true;
 }
 }  // namespace
-bool SoftmaxChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool SoftmaxChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   std::vector<int64_t> input_shape;
   if (GetInputShapeFromCNode(op, kInputIndex1, &input_shape) == RET_OK && !input_shape.empty()) {
-    auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+    auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
     MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primitive is nullptr.");
     auto axis_ptr = primitive->GetAttr(ops::kAxis);
     if (axis_ptr != nullptr) {
-      auto axis_data = GetValue<std::vector<int64_t>>(axis_ptr);
+      auto axis_data = api::GetValue<std::vector<int64_t>>(axis_ptr);
       auto axis = axis_data[0];
       if (axis < 0) {
         axis = (axis + input_shape.size()) % input_shape.size();
         std::vector<int64_t> axes = {axis};
-        primitive->set_attr(ops::kAxis, MakeValue(axes));
+        primitive->AddAttr(ops::kAxis, api::MakeValue(axes));
       }
       if (axis != kAxis1 && axis != kAxis2 && axis != kAxis3) {
         MS_LOG(WARNING) << "axis val only supports 1/2/3 by dpico. " << op->fullname_with_scope();

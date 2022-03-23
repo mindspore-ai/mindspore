@@ -21,22 +21,19 @@
 #include <string>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGridSampler3D = "GridSampler3D";
-class GridSampler3D : public PrimitiveC {
+class MIND_API GridSampler3D : public BaseOperator {
  public:
-  GridSampler3D() : PrimitiveC(kNameGridSampler3D) { InitIOName({"input_x", "grid"}, {"output"}); }
-  ~GridSampler3D() = default;
-  MS_DECLARE_PARENT(GridSampler3D, PrimitiveC);
+  MIND_API_BASE_MEMBER(GridSampler3D);
+  GridSampler3D() : BaseOperator(kNameGridSampler3D) { InitIOName({"input_x", "grid"}, {"output"}); }
 };
-AbstractBasePtr GridSampler3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr GridSampler3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimGridSampler3D = std::shared_ptr<GridSampler3D>;
 }  // namespace ops
 }  // namespace mindspore

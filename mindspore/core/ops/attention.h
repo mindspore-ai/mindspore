@@ -19,25 +19,23 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "utils/check_convert_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAttention = "Attention";
 /// \brief MultiHead-Attention op in MindIR.
-class MS_CORE_API Attention : public PrimitiveC {
+class MIND_API Attention : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Attention);
   /// \brief Constructor.
-  Attention() : PrimitiveC(kNameAttention) {
+  Attention() : BaseOperator(kNameAttention) {
     InitIOName(
       {"q", "k", "v", "weight_q", "weight_k", "weight_v", "weight_o", "bias_q", "bias_k", "bias_v", "bias_o", "mask"},
       {"output"});
   }
-  /// \brief Destructor.
-  ~Attention() override = default;
-  MS_DECLARE_PARENT(Attention, PrimitiveC);
   /// \brief Initialize Attention op.
   void Init() const {}
 };

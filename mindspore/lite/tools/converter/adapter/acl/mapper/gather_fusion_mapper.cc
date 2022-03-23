@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/mapper/gather_fusion_mapper.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
 constexpr size_t kNameGatherInputNum = 4;
-}
+}  // namespace
 
 STATUS GatherMapper::Mapper(const CNodePtr &cnode) {
   MS_CHECK_TRUE_MSG(cnode != nullptr, lite::RET_ERROR, "Cnode is nullptr.");

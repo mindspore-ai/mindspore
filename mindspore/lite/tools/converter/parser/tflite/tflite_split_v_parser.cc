@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                        const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_GE(tflite_op->inputs.size(), kInputSize2, nullptr);
   auto prim = std::make_unique<ops::Split>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -70,7 +70,7 @@ ops::PrimitiveC *TfliteSplitVParser::Parse(const std::unique_ptr<tflite::Operato
   }
   prim->set_axis(static_cast<int64_t>(axis));
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteSplitVParser(tflite::BuiltinOperator_SPLIT_V, new TfliteSplitVParser());

@@ -20,27 +20,22 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScale = "Scale";
 /// \brief Scale defined Scale operator prototype of lite.
-class MS_CORE_API Scale : public PrimitiveC {
+class MIND_API Scale : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Scale);
   /// \brief Constructor.
-  Scale() : PrimitiveC(kNameScale) {}
+  Scale() : BaseOperator(kNameScale) {}
 
   /// \brief Constructor.
-  explicit Scale(const std::string k_name) : PrimitiveC(k_name) {}
-
-  /// \brief Destructor.
-  ~Scale() = default;
-
-  MS_DECLARE_PARENT(Scale, PrimitiveC);
+  explicit Scale(const std::string k_name) : BaseOperator(k_name) {}
 
   /// \brief Method to init the op's attributes.
   ///

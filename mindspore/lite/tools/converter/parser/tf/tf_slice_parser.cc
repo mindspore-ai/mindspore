@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFSliceParser::Parse(const tensorflow::NodeDef &tf_op,
-                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                      std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFSliceParser::Parse(const tensorflow::NodeDef &tf_op,
+                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                   std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::SliceFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   // begin
@@ -68,7 +68,7 @@ ops::PrimitiveC *TFSliceParser::Parse(const tensorflow::NodeDef &tf_op,
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 TFNodeRegistrar g_tfSliceParser("Slice", new TFSliceParser());
 }  // namespace lite

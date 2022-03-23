@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/full_quant_quantizer.h"
 #include <dirent.h>
 #include <set>

@@ -19,26 +19,22 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCast = "Cast";
 /// \brief Returns a tensor with the new specified data type.
 /// Refer to Python API @ref mindspore.ops.Cast for more details.
-class MS_CORE_API Cast : public PrimitiveC {
+class MIND_API Cast : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Cast);
   /// \brief Constructor.
-  Cast() : PrimitiveC(kNameCast) { InitIOName({"x", "dst_type"}, {"output"}); }
-  /// \brief Destructor.
-  ~Cast() = default;
-  MS_DECLARE_PARENT(Cast, PrimitiveC);
+  Cast() : BaseOperator(kNameCast) { InitIOName({"x", "dst_type"}, {"output"}); }
 };
-AbstractBasePtr CastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCast = std::shared_ptr<Cast>;
 }  // namespace ops
 }  // namespace mindspore

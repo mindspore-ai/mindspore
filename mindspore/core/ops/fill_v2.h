@@ -21,23 +21,20 @@
 #include <string>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFillV2 = "FillV2";
-class MS_CORE_API FillV2 : public PrimitiveC {
+class MIND_API FillV2 : public BaseOperator {
  public:
-  FillV2() : PrimitiveC(kNameFillV2) { InitIOName({"shape", "value"}, {"y"}); }
-  ~FillV2() = default;
-  MS_DECLARE_PARENT(FillV2, PrimitiveC);
+  MIND_API_BASE_MEMBER(FillV2);
+  FillV2() : BaseOperator(kNameFillV2) { InitIOName({"shape", "value"}, {"y"}); }
 };
 
-AbstractBasePtr FillV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr FillV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimFillV2Ptr = std::shared_ptr<FillV2>;
 }  // namespace ops

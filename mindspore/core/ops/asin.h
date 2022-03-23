@@ -22,30 +22,26 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAsin = "Asin";
 /// \brief Computes arcsine of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.Asin for more details.
-class MS_CORE_API Asin : public PrimitiveC {
+class MIND_API Asin : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Asin);
   /// \brief Constructor.
-  Asin() : PrimitiveC(kNameAsin) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Asin() = default;
-
-  MS_DECLARE_PARENT(Asin, PrimitiveC);
+  Asin() : BaseOperator(kNameAsin) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Asin for the inputs.
   void Init() const {}
 };
 
-AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimAsinPtr = std::shared_ptr<Asin>;
 }  // namespace ops

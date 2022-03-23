@@ -19,25 +19,23 @@
 #include <memory>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSmoothL1LossGrad = "SmoothL1LossGrad";
-class MS_CORE_API SmoothL1LossGrad : public PrimitiveC {
+class MIND_API SmoothL1LossGrad : public BaseOperator {
  public:
-  SmoothL1LossGrad() : PrimitiveC(kNameSmoothL1LossGrad) {}
-  ~SmoothL1LossGrad() = default;
-  MS_DECLARE_PARENT(SmoothL1LossGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(SmoothL1LossGrad);
+  SmoothL1LossGrad() : BaseOperator(kNameSmoothL1LossGrad) {}
   void Init();
   void Init(const float beta);
   void set_beta(const float beta);
   float get_beta() const;
 };
-AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSmoothL1LossGradPtr = std::shared_ptr<SmoothL1LossGrad>;
 }  // namespace ops
 }  // namespace mindspore

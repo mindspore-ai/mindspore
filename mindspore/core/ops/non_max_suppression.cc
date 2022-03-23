@@ -17,11 +17,16 @@
 #include <set>
 
 #include "ops/non_max_suppression.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(NonMaxSuppression, PrimitiveC, BaseOperator);
 void NonMaxSuppression::set_center_point_box(const int64_t center_point_box) {
-  (void)AddAttr(kCenterPointBox, MakeValue(center_point_box));
+  (void)AddAttr(kCenterPointBox, api::MakeValue(center_point_box));
 }
 int64_t NonMaxSuppression::get_center_point_box() const {
   auto value_ptr = this->GetAttr(kCenterPointBox);

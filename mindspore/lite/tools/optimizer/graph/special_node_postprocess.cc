@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/special_node_postprocess.h"
 #include <memory>
 #include <utility>
@@ -21,6 +22,7 @@
 #include "include/errorcode.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl//op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {

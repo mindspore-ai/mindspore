@@ -20,20 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API StridedSliceGrad : public PrimitiveC {
+class MIND_API StridedSliceGrad : public BaseOperator {
  public:
-  StridedSliceGrad() : PrimitiveC(prim::kPrimStridedSliceGrad->name()) {
+  MIND_API_BASE_MEMBER(StridedSliceGrad);
+  StridedSliceGrad() : BaseOperator("StridedSliceGrad") {
     InitIOName({"dy", "shapex", "begin", "end", "strides"}, {"output"});
   }
 
-  ~StridedSliceGrad() = default;
-  MS_DECLARE_PARENT(StridedSliceGrad, PrimitiveC);
   void Init(int64_t begin_mask = 0, int64_t end_mask = 0, int64_t ellipsis_mask = 0, int64_t new_axis_mask = 0,
             int64_t shrink_axis_mask = 0);
   void set_begin_mask(int64_t begin_mask);
@@ -48,8 +46,8 @@ class MS_CORE_API StridedSliceGrad : public PrimitiveC {
   int64_t get_shrink_axis_mask() const;
 };
 
-AbstractBasePtr StridedSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr StridedSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimStridedSliceGradPtr = std::shared_ptr<StridedSliceGrad>;
 }  // namespace ops
 }  // namespace mindspore

@@ -36,17 +36,16 @@ STATUS CaffeInspector::InspectModel(const caffe::NetParameter &proto) {
   return RET_OK;
 }
 
-STATUS CaffeInspector::ParseInput() {
+void CaffeInspector::ParseInput() {
   if (net.input_size() > 0) {
     MS_LOG(INFO) << "This net exist input.";
     for (int i = 0; i < net.input_size(); i++) {
       graphInput.insert(net.input(i));
     }
   }
-  return RET_OK;
 }
 
-STATUS CaffeInspector::FindGraphInputsAndOutputs() {
+void CaffeInspector::FindGraphInputsAndOutputs() {
   for (const auto &iter : layerBottoms) {
     if (layerTops.find(iter) == layerTops.end()) {
       graphInput.insert(iter);
@@ -66,10 +65,9 @@ STATUS CaffeInspector::FindGraphInputsAndOutputs() {
       graphOutput.insert(iter);
     }
   }
-  return RET_OK;
 }
 
-STATUS CaffeInspector::SetLayerTopsAndBottoms() {
+void CaffeInspector::SetLayerTopsAndBottoms() {
   for (int32_t i = 0; i < net.layer_size(); i++) {
     auto &layer = const_cast<caffe::LayerParameter &>(net.layer(i));
     if (layer.top_size() == 1 && layer.bottom_size() == 1 && layer.top(0) == layer.bottom(0)) {
@@ -85,7 +83,6 @@ STATUS CaffeInspector::SetLayerTopsAndBottoms() {
       layerBottoms.insert(layer.bottom(j));
     }
   }
-  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

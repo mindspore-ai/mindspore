@@ -20,6 +20,7 @@
 
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -79,14 +80,18 @@ abstract::TupleShapePtr AdamInferShape(const PrimitivePtr &primitive, const std:
     std::vector<abstract::BaseShapePtr>{var_shape_ptr, m_shape_ptr, v_shape_ptr});
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Adam, PrimitiveC, BaseOperator);
 void Adam::Init(const bool use_locking, const bool use_nesterov) {
   this->set_use_locking(use_locking);
   this->set_use_nesterov(use_nesterov);
 }
 
-void Adam::set_use_locking(const bool use_locking) { (void)this->AddAttr(kUseLocking, MakeValue(use_locking)); }
+void Adam::set_use_locking(const bool use_locking) { (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking)); }
 
-void Adam::set_use_nesterov(const bool use_nesterov) { (void)this->AddAttr(kUseNesterov, MakeValue(use_nesterov)); }
+void Adam::set_use_nesterov(const bool use_nesterov) {
+  (void)this->AddAttr(kUseNesterov, api::MakeValue(use_nesterov));
+}
 
 bool Adam::get_use_locking() const {
   auto value_ptr = GetAttr(kUseLocking);

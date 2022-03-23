@@ -20,23 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAudioSpectrogram = "AudioSpectrogram";
 /// \brief AudioSpectrogram defined AudioSpectrogram operator prototype.
-class MS_CORE_API AudioSpectrogram : public PrimitiveC {
+class MIND_API AudioSpectrogram : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(AudioSpectrogram);
   /// \brief Constructor.
-  AudioSpectrogram() : PrimitiveC(kNameAudioSpectrogram) {}
-
-  /// \brief Destructor.
-  ~AudioSpectrogram() = default;
-
-  MS_DECLARE_PARENT(AudioSpectrogram, PrimitiveC);
+  AudioSpectrogram() : BaseOperator(kNameAudioSpectrogram) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -75,8 +70,8 @@ class MS_CORE_API AudioSpectrogram : public PrimitiveC {
   /// \return a boolean value.
   bool get_mag_square() const;
 };
-AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

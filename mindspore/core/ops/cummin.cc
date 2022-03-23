@@ -19,6 +19,7 @@
 #include "abstract/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
 #include "ops/cummin.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -50,6 +51,7 @@ TuplePtr CumminInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(Cummin, PrimitiveC, BaseOperator);
 AbstractBasePtr CumminInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();

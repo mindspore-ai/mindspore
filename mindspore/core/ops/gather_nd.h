@@ -18,26 +18,23 @@
 #define MINDSPORE_CORE_OPS_GATHER_ND_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGatherNd = "GatherNd";
 /// \brief Gathers slices from a tensor by indices. Refer to Python API @ref mindspore.ops.GatherNd for more details.
-class MS_CORE_API GatherNd : public PrimitiveC {
+class MIND_API GatherNd : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(GatherNd);
   /// \brief Constructor.
-  GatherNd() : PrimitiveC(kNameGatherNd) { InitIOName({"x1", "x2"}, {"y"}); }
-  /// \brief Destructor.
-  ~GatherNd() = default;
-  MS_DECLARE_PARENT(GatherNd, PrimitiveC);
+  GatherNd() : BaseOperator(kNameGatherNd) { InitIOName({"x1", "x2"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GatherNd for the inputs.
   void Init() const {}
 };
-AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimGatherNdPtr = std::shared_ptr<GatherNd>;
 }  // namespace ops
 }  // namespace mindspore

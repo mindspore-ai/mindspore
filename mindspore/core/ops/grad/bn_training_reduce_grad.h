@@ -20,30 +20,28 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBNTrainingReduceGrad = "BNTrainingReduceGrad";
-class BNTrainingReduceGrad : public PrimitiveC {
+class MIND_API BNTrainingReduceGrad : public BaseOperator {
  public:
-  BNTrainingReduceGrad() : PrimitiveC(kNameBNTrainingReduceGrad) {
+  MIND_API_BASE_MEMBER(BNTrainingReduceGrad);
+  BNTrainingReduceGrad() : BaseOperator(kNameBNTrainingReduceGrad) {
     InitIOName({"grads", "x", "diff_scale", "diff_offset", "scale", "batch_mean", "batch_variance"}, {"y"});
   }
-  explicit BNTrainingReduceGrad(const std::string k_name) : PrimitiveC(k_name) {
+  explicit BNTrainingReduceGrad(const std::string k_name) : BaseOperator(k_name) {
     InitIOName({"grads", "x", "diff_scale", "diff_offset", "scale", "batch_mean", "batch_variance"}, {"y"});
   }
-  ~BNTrainingReduceGrad() = default;
-  MS_DECLARE_PARENT(BNTrainingReduceGrad, PrimitiveC);
   void Init(const float epsilon = 0.0001);
   void set_epsilon(const float epsilon);
   float get_epsilon() const;
 };
 
-AbstractBasePtr BNTrainingReduceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BNTrainingReduceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

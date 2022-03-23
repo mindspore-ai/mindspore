@@ -26,20 +26,20 @@ constexpr int local_size_3 = 3;
 constexpr int local_size_5 = 5;
 constexpr int local_size_7 = 7;
 }  // namespace
-bool LRNChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool LRNChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, 1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
 
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   auto r_ptr = primitive->GetAttr(ops::kDepthRadius);
   if (r_ptr != nullptr) {
-    auto r_data = GetValue<int64_t>(r_ptr) * 2 + 1;
+    auto r_data = api::GetValue<int64_t>(r_ptr) * 2 + 1;
     if (r_data != local_size_3 && r_data != local_size_5 && r_data != local_size_7) {
       MS_LOG(WARNING) << "local size only supports 3/5/7 " << op->fullname_with_scope();
       return false;
@@ -47,7 +47,7 @@ bool LRNChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format
   }
   auto norm_region_ptr = primitive->GetAttr(ops::kNormRegion);
   if (norm_region_ptr != nullptr) {
-    auto norm_region_data = GetValue<std::string>(norm_region_ptr);
+    auto norm_region_data = api::GetValue<std::string>(norm_region_ptr);
     if (norm_region_data != "ACROSS_CHANNEL") {
       MS_LOG(WARNING) << "norm region only supports ACROSS_CHANNEL " << op->fullname_with_scope();
       return false;

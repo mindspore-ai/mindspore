@@ -21,22 +21,22 @@
 #include <vector>
 #include <set>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftMarginLossGrad = "SoftMarginLossGrad";
-class MS_CORE_API SoftMarginLossGrad : public PrimitiveC {
+class MIND_API SoftMarginLossGrad : public BaseOperator {
  public:
-  SoftMarginLossGrad() : PrimitiveC(kNameSoftMarginLossGrad) { InitIOName({"predict", "label", "dout"}, {"gradient"}); }
-  ~SoftMarginLossGrad() = default;
-  MS_DECLARE_PARENT(SoftMarginLossGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(SoftMarginLossGrad);
+  SoftMarginLossGrad() : BaseOperator(kNameSoftMarginLossGrad) {
+    InitIOName({"predict", "label", "dout"}, {"gradient"});
+  }
 };
 
-AbstractBasePtr SoftMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SoftMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SOFT_MARGIN_LOSS_GRAD_H_

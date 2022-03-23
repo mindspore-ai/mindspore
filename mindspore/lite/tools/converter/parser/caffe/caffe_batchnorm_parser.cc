@@ -26,14 +26,15 @@
 namespace mindspore {
 namespace lite {
 using STATUS = int;
-ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::BatchNorm>();
-
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   prim->set_is_training(false);
   auto value_ptr = MakeValue<int64_t>(mindspore::Format::NCHW);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
+  prim_c->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
 
   const caffe::BatchNormParameter &batchNormParam = proto.batch_norm_param();
   if (proto.bottom_size() != 1) {
@@ -53,10 +54,10 @@ ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
   }
   prim->set_epsilon(epsilon);
 
-  prim->AddAttr(ops::kUseGlobalStats, MakeValue(true));
+  prim_c->AddAttr(ops::kUseGlobalStats, MakeValue(true));
   int fmk_type = converter::FmkType::kFmkTypeCaffe;
-  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
-  return prim.release();
+  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeBatchNormParser("BatchNorm", new CaffeBatchNormParser());

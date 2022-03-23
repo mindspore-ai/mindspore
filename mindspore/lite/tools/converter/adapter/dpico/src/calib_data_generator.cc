@@ -20,6 +20,7 @@
 #include <set>
 #include <string>
 #include <numeric>
+#include "ops/tuple_get_item.h"
 #include "common/anf_util.h"
 #include "common/string_util.h"
 #include "common/file_util.h"
@@ -59,7 +60,7 @@ int CalibDataGenerator::GenerateDumpConfig(const std::string &dump_cfg_path,
   return RET_OK;
 }
 
-std::string CalibDataGenerator::GetInputShapesStr(const AnfNodePtrList &graph_inputs) {
+std::string CalibDataGenerator::GetInputShapesStr(const api::AnfNodePtrList &graph_inputs) {
   std::string input_shapes_str;
   for (const auto &input : graph_inputs) {
     ShapeVector shape_vector;
@@ -99,7 +100,7 @@ std::string CalibDataGenerator::GetInputShapesStr(const AnfNodePtrList &graph_in
   return input_shapes_str;
 }
 
-std::vector<std::string> CalibDataGenerator::GetInDataFileList(const AnfNodePtrList &graph_inputs) {
+std::vector<std::string> CalibDataGenerator::GetInDataFileList(const api::AnfNodePtrList &graph_inputs) {
   auto preprocessed_data_dir = DataPreprocessor::GetInstance()->GetPreprocessedDataDir();
   if (preprocessed_data_dir.empty()) {
     MS_LOG(ERROR) << "preprocessed_data_dir is empty.";
@@ -136,18 +137,21 @@ int CalibDataGenerator::DumpKernelsData(const std::string &dump_cfg_path,
     MS_LOG(ERROR) << "set env for dump config failed.";
     return RET_ERROR;
   }
+  std::string benchmark_path = "../../benchmark/benchmark";
+  bool use_default_benchmark = true;
   auto config_info = converter::ConverterContext::GetConfigInfo("dpico");
-  if (config_info.empty()) {
-    MS_LOG(ERROR) << "there is no [dpico] in config file.";
-    return RET_ERROR;
+  if (!config_info.empty()) {
+    if (config_info.find("benchmark_path") != config_info.end()) {
+      benchmark_path = config_info.at("benchmark_path");
+      use_default_benchmark = false;
+    }
   }
-  if (config_info.find("benchmark_path") == config_info.end()) {
-    MS_LOG(ERROR) << "there is no benchmark_path in [dpico] config section.";
-    return RET_ERROR;
+  if (use_default_benchmark) {
+    MS_LOG(WARNING) << R"(there is no "benchmark_path" in the converter config file,
+                          will use the default value: "../../benchmark/benchmark")";
   }
-  auto benchmark_path = config_info.at("benchmark_path");
-  if (benchmark_path.empty()) {
-    MS_LOG(ERROR) << "benchmark_path content is empty in [dpico] section.";
+  if (AccessFile(benchmark_path, F_OK) != 0) {
+    MS_LOG(ERROR) << "File not exist: " << benchmark_path;
     return RET_ERROR;
   }
   std::string current_path;
@@ -294,14 +298,14 @@ int CalibDataGenerator::TransBinsToTxt(const std::vector<DumpOpInfo> &dump_op_in
   return RET_OK;
 }
 
-int CalibDataGenerator::Run(const AnfNodePtrList &graph_inputs, const AnfNodePtrList &nodes) {
+int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::AnfNodePtrList &nodes) {
   if (graph_inputs.empty()) {
     MS_LOG(ERROR) << "graph inputs shouldn't be empty.";
     return RET_ERROR;
   }
   auto image_lists = MapperConfigParser::GetInstance()->GetImageLists();
   std::vector<DumpOpInfo> dump_op_infos;
-  std::set<AnfNodePtr> has_visited;
+  std::set<api::AnfNodePtr> has_visited;
   for (const auto &node : nodes) {
     if (has_visited.find(node) != has_visited.end()) {
       continue;
@@ -313,8 +317,8 @@ int CalibDataGenerator::Run(const AnfNodePtrList &graph_inputs, const AnfNodePtr
       dump_op_info.input_index = control_flow_inputs_[node].second;
     } else {
       dump_op_info.output_index = 0;
-      if (CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
-        auto tuple_get_item_cnode = node->cast<CNodePtr>();
+      if (CheckPrimitiveType(node, api::MakeShared<ops::TupleGetItem>())) {
+        auto tuple_get_item_cnode = node->cast<api::CNodePtr>();
         if (tuple_get_item_cnode == nullptr || tuple_get_item_cnode->inputs().size() < kInputIndex2) {
           MS_LOG(ERROR) << "tuple_get_item_node is invalid. " << node->fullname_with_scope();
           return RET_ERROR;

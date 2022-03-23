@@ -20,21 +20,19 @@
 #include <map>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLstsq = "Lstsq";
-class Lstsq : public PrimitiveC {
+class MIND_API Lstsq : public BaseOperator {
  public:
-  Lstsq() : PrimitiveC(kNameLstsq) { InitIOName({"matrix", "rhs"}, {"y"}); }
-  ~Lstsq() = default;
-  MS_DECLARE_PARENT(Lstsq, PrimitiveC);
+  MIND_API_BASE_MEMBER(Lstsq);
+  Lstsq() : BaseOperator(kNameLstsq) { InitIOName({"matrix", "rhs"}, {"y"}); }
 };
-AbstractBasePtr LstsqInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LstsqInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLstsqPtr = std::shared_ptr<Lstsq>;
 }  // namespace ops
 }  // namespace mindspore

@@ -19,22 +19,24 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(CumSum, PrimitiveC, BaseOperator);
 void CumSum::Init(const bool exclusive, const bool reverse) {
   this->set_exclusive(exclusive);
   this->set_reverse(reverse);
 }
 
-void CumSum::set_exclusive(const bool exclusive) { (void)this->AddAttr(kExclusive, MakeValue(exclusive)); }
+void CumSum::set_exclusive(const bool exclusive) { (void)this->AddAttr(kExclusive, api::MakeValue(exclusive)); }
 
 bool CumSum::get_exclusive() const {
   auto value_ptr = this->GetAttr(kExclusive);
   return GetValue<bool>(value_ptr);
 }
 
-void CumSum::set_reverse(const bool reverse) { (void)this->AddAttr(kReverse, MakeValue(reverse)); }
+void CumSum::set_reverse(const bool reverse) { (void)this->AddAttr(kReverse, api::MakeValue(reverse)); }
 
 bool CumSum::get_reverse() const {
   auto value_ptr = this->GetAttr(kReverse);

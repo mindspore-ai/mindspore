@@ -20,26 +20,22 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduce = "Reduce";
 /// \brief Reduce defined Reduce operator prototype of lite.
-class MS_CORE_API Reduce : public PrimitiveC {
+class MIND_API Reduce : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Reduce);
   /// \brief Constructor.
-  Reduce() : PrimitiveC(kNameReduce) { InitIOName({"input_x", "axis"}, {"y"}); }
+  Reduce() : BaseOperator(kNameReduce) { InitIOName({"input_x", "axis"}, {"y"}); }
 
   /// \brief Constructor.
-  explicit Reduce(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"input_x", "axis"}, {"y"}); }
-
-  /// \brief Destructor.
-  ~Reduce() = default;
-
-  MS_DECLARE_PARENT(Reduce, PrimitiveC);
+  explicit Reduce(const std::string k_name) : BaseOperator(k_name) { InitIOName({"input_x", "axis"}, {"y"}); }
 
   /// \brief Method to init the op's attributes.
   ///
@@ -56,8 +52,8 @@ class MS_CORE_API Reduce : public PrimitiveC {
   /// \return keep_dims attribute.
   bool get_keep_dims() const;
 };
-AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

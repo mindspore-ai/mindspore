@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFTileParser::Parse(const tensorflow::NodeDef &tf_op,
-                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                     std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFTileParser::Parse(const tensorflow::NodeDef &tf_op,
+                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                  std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::TileFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
@@ -48,7 +48,7 @@ ops::PrimitiveC *TFTileParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "add op input failed";
     return nullptr;
   }
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfTileParser("Tile", new TFTileParser());

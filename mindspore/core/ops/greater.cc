@@ -20,6 +20,8 @@
 #include "ops/greater.h"
 #include "ops/op_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -41,12 +43,14 @@ TypePtr GreaterInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   return std::make_shared<TensorType>(kBool);
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Greater, PrimitiveC, BaseOperator);
 AbstractBasePtr GreaterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = GreaterInferType(primitive, input_args);
   auto infer_shape = GreaterInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameGreater, Greater);
+REGISTER_PRIMITIVE_EVAL_IMPL(Greater, prim::kPrimGreater, GreaterInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "api/ir/func_graph.h"
+#include "mindapi/ir/func_graph.h"
 #include "ops/custom.h"
 #include "src/graph_split_info.h"
 #include "./op_enum_public.h"
@@ -36,21 +36,23 @@ class CustomOpCreator {
       : custom_id_(custom_id), has_unsupported_(has_unsupported) {}
   int GetCustomId() { return custom_id_; }
   ~CustomOpCreator() = default;
-  CNodePtr CreateCustomOp(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
-                          const ModelCoreInfoPtr &om_model_info);
+  api::CNodePtr CreateCustomOp(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
+                               const ModelCoreInfoPtr &om_model_info);
 
  private:
-  ParameterPtr CreateOmParameter(const api::FuncGraphPtr &func_graph, const ModelCoreInfoPtr &om_model_info);
+  api::ParameterPtr CreateOmParameter(const api::FuncGraphPtr &func_graph, const ModelCoreInfoPtr &om_model_info);
   STATUS SetSubgraphInputOutputDims(Subgraph *subgraph, const api::FuncGraphPtr &func_graph,
                                     const ModelCoreInfoPtr &om_model_info);
   STATUS SetCustomAttrs(const Subgraph &subgraph, const api::FuncGraphPtr &func_graph,
-                        const std::shared_ptr<ops::Custom> &prim);
-  STATUS SetCustomOutputs(const api::FuncGraphPtr &func_graph, Subgraph *subgraph, const CNodePtr &custom_cnode,
+                        const api::SharedPtr<ops::Custom> &prim);
+  STATUS SetCustomOutputs(const api::FuncGraphPtr &func_graph, Subgraph *subgraph, const api::CNodePtr &custom_cnode,
                           const ModelCoreInfoPtr &om_model_info);
-  STATUS SetCustomSingleOutput(const api::FuncGraphPtr &func_graph, Subgraph *subgraph, const CNodePtr &custom_cnode,
-                               const ModelCoreInfoPtr &om_model_info, std::vector<std::string> *output_names);
-  STATUS SetCustomMultiOutput(const api::FuncGraphPtr &func_graph, Subgraph *subgraph, const CNodePtr &custom_cnode,
-                              const ModelCoreInfoPtr &om_model_info, std::vector<std::string> *output_names);
+  STATUS SetCustomSingleOutput(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
+                               const api::CNodePtr &custom_cnode, const ModelCoreInfoPtr &om_model_info,
+                               std::vector<std::string> *output_names);
+  STATUS SetCustomMultiOutput(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
+                              const api::CNodePtr &custom_cnode, const ModelCoreInfoPtr &om_model_info,
+                              std::vector<std::string> *output_names);
   int custom_id_;
   bool has_unsupported_;
 };

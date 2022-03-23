@@ -22,29 +22,24 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAsinh = "Asinh";
 /// \brief Computes arcsinh of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.Asinh for more details.
-class MS_CORE_API Asinh : public PrimitiveC {
+class MIND_API Asinh : public BaseOperator {
  public:
-  /// \brief Constructor.
-  Asinh() : PrimitiveC(kNameAsinh) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Asinh() = default;
-
-  MS_DECLARE_PARENT(Asinh, PrimitiveC);
+  MIND_API_BASE_MEMBER(Asinh);
+  Asinh() : BaseOperator(kNameAsinh) { InitIOName({"x"}, {"y"}); }
   void Init() {}
 };
 
-AbstractBasePtr AsinhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AsinhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimAsinhPtr = std::shared_ptr<Asinh>;
 }  // namespace ops

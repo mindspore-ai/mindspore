@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxSpliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxSpliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx Splice Parser";
   auto primitive = std::make_unique<ops::Splice>();
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
@@ -52,7 +52,7 @@ ops::PrimitiveC *OnnxSpliceParser::Parse(const onnx::GraphProto &onnx_graph, con
     }
   }
   primitive->Init(context, forward_indexes, output_dim);
-  return primitive.release();
+  return primitive->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxSpliceParser("Splice", new OnnxSpliceParser());

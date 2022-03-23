@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/const_fold/fold_with_infershape.h"
 #include <memory>
 #include <set>
