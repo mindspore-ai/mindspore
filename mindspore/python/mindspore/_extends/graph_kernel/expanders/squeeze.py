@@ -32,10 +32,10 @@ class Squeeze(Expander):
         """infer shape for squeeze"""
         def squeeze_axis(shape, axis):
             if not axis:
-                out_shape = [d for d in shape if d != 1]
+                out_shape = list(d for d in shape if d != 1)
             else:
                 ndim = len(shape)
-                out_shape = [shape[i] for i in range(ndim) if not (i in axis or (i - ndim) in axis)]
+                out_shape = list(shape[i] for i in range(ndim) if not (i in axis or (i - ndim) in axis))
             if not out_shape:
                 out_shape = [1]
             return out_shape

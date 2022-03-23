@@ -98,7 +98,7 @@ class AkgProcess:
             process_num = 1
         max_proc_num = 16
         self.process_num = min([cpu_count(), max_proc_num, process_num])
-        self.args = [[] for _ in range(self.process_num)]
+        self.args = list([] for _ in range(self.process_num))
         self.wait_time = wait_time
         self.platform = platform
         self.argc = 0
@@ -111,7 +111,7 @@ class AkgProcess:
         """
         if self.argc == 0:
             raise ValueError("json must be not null")
-        args = [(arg, attrs) for arg in self.args]
+        args = list((arg, attrs) for arg in self.args)
         if self.platform == "ASCEND":
             with Pool(processes=self.process_num) as pool:
                 res = pool.starmap_async(_compile_akg_task_ascend, args)
