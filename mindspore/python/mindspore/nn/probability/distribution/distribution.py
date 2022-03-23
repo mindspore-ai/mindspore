@@ -218,7 +218,7 @@ class Distribution(Cell):
         """
         Check if the parameters used during initialization are scalars.
         """
-        param_dict = self.parameters['param_dict']
+        param_dict = self.parameters.get('param_dict')
         for value in param_dict.values():
             if value is None:
                 continue
