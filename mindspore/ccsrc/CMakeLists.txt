@@ -423,7 +423,7 @@ if(ENABLE_D)
     find_library(GE_RUNNER ge_runner ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(GRAPH graph ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(HCCL hccl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    target_link_libraries(mindspore PUBLIC ${GE_RUNNER} ${GRAPH} ${HCCL})
+    target_link_libraries(mindspore_backend PUBLIC ${GE_RUNNER} ${GRAPH} ${HCCL})
 endif()
 
 if(MODE_ASCEND_ALL)
