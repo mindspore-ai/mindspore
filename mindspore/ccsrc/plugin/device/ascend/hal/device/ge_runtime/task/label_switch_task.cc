@@ -41,7 +41,10 @@ LabelSwitchTask::LabelSwitchTask(const ModelContext &model_context,
   MS_EXCEPTION_IF_NULL(label_info_);
 }
 
-LabelSwitchTask::~LabelSwitchTask() {}
+LabelSwitchTask::~LabelSwitchTask() {
+  stream_ = nullptr;
+  rt_model_handle_ = nullptr;
+}
 
 void LabelSwitchTask::Distribute() {
   MS_LOG(INFO) << "LabelSwitchTask Distribute start.";
