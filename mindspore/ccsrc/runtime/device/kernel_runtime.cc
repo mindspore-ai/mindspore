@@ -725,6 +725,9 @@ void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph &graph) {
 }
 
 void KernelRuntime::AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node) {
+  if (!reuse_communication_address_.empty()) {
+    type = kDynamicMem;
+  }
   AssignCommunicationNodeInputMem(type, node);
   AssignCommunicationNodeOutputMem(type, node);
   AssignWorkSpaceMem(type, node);
@@ -770,6 +773,18 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
   }
 
   uint8_t *output_ptr = nullptr;
+  int64_t valid_reuse_index = -1;
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::HasNodeAttr(kAttrReuseCommunication, cnode)) {
+    auto reuse_index = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrReuseCommunication);
+    auto it = reuse_communication_address_.find(reuse_index);
+    if (it != reuse_communication_address_.end()) {
+      valid_reuse_index = reuse_index;
+      output_ptr = it->second.second;
+    }
+  }
+
   for (size_t j = 0; j < align_size_list.size(); ++j) {
     std::string output_format = AnfAlgo::GetOutputFormat(node, j);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, j);
@@ -778,6 +793,10 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
     if (output_ptr == nullptr) {
       output_ptr = mem_manager_->MallocOutputMem(node, 0, type, total_size, address, true);
       MS_EXCEPTION_IF_NULL(output_ptr);
+      if (valid_reuse_index != -1) {
+        auto &it = reuse_communication_address_[valid_reuse_index];
+        it.second = output_ptr;
+      }
     } else {
       address->set_ptr(output_ptr);
     }
@@ -848,10 +867,29 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
     MS_LOG(ERROR) << "No inputs for " << cnode->fullname_with_scope();
     return;
   }
-  auto first_input_node = cnode->input(1);
-  auto prenode_index = common::AnfAlgo::VisitKernelWithReturnType(first_input_node, 0, true);
-  uint8_t *input_ptr = mem_manager_->MallocOutputMem(prenode_index.first, prenode_index.second, type, total_size,
-                                                     addr_size[0].first, true);
+
+  int64_t valid_reuse_index = -1;
+  uint8_t *input_ptr = nullptr;
+  if (common::AnfAlgo::HasNodeAttr(kAttrReuseCommunication, cnode)) {
+    auto reuse_index = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrReuseCommunication);
+    auto it = reuse_communication_address_.find(reuse_index);
+    if (it != reuse_communication_address_.end()) {
+      valid_reuse_index = reuse_index;
+      input_ptr = it->second.first;
+    }
+  }
+
+  if (input_ptr == nullptr) {
+    auto first_input_node = cnode->input(1);
+    auto prenode_index = common::AnfAlgo::VisitKernelWithReturnType(first_input_node, 0, true);
+    input_ptr = mem_manager_->MallocOutputMem(prenode_index.first, prenode_index.second, type, total_size,
+                                              addr_size[0].first, true);
+    if (valid_reuse_index != -1) {
+      auto &it = reuse_communication_address_[valid_reuse_index];
+      it.first = input_ptr;
+    }
+  }
+
   for (const auto &iter : addr_size) {
     MS_EXCEPTION_IF_NULL(iter.first);
     iter.first->set_ptr(input_ptr);

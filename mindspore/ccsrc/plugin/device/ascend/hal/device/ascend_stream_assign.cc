@@ -383,6 +383,15 @@ void AscendStreamAssign::CheckScenario(const NotNull<KernelGraphPtr> &graph_ptr,
     return;
   }
 
+  // if boost scene, disable reorder allreduce.
+  for (const auto hcom_node : hcom_nodes) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrReuseCommunication, hcom_node)) {
+      MS_LOG(INFO) << "Current graph has reuse hccl, no optimization needed!";
+      last_grad_and_status->clear();
+      return;
+    }
+  }
+
   auto overflow_marker_pos = find(cnode_ptr_list.begin(), cnode_ptr_list.end(), overflow_marker);
   auto last_hcom_ptr = hcom_nodes[hcom_nodes.size() - 1];
   auto last_hcom_pos = find(cnode_ptr_list.begin(), cnode_ptr_list.end(), last_hcom_ptr);

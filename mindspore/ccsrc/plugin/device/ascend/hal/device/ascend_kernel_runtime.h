@@ -80,6 +80,7 @@ class AscendKernelRuntime : public KernelRuntime {
   // add for MindRT
   void ReleaseDeviceRes() override;
   uint64_t GetMsUsedHbmSize() const;
+  void SetReuseCommunicationAddress(const session::KernelGraph &graph);
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,

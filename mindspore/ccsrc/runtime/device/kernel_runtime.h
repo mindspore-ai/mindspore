@@ -221,6 +221,7 @@ class KernelRuntime {
   std::map<uint32_t, std::pair<std::map<AnfNodePtr, std::vector<std::function<void()>>>,
                                std::map<AnfNodePtr, std::vector<std::function<void()>>>>>
     graph_kernel_events_map_;
+  mindspore::HashMap<int64_t, std::pair<uint8_t *, uint8_t *>> reuse_communication_address_;
   MemSchedulerManager mem_scheduler_manager_;
 };
 using KernelRuntimePtr = std::shared_ptr<KernelRuntime>;
