@@ -24,6 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kNcdhwShapeSize = 5;
+}  // namespace
+
 bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
   size_t real_input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < real_input_num; i++) {
@@ -71,7 +75,7 @@ std::vector<int64_t> HostCheck::GetFinalInferShape(const AnfNodePtr &node, const
     MS_LOG(DEBUG) << "Get Device Shape using a shape size is less than 4 ,should be Padding shape by Default firstly";
     temp_shape = trans::PaddingShapeTo4dDefault(infer_shape);
   }
-  if (infer_shape.size() != trans::kNcdhw && k3DFormatSet.find(format) != k3DFormatSet.end()) {
+  if (infer_shape.size() != kNcdhwShapeSize && k3DFormatSet.find(format) != k3DFormatSet.end()) {
     temp_shape = trans::PaddingShapeTo5dDefault(infer_shape);
   }
   return temp_shape;
