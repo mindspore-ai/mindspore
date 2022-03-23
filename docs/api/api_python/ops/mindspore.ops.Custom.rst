@@ -7,7 +7,8 @@ mindspore.ops.Custom
     根据输入函数的不用，你可以创建多个自定义算子，并且把它们用在神经网络中。
     关于自定义算子的详细说明和介绍，包括参数的正确书写，见编程指南 https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_operator_custom.html 。
 
-    .. warning::这是一个实验性接口，后续可能删除或修改。
+    .. warning::
+        这是一个实验性接口，后续可能删除或修改。
 
     .. note::
 
