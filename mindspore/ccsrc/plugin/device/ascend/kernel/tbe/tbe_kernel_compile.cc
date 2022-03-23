@@ -214,33 +214,6 @@ std::string GetParaDebugPath() {
   return save_path;
 }
 
-std::string GetTbePath() {
-  auto tbe_path = common::GetEnv(kTBE_IMPL_PATH);
-  char real_path[PATH_MAX] = {0};
-  if (!tbe_path.empty()) {
-    if (realpath(tbe_path.c_str(), real_path)) {
-      tbe_path = real_path;
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid environment variable '" << kTBE_IMPL_PATH << "', the path is " << tbe_path
-                        << ". Please check (1) whether the path exists, (2) whether the path has the access "
-                           "permission, (3) whether the path is too long. ";
-    }
-  } else {
-    if (realpath(kDefPath, real_path)) {
-      tbe_path = real_path;
-    } else if (realpath(kBkPath, real_path)) {
-      tbe_path = real_path;
-    } else {
-      MS_LOG(WARNING) << "Invalid path is [" << kDefPath << "] or [" << kBkPath << "]. "
-                      << "Please check (1) whether the path exists, (2) whether the path has the access "
-                      << "permission, (3) whether the path is too long. ";
-      // unknown TBE_IMPL_PATH
-      tbe_path = "";
-    }
-  }
-  return tbe_path;
-}
-
 std::vector<std::string> GetTuneOpsList(const std::string &d) {
   std::vector<string> res;
   auto ops = common::GetEnv(kTUNE_OPS_NAME);
@@ -343,7 +316,7 @@ void TbeKernelCompileManager::JsonAssemble(const std::string &job_type, const nl
     static auto process_num = GetProcessNum();
     job_info[kProcessNum] = process_num;
     job_info[kParaDebugPath] = GetParaDebugPath();
-    job_info[kTbeImplPath] = GetTbePath();
+    job_info[kTbeImplPath] = "";
     job_info[kSocInfo] = src_json;
     nlohmann::json tune_infos;
     tune_infos[kTuneOpList] = GetTuneOpsList(",");

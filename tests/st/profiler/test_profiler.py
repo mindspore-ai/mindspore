@@ -162,7 +162,7 @@ class TestProfiler:
         self._train_with_profiler(device_target="GPU")
         self._check_gpu_profiling_file()
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard

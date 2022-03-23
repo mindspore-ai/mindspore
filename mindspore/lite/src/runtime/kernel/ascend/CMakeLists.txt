@@ -1,6 +1,6 @@
 include_directories(${TOP_DIR}/graphengine/inc/external)
 
-find_library(ge_graph libgraph.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+find_library(ge_graph libgraph.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
 
 aux_source_directory(src ACL_SRC)
 add_library(ascend_kernel_mid OBJECT ${ACL_SRC})
