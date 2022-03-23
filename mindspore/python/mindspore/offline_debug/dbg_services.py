@@ -67,31 +67,8 @@ class DbgServices:
         self.version = self.dbg_instance.GetVersion()
         self.initialized = False
 
-    @check_initialize
-    def initialize(self, net_name, is_sync_mode=True, max_mem_usage=0):
-        """
-        Initialize Debug Service.
-
-        Args:
-            net_name (str): Network name.
-            is_sync_mode (bool): Whether to process synchronous or asynchronous dump files mode
-                                 (default: True (synchronous)).
-            max_mem_usage (int): Maximum memory size of the debugger internal tensor cache in Megabytes(MB),
-                                 (default: 0 (disable memory restriction feature)).
-
-        Returns:
-            Initialized Debug Service instance.
-
-        Examples:
-        >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
-        >>> d_init = d.initialize(net_name="network name", is_sync_mode=True, max_mem_usage=4096)
-        """
-        logger.info("in Python Initialize dump_file_path %s", self.dump_file_path)
-        self.initialized = True
-        return self.dbg_instance.Initialize(net_name, self.dump_file_path, is_sync_mode, max_mem_usage)
-
-    def transform_check_node_list(self, info_name, info_param, node_name, check_node_list):
+    @staticmethod
+    def transform_check_node_list(info_name, info_param, node_name, check_node_list):
         """
         Transforming check_node_list based on info_name and info_param.
 
@@ -123,6 +100,30 @@ class DbgServices:
             else:
                 check_node_list[node_name][info_name] = list(map(str, info_param))
         return check_node_list
+
+    @check_initialize
+    def initialize(self, net_name, is_sync_mode=True, max_mem_usage=0):
+        """
+        Initialize Debug Service.
+
+        Args:
+            net_name (str): Network name.
+            is_sync_mode (bool): Whether to process synchronous or asynchronous dump files mode
+                                 (default: True (synchronous)).
+            max_mem_usage (int): Maximum memory size of the debugger internal tensor cache in Megabytes(MB),
+                                 (default: 0 (disable memory restriction feature)).
+
+        Returns:
+            Initialized Debug Service instance.
+
+        Examples:
+        >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
+        >>> d_init = d.initialize(net_name="network name", is_sync_mode=True, max_mem_usage=4096)
+        """
+        logger.info("in Python Initialize dump_file_path %s", self.dump_file_path)
+        self.initialized = True
+        return self.dbg_instance.Initialize(net_name, self.dump_file_path, is_sync_mode, max_mem_usage)
 
     @check_initialize_done
     @check_add_watchpoint
@@ -251,6 +252,12 @@ class DbgServices:
 
     @check_initialize_done
     def check_watchpoint_progress(self):
+        """
+        Returning the progress percentage of checking watchpoint.
+
+        Returns:
+            float, progress percentage.
+        """
         progress_percentage = self.dbg_instance.CheckWatchpointProgress()
         return progress_percentage
 
