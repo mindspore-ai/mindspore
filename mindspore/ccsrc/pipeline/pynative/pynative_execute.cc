@@ -189,6 +189,14 @@ std::string GetId(const py::handle &obj) {
   }
 }
 
+bool IsFunctionType(const py::object &cell) {
+  if (!py::isinstance<Cell>(cell)) {
+    return true;
+  }
+
+  return false;
+}
+
 void GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes,
                   mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> *type_indexes) {
   MS_EXCEPTION_IF_NULL(type_indexes);
@@ -3116,6 +3124,9 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
                                       [](const TopCellInfoPtr &value) { return !value->is_topest(); });
   if (top_cell()->is_topest() && !has_higher_order) {
     top_cell()->ClearDeviceMemory();
+    if (IsFunctionType(cell)) {
+      ClearCellRes(cell_id);
+    }
   }
   // High order
   if (top_cell()->vm_compiled()) {
