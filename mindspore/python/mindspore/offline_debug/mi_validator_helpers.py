@@ -25,12 +25,14 @@ UINT64_MIN = 0
 
 
 def pad_arg_name(arg_name):
+    """Add a space for arg_name."""
     if arg_name != "":
         arg_name = arg_name + " "
     return arg_name
 
 
 def check_value(arg, valid_range, arg_name=""):
+    """Check the value of arg is in a valid range."""
     arg_name = pad_arg_name(arg_name)
     if arg < valid_range[0] or arg > valid_range[1]:
         raise ValueError(
@@ -39,21 +41,25 @@ def check_value(arg, valid_range, arg_name=""):
 
 
 def check_uint32(arg, arg_name=""):
+    """Check arg type is uint32."""
     type_check(arg, (int,), arg_name)
     check_value(arg, [UINT32_MIN, UINT32_MAX])
 
 
 def check_uint64(arg, arg_name=""):
+    """Check arg type is uint64."""
     type_check(arg, (int,), arg_name)
     check_value(arg, [UINT64_MIN, UINT64_MAX])
 
 
 def check_iteration(arg, arg_name=""):
+    """Check arg is in a valid range."""
     type_check(arg, (int,), arg_name)
     check_value(arg, [-1, UINT64_MAX])
 
 
 def check_dir(dataset_dir):
+    """Check the dataset_dir is a valid dir."""
     if not os.path.isdir(dataset_dir) or not os.access(dataset_dir, os.R_OK):
         raise ValueError("The folder {} does not exist or permission denied!".format(dataset_dir))
 

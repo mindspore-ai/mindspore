@@ -146,6 +146,49 @@ class AsyncDumpConverter:
             self.output_path, 'convert_failed_file_list.txt')
         self.clear_failed_list_file()
 
+    @staticmethod
+    def _get_file_list(files, convert_obj):
+        """
+        Process to get file lists in multi_process.
+        """
+        multi_process_file_list = []
+        big_file_list = []
+        max_file_size = 0
+        if hasattr(convert_obj, 'multi_process'):
+            max_file_size = getattr(convert_obj.multi_process, 'get_max_file_size')()
+        else:
+            max_file_size = getattr(convert_obj, '_get_max_file_size')()
+        for cur_file in files:
+            cur_path = cur_file
+            if os.path.isfile(cur_path):
+                if os.path.getsize(cur_path) > max_file_size:
+                    big_file_list.append(cur_path)
+                else:
+                    multi_process_file_list.append(cur_path)
+        return multi_process_file_list, big_file_list
+
+    @staticmethod
+    def _process_func(convert_obj):
+        """
+        get function to process format transformation.
+        """
+        if hasattr(convert_obj, '_convert_format_for_one_file'):
+            func = getattr(convert_obj, '_convert_format_for_one_file')
+        else:
+            func = getattr(convert_obj, 'convert_format_for_one_file')
+        return func
+
+    @staticmethod
+    def _result_callback_func(convert_obj):
+        """
+        get result callback function.
+        """
+        if hasattr(convert_obj, 'multi_process'):
+            func = getattr(convert_obj.multi_process, '_handle_result_callback')
+        else:
+            func = getattr(convert_obj, '_handle_result_callback')
+        return func
+
     def clear_failed_list_file(self):
         """
         Remove existing failed txt file.
@@ -201,26 +244,6 @@ class AsyncDumpConverter:
                     + self.failed_file_path + '".')
         return return_code
 
-    def _get_file_list(self, files, convert_obj):
-        """
-        Process to get file lists in multi_process.
-        """
-        multi_process_file_list = []
-        big_file_list = []
-        max_file_size = 0
-        if hasattr(convert_obj, 'multi_process'):
-            max_file_size = getattr(convert_obj.multi_process, 'get_max_file_size')()
-        else:
-            max_file_size = getattr(convert_obj, '_get_max_file_size')()
-        for cur_file in files:
-            cur_path = cur_file
-            if os.path.isfile(cur_path):
-                if os.path.getsize(cur_path) > max_file_size:
-                    big_file_list.append(cur_path)
-                else:
-                    multi_process_file_list.append(cur_path)
-        return multi_process_file_list, big_file_list
-
     def _process_in_single_process(self, big_file_list, convert_obj):
         """
         Process big file in single process.
@@ -255,23 +278,3 @@ class AsyncDumpConverter:
             if cur_ret != self.convert_tool.compare_none_error:
                 return cur_ret
         return self.convert_tool.compare_none_error
-
-    def _process_func(self, convert_obj):
-        """
-        get function to process format transformation.
-        """
-        if hasattr(convert_obj, '_convert_format_for_one_file'):
-            func = getattr(convert_obj, '_convert_format_for_one_file')
-        else:
-            func = getattr(convert_obj, 'convert_format_for_one_file')
-        return func
-
-    def _result_callback_func(self, convert_obj):
-        """
-        get result callback function.
-        """
-        if hasattr(convert_obj, 'multi_process'):
-            func = getattr(convert_obj.multi_process, '_handle_result_callback')
-        else:
-            func = getattr(convert_obj, '_handle_result_callback')
-        return func
