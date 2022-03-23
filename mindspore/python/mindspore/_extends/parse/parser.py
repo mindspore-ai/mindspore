@@ -168,6 +168,8 @@ def get_env_support_modules():
         except (ModuleNotFoundError, ValueError):
             module = module[0:module.rfind('.')]
             module_spec = importlib.util.find_spec(module)
+        finally:
+            pass
         if module_spec is None:
             raise ModuleNotFoundError(f"Cannot find module: {module}. " \
                 f"Please check if {module} is installed, or if MS_DEV_SUPPORT_MODULES is set correctly.")
@@ -654,7 +656,7 @@ def eval_script(exp_str, params):
 
     # Convert set to tuple.
     if isinstance(obj, set):
-        obj = tuple(obj)
+        return tuple(obj)
     return obj
 
 
@@ -682,6 +684,14 @@ class Parser:
         self.closure_namespace = ClosureNamespace(inspect.unwrap(self.fn))
         self.function_name = fn.__name__
         self.col_offset = 0
+
+    @staticmethod
+    def is_unsupported_special_type(value):
+        """To check if not supported special type, such as print"""
+        if value in _unsupported_special_type:
+            logger.debug(f"Found unsupported special type: '{value}'.")
+            return True
+        return False
 
     def parse(self):
         """Parse the function or method."""
@@ -745,13 +755,6 @@ class Parser:
             if value == item:
                 logger.debug(f"Found unsupported internal type: '{value}'.")
                 return True
-        return False
-
-    def is_unsupported_special_type(self, value):
-        """To check if not supported special type, such as print"""
-        if value in _unsupported_special_type:
-            logger.debug(f"Found unsupported special type: '{value}'.")
-            return True
         return False
 
     def get_namespace_symbol(self, var: str):

@@ -1608,6 +1608,7 @@ def csr_to_dense(x):
 
 @constexpr
 def empty_tensor(dtype):
+    """Return empty tensor"""
     return Tensor([], dtype)
 
 
@@ -1883,6 +1884,7 @@ def list_append(self_, item):
 
 
 def list_insert(self_, index, obj):
+    """Insert into list"""
     return _insert(self_, index, obj)
 
 #################
