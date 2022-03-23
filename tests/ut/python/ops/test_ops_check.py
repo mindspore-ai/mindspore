@@ -16,8 +16,6 @@
 import functools
 import logging
 import numpy as np
-import pytest
-
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore import nn
@@ -64,27 +62,6 @@ def test_net_without_construct():
     net = NetMissConstruct()
     inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
     _cell_graph_executor.compile(net, inp)
-
-
-class NetWithRaise(nn.Cell):
-    """ NetWithRaise definition """
-
-    def __init__(self):
-        super(NetWithRaise, self).__init__()
-        self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')
-
-    # raise exception in method 'construct'
-    def construct(self, x):
-        raise 'exception in construct'
-
-
-def test_net_with_raise():
-    """ test_net_with_raise """
-    net = NetWithRaise()
-    inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
-    with pytest.raises(RuntimeError) as err:
-        _cell_graph_executor.compile(net, inp)
-    assert "Unsupported statement 'Raise'." in str(err.value)
 
 
 class NetAddN(nn.Cell):

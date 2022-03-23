@@ -142,6 +142,8 @@ class Parser {
   FunctionBlockPtr ParseContinue(const FunctionBlockPtr &block, const py::object &node);
   // Process pass statement
   FunctionBlockPtr ParsePass(const FunctionBlockPtr &block, const py::object &node);
+  // Process raise statement
+  FunctionBlockPtr ParseRaise(const FunctionBlockPtr &block, const py::object &node);
 
   // Process the expr and slice node method list
   AnfNodePtr ParseBinOp(const FunctionBlockPtr &block, const py::object &node);
@@ -197,6 +199,11 @@ class Parser {
                                      const py::object &generator_node);
   AnfNodePtr ParseListCompIfs(const FunctionBlockPtr &list_body_block, const ParameterPtr &list_param,
                               const py::object &node, const py::object &generator_node);
+  AnfNodePtr ParseJoinedStr(const FunctionBlockPtr &block, const py::object &node);
+  AnfNodePtr ParseFormattedValue(const FunctionBlockPtr &block, const py::object &node);
+  std::vector<AnfNodePtr> ParseException(const FunctionBlockPtr &block, const py::list &args, const std::string &name);
+  std::vector<AnfNodePtr> ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node);
+  void ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
 
   // Transform tail call to parallel call.
   void TransformParallelCall();
