@@ -129,7 +129,7 @@ def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
     assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
     assert np.allclose(hy.asnumpy(), hy_pynative.asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
