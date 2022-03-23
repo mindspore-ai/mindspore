@@ -28,12 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
-namespace {
-#ifndef SERVER_INFERENCE
-constexpr int kStackStep = 64;
-#endif
-}  // namespace
-
 static inline int GetCopyNum(const std::vector<int> &in_shape, int axis, int n_dim) {
   int copy_num = 1;
   if (axis > 0) {
@@ -67,10 +61,9 @@ int StackBaseCPUKernel::UpdateThreadNumPass() {
     thread_cost_context_->per_unit_compute_cost_ = 9.286;  // 9.286 : stack per unit compute cost, dataNum about 12k
   }
 
-  if (thread_cost_context_ != nullptr) {
-    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
-    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
-  }
+  thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
+  thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+
   return RET_OK;
 }
 #endif
@@ -96,7 +89,7 @@ int StackBaseCPUKernel::ReSize() {
   }
   thread_num_ = MSMIN(outer_size_, thread_num_);
 #else
-  thread_num_ = MSMIN(UP_DIV(outer_size_, kStackStep), op_parameter_->thread_num_);
+  thread_num_ = MSMIN(UP_DIV(outer_size_, 64), op_parameter_->thread_num_);  // 64 : stack step
 #endif
 
   return RET_OK;
