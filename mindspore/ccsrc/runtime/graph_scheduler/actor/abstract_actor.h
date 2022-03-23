@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <set>
+#include <map>
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
@@ -64,6 +65,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   }
   const std::vector<AID> &input_data_arrow_aids() const { return input_data_arrow_aids_; }
   const std::vector<AID> &input_control_arrow_aids() const { return input_control_arrow_aids_; }
+  const std::map<size_t, AnfNodeWeakPtr> &internal_parameters() const { return internal_parameters_; }
 
  protected:
   friend class GraphScheduler;
@@ -107,6 +109,11 @@ class AbstractActor : public OpActor<DeviceTensor> {
   std::vector<std::pair<size_t, AnfNodePtr>> device_tensor_store_keys_;
   // The device tensor stores which have the auto monad attribute.
   std::set<AnfNodePtr> auto_monad_device_tensor_stores_;
+
+  // HashMap <output_index, internal_parameter> is used to update the shape of internal parameter node for inferring the
+  // dynamic shape information of the nodes located at the boundary of the graph partition, such as heterogeneous
+  // scenario and so on.
+  std::map<size_t, AnfNodeWeakPtr> internal_parameters_;
 
   // The dependent input actors.
   std::vector<AID> input_data_arrow_aids_;

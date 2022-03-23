@@ -21,8 +21,6 @@
 
 namespace mindspore {
 namespace runtime {
-void CustomActor::Init() {}
-
 void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
   auto node = kernel_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -48,6 +46,14 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     auto base_node = AnfUtils::GetCustomActorBaseNode(kernel_.lock());
     auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());
     UpdateOutputAddrSize(kernel_info, base_node);
+    // Update the shape of internal parameter.
+    for (auto &internal_parameter_iter : internal_parameters_) {
+      auto internal_parameter = internal_parameter_iter.second.lock();
+      MS_EXCEPTION_IF_NULL(internal_parameter);
+      common::AnfAlgo::SetOutputInferTypeAndShape(
+        {common::AnfAlgo::GetOutputInferDataType(base_node, internal_parameter_iter.first)},
+        {common::AnfAlgo::GetOutputInferShape(base_node, internal_parameter_iter.first)}, internal_parameter.get());
+    }
   }
   EraseInput(ctx);
   SendOutput(ctx);
