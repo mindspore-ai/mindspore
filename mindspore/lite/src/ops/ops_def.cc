@@ -332,6 +332,7 @@ OP_SCHEMA_DEF_END(BatchNorm)
 
 OP_SCHEMA_DEF(BatchNormGrad)
 OP_ATTR(epsilon, float)
+OP_ATTR(is_training, bool)
 OP_SCHEMA_DEF_END(BatchNormGrad)
 
 OP_SCHEMA_DEF(BatchToSpace)

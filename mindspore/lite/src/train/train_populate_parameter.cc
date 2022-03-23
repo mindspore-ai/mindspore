@@ -408,6 +408,7 @@ OpParameter *PopulateBNGradParameter(const void *prim) {
   MS_ASSERT(value != nullptr);
   bnGrad_param->op_parameter_.type_ = primitive->value_type();
   bnGrad_param->epsilon_ = value->epsilon();
+  bnGrad_param->is_training_ = value->is_training();
   return reinterpret_cast<OpParameter *>(bnGrad_param);
 }
 

@@ -332,6 +332,7 @@ table BatchNorm {
 
 table BatchNormGrad {
     epsilon: float;
+    is_training: bool;
 }
 
 table BatchToSpace {
