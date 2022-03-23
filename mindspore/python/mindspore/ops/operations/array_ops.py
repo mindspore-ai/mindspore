@@ -7366,6 +7366,64 @@ class RightShift(Primitive):
         self.init_prim_io_names(inputs=['input_x', 'input_y'], outputs=['output'])
 
 
+class LogSpace(Primitive):
+    r"""
+    Creates a one-dimensional tensor of size steps whose values are evenly spaced from base**start to base**end,
+    inclusive, on a logarithmic scale with base.
+
+    .. math::s
+        \begin{aligned}
+        &step = (end - start)/(steps - 1)\\
+        &output = [base**start,base**(start + (end-start)/(steps-1)),
+                   base**(start + (steps-2)(end-start)/(steps-1)),
+                    ... , base**end]
+        \end{aligned}
+
+    Args:
+        steps (int): The steps must be a non-negative integer.
+        base (int): The base must be a non-negative integer.
+        dtype (mindspore.dtype): The dtype of output, mindspore.float16 or mindspore.float32.
+
+    Inputs:
+        - **start** (Tensor) - Start value of interval, with shape of 0-D, dtype is float16 or float32.
+        - **end** (Tensor) - End value of interval, with shape of 0-D, dtype is float16 or float32.
+
+    Outputs:
+        Tensor has the shape as (step, ). Its datatype is set by the attr 'dtype'.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `steps` is not an int.
+        TypeError: If `base` is not an int.
+        TypeError: If `dtype` is not mindspore.float16 or mindspore.float32.
+        ValueError: If `steps` is not a non-negative integer.
+        ValueError: If `base` is not a non-negative integer.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> logspace = ops.LogSpace(steps = 10, base = 10, dtype=mindspore.float32)
+        >>> start = Tensor(1, mindspore.float32)
+        >>> end = Tensor(10, mindspore.float32)
+        >>> output = logspace(start, end)
+        >>> print(output)
+        [1.e+01 1.e+02 1.e+03 1.e+04 1.e+05 1.e+06 1.e+07 1.e+08 1.e+09 1.e+10]
+    """
+
+    @prim_attr_register
+    def __init__(self, steps, base, dtype):
+        """Initialize Logspace."""
+        validator.check_value_type("steps", steps, [int], self.name)
+        validator.check_value_type("base", base, [int], self.name)
+        validator.check_non_negative_int(steps, "steps", self.name)
+        validator.check_non_negative_int(base, "base", self.name)
+        validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
+        valid_values = (mstype.float16, mstype.float32)
+        validator.check_type_name("dtype", dtype, valid_values, self.name)
+        self.init_prim_io_names(inputs=['start', 'end'], outputs=['y'])
+
+
 class NonZero(Primitive):
     """
     Return a tensor of the positions of all non-zero values.
