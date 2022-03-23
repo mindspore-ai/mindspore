@@ -22,7 +22,7 @@
 #include "frontend/parallel/ops_info/layer_norm_info.h"
 #include "frontend/parallel/ops_info/batchnorm_info.h"
 #include "frontend/parallel/ops_info/bias_add_info.h"
-#include "frontend/parallel/ops_info/scatter_update_info.h"
+#include "frontend/parallel/ops_info/scatter_ops_info.h"
 #include "frontend/parallel/ops_info/conv2d_info.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/step_parallel.h"

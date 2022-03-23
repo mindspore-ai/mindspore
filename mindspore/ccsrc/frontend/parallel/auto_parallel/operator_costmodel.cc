@@ -1885,6 +1885,30 @@ void MatmulDDSCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   std::fill(is_inputs_should_in_memory_.begin(), is_inputs_should_in_memory_.end(), keep_mem);
 }
 
+double ScatterMathOpsCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                                     const std::vector<TensorInfo> &, int64_t) const {
+  double result = 0.0;
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  Shape input1_slice_shape = inputs[1].slice_shape();
+  Shape input2_slice_shape = inputs[2].slice_shape();
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for gatherv2 cost";
+  }
+  // don't split axis
+  if (strategy_.at(0) == 1) {
+    result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) +
+              ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) +
+              ListProduct(input2_slice_shape) * static_cast<double>(inputs_type_lengths_[2]);
+  } else {
+    // split axis
+    result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) +
+              ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * 3 +
+              ListProduct(input2_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * 2;
+  }
+
+  return result;
+}
+
 double CropAndResizeCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
                                              const std::vector<TensorInfo> &outputs, int64_t) const {
   double result = 0.0;
