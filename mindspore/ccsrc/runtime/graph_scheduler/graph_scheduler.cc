@@ -1296,13 +1296,20 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
     kernel_type = actor_pair.first->type_;
   }
 
-  // Update the real input node.
-  MS_EXCEPTION_IF_NULL(to_kernel_with_input_idx.first);
-  if (to_kernel_with_input_idx.first->isa<CNode>()) {
-    auto kernel_mod = AnfAlgo::GetKernelMod(to_kernel_with_input_idx.first->cast<CNodePtr>());
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    kernel_mod->InsertRealInputNode(real_from_kernel_with_output_idx.first, real_from_kernel_with_output_idx.second,
-                                    to_kernel_with_input_idx.second);
+  // Record the internal parameter of dynamic shape kernel.
+  if (common::AnfAlgo::IsDynamicShape(real_from_kernel_with_output_idx.first)) {
+    AbstractActor *dynamic_shape_actor = nullptr;
+    auto from_update_node = AnfUtils::GetCustomUpdateopNode(real_from_kernel_with_output_idx.first);
+    auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_kernel_with_output_idx.first);
+    if (from_update_node != nullptr) {
+      dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_update_node));
+    } else if (from_infer_node != nullptr) {
+      dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
+    } else {
+      dynamic_shape_actor = real_from_actor;
+    }
+    MS_EXCEPTION_IF_NULL(dynamic_shape_actor);
+    dynamic_shape_actor->internal_parameters_[real_from_kernel_with_output_idx.second] = internal_parameter;
   }
 
   if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
@@ -1416,27 +1423,36 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
 
     // Set the member output_ of the copy actor.
     if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
-      copy_actor->output_ = AnfAlgo::GetMutableOutputAddr(to_kernel_with_input_idx.first, 0, false);
+      copy_actor->output_ = AnfAlgo::GetMutableOutputAddr(to_kernel_with_input_idx.first, 0, false).get();
     } else {
       copy_actor->output_ =
-        AnfAlgo::GetPrevNodeMutableOutputAddr(to_kernel_with_input_idx.first, to_kernel_with_input_idx.second, false);
+        AnfAlgo::GetPrevNodeMutableOutputAddr(to_kernel_with_input_idx.first, to_kernel_with_input_idx.second, false)
+          .get();
     }
     MS_EXCEPTION_IF_NULL(copy_actor->output_);
     if (copy_actor->output_->DeviceType() != to_device_context->GetDeviceAddressType()) {
       MS_LOG(EXCEPTION) << "The device type is not equal, output device type:" << copy_actor->output_->DeviceType()
                         << ", to device context type:" << to_device_context->GetDeviceAddressType();
     }
+    copy_actor->is_need_update_output_size_ = common::AnfAlgo::IsDynamicShape(to_kernel_with_input_idx.first);
 
     // Link between from actor and copy actor.
     AddDataArrow(from_actor, copy_actor, from_kernel, from_kernel_with_output_idx.second, 0);
+    // Link control arrow between custom update actor and copy actor if the custom update actor exists.
+    auto custom_update_node = AnfUtils::GetCustomUpdateopNode(from_kernel);
+    if (custom_update_node != nullptr) {
+      auto custom_update_actor = FetchActor(AnfUtils::GetCustomActorName(custom_update_node));
+      MS_EXCEPTION_IF_NULL(custom_update_actor);
+      AddControlArrow(custom_update_actor, copy_actor);
+    }
   }
 
   // If the copy actor already exists, only need link between copy actor and to actor.
   AddDataArrow(copy_actor, to_actor, nullptr, 0, to_kernel_with_input_idx.second);
   if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
-    UpdateRefCount(copy_actor->output_.get(), true);
+    UpdateRefCount(copy_actor->output_, true);
   } else {
-    UpdateRefCount(copy_actor->output_.get(), false);
+    UpdateRefCount(copy_actor->output_, false);
   }
 }
 
@@ -1682,6 +1698,11 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
         continue;
       }
 
+      auto to_kernel_type = FetchKernelTransformType(to_node, graph, graph_compiler_info.origin_parameters_order_,
+                                                     graph_compiler_info.strategy_);
+      auto to_actor = FetchActor(to_kernel_type, graph_compiler_info.name_, to_node, graph);
+      MS_EXCEPTION_IF_NULL(to_actor);
+
       AbstractActor *from_actor = nullptr;
       // InternalParameter --> CustomActor.
       if (IsInternalParameter(from_node, graph)) {
@@ -1691,20 +1712,28 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
         if (IsSwitchActor(front_output_node) || (graph_output_to_actor_.count(front_output_with_index) == 0)) {
           continue;
         }
-        from_actor = graph_output_to_actor_[front_output_with_index].first;
+        auto real_from_node = graph_output_to_actor_[front_output_with_index].second.first;
+        auto from_update_node = AnfUtils::GetCustomUpdateopNode(real_from_node);
+        auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_node);
+        if (from_update_node != nullptr) {
+          from_actor = FetchActor(AnfUtils::GetCustomActorName(from_update_node));
+        } else if (from_infer_node != nullptr) {
+          from_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
+        } else {
+          from_actor = graph_output_to_actor_[front_output_with_index].first;
+        }
+        MS_EXCEPTION_IF_NULL(from_actor);
+        MS_LOG(INFO) << "Custom actor link control arrow by internal parameter, front node: "
+                     << front_output_node->fullname_with_scope() << ", from actor: " << from_actor->GetAID().Name()
+                     << ", to actor: " << to_actor->GetAID().Name();
       } else if (from_node->isa<Parameter>()) {
         continue;
       } else {
         auto from_kernel_type = FetchKernelTransformType(from_node, graph, graph_compiler_info.origin_parameters_order_,
                                                          graph_compiler_info.strategy_);
         from_actor = FetchActor(from_kernel_type, graph_compiler_info.name_, from_node, graph);
+        MS_EXCEPTION_IF_NULL(from_actor);
       }
-      MS_EXCEPTION_IF_NULL(from_actor);
-
-      auto to_kernel_type = FetchKernelTransformType(to_node, graph, graph_compiler_info.origin_parameters_order_,
-                                                     graph_compiler_info.strategy_);
-      auto to_actor = FetchActor(to_kernel_type, graph_compiler_info.name_, to_node, graph);
-      MS_EXCEPTION_IF_NULL(to_actor);
       AddControlArrow(from_actor, to_actor);
     }
   }

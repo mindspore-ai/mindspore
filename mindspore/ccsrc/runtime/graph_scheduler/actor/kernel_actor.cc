@@ -463,6 +463,14 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
   // The size of output address may be changed in dynamic shape scenario.
   if (is_dynamic_shape_) {
     UpdateOutputAddrSize(kernel_info_, kernel_);
+    // Update the shape of internal parameter.
+    for (auto &internal_parameter_iter : internal_parameters_) {
+      auto internal_parameter = internal_parameter_iter.second.lock();
+      MS_EXCEPTION_IF_NULL(internal_parameter);
+      common::AnfAlgo::SetOutputInferTypeAndShape(
+        {common::AnfAlgo::GetOutputInferDataType(kernel_, internal_parameter_iter.first)},
+        {common::AnfAlgo::GetOutputInferShape(kernel_, internal_parameter_iter.first)}, internal_parameter.get());
+    }
   }
 
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
