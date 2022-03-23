@@ -212,18 +212,13 @@ def _parallel_compilation_init(initialize: TbeJob):
     :return:
     """
     os.environ["TE_PARALLEL_COMPILER"] = str(initialize.content["process_num"])
-    embedding = False
     soc_info = get_soc_info(initialize.content)
     real_debug_level = get_real_op_debug_level(initialize.content)
     auto_tiling_mode = initialize.content["SocInfo"]["autoTilingMode"]
     offline_tune = initialize.content["SocInfo"]["offlineTune"]
-    global_loglevel = None
-    enable_event = 1
-    pid_str = os.getpid()
-    time_str = datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3]
-    pid_ts = "{}_pid{}".format(time_str, pid_str)
-    ret = init_multi_process_env(embedding, soc_info, auto_tiling_mode, real_debug_level,
-                                 global_loglevel, enable_event, pid_ts)
+    pid_ts = "{}_pid{}".format(datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3], os.getpid())
+    ret = init_multi_process_env(False, soc_info, auto_tiling_mode, real_debug_level,
+                                 None, 1, pid_ts)
     if ret is None:
         initialize.error("Init multiprocess env failed")
         return False
@@ -420,7 +415,10 @@ def _pre_build_compute_op_info(compute_op, job):
 
 
 def get_prebuild_output(op_name):
-    """ get prebuild output """
+    """
+    get prebuild output
+    :param op_name:
+    """
     params_str = op_params_to_json(op_name)
     try:
         res = json.loads(params_str)
@@ -598,8 +596,7 @@ def rl_tune_single_op(job: TbeJob):
     pack_args = pack_op_args(inputs, outputs, attrs)
     res = dispatch_single_tune_task(job.source_id, job.id, l1_size, base_kernel, op_kernel_name, full_name,
                                     tune_op_module_name, op_func_name, op_type, pack_args)
-    res = _process_rl_tune_result(job, op_type, res)
-    return res
+    return _process_rl_tune_result(job, op_type, res)
 
 
 def rl_tune_fusion_op(job: TbeJob):
@@ -630,15 +627,14 @@ def rl_tune_fusion_op(job: TbeJob):
     op_module_names_str = ""
     op_type_set = set()
     for op in compute_op_list:
-        op_module_names_str = op_module_names_str + "," + get_module_name(op)
+        op_module_names_str = ','.join([op_module_names_str, get_module_name(op)])
         op_type_set.add(op["type"])
     op_module_names_str = op_module_names_str[1:]
     op_type = "__".join(list(op_type_set))
     from schedule_search.rl_online_tune import dispatch_fusion_tune_task
     res = dispatch_fusion_tune_task(job.source_id, job.id, l1_size, base_kernel, op_kernel_name, op_module_names_str,
                                     json.dumps(job.content))
-    res = _process_rl_tune_result(job, op_type, res)
-    return res
+    return _process_rl_tune_result(job, op_type, res)
 
 
 def _process_rl_tune_result(job, op_type, res):
