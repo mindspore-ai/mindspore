@@ -1777,15 +1777,13 @@ void ControlNodeParser::ParseNeedStackControlNode(const std::vector<AnfNodePtr> 
   }
 }
 
-void CollectEffectiveInputByGraph(const KernelGraphPtr &graph, const FrontToBackendKernelWithContext &outputs,
-                                  const DeviceContext *const device_context,
-                                  std::map<KernelWithIndex, const DeviceContext *> *const inputs,
-                                  bool *const need_stack) {
+void CollectEffectiveInputByGraph(const KernelGraphPtr &graph, const DeviceContext *const device_context,
+                                  KernelGraphGroupInfo *const kernel_graph_group_info) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(inputs);
-  MS_EXCEPTION_IF_NULL(need_stack);
+  MS_EXCEPTION_IF_NULL(kernel_graph_group_info);
 
+  const auto &outputs = kernel_graph_group_info->front_output_nodes_;
   const auto &real_parameters = graph->input_nodes();
   for (const auto &parameter : real_parameters) {
     auto front_node_with_index = GetFrontNodeByKernelGraph(parameter, graph.get());
@@ -1794,16 +1792,21 @@ void CollectEffectiveInputByGraph(const KernelGraphPtr &graph, const FrontToBack
     // the group inputs.
     if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter) ||
         outputs.find(front_node_with_index) != outputs.end() || front_node_with_index.first->isa<ValueNode>()) {
+      if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter)) {
+        kernel_graph_group_info->monad_inputs_.emplace(front_node_with_index.first);
+        MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString()
+                      << " add front monad input node:" << front_node_with_index.first->DebugString();
+      }
       continue;
     }
     if (common::AnfAlgo::IsCallNode(front_node_with_index.first)) {
-      (*need_stack) = true;
+      kernel_graph_group_info->need_stack_ = true;
     }
     MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString()
                   << " add front input node:" << front_node_with_index.first->DebugString()
                   << " index:" << front_node_with_index.second << " backend node:" << parameter->DebugString()
                   << " index:0";
-    (*inputs)[front_node_with_index] = device_context;
+    kernel_graph_group_info->front_input_nodes_[front_node_with_index] = device_context;
   }
 }
 
@@ -1860,9 +1863,7 @@ void ControlNodeParser::ParseKernelGraphGroup(const KernelGraphToDeviceContext &
         (void)kernel_graph_group_info->graphs_.emplace(kernel_graph);
 
         // Collect inputs in group.
-        CollectEffectiveInputByGraph(kernel_graph, kernel_graph_group_info->front_output_nodes_, iter->second,
-                                     &(kernel_graph_group_info->front_input_nodes_),
-                                     &(kernel_graph_group_info->need_stack_));
+        CollectEffectiveInputByGraph(kernel_graph, iter->second, kernel_graph_group_info.get());
 
         // Collect outputs in group.
         CollectEffectiveOutputByGraph(kernel_graph, iter->second, &(kernel_graph_group_info->front_output_nodes_));

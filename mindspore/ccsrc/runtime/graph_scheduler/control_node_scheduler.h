@@ -96,6 +96,7 @@ class ControlNodeScheduler {
   void LinkDataArrowForOutputActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowForKernelActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowForCustomActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
+  void LinkControlArrowByKernelGraphGroup(const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowByAutoMonad(ControlActor *to_actor, const AnfNodePtr &from_node,
                                    const ControlNodeParserPtr &parser);
 
