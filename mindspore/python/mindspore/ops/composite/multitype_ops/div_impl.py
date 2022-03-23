@@ -27,6 +27,7 @@ div is a metafuncgraph object which will div two objects according to input type
 using ".register" decorator
 """
 
+
 @div.register("CSRTensor", "Tensor")
 def _csrtensor_div_tensor(x, y):
     """

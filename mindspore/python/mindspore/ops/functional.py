@@ -151,6 +151,7 @@ tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 stack = P.Stack()
 
+
 def csr_mul(x, y):
     """
     Returns x * y where x is CSRTensor and y is Tensor.
@@ -172,6 +173,7 @@ def csr_mul(x, y):
         ``GPU`` ``CPU``
     """
     return _csr_ops.CSRMul()(x, y)
+
 
 def csr_div(x, y):
     """
@@ -214,6 +216,7 @@ partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
 identity = P.identity()
+
 
 @constexpr
 def _convert_grad_position_type(grad_position):
@@ -993,6 +996,7 @@ coo_tensor_get_dense_shape = Primitive('COOTensorGetDenseShape')
 
 @constexpr
 def print_info(info):
+    """Print given error info"""
     print(info)
 
 
