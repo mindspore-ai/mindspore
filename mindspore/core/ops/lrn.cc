@@ -74,35 +74,6 @@ void LRN::Init(const int64_t depth_radius, const float bias, const float alpha, 
   this->set_norm_region(norm_region);
 }
 
-namespace {
-abstract::ShapePtr LRNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t x_size = 4;
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(in_shape.size()), kEqual, x_size, prim_name);
-
-  return std::make_shared<abstract::Shape>(in_shape);
-}
-
-TypePtr LRNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name()
-                      << "', the input args userd for infer shape and type, can not be a nullptr.";
-  }
-  std::map<std::string, TypePtr> types;
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  (void)types.emplace("x", input_args[0]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-}
-}  // namespace
-
-AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(LRNInferType(primitive, input_args),
-                                                    LRNInferShape(primitive, input_args)->shape());
-}
 REGISTER_PRIMITIVE_C(kNameLRN, LRN);
 }  // namespace ops
 }  // namespace mindspore

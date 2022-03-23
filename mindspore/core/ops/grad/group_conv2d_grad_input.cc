@@ -158,28 +158,6 @@ bool GroupConv2DGradInput::get_has_bias() const {
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
-AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("group_conv_2D_infer", SizeToLong(input_args.size()), kGreaterEqual,
-                                           input_num, prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-
-  // Infer shape
-  auto shape_ptr = primitive->GetAttr(kInputShape);
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  auto shape = GetValue<std::vector<int64_t>>(shape_ptr);
-
-  // Infer type
-  auto type_ptr = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(type_ptr);
-  auto type_tensor_ptr = type_ptr->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(type_tensor_ptr);
-  auto type = type_tensor_ptr->element();
-  return std::make_shared<abstract::AbstractTensor>(type, shape);
-}
 REGISTER_PRIMITIVE_C(kNameGroupConv2DGradInput, GroupConv2DGradInput);
 }  // namespace ops
 }  // namespace mindspore

@@ -21,29 +21,6 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  // Infer type
-  auto output0_type = kInt32;
-  auto output1_type = kFloat32;
-
-  // Infer shape
-  std::vector<int64_t> out_shape;
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto string_num = input_shape[0];
-  if (string_num == 0) {
-    out_shape.push_back(1);
-  } else {
-    out_shape.push_back(string_num);
-  }
-
-  auto output0 = std::make_shared<abstract::AbstractTensor>(output0_type, out_shape);
-  auto output1 = std::make_shared<abstract::AbstractTensor>(output1_type, out_shape);
-  AbstractBasePtrList output = {output0, output1};
-  return std::make_shared<abstract::AbstractTuple>(output);
-}
 REGISTER_PRIMITIVE_C(kNameCustomExtractFeatures, CustomExtractFeatures);
 }  // namespace ops
 }  // namespace mindspore

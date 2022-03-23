@@ -28,35 +28,7 @@ bool TopK::get_sorted() const {
   auto value_ptr = this->GetAttr(kSorted);
   return GetValue<bool>(value_ptr);
 }
-AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("top_k_infer", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
 
-  // Infer dtype
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto output1_type = kInt32;
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  auto output0_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim_name);
-
-  // Infer shape
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto k_v = GetValue<int>(input_args[1]->BuildValue());
-  auto ndims = x_shape.size() - 1;
-  std::pair<int64_t, int64_t> k_range(0, x_shape[ndims]);
-  CheckAndConvertUtils::CheckInRange<int64_t>("top_k_infer", static_cast<int64_t>(k_v), kIncludeRight, k_range,
-                                              prim_name);
-  x_shape[ndims] = k_v;
-  auto output0 = std::make_shared<abstract::AbstractTensor>(output0_type, x_shape);
-  auto output1 = std::make_shared<abstract::AbstractTensor>(output1_type, x_shape);
-  AbstractBasePtrList output = {output0, output1};
-  return std::make_shared<abstract::AbstractTuple>(output);
-}
 REGISTER_PRIMITIVE_C(kNameTopK, TopK);
 }  // namespace ops
 }  // namespace mindspore

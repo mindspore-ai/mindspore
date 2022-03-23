@@ -39,33 +39,6 @@ bool FakeQuantWithMinMaxVarsPerChannel::get_narrow_range() const {
   return GetValue<bool>(value_ptr);
 }
 
-AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x rank", (int64_t)x_shape.size(), kGreaterThan, 1, op_name);
-  CheckAndConvertUtils::Check("min shape", min_shape, kEqual, max_shape, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("min shape", (int64_t)min_shape.size(), kEqual, 1, op_name);
-  CheckAndConvertUtils::Check("min shape", min_shape[0], kEqual, x_shape[x_shape.size() - 1], op_name);
-
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  auto min_type = input_args[kInputIndex1]->BuildType();
-  auto max_type = input_args[kInputIndex2]->BuildType();
-  std::vector<std::string> type_name = {"x", "min", "max"};
-  std::vector<TypePtr> type = {x_type, min_type, max_type};
-  for (size_t i = 0; i < 3; i++) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid(type_name[i], type[i], {kFloat16, kFloat32}, op_name);
-  }
-  auto tensor_type = x_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto data_type = tensor_type->element();
-  MS_EXCEPTION_IF_NULL(data_type);
-  return std::make_shared<abstract::AbstractTensor>(data_type, x_shape);
-}
 REGISTER_PRIMITIVE_C(kNameFakeQuantWithMinMaxVarsPerChannel, FakeQuantWithMinMaxVarsPerChannel);
 }  // namespace ops
 }  // namespace mindspore

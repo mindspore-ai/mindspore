@@ -50,66 +50,6 @@ ActivationType AvgPoolFusion::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-namespace {
-abstract::ShapePtr AvgPoolFusionInferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto op_name = primitive->name();
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
-  if (format == NHWC) {
-    in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
-  }
-  const int64_t x_rank = 4;
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
-  auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
-  auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
-  auto batch = in_shape[0];
-  auto channel = in_shape[1];
-  auto in_h = in_shape[2];
-  auto in_w = in_shape[3];
-
-  auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
-  (void)CheckAndConvertUtils::CheckPositiveVector(kStride, strides, op_name);
-  auto kernel_h = kernel_size[2];
-  auto kernel_w = kernel_size[3];
-  auto stride_h = strides[2];
-  auto stride_w = strides[3];
-  int64_t out_h = abstract::Shape::SHP_ANY;
-  int64_t out_w = abstract::Shape::SHP_ANY;
-  if (pad_mode == VALID) {
-    out_h = static_cast<int64_t>(ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
-    out_w = static_cast<int64_t>(ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
-  } else if (pad_mode == SAME) {
-    out_h = static_cast<int64_t>(ceil(in_h / static_cast<float>(stride_h)));
-    out_w = static_cast<int64_t>(ceil(in_w / static_cast<float>(stride_w)));
-  }
-  std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
-  if (format == NHWC) {
-    out_shape = {batch, out_h, out_w, channel};
-  }
-  if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', Kernel size should be positive, but got not valid.";
-  }
-  return std::make_shared<abstract::Shape>(out_shape);
-}
-
-TypePtr AvgPoolFusionInferType(const std::vector<AbstractBasePtr> &input_args) {
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  return input_args[0]->BuildType();
-}
-}  // namespace
-
-AbstractBasePtr AvgPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(AvgPoolFusionInferType(input_args),
-                                                    AvgPoolFusionInferShape(primitive, input_args));
-}
 REGISTER_PRIMITIVE_C(kNameAvgPoolFusion, AvgPoolFusion);
 }  // namespace ops
 }  // namespace mindspore

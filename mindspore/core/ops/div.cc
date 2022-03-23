@@ -25,29 +25,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr DivInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  return BroadCastInferShape(prim_name, input_args);
-}
-
-TypePtr DivInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-}
-}  // namespace
-
-AbstractBasePtr DivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(DivInferType(primitive, input_args),
-                                                    DivInferShape(primitive, input_args)->shape());
-}
 REGISTER_PRIMITIVE_C(kNameDiv, Div);
 }  // namespace ops
 }  // namespace mindspore

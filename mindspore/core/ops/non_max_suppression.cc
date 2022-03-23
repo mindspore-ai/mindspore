@@ -29,11 +29,6 @@ int64_t NonMaxSuppression::get_center_point_box() const {
 }
 void NonMaxSuppression::Init(const int64_t center_point_box) { this->set_center_point_box(center_point_box); }
 
-AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args) {
-  MS_LOG(INFO) << "NonMaxSuppression infer shape in runtime.";
-  return std::make_shared<abstract::AbstractTensor>(kInt32, std::vector<int64_t>{});
-}
 REGISTER_PRIMITIVE_C(kNameNonMaxSuppression, NonMaxSuppression);
 }  // namespace ops
 }  // namespace mindspore

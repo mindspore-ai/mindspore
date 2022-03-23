@@ -25,42 +25,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr SpaceToBatchNDInferShape(const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  const int64_t shape_size = 4;
-  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
-  auto out_shape = x_shape;
-  int64_t block_shape_prod = 1;
-  const size_t offset = 2;
-  auto block_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockShape));
-  auto padding = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
-  size_t size = block_shape.size();
-  for (size_t i = 0; i < size; i++) {
-    int64_t padded = out_shape[i + offset] + padding[i][0] + padding[i][1];
-    if (padded % block_shape[i] != 0) {
-      MS_EXCEPTION(ValueError) << prim_name << " padded[" << i << "]" << padded << "should be divisible by block_shape["
-                               << i << "]" << block_shape[i];
-    }
-    out_shape[i + offset] = int64_t(floor(padded / static_cast<float>(block_shape[i])));
-    block_shape_prod = block_shape_prod * block_shape[i];
-  }
-  out_shape[0] = out_shape[0] * block_shape_prod;
-  return std::make_shared<abstract::Shape>(out_shape);
-}
-
-TypePtr SpaceToBatchNDInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  return input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-}
-}  // namespace
-
 void SpaceToBatchND::set_paddings(std::vector<std::vector<int64_t>> paddings) {
   const int64_t pad_size = 2;
   (void)CheckAndConvertUtils::CheckInteger(kPaddings, SizeToLong(paddings.size()), kEqual, pad_size, this->name());
@@ -99,11 +63,6 @@ void SpaceToBatchND::Init(const std::vector<int64_t> block_shape, const std::vec
   this->set_block_shape(block_shape);
 }
 
-AbstractBasePtr SpaceToBatchNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(SpaceToBatchNDInferType(primitive, input_args),
-                                                    SpaceToBatchNDInferShape(primitive, input_args)->shape());
-}
 REGISTER_PRIMITIVE_C(kNameSpaceToBatchND, SpaceToBatchND);
 }  // namespace ops
 }  // namespace mindspore

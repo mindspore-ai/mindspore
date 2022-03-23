@@ -18,24 +18,6 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr FlattenGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto input_x = input_args[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_x);
-  auto input_shape = input_args[1]->cast<abstract::AbstractTuplePtr>();
-  MS_EXCEPTION_IF_NULL(input_shape);
-  auto out_shape = GetValue<std::vector<int64_t>>(input_shape->BuildValue());
-  auto ret = input_x->Broaden();
-  ret->set_shape(std::make_shared<abstract::Shape>(out_shape));
-  return ret;
-}
 REGISTER_PRIMITIVE_C(kNameFlattenGrad, FlattenGrad);
 }  // namespace ops
 }  // namespace mindspore

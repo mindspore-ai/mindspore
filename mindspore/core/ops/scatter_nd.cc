@@ -22,39 +22,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr ScatterNdInferShape(const std::vector<AbstractBasePtr> &input_args) {
-  auto shape_value = input_args[kInputIndex2]->BuildValue();
-  auto shape_value_element = GetValue<std::vector<int64_t>>(shape_value);
-  for (const auto &shape : shape_value_element) {
-    (void)CheckAndConvertUtils::CheckInteger("shape value", shape, kGreaterThan, 0, "ScatterNd");
-  }
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto update_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices_shape[0] and update_shape[0]", indices_shape[0], kEqual,
-                                           update_shape[0], "ScatterNd");
-  return std::make_shared<abstract::Shape>(shape_value_element);
-}
-
-TypePtr ScatterNdInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  const std::set<TypePtr> indices_valid_types = {kInt32, kInt64};
-  const std::set<TypePtr> update_valid_types = {kTensorType};
-  auto indices_type = input_args[0]->BuildType();
-  auto update_type = input_args[1]->BuildType();
-  (void)CheckAndConvertUtils::CheckTypeValid("update type", update_type, update_valid_types, prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_type, indices_valid_types, prim->name());
-  return input_args[1]->BuildType();
-}
-}  // namespace
-
-AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(ScatterNdInferType(primitive, input_args),
-                                                    ScatterNdInferShape(input_args)->shape());
-}
 REGISTER_PRIMITIVE_C(kNameScatterNd, ScatterNd);
 }  // namespace ops
 }  // namespace mindspore

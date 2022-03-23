@@ -27,31 +27,6 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  // Infer shape
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto dim_val = GetValue<int64_t>(input_args[1]->BuildValue());
-  auto rank = x_shape.size();
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("axis", dim_val, kIncludeBoth, {-rank - 1, rank}, prim_name);
-  if (dim_val < 0) {
-    dim_val += SizeToLong(x_shape.size()) + 1;
-  }
-  auto out_shape = x_shape;
-  (void)out_shape.insert(out_shape.begin() + dim_val, 1, 1);
-
-  // Infer type
-  const size_t x_index = 0;
-  auto x_type = CheckAndConvertUtils::GetTensorInputType(prim_name, input_args, x_index);
-  return std::make_shared<abstract::AbstractTensor>(x_type, out_shape);
-}
 REGISTER_PRIMITIVE_C(kNameExpandDims, ExpandDims);
 }  // namespace ops
 }  // namespace mindspore

@@ -29,23 +29,7 @@ void QuantDTypeCast::Init(const int64_t src_t, const int64_t dst_t) {
   this->set_src_t(src_t);
   this->set_dst_t(dst_t);
 }
-AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  const size_t x_index = 0;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
-  auto input_type = CheckAndConvertUtils::GetTensorInputType(primitive->name(), input_args, x_index);
-  auto dst_type = TypeIdToType(TypeId(GetValue<int64_t>(primitive->GetAttr(kDstT))));
-  MS_EXCEPTION_IF_NULL(dst_type);
-  if (input_type != dst_type) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', Input type should be " << dst_type->ToString()
-                            << ", but got " << input_type->ToString();
-    input_type->ToString();
-  }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  return std::make_shared<abstract::AbstractTensor>(dst_type, input_shape);
-}
+
 REGISTER_PRIMITIVE_C(kNameQuantDTypeCast, QuantDTypeCast);
 }  // namespace ops
 }  // namespace mindspore

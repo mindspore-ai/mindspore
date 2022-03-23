@@ -34,51 +34,6 @@ int64_t Assert::get_summarize() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  TypePtr condition;
-  if (!(input_args[0]->BuildType()->type_id() == kObjectTypeTensorType)) {
-    auto condition_values = GetValue<std::vector<bool>>(input_args[0]->BuildValue());
-    (void)CheckAndConvertUtils::CheckInteger("condition's rank", SizeToLong(condition_values.size()), kLessEqual, 1,
-                                             op_name);
-    if (condition_values.size() == 1) {
-      if (!condition_values[0]) {
-        MS_EXCEPTION(ValueError) << "For '" << op_name
-                                 << "', condition value must be `true` when only one value contained, but got "
-                                 << !condition_values[0];
-      }
-    }
-    condition = TypeIdToType(kNumberTypeBool);
-  } else {
-    auto condition_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-    (void)CheckAndConvertUtils::CheckInteger("condition's rank", condition_shape[0], kLessEqual, 1, op_name);
-    if (condition_shape[0] == 1) {
-      auto condition_value = reinterpret_cast<bool *>(input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->data_c());
-      MS_EXCEPTION_IF_NULL(condition_value);
-      if (!*condition_value) {
-        MS_EXCEPTION(ValueError) << "For '" << op_name
-                                 << "', condition value must be `true` when only one value contained, but got "
-                                 << !*condition_value;
-      }
-    }
-    condition = input_args[0]->BuildType();
-  }
-  std::vector<int64_t> output_shape = {1};
-  std::set<TypePtr> local_bool = {kBool};
-  std::map<std::string, TypePtr> args = {{"condition", condition}};
-  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, local_bool, op_name);
-  auto inputs_type = input_args[1]->BuildType()->cast<TuplePtr>()->elements();
-  for (auto dtype : inputs_type) {
-    std::set<TypePtr> template_types = {kTensorType};
-    (void)CheckAndConvertUtils::CheckSubClass("input", dtype, template_types, op_name);
-  }
-  return std::make_shared<abstract::AbstractTensor>(kInt32, output_shape);
-}
 REGISTER_PRIMITIVE_C(kNameAssert, Assert);
 }  // namespace ops
 }  // namespace mindspore

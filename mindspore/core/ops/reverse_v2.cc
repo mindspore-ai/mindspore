@@ -21,24 +21,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  return std::make_shared<abstract::Shape>(x_shape);
-}
-
-TypePtr ReverseV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
-                                         kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool};
-  auto infer_type = input_args[0]->BuildType();
-  return CheckAndConvertUtils::CheckTensorTypeValid("x type", infer_type, valid_types, prim->name());
-}
-}  // namespace
-
 void ReverseV2::Init(const std::vector<int64_t> &axis) { this->set_axis(axis); }
 void ReverseV2::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 std::vector<int64_t> ReverseV2::get_axis() const {
@@ -46,11 +28,6 @@ std::vector<int64_t> ReverseV2::get_axis() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-AbstractBasePtr ReverseV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(ReverseV2InferType(primitive, input_args),
-                                                    ReverseV2InferShape(primitive, input_args)->shape());
-}
 REGISTER_PRIMITIVE_C(kNameReverseV2, ReverseV2);
 }  // namespace ops
 }  // namespace mindspore
