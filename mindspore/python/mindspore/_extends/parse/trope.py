@@ -84,7 +84,7 @@ def hasnext(it):  # pragma: no cover
     raise RuntimeError('This operation is not meant to be called directly.')
 
 
-def to_array(x):  # pragma: no cover
+def to_array(x):
     """The to_array function."""
     raise RuntimeError('This operation is not meant to be called directly.')
 

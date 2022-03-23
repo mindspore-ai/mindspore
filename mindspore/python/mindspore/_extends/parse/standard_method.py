@@ -1530,6 +1530,7 @@ def narrow(x, axis, start, length):
     """
     return F.narrow(x, axis, start, length)
 
+
 def view(x, *shape):
     """Reshape tensor, if shape is -1, reshape tensor into one dimension"""
     shape = check_view_shape(shape)
@@ -1574,6 +1575,7 @@ def while_cond(x):
 
 
 def coo_to_csr(x):
+    """convert coo to csr."""
     row_indices = x.indices[:, 0]
     col_indices = x.indices[:, 1]
     idx_dtype = x.indices.dtype
@@ -1586,15 +1588,20 @@ def coo_to_csr(x):
 
 
 def coo_to_dense(x):
+    """convert coo to dense."""
     zeros_tensor = F.zeros(x.shape, x.values.dtype)
     return F.tensor_scatter_update(zeros_tensor, x.indices, x.values)
 
+
 def csr_to_coo(x):
+    """convert csr to coo."""
     row_indices = F.csr2coo(x.indptr, x.values.shape[0])
     coo_indices = P.Stack(1)((row_indices, x.indices))
     return COOTensor(coo_indices, x.values, x.shape)
 
+
 def csr_to_dense(x):
+    """convert csr to dense."""
     coo_tensor = x.to_coo()
     return coo_tensor.to_dense()
 
@@ -1887,6 +1894,7 @@ def to_array(x):
     """Implementation of `to_array`."""
     return x.__ms_to_array__()
 
+
 def filter_(fun, iter_):
     """Support the use of built-in function filter."""
     result = []
@@ -1905,32 +1913,39 @@ def csr_astype(x, dtype):
     data = F.cast(x.values, dtype)
     return F.make_csr_tensor(x.indptr, x.indices, data, x.shape)
 
+
 def csr_sum(x, axis):
     """Implementation of `sum` for CSRTensor."""
     return F.csr_reduce_sum(x, axis)
+
 
 def csr_abs(x):
     """Implementation of `abs` for CSRTensor."""
     data = F.absolute(x.values)
     return F.make_csr_tensor(x.indptr, x.indices, data, x.shape)
 
+
 def csr_mv(x, dense_vector):
     """Implementation of `abs` for CSRTensor."""
     return F.csr_mv(x, dense_vector)
+
 
 def csr_to_tuple(x):
     """Implementation of `to_tuple` for CSRTensor."""
     res = (x.indptr, x.indices, x.values, x.shape)
     return res
 
+
 def coo_astype(x, dtype):
     """Implementation of `astype` for COOTensor."""
     data = F.cast(x.values, dtype)
     return F.make_coo_tensor(x.indices, data, x.shape)
 
+
 def coo_to_tuple(x):
     """Implementation of `to_tuple` for COOTensor."""
     return x.indices, x.values, x.shape
+
 
 def coo_abs(x):
     """Implementation of `abs` for COOTensor."""
@@ -1947,6 +1962,7 @@ def sparse_size_(x):
     Return the size of SparseTensor.values. That is the number of non-zero values in SparseTensor.
     """
     return size_(x.values)
+
 
 def sparse_ndim_(x):
     """
