@@ -141,7 +141,7 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 std::vector<KernelAttr> BroadcastToCpuKernelMod::GetOpSupport() {
   auto iter = func_list_.find(kernel_type_);
   if (iter == func_list_.end()) {
-    MS_LOG(EXCEPTION) << "Does not support " << kernel_type_ << "!";
+    MS_LOG(EXCEPTION) << "not support " << kernel_type_ << "!";
   }
 
   std::vector<KernelAttr> support_list;
