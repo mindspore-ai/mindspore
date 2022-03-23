@@ -155,57 +155,6 @@ class Cholesky(PrimitiveWithInfer):
         return output
 
 
-class CholeskySolve(PrimitiveWithInfer):
-    """Solve the linear equations A x = b, given the Cholesky factorization of A.
-
-    Parameters
-    ----------
-    lower : bool, optional
-        Whether to compute the upper or lower triangular Cholesky factorization
-        (Default: upper-triangular)
-    b : array
-        Right-hand side
-
-    Inputs:
-        - **A** (Tensor) - A matrix of shape :math:`(M, M)` to be decomposed.
-        - **b** (Tensor) - A Tensor of shape :math:`(M,)` or :math:`(..., M)`.
-                           Right-hand side matrix in :math:`A x = b`.
-    Returns
-    -------
-    x : array
-        The solution to the system A x = b
-    Supported Platforms:
-        ``CPU`` ``GPU``
-    Examples:
-        >>> import numpy as onp
-        >>> from mindspore.common import Tensor
-        >>> from mindspore.scipy.ops import CholeskySolve
-        >>> from mindspore.scipy.linalg import cho_factor
-        >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]], dtype=onp.float32))
-        >>> b = Tensor(onp.array([1.0, 1.0, 1.0, 1.0], dtype=onp.float32))
-        >>> c, lower = cho_factor(A)
-        >>> cholesky_solver = CholeskySolve(lower=lower)
-        >>> x = cholesky_solver(c, b)
-        >>> print(x)
-        [-0.01749266  0.11953348  0.01166185  0.15743434]
-    """
-
-    @prim_attr_register
-    def __init__(self, lower=False):
-        super().__init__(name="CholeskySolve")
-        self.lower = validator.check_value_type("lower", lower, [bool], self.name)
-        self.init_prim_io_names(inputs=['A', 'b'], outputs=['y'])
-
-    def __infer__(self, A, b):
-        b_shape = b['shape']
-        a_dtype = A['dtype']
-        return {
-            'shape': tuple(b_shape),
-            'dtype': a_dtype,
-            'value': None
-        }
-
-
 class Eigh(PrimitiveWithInfer):
     """
     Eigh decomposition(Symmetric matrix)
@@ -304,28 +253,6 @@ class LU(PrimitiveWithInfer):
         output = {
             'shape': (x_shape, pivots_shape, permutation_shape),
             'dtype': (x_dtype, mstype.int32, mstype.int32),
-            'value': None
-        }
-        return output
-
-
-class LUSolver(PrimitiveWithInfer):
-    """
-    LUSolver for Ax = b
-    """
-
-    @prim_attr_register
-    def __init__(self, trans: str):
-        super().__init__(name="LUSolver")
-        self.init_prim_io_names(inputs=['a', 'b'], outputs=['output'])
-        self.trans = validator.check_value_type("trans", trans, [str], self.name)
-
-    def __infer__(self, a, b):
-        b_shape = list(b['shape'])
-        a_dtype = a['dtype']
-        output = {
-            'shape': tuple(b_shape),
-            'dtype': a_dtype,
             'value': None
         }
         return output

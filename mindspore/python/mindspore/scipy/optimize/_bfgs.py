@@ -14,11 +14,9 @@
 # ============================================================================
 """BFGS"""
 from typing import NamedTuple
-
 from ... import nn
 from ... import numpy as mnp
 from ...common import Tensor
-
 from .line_search import LineSearch
 from ..utils import _to_scalar, _to_tensor, grad, _norm
 
@@ -82,7 +80,7 @@ class MinimizeBfgs(nn.Cell):
             maxiter = mnp.size(x0) * 200
 
         d = x0.shape[0]
-        I = mnp.eye(d, dtype=x0.dtype)
+        identity = mnp.eye(d, dtype=x0.dtype)
         f_0 = self.func(x0)
         g_0 = grad(self.func)(x0)
 
@@ -96,7 +94,7 @@ class MinimizeBfgs(nn.Cell):
             "x_k": x0,
             "f_k": f_0,
             "g_k": g_0,
-            "H_k": I,
+            "H_k": identity,
             "old_old_fval": f_0 + _norm(g_0) / 2,
             "status": _INT_ZERO,
             "line_search_status": _INT_ZERO
@@ -136,13 +134,13 @@ class MinimizeBfgs(nn.Cell):
             rho_k = mnp.reciprocal(mnp.dot(y_k, s_k))
             sy_k = mnp.expand_dims(s_k, axis=1) * mnp.expand_dims(y_k, axis=0)
             term1 = rho_k * sy_k
-            sy_k_2 = mnp.expand_dims(y_k, axis=1) * mnp.expand_dims(s_k, axis=0)
-            term2 = rho_k * sy_k_2
-            term3 = mnp.matmul(I - term1, state["H_k"])
-            term4 = mnp.matmul(term3, I - term2)
+            ys_k = mnp.expand_dims(y_k, axis=1) * mnp.expand_dims(s_k, axis=0)
+            term2 = rho_k * ys_k
+            term3 = mnp.matmul(identity - term1, state["H_k"])
+            term4 = mnp.matmul(term3, identity - term2)
             term5 = rho_k * (mnp.expand_dims(s_k, axis=1) * mnp.expand_dims(s_k, axis=0))
-            H_kp1 = term4 + term5
-            state["H_k"] = H_kp1
+            hess_kp1 = term4 + term5
+            state["H_k"] = hess_kp1
 
             # next iteration
             state["k"] = state["k"] + 1

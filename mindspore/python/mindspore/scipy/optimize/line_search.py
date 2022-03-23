@@ -14,12 +14,10 @@
 # ============================================================================
 """line search"""
 from typing import NamedTuple
-
 from ... import nn
 from ... import numpy as mnp
 from ...common import dtype as mstype
 from ...common import Tensor
-
 from ..utils import _to_scalar, _to_tensor, grad
 
 
@@ -52,7 +50,6 @@ def _cubicmin(a, fa, fpa, b, fb, c, fc):
     """Finds the minimizer for a cubic polynomial that goes through the
     points (a,fa), (b,fb), and (c,fc) with derivative at a of fpa.
     """
-    C = fpa
     db = b - a
     dc = c - a
     denom = (db * dc) ** 2 * (db - dc)
@@ -64,13 +61,12 @@ def _cubicmin(a, fa, fpa, b, fb, c, fc):
     d1[1, 1] = db ** 3
 
     d2 = mnp.zeros((2,))
-    d2[0] = fb - fa - C * db
-    d2[1] = fc - fa - C * dc
+    d2[0] = fb - fa - fpa * db
+    d2[1] = fc - fa - fpa * dc
 
-    A, B = mnp.dot(d1, d2.flatten()) / denom
-
-    radical = B * B - 3. * A * C
-    xmin = a + (-B + mnp.sqrt(radical)) / (3. * A)
+    a2, b2 = mnp.dot(d1, d2) / denom
+    radical = b2 * b2 - 3. * a2 * fpa
+    xmin = a + (-b2 + mnp.sqrt(radical)) / (3. * a2)
     return xmin
 
 
@@ -78,11 +74,9 @@ def _quadmin(a, fa, fpa, b, fb):
     """Finds the minimizer for a quadratic polynomial that goes through
     the points (a,fa), (b,fb) with derivative at a of fpa.
     """
-    D = fa
-    C = fpa
     db = b - a
-    B = (fb - D - C * db) / (db ** 2)
-    xmin = a - C / (2. * B)
+    b2 = (fb - fa - fpa * db) / (db ** 2)
+    xmin = a - fpa / (2. * b2)
     return xmin
 
 
@@ -179,8 +173,7 @@ def _zoom(fn, a_low, phi_low, dphi_low, a_high, phi_high, dphi_high, phi_0, g_0,
         state["phi_low"] = mnp.where(j_to_low, phi_j, state["phi_low"])
         state["dphi_low"] = mnp.where(j_to_low, dphi_j, state["dphi_low"])
 
-        # next iteration
-        state["j"] = state["j"] + 1
+        state["j"] += 1
 
     state["failed"] = state["j"] == maxiter
     return state
@@ -194,8 +187,7 @@ class LineSearch(nn.Cell):
         super(LineSearch, self).__init__()
         self.func = func
 
-    def construct(self, xk, pk, old_fval=None, old_old_fval=None, gfk=None,
-                  c1=1e-4, c2=0.9, maxiter=3):
+    def construct(self, xk, pk, old_fval=None, old_old_fval=None, gfk=None, c1=1e-4, c2=0.9, maxiter=20):
         def fval_and_grad(alpha):
             xkk = xk + alpha * pk
             fkk = self.func(xkk)
@@ -284,7 +276,6 @@ class LineSearch(nn.Cell):
             state["g_star"] = mnp.where(cond3, zoom2["g_star"], state["g_star"])
             state["dphi_star"] = mnp.where(cond3, zoom2["dphi_star"], state["dphi_star"])
 
-            # next iteration
             state["i"] += 1
             state["a_i"] = a_i
             state["phi_i"] = phi_i
@@ -308,8 +299,7 @@ class LineSearch(nn.Cell):
         return state
 
 
-def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4,
-                c2=0.9, maxiter=20):
+def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4, c2=0.9, maxiter=20):
     """Inexact line search that satisfies strong Wolfe conditions.
 
     Algorithm 3.5 from Wright and Nocedal, 'Numerical Optimization', 1999, pg. 59-61
