@@ -111,8 +111,6 @@ void LstmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST_ITER, dst_h_desc);
   AddArgument(DNNL_ARG_DST_ITER_C, dst_c_desc);
 
-  using dt = dnnl::memory::data_type;
-  using tag = dnnl::memory::format_tag;
   auto weights_dims_desc = CreateDesc<dnnl::memory::desc>(weights_dims_, dt::f32, tag::ldgoi);
   auto weights_h_dims_desc = CreateDesc<dnnl::memory::desc>(weights_h_dims_, dt::f32, tag::ldgoi);
   user_weights_memory_ = CreateDesc<dnnl::memory>(weights_dims_desc, eng);

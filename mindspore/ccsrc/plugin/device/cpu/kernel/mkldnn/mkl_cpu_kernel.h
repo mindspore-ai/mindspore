@@ -148,7 +148,7 @@ class mkl_threadpool : public dnnl::threadpool_interop::threadpool_iface {
       fn(i, n_jobs);
       return 0;
     };
-    tp_->ParallelLaunch(func, nullptr, n_jobs);
+    (void)tp_->ParallelLaunch(func, nullptr, n_jobs);
   }
 };
 #endif

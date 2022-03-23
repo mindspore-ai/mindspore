@@ -113,7 +113,12 @@ class TransposeFwdGpuKernelMod : public NativeGpuKernelMod {
     output_size_ = input_size_;
     std::vector<int64_t> perm = GetAttr<std::vector<int64_t>>(kernel_node, "perm");
     for (size_t j = 0; j < perm.size(); j++) {
-      input_axis_.push_back(perm[j]);
+      auto p = (perm[j] >= 0) ? perm[j] : (perm.size() + perm[j]);
+      if (p < 0) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the perm value should in [-" << perm.size() << ", "
+                          << (perm.size() - 1) << "], but got " << perm;
+      }
+      input_axis_.push_back(p);
     }
     InitSizeLists();
     return true;
