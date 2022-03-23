@@ -21,6 +21,8 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations.nn_ops import FractionalMaxPool
 from ..operations._grad_ops import FractionalMaxPoolGrad
+from ..operations.nn_ops import FractionalMaxPool3DWithFixedKsize
+from ..operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -108,5 +110,17 @@ def get_bprop_fractional_max_pool(self):
     def bprop(x, out, dout):
         dx = fractional_max_pool_grad(x, out[0], dout[0], out[1], out[2])
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(FractionalMaxPool3DWithFixedKsize)
+def get_bprop_fractional_max_pool3d_with_fixed_ksize(self):
+    """Grad definition for `FractionalMaxPool3DWithFixedKsize` operation."""
+    fractional_max_pool3d_grad_with_fixed_ksize = FractionalMaxPool3DGradWithFixedKsize(data_format=self.data_format)
+
+    def bprop(x, random_samples, out, dout):
+        dx = fractional_max_pool3d_grad_with_fixed_ksize(x, dout[0], out[1])
+        return (dx, zeros_like(random_samples))
 
     return bprop

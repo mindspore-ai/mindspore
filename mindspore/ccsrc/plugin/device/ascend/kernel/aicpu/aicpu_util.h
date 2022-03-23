@@ -28,6 +28,8 @@ namespace mindspore {
 namespace kernel {
 constexpr auto kLibAicpuKernelSoName = "libaicpu_kernels.so";
 constexpr auto kLibCpuKernelSoName = "libcpu_kernels.so";
+constexpr auto kFormat = "format";
+constexpr auto kDataFormat = "data_format";
 constexpr auto kInitDataSetQueue = "InitDataSetQueue";
 constexpr auto kInitData = "InitData";
 constexpr auto kGetNext = "GetNext";

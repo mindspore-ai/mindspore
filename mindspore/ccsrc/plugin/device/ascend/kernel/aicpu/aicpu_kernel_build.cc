@@ -190,6 +190,8 @@ void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *p
         attr_name = kSeed;
       } else if (attr_name == kSeed1) {
         attr_name = kSeed2;
+      } else if (attr_name == kFormat) {
+        attr_name = kDataFormat;
       }
       std::string type = attr_ptr->type();
       ParseAttrValue(type, attr_name, value, node_attr);

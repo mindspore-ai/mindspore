@@ -40,6 +40,8 @@ from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.nn_ops import FractionalMaxPool
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
+from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
+from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore._c_expression import security
@@ -1924,6 +1926,18 @@ test_case_math_ops = [
 ]
 
 test_case_nn_ops = [
+    ('FractionalMaxPool3DWithFixedKsize', {
+        'block': FractionalMaxPool3DWithFixedKsize(ksize=(1.0, 1.0, 2.0), output_shape=(2, 2, 3)),
+        'desc_inputs': [([1, 1, 4, 4, 7], {'dtype': np.int64}),
+                        ([1, 1, 3], {'dtype': np.float32})],
+        'desc_bprop': [([1, 1, 2, 2, 3], {'dtype': np.int64}),
+                       ([1, 1, 2, 2, 3], {'dtype': np.int64})]}),
+    ('FractionalMaxPool3DGradWithFixedKsize', {
+        'block': FractionalMaxPool3DGradWithFixedKsize(),
+        'desc_inputs': [([1, 1, 4, 4, 7], {'dtype': np.int64}),
+                        ([1, 1, 2, 2, 3], {'dtype': np.int64}),
+                        ([1, 1, 2, 2, 3], {'dtype': np.int64})],
+        'skip': ['backward']}),
     ('CeLU', {
         'block': P.CeLU(),
         'desc_inputs': [[1, 2, 3]],

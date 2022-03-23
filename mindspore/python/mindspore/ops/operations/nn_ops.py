@@ -9111,3 +9111,98 @@ class FractionalMaxPool(Primitive):
         validator.check_value_type("deterministic", deterministic, [bool], self.name)
         validator.check_value_type("seed", seed, [int], self.name)
         validator.check_value_type("seed2", seed2, [int], self.name)
+
+
+class FractionalMaxPool3DWithFixedKsize(Primitive):
+    r"""
+    3D fractional max pooling operation.
+
+    This operator applies a 3D fractional max pooling over an input signal composed of several input planes.
+    The max-pooling operation is applied in kD x kH x kW regions by a stochastic step size determined
+    by the target output size.
+    The number of output features is equal to the number of input planes.
+
+    Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
+
+    The input and output data format can be "NCDHW" and "NDHWC". N is the batch size, C is the number of channels,
+    D the feature depth, H is the feature height, and W is the feature width.
+
+    Args:
+        ksize (Union[float, tuple]): The target ksize is D x H x W.
+            ksize can be a tuple, or a single K for K x K x K.
+            specifying the window size (D, H, W) of the input tensor.
+
+        output_shape (Union[int, tuple]): The target output_shape is D x H x W.
+            output_shape can be a tuple, or a single H for H x H x H.
+            specifying the size (D, H, W) of the output tensor.
+
+        data_format (str) : The optional value for data format.
+            Currently support 'NCDHW' and 'NHDWC'. Default: 'NCDHW'.
+
+    Inputs:
+        - **x** (Tensor) - The input of FractionalMaxPool3DWithFixedKsize, which is a 4D or 5D tensor.
+          Tensor of data type : float16, float32, double, int32, int64.
+          Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(N, D_{in}, H_{in}, W_{in}, C)`.
+
+        - **random_samples** (Tensor) - The random step of FractionalMaxPool3DWithFixedKsize, which is a 3D tensor.
+          Tensor of data type : float16, float32, double, and value is between (0, 1).
+          Supported shape :math:`(N, C, 3)`
+
+    Outputs:
+        Outputs:
+        - **y** (Tensor) - A tensor, the output of FractionalMaxPool3DWithFixedKsize.
+        Has the same data type with `x`.
+        Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(N, D_{out}, H_{out}, W_{out}, C)`.
+
+        - **argmax** (Tensor) - A tensor, the indices along with the outputs.
+        Has the same shape as the `y` and int32 or int64 data type.
+
+    Raises:
+        TypeError: If `input_x` is not a 4D or 5D tensor.
+        TypeError: If `random_samples` is not a 3D tensor.
+        TypeError: If data type of `x` is not float16, float32, double, int32, int64.
+        TypeError: If dtype of `random_samples` is not float16, float32, double.
+        TypeError: If dtype of `argmax` is not int32, int64.
+        ValueError: If `output_shape` is a tuple and if `output_shape` length is not 3.
+        ValueError: If `ksize` is a tuple and if `ksize` length is not 3.
+        ValueError: If numbers in `output_shape` or `ksize` is not positive.
+        ValueError: If `data_format` is neither 'NCDHW' nor 'NDHWC'.
+        ValueError: If the first dimension size of `input_x` and `random_samples` is not equal.
+        ValueError: If the second dimension size of `input_x` and `random_samples` is not equal.
+        ValueError: If the third dimension size of `random_samples` is not 3.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+        ...       .reshape([1, 1, 2, 2, 4]), mstype.float32)
+        >>> random_samples = Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), mstype.float32)
+        >>> ksize = (1.0, 1.0, 1.0)
+        >>> output_shape = (1, 1, 2)
+        >>> net = ops.FractionalMaxPool3DWithFixedKsize(ksize = ksize, output_shape = output_shape)
+        >>> output, argmax = net(x, random_samples)
+        >>> print(output)
+        >>> print(argmax)
+        [[[[[13. 16.]]]]]
+        [[[[[12 15]]]]]
+    """
+    @prim_attr_register
+    def __init__(self, ksize, output_shape, data_format="NCDHW"):
+        """Initialize FractionalMaxPool3DWithFixedKsize."""
+        self.init_prim_io_names(inputs=["x", "random_samples"], outputs=["y", "argmax"])
+        validator.check_value_type("ksize", ksize, [float, tuple], self.name)
+        self.ksize = ksize
+        if isinstance(self.ksize, float):
+            self.ksize = (ksize, ksize, ksize)
+        if len(self.ksize) != 3:
+            raise ValueError(f"For '{self.name}', attr 'ksize' should be an positive float number or a tuple of "
+                             f"three float numbers, but got {len(self.ksize)} numbers.")
+        for item in self.ksize:
+            validator.check_positive_float(item, 'ksize item', self.name)
+        self.output_shape = validator.check_value_type("output_shape", output_shape, [int, tuple], self.name)
+        self.data_format = validator.check_string(data_format, ['NCDHW', 'NDHWC'], 'data_format', self.name)
+        self.output_shape = _check_3d_int_or_tuple("output_shape", output_shape,
+                                                   self.name, allow_five=False, ret_five=False)
+        self.add_prim_attr("ksize", self.ksize)
+        self.add_prim_attr("output_shape", self.output_shape)
