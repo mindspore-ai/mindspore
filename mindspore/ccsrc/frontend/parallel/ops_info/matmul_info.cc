@@ -484,6 +484,14 @@ Status MatMulBase::GenerateStrategiesNotPower2(int64_t stage_id, size_t dev_num_
     }
   }
   strategy_cost_.clear();
+  // add the repeated strategy
+  auto repeated_stra_arrays{inputs_shape_};
+  for (auto &stra_array : repeated_stra_arrays) {
+    std::fill(stra_array.begin(), stra_array.end(), 1);
+  }
+  StrategyPtr repeated_stra = std::make_shared<Strategy>(stage_id, repeated_stra_arrays);
+  sp_vector.push_back(repeated_stra);
+
   for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == FAILED) {
       MS_LOG(WARNING) << name_ << " : Calculating cost for strategy failed.";

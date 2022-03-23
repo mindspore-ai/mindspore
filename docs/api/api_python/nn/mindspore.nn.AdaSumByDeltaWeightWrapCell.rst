@@ -3,7 +3,7 @@ mindspore.nn.AdaSumByDeltaWeightWrapCell
 
 .. py:class:: mindspore.nn.AdaSumByDeltaWeightWrapCell(optimizer)
 
-    Adaptive Summation (AdaSum)算法的实现，根据更新前后的参数差计算。
+    Adaptive Summation (AdaSum)算法的实现，根据更新前后的参数差计算。应用于semi_auto_parallel/auto_parallel模式。
 
     请参阅论文 `AdaSum: Scaling Distributed Training with Adaptive Summation <https://arxiv.org/abs/2006.02924>`_。
 
