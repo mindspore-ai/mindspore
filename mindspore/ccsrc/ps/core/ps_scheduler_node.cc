@@ -50,6 +50,146 @@ void PSSchedulerNode::RunRecovery() {
 
   MS_LOG(INFO) << "Scheduler recovery finish.";
 }
+
+void PSSchedulerNode::RegisterInitCollectCommServiceHandler() {
+  handlers_[NodeCommand::SEND_HOST_NAME] = static_cast<ResponseHandler>(&PSSchedulerNode::ProcessSendHostName);
+  handlers_[NodeCommand::QUERY_HOST_NAMES] = static_cast<ResponseHandler>(&PSSchedulerNode::ProcessQueryHostNames);
+  handlers_[NodeCommand::SEND_UNIQUE_ID] = static_cast<ResponseHandler>(&PSSchedulerNode::ProcessSendUniqueID);
+  handlers_[NodeCommand::QUERY_UNIQUE_ID] = static_cast<ResponseHandler>(&PSSchedulerNode::ProcessQueryUniqueID);
+}
+
+void PSSchedulerNode::ProcessSendHostName(const std::shared_ptr<TcpServer> &server,
+                                          const std::shared_ptr<TcpConnection> &conn,
+                                          const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+
+  SendHostHashNameMessage send_host_name_msg;
+  send_host_name_msg.ParseFromArray(data, SizeToInt(size));
+  std::string node_id = send_host_name_msg.node_id();
+  uint32_t rank_id = send_host_name_msg.rank_id();
+  size_t host_hash_name = send_host_name_msg.host_hash_name();
+  MS_LOG(INFO) << "Received send host name request, node id: " << node_id << ", rank id: " << rank_id;
+
+  bool ret = false;
+  std::string error = "";
+  if (rank_id >= worker_num_) {
+    error = "The rank id: " + std::to_string(rank_id) + " should be less than: " + std::to_string(worker_num_);
+    MS_LOG(ERROR) << error;
+  } else {
+    host_hash_names_[rank_id] = host_hash_name;
+    (void)recv_rank_id_send_host_name_.insert(rank_id);
+    ret = true;
+  }
+
+  GeneralResponse(server, conn, meta, ret, error);
+  MS_LOG(INFO) << "Respond send host name request, node id: " << node_id << ", rank id: " << rank_id;
+}
+
+void PSSchedulerNode::ProcessQueryHostNames(const std::shared_ptr<TcpServer> &server,
+                                            const std::shared_ptr<TcpConnection> &conn,
+                                            const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+
+  GeneralQueryMessage query_msg;
+  query_msg.ParseFromArray(data, SizeToInt(size));
+  std::string node_id = query_msg.node_id();
+  uint32_t rank_id = query_msg.rank_id();
+  MS_LOG(INFO) << "Received query host name request, node id: " << node_id << ", rank id: " << rank_id;
+
+  bool is_success = recv_rank_id_send_host_name_.size() == host_hash_names_.size();
+  QueryHostHashNameRespMessage resp_msg;
+  resp_msg.set_is_success(is_success);
+  if (is_success) {
+    *resp_msg.mutable_host_hash_names() = {host_hash_names_.begin(), host_hash_names_.end()};
+  }
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, resp_msg.SerializeAsString().data(),
+                           resp_msg.ByteSizeLong())) {
+    MS_LOG(ERROR) << "Scheduler failed to respond message.";
+    return;
+  }
+  MS_LOG(INFO) << "Respond query host name request, node id: " << node_id << ", rank id: " << rank_id;
+
+  if (is_success) {
+    (void)recv_rank_id_query_host_name_.insert(rank_id);
+
+    if (recv_rank_id_query_host_name_.size() == recv_rank_id_send_host_name_.size()) {
+      recv_rank_id_send_host_name_.clear();
+      recv_rank_id_query_host_name_.clear();
+    }
+  }
+}
+
+void PSSchedulerNode::ProcessSendUniqueID(const std::shared_ptr<TcpServer> &server,
+                                          const std::shared_ptr<TcpConnection> &conn,
+                                          const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+
+  SendUniqueIDMessage send_unique_id_msg;
+  send_unique_id_msg.ParseFromArray(data, SizeToInt(size));
+  std::string node_id = send_unique_id_msg.node_id();
+  uint32_t rank_id = send_unique_id_msg.rank_id();
+  std::string group_name = send_unique_id_msg.group_name();
+  MS_LOG(INFO) << "Received send unique id request, group name: " << group_name << ", node id: " << node_id
+               << ", rank id: " << rank_id;
+
+  bool ret = false;
+  std::string error = "";
+  if (rank_id != 0) {
+    error = "The rank id: " + std::to_string(rank_id) + " of worker which sends unique id should be 0";
+    MS_LOG(ERROR) << error;
+  } else {
+    unique_id_group_[group_name] = send_unique_id_msg.unique_id();
+    ret = true;
+  }
+
+  GeneralResponse(server, conn, meta, ret, error);
+  MS_LOG(INFO) << "Respond send unique id request, group name: " << group_name << ", node id: " << node_id
+               << ", rank id: " << rank_id;
+}
+
+void PSSchedulerNode::ProcessQueryUniqueID(const std::shared_ptr<TcpServer> &server,
+                                           const std::shared_ptr<TcpConnection> &conn,
+                                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+
+  QueryUniqueIDMessage query_msg;
+  query_msg.ParseFromArray(data, SizeToInt(size));
+  std::string node_id = query_msg.node_id();
+  uint32_t rank_id = query_msg.rank_id();
+  std::string group_name = query_msg.group_name();
+  MS_LOG(INFO) << "Received query unique id request, group name: " << group_name << ", node id: " << node_id
+               << ", rank id: " << rank_id;
+
+  auto iter = unique_id_group_.find(group_name);
+  bool is_success = (iter != unique_id_group_.end());
+
+  QueryUniqueIDRespMessage resp_msg;
+  resp_msg.set_is_success(is_success);
+  if (is_success) {
+    resp_msg.set_unique_id(iter->second);
+  }
+
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, resp_msg.SerializeAsString().data(),
+                           resp_msg.ByteSizeLong())) {
+    MS_LOG(ERROR) << "Scheduler failed to respond message.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Respond query unique id request, group name: " << group_name << ", node id: " << node_id
+               << ", rank id: " << rank_id;
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

@@ -34,6 +34,7 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
   initialized_ = true;
+  finalized_ = false;
   return true;
 }
 
@@ -47,6 +48,167 @@ bool MsCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name
   MsCommunicationGroupPtr group = std::make_shared<MsCommunicationGroup>(group_name, group_ranks, global_rank_id_);
   CHECK_IF_NULL(group);
   groups_[group_name] = group;
+  return true;
+}
+
+bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) const {
+  CHECK_IF_NULL(host_hash_names);
+  while (!SendHostHashName(host_hash_name)) {
+    MS_LOG(WARNING) << "Send host hash name to scheduler failed, retrying...";
+    if (finalized_.load()) {
+      return false;
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
+  }
+
+  while (!QueryHostHashNames(host_hash_names)) {
+    MS_LOG(WARNING) << "Query host hash names from scheduler failed, retrying...";
+    if (finalized_.load()) {
+      return false;
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
+  }
+
+  return true;
+}
+
+bool MsCollectiveCommLib::BroadcastUniqueID(const std::string &group_name, bool is_root_node, size_t root_info_size,
+                                            void *root_info) const {
+  CHECK_IF_NULL(root_info);
+  if (is_root_node) {
+    while (!SendUniqueID(group_name, root_info_size, root_info)) {
+      MS_LOG(WARNING) << "Send unique id to scheduler failed, retrying...";
+      if (finalized_.load()) {
+        return false;
+      }
+
+      std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
+    }
+    return true;
+  }
+
+  while (!QueryUniqueID(group_name, root_info_size, root_info)) {
+    MS_LOG(WARNING) << "Query unique id from scheduler failed, retrying...";
+    if (finalized_.load()) {
+      return false;
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
+  }
+  return true;
+}
+
+bool MsCollectiveCommLib::SendHostHashName(size_t host_hash_name) const {
+  CHECK_IF_NULL(node_);
+  ps::core::SendHostHashNameMessage send_host_name_msg;
+  send_host_name_msg.set_node_id(node_->node_id());
+  send_host_name_msg.set_rank_id(node_->rank_id());
+  send_host_name_msg.set_host_hash_name(host_hash_name);
+  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
+  if (!node_->SendToScheduler(send_host_name_msg.SerializeAsString().data(),
+                              send_host_name_msg.SerializeAsString().size(), NodeCommand::SEND_HOST_NAME, &output)) {
+    MS_LOG(WARNING) << "Failed to send host hash name request to scheduler.";
+    return false;
+  }
+
+  ps::core::GeneralResponseMsg resp_msg;
+  CHECK_IF_NULL(output);
+  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
+  if (!resp_msg.is_success()) {
+    MS_LOG(WARNING) << "Send host hash name to scheduler failed.";
+    return false;
+  }
+  return true;
+}
+
+bool MsCollectiveCommLib::QueryHostHashNames(std::vector<size_t> *host_hash_names) const {
+  CHECK_IF_NULL(host_hash_names);
+  CHECK_IF_NULL(node_);
+  ps::core::GeneralQueryMessage general_query_msg;
+  general_query_msg.set_node_id(node_->node_id());
+  general_query_msg.set_rank_id(node_->rank_id());
+  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
+  if (!node_->SendToScheduler(general_query_msg.SerializeAsString().data(),
+                              general_query_msg.SerializeAsString().size(), NodeCommand::QUERY_HOST_NAMES, &output)) {
+    MS_LOG(WARNING) << "Failed to send query host name request to scheduler.";
+    return false;
+  }
+
+  ps::core::QueryHostHashNameRespMessage resp_msg;
+  CHECK_IF_NULL(output);
+  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
+  if (!resp_msg.is_success()) {
+    MS_LOG(INFO) << "Query host hash name from scheduer failed, maybe scheduler has not received all host names.";
+    return false;
+  }
+
+  if (host_hash_names->size() != IntToSize(resp_msg.host_hash_names_size())) {
+    MS_LOG(ERROR) << "The host_hash_names container size: " << host_hash_names->size()
+                  << ", but received size: " << resp_msg.host_hash_names_size();
+    return false;
+  }
+
+  for (size_t i = 0; i < host_hash_names->size(); i++) {
+    (*host_hash_names)[i] = resp_msg.host_hash_names()[i];
+  }
+
+  return true;
+}
+
+bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t root_info_size,
+                                       const void *root_info) const {
+  CHECK_IF_NULL(root_info);
+  CHECK_IF_NULL(node_);
+  ps::core::SendUniqueIDMessage send_unique_id_msg;
+  send_unique_id_msg.set_node_id(node_->node_id());
+  send_unique_id_msg.set_rank_id(node_->rank_id());
+  send_unique_id_msg.set_group_name(group_name);
+  send_unique_id_msg.set_unique_id(root_info, root_info_size);
+  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
+  if (!node_->SendToScheduler(send_unique_id_msg.SerializeAsString().data(),
+                              send_unique_id_msg.SerializeAsString().size(), NodeCommand::SEND_UNIQUE_ID, &output)) {
+    MS_LOG(WARNING) << "Failed to send unique id request to scheduler.";
+    return false;
+  }
+
+  ps::core::GeneralResponseMsg resp_msg;
+  CHECK_IF_NULL(output);
+  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
+  if (!resp_msg.is_success()) {
+    MS_LOG(WARNING) << "Send unique id to scheduler failed.";
+    return false;
+  }
+  return true;
+}
+
+bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) const {
+  CHECK_IF_NULL(root_info);
+  CHECK_IF_NULL(node_);
+  ps::core::QueryUniqueIDMessage query_unique_id_msg;
+  query_unique_id_msg.set_node_id(node_->node_id());
+  query_unique_id_msg.set_rank_id(node_->rank_id());
+  query_unique_id_msg.set_group_name(group_name);
+  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
+  if (!node_->SendToScheduler(query_unique_id_msg.SerializeAsString().data(),
+                              query_unique_id_msg.SerializeAsString().size(), NodeCommand::QUERY_UNIQUE_ID, &output)) {
+    MS_LOG(WARNING) << "Failed to send query unique id request to scheduler.";
+    return false;
+  }
+
+  ps::core::QueryUniqueIDRespMessage resp_msg;
+  CHECK_IF_NULL(output);
+  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
+  if (!resp_msg.is_success()) {
+    MS_LOG(INFO) << "Query unique id from scheduer failed, maybe scheduler has not received unique id.";
+    return false;
+  }
+
+  auto ret = memcpy_s(root_info, root_info_size, resp_msg.unique_id().data(), resp_msg.unique_id().length());
+  if (ret != EOK) {
+    MS_LOG(WARNING) << "The memcpy_s error, errorno(" << ret << ")";
+    return false;
+  }
   return true;
 }
 

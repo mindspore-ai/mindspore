@@ -166,7 +166,7 @@ class BACKEND_EXPORT AbstractNode : public Node {
   void ProcessFetchServersResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
   // Process the response messages about actor route table service.
-  void ProcessActorRouteServiceResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+  void ProcessReceiveSchedulerResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
   void ProcessSendMetadata(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                            const Protos &protos, const void *data, size_t size);
@@ -221,6 +221,9 @@ class BACKEND_EXPORT AbstractNode : public Node {
   void InitCommandHandler();
   void RegisterActorRouteTableRspHandler();
   void InitServerHandler();
+
+  // Register collective communication initialization response methods.
+  virtual void RegisterInitCollectCommResphandler() {}
 
   // when initializing the node, should initializing the node info.
   void InitNodeInfo(const NodeRole &role);

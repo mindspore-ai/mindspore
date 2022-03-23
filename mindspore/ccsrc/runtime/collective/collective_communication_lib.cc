@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace device {
 bool CollectiveCommunicationLib::Finalize() {
-  if (!initialized_) {
+  if (!initialized_ || finalized_.load()) {
     return true;
   }
 
@@ -31,6 +31,7 @@ bool CollectiveCommunicationLib::Finalize() {
   }
   groups_.clear();
   initialized_ = false;
+  finalized_ = true;
   return true;
 }
 

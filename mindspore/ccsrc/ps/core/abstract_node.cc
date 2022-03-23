@@ -776,8 +776,8 @@ void AbstractNode::ProcessFetchServersResp(const std::shared_ptr<MessageMeta> &m
   }
 }
 
-void AbstractNode::ProcessActorRouteServiceResp(const std::shared_ptr<MessageMeta> &meta, const void *data,
-                                                size_t size) {
+void AbstractNode::ProcessReceiveSchedulerResp(const std::shared_ptr<MessageMeta> &meta, const void *data,
+                                               size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   std::lock_guard<std::mutex> lock(receive_messages_mutex_);
@@ -1275,12 +1275,13 @@ void AbstractNode::InitCommandHandler() {
   handlers_[NodeCommand::SCALE_IN_DONE] = nullptr;
   handlers_[NodeCommand::SEND_EVENT] = nullptr;
   RegisterActorRouteTableRspHandler();
+  RegisterInitCollectCommResphandler();
 }
 
 void AbstractNode::RegisterActorRouteTableRspHandler() {
-  handlers_[NodeCommand::REGISTER_ACTOR_ROUTE] = &AbstractNode::ProcessActorRouteServiceResp;
-  handlers_[NodeCommand::DELETE_ACTOR_ROUTE] = &AbstractNode::ProcessActorRouteServiceResp;
-  handlers_[NodeCommand::LOOKUP_ACTOR_ROUTE] = &AbstractNode::ProcessActorRouteServiceResp;
+  handlers_[NodeCommand::REGISTER_ACTOR_ROUTE] = &AbstractNode::ProcessReceiveSchedulerResp;
+  handlers_[NodeCommand::DELETE_ACTOR_ROUTE] = &AbstractNode::ProcessReceiveSchedulerResp;
+  handlers_[NodeCommand::LOOKUP_ACTOR_ROUTE] = &AbstractNode::ProcessReceiveSchedulerResp;
 }
 
 void AbstractNode::InitServerHandler() {

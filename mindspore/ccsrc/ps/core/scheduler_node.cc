@@ -233,6 +233,7 @@ void SchedulerNode::InitCommandHandler() {
   handlers_[NodeCommand::SCALE_IN_DONE] = &SchedulerNode::ProcessScaleInDone;
   handlers_[NodeCommand::SEND_EVENT] = &SchedulerNode::ProcessSendEvent;
   RegisterActorRouteTableServiceHandler();
+  RegisterInitCollectCommServiceHandler();
 }
 
 void SchedulerNode::RegisterActorRouteTableServiceHandler() {
