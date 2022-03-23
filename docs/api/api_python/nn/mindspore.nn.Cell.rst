@@ -605,7 +605,7 @@
 
         - **cell_type** (str) – 被更新的类型，`cell_type` 可以是"quant"或"second-order"。
 
-    .. py:method:: update_parameters_name(prefix="", recurse=True)
+    .. py:method:: update_parameters_name(prefix='', recurse=True)
 
         给网络参数名称添加 `prefix` 前缀字符串。
 
