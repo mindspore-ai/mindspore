@@ -293,9 +293,10 @@ void FusionBuildTbeJsonCreator::GenReusedOutputDesc(const AnfNodePtr &anf_node, 
 std::vector<size_t> FusionBuildTbeJsonCreator::GetDescOutputIndex(const std::vector<int64_t> &output_used_nums) {
   std::vector<size_t> desc_output_index = {};
   for (size_t idx = 0; idx < output_used_nums.size(); ++idx) {
-    (void)desc_output_index.emplace_back(idx);
-    if (output_used_nums[idx] > 1) {
-      desc_output_index.emplace_back(idx);
+    auto index = idx;
+    (void)desc_output_index.emplace_back(index);
+    if (output_used_nums[index] > 1) {
+      desc_output_index.emplace_back(index);
     }
   }
   return desc_output_index;
