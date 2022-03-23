@@ -17,6 +17,7 @@
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include <ctime>
 #include <string>
+#include <vector>
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/allreduce_fusion/allreduce_fusion.h"
 #include "include/common/utils/parallel_context.h"

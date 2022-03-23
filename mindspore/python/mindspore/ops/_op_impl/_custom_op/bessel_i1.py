@@ -34,10 +34,12 @@ bessel_i1_op_info = TBERegOp("BesselI1") \
     .dtype_format(DataType.F32_None, DataType.F32_None) \
     .get_op_info()
 
+
 @op_info_register(bessel_i1_op_info)
 def _bessel_i1_tbe():
     """BesselI1 TBE register"""
     return
+
 
 A = [2.77791411276104639959E-18, -2.11142121435816608115E-17,
      1.55363195773620046921E-16, -1.10559694773538630805E-15,
@@ -69,6 +71,7 @@ B = [
     -1.10588938762623716291E-4, -9.76109749136146840777E-3,
     7.78576235018280120474E-1]
 
+
 def chebevl(x, num, coef, shape, dtype):
     """chebevl"""
     broad_coef = dsl.broadcast(coef[0], shape, dtype)
@@ -80,6 +83,7 @@ def chebevl(x, num, coef, shape, dtype):
         coef_i = dsl.broadcast(coef[i], shape, dtype)
         broad_coef = dsl.vsub(dsl.vadd(dsl.vmul(x, broad_zero), coef_i), none_signal)
     return dsl.vmuls(dsl.vsub(broad_coef, none_signal), 0.5)
+
 
 @fusion_manager.register("bessel_i1")
 def bessel_i1_compute(input_x, output_y, kernel_name="bessel_i1"):
@@ -106,6 +110,7 @@ def bessel_i1_compute(input_x, output_y, kernel_name="bessel_i1"):
         res = dsl.cast_to(res, "float16")
 
     return res
+
 
 def bessel_i1(x, y, kernel_name="bessel_i1"):
     """bessel_i1"""
