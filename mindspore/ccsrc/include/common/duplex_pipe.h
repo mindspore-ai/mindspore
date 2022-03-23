@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_DUPLEX_PIPE_H_
 
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #include <string>
 #include <memory>
 #include <initializer_list>
@@ -41,14 +41,14 @@ class COMMON_EXPORT DuplexPipe : public std::enable_shared_from_this<mindspore::
   constexpr inline static unsigned int kTimeOutSeconds = 5;
 
   DuplexPipe() = default;
-  ~DuplexPipe();
+  virtual ~DuplexPipe();
 
   // Create a subprocess and open a duplex pipe between local and remote
   int Open(const std::initializer_list<std::string> &arg_list, bool append_fds = false);
   void Close();
   void SetTimeOutSeconds(unsigned int secs) { time_out_secs_ = secs; }
-  void SetTimeOutCallback(const std::shared_ptr<std::function<void()>> cb) { time_out_callback_ = cb; }
-  void SetFinalizeCallback(const std::shared_ptr<std::function<void()>> cb) { finalize_callback_ = cb; }
+  void SetTimeOutCallback(const std::shared_ptr<std::function<void()>> &cb) { time_out_callback_ = cb; }
+  void SetFinalizeCallback(const std::shared_ptr<std::function<void()>> &cb) { finalize_callback_ = cb; }
 
   // Write the 'buf' to remote stdin
   void Write(const std::string &buf, bool flush = true) const;
@@ -89,21 +89,21 @@ class COMMON_EXPORT DuplexPipe : public std::enable_shared_from_this<mindspore::
   // Pipe: { Local:fd1_[1] --> Remote:fd1_[0] }
   // Remote:fd1_[0] would be redirected by subprocess's stdin.
   // Local:fd1_[1] would be used by 'Write()' as output.
-  int fd1_[2];
+  int fd1_[2]{};
 
   // Pipe: { Remote:fd2_[1] --> Local:fd2_[0] }
   // Remote:fd2_[1] would be redirected by subprocess's stdout.
   // Local:fd2_[0] would be used by 'Read()' as input.
-  int fd2_[2];
+  int fd2_[2]{};
 
   // // Used and returned by 'Read()'.
   // std::string buf_;
-  char c_buf_[kBufferSize];
+  char c_buf_[kBufferSize]{};
 
-  int local_stdin_;
-  int local_stdout_;
-  int remote_stdin_;
-  int remote_stdout_;
+  int local_stdin_{};
+  int local_stdout_{};
+  int remote_stdin_{};
+  int remote_stdout_{};
 
   class COMMON_EXPORT SignalHandler {
    public:
@@ -130,7 +130,7 @@ class COMMON_EXPORT DuplexPipe : public std::enable_shared_from_this<mindspore::
 
   // Subprocess id in parent process,
   // otherwise zero in child process.
-  pid_t pid_;
+  pid_t pid_{};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_DUPLEX_PIPE_H_
