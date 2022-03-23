@@ -18,7 +18,7 @@
 #include "nnacl/infer/infer_register.h"
 
 static const int num_of_gates = 4;
-static const int no_of_recorde_values = 7;
+static const int no_of_recorde_values = 6;
 
 int CheckInputShapeValid(const TensorC *const *inputs, const LstmParameter *parameter) {
   const TensorC *input = inputs[FIRST_INPUT];
@@ -70,14 +70,14 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-
+  int dir_multiplier = param->bidirectional_ ? 2 : 1;
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
   int hidden_size = 1;
   ShapeSet(out_shape, &out_shape_size, input->shape_, input->shape_size_);
   if (inputs_size == DIMENSION_4D) {  // if input from MINDIR
     hidden_size = weight_i->shape_[THIRD_INPUT];
-    out_shape[THIRD_INPUT] = hidden_size;
+    out_shape[THIRD_INPUT] = hidden_size * dir_multiplier;
   } else {
     if (CheckInputShapeValid(inputs, param) != NNACL_OK) {
       return NNACL_ERR;
@@ -99,7 +99,7 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   SetShapeArray(output, out_shape, out_shape_size);
   int state_shape[MAX_SHAPE_SIZE];
   size_t state_shape_size = 0;
-  int dir_multiplier = param->bidirectional_ ? 2 : 1;
+
   ShapeSet(state_shape, &state_shape_size, input->shape_, input->shape_size_);
   state_shape[FIRST_INPUT] = dir_multiplier;
   state_shape[THIRD_INPUT] = hidden_size;

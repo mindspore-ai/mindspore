@@ -51,7 +51,8 @@ int LstmGradWeightInferShape(const TensorC *const *inputs, size_t inputs_size, T
   if (has_bias) {
     output_shape[0] += C2NUM * gate_size;
   }
-
+  int dir_mul = (param->bidirectional_) ? C2NUM : C1NUM;
+  output_shape[0] *= dir_mul;
   SetShapeArray(output, output_shape, C3NUM);
 
   return NNACL_OK;

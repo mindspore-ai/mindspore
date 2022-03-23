@@ -43,21 +43,11 @@ int LSTMGradDataCPUKernel::ReSize() { return InitParam(); }
 int LSTMGradDataCPUKernel::Run() {
   auto ret = MallocRunBuffer();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmGradDataCPUKernel MallocRunBuffer error.";
+    MS_LOG(ERROR) << "LSTMGradDataCPUKernel MallocRunBuffer error.";
     FreeRunBuffer();
     return RET_ERROR;
   }
 
-  auto output = out_tensors_.at(0);
-  auto output_ptr = reinterpret_cast<float *>(output->data());
-  CHECK_NULL_RETURN(output_ptr);
-
-  LstmBackpropUnidirectional(output_ptr, false);
-  FreeRunBuffer();
-  return RET_OK;
-}
-
-int LSTMGradDataCPUKernel::LstmBackpropUnidirectional(float *output, bool is_backward) {
   // get input tensors
   auto dC_tensor = in_tensors_.at(dC_index);
   MS_ASSERT(dC_tensor != nullptr);
@@ -71,8 +61,6 @@ int LSTMGradDataCPUKernel::LstmBackpropUnidirectional(float *output, bool is_bac
   MS_ASSERT(intermediate_tensor != nullptr);
   auto cell_input_tensor = in_tensors_.at(cell_input_index);
   MS_ASSERT(cell_input_tensor != nullptr);
-
-  // Get output tensors
   auto dX_tensor = out_tensors_.at(dX_out_index);
   MS_ASSERT(dX_tensor != nullptr);
   auto dH_out_tensor = out_tensors_.at(dH_out_index);
@@ -80,58 +68,119 @@ int LSTMGradDataCPUKernel::LstmBackpropUnidirectional(float *output, bool is_bac
   auto dC_out_tensor = out_tensors_.at(dC_out_index);
   MS_ASSERT(dC_out_tensor != nullptr);
 
-  auto cell_input_data = reinterpret_cast<float *>(cell_input_tensor->data());
-  auto dh_out = reinterpret_cast<float *>(dH_out_tensor->data());
-  auto dc_out = reinterpret_cast<float *>(dC_out_tensor->data());
-  auto intermediate_data = reinterpret_cast<float *>(intermediate_tensor->data());
-  auto dC = reinterpret_cast<float *>(dC_tensor->data());
-  auto dH = reinterpret_cast<float *>(dH_tensor->data());
-  auto dY = reinterpret_cast<float *>(dy_tensor->data());
-  auto dX = reinterpret_cast<float *>(dX_tensor->data());
-  auto weights = reinterpret_cast<float *>(weights_tensor->data());
+  // Get Tensors Data
+  int time_stamp_len = lstm_param_->batch_ * lstm_param_->hidden_size_;
 
-  auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
-  auto seq_stride = lstm_param_->seq_len_ * state_size;
-  float *cell_state = intermediate_data + seq_stride * 1;
-  float *input_gate = intermediate_data + seq_stride * 2;
-  float *output_gate = intermediate_data + seq_stride * 3;
-  float *forget_gate = intermediate_data + seq_stride * 4;
-  float *cell_gate = intermediate_data + seq_stride * 5;
-  // reorder weights only from IFGO to IOFG
-  ReorderLstmWeightGrad(weights_tmp_, weights);
-  memset(dH, 0, dH_tensor->Size());
-  memset(dC, 0, dC_tensor->Size());
+  weights_ = reinterpret_cast<float *>(weights_tensor->data());
+  ReorderLstmWeightGrad(weights_tmp_, weights_);
+
+  dC_ = reinterpret_cast<float *>(dC_tensor->data());
+  dH_ = reinterpret_cast<float *>(dH_tensor->data());
+  dX_ = reinterpret_cast<float *>(dX_tensor->data());
+  memset(dH_, 0, dH_tensor->Size());
+  memset(dC_, 0, dC_tensor->Size());
+  memset(dX_, 0, dX_tensor->Size());
+
+  int w_size = lstm_param_->hidden_size_ * lstm_param_->input_size_;
+  int h_size = lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
+
+  float *orig_da = dA_tmp_;
+  if (lstm_param_->bidirectional_) {
+    // Adjust pointer to backward cell
+    cell_input_data_ = reinterpret_cast<float *>(cell_input_tensor->data()) + time_stamp_len;
+    intermediate_data_ = reinterpret_cast<float *>(intermediate_tensor->data()) + time_stamp_len;
+    dC_ = reinterpret_cast<float *>(dC_tensor->data()) + time_stamp_len;
+    dH_ = reinterpret_cast<float *>(dH_tensor->data()) + time_stamp_len;
+    dY_ = reinterpret_cast<float *>(dy_tensor->data()) + lstm_param_->hidden_size_;
+    dA_tmp_ = orig_da + lstm_param_->seq_len_ * num_of_gates * time_stamp_len;
+    int w_offset = num_of_gates * (w_size + h_size);
+    int v_offset = weight_batch_ * w_size + num_of_gates * h_size;
+    float *w = weights_tmp_ + w_offset;
+    float *v = weights_tmp_ + v_offset;
+    LstmBackpropUnidirectional(true, w, v);
+  }
+  // adjust to forward cell
+  cell_input_data_ = reinterpret_cast<float *>(cell_input_tensor->data());
+  intermediate_data_ = reinterpret_cast<float *>(intermediate_tensor->data());
+  dC_ = reinterpret_cast<float *>(dC_tensor->data());
+  dH_ = reinterpret_cast<float *>(dH_tensor->data());
+  dY_ = reinterpret_cast<float *>(dy_tensor->data());
+
+  int w_offset = 0;
+  int v_offset = num_of_gates * w_size;
+  float *w = weights_tmp_ + w_offset;
+  float *v = weights_tmp_ + v_offset;
+  dA_tmp_ = orig_da;
+  LstmBackpropUnidirectional(false, w, v);
+
+  // setup output tensors
+  dh_out_ = reinterpret_cast<float *>(dH_out_tensor->data());
+  dc_out_ = reinterpret_cast<float *>(dC_out_tensor->data());
+  std::copy(&(dH_[0]), &(dH_[dH_tensor->ElementsNum()]), &(dh_out_[0]));
+  std::copy(&(dC_[0]), &(dC_[dC_tensor->ElementsNum()]), &(dc_out_[0]));
+
+  auto seq_stride = lstm_param_->seq_len_ * lstm_param_->output_step_;
+  float *cell_state = intermediate_data_ + seq_stride * 1;
+  std::copy(&(dA_tmp_[0]), &(dA_tmp_[num_of_gates * seq_stride]), &(cell_state[0]));
+  FreeRunBuffer();
+  return RET_OK;
+}
+
+int LSTMGradDataCPUKernel::LstmBackpropUnidirectional(bool is_backward, float *w, float *v) {
+  auto seq_stride = lstm_param_->seq_len_ * lstm_param_->output_step_;
+  int state_len = lstm_param_->batch_ * lstm_param_->hidden_size_;
+  float *cell_state = intermediate_data_ + seq_stride * 1;
+  float *input_gate = intermediate_data_ + seq_stride * 2;
+  float *output_gate = intermediate_data_ + seq_stride * 3;
+  float *forget_gate = intermediate_data_ + seq_stride * 4;
+  float *cell_gate = intermediate_data_ + seq_stride * 5;
+
+  int dir_mult = lstm_param_->bidirectional_ ? 2 : 1;
+  int prev_time_stamp_offset = (is_backward) ? 1 : -1;
+  int first_time_stamp = (is_backward) ? lstm_param_->seq_len_ - 1 : 0;
   for (int t = lstm_param_->seq_len_ - 1; t >= 0; t--) {
     int real_t = is_backward ? lstm_param_->seq_len_ - t - 1 : t;
-    auto stride = real_t * state_size;
-
+    auto stride = real_t * lstm_param_->output_step_;
     float *curr_cell_state = cell_state + stride;
-    float *prev_cell_state = (real_t > 0) ? cell_state + (real_t - 1) * state_size : cell_input_data;
+    float *prev_cell_state = (real_t == first_time_stamp)
+                               ? cell_input_data_
+                               : cell_state + (real_t + prev_time_stamp_offset) * lstm_param_->output_step_;
     float *curr_input_gate = input_gate + stride;
     float *curr_forget_gate = forget_gate + stride;
     float *curr_cell_gate = cell_gate + stride;
     float *curr_output_gate = output_gate + stride;
-    float *curr_dx = dX + real_t * lstm_param_->batch_ * lstm_param_->input_size_;
-    float *curr_dy = dY + real_t * state_size;
-
+    float *curr_dx = dX_ + real_t * lstm_param_->batch_ * lstm_param_->input_size_;
+    int seq_offset = real_t * lstm_param_->output_step_;
+    for (int b = 0; b < lstm_param_->batch_; b++) {
+      int batch_offset = b * dir_mult * lstm_param_->hidden_size_;
+      float *dy = dY_ + seq_offset + batch_offset;
+      memcpy(curr_dy_ + b * lstm_param_->hidden_size_, dy, lstm_param_->hidden_size_ * sizeof(float));
+    }
     float *dA = nullptr;
     LstmGradDoInputStep(curr_output_gate, curr_cell_state, prev_cell_state, curr_cell_gate, curr_input_gate,
-                        curr_forget_gate, curr_dy, dC, dH, &dA, curr_dx, weights_tmp_, workspace_, lstm_param_);
-    float *dA_t = dA_tmp_ + t * num_of_gates * lstm_param_->output_step_;
-    std::copy(&(dA[0]), &(dA[num_of_gates * lstm_param_->output_step_]), &dA_t[0]);  // for w grad step
+                        curr_forget_gate, curr_dy_, dC_, dH_, &dA, curr_dx, w, v, workspace_, lstm_param_);
+    float *dA_t = dA_tmp_ + real_t * num_of_gates * state_len;
+    std::copy(&(dA[0]), &(dA[num_of_gates * state_len]), &dA_t[0]);  // for w grad step
   }
-  std::copy(&(dH[0]), &(dH[state_size]), &(dh_out[0]));
-  std::copy(&(dC[0]), &(dC[state_size]), &(dc_out[0]));
-  std::copy(&(dA_tmp_[0]), &(dA_tmp_[num_of_gates * lstm_param_->output_step_ * lstm_param_->seq_len_]),
-            &(cell_state[0]));
   return RET_OK;
 }
 
 void LSTMGradDataCPUKernel::ReorderLstmWeightGrad(float *dst, float *src) {
-  ReorderLstmWeights(dst, src, weight_batch_, lstm_param_->hidden_size_, lstm_param_->input_size_, getLstmOrderIFGO());
-  src += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
-  dst += weight_batch_ * lstm_param_->hidden_size_ * lstm_param_->input_size_;
-  ReorderLstmWeights(dst, src, weight_batch_, lstm_param_->hidden_size_, lstm_param_->hidden_size_, getLstmOrderIFGO());
+  int uni_batch = lstm_param_->bidirectional_ ? weight_batch_ / 2 : weight_batch_;
+  ReorderLstmWeights(dst, src, uni_batch, lstm_param_->hidden_size_, lstm_param_->input_size_, getLstmOrderIFGO());
+  src += uni_batch * lstm_param_->hidden_size_ * lstm_param_->input_size_;
+  dst += uni_batch * lstm_param_->hidden_size_ * lstm_param_->input_size_;
+  ReorderLstmWeights(dst, src, uni_batch, lstm_param_->hidden_size_, lstm_param_->hidden_size_, getLstmOrderIFGO());
+  src += uni_batch * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
+  dst += uni_batch * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
+  if (lstm_param_->bidirectional_) {
+    ReorderLstmWeights(dst, src, uni_batch, lstm_param_->hidden_size_, lstm_param_->input_size_, getLstmOrderIFGO());
+    src += uni_batch * lstm_param_->hidden_size_ * lstm_param_->input_size_;
+    dst += uni_batch * lstm_param_->hidden_size_ * lstm_param_->input_size_;
+    ReorderLstmWeights(dst, src, uni_batch, lstm_param_->hidden_size_, lstm_param_->hidden_size_, getLstmOrderIFGO());
+    src += uni_batch * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
+    dst += uni_batch * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
+  }
 }
 
 int LSTMGradDataCPUKernel::DoGrad(int thread_id) { return RET_OK; }
@@ -142,11 +191,6 @@ int LSTMGradDataCPUKernel::InitParam() {
   std::vector<int> in_shape = input->shape();
   lstm_param_->seq_len_ = in_shape.at(FIRST_INPUT);
   lstm_param_->batch_ = in_shape.at(SECOND_INPUT);
-
-  auto dy = in_tensors_.at(dy_index);
-  MS_ASSERT(dy != nullptr);
-  std::vector<int> dy_shape = dy->shape();
-  lstm_param_->hidden_size_ = dy_shape.at(THIRD_INPUT);
 
   int dir_multiplier = lstm_param_->bidirectional_ ? 2 : 1;
   lstm_param_->output_step_ = dir_multiplier * lstm_param_->batch_ * lstm_param_->hidden_size_;
@@ -184,7 +228,7 @@ int LSTMGradDataCPUKernel::InitParam() {
 
 int LSTMGradDataCPUKernel::MallocRunBuffer() {
   int workspace_size = GetRunWorkspaceSize(lstm_param_);
-  if ((workspace_size == 0) || (workspace_size > LSTMGRADDATA_MAX_WORKSPACE_SIZE)) {
+  if (workspace_size == 0) {
     MS_LOG(ERROR) << "LstmGradDataCPUKernel malloc run workspace 0 error.";
     return RET_ERROR;
   }
@@ -194,7 +238,7 @@ int LSTMGradDataCPUKernel::MallocRunBuffer() {
     return RET_ERROR;
   }
   auto dA_size = num_of_gates * lstm_param_->output_step_ * lstm_param_->seq_len_;
-  if ((dA_size == 0) || (dA_size > LSTMGRADDATA_MAX_WORKSPACE_SIZE)) {
+  if (dA_size == 0) {
     MS_LOG(ERROR) << "LstmGradDataCPUKernel malloc run dA_tmp size error.";
     return RET_ERROR;
   }
@@ -208,6 +252,12 @@ int LSTMGradDataCPUKernel::MallocRunBuffer() {
   weights_tmp_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(weights_size * sizeof(float)));
   if (weights_tmp_ == nullptr) {
     MS_LOG(ERROR) << "LstmGradWeightCPUKernel malloc run weights_tmp_ alloc error.";
+    return RET_ERROR;
+  }
+  int curr_dy_size = lstm_param_->hidden_size_ * lstm_param_->batch_;
+  curr_dy_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(curr_dy_size * sizeof(float)));
+  if (curr_dy_ == nullptr) {
+    MS_LOG(ERROR) << "LstmCPUKernel malloc run curr_dy_ alloc error.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -225,6 +275,10 @@ void LSTMGradDataCPUKernel::FreeRunBuffer() {
   if (weights_tmp_ != nullptr) {
     ms_context_->allocator->Free(weights_tmp_);
     weights_tmp_ = nullptr;
+  }
+  if (curr_dy_ != nullptr) {
+    ms_context_->allocator->Free(curr_dy_);
+    curr_dy_ = nullptr;
   }
 }
 
