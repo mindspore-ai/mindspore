@@ -24,10 +24,10 @@
 #include "ir/anf.h"
 
 namespace mindspore {
-/// \beief Named defines an abstract class that records the name and hash_id.
+/// \brief Named defines an abstract class that records the name and hash_id.
 class MS_CORE_API Named : public Value {
  public:
-  /// \beief The constructor for Named.
+  /// \brief The constructor for Named.
   ///
   /// \param[in] name The name of object.
   explicit Named(const std::string &name) : name_(name) { hash_id_ = std::hash<std::string>{}(name); }
@@ -111,10 +111,10 @@ struct MS_CORE_API NamedEqual {
     return *t1 == *t2;
   }
 };
-/// \beief None defines interface for none data.
+/// \brief None defines interface for none data.
 class MS_CORE_API None final : public Named {
  public:
-  /// \beief The default constructor for None.
+  /// \brief The default constructor for None.
   None() : Named("None") {}
   /// \brief The destructor of None.
   ~None() override = default;
@@ -123,10 +123,10 @@ class MS_CORE_API None final : public Named {
 };
 GVAR_DEF(NamedPtr, kNone, std::make_shared<None>());
 
-/// \beief Null defines interface for null data.
+/// \brief Null defines interface for null data.
 class MS_CORE_API Null final : public Named {
  public:
-  /// \beief The default constructor for Null.
+  /// \brief The default constructor for Null.
   Null() : Named("Null") {}
   /// \brief The destructor of Null.
   ~Null() override = default;
@@ -135,10 +135,10 @@ class MS_CORE_API Null final : public Named {
 };
 GVAR_DEF(NamedPtr, kNull, std::make_shared<Null>());
 
-/// \beief Ellipsis defines interface for ... data.
+/// \brief Ellipsis defines interface for ... data.
 class MS_CORE_API Ellipsis final : public Named {
  public:
-  /// \beief The default constructor for Ellipsis.
+  /// \brief The default constructor for Ellipsis.
   Ellipsis() : Named("Ellipsis") {}
   /// \brief The destructor of Ellipsis.
   ~Ellipsis() override = default;
