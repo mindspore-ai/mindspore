@@ -46,7 +46,8 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **ValueError** - `seed` 小于0或 `seed` 大于MAX_UINT_32时， `seed` 无效。
+    - **TypeError** - `seed` 不是int类型。
+    - **ValueError** - `seed` 小于0或 `seed` 大于 `UINT32_MAX(4294967295)` 时， `seed` 无效。
 
 .. py:function:: mindspore.dataset.config.get_seed()
 
@@ -66,7 +67,8 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **ValueError** - 当 `size` 小于等于0或 `size` 大于 `MAX_INT_32` 时，线程的队列容量无效。
+    - **TypeError** - `size` 不是int类型。
+    - **ValueError** - `size` 小于等于0或 `size` 大于 `INT32_MAX(2147483647)` 时，线程的队列容量无效。
 
     .. note::
         用于预取的总内存可能会随着工作线程数量的增加而快速增长，所以当工作线程数量大于4时，每个工作线程的预取大小将减少。
@@ -91,7 +93,8 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **ValueError** - `num` 小于等于0或 `num` 大于MAX_INT_32时，并行工作线程数量设置无效。
+    - **TypeError** - `num` 不是int类型。
+    - **ValueError** - `num` 小于等于0或 `num` 大于 `INT32_MAX(2147483647)` 时，并行工作线程数量设置无效。
 
 .. py:function:: mindspore.dataset.config.get_num_parallel_workers()
 
@@ -133,7 +136,8 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **ValueError** - `interval` 小于等于0或 `interval` 大于MAX_INT_32时， `interval` 无效。
+    - **TypeError** - `interval` 不是int类型。
+    - **ValueError** - `interval` 小于等于0或 `interval` 大于 `INT32_MAX(2147483647)` 时， `interval` 无效。
 
 .. py:function:: mindspore.dataset.config.get_monitor_sampling_interval()
 
@@ -154,7 +158,8 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **ValueError** - `timeout` 小于等于0或 `timeout` 大于MAX_INT_32时 `timeout` 无效。
+    - **TypeError** - `timeout` 不是int类型。
+    - **ValueError** - `timeout` 小于等于0或 `timeout` 大于 `INT32_MAX(2147483647)` 时 `timeout` 无效。
 
 .. py:function:: mindspore.dataset.config.get_callback_timeout()
 
@@ -295,23 +300,24 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.set_multiprocessing_timeout_interval(interval)
 
-    设置在多进程下，主进程获取数据超时时，告警日志打印的默认时间间隔（秒）。
+    设置在多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的默认时间间隔（秒）。
 
     **参数：**
 
-    - **interval** (int) - 表示多进程下，主进程获取数据超时时，告警日志打印的时间间隔（秒）。
+    - **interval** (int) - 表示多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔（秒）。
 
     **异常：**
 
-    - **ValueError** - `interval` 小于等于0或 `interval` 大于MAX_INT_32时， `interval` 无效。
+    - **TypeError** - `interval` 不是int类型。
+    - **ValueError** - `interval` 小于等于0或 `interval` 大于 `INT32_MAX(2147483647)` 时， `interval` 无效。
 
 .. py:function:: mindspore.dataset.config.get_multiprocessing_timeout_interval()
 
-    获取在多进程下，主进程获取数据超时时，告警日志打印的时间间隔的全局配置。
+    获取在多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔的全局配置。
 
     **返回：**
 
-    int，表示多进程下，主进程获取数据超时时，告警日志打印的时间间隔（秒）。
+    int，表示多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔（秒）。
 
 .. automodule:: mindspore.dataset.config
     :members:

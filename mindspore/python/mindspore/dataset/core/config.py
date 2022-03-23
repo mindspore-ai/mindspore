@@ -107,17 +107,18 @@ def set_seed(seed):
         seed(int): Random number seed. It is used to generate deterministic random numbers.
 
     Raises:
-        ValueError: If seed is invalid when seed < 0 or seed > MAX_UINT_32.
+        TypeError: If seed isn't of type int.
+        ValueError: If seed < 0 or seed > UINT32_MAX(4294967295).
 
     Examples:
         >>> # Set a new global configuration value for the seed value.
         >>> # Operations with randomness will use the seed value to generate random values.
         >>> ds.config.set_seed(1000)
     """
-    if not isinstance(seed, int):
-        raise ValueError("seed isn't of type int.")
+    if not isinstance(seed, int) or isinstance(seed, bool):
+        raise TypeError("seed isn't of type int.")
     if seed < 0 or seed > UINT32_MAX:
-        raise ValueError("Seed given is not within the required range.")
+        raise ValueError("seed given is not within the required range [0, UINT32_MAX(4294967295)].")
     _config.set_seed(seed)
     random.seed(seed)
     # numpy.random isn't thread safe
@@ -149,7 +150,8 @@ def set_prefetch_size(size):
         size (int): The length of the cache queue.
 
     Raises:
-        ValueError: If the queue capacity of the thread is invalid when size <= 0 or size > MAX_INT_32.
+        TypeError: If size is not of type int.
+        ValueError: If size <= 0 or size > INT32_MAX(2147483647).
 
     Note:
         Since total memory used for prefetch can grow very large with high number of workers,
@@ -160,10 +162,10 @@ def set_prefetch_size(size):
         >>> # Set a new global configuration value for the prefetch size.
         >>> ds.config.set_prefetch_size(1000)
     """
-    if not isinstance(size, int):
-        raise ValueError("size isn't of type int.")
+    if not isinstance(size, int) or isinstance(size, bool):
+        raise TypeError("size isn't of type int.")
     if size <= 0 or size > INT32_MAX:
-        raise ValueError("Prefetch size given is not within the required range.")
+        raise ValueError("size is not within the required range (0, INT32_MAX(2147483647)].")
     _config.set_op_connector_size(size)
 
 
@@ -191,17 +193,19 @@ def set_num_parallel_workers(num):
         num (int): Number of parallel workers to be used as a default for each operation.
 
     Raises:
-        ValueError: If num_parallel_workers is invalid when num <= 0 or num > MAX_INT_32.
+        TypeError: If num is not of type int.
+        ValueError: If num <= 0 or num > INT32_MAX(2147483647).
 
     Examples:
         >>> # Set a new global configuration value for the number of parallel workers.
         >>> # Now parallel dataset operators will run with 8 workers.
         >>> ds.config.set_num_parallel_workers(8)
     """
-    if not isinstance(num, int):
-        raise ValueError("num isn't of type int.")
+    if not isinstance(num, int) or isinstance(num, bool):
+        raise TypeError("num isn't of type int.")
     if num <= 0 or num > INT32_MAX:
-        raise ValueError("Number of parallel workers given is not within the required range.")
+        raise ValueError("Number of parallel workers given is not within the required range"
+                         " (0, INT32_MAX(2147483647)].")
     _config.set_num_parallel_workers(num)
 
 
@@ -265,16 +269,17 @@ def set_monitor_sampling_interval(interval):
         interval (int): Interval (in milliseconds) to be used for performance monitor sampling.
 
     Raises:
-        ValueError: If interval is invalid when interval <= 0 or interval > MAX_INT_32.
+        TypeError: If interval is not type int.
+        ValueError: If interval <= 0 or interval > INT32_MAX(2147483647).
 
     Examples:
         >>> # Set a new global configuration value for the monitor sampling interval.
         >>> ds.config.set_monitor_sampling_interval(100)
     """
-    if not isinstance(interval, int):
-        raise ValueError("interval isn't of type int.")
+    if not isinstance(interval, int) or isinstance(interval, bool):
+        raise TypeError("interval isn't of type int.")
     if interval <= 0 or interval > INT32_MAX:
-        raise ValueError("Interval given is not within the required range.")
+        raise ValueError("Interval given is not within the required range (0, INT32_MAX(2147483647)].")
     _config.set_monitor_sampling_interval(interval)
 
 
@@ -334,10 +339,11 @@ def _set_auto_workers_config(option):
     Args:
         option (int): The id of the profile to use.
     Raises:
-        ValueError: If option is not int or not within the range of [0, 6]
+        TypeError: If option is not of type int.
+        ValueError: If option is not within the range of [0, 6].
     """
-    if not isinstance(option, int):
-        raise ValueError("option isn't of type int.")
+    if not isinstance(option, int) or isinstance(option, bool):
+        raise TypeError("option isn't of type int.")
     if option < 0 or option > 6:
         raise ValueError("option isn't within the required range of [0, 6].")
     _config.set_auto_worker_config(option)
@@ -366,14 +372,15 @@ def set_callback_timeout(timeout):
         timeout (int): Timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
 
     Raises:
-        ValueError: If timeout is invalid when timeout <= 0 or timeout > MAX_INT_32.
+        TypeError: If timeout is not type int.
+        ValueError: If timeout <= 0 or timeout > INT32_MAX(2147483647).
 
     Examples:
         >>> # Set a new global configuration value for the timeout value.
         >>> ds.config.set_callback_timeout(100)
     """
-    if not isinstance(timeout, int):
-        raise ValueError("timeout isn't of type int.")
+    if not isinstance(timeout, int) or isinstance(timeout, bool):
+        raise TypeError("timeout isn't of type int.")
     if timeout <= 0 or timeout > INT32_MAX:
         raise ValueError("Timeout given is not within the required range.")
     _config.set_callback_timeout(timeout)
@@ -516,10 +523,10 @@ def set_autotune_interval(interval):
         >>> # set a new interval for AutoTune
         >>> ds.config.set_autotune_interval(30)
     """
-    if not isinstance(interval, int):
+    if not isinstance(interval, int) or isinstance(interval, bool):
         raise TypeError("interval must be of type int.")
     if interval < 0 or interval > INT32_MAX:
-        raise ValueError("Interval given is not within the required range.")
+        raise ValueError("Interval given is not within the required range [0, INT32_MAX(2147483647)].")
     _config.set_autotune_interval(interval)
 
 
@@ -604,7 +611,7 @@ def set_sending_batches(batch_num):
         >>> # Set a new global configuration value for the sending batches
         >>> ds.config.set_sending_batches(10)
     """
-    if not isinstance(batch_num, int):
+    if not isinstance(batch_num, int) or isinstance(batch_num, bool):
         raise TypeError("batch_num must be an int dtype.")
     _config.set_sending_batches(batch_num)
 
@@ -680,37 +687,40 @@ def get_enable_watchdog():
 
 def set_multiprocessing_timeout_interval(interval):
     """
-    Set the default interval (in seconds) for multiprocessing timeout when main process gets data from subprocesses.
+    Set the default interval (in seconds) for multiprocessing/multithreading timeout when main process/thread gets
+    data from subprocesses/child threads.
 
     Args:
-        interval (int): Interval (in seconds) to be used for multiprocessing timeout when main process gets data from
-          subprocess. System default: 300s.
+        interval (int): Interval (in seconds) to be used for multiprocessing/multithreading timeout when main
+          process/thread gets data from subprocess/child threads. System default: 300s.
 
     Raises:
-        ValueError: If interval is invalid when interval <= 0 or interval > MAX_INT_32.
+        ValueError: If interval <= 0 or interval > INT32_MAX(2147483647).
 
     Examples:
-        >>> # Set a new global configuration value for multiprocessing timeout when getting data.
+        >>> # Set a new global configuration value for multiprocessing/multithreading timeout when getting data.
         >>> ds.config.set_multiprocessing_timeout_interval(300)
     """
-    if not isinstance(interval, int):
-        raise ValueError("interval isn't of type int.")
+    if not isinstance(interval, int) or isinstance(interval, bool):
+        raise TypeError("interval isn't of type int.")
     if interval <= 0 or interval > INT32_MAX:
-        raise ValueError("Interval given is not within the required range (0, INT32_MAX).")
+        raise ValueError("Interval given is not within the required range (0, INT32_MAX(2147483647)).")
     _config.set_multiprocessing_timeout_interval(interval)
 
 
 def get_multiprocessing_timeout_interval():
     """
-    Get the global configuration of multiprocessing timeout when main process gets data from subprocesses.
+    Get the global configuration of multiprocessing/multithreading timeout when main process/thread gets data from
+    subprocesses/child threads.
 
     Returns:
-        int, interval (in seconds) for multiprocessing timeout when main process gets data from subprocesses
-          (default is 300s).
+        int, interval (in seconds) for multiprocessing/multithreading timeout when main process/thread gets data from
+          subprocesses/child threads (default is 300s).
 
     Examples:
-        >>> # Get the global configuration of multiprocessing timeout when main process gets data from subprocesses.
-        >>> # If set_multiprocessing_timeout_interval() is never called before, the default value(300) will be returned.
+        >>> # Get the global configuration of multiprocessing/multithreading timeout when main process/thread gets data
+        >>> # from subprocesses/child threads. If set_multiprocessing_timeout_interval() is never called before, the
+        >>> # default value(300) will be returned.
         >>> multiprocessing_timeout_interval = ds.config.get_multiprocessing_timeout_interval()
     """
     return _config.get_multiprocessing_timeout_interval()

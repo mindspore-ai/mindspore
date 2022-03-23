@@ -32,6 +32,16 @@ DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
+def config_error_func(config_interface, input_args, err_type, except_err_msg):
+    err_msg = ""
+    try:
+        config_interface(input_args)
+    except err_type as e:
+        err_msg = str(e)
+
+    assert except_err_msg in err_msg
+
+
 def test_basic():
     """
     Test basic configuration functions
@@ -429,6 +439,37 @@ def test_multiprocessing_timeout_interval():
     assert saved_config == ds.config.get_multiprocessing_timeout_interval()
 
 
+def test_config_bool_type_error():
+    """
+    Feature: Now many interfaces of config support bool input even its valid input is int.
+    Description: We will raise a type error when input is a bool when it should be int.
+    Expectation: TypeError will be raised when input is a bool.
+    """
+    # set_seed will raise TypeError if input is a boolean
+    config_error_func(ds.config.set_seed, True, TypeError, "seed isn't of type int")
+
+    # set_prefetch_size will raise TypeError if input is a boolean
+    config_error_func(ds.config.set_prefetch_size, True, TypeError, "size isn't of type int")
+
+    # set_num_parallel_workers will raise TypeError if input is a boolean
+    config_error_func(ds.config.set_num_parallel_workers, True, TypeError, "num isn't of type int")
+
+    # set_monitor_sampling_interval will raise TypeError if input is a boolean
+    config_error_func(ds.config.set_monitor_sampling_interval, True, TypeError, "interval isn't of type int")
+
+    # set_callback_timeout will raise TypeError if input is a boolean
+    config_error_func(ds.config.set_callback_timeout, True, TypeError, "timeout isn't of type int")
+
+    # set_autotune_interval will raise TypeError if input is a boolean
+    config_error_func(ds.config.set_autotune_interval, True, TypeError, "interval must be of type int")
+
+    # set_sending_batches will raise TypeError if input is a boolean
+    config_error_func(ds.config.set_sending_batches, True, TypeError, "batch_num must be an int dtype")
+
+    # set_multiprocessing_timeout_interval will raise TypeError if input is a boolean
+    config_error_func(ds.config.set_multiprocessing_timeout_interval, True, TypeError, "interval isn't of type int")
+
+
 if __name__ == '__main__':
     test_basic()
     test_get_seed()
@@ -443,3 +484,4 @@ if __name__ == '__main__':
     test_auto_num_workers()
     test_enable_watchdog()
     test_multiprocessing_timeout_interval()
+    test_config_bool_type_error()
