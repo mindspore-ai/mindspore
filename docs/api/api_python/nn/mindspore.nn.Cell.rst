@@ -95,6 +95,19 @@
 
         检查Cell中的网络参数名称是否重复。
 
+    
+    .. py:method:: set_inputs(*inputs)
+
+        设置编译计算图所需的输入，输入需与实例中定义的输入一致。
+
+        **参数：**
+
+        - **inputs** (tuple) – Cell的输入。
+        
+        .. note::
+
+        这是一个实验接口，可能会被更改或者删除。
+
     .. py:method:: compile(*inputs)
 
         编译Cell为计算图，输入需与construct中定义的输入一致。
@@ -173,6 +186,18 @@
         **返回：**
 
         String类型，网络的作用域。
+    
+    .. py:method:: get_inputs()
+
+        返回编译计算图所设置的输入。
+
+        **返回：**
+
+        Tuple类型，编译计算图所设置的输入。
+
+        .. note::
+
+        这是一个实验接口，可能会被更改或者删除。
 
     .. py:method:: infer_param_pipeline_stage()
 
