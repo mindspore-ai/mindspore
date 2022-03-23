@@ -340,11 +340,12 @@ def _is_class_instance(obj):
 
 
 def _is_dataclass_instance(obj):
-    """check whether a class is an instance of a dataclass (and not a dataclass itself)"""
+    """Check whether a class is an instance of a dataclass (and not a dataclass itself)"""
     return is_dataclass(obj) and not isinstance(obj, type)
 
 
 def _convert_tuple_to_args_kwargs(params):
+    """Convert tuple to args and kwargs."""
     args = tuple()
     kwargs = dict()
     for param in params:
@@ -356,6 +357,7 @@ def _convert_tuple_to_args_kwargs(params):
 
 
 def is_supported_create_instance_type(cls_type):
+    """Check if cls_type is a supported instance type."""
     return issubclass(cls_type, (nn.Cell, ops.Primitive))
 
 
@@ -600,6 +602,7 @@ def get_args(node):
 
 
 def _in_sys_path(file_path):
+    """To check if file_path is under system path."""
     for path in list(sys.path):
         if file_path.startswith(path):
             return True
@@ -730,6 +733,7 @@ class Parser:
         return None, None
 
     def is_constant_value(self, var, attr):
+        """Check whether the value is a constant."""
         if var in self.global_namespace:
             module = self.global_namespace[var]
             if hasattr(module, attr):
@@ -739,6 +743,7 @@ class Parser:
         return False
 
     def is_unsupported_namespace(self, value):
+        """To check if the value is an unsupported namespace."""
         unsupported = isinstance(value, _builtin_function_or_method_type) and value not in convert_object_map
         logger.debug(f"'{value}' unsupported: {unsupported}.")
         return unsupported
