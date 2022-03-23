@@ -54,8 +54,6 @@ int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
         uint16_t *data = (uint16_t *)(shape_tensor->data_);
         float scale_height = ShortToFloat32(data[height_index]);
         float scale_width = ShortToFloat32(data[width_index]);
-        MS_CHECK_INT_MUL_NOT_OVERFLOW(scale_height, GetHeight(input), NNACL_ERRCODE_MUL_OVERFLOW);
-        MS_CHECK_INT_MUL_NOT_OVERFLOW(scale_width, GetWidth(input), NNACL_ERRCODE_MUL_OVERFLOW);
         param->new_height_ = round(scale_height * GetHeight(input));
         param->new_width_ = round(scale_width * GetWidth(input));
       }

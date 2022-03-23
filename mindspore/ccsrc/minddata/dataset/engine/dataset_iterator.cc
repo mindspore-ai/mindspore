@@ -59,7 +59,7 @@ Status DatasetIterator::GetNextAsMap(TensorMap *out_map) {
   }
 
   // Populate the out map from the row and return it
-  for (const auto colMap : col_name_id_map_) {
+  for (const auto &colMap : col_name_id_map_) {
     std::string column_name = colMap.first;
     // Need to filter meta column start with kDftMetaColumnPrefix
     size_t pos = column_name.find(kDftMetaColumnPrefix);

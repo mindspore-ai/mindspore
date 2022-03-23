@@ -139,8 +139,8 @@
 #include "nnacl/infer/affine_infer.h"
 #include "nnacl/infer/attention_infer.h"
 #include "nnacl/infer/scatter_nd_update_infer.h"
-#include "nnacl/infer/nllloss.h"
-#include "nnacl/infer/nllloss_grad.h"
+#include "nnacl/infer/nllloss_infer.h"
+#include "nnacl/infer/nllloss_grad_infer.h"
 
 InferShape g_infer_func[PrimType_MAX] = {0};
 InferShape g_inner_op_infer_func[PrimType_InnerOpMax - PrimType_InnerOpMin] = {0};
