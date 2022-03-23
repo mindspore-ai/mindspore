@@ -25,8 +25,12 @@ def infer(op_name, inputs, attrs):
     """infer shape dtype and format"""
 
     def _create_opinfer():
-        if hasattr(sys.modules[__name__], op_name):
-            op_cls = getattr(sys.modules[__name__], op_name)
+        self_module = sys.modules.get(__name__, None)
+        if self_module is None:
+            raise GKException("OpInfo does not support op {}".format(op_name))
+
+        if hasattr(self_module, op_name):
+            op_cls = getattr(self_module, op_name)
             return op_cls(op_name, inputs, attrs)
         # common infer
         class_name_map = {
@@ -36,7 +40,7 @@ def infer(op_name, inputs, attrs):
         cls_name = class_name_map.get(PrimLib.primtives.get(op_name, PrimLib.default_primtive).iter_type, None)
         if not cls_name:
             raise GKException("OpInfo does not support op {}".format(op_name))
-        op_cls = getattr(sys.modules[__name__], cls_name)
+        op_cls = getattr(self_module, cls_name)
         return op_cls(op_name, inputs, attrs)
 
     return _create_opinfer().infer()
@@ -105,7 +109,7 @@ class _Elemwise(OpInfer):
     @staticmethod
     def broadcast_shape(shapes):
         """deduce broadcast shape using same rules as numpy"""
-        dim_size = max([len(shape) for shape in shapes])
+        dim_size = max(len(shape) for shape in shapes)
         align_shapes = [[1] * (dim_size - len(shape)) + shape for shape in shapes]
         out_shape = [1] * dim_size
         for i in range(dim_size):
@@ -158,8 +162,8 @@ class _Elemwise(OpInfer):
             return self.broadcast_shape([op_input.shape for op_input in self.inputs])
 
         # in case formats are fractal_nz, default_fromat/NHWC/HCHW(optional)
-        is_default_frac_nz = [op_input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW, DF.FRAC_NZ)
-                              for op_input in self.inputs]
+        is_default_frac_nz = (op_input.data_format in (DF.DEFAULT, DF.NHWC, DF.NCHW, DF.FRAC_NZ)
+                              for op_input in self.inputs)
         if all(is_default_frac_nz):
             nz_shapes = [self.defaultformat_to_nz(op_input.shape) if op_input.data_format != DF.FRAC_NZ
                          else op_input.shape for op_input in self.inputs]
@@ -186,7 +190,7 @@ class _Reduce(OpInfer):
         axis = self.attrs['reduce_axis']
         if isinstance(axis, int):
             axis = [axis]
-        if not all([(-shape_len <= i < shape_len) for i in axis]):
+        if not all((-shape_len <= i < shape_len) for i in axis):
             raise GKException(
                 "Reduce axis should be in range [{},{}) but got {}".format(-shape_len, shape_len, axis))
 
@@ -196,7 +200,7 @@ class _Reduce(OpInfer):
 
         if isinstance(axis, int):
             axis = [axis]
-        if any([i < 0 for i in axis]):
+        if any(i < 0 for i in axis):
             # change the axis to non-negative number.
             axis = list(map(lambda i: i + len(shape) if i < 0 else i, axis))
         self.attrs['reduce_axis'] = sorted(axis)
