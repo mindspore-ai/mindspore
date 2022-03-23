@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 """generate json desc for SoftmaxGradExt"""
 from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from ._utils import Expander, ExpanderInfoValidator as VLD
-from ._utils import infer_shape_from_fractalnz, get_reduced_ori_shape, to_frac_z_axis
+from ._utils import get_reduce_axis_shape
 
 
 @VLD.add_format(DF.FRAC_NZ, DF.FRAC_NZ, DF.DEFAULT)
@@ -28,28 +28,11 @@ class SoftmaxGradExt(Expander):
         x, y, z = self.inputs
         axis = self.attrs['axis']
 
-        ori_shape = x.shape
-        if x.data_format == DF.FRAC_NZ:
-            ori_shape = infer_shape_from_fractalnz(ori_shape)
-        if not axis:
-            axis = []
-            for i, _ in enumerate(ori_shape):
-                axis.append(i)
-        else:
-            if isinstance(axis, int):
-                axis = [axis]
-            for i, _ in enumerate(list(axis)):
-                if axis[i] < 0:
-                    axis[i] += len(ori_shape)
-
-        ori_reduced_shape = ori_shape
-        if x.data_format == DF.FRAC_NZ:
-            ori_reduced_shape = get_reduced_ori_shape(ori_shape, axis)
-            axis = to_frac_z_axis(ori_shape, axis)
+        reduce_axis, ori_reduced_shape = get_reduce_axis_shape(x.shape, x.data_format, axis)
 
         data_mul = graph_builder.emit('Mul', [x, y])
         data_sum = graph_builder.emit('ReduceSum', [data_mul],
-                                      attrs={'reduce_axis': axis, 'keep_dims': True, 'reduce_output_fuse': True})
+                                      attrs={'reduce_axis': reduce_axis, 'keep_dims': True, 'reduce_output_fuse': True})
         if x.data_format == DF.FRAC_NZ:
             data_sum = graph_builder.emit('Reshape', [data_sum], attrs={'shape': ori_reduced_shape})
         data_sub = graph_builder.emit('Sub', [x, data_sum])

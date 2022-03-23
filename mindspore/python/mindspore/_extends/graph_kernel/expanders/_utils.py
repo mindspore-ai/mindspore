@@ -83,6 +83,7 @@ class ExpanderInfoValidator:
 
     def __init__(self):
         """Init"""
+
     @staticmethod
     def _add_check_function(kls, func):
         """
@@ -94,6 +95,7 @@ class ExpanderInfoValidator:
         def new_check(obj):
             old_check(obj)
             func(obj)
+
         setattr(kls, "_check", new_check)
 
     @staticmethod
@@ -131,6 +133,7 @@ class ExpanderInfoValidator:
     @staticmethod
     def check_all_formats_same(kls):
         """Check that all formats are the same"""
+
         # Ensure no args case can return a class
         def _check(*args):
             def _check_format(obj):
@@ -147,11 +150,13 @@ class ExpanderInfoValidator:
                 return cls
 
             return wrapper
+
         return _check()(kls)
 
     @staticmethod
     def check_attrs(*args):
         """Check the attrs exist"""
+
         def _check_attr(obj):
             for a in args:
                 if a not in obj.attrs:
@@ -225,3 +230,42 @@ def get_reduced_ori_shape(shape, axis):
         else:
             reduced_ori_shape.append(value)
     return reduced_ori_shape
+
+
+def get_reduce_axis_shape(shape, data_format, axis):
+    """
+    Get the reduce axis under format `data_format` and original reduced shape.
+    Parameters
+    ----------
+    shape: list or tuple
+        shape of input
+    data_format: str
+        data format of input
+    axis: None, int, list or tuple
+        reduce axis of the original shape
+    Returns
+    -------
+    reduce_axis: list
+        reduce axis of the `data_format` shape
+    ori_reduced_shape: list
+        original reduced shape
+    """
+    ori_shape = shape
+    if data_format == "FRACTAL_NZ":
+        ori_shape = infer_shape_from_fractalnz(shape)
+    if not axis:
+        axis = []
+        for i, _ in enumerate(ori_shape):
+            axis.append(i)
+    else:
+        if isinstance(axis, int):
+            axis = [axis]
+        for i, _ in enumerate(list(axis)):
+            if axis[i] < 0:
+                axis[i] += len(ori_shape)
+
+    ori_reduced_shape = get_reduced_ori_shape(ori_shape, axis)
+    reduce_axis = axis
+    if data_format == "FRACTAL_NZ":
+        reduce_axis = to_frac_z_axis(ori_shape, axis)
+    return reduce_axis, ori_reduced_shape

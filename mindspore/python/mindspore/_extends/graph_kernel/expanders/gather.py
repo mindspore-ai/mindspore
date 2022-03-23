@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class Gather(Expander):
             new_indices_shape = [indices_shape_one_dim]
             reshape_indices = graph_builder.emit('Reshape', [indices], attrs={'shape': new_indices_shape})
             tmp_result = graph_builder.emit('Gather', [inputs, reshape_indices], attrs={'axis': axis})
-            output_shape = inputs.shape.copy()
+            output_shape = list(inputs.shape)
             output_shape[axis:axis] = ori_indices_shape
             del output_shape[axis + len(ori_indices_shape)]
             result = graph_builder.emit('Reshape', [tmp_result], attrs={'shape': output_shape})

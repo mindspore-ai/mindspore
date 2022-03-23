@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ class LayerNorm(Expander):
 
         ori_shape_x = input_x.shape
         if input_x.data_format == DF.FRAC_NZ:
-            ori_shape_x = infer_shape_from_fractalnz(ori_shape_x)
+            ori_shape_x = infer_shape_from_fractalnz(input_x.shape)
 
         # Calculate the scaling ratio of the average
         if begin_norm_axis < 0:
@@ -55,15 +55,14 @@ class LayerNorm(Expander):
         # after reduced
         ori_reduced_shape_x = get_reduced_ori_shape(ori_shape_x, reduce_axis)
 
+        axis = reduce_axis
         if input_x.data_format == DF.FRAC_NZ:
-            reduce_axis = to_frac_z_axis(ori_shape_x, reduce_axis)
+            axis = to_frac_z_axis(ori_shape_x, reduce_axis)
 
-        mean_cof = 1.0 / reduce_elts
-        mean_cof_v = graph_builder.value(input_x.dtype, mean_cof)
+        mean_cof_v = graph_builder.value(input_x.dtype, 1.0 / reduce_elts)
 
         # Calculate mean
-        mean_red = graph_builder.emit('ReduceSum', [input_x],
-                                      attrs={'reduce_axis': reduce_axis, 'keep_dims': True})
+        mean_red = graph_builder.emit('ReduceSum', [input_x], attrs={'reduce_axis': axis, 'keep_dims': True})
         mean = graph_builder.emit('Mul', [mean_red, mean_cof_v])
         if input_x.data_format == DF.FRAC_NZ:
             mean = graph_builder.emit('Reshape', [mean], attrs={'shape': ori_reduced_shape_x})
@@ -71,8 +70,7 @@ class LayerNorm(Expander):
         # Calculate variance
         variance_sub = graph_builder.emit('Sub', [input_x, mean])
         variance_mul = graph_builder.emit('Mul', [variance_sub, variance_sub])
-        variance_red = graph_builder.emit('ReduceSum', [variance_mul],
-                                          attrs={'reduce_axis': reduce_axis, 'keep_dims': True})
+        variance_red = graph_builder.emit('ReduceSum', [variance_mul], attrs={'reduce_axis': axis, 'keep_dims': True})
         variance = graph_builder.emit('Mul', [variance_red, mean_cof_v])
         if input_x.data_format == DF.FRAC_NZ:
             variance = graph_builder.emit('Reshape', [variance], attrs={'shape': ori_reduced_shape_x})
