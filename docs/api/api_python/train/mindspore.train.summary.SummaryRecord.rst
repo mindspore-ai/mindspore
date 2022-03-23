@@ -93,7 +93,7 @@
 
         - **step** (int) - 表示当前的step。
         - **train_network** (Cell) - 表示用于保存计算图的训练网络。默认值：None，表示当原始网络的图为None时，不保存计算图。
-        - **plugin_filter** (Callable[[str], bool]) - 过滤器函数，用于过滤需要写入的标签项。默认值：None。
+        - **plugin_filter** (Callable[[str], bool], 可选) - 过滤器函数，用于过滤需要写入的标签项。默认值：None。
 
         **返回：**
 
