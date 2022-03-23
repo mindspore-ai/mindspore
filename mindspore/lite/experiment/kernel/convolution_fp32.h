@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/inner_kernel.h"
-#include "nnacl/op_base.h"
 #include "nnacl/kernel.h"
 
 namespace mindspore::kernel {
@@ -32,12 +31,11 @@ class ConvolutionCPUFp32 : public InnerKernel {
 
   int Run() override;
   int ReSize() override;
-  int PostProcess() override;  // invoke after running, e.g., free input tensor
-  int PreProcess() override;   // invoke before running, e.g., allocate output tensor, pack input
 
  private:
-  KernelStru *kernel;
-  KernelContext ctx_;
+  KernelBase *kernel;
+  TensorC *in[2];
+  TensorC *out[1];
 };
 }  // namespace mindspore::kernel
 
