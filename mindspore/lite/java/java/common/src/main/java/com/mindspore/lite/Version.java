@@ -22,6 +22,9 @@ package com.mindspore.lite;
  * @since v1.0
  */
 public class Version {
+    static {
+        System.loadLibrary("mindspore-lite-jni");
+    }
     /**
      * Get MindSpore Lite version info.
      *

@@ -16,24 +16,12 @@
 
 package com.mindspore.config;
 
-import com.mindspore.lite.NativeLibrary;
-
 /**
  * Define mindspore version info.
  *
  * @since v1.0
  */
 public class Version {
-    static {
-        try {
-            NativeLibrary.load();
-        } catch (Exception e) {
-            System.err.println("Failed to load MindSporLite native library.");
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
     /**
      * Get MindSpore Lite version info.
      *

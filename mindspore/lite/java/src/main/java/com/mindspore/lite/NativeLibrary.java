@@ -1,6 +1,6 @@
 package com.mindspore.lite;
 
-
+import com.mindspore.config.Version;
 import java.io.*;
 import java.util.logging.Logger;
 
@@ -12,11 +12,11 @@ public class NativeLibrary {
     private static final String MINDSPORE_LITE_JNI_LIBNAME = "mindspore-lite-jni";
 
     public static void load() {
-        if (isLibLoaded()) {
+        if (isLibLoaded() || loadLibrary()) {
             LOGGER.info("Native lib has been loaded.");
             return;
         }
-        loadLib(makeResourceName("lib" + GLOG_LIBNAME + ".so.0"));
+        loadLib(makeResourceName("lib" + GLOG_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_JNI_LIBNAME + ".so"));
     }
@@ -28,6 +28,19 @@ public class NativeLibrary {
             return false;
         }
         return true;
+    }
+
+    private static boolean loadLibrary() {
+        try {
+            System.loadLibrary(GLOG_LIBNAME);
+            System.loadLibrary(MINDSPORE_LITE_LIBNAME);
+            System.loadLibrary(MINDSPORE_LITE_JNI_LIBNAME);
+            LOGGER.info("loadLibrary: success");
+            return true;
+        } catch (UnsatisfiedLinkError e) {
+            LOGGER.warning("tryLoadLibraryFailed: " + e.getMessage());
+            return false;
+        }
     }
 
     private static void loadLib(String libResourceName) {
