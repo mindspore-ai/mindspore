@@ -29,6 +29,10 @@ grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_while_grad():
     class MyWhileNet(nn.Cell):
         def __init__(self):
@@ -53,14 +57,20 @@ def test_while_grad():
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(2), dtype=ms.int32)
-    x = Tensor(np.random.randn(2, 2, 2).astype(np.float32), dtype=ms.float32)
+    input_x = np.array([[[4, 0], [0, 0]],
+                        [[0, 4], [0, 0]]]).astype(np.float32)
+    x = Tensor(input_x, dtype=ms.float32)
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     while_net = MyWhileNet()
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
 
-    assert  graph_output == 0
+    expect_zero = np.array([0], dtype=np.float32)
+    expect_two = input_x
+    assert np.allclose(graph_output[0].asnumpy(), expect_zero, 0.0001, 0.0001)
+    assert np.allclose(graph_output[1].asnumpy(), expect_zero, 0.0001, 0.0001)
+    assert np.allclose(graph_output[2].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
 @pytest.mark.level0

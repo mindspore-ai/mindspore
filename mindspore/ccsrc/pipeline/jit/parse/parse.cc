@@ -213,7 +213,7 @@ void TransformParallelCallFormerToMiddle(const FuncGraphPtr &former_call_graph, 
   } else {
     (void)inputs.emplace_back(former_graph_output);
   }
-  auto new_output = former_call_graph->NewCNodeInOrder(std::move(inputs));
+  auto new_output = former_call_graph->NewCNodeBefore(former_call_graph->return_node(), std::move(inputs));
   former_call_graph->set_output(new_output);
 }
 
