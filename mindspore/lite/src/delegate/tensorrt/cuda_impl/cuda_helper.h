@@ -19,7 +19,6 @@
 
 #include <cuda_runtime.h>
 #include <algorithm>
-#include "src/common/log_util.h"
 
 class CudaHelper {
  public:
@@ -39,22 +38,20 @@ class CudaHelper {
 #define GET_BLOCKS(total_threads) CudaHelper::GetInstance().GetBlocksNum(total_threads)
 #define GET_THREADS CudaHelper::GetInstance().GetThreadNum()
 
-#define CUDA_CHECK(ret)                                                          \
-  do {                                                                           \
-    cudaError_t cuda_ret = (ret);                                                \
-    if ((cuda_ret) != cudaSuccess) {                                             \
-      MS_LOG(ERROR) << "cuda func call error: " << cudaGetErrorString(cuda_ret); \
-      return -1;                                                                 \
-    }                                                                            \
+#define CUDA_CHECK(ret)              \
+  do {                               \
+    cudaError_t cuda_ret = (ret);    \
+    if ((cuda_ret) != cudaSuccess) { \
+      return -1;                     \
+    }                                \
   } while (0)
 
-#define CUDA_CHECK_VOID(ret)                                                     \
-  do {                                                                           \
-    cudaError_t cuda_ret = (ret);                                                \
-    if ((cuda_ret) != cudaSuccess) {                                             \
-      MS_LOG(ERROR) << "cuda func call error: " << cudaGetErrorString(cuda_ret); \
-      return;                                                                    \
-    }                                                                            \
+#define CUDA_CHECK_VOID(ret)         \
+  do {                               \
+    cudaError_t cuda_ret = (ret);    \
+    if ((cuda_ret) != cudaSuccess) { \
+      return;                        \
+    }                                \
   } while (0)
 
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_CUDA_HELPER_H_
