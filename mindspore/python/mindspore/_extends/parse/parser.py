@@ -611,12 +611,8 @@ def _in_sys_path(file_path):
 
 def is_third_party_module(value):
     """To check if value is a third-party module."""
-    # Check if value is a module or package.
-    if not inspect.ismodule(value) or not hasattr(value, '__file__'):
-        return False
-    # Check if module file is under the sys path.
-    module_file = value.__file__
-    if not _in_sys_path(module_file):
+    # Check if value is a module or package, check if module file is under the sys path.
+    if not inspect.ismodule(value) or not hasattr(value, '__file__') or not _in_sys_path(value.__file__):
         return False
 
     # Get module leftmost name.
@@ -696,6 +692,29 @@ class Parser:
             return True
         return False
 
+    @staticmethod
+    def is_unsupported_namespace(value):
+        """To check if not supported for namespace"""
+        unsupported = isinstance(value, _builtin_function_or_method_type) and value not in convert_object_map
+        logger.debug(f"'{value}' unsupported: {unsupported}.")
+        return unsupported
+
+    @staticmethod
+    def is_unsupported_python_builtin_type(value):
+        """To check if not supported for builtin type"""
+        unsupported = value in _unsupported_python_builtin_type
+        logger.debug(f"value: '{value}', unsupported builtin type: {unsupported}.")
+        return unsupported
+
+    @staticmethod
+    def is_unsupported_internal_type(value):
+        """To check if not supported internal type, such as Tensor"""
+        for item in _unsupported_internal_type:
+            if value == item:
+                logger.debug(f"Found unsupported internal type: '{value}'.")
+                return True
+        return False
+
     def parse(self):
         """Parse the function or method."""
         logger.debug("fn: %r", self.fn)
@@ -740,26 +759,6 @@ class Parser:
                 value = getattr(module, attr)
                 # Check if value is constant.
                 return isinstance(value, (int, float, bool))
-        return False
-
-    def is_unsupported_namespace(self, value):
-        """To check if the value is an unsupported namespace."""
-        unsupported = isinstance(value, _builtin_function_or_method_type) and value not in convert_object_map
-        logger.debug(f"'{value}' unsupported: {unsupported}.")
-        return unsupported
-
-    def is_unsupported_python_builtin_type(self, value):
-        """To check if not supported builtin type"""
-        unsupported = value in _unsupported_python_builtin_type
-        logger.debug(f"value: '{value}', unsupported builtin type: {unsupported}.")
-        return unsupported
-
-    def is_unsupported_internal_type(self, value):
-        """To check if not supported internal type, such as Tensor"""
-        for item in _unsupported_internal_type:
-            if value == item:
-                logger.debug(f"Found unsupported internal type: '{value}'.")
-                return True
         return False
 
     def get_namespace_symbol(self, var: str):
