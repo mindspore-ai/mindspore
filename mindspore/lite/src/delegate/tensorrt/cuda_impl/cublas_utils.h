@@ -19,6 +19,7 @@
 
 #include <cublas_v2.h>
 #include "src/delegate/tensorrt/cuda_impl/cuda_helper.h"
+#include "src/common/log_util.h"
 
 // cublas API error checking
 #define CUBLAS_CHECK_VOID(err)                        \
