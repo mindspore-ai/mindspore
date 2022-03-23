@@ -113,8 +113,8 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optim
   }
   auto multi_graph_sink = [&func_graph](const FuncGraphPtr &f) {
     if (MsContext::GetInstance()->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
-      if (func_graph->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
-        f->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
+      if (func_graph->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
+        f->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE, true);
       }
     }
   };

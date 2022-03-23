@@ -315,7 +315,7 @@ void BroadenArgs(const AbstractBasePtrList &args_spec_list, AbstractBasePtrList 
 
 AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
   MS_EXCEPTION_IF_NULL(func_graph_);
-  if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
+  if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
     AbstractBasePtrList broaded_list;
     BroadenArgs(args_spec_list, &broaded_list);
     MS_LOG(DEBUG) << func_graph_->ToString() << ", original: " << mindspore::ToString(args_spec_list)
@@ -327,12 +327,12 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
 
 AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(func_graph_);
-  if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
+  if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
     return args_spec_list;
   }
 
   if (func_graph_->has_flag(kFuncGraphFlagUndetermined)) {
-    func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
+    func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE, true);
     auto normalized_args_spec_list = NormalizeArgs(args_spec_list);
     MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
     MS_LOG(DEBUG) << "Normalized args " << mindspore::ToString(normalized_args_spec_list);
