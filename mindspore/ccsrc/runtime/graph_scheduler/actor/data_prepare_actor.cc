@@ -415,6 +415,7 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
         AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
         tensor_address->SetNodeIndex(input_node, 0);
       }
+      device_address->SetSize(host_tensors[tensor_position]->data().nbytes());
     }
   }
 

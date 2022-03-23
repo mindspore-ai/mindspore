@@ -81,6 +81,9 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
   }
   RangePair ret;
   for (size_t i = 0; i < input_range_min.size(); ++i) {
+    if (input_range_min[i] < 0) {
+      input_range_min[i] = 1;
+    }
     ret.emplace_back(input_range_min[i], input_range_max[i]);
   }
   return shapeRangeTransfer.GetRealRange(ret, format, data_type);
@@ -108,6 +111,9 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
   }
   RangePair ret;
   for (size_t i = 0; i < output_range_min.size(); ++i) {
+    if (output_range_min[i] < 0) {
+      output_range_min[i] = 1;
+    }
     ret.emplace_back(output_range_min[i], output_range_max[i]);
   }
   return shapeRangeTransfer.GetRealRange(ret, format, data_type);

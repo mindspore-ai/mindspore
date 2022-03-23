@@ -149,6 +149,11 @@ def get_single_io_arg(info):
         res = info
     else:
         res = None
+    if 'range' in info:
+        for i in range(len(info['range'])):
+            if info['range'][i][1] == -1:
+                info['range'][i][1] = None
+        res = info
     return res
 
 

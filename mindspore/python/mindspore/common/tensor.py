@@ -125,7 +125,10 @@ class Tensor(Tensor_):
             _check_tensor_input(input_data, dtype, shape, init)
 
             # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
-            if init is None:
+            if (isinstance(shape, (list, tuple)) and None in shape) or init is not None:
+                shape = _check_tensor_dynamic_shape(dtype, shape, init)
+                Tensor_.__init__(self, dtype, shape)
+            else:
                 validator.check_value_type('input_data', input_data,
                                            (Tensor_, np.ndarray, np.str_, list, tuple, float, int, bool, complex),
                                            'Tensor')
@@ -153,8 +156,6 @@ class Tensor(Tensor_):
                     Tensor_.__init__(self, input_data, dtype)
                 else:
                     Tensor_.__init__(self, input_data)
-            else:
-                Tensor_.__init__(self, dtype, shape)
 
         self.virtual_flag = False
         self.init = init
@@ -2898,9 +2899,6 @@ def _check_tensor_input(input_data=None, dtype=None, shape=None, init=None):
     if init is not None and (shape is None or dtype is None):
         raise ValueError("init, dtype and shape must have values at the same time.")
 
-    if (int(input_data is None) + int(init is None)) != 1:
-        raise TypeError("input_data and init can not be None at the same time.")
-
     if input_data is not None:
         if isinstance(input_data, np.ndarray) and input_data.ndim > 1 and input_data.size == 0:
             raise ValueError("input_data can not contain zero dimension.")
@@ -2910,6 +2908,20 @@ def _check_tensor_input(input_data=None, dtype=None, shape=None, init=None):
 
     if shape is not None and not (hasattr(init, "__enable_zero_dim__") and init.__enable_zero_dim__) and 0 in shape:
         raise ValueError("Shape can not contain zero value.")
+
+
+def _check_tensor_dynamic_shape(dtype=None, shape=None, init=None):
+    """Check if the tensor has dynamic shape."""
+    shape_list = list(shape)
+    if len(shape_list) >= 1:
+        shape_replaced_list = [-1 if i is None else i for i in shape_list]
+        if isinstance(shape, tuple):
+            shape = tuple(shape_replaced_list)
+        if isinstance(shape, list):
+            shape = shape_replaced_list
+    if -1 in shape and (dtype is None or init is not None):
+        raise ValueError("If setting dynamic shape, dtype must not be None, init must be None")
+    return shape
 
 
 tensor_operator_registry.register('vm_compare', _vm_compare)
