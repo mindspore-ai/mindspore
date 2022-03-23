@@ -112,10 +112,11 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
 
   std::map<int64_t, size_t> rank_id_map;
   for (size_t i = 0; i < rank_ids.size(); ++i) {
-    if (rank_ids[i] < 0 || static_cast<size_t>(rank_ids[i]) >= rank_size_) {
-      MS_LOG(EXCEPTION) << "Invalid rank id " << rank_ids[i] << " at index " << i << " as rank size " << rank_size_;
+    auto rank_id = rank_ids.at(i);
+    if (rank_id < 0 || LongToSize(rank_id) >= rank_size_) {
+      MS_LOG(EXCEPTION) << "Invalid rank id " << rank_id << " at index " << i << " as rank size " << rank_size_;
     }
-    (void)rank_id_map.emplace(rank_ids[i], i);
+    (void)rank_id_map.emplace(rank_id, i);
   }
 
   size_t offset = 0;

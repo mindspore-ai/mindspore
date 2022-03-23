@@ -346,11 +346,13 @@ class AutoBoost:
         level_config = _boost_config_level[level]
         if not boost_config_dict:
             return level_config
+
         mode = "auto"
         if 'boost' in boost_config_dict and 'mode' in boost_config_dict['boost']:
             mode = boost_config_dict['boost']['mode']
         if mode not in _boost_config_mode:
             raise ValueError("The boost mode must be in {}, but got {}".format(_boost_config_mode, mode))
+
         if mode == "manual":
             for key, value in boost_config_dict["boost"].items():
                 if key in level_config:
@@ -359,11 +361,17 @@ class AutoBoost:
             level_config = {key: True for key in level_config}
         elif mode == "disable_all":
             level_config = {key: False for key in level_config}
+
+        valid_boost_each_mode_config = []
         for key, boost_each_mode_config in boost_config_dict.items():
             if key in level_config.keys() and level_config[key] or key == "common":
-                for key_s in boost_each_mode_config.keys():
-                    if key_s in self._boost_config_func_map:
-                        self._boost_config_func_map[key_s](self, boost_each_mode_config[key_s])
+                valid_boost_each_mode_config.append(boost_each_mode_config)
+
+        for boost_each_mode_config in valid_boost_each_mode_config:
+            for key_s in boost_each_mode_config.keys():
+                if key_s in self._boost_config_func_map:
+                    self._boost_config_func_map[key_s](self, boost_each_mode_config[key_s])
+
         return level_config
 
     _boost_config_func_map = {
