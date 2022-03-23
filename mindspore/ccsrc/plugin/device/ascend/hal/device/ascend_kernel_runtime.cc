@@ -1060,7 +1060,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (GraphWithEmptyTaskList(graph)) {
-    MS_LOG(WARNING) << "RunTask end, no task info found";
+    MS_LOG(INFO) << "RunTask end, no task info found";
     return true;
   }
 
