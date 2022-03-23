@@ -690,7 +690,8 @@ class ThorAscend(Optimizer):
         self.matrix_max_inv = ()
         for i in range(len(self.matrix_a)):
             self.matrix_max_inv = self.matrix_max_inv + (
-                Parameter(initializer(1, [1], mstype.float32), name="matrix_max" + str(i), requires_grad=False),)
+                Parameter(initializer(1, [1], mstype.float32), name='%s%s' % ("matrix_max", str(i)),
+                          requires_grad=False),)
         self.matrix_max_inv = ParameterTuple(self.matrix_max_inv)
         self.thor = True
         self.weight_decay = weight_decay

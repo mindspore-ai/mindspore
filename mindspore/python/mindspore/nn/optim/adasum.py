@@ -36,6 +36,9 @@ __all__ = ["AdaSumByDeltaWeightWrapCell", "AdaSumByGradWrapCell"]
 MAX_NUM_HASH = 2 ** 31
 
 _update_parameters = C.MultitypeFuncGraph("update_parameters")
+_reshape_grads = C.MultitypeFuncGraph("reshape_grads")
+
+
 @_update_parameters.register("Tensor", "Tensor", "Tensor", "Tensor", "Function")
 def _update_parameters_adasum(delta_weight, update_delta_weight, parameter, old_parameter, reshape):
     shape = F.shape(delta_weight)
@@ -43,21 +46,27 @@ def _update_parameters_adasum(delta_weight, update_delta_weight, parameter, old_
     new_parameter = old_parameter - update_delta_weight
     return P.Assign()(parameter, new_parameter)
 
-_reshape_grads = C.MultitypeFuncGraph("reshape_grads")
+
 @_reshape_grads.register("Tensor", "Tensor", "Function")
 def reshape_grads_adasum(grads, update_grads, reshape):
+    """
+    Reshape gradient.
+    """
     shape = F.shape(grads)
     update_grads = reshape(update_grads, shape)
     return update_grads
+
 
 def _send_before_receive(send_part, send, recv):
     send_ok = send(send_part)
     return recv(send_ok)
 
+
 def _receive_before_send(send_part, send, recv):
     receive_ok = recv(send_part)
     send_part = F.depend(send_part, receive_ok)
     return F.depend(receive_ok, send(send_part))
+
 
 def _send_recv_res(left_send, recv_part, local_part, allreduce, parameter_divisibility, allreduce_node_num):
     """send result and receive result."""
@@ -92,6 +101,9 @@ def _send_recv_res(left_send, recv_part, local_part, allreduce, parameter_divisi
 
 
 _adasum_opt_forward = C.MultitypeFuncGraph("adasum_opt_forward")
+_adasum_opt_rollback = C.MultitypeFuncGraph("adasum_opt_rollback")
+
+
 @_adasum_opt_forward.register("Bool", "Function", "Bool", "Int64", "Function", "Function", "Tensor")
 def _adasum_opt_forward_process(left_send, allreduce, parameter_divisibility, allreduce_node_num, send, recv, delta_w):
     """adasum optimizer process."""
@@ -121,7 +133,7 @@ def _adasum_opt_forward_process(left_send, allreduce, parameter_divisibility, al
                                         allreduce_node_num)
     return update_delta_w
 
-_adasum_opt_rollback = C.MultitypeFuncGraph("adasum_opt_rollback")
+
 @_adasum_opt_rollback.register("Bool", "Bool", "Tensor", "Function", "Function")
 def _adasum_opt_rollback_process(left_send, parameter_divisibility, delta_w, send, recv):
     """adasum optimizer rollback process."""
@@ -146,6 +158,7 @@ def _adasum_opt_rollback_process(left_send, parameter_divisibility, delta_w, sen
     else:
         res = delta_w
     return res
+
 
 class _AdaSum(Cell):
     r"""
@@ -172,6 +185,30 @@ class _AdaSum(Cell):
         for parameter in self.parameter_tuple:
             reshape = P.Reshape().add_prim_attr("target_param", "adasum_delta_weight." + parameter.name)
             self.update_reshape_list.append(reshape)
+
+    @staticmethod
+    def _hash(step, target, weights_index):
+        target = "tag" + str(step) + str(target) + str(weights_index)
+        target_hash = hashlib.sha1(target.encode()).hexdigest()
+        hash_res = int(int(target_hash, 16) % MAX_NUM_HASH)
+        return hash_res
+
+    def construct(self, delta_weights, parameters, old_parameters):
+        forward_weights = [delta_weights]
+        for i in range(self.calc_times):
+            process_weights = self.hyper_map(F.partial(_adasum_opt_forward, self.send_node[i]), self.allreduce_list[i],
+                                             self.parameter_divisibility_list[i], self.allreduce_node_num_list[i],
+                                             self.send_list_forward[i], self.recv_list_forward[i], forward_weights[-1])
+            forward_weights.append(process_weights)
+        for i in range(self.calc_times):
+            j = self.calc_times - i - 1
+            process_weights = self.hyper_map(F.partial(_adasum_opt_rollback, self.send_node[j]),
+                                             self.parameter_divisibility_list[j], forward_weights[j + 1],
+                                             self.send_list_rollback[j], self.recv_list_rollback[j])
+            forward_weights[j] = process_weights
+        adasum_parameters = self.hyper_map(F.partial(_update_parameters), delta_weights, forward_weights[0],
+                                           parameters, old_parameters, self.update_reshape_list)
+        return adasum_parameters
 
     def _generate_communication_op(self):
         """generate communication op."""
@@ -303,28 +340,6 @@ class _AdaSum(Cell):
             delta_weights_divisibility += (divisibility_flag,)
         return left_delta_weights, right_delta_weights, delta_weights_divisibility
 
-    def _hash(self, step, target, weights_index):
-        target = "tag" + str(step) + str(target) + str(weights_index)
-        target_hash = hashlib.sha1(target.encode()).hexdigest()
-        hash_res = int(int(target_hash, 16) % MAX_NUM_HASH)
-        return hash_res
-
-    def construct(self, delta_weights, parameters, old_parameters):
-        forward_weights = [delta_weights]
-        for i in range(self.calc_times):
-            process_weights = self.hyper_map(F.partial(_adasum_opt_forward, self.send_node[i]), self.allreduce_list[i],
-                                             self.parameter_divisibility_list[i], self.allreduce_node_num_list[i],
-                                             self.send_list_forward[i], self.recv_list_forward[i], forward_weights[-1])
-            forward_weights.append(process_weights)
-        for i in range(self.calc_times):
-            j = self.calc_times - i - 1
-            process_weights = self.hyper_map(F.partial(_adasum_opt_rollback, self.send_node[j]),
-                                             self.parameter_divisibility_list[j], forward_weights[j + 1],
-                                             self.send_list_rollback[j], self.recv_list_rollback[j])
-            forward_weights[j] = process_weights
-        adasum_parameters = self.hyper_map(F.partial(_update_parameters), delta_weights, forward_weights[0],
-                                           parameters, old_parameters, self.update_reshape_list)
-        return adasum_parameters
 
 class _AdaSumByGrad(_AdaSum):
     """Apply adasum by gradients"""
@@ -345,22 +360,28 @@ class _AdaSumByGrad(_AdaSum):
                                       self.update_reshape_list)
         return update_grads
 
+
 _get_delta_weight = C.MultitypeFuncGraph("_get_delta_weight")
+_save_weight = C.MultitypeFuncGraph("_save_weight")
+scale_mul = P.Mul().add_prim_attr("keep_alive", True)
+_clone_weight = C.MultitypeFuncGraph("_clone_weight")
+
+
 @_get_delta_weight.register("Tensor", "Tensor")
 def _get_delta_weight_process(new_parameter, old_parameter):
     delta_w = old_parameter - new_parameter
     return delta_w
 
-_save_weight = C.MultitypeFuncGraph("_save_weight")
+
 @_save_weight.register("Tensor", "Tensor")
 def _save_weight_process(new_parameter, old_parameter):
     return P.Assign()(new_parameter, old_parameter)
 
-scale_mul = P.Mul().add_prim_attr("keep_alive", True)
-_clone_weight = C.MultitypeFuncGraph("_clone_weight")
+
 @_clone_weight.register("Tensor", "Tensor")
 def _clone_weight_process(scale, weight):
     return scale_mul(weight, scale)
+
 
 def _parallel_check():
     """Parallel infos checking"""
@@ -376,6 +397,7 @@ def _parallel_check():
     stage_device_num = _get_stage_device_num()
     if stage_device_num < 16 or (stage_device_num & (stage_device_num - 1) != 0):
         raise RuntimeError("The device_num should be at least 16 and should be the power of 2 when applying adasum.")
+
 
 class AdaSumByGradWrapCell(Cell):
     r"""
@@ -429,6 +451,7 @@ class AdaSumByGradWrapCell(Cell):
         sync_tensor = F.depend(self.sync_tensor, adasum_res)
         sync_flag = P.AllReduce()(sync_tensor)
         return F.depend(self.optimizer(adasum_res), sync_flag)
+
 
 class AdaSumByDeltaWeightWrapCell(Cell):
     r"""

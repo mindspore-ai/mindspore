@@ -68,7 +68,7 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   strides_.resize(input_rank_);
   strides_[input_rank_ - 1] = 1;
-  for (int32_t i = input_rank_ - 2; i >= 0; i--) {
+  for (int32_t i = SizeToInt(input_rank_) - 2; i >= 0; i--) {
     size_t ind = IntToSize(i);
     strides_[ind] = output_shape[ind + 1] * strides_[ind + 1];
   }

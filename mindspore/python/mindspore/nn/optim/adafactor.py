@@ -128,6 +128,9 @@ def _run_fused_ada_factor(fused_ada_factor, eps, clip_threshold, beta1, beta2t, 
 
 
 def trans_to_tensor(param, is_tuple=False, fp32=True):
+    """
+    Transform params to tensor.
+    """
     if param is None or isinstance(param, bool):
         return param
     data_type = mstype.float32 if fp32 else mstype.float16
@@ -382,10 +385,16 @@ class AdaFactor(Optimizer):
 
     @property
     def supports_memory_efficient_fp16(self):
+        """
+        Support memory efficient for fp16
+        """
         return True
 
     @property
     def supports_flat_params(self):
+        """
+        Support flatten params
+        """
         return False
 
     def construct(self, gradients):

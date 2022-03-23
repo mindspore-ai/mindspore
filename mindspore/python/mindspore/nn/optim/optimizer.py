@@ -286,6 +286,27 @@ class Optimizer(Cell):
         """
         raise NotImplementedError
 
+    @staticmethod
+    def _preprocess_grad_centralization(grad_centralization):
+        if not isinstance(grad_centralization, bool):
+            raise TypeError("For 'Optimizer', the 'gradients_centralization' should be bool type, "
+                            "but got {}.".format(type(grad_centralization)))
+        return grad_centralization
+
+    @staticmethod
+    def _parameters_base_check(parameters, param_info):
+        """Parameters base check."""
+        if parameters is None:
+            raise ValueError(f"For 'Optimizer', the argument {param_info} can not be None.")
+        if not isinstance(parameters, Iterable):
+            raise TypeError(f"For 'Optimizer', the argument {param_info} must be Iterable type, "
+                            f"but got {type(parameters)}.")
+        parameters = list(parameters)
+
+        if not parameters:
+            raise ValueError(f"For 'Optimizer', the argument {param_info} must not be empty.")
+        return parameters
+
     def _set_base_target(self, value):
         """
         If the input value is set to "CPU", the parameters will be updated on the host using the Fused
@@ -393,12 +414,6 @@ class Optimizer(Cell):
             raise TypeError("Weight decay should be int, float or Cell.")
         return weight_decay
 
-    def _preprocess_grad_centralization(self, grad_centralization):
-        if not isinstance(grad_centralization, bool):
-            raise TypeError("For 'Optimizer', the 'gradients_centralization' should be bool type, "
-                            "but got {}.".format(type(grad_centralization)))
-        return grad_centralization
-
     def _preprocess_single_lr(self, learning_rate):
         """Check lr value, and convert lr to a float, a Tensor or a LearningRateSchedule."""
         if isinstance(learning_rate, (float, int)):
@@ -439,19 +454,6 @@ class Optimizer(Cell):
         if isinstance(learning_rate, Tensor) and learning_rate.ndim == 1:
             return _IteratorLearningRate(learning_rate, name)
         return learning_rate
-
-    def _parameters_base_check(self, parameters, param_info):
-        """Parameters base check."""
-        if parameters is None:
-            raise ValueError(f"For 'Optimizer', the argument {param_info} can not be None.")
-        if not isinstance(parameters, Iterable):
-            raise TypeError(f"For 'Optimizer', the argument {param_info} must be Iterable type, "
-                            f"but got {type(parameters)}.")
-        parameters = list(parameters)
-
-        if not parameters:
-            raise ValueError(f"For 'Optimizer', the argument {param_info} must not be empty.")
-        return parameters
 
     def _check_group_params(self, parameters):
         """Check group params."""
@@ -590,7 +592,6 @@ class Optimizer(Cell):
         self.group_weight_decay = ordered_weight_decay
         self.group_grad_centralization = ordered_grad_centralization
 
-
     def get_weight_decay(self):
         """
         The optimizer calls this interface to get the weight decay value for the current step.
@@ -609,7 +610,6 @@ class Optimizer(Cell):
                 return weight_decay
             return self.weight_decay(self.global_step)
         return self.weight_decay
-
 
     def get_lr(self):
         """
@@ -630,7 +630,6 @@ class Optimizer(Cell):
                 lr = self.learning_rate(self.global_step)
         self.assignadd(self.global_step, self.global_step_increase_tensor)
         return lr
-
 
     def get_lr_parameter(self, param):
         """

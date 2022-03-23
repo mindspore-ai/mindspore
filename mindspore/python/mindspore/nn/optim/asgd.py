@@ -159,8 +159,8 @@ class ASGD(Optimizer):
         self.t0 = Tensor([t0], dtype=mstype.float32)
         mu, eta = [], []
         for param in self.parameters:
-            mu.append(Parameter(Tensor(1., dtype=mstype.float32), name='mu_'+param.name))
-            eta.append(Parameter(Tensor(0., dtype=mstype.float32), name='eta_'+param.name))
+            mu.append(Parameter(Tensor(1., dtype=mstype.float32), name='%s%s' % ("mu_", param.name)))
+            eta.append(Parameter(Tensor(0., dtype=mstype.float32), name='%s%s' % ("eta_", param.name)))
         self.lens = len(self.parameters)
         self.mu = mindspore.ParameterTuple(mu)
         self.eta = mindspore.ParameterTuple(eta)
