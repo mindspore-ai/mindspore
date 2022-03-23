@@ -27,7 +27,8 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
+constexpr int DynamicInputNum = 5;
+template <typename T, typename S = int64_t>
 class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSliceGpuCommon {
  public:
   StridedSliceGradGpuKernelMod() = default;
@@ -49,8 +50,19 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    std::vector<int64_t> shapex = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
-    for (auto x : shapex) {
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num == DynamicInputNum) {
+      is_dynamic_attr_ = true;
+    }
+    if (is_dynamic_attr_) {
+      GetDynamicAttrIntValue(kernel_node, kShapexIndex_, &shapex_);
+      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_);
+      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_);
+      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_);
+    } else {
+      shapex_ = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
+    }
+    for (auto x : shapex_) {
       input_shape_.push_back(static_cast<size_t>(x));
     }
     if (input_shape_.size() > MAX_DIMS) {
@@ -58,9 +70,18 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
                         << ", but got " << input_shape_.size();
     }
 
-    CollectInfo(kernel_node);
+    CollectInfo(kernel_node, is_dynamic_attr_);
     InitSizeLists();
     return true;
+  }
+  void ResetResource() noexcept override {
+    ResetSizeLists();
+    begin_.clear();
+    end_.clear();
+    strides_.clear();
+    input_shape_.clear();
+    output_shape_.clear();
+    is_dynamic_attr_ = false;
   }
 
  protected:
@@ -77,6 +98,14 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
     }
     output_size_list_.push_back(size1);
   }
+  bool is_null_input_{false};
+  bool is_dynamic_attr_{false};
+  bool get_dynamic_attr_value_{false};
+  static constexpr size_t kShapexIndex_{1};
+  static constexpr size_t kBeginIndex_{2};
+  static constexpr size_t kEndIndex_{3};
+  static constexpr size_t kStrideIndex_{4};
+  std::vector<int64_t> shapex_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -21,7 +21,7 @@ namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  UnsortedSegmentSumGpuKernelMod, double, int)
+  UnsortedSegmentSumGpuKernelMod, double, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
@@ -31,7 +31,7 @@ MS_REG_GPU_KERNEL_TWO(
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  UnsortedSegmentSumGpuKernelMod, float, int)
+  UnsortedSegmentSumGpuKernelMod, float, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
@@ -41,7 +41,7 @@ MS_REG_GPU_KERNEL_TWO(
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  UnsortedSegmentSumGpuKernelMod, half, int)
+  UnsortedSegmentSumGpuKernelMod, half, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
@@ -51,29 +51,78 @@ MS_REG_GPU_KERNEL_TWO(
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  UnsortedSegmentSumGpuKernelMod, int, int)
+  UnsortedSegmentSumGpuKernelMod, int32_t, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
   UnsortedSegmentSumGpuKernelMod, int, int64_t)
-
-// Re-registration with 3 inputs - dynamic shape mode - sets of Int64/Int32 num segments types
+// Re-registration with 3 inputs - dynamic shape mode
+// Int32
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      UnsortedSegmentSumGpuKernelMod, double, int32_t)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      UnsortedSegmentSumGpuKernelMod, double, int64_t)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UnsortedSegmentSumGpuKernelMod, float, int32_t)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UnsortedSegmentSumGpuKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      UnsortedSegmentSumGpuKernelMod, half, int32_t)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      UnsortedSegmentSumGpuKernelMod, half, int64_t)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      UnsortedSegmentSumGpuKernelMod, int32_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      UnsortedSegmentSumGpuKernelMod, int32_t, int64_t)
+// Int64
 MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      UnsortedSegmentSumGpuKernelMod, double, int)
-MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat64),
-                      UnsortedSegmentSumGpuKernelMod, double, int)
-
+                      UnsortedSegmentSumGpuKernelMod, double, int32_t)
 MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat64)
@@ -83,27 +132,11 @@ MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       UnsortedSegmentSumGpuKernelMod, double, int64_t)
 MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat64),
-                      UnsortedSegmentSumGpuKernelMod, double, int64_t)
-
-MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
-                      KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      UnsortedSegmentSumGpuKernelMod, float, int)
-MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      UnsortedSegmentSumGpuKernelMod, float, int)
-
+                      UnsortedSegmentSumGpuKernelMod, float, int32_t)
 MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
@@ -113,27 +146,11 @@ MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       UnsortedSegmentSumGpuKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      UnsortedSegmentSumGpuKernelMod, float, int64_t)
-
-MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
-                      KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      UnsortedSegmentSumGpuKernelMod, half, int)
-MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      UnsortedSegmentSumGpuKernelMod, half, int)
-
+                      UnsortedSegmentSumGpuKernelMod, half, int32_t)
 MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -143,40 +160,17 @@ MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       UnsortedSegmentSumGpuKernelMod, half, int64_t)
 MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      UnsortedSegmentSumGpuKernelMod, half, int64_t)
-
-MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
-                      KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt32),
-                      UnsortedSegmentSumGpuKernelMod, int, int)
-MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt32),
-                      UnsortedSegmentSumGpuKernelMod, int, int)
-
+                      UnsortedSegmentSumGpuKernelMod, int32_t, int32_t)
 MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt32),
-                      UnsortedSegmentSumGpuKernelMod, int, int64_t)
-MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt32),
-                      UnsortedSegmentSumGpuKernelMod, int, int64_t)
+                      UnsortedSegmentSumGpuKernelMod, int32_t, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

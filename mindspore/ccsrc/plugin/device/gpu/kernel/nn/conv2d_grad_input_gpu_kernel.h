@@ -47,8 +47,10 @@ constexpr size_t kWidth2DStrideIndex = 1;
 constexpr size_t k2DDilationSize = 4;
 constexpr size_t kHeight2DDilationIndex = 2;
 constexpr size_t kWidth2DDilationIndex = 3;
+constexpr auto StaticInput = 2;
+constexpr auto DynamicInput = 3;
 
-template <typename T>
+template <typename T, typename S = int64_t>
 class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
  public:
   ConvGradInputBkwGpuKernelMod()
@@ -129,21 +131,21 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
     InitResource();
     (void)CheckParam(kernel_node);
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
-    auto format_attr = GetAttr<std::string>(kernel_node, "format");
-    if (format_attr == kOpFormat_NHWC) {
-      data_format_ = kOpFormat_NHWC;
+    if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
+      return true;
     }
+
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     if (CheckNull(dy_shape, filter_shape)) {
       return true;
     }
-
+    auto format_attr = GetAttr<std::string>(kernel_node, "format");
+    if (format_attr == kOpFormat_NHWC) {
+      data_format_ = kOpFormat_NHWC;
+    }
     std::vector<size_t> input_shape;
     GetInputShape(kernel_node, &input_shape);
     if (data_format_ == kOpFormat_NHWC) {
@@ -155,7 +157,6 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
     CheckTensorSize({input_shape, dy_shape, filter_shape});
     SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
     Set4DDesc(dy_shape, input_shape, filter_shape);
-
     group_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "group"));
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionGroupCount(conv_desc_, group_),
                                 "cudnnSetConvGroupCount failed");
@@ -243,6 +244,44 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
                                "cudnnDestroyTensorDescriptor failed");
   }
 
+  void ResetResource() noexcept override {
+    MS_LOG(ERROR) << "czrrr conv2d_grad_input ResetResource";
+    cudnn_handle_ = nullptr;
+    w_desc_ = nullptr;
+    conv_desc_ = nullptr;
+    dy_desc_ = nullptr;
+    dx_desc_ = nullptr;
+    padded_descriptor_ = nullptr;
+    algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
+    pad_mode_ = "";
+    data_format_ = kOpFormat_NCHW;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    compute_format_ = CUDNN_TENSOR_NCHW;
+    old_height_ = 0;
+    old_width_ = 0;
+    pad_height_ = 0;
+    pad_width_ = 0;
+    pad_top_ = 0;
+    pad_left_ = 0;
+    n_ = 0;
+    c_ = 0;
+    stride_.clear();
+    dilation_.clear();
+    group_ = 1;
+    is_null_input_ = false;
+    kernel_name_ = "Conv2dGradInput";
+    dy_size_ = 0;
+    w_size_ = 0;
+    output_size_ = 0;
+    padded_size_ = 0;
+    workspace_size_ = 0;
+    use_pad_ = 0;
+    beta_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
@@ -293,14 +332,28 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void CheckParam(const CNodePtr &kernel_node) {
+    kernel_node_ = kernel_node;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
+    if (input_num != StaticInput && input_num != DynamicInput) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2 or 3, but got " << input_num;
+    }
+    if (input_num == DynamicInput) {
+      is_dynamic_attr_ = true;
+    }
+    if (GetDynamicAttrIntValue(kernel_node, kShapeIndex_, &input_shape_)) {
+      get_dynamic_attr_value_ = true;
+    }
+    if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
+      input_size_list_.push_back(0);
+      input_size_list_.push_back(0);
+      output_size_list_.push_back(0);
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
+    data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
   }
   void SelectAlgorithm(cudnnTensorDescriptor_t dx_desc_real) {
     constexpr int requested_algo_count = 1;
@@ -418,6 +471,10 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
   size_t workspace_size_;
   bool use_pad_;
   float beta_;
+  bool is_dynamic_attr_{false};
+  bool get_dynamic_attr_value_{false};
+  std::vector<int64_t> input_shape_;
+  static constexpr size_t kShapeIndex_{2};
 };
 }  // namespace kernel
 }  // namespace mindspore
