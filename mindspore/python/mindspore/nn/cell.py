@@ -294,7 +294,7 @@ class Cell(Cell_):
 
     def get_func_graph_proto(self):
         """Return graph binary proto."""
-        exec_id = self.phase + "." + str(self.create_time) + '.' + str(id(self))
+        exec_id = ".".join([self.phase, str(self.create_time), str(id(self))])
         return _cell_graph_executor._get_func_graph_proto(self, exec_id, "anf_ir", True)
 
     def __getattr__(self, name):
@@ -730,17 +730,6 @@ class Cell(Cell_):
         else:
             object.__setattr__(self, name, value)
 
-    def _check_param_list_tuple(self, value):
-        """
-        Check the type of input in list or tuple is Parameter.
-        :param value: list or tuple.
-        :return: The types of all inputs are parameter.
-        """
-        for item in value:
-            if not isinstance(item, Parameter):
-                return False
-        return True
-
     def __setattr__(self, name, value):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
@@ -748,7 +737,7 @@ class Cell(Cell_):
             self._set_attr_for_parameter(name, value)
         elif isinstance(value, ParameterTuple):
             self._set_attr_for_parameter_tuple(name, value)
-        elif isinstance(value, (list, tuple)) and value and self._check_param_list_tuple(value):
+        elif isinstance(value, (list, tuple)) and value and _check_param_list_tuple(value):
             self._set_attr_for_parameter_in_list_or_tuple(name, value)
         elif isinstance(value, Cell):
             self._set_attr_for_cell(name, value)
@@ -2224,3 +2213,15 @@ class GraphCell(Cell):
         self.phase = "graph_load_from_mindir"
         self._add_attr("graph_load_from_mindir", self.graph)
         return self.compile_and_run(*inputs)
+
+
+def _check_param_list_tuple(value):
+    """
+    Check the type of input in list or tuple is Parameter.
+    :param value: list or tuple.
+    :return: The types of all inputs are parameter.
+    """
+    for item in value:
+        if not isinstance(item, Parameter):
+            return False
+    return True
