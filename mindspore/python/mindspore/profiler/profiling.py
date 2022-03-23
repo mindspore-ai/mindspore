@@ -685,15 +685,8 @@ class Profiler:
             logger.warning(err.message)
 
         logger.warning(
-            '\nMemory Usage is not supported on GPU currently.\n'
-            'Please running on Ascend if you would like to see memory analysis, '
-            'otherwise, this warning can be ignored.'
-        )
-
-        logger.warning(
-            '\nProfile communication is not supported on GPU currently.\n'
-            'Please running on Ascend if you would like to see cluster communication analysis, '
-            'otherwise, this warning can be ignored.'
+            '\nThe training and inference process does not support profiler currently, '
+            'only individual training or inference is supported.'
         )
 
     def _get_step_reduce_op_type(self):
