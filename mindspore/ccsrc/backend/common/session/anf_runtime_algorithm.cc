@@ -933,9 +933,10 @@ static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, s
   };
   if (!max_shape.empty()) {
     if (device_shape->empty()) {
-      std::transform(max_shape.begin(), max_shape.end(), std::back_inserter(*device_shape), ConvertNegOneToDefault);
+      (void)std::transform(max_shape.begin(), max_shape.end(), std::back_inserter(*device_shape),
+                           ConvertNegOneToDefault);
     } else {
-      std::transform(max_shape.begin(), max_shape.end(), device_shape->begin(), IntToSize);
+      (void)std::transform(max_shape.begin(), max_shape.end(), device_shape->begin(), IntToSize);
     }
   } else {
     auto tmp_shape = *device_shape;
