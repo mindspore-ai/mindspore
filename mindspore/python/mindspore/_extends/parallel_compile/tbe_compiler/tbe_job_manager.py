@@ -366,7 +366,7 @@ class TbeJobManager:
             return TuneMode.RL_TUNE
         if TuneMode.GA_TUNE.value in auto_tiling_mode:
             for func_name in func_names:
-                if func_name in self.auto_tune_op_list:
+                if func_name.lower() in self.auto_tune_op_list:
                     return TuneMode.GA_TUNE
         if TuneMode.RL_TUNE.value in auto_tiling_mode:
             return TuneMode.RL_TUNE

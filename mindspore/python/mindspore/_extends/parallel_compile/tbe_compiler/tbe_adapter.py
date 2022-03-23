@@ -286,7 +286,7 @@ def get_auto_tune_support_op_list(job: TbeJob):
     from auto_tune_main import enable_auto_tune_support
     auto_tune_op_list = enable_auto_tune_support()
     job.info("auto tune GA support ops list:{}".format(auto_tune_op_list))
-    return auto_tune_op_list
+    return [x.lower() for x in auto_tune_op_list]
 
 
 def _normalize_module_name(module_name, py_module_path):
@@ -573,7 +573,6 @@ def rl_tune_single_op(job: TbeJob):
     set_current_op_name(op_kernel_name)
     unknown_shape = compute_op_info["unknown_shape"]
     int64_mode = compute_op_info["int64mode"]
-    dynamic_compile_static = compute_op_info["dynamic_compile_static"]
     op_pattern = compute_op_info["pattern"]
     fuzz_build_info = get_fuzz_build_info(job.content)
     auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
@@ -581,7 +580,7 @@ def rl_tune_single_op(job: TbeJob):
     options = get_options_info(job.content)
     try:
         build_single_op_from_c(op_module_name, op_func_name, op_type, "build", unknown_shape,
-                               (inputs, outputs, attrs), int64_mode, dynamic_compile_static, unknown_shape, options,
+                               (inputs, outputs, attrs), int64_mode, unknown_shape, options,
                                op_pattern, auto_tiling_mode, device_id, json.dumps(fuzz_build_info))
     # pylint: disable=broad-except
     except Exception:
