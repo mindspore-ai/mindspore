@@ -83,13 +83,13 @@ void AdjustDependForParallelOptimizerRecomputeAllGather::IncreaseAllgatherFusion
     for (auto &adjust_node : parallel_optimizer_recompute_first_fusion_allgathers) {
       int64_t current_fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
       int64_t destination_fusion_id =
-        current_fusion_id + unrecompute_max_fusion_id - recompute_min_fusion_id + kFusionGap;
+        (kFusionGap + current_fusion_id + unrecompute_max_fusion_id) - recompute_min_fusion_id;
       common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(destination_fusion_id), adjust_node);
     }
     for (auto &adjust_node : parallel_optimizer_recompute_allgathers) {
       int64_t current_fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
       int64_t destination_fusion_id =
-        current_fusion_id + unrecompute_max_fusion_id - recompute_min_fusion_id + kFusionGap;
+        (kFusionGap + current_fusion_id + unrecompute_max_fusion_id) - recompute_min_fusion_id;
       common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(destination_fusion_id), adjust_node);
     }
   }

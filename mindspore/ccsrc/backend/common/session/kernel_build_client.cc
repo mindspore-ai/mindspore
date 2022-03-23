@@ -97,5 +97,15 @@ std::string AscendKernelBuildClient::DispatchToServer(const std::string &job_jso
   }
   return res;
 }
+
+AscendKernelBuildClient &AscendKernelBuildClient::Instance() {
+  static AscendKernelBuildClient instance{};
+  return instance;
+}
+
+AkgKernelBuildClient &AkgKernelBuildClient::Instance() {
+  static AkgKernelBuildClient instance{};
+  return instance;
+}
 }  // namespace kernel
 }  // namespace mindspore

@@ -151,7 +151,7 @@ DuplexPipe &DuplexPipe::operator>>(std::string &buf) {
   return *this;
 }
 
-void DuplexPipe::Close() {
+void DuplexPipe::Close() noexcept {
   close(fd1_[0]);
   close(fd1_[1]);
   close(fd2_[0]);
