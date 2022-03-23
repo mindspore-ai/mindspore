@@ -36,10 +36,9 @@ int SplitBaseCPUKernel::UpdateThreadNumPass() {
     thread_cost_context_->per_unit_compute_cost_ = 17.573;  // 17.573 : compute cost, dataNum about 8k
   }
 
-  if (thread_cost_context_ != nullptr) {
-    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
-    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
-  }
+  thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
+  thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+
   return RET_OK;
 }
 #endif
