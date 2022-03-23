@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 int LayerNormFp16(const float16_t *src_data, const float16_t *gamma_data, const float16_t *beta_data,
-                  float16_t *dst_data, float16_t *out_mean, float16_t *out_deno, LayerNormParameter *param,
+                  float16_t *dst_data, float16_t *out_mean, float16_t *out_variance, LayerNormParameter *param,
                   size_t task_id);
 #ifdef __cplusplus
 }

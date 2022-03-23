@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_data, float *dst_data, float *out_mean,
-              float *out_deno, const LayerNormParameter *param, size_t task_id);
+              float *out_variance, const LayerNormParameter *param, size_t task_id);
 #ifdef __cplusplus
 }
 #endif

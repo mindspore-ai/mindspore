@@ -18,17 +18,17 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
-int LayerNormMeanAndSquareFp16(const float16_t *src, int num, float16_t *mean, float16_t *square_mean) {
+int LayerNormMeanAndSquareFp16(const float16_t *src, int num, float16_t *mean, float16_t *variance) {
   if (num <= 0) {
     return NNACL_ERR;
   }
   int index = 0;
   float sum = 0.0f;
-  float square_sum = 0.0f;
+  float square_mean = 0.0f;
   for (; index <= num - C8NUM; index += C8NUM) {
     float16x8_t srcv = vld1q_f16(src + index);
     for (int i = 0; i < C8NUM; ++i) {
-      square_sum += srcv[i] * srcv[i];
+      square_mean += srcv[i] * srcv[i];
     }
     float16x4_t sum2 = vadd_f16(vget_low_f16(srcv), vget_high_f16(srcv));
     float32x4_t sum_f32 = vcvt_f32_f16(sum2);
@@ -36,10 +36,11 @@ int LayerNormMeanAndSquareFp16(const float16_t *src, int num, float16_t *mean, f
   }
   for (; index < num; index++) {
     sum += src[index];
-    square_sum += src[index] * src[index];
+    square_mean += src[index] * src[index];
   }
   *mean = (float16_t)(sum / num);
-  *square_mean = (float16_t)(square_sum / num);
+  square_mean = square_mean / num;
+  *variance = square_mean - (*mean) * (*mean);
   return NNACL_OK;
 }
 
@@ -65,7 +66,7 @@ void LayerNormGammaAndBetaFp16(float16_t *dst, const float16_t *src, const float
 }
 
 int LayerNormFp16(const float16_t *src_data, const float16_t *gamma_data, const float16_t *beta_data,
-                  float16_t *dst_data, float16_t *out_mean, float16_t *out_deno, LayerNormParameter *param,
+                  float16_t *dst_data, float16_t *out_mean, float16_t *out_variance, LayerNormParameter *param,
                   size_t task_id) {
   if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL) {
     return NNACL_NULL_PTR;
@@ -79,18 +80,18 @@ int LayerNormFp16(const float16_t *src_data, const float16_t *gamma_data, const 
     const float16_t *src_norm = src_data + i * param->norm_inner_size_;
     float16_t *dst_norm = dst_data + i * param->norm_inner_size_;
     float16_t cur_mean = 0.0f;
-    float16_t cur_deno = 0.0f;
-    int ret = LayerNormMeanAndSquareFp16(src_norm, param->norm_inner_size_, &cur_mean, &cur_deno);
+    float16_t cur_variance = 0.0f;
+    int ret = LayerNormMeanAndSquareFp16(src_norm, param->norm_inner_size_, &cur_mean, &cur_variance);
     if (ret != NNACL_OK) {
       return NNACL_ERR;
     }
     if (out_mean != NULL) {
       out_mean[i] = cur_mean;
     }
-    if (out_deno != NULL) {
-      out_deno[i] = cur_deno;
+    if (out_variance != NULL) {
+      out_variance[i] = cur_variance;
     }
-    const float16_t deno = 1 / sqrtf(cur_deno - cur_mean * cur_mean + param->epsilon_);
+    const float16_t deno = 1 / sqrtf(cur_variance + param->epsilon_);
     if (param->norm_outer_size_ <= param->params_outer_size_) {
       for (int x = 0; x < param->norm_inner_size_ / param->params_inner_size_; x++) {
         const float16_t *src_param = src_norm + x * param->params_inner_size_;
