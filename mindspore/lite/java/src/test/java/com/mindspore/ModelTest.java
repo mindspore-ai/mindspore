@@ -5,7 +5,7 @@ import com.mindspore.config.DeviceType;
 import com.mindspore.config.MSContext;
 import com.mindspore.config.TrainCfg;
 import com.mindspore.lite.NativeLibrary;
-import com.mindspore.lite.Version;
+import com.mindspore.config.Version;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

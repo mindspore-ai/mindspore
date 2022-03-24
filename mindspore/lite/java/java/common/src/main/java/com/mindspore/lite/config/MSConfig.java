@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package com.mindspore.lite.config;
 
-import com.mindspore.lite.NativeLibrary;
-
 /**
  * MSConfig is defined for holding environment variables during runtime.
  *
@@ -25,13 +23,7 @@ import com.mindspore.lite.NativeLibrary;
  */
 public class MSConfig {
     static {
-        try {
-            NativeLibrary.load();
-        } catch (Exception e) {
-            System.err.println("Failed to load MindSporLite native library.");
-            e.printStackTrace();
-            throw e;
-        }
+        System.loadLibrary("mindspore-lite-jni");
     }
 
     private long msConfigPtr;
