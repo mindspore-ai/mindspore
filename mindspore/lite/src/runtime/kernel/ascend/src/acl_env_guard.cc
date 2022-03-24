@@ -32,13 +32,7 @@ AclEnvGuard::AclEnvGuard(std::string_view cfg_file) : errno_(ACL_ERROR_NONE) {
   MS_LOG(INFO) << "Acl init success";
 }
 
-AclEnvGuard::~AclEnvGuard() {
-  errno_ = aclFinalize();
-  if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_FINALIZE) {
-    MS_LOG(ERROR) << "Finalize acl failed";
-  }
-  MS_LOG(INFO) << "Acl finalize success";
-}
+AclEnvGuard::~AclEnvGuard() { (void)aclFinalize(); }
 
 std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
   std::shared_ptr<AclEnvGuard> acl_env;
