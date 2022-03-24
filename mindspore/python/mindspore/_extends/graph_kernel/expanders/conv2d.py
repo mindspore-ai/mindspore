@@ -67,7 +67,8 @@ class Conv2D(Expander):
             return True
         return False
 
-    def _check(self):
+    def _common_check(self):
+        """common check for inputs and attrs"""
         type_0 = self.inputs[0]['data_type']
         type_1 = self.inputs[1]['data_type']
         if type_0 != "float16" or type_1 != "float16":
@@ -89,10 +90,12 @@ class Conv2D(Expander):
             raise GKException("For 'Conv2D', value of attr 'dilation' should be [1, 1, 1, 1], but got {}"
                               .format(dilation))
 
+    def _check(self):
+        self._common_check()
+
         pad_list = self.attrs['pad_list']
-        pad_mode = self.attrs['pad_mode']
         check_nd(pad_list, 4)
-        self.has_pad = conv_had_pad(pad_list, pad_mode)
+        self.has_pad = conv_had_pad(pad_list, self.attrs['pad_mode'])
 
         shape_0 = self.inputs[0]['shape']
         shape_1 = self.inputs[1]['shape']

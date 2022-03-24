@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ def get_op_expander(json_str: str):
     except jd.JSONDecodeError:
         logger.error("Failed to generate graph kernel op")
         logger.error(traceback.format_exc())
-        return None
+        return ""
     except GraphKernelUnsupportedException as e:
         logger.info(e.message)
         return ""
