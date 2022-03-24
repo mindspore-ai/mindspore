@@ -87,15 +87,15 @@ int ConvolutionGradInputCPUKernel::DoExecute(int task_id) {
   auto dx_addr = reinterpret_cast<float *>(out_dx->MutableData());
 
   int i, j;
-  int nweights = input_w->ElementsNum();
+  int batch = conv_param->output_batch_;
+  int groups = conv_param->group_;
   int in_ch = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
   int k_h = conv_param->kernel_h_;
   int k_w = conv_param->kernel_w_;
-  int batch = conv_param->output_batch_;
+  int nweights = input_w->ElementsNum();
   int out_ch = conv_param->output_channel_;
-  int groups = conv_param->group_;
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
   int thread_num = op_parameter_->thread_num_;
@@ -130,13 +130,13 @@ int ConvolutionGradInputCPUKernel::DoExecute(int task_id) {
         float *mat_b = nullptr;
         if (ci == 0) {
           mat_b = w_addr + j * nweights / groups;
-          gcb.ca = 0;
-          gcb.cb = 0;
           gcb.bias = nullptr;
+          gcb.cb = 0;
+          gcb.ca = 0;
           gcb.atype = ActType_No;
         } else {
-          mat_b = gcb.mat_b;
           gcb.cb = 1;
+          mat_b = gcb.mat_b;
         }
         int real_chunk = MSMIN(m - ci, chunk_);
         float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;

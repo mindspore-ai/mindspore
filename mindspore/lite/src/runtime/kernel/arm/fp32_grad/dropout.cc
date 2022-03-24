@@ -30,6 +30,8 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Dropout;
 
 namespace mindspore::kernel {
+constexpr float kOne = 1.0f;
+
 int DropoutCPUKernel::Prepare() {
   auto param = reinterpret_cast<DropoutParameter *>(op_parameter_);
   if (param == nullptr) {
@@ -37,15 +39,15 @@ int DropoutCPUKernel::Prepare() {
     return RET_NULL_PTR;
   }
 
-  if ((param->ratio_ > 1.0f) || (param->ratio_ < 0.0f)) {
+  if ((param->ratio_ > kOne) || (param->ratio_ < 0.0f)) {
     MS_LOG(ERROR) << "unsupported ratio value - Dropout ratio should be between zero to one";
     return RET_ERROR;
   }
 
-  if (param->ratio_ >= 1.0f) {
-    scale_ = 1.0f;
+  if (param->ratio_ >= kOne) {
+    scale_ = kOne;
   } else {
-    scale_ = 1. / (1. - param->ratio_);
+    scale_ = kOne / (kOne - param->ratio_);
   }
   if (!InferShapeDone()) {
     return RET_OK;

@@ -197,9 +197,9 @@ int LstmCPUKernel::InitStateWeightBias() {
                  lstm_param_->bidirectional_, nullptr);
   } else if (weight_h->ElementsNum() - weight_i_size - weight_h_size - C2NUM * bias_size == 0) {
     // mindir from device "GPU", secend bias is also present order IFOG
-    int dir_mul = lstm_param_->bidirectional_ ? 2 : 1;
-    int bias_offset =
-      (gpu_orig_state_) ? gate_num * ((dir_mul - 1) * cw_size + dir_mul * hh_size + b_size) : weight_h_size + bias_size;
+    int dir_mul = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
+    int bias_offset = (gpu_orig_state_) ? gate_num * ((dir_mul - C1NUM) * cw_size + dir_mul * hh_size + b_size)
+                                        : weight_h_size + bias_size;
     float *state_bias = weight_h_data + bias_offset;
     int b_stride = (gpu_orig_state_) ? gate_num * (b_size * C2NUM) : gate_num * b_size;
     PackLstmBiasWithStride(state_bias_, state_bias, weight_batch_, lstm_param_->hidden_size_,
@@ -430,9 +430,9 @@ int LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_i, cons
   float *cell_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * 3;
   float *output_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_;
   float *tmp = buffer_[tmp_hidden_output_index];
-  int dir_mult = lstm_param_->bidirectional_ ? 2 : 1;
+  int dir_mult = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
   for (int t = 0; t < lstm_param_->seq_len_; t++) {
-    int real_t = is_backward ? lstm_param_->seq_len_ - t - 1 : t;
+    int real_t = is_backward ? lstm_param_->seq_len_ - t - C1NUM : t;
     float *input_gate_t = input_gate + lstm_param_->batch_ * lstm_param_->hidden_size_ * real_t;
     float *forget_gate_t = forget_gate + lstm_param_->batch_ * lstm_param_->hidden_size_ * real_t;
     float *cell_gate_t = cell_gate + lstm_param_->batch_ * lstm_param_->hidden_size_ * real_t;

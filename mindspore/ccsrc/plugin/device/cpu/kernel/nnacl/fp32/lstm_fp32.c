@@ -22,48 +22,37 @@
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 
-void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align, const int *order) {
+static void PackLstmMatrix(const float *src_batch, float *dst_batch, int col, int deep) {
+#ifdef ENABLE_AVX
+  RowMajor2Col16Major(src_batch, dst_batch, col, deep);
+#elif defined(ENABLE_ARM32)
+  RowMajor2Col4Major(src_batch, dst_batch, col, deep);
+#else
+  RowMajor2Col8Major(src_batch, dst_batch, col, deep);
+#endif
+}
+
+static void PackLstmWeightBatch(float *dst, const float *src, int batch, int deep, int col, int col_align,
+                                const int *order) {
   for (int i = 0; i < batch; i++) {
     const float *src_batch = src + i * col * deep;
     float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align * deep;
-#ifdef ENABLE_AVX
-    RowMajor2Col16Major(src_batch, dst_batch, col, deep);
-#elif defined(ENABLE_ARM32)
-    RowMajor2Col4Major(src_batch, dst_batch, col, deep);
-#else
-    RowMajor2Col8Major(src_batch, dst_batch, col, deep);
-#endif
+    PackLstmMatrix(src_batch, dst_batch, col, deep);
   }
+}
+
+void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align, const int *order) {
+  PackLstmWeightBatch(dst, src, batch, deep, col, col_align, order);
 }
 
 void PackLstmWeightWithStride(float *dst, const float *src, int batch, int deep, int col, int col_align,
                               bool is_bidirectional, int stride, const int *order) {
   int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
-  for (int i = 0; i < unidirectional_batch; i++) {
-    const float *src_batch = src + i * col * deep;
-    float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align * deep;
-#ifdef ENABLE_AVX
-    RowMajor2Col16Major(src_batch, dst_batch, col, deep);
-#elif defined(ENABLE_ARM32)
-    RowMajor2Col4Major(src_batch, dst_batch, col, deep);
-#else
-    RowMajor2Col8Major(src_batch, dst_batch, col, deep);
-#endif
-  }
+  PackLstmWeightBatch(dst, src, unidirectional_batch, deep, col, col_align, order);
   src += stride;
   dst += unidirectional_batch * col_align * deep;
   if (is_bidirectional) {
-    for (int i = 0; i < unidirectional_batch; i++) {
-      const float *src_batch = src + i * col * deep;
-      float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align * deep;
-#ifdef ENABLE_AVX
-      RowMajor2Col16Major(src_batch, dst_batch, col, deep);
-#elif defined(ENABLE_ARM32)
-      RowMajor2Col4Major(src_batch, dst_batch, col, deep);
-#else
-      RowMajor2Col8Major(src_batch, dst_batch, col, deep);
-#endif
-    }
+    PackLstmWeightBatch(dst, src, unidirectional_batch, deep, col, col_align, order);
   }
 }
 

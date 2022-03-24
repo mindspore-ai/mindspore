@@ -127,7 +127,7 @@ int LSTMGradWeightCPUKernel::LstmBackpropUnidirectional(bool is_backward, float 
 }
 
 void LSTMGradWeightCPUKernel::ReorderLstmWeightGrad(float *dst, float *src, LstmGradParameter *param) {
-  int uni_batch = param->bidirectional_ ? weight_batch_ / 2 : weight_batch_;
+  int uni_batch = param->bidirectional_ ? weight_batch_ / C2NUM : weight_batch_;
   // 4xWixWh,4xWirxWhr,4xBiBh,4xBirBhr
   ReorderLstmWeights(dst, src, uni_batch, lstm_param_->hidden_size_, lstm_param_->input_size_, getLstmOrderIOFG());
   src += uni_batch * lstm_param_->hidden_size_ * lstm_param_->input_size_;
