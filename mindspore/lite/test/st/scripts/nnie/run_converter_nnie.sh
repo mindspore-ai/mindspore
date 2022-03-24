@@ -7,17 +7,21 @@ function Run_Converter() {
     cd ${x86_path} || exit 1
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
-    # generate converter_lite config file
-    ms_config_file=${x86_path}/converter.cfg
 
-    cp tools/converter/converter/converter_lite ./ || exit 1
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib:./tools/converter/providers/Hi3516D/third_party/opencv-4.2.0:./tools/converter/providers/Hi3516D/third_party/protobuf-3.9.0
-
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./runtime/lib/
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:../tools/converter/lib/:../tools/converter/third_party/glog/lib:../tools/converter/providers/Hi3516D/third_party/opencv-4.2.0:../tools/converter/providers/Hi3516D/third_party/protobuf-3.9.0
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:../runtime/lib/
 
     echo ' ' > ${run_converter_log_file}
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
+
+    # parallel processing
+    fifo_file="fifo_file.txt"
+    mkfifo ${fifo_file}
+    exec 6<>${fifo_file}
+    rm -f ${fifo_file}
+    max_parallel_jobs=6
+    for ((i = 0; i < ${max_parallel_jobs}; i++)); do echo; done >&6
 
     # Convert nnie models:
     while read line; do
@@ -25,28 +29,42 @@ function Run_Converter() {
         if [[ $nnie_line_info == \#* || $nnie_line_info == "" ]]; then
           continue
         fi
-        model_location=`echo ${nnie_line_info}|awk -F ' ' '{print $1}'`
-        model_info=`echo ${nnie_line_info}|awk -F ' ' '{print $2}'`
-        model_name=${model_info%%;*}
-        cp ${models_path}/${model_location}/${model_name}.cfg ./ || exit 1
-        echo "[registry]" > ${ms_config_file}
-        echo 'plugin_path='${x86_path}'/mindspore-lite-'${version}'-linux-x64/tools/converter/providers/Hi3516D/libmslite_nnie_converter.so' >> ${ms_config_file}
-        echo '[nnie]' >> ${ms_config_file}
-        echo 'nnie_mapper_path=./tools/converter/providers/Hi3516D/libnnie_mapper.so' >> ${ms_config_file}
-        echo 'nnie_data_process_path=./tools/converter/providers/Hi3516D/libmslite_nnie_data_process.so' >> ${ms_config_file}
-        echo 'benchmark_path='${x86_path}'/mindspore-lite-'${version}'-linux-x64/tools/benchmark/benchmark' >> ${ms_config_file}
-        echo 'nnie_config_path='./${model_name}.cfg >> ${ms_config_file}
-        echo -e 'nnie_disable_inplace_fusion=off\n' >> ${ms_config_file}
+        read -u6
+        {
+          model_location=`echo ${nnie_line_info}|awk -F ' ' '{print $1}'`
+          model_info=`echo ${nnie_line_info}|awk -F ' ' '{print $2}'`
+          model_name=${model_info%%;*}
 
-        echo ${model_name} >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_location}'/model/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_location}'/model/'${model_name}'.caffemodel --configFile='${ms_config_file}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=CAFFE --modelFile=${models_path}/${model_location}/model/${model_name}.prototxt --weightFile=${models_path}/${model_location}/model/${model_name}.caffemodel --configFile=${ms_config_file} --outputFile=${ms_models_path}/${model_name}
-        if [ $? = 0 ]; then
-            converter_result='converter CAFFE '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter CAFFE '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
-        fi
+          # generate converter config file
+          mkdir -p ./${model_name} || exit 1
+          cd ./${model_name} || exit 1
+          cp ../tools/converter/converter/converter_lite ./ || exit 1
+          cp ${models_path}/${model_location}/${model_name}.cfg ./ || exit 1
+
+          ms_config_file=./converter.cfg
+          echo "[registry]" > ${ms_config_file}
+          echo 'plugin_path='${x86_path}'/mindspore-lite-'${version}'-linux-x64/tools/converter/providers/Hi3516D/libmslite_nnie_converter.so' >> ${ms_config_file}
+          echo '[nnie]' >> ${ms_config_file}
+          echo 'nnie_mapper_path=../tools/converter/providers/Hi3516D/libnnie_mapper.so' >> ${ms_config_file}
+          echo 'nnie_data_process_path=../tools/converter/providers/Hi3516D/libmslite_nnie_data_process.so' >> ${ms_config_file}
+          echo 'benchmark_path='${x86_path}'/mindspore-lite-'${version}'-linux-x64/tools/benchmark/benchmark' >> ${ms_config_file}
+          echo 'nnie_config_path='./${model_name}.cfg >> ${ms_config_file}
+          echo -e 'nnie_disable_inplace_fusion=off\n' >> ${ms_config_file}
+          echo ${model_name} >> "${run_converter_log_file}"
+          echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_location}'/model/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_location}'/model/'${model_name}'.caffemodel --configFile='${ms_config_file}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
+          ./converter_lite  --fmk=CAFFE --modelFile=${models_path}/${model_location}/model/${model_name}.prototxt --weightFile=${models_path}/${model_location}/model/${model_name}.caffemodel --configFile=${ms_config_file} --outputFile=${ms_models_path}/${model_name}
+          if [ $? = 0 ]; then
+              rm -rf ${x86_path}/mindspore-lite-${version}-linux-x64/${model_name}
+              converter_result='converter CAFFE '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+          else
+              rm -rf ${x86_path}/mindspore-lite-${version}-linux-x64/${model_name}
+              converter_result='converter CAFFE '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+          fi
+          echo >&6
+        } &
     done < ${models_nnie_config}
+    wait
+    exec 6>&-
 }
 
 # Run benchmark on hi3516:
