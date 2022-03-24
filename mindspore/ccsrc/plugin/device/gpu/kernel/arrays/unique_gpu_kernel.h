@@ -20,11 +20,10 @@
 #include <vector>
 #include <memory>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/unique_helper.h"
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
 class UniqueGpuKernelMod : public NativeGpuKernelMod {
  public:
   UniqueGpuKernelMod() { ResetResource(); }
@@ -45,25 +44,7 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    helper_ptr_ = std::make_unique<cukernel::UniqueHelperGpuKernel<T, S>>(kernel_name);
-    helper_ptr_->ResetResource();
-    std::vector<std::vector<size_t>> input_shapes;
-    std::vector<std::vector<size_t>> output_shapes;
-    std::vector<size_t> shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_shapes.emplace_back(shape);
-    helper_ptr_->CalMemSize(input_shapes, output_shapes);
-    InitSizeLists();
-    is_need_updateop_ = true;
-    return true;
-  }
+  bool Init(const CNodePtr &kernel_node) override;
 
   void UpdateOp() override {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
@@ -74,7 +55,10 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
     for (size_t i = 0; i < output_num; ++i) {
       std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(kernel_node_.lock(), i);
       if (i == 0) {
-        shape[0] = helper_ptr_->GetOutSize();
+        auto dyn_out = helper_ptr_->GetDynOutInfo();
+        MS_EXCEPTION_IF_CHECK_FAIL(dyn_out.shapes.size() == 1 && dyn_out.shapes[0].size() == 1,
+                                   "Unique output info error.");
+        shape[0] = dyn_out.shapes[0][0];
       }
       TypeId type_id = common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), i);
       type_ids.emplace_back(type_id);
@@ -98,10 +82,12 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
     workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   }
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
   void *stream_ptr_;
   bool is_null_input_;
-  std::unique_ptr<cukernel::UniqueHelperGpuKernel<T, S>> helper_ptr_ = nullptr;
+  std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
 };
 }  // namespace kernel
 }  // namespace mindspore

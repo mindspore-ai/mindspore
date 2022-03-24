@@ -56,15 +56,28 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
       }
       akg_nodes.push_back(kernel);
     } else if (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
-      auto gpu_kernel_ptr = kernel::NativeGpuKernelModFactory::GetInstance().Create(kernel_name, kernel);
-      if (!gpu_kernel_ptr) {
+      std::shared_ptr<kernel::NativeGpuKernelMod> gpu_kernel_mod = nullptr;
+      bool new_factory = true;
+      // TODO(tronzhang): When old kernel has been rectified, remove the condition and keep the true branch.
+      if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
+        gpu_kernel_mod = kernel::Factory<kernel::NativeGpuKernelMod>::Instance().Create(kernel_name);
+      } else {
+        gpu_kernel_mod =
+          (std::shared_ptr<kernel::NativeGpuKernelMod>)(kernel::NativeGpuKernelModFactory::GetInstance().Create(
+            kernel_name, kernel));
+        new_factory = false;
+      }
+      if (!gpu_kernel_mod) {
         MS_LOG(EXCEPTION) << "Build gpu kernel op[" << kernel->fullname_with_scope() << "] failed";
       }
       MS_EXCEPTION_IF_NULL(kernel);
-      if (!gpu_kernel_ptr->Init(kernel)) {
+      if (new_factory) {
+        gpu_kernel_mod->SetGpuRefMapToKernelInfo(kernel);
+      }
+      if (!gpu_kernel_mod->Init(kernel)) {
         MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
       }
-      session::AnfRuntimeAlgorithm::SetKernelMod((kernel::KernelModPtr)gpu_kernel_ptr, kernel.get());
+      session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
     }
   }
 

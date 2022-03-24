@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
  public:
   BatchToSpaceGpuKernelMod() { ResetResource(); }
@@ -44,33 +43,11 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-
-    helper_ptr_ = std::make_unique<cukernel::BatchToSpaceHelperGpuKernel<T>>(kernel_name_);
-    helper_ptr_->ResetResource();
-
-    std::vector<std::vector<size_t>> input_shapes;
-    std::vector<std::vector<size_t>> output_shapes;
-    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-    input_shapes.emplace_back(input_shape);
-    output_shapes.emplace_back(output_shape);
-    attr_.block_size = GetAttr<int64_t>(kernel_node, "block_size");
-    attr_.crops = GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "crops");
-    attr_.input_shape = input_shape;
-    int flag = helper_ptr_->CheckKernelParam(&attr_);
-    if (flag != 0) {
-      return false;
+  bool Init(const CNodePtr &kernel_node) override;
+  void ResetResource() noexcept override {
+    if (helper_ptr_) {
+      helper_ptr_->ResetResource();
     }
-
-    flag = helper_ptr_->CalMemSize(input_shapes, output_shapes);
-    if (flag != 0) {
-      return false;
-    }
-    InitSizeLists();
-    return true;
   }
 
  protected:
@@ -78,10 +55,11 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
     input_size_list_ = helper_ptr_->GetInputSizeList();
     output_size_list_ = helper_ptr_->GetOutputSizeList();
   }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   std::string kernel_name_;
-  std::unique_ptr<cukernel::BatchToSpaceHelperGpuKernel<T>> helper_ptr_ = nullptr;
+  std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
   cukernel::BatchToSpaceAttr attr_;
 };
 }  // namespace kernel

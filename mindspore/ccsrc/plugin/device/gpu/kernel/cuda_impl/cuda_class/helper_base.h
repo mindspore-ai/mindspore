@@ -21,15 +21,23 @@
 #include <vector>
 #include "mindspore/core/utils/log_adapter.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/cuda_class_common.h"
+#include "ir/dtype/type_id.h"
+#include "include/api/format.h"
 namespace mindspore {
 namespace cukernel {
 struct GpuKernelAttrBase {
   virtual ~GpuKernelAttrBase() = default;
 };
 
+struct DynamicOutInfo {
+  std::vector<std::vector<int>> shapes;
+  std::vector<std::vector<TypeId>> types;
+  std::vector<std::vector<Format>> formats;
+};
+
 class GpuKernelHelperBase {
  public:
-  explicit GpuKernelHelperBase(std::string &kernel_name) : kernel_name_(kernel_name) {}
+  explicit GpuKernelHelperBase(const std::string &kernel_name) : kernel_name_(kernel_name) {}
   virtual ~GpuKernelHelperBase() {
     input_size_list_.clear();
     output_size_list_.clear();
@@ -51,6 +59,9 @@ class GpuKernelHelperBase {
   std::vector<size_t> GetWorkSizeList() { return work_size_list_; }
 
   virtual int CheckKernelParam(GpuKernelAttrBase *kernel_attr) { return 0; }
+
+  // Dynamic kernel can pass output information by this interface.
+  virtual DynamicOutInfo GetDynOutInfo() { return DynamicOutInfo(); }
 
  protected:
   std::vector<size_t> input_size_list_;

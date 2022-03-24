@@ -72,7 +72,7 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {
 template <typename T>
 class UnaryHelperGpuKernel : public GpuKernelHelperBase {
  public:
-  explicit UnaryHelperGpuKernel(std::string &kernel_name) : GpuKernelHelperBase(kernel_name) {}
+  explicit UnaryHelperGpuKernel(const std::string &kernel_name) : GpuKernelHelperBase(kernel_name) {}
   virtual ~UnaryHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<size_t>> &input_shapes,
                  const std::vector<std::vector<size_t>> &output_shapes) override {

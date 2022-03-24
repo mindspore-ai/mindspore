@@ -19,7 +19,8 @@
 #include <memory>
 #include <string>
 #include "kernel/common_utils.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/oplib/opinfo.h"
@@ -82,16 +83,41 @@ bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo> &alternative_kernel_
   return true;
 }
 
-std::string SupportedTypeList(const CNodePtr &kernel_node, KernelType kernel_type) {
+std::string GetSupportedTypesStr(const CNodePtr &kernel_node, KernelType kernel_type) {
   std::string supported_type_lists;
-  // Custom op gets reg info from OpLib instead of NativeGpuKernelModFactory.
+  // Custom op gets reg info from OpLib instead of NativeGpuKernelMod.
   if (!IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
-    supported_type_lists =
-      kernel::NativeGpuKernelModFactory::GetInstance().SupportedTypeList(common::AnfAlgo::GetCNodeName(kernel_node));
-    if (!supported_type_lists.empty()) {
-      return supported_type_lists;
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    // TODO(tronzhang): When old kernel has been rectified, remove the condition and keep the true branch.
+    if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
+      auto kernel_attr_list = kernel::NativeGpuKernelMod::GetGpuSupportedList(kernel_name);
+      if (!kernel_attr_list.empty()) {
+        for (size_t attr_index = 0; attr_index < kernel_attr_list.size(); ++attr_index) {
+          std::string type_list = "input[";
+          auto attr = kernel_attr_list[attr_index];
+          for (size_t input_index = 0; input_index < attr.GetInputSize(); ++input_index) {
+            type_list = type_list + TypeIdToString(attr.GetInputAttr(input_index).first) +
+                        ((input_index == (attr.GetInputSize() - 1)) ? "" : " ");
+          }
+          type_list = type_list + "], output[";
+          for (size_t input_index = 0; input_index < attr.GetOutputSize(); ++input_index) {
+            type_list = type_list + TypeIdToString(attr.GetOutputAttr(input_index).first) +
+                        ((input_index == (attr.GetOutputSize() - 1)) ? "" : " ");
+          }
+          supported_type_lists = supported_type_lists + type_list + "]; ";
+        }
+
+        return supported_type_lists;
+      }
+    } else {
+      supported_type_lists =
+        kernel::NativeGpuKernelModFactory::GetInstance().SupportedTypeList(common::AnfAlgo::GetCNodeName(kernel_node));
+      if (!supported_type_lists.empty()) {
+        return supported_type_lists;
+      }
     }
   }
+
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel::OpImplyType imply_type = GetImplyType(kernel_type);
@@ -116,6 +142,7 @@ std::string SupportedTypeList(const CNodePtr &kernel_node, KernelType kernel_typ
     }
     supported_type_lists = supported_type_lists + supported_akg_type_list + "]; ";
   }
+
   return supported_type_lists;
 }
 
@@ -164,9 +191,9 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
   auto func_type = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
   if (func_type == kCustomTypeAOT) {
     *kernel_type = KernelType::GPU_KERNEL;
-    if (!kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(op_name, selected_kernel_info)) {
-      kernel::GpuKernelRegister(op_name, mindspore::kernel::KernelAttr(),
-                                []() { return new kernel::CustomAOTGpuKernelMod(); });
+    if (!kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(op_name)) {
+      kernel::Factory<kernel::NativeGpuKernelMod>::Instance().Register(
+        op_name, []() { return std::make_shared<kernel::CustomAOTGpuKernelMod>(); });
     }
   } else if (kCustomTypeAkg.find(func_type) != kCustomTypeAkg.end()) {
     *kernel_type = KernelType::AKG_KERNEL;
@@ -200,7 +227,8 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
   return true;
 }
 
-void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node) {
+void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node,
+                         const std::vector<std::tuple<size_t, TypeId, TypeId>> &input_reduce_detail) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
@@ -229,17 +257,27 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
         (common::AnfAlgo::GetCNodeName(kernel_node) == "ApplyMomentum")) {
       std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
       builder->SetOutputsFormat(output_format);
-      auto reduce_flag = kernel::NativeGpuKernelModFactory::GetInstance().reduce_flag_;
       std::vector<TypeId> output_type;
+      // TODO(tronzhang): When old kernel has been rectified, remove the condition and keep the false branch.
+      auto reduce_flag = kernel::NativeGpuKernelModFactory::GetInstance().reduce_flag_;
       if (std::find(reduce_flag.first.begin(), reduce_flag.first.end(), input_index) != reduce_flag.first.end()) {
         output_type = {reduce_flag.second};
       } else {
-        output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
+        auto iter = std::find_if(input_reduce_detail.begin(), input_reduce_detail.end(),
+                                 [input_index](const std::tuple<size_t, TypeId, TypeId> &reduce_detail) {
+                                   return std::get<0>(reduce_detail) == input_index;
+                                 });
+        if (iter != input_reduce_detail.end()) {
+          output_type = {std::get<1>(*iter)};
+        } else {
+          output_type = {selected_kernel_info.GetInputDeviceType(input_index)};
+        }
       }
       builder->SetOutputsDeviceType(output_type);
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
     }
   }
+  // TODO(tronzhang): When old kernel has been rectified, remove the call of NativeGpuKernelModFactory.
   kernel::NativeGpuKernelModFactory::GetInstance().reduce_flag_.first.clear();
 }
 
@@ -397,7 +435,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
   auto graph_selected_info = graph_info_builder.Build();
   MS_EXCEPTION_IF_NULL(graph_selected_info);
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, kernel_node.get());
-  SetTensorDeviceInfo(*graph_selected_info, kernel_node);
+  SetTensorDeviceInfo(*graph_selected_info, kernel_node, {});
 }
 
 void PrintUnsupportedTypeException(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type,
@@ -410,7 +448,7 @@ void PrintUnsupportedTypeException(const CNodePtr &kernel_node, const std::vecto
   std::for_each(std::begin(outputs_type), std::end(outputs_type),
                 [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
   build_type += "]";
-  auto supported_type_lists = SupportedTypeList(kernel_node, kernel_type);
+  auto supported_type_lists = GetSupportedTypesStr(kernel_node, kernel_type);
   MS_EXCEPTION(TypeError) << "Select GPU kernel op[" << kernel_name
                           << "] fail! Incompatible data type!\nThe supported data types are " << supported_type_lists
                           << ", but get " << build_type;
@@ -487,16 +525,42 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_type);
   bool result = false;
+  std::vector<std::tuple<size_t, TypeId, TypeId>> input_reduce_index;
+  std::vector<std::tuple<size_t, TypeId, TypeId>> output_reduce_index;
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     // Custom op select kernel from OpLib
     result = SelectCustomKernel(kernel_node, builder->Build(), &kernel_type);
   } else if (kernel_type == UNKNOWN_KERNEL_TYPE) {
-    result = kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(
-      common::AnfAlgo::GetCNodeName(kernel_node), builder->Build());
-    if (!result) {
-      result = kernel::NativeGpuKernelModFactory::GetInstance().ReducePrecision(
-        common::AnfAlgo::GetCNodeName(kernel_node), builder);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    // TODO(tronzhang): When old kernel has been rectified, remove the condition and keep the true branch.
+    if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
+      result = kernel::NativeGpuKernelMod::GpuCheckSupport(kernel_name, GetKernelAttrFromBuildInfo(builder->Build()));
+      if (!result) {
+        std::tie(result, input_reduce_index, output_reduce_index) = kernel::NativeGpuKernelMod::GpuReducePrecisionCheck(
+          kernel_name, GetKernelAttrFromBuildInfo(builder->Build()));
+        if (result) {
+          const size_t kReduceToTypeIdx = 2;
+          for (const auto &item : input_reduce_index) {
+            auto idx = std::get<0>(item);
+            auto to_type_id = std::get<kReduceToTypeIdx>(item);
+            builder->SetInputDeviceType(to_type_id, idx);
+          }
+          for (const auto &item : output_reduce_index) {
+            auto idx = std::get<0>(item);
+            auto to_type_id = std::get<kReduceToTypeIdx>(item);
+            builder->SetOutputDeviceType(to_type_id, idx);
+          }
+        }
+      }
+    } else {
+      result = kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(
+        common::AnfAlgo::GetCNodeName(kernel_node), builder->Build());
+      if (!result) {
+        result = kernel::NativeGpuKernelModFactory::GetInstance().ReducePrecision(
+          common::AnfAlgo::GetCNodeName(kernel_node), builder);
+      }
     }
+
     if (!result && (!common::AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
       result = SelectAkgKernel(kernel_node, builder->Build());
       kernel_type = AKG_KERNEL;
@@ -511,7 +575,7 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   builder->SetKernelType(kernel_type);
   builder->SetProcessor(kernel::Processor::CUDA);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
-  SetTensorDeviceInfo(*(builder->Build()), kernel_node);
+  SetTensorDeviceInfo(*(builder->Build()), kernel_node, input_reduce_index);
 }
 }  // namespace gpu
 }  // namespace device
