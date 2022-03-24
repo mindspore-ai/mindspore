@@ -271,48 +271,6 @@ TEST_F(TCPTest, SendSyncMessage) {
   client->Finalize();
   server->Finalize();
 }
-
-/// Feature: test sending large messages.
-/// Description: start a socket server and send several large messages to it.
-/// Expectation: the server received these large messages sented from client.
-TEST_F(TCPTest, SendLargeMessages) {
-  Init();
-
-  // Start the tcp server.
-  auto server_url = "127.0.0.1:8081";
-  std::unique_ptr<TCPServer> server = std::make_unique<TCPServer>();
-  bool ret = server->Initialize(server_url);
-  ASSERT_TRUE(ret);
-
-  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> void { IncrDataMsgNum(1); });
-
-  // Start the tcp client.
-  auto client_url = "127.0.0.1:1234";
-  std::unique_ptr<TCPClient> client = std::make_unique<TCPClient>();
-  ret = client->Initialize();
-  ASSERT_TRUE(ret);
-
-  // Send the message.
-  client->Connect(server_url);
-
-  size_t msg_cnt = 100;
-  size_t large_msg_size = 102400;
-  for (int i = 0; i < msg_cnt; ++i) {
-    auto message = CreateMessage(server_url, client_url, large_msg_size);
-    client->SendAsync(std::move(message));
-  }
-
-  // Wait timeout: 15s
-  WaitForDataMsg(msg_cnt, 15);
-
-  // Check result
-  EXPECT_EQ(msg_cnt, GetDataMsgNum());
-
-  // Destroy
-  client->Disconnect(server_url);
-  client->Finalize();
-  server->Finalize();
-}
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore
