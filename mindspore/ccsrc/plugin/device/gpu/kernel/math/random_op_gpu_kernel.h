@@ -57,7 +57,8 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
         seed2_(0),
         mask_generator_(nullptr),
         states_init_(false),
-        is_null_input_(false) {}
+        is_null_input_(false),
+        use_curand_(false) {}
   ~RandomOpGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -76,8 +77,35 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
 
     switch (random_op_type_) {
       case RANDOM_OP_NORMAL: {
-        StandardNormal(seed_, seed2_, devStates, output_addr, outputs[0]->size / sizeof(T),
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
+        if (use_curand_) {
+          float *mask_f = GetDeviceAddress<float>(outputs, 0);
+          if (!states_init_) {
+            int RNG_seed = 0;
+            std::random_device rd;
+            if (seed2_ != 0) {
+              RNG_seed = seed2_;
+            } else if (seed_ != 0) {
+              RNG_seed = seed_;
+            } else {
+              RNG_seed = static_cast<int>(rd());
+            }
+            CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_PHILOX4_32_10),
+                                         "Failed to create generator");
+            CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, RNG_seed),
+                                         "Failed to SetPseudoRandomGeneratorSeed");
+            MS_EXCEPTION_IF_NULL(mask_generator_);
+            states_init_ = true;
+          }
+          CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "Failed to set stream for generator");
+          // curandGen only support float or double for mask.
+          CHECK_CURAND_RET_WITH_EXCEPT(
+            curandGenerateNormal(mask_generator_, mask_f, outputs[0]->size / sizeof(float), 0.0, 1.0),
+            "Failed to generate normal");
+        } else {
+          StandardNormal(seed_, seed2_, devStates, output_addr, outputs[0]->size / sizeof(T),
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+        }
         break;
       }
       case RANDOM_OP_UNIFORM_INT: {
@@ -173,6 +201,9 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
     MS_EXCEPTION_IF_NULL(prim);
     seed_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed")));
     seed2_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed2")));
+    if (prim->HasAttr("use_curand")) {
+      use_curand_ = GetValue<bool>(prim->GetAttr("use_curand"));
+    }
     InitSizeLists();
     return true;
   }
@@ -201,6 +232,7 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
   curandGenerator_t mask_generator_;
   bool states_init_;
   bool is_null_input_;
+  bool use_curand_;
 };
 }  // namespace kernel
 }  // namespace mindspore
