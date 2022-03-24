@@ -16,6 +16,7 @@
 
 #include "src/delegate/tensorrt/cuda_impl/cudnn_utils.h"
 #include <unordered_map>
+#include "src/common/log_util.h"
 
 namespace mindspore::lite {
 cudnnDataType_t ConvertCudnnDataType(nvinfer1::DataType trt_datatype) {
