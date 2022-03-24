@@ -78,6 +78,7 @@ class PrimitivePy : public Primitive {
 
  private:
   py::function GetComputeFunction() const;
+  py::object UnpackRetValueOfCellHook(const py::object &grad_out) const;
   void CheckHookConsistency(const py::object &grad_out, const py::object &expected_grad_out, const py::object &code_obj,
                             const py::object &co_name) const;
   py::object python_obj_;

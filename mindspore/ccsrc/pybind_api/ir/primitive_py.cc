@@ -252,6 +252,19 @@ void PrimitivePy::RemoveBackwardHookFn(const int &key) {
   }
 }
 
+py::object PrimitivePy::UnpackRetValueOfCellHook(const py::object &grad_out) const {
+  if (!py::isinstance<py::tuple>(grad_out)) {
+    hook_grad_.clear();
+    MS_EXCEPTION(TypeError) << "The return gradient of cell backward hook function should be a tuple!";
+  }
+  auto out_tuple = py::cast<py::tuple>(grad_out);
+  if (out_tuple.size() == 1) {
+    // The input number of current cell is 1.
+    return out_tuple[0];
+  }
+  return grad_out;
+}
+
 void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::object &expected_grad_out,
                                        const py::object &code_obj, const py::object &co_name) const {
   if (py::isinstance<py::tuple>(expected_grad_out)) {
@@ -345,7 +358,7 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
       py::tuple hook_fn_args = ConstructCellHookFnArgs(cell_id, iter->second, grad_output);
       py::object ret = elem.second(*hook_fn_args);
       if (!py::isinstance<py::none>(ret)) {
-        grad_output = ret;
+        grad_output = UnpackRetValueOfCellHook(ret);
       }
       CheckHookConsistency(grad_output, py_args[args_size - 1], code_obj, co_name);
     }
