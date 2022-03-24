@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include "proto/cache_grpc.pb.h"
 #include "minddata/dataset/engine/cache/cache_common.h"
 #include "minddata/dataset/engine/cache/cache_request.h"
 #include "minddata/dataset/util/service.h"
