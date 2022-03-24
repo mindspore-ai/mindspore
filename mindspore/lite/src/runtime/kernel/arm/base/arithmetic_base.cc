@@ -27,17 +27,17 @@ namespace mindspore::kernel {
 namespace {
 #ifdef DYNAMIC_THREAD_DISTRIBUTE
 const std::map<std::pair<int, int>, float> arithmetic_compute_cost_map_ = {
-  {{schema::PrimitiveType_MulFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
-  {{schema::PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
-  {{schema::PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},  // dataNum about 130k
+  {{schema::PrimitiveType_MulFusion, schema::ActivationType_RELU}, 2.288f},           // dataNum about 80k
+  {{schema::PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 2.288f},          // dataNum about 80k
+  {{schema::PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION}, 1.806f},  // dataNum about 100k
 
-  {{schema::PrimitiveType_AddFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
-  {{schema::PrimitiveType_AddFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
-  {{schema::PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},  // dataNum about 130k
+  {{schema::PrimitiveType_AddFusion, schema::ActivationType_RELU}, 2.288f},           // dataNum about 80k
+  {{schema::PrimitiveType_AddFusion, schema::ActivationType_RELU6}, 2.288f},          // dataNum about 80k
+  {{schema::PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION}, 1.806f},  // dataNum about 100k
 
-  {{schema::PrimitiveType_SubFusion, schema::ActivationType_RELU}, 1.806f},           // dataNum about 100k
-  {{schema::PrimitiveType_SubFusion, schema::ActivationType_RELU6}, 1.806f},          // dataNum about 100k
-  {{schema::PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION}, 1.275f},  // dataNum about 130k
+  {{schema::PrimitiveType_SubFusion, schema::ActivationType_RELU}, 2.288f},           // dataNum about 80k
+  {{schema::PrimitiveType_SubFusion, schema::ActivationType_RELU6}, 2.288f},          // dataNum about 80k
+  {{schema::PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION}, 1.806f},  // dataNum about 100k
 
   // {{schema::PrimitiveType_DivFusion, schema::ActivationType_RELU}, 1.0f},
   // {{schema::PrimitiveType_DivFusion, schema::ActivationType_RELU6}, 1.0f},
