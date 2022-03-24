@@ -21,22 +21,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdder = "Adder";
 /// \brief All defined All operator prototype of lite.
-class MS_CORE_API Adder : public PrimitiveC {
+class MIND_API Adder : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Adder);
   /// \brief Constructor.
-  explicit Adder(const std::string &k_name = kNameAdder) : PrimitiveC(k_name) {}
-
-  /// \brief Destructor.
-  ~Adder() = default;
-  MS_DECLARE_PARENT(Adder, PrimitiveC);
+  explicit Adder(const std::string &k_name = kNameAdder) : BaseOperator(k_name) {}
 
   /// \brief Method to init the op's attributes.
   ///

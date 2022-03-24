@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include <memory>
 #include "tools/optimizer/fusion/activation_fusion.h"
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/fusion_inout_test.h"
@@ -62,13 +63,15 @@ class ActivationFusionInoutTest : public FusionInoutTest {
                          const std::string &name, const float &min_val = FLT_MAX, const float &max_val = -FLT_MAX) {
     auto prim = std::make_unique<ops::Activation>();
     MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create Act primitivec failed");
+    auto prim_c = prim->GetPrim();
+    MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
     prim->Init();
     prim->set_activation_type(type);
     if (type == ActivationType::HARD_TANH) {
       prim->set_min_val(min_val);
       prim->set_max_val(max_val);
     }
-    auto act_primitive = NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim.release()));
+    auto act_primitive = NewValueNode(prim_c);
     MS_CHECK_TRUE_RET(act_primitive != nullptr, nullptr);
     auto act = graph->NewCNode({act_primitive, input});
     MS_CHECK_TRUE_MSG(act != nullptr, nullptr, "create Act failed");

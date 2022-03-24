@@ -19,6 +19,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -34,7 +35,9 @@ abstract::ShapePtr ScalarSummaryInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(ShapeVector(1));
 }
 }  // namespace
-void ScalarSummary::set_side_effect_io() { (void)this->AddAttr(kSideEffectIO, MakeValue(true)); }
+
+MIND_API_BASE_IMPL(ScalarSummary, PrimitiveC, BaseOperator);
+void ScalarSummary::set_side_effect_io() { (void)this->AddAttr(kSideEffectIO, api::MakeValue(true)); }
 
 bool ScalarSummary::get_side_effect_io() const {
   auto value_ptr = GetAttr(kSideEffectIO);

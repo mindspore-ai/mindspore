@@ -20,28 +20,25 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameAdd = prim::kAdd;
+constexpr auto kNameAdd = "Add";
 /// \brief Adds two input tensors element-wise. Refer to Python API @ref mindspore.ops.Add for more details.
-class MS_CORE_API Add : public PrimitiveC {
+class MIND_API Add : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Add);
   /// \brief Constructor.
-  Add() : PrimitiveC(kNameAdd) { InitIOName({"x", "y"}, {"output"}); }
-  explicit Add(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Add() = default;
-  MS_DECLARE_PARENT(Add, PrimitiveC);
+  Add() : BaseOperator(kNameAdd) { InitIOName({"x", "y"}, {"output"}); }
+  explicit Add(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Add for the inputs.
   void Init() const {}
 };
 
-AbstractBasePtr AddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

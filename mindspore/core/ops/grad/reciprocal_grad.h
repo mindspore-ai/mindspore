@@ -20,19 +20,16 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReciprocalGrad = "ReciprocalGrad";
-class ReciprocalGrad : public PrimitiveC {
+class MIND_API ReciprocalGrad : public BaseOperator {
  public:
-  ReciprocalGrad() : PrimitiveC(kNameReciprocalGrad) {}
-  ~ReciprocalGrad() = default;
-  MS_DECLARE_PARENT(ReciprocalGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(ReciprocalGrad);
+  ReciprocalGrad() : BaseOperator(kNameReciprocalGrad) {}
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -15,9 +15,13 @@
  */
 
 #include "ops/sgd.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(SGD, PrimitiveC, BaseOperator);
 void SGD::Init(const float dampening, const float weight_decay, const bool nesterov) {
   set_nesterov(nesterov);
   set_dampening(dampening);
@@ -26,12 +30,12 @@ void SGD::Init(const float dampening, const float weight_decay, const bool neste
 
 void SGD::set_dampening(const float dampening) {
   if (get_nesterov()) CheckAndConvertUtils::CheckValue<float>(kDampening, dampening, kEqual, 0.0, name());
-  (void)AddAttr(kDampening, MakeValue(dampening));
+  (void)AddAttr(kDampening, api::MakeValue(dampening));
 }
 
-void SGD::set_weight_decay(const float weight_decay) { (void)AddAttr(kWeightDecay, MakeValue(weight_decay)); }
+void SGD::set_weight_decay(const float weight_decay) { (void)AddAttr(kWeightDecay, api::MakeValue(weight_decay)); }
 
-void SGD::set_nesterov(const bool nesterov) { (void)AddAttr(kNesterov, MakeValue(nesterov)); }
+void SGD::set_nesterov(const bool nesterov) { (void)AddAttr(kNesterov, api::MakeValue(nesterov)); }
 
 float SGD::get_dampening() const {
   auto value_ptr = GetAttr(kDampening);

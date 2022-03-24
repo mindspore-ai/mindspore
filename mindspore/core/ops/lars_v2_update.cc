@@ -17,6 +17,7 @@
 #include "ops/lars_v2_update.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -90,6 +91,8 @@ TypePtr LARSUpdateInferType(const PrimitivePtr &primitive, const std::vector<Abs
   return types["Weight dtype"];
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(LARSUpdate, PrimitiveC, BaseOperator);
 AbstractBasePtr LARSUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = LARSUpdateInferType(primitive, input_args);

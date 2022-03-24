@@ -17,6 +17,7 @@
 #include <memory>
 #include <utility>
 #include "src/ops/ops_utils.h"
+#include "mindapi/base/shared_ptr.h"
 
 #ifdef PRIMITIVE_WRITEABLE
 #include "mindspore/core/ir/anf.h"
@@ -45,811 +46,820 @@ std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const AnfNodePtr &node) {
   }
 }
 
+template <typename T>
+api::SharedPtr<T> GetOperator(const AnfNodePtr &node) {
+  auto prim = GetValueNode<PrimitivePtr>(node);
+  if (prim == nullptr) {
+    return nullptr;
+  }
+  return api::MakeShared<T>(prim);
+}
+
 std::unique_ptr<schema::PrimitiveT> AbsPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Abs>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Abs>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AbsGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AbsGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AbsGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ActivationPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Activation>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ActivationGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ActivationGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ActivationGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AdamPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Adam>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Adam>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AdderFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AdderFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AdderFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AddFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AddFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AddFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AddGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AddGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AddGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AddNPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AddN>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AddN>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AllPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::All>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::All>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ApplyMomentumPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ApplyMomentum>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ApplyMomentum>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ArgMaxFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ArgMaxFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ArgMaxFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ArgMinFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ArgMinFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ArgMinFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AssertPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Assert>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Assert>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AssignPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Assign>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Assign>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AssignAddPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AssignAdd>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AssignAdd>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AudioSpectrogramPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AudioSpectrogram>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AudioSpectrogram>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AvgPoolFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AvgPoolFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AvgPoolFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> AvgPoolGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AvgPoolGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AvgPoolGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> BatchNormPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::BatchNorm>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::BatchNorm>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> BatchToSpacePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::BatchToSpace>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::BatchToSpace>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> BatchToSpaceNDPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::BatchToSpaceND>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::BatchToSpaceND>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> BiasAddPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::BiasAdd>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::BiasAdd>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> BiasAddGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::BiasAddGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::BiasAddGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> BNGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::BatchNormGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::BatchNormGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> BroadcastToPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::BroadcastTo>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::BroadcastTo>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> CastPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Cast>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Cast>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> CeilPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Ceil>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Ceil>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ClipPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Clip>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Clip>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ConcatPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Concat>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Concat>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ConstantOfShapePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ConstantOfShape>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ConstantOfShape>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> Conv2DBackpropFilterFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Conv2DBackpropFilterFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Conv2DBackpropFilterFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> Conv2DBackpropInputFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Conv2DBackpropInputFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Conv2DBackpropInputFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> Conv2DFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Conv2DFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Conv2DFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> Conv2dTransposeFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Conv2dTransposeFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Conv2dTransposeFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> CosPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Cos>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Cos>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> CropPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Crop>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Crop>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> CropAndResizePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::CropAndResize>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::CropAndResize>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> CustomExtractFeaturesPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::CustomExtractFeatures>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::CustomExtractFeatures>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> CustomNormalizePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::CustomNormalize>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::CustomNormalize>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> CustomPredictPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::CustomPredict>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::CustomPredict>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> DependPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Depend>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Depend>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> DepthToSpacePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::DepthToSpace>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::DepthToSpace>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> DetectionPostProcessPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::DetectionPostProcess>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::DetectionPostProcess>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> DivFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::DivFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::DivFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> DivGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::DivGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::DivGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> DropoutPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Dropout>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Dropout>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> DropoutGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::DropoutGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::DropoutGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> GRUPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::GRU>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::GRU>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> EltwisePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Eltwise>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Eltwise>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> EluPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Elu>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Elu>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> EmbeddingLookupFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::EmbeddingLookupFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::EmbeddingLookupFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> EqualPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Equal>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Equal>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ExpandDimsPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ExpandDims>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ExpandDims>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ExpFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ExpFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ExpFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FftImagPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::FftImag>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::FftImag>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FftRealPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::FftReal>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::FftReal>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FillPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Fill>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Fill>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FlattenPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Flatten>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Flatten>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FlattenGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::FlattenGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::FlattenGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FloorPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Floor>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Floor>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FloorDivPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::FloorDiv>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::FloorDiv>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FloorModPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::FloorMod>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::FloorMod>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FullConnectionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::FullConnection>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::FullConnection>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> FusedBatchNormPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::FusedBatchNorm>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::FusedBatchNorm>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> GatherPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Gather>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Gather>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> GatherNdPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::GatherNd>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::GatherNd>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> GreaterPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Greater>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Greater>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> GreaterEqualPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::GreaterEqual>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::GreaterEqual>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> HashtableLookupPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::HashtableLookup>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::HashtableLookup>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> InstanceNormPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::InstanceNorm>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::InstanceNorm>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> InvertPermutationPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::InvertPermutation>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::InvertPermutation>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LayerNormFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LayerNormFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LayerNormFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LayerNormGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LayerNormGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LayerNormGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LeakyReluPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LeakyRelu>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LeakyRelu>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LessPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Less>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Less>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LessEqualPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LessEqual>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LessEqual>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LogPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Log>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Log>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LogGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LogGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LogGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LogicalAndPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LogicalAnd>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LogicalAnd>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LogicalNotPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LogicalNot>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LogicalNot>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LogicalOrPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LogicalOr>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LogicalOr>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LrnPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LRN>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LRN>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LpNormalizationPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LpNormalization>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LpNormalization>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LshProjectionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LshProjection>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LshProjection>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LSTMPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LSTM>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LSTM>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LSTMGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LSTMGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LSTMGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LSTMGradDataPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LSTMGradData>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LSTMGradData>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> LSTMGradWeightPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LSTMGradWeight>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LSTMGradWeight>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> L2NormalizeFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::L2NormalizeFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::L2NormalizeFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MatMulFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::MatMulFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::MatMulFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MaximumPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Maximum>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Maximum>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MaximumGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::MaximumGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::MaximumGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MaxPoolFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::MaxPoolFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::MaxPoolFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MaxPoolGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::MaxPoolGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::MaxPoolGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SwitchLayerPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SwitchLayer>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SwitchLayer>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MfccPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Mfcc>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Mfcc>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MinimumPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Minimum>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Minimum>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MinimumGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::MinimumGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::MinimumGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ModPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Mod>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Mod>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MulFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::MulFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::MulFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> MulGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::MulGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::MulGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> NegPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Neg>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Neg>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> NegGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::NegGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::NegGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> NotEqualPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::NotEqual>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::NotEqual>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> NonMaxSuppressionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::NonMaxSuppression>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::NonMaxSuppression>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> OneHotPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::OneHot>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::OneHot>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> OnesLikePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::OnesLike>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::OnesLike>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> PadFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::PadFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::PadFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> PartialFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::PartialFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::PartialFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> PowerGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::PowerGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::PowerGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> PowFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::PowFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::PowFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> PReLUFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::PReLUFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::PReLUFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> QuantDTypeCastPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::QuantDTypeCast>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::QuantDTypeCast>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> RaggedRangePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::RaggedRange>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::RaggedRange>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> RangePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Range>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Range>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> RandomStandardNormalPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::RandomStandardNormal>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::RandomStandardNormal>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> RankPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Rank>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Rank>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> RealDivPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::RealDiv>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::RealDiv>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ReciprocalPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Reciprocal>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Reciprocal>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ReduceFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ReduceFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ReduceFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ReshapePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Reshape>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Reshape>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ResizePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Resize>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Resize>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ResizeGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ResizeGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ResizeGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ReverseV2PrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ReverseV2>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ReverseV2>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ReverseSequencePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ReverseSequence>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ReverseSequence>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> RfftPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Rfft>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Rfft>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ROIPoolingPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ROIPooling>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ROIPooling>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> RoundPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Round>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Round>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> RsqrtPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Rsqrt>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Rsqrt>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> RsqrtGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::RsqrtGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::RsqrtGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ScaleFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ScaleFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ScaleFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ScatterNdPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ScatterNd>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ScatterNd>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SelectPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Select>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Select>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SGDPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SGD>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SGD>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ShapePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Shape>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Shape>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SigmoidCrossEntropyWithLogitsPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SigmoidCrossEntropyWithLogits>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SigmoidCrossEntropyWithLogits>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SigmoidCrossEntropyWithLogitsGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SigmoidCrossEntropyWithLogitsGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SigmoidCrossEntropyWithLogitsGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SinPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Sin>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Sin>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SizePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Size>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Size>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SkipGramPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SkipGram>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SkipGram>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SliceFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SliceFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SliceFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SmoothL1LossPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SmoothL1Loss>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SmoothL1Loss>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SmoothL1LossGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SmoothL1LossGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SmoothL1LossGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SoftmaxPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Softmax>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Softmax>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SoftmaxCrossEntropyWithLogitsPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SoftmaxCrossEntropyWithLogits>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SoftmaxCrossEntropyWithLogits>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SpaceToBatchPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SpaceToBatch>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SpaceToBatch>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SpaceToBatchNDPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SpaceToBatchND>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SpaceToBatchND>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SpaceToDepthPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SpaceToDepth>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SpaceToDepth>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SparseSoftmaxCrossEntropyWithLogitsPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SparseSoftmaxCrossEntropyWithLogits>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SparseSoftmaxCrossEntropyWithLogits>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SparseToDensePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SparseToDense>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SparseToDense>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SplitPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Split>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Split>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SqrtPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Sqrt>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Sqrt>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SqrtGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SqrtGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SqrtGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SquarePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Square>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Square>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SquaredDifferencePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SquaredDifference>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SquaredDifference>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SqueezePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Squeeze>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Squeeze>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> StackPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Stack>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Stack>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> StridedSlicePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::StridedSlice>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::StridedSlice>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> StridedSliceGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::StridedSliceGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::StridedSliceGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SubFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SubFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SubFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SubGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SubGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SubGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> SwitchPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Switch>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Switch>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> TensorListFromTensorPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorListFromTensor>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TensorListFromTensor>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> TensorListGetItemPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorListGetItem>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TensorListGetItem>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> TensorListReservePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorListReserve>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TensorListReserve>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> TensorListSetItemPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorListSetItem>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TensorListSetItem>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> TensorListStackPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorListStack>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TensorListStack>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> TileFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TileFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TileFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> TopKFusionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TopKFusion>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TopKFusion>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> TransposePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Transpose>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Transpose>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> UniquePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Unique>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Unique>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> UnstackPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Unstack>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Unstack>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> UnsortedSegmentSumPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::UnsortedSegmentSum>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::UnsortedSegmentSum>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> UnsqueezePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Unsqueeze>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Unsqueeze>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> WherePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Where>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Where>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ZerosLikePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ZerosLike>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ZerosLike>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 std::unique_ptr<schema::PrimitiveT> ErfPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Erf>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Erf>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> SplicePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Splice>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Splice>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> LogSoftmaxPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LogSoftmax>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::LogSoftmax>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> CallPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Call>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Call>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> CumSumPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::CumSum>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::CumSum>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> SplitWithOverlapPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SplitWithOverlap>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::SplitWithOverlap>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> GluPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::GLU>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::GLU>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> TensorArrayPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorArray>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TensorArray>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> TensorArrayReadPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorArrayRead>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TensorArrayRead>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> TensorArrayWritePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::TensorArrayWrite>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::TensorArrayWrite>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> AffinePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Affine>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Affine>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> AttentionPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Attention>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Attention>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> ScatterNdUpdatePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ScatterNdUpdate>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ScatterNdUpdate>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> AllGatherPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AllGather>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::AllGather>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> ReduceScatterPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ReduceScatter>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::ReduceScatter>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> DynamicQuantPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::DynamicQuant>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::DynamicQuant>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> RandomNormalPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::RandomNormal>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::RandomNormal>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> NLLLossPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::NLLLoss>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::NLLLoss>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> NLLLossGradPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::NLLLossGrad>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::NLLLossGrad>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
 std::unique_ptr<schema::PrimitiveT> CustomPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Custom>>(node);
+  auto ms_primc = GetOperator<mindspore::ops::Custom>(node);
   auto schema_op = std::make_unique<schema::CustomT>();
   if (schema_op == nullptr) {
     return nullptr;

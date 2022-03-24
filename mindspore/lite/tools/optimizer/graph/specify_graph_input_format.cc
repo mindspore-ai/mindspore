@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include <memory>
 #include <vector>
 #include "tools/optimizer/common/format_utils.h"
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {

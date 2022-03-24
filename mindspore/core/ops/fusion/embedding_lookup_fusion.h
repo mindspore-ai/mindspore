@@ -20,25 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEmbeddingLookupFusion = "EmbeddingLookupFusion";
 /// \brief EmbeddingLookupFusion defined EmbeddingLookup operator prototype of lite.
-class MS_CORE_API EmbeddingLookupFusion : public PrimitiveC {
+class MIND_API EmbeddingLookupFusion : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(EmbeddingLookupFusion);
   /// \brief Constructor.
-  EmbeddingLookupFusion() : PrimitiveC(kNameEmbeddingLookupFusion) {
+  EmbeddingLookupFusion() : BaseOperator(kNameEmbeddingLookupFusion) {
     InitIOName({"params", "indices", "offset"}, {"output"});
   }
-
-  /// \brief Destructor.
-  ~EmbeddingLookupFusion() = default;
-
-  MS_DECLARE_PARENT(EmbeddingLookupFusion, PrimitiveC);
 
   /// \brief Method to init the op's attributes.
   ///

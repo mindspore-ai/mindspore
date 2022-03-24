@@ -20,7 +20,6 @@
 #include <vector>
 #include <algorithm>
 #include "common/fetch_content.h"
-#include "ops/op_utils.h"
 #include "common/op_enum.h"
 #include "ops/gather.h"
 #include "op/gather_operator.h"
@@ -30,13 +29,13 @@ namespace dpico {
 namespace {
 const size_t kOfflineArgSize2 = 2;
 }  // namespace
-STATUS GatherMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                         const CNodePtrList &output_cnodes) {
+STATUS GatherMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                         const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto gather_prim = utils::cast<std::shared_ptr<ops::Gather>>(prim);
+  auto gather_prim = api::utils::cast<api::SharedPtr<ops::Gather>>(prim);
   MS_ASSERT(gather_prim != nullptr);
 
   auto gather_operator = std::make_unique<mapper::GatherOperator>();
@@ -61,7 +60,7 @@ STATUS GatherMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *ba
     auto data = reinterpret_cast<int32_t *>(data_info.data_.data());
     gather_operator->SetAxis(*data);
   } else if (gather_prim->GetAttr(ops::kAxis) != nullptr) {
-    gather_operator->SetAxis(GetValue<int32_t>(gather_prim->GetAttr(ops::kAxis)));
+    gather_operator->SetAxis(static_cast<int32_t>(api::GetValue<int64_t>(gather_prim->GetAttr(ops::kAxis))));
   } else {
     MS_LOG(ERROR) << "null param";
     return RET_ERROR;

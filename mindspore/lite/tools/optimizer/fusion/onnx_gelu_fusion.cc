@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
 #include "nnacl/op_base.h"
 

@@ -20,18 +20,16 @@
 #include <string>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSigmoidGrad = "SigmoidGrad";
-class SigmoidGrad : public PrimitiveC {
+class MIND_API SigmoidGrad : public BaseOperator {
  public:
-  SigmoidGrad() : PrimitiveC(kNameSigmoidGrad) { InitIOName({"input"}, {"output"}); }
-  ~SigmoidGrad() = default;
-  MS_DECLARE_PARENT(SigmoidGrad, PrimitiveC)
+  MIND_API_BASE_MEMBER(SigmoidGrad);
+  SigmoidGrad() : BaseOperator(kNameSigmoidGrad) { InitIOName({"input"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -21,22 +21,19 @@
 #include <string>
 #include <set>
 #include <map>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLARSUpdate = "LARSUpdate";
-class MS_CORE_API LARSUpdate : public PrimitiveC {
+class MIND_API LARSUpdate : public BaseOperator {
  public:
-  explicit LARSUpdate(const std::string &name = kNameLARSUpdate) : PrimitiveC(name) {}
-  ~LARSUpdate() = default;
-  MS_DECLARE_PARENT(LARSUpdate, PrimitiveC);
+  MIND_API_BASE_MEMBER(LARSUpdate);
+  explicit LARSUpdate(const std::string &name = kNameLARSUpdate) : BaseOperator(name) {}
 };
-AbstractBasePtr LARSUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LARSUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLARSUpdatePtr = std::shared_ptr<LARSUpdate>;
 }  // namespace ops
 }  // namespace mindspore

@@ -21,14 +21,16 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(DropoutGrad, PrimitiveC, BaseOperator);
 void DropoutGrad::Init(const float keep_prob) { this->set_keep_prob(keep_prob); }
 
 void DropoutGrad::set_keep_prob(const float keep_prob) {
   CheckAndConvertUtils::CheckInRange<float>(kKeepProb, keep_prob, kIncludeRight, {0.0, 1.0}, this->name());
-  (void)this->AddAttr(kKeepProb, MakeValue(keep_prob));
+  (void)this->AddAttr(kKeepProb, api::MakeValue(keep_prob));
 }
 
 float DropoutGrad::get_keep_prob() const {

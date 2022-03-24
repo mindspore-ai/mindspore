@@ -44,9 +44,11 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
   int64_t mode = GetValue<int64_t>(attr_val);
   PrimitivePtr dst_prim = nullptr;
   if (mode == static_cast<int64_t>(ReduceMode::Reduce_Sum)) {
-    dst_prim = std::make_shared<ops::ReduceSum>();
+    ops::ReduceSum reduce_sum_op;
+    dst_prim = reduce_sum_op.GetPrim();
   } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_Mean)) {
-    dst_prim = std::make_shared<ops::ReduceMean>();
+    ops::ReduceMean reduce_mean_op;
+    dst_prim = reduce_mean_op.GetPrim();
   }
   CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());

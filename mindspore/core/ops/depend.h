@@ -19,29 +19,23 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDepend = "Depend";
 /// \brief Depend defined Depend operator prototype.
-class MS_CORE_API Depend : public PrimitiveC {
+class MIND_API Depend : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Depend);
   /// \brief Constructor.
-  Depend() : PrimitiveC(kNameDepend) {}
-
-  /// \brief Destructor.
-  ~Depend() = default;
-
-  MS_DECLARE_PARENT(Depend, PrimitiveC);
+  Depend() : BaseOperator(kNameDepend) {}
 
   /// \brief Method to init the op's attributes.
   void Init() const {}
 };
-AbstractBasePtr DependInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DependInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimDepend = std::shared_ptr<Depend>;
 }  // namespace ops
 }  // namespace mindspore

@@ -16,9 +16,11 @@
 
 #include "ops/adder.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Adder, PrimitiveC, BaseOperator);
 void Adder::Init(const int64_t in_channel, const int64_t out_channel, const std::vector<int64_t> &kernel_size,
                  const PadMode &pad_mode, const std::vector<int64_t> &stride, const std::vector<int64_t> &pad_list,
                  const std::vector<int64_t> &dilation, const int64_t group, const Format &format) {
@@ -33,14 +35,16 @@ void Adder::Init(const int64_t in_channel, const int64_t out_channel, const std:
   set_format(format);
 }
 
-void Adder::set_in_channel(const int64_t in_channel) { (void)this->AddAttr(kInChannel, MakeValue(in_channel)); }
+void Adder::set_in_channel(const int64_t in_channel) { (void)this->AddAttr(kInChannel, api::MakeValue(in_channel)); }
 
 int64_t Adder::get_in_channel() const {
   auto value_ptr = GetAttr(kInChannel);
   return GetValue<int64_t>(value_ptr);
 }
 
-void Adder::set_out_channel(const int64_t out_channel) { (void)this->AddAttr(kOutChannel, MakeValue(out_channel)); }
+void Adder::set_out_channel(const int64_t out_channel) {
+  (void)this->AddAttr(kOutChannel, api::MakeValue(out_channel));
+}
 
 int64_t Adder::get_out_channel() const {
   auto value_ptr = GetAttr(kOutChannel);
@@ -48,7 +52,7 @@ int64_t Adder::get_out_channel() const {
 }
 
 void Adder::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  (void)this->AddAttr(kKernelSize, MakeValue(kernel_size));
+  (void)this->AddAttr(kKernelSize, api::MakeValue(kernel_size));
 }
 
 std::vector<int64_t> Adder::get_kernel_size() const {
@@ -58,7 +62,7 @@ std::vector<int64_t> Adder::get_kernel_size() const {
 
 void Adder::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
-  (void)this->AddAttr(kPadMode, MakeValue(swi));
+  (void)this->AddAttr(kPadMode, api::MakeValue(swi));
 }
 
 PadMode Adder::get_pad_mode() const {
@@ -66,28 +70,32 @@ PadMode Adder::get_pad_mode() const {
   return PadMode(GetValue<int64_t>(value_ptr));
 }
 
-void Adder::set_stride(const std::vector<int64_t> &stride) { (void)this->AddAttr(kStride, MakeValue(stride)); }
+void Adder::set_stride(const std::vector<int64_t> &stride) { (void)this->AddAttr(kStride, api::MakeValue(stride)); }
 
 std::vector<int64_t> Adder::get_stride() const {
   auto value_ptr = GetAttr(kStride);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Adder::set_pad_list(const std::vector<int64_t> &pad_list) { (void)this->AddAttr(kPadList, MakeValue(pad_list)); }
+void Adder::set_pad_list(const std::vector<int64_t> &pad_list) {
+  (void)this->AddAttr(kPadList, api::MakeValue(pad_list));
+}
 
 std::vector<int64_t> Adder::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Adder::set_dilation(const std::vector<int64_t> &dilation) { (void)this->AddAttr(kDilation, MakeValue(dilation)); }
+void Adder::set_dilation(const std::vector<int64_t> &dilation) {
+  (void)this->AddAttr(kDilation, api::MakeValue(dilation));
+}
 
 std::vector<int64_t> Adder::get_dilation() const {
   auto value_ptr = GetAttr(kDilation);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Adder::set_group(const int64_t group) { (void)this->AddAttr(kGroup, MakeValue(group)); }
+void Adder::set_group(const int64_t group) { (void)this->AddAttr(kGroup, api::MakeValue(group)); }
 
 int64_t Adder::get_group() const {
   auto value_ptr = GetAttr(kGroup);
@@ -96,7 +104,7 @@ int64_t Adder::get_group() const {
 
 void Adder::set_format(const Format &format) {
   int64_t swi = format;
-  (void)this->AddAttr(kFormat, MakeValue(swi));
+  (void)this->AddAttr(kFormat, api::MakeValue(swi));
 }
 
 Format Adder::get_format() const {

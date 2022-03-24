@@ -20,9 +20,9 @@
 #include <memory>
 #include <unordered_map>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
@@ -30,13 +30,11 @@ constexpr auto kNameEinsum = "Einsum";
 
 /// \brief .
 /// Refer to Python API @ref mindspore.ops.Einsum for more details.
-class Einsum : public PrimitiveC {
+class MIND_API Einsum : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Einsum);
   /// \brief Constructor.
-  Einsum() : PrimitiveC(kNameEinsum) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Einsum() = default;
-  MS_DECLARE_PARENT(Einsum, PrimitiveC);
+  Einsum() : BaseOperator(kNameEinsum) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Einsum for the inputs.
   void Init(const std::string &equation);
   /// \brief Set equation.
@@ -47,8 +45,8 @@ class Einsum : public PrimitiveC {
   std::string get_equation() const;
 };
 
-AbstractBasePtr EinsumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr EinsumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

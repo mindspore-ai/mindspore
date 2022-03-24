@@ -20,23 +20,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRandomStandardNormal = "RandomStandardNormal";
 /// \brief RandomStandardNormal defined RandomStandardNormal operator prototype of lite.
-class MS_CORE_API RandomStandardNormal : public PrimitiveC {
+class MIND_API RandomStandardNormal : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(RandomStandardNormal);
   /// \brief Constructor.
-  RandomStandardNormal() : PrimitiveC(kNameRandomStandardNormal) {}
-
-  /// \brief Destructor.
-  ~RandomStandardNormal() = default;
-
-  MS_DECLARE_PARENT(RandomStandardNormal, PrimitiveC);
+  RandomStandardNormal() : BaseOperator(kNameRandomStandardNormal) {}
 
   /// \brief Method to init the op's attributes.
   ///

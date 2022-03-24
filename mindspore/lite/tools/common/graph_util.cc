@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/common/graph_util.h"
 #include <algorithm>
 #include <functional>
@@ -29,6 +30,7 @@
 #include "src/common/utils.h"
 #include "nnacl/op_base.h"
 #include "ops/make_tuple.h"
+#include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -49,8 +51,10 @@ int SetFuncGraphOutput(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> 
     MS_LOG(DEBUG) << "new MakeTuple failed";
     return lite::RET_NULL_PTR;
   }
-  auto make_tuple_cnode = graph->NewCNode(make_tuple_prim_ptr, outputs);
-  if (make_tuple_prim_ptr == nullptr) {
+  auto make_tuple_prim_c = make_tuple_prim_ptr->GetPrim();
+  MS_CHECK_TRUE_MSG(make_tuple_prim_c != nullptr, lite::RET_NULL_PTR, "make_tuple_prim_c is nullptr");
+  auto make_tuple_cnode = graph->NewCNode(make_tuple_prim_c, outputs);
+  if (make_tuple_cnode == nullptr) {
     MS_LOG(DEBUG) << "new cnode failed";
     return lite::RET_NULL_PTR;
   }

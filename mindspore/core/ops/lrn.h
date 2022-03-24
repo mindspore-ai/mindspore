@@ -20,21 +20,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLRN = "LRN";
 /// \brief Local Response Normalization. Refer to Python API @ref mindspore.ops.LRN for more details.
-class MS_CORE_API LRN : public PrimitiveC {
+class MIND_API LRN : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LRN);
   /// \brief Constructor.
-  LRN() : PrimitiveC(kNameLRN) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~LRN() = default;
-  MS_DECLARE_PARENT(LRN, PrimitiveC);
+  LRN() : BaseOperator(kNameLRN) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LRN for the inputs.
   void Init(const int64_t depth_radius = 5, const float bias = 1.0, const float alpha = 1.0, const float beta = 0.5,
             const std::string &norm_region = "ACROSS_CHANNELS");
@@ -69,8 +67,8 @@ class MS_CORE_API LRN : public PrimitiveC {
   /// \return norm_region.
   std::string get_norm_region() const;
 };
-AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLrn = std::shared_ptr<LRN>;
 }  // namespace ops
 }  // namespace mindspore

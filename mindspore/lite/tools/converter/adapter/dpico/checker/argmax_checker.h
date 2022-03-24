@@ -26,7 +26,7 @@ class ArgMaxChecker : public OpChecker {
  public:
   ArgMaxChecker() : OpChecker("ArgMax") {}
   ~ArgMaxChecker() override = default;
-  bool Check(CNodePtr op, int32_t output_num, mindspore::Format format) override;
+  bool Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) override;
 };
 }  // namespace dpico
 }  // namespace mindspore

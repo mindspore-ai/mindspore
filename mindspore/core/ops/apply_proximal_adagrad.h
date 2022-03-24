@@ -22,24 +22,22 @@
 #include <vector>
 #include <string>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyProximalAdagrad = "ApplyProximalAdagrad";
-class ApplyProximalAdagrad : public PrimitiveC {
+class MIND_API ApplyProximalAdagrad : public BaseOperator {
  public:
-  ApplyProximalAdagrad() : PrimitiveC(kNameApplyProximalAdagrad) {
+  MIND_API_BASE_MEMBER(ApplyProximalAdagrad);
+  ApplyProximalAdagrad() : BaseOperator(kNameApplyProximalAdagrad) {
     InitIOName({"var", "accum", "lr", "l1", "l2", "grad"}, {"var", "accum"});
   }
-  ~ApplyProximalAdagrad() = default;
-  MS_DECLARE_PARENT(ApplyProximalAdagrad, PrimitiveC);
 };
 
-AbstractBasePtr ApplyProximalAdagradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyProximalAdagradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimApplyProximalAdagradPtr = std::shared_ptr<ApplyProximalAdagrad>;
 }  // namespace ops

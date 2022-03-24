@@ -16,9 +16,12 @@
 
 #include <memory>
 #include "ops/invert_permutation.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(InvertPermutation, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameInvertPermutation, InvertPermutation);
 }  // namespace ops
 }  // namespace mindspore

@@ -19,27 +19,24 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFlatten = "Flatten";
 /// \brief Flattens a tensor without changing its batch size on the 0-th axis.
 /// Refer to Python API @ref mindspore.ops.Flatten for more details.
-class MS_CORE_API Flatten : public PrimitiveC {
+class MIND_API Flatten : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Flatten);
   /// \brief Constructor.
-  Flatten() : PrimitiveC(kNameFlatten) {}
-  /// \brief Destructor.
-  ~Flatten() = default;
-  MS_DECLARE_PARENT(Flatten, PrimitiveC);
+  Flatten() : BaseOperator(kNameFlatten) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Flatten for the inputs.
   void Init() const {}
 };
-AbstractBasePtr FlattenInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr FlattenInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

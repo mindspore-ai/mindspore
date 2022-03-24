@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fisson/node_out_shapes.h"
 #include <vector>
 #include <string>

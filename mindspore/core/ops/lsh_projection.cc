@@ -16,14 +16,17 @@
 
 #include "ops/lsh_projection.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(LshProjection, PrimitiveC, BaseOperator);
 void LshProjection::Init(const LshProjectionType &type) { set_type(type); }
 
 void LshProjection::set_type(const LshProjectionType &type) {
   int64_t swi = (int64_t)type;
-  (void)AddAttr(kType, MakeValue(swi));
+  (void)AddAttr(kType, api::MakeValue(swi));
 }
 
 LshProjectionType LshProjection::get_type() const { return LshProjectionType(GetValue<int64_t>(GetAttr(kType))); }

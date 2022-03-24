@@ -15,14 +15,18 @@
  */
 
 #include "ops/control_depend.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ControlDepend, PrimitiveC, BaseOperator);
 void ControlDepend::Init(const int64_t depend_mode) { this->set_depend_mode(depend_mode); }
 
 void ControlDepend::set_depend_mode(const int64_t depend_mode) {
   CheckAndConvertUtils::CheckInRange<int64_t>(kDependMode, depend_mode, kIncludeBoth, {0, 1}, name());
-  (void)AddAttr(kDependMode, MakeValue(depend_mode));
+  (void)AddAttr(kDependMode, api::MakeValue(depend_mode));
 }
 
 int64_t ControlDepend::get_depend_mode() const {

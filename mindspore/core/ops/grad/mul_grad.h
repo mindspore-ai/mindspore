@@ -17,18 +17,16 @@
 #define MINDSPORE_CORE_OPS_MUL_GRAD_H_
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMulGrad = "MulGrad";
-class MS_CORE_API MulGrad : public PrimitiveC {
+class MIND_API MulGrad : public BaseOperator {
  public:
-  MulGrad() : PrimitiveC(kNameMulGrad) {}
-  ~MulGrad() = default;
-  MS_DECLARE_PARENT(MulGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(MulGrad);
+  MulGrad() : BaseOperator(kNameMulGrad) {}
   void Init() const {}
 };
 

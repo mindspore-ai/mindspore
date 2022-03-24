@@ -20,6 +20,7 @@
 #include "abstract/param_validator.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -53,6 +54,7 @@ TypePtr AtanGradInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(AtanGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr AtanGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   auto type = AtanGradInferType(primitive, input_args);

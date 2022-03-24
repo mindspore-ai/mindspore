@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/mapper/transpose_mapper.h"
 #include <algorithm>
 #include <vector>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
 constexpr size_t kCommonInputNum = 3;
-}
+}  // namespace
 
 STATUS TransposeMapper::Mapper(const CNodePtr &cnode) {
   MS_CHECK_TRUE_MSG(cnode != nullptr, lite::RET_ERROR, "cnode is nullptr.");

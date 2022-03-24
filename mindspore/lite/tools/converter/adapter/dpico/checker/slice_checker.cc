@@ -23,22 +23,22 @@ namespace mindspore {
 namespace dpico {
 namespace {
 constexpr int kMaxSplitSize = 31;
-}
+}  // namespace
 
-bool SliceChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool SliceChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (output_num > kMaxTopNum) {
     MS_LOG(WARNING) << "output num " << output_num << " is greater than " << kMaxNumOutput << " "
                     << op->fullname_with_scope();
     return false;
   }
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   auto axis_ptr = primitive->GetAttr(ops::kAxes);
   if (axis_ptr != nullptr) {
-    auto axis_data = GetValue<std::vector<int64_t>>(axis_ptr);
+    auto axis_data = api::GetValue<std::vector<int64_t>>(axis_ptr);
     if (axis_data[0] < kAxisLowerBound || axis_data[0] > kAxisUpperBound) {
       MS_LOG(WARNING) << "axis val should in range [-4, 3]. " << op->fullname_with_scope();
       return false;
@@ -46,7 +46,7 @@ bool SliceChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format form
   }
 
   if (primitive->GetAttr(ops::kSizeSplits) != nullptr) {
-    auto splits = GetValue<std::vector<int64_t>>(primitive->GetAttr(ops::kSizeSplits));
+    auto splits = api::GetValue<std::vector<int64_t>>(primitive->GetAttr(ops::kSizeSplits));
     if (splits.size() > kMaxSplitSize) {
       MS_LOG(WARNING) << "split size should be less than " << kMaxSplitSize << " " << op->fullname_with_scope();
       return false;

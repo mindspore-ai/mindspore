@@ -17,18 +17,16 @@
 #ifndef MINDSPORE_CORE_OPS_BN_GRAD_H_
 #define MINDSPORE_CORE_OPS_BN_GRAD_H_
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBNGrad = "BNGrad";
-class MS_CORE_API BNGrad : public PrimitiveC {
+class MIND_API BNGrad : public BaseOperator {
  public:
-  BNGrad() : PrimitiveC(kNameBNGrad) {}
-  ~BNGrad() = default;
-  MS_DECLARE_PARENT(BNGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(BNGrad);
+  BNGrad() : BaseOperator(kNameBNGrad) {}
   void Init(const float eps, const float momentum);
   void set_eps(const float eps);
   void set_momentum(const float momentum);

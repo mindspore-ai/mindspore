@@ -16,7 +16,9 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_
-
+#ifndef USE_DEPRECATED_API
+#define USE_DEPRECATED_API
+#endif
 #include <memory>
 #include <string>
 #include <utility>
@@ -54,8 +56,7 @@ inline const std::vector<int> kNH2NC = {0, 3, 1, 2};
 inline const std::vector<int> kNC2NH = {0, 2, 3, 1};
 inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
-inline const PrimitivePtr kPrimConv2DBackpropInputFusion =
-  std::make_shared<Primitive>(ops::kNameConv2DBackpropInputFusion);
+inline const PrimitivePtr kPrimConv2DBackpropInputFusion = std::make_shared<Primitive>("Conv2DBackpropInputFusion");
 
 std::vector<int> CastToInt(const ValuePtr &value);
 

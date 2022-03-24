@@ -29,11 +29,8 @@ class CaffeDetectionOutputParser : public CaffeNodeParser {
   CaffeDetectionOutputParser() : CaffeNodeParser("detection_output") {}
   ~CaffeDetectionOutputParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  BaseOperatorPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
-STATUS SetParamType(mapper::DetectionOutputParam *param, const caffe::DetectionOutputParameter_ParamType &param_type);
-STATUS SetCodeType(mapper::DetectionOutputParam *param, const caffe::CodeType &code_type);
-void SetParamAttr(mapper::DetectionOutputParam *param, const caffe::DetectionOutputParameter &iter);
 }  // namespace lite
 }  // namespace mindspore
 

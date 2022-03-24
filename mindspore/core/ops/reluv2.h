@@ -19,30 +19,27 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReLUV2 = prim::kReLUV2;
+constexpr auto kNameReLUV2 = "ReLUV2";
 /// \brief Rectified Linear Unit activation function.
 /// Refer to Python API @ref mindspore.ops.ReLUV2 for more details.
-class MS_CORE_API ReLUV2 : public PrimitiveC {
+class MIND_API ReLUV2 : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ReLUV2);
   /// \brief Constructor.
-  ReLUV2() : PrimitiveC(prim::kPrimReluV2->name()) { InitIOName({"x"}, {"output", "mask"}); }
+  ReLUV2() : BaseOperator("ReluV2") { InitIOName({"x"}, {"output", "mask"}); }
   /// \brief Constructor.
-  explicit ReLUV2(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"output", "mask"}); }
-  /// \brief Destructor.
-  ~ReLUV2() = default;
-  MS_DECLARE_PARENT(ReLUV2, PrimitiveC);
+  explicit ReLUV2(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"output", "mask"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

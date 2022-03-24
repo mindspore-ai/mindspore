@@ -19,21 +19,18 @@
 #include <memory>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Returns a Tensor that is the conjugate part of the input.
 /// Refer to Python API @ref mindspore.ops.Conj for more details.
-class MS_CORE_API Conj : public PrimitiveC {
+class MIND_API Conj : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Conj);
   /// \brief Constructor.
-  Conj() : PrimitiveC(prim::kPrimConj->name()) { InitIOName({"input"}, {"output"}); }
-  /// \brief Destructor.
-  ~Conj() = default;
-  MS_DECLARE_PARENT(Conj, PrimitiveC);
+  Conj() : BaseOperator("Conj") { InitIOName({"input"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Conj for the inputs.
   void Init() {}
 };

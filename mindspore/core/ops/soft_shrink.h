@@ -19,26 +19,24 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftShrink = "SoftShrink";
 /// \brief Applies the soft shrinkage function elementwise.
 /// Refer to Python API @ref mindspore.ops.SoftShrink for more details.
-class MS_CORE_API SoftShrink : public PrimitiveC {
+class MIND_API SoftShrink : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SoftShrink);
   /// \brief Constructor.
-  SoftShrink() : PrimitiveC(kNameSoftShrink) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~SoftShrink() = default;
-  MS_DECLARE_PARENT(SoftShrink, PrimitiveC);
+  SoftShrink() : BaseOperator(kNameSoftShrink) { InitIOName({"input_x"}, {"output"}); }
 };
 
-AbstractBasePtr SoftShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SoftShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 
 }  // namespace ops
 }  // namespace mindspore

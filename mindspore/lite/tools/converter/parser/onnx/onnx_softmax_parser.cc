@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxSoftMaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxSoftMaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Softmax>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   int64_t axis;
@@ -38,7 +38,7 @@ ops::PrimitiveC *OnnxSoftMaxParser::Parse(const onnx::GraphProto &onnx_graph, co
   }
   prim->set_axis({axis});
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxSoftMaxParser("Softmax", new OnnxSoftMaxParser());

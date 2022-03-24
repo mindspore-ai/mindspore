@@ -20,22 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameBiasAddGrad = prim::kBiasAddGrad;
-class MS_CORE_API BiasAddGrad : public PrimitiveC {
+constexpr auto kNameBiasAddGrad = "BiasAddGrad";
+class MIND_API BiasAddGrad : public BaseOperator {
  public:
-  BiasAddGrad() : PrimitiveC(prim::kPrimBiasAddGrad->name()) { InitIOName({"x"}, {"output"}); }
-  ~BiasAddGrad() = default;
-  MS_DECLARE_PARENT(BiasAddGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(BiasAddGrad);
+  BiasAddGrad() : BaseOperator(kNameBiasAddGrad) { InitIOName({"x"}, {"output"}); }
   void Init() const {}
 };
-AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

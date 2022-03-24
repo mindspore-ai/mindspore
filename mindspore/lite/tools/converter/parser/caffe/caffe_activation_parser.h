@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_ACTIVATION_PARSER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_ACTIVATION_PARSER_H_
+#define USE_DEPRECATED_API
 
 #include <vector>
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
@@ -28,7 +29,7 @@ class CaffeReluParser : public CaffeNodeParser {
   CaffeReluParser() : CaffeNodeParser("relu") {}
   ~CaffeReluParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 
 class CaffeRelu6Parser : public CaffeNodeParser {
@@ -36,7 +37,7 @@ class CaffeRelu6Parser : public CaffeNodeParser {
   CaffeRelu6Parser() : CaffeNodeParser("relu6") {}
   ~CaffeRelu6Parser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 
 class CaffeSigmoidParser : public CaffeNodeParser {
@@ -44,7 +45,7 @@ class CaffeSigmoidParser : public CaffeNodeParser {
   CaffeSigmoidParser() : CaffeNodeParser("sigmoid") {}
   ~CaffeSigmoidParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 
 class CaffeTanhParser : public CaffeNodeParser {
@@ -52,7 +53,7 @@ class CaffeTanhParser : public CaffeNodeParser {
   CaffeTanhParser() : CaffeNodeParser("tanh") {}
   ~CaffeTanhParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 
 class CaffeEluParser : public CaffeNodeParser {
@@ -60,7 +61,7 @@ class CaffeEluParser : public CaffeNodeParser {
   CaffeEluParser() : CaffeNodeParser("elu") {}
   ~CaffeEluParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -19,27 +19,24 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSin = "Sin";
 /// \brief Computes sine of the input element-wise. Refer to Python API @ref mindspore.ops.Sin for more details.
-class MS_CORE_API Sin : public PrimitiveC {
+class MIND_API Sin : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Sin);
   /// \brief Constructor.
-  Sin() : PrimitiveC(kNameSin) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Sin() = default;
-  MS_DECLARE_PARENT(Sin, PrimitiveC);
+  Sin() : BaseOperator(kNameSin) { InitIOName({"x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
 
-AbstractBasePtr SinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSinPtr = std::shared_ptr<Sin>;
 }  // namespace ops
 }  // namespace mindspore

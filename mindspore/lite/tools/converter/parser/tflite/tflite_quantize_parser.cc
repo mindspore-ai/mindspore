@@ -22,9 +22,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteQuantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteQuantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(!tflite_op->inputs.empty(), nullptr);
   MS_CHECK_TRUE_RET(!tflite_op->outputs.empty(), nullptr);
   const auto &in_tensor = tflite_subgraph->tensors[tflite_op->inputs[FIRST_INPUT]];
@@ -45,15 +45,17 @@ ops::PrimitiveC *TfliteQuantizeParser::Parse(const std::unique_ptr<tflite::Opera
     MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
     prim->set_src_t(in_tensor_type);
     prim->set_dst_t(out_tensor_type);
-    return prim.release();
+    return prim->GetPrim();
   } else {
     auto prim = std::make_unique<ops::Cast>();
     MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+    auto prim_c = prim->GetPrim();
+    MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
     auto dstT = GetTfliteDataType(out_tensor->type);
     auto dst_value = MakeValue(static_cast<int32_t>(dstT));
     MS_CHECK_TRUE_RET(dst_value != nullptr, nullptr);
-    prim->AddAttr("to", dst_value);
-    return prim.release();
+    prim_c->AddAttr("to", dst_value);
+    return prim->GetPrim();
   }
 }
 

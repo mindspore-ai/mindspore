@@ -23,11 +23,13 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
-                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                       std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
+                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                    std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Concat>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   auto axis_node = GetConstInputNode(tf_node_map, tf_op.input(tf_op.input_size() - 1));
   if (axis_node == nullptr) {
     MS_LOG(ERROR) << "get concat axis attr node failed";
@@ -48,8 +50,8 @@ ops::PrimitiveC *TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
       return nullptr;
     }
   }
-  prim->AddAttr(ops::kOriginalOpName, MakeValue("ConcatV2"));
-  return prim.release();
+  prim_c->AddAttr(ops::kOriginalOpName, MakeValue("ConcatV2"));
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfConcatV2Parser("ConcatV2", new TFConcatParser());

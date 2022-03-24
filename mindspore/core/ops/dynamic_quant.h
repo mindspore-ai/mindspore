@@ -22,25 +22,19 @@
 #include <string>
 #include <memory>
 #include <algorithm>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/primitive_infer_map.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDynamicQuant = "DynamicQuant";
 /// \brief the DynamicQuant operator prototype.
-class MS_CORE_API DynamicQuant : public PrimitiveC {
+class MIND_API DynamicQuant : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(DynamicQuant);
   /// \brief Constructor.
-  DynamicQuant() : PrimitiveC(kNameDynamicQuant) {}
-
-  /// \brief Destructor.
-  ~DynamicQuant() = default;
-
-  MS_DECLARE_PARENT(DynamicQuant, PrimitiveC);
+  DynamicQuant() : BaseOperator(kNameDynamicQuant) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -68,8 +62,8 @@ class MS_CORE_API DynamicQuant : public PrimitiveC {
   /// \return the data type of output.
   int64_t get_dst_type() const;
 };
-AbstractBasePtr DynamicQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DynamicQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

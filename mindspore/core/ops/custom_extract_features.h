@@ -18,22 +18,20 @@
 #define MINDSPORE_CORE_OPS_CUSTOM_EXTRACT_FEATURES_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCustomExtractFeatures = "CustomExtractFeatures";
-class MS_CORE_API CustomExtractFeatures : public PrimitiveC {
+class MIND_API CustomExtractFeatures : public BaseOperator {
  public:
-  CustomExtractFeatures() : PrimitiveC(kNameCustomExtractFeatures) {}
-  ~CustomExtractFeatures() = default;
-  MS_DECLARE_PARENT(CustomExtractFeatures, PrimitiveC);
+  MIND_API_BASE_MEMBER(CustomExtractFeatures);
+  CustomExtractFeatures() : BaseOperator(kNameCustomExtractFeatures) {}
   void Init() const {}
 };
-AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -19,18 +19,16 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEinsumGrad = "EinsumGrad";
-class EinsumGrad : public PrimitiveC {
+class MIND_API EinsumGrad : public BaseOperator {
  public:
-  EinsumGrad() : PrimitiveC(kNameEinsumGrad) {}
-  ~EinsumGrad() = default;
-  MS_DECLARE_PARENT(EinsumGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(EinsumGrad);
+  EinsumGrad() : BaseOperator(kNameEinsumGrad) {}
   void Init(const std::string equation);
   void set_equation(const std::string equation);
   std::string get_equation() const;

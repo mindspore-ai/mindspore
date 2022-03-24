@@ -21,22 +21,17 @@
 #include <string>
 #include <memory>
 #include "ops/reduce.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceFusion = "ReduceFusion";
 /// \brief ReduceFusion defined Reduce operator prototype of lite.
-class MS_CORE_API ReduceFusion : public Reduce {
+class MIND_API ReduceFusion : public Reduce {
  public:
+  MIND_API_BASE_MEMBER(ReduceFusion);
   /// \brief Constructor.
   ReduceFusion() : Reduce(kNameReduceFusion) {}
-
-  /// \brief Destructor.
-  ~ReduceFusion() = default;
-
-  MS_DECLARE_PARENT(ReduceFusion, PrimitiveC);
 
   /// \brief Method to init the op's attributes.
   ///
@@ -89,8 +84,8 @@ class MS_CORE_API ReduceFusion : public Reduce {
   /// \return a size factor applied to output.
   float get_coeff() const;
 };
-AbstractBasePtr ReduceFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ReduceFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

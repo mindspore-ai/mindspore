@@ -21,14 +21,14 @@
 
 namespace mindspore {
 namespace dpico {
-bool StridedSliceChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+bool StridedSliceChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   if (primitive->GetAttr(ops::kFmkType) != nullptr) {
-    auto fmk_type = static_cast<converter::FmkType>(GetValue<int>(primitive->GetAttr(ops::kFmkType)));
+    auto fmk_type = static_cast<converter::FmkType>(api::GetValue<int64_t>(primitive->GetAttr(ops::kFmkType)));
     if (fmk_type == converter::kFmkTypeOnnx) {
       return true;
     }

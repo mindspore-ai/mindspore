@@ -17,23 +17,19 @@
 #define MINDSPORE_CORE_OPS_GELU_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameGeLU = prim::kGeLU;
+constexpr auto kNameGeLU = "GeLU";
 /// \brief Gaussian Error Linear Units activation function.
 /// Refer to Python API @ref mindspore.ops.GeLU for more details.
-class MS_CORE_API GeLU : public PrimitiveC {
+class MIND_API GeLU : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(GeLU);
   /// \brief Constructor.
-  GeLU() : PrimitiveC(kNameGeLU) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~GeLU() = default;
-  MS_DECLARE_PARENT(GeLU, PrimitiveC);
+  GeLU() : BaseOperator(kNameGeLU) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GeLU for the inputs.
   void Init() const {}
 };

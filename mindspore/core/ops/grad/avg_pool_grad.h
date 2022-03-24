@@ -21,22 +21,20 @@
 #include <string>
 #include <memory>
 #include "ops/grad/pool_grad.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPoolGrad = "AvgPoolGrad";
-class MS_CORE_API AvgPoolGrad : public PoolGrad {
+class MIND_API AvgPoolGrad : public PoolGrad {
  public:
+  MIND_API_BASE_MEMBER(AvgPoolGrad);
   AvgPoolGrad() : PoolGrad(kNameAvgPoolGrad) { InitIOName({"x_origin", "out_origin", "grad"}, {"output"}); }
-  ~AvgPoolGrad() = default;
-  MS_DECLARE_PARENT(AvgPoolGrad, PoolGrad);
 };
 
-AbstractBasePtr AvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

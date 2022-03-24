@@ -18,9 +18,11 @@
 
 #include "ops/reduce_sum_square.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ReduceSumSquare, PrimitiveC, Reduce);
 REGISTER_PRIMITIVE_C(kNameReduceSumSquare, ReduceSumSquare);
 }  // namespace ops
 }  // namespace mindspore

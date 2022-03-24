@@ -20,23 +20,22 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropFilter = "Conv2DBackpropFilter";
-class MS_CORE_API Conv2DBackpropFilter : public PrimitiveC {
+class MIND_API Conv2DBackpropFilter : public BaseOperator {
  public:
-  Conv2DBackpropFilter() : PrimitiveC(kNameConv2DBackpropFilter) {
+  MIND_API_BASE_MEMBER(Conv2DBackpropFilter);
+  Conv2DBackpropFilter() : BaseOperator(kNameConv2DBackpropFilter) {
     InitIOName({"out_backprop", "input", "filter_sizes"}, {"output"});
   }
-  explicit Conv2DBackpropFilter(const std::string k_name) : PrimitiveC(k_name) {
+  explicit Conv2DBackpropFilter(const std::string k_name) : BaseOperator(k_name) {
     InitIOName({"out_backprop", "input", "filter_sizes"}, {"output"});
   }
-  ~Conv2DBackpropFilter() = default;
-  MS_DECLARE_PARENT(Conv2DBackpropFilter, PrimitiveC);
   void Init(const int64_t out_channel, const std::vector<int64_t> &kernel_size, const PadMode &pad_mode = VALID,
             const std::vector<int64_t> &pad_list = {0, 0, 0, 0}, const int64_t mode = 1,
             const std::vector<int64_t> &stride = {1, 1}, const std::vector<int64_t> &dilation = {1, 1, 1, 1},
@@ -64,8 +63,8 @@ class MS_CORE_API Conv2DBackpropFilter : public PrimitiveC {
   int64_t get_group() const;
   Format get_format() const;
 };
-AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

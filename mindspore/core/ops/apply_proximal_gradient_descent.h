@@ -19,23 +19,22 @@
 #include <memory>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyProximalGradientDescent = "ApplyProximalGradientDescent";
-class ApplyProximalGradientDescent : public PrimitiveC {
+class MIND_API ApplyProximalGradientDescent : public BaseOperator {
  public:
-  ApplyProximalGradientDescent() : PrimitiveC(kNameApplyProximalGradientDescent) {
+  MIND_API_BASE_MEMBER(ApplyProximalGradientDescent);
+  ApplyProximalGradientDescent() : BaseOperator(kNameApplyProximalGradientDescent) {
     InitIOName({"var", "alpha", "l1", "l2", "delta"}, {"var"});
   }
-  ~ApplyProximalGradientDescent() = default;
-  MS_DECLARE_PARENT(ApplyProximalGradientDescent, PrimitiveC);
 };
-AbstractBasePtr ApplyProximalGradientDescentInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyProximalGradientDescentInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

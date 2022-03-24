@@ -34,7 +34,7 @@ class DepthwiseConv2DInfo : public Conv2DInfo {
   int InferReplaceOp() override;
   int InferParallelCNodes() override;
   int CheckStrategy(const SplitStrategy &strategy) override;
-  int ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+  int ConstructOutputCNodes(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                             const std::vector<AnfNodePtr> &feature_split_outputs,
                             const std::vector<AnfNodePtr> &kernel_split_outputs,
                             const std::vector<AnfNodePtr> &bias_split_outputs) override;
@@ -48,10 +48,10 @@ class DepthwiseConv2DInfo : public Conv2DInfo {
                          const std::vector<AnfNodePtr> &kernel_split_outputs,
                          const std::vector<AnfNodePtr> &bias_split_outputs);
 
-  void AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &conv_prim, int64_t *visited_in_channel,
+  void AdJustConvPrim(const api::SharedPtr<ops::Conv2DFusion> &conv_prim, int64_t *visited_in_channel,
                       int64_t *visited_out_channel, int64_t *visited_group, int output_conv_index);
 
-  void AdJustInputs(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+  void AdJustInputs(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                     const std::vector<AnfNodePtr> &feature_split_outputs,
                     const std::vector<AnfNodePtr> &kernel_split_outputs,
                     const std::vector<AnfNodePtr> &bias_split_outputs, int output_conv_index);

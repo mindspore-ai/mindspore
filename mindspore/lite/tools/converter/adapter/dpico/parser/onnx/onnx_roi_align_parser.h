@@ -17,16 +17,19 @@
 #ifndef DPICO_PARSER_ONNX_ONNX_ROI_ALIGN_PARSER_H_
 #define DPICO_PARSER_ONNX_ONNX_ROI_ALIGN_PARSER_H_
 
+#include <memory>
 #include "include/registry/node_parser.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace lite {
+using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
 class OnnxRoiAlignParser : public converter::NodeParser {
  public:
   OnnxRoiAlignParser() : NodeParser() {}
   ~OnnxRoiAlignParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  ops::BaseOperatorPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

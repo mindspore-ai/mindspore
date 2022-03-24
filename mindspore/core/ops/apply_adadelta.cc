@@ -23,6 +23,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "utils/tensor_construct_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -121,6 +122,8 @@ TuplePtr ApplyAdadeltaInferType(const PrimitivePtr &primitive, const std::vector
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, accum_type, accum_update_type});
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(ApplyAdadelta, PrimitiveC, BaseOperator);
 AbstractBasePtr ApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = ApplyAdadeltaInferType(primitive, input_args);

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_ANF_EXPORTER_FETCH_CONTENT_H_
-#define MINDSPORE_LITE_TOOLS_ANF_EXPORTER_FETCH_CONTENT_H_
+#ifndef DPICO_COMMON_FETCH_CONTENT_H_
+#define DPICO_COMMON_FETCH_CONTENT_H_
 
 #include <string>
 #include <vector>
-#include "ir/primitive.h"
-#include "ir/func_graph.h"
+#include "mindapi/ir/primitive.h"
+#include "mindapi/ir/func_graph.h"
 
 namespace mindspore {
 namespace dpico {
@@ -31,10 +31,11 @@ struct DataInfo {
   DataInfo() : data_type_(0) {}
 };
 
-int FetchFromDefaultParam(const ParameterPtr &param_node, DataInfo *data_info);
+int FetchFromDefaultParam(const api::ParameterPtr &param_node, DataInfo *data_info);
 
-int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, DataInfo *data_info);
+int FetchDataFromParameterNode(const api::CNodePtr &cnode, size_t index, DataInfo *data_info);
+
 int GetDataSizeFromTensor(DataInfo *data_info, int *data_size);
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_ANF_EXPORTER_FETCH_CONTENT_H_
+#endif  // DPICO_COMMON_FETCH_CONTENT_H_

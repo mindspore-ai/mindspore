@@ -20,18 +20,17 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameToFormat = "ToFormat";
-class MS_CORE_API ToFormat : public PrimitiveC {
+class MIND_API ToFormat : public BaseOperator {
  public:
-  ToFormat() : PrimitiveC(kNameToFormat) {}
-  ~ToFormat() = default;
-  MS_DECLARE_PARENT(ToFormat, PrimitiveC);
+  MIND_API_BASE_MEMBER(ToFormat);
+  ToFormat() : BaseOperator(kNameToFormat) {}
   void Init(const int64_t src_t, const int64_t dst_t);
   void set_src_t(const int64_t src_t);
   void set_dst_t(const int64_t dst_t);

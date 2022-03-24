@@ -18,9 +18,11 @@
 
 #include "ops/reduce_max.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ReduceMax, PrimitiveC, Reduce);
 REGISTER_PRIMITIVE_C(kNameReduceMax, ReduceMax);
 }  // namespace ops
 }  // namespace mindspore

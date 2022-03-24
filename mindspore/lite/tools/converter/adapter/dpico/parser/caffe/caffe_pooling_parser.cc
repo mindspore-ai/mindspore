@@ -99,7 +99,7 @@ mindspore::RoundMode CaffePoolingParser::ParseRoundMode(const caffe::PoolingPara
   return roundMode;
 }
 
-ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+BaseOperatorPtr CaffePoolingParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   const caffe::PoolingParameter &poolingParam = proto.pooling_param();
 
   // parse kernel params
@@ -127,7 +127,7 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
   auto roundMode = ParseRoundMode(poolingParam);
 
   if (poolingParam.pool() == caffe::PoolingParameter::MAX) {
-    auto prim = std::make_unique<ops::MaxPoolFusion>();
+    auto prim = std::make_shared<ops::MaxPoolFusion>();
     if (prim == nullptr) {
       MS_LOG(ERROR) << "prim is nullptr.";
       return nullptr;
@@ -139,9 +139,9 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
     prim->set_pad(pad);
     prim->set_round_mode(roundMode);
     prim->set_global(poolingParam.global_pooling());
-    return prim.release();
+    return prim;
   } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
-    auto prim = std::make_unique<ops::AvgPoolFusion>();
+    auto prim = std::make_shared<ops::AvgPoolFusion>();
     if (prim == nullptr) {
       MS_LOG(ERROR) << "prim is nullptr.";
       return nullptr;
@@ -153,7 +153,7 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
     prim->set_pad(pad);
     prim->set_round_mode(roundMode);
     prim->set_global(poolingParam.global_pooling());
-    return prim.release();
+    return prim;
   } else {
     MS_LOG(ERROR) << "poolingParam.pool() is not MAX or AVE";
     return nullptr;

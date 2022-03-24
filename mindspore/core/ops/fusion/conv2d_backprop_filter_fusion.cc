@@ -18,9 +18,11 @@
 
 #include "ops/fusion/conv2d_backprop_filter_fusion.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Conv2DBackpropFilterFusion, PrimitiveC, Conv2DBackpropFilter);
 void Conv2DBackpropFilterFusion::Init(const int64_t out_channel, const std::vector<int64_t> &kernel_size,
                                       const PadMode &pad_mode, const std::vector<int64_t> &pad_list, const int64_t mode,
                                       const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,
@@ -39,11 +41,11 @@ void Conv2DBackpropFilterFusion::Init(const int64_t out_channel, const std::vect
 
 void Conv2DBackpropFilterFusion::set_activation_type(const ActivationType activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 void Conv2DBackpropFilterFusion::set_in_channel(const int64_t in_channel) {
-  (void)this->AddAttr(kInChannel, MakeValue(in_channel));
+  (void)this->AddAttr(kInChannel, api::MakeValue(in_channel));
 }
 
 ActivationType Conv2DBackpropFilterFusion::get_activation_type() const {

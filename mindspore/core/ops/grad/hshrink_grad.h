@@ -18,22 +18,20 @@
 #define MINDSPORE_CORE_OPS_HSHRINK_GRAD_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHShrinkGrad = "HShrinkGrad";
-class MS_CORE_API HShrinkGrad : public PrimitiveC {
+class MIND_API HShrinkGrad : public BaseOperator {
  public:
-  HShrinkGrad() : PrimitiveC(kNameHShrinkGrad) { InitIOName({"gradients", "features"}, {"backprops"}); }
-  ~HShrinkGrad() = default;
-  MS_DECLARE_PARENT(HShrinkGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(HShrinkGrad);
+  HShrinkGrad() : BaseOperator(kNameHShrinkGrad) { InitIOName({"gradients", "features"}, {"backprops"}); }
 };
 
-AbstractBasePtr HShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr HShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_HSHRINK_GRAD_H_

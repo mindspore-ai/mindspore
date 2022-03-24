@@ -20,22 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLeakyRelu = "LeakyRelu";
 /// \brief Leaky ReLU activation function. Refer to Python API @ref mindspore.nn.LeakyReLU for more details.
-class MS_CORE_API LeakyRelu : public PrimitiveC {
+class MIND_API LeakyRelu : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LeakyRelu);
   /// \brief Constructor.
-  LeakyRelu() : PrimitiveC(kNameLeakyRelu) {}
-  /// \brief Destructor.
-  ~LeakyRelu() = default;
-  MS_DECLARE_PARENT(LeakyRelu, PrimitiveC);
+  LeakyRelu() : BaseOperator(kNameLeakyRelu) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.nn.LeakyReLU for the inputs.
   void Init(const float negative_slope);
   /// \brief Set negative_slope.
@@ -46,8 +42,8 @@ class MS_CORE_API LeakyRelu : public PrimitiveC {
   float get_negative_slope() const;
 };
 
-AbstractBasePtr LeakyReluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LeakyReluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/glu_fusion.h"
 #include <memory>
 #include <string>
@@ -27,6 +28,8 @@ CNodePtr GLUFusion::CreateGLUNode(const FuncGraphPtr &func_graph, const AnfNodeP
   MS_ASSERT(func_graph != nullptr && node != nullptr && equiv != nullptr);
   auto glu_prim = std::make_shared<ops::GLU>();
   MS_CHECK_TRUE_RET(glu_prim != nullptr, nullptr);
+  auto glu_prim_c = glu_prim->GetPrim();
+  MS_CHECK_TRUE_RET(glu_prim_c != nullptr, nullptr);
   auto split_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[split_prim_]));
   if (split_prim != nullptr && split_prim->GetAttr(ops::kAxis) != nullptr) {
     auto axis = GetValue<int64_t>(split_prim->GetAttr(ops::kAxis));
@@ -34,7 +37,7 @@ CNodePtr GLUFusion::CreateGLUNode(const FuncGraphPtr &func_graph, const AnfNodeP
   }
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
   MS_ASSERT(input_node != nullptr);
-  auto glu_cnode = func_graph->NewCNode(glu_prim, {input_node});
+  auto glu_cnode = func_graph->NewCNode(glu_prim_c, {input_node});
   MS_CHECK_TRUE_RET(glu_cnode != nullptr, nullptr);
   glu_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_glu");
   if (node->abstract() != nullptr) {

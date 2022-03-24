@@ -19,22 +19,17 @@
 #include <vector>
 
 #include "ops/conv2d.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DFusion = "Conv2DFusion";
 /// \brief Conv2DFusion defined Conv2D operator prototype of lite.
-class MS_CORE_API Conv2DFusion : public Conv2D {
+class MIND_API Conv2DFusion : public Conv2D {
  public:
+  MIND_API_BASE_MEMBER(Conv2DFusion);
   /// \brief Constructor.
   Conv2DFusion() : Conv2D(kNameConv2DFusion) {}
-
-  /// \brief Destructor.
-  ~Conv2DFusion() = default;
-
-  MS_DECLARE_PARENT(Conv2DFusion, Conv2D);
 
   /// \brief Method to init the op's attributes.
   ///

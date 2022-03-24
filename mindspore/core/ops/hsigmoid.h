@@ -19,25 +19,22 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHSigmoid = "HSigmoid";
 /// \brief Hard sigmoid activation function. Refer to Python API @ref mindspore.ops.HSigmoid for more details.
-class MS_CORE_API HSigmoid : public PrimitiveC {
+class MIND_API HSigmoid : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(HSigmoid);
   /// \brief Constructor.
-  HSigmoid() : PrimitiveC(kNameHSigmoid) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~HSigmoid() = default;
-  MS_DECLARE_PARENT(HSigmoid, PrimitiveC);  // come from ops/primitive_c.h
+  HSigmoid() : BaseOperator(kNameHSigmoid) { InitIOName({"input_x"}, {"output"}); }
 };
 
-AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 
 }  // namespace ops
 }  // namespace mindspore

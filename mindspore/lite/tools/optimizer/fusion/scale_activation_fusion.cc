@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/scale_activation_fusion.h"
 #include <memory>
 #include "ops/fusion/activation.h"
@@ -43,8 +44,10 @@ const AnfNodePtr ScaleActivationFusion::Process(const FuncGraphPtr &func_graph, 
     return nullptr;
   }
   MS_CHECK_TRUE_RET(act_node->size() == kInputSizeTwo, nullptr);
-  auto act_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(act_node->input(FIRST_INPUT));
-  MS_CHECK_TRUE_RET(act_prim != nullptr && act_prim->GetAttr(ops::kActivationType) != nullptr, nullptr);
+  auto act_prim = ops::GetOperator<mindspore::ops::Activation>(act_node->input(FIRST_INPUT));
+  MS_CHECK_TRUE_RET(act_prim != nullptr, nullptr);
+  auto act_prim_c = act_prim->GetPrim();
+  MS_CHECK_TRUE_RET(act_prim_c != nullptr && act_prim_c->GetAttr(ops::kActivationType) != nullptr, nullptr);
   if (act_prim->get_activation_type() != mindspore::RELU && act_prim->get_activation_type() != mindspore::RELU6) {
     return nullptr;
   }
@@ -56,16 +59,17 @@ const AnfNodePtr ScaleActivationFusion::Process(const FuncGraphPtr &func_graph, 
   if (IsMarkedTrainOp(scale_cnode) || IsMultiOutputTensors(func_graph, scale_cnode)) {
     return nullptr;
   }
-
-  auto scale_prim = GetValueNode<std::shared_ptr<ops::ScaleFusion>>(scale_cnode->input(FIRST_INPUT));
+  auto scale_prim = ops::GetOperator<ops::ScaleFusion>(scale_cnode->input(FIRST_INPUT));
   MS_ASSERT(scale_prim != nullptr);
+  auto scale_prim_c = scale_prim->GetPrim();
+  MS_CHECK_TRUE_RET(scale_prim_c != nullptr, nullptr);
   ActivationType act_type = act_prim->get_activation_type();
-  if (scale_prim->GetAttr(ops::kActivationType) != nullptr && scale_prim->get_activation_type() != NO_ACTIVATION) {
+  if (scale_prim_c->GetAttr(ops::kActivationType) != nullptr && scale_prim->get_activation_type() != NO_ACTIVATION) {
     auto scale_act = scale_prim->get_activation_type();
     MS_CHECK_TRUE_RET(scale_act == RELU || scale_act == RELU6, nullptr);
     act_type = scale_act == RELU6 ? RELU6 : act_type;
   }
-  scale_prim->AddAttr(ops::kActivationType, MakeValue<int64_t>(act_type));
+  scale_prim_c->AddAttr(ops::kActivationType, MakeValue<int64_t>(act_type));
   return scale_node;
 }
 }  // namespace mindspore::opt

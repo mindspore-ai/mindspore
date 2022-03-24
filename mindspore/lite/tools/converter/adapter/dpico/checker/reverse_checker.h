@@ -26,7 +26,7 @@ class ReverseChecker : public OpChecker {
  public:
   ReverseChecker() : OpChecker("Reverse") {}
   ~ReverseChecker() override = default;
-  bool Check(CNodePtr op, int32_t output_num, mindspore::Format format) override;
+  bool Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) override;
 };
 }  // namespace dpico
 }  // namespace mindspore

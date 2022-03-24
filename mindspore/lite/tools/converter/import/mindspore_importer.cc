@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/import/mindspore_importer.h"
 #include <memory>
 #include <map>

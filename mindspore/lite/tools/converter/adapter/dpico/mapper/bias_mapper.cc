@@ -19,7 +19,7 @@
 #include <utility>
 #include <algorithm>
 #include <vector>
-#include "ops/op_utils.h"
+#include "ops/bias_add.h"
 #include "common/anf_util.h"
 #include "common/op_attr.h"
 #include "common/op_enum.h"
@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace dpico {
 namespace {
-STATUS SetBiasDataInfo(const CNodePtr &cnode, mapper::BiasOperator *bias_operator) {
+STATUS SetBiasDataInfo(const api::CNodePtr &cnode, mapper::BiasOperator *bias_operator) {
   if (bias_operator == nullptr) {
     MS_LOG(ERROR) << "bias_operator is nullptr.";
     return RET_ERROR;
@@ -36,14 +36,14 @@ STATUS SetBiasDataInfo(const CNodePtr &cnode, mapper::BiasOperator *bias_operato
   if (cnode->inputs().size() == kInputIndex3) {
     auto input_anode = cnode->input(kInputIndex2);
     MS_ASSERT(input_anode != nullptr);
-    auto param_node = input_anode->cast<ParameterPtr>();
+    auto param_node = input_anode->cast<api::ParameterPtr>();
     if (param_node == nullptr || !param_node->has_default()) {
       MS_LOG(DEBUG) << "only parameter node needs to set BiasPtr";
       return RET_OK;
     }
-    auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
+    auto tensor_info = param_node->default_param()->cast<api::TensorPtr>();
     if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
-      auto data = reinterpret_cast<float *>(tensor_info->data_c());
+      auto data = reinterpret_cast<float *>(tensor_info->data());
       MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
       bias_operator->SetBiasPtr(data);
       ShapeVector shape_vector;
@@ -64,8 +64,8 @@ STATUS SetBiasDataInfo(const CNodePtr &cnode, mapper::BiasOperator *bias_operato
   return RET_OK;
 }
 }  // namespace
-STATUS BiasMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                       const CNodePtrList &output_cnodes) {
+STATUS BiasMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                       const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -83,9 +83,9 @@ STATUS BiasMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
   }
 
   if (prim->GetAttr(ops::kAxis) != nullptr) {
-    bias_operator->SetAxis(GetValue<int32_t>(prim->GetAttr(ops::kAxis)));
-  } else if (CheckPrimitiveType(cnode, prim::kPrimBiasAdd)) {
-    auto format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+    bias_operator->SetAxis(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(ops::kAxis))));
+  } else if (CheckPrimitiveType(cnode, api::MakeShared<ops::BiasAdd>())) {
+    auto format = api::GetValue<int64_t>(prim->GetAttr(ops::kFormat));
     if (format == mindspore::NCHW) {
       bias_operator->SetAxis(1);
     } else if (format == mindspore::NHWC) {
@@ -96,7 +96,7 @@ STATUS BiasMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
     }
   }
   if (prim->GetAttr(dpico::kNumAxes) != nullptr) {
-    bias_operator->SetBiasNumAxes(GetValue<int32_t>(prim->GetAttr(dpico::kNumAxes)));
+    bias_operator->SetBiasNumAxes(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(dpico::kNumAxes))));
   }
 
   if (SetBiasDataInfo(cnode, bias_operator.get()) != RET_OK) {

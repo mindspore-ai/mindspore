@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_PASS_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_PASS_H
 
+#define USE_DEPRECATED_API
 #include <memory>
 #include "backend/common/optimizer/pass.h"
 #include "tools/converter/converter_flags.h"

@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
+#include "checker/arithmetic_checker.h"
 #include <string>
 #include <vector>
 #include <unordered_set>
 #include "common/anf_util.h"
 #include "common/check_base.h"
 #include "common/op_enum.h"
-#include "checker/arithmetic_checker.h"
 
 namespace mindspore {
 namespace dpico {
-bool ArithmeticChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool ArithmeticChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, 1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
-  auto prim = GetValueNode<PrimitivePtr>(op->input(0));
+  auto prim = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, false, "prim is nullptr." << op->fullname_with_scope());
 
   if (op->inputs().size() != kDims3) {

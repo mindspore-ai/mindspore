@@ -17,17 +17,20 @@
 #include <set>
 #include "ops/pad.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void Pad::Init(const std::vector<std::vector<int64_t>> &paddings) { this->set_paddings(paddings); }
 void Pad::set_paddings(const std::vector<std::vector<int64_t>> &paddings) {
-  (void)this->AddAttr(kPaddings, MakeValue(paddings));
+  (void)this->AddAttr(kPaddings, api::MakeValue(paddings));
 }
 std::vector<std::vector<int64_t>> Pad::get_paddings() const {
   return GetValue<std::vector<std::vector<int64_t>>>(GetAttr(kPaddings));
 }
 
+MIND_API_BASE_IMPL(Pad, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNamePad, Pad);
 }  // namespace ops
 }  // namespace mindspore

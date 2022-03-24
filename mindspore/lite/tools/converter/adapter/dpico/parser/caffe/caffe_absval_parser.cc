@@ -17,18 +17,17 @@
 #include "parser/caffe/caffe_absval_parser.h"
 #include <memory>
 #include <vector>
-#include "common/op_attr.h"
 #include "ops/abs.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeAbsvalParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Abs>();
+BaseOperatorPtr CaffeAbsvalParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Abs>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
   }
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeAbsvalParser("AbsVal", new CaffeAbsvalParser());

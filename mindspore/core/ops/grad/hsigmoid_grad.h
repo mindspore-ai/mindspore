@@ -21,22 +21,20 @@
 #include <string>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHSigmoidGrad = "HSigmoidGrad";
-class MS_CORE_API HSigmoidGrad : public PrimitiveC {
+class MIND_API HSigmoidGrad : public BaseOperator {
  public:
-  HSigmoidGrad() : PrimitiveC(kNameHSigmoidGrad) { InitIOName({"grads", "input_x"}, {"output"}); }
-  ~HSigmoidGrad() = default;
-  MS_DECLARE_PARENT(HSigmoidGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(HSigmoidGrad);
+  HSigmoidGrad() : BaseOperator(kNameHSigmoidGrad) { InitIOName({"grads", "input_x"}, {"output"}); }
 };
 
-AbstractBasePtr HSigmoidGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr HSigmoidGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -20,6 +20,7 @@
 
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -30,15 +31,15 @@ void ApplyMomentum::Init(const bool use_nesterov, const bool use_locking, const 
 }
 
 void ApplyMomentum::set_use_nesterov(const bool use_nesterov) {
-  (void)this->AddAttr(kUseNesterov, MakeValue(use_nesterov));
+  (void)this->AddAttr(kUseNesterov, api::MakeValue(use_nesterov));
 }
 
 void ApplyMomentum::set_use_locking(const bool use_locking) {
-  (void)this->AddAttr(kUseLocking, MakeValue(use_locking));
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
 }
 
 void ApplyMomentum::set_gradient_scale(const float gradient_scale) {
-  (void)this->AddAttr(kGradientScale, MakeValue(gradient_scale));
+  (void)this->AddAttr(kGradientScale, api::MakeValue(gradient_scale));
 }
 
 bool ApplyMomentum::get_use_nesterov() const {
@@ -102,6 +103,8 @@ TypePtr ApplyMomentumInferType(const PrimitivePtr &primitive, const std::vector<
   return v_tensor_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(ApplyMomentum, PrimitiveC, BaseOperator);
 AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = ApplyMomentumInferType(primitive, input_args);

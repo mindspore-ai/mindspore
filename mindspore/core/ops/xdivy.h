@@ -22,24 +22,22 @@
 #include <memory>
 #include <algorithm>
 #include <set>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameXdivy = "Xdivy";
-class Xdivy : public PrimitiveC {
+class Xdivy : public BaseOperator {
  public:
-  Xdivy() : PrimitiveC(prim::kPrimXdivy->name()) { InitIOName({"x", "y"}, {"output"}); }
-  ~Xdivy() = default;
-  MS_DECLARE_PARENT(Xdivy, PrimitiveC);
+  MIND_API_BASE_MEMBER(Xdivy);
+  Xdivy() : BaseOperator("Xdivy") { InitIOName({"x", "y"}, {"output"}); }
 };
 
 using PrimXdivyPtr = std::shared_ptr<Xdivy>;
-AbstractBasePtr XdivyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr XdivyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

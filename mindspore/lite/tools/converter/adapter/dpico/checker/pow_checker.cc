@@ -17,19 +17,19 @@
 #include "checker/pow_checker.h"
 #include <vector>
 #include <limits>
-#include <string>
+#include <cmath>
 #include "common/fetch_content.h"
 #include "common/op_enum.h"
 
 namespace mindspore {
 namespace dpico {
-bool PowFusionChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool PowFusionChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, kInputIndex1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
   float power;
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
@@ -46,13 +46,14 @@ bool PowFusionChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format 
     }
     power = *(reinterpret_cast<float *>(data_info.data_.data()));
   } else if (primitive->GetAttr(ops::kPower) != nullptr) {
-    power = GetValue<float>(primitive->GetAttr(ops::kPower));
+    power = api::GetValue<float>(primitive->GetAttr(ops::kPower));
   } else {
     MS_LOG(ERROR) << "null param";
     return false;
   }
-  if (!(fmod(fabs(power), 1.0) > std::numeric_limits<float>::epsilon() &&  // support power: -0.5, 0.5, integers
-        fabs(fabs(power) - 0.5) > std::numeric_limits<float>::epsilon())) {
+  if (!(std::fmod(std::fabs(power), 1.0) >
+          std::numeric_limits<float>::epsilon() &&  // support power: -0.5, 0.5, integers
+        std::fabs(std::fabs(power) - 0.5) > std::numeric_limits<float>::epsilon())) {
     return true;
   } else {
     MS_LOG(WARNING) << "power val only supports -0.5, 0.5, integers " << op->fullname_with_scope();

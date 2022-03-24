@@ -16,9 +16,12 @@
 
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Conv2dTransposeFusion, PrimitiveC, Conv2DTranspose);
 void Conv2dTransposeFusion::Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size,
                                  int64_t mode, const PadMode &pad_mode, const std::vector<int64_t> &pad,
                                  const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,
@@ -45,7 +48,7 @@ void Conv2dTransposeFusion::set_kernel_size(const std::vector<int64_t> &kernel_s
   for (int64_t item : kernel_size) {
     (void)CheckAndConvertUtils::CheckInteger(kKernelSize, item, kGreaterEqual, 1, name());
   }
-  (void)AddAttr(kKernelSize, MakeValue(kernel_size));
+  (void)AddAttr(kKernelSize, api::MakeValue(kernel_size));
 }
 
 void Conv2dTransposeFusion::set_dilation(const std::vector<int64_t> &dilation) {
@@ -54,7 +57,7 @@ void Conv2dTransposeFusion::set_dilation(const std::vector<int64_t> &dilation) {
   for (int64_t item : dilation) {
     (void)CheckAndConvertUtils::CheckInteger(kDilation, item, kGreaterEqual, 1, name());
   }
-  (void)AddAttr(kDilation, MakeValue(dilation));
+  (void)AddAttr(kDilation, api::MakeValue(dilation));
 }
 
 void Conv2dTransposeFusion::set_output_paddings(const std::vector<int64_t> &output_paddings) {
@@ -63,12 +66,12 @@ void Conv2dTransposeFusion::set_output_paddings(const std::vector<int64_t> &outp
   for (int64_t item : output_paddings) {
     (void)CheckAndConvertUtils::CheckInteger(kOutputPaddings, item, kGreaterEqual, 0, name());
   }
-  (void)AddAttr(kOutputPaddings, MakeValue(output_paddings));
+  (void)AddAttr(kOutputPaddings, api::MakeValue(output_paddings));
 }
 
 void Conv2dTransposeFusion::set_activation_type(ActivationType activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 std::vector<int64_t> Conv2dTransposeFusion::get_output_paddings() const {

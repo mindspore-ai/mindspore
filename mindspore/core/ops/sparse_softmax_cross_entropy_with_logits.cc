@@ -22,13 +22,15 @@
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(SparseSoftmaxCrossEntropyWithLogits, PrimitiveC, BaseOperator);
 void SparseSoftmaxCrossEntropyWithLogits::Init(const bool is_grad) { this->set_is_grad(is_grad); }
 
 void SparseSoftmaxCrossEntropyWithLogits::set_is_grad(const bool is_grad) {
-  (void)this->AddAttr(kIsGrad, MakeValue(is_grad));
+  (void)this->AddAttr(kIsGrad, api::MakeValue(is_grad));
 }
 
 bool SparseSoftmaxCrossEntropyWithLogits::get_is_grad() const { return GetValue<bool>(GetAttr(kIsGrad)); }

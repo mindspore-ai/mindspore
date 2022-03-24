@@ -17,14 +17,14 @@
 #include "parser/caffe/caffe_reduce_parser.h"
 #include <memory>
 #include <vector>
-#include "ops/op_utils.h"
 #include "include/registry/converter_context.h"
 #include "ops/fusion/reduce_fusion.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeReduceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::ReduceFusion>();
+BaseOperatorPtr CaffeReduceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::ReduceFusion>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -56,14 +56,14 @@ ops::PrimitiveC *CaffeReduceParser::Parse(const caffe::LayerParameter &proto, co
   } else {
     axes = std::vector<int>(1, 0);
   }
-  prim->AddAttr(ops::kAxes, MakeValue(axes));
+  prim->AddAttr(ops::kAxes, api::MakeValue(axes));
 
   if (reduce_param.has_coeff()) {
-    prim->AddAttr(ops::kCoeff, MakeValue<float>(reduce_param.coeff()));
+    prim->AddAttr(ops::kCoeff, api::MakeValue<float>(reduce_param.coeff()));
   }
   int fmk_type = converter::FmkType::kFmkTypeCaffe;
-  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
-  return prim.release();
+  prim->AddAttr(ops::kFmkType, api::MakeValue(static_cast<int64_t>(fmk_type)));
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeReduceParser("Reduction", new CaffeReduceParser());

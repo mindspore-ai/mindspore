@@ -23,11 +23,13 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
-                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                       std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
+                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                    std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Gather>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   int batchDims = 0;
   tensorflow::AttrValue attr_value;
   if (TensorFlowUtils::FindAttrValue(tf_op, "batch_dims", &attr_value)) {
@@ -70,7 +72,7 @@ ops::PrimitiveC *TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
   if (batchDims != 0 && !axis_is_set) {
     axis = batchDims;
   }
-  prim->AddAttr("axis", MakeValue(axis));
+  prim_c->AddAttr("axis", MakeValue(axis));
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
@@ -78,7 +80,7 @@ ops::PrimitiveC *TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfGatherV2Parser("GatherV2", new TFGatherParser());

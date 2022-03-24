@@ -25,7 +25,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr auto kNameInputNum = 3;
-}
+}  // namespace
 
 STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
   if (cnode->inputs().size() != kNameInputNum) {

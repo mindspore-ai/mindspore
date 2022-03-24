@@ -20,21 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Creates a tensor filled with value zeros. Refer to Python API @ref mindspore.ops.Zeros for more details.
-class MS_CORE_API Zeros : public PrimitiveC {
+class MIND_API Zeros : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Zeros);
   /// \brief Constructor.
-  Zeros() : PrimitiveC(prim::kPrimZeros->name()) {}
-  /// \brief Destructor.
-  ~Zeros() = default;
-  MS_DECLARE_PARENT(Zeros, PrimitiveC);
+  Zeros() : BaseOperator("Zeros") {}
   /// \brief Init.
   void Init() const {}
 };

@@ -19,23 +19,21 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyPowerSign = "ApplyPowerSign";
-class ApplyPowerSign : public PrimitiveC {
+class MIND_API ApplyPowerSign : public BaseOperator {
  public:
-  ApplyPowerSign() : PrimitiveC(kNameApplyPowerSign) {
+  MIND_API_BASE_MEMBER(ApplyPowerSign);
+  ApplyPowerSign() : BaseOperator(kNameApplyPowerSign) {
     InitIOName({"var", "m", "lr", "logbase", "sign_decay", "beta", "grad"}, {"var", "m"});
   }
-  ~ApplyPowerSign() = default;
-  MS_DECLARE_PARENT(ApplyPowerSign, PrimitiveC);
 };
-AbstractBasePtr ApplyPowerSignDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyPowerSignDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyPowerSignDPtr = std::shared_ptr<ApplyPowerSign>;
 }  // namespace ops
 }  // namespace mindspore

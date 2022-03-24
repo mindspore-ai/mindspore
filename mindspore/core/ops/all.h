@@ -16,23 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_ALL_H_
 #define MINDSPORE_CORE_OPS_ALL_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAll = "All";
 /// \brief All defined All operator prototype of lite.
-class MS_CORE_API All : public PrimitiveC {
+class MIND_API All : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(All);
   /// \brief Constructor.
-  All() : PrimitiveC(kNameAll) {}
-
-  /// \brief Destructor.
-  ~All() = default;
-
-  MS_DECLARE_PARENT(All, PrimitiveC);
+  All() : BaseOperator(kNameAll) {}
 
   /// \brief Method to init the op's attributes.
   ///

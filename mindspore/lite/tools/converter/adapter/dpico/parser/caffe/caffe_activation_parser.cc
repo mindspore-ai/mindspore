@@ -17,13 +17,14 @@
 #include "parser/caffe/caffe_activation_parser.h"
 #include <memory>
 #include <limits>
+#include <cmath>
 #include "common/op_attr.h"
 #include "ops/fusion/activation.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeReluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Activation>();
+BaseOperatorPtr CaffeReluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Activation>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -38,11 +39,11 @@ ops::PrimitiveC *CaffeReluParser::Parse(const caffe::LayerParameter &proto, cons
     }
   }
 
-  return prim.release();
+  return prim;
 }
 
-ops::PrimitiveC *CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Activation>();
+BaseOperatorPtr CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Activation>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -54,33 +55,33 @@ ops::PrimitiveC *CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, con
       prim->set_alpha(negative_slope);
     }
   }
-  return prim.release();
+  return prim;
 }
 
-ops::PrimitiveC *CaffeSigmoidParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Activation>();
+BaseOperatorPtr CaffeSigmoidParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Activation>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
   }
   prim->set_activation_type(mindspore::ActivationType::SIGMOID);
 
-  return prim.release();
+  return prim;
 }
 
-ops::PrimitiveC *CaffeTanhParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Activation>();
+BaseOperatorPtr CaffeTanhParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Activation>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
   }
   prim->set_activation_type(mindspore::ActivationType::TANH);
 
-  return prim.release();
+  return prim;
 }
 
-ops::PrimitiveC *CaffeEluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Activation>();
+BaseOperatorPtr CaffeEluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Activation>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -94,11 +95,11 @@ ops::PrimitiveC *CaffeEluParser::Parse(const caffe::LayerParameter &proto, const
     }
   }
 
-  return prim.release();
+  return prim;
 }
 
-ops::PrimitiveC *CaffeHswishParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Activation>();
+BaseOperatorPtr CaffeHswishParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Activation>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -107,10 +108,10 @@ ops::PrimitiveC *CaffeHswishParser::Parse(const caffe::LayerParameter &proto, co
   if (proto.has_hswish_param()) {
     const caffe::HswishParameter &hswishParameter = proto.hswish_param();
     if (hswishParameter.has_negative_slope()) {
-      prim->AddAttr(dpico::kNegativeSlope, MakeValue<float>(hswishParameter.negative_slope()));
+      prim->AddAttr(dpico::kNegativeSlope, api::MakeValue<float>(hswishParameter.negative_slope()));
     }
   }
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeReluParser("ReLU", new CaffeReluParser());

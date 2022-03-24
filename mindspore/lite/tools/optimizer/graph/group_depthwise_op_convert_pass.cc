@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
 #include <vector>
 #include <memory>
@@ -24,6 +26,7 @@
 #include "tools/common/tensor_util.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -47,7 +50,7 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
     MS_ASSERT(prim_node != nullptr);
     auto prim_value_node = prim_node->cast<ValueNodePtr>();
     MS_ASSERT(prim_value_node != nullptr && prim_value_node->value != nullptr);
-    auto conv2d_fusion = prim_value_node->value()->cast<std::shared_ptr<mindspore::ops::Conv2DFusion>>();
+    auto conv2d_fusion = ops::GetOperator<mindspore::ops::Conv2DFusion>(prim_value_node);
     if (conv2d_fusion == nullptr) {
       MS_LOG(ERROR) << "the input of depthwiseConv2d is null";
       return false;
@@ -102,7 +105,7 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
 
       status = TransFilterFormat(weight_value, weight_src_format, weight_dst_format);
       if (status == RET_OK) {
-        conv2d_fusion->AddAttr(ops::kFormat, MakeValue<int64_t>(weight_dst_format));
+        conv2d_fusion->AddAttr(ops::kFormat, api::MakeValue<int64_t>(weight_dst_format));
       } else {
         MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_dst_format]) << "To"
                       << EnumNameFormat(weight_dst_format) << " failed, node : " << node->fullname_with_scope();

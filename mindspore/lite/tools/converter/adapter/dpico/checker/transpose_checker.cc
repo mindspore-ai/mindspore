@@ -17,6 +17,7 @@
 #include "checker/transpose_checker.h"
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "common/data_transpose_utils.h"
 #include "common/fetch_content.h"
 #include "common/op_attr.h"
@@ -24,12 +25,12 @@
 
 namespace mindspore {
 namespace dpico {
-bool TransposeChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool TransposeChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, kInputIndex1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
@@ -52,7 +53,9 @@ bool TransposeChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format 
     }
     perm_val = {data[0], data[kAxis1], data[kAxis2], data[kAxis3]};
   } else if (primitive->GetAttr(kPerm) != nullptr) {
-    perm_val = GetValue<std::vector<int32_t>>(primitive->GetAttr(kPerm));
+    auto perm_vec = api::GetValue<std::vector<int64_t>>(primitive->GetAttr(kPerm));
+    (void)std::transform(perm_vec.begin(), perm_vec.end(), std::back_inserter(perm_val),
+                         [](int64_t p) { return static_cast<int32_t>(p); });
   } else {
     MS_LOG(ERROR) << "transpose param invalid" << op->fullname_with_scope();
     return false;

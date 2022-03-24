@@ -19,22 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDropout = "Dropout";
 /// \brief During training, randomly zeroes some of the elements of the input tensor with probability 1-keep_prob
 //// from a Bernoulli distribution. Refer to Python API @ref mindspore.ops.Dropout for more details.
-class MS_CORE_API Dropout : public PrimitiveC {
+class MIND_API Dropout : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Dropout);
   /// \brief Constructor.
-  Dropout() : PrimitiveC(kNameDropout) {}
-  /// \brief Destructor.
-  ~Dropout() = default;
-  MS_DECLARE_PARENT(Dropout, PrimitiveC);
+  Dropout() : BaseOperator(kNameDropout) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Dropout for the inputs.
   void Init(const float keep_prob = 0.5);
   /// \brief Set keep_prob.
@@ -44,8 +41,8 @@ class MS_CORE_API Dropout : public PrimitiveC {
   /// \return keep_prob.
   float get_keep_prob() const;
 };
-AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_DROPOUT_H_

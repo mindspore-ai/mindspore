@@ -22,23 +22,20 @@
 #include <string>
 #include <memory>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBoundingBoxDecode = "BoundingBoxDecode";
-class MS_CORE_API BoundingBoxDecode : public PrimitiveC {
+class MIND_API BoundingBoxDecode : public BaseOperator {
  public:
-  BoundingBoxDecode() : PrimitiveC(kNameBoundingBoxDecode) { InitIOName({"anchor_box", "deltas"}, {"output"}); }
-  ~BoundingBoxDecode() = default;
-  MS_DECLARE_PARENT(BoundingBoxDecode, PrimitiveC);
+  MIND_API_BASE_MEMBER(BoundingBoxDecode);
+  BoundingBoxDecode() : BaseOperator(kNameBoundingBoxDecode) { InitIOName({"anchor_box", "deltas"}, {"output"}); }
 };
 
-AbstractBasePtr BoundingBoxDecodeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BoundingBoxDecodeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

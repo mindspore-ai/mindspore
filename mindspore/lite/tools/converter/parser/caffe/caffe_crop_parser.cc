@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Crop>();
 
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -50,7 +50,7 @@ ops::PrimitiveC *CaffeCropParser::Parse(const caffe::LayerParameter &proto, cons
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeCropParser("Crop", new CaffeCropParser());

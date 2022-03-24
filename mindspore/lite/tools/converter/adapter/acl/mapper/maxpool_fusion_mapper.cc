@@ -20,6 +20,7 @@
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "include/registry/converter_context.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -39,7 +40,8 @@ STATUS MaxPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   } else if (fmk_type == converter::kFmkTypeOnnx) {
     dst_prim = std::make_shared<acl::MaxPoolV3>();
   } else {
-    dst_prim = std::make_shared<ops::MaxPool>();
+    ops::MaxPool max_pool_op;
+    dst_prim = max_pool_op.GetPrim();
   }
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "Get primitive by fmk type failed.");
   dst_prim->SetAttrs(src_prim->attrs());

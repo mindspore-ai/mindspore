@@ -26,7 +26,7 @@ class TransposeChecker : public OpChecker {
  public:
   TransposeChecker() : OpChecker("Transpose") {}
   ~TransposeChecker() override = default;
-  bool Check(CNodePtr op, int32_t output_num, mindspore::Format format) override;
+  bool Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) override;
 };
 }  // namespace dpico
 }  // namespace mindspore

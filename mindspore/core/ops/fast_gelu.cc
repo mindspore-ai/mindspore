@@ -23,6 +23,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -52,6 +53,7 @@ TypePtr FastGeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(FastGeLU, PrimitiveC, BaseOperator);
 AbstractBasePtr FastGeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = FastGeLUInferType(primitive, input_args);

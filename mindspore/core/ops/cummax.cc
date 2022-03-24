@@ -21,6 +21,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -62,5 +63,7 @@ AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const Primitive
 
 REGISTER_PRIMITIVE_EVAL_IMPL(Cummax, prim::kPrimCummax, CummaxInfer, nullptr, true);
 }  // namespace
+
+MIND_API_BASE_IMPL(Cummax, PrimitiveC, BaseOperator);
 }  // namespace ops
 }  // namespace mindspore

@@ -22,22 +22,17 @@
 #include <string>
 #include <memory>
 #include "ops/adder.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdderFusion = "AdderFusion";
 /// \brief AdderFusion defined Adder operator prototype of lite.
-class MS_CORE_API AdderFusion : public Adder {
+class MIND_API AdderFusion : public Adder {
  public:
+  MIND_API_BASE_MEMBER(AdderFusion);
   /// \brief Constructor.
   AdderFusion() : Adder(kNameAdderFusion) {}
-
-  /// \brief Destructor.
-  ~AdderFusion() = default;
-
-  MS_DECLARE_PARENT(AdderFusion, Adder);
 
   /// \brief Method to init the op's attributes.
   ///

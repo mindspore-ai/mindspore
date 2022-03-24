@@ -18,9 +18,13 @@
 #include <map>
 #include <string>
 #include "ops/fusion/mat_mul_fusion.h"
+#include "ops/op_utils.h"
+#include "abstract/dshape.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(MatMulFusion, PrimitiveC, MatMul);
 void MatMulFusion::Init(bool transpose_a, bool transpose_b, const ActivationType &activation_type) {
   set_transpose_a(transpose_a);
   set_transpose_b(transpose_b);
@@ -29,7 +33,7 @@ void MatMulFusion::Init(bool transpose_a, bool transpose_b, const ActivationType
 
 void MatMulFusion::set_activation_type(const ActivationType activation_type) {
   int64_t act = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(act));
+  (void)this->AddAttr(kActivationType, api::MakeValue(act));
 }
 
 ActivationType MatMulFusion::get_activation_type() const {

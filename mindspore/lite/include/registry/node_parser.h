@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include "include/registry/converter_context.h"
+#include "ops/base_operator.h"
 
 namespace onnx {
 class GraphProto;
@@ -45,7 +46,7 @@ struct ModelT;
 namespace mindspore {
 namespace ops {
 /// \brief PrimitiveC defined a base class for storing properties
-class PrimitiveC;
+using BaseOperatorPtr = api::SharedPtr<ops::BaseOperator>;
 }  // namespace ops
 namespace converter {
 /// \brief NodeParser defined a base class for parsing node's attributes.
@@ -63,7 +64,7 @@ class MS_API NodeParser {
   /// \param[in] onnx_node Define the node to be resolved.
   ///
   /// \return PrimitiveC Attribute storage.
-  virtual ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  virtual ops::BaseOperatorPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
     return nullptr;
   }
 
@@ -73,7 +74,7 @@ class MS_API NodeParser {
   /// \param[in] weight Define the node which contains weight information.
   ///
   /// \return PrimitiveC Attribute storage.
-  virtual ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  virtual ops::BaseOperatorPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
     return nullptr;
   }
 
@@ -86,9 +87,9 @@ class MS_API NodeParser {
   /// \param[in] output_size Define the output num of current node, which need to be determined by user.
   ///
   /// \return PrimitiveC Attribute storage.
-  virtual ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                                 const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
-                                 std::vector<std::string> *inputs, int *output_size) {
+  virtual ops::BaseOperatorPtr Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
     return nullptr;
   }
 
@@ -98,9 +99,9 @@ class MS_API NodeParser {
   /// \param[in] tflite_model Define the model, which contains all information abort the graph.
   ///
   /// \return PrimitiveC Attribute storage.
-  virtual ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  virtual ops::BaseOperatorPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
     return nullptr;
   }
 };

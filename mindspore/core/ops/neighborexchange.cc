@@ -18,6 +18,7 @@
 #include <string>
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -187,6 +188,8 @@ TypePtr NeighborExchangeInferType(const PrimitivePtr &primitive) {
   return std::make_shared<Tuple>(type_vec);
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(NeighborExchange, PrimitiveC, BaseOperator);
 AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   NeighborExchangeCheck(primitive, input_args);

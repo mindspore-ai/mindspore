@@ -28,7 +28,7 @@ class CaffeRnnParser : public CaffeNodeParser {
   CaffeRnnParser() : CaffeNodeParser("Rnn") {}
   ~CaffeRnnParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  BaseOperatorPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

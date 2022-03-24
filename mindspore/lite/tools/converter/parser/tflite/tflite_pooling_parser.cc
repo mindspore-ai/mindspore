@@ -24,9 +24,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(!tflite_op->inputs.empty(), nullptr);
   auto prim = std::make_unique<ops::AvgPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -58,12 +58,12 @@ ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::Operat
     prim->set_pad(params);
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_TRUE_RET(!tflite_op->inputs.empty(), nullptr);
   auto prim = std::make_unique<ops::MaxPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -95,7 +95,7 @@ ops::PrimitiveC *TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::Operat
     prim->set_pad(params);
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteMeanPoolingParser(tflite::BuiltinOperator_AVERAGE_POOL_2D, new TfliteAvgPoolParser());

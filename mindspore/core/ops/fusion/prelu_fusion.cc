@@ -20,19 +20,21 @@
 #include <memory>
 #include <vector>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(PReLUFusion, PrimitiveC, PReLU);
 void PReLUFusion::Init(const bool channel_shared, const std::vector<float> &slope) {
   this->set_channel_shared(channel_shared);
   this->set_slope(slope);
 }
 
 void PReLUFusion::set_channel_shared(const bool channel_shared) {
-  (void)this->AddAttr(kChannelShared, MakeValue(channel_shared));
+  (void)this->AddAttr(kChannelShared, api::MakeValue(channel_shared));
 }
 
-void PReLUFusion::set_slope(const std::vector<float> &slope) { (void)this->AddAttr(kSlope, MakeValue(slope)); }
+void PReLUFusion::set_slope(const std::vector<float> &slope) { (void)this->AddAttr(kSlope, api::MakeValue(slope)); }
 
 bool PReLUFusion::get_channel_shared() const {
   auto value_ptr = GetAttr(kChannelShared);

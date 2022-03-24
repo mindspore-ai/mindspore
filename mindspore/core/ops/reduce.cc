@@ -22,15 +22,17 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void Reduce::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
+void Reduce::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }
 
 bool Reduce::get_keep_dims() const { return GetValue<bool>(GetAttr(kKeepDims)); }
 
 void Reduce::Init(const bool keep_dims) { this->set_keep_dims(keep_dims); }
 
+MIND_API_BASE_IMPL(Reduce, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameReduce, Reduce);
 }  // namespace ops
 }  // namespace mindspore

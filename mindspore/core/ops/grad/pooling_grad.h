@@ -20,18 +20,17 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePoolingGrad = "PoolingGrad";
-class MS_CORE_API PoolingGrad : public PrimitiveC {
+class MIND_API PoolingGrad : public BaseOperator {
  public:
-  PoolingGrad() : PrimitiveC(kNamePoolingGrad) {}
-  ~PoolingGrad() = default;
-  MS_DECLARE_PARENT(PoolingGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(PoolingGrad);
+  PoolingGrad() : BaseOperator(kNamePoolingGrad) {}
   void Init(const PoolMode &pool_mode, const std::vector<int64_t> &window, const std::vector<int64_t> &stride,
             const PadMode &pad_mode, const std::vector<int64_t> &pad_list, const RoundMode &round_mode,
             const Format &format = NCHW, const bool global = false);

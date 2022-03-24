@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
-                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                       std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
+                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                    std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::ReduceFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (tf_op.op() == "Sum") {
@@ -63,7 +63,7 @@ ops::PrimitiveC *TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfSumParser("Sum", new TFReduceParser());

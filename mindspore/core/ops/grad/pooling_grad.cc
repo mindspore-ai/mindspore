@@ -16,9 +16,11 @@
 
 #include "ops/grad/pooling_grad.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(PoolingGrad, PrimitiveC, BaseOperator);
 void PoolingGrad::Init(const PoolMode &pool_mode, const std::vector<int64_t> &window,
                        const std::vector<int64_t> &stride, const PadMode &pad_mode,
                        const std::vector<int64_t> &pad_list, const RoundMode &round_mode, const Format &format,
@@ -35,7 +37,7 @@ void PoolingGrad::Init(const PoolMode &pool_mode, const std::vector<int64_t> &wi
 
 void PoolingGrad::set_pool_mode(const PoolMode &pool_mode) {
   int64_t swi = pool_mode;
-  (void)this->AddAttr(kPoolMode, MakeValue(swi));
+  (void)this->AddAttr(kPoolMode, api::MakeValue(swi));
 }
 
 PoolMode PoolingGrad::get_pool_mode() const {
@@ -43,7 +45,9 @@ PoolMode PoolingGrad::get_pool_mode() const {
   return PoolMode(GetValue<int64_t>(value_ptr));
 }
 
-void PoolingGrad::set_window(const std::vector<int64_t> &window) { (void)this->AddAttr(kWindow, MakeValue(window)); }
+void PoolingGrad::set_window(const std::vector<int64_t> &window) {
+  (void)this->AddAttr(kWindow, api::MakeValue(window));
+}
 
 std::vector<int64_t> PoolingGrad::get_window() const {
   auto value_ptr = GetAttr(kWindow);
@@ -51,7 +55,9 @@ std::vector<int64_t> PoolingGrad::get_window() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void PoolingGrad::set_stride(const std::vector<int64_t> &stride) { (void)this->AddAttr(kStride, MakeValue(stride)); }
+void PoolingGrad::set_stride(const std::vector<int64_t> &stride) {
+  (void)this->AddAttr(kStride, api::MakeValue(stride));
+}
 
 std::vector<int64_t> PoolingGrad::get_stride() const {
   auto value_ptr = GetAttr(kStride);
@@ -61,7 +67,7 @@ std::vector<int64_t> PoolingGrad::get_stride() const {
 
 void PoolingGrad::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
-  (void)this->AddAttr(kPadMode, MakeValue(swi));
+  (void)this->AddAttr(kPadMode, api::MakeValue(swi));
 }
 
 PadMode PoolingGrad::get_pad_mode() const {
@@ -71,7 +77,7 @@ PadMode PoolingGrad::get_pad_mode() const {
 }
 
 void PoolingGrad::set_pad_list(const std::vector<int64_t> &pad_list) {
-  (void)this->AddAttr(kPadList, MakeValue(pad_list));
+  (void)this->AddAttr(kPadList, api::MakeValue(pad_list));
 }
 
 std::vector<int64_t> PoolingGrad::get_pad_list() const {
@@ -82,7 +88,7 @@ std::vector<int64_t> PoolingGrad::get_pad_list() const {
 
 void PoolingGrad::set_round_mode(const RoundMode &round_mode) {
   int64_t swi = round_mode;
-  (void)this->AddAttr(kRoundMode, MakeValue(swi));
+  (void)this->AddAttr(kRoundMode, api::MakeValue(swi));
 }
 
 RoundMode PoolingGrad::get_round_mode() const {
@@ -93,7 +99,7 @@ RoundMode PoolingGrad::get_round_mode() const {
 
 void PoolingGrad::set_format(const Format &format) {
   int64_t swi = format;
-  (void)this->AddAttr(kFormat, MakeValue(swi));
+  (void)this->AddAttr(kFormat, api::MakeValue(swi));
 }
 
 Format PoolingGrad::get_format() const {
@@ -102,7 +108,7 @@ Format PoolingGrad::get_format() const {
   return Format(GetValue<int64_t>(value_ptr));
 }
 
-void PoolingGrad::set_global(const bool global) { (void)this->AddAttr(kGlobal, MakeValue(global)); }
+void PoolingGrad::set_global(const bool global) { (void)this->AddAttr(kGlobal, api::MakeValue(global)); }
 
 bool PoolingGrad::get_global() const {
   auto value_ptr = GetAttr(kGlobal);

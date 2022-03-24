@@ -17,9 +17,11 @@
 #include "ops/fusion/l2_normalize_fusion.h"
 #include <string>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(L2NormalizeFusion, PrimitiveC, L2Normalize);
 void L2NormalizeFusion::Init(const std::vector<int64_t> &axis, const float epsilon,
                              const ActivationType &activation_type) {
   this->set_axis(axis);
@@ -29,7 +31,7 @@ void L2NormalizeFusion::Init(const std::vector<int64_t> &axis, const float epsil
 
 void L2NormalizeFusion::set_activation_type(const ActivationType &activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 ActivationType L2NormalizeFusion::get_activation_type() const {

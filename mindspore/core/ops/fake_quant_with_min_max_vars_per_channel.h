@@ -20,22 +20,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFakeQuantWithMinMaxVarsPerChannel = "FakeQuantWithMinMaxVarsPerChannel";
 /// \brief Fake-quantize the input and one of shape: [d], [b, d], [b, h, w, d] by per-channel minimum and maximum.
 /// Refer to Python API @ref mindspore.ops.FakeQuantWithMinMaxVarsPerChannel for more details.
-class MS_CORE_API FakeQuantWithMinMaxVarsPerChannel : public PrimitiveC {
+class MIND_API FakeQuantWithMinMaxVarsPerChannel : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(FakeQuantWithMinMaxVarsPerChannel);
   /// \brief Constructor.
-  FakeQuantWithMinMaxVarsPerChannel() : PrimitiveC(kNameFakeQuantWithMinMaxVarsPerChannel) {}
-  /// \brief Destructor.
-  ~FakeQuantWithMinMaxVarsPerChannel() = default;
-  MS_DECLARE_PARENT(FakeQuantWithMinMaxVarsPerChannel, PrimitiveC);
+  FakeQuantWithMinMaxVarsPerChannel() : BaseOperator(kNameFakeQuantWithMinMaxVarsPerChannel) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FakeQuantWithMinMaxVarsPerChannel
   /// for the inputs.
   void Init(const int64_t num_bits = 8, const bool narrow_range = false);
@@ -53,9 +50,9 @@ class MS_CORE_API FakeQuantWithMinMaxVarsPerChannel : public PrimitiveC {
   bool get_narrow_range() const;
 };
 
-AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

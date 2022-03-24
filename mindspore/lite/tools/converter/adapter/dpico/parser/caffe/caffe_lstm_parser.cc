@@ -17,14 +17,13 @@
 #include "parser/caffe/caffe_lstm_parser.h"
 #include <memory>
 #include <vector>
-#include <functional>
 #include "ops/custom.h"
 #include "common/op_attr.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeLstmParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeLstmParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -34,25 +33,25 @@ ops::PrimitiveC *CaffeLstmParser::Parse(const caffe::LayerParameter &proto, cons
   if (proto.has_recurrent_param()) {
     const auto &lstm_param = proto.recurrent_param();
     if (lstm_param.has_num_output()) {
-      prim->AddAttr(dpico::kNumOutput, MakeValue<uint32_t>(lstm_param.num_output()));
+      prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(lstm_param.num_output()));
     }
     if (lstm_param.has_expose_hidden()) {
-      prim->AddAttr(dpico::kExposeHidden, MakeValue<bool>(lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kOutputLastFrameFlag, MakeValue<bool>(lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kInitialHOnlineFlag, MakeValue<bool>(lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kUseDefaultInitialHFlag, MakeValue<bool>(!lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kInitialCOnlineFlag, MakeValue<bool>(lstm_param.expose_hidden()));
-      prim->AddAttr(dpico::kUseDefaultInitialCFlag, MakeValue<bool>(!lstm_param.expose_hidden()));
+      prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(lstm_param.expose_hidden()));
+      prim->AddAttr(dpico::kOutputLastFrameFlag, api::MakeValue<bool>(lstm_param.expose_hidden()));
+      prim->AddAttr(dpico::kInitialHOnlineFlag, api::MakeValue<bool>(lstm_param.expose_hidden()));
+      prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(!lstm_param.expose_hidden()));
+      prim->AddAttr(dpico::kInitialCOnlineFlag, api::MakeValue<bool>(lstm_param.expose_hidden()));
+      prim->AddAttr(dpico::kUseDefaultInitialCFlag, api::MakeValue<bool>(!lstm_param.expose_hidden()));
     }
   }
 
   // set default value
-  prim->AddAttr(dpico::kKeepDirectionDimFlag, MakeValue<bool>(false));
-  prim->AddAttr(dpico::kPeepHoleFlag, MakeValue<bool>(false));
-  prim->AddAttr(dpico::kLstmWeightOrderIofcFlag, MakeValue<bool>(false));
-  prim->AddAttr(dpico::kSequenceLensOnlineFlag, MakeValue<bool>(false));
+  prim->AddAttr(dpico::kKeepDirectionDimFlag, api::MakeValue<bool>(false));
+  prim->AddAttr(dpico::kPeepHoleFlag, api::MakeValue<bool>(false));
+  prim->AddAttr(dpico::kLstmWeightOrderIofcFlag, api::MakeValue<bool>(false));
+  prim->AddAttr(dpico::kSequenceLensOnlineFlag, api::MakeValue<bool>(false));
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeLSTMParser("LSTM", new CaffeLstmParser());

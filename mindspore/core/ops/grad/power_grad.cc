@@ -23,24 +23,26 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void PowerGrad::set_power(const float power) { (void)this->AddAttr(kPower, MakeValue(power)); }
+MIND_API_BASE_IMPL(PowerGrad, PrimitiveC, BaseOperator);
+void PowerGrad::set_power(const float power) { (void)this->AddAttr(kPower, api::MakeValue(power)); }
 float PowerGrad::get_power() const {
   auto value_ptr = GetAttr(kPower);
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 
-void PowerGrad::set_scale(const float scale) { (void)this->AddAttr(kScale, MakeValue(scale)); }
+void PowerGrad::set_scale(const float scale) { (void)this->AddAttr(kScale, api::MakeValue(scale)); }
 float PowerGrad::get_scale() const {
   auto value_ptr = GetAttr(kScale);
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 
-void PowerGrad::set_shift(const float shift) { (void)this->AddAttr(kShift, MakeValue(shift)); }
+void PowerGrad::set_shift(const float shift) { (void)this->AddAttr(kShift, api::MakeValue(shift)); }
 float PowerGrad::get_shift() const {
   auto value_ptr = GetAttr(kShift);
   MS_EXCEPTION_IF_NULL(value_ptr);

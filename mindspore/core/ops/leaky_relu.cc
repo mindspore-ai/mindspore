@@ -15,16 +15,20 @@
  */
 
 #include "ops/leaky_relu.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void LeakyRelu::Init(const float negative_slope) { this->set_negative_slope(negative_slope); }
 
 void LeakyRelu::set_negative_slope(const float negative_slope) {
-  (void)this->AddAttr(kNegativeSlope, MakeValue(negative_slope));
+  (void)this->AddAttr(kNegativeSlope, api::MakeValue(negative_slope));
 }
 float LeakyRelu::get_negative_slope() const { return GetValue<float>(GetAttr(kNegativeSlope)); }
 
+MIND_API_BASE_IMPL(LeakyRelu, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameLeakyRelu, LeakyRelu);
 }  // namespace ops
 }  // namespace mindspore

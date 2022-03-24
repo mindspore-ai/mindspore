@@ -153,5 +153,7 @@ class MIND_API AbstractTuple : public AbstractSequence {
   /// \param[in] elements A list of abstracts.
   explicit AbstractTuple(const AbstractBasePtrList &elements);
 };
+
+using AbstractTuplePtr = SharedPtr<AbstractTuple>;
 }  // namespace mindspore::api
 #endif  // MINDSPORE_CORE_MINDAPI_IR_ABSTRACT_H_

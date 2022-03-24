@@ -15,9 +15,12 @@
  */
 
 #include "ops/grad/neg_grad.h"
+#include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(NegGrad, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameNegGrad, NegGrad);
 }  // namespace ops
 }  // namespace mindspore

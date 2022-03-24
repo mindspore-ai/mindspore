@@ -18,24 +18,21 @@
 #define MINDSPORE_CORE_OPS_DIAG_PART_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Extracts the diagonal part from given tensor.
 /// Refer to Python API @ref mindspore.ops.DiagPart for more details.
-class MS_CORE_API DiagPart : public PrimitiveC {
+class MIND_API DiagPart : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(DiagPart);
   /// \brief Constructor.
-  DiagPart() : PrimitiveC(prim::kPrimDiagPart->name()) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~DiagPart() = default;
-  MS_DECLARE_PARENT(DiagPart, PrimitiveC);
+  DiagPart() : BaseOperator("DiagPart") { InitIOName({"input_x"}, {"output"}); }
 };
-AbstractBasePtr DiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

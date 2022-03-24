@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/parameter_tunner.h"
 #include <set>
 #include <functional>

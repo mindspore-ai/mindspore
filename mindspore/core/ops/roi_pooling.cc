@@ -22,21 +22,23 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void ROIPooling::set_pooled_h(const int64_t pooled_h) { (void)this->AddAttr(kPooledH, MakeValue(pooled_h)); }
+MIND_API_BASE_IMPL(ROIPooling, PrimitiveC, BaseOperator);
+void ROIPooling::set_pooled_h(const int64_t pooled_h) { (void)this->AddAttr(kPooledH, api::MakeValue(pooled_h)); }
 
 int64_t ROIPooling::get_pooled_h() const { return GetValue<int64_t>(GetAttr(kPooledH)); }
 
-void ROIPooling::set_pooled_w(const int64_t pooled_w) { (void)this->AddAttr(kPooledW, MakeValue(pooled_w)); }
+void ROIPooling::set_pooled_w(const int64_t pooled_w) { (void)this->AddAttr(kPooledW, api::MakeValue(pooled_w)); }
 
 int64_t ROIPooling::get_pooled_w() const {
   auto value_ptr = GetAttr(kPooledW);
   return GetValue<int64_t>(value_ptr);
 }
 
-void ROIPooling::set_scale(const float scale) { (void)this->AddAttr(kScale, MakeValue(scale)); }
+void ROIPooling::set_scale(const float scale) { (void)this->AddAttr(kScale, api::MakeValue(scale)); }
 
 float ROIPooling::get_scale() const {
   auto value_ptr = GetAttr(kScale);

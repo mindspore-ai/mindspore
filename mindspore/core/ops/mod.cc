@@ -25,6 +25,8 @@
 
 #include "abstract/primitive_infer_map.h"
 #include "utils/tensor_construct_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -82,6 +84,7 @@ AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   auto infer_shape = ModInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+MIND_API_BASE_IMPL(Mod, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMod, Mod);
 }  // namespace ops
 }  // namespace mindspore

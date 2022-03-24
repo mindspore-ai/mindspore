@@ -19,23 +19,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIsNan = "IsNan";
-class IsNan : public PrimitiveC {
+class IsNan : public BaseOperator {
  public:
-  IsNan() : PrimitiveC(kNameIsNan) { InitIOName({"x"}, {"y"}); }
-  ~IsNan() = default;
-  MS_DECLARE_PARENT(IsNan, PrimitiveC);
+  MIND_API_BASE_MEMBER(IsNan);
+  IsNan() : BaseOperator(kNameIsNan) { InitIOName({"x"}, {"y"}); }
 };
 
-AbstractBasePtr IsNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr IsNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimIsNanPtr = std::shared_ptr<IsNan>;
 }  // namespace ops
 }  // namespace mindspore

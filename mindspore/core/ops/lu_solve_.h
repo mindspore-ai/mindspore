@@ -22,21 +22,20 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLuSolve = "LuSolve";
-class LuSolve : public PrimitiveC {
+class MIND_API LuSolve : public BaseOperator {
  public:
-  LuSolve() : PrimitiveC(kNameLuSolve) { InitIOName({"x", "lu_data", "lu_pivots"}, {"output"}); }
-  ~LuSolve() = default;
-  MS_DECLARE_PARENT(LuSolve, PrimitiveC);
+  MIND_API_BASE_MEMBER(LuSolve);
+  LuSolve() : BaseOperator(kNameLuSolve) { InitIOName({"x", "lu_data", "lu_pivots"}, {"output"}); }
 };
-AbstractBasePtr LuSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LuSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLuSolvePtr = std::shared_ptr<LuSolve>;
 }  // namespace ops
 }  // namespace mindspore

@@ -16,28 +16,26 @@
 
 #ifndef MINDSPORE_CORE_OPS_GRAD_RSQRT_GRAD_H_
 #define MINDSPORE_CORE_OPS_GRAD_RSQRT_GRAD_H_
+
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRsqrtGrad = "RsqrtGrad";
-class MS_CORE_API RsqrtGrad : public PrimitiveC {
+class MIND_API RsqrtGrad : public BaseOperator {
  public:
-  RsqrtGrad() : PrimitiveC(kNameRsqrtGrad) { InitIOName({"out_backprop", "input"}, {"output"}); }
-  ~RsqrtGrad() = default;
-  MS_DECLARE_PARENT(RsqrtGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(RsqrtGrad);
+  RsqrtGrad() : BaseOperator(kNameRsqrtGrad) { InitIOName({"out_backprop", "input"}, {"output"}); }
   void Init() const {}
 };
-AbstractBasePtr RsqrtGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr RsqrtGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimRsqrtGradPtr = std::shared_ptr<RsqrtGrad>;
 }  // namespace ops
 }  // namespace mindspore

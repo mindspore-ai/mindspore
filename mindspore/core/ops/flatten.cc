@@ -17,6 +17,8 @@
 #include <set>
 #include "ops/flatten.h"
 #include "utils/check_convert_utils.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -69,6 +71,7 @@ TypePtr FlattenInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(Flatten, PrimitiveC, BaseOperator);
 AbstractBasePtr FlattenInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = FlattenInferShape(primitive, input_args);

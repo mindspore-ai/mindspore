@@ -19,26 +19,22 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLess = "Less";
 /// \brief Computes the boolean value of \f$x<y\f$ element-wise.
 /// Refer to Python API @ref mindspore.ops.Less for more details.
-class MS_CORE_API Less : public PrimitiveC {
+class MIND_API Less : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Less);
   /// \brief Constructor.
-  Less() : PrimitiveC(kNameLess) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Less() = default;
-  MS_DECLARE_PARENT(Less, PrimitiveC);
+  Less() : BaseOperator(kNameLess) { InitIOName({"x", "y"}, {"output"}); }
 };
-AbstractBasePtr LessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LESS_H_

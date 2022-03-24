@@ -17,9 +17,11 @@
 #include "ops/tensor_array.h"
 #include <vector>
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(TensorArray, PrimitiveC, BaseOperator);
 constexpr auto kTensorArrayDynamicSize = "dynamic_size";
 constexpr auto kTensorArrayIdenticalElementShapes = "identical_element_shapes";
 constexpr auto kTensorArrayElementShape = "element_shape";
@@ -34,18 +36,18 @@ void TensorArray::Init(bool dynamic_size, bool identical_element_shapes, const s
 }
 
 void TensorArray::set_dynamic_size(bool dynamic_size) {
-  (void)this->AddAttr(kTensorArrayDynamicSize, MakeValue(dynamic_size));
+  (void)this->AddAttr(kTensorArrayDynamicSize, api::MakeValue(dynamic_size));
 }
 
 void TensorArray::set_identical_element_shapes(bool identical_element_shapes) {
-  (void)this->AddAttr(kTensorArrayIdenticalElementShapes, MakeValue(identical_element_shapes));
+  (void)this->AddAttr(kTensorArrayIdenticalElementShapes, api::MakeValue(identical_element_shapes));
 }
 
 void TensorArray::set_element_shape(const std::vector<int> &element_shape) {
-  (void)this->AddAttr(kTensorArrayElementShape, MakeValue(element_shape));
+  (void)this->AddAttr(kTensorArrayElementShape, api::MakeValue(element_shape));
 }
 
-void TensorArray::set_data_type(int data_type) { (void)this->AddAttr(kTensorArrayDataType, MakeValue(data_type)); }
+void TensorArray::set_data_type(int data_type) { (void)this->AddAttr(kTensorArrayDataType, api::MakeValue(data_type)); }
 
 bool TensorArray::get_dynamic_size() const {
   auto value_ptr = GetAttr(kTensorArrayDynamicSize);
@@ -59,12 +61,15 @@ bool TensorArray::get_identical_element_shapes() const {
 
 const std::vector<int> TensorArray::get_element_shape() const {
   auto value_ptr = GetAttr(kTensorArrayElementShape);
-  return GetValue<std::vector<int>>(value_ptr);
+  auto tmp = GetValue<std::vector<int64_t>>(value_ptr);
+  std::vector<int> res(tmp.begin(), tmp.end());
+  return res;
 }
 
 int TensorArray::get_data_type() const {
   auto value_ptr = GetAttr(kTensorArrayDataType);
-  return GetValue<int>(value_ptr);
+  auto tmp = GetValue<int64_t>(value_ptr);
+  return static_cast<int>(tmp);
 }
 
 REGISTER_PRIMITIVE_C(kNameTensorArray, TensorArray);

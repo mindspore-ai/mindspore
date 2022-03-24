@@ -19,6 +19,7 @@
 #include <string>
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -230,6 +231,8 @@ TypePtr NeighborExchangeV2InferType(const PrimitivePtr &primitive, const std::ve
   return recv_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(NeighborExchangeV2, PrimitiveC, BaseOperator);
 AbstractBasePtr NeighborExchangeV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   NeighborExchangeV2Check(primitive, input_args);

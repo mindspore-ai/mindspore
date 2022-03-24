@@ -18,23 +18,20 @@
 #define MINDSPORE_CORE_OPS_RESIZE_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResize = "Resize";
 /// \brief Resize defined the Resize operator prototype of lite.
-class MS_CORE_API Resize : public PrimitiveC {
+class MIND_API Resize : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Resize);
   /// \brief Constructor.
-  Resize() : PrimitiveC(kNameResize) {}
-
-  /// \brief Destructor.
-  ~Resize() = default;
-
-  MS_DECLARE_PARENT(Resize, PrimitiveC);
+  Resize() : BaseOperator(kNameResize) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -158,8 +155,8 @@ class MS_CORE_API Resize : public PrimitiveC {
   NearestMode get_nearest_mode() const;
 };
 
-AbstractBasePtr ResizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ResizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

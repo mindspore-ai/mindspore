@@ -20,21 +20,18 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBroadcast = "Broadcast";
 /// \brief Broadcasts the tensor to the whole group. Refer to Python API @ref mindspore.ops.Broadcast for more details.
-class MS_CORE_API Broadcast : public PrimitiveC {
+class MIND_API Broadcast : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Broadcast);
   /// \brief Constructor.
-  Broadcast() : PrimitiveC(kNameBroadcast) {}
-  /// \brief Destructor.
-  ~Broadcast() = default;
-  MS_DECLARE_PARENT(Broadcast, PrimitiveC);
+  Broadcast() : BaseOperator(kNameBroadcast) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Broadcast for the inputs.
   void Init(const int64_t root_rank, const std::string &group = "hccl_world_group");
   /// \brief Set root_rank.
@@ -50,8 +47,8 @@ class MS_CORE_API Broadcast : public PrimitiveC {
   /// \return group.
   std::string get_group() const;
 };
-AbstractBasePtr BroadcastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BroadcastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimBroadcast = std::shared_ptr<Broadcast>;
 }  // namespace ops
 }  // namespace mindspore

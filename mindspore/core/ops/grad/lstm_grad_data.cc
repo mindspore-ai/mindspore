@@ -17,54 +17,56 @@
 #include "ops/grad/lstm_grad_data.h"
 #include <algorithm>
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void LSTMGradData::set_input_size(const int64_t input_size) {
   (void)CheckAndConvertUtils::CheckInteger(kInput_size, input_size, kGreaterThan, 0, this->name());
-  (void)AddAttr(kInput_size, MakeValue(input_size));
+  (void)AddAttr(kInput_size, api::MakeValue(input_size));
 }
 int64_t LSTMGradData::get_input_size() const { return GetValue<int64_t>(GetAttr(kInput_size)); }
 void LSTMGradData::set_hidden_size(const int64_t hidden_size) {
   (void)CheckAndConvertUtils::CheckInteger(kHidden_size, hidden_size, kGreaterThan, 0, this->name());
-  (void)AddAttr(kHidden_size, MakeValue(hidden_size));
+  (void)AddAttr(kHidden_size, api::MakeValue(hidden_size));
 }
 int64_t LSTMGradData::get_hidden_size() const { return GetValue<int64_t>(GetAttr(kHidden_size)); }
 void LSTMGradData::set_num_layers(const int64_t num_layers) {
   (void)CheckAndConvertUtils::CheckInteger(kNumLayers, num_layers, kGreaterThan, 0, this->name());
-  (void)AddAttr(kNumLayers, MakeValue(num_layers));
+  (void)AddAttr(kNumLayers, api::MakeValue(num_layers));
 }
 int64_t LSTMGradData::get_num_layers() const { return GetValue<int64_t>(GetAttr(kNumLayers)); }
-void LSTMGradData::set_has_bias(const bool has_bias) { (void)AddAttr(kHasBias, MakeValue(has_bias)); }
+void LSTMGradData::set_has_bias(const bool has_bias) { (void)AddAttr(kHasBias, api::MakeValue(has_bias)); }
 bool LSTMGradData::get_has_bias() const {
   auto value_ptr = this->GetAttr(kHasBias);
   return GetValue<bool>(value_ptr);
 }
 void LSTMGradData::set_dropout(const float dropout) {
   (void)CheckAndConvertUtils::CheckInRange<float>(kDropout, dropout, kIncludeBoth, {0.0, 1.0}, this->name());
-  (void)AddAttr(kDropout, MakeValue(dropout));
+  (void)AddAttr(kDropout, api::MakeValue(dropout));
 }
 float LSTMGradData::get_dropout() const {
   auto value_ptr = this->GetAttr(kDropout);
   return GetValue<float>(value_ptr);
 }
 void LSTMGradData::set_bidirectional(const bool bidirectional) {
-  (void)AddAttr(kBidirectional, MakeValue(bidirectional));
+  (void)AddAttr(kBidirectional, api::MakeValue(bidirectional));
 }
 bool LSTMGradData::get_bidirectional() const {
   auto value_ptr = this->GetAttr(kBidirectional);
   return GetValue<bool>(value_ptr);
 }
 void LSTMGradData::set_num_directions(const int64_t num_directions) {
-  (void)AddAttr(kNumDirections, MakeValue(num_directions));
+  (void)AddAttr(kNumDirections, api::MakeValue(num_directions));
 }
 int64_t LSTMGradData::get_num_directions() const { return GetValue<int64_t>(GetAttr(kNumDirections)); }
-void LSTMGradData::set_zoneout_cell(float zoneout_cell) { (void)AddAttr(kZoneoutCell, MakeValue(zoneout_cell)); }
+void LSTMGradData::set_zoneout_cell(float zoneout_cell) { (void)AddAttr(kZoneoutCell, api::MakeValue(zoneout_cell)); }
 
 float LSTMGradData::get_zoneout_cell() const { return GetValue<float>(this->GetAttr(kZoneoutCell)); }
 
 void LSTMGradData::set_zoneout_hidden(float zoneout_hidden) {
-  (void)AddAttr(kZoneoutHidden, MakeValue(zoneout_hidden));
+  (void)AddAttr(kZoneoutHidden, api::MakeValue(zoneout_hidden));
 }
 
 float LSTMGradData::get_zoneout_hidden() const { return GetValue<float>(this->GetAttr(kZoneoutHidden)); }
@@ -88,6 +90,7 @@ void LSTMGradData::Init(const int64_t input_size, const int64_t hidden_size, con
   this->set_zoneout_hidden(zoneout_hidden);
 }
 
+MIND_API_BASE_IMPL(LSTMGradData, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameLSTMGradData, LSTMGradData);
 }  // namespace ops
 }  // namespace mindspore

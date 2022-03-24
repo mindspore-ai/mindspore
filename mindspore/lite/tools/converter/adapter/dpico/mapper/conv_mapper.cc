@@ -38,7 +38,7 @@ struct ConvAttr {
   int64_t out_channel{1};
   PadMode pad_mode{PadMode::PAD};
 };
-STATUS GetConvAttrFromPrimitive(ConvAttr *conv_attr, const std::shared_ptr<ops::Conv2DFusion> &conv_prim) {
+STATUS GetConvAttrFromPrimitive(ConvAttr *conv_attr, const api::SharedPtr<ops::Conv2DFusion> &conv_prim) {
   if (conv_attr == nullptr) {
     MS_LOG(ERROR) << "conv_attr is nullptr.";
     return RET_ERROR;
@@ -82,13 +82,13 @@ STATUS GetConvAttrFromPrimitive(ConvAttr *conv_attr, const std::shared_ptr<ops::
   return RET_OK;
 }
 }  // namespace
-STATUS ConvMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                       const CNodePtrList &output_cnodes) {
+STATUS ConvMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                       const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto conv_prim = utils::cast<std::shared_ptr<ops::Conv2DFusion>>(prim);
+  auto conv_prim = api::utils::cast<api::SharedPtr<ops::Conv2DFusion>>(prim);
   MS_ASSERT(conv_prim != nullptr);
   ConvAttr conv_attr;
   if (GetConvAttrFromPrimitive(&conv_attr, conv_prim) != RET_OK) {
@@ -110,7 +110,7 @@ STATUS ConvMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
   }
 
   std::unique_ptr<mapper::ConvOperator> conv_operator;
-  if (conv_prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(conv_prim->GetAttr(ops::kIsDepthWise))) {
+  if (conv_prim->GetAttr(ops::kIsDepthWise) != nullptr && api::GetValue<bool>(conv_prim->GetAttr(ops::kIsDepthWise))) {
     conv_operator = std::make_unique<mapper::DepthwiseconvOperator>();
     if (conv_operator == nullptr) {
       MS_LOG(ERROR) << "conv_operator is nullptr.";

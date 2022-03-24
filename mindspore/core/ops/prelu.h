@@ -19,29 +19,27 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePReLU = "PReLU";
 /// \brief Parametric Rectified Linear Unit activation function.
 /// Refer to Python API @ref mindspore.ops.PReLU for more details.
-class MS_CORE_API PReLU : public PrimitiveC {
+class MIND_API PReLU : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(PReLU);
   /// \brief Constructor.
-  PReLU() : PrimitiveC(kNamePReLU) { InitIOName({"x"}, {"y"}); }
-  explicit PReLU(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~PReLU() = default;
-  MS_DECLARE_PARENT(PReLU, PrimitiveC);
+  PReLU() : BaseOperator(kNamePReLU) { InitIOName({"x"}, {"y"}); }
+  explicit PReLU(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.PReLU for the inputs.
   void Init() const {}
 };
 
-AbstractBasePtr PReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr PReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

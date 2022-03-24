@@ -16,22 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_TUPLE_GET_ITEM_H_
 #define MINDSPORE_CORE_OPS_TUPLE_GET_ITEM_H_
-#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTupleGetItem = "TupleGetItem";
 /// \brief TupleGetItem op is added to the multi-output node to describe which output of the node, which is only used
 /// in FuncGraph.
-class MS_CORE_API TupleGetItem : public PrimitiveC {
+class MIND_API TupleGetItem : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TupleGetItem);
   /// \brief Constructor.
-  TupleGetItem() : PrimitiveC(kNameTupleGetItem) {}
-
-  /// \brief Destructor.
-  ~TupleGetItem() = default;
-
-  MS_DECLARE_PARENT(TupleGetItem, PrimitiveC);
+  TupleGetItem() : BaseOperator(kNameTupleGetItem) {}
 };
 }  // namespace ops
 }  // namespace mindspore

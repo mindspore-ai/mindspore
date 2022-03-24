@@ -25,9 +25,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFLogicalAndParser::Parse(const tensorflow::NodeDef &tf_op,
-                                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                           std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFLogicalAndParser::Parse(const tensorflow::NodeDef &tf_op,
+                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                        std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::LogicalAnd>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -35,12 +35,12 @@ ops::PrimitiveC *TFLogicalAndParser::Parse(const tensorflow::NodeDef &tf_op,
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFLogicalOrParser::Parse(const tensorflow::NodeDef &tf_op,
-                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                          std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFLogicalOrParser::Parse(const tensorflow::NodeDef &tf_op,
+                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                       std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::LogicalOr>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -48,12 +48,12 @@ ops::PrimitiveC *TFLogicalOrParser::Parse(const tensorflow::NodeDef &tf_op,
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFLogicalNotParser::Parse(const tensorflow::NodeDef &tf_op,
-                                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                           std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFLogicalNotParser::Parse(const tensorflow::NodeDef &tf_op,
+                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                        std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::LogicalNot>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -61,7 +61,7 @@ ops::PrimitiveC *TFLogicalNotParser::Parse(const tensorflow::NodeDef &tf_op,
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfLogicalAndParser("LogicalAnd", new TFLogicalAndParser());

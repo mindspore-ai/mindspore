@@ -20,6 +20,8 @@
 #include <set>
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -47,6 +49,8 @@ AbstractBasePtr ConjInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return abstract::MakeAbstract(ConjInferShape(primitive, input_args), ConjInferType(primitive, input_args));
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Conj, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Conj, prim::kPrimConj, ConjInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -20,22 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Gathers values along an axis specified by dimension.
 /// Refer to Python API @ref mindspore.ops.GatherD for more details.
-class MS_CORE_API GatherD : public PrimitiveC {
+class MIND_API GatherD : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(GatherD);
   /// \brief Constructor.
-  GatherD() : PrimitiveC(prim::kPrimGatherD->name()) { InitIOName({"x", "dim", "index"}, {"output"}); }
-  /// \brief Destructor.
-  ~GatherD() = default;
-  MS_DECLARE_PARENT(GatherD, PrimitiveC);
+  GatherD() : BaseOperator("GatherD") { InitIOName({"x", "dim", "index"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GatherD for the inputs.
   void Init() const {}
 };

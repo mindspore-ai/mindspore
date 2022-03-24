@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include <vector>
 #include <memory>
@@ -44,7 +46,7 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     auto clip_cnode = node->cast<CNodePtr>();
     MS_ASSERT(clip_cnode != nullptr);
     MS_ASSERT(clip_cnode->size() >= kClipMinIndex);
-    auto clip_c = GetValueNode<ops::PrimClipPtr>(clip_cnode->input(0));
+    auto clip_c = ops::GetOperator<ops::Clip>(clip_cnode->input(0));
     MS_ASSERT(clip_c != nullptr);
     float max = FLT_MAX;
     float min = -FLT_MAX;
@@ -88,7 +90,9 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     if (min == 0 && max == FLT_MAX) {
       primitive_c->set_activation_type(mindspore::RELU);
     }
-    auto value_node = NewValueNode(primitive_c);
+    auto primitive = primitive_c->GetPrim();
+    MS_CHECK_TRUE_MSG(primitive != nullptr, false, "primitive is nullptr");
+    auto value_node = NewValueNode(primitive);
     MS_CHECK_TRUE_MSG(value_node != nullptr, false, "value_node is nullptr");
     std::vector<AnfNodePtr> op_inputs = {value_node};
     op_inputs.push_back(clip_cnode->input(1));

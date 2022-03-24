@@ -24,8 +24,8 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS ThresholdMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                            const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS ThresholdMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                            const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -44,7 +44,7 @@ STATUS ThresholdMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> 
 
   threshold_operator->SetOpType(mapper::OpType::THRESHOLD);
   if (prim->GetAttr(dpico::kThreshold) != nullptr) {
-    threshold_operator->SetThreshold(GetValue<float>(prim->GetAttr(dpico::kThreshold)));
+    threshold_operator->SetThreshold(api::GetValue<float>(prim->GetAttr(dpico::kThreshold)));
   }
 
   base_operators->push_back(std::move(threshold_operator));

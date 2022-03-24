@@ -16,20 +16,22 @@
 #include "ops/random_normal.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(RandomNormal, PrimitiveC, BaseOperator);
 void RandomNormal::Init(float seed, float mean, float scale) {
   this->set_seed(seed);
   this->set_mean(mean);
   this->set_scale(scale);
 }
 
-void RandomNormal::set_seed(float seed) { (void)this->AddAttr(kSeed, MakeValue(seed)); }
+void RandomNormal::set_seed(float seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
 
-void RandomNormal::set_mean(float mean) { (void)this->AddAttr(kMean, MakeValue(mean)); }
+void RandomNormal::set_mean(float mean) { (void)this->AddAttr(kMean, api::MakeValue(mean)); }
 
-void RandomNormal::set_scale(float scale) { (void)this->AddAttr(kScale, MakeValue(scale)); }
+void RandomNormal::set_scale(float scale) { (void)this->AddAttr(kScale, api::MakeValue(scale)); }
 
 float RandomNormal::get_seed() const {
   auto value_ptr = GetAttr(kSeed);

@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -73,6 +74,8 @@ TypePtr AddcmulInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   return input_data_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Addcmul, PrimitiveC, BaseOperator);
 AbstractBasePtr AddcmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

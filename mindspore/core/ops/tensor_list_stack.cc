@@ -20,20 +20,22 @@
 #include "ops/tensor_list_stack.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(TensorListStack, PrimitiveC, BaseOperator);
 void TensorListStack::Init(const int64_t num_elements, const int64_t element_dtype) {
   this->set_num_elements(num_elements);
   this->set_element_dtype(element_dtype);
 }
 
 void TensorListStack::set_num_elements(const int64_t num_elements) {
-  (void)this->AddAttr(kNumElements, MakeValue(num_elements));
+  (void)this->AddAttr(kNumElements, api::MakeValue(num_elements));
 }
 
 void TensorListStack::set_element_dtype(const int64_t element_dtype) {
-  (void)this->AddAttr(kElement_dtype, MakeValue(element_dtype));
+  (void)this->AddAttr(kElement_dtype, api::MakeValue(element_dtype));
 }
 
 int64_t TensorListStack::get_num_elements() const {

@@ -19,6 +19,7 @@
 #include "backend/common/optimizer/pass.h"
 #include "tools/converter/export_model.h"
 #include "include/registry/pass_base.h"
+#include "mindapi/ir/func_graph.h"
 
 namespace mindspore {
 namespace opt {
@@ -37,7 +38,8 @@ class DumpGraph : public registry::PassBase, public Pass {
 
   bool Execute(const api::FuncGraphPtr &func_graph) override {
     MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "funcGraph is a nullptr.");
-    auto graph = std::dynamic_pointer_cast<FuncGraph>(func_graph);
+    auto impl = func_graph->impl();
+    auto graph = std::dynamic_pointer_cast<FuncGraph>(impl);
     MS_CHECK_TRUE_MSG(graph != nullptr, false, "Graph is a nullptr.");
     return Run(graph);
   }

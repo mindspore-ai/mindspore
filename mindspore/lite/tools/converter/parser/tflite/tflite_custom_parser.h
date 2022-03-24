@@ -31,32 +31,32 @@ class TfliteCustomParser : public TfliteNodeParser {
 
   ~TfliteCustomParser() override = default;
 
-  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  PrimitiveCPtr Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                      const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 
-  static ops::PrimitiveC *DetectPostProcess(const std::vector<uint8_t> &custom_attr,
-                                            const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static PrimitiveCPtr DetectPostProcess(const std::vector<uint8_t> &custom_attr,
+                                         const std::unique_ptr<tflite::OperatorT> &tflite_op);
 
-  static ops::PrimitiveC *AudioSpectrogram(const std::vector<uint8_t> &custom_attr);
+  static PrimitiveCPtr AudioSpectrogram(const std::vector<uint8_t> &custom_attr);
 
-  static ops::PrimitiveC *Mfcc(const std::vector<uint8_t> &custom_attr);
+  static PrimitiveCPtr Mfcc(const std::vector<uint8_t> &custom_attr);
 
-  static ops::PrimitiveC *Predict(const std::vector<uint8_t> &custom_attr);
+  static PrimitiveCPtr Predict(const std::vector<uint8_t> &custom_attr);
 
-  static ops::PrimitiveC *Normalize();
+  static PrimitiveCPtr Normalize();
 
-  static ops::PrimitiveC *ExtractFeatures();
+  static PrimitiveCPtr ExtractFeatures();
 
-  ops::PrimitiveC *Rfft(const std::vector<uint8_t> &custom_attr, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                        const std::unique_ptr<tflite::ModelT> &tflite_model);
+  PrimitiveCPtr Rfft(const std::vector<uint8_t> &custom_attr, const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                     const std::unique_ptr<tflite::ModelT> &tflite_model);
 
-  static ops::PrimitiveC *FftReal();
+  static PrimitiveCPtr FftReal();
 
-  static ops::PrimitiveC *FftImag();
+  static PrimitiveCPtr FftImag();
 
-  static ops::PrimitiveC *Identity();
+  static PrimitiveCPtr Identity();
 };
 }  // namespace lite
 }  // namespace mindspore

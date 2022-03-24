@@ -22,25 +22,19 @@
 #include <string>
 #include <memory>
 #include <algorithm>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/primitive_infer_map.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameQuantDTypeCast = "QuantDTypeCast";
 /// \brief QuantDTypeCast QuantDTypeCast the QuantDTypeCast operator prototype.
-class MS_CORE_API QuantDTypeCast : public PrimitiveC {
+class MIND_API QuantDTypeCast : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(QuantDTypeCast);
   /// \brief Constructor.
-  QuantDTypeCast() : PrimitiveC(kNameQuantDTypeCast) {}
-
-  /// \brief Destructor.
-  ~QuantDTypeCast() = default;
-
-  MS_DECLARE_PARENT(QuantDTypeCast, PrimitiveC);
+  QuantDTypeCast() : BaseOperator(kNameQuantDTypeCast) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -68,8 +62,8 @@ class MS_CORE_API QuantDTypeCast : public PrimitiveC {
   /// \return the data type of output.
   int64_t get_dst_t() const;
 };
-AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

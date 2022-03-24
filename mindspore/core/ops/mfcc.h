@@ -18,23 +18,18 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMfcc = "Mfcc";
 /// \brief Mfcc defined the operator prototype of extracting Mel-Frequency Cepstral Coefficients.
-class MS_CORE_API Mfcc : public PrimitiveC {
+class MIND_API Mfcc : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Mfcc);
   /// \brief Constructor.
-  Mfcc() : PrimitiveC(kNameMfcc) {}
-
-  /// \brief Destructor.
-  ~Mfcc() = default;
-
-  MS_DECLARE_PARENT(Mfcc, PrimitiveC);
+  Mfcc() : BaseOperator(kNameMfcc) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -85,8 +80,8 @@ class MS_CORE_API Mfcc : public PrimitiveC {
   /// \return the output channels to generate per time slice.
   int64_t get_dct_coeff_num() const;
 };
-AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

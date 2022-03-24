@@ -19,22 +19,24 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Crop, PrimitiveC, BaseOperator);
 void Crop::Init(const int64_t axis, const std::vector<int64_t> &offsets) {
   this->set_axis(axis);
   this->set_offsets(offsets);
 }
 
-void Crop::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void Crop::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t Crop::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
   return GetValue<int64_t>(value_ptr);
 }
 
-void Crop::set_offsets(const std::vector<int64_t> &offsets) { (void)this->AddAttr(kOffsets, MakeValue(offsets)); }
+void Crop::set_offsets(const std::vector<int64_t> &offsets) { (void)this->AddAttr(kOffsets, api::MakeValue(offsets)); }
 
 std::vector<int64_t> Crop::get_offsets() const {
   auto value_ptr = this->GetAttr(kOffsets);

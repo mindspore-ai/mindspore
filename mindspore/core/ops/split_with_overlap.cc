@@ -16,8 +16,11 @@
 
 #include "ops/split_with_overlap.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(SplitWithOverlap, PrimitiveC, BaseOperator);
 void SplitWithOverlap::Init(int64_t number_split, const std::vector<int64_t> &ratio,
                             const std::vector<int64_t> &extend_top, const std::vector<int64_t> &extend_bottom,
                             int64_t split_dim, int64_t stride, int64_t pad_top, bool trans_format) {
@@ -31,28 +34,30 @@ void SplitWithOverlap::Init(int64_t number_split, const std::vector<int64_t> &ra
   this->set_trans_format(trans_format);
 }
 
-void SplitWithOverlap::set_ratio(const std::vector<int64_t> &ratio) { (void)this->AddAttr(kRatio, MakeValue(ratio)); }
+void SplitWithOverlap::set_ratio(const std::vector<int64_t> &ratio) {
+  (void)this->AddAttr(kRatio, api::MakeValue(ratio));
+}
 
 void SplitWithOverlap::set_extend_top(const std::vector<int64_t> &extend_top) {
-  (void)this->AddAttr(kExtendTop, MakeValue(extend_top));
+  (void)this->AddAttr(kExtendTop, api::MakeValue(extend_top));
 }
 
 void SplitWithOverlap::set_extend_bottom(const std::vector<int64_t> &extend_bottom) {
-  (void)this->AddAttr(kExtendBottom, MakeValue(extend_bottom));
+  (void)this->AddAttr(kExtendBottom, api::MakeValue(extend_bottom));
 }
 
 void SplitWithOverlap::set_number_split(int64_t number_split) {
-  (void)this->AddAttr(kNumberSplit, MakeValue(number_split));
+  (void)this->AddAttr(kNumberSplit, api::MakeValue(number_split));
 }
 
-void SplitWithOverlap::set_split_dim(int64_t split_dim) { (void)this->AddAttr(kSplitDim, MakeValue(split_dim)); }
+void SplitWithOverlap::set_split_dim(int64_t split_dim) { (void)this->AddAttr(kSplitDim, api::MakeValue(split_dim)); }
 
-void SplitWithOverlap::set_split_stride(int64_t stride) { (void)this->AddAttr(kSplitStride, MakeValue(stride)); }
+void SplitWithOverlap::set_split_stride(int64_t stride) { (void)this->AddAttr(kSplitStride, api::MakeValue(stride)); }
 
-void SplitWithOverlap::set_pad_top(int64_t pad_top) { (void)this->AddAttr(kPadTop, MakeValue(pad_top)); }
+void SplitWithOverlap::set_pad_top(int64_t pad_top) { (void)this->AddAttr(kPadTop, api::MakeValue(pad_top)); }
 
 void SplitWithOverlap::set_trans_format(bool trans_format) {
-  (void)this->AddAttr(kTransFormat, MakeValue(trans_format));
+  (void)this->AddAttr(kTransFormat, api::MakeValue(trans_format));
 }
 
 std::vector<int64_t> SplitWithOverlap::get_ratio() const {

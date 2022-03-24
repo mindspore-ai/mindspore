@@ -20,22 +20,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Returns the natural logarithm of one plus the input tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Log1p for more details.
-class MS_CORE_API Log1p : public PrimitiveC {
+class MIND_API Log1p : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Log1p);
   /// \brief Constructor.
-  Log1p() : PrimitiveC(prim::kPrimLog1p->name()) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Log1p() = default;
-  MS_DECLARE_PARENT(Log1p, PrimitiveC);
+  Log1p() : BaseOperator("Log1p") { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Log1p for the inputs.
   void Init() const {}
 };

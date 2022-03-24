@@ -19,6 +19,9 @@
 #include <string>
 #include <vector>
 #include "ops/expm1.h"
+#include "utils/check_convert_utils.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -42,6 +45,8 @@ TypePtr Expm1InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   return x_dtype;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Expm1, PrimitiveC, BaseOperator);
 AbstractBasePtr Expm1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

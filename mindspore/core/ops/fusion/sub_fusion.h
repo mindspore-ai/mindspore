@@ -17,22 +17,17 @@
 #ifndef MINDSPORE_CORE_OPS_SUB_FUSION_H_
 #define MINDSPORE_CORE_OPS_SUB_FUSION_H_
 #include "ops/sub.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSubFusion = "SubFusion";
 /// \brief SubFusion defined Sub operator prototype of lite.
-class MS_CORE_API SubFusion : public Sub {
+class MIND_API SubFusion : public Sub {
  public:
+  MIND_API_BASE_MEMBER(SubFusion);
   /// \brief Constructor.
   SubFusion() : Sub(kNameSubFusion) {}
-
-  /// \brief Destructor.
-  ~SubFusion() = default;
-
-  MS_DECLARE_PARENT(SubFusion, Sub);
 
   /// \brief Method to init the op's attributes.
   ///

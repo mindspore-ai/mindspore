@@ -19,24 +19,19 @@
 #include <vector>
 
 #include "ops/conv2d_transpose.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2dTransposeFusion = "Conv2dTransposeFusion";
 /// \brief Conv2dTransposeFusion defined Conv2dTranspose operator prototype of lite.
-class MS_CORE_API Conv2dTransposeFusion : public Conv2DTranspose {
+class MIND_API Conv2dTransposeFusion : public Conv2DTranspose {
  public:
+  MIND_API_BASE_MEMBER(Conv2dTransposeFusion);
   /// \brief Constructor.
   Conv2dTransposeFusion() : Conv2DTranspose(kNameConv2dTransposeFusion) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});
   }
-
-  /// \brief Destructor.
-  ~Conv2dTransposeFusion() = default;
-
-  MS_DECLARE_PARENT(Conv2dTransposeFusion, Conv2DTranspose);
 
   /// \brief Method to init the op's attributes.
   ///

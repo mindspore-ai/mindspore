@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include "include/api/format.h"
+#include "ops/make_tuple.h"
 #include "common/anf_util.h"
 #include "common/op_attr.h"
 #include "common/op_enum.h"
@@ -28,6 +30,7 @@
 #include "src/om_generator.h"
 #include "src/graph_split_api.h"
 #include "ops/tuple_get_item.h"
+#include "third_party/securec/include/securec.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -51,16 +54,16 @@ int CheckOmDataCoreInfo(const mapper::DataCoreInfo &data_core_info) {
   return RET_OK;
 }
 
-bool CheckInputCNodeSize(const CNodePtr &cnode, size_t *next_idx) {
+bool CheckInputCNodeSize(const api::CNodePtr &cnode, size_t *next_idx) {
   int target_valid_input_size = 1;
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
-    if (utils::isa<ParameterPtr>(cnode->input(i))) {
-      auto param_node = input_node->cast<ParameterPtr>();
+    if (api::utils::isa<api::ParameterPtr>(cnode->input(i))) {
+      auto param_node = input_node->cast<api::ParameterPtr>();
       if (param_node != nullptr && !param_node->has_default()) {  // graph input
         target_valid_input_size--;
       }
-    } else if (utils::isa<CNodePtr>(input_node)) {
+    } else if (api::utils::isa<api::CNodePtr>(input_node)) {
       *next_idx = i;
       target_valid_input_size--;
     }
@@ -68,11 +71,11 @@ bool CheckInputCNodeSize(const CNodePtr &cnode, size_t *next_idx) {
   return target_valid_input_size == 0;
 }
 
-bool IsCorrespondOutput(const AnfNodePtr &node, const std::string &target_name) {
+bool IsCorrespondOutput(const api::AnfNodePtr &node, const std::string &target_name) {
   if (node->fullname_with_scope() == target_name) {
     return true;
   }
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = node->cast<api::CNodePtr>();
   if (cnode == nullptr) {
     MS_LOG(INFO) << "cur node isn't a cnode, will stop recursive search. " << node->fullname_with_scope();
     return false;
@@ -88,8 +91,8 @@ bool IsCorrespondOutput(const AnfNodePtr &node, const std::string &target_name) 
 }
 }  // namespace
 
-CNodePtr CustomOpCreator::CreateCustomOp(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
-                                         const ModelCoreInfoPtr &om_model_info) {
+api::CNodePtr CustomOpCreator::CreateCustomOp(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
+                                              const ModelCoreInfoPtr &om_model_info) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr && subgraph != nullptr && om_model_info != nullptr, nullptr,
                     "obtain nullptr input parameter.");
   auto om_parameter = CreateOmParameter(func_graph, om_model_info);
@@ -99,7 +102,7 @@ CNodePtr CustomOpCreator::CreateCustomOp(const api::FuncGraphPtr &func_graph, Su
     return nullptr;
   }
 
-  auto prim = std::make_shared<ops::Custom>();
+  auto prim = api::MakeShared<ops::Custom>();
   MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "new Custom failed");
   prim->set_type("DPICO");
 
@@ -127,24 +130,23 @@ CNodePtr CustomOpCreator::CreateCustomOp(const api::FuncGraphPtr &func_graph, Su
   return custom_cnode;
 }
 
-ParameterPtr CustomOpCreator::CreateOmParameter(const api::FuncGraphPtr &func_graph,
-                                                const ModelCoreInfoPtr &om_model_info) {
+api::ParameterPtr CustomOpCreator::CreateOmParameter(const api::FuncGraphPtr &func_graph,
+                                                     const ModelCoreInfoPtr &om_model_info) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr && om_model_info != nullptr, nullptr, "obtain nullptr input parameter.");
   MS_CHECK_TRUE_MSG(om_model_info->modelSize != 0, nullptr, "om model size equals 0.");
   auto om_parameter = func_graph->add_parameter();
   MS_CHECK_TRUE_MSG(om_parameter != nullptr, nullptr, "new parameter failed.");
   om_parameter->set_name("DPICO_om_data");
-  auto type_ptr = TypeIdToType(kNumberTypeUInt8);
   ShapeVector shape_vector = {static_cast<int64_t>(om_model_info->modelSize)};
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  auto abstract_tensor = api::MakeShared<api::AbstractTensor>(kNumberTypeUInt8, shape_vector);
   MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, nullptr, "abstract_tensor is nullptr.");
   om_parameter->set_abstract(abstract_tensor);
 
   auto tensor_info =
-    std::make_shared<tensor::Tensor>(kNumberTypeUInt8, ShapeVector({static_cast<int64_t>(om_model_info->modelSize)}));
+    api::MakeShared<api::Tensor>(kNumberTypeUInt8, ShapeVector({static_cast<int64_t>(om_model_info->modelSize)}));
   MS_CHECK_TRUE_MSG(tensor_info != nullptr, nullptr, "tensor_info is nullptr.");
-  auto tensor_data = tensor_info->data_c();
-  MS_CHECK_TRUE_MSG(tensor_data != nullptr, nullptr, "new tensor::Tensor failed.");
+  auto tensor_data = tensor_info->data();
+  MS_CHECK_TRUE_MSG(tensor_data != nullptr, nullptr, "new api::Tensor failed.");
   MS_CHECK_TRUE_MSG(tensor_info->Size() != 0, nullptr, "tensor size shouldn't be 0");
   if (memcpy_s(tensor_data, tensor_info->Size(), om_model_info->modelBuffer, om_model_info->modelSize) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";
@@ -167,7 +169,7 @@ STATUS CustomOpCreator::SetSubgraphInputOutputDims(Subgraph *subgraph, const api
     }
     for (const auto &node : subgraph_inputs) {
       auto node_name = RemoveSpecifiedChar(node->fullname_with_scope(), '\0');
-      if (CheckPrimitiveType(node, prim::kPrimCustom)) {
+      if (CheckPrimitiveType(node, api::MakeShared<ops::Custom>())) {
         node_name = GetCustomOutputName(node);
         MS_CHECK_TRUE_MSG(!node_name.empty(), RET_ERROR,
                           "get custom node output name failed." << node->fullname_with_scope());
@@ -204,7 +206,7 @@ STATUS CustomOpCreator::SetSubgraphInputOutputDims(Subgraph *subgraph, const api
 }
 
 STATUS CustomOpCreator::SetCustomAttrs(const Subgraph &subgraph, const api::FuncGraphPtr &func_graph,
-                                       const std::shared_ptr<ops::Custom> &prim) {
+                                       const api::SharedPtr<ops::Custom> &prim) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr && prim != nullptr, RET_ERROR, "obtain nullptr input parameter.");
   std::map<std::string, std::vector<uint8_t>> custom_attrs;
   // add "input_shape " attr
@@ -253,9 +255,9 @@ STATUS CustomOpCreator::SetCustomAttrs(const Subgraph &subgraph, const api::Func
 }
 
 STATUS CustomOpCreator::SetCustomOutputs(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
-                                         const CNodePtr &custom_cnode, const ModelCoreInfoPtr &om_model_info) {
+                                         const api::CNodePtr &custom_cnode, const ModelCoreInfoPtr &om_model_info) {
   MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "subgraph is nullptr.");
-  auto manager = func_graph->get_manager();
+  auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "funcgraph manager is nullptr.");
   auto subgraph_outputs = GetSubgraphOutputs(*subgraph, manager);
   MS_CHECK_TRUE_MSG(subgraph->outputs_format.size() == subgraph_outputs.size(), RET_ERROR,
@@ -277,15 +279,15 @@ STATUS CustomOpCreator::SetCustomOutputs(const api::FuncGraphPtr &func_graph, Su
       return RET_ERROR;
     }
   }
-  custom_cnode->AddAttr(kOutputsNames, MakeValue(custom_outputs_names));
+  custom_cnode->AddAttr(kOutputsNames, api::MakeValue(custom_outputs_names));
   return RET_OK;
 }
 
 STATUS CustomOpCreator::SetCustomSingleOutput(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
-                                              const CNodePtr &custom_cnode,
+                                              const api::CNodePtr &custom_cnode,
                                               const std::shared_ptr<mapper::ModelCoreInfo> &om_model_info,
                                               std::vector<std::string> *custom_outputs_names) {
-  auto manager = func_graph->get_manager();
+  auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "funcgraph manager is nullptr.");
   auto subgraph_outputs = GetSubgraphOutputs(*subgraph, manager);
   auto output_info = om_model_info->outputInfos.at(0);
@@ -315,16 +317,16 @@ STATUS CustomOpCreator::SetCustomSingleOutput(const api::FuncGraphPtr &func_grap
 }
 
 STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
-                                             const CNodePtr &custom_cnode,
+                                             const api::CNodePtr &custom_cnode,
                                              const std::shared_ptr<mapper::ModelCoreInfo> &om_model_info,
                                              std::vector<std::string> *custom_outputs_names) {
-  auto manager = func_graph->get_manager();
+  auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "funcgraph manager is nullptr.");
   auto subgraph_outputs = GetSubgraphOutputs(*subgraph, manager);
   MS_ASSERT(subgraph->outputs_format.size() == subgraph_outputs.size());
   MS_ASSERT(om_model_info->outputInfos.size() >= subgraph_outputs.size());
-  AbstractBasePtrList abstract_list;
-  CNodePtrList subgraph_new_cnodes = {custom_cnode};
+  api::AbstractBasePtrList abstract_list;
+  api::CNodePtrList subgraph_new_cnodes = {custom_cnode};
   auto output_formats = subgraph->outputs_format;
   subgraph->outputs_format.resize(om_model_info->outputInfos.size(), NCHW);
   size_t has_replace_num = 0;
@@ -338,12 +340,12 @@ STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph
     auto abstract_tensor = CreateTensorAbstract(shape_vector, kDataTypeMap.at(output_info.type));
     MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "abstract_tensor is nullptr.");
     abstract_list.emplace_back(abstract_tensor);
-    auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
+    auto tuple_get_item_prim_ptr = api::MakeShared<ops::TupleGetItem>();
     MS_CHECK_TRUE_MSG(tuple_get_item_prim_ptr != nullptr, RET_ERROR, "tuple_get_item_prim_ptr is nullptr.");
     auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
-    auto get_item_value = NewValueNode(MakeValue<int>(i));
-    AnfNodePtrList inputs{tuple_get_item_prim, custom_cnode, get_item_value};
-    CNodePtr get_item_cnode = func_graph->NewCNode(inputs);
+    auto get_item_value = NewValueNode(api::MakeValue<int64_t>(i));
+    api::AnfNodePtrList inputs{tuple_get_item_prim, custom_cnode, get_item_value};
+    api::CNodePtr get_item_cnode = func_graph->NewCNode(inputs);
     MS_CHECK_TRUE_MSG(get_item_cnode != nullptr, RET_ERROR, "get_item_cnode is nullptr.");
     get_item_cnode->set_fullname_with_scope(custom_cnode->fullname_with_scope() + "_getitem_" + std::to_string(i));
     auto output_name = RemoveSpecifiedChar(output_info.name, '\0');
@@ -352,7 +354,7 @@ STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph
     if (has_unsupported_) {
       auto ori_node_iter = std::find_if(  // extra or inconsistent output will be found.
         subgraph_outputs.begin(), subgraph_outputs.end(),
-        [output_name](const AnfNodePtr &anf_node) { return IsCorrespondOutput(anf_node, output_name); });
+        [output_name](const api::AnfNodePtr &anf_node) { return IsCorrespondOutput(anf_node, output_name); });
       if (ori_node_iter == subgraph_outputs.end()) {
         continue;
       }
@@ -375,7 +377,7 @@ STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph
       }
     } else {
       auto return_cnode = func_graph->get_return();
-      if (CheckPrimitiveType(return_cnode->input(1), prim::kPrimMakeTuple)) {
+      if (CheckPrimitiveType(return_cnode->input(1), api::MakeShared<ops::MakeTuple>())) {
         manager->AddEdge(return_cnode->input(1), get_item_cnode);
       } else {
         manager->AddEdge(return_cnode, get_item_cnode);
@@ -388,7 +390,7 @@ STATUS CustomOpCreator::SetCustomMultiOutput(const api::FuncGraphPtr &func_graph
     return RET_ERROR;
   }
   subgraph->cnodes = subgraph_new_cnodes;
-  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  auto abstract_tuple = api::MakeShared<api::AbstractTuple>(abstract_list);
   MS_CHECK_TRUE_MSG(abstract_tuple != nullptr, RET_ERROR, "abstract_tuple is nullptr.");
   custom_cnode->set_abstract(abstract_tuple);
   return RET_OK;

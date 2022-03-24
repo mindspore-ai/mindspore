@@ -24,22 +24,22 @@ namespace mindspore {
 namespace dpico {
 namespace {
 constexpr int kMaxFlattenInputW = 65536;
-}
-bool FlattenChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+}  // namespace
+bool FlattenChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr." << op->fullname_with_scope();
     return false;
   }
   if (primitive->GetAttr(kStartAxis) != nullptr) {
-    auto axis = GetValue<int32_t>(primitive->GetAttr(kStartAxis));
+    auto axis = api::GetValue<int64_t>(primitive->GetAttr(kStartAxis));
     if (axis < kAxisLowerBound || axis > kAxisUpperBound) {
       MS_LOG(WARNING) << "start_axis val should in range [-4, 3] " << op->fullname_with_scope();
       return false;
     }
   }
   if (primitive->GetAttr(kEndAxis) != nullptr) {
-    auto end_axis = GetValue<int32_t>(primitive->GetAttr(kEndAxis));
+    auto end_axis = api::GetValue<int64_t>(primitive->GetAttr(kEndAxis));
     if (end_axis < kAxisLowerBound || end_axis > kAxisUpperBound) {
       MS_LOG(WARNING) << "end_axis val should in range [-4, 3] " << op->fullname_with_scope();
       return false;

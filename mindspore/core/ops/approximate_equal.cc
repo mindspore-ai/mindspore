@@ -18,6 +18,9 @@
 #include <set>
 #include <map>
 #include <string>
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -59,6 +62,8 @@ TypePtr ApproximateEqualInferType(const PrimitivePtr &prim, const std::vector<Ab
   return y_dtype;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(ApproximateEqual, PrimitiveC, BaseOperator);
 AbstractBasePtr ApproximateEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

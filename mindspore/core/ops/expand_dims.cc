@@ -24,9 +24,11 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "utils/log_adapter.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ExpandDims, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameExpandDims, ExpandDims);
 }  // namespace ops
 }  // namespace mindspore

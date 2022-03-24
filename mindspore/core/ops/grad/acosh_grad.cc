@@ -15,6 +15,13 @@
  */
 
 #include "ops/grad/acosh_grad.h"
+#include <algorithm>
+#include <set>
+#include "ops/op_utils.h"
+#include "abstract/param_validator.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -40,6 +47,7 @@ TypePtr AcoshGradInferType(const PrimitivePtr &primitive, const std::vector<Abst
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(AcoshGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr AcoshGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

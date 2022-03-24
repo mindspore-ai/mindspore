@@ -33,10 +33,10 @@ constexpr int kMaxDilationSize = 5;
 constexpr int kMaxDilationAndKernelProd = 15;
 constexpr float kCoefficient = 16.0;
 
-bool CheckPad(const PrimitivePtr &primitive) {
+bool CheckPad(const api::PrimitivePtr &primitive) {
   auto pad_ptr = primitive->GetAttr(ops::kPad);
   if (pad_ptr != nullptr) {
-    auto pad_data = GetValue<std::vector<int64_t>>(pad_ptr);
+    auto pad_data = api::GetValue<std::vector<int64_t>>(pad_ptr);
     if (pad_data.size() > kDims3) {
       if (pad_data[0] < 0 || pad_data[0] > kMaxPadSize || pad_data[1] < 0 || pad_data[1] > kMaxPadSize ||
           pad_data[kAxis2] < 0 || pad_data[kAxis2] > kMaxPadSize || pad_data[kAxis3] < 0 ||
@@ -48,13 +48,13 @@ bool CheckPad(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckKernelSize(const PrimitivePtr &primitive) {
+bool CheckKernelSize(const api::PrimitivePtr &primitive) {
   auto is_global_ptr = primitive->GetAttr(ops::kGlobal);
   auto kernel_ptr = primitive->GetAttr(ops::kKernelSize);
   if (kernel_ptr != nullptr) {
-    auto kernel_data = GetValue<std::vector<int64_t>>(kernel_ptr);
+    auto kernel_data = api::GetValue<std::vector<int64_t>>(kernel_ptr);
     if (is_global_ptr != nullptr) {
-      auto is_global = GetValue<bool>(is_global_ptr);
+      auto is_global = api::GetValue<bool>(is_global_ptr);
       if (!is_global && (kernel_data[0] < 1 || kernel_data[0] > kMaxKernelSize || kernel_data[1] < 1 ||
                          kernel_data[1] > kMaxKernelSize)) {
         MS_LOG(WARNING) << "kernel should in range [1,255]";
@@ -64,10 +64,10 @@ bool CheckKernelSize(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckStride(const PrimitivePtr &primitive) {
+bool CheckStride(const api::PrimitivePtr &primitive) {
   auto stride_ptr = primitive->GetAttr(ops::kStrides);
   if (stride_ptr != nullptr) {
-    auto stride_data = GetValue<std::vector<int64_t>>(stride_ptr);
+    auto stride_data = api::GetValue<std::vector<int64_t>>(stride_ptr);
     if (stride_data[0] < 1 || stride_data[0] > kMaxStrideSize || stride_data[1] < 1 ||
         stride_data[1] > kMaxStrideSize) {
       MS_LOG(WARNING) << "stride should in range [1,255]";
@@ -76,10 +76,10 @@ bool CheckStride(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckRoundMode(const PrimitivePtr &primitive) {
+bool CheckRoundMode(const api::PrimitivePtr &primitive) {
   auto round_mode_ptr = primitive->GetAttr(ops::kRoundMode);
   if (round_mode_ptr != nullptr) {
-    auto round_mode_data = GetValue<int64_t>(round_mode_ptr);
+    auto round_mode_data = api::GetValue<int64_t>(round_mode_ptr);
     if (round_mode_data != 0 && round_mode_data != 1) {
       MS_LOG(WARNING) << "round mode only supports CEIL or FLOOR";
       return false;
@@ -87,12 +87,12 @@ bool CheckRoundMode(const PrimitivePtr &primitive) {
   }
   return true;
 }
-bool CheckAttr(const PrimitivePtr &primitive, int64_t input_w) {
+bool CheckAttr(const api::PrimitivePtr &primitive, int64_t input_w) {
   auto kernel_ptr = primitive->GetAttr(ops::kKernelSize);
   auto stride_ptr = primitive->GetAttr(ops::kStride);
   if (stride_ptr != nullptr && kernel_ptr != nullptr) {
-    auto kernel_data = GetValue<std::vector<int64_t>>(kernel_ptr);
-    auto stride_data = GetValue<std::vector<int64_t>>(stride_ptr);
+    auto kernel_data = api::GetValue<std::vector<int64_t>>(kernel_ptr);
+    auto stride_data = api::GetValue<std::vector<int64_t>>(stride_ptr);
     if (kernel_data[0] > kMaxPoolUpperBound / (input_w / (kCoefficient * stride_data[1]) * stride_data[1])) {
       MS_LOG(WARNING) << "kernel and stride should satisfy kernel_h <= 2048 / (w / (16 * stride) * stride) ";
       return false;
@@ -102,8 +102,8 @@ bool CheckAttr(const PrimitivePtr &primitive, int64_t input_w) {
 }
 }  // namespace
 
-bool PoolingChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+bool PoolingChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;

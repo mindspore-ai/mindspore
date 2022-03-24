@@ -30,7 +30,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr int kFp16ToFp32Multiply = 2;
-}
+}  // namespace
 
 STATUS ConvertFP32ToFP16Pass::Run(schema::MetaGraphT *graph) {
   if (!need_convert_) {

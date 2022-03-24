@@ -18,18 +18,17 @@
 #define MINDSPORE_CORE_OPS_DE_CONV2D_GRAD_FILTER_H_
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDeConv2DGradFilter = "DeConv2DGradFilter";
-class MS_CORE_API DeConv2DGradFilter : public PrimitiveC {
+class MIND_API DeConv2DGradFilter : public BaseOperator {
  public:
-  DeConv2DGradFilter() : PrimitiveC(kNameDeConv2DGradFilter) {}
-  ~DeConv2DGradFilter() = default;
-  MS_DECLARE_PARENT(DeConv2DGradFilter, PrimitiveC);
+  MIND_API_BASE_MEMBER(DeConv2DGradFilter);
+  DeConv2DGradFilter() : BaseOperator(kNameDeConv2DGradFilter) {}
   void Init(const int64_t in_channel, const int64_t out_channel, const std::vector<int64_t> &kernel_size,
             const PadMode &pad_mode, const std::vector<int64_t> &pad_list, const std::vector<int64_t> &stride,
             const std::vector<int64_t> &dilation, const int64_t group, const Format &format = NCHW,

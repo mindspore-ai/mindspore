@@ -20,25 +20,23 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTrunc = "Trunc";
 /// \brief Returns a new tensor with the truncated integer values of the elements of input.
-class Trunc : public PrimitiveC {
+class Trunc : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Trunc);
   /// \brief Constructor.
-  Trunc() : PrimitiveC(kNameTrunc) { InitIOName({"input_x"}, {"output_y"}); }
-  /// \brief Destructor.
-  ~Trunc() = default;
-  MS_DECLARE_PARENT(Trunc, PrimitiveC);
+  Trunc() : BaseOperator(kNameTrunc) { InitIOName({"input_x"}, {"output_y"}); }
 };
 
-AbstractBasePtr TruncInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr TruncInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimTruncPtr = std::shared_ptr<Trunc>;
 }  // namespace ops

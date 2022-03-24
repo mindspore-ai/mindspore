@@ -23,21 +23,23 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void ReduceFusion::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
+MIND_API_BASE_IMPL(ReduceFusion, PrimitiveC, Reduce);
+void ReduceFusion::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }
 
 void ReduceFusion::set_mode(const ReduceMode mode) {
   int64_t swi = mode;
-  (void)this->AddAttr(kMode, MakeValue(swi));
+  (void)this->AddAttr(kMode, api::MakeValue(swi));
 }
 
 void ReduceFusion::set_reduce_to_end(const bool reduce_to_end) {
-  (void)this->AddAttr(kReduceToEnd, MakeValue(reduce_to_end));
+  (void)this->AddAttr(kReduceToEnd, api::MakeValue(reduce_to_end));
 }
 
-void ReduceFusion::set_coeff(const float coeff) { (void)this->AddAttr(kCoeff, MakeValue(coeff)); }
+void ReduceFusion::set_coeff(const float coeff) { (void)this->AddAttr(kCoeff, api::MakeValue(coeff)); }
 
 bool ReduceFusion::get_keep_dims() const {
   auto value_ptr = GetAttr(kKeepDims);

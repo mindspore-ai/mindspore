@@ -20,6 +20,7 @@
 #include "abstract/param_validator.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -48,6 +49,7 @@ TypePtr ReciprocalGradInferType(const PrimitivePtr &primitive, const std::vector
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(ReciprocalGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr ReciprocalGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

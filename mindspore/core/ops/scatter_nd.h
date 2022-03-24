@@ -19,27 +19,24 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScatterNd = "ScatterNd";
 /// \brief Scatters a tensor into a new tensor depending on the specified indices.
 /// Refer to Python API @ref mindspore.ops.ScatterNd for more details.
-class MS_CORE_API ScatterNd : public PrimitiveC {
+class MIND_API ScatterNd : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ScatterNd);
   /// \brief Constructor.
-  ScatterNd() : PrimitiveC(kNameScatterNd) { InitIOName({"indices", "update", "shape"}, {"output"}); }
-  /// \brief Destructor.
-  ~ScatterNd() = default;
-  MS_DECLARE_PARENT(ScatterNd, PrimitiveC);
+  ScatterNd() : BaseOperator(kNameScatterNd) { InitIOName({"indices", "update", "shape"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

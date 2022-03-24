@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/parallel/spliter.h"
 #include <queue>
 #include "tools/optimizer/fisson/fisson_util.h"
 #include "tools/optimizer/parallel/split_strategy.h"
+#include "ops/op_utils.h"
+
 namespace mindspore {
 namespace opt {
 Spliter *Spliter::GetInstance() {
@@ -57,9 +60,7 @@ void Spliter::VisitNodesOutputs(const FuncGraphPtr &func_graph) {
 }
 
 void Spliter::RecordGraphInfo(const FuncGraphPtr &func_graph) {
-  if (func_graph == nullptr) {
-    return;
-  }
+  MS_ASSERT(func_graph != nullptr);
   VisitNodesInputs(func_graph);
   VisitNodesOutputs(func_graph);
   for (const auto &node : func_graph->GetOrderedCnodes()) {

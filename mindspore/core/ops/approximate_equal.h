@@ -19,21 +19,18 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-class ApproximateEqual : public PrimitiveC {
+class MIND_API ApproximateEqual : public BaseOperator {
  public:
-  ApproximateEqual() : PrimitiveC(prim::kPrimApproximateEqual->name()) {}
-  ~ApproximateEqual() = default;
-  MS_DECLARE_PARENT(ApproximateEqual, PrimitiveC);
+  MIND_API_BASE_MEMBER(ApproximateEqual);
+  ApproximateEqual() : BaseOperator("ApproximateEqual") {}
   void Init() {}
 };
-AbstractBasePtr ApproximateEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApproximateEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApproximateEqualPtr = std::shared_ptr<ApproximateEqual>;
 }  // namespace ops
 }  // namespace mindspore

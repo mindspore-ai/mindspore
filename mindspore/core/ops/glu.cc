@@ -15,12 +15,15 @@
  */
 #include "ops/glu.h"
 #include "ir/dtype/tensor_type.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(GLU, PrimitiveC, BaseOperator);
 void GLU::Init(int64_t axis) { set_axis(axis); }
 
-void GLU::set_axis(int64_t axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
+void GLU::set_axis(int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t GLU::get_axis() const {
   auto value_ptr = GetAttr(kAxis);

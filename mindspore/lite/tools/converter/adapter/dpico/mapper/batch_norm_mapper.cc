@@ -19,7 +19,8 @@
 #include <utility>
 #include <limits>
 #include <vector>
-#include "ops/op_utils.h"
+#include <cmath>
+#include "ops/batch_norm.h"
 #include "common/anf_util.h"
 #include "common/op_enum.h"
 #include "op/batch_norm_operator.h"
@@ -28,7 +29,7 @@ namespace mindspore {
 namespace dpico {
 namespace {
 // BatchNorm: {BNMeanIndex:2, BNVarIndex:3, ScaleFactorIndex:4}
-STATUS SetBnDataInfo(const CNodePtr &cnode, mapper::BatchNormOperator *batch_norm_operator) {
+STATUS SetBnDataInfo(const api::CNodePtr &cnode, mapper::BatchNormOperator *batch_norm_operator) {
   if (batch_norm_operator == nullptr) {
     MS_LOG(ERROR) << "batch_norm_operator is nullptr.";
     return RET_ERROR;
@@ -36,13 +37,13 @@ STATUS SetBnDataInfo(const CNodePtr &cnode, mapper::BatchNormOperator *batch_nor
   for (size_t i = 2; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
-    auto param_node = input_node->cast<ParameterPtr>();
+    auto param_node = input_node->cast<api::ParameterPtr>();
     if (param_node == nullptr || !param_node->has_default()) {
       continue;
     }
-    auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
+    auto tensor_info = param_node->default_param()->cast<api::TensorPtr>();
     if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
-      auto data = reinterpret_cast<float *>(tensor_info->data_c());
+      auto data = reinterpret_cast<float *>(tensor_info->data());
       MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
       if (i == kInputIndex2) {
         batch_norm_operator->SetBnMeanDataPtr(data);
@@ -67,7 +68,7 @@ STATUS SetBnDataInfo(const CNodePtr &cnode, mapper::BatchNormOperator *batch_nor
   return RET_OK;
 }
 // FusedBatchNorm: {ScaleIndex:2, BiasIndex:3, MeanIndex:4, VarIndex:5}
-STATUS SetFusedBnDataInfo(const CNodePtr &cnode, mapper::BatchNormOperator *batch_norm_operator) {
+STATUS SetFusedBnDataInfo(const api::CNodePtr &cnode, mapper::BatchNormOperator *batch_norm_operator) {
   if (batch_norm_operator == nullptr) {
     MS_LOG(ERROR) << "batch_norm_operator is nullptr.";
     return RET_ERROR;
@@ -75,13 +76,13 @@ STATUS SetFusedBnDataInfo(const CNodePtr &cnode, mapper::BatchNormOperator *batc
   for (size_t i = 2; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
-    auto param_node = input_node->cast<ParameterPtr>();
+    auto param_node = input_node->cast<api::ParameterPtr>();
     if (param_node == nullptr || !param_node->has_default()) {
       continue;
     }
-    auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
+    auto tensor_info = param_node->default_param()->cast<api::TensorPtr>();
     if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
-      auto data = reinterpret_cast<float *>(tensor_info->data_c());
+      auto data = reinterpret_cast<float *>(tensor_info->data());
       MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
       if (i == kInputIndex2) {
         batch_norm_operator->SetBnScalePtr(data);
@@ -109,8 +110,8 @@ STATUS SetFusedBnDataInfo(const CNodePtr &cnode, mapper::BatchNormOperator *batc
   return RET_OK;
 }
 }  // namespace
-STATUS BatchNormMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                            const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS BatchNormMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                            const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -128,19 +129,19 @@ STATUS BatchNormMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> 
 
   batch_norm_operator->SetOpType(mapper::OpType::BN);
   if (prim->GetAttr(ops::kEpsilon) != nullptr) {
-    batch_norm_operator->SetBnEps(GetValue<float>(prim->GetAttr(ops::kEpsilon)));
+    batch_norm_operator->SetBnEps(api::GetValue<float>(prim->GetAttr(ops::kEpsilon)));
   }
 
   if (prim->GetAttr(ops::kMomentum) != nullptr) {
-    auto momentum = GetValue<float>(prim->GetAttr(ops::kMomentum));
+    auto momentum = api::GetValue<float>(prim->GetAttr(ops::kMomentum));
     const float default_momentum_value = 0.9;
-    if (fabs(momentum - default_momentum_value) > std::numeric_limits<float>::epsilon()) {
+    if (std::fabs(momentum - default_momentum_value) > std::numeric_limits<float>::epsilon()) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << "'s momentum attr value " << momentum
                    << " is not equal to mapper default value 0.9. Note that mapper will ignore this value.";
     }
   }
 
-  if (CheckPrimitiveType(cnode, prim::kPrimBatchNorm)) {
+  if (CheckPrimitiveType(cnode, api::MakeShared<ops::BatchNorm>())) {
     if (SetBnDataInfo(cnode, batch_norm_operator.get()) != RET_OK) {
       MS_LOG(ERROR) << "set bn data info failed.";
       return RET_ERROR;

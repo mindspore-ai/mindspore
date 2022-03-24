@@ -15,12 +15,15 @@
  */
 
 #include "ops/scale.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Scale, PrimitiveC, BaseOperator);
 void Scale::Init(const int64_t axis) { set_axis(axis); }
 
-void Scale::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void Scale::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 int64_t Scale::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 REGISTER_PRIMITIVE_C(kNameScale, Scale);

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "ut/tools/converter/registry/parser/node_parser_test.h"
 #include <map>
 #include <string>
@@ -28,9 +29,9 @@ class AddNodeParserTest : public NodeParserTest {
  public:
   AddNodeParserTest() = default;
   ~AddNodeParserTest() = default;
-  ops::PrimitiveC *Parse() override {
-    auto primc = std::make_unique<ops::AddFusion>();
-    return primc.release();
+  BaseOperatorPtr Parse() override {
+    auto primc = api::MakeShared<ops::AddFusion>();
+    return primc;
   }
 };
 
@@ -38,11 +39,11 @@ class SplitNodeParserTest : public NodeParserTest {
  public:
   SplitNodeParserTest() = default;
   ~SplitNodeParserTest() = default;
-  ops::PrimitiveC *Parse() override {
-    auto primc = std::make_unique<ops::Split>();
+  BaseOperatorPtr Parse() override {
+    auto primc = api::MakeShared<ops::Split>();
     primc->set_axis(0);
     primc->set_output_num(2);
-    return primc.release();
+    return primc;
   }
 };
 
@@ -50,10 +51,10 @@ class ConcatNodeParserTest : public NodeParserTest {
  public:
   ConcatNodeParserTest() = default;
   ~ConcatNodeParserTest() = default;
-  ops::PrimitiveC *Parse() override {
-    auto primc = std::make_unique<ops::Concat>();
+  BaseOperatorPtr Parse() override {
+    auto primc = api::MakeShared<ops::Concat>();
     primc->set_axis(0);
-    return primc.release();
+    return primc;
   }
 };
 
@@ -62,8 +63,8 @@ class CustomProposalNodeParserTest : public NodeParserTest {
  public:
   CustomProposalNodeParserTest() = default;
   ~CustomProposalNodeParserTest() = default;
-  ops::PrimitiveC *Parse() override {
-    auto primc = std::make_unique<ops::Custom>();
+  BaseOperatorPtr Parse() override {
+    auto primc = api::MakeShared<ops::Custom>();
     primc->set_type("Proposal");
     std::map<std::string, std::vector<uint8_t>> custom_attrs;
     std::string height = std::to_string(100);
@@ -73,7 +74,7 @@ class CustomProposalNodeParserTest : public NodeParserTest {
     std::vector<uint8_t> width_attr(width.begin(), width.end());
     custom_attrs["image_width"] = width_attr;
     primc->set_attr(custom_attrs);
-    return primc.release();
+    return primc;
   }
 };
 

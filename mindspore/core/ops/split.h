@@ -19,22 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSplit = "Split";
 /// \brief Splits the input tensor into output_num of tensors along the given axis and output numbers.
 /// Refer to Python API @ref mindspore.ops.Split for more details.
-class MS_CORE_API Split : public PrimitiveC {
+class MIND_API Split : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Split);
   /// \brief Constructor.
-  Split() : PrimitiveC(kNameSplit) {}
-  /// \brief Destructor.
-  ~Split() = default;
-  MS_DECLARE_PARENT(Split, PrimitiveC);
+  Split() : BaseOperator(kNameSplit) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Split for the inputs.
   void Init(const int64_t axis, const int64_t output_num);
   /// \brief Set size_splits.
@@ -56,8 +53,8 @@ class MS_CORE_API Split : public PrimitiveC {
   /// \return output_num.
   int64_t get_output_num() const;
 };
-AbstractBasePtr SplitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SplitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSplit = std::shared_ptr<Split>;
 }  // namespace ops
 }  // namespace mindspore

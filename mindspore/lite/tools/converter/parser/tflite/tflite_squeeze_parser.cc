@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteSqueezeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteSqueezeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Squeeze>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -40,7 +40,7 @@ ops::PrimitiveC *TfliteSqueezeParser::Parse(const std::unique_ptr<tflite::Operat
                        [](const int64_t &value) { return static_cast<int64_t>(value); });
   prim->set_axis(dims_vector);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteSqueezeParser(tflite::BuiltinOperator_SQUEEZE, new TfliteSqueezeParser());

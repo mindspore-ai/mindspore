@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/transpose_matmul_fusion.h"
 #include <memory>
 #include <vector>
@@ -83,7 +84,7 @@ bool TransposeMatMulFusion::Run(const FuncGraphPtr &func_graph) {
     if (!CheckInputTransposeNode(func_graph, cnode, indices_need_fuse, sizeof(bool) * DIMENSION_2D)) {
       continue;
     }
-    auto matmul_prim = GetValueNode<std::shared_ptr<mindspore::ops::MatMul>>(cnode->input(0));
+    auto matmul_prim = ops::GetOperator<mindspore::ops::MatMul>(cnode->input(0));
     MS_ASSERT(matmul_prim != nullptr);
     auto manager = func_graph->manager();
     MS_ASSERT(manager != nullptr);

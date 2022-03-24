@@ -20,6 +20,8 @@
 #include "ops/less_equal.h"
 #include "ops/op_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -42,6 +44,7 @@ TypePtr LessEqualInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(LessEqual, PrimitiveC, BaseOperator);
 AbstractBasePtr LessEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   auto infer_shape = LessEqualInferShape(primitive, input_args);

@@ -16,23 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_SWITCH_H_
 #define MINDSPORE_CORE_OPS_SWITCH_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSwitch = "Switch";
 /// \brief Switch defined Switch operator prototype of lite.
-class MS_CORE_API Switch : public PrimitiveC {
+class MIND_API Switch : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Switch);
   /// \brief Constructor.
-  Switch() : PrimitiveC(kNameSwitch) {}
-
-  /// \brief Destructor.
-  ~Switch() = default;
-
-  MS_DECLARE_PARENT(Switch, PrimitiveC);
+  Switch() : BaseOperator(kNameSwitch) {}
 };
 }  // namespace ops
 }  // namespace mindspore

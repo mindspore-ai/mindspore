@@ -22,25 +22,19 @@
 #include <string>
 #include <memory>
 #include <algorithm>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/primitive_infer_map.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNonMaxSuppression = "NonMaxSuppression";
 /// \brief NonMaxSuppression QuantDTypeCast the NonMaxSuppression operator prototype.
-class MS_CORE_API NonMaxSuppression : public PrimitiveC {
+class MIND_API NonMaxSuppression : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(NonMaxSuppression);
   /// \brief Constructor.
-  NonMaxSuppression() : PrimitiveC(kNameNonMaxSuppression) {}
-
-  /// \brief Destructor.
-  ~NonMaxSuppression() = default;
-
-  MS_DECLARE_PARENT(NonMaxSuppression, PrimitiveC);
+  NonMaxSuppression() : BaseOperator(kNameNonMaxSuppression) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -59,8 +53,8 @@ class MS_CORE_API NonMaxSuppression : public PrimitiveC {
   /// \return an integer value.
   int64_t get_center_point_box() const;
 };
-AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimNonMaxSuppressionPtr = std::shared_ptr<NonMaxSuppression>;
 }  // namespace ops
 }  // namespace mindspore

@@ -16,9 +16,12 @@
 
 #include "ops/reduce_min.h"
 #include <memory>
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ReduceMin, PrimitiveC, Reduce);
 REGISTER_PRIMITIVE_C(kNameReduceMin, ReduceMin);
 }  // namespace ops
 }  // namespace mindspore

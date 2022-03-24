@@ -19,12 +19,13 @@
 #include "common/op_enum.h"
 #include "common/check_base.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto,
-                                                 const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
+BaseOperatorPtr CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto,
+                                                const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Conv2dTransposeFusion>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -104,10 +105,10 @@ ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &pr
     }
   }
   if (group != 1) {
-    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    prim->AddAttr(ops::kIsDepthWise, api::MakeValue<bool>(true));
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeDeconvolutionParser("Deconvolution", new CaffeDeconvolutionParser());

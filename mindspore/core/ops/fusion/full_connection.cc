@@ -17,10 +17,13 @@
 #include "ops/fusion/full_connection.h"
 #include <string>
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void FullConnection::set_has_bias(const bool has_bias) { (void)this->AddAttr(kHasBias, MakeValue(has_bias)); }
+MIND_API_BASE_IMPL(FullConnection, PrimitiveC, BaseOperator);
+void FullConnection::set_has_bias(const bool has_bias) { (void)this->AddAttr(kHasBias, api::MakeValue(has_bias)); }
 
 bool FullConnection::get_has_bias() const {
   auto value_ptr = GetAttr(kHasBias);
@@ -28,14 +31,14 @@ bool FullConnection::get_has_bias() const {
   return GetValue<bool>(value_ptr);
 }
 
-void FullConnection::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void FullConnection::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 int64_t FullConnection::get_axis() const {
   auto value_ptr = GetAttr(kAxis);
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
-void FullConnection::set_use_axis(const bool use_axis) { (void)this->AddAttr(kUseAxis, MakeValue(use_axis)); }
+void FullConnection::set_use_axis(const bool use_axis) { (void)this->AddAttr(kUseAxis, api::MakeValue(use_axis)); }
 bool FullConnection::get_use_axis() const {
   auto value_ptr = GetAttr(kUseAxis);
   MS_EXCEPTION_IF_NULL(value_ptr);
@@ -44,7 +47,7 @@ bool FullConnection::get_use_axis() const {
 
 void FullConnection::set_activation_type(const ActivationType &activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 ActivationType FullConnection::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);

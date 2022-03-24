@@ -16,9 +16,11 @@
 
 #include "ops/grad/pool_grad.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(PoolGrad, PrimitiveC, BaseOperator);
 std::vector<int64_t> PoolGrad::_grad_check_vector(const std::string &arg_name, std::vector<int64_t> arg_val,
                                                   const std::string &op_name) {
   std::vector<int64_t> ret;
@@ -56,22 +58,22 @@ void PoolGrad::Init(const std::vector<int64_t> &kernel_size, const std::vector<i
 
 void PoolGrad::set_kernel_size(const std::vector<int64_t> &kernel_size) {
   std::vector<int64_t> k_size = _grad_check_vector(kKernelSize, kernel_size, this->name());
-  (void)this->AddAttr(kKernelSize, MakeValue(k_size));
+  (void)this->AddAttr(kKernelSize, api::MakeValue(k_size));
 }
 
 void PoolGrad::set_strides(const std::vector<int64_t> &strides) {
   std::vector<int64_t> strides_ = _grad_check_vector(kStrides, strides, this->name());
-  (void)this->AddAttr(kStrides, MakeValue(strides_));
+  (void)this->AddAttr(kStrides, api::MakeValue(strides_));
 }
 
 void PoolGrad::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
-  (void)this->AddAttr(kPadMode, MakeValue(swi));
+  (void)this->AddAttr(kPadMode, api::MakeValue(swi));
 }
 
 void PoolGrad::set_format(const Format &format) {
   int64_t swi = format;
-  (void)this->AddAttr(kFormat, MakeValue(swi));
+  (void)this->AddAttr(kFormat, api::MakeValue(swi));
 }
 
 std::vector<int64_t> PoolGrad::get_kernel_size() const {

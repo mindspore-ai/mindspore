@@ -30,8 +30,8 @@ class PoolMapper : public OpMapper {
  public:
   PoolMapper() : OpMapper("Pool") {}
   ~PoolMapper() override = default;
-  STATUS Map(const CNodePtr &node, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-             const CNodePtrList &output_cnodes) override;
+  STATUS Map(const api::CNodePtr &node, std::vector<BaseOperatorPtr> *base_operators, const api::PrimitivePtr &prim,
+             const api::CNodePtrList &output_cnodes) override;
 };
 }  // namespace dpico
 }  // namespace mindspore

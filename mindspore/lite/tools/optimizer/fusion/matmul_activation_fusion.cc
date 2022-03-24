@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/matmul_activation_fusion.h"
 #include <memory>
 #include "ops/fusion/activation.h"
@@ -21,6 +22,7 @@
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 const BaseRef MatMulActivationFusion::DefinePattern() const {
@@ -47,7 +49,7 @@ const AnfNodePtr MatMulActivationFusion::Process(const FuncGraphPtr &func_graph,
   }
   MS_CHECK_TRUE_RET(act_cnode->input(1) != nullptr, nullptr);
   auto matmul_cnode = act_cnode->input(1)->cast<CNodePtr>();
-  auto matmul_prim = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
+  auto matmul_prim = ops::GetOperator<ops::MatMulFusion>(matmul_cnode->input(0));
   if (matmul_prim == nullptr) {
     MS_LOG(ERROR) << "matmul prim is nullptr.";
     return nullptr;
@@ -57,7 +59,7 @@ const AnfNodePtr MatMulActivationFusion::Process(const FuncGraphPtr &func_graph,
     MS_LOG(ERROR) << "matmul has activation.";
     return nullptr;
   }
-  auto act_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(act_cnode->input(0));
+  auto act_prim = ops::GetOperator<mindspore::ops::Activation>(act_cnode->input(0));
   if (act_prim == nullptr) {
     MS_LOG(ERROR) << "activation prim is nullptr.";
     return nullptr;
@@ -71,7 +73,7 @@ const AnfNodePtr MatMulActivationFusion::Process(const FuncGraphPtr &func_graph,
   if (type != mindspore::RELU && type != RELU6) {
     return nullptr;
   }
-  matmul_prim->AddAttr(ops::kActivationType, MakeValue<int64_t>(type));
+  matmul_prim->AddAttr(ops::kActivationType, api::MakeValue<int64_t>(type));
   auto manage = Manage(func_graph);
   if (manage == nullptr) {
     MS_LOG(ERROR) << "manage is nullptr.";

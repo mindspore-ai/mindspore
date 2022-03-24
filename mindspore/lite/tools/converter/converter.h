@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_H
 
+#define USE_DEPRECATED_API
 #include <memory>
 #include <string>
 #include "include/registry/model_parser.h"

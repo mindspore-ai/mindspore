@@ -21,6 +21,8 @@
 #include <memory>
 #include "ops/addn.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -83,6 +85,8 @@ TypePtr AddNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   return elements[0]->BuildType();
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(AddN, PrimitiveC, BaseOperator);
 AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

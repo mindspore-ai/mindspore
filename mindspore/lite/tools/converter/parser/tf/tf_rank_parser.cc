@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFRankParser::Parse(const tensorflow::NodeDef &tf_op,
-                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                     std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFRankParser::Parse(const tensorflow::NodeDef &tf_op,
+                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                  std::vector<std::string> *inputs, int *output_size) {
   MS_LOG(DEBUG) << "TF RankParser";
   if (output_size == nullptr) {
     MS_LOG(ERROR) << "output_size is nullptr";
@@ -41,7 +41,7 @@ ops::PrimitiveC *TFRankParser::Parse(const tensorflow::NodeDef &tf_op,
   if (status != RET_OK) {
     return nullptr;
   }
-  return prim.release();
+  return prim->GetPrim();
 }
 TFNodeRegistrar g_tfRankParser("Rank", new TFRankParser());
 }  // namespace lite

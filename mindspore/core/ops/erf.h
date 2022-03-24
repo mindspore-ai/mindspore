@@ -18,22 +18,21 @@
 #define MINDSPORE_CORE_OPS_ERF_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameErf = "Erf";
-class MS_CORE_API Erf : public PrimitiveC {
+class MIND_API Erf : public BaseOperator {
  public:
-  Erf() : PrimitiveC(kNameErf) { InitIOName({"x"}, {"y"}); }
-  ~Erf() = default;
-  MS_DECLARE_PARENT(Erf, PrimitiveC);
+  MIND_API_BASE_MEMBER(Erf);
+  /// \brief Constructor.
+  Erf() : BaseOperator(kNameErf) { InitIOName({"x"}, {"y"}); }
 };
 
-AbstractBasePtr ErfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ErfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimErf = std::shared_ptr<Erf>;
 }  // namespace ops
 }  // namespace mindspore

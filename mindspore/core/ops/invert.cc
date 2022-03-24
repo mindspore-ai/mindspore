@@ -21,6 +21,7 @@
 
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -40,6 +41,8 @@ TypePtr InvertInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   return input_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Invert, PrimitiveC, BaseOperator);
 AbstractBasePtr InvertInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

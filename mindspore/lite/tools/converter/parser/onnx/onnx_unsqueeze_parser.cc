@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Unsqueeze>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   std::vector<int64_t> axis;
@@ -36,7 +36,7 @@ ops::PrimitiveC *OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph, 
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxUnsqueezeParser("Unsqueeze", new OnnxUnSqueezeParser());

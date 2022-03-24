@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/mul_add_fusion.h"
 #include <algorithm>
 #include <memory>
 #include <vector>
-#include "ops/fusion/mul_fusion.h"
+#include "nnacl/op_base.h"
 #include "ops/fusion/add_fusion.h"
+#include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/scale_fusion.h"
 #include "ops/op_utils.h"
-#include "tools/optimizer/common/gllo_utils.h"
 #include "tools/anf_exporter/fetch_content.h"
-#include "nnacl/op_base.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
 VectorRef MulAddFusion::DefineMulFirstPattern() const {
@@ -63,9 +64,11 @@ bool MulAddFusion::CheckAddNode(const mindspore::CNodePtr &cnode) const {
   if (IsMarkedTrainOp(cnode)) {
     return false;
   }
-  auto add_primitive = GetValueNode<std::shared_ptr<ops::AddFusion>>(cnode->input(0));
+  auto add_primitive = ops::GetOperator<ops::AddFusion>(cnode->input(0));
   MS_CHECK_TRUE_RET(add_primitive != nullptr, false);
-  auto quant_attr = add_primitive->GetAttr("quant_params");
+  auto add_primitive_c = add_primitive->GetPrim();
+  MS_CHECK_TRUE_RET(add_primitive_c != nullptr, false);
+  auto quant_attr = add_primitive_c->GetAttr("quant_params");
   if (quant_attr != nullptr) {
     auto quant_param_holder = quant_attr->cast<lite::QuantParamHolderPtr>();
     MS_CHECK_TRUE_RET(quant_param_holder != nullptr, false);
@@ -79,7 +82,7 @@ bool MulAddFusion::CheckAddNode(const mindspore::CNodePtr &cnode) const {
   }
 
   ActivationType add_act_type = ActivationType::NO_ACTIVATION;
-  if (add_primitive->GetAttr(ops::kActivationType) != nullptr) {
+  if (add_primitive_c->GetAttr(ops::kActivationType) != nullptr) {
     add_act_type = add_primitive->get_activation_type();
     if (add_act_type != ActivationType::RELU && add_act_type != ActivationType::RELU6 &&
         add_act_type != ActivationType::NO_ACTIVATION) {
@@ -100,9 +103,11 @@ bool MulAddFusion::CheckMulNode(const mindspore::FuncGraphPtr &func_graph, const
   if (IsMarkedTrainOp(cnode)) {
     return false;
   }
-  auto mul_primitive = GetValueNode<std::shared_ptr<ops::MulFusion>>(cnode->input(0));
+  auto mul_primitive = ops::GetOperator<ops::MulFusion>(cnode->input(0));
   MS_CHECK_TRUE_RET(mul_primitive != nullptr, false);
-  auto quant_attr = mul_primitive->GetAttr("quant_params");
+  auto mul_primitive_c = mul_primitive->GetPrim();
+  MS_CHECK_TRUE_RET(mul_primitive_c != nullptr, false);
+  auto quant_attr = mul_primitive_c->GetAttr("quant_params");
   if (quant_attr != nullptr) {
     auto quant_param_holder = quant_attr->cast<lite::QuantParamHolderPtr>();
     MS_CHECK_TRUE_RET(quant_param_holder != nullptr, false);
@@ -115,7 +120,7 @@ bool MulAddFusion::CheckMulNode(const mindspore::FuncGraphPtr &func_graph, const
     }
   }
 
-  if (mul_primitive->GetAttr(ops::kActivationType) != nullptr &&
+  if (mul_primitive_c->GetAttr(ops::kActivationType) != nullptr &&
       mul_primitive->get_activation_type() != ActivationType::NO_ACTIVATION) {
     MS_LOG(DEBUG) << "Only support mul node with no activation";
     return false;
@@ -243,10 +248,12 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
     return nullptr;
   }
   scale_primitive->set_activation_type(scale_act_type_);
+  auto scale_primitive_c = scale_primitive->GetPrim();
+  MS_CHECK_TRUE_RET(scale_primitive_c != nullptr, nullptr);
   scale_primitive->set_axis(-(static_cast<int64_t>(bias_tensor_->shape_c().size() + axis_offset)));
 
   // create scale op
-  auto scale_node = func_graph->NewCNode(scale_primitive, {mul_input_anode, mul_const_anode_, add_const_anode_});
+  auto scale_node = func_graph->NewCNode(scale_primitive_c, {mul_input_anode, mul_const_anode_, add_const_anode_});
   scale_node->set_abstract(add_cnode->abstract());
   return scale_node;
 }

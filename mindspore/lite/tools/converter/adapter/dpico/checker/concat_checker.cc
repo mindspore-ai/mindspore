@@ -17,6 +17,7 @@
 #include "checker/concat_checker.h"
 #include <vector>
 #include <string>
+#include <climits>
 #include "common/anf_util.h"
 #include "common/op_enum.h"
 
@@ -40,8 +41,8 @@ bool CheckConcatInputW(const ShapeVector &input_shape, int64_t axis, int64_t inp
   return supported;
 }
 }  // namespace
-bool ConcatChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+bool ConcatChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr." << op->fullname_with_scope();
     return false;
@@ -49,7 +50,7 @@ bool ConcatChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format for
   int64_t axis = 0;
   auto axis_ptr = primitive->GetAttr(ops::kAxis);
   if (axis_ptr != nullptr) {
-    axis = GetValue<int64_t>(axis_ptr);
+    axis = api::GetValue<int64_t>(axis_ptr);
     if (axis < kAxisLowerBound || axis > kAxisUpperBound) {
       MS_LOG(WARNING) << op->fullname_with_scope() << "'s axis should in range [-4, 3], but in fact it's " << axis;
       return false;
@@ -65,7 +66,7 @@ bool ConcatChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format for
   std::vector<int64_t> input_shape;
   for (size_t i = 1; i < op->inputs().size(); i++) {
     auto input = op->input(i);
-    if (input->cast<ParameterPtr>() != nullptr && input->cast<ParameterPtr>()->has_default()) {
+    if (input->cast<api::ParameterPtr>() != nullptr && input->cast<api::ParameterPtr>()->has_default()) {
       MS_LOG(WARNING) << "there is offline data in concat, which dpico is unsupported. " << op->fullname_with_scope();
       return false;
     }

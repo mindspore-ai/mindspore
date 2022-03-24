@@ -17,23 +17,18 @@
 #define MINDSPORE_CORE_OPS_CLIP_H_
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameClip = "Clip";
 /// \brief Clip defined Clip operator prototype.
-class MS_CORE_API Clip : public PrimitiveC {
+class MIND_API Clip : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Clip);
   /// \brief Constructor.
-  Clip() : PrimitiveC(kNameClip) {}
-
-  /// \brief Destructor.
-  ~Clip() = default;
-
-  MS_DECLARE_PARENT(Clip, PrimitiveC);
+  Clip() : BaseOperator(kNameClip) {}
 
   /// \brief Method to init the op's attributes.
   ///

@@ -19,22 +19,18 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameL2Normalize = "L2Normalize";
 /// \brief L2 Normalization Operator. Refer to Python API @ref mindspore.ops.L2Normalize for more details.
-class MS_CORE_API L2Normalize : public PrimitiveC {
+class MIND_API L2Normalize : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(L2Normalize);
   /// \brief Constructor.
-  explicit L2Normalize(const std::string &name = kNameL2Normalize) : PrimitiveC(name) {}
-  /// \brief Destructor.
-  ~L2Normalize() = default;
-  MS_DECLARE_PARENT(L2Normalize, PrimitiveC);
+  explicit L2Normalize(const std::string &name = kNameL2Normalize) : BaseOperator(name) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.L2Normalize for the inputs.
   void Init(const std::vector<int64_t> &axis, const float epsilon = 1e-4);
   /// \brief Set axis.
@@ -50,8 +46,8 @@ class MS_CORE_API L2Normalize : public PrimitiveC {
   /// \return epsilon.
   float get_epsilon() const;
 };
-AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_L2_NORMALIZE_H_

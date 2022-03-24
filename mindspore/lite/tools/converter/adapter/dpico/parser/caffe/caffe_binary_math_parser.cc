@@ -28,35 +28,35 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeBinaryMathParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+BaseOperatorPtr CaffeBinaryMathParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   const caffe::BinaryMathParameter &binary_math_param = proto.binary_math_param();
-  std::unique_ptr<ops::PrimitiveC> prim;
+  BaseOperatorPtr prim;
   if (binary_math_param.has_operation()) {
     auto operation = binary_math_param.operation();
     switch (operation) {
       case caffe::BinaryMathParameter_BinaryMathOp_ADD:
-        prim = std::make_unique<ops::AddFusion>();
+        prim = std::make_shared<ops::AddFusion>();
         break;
       case caffe::BinaryMathParameter_BinaryMathOp_SUB:
-        prim = std::make_unique<ops::SubFusion>();
+        prim = std::make_shared<ops::SubFusion>();
         break;
       case caffe::BinaryMathParameter_BinaryMathOp_MUL:
-        prim = std::make_unique<ops::MulFusion>();
+        prim = std::make_shared<ops::MulFusion>();
         break;
       case caffe::BinaryMathParameter_BinaryMathOp_DIV:
-        prim = std::make_unique<ops::DivFusion>();
+        prim = std::make_shared<ops::DivFusion>();
         break;
       case caffe::BinaryMathParameter_BinaryMathOp_MAX:
-        prim = std::make_unique<ops::Maximum>();
+        prim = std::make_shared<ops::Maximum>();
         break;
       case caffe::BinaryMathParameter_BinaryMathOp_MIN:
-        prim = std::make_unique<ops::Minimum>();
+        prim = std::make_shared<ops::Minimum>();
         break;
       case caffe::BinaryMathParameter_BinaryMathOp_SQUARE_DIFF:
-        prim = std::make_unique<ops::SquaredDifference>();
+        prim = std::make_shared<ops::SquaredDifference>();
         break;
       case caffe::BinaryMathParameter_BinaryMathOp_X_DIV_Y: {
-        prim = std::make_unique<ops::Custom>();
+        prim = std::make_shared<ops::Custom>();
         if (prim == nullptr) {
           MS_LOG(ERROR) << "prim is nullptr. " << proto.name();
           return nullptr;
@@ -65,7 +65,7 @@ ops::PrimitiveC *CaffeBinaryMathParser::Parse(const caffe::LayerParameter &proto
         break;
       }
       case caffe::BinaryMathParameter_BinaryMathOp_X_LOG_Y: {
-        prim = std::make_unique<ops::Custom>();
+        prim = std::make_shared<ops::Custom>();
         if (prim == nullptr) {
           MS_LOG(ERROR) << "prim is nullptr. " << proto.name();
           return nullptr;
@@ -78,13 +78,13 @@ ops::PrimitiveC *CaffeBinaryMathParser::Parse(const caffe::LayerParameter &proto
         return nullptr;
     }
   } else {
-    prim = std::make_unique<ops::AddFusion>();
+    prim = std::make_shared<ops::AddFusion>();
   }
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr. " << proto.name();
     return nullptr;
   }
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeBinaryMathParser("BinaryMath", new CaffeBinaryMathParser());

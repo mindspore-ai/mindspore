@@ -20,28 +20,25 @@
 #include <memory>
 #include <string>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameExp = prim::kExp;
+constexpr auto kNameExp = "Exp";
 /// \brief Returns exponential of a tensor element-wise. Refer to Python API @ref mindspore.ops.Exp for more details.
-class MS_CORE_API Exp : public PrimitiveC {
+class MIND_API Exp : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Exp);
   /// \brief Constructor.
-  Exp() : PrimitiveC(prim::kPrimExp->name()) { InitIOName({"x"}, {"y"}); }
-  explicit Exp(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Exp() = default;
-  MS_DECLARE_PARENT(Exp, PrimitiveC);
+  Exp() : BaseOperator("Exp") { InitIOName({"x"}, {"y"}); }
+  explicit Exp(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Exp for the inputs.
   void Init() const {}
 };
 
-AbstractBasePtr ExpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ExpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

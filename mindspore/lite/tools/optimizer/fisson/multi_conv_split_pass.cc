@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fisson/multi_conv_split_pass.h"
 #include <string>
 #include <memory>
@@ -23,6 +24,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 using mindspore::converter::FmkType;
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;

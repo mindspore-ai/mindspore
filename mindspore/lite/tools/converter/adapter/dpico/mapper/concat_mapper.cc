@@ -18,19 +18,18 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "ops/op_utils.h"
 #include "ops/concat.h"
 #include "op/concat_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS ConcatMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                         const CNodePtrList &output_cnodes) {
+STATUS ConcatMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                         const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto concat_prim = utils::cast<std::shared_ptr<ops::Concat>>(prim);
+  auto concat_prim = api::utils::cast<api::SharedPtr<ops::Concat>>(prim);
   MS_ASSERT(concat_prim != nullptr);
 
   auto concat_operator = std::make_unique<mapper::ConcatOperator>();

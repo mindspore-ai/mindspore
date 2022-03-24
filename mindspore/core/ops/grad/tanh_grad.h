@@ -21,21 +21,18 @@
 #include <string>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTanhGrad = "TanhGrad";
-class TanhGrad : public PrimitiveC {
+class TanhGrad : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TanhGrad);
   /// \brief Constructor.
-  TanhGrad() : PrimitiveC(kNameTanhGrad) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~TanhGrad() = default;
+  TanhGrad() : BaseOperator(kNameTanhGrad) { InitIOName({"x"}, {"output"}); }
   /// \brief Init.
-  MS_DECLARE_PARENT(TanhGrad, PrimitiveC);
 };
 }  // namespace ops
 }  // namespace mindspore

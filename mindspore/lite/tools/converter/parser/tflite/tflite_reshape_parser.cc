@@ -22,12 +22,13 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                            const std::unique_ptr<tflite::ModelT> &tfliteModel) {
+PrimitiveCPtr TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                         const std::unique_ptr<tflite::ModelT> &tfliteModel) {
   auto prim = std::make_unique<ops::Reshape>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   std::vector<int32_t> shape;
   const auto &tflite_attr = tflite_op->builtin_options.AsReshapeOptions();
   if (tflite_attr != nullptr) {
@@ -37,10 +38,10 @@ ops::PrimitiveC *TfliteReshapeParser::Parse(const std::unique_ptr<tflite::Operat
     }
     auto value_ptr = MakeValue(shape);
     MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-    prim->AddAttr("shape", value_ptr);
+    prim_c->AddAttr("shape", value_ptr);
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteReshapeParser(tflite::BuiltinOperator_RESHAPE, new TfliteReshapeParser());

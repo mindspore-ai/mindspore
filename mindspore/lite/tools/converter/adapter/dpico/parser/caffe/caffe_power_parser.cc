@@ -18,11 +18,12 @@
 #include <vector>
 #include <memory>
 #include "ops/fusion/pow_fusion.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffePowerParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::PowFusion>();
+BaseOperatorPtr CaffePowerParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::PowFusion>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -42,11 +43,11 @@ ops::PrimitiveC *CaffePowerParser::Parse(const caffe::LayerParameter &proto, con
       shift = powerParam.shift();
     }
   }
-  prim->AddAttr(ops::kPower, MakeValue(power));
+  prim->AddAttr(ops::kPower, api::MakeValue(power));
   prim->set_scale(scale);
   prim->set_shift(shift);
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffePowerParser("Power", new CaffePowerParser());

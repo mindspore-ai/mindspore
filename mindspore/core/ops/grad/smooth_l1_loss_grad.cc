@@ -21,17 +21,18 @@
 #include "ops/grad/smooth_l1_loss_grad.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void SmoothL1LossGrad::Init(const float beta) { this->set_beta(beta); }
 
-void SmoothL1LossGrad::set_beta(const float beta) { (void)this->AddAttr(kBeta, MakeValue(beta)); }
+void SmoothL1LossGrad::set_beta(const float beta) { (void)this->AddAttr(kBeta, api::MakeValue(beta)); }
 
 float SmoothL1LossGrad::get_beta() const {
   auto value_ptr = this->GetAttr(kBeta);
   MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<int32_t>(value_ptr);
+  return GetValue<float>(value_ptr);
 }
 
 namespace {
@@ -66,6 +67,7 @@ TypePtr SmoothL1LossGradInferType(const PrimitivePtr &prim, const std::vector<Ab
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(SmoothL1LossGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = SmoothL1LossGradInferType(primitive, input_args);

@@ -15,9 +15,11 @@
  */
 #include "ops/ragged_range.h"
 #include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(RaggedRange, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameRaggedRange, RaggedRange);
 }  // namespace ops
 }  // namespace mindspore

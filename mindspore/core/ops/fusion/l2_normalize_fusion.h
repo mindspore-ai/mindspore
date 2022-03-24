@@ -19,22 +19,17 @@
 #include <vector>
 
 #include "ops/l2_normalize.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameL2NormalizeFusion = "L2NormalizeFusion";
 /// \brief L2NormalizeFusion defined L2Normalize operator prototype of lite.
-class MS_CORE_API L2NormalizeFusion : public L2Normalize {
+class MIND_API L2NormalizeFusion : public L2Normalize {
  public:
+  MIND_API_BASE_MEMBER(L2NormalizeFusion);
   /// \brief Constructor.
   L2NormalizeFusion() : L2Normalize(kNameL2NormalizeFusion) {}
-
-  /// \brief Destructor.
-  ~L2NormalizeFusion() = default;
-
-  MS_DECLARE_PARENT(L2NormalizeFusion, L2Normalize);
 
   /// \brief Method to init the op's attributes.
   ///

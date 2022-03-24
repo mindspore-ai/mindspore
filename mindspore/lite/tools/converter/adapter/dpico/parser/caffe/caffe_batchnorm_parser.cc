@@ -22,8 +22,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::BatchNorm>();
+BaseOperatorPtr CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::BatchNorm>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -50,10 +50,10 @@ ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
   prim->set_epsilon(epsilon);
 
   if (batchNormParam.has_use_global_stats()) {
-    prim->AddAttr(dpico::kUseGlobalStats, MakeValue(batchNormParam.use_global_stats()));
+    prim->AddAttr(dpico::kUseGlobalStats, api::MakeValue(batchNormParam.use_global_stats()));
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeBatchNormParser("BatchNorm", new CaffeBatchNormParser());

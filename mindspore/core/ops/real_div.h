@@ -19,28 +19,26 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameRealDiv = prim::kRealDiv;
+constexpr auto kNameRealDiv = "RealDiv";
 /// \brief Divides the first input tensor by the second input tensor in floating-point type element-wise.
 /// Refer to Python API @ref mindspore.ops.RealDiv for more details.
-class MS_CORE_API RealDiv : public PrimitiveC {
+class MIND_API RealDiv : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(RealDiv);
   /// \brief Constructor.
-  RealDiv() : PrimitiveC(kNameRealDiv) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~RealDiv() = default;
-  MS_DECLARE_PARENT(RealDiv, PrimitiveC);
+  RealDiv() : BaseOperator(kNameRealDiv) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.RealDiv for the inputs.
   void Init() const {}
 };
 
-AbstractBasePtr RealDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr RealDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

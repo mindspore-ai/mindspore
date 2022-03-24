@@ -17,6 +17,7 @@
 #include "ops/grad/nllloss_grad.h"
 
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -24,7 +25,7 @@ void NLLLossGrad::Init(const Reduction &reduction) { set_reduction(reduction); }
 
 void NLLLossGrad::set_reduction(const Reduction &reduction) {
   int64_t reduce = reduction;
-  (void)AddAttr(kReduction, MakeValue(reduce));
+  (void)AddAttr(kReduction, api::MakeValue(reduce));
 }
 
 Reduction NLLLossGrad::get_reduction() const {
@@ -32,6 +33,7 @@ Reduction NLLLossGrad::get_reduction() const {
   return Reduction(GetValue<int64_t>(value_ptr));
 }
 
+MIND_API_BASE_IMPL(NLLLossGrad, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameNLLLossGrad, NLLLossGrad)
 }  // namespace ops
 }  // namespace mindspore

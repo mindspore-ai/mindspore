@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/norm_fusion.h"
 #include <algorithm>
 #include <memory>
@@ -24,6 +26,7 @@
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
 #include "src/ops/ops_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -70,9 +73,10 @@ bool IsReduceNode(const EquivPtr &equiv, const VarPtr &input_prim, const VarPtr 
   MS_ASSERT(equiv != nullptr && input_prim != nullptr && input_axes != nullptr && axes != nullptr);
   auto reduce_value = utils::cast<AnfNodePtr>((*equiv)[input_prim]);
   MS_ASSERT(reduce_value != nullptr);
-  auto mean2_primitive = GetValueNode<std::shared_ptr<ops::ReduceFusion>>(reduce_value);
-  if (mean2_primitive == nullptr || mean2_primitive->GetAttr(ops::kMode) == nullptr ||
-      mean2_primitive->get_mode() != mindspore::Reduce_Mean) {
+  auto mean2_primitive = ops::GetOperator<ops::ReduceFusion>(reduce_value);
+  MS_CHECK_TRUE_RET(mean2_primitive != nullptr, false);
+  auto mean2_primitive_c = mean2_primitive->GetPrim();
+  if (mean2_primitive_c->GetAttr(ops::kMode) == nullptr || mean2_primitive->get_mode() != mindspore::Reduce_Mean) {
     return false;
   }
   if (GetReduceAxes((*equiv)[input_axes], axes) != lite::RET_OK) {
@@ -107,21 +111,25 @@ CNodePtr NormFusion::CreateNormNode(const FuncGraphPtr &func_graph, const EquivP
                                     int begin_params_axis) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
-  PrimitiveCPtr primitive = nullptr;
+  PrimitiveCPtr primitive_c = nullptr;
   if (type == schema::PrimitiveType_LayerNormFusion) {
     auto layer_norm_primitive = std::make_shared<ops::LayerNormFusion>();
     MS_CHECK_TRUE_RET(layer_norm_primitive != nullptr, nullptr);
     layer_norm_primitive->Init(begin_norm_axis, begin_params_axis, epsilon, true);
-    primitive = layer_norm_primitive;
+    auto layer_norm_primitive_c = layer_norm_primitive->GetPrim();
+    MS_CHECK_TRUE_RET(layer_norm_primitive_c != nullptr, nullptr);
+    primitive_c = layer_norm_primitive_c;
   } else if (type == schema::PrimitiveType_InstanceNorm) {
     auto instance_norm_primitive = std::make_shared<ops::InstanceNorm>();
     MS_CHECK_TRUE_RET(instance_norm_primitive != nullptr, nullptr);
+    auto instance_norm_primitive_c = instance_norm_primitive->GetPrim();
+    MS_CHECK_TRUE_RET(instance_norm_primitive_c != nullptr, nullptr);
     instance_norm_primitive->Init(epsilon);
-    primitive = instance_norm_primitive;
+    primitive_c = instance_norm_primitive_c;
   } else {
     return nullptr;
   }
-  auto value_node = NewValueNode(primitive);
+  auto value_node = NewValueNode(primitive_c);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> new_node_inputs = {value_node};
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);

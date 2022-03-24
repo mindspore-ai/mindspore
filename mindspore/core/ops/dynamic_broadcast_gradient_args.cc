@@ -23,6 +23,8 @@
 #include <memory>
 
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -69,6 +71,7 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(DynamicBroadcastGradientArgs, PrimitiveC, BaseOperator);
 AbstractBasePtr DynamicBroadcastGradientArgsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto types = std::vector<TypePtr>{kInt64, kInt64};

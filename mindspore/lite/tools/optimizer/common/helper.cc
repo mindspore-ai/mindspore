@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "backend/common/optimizer/helper.h"
 #include <memory>
 #include <vector>

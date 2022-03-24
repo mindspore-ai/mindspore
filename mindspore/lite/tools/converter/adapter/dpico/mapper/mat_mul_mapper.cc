@@ -26,8 +26,8 @@
 namespace mindspore {
 namespace dpico {
 namespace {
-STATUS DoMaxtixOperatorMap(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                           const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS DoMaxtixOperatorMap(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                           const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   auto matrix_operator = std::make_unique<mapper::MatrixOperator>();
   if (matrix_operator == nullptr) {
     MS_LOG(ERROR) << "matrix_operator is nullptr.";
@@ -38,19 +38,19 @@ STATUS DoMaxtixOperatorMap(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *
     return RET_ERROR;
   }
   if (prim->GetAttr(kDim1) != nullptr) {
-    matrix_operator->SetMatMulDim1(GetValue<uint32_t>(prim->GetAttr(kDim1)));
+    matrix_operator->SetMatMulDim1(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kDim1))));
   } else {
     MS_LOG(ERROR) << kDim1 << " attr is missed. " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
   if (prim->GetAttr(kDim2) != nullptr) {
-    matrix_operator->SetMatMulDim2(GetValue<uint32_t>(prim->GetAttr(kDim2)));
+    matrix_operator->SetMatMulDim2(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kDim2))));
   } else {
     MS_LOG(ERROR) << kDim2 << " attr is missed. " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
   if (prim->GetAttr(kDim3) != nullptr) {
-    matrix_operator->SetMatMulDim3(GetValue<uint32_t>(prim->GetAttr(kDim3)));
+    matrix_operator->SetMatMulDim3(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kDim3))));
   } else {
     MS_LOG(ERROR) << kDim3 << " attr is missed. " << cnode->fullname_with_scope();
     return RET_ERROR;
@@ -59,14 +59,14 @@ STATUS DoMaxtixOperatorMap(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *
   return RET_OK;
 }
 }  // namespace
-STATUS MatMulMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                         const CNodePtrList &output_cnodes) {
+STATUS MatMulMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                         const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
   if (prim->GetAttr(kOperatorType) != nullptr) {
-    auto op_type = GetValue<std::string>(prim->GetAttr(kOperatorType));
+    auto op_type = api::GetValue<std::string>(prim->GetAttr(kOperatorType));
     if (op_type == "FullConnection") {
       OpMapperRegistry::GetInstance()->GetOpMapper(op_type)->Map(cnode, base_operators, prim, output_cnodes);
     } else if (op_type == "Matrix") {

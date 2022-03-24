@@ -20,22 +20,17 @@
 #include <memory>
 
 #include "ops/max_pool.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolFusion = "MaxPoolFusion";
 /// \brief MaxPoolFusion defined MaxPool operator prototype of lite.
-class MS_CORE_API MaxPoolFusion : public MaxPool {
+class MIND_API MaxPoolFusion : public MaxPool {
  public:
+  MIND_API_BASE_MEMBER(MaxPoolFusion);
   /// \brief Constructor.
   MaxPoolFusion() : MaxPool(kNameMaxPoolFusion) { InitIOName({"x"}, {"output"}); }
-
-  /// \brief Destructor.
-  ~MaxPoolFusion() = default;
-
-  MS_DECLARE_PARENT(MaxPoolFusion, MaxPool);
 
   /// \brief Method to init the op's attributes.
   ///
@@ -75,8 +70,8 @@ class MS_CORE_API MaxPoolFusion : public MaxPool {
   ActivationType get_activation_type() const;
 };
 
-AbstractBasePtr MaxPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MaxPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -23,11 +23,11 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFTensorArrayWriteParser::Parse(const tensorflow::NodeDef &tf_op,
-                                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                                 std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFTensorArrayWriteParser::Parse(const tensorflow::NodeDef &tf_op,
+                                              const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                              std::vector<std::string> *inputs, int *output_size) {
   MS_LOG(DEBUG) << "TF TensorArrayWriteParser";
-  auto prim = std::make_unique<TensorArrayWriteV3>();
+  auto prim = std::make_shared<TensorArrayWriteV3>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr";
     return nullptr;
@@ -38,7 +38,7 @@ ops::PrimitiveC *TFTensorArrayWriteParser::Parse(const tensorflow::NodeDef &tf_o
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return prim.release();
+  return prim;
 }
 TFNodeRegistrar g_tfTensorArrayWriteParser("TensorArrayWriteV3", new TFTensorArrayWriteParser());
 }  // namespace lite

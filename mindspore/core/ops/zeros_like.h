@@ -19,25 +19,22 @@
 #include <memory>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Creates a new tensor. Refer to Python API @ref mindspore.ops.ZerosLike for more details.
-class MS_CORE_API ZerosLike : public PrimitiveC {
+class MIND_API ZerosLike : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ZerosLike);
   /// \brief Constructor.
-  ZerosLike() : PrimitiveC(prim::kPrimZerosLike->name()) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~ZerosLike() = default;
-  MS_DECLARE_PARENT(ZerosLike, PrimitiveC);
+  ZerosLike() : BaseOperator("ZerosLike") { InitIOName({"x"}, {"y"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr ZerosLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ZerosLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

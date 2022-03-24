@@ -18,23 +18,18 @@
 #define MINDSPORE_CORE_OPS_LP_NORMALIZATION_H_
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLpNormalization = "LpNormalization";
 /// \brief LpNormalization defined LpNormalization operator prototype of lite.
-class MS_CORE_API LpNormalization : public PrimitiveC {
+class MIND_API LpNormalization : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LpNormalization);
   /// \brief Constructor.
-  LpNormalization() : PrimitiveC(kNameLpNormalization) {}
-
-  /// \brief Destructor.
-  ~LpNormalization() = default;
-
-  MS_DECLARE_PARENT(LpNormalization, PrimitiveC);
+  LpNormalization() : BaseOperator(kNameLpNormalization) {}
 
   /// \brief Method to init the op's attributes.
   ///

@@ -17,11 +17,13 @@
 #include "tools/converter/adapter/acl/mapper/matmul_fusion_mapper.h"
 #include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
 STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
-  auto dst_prim = std::make_shared<ops::MatMul>();
+  ops::MatMul mat_mul;
+  auto dst_prim = mat_mul.GetPrim();
   if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "MatMulFusion mapper failed.";
     return RET_ERROR;

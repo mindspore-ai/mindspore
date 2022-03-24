@@ -21,6 +21,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -49,6 +50,7 @@ TypePtr LayerNormBetaGammaBackpropInferType(const PrimitivePtr &prim, const std:
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(LayerNormBetaGammaBackprop, PrimitiveC, BaseOperator);
 AbstractBasePtr LayerNormBetaGammaBackpropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -19,22 +19,18 @@
 
 #include <string>
 
-#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNLLLoss = "NLLLoss";
 /// \brief NLLLoss operation. Refer to Python API @ref mindspore.ops.NLLLoss for more details.
-class MS_CORE_API NLLLoss : public PrimitiveC {
+class MIND_API NLLLoss : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(NLLLoss);
   /// \brief Constructor.
-  NLLLoss() : PrimitiveC(kNameNLLLoss) { InitIOName({"logits", "labels", "weight"}, {"loss", "total_weight"}); }
-
-  /// \brief Destructor.
-  ~NLLLoss() = default;
-
-  MS_DECLARE_PARENT(NLLLoss, PrimitiveC);
+  NLLLoss() : BaseOperator(kNameNLLLoss) { InitIOName({"logits", "labels", "weight"}, {"loss", "total_weight"}); }
 
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.NLLLoss for the inputs.
   void Init(const Reduction &reduction = NONE);

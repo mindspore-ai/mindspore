@@ -18,24 +18,21 @@
 #define MINDSPORE_CORE_OPS_DIAG_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Constructs a diagonal tensor with a given diagonal values.
 /// Refer to Python API @ref mindspore.ops.Diag for more details.
-class MS_CORE_API Diag : public PrimitiveC {
+class MIND_API Diag : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Diag);
   /// \brief Constructor.
-  Diag() : PrimitiveC(prim::kPrimDiag->name()) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Diag() = default;
-  MS_DECLARE_PARENT(Diag, PrimitiveC);
+  Diag() : BaseOperator("Diag") { InitIOName({"input_x"}, {"output"}); }
 };
-AbstractBasePtr DiagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DiagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

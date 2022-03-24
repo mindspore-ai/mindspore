@@ -18,6 +18,8 @@
 #include <algorithm>
 #include "ops/op_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -72,6 +74,7 @@ TypePtr IndexAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(IndexAdd, PrimitiveC, BaseOperator);
 AbstractBasePtr IndexAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(IndexAddInferShape(primitive, input_args), IndexAddInferType(primitive, input_args));

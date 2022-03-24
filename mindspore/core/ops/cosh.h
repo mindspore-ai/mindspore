@@ -18,22 +18,20 @@
 #define MINDSPORE_CORE_OPS_COSH_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCosh = "Cosh";
-class Cosh : public PrimitiveC {
+class Cosh : public BaseOperator {
  public:
-  Cosh() : PrimitiveC(kNameCosh) { InitIOName({"x"}, {"output"}); }
-  ~Cosh() = default;
-  MS_DECLARE_PARENT(Cosh, PrimitiveC);
+  MIND_API_BASE_MEMBER(Cosh);
+  Cosh() : BaseOperator(kNameCosh) { InitIOName({"x"}, {"output"}); }
   void Init() {}
 };
-AbstractBasePtr CoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimCoshPtr = std::shared_ptr<Cosh>;
 }  // namespace ops
 }  // namespace mindspore

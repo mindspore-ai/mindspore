@@ -20,21 +20,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Returns the shape of the input tensor.
 /// Refer to Python API @ref mindspore.ops.Shape for more details.
-class MS_CORE_API Shape : public PrimitiveC {
+class MIND_API Shape : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Shape);
   /// \brief Constructor.
-  Shape() : PrimitiveC(prim::kPrimShape->name()) {}
-  /// \brief Destructor.
-  ~Shape() = default;
-  MS_DECLARE_PARENT(Shape, PrimitiveC);
+  Shape() : BaseOperator("Shape") {}
   /// \brief Init.
   void Init() const {}
 };

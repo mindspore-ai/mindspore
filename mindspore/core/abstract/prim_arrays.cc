@@ -24,6 +24,7 @@
 #include "utils/shape_utils.h"
 #include "ops/op_utils.h"
 #include "utils/anf_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace abstract {

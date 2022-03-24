@@ -26,13 +26,13 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS PowerMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                        const CNodePtrList &output_cnodes) {
+STATUS PowerMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                        const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto power_prim = utils::cast<std::shared_ptr<ops::PowFusion>>(prim);
+  auto power_prim = api::utils::cast<api::SharedPtr<ops::PowFusion>>(prim);
   MS_ASSERT(power_prim != nullptr);
 
   auto power_operator = std::make_unique<mapper::PowerOperator>();
@@ -61,16 +61,16 @@ STATUS PowerMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *bas
     }
     power_operator->SetPowerPower(*data);
   } else if (prim->GetAttr(ops::kPower) != nullptr) {
-    power_operator->SetPowerPower(GetValue<float>(prim->GetAttr(ops::kPower)));
+    power_operator->SetPowerPower(api::GetValue<float>(prim->GetAttr(ops::kPower)));
   } else {
     MS_LOG(ERROR) << "null param";
     return RET_ERROR;
   }
   if (prim->GetAttr(ops::kScale) != nullptr) {
-    power_operator->SetPowerScale(GetValue<float>(prim->GetAttr(ops::kScale)));
+    power_operator->SetPowerScale(api::GetValue<float>(prim->GetAttr(ops::kScale)));
   }
   if (prim->GetAttr(ops::kShift) != nullptr) {
-    power_operator->SetPowerShift(GetValue<float>(prim->GetAttr(ops::kShift)));
+    power_operator->SetPowerShift(api::GetValue<float>(prim->GetAttr(ops::kShift)));
   }
   if (PushOfflineArgs(cnode, power_operator.get(), 1) != RET_OK) {
     MS_LOG(ERROR) << "push offline args failed. " << cnode->fullname_with_scope();

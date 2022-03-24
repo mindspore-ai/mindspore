@@ -20,22 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
+
 #include "ops/reduce.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceAll = "ReduceAll";
 /// \brief Reduces a dimension of a tensor by the "logical AND" of all elements in the dimension.
 /// Refer to Python API @ref mindspore.ops.ReduceAll for more details.
-class MS_CORE_API ReduceAll : public Reduce {
+class MIND_API ReduceAll : public Reduce {
  public:
+  MIND_API_BASE_MEMBER(ReduceAll);
   /// \brief Constructor.
   ReduceAll() : Reduce(kNameReduceAll) { InitIOName({"input_x", "axis"}, {"y"}); }
-  /// \brief Destructor.
-  ~ReduceAll() = default;
-  MS_DECLARE_PARENT(ReduceAll, Reduce);
 };
 }  // namespace ops
 }  // namespace mindspore

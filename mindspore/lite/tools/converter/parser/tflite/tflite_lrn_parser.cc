@@ -22,9 +22,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteLRNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                        const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteLRNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::LRN>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -38,7 +38,7 @@ ops::PrimitiveC *TfliteLRNParser::Parse(const std::unique_ptr<tflite::OperatorT>
   prim->set_beta(tflite_attr->beta);
   prim->set_bias(tflite_attr->bias);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteLRNParser(tflite::BuiltinOperator_LOCAL_RESPONSE_NORMALIZATION, new TfliteLRNParser());

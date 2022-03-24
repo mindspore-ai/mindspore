@@ -15,12 +15,17 @@
  */
 
 #include "ops/gru.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(GRU, PrimitiveC, BaseOperator);
 void GRU::Init(bool bidirectional) { this->set_bidirectional(bidirectional); }
 
-void GRU::set_bidirectional(bool bidirectional) { (void)AddAttr(kBidirectional, MakeValue(bidirectional)); }
+void GRU::set_bidirectional(bool bidirectional) { (void)AddAttr(kBidirectional, api::MakeValue(bidirectional)); }
 
 bool GRU::get_bidirectional() const {
   auto value_ptr = this->GetAttr(kBidirectional);

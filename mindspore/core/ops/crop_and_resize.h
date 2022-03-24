@@ -18,22 +18,19 @@
 #define MINDSPORE_CORE_OPS_CROP_AND_RESIZE_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCropAndResize = "CropAndResize";
 /// \brief Extracts crops from the input image tensor and resizes them.
 /// Refer to Python API @ref mindspore.ops.CropAndResize for more details.
-class MS_CORE_API CropAndResize : public PrimitiveC {
+class MIND_API CropAndResize : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(CropAndResize);
   /// \brief Constructor.
-  CropAndResize() : PrimitiveC(kNameCropAndResize) { InitIOName({"x", "boxes", "box_index", "crop_size"}, {"y"}); }
-  /// \brief Destructor.
-  ~CropAndResize() = default;
-  MS_DECLARE_PARENT(CropAndResize, PrimitiveC);
+  CropAndResize() : BaseOperator(kNameCropAndResize) { InitIOName({"x", "boxes", "box_index", "crop_size"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CropAndResize for the inputs.
   void Init(ResizeMethod method, float extrapolation_value);
 

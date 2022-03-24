@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/converter.h"
 #include <memory>
 #include <vector>
@@ -48,6 +49,10 @@ void InitConverterParameters(const converter::Flags &flag, converter::ConverterP
   converter_parameters->model_file = flag.modelFile;
   converter_parameters->weight_file = flag.weightFile;
 }
+FuncGraphPtr ConvertGraph(const api::FuncGraphPtr &func_graph) {
+  auto impl = func_graph->impl();
+  return std::dynamic_pointer_cast<FuncGraph>(impl);
+}
 }  // namespace
 
 FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
@@ -57,7 +62,7 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
     kernel::PopulateTrainParameters();
 #endif
     MindsporeImporter ms_import;
-    func_graph_base = ms_import.ImportMindIR(flag);
+    func_graph_base = api::MakeShared<api::FuncGraph>(ms_import.ImportMindIR(flag));
   } else {
     model_parser_ = registry::ModelParserRegistry::GetModelParser(flag.fmk);
     if (model_parser_ == nullptr) {
@@ -72,7 +77,7 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NOT_SUPPORT);
     return nullptr;
   }
-  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(func_graph_base);
+  auto func_graph = ConvertGraph(func_graph_base);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is invalid.";
     return nullptr;

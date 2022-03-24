@@ -16,23 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_PARTIAL_H_
 #define MINDSPORE_CORE_OPS_PARTIAL_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePartial = "Partial";
 /// \brief Partial defined Partial operator prototype of lite.
-class MS_CORE_API Partial : public PrimitiveC {
+class MIND_API Partial : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Partial);
   /// \brief Constructor.
-  Partial() : PrimitiveC(kNamePartial) {}
-
-  /// \brief Destructor.
-  ~Partial() = default;
-
-  MS_DECLARE_PARENT(Partial, PrimitiveC);
+  Partial() : BaseOperator(kNamePartial) {}
 
   /// \brief Method to init the op's attributes.
   void Init() const {}

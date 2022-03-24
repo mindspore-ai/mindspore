@@ -25,15 +25,11 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMinFusion = "ArgMinFusion";
 /// \brief ArgMinFusion defined ArgMin operator prototype of lite.
-class MS_CORE_API ArgMinFusion : public ArgMin {
+class MIND_API ArgMinFusion : public ArgMin {
  public:
+  MIND_API_BASE_MEMBER(ArgMinFusion);
   /// \brief Constructor.
   ArgMinFusion() : ArgMin(kNameArgMinFusion) { InitIOName({"x"}, {"output"}); }
-
-  /// \brief Destructor.
-  ~ArgMinFusion() = default;
-
-  MS_DECLARE_PARENT(ArgMinFusion, ArgMin);
 
   /// \brief Method to init the op's attributes.
   ///
@@ -73,8 +69,8 @@ class MS_CORE_API ArgMinFusion : public ArgMin {
   /// \return the number of minimum value along with axis.
   int64_t get_top_k() const;
 };
-AbstractBasePtr ArgMinFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ArgMinFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimArgMinFusion = std::shared_ptr<ArgMinFusion>;
 }  // namespace ops
 }  // namespace mindspore

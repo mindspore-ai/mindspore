@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFZerosLikeParser::Parse(const tensorflow::NodeDef &tf_op,
-                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                          std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFZerosLikeParser::Parse(const tensorflow::NodeDef &tf_op,
+                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                       std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::ZerosLike>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = tf_op.input_size();
@@ -33,7 +33,7 @@ ops::PrimitiveC *TFZerosLikeParser::Parse(const tensorflow::NodeDef &tf_op,
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 TFNodeRegistrar g_tfZerosLikeParser("ZerosLike", new TFZerosLikeParser());
 }  // namespace lite

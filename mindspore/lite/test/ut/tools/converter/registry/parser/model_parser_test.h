@@ -22,6 +22,7 @@
 #include <vector>
 #include "include/registry/model_parser.h"
 #include "include/registry/model_parser_registry.h"
+#include "mindapi/ir/anf.h"
 #include "ut/tools/converter/registry/parser/node_parser_test.h"
 
 namespace mindspore {
@@ -35,7 +36,7 @@ class ModelParserTest : public converter::ModelParser {
   int BuildGraphInputs();
   int BuildGraphNodes();
   int BuildGraphOutputs();
-  std::map<std::string, AnfNodePtr> nodes_;
+  std::map<std::string, api::AnfNodePtr> nodes_;
   std::map<std::string, std::vector<std::string>> model_layers_info_;
   std::vector<std::string> model_structure_;
 };

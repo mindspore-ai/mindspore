@@ -18,6 +18,9 @@
 #include <map>
 #include <string>
 #include "ops/mat_mul.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -26,9 +29,9 @@ void MatMul::Init(bool transpose_a, bool transpose_b) {
   set_transpose_b(transpose_b);
 }
 
-void MatMul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, MakeValue(transpose_a)); }
+void MatMul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, api::MakeValue(transpose_a)); }
 
-void MatMul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, MakeValue(transpose_b)); }
+void MatMul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, api::MakeValue(transpose_b)); }
 
 bool MatMul::get_transpose_a() const {
   auto value_ptr = GetAttr(kTransposeA);
@@ -40,6 +43,7 @@ bool MatMul::get_transpose_b() const {
   return GetValue<bool>(value_ptr);
 }
 
+MIND_API_BASE_IMPL(MatMul, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMatMul, MatMul);
 }  // namespace ops
 }  // namespace mindspore

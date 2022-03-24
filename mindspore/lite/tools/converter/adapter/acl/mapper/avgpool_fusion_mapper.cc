@@ -20,6 +20,8 @@
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "include/registry/converter_context.h"
 #include "src/common/log_util.h"
+#include "ops/op_utils.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
@@ -46,6 +48,11 @@ STATUS AvgPoolFusionMapper::Mapper(const CNodePtr &cnode) {
 }
 
 void AvgPoolFusionMapper::CreateTargetPrim(const PrimitivePtr &src_prim, PrimitivePtr *dst_prim, int fmk_type) {
+  if (dst_prim == nullptr) {
+    MS_LOG(ERROR) << "Target prim is nullptr.";
+    return;
+  }
+
   if (fmk_type == converter::kFmkTypeCaffe) {
     *dst_prim = std::make_shared<acl::Pooling>();
   } else if (fmk_type == converter::kFmkTypeOnnx) {
@@ -56,7 +63,8 @@ void AvgPoolFusionMapper::CreateTargetPrim(const PrimitivePtr &src_prim, Primiti
       *dst_prim = std::make_shared<acl::AvgPoolV2>();
     }
   } else {
-    *dst_prim = std::make_shared<ops::AvgPool>();
+    ops::AvgPool dst_node;
+    *dst_prim = dst_node.GetPrim();
   }
 }
 

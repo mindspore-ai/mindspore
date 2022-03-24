@@ -21,29 +21,27 @@
 #include <string>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCTCLossV2 = "CTCLossV2";
 /// \brief Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
 /// Refer to Python API @ref mindspore.ops.CTCLossV2 for more details.
-class MS_CORE_API CTCLossV2 : public PrimitiveC {
+class MIND_API CTCLossV2 : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(CTCLossV2);
   /// \brief Constructor.
-  CTCLossV2() : PrimitiveC(kNameCTCLossV2) {
+  CTCLossV2() : BaseOperator(kNameCTCLossV2) {
     InitIOName({"log_probs", "targets", "input_lengths", "target_lengths"}, {"neg_log_likelihood", "log_alpha"});
   }
-  /// \brief Destructor.
-  ~CTCLossV2() = default;
-  MS_DECLARE_PARENT(CTCLossV2, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CTCLossV2 for the inputs.
   void Init() const {}
 };
 
-AbstractBasePtr CTCLossV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CTCLossV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

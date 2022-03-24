@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include <memory>
 #include <vector>
@@ -105,7 +106,10 @@ int ProcessDependencyWithTwoNodes(const FuncGraphPtr &func_graph, const CNodePtr
   tr.SetEdge(post_node, iter->second, NewValueNode(std::make_shared<UMonad>()));
   tr.Commit();
   auto depend_prim = std::make_shared<ops::Depend>();
-  auto depend_node = func_graph->NewCNode(depend_prim, {post_node, pre_node});
+  MS_ASSERT(depend_prim != nullptr);
+  auto depend_prim_c = depend_prim->GetPrim();
+  MS_ASSERT(depend_prim_c != nullptr);
+  auto depend_node = func_graph->NewCNode(depend_prim_c, {post_node, pre_node});
   MS_CHECK_TRUE_MSG(depend_prim != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
   MS_CHECK_TRUE_MSG(depend_node != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
   depend_node->set_fullname_with_scope(cnode->fullname_with_scope());
@@ -121,7 +125,11 @@ int ProcessInputHaveDependency(const FuncGraphPtr &func_graph, const CNodePtr &c
   if (ProcessDependencyWithTwoNodes(func_graph, cnode, false) == lite::RET_OK) {
     return lite::RET_OK;
   }
-  auto make_tuple_prim = NewValueNode(std::make_shared<ops::MakeTuple>());
+  auto make_tuple_node = std::make_shared<ops::MakeTuple>();
+  MS_CHECK_TRUE_MSG(make_tuple_node != nullptr, lite::RET_NULL_PTR, "make_tuple_node Failed");
+  auto make_tuple_prim_c = make_tuple_node->GetPrim();
+  MS_CHECK_TRUE_MSG(make_tuple_prim_c != nullptr, lite::RET_NULL_PTR, "make_tuple_prim_c Failed");
+  auto make_tuple_prim = NewValueNode(make_tuple_prim_c);
   auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(make_tuple_prim != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
   MS_ASSERT(manager != nullptr);
@@ -318,7 +326,7 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
       is_invalid = false;
     }
   } else {
-    auto pad_prim = utils::cast<std::shared_ptr<mindspore::ops::PadFusion>>(primitive);
+    auto pad_prim = api::MakeShared<mindspore::ops::PadFusion>(primitive);
     MS_ASSERT(pad_prim != nullptr);
     MS_CHECK_TRUE_RET(pad_prim->GetAttr(ops::kPaddings) != nullptr, lite::RET_ERROR);
     auto pad_data = pad_prim->get_paddings();

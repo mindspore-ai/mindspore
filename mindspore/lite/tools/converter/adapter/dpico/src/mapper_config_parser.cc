@@ -20,7 +20,7 @@
 #include "common/op_enum.h"
 #include "common/string_util.h"
 #include "common/file_util.h"
-#include "utils/log_adapter.h"
+#include "mindapi/base/logging.h"
 
 namespace mindspore {
 namespace dpico {

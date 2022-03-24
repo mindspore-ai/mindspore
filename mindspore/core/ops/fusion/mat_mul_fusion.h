@@ -20,23 +20,18 @@
 #include <memory>
 
 #include "ops/mat_mul.h"
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "abstract/dshape.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatMulFusion = "MatMulFusion";
 /// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.MatMul for more details.
-class MS_CORE_API MatMulFusion : public MatMul {
+class MIND_API MatMulFusion : public MatMul {
  public:
+  MIND_API_BASE_MEMBER(MatMulFusion);
   /// \brief Constructor.
   MatMulFusion() : MatMul(kNameMatMulFusion) {}
-  /// \brief Destructor.
-  ~MatMulFusion() = default;
-  MS_DECLARE_PARENT(MatMulFusion, MatMul);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MatMulFusion for the inputs.
   void Init(bool transpose_a = false, bool transpose_b = false, const ActivationType &activation_type = NO_ACTIVATION);
   /// \brief Method to set activation type.

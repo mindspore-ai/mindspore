@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::MatMulFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   float alpha = 1.0f;
@@ -43,7 +43,7 @@ ops::PrimitiveC *OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, con
     return nullptr;
   }
   prim->set_activation_type(mindspore::NO_ACTIVATION);
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxMatmulParser("MatMul", new OnnxMatmulParser());

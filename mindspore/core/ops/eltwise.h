@@ -16,23 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_ELTWISE_H_
 #define MINDSPORE_CORE_OPS_ELTWISE_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEltwise = "Eltwise";
 /// \brief Eltwise defined Element-wise operator prototype.
-class MS_CORE_API Eltwise : public PrimitiveC {
+class MIND_API Eltwise : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Eltwise);
   /// \brief Constructor.
-  Eltwise() : PrimitiveC(kNameEltwise) {}
-
-  /// \brief Destructor.
-  ~Eltwise() = default;
-
-  MS_DECLARE_PARENT(Eltwise, PrimitiveC);
+  Eltwise() : BaseOperator(kNameEltwise) {}
 
   /// \brief Method to init the op's attributes.
   ///

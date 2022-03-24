@@ -29,9 +29,9 @@ class TFLogicalAndParser : public TFNodeParser {
   TFLogicalAndParser() = default;
   ~TFLogicalAndParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFLogicalOrParser : public TFNodeParser {
@@ -39,9 +39,9 @@ class TFLogicalOrParser : public TFNodeParser {
   TFLogicalOrParser() = default;
   ~TFLogicalOrParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 
 class TFLogicalNotParser : public TFNodeParser {
@@ -49,9 +49,9 @@ class TFLogicalNotParser : public TFNodeParser {
   TFLogicalNotParser() = default;
   ~TFLogicalNotParser() override = default;
 
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override;
+  PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
+                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                      std::vector<std::string> *inputs, int *output_size) override;
 };
 }  // namespace lite
 }  // namespace mindspore

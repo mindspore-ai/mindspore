@@ -19,27 +19,23 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLerp = "Lerp";
 /// \brief Does a linear interpolation of two tensors start and end based on a float or tensor weight.
 /// Refer to Python API @ref mindspore.ops.Lerp for more details.
-class Lerp : public PrimitiveC {
+class MIND_API Lerp : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Lerp);
   /// \brief Constructor.
-  Lerp() : PrimitiveC(kNameLerp) { InitIOName({"start", "end", "weight"}, {"output"}); }
-  /// \brief Destructor.
-  ~Lerp() = default;
-  MS_DECLARE_PARENT(Lerp, PrimitiveC);
+  Lerp() : BaseOperator(kNameLerp) { InitIOName({"start", "end", "weight"}, {"output"}); }
 };
 
-AbstractBasePtr LerpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LerpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LERP_H_

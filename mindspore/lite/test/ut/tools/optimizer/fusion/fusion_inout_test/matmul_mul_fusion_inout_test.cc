@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include <memory>
 #include "tools/optimizer/fusion/matmul_mul_fusion.h"
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/conv_fusion_inout_test.h"
@@ -55,8 +56,10 @@ class MatmulMulFusionInoutTest : public FusionInoutTest {
     AnfNodePtr param = AddParameter(graph_, 0, {in_}, kNumberTypeFloat32, name);
     auto prim = std::make_unique<ops::MulFusion>();
     MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create MulFusion primitivec failed");
+    auto prim_c = prim->GetPrim();
+    MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
     prim->Init(ActivationType::NO_ACTIVATION);
-    auto add_primitive = NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim.release()));
+    auto add_primitive = NewValueNode(prim_c);
     MS_CHECK_TRUE_RET(add_primitive != nullptr, nullptr);
     auto add_fusion = graph->NewCNode({add_primitive, input, param});
     MS_CHECK_TRUE_MSG(add_fusion != nullptr, nullptr, "create AddFusion failed");
@@ -69,8 +72,10 @@ class MatmulMulFusionInoutTest : public FusionInoutTest {
     AnfNodePtr bias = AddParameter(graph_, 0, {in_}, kNumberTypeFloat32, "graph_" + name + "_input3");
     auto prim = std::make_unique<ops::MatMulFusion>();
     MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create MatMul primitivec failed");
+    auto prim_c = prim->GetPrim();
+    MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
     prim->Init(false, false, ActivationType::NO_ACTIVATION);
-    auto add_primitive = NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim.release()));
+    auto add_primitive = NewValueNode(prim_c);
     MS_CHECK_TRUE_RET(add_primitive != nullptr, nullptr);
     auto add_fusion = graph->NewCNode({add_primitive, input1, input2, bias});
     MS_CHECK_TRUE_MSG(add_fusion != nullptr, nullptr, "create AddFusion failed");

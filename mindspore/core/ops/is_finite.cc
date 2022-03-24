@@ -16,9 +16,11 @@
 
 #include "ops/is_finite.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(IsFinite, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameIsFinite, IsFinite);
 }  // namespace ops
 }  // namespace mindspore

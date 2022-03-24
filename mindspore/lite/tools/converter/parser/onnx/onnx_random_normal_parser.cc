@@ -22,19 +22,19 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxRandomNormalParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxRandomNormalParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::RandomNormal>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "dtype") {
       auto onnx_dtype = static_cast<onnx::TensorProto_DataType>(onnx_node_attr.i());
       auto data_type = OnnxNodeParser::GetDataTypeFromOnnx(onnx_dtype);
-      prim->AddAttr(ops::kDataType, MakeValue(static_cast<int>(data_type)));
+      prim->AddAttr(ops::kDataType, api::MakeValue(static_cast<int>(data_type)));
     } else if (onnx_node_attr.name() == "shape") {
       std::vector<int64_t> shape;
       std::transform(onnx_node_attr.ints().begin(), onnx_node_attr.ints().end(), std::back_inserter(shape),
                      [](int ele) { return static_cast<int64_t>(ele); });
-      prim->AddAttr(ops::kShape, MakeValue(shape));
+      prim->AddAttr(ops::kShape, api::MakeValue(shape));
     } else if (onnx_node_attr.name() == "seed") {
       prim->set_seed(static_cast<float>(onnx_node_attr.f()));
     } else if (onnx_node_attr.name() == "mean") {
@@ -43,7 +43,7 @@ ops::PrimitiveC *OnnxRandomNormalParser::Parse(const onnx::GraphProto &onnx_grap
       prim->set_scale(static_cast<float>(onnx_node_attr.f()));
     }
   }
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxRandomNormalParser("RandomNormal", new OnnxRandomNormalParser());

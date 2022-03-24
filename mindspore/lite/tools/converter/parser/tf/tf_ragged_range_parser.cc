@@ -22,9 +22,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFRaggedRangeParser::Parse(const tensorflow::NodeDef &tf_op,
-                                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                            std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFRaggedRangeParser::Parse(const tensorflow::NodeDef &tf_op,
+                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                         std::vector<std::string> *inputs, int *output_size) {
   *output_size = 2;
   for (int i = 0; i < 3; i++) {
     if (AddOpInput(tf_op, i, inputs) != RET_OK) {
@@ -34,7 +34,7 @@ ops::PrimitiveC *TFRaggedRangeParser::Parse(const tensorflow::NodeDef &tf_op,
   }
   auto prim = std::make_unique<ops::RaggedRange>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfRaggedRangeParser("RaggedRange", new TFRaggedRangeParser());

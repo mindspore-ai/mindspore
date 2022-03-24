@@ -18,19 +18,21 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Split, PrimitiveC, BaseOperator);
 void Split::Init(const int64_t axis, const int64_t output_num) {
   this->set_axis(axis);
   this->set_output_num(output_num);
 }
 
 void Split::set_size_splits(const std::vector<int64_t> &size_splits) {
-  (void)this->AddAttr(kSizeSplits, MakeValue(size_splits));
+  (void)this->AddAttr(kSizeSplits, api::MakeValue(size_splits));
 }
-void Split::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
-void Split::set_output_num(const int64_t output_num) { (void)this->AddAttr(kOutputNum, MakeValue(output_num)); }
+void Split::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+void Split::set_output_num(const int64_t output_num) { (void)this->AddAttr(kOutputNum, api::MakeValue(output_num)); }
 
 std::vector<int64_t> Split::get_size_splits() const {
   auto value_ptr = GetAttr(kSizeSplits);

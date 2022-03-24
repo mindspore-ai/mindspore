@@ -19,6 +19,9 @@
 #include <set>
 #include <vector>
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -58,6 +61,7 @@ TypePtr AvgPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(AvgPool3DGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   auto res = std::make_shared<abstract::AbstractTensor>(AvgPool3DGradInferType(primitive, input_args),

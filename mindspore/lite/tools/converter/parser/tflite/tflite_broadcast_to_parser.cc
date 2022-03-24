@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   MS_CHECK_GE(tflite_op->inputs.size(), kInputSize1, nullptr);
   auto prim = std::make_unique<ops::BroadcastTo>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -37,7 +37,7 @@ ops::PrimitiveC *TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::Op
   }
   prim->set_shape(dst_shape);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 }  // namespace lite
 }  // namespace mindspore

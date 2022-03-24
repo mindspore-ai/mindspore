@@ -18,23 +18,24 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include "ops/op_utils.h"
 #include "common/op_enum.h"
 #include "common/anf_util.h"
 #include "op/pool_operator.h"
+#include "ops/fusion/max_pool_fusion.h"
+#include "ops/fusion/avg_pool_fusion.h"
 
 namespace mindspore {
 namespace dpico {
 namespace {
-STATUS SetPadAttr(const PrimitivePtr &prim, mapper::PoolOperator *pool_operator) {
+STATUS SetPadAttr(const api::PrimitivePtr &prim, mapper::PoolOperator *pool_operator) {
   if (pool_operator == nullptr) {
     MS_LOG(ERROR) << "pool_operator is nullptr. ";
     return RET_ERROR;
   }
   if (prim->GetAttr(ops::kPadMode) != nullptr) {
-    auto pad_mode = PadMode(GetValue<int64_t>(prim->GetAttr(ops::kPadMode)));
+    auto pad_mode = PadMode(api::GetValue<int64_t>(prim->GetAttr(ops::kPadMode)));
     if (pad_mode == PadMode::PAD) {
-      auto pad_list = GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kPad));
+      auto pad_list = api::GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kPad));
       if (pad_list.size() != kDims4) {
         MS_LOG(ERROR) << "pad_list size is invalid. " << pad_list.size();
         return RET_ERROR;
@@ -63,8 +64,8 @@ STATUS SetPadAttr(const PrimitivePtr &prim, mapper::PoolOperator *pool_operator)
   return RET_OK;
 }
 }  // namespace
-STATUS PoolMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                       const CNodePtrList &output_cnodes) {
+STATUS PoolMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                       const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -80,12 +81,12 @@ STATUS PoolMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
     MS_LOG(ERROR) << "set common attr failed. " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  if (CheckPrimitiveType(cnode, prim::kPrimAvgPoolFusion)) {
+  if (CheckPrimitiveType(cnode, api::MakeShared<ops::AvgPoolFusion>())) {
     pool_operator->SetOpType(mapper::OpType::POOLINGAVE);
-  } else if (CheckPrimitiveType(cnode, prim::kPrimMaxPoolFusion)) {
+  } else if (CheckPrimitiveType(cnode, api::MakeShared<ops::MaxPoolFusion>())) {
     pool_operator->SetOpType(mapper::OpType::POOLINGMAX);
   } else {
-    auto primitive = mindspore::GetValueNode<mindspore::PrimitivePtr>(cnode->input(0));
+    auto primitive = api::GetValueNode<api::PrimitivePtr>(cnode->input(0));
     if (primitive == nullptr) {
       MS_LOG(ERROR) << "primitive is nullptr. " << cnode->fullname_with_scope();
       return RET_ERROR;
@@ -95,7 +96,7 @@ STATUS PoolMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
   }
 
   if (prim->GetAttr(ops::kKernelSize)) {
-    auto kernel_size = GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kKernelSize));
+    auto kernel_size = api::GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kKernelSize));
     if (kernel_size.size() != kDims2) {
       MS_LOG(ERROR) << "kernel_size should be 2 dims, which is " << kernel_size.size();
       return RET_ERROR;
@@ -105,7 +106,7 @@ STATUS PoolMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
   }
 
   if (prim->GetAttr(ops::kStrides) != nullptr) {
-    auto stride = GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kStrides));
+    auto stride = api::GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kStrides));
     if (stride.size() != kDims2) {
       MS_LOG(ERROR) << "stride should be 2 dims, which is " << stride.size();
       return RET_ERROR;
@@ -115,12 +116,12 @@ STATUS PoolMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
   }
 
   if (prim->GetAttr(ops::kGlobal) != nullptr) {
-    auto global_flag = GetValue<bool>(prim->GetAttr(ops::kGlobal));
+    auto global_flag = api::GetValue<bool>(prim->GetAttr(ops::kGlobal));
     pool_operator->SetGlobalPoolingFlag(global_flag);
   }
 
   if (prim->GetAttr(ops::kRoundMode) != nullptr) {
-    auto round_mode = GetValue<int64_t>(prim->GetAttr(ops::kRoundMode));
+    auto round_mode = api::GetValue<int64_t>(prim->GetAttr(ops::kRoundMode));
     if (round_mode == RoundMode::CEIL) {
       pool_operator->SetRoundMode(mapper::POOLING_ROUND_MODE_CEIL);
     } else if (round_mode == RoundMode::FLOOR) {

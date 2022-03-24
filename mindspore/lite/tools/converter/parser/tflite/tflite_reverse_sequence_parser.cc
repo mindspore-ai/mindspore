@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                    const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::ReverseSequence>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -38,7 +38,7 @@ ops::PrimitiveC *TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite
   prim->set_seq_dim(tflite_attr->seq_dim);
   prim->set_batch_dim(tflite_attr->batch_dim);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteReverseSequenceParser(tflite::BuiltinOperator_REVERSE_SEQUENCE,

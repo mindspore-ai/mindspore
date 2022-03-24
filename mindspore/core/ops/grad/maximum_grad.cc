@@ -20,6 +20,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -60,8 +61,10 @@ TuplePtr MaximumGradInferType(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<Tuple>(type_tuple);
 }
 }  // namespace
-AbstractBasePtr MaximumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
+
+MIND_API_BASE_IMPL(MaximumGrad, PrimitiveC, BaseOperator);
+abstract::AbstractBasePtr MaximumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto infer_type = MaximumGradInferType(primitive, input_args);
   auto infer_shape = MaximumGradInferShape(primitive, input_args);
@@ -72,9 +75,9 @@ void MaximumGrad::Init(const bool grad_x, const bool grad_y) {
   set_grad_y(grad_y);
 }
 
-void MaximumGrad::set_grad_x(const bool grad_x) { (void)this->AddAttr(kGradX, MakeValue(grad_x)); }
+void MaximumGrad::set_grad_x(const bool grad_x) { (void)this->AddAttr(kGradX, api::MakeValue(grad_x)); }
 
-void MaximumGrad::set_grad_y(const bool grad_y) { (void)this->AddAttr(kGradY, MakeValue(grad_y)); }
+void MaximumGrad::set_grad_y(const bool grad_y) { (void)this->AddAttr(kGradY, api::MakeValue(grad_y)); }
 
 bool MaximumGrad::get_grad_x() const {
   auto value_ptr = GetAttr(kGradX);

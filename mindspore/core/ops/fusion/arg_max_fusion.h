@@ -25,15 +25,11 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMaxFusion = "ArgMaxFusion";
 /// \brief ArgMaxFusion defined ArgMax operator prototype of lite.
-class MS_CORE_API ArgMaxFusion : public ArgMax {
+class MIND_API ArgMaxFusion : public ArgMax {
  public:
+  MIND_API_BASE_MEMBER(ArgMaxFusion);
   /// \brief Constructor.
   ArgMaxFusion() : ArgMax(kNameArgMaxFusion) { InitIOName({"x"}, {"output"}); }
-
-  /// \brief Destructor.
-  ~ArgMaxFusion() = default;
-
-  MS_DECLARE_PARENT(ArgMaxFusion, ArgMax);
 
   /// \brief Method to init the op's attributes.
   ///
@@ -73,8 +69,8 @@ class MS_CORE_API ArgMaxFusion : public ArgMax {
   /// \return the number of maximum value along with axis.
   int64_t get_top_k() const;
 };
-AbstractBasePtr ArgMaxFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ArgMaxFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimArgMaxFusion = std::shared_ptr<ArgMaxFusion>;
 }  // namespace ops
 }  // namespace mindspore

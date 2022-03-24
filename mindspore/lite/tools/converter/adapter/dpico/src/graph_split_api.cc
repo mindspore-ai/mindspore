@@ -18,6 +18,10 @@
 #include <unordered_set>
 #include <string>
 #include <algorithm>
+#include "ops/return.h"
+#include "ops/transpose.h"
+#include "ops/make_tuple.h"
+#include "ops/tuple_get_item.h"
 #include "common/op_attr.h"
 #include "include/errorcode.h"
 #include "include/api/format.h"
@@ -41,33 +45,34 @@ struct SegmentInfo {
   size_t right_border;
   bool is_supported;
 };
-CNodePtrList GetFuncGraphTotalCNodes(const api::FuncGraphPtr &func_graph) {
-  CNodePtrList graph_total_cnodes;
+api::CNodePtrList GetFuncGraphTotalCNodes(const api::FuncGraphPtr &func_graph) {
+  api::CNodePtrList graph_total_cnodes;
   auto node_list = api::FuncGraph::TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
-    auto cnode = node->cast<CNodePtr>();
+    auto cnode = node->cast<api::CNodePtr>();
     if (cnode != nullptr &&
-        !CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {  // tuple_get_item may affect split graph
+        !CheckPrimitiveType(cnode, api::MakeShared<ops::TupleGetItem>())) {  // tuple_get_item may affect split graph
       graph_total_cnodes.push_back(cnode);
     }
   }
   return graph_total_cnodes;
 }
 
-bool IsTupleGetItemNeeded(const CNodePtr &cnode, const CNodePtr &linked_cnode, const CNodePtrList &total_cnodes) {
-  return CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) &&
+bool IsTupleGetItemNeeded(const api::CNodePtr &cnode, const api::CNodePtr &linked_cnode,
+                          const api::CNodePtrList &total_cnodes) {
+  return CheckPrimitiveType(cnode, api::MakeShared<ops::TupleGetItem>()) &&
          GetBoolAttr(cnode, kIsMapperSupported) == GetBoolAttr(linked_cnode, kIsMapperSupported) &&
          std::find(total_cnodes.begin(), total_cnodes.end(), cnode) == total_cnodes.end();
 }
 
-CNodePtrList GetSubgraphTotalCNodes(const api::FuncGraphPtr &func_graph, const CNodePtrList &cnode_list,
-                                    const SegmentInfo &segment_info) {
-  CNodePtrList total_cnodes{};
+api::CNodePtrList GetSubgraphTotalCNodes(const api::FuncGraphPtr &func_graph, const api::CNodePtrList &cnode_list,
+                                         const SegmentInfo &segment_info) {
+  api::CNodePtrList total_cnodes{};
   for (size_t i = segment_info.left_border; i <= segment_info.right_border; i++) {
     auto &cur_cnode = cnode_list[i];
     total_cnodes.push_back(cur_cnode);
     for (const auto &input_node : cur_cnode->inputs()) {
-      auto input_cnode = input_node->cast<CNodePtr>();
+      auto input_cnode = input_node->cast<api::CNodePtr>();
       if (input_cnode == nullptr) {
         continue;
       }
@@ -78,10 +83,9 @@ CNodePtrList GetSubgraphTotalCNodes(const api::FuncGraphPtr &func_graph, const C
 
     auto manager = api::FuncGraphManager::Manage(func_graph, true);
     MS_CHECK_TRUE_MSG(manager != nullptr, {}, "manager is nullptr.");
-    auto node_map = manager->node_users();
-    auto node_users = node_map[cur_cnode];
+    auto node_users = manager->GetUsers(cur_cnode);
     for (const auto &node_user : node_users) {
-      auto output_cnode = node_user.first->cast<CNodePtr>();
+      auto output_cnode = node_user.first->cast<api::CNodePtr>();
       if (IsTupleGetItemNeeded(output_cnode, cur_cnode, total_cnodes)) {
         total_cnodes.push_back(output_cnode);
       }
@@ -90,7 +94,7 @@ CNodePtrList GetSubgraphTotalCNodes(const api::FuncGraphPtr &func_graph, const C
   return total_cnodes;
 }
 
-STATUS GetSubgraphNetType(const CNodePtrList &cnodes, OmNetType *om_net_type) {
+STATUS GetSubgraphNetType(const api::CNodePtrList &cnodes, OmNetType *om_net_type) {
   for (const auto &cnode : cnodes) {
     std::string op_type_name;
     if (GetPrimitiveType(cnode, &op_type_name) != RET_OK) {
@@ -114,12 +118,12 @@ STATUS GetSubgraphNetType(const CNodePtrList &cnodes, OmNetType *om_net_type) {
   return RET_OK;
 }
 
-STATUS GenerateSegmentInfos(const CNodePtrList &graph_total_cnodes, std::vector<SegmentInfo> *segment_infos) {
+STATUS GenerateSegmentInfos(const api::CNodePtrList &graph_total_cnodes, std::vector<SegmentInfo> *segment_infos) {
   MS_CHECK_TRUE_MSG(segment_infos != nullptr, RET_ERROR, "segment_infos are nullptr");
   size_t start = 0;
   for (size_t pos = 0; pos < graph_total_cnodes.size(); pos++) {
     if (pos == graph_total_cnodes.size() - 1) {
-      if (!CheckPrimitiveType(graph_total_cnodes[pos], prim::kPrimReturn)) {
+      if (!CheckPrimitiveType(graph_total_cnodes[pos], api::MakeShared<ops::Return>())) {
         MS_LOG(ERROR) << "last cnode should be return node.";
         return RET_ERROR;
       }
@@ -153,7 +157,8 @@ STATUS ComputeNetworkSegments(const std::vector<SegmentInfo> &segment_infos, Gra
   return RET_OK;
 }
 
-std::vector<Subgraph> GenerateSubgraphs(const api::FuncGraphPtr &func_graph, const CNodePtrList &graph_total_cnodes,
+std::vector<Subgraph> GenerateSubgraphs(const api::FuncGraphPtr &func_graph,
+                                        const api::CNodePtrList &graph_total_cnodes,
                                         const std::vector<SegmentInfo> &segment_infos, size_t *subgraph_cnt) {
   MS_CHECK_TRUE_MSG(subgraph_cnt != nullptr, {}, "subgraph_cnt is nullptr.");
   std::vector<Subgraph> subgraphs;
@@ -171,12 +176,11 @@ std::vector<Subgraph> GenerateSubgraphs(const api::FuncGraphPtr &func_graph, con
   return subgraphs;
 }
 
-bool FilterMakeTuple(const api::FuncGraphManagerPtr &manager, const Subgraph &subgraph, const CNodePtr &cnode) {
-  auto node_map = manager->node_users();
-  auto node_users = node_map[cnode];
+bool FilterMakeTuple(const api::FuncGraphManagerPtr &manager, const Subgraph &subgraph, const api::CNodePtr &cnode) {
+  auto node_users = manager->GetUsers(cnode);
   bool is_subgraph_output = true;
   for (const auto &node_user : node_users) {
-    auto output_cnode = node_user.first->cast<CNodePtr>();
+    auto output_cnode = node_user.first->cast<api::CNodePtr>();
     if (output_cnode == nullptr) {
       continue;
     }
@@ -187,41 +191,41 @@ bool FilterMakeTuple(const api::FuncGraphManagerPtr &manager, const Subgraph &su
   return is_subgraph_output;
 }
 
-bool IsSubgraphParamInput(const AnfNodePtr &front_node, const AnfNodePtrList &subgraph_param_inputs) {
-  auto param = front_node->cast<ParameterPtr>();
+bool IsSubgraphParamInput(const api::AnfNodePtr &front_node, const api::AnfNodePtrList &subgraph_param_inputs) {
+  auto param = front_node->cast<api::ParameterPtr>();
   return !param->has_default() &&
          std::find(subgraph_param_inputs.begin(), subgraph_param_inputs.end(), param) == subgraph_param_inputs.end();
 }
 
-bool IsSubgraphCNodeInput(const AnfNodePtr &front_node, const Subgraph &subgraph,
-                          const AnfNodePtrList &subgraph_cnode_inputs) {
+bool IsSubgraphCNodeInput(const api::AnfNodePtr &front_node, const Subgraph &subgraph,
+                          const api::AnfNodePtrList &subgraph_cnode_inputs) {
   return std::find(subgraph.cnodes.begin(), subgraph.cnodes.end(), front_node) == subgraph.cnodes.end() &&
          std::find(subgraph_cnode_inputs.begin(), subgraph_cnode_inputs.end(), front_node) ==
            subgraph_cnode_inputs.end();
 }
 
-int DetermineOutputFormat(const AnfNodePtr &output_node, Format *format) {
-  MS_CHECK_TRUE_MSG(output_node != nullptr && output_node->isa<CNode>(), RET_ERROR, "output node is invalid.");
-  auto output_cnode = output_node->cast<CNodePtr>();
+int DetermineOutputFormat(const api::AnfNodePtr &output_node, Format *format) {
+  MS_CHECK_TRUE_MSG(output_node != nullptr && output_node->isa<api::CNode>(), RET_ERROR, "output node is invalid.");
+  auto output_cnode = output_node->cast<api::CNodePtr>();
   int64_t local_format = NCHW;
   auto search_cnode = output_cnode;
   const int max_search_depth = 10;
   int loop = 0;
   // current node may has no format, which can be obtain by transitivity of format.
   while (loop < max_search_depth) {
-    auto primitive = GetValueNode<PrimitivePtr>(search_cnode->input(0));
+    auto primitive = api::GetValueNode<api::PrimitivePtr>(search_cnode->input(0));
     if (primitive == nullptr) {
       break;
     }
     if (primitive->GetAttr(kFormat) != nullptr) {
-      local_format = GetValue<int64_t>(primitive->GetAttr(kFormat));
+      local_format = api::GetValue<int64_t>(primitive->GetAttr(kFormat));
       break;
     }
     auto input_node = search_cnode->input(1);
-    if (!utils::isa<CNode>(input_node)) {
+    if (!api::utils::isa<api::CNode>(input_node)) {
       break;
     }
-    search_cnode = input_node->cast<CNodePtr>();
+    search_cnode = input_node->cast<api::CNodePtr>();
     loop++;
   }
   if (local_format < NCHW || local_format > NCW) {
@@ -229,7 +233,7 @@ int DetermineOutputFormat(const AnfNodePtr &output_node, Format *format) {
     return RET_ERROR;
   }
   *format = static_cast<Format>(local_format);
-  if (CheckPrimitiveType(output_cnode, prim::kPrimTranspose)) {
+  if (CheckPrimitiveType(output_cnode, api::MakeShared<ops::Transpose>())) {
     auto abstract = GetCNodeInputAbstract(output_cnode, 1);
     MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "input's abstract is nullptr.");
     ShapeVector input_shape;
@@ -284,14 +288,14 @@ int GraphSplit(const std::vector<api::FuncGraphPtr> &func_graphs, GraphSplitInfo
   return RET_OK;
 }
 
-AnfNodePtrList GetSubgraphInputs(const Subgraph &subgraph, const api::FuncGraphPtr &func_graph) {
+api::AnfNodePtrList GetSubgraphInputs(const Subgraph &subgraph, const api::FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, {}, "func_graph is nullptr.");
-  auto manager = func_graph->get_manager();
+  auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, {}, "funcgraph manager is nullptr.");
-  AnfNodePtrList subgraph_param_inputs;
-  AnfNodePtrList subgraph_cnode_inputs;
+  api::AnfNodePtrList subgraph_param_inputs;
+  api::AnfNodePtrList subgraph_cnode_inputs;
   for (const auto &cnode : subgraph.cnodes) {
-    if (CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
+    if (CheckPrimitiveType(cnode, api::MakeShared<ops::MakeTuple>())) {
       if (FilterMakeTuple(manager, subgraph, cnode)) {
         continue;
       }
@@ -299,11 +303,11 @@ AnfNodePtrList GetSubgraphInputs(const Subgraph &subgraph, const api::FuncGraphP
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
       auto front_node = cnode->input(i);
       MS_CHECK_TRUE_MSG(front_node != nullptr, {}, "input node is nullptr.");
-      if (utils::isa<Parameter>(front_node)) {
+      if (api::utils::isa<api::Parameter>(front_node)) {
         if (IsSubgraphParamInput(front_node, subgraph_param_inputs)) {
           subgraph_param_inputs.push_back(front_node);
         }
-      } else if (utils::isa<CNode>(front_node)) {
+      } else if (api::utils::isa<api::CNode>(front_node)) {
         if (IsSubgraphCNodeInput(front_node, subgraph, subgraph_cnode_inputs)) {
           subgraph_cnode_inputs.push_back(front_node);
         }
@@ -311,7 +315,7 @@ AnfNodePtrList GetSubgraphInputs(const Subgraph &subgraph, const api::FuncGraphP
     }
   }
   // keep subgraph input as origin graph input order
-  AnfNodePtrList subgraph_inputs;
+  api::AnfNodePtrList subgraph_inputs;
   auto graph_inputs = func_graph->get_inputs();
   for (auto &graph_input : graph_inputs) {
     if (std::find(subgraph_param_inputs.begin(), subgraph_param_inputs.end(), graph_input) ==
@@ -324,26 +328,25 @@ AnfNodePtrList GetSubgraphInputs(const Subgraph &subgraph, const api::FuncGraphP
   return subgraph_inputs;
 }
 
-AnfNodePtrList GetSubgraphOutputs(const Subgraph &subgraph, const api::FuncGraphManagerPtr &manager) {
-  AnfNodePtrList subgraph_outputs;
-  auto node_map = manager->node_users();
+api::AnfNodePtrList GetSubgraphOutputs(const Subgraph &subgraph, const api::FuncGraphManagerPtr &manager) {
+  api::AnfNodePtrList subgraph_outputs;
   for (const auto &cnode : subgraph.cnodes) {
-    auto node_users = node_map[cnode];
+    auto node_users = manager->GetUsers(cnode);
     for (const auto &node_user : node_users) {
-      auto output_cnode = node_user.first->cast<CNodePtr>();
+      auto output_cnode = node_user.first->cast<api::CNodePtr>();
       if (output_cnode == nullptr) {
         continue;
       }
       if (std::find(subgraph.cnodes.begin(), subgraph.cnodes.end(), output_cnode) != subgraph.cnodes.end()) {
         continue;
       }
-      if (!CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
+      if (!CheckPrimitiveType(cnode, api::MakeShared<ops::MakeTuple>())) {
         subgraph_outputs.push_back(cnode);
         break;
       }
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
         auto input_node = cnode->input(i);
-        if (utils::isa<CNodePtr>(input_node) &&
+        if (api::utils::isa<api::CNodePtr>(input_node) &&
             std::find(subgraph.cnodes.begin(), subgraph.cnodes.end(), input_node) != subgraph.cnodes.end() &&
             std::find(subgraph_outputs.begin(), subgraph_outputs.end(), input_node) == subgraph_outputs.end()) {
           subgraph_outputs.push_back(input_node);
@@ -357,7 +360,7 @@ AnfNodePtrList GetSubgraphOutputs(const Subgraph &subgraph, const api::FuncGraph
 
 int FillSubgraphOutputsFormat(Subgraph *subgraph, const api::FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_MSG(subgraph != nullptr && func_graph != nullptr, RET_ERROR, "output node is invalid.");
-  auto manager = func_graph->get_manager();
+  auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "func_graph's manager is a nullptr.");
   auto subgraph_outputs = GetSubgraphOutputs(*subgraph, manager);
   for (auto &output_node : subgraph_outputs) {

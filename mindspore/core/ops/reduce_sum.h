@@ -20,27 +20,25 @@
 #include <vector>
 #include <string>
 #include <memory>
+
 #include "ops/reduce.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceSum = "ReduceSum";
 /// \brief Reduces a dimension of a tensor by summing all elements in the dimension, by default.
 /// Refer to Python API @ref mindspore.ops.ReduceSum for more details.
-class MS_CORE_API ReduceSum : public Reduce {
+class MIND_API ReduceSum : public Reduce {
  public:
+  MIND_API_BASE_MEMBER(ReduceSum);
   /// \brief Constructor.
   ReduceSum() : Reduce(kNameReduceSum) { InitIOName({"x", "axis"}, {"y"}); }
-  /// \brief Destructor.
-  ~ReduceSum() = default;
-  MS_DECLARE_PARENT(ReduceSum, Reduce);
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

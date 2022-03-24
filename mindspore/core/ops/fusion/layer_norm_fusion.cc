@@ -15,9 +15,12 @@
  */
 
 #include "ops/fusion/layer_norm_fusion.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(LayerNormFusion, PrimitiveC, LayerNorm);
 void LayerNormFusion::Init(const int64_t begin_norm_axis, const int64_t begin_params_axis, const float epsilon,
                            const bool elementwise_affine) {
   this->set_begin_norm_axis(begin_norm_axis);
@@ -27,7 +30,7 @@ void LayerNormFusion::Init(const int64_t begin_norm_axis, const int64_t begin_pa
 }
 
 void LayerNormFusion::set_elementwise_affine(const bool elementwise_affine) {
-  (void)AddAttr(kElementwiseAffine, MakeValue(elementwise_affine));
+  (void)AddAttr(kElementwiseAffine, api::MakeValue(elementwise_affine));
 }
 
 bool LayerNormFusion::get_elementwise_affine() const {

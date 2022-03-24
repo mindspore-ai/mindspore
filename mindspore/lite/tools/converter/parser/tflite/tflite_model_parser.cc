@@ -42,6 +42,11 @@ namespace mindspore::lite {
 namespace {
 constexpr size_t kMainGraphIndex = 0;
 constexpr size_t kConvWeightIndex = 2;
+
+FuncGraphPtr ConvertGraph(const api::FuncGraphPtr &func_graph) {
+  auto impl = func_graph->impl();
+  return std::dynamic_pointer_cast<FuncGraph>(impl);
+}
 }  // namespace
 std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::string &model_path) {
   size_t size = 0;
@@ -187,7 +192,7 @@ api::FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters 
     return nullptr;
   }
 
-  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  auto func_graph = ConvertGraph(res_graph_);
   MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
   if ((status = CommonAnfAdjust(func_graph)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
@@ -250,7 +255,7 @@ STATUS TfliteModelParser::ConvertTfliteGraph() {
 
     // record the function graph
     if (idx == kMainGraphIndex) {
-      res_graph_ = func_graph;
+      res_graph_ = api::MakeShared<api::FuncGraph>(func_graph);
     } else {
       status = BuildSubFuncGraphMap(idx, func_graph, subgraph_name);
       if (status != RET_OK) {
@@ -291,10 +296,10 @@ STATUS TfliteModelParser::ConvertOps(const std::unique_ptr<tflite::SubGraphT> &t
     op_idx++;
     // parse primitive
     MS_LOG(INFO) << "parse node :" << op_name;
-    ops::PrimitiveC *primitive_c = nullptr;
+    ops::PrimitiveCPtr primitive_c;
     auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeTflite, op_type);
     if (node_parser != nullptr) {
-      primitive_c = node_parser->Parse(op, tflite_subgraph, tflite_model_);
+      primitive_c = node_parser->Parse(op, tflite_subgraph, tflite_model_)->GetPrim();
     } else {
       auto node_parser_builtin = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(tflite_op_type);
       if (node_parser_builtin == nullptr) {
@@ -311,7 +316,7 @@ STATUS TfliteModelParser::ConvertOps(const std::unique_ptr<tflite::SubGraphT> &t
 
     std::vector<AnfNodePtr> op_inputs;
     if (primitive_c != nullptr) {
-      auto value_node = NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c));
+      auto value_node = NewValueNode(primitive_c);
       MSLITE_CHECK_PTR(value_node);
       op_inputs = {value_node};
     } else {
@@ -416,7 +421,7 @@ STATUS TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::Tens
 
 STATUS TfliteModelParser::ConvertOpQuantParams(const std::unique_ptr<tflite::OperatorT> &op,
                                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                               ops::PrimitiveC *primitive_c) {
+                                               PrimitiveCPtr primitive_c) {
   MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "tflite op is null, get quant params failed.";
@@ -526,7 +531,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs(const std::unique_ptr<tflite::SubG
       MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
     }
-    auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
+    auto make_tuple_prim_c = make_tuple_prim_ptr->GetPrim();
+    MSLITE_CHECK_PTR(make_tuple_prim_c);
+    auto make_tuple_prim = NewValueNode(make_tuple_prim_c);
     MSLITE_CHECK_PTR(make_tuple_prim);
     std::vector<AnfNodePtr> make_tuple_inputs = output_nodes;
     make_tuple_inputs.insert(make_tuple_inputs.begin(), make_tuple_prim);
@@ -539,7 +546,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs(const std::unique_ptr<tflite::SubG
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
     }
-    auto value_node = NewValueNode(return_prim_ptr);
+    auto return_prim_c = return_prim_ptr->GetPrim();
+    MSLITE_CHECK_PTR(return_prim_c);
+    auto value_node = NewValueNode(return_prim_c);
     MSLITE_CHECK_PTR(value_node);
     std::vector<AnfNodePtr> op_inputs{value_node};
     op_inputs.emplace_back(make_tuple_cnode);
@@ -556,7 +565,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs(const std::unique_ptr<tflite::SubG
     int output_idx = tflite_subgraph->outputs.front() < 0
                        ? static_cast<int>(tflite_subgraph->outputs.front() + tflite_subgraph->tensors.size())
                        : static_cast<int>(tflite_subgraph->outputs.front());
-    auto value_node = NewValueNode(returnPrim);
+    auto return_prim_c = returnPrim->GetPrim();
+    MSLITE_CHECK_PTR(return_prim_c);
+    auto value_node = NewValueNode(return_prim_c);
     MSLITE_CHECK_PTR(value_node);
     std::vector<AnfNodePtr> op_inputs{value_node};
     MS_CHECK_TRUE_RET(anf_node_map->find(output_idx) != anf_node_map->end(), RET_NOT_FIND_OP);
@@ -623,7 +634,7 @@ STATUS TfliteModelParser::ControlFlowNodePostProcess() {
   if (control_flow_map_.empty()) {
     return RET_OK;
   }
-  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  auto func_graph = ConvertGraph(res_graph_);
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_ERROR);
   static auto root_func_manager = Manage(func_graph);
   for (auto &node_vs_graph : control_flow_map_) {
@@ -643,7 +654,7 @@ STATUS TfliteModelParser::ControlFlowNodePostProcess() {
     MSLITE_CHECK_PTR(second_value_node);
     auto inputs = control_flow_node->inputs();
     inputs.insert(inputs.begin() + 1, {first_value_node, second_value_node});
-    auto new_node = res_graph_->NewCNode(inputs);  // must create new node, otherwise node_users won't update
+    auto new_node = func_graph->NewCNode(inputs);  // must create new node, otherwise node_users won't update
     if (new_node == nullptr) {
       MS_LOG(ERROR) << "new node failed";
       return RET_ERROR;
@@ -824,7 +835,9 @@ STATUS TfliteModelParser::ConvertOutputTensor(const std::unique_ptr<tflite::SubG
         MS_LOG(ERROR) << "new TupleGetItem failed";
         return RET_NULL_PTR;
       }
-      auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+      auto tuple_get_item_prim_c = tuple_get_item_prim_ptr->GetPrim();
+      MSLITE_CHECK_PTR(tuple_get_item_prim_c);
+      auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_c);
       MSLITE_CHECK_PTR(tuple_get_item_prim);
       auto get_item_value = NewValueNode(MakeValue<int>(op_idx));
       MSLITE_CHECK_PTR(get_item_value);

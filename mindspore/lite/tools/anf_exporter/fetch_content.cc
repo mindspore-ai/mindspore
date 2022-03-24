@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/anf_exporter/fetch_content.h"
 #include <algorithm>
 #include <string>
@@ -30,6 +31,8 @@
 #include "tools/common/node_util.h"
 #include "src/ops/ops_utils.h"
 #include "src/ops/populate/populate_register.h"
+#include "mindapi/base/format.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {

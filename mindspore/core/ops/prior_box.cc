@@ -19,17 +19,19 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(PriorBox, PrimitiveC, BaseOperator);
 void PriorBox::set_min_sizes(const std::vector<int64_t> &min_sizes) {
-  (void)this->AddAttr(kMinSizes, MakeValue(min_sizes));
+  (void)this->AddAttr(kMinSizes, api::MakeValue(min_sizes));
 }
 
 std::vector<int64_t> PriorBox::get_min_sizes() const { return GetValue<std::vector<int64_t>>(GetAttr(kMinSizes)); }
 
 void PriorBox::set_max_sizes(const std::vector<int64_t> &max_sizes) {
-  (void)this->AddAttr(kMaxSizes, MakeValue(max_sizes));
+  (void)this->AddAttr(kMaxSizes, api::MakeValue(max_sizes));
 }
 
 std::vector<int64_t> PriorBox::get_max_sizes() const {
@@ -38,13 +40,13 @@ std::vector<int64_t> PriorBox::get_max_sizes() const {
 }
 
 void PriorBox::set_aspect_ratios(const std::vector<float> &aspect_ratios) {
-  (void)this->AddAttr(kAspectRatios, MakeValue(aspect_ratios));
+  (void)this->AddAttr(kAspectRatios, api::MakeValue(aspect_ratios));
 }
 
 std::vector<float> PriorBox::get_aspect_ratios() const { return GetValue<std::vector<float>>(GetAttr(kAspectRatios)); }
 
 void PriorBox::set_variances(const std::vector<float> &variances) {
-  (void)this->AddAttr(kVariances, MakeValue(variances));
+  (void)this->AddAttr(kVariances, api::MakeValue(variances));
 }
 
 std::vector<float> PriorBox::get_variances() const {
@@ -53,7 +55,7 @@ std::vector<float> PriorBox::get_variances() const {
 }
 
 void PriorBox::set_image_size_w(const int64_t image_size_w) {
-  (void)this->AddAttr(kImageSizeW, MakeValue(image_size_w));
+  (void)this->AddAttr(kImageSizeW, api::MakeValue(image_size_w));
 }
 
 int64_t PriorBox::get_image_size_w() const {
@@ -62,7 +64,7 @@ int64_t PriorBox::get_image_size_w() const {
 }
 
 void PriorBox::set_image_size_h(const int64_t image_size_h) {
-  (void)this->AddAttr(kImageSizeH, MakeValue(image_size_h));
+  (void)this->AddAttr(kImageSizeH, api::MakeValue(image_size_h));
 }
 
 int64_t PriorBox::get_image_size_h() const {
@@ -70,32 +72,32 @@ int64_t PriorBox::get_image_size_h() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-void PriorBox::set_step_w(const float step_w) { (void)this->AddAttr(kStepW, MakeValue(step_w)); }
+void PriorBox::set_step_w(const float step_w) { (void)this->AddAttr(kStepW, api::MakeValue(step_w)); }
 
 float PriorBox::get_step_w() const {
   auto value_ptr = GetAttr(kStepW);
   return GetValue<float>(value_ptr);
 }
 
-void PriorBox::set_step_h(const float step_h) { (void)this->AddAttr(kStepH, MakeValue(step_h)); }
+void PriorBox::set_step_h(const float step_h) { (void)this->AddAttr(kStepH, api::MakeValue(step_h)); }
 
 float PriorBox::get_step_h() const {
   auto value_ptr = GetAttr(kStepH);
   return GetValue<float>(value_ptr);
 }
 
-void PriorBox::set_clip(const bool clip) { (void)this->AddAttr(kClip, MakeValue(clip)); }
+void PriorBox::set_clip(const bool clip) { (void)this->AddAttr(kClip, api::MakeValue(clip)); }
 
 bool PriorBox::get_clip() const {
   auto value_ptr = GetAttr(kClip);
   return GetValue<bool>(value_ptr);
 }
 
-void PriorBox::set_flip(const bool flip) { (void)this->AddAttr(kFlip, MakeValue(flip)); }
+void PriorBox::set_flip(const bool flip) { (void)this->AddAttr(kFlip, api::MakeValue(flip)); }
 
 bool PriorBox::get_flip() const { return GetValue<bool>(GetAttr(kFlip)); }
 
-void PriorBox::set_offset(const float offset) { (void)this->AddAttr(kOffset, MakeValue(offset)); }
+void PriorBox::set_offset(const float offset) { (void)this->AddAttr(kOffset, api::MakeValue(offset)); }
 
 float PriorBox::get_offset() const {
   auto value_ptr = GetAttr(kOffset);

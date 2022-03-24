@@ -19,23 +19,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFlattenGrad = "FlattenGrad";
-class MS_CORE_API FlattenGrad : public PrimitiveC {
+class MIND_API FlattenGrad : public BaseOperator {
  public:
-  FlattenGrad() : PrimitiveC(kNameFlattenGrad) { InitIOName({"x", "shape"}, {"output"}); }
-  ~FlattenGrad() = default;
-  MS_DECLARE_PARENT(FlattenGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(FlattenGrad);
+  FlattenGrad() : BaseOperator(kNameFlattenGrad) { InitIOName({"x", "shape"}, {"output"}); }
 };
 
-AbstractBasePtr FlattenGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr FlattenGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFlattenGrad = std::shared_ptr<FlattenGrad>;
 }  // namespace ops
 }  // namespace mindspore

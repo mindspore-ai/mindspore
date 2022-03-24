@@ -15,17 +15,19 @@
  */
 
 #include "mapper/op_mapper.h"
-#include <algorithm>
 #include <functional>
+#include <algorithm>
+#include "ops/tuple_get_item.h"
 #include "common/op_attr.h"
 #include "common/op_enum.h"
 #include "common/anf_util.h"
 #include "common/string_util.h"
+#include "third_party/securec/include/securec.h"
 
 namespace mindspore {
 namespace dpico {
 namespace {
-STATUS SetOpInputs(const CNodePtr &cnode, mapper::BaseOperator *base_operator) {
+STATUS SetOpInputs(const api::CNodePtr &cnode, mapper::BaseOperator *base_operator) {
   if (base_operator == nullptr) {
     MS_LOG(ERROR) << "base_operator is nullptr.";
     return RET_ERROR;
@@ -34,20 +36,20 @@ STATUS SetOpInputs(const CNodePtr &cnode, mapper::BaseOperator *base_operator) {
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_anode = cnode->input(i);
     MS_ASSERT(input_anode != nullptr);
-    if (utils::isa<ParameterPtr>(input_anode)) {
-      auto param_node = input_anode->cast<ParameterPtr>();
+    if (api::utils::isa<api::ParameterPtr>(input_anode)) {
+      auto param_node = input_anode->cast<api::ParameterPtr>();
       if (param_node != nullptr && !param_node->has_default()) {  // graph input
         input_names.emplace_back(input_anode->fullname_with_scope());
       }
-    } else if (utils::isa<CNodePtr>(input_anode)) {
-      auto input_cnode = input_anode->cast<CNodePtr>();
+    } else if (api::utils::isa<api::CNodePtr>(input_anode)) {
+      auto input_cnode = input_anode->cast<api::CNodePtr>();
       if (input_cnode == nullptr) {
         MS_LOG(ERROR) << "input node must be cnode.";
         return RET_ERROR;
       }
       auto node_name = input_cnode->fullname_with_scope();
       if (input_cnode->GetAttr(kOutputsNames) != nullptr) {
-        auto output_names = GetValue<std::vector<std::string>>(input_cnode->GetAttr(kOutputsNames));
+        auto output_names = api::GetValue<std::vector<std::string>>(input_cnode->GetAttr(kOutputsNames));
         if (output_names.size() == 1) {
           node_name = output_names.at(0);
         }
@@ -59,11 +61,12 @@ STATUS SetOpInputs(const CNodePtr &cnode, mapper::BaseOperator *base_operator) {
   return RET_OK;
 }
 
-STATUS FillMultiOutOpOutputs(const CNodePtr &cnode, mapper::BaseOperator *base_operator,
-                             const CNodePtrList &output_cnodes) {
+STATUS FillMultiOutOpOutputs(const api::CNodePtr &cnode, mapper::BaseOperator *base_operator,
+                             const api::CNodePtrList &output_cnodes) {
   MS_ASSERT(base_operator != nullptr);
-  if (std::any_of(output_cnodes.begin(), output_cnodes.end(),
-                  [](const CNodePtr cnode) { return !CheckPrimitiveType(cnode, prim::kPrimTupleGetItem); })) {
+  if (std::any_of(output_cnodes.begin(), output_cnodes.end(), [](const api::CNodePtr &cnode) {
+        return !CheckPrimitiveType(cnode, api::MakeShared<ops::TupleGetItem>());
+      })) {
     MS_LOG(ERROR) << "multi-out op must be connected with tuple-get-item node.";
     return RET_ERROR;
   }
@@ -72,11 +75,11 @@ STATUS FillMultiOutOpOutputs(const CNodePtr &cnode, mapper::BaseOperator *base_o
     MS_LOG(ERROR) << "each node's abstract must be not a nullptr.";
     return RET_ERROR;
   }
-  if (!abstract->isa<abstract::AbstractTuple>()) {
+  if (!abstract->isa<api::AbstractTuple>()) {
     MS_LOG(ERROR) << "multi-out op's abstract must be a tuple.";
     return RET_ERROR;
   }
-  auto abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
+  auto abstract_tuple = abstract->cast<api::AbstractTuplePtr>();
   MS_ASSERT(abstract_tuple != nullptr);
   auto output_num = abstract_tuple->elements().size();
   std::vector<std::string> output_names;
@@ -84,14 +87,14 @@ STATUS FillMultiOutOpOutputs(const CNodePtr &cnode, mapper::BaseOperator *base_o
   for (size_t i = 0; i < output_num; ++i) {
     output_names.emplace_back(cnode->fullname_with_scope() + "_unused_" + std::to_string(i));
   }
-  for (auto output_cnode : output_cnodes) {
+  for (const auto &output_cnode : output_cnodes) {
     if (output_cnode->size() != kInputIndex3) {
       MS_LOG(ERROR) << "tuple-get_item's inputs size must be 3.";
       return RET_ERROR;
     }
     auto index_node = output_cnode->input(kInputIndex2);
     MS_CHECK_TRUE_MSG(index_node != nullptr, RET_ERROR, "node is nullptr.");
-    auto value_ptr = GetValueNode(index_node);
+    auto value_ptr = api::GetValueNode(index_node);
     MS_CHECK_TRUE_MSG(value_ptr != nullptr, RET_ERROR, "tuple_get_item's second input must be a value.");
     auto num_str = value_ptr->ToString();
     MS_CHECK_TRUE_MSG(IsValidUnsignedNum(num_str), RET_ERROR, "tuple_get_item's second input must be an unsigned int");
@@ -104,14 +107,17 @@ STATUS FillMultiOutOpOutputs(const CNodePtr &cnode, mapper::BaseOperator *base_o
   return RET_OK;
 }
 
-STATUS SetOpOutputs(const CNodePtr &cnode, mapper::BaseOperator *base_operator, const CNodePtrList &output_cnodes) {
+STATUS SetOpOutputs(const api::CNodePtr &cnode, mapper::BaseOperator *base_operator,
+                    const api::CNodePtrList &output_cnodes) {
   if (cnode == nullptr || base_operator == nullptr ||
-      std::any_of(output_cnodes.begin(), output_cnodes.end(), [](const CNodePtr cnode) { return cnode == nullptr; })) {
+      std::any_of(output_cnodes.begin(), output_cnodes.end(),
+                  [](const api::CNodePtr &cnode) { return cnode == nullptr; })) {
     MS_LOG(ERROR) << "the function exist that input parameter is a nullptr.";
     return RET_ERROR;
   }
-  if (std::all_of(output_cnodes.begin(), output_cnodes.end(),
-                  [](const CNodePtr cnode) { return !CheckPrimitiveType(cnode, prim::kPrimTupleGetItem); })) {
+  if (std::all_of(output_cnodes.begin(), output_cnodes.end(), [](const api::CNodePtr &cnode) {
+        return !CheckPrimitiveType(cnode, api::MakeShared<ops::TupleGetItem>());
+      })) {
     // single output op
     std::vector<std::string> output_names;
     output_names.emplace_back(cnode->fullname_with_scope());
@@ -128,7 +134,8 @@ STATUS SetOpOutputs(const CNodePtr &cnode, mapper::BaseOperator *base_operator, 
 }
 }  // namespace
 
-STATUS SetCommonAttr(const CNodePtr &cnode, mapper::BaseOperator *base_operator, const CNodePtrList &output_cnodes) {
+STATUS SetCommonAttr(const api::CNodePtr &cnode, mapper::BaseOperator *base_operator,
+                     const api::CNodePtrList &output_cnodes) {
   if (base_operator == nullptr) {
     MS_LOG(ERROR) << "base operator is nullptr.";
     return RET_ERROR;
@@ -146,7 +153,7 @@ STATUS SetCommonAttr(const CNodePtr &cnode, mapper::BaseOperator *base_operator,
   return RET_OK;
 }
 
-STATUS SetConvFcDataInfo(const CNodePtr &cnode, mapper::BaseOperator *base_operator) {
+STATUS SetConvFcDataInfo(const api::CNodePtr &cnode, mapper::BaseOperator *base_operator) {
   if (base_operator == nullptr) {
     MS_LOG(ERROR) << "base_operator is nullptr.";
     return RET_ERROR;
@@ -154,13 +161,13 @@ STATUS SetConvFcDataInfo(const CNodePtr &cnode, mapper::BaseOperator *base_opera
   for (size_t i = 2; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
-    auto param_node = input_node->cast<ParameterPtr>();
+    auto param_node = input_node->cast<api::ParameterPtr>();
     if (param_node == nullptr || !param_node->has_default()) {
       continue;
     }
-    auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
+    auto tensor_info = param_node->default_param()->cast<api::TensorPtr>();
     if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
-      auto data = reinterpret_cast<float *>(tensor_info->data_c());
+      auto data = reinterpret_cast<float *>(tensor_info->data());
       MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
       if (i == kInputIndex2) {
         base_operator->SetWeightDataPtr(data);
@@ -181,26 +188,26 @@ STATUS SetConvFcDataInfo(const CNodePtr &cnode, mapper::BaseOperator *base_opera
 
   return RET_OK;
 }
-STATUS SetRecurrentDataInfo(const CNodePtr &cnode, mapper::RecurrentOperator *recurrent_operator) {
+STATUS SetRecurrentDataInfo(const api::CNodePtr &cnode, mapper::RecurrentOperator *recurrent_operator) {
   if (recurrent_operator == nullptr) {
     MS_LOG(ERROR) << "recurrent_operator is nullptr.";
     return RET_ERROR;
   }
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
-    AnfNodePtr input_node = cnode->input(i);
-    if (utils::isa<CNode>(input_node)) {
+    auto input_node = cnode->input(i);
+    if (api::utils::isa<api::CNode>(input_node)) {
       MS_LOG(INFO) << "cnode don't have blobs";
       continue;
     }
-    if (utils::isa<ParameterPtr>(input_node)) {
-      auto input_param_node = input_node->cast<ParameterPtr>();
+    if (api::utils::isa<api::ParameterPtr>(input_node)) {
+      auto input_param_node = input_node->cast<api::ParameterPtr>();
       if (!input_param_node->has_default()) {
         MS_LOG(INFO) << "graph input don't have blobs";
         continue;
       }
-      auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(input_param_node->default_param());
+      auto tensor_info = input_param_node->default_param()->cast<api::TensorPtr>();
       if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
-        auto raw_datas = static_cast<float *>(tensor_info->data_c());
+        auto raw_datas = static_cast<float *>(tensor_info->data());
         auto elem_count = tensor_info->DataSize();
         auto weight_data = new (std::nothrow) float[tensor_info->DataSize()];
         if (weight_data == nullptr) {
@@ -223,7 +230,7 @@ STATUS SetRecurrentDataInfo(const CNodePtr &cnode, mapper::RecurrentOperator *re
   }
   return RET_OK;
 }
-STATUS PushOfflineArgs(const CNodePtr &cnode, mapper::BaseOperator *base_operator, size_t offline_args_size) {
+STATUS PushOfflineArgs(const api::CNodePtr &cnode, mapper::BaseOperator *base_operator, size_t offline_args_size) {
   if (base_operator == nullptr) {
     MS_LOG(ERROR) << "base_operator is nullptr.";
     return RET_ERROR;
@@ -238,29 +245,29 @@ STATUS PushOfflineArgs(const CNodePtr &cnode, mapper::BaseOperator *base_operato
   std::vector<std::pair<std::vector<float>, std::vector<int32_t>>> offline_args;
   bool has_offline_args = false;
   for (size_t i = 1; i < inputs_size; i++) {
-    AnfNodePtr input_node = cnode->input(i);
-    if (utils::isa<CNode>(input_node)) {
+    auto input_node = cnode->input(i);
+    if (api::utils::isa<api::CNode>(input_node)) {
       MS_LOG(INFO) << "cnode don't have blobs";
       offline_args.emplace_back();
       continue;
     }
-    if (utils::isa<ParameterPtr>(input_node)) {
-      auto input_param_node = input_node->cast<ParameterPtr>();
+    if (api::utils::isa<api::ParameterPtr>(input_node)) {
+      auto input_param_node = input_node->cast<api::ParameterPtr>();
       if (!input_param_node->has_default()) {
         MS_LOG(INFO) << "graph input don't have blobs";
         offline_args.emplace_back();
         continue;
       }
-      auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(input_param_node->default_param());
+      auto tensor_info = input_param_node->default_param()->cast<api::TensorPtr>();
       if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
         has_offline_args = true;
         std::vector<float> offline_data;
         auto elem_count = tensor_info->DataSize();
         if (tensor_info->data_type() == kNumberTypeInt32 || tensor_info->data_type() == kNumberTypeInt) {
-          auto raw_datas = static_cast<int32_t *>(tensor_info->data_c());
+          auto raw_datas = static_cast<int32_t *>(tensor_info->data());
           offline_data = std::vector<float>(raw_datas, raw_datas + elem_count);
         } else if (tensor_info->data_type() == kNumberTypeFloat32 || tensor_info->data_type() == kNumberTypeFloat) {
-          auto raw_datas = static_cast<float *>(tensor_info->data_c());
+          auto raw_datas = static_cast<float *>(tensor_info->data());
           offline_data = std::vector<float>(raw_datas, raw_datas + elem_count);
         } else {
           MS_LOG(ERROR) << "unsupported param type. " << tensor_info->data_type();

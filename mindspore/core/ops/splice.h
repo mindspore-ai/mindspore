@@ -18,22 +18,19 @@
 #define MINDSPORE_CORE_OPS_SPLICE_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSplice = "Splice";
 /// \brief All defined All operator prototype of lite.
-class MS_CORE_API Splice : public PrimitiveC {
+class MIND_API Splice : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Splice);
   /// \brief Constructor.
-  Splice() : PrimitiveC(kNameSplice) { InitIOName({"inputs"}, {"outputs"}); }
-
-  /// \brief Destructor.
-  ~Splice() = default;
-  MS_DECLARE_PARENT(Splice, PrimitiveC);
+  Splice() : BaseOperator(kNameSplice) { InitIOName({"inputs"}, {"outputs"}); }
 
   /// \brief Method to init the op's attributes.
   ///
@@ -71,8 +68,8 @@ class MS_CORE_API Splice : public PrimitiveC {
   ///
   /// \param[in] output_dim Define the output_dim.
   int64_t get_output_dim() const;
-  AbstractBasePtr SpliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+  abstract::AbstractBasePtr SpliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 };
 }  // namespace ops
 }  // namespace mindspore

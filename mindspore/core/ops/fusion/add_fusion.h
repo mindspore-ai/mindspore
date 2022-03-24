@@ -20,22 +20,17 @@
 #include <memory>
 
 #include "ops/add.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAddFusion = "AddFusion";
 /// \brief AddFusion defined Add operator prototype of lite.
-class MS_CORE_API AddFusion : public Add {
+class MIND_API AddFusion : public Add {
  public:
+  MIND_API_BASE_MEMBER(AddFusion);
   /// \brief Constructor.
   AddFusion() : Add(kNameAddFusion) { InitIOName({"x", "y"}, {"output"}); }
-
-  /// \brief Destructor.
-  ~AddFusion() = default;
-
-  MS_DECLARE_PARENT(AddFusion, Add);
 
   /// \brief Method to init the op's attributes.
   ///
@@ -53,8 +48,8 @@ class MS_CORE_API AddFusion : public Add {
   ActivationType get_activation_type() const;
 };
 
-AbstractBasePtr AddFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AddFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

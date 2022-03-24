@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFBatchToSpaceNDParser::Parse(const tensorflow::NodeDef &tf_op,
-                                               const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                               std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFBatchToSpaceNDParser::Parse(const tensorflow::NodeDef &tf_op,
+                                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                            std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::BatchToSpace>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -36,7 +36,7 @@ ops::PrimitiveC *TFBatchToSpaceNDParser::Parse(const tensorflow::NodeDef &tf_op,
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 TFNodeRegistrar g_tfBatchToSpaceNDParser("BatchToSpaceND", new TFBatchToSpaceNDParser());
 TFNodeRegistrar g_tfBatchToSpaceParser("BatchToSpace", new TFBatchToSpaceNDParser());

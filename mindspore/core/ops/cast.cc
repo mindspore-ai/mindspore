@@ -15,9 +15,12 @@
  */
 
 #include "ops/cast.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Cast, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameCast, Cast);
 }  // namespace ops
 }  // namespace mindspore

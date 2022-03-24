@@ -20,18 +20,16 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLSTMGradWeight = "LSTMGradWeight";
-class MS_CORE_API LSTMGradWeight : public PrimitiveC {
+class MIND_API LSTMGradWeight : public BaseOperator {
  public:
-  LSTMGradWeight() : PrimitiveC(kNameLSTMGradWeight) {}
-  ~LSTMGradWeight() = default;
-  MS_DECLARE_PARENT(LSTMGradWeight, PrimitiveC);
+  MIND_API_BASE_MEMBER(LSTMGradWeight);
+  LSTMGradWeight() : BaseOperator(kNameLSTMGradWeight) {}
   void Init(const int64_t input_size, const int64_t hidden_size, const int64_t num_layers, const bool has_bias,
             const float dropout, const bool bidirectional = false, const float zoneout_cell = 0.0f,
             const float zoneout_hidden = 0.0f);
@@ -55,8 +53,8 @@ class MS_CORE_API LSTMGradWeight : public PrimitiveC {
   float get_zoneout_hidden() const;
   int64_t get_good_ld(const int64_t dim, const int64_t type_size);
 };
-AbstractBasePtr LstmGradWeightInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LstmGradWeightInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

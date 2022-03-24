@@ -15,6 +15,10 @@
  */
 
 #include "ops/upper_bound.h"
+#include "ops/op_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -59,6 +63,7 @@ TypePtr UpperBoundInferType(const PrimitivePtr &primitive, const std::vector<Abs
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(UpperBound, PrimitiveC, BaseOperator);
 AbstractBasePtr UpperBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -18,15 +18,19 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(CustomPredict, PrimitiveC, BaseOperator);
 void CustomPredict::Init(const int64_t output_num, const float weight_threshold) {
   this->set_output_num(output_num);
   this->set_weight_threshold(weight_threshold);
 }
 
-void CustomPredict::set_output_num(const int64_t output_num) { (void)this->AddAttr(kOutputNum, MakeValue(output_num)); }
+void CustomPredict::set_output_num(const int64_t output_num) {
+  (void)this->AddAttr(kOutputNum, api::MakeValue(output_num));
+}
 
 int64_t CustomPredict::get_output_num() const {
   auto value_ptr = this->GetAttr(kOutputNum);
@@ -34,7 +38,7 @@ int64_t CustomPredict::get_output_num() const {
 }
 
 void CustomPredict::set_weight_threshold(const float weight_threshold) {
-  (void)this->AddAttr(kWeightThreshold, MakeValue(weight_threshold));
+  (void)this->AddAttr(kWeightThreshold, api::MakeValue(weight_threshold));
 }
 
 float CustomPredict::get_weight_threshold() const {

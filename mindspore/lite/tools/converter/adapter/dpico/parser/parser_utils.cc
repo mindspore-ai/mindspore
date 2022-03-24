@@ -20,20 +20,27 @@
 #include <vector>
 #include <string>
 #include "common/file_util.h"
-#include "ops/op_utils.h"
 #include "common/format_utils.h"
 #include "common/anf_util.h"
 #include "parser/caffe/inputs_adjust.h"
 #include "common/data_transpose_utils.h"
+#include "ops/fusion/conv2d_fusion.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/adam.h"
+#include "ops/apply_momentum.h"
+#include "ops/sgd.h"
+#include "ops/op_name.h"
+#include "common/check_base.h"
 
 namespace mindspore::lite {
 namespace {
 const int WARNING_THRESHOLD = 536870912 * 2;
-bool IsWeightNodeSensitive(const AnfNodePtr &node) {
-  return dpico::CheckPrimitiveType(node, prim::kPrimConv2DFusion) ||
-         dpico::CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion) ||
-         dpico::CheckPrimitiveType(node, prim::kPrimApplyMomentum) || dpico::CheckPrimitiveType(node, prim::kPrimSGD) ||
-         dpico::CheckPrimitiveType(node, prim::kPrimAdam);
+bool IsWeightNodeSensitive(const api::AnfNodePtr &node) {
+  return dpico::CheckPrimitiveType(node, api::MakeShared<ops::Conv2DFusion>()) ||
+         dpico::CheckPrimitiveType(node, api::MakeShared<ops::Conv2dTransposeFusion>()) ||
+         dpico::CheckPrimitiveType(node, api::MakeShared<ops::ApplyMomentum>()) ||
+         dpico::CheckPrimitiveType(node, api::MakeShared<ops::SGD>()) ||
+         dpico::CheckPrimitiveType(node, api::MakeShared<ops::Adam>());
 }
 
 int GetTransposePerm(mindspore::Format src_format, mindspore::Format dst_format, std::vector<int> *perm) {
@@ -74,9 +81,11 @@ int GetTransposePermSharing(mindspore::Format src_format, mindspore::Format dst_
   return lite::RET_OK;
 }
 
-int UnifyVariableConvWeight(const api::FuncGraphPtr &graph, const AnfNodePtr &weight_node, mindspore::Format src_format,
-                            mindspore::Format dst_format, std::set<AnfNodePtr> *has_visited) {
-  MS_ASSERT(graph != nullptr && weight_node != nullptr && has_visited != nullptr);
+int UnifyVariableConvWeight(const api::FuncGraphPtr &graph, const api::AnfNodePtr &weight_node,
+                            mindspore::Format src_format, mindspore::Format dst_format,
+                            std::set<api::AnfNodePtr> *has_visited) {
+  MS_CHECK_TRUE_MSG(graph != nullptr && weight_node != nullptr && has_visited != nullptr, RET_ERROR,
+                    "input param contains nullptr.");
   if (src_format == dst_format) {
     return lite::RET_OK;
   }
@@ -87,13 +96,12 @@ int UnifyVariableConvWeight(const api::FuncGraphPtr &graph, const AnfNodePtr &we
     return status;
   }
   auto manager = api::FuncGraphManager::Manage(graph);
-  MS_ASSERT(manager != nullptr);
-  CNodePtr trans_cnode = nullptr;
-  auto node_map = manager->node_users();
-  auto &weight_node_users = node_map[weight_node];
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "manager is nullptr.");
+  api::CNodePtr trans_cnode = nullptr;
+  auto weight_node_users = manager->GetUsers(weight_node);
   for (auto &weight_node_user : weight_node_users) {
     auto post_node = weight_node_user.first;
-    if (!utils::isa<CNodePtr>(post_node)) {
+    if (!api::utils::isa<api::CNodePtr>(post_node)) {
       MS_LOG(ERROR) << "post node is invalid.";
       return RET_ERROR;
     }
@@ -126,7 +134,7 @@ int UnifyVariableConvWeight(const api::FuncGraphPtr &graph, const AnfNodePtr &we
         abstract = dpico::CreateTensorAbstract(shape, TypeId::kNumberTypeFloat32);
         MS_ASSERT(abstract != nullptr);
       }
-      auto shape_ptr = std::make_shared<abstract::Shape>(shape);
+      auto shape_ptr = api::MakeShared<api::Shape>(shape);
       if (shape_ptr == nullptr) {
         MS_LOG(ERROR) << "shape ptr is nullptr.";
         return RET_ERROR;
@@ -134,16 +142,17 @@ int UnifyVariableConvWeight(const api::FuncGraphPtr &graph, const AnfNodePtr &we
       abstract->set_shape(shape_ptr);
       trans_cnode->set_abstract(abstract);
     }
-    auto post_cnode = post_node->cast<CNodePtr>();
+    auto post_cnode = post_node->cast<api::CNodePtr>();
     manager->SetEdge(post_cnode, weight_node_user.second, trans_cnode);
   }
   return RET_OK;
 }
 
-int HandleConstConvWeightShared(const api::FuncGraphPtr &graph, const AnfNodePtr &weight_node,
+int HandleConstConvWeightShared(const api::FuncGraphPtr &graph, const api::AnfNodePtr &weight_node,
                                 mindspore::Format src_format, mindspore::Format dst_format,
-                                std::set<AnfNodePtr> *has_visited) {
-  MS_ASSERT(graph != nullptr && weight_node != nullptr && has_visited != nullptr);
+                                std::set<api::AnfNodePtr> *has_visited) {
+  MS_CHECK_TRUE_MSG(graph != nullptr && weight_node != nullptr && has_visited != nullptr, RET_ERROR,
+                    "input param contains nullptr.");
   if (src_format == dst_format) {
     return RET_OK;
   }
@@ -154,13 +163,12 @@ int HandleConstConvWeightShared(const api::FuncGraphPtr &graph, const AnfNodePtr
     return status;
   }
   auto manager = api::FuncGraphManager::Manage(graph);
-  MS_ASSERT(manager != nullptr);
-  CNodePtr trans_cnode = nullptr;
-  auto node_map = manager->node_users();
-  auto &weight_node_users = node_map[weight_node];
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "manager is nullptr.");
+  api::CNodePtr trans_cnode = nullptr;
+  auto weight_node_users = manager->GetUsers(weight_node);
   for (auto &weight_node_user : weight_node_users) {
     auto post_node = weight_node_user.first;
-    if (!utils::isa<CNodePtr>(post_node)) {
+    if (!api::utils::isa<api::CNodePtr>(post_node)) {
       MS_LOG(ERROR) << "post node is invalid.";
       return RET_ERROR;
     }
@@ -172,9 +180,9 @@ int HandleConstConvWeightShared(const api::FuncGraphPtr &graph, const AnfNodePtr
       trans_cnode =
         dpico::GenTransposeNode(graph, weight_node, perm, weight_node->fullname_with_scope() + "_post_perm");
       MS_ASSERT(trans_cnode != nullptr);
-      auto prim = GetValueNode<PrimitivePtr>(trans_cnode->input(0));
+      auto prim = api::GetValueNode<api::PrimitivePtr>(trans_cnode->input(0));
       MS_ASSERT(prim != nullptr);
-      prim->AddAttr(ops::kFormat, MakeValue<int64_t>(dst_format));
+      prim->AddAttr(ops::kFormat, api::MakeValue<int64_t>(dst_format));
       auto weight_value = dpico::GetTensorInfo(weight_node);
       MS_ASSERT(weight_value != nullptr);
       auto weight_shape = weight_value->shape();
@@ -190,7 +198,7 @@ int HandleConstConvWeightShared(const api::FuncGraphPtr &graph, const AnfNodePtr
       auto abstract = weight_node->abstract();
       MS_ASSERT(abstract != nullptr);
       abstract = abstract->Clone();
-      auto shape_ptr = std::make_shared<abstract::Shape>(shape);
+      auto shape_ptr = api::MakeShared<api::Shape>(shape);
       if (shape_ptr == nullptr) {
         MS_LOG(ERROR) << "shape ptr is nullptr.";
         return RET_ERROR;
@@ -198,14 +206,15 @@ int HandleConstConvWeightShared(const api::FuncGraphPtr &graph, const AnfNodePtr
       abstract->set_shape(shape_ptr);
       trans_cnode->set_abstract(abstract);
     }
-    auto post_cnode = post_node->cast<CNodePtr>();
+    auto post_cnode = post_node->cast<api::CNodePtr>();
     manager->SetEdge(post_cnode, weight_node_user.second, trans_cnode);
   }
   return RET_OK;
 }
 
-int UnifyConstConvWeight(const api::FuncGraphPtr &graph, const AnfNodePtr &weight_node, mindspore::Format src_format,
-                         mindspore::Format dst_format, std::set<AnfNodePtr> *has_visited) {
+int UnifyConstConvWeight(const api::FuncGraphPtr &graph, const api::AnfNodePtr &weight_node,
+                         mindspore::Format src_format, mindspore::Format dst_format,
+                         std::set<api::AnfNodePtr> *has_visited) {
   MS_ASSERT(graph != nullptr && weight_node != nullptr && has_visited != nullptr);
   if (src_format == dst_format) {
     return lite::RET_OK;
@@ -247,15 +256,15 @@ void GetAllFuncGraph(const api::FuncGraphPtr &func_graph, std::set<api::FuncGrap
 
   auto nodes = func_graph->nodes();
   for (auto &node : nodes) {
-    auto new_fg = api::FuncGraph::GetFuncGraphFromAnfNode(node);
+    auto new_fg = api::GetValueNode<api::FuncGraphPtr>(node);
     if (new_fg != nullptr) {
       GetAllFuncGraph(new_fg, all_func_graphs);
     }
-    if (utils::isa<CNodePtr>(node)) {
-      auto cnode = node->cast<CNodePtr>();
+    if (api::utils::isa<api::CNodePtr>(node)) {
+      auto cnode = node->cast<api::CNodePtr>();
       for (auto &input : cnode->inputs()) {
-        if (input->isa<ValueNode>()) {
-          new_fg = api::FuncGraph::GetFuncGraphFromAnfNode(node);
+        if (input->isa<api::ValueNode>()) {
+          new_fg = api::GetValueNode<api::FuncGraphPtr>(node);
           if (new_fg != nullptr) {
             GetAllFuncGraph(new_fg, all_func_graphs);
           }
@@ -280,23 +289,23 @@ int PostAdjust(const std::set<api::FuncGraphPtr> &all_func_graphs) {
   return RET_OK;
 }
 
-int UnifyConvWeightFormat(const api::FuncGraphPtr &graph, const CNodePtr &cnode, mindspore::Format src_format,
-                          mindspore::Format dst_format, std::set<AnfNodePtr> *has_visited) {
+int UnifyConvWeightFormat(const api::FuncGraphPtr &graph, const api::CNodePtr &cnode, mindspore::Format src_format,
+                          mindspore::Format dst_format, std::set<api::AnfNodePtr> *has_visited) {
   MS_ASSERT(graph != nullptr && cnode != nullptr && has_visited != nullptr);
   if (src_format == dst_format) {
     return lite::RET_OK;
   }
-  if (!dpico::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) &&
-      !dpico::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
+  if (!dpico::CheckPrimitiveType(cnode, api::MakeShared<ops::Conv2DFusion>()) &&
+      !dpico::CheckPrimitiveType(cnode, api::MakeShared<ops::Conv2dTransposeFusion>())) {
     MS_LOG(ERROR) << "cnode is not a member of convolution's family.";
     return RET_ERROR;
   }
   bool is_const_weight = true;
   auto weight_node = cnode->input(dpico::kInputIndex2);
-  if (utils::isa<CNode>(weight_node)) {
+  if (api::utils::isa<api::CNode>(weight_node)) {
     is_const_weight = false;
-  } else if (utils::isa<Parameter>(weight_node)) {
-    auto weight_param_node = weight_node->cast<ParameterPtr>();
+  } else if (api::utils::isa<api::Parameter>(weight_node)) {
+    auto weight_param_node = weight_node->cast<api::ParameterPtr>();
     if (!weight_param_node->has_default()) {
       is_const_weight = false;
     }

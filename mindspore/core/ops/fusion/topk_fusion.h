@@ -19,22 +19,17 @@
 #include <vector>
 
 #include "ops/topk.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTopKFusion = "TopKFusion";
 /// \brief TopKFusion defined TopK operator prototype of lite.
-class MS_CORE_API TopKFusion : public TopK {
+class MIND_API TopKFusion : public TopK {
  public:
+  MIND_API_BASE_MEMBER(TopKFusion);
   /// \brief Constructor.
   TopKFusion() : TopK(kNameTopKFusion) {}
-
-  /// \brief Destructor.
-  ~TopKFusion() = default;
-
-  MS_DECLARE_PARENT(TopKFusion, TopK);
 
   /// \brief Method to init the op's attributes.
   ///

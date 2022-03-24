@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/decrease_transpose_algo.h"
 #include <queue>
 #include <set>

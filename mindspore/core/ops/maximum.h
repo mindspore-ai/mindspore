@@ -20,25 +20,23 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaximum = "Maximum";
 /// \brief Computes the maximum of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.Maximum for more details.
-class MS_CORE_API Maximum : public PrimitiveC {
+class MIND_API Maximum : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Maximum);
   /// \brief Constructor.
-  Maximum() : PrimitiveC(kNameMaximum) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Maximum() = default;
-  MS_DECLARE_PARENT(Maximum, PrimitiveC);
+  Maximum() : BaseOperator(kNameMaximum) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Maximum for the inputs.
   void Init() const {}
 };
-AbstractBasePtr MaximumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MaximumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimMaximumPtr = std::shared_ptr<Maximum>;
 }  // namespace ops
 }  // namespace mindspore

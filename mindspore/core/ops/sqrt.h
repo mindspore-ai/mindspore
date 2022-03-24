@@ -16,21 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_SQRT_H_
 #define MINDSPORE_CORE_OPS_SQRT_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSqrt = "Sqrt";
 /// \brief Returns square root of a tensor element-wise. Refer to Python API @ref mindspore.ops.Sqrt for more details.
-class MS_CORE_API Sqrt : public PrimitiveC {
+class MIND_API Sqrt : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Sqrt);
   /// \brief Constructor.
-  Sqrt() : PrimitiveC(kNameSqrt) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Sqrt() = default;
-  MS_DECLARE_PARENT(Sqrt, PrimitiveC);
+  Sqrt() : BaseOperator(kNameSqrt) { InitIOName({"x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };

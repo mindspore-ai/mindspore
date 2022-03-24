@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/parser/unify_format.h"
 #include <map>
 #include <memory>
 #include <vector>
 #include "tools/common/tensor_util.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {

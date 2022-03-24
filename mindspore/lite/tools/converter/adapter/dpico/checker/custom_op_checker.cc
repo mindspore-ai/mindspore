@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace dpico {
-bool CustomOpChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) { return true; }
+bool CustomOpChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) { return true; }
 OpCheckerRegistrar g_DecBboxChecker("DecBBox", new CustomOpChecker());
 OpCheckerRegistrar g_DetectionOutputChecker("DetectionOutput", new CustomOpChecker());
 OpCheckerRegistrar g_ExtractChecker("Extract", new CustomOpChecker());

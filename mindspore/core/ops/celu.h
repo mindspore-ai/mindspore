@@ -21,28 +21,25 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCeLU = "CeLU";
 /// \brief Computes CeLU (Continuously differentiable exponential linear units) of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.CeLU for more details.
-class CeLU : public PrimitiveC {
+class CeLU : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(CeLU);
   /// \brief Constructor.
-  CeLU() : PrimitiveC(kNameCeLU) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~CeLU() = default;
-  MS_DECLARE_PARENT(CeLU, PrimitiveC);
+  CeLU() : BaseOperator(kNameCeLU) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CeLU for the inputs.
   void Init() {}
 };
 
-AbstractBasePtr CeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCeLUPtr = std::shared_ptr<CeLU>;
 }  // namespace ops
 }  // namespace mindspore

@@ -19,6 +19,11 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "include/registry/model_parser_registry.h"
+#include "mindapi/ir/func_graph.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/base/type_id.h"
+#include "mindapi/ir/tensor.h"
+#include "ops/return.h"
 
 namespace mindspore {
 api::FuncGraphPtr ModelParserTest::Parse(const converter::ConverterParameters &flag) {
@@ -69,7 +74,7 @@ int ModelParserTest::BuildGraphInputs() {
       return lite::RET_ERROR;
     }
     ShapeVector shape{10, 10};
-    auto tensor_info = std::make_shared<tensor::Tensor>(TypeId::kNumberTypeFloat32, shape);
+    auto tensor_info = mindspore::api::MakeShared<mindspore::api::Tensor>(kNumberTypeFloat32, shape);
     if (tensor_info == nullptr) {
       return lite::RET_ERROR;
     }
@@ -106,7 +111,7 @@ int ModelParserTest::BuildGraphNodes() {
       MS_LOG(ERROR) << "node parser failed.";
       return lite::RET_ERROR;
     }
-    std::vector<AnfNodePtr> anf_inputs;
+    std::vector<api::AnfNodePtr> anf_inputs;
     for (auto &input : node_inputs) {
       if (nodes_.find(input) != nodes_.end()) {
         anf_inputs.push_back(nodes_[input]);
@@ -117,9 +122,9 @@ int ModelParserTest::BuildGraphNodes() {
           return lite::RET_ERROR;
         }
         ShapeVector shape{10, 10};
-        auto tensor_info = std::make_shared<tensor::Tensor>(TypeId::kNumberTypeFloat32, shape);
+        auto tensor_info = mindspore::api::MakeShared<mindspore::api::Tensor>(kNumberTypeFloat32, shape);
         auto size = tensor_info->Size();
-        memset_s(tensor_info->data_c(), size, 0, size);
+        memset_s(tensor_info->data(), size, 0, size);
         parameter->set_abstract(tensor_info->ToAbstract());
         parameter->set_default_param(tensor_info);
         parameter->set_name(input);
@@ -127,9 +132,9 @@ int ModelParserTest::BuildGraphNodes() {
         nodes_.insert(std::make_pair(input, parameter));
       }
     }
-    auto cnode = res_graph_->NewCNode(std::shared_ptr<ops::PrimitiveC>(primc), anf_inputs);
+    auto cnode = res_graph_->NewCNode(primc, anf_inputs);
     cnode->set_fullname_with_scope(node_name);
-    auto tensor_info = std::make_shared<tensor::Tensor>(TypeId::kNumberTypeFloat32, ShapeVector{});
+    auto tensor_info = mindspore::api::MakeShared<mindspore::api::Tensor>(kNumberTypeFloat32, ShapeVector{});
     cnode->set_abstract(tensor_info->ToAbstract());
     nodes_.insert(std::make_pair(node_name, cnode));
   }
@@ -152,7 +157,7 @@ int ModelParserTest::BuildGraphOutputs() {
     if (nodes_.find(outputs[0]) == nodes_.end()) {
       return lite::RET_ERROR;
     }
-    auto return_prim = std::make_shared<Primitive>("Return");
+    auto return_prim = mindspore::api::MakeShared<ops::Return>();
     auto return_cnode = res_graph_->NewCNode(return_prim, {nodes_[outputs[0]]});
     return_cnode->set_fullname_with_scope("Return");
     res_graph_->set_return(return_cnode);

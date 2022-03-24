@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/parallel/split_strategy.h"
 #include <vector>
 #include <unordered_map>

@@ -17,23 +17,21 @@
 #ifndef MINDSPORE_CORE_OPS_TRUNCATE_MOD_H_
 #define MINDSPORE_CORE_OPS_TRUNCATE_MOD_H_
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTruncateMod = "TruncateMod";
 
-class TruncateMod : public PrimitiveC {
+class TruncateMod : public BaseOperator {
  public:
-  TruncateMod() : PrimitiveC(kNameTruncateMod) { InitIOName({"x", "y"}, {"output"}); }
-  ~TruncateMod() = default;
-  MS_DECLARE_PARENT(TruncateMod, PrimitiveC);
+  MIND_API_BASE_MEMBER(TruncateMod);
+  TruncateMod() : BaseOperator(kNameTruncateMod) { InitIOName({"x", "y"}, {"output"}); }
   void Init() {}
 };
-AbstractBasePtr TruncateModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr TruncateModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

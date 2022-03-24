@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_transform_fusion.h"
 #include <algorithm>
 #include <memory>
@@ -25,6 +26,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -37,16 +39,20 @@ int64_t GetOutChannels(const CNodePtr &conv_node) {
   auto value_node = conv_node->input(0);
   MS_ASSERT(value_node != nullptr);
   if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
-    auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(value_node);
+    auto conv_prim = ops::GetOperator<ops::Conv2DFusion>(value_node);
     MS_ASSERT(conv_prim != nullptr);
-    if (conv_prim->GetAttr(ops::kOutChannel) == nullptr) {
+    auto conv_prim_c = conv_prim->GetPrim();
+    MS_ASSERT(conv_prim_c != nullptr);
+    if (conv_prim_c->GetAttr(ops::kOutChannel) == nullptr) {
       return 0;
     }
     return conv_prim->get_out_channel();
   } else if (CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion)) {
-    auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2dTransposeFusion>>(value_node);
+    auto conv_prim = ops::GetOperator<ops::Conv2dTransposeFusion>(value_node);
     MS_ASSERT(conv_prim != nullptr);
-    if (conv_prim->GetAttr(ops::kOutChannel) == nullptr) {
+    auto conv_prim_c = conv_prim->GetPrim();
+    MS_ASSERT(conv_prim_c != nullptr);
+    if (conv_prim_c->GetAttr(ops::kOutChannel) == nullptr) {
       return 0;
     }
     return conv_prim->get_out_channel();
@@ -322,9 +328,11 @@ int ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const ten
   if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
     GenerateNewWeightConv2D(tmp_weight_data, weight_data, trans_scale, weight_shape_size, kernel_num);
   } else if (CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
-    auto conv_primc = conv_prim->cast<std::shared_ptr<ops::Conv2dTransposeFusion>>();
-    MS_ASSERT(conv_primc != nullptr);
-    auto group = conv_primc->GetAttr(ops::kGroup) == nullptr ? 1 : conv_primc->get_group();
+    auto conv2d_prim = api::MakeShared<ops::Conv2dTransposeFusion>(conv_prim);
+    MS_ASSERT(conv2d_prim != nullptr);
+    auto conv2d_prim_c = conv2d_prim->GetPrim();
+    MS_ASSERT(conv2d_prim_c != nullptr);
+    auto group = conv2d_prim_c->GetAttr(ops::kGroup) == nullptr ? 1 : conv2d_prim->get_group();
     GenerateNewWeightConv2DTranspose(tmp_weight_data, trans_scale, weight_tensor, group, kernel_num);
   }
   auto ret = memcpy_s(weight_data, weight_tensor->Size(), tmp_weight_data, data_size);

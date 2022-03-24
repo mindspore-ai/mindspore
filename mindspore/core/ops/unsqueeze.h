@@ -20,23 +20,18 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnsqueeze = "Unsqueeze";
 /// \brief Unsqueeze defined the Unsqueeze operator prototype of lite.
-class MS_CORE_API Unsqueeze : public PrimitiveC {
+class MIND_API Unsqueeze : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Unsqueeze);
   /// \brief Constructor.
-  Unsqueeze() : PrimitiveC(kNameUnsqueeze) {}
-
-  /// \brief Destructor.
-  ~Unsqueeze() = default;
-
-  MS_DECLARE_PARENT(Unsqueeze, PrimitiveC);
+  Unsqueeze() : BaseOperator(kNameUnsqueeze) {}
 
   /// \brief Method to init the op's attributes
   ///
@@ -53,8 +48,8 @@ class MS_CORE_API Unsqueeze : public PrimitiveC {
   /// \return dimensions info of expanding.
   std::vector<int64_t> get_axis() const;
 };
-AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

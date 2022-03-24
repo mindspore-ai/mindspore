@@ -22,23 +22,19 @@
 #include <string>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "abstract/primitive_infer_map.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLowerBound = "LowerBound";
-class LowerBound : public PrimitiveC {
+class MIND_API LowerBound : public BaseOperator {
  public:
-  LowerBound() : PrimitiveC(kNameLowerBound) { InitIOName({"sorted_x", "values"}, {"y"}); }
-  ~LowerBound() = default;
-  MS_DECLARE_PARENT(LowerBound, PrimitiveC);
+  MIND_API_BASE_MEMBER(LowerBound);
+  LowerBound() : BaseOperator(kNameLowerBound) { InitIOName({"sorted_x", "values"}, {"y"}); }
 };
-AbstractBasePtr LowerBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LowerBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLowerBound = std::shared_ptr<LowerBound>;
 }  // namespace ops
 }  // namespace mindspore

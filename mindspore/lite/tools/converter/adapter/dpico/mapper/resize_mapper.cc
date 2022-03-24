@@ -22,7 +22,6 @@
 #include "common/anf_util.h"
 #include "include/registry/converter_context.h"
 #include "common/op_enum.h"
-#include "ops/op_utils.h"
 #include "ops/resize.h"
 #include "op/resize_operator.h"
 
@@ -44,7 +43,7 @@ const std::unordered_map<mindspore::NearestMode, mapper::NearestMode> kNearestMo
   {mindspore::NearestMode::CEIL, mapper::NearestMode::NEAREST_CEIL},
   {mindspore::NearestMode::FLOOR, mapper::NearestMode::NEAREST_FLOOR}};
 
-STATUS GetShapeAndFormat(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<int64_t> *input_shape,
+STATUS GetShapeAndFormat(const api::CNodePtr &cnode, const api::PrimitivePtr &prim, std::vector<int64_t> *input_shape,
                          Format *input_format) {
   MS_CHECK_TRUE_MSG(input_shape != nullptr, RET_ERROR, "input_shape is nullptr.");
   MS_CHECK_TRUE_MSG(input_format != nullptr, RET_ERROR, "input_format is nullptr.");
@@ -58,14 +57,15 @@ STATUS GetShapeAndFormat(const CNodePtr &cnode, const PrimitivePtr &prim, std::v
     return RET_ERROR;
   }
   if (prim->GetAttr(ops::kFormat) != nullptr) {
-    *input_format = static_cast<Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat)));
+    *input_format = static_cast<Format>(api::GetValue<int64_t>(prim->GetAttr(ops::kFormat)));
   } else {
     MS_LOG(ERROR) << ops::kFormat << " attr is needed.";
     return RET_ERROR;
   }
   return RET_OK;
 }
-STATUS SetResizeDataInfo(const CNodePtr &cnode, const PrimitivePtr &prim, mapper::ResizeOperator *resize_operator) {
+STATUS SetResizeDataInfo(const api::CNodePtr &cnode, const api::PrimitivePtr &prim,
+                         mapper::ResizeOperator *resize_operator) {
   MS_CHECK_TRUE_MSG(resize_operator != nullptr, RET_ERROR, "resize_operator is nullptr.");
   if (cnode->inputs().size() != dpico::kDims3) {
     MS_LOG(DEBUG) << "only process two inputs. " << cnode->fullname_with_scope();
@@ -73,12 +73,12 @@ STATUS SetResizeDataInfo(const CNodePtr &cnode, const PrimitivePtr &prim, mapper
   }
   auto input_node = cnode->input(kAxis2);
   MS_CHECK_TRUE_MSG(input_node != nullptr, RET_ERROR, "input_node is nullptr.");
-  auto param_node = input_node->cast<ParameterPtr>();
+  auto param_node = input_node->cast<api::ParameterPtr>();
   if (param_node == nullptr || !param_node->has_default()) {
     MS_LOG(ERROR) << "invalid parameter node. " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
+  auto tensor_info = param_node->default_param()->cast<api::TensorPtr>();
   if (tensor_info == nullptr || tensor_info->DataSize() == 0) {
     MS_LOG(ERROR) << "tensor_info is invalid. " << cnode->fullname_with_scope();
     return RET_ERROR;
@@ -102,7 +102,7 @@ STATUS SetResizeDataInfo(const CNodePtr &cnode, const PrimitivePtr &prim, mapper
                     "resize param element size should be 2. " << cnode->fullname_with_scope());
   if (tensor_info->data_type() == kNumberTypeInt32 || tensor_info->data_type() == kNumberTypeInt) {
     std::vector<int> size_vec;
-    auto data = reinterpret_cast<int32_t *>(tensor_info->data_c());
+    auto data = reinterpret_cast<int32_t *>(tensor_info->data());
     MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
     if (input_format == Format::NCHW) {
       size_vec = {static_cast<int32_t>(input_shape.at(0)), static_cast<int32_t>(input_shape.at(kNCHW_C)), *data,
@@ -114,7 +114,7 @@ STATUS SetResizeDataInfo(const CNodePtr &cnode, const PrimitivePtr &prim, mapper
     resize_operator->SetSizeVec(size_vec);
   } else if (tensor_info->data_type() == kNumberTypeFloat32 || tensor_info->data_type() == kNumberTypeFloat) {
     std::vector<float> scale_vec;
-    auto data = reinterpret_cast<float *>(tensor_info->data_c());
+    auto data = reinterpret_cast<float *>(tensor_info->data());
     MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
     if (input_format == Format::NCHW) {
       scale_vec = {1.0, 1.0, *data, *(data + 1)};
@@ -129,17 +129,17 @@ STATUS SetResizeDataInfo(const CNodePtr &cnode, const PrimitivePtr &prim, mapper
   return RET_OK;
 }
 }  // namespace
-STATUS ResizeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                         const CNodePtrList &output_cnodes) {
+STATUS ResizeMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                         const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto resize_prim = utils::cast<std::shared_ptr<ops::Resize>>(prim);
+  auto resize_prim = api::utils::cast<api::SharedPtr<ops::Resize>>(prim);
   MS_ASSERT(resize_prim != nullptr);
 
   if (resize_prim->GetAttr(ops::kFmkType) != nullptr) {
-    auto fmk_type = static_cast<converter::FmkType>(GetValue<int>(resize_prim->GetAttr(ops::kFmkType)));
+    auto fmk_type = static_cast<converter::FmkType>(api::GetValue<int64_t>(resize_prim->GetAttr(ops::kFmkType)));
     if (fmk_type == converter::kFmkTypeCaffe) {
       MS_CHECK_TRUE_MSG(OpMapperRegistry::GetInstance()->GetOpMapper("Interp") != nullptr, RET_ERROR,
                         "mapper is nullptr.");
@@ -178,7 +178,8 @@ STATUS ResizeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *ba
   if (prim->GetAttr(ops::kCoordinateTransformMode) != nullptr) {
     auto coordinate_transform_mode = static_cast<CoordinateTransformMode>(resize_prim->get_coordinate_transform_mode());
     if (kCoordinateModeMap.find(coordinate_transform_mode) == kCoordinateModeMap.end()) {
-      MS_LOG(ERROR) << "unsupported coordinate transform mode:" << coordinate_transform_mode << " "
+      MS_LOG(ERROR) << "unsupported coordinate transform mode:"
+                    << std::to_string(static_cast<int>(coordinate_transform_mode)) << " "
                     << cnode->fullname_with_scope();
       return RET_ERROR;
     }
@@ -187,7 +188,8 @@ STATUS ResizeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *ba
   if (prim->GetAttr(ops::kMethod) != nullptr) {
     auto interpolation_mode = static_cast<ResizeMethod>(resize_prim->get_method());
     if (kInterpolationModeMap.find(interpolation_mode) == kInterpolationModeMap.end()) {
-      MS_LOG(ERROR) << "unsupported interpolation mode:" << interpolation_mode << " " << cnode->fullname_with_scope();
+      MS_LOG(ERROR) << "unsupported interpolation mode:" << std::to_string(static_cast<int>(interpolation_mode)) << " "
+                    << cnode->fullname_with_scope();
       return RET_ERROR;
     }
     resize_operator->SetInterpolationMode(kInterpolationModeMap.at(interpolation_mode));
@@ -195,7 +197,8 @@ STATUS ResizeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *ba
   if (prim->GetAttr(ops::kNearestMode) != nullptr) {
     auto nearest_mode = static_cast<mindspore::NearestMode>(resize_prim->get_nearest_mode());
     if (kNearestModeMap.find(nearest_mode) == kNearestModeMap.end()) {
-      MS_LOG(ERROR) << "unsupported nearest mode:" << nearest_mode << " " << cnode->fullname_with_scope();
+      MS_LOG(ERROR) << "unsupported nearest mode:" << std::to_string(static_cast<int>(nearest_mode)) << " "
+                    << cnode->fullname_with_scope();
       return RET_ERROR;
     }
     resize_operator->SetNearestMode(kNearestModeMap.at(nearest_mode));

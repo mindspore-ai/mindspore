@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/parallel/multi_conv_info.h"
 #include <string>
 #include <algorithm>
@@ -20,6 +22,7 @@
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 using mindspore::converter::FmkType;
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
@@ -65,7 +68,7 @@ bool MultiConvSplit::CheckSplitValid() {
   for (const auto &conv_node : conv_nodes_) {
     auto conv_cnode = conv_node->cast<CNodePtr>();
     MS_ASSERT(conv_cnode != nullptr);
-    auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(conv_cnode->input(kAnfPrimitiveIndex));
+    auto conv_prim = ops::GetOperator<ops::Conv2DFusion>(conv_cnode->input(kAnfPrimitiveIndex));
     MS_ASSERT(conv_prim != nullptr);
     MS_CHECK_TRUE_RET(conv_prim->GetAttr(ops::kPadMode) != nullptr, false);
     if (conv_prim->get_pad_mode() != SAME) {
@@ -177,7 +180,7 @@ bool MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vect
   MS_ASSERT(ori_node != nullptr && outputs_node != nullptr);
   auto ori_conv_cnode = ori_node->cast<CNodePtr>();
   MS_ASSERT(ori_conv_cnode != nullptr);
-  auto ori_attr = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(ori_conv_cnode->input(kAnfPrimitiveIndex));
+  auto ori_attr = ops::GetOperator<ops::Conv2DFusion>(ori_conv_cnode->input(kAnfPrimitiveIndex));
   MS_ASSERT(ori_attr != nullptr);
   for (int output_conv_index = 0; output_conv_index < static_cast<int>(split_info_.out_num); output_conv_index++) {
     // Create Conv node attr
@@ -194,7 +197,9 @@ bool MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vect
     AdJustConvPrim(conv_prim, input_shape, output_conv_index);
     // node inputs
     std::vector<AnfNodePtr> conv_inputs;
-    conv_inputs.push_back(NewValueNode(conv_prim));
+    auto conv_prim_c = conv_prim->GetPrim();
+    MS_ASSERT(conv_prim_c != nullptr);
+    conv_inputs.push_back(NewValueNode(conv_prim_c));
     AdJustInputs(ori_node, inputs_node, output_conv_index, &conv_inputs);
     // create new conv node
     if (!CreateNewConvNode(ori_node, conv_inputs, output_conv_index, outputs_node)) {
@@ -273,8 +278,8 @@ AnfNodePtr MultiConvSplitH::SplitMultiConv(const AnfNodePtr &node) {
   return MultiConvNHSplit(node);
 }
 
-void MultiConvSplitH::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
-                                     const ShapeVector &input_shape, int output_conv_index) {
+void MultiConvSplitH::AdJustConvPrim(const api::SharedPtr<ops::Conv2DFusion> &conv_prim, const ShapeVector &input_shape,
+                                     int output_conv_index) {
   MS_ASSERT(conv_prim != nullptr);
   MS_ASSERT(input_shape.size() == kInputSizeFour);
   int64_t input_h = input_shape.at(kAxisH);

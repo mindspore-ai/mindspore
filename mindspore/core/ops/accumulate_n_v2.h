@@ -19,21 +19,19 @@
 #include <memory>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAccumulateNV2 = "AccumulateNV2";
-class MS_CORE_API AccumulateNV2 : public PrimitiveC {
+class MIND_API AccumulateNV2 : public BaseOperator {
  public:
-  AccumulateNV2() : PrimitiveC(kNameAccumulateNV2) { InitIOName({"inputs"}, {"sum"}); }
-  ~AccumulateNV2() = default;
-  MS_DECLARE_PARENT(AccumulateNV2, PrimitiveC);
+  MIND_API_BASE_MEMBER(AccumulateNV2);
+  AccumulateNV2() : BaseOperator(kNameAccumulateNV2) { InitIOName({"inputs"}, {"sum"}); }
 };
-AbstractBasePtr AccumulateNV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AccumulateNV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAccumulateNV2Ptr = std::shared_ptr<AccumulateNV2>;
 }  // namespace ops
 }  // namespace mindspore

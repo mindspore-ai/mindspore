@@ -22,28 +22,23 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameACos = "ACos";
 /// \brief Computes arccosine of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.ACos for more details.
-class ACos : public PrimitiveC {
+class MIND_API ACos : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ACos);
   /// \brief Constructor.
-  ACos() : PrimitiveC(kNameACos) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~ACos() = default;
-
-  MS_DECLARE_PARENT(ACos, PrimitiveC);
+  ACos() : BaseOperator(kNameACos) { InitIOName({"x"}, {"y"}); }
 };
 
-AbstractBasePtr ACosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ACosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimACosPtr = std::shared_ptr<ACos>;
 }  // namespace ops

@@ -20,22 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
+
 #include "ops/reduce.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceMax = "ReduceMax";
 /// \brief Reduces a dimension of a tensor by the maximum value in this dimension.
 /// Refer to Python API @ref mindspore.ops.ReduceMax for more details.
-class MS_CORE_API ReduceMax : public Reduce {
+class MIND_API ReduceMax : public Reduce {
  public:
+  MIND_API_BASE_MEMBER(ReduceMax);
   /// \brief Constructor.
   ReduceMax() : Reduce(kNameReduceMax) { InitIOName({"input_x", "axis"}, {"y"}); }
-  /// \brief Destructor.
-  ~ReduceMax() = default;
-  MS_DECLARE_PARENT(ReduceMax, Reduce);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ReduceMax for the inputs.
   void Init() const {}
 };

@@ -28,6 +28,8 @@
 #include "ir/dtype/type_id.h"
 #include "ops/primitive_c.h"
 #include "mindspore/core/utils/check_convert_utils.h"
+#include "tools/converter/parser/parser_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -37,9 +39,7 @@ class OnnxNodeParser {
 
   virtual ~OnnxNodeParser() = default;
 
-  virtual ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-    return nullptr;
-  }
+  virtual PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) { return nullptr; }
 
   static STATUS set_opset_version(int64_t version) {
     opset_version_ = version;

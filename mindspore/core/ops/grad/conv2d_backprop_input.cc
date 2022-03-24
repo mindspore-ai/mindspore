@@ -21,6 +21,9 @@
 #include <set>
 
 #include "ops/grad/conv2d_backprop_input.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -159,6 +162,8 @@ TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Conv2DBackpropInput, PrimitiveC, BaseOperator);
 AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -193,19 +198,20 @@ void Conv2DBackpropInput::Init(int64_t out_channel, const std::vector<int64_t> &
 
 void Conv2DBackpropInput::set_out_channel(int64_t out_channel) {
   (void)AddAttr(kOutChannel,
-                MakeValue(CheckAndConvertUtils::CheckInteger(kOutChannel, out_channel, kGreaterThan, 0, name())));
+                api::MakeValue(CheckAndConvertUtils::CheckInteger(kOutChannel, out_channel, kGreaterThan, 0, name())));
 }
 
 void Conv2DBackpropInput::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  (void)AddAttr(kKernelSize, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, name())));
+  (void)AddAttr(kKernelSize,
+                api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, name())));
 }
 
 void Conv2DBackpropInput::set_stride(const std::vector<int64_t> &stride) {
-  (void)AddAttr(kStride, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name())));
+  (void)AddAttr(kStride, api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name())));
 }
 
 void Conv2DBackpropInput::set_dilation(const std::vector<int64_t> &dilation) {
-  (void)AddAttr(kDilation, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name())));
+  (void)AddAttr(kDilation, api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name())));
 }
 
 void Conv2DBackpropInput::set_pad_mode(const PadMode &pad_mode) {
@@ -218,30 +224,30 @@ void Conv2DBackpropInput::set_pad_mode(const PadMode &pad_mode) {
     CheckAndConvertUtils::Check(kPad, pad, kEqual, {0, 0, 0, 0}, name());
   }
   int64_t swi = pad_mode;
-  (void)AddAttr(kPadMode, MakeValue(swi));
+  (void)AddAttr(kPadMode, api::MakeValue(swi));
 }
 
 void Conv2DBackpropInput::set_pad(const std::vector<int64_t> &pad) {
   const int64_t pad_size = 4;
   (void)CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, pad_size, name());
-  (void)AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
+  (void)AddAttr(kPad, api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 
 void Conv2DBackpropInput::set_mode(int64_t mode) {
-  (void)AddAttr(kMode, MakeValue(CheckAndConvertUtils::CheckInteger(kMode, mode, kEqual, 1, name())));
+  (void)AddAttr(kMode, api::MakeValue(CheckAndConvertUtils::CheckInteger(kMode, mode, kEqual, 1, name())));
 }
 
 void Conv2DBackpropInput::set_group(int64_t group) {
-  (void)AddAttr(kGroup, MakeValue(CheckAndConvertUtils::CheckInteger(kGroup, group, kGreaterThan, 0, name())));
+  (void)AddAttr(kGroup, api::MakeValue(CheckAndConvertUtils::CheckInteger(kGroup, group, kGreaterThan, 0, name())));
 }
 
 void Conv2DBackpropInput::set_format(const Format &format) {
   int64_t f = format;
-  (void)AddAttr(kFormat, MakeValue(f));
+  (void)AddAttr(kFormat, api::MakeValue(f));
 }
 
 void Conv2DBackpropInput::set_pad_list(const std::vector<int64_t> &pad_list) {
-  (void)this->AddAttr(kPadList, MakeValue(pad_list));
+  (void)this->AddAttr(kPadList, api::MakeValue(pad_list));
 }
 
 int64_t Conv2DBackpropInput::get_out_channel() const {

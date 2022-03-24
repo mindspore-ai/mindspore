@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/mapper/spatial_node_adapter.h"
 #include <vector>
 #include <set>
@@ -46,7 +47,8 @@ CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &
   CNodePtr get_item_cnode = nullptr;
   auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
   MS_CHECK_TRUE_MSG(tuple_get_item_prim_ptr != nullptr, nullptr, "New TupleGetItem failed");
-  auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+  auto tuple_get_item_prim_c = tuple_get_item_prim_ptr->GetPrim();
+  auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_c);
   MS_CHECK_TRUE_MSG(tuple_get_item_prim != nullptr, nullptr, "tuple_prim is nullptr.");
   auto get_item_value = NewValueNode(MakeValue<int64_t>(0));
   MS_CHECK_TRUE_MSG(get_item_value != nullptr, nullptr, "item_value is nullptr.");

@@ -21,21 +21,18 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogSoftmax = "LogSoftmax";
 /// \brief Log Softmax activation function. Refer to Python API @ref mindspore.ops.LogSoftmax for more details.
-class MS_CORE_API LogSoftmax : public PrimitiveC {
+class MIND_API LogSoftmax : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LogSoftmax);
   /// \brief Constructor.
-  LogSoftmax() : PrimitiveC(kNameLogSoftmax) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~LogSoftmax() = default;
-  MS_DECLARE_PARENT(LogSoftmax, PrimitiveC);
+  LogSoftmax() : BaseOperator(kNameLogSoftmax) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogSoftmax for the inputs.
   void Init(const int64_t axis = -1);
   /// \brief Set axis.

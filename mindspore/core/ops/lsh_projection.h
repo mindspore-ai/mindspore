@@ -20,23 +20,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLshProjection = "LshProjection";
 /// \brief LshProjection defined LshProjection operator prototype of lite, which is to project an input to a bit vector.
-class MS_CORE_API LshProjection : public PrimitiveC {
+class MIND_API LshProjection : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LshProjection);
   /// \brief Constructor.
-  LshProjection() : PrimitiveC(kNameLshProjection) {}
-
-  /// \brief Destructor.
-  ~LshProjection() = default;
-
-  MS_DECLARE_PARENT(LshProjection, PrimitiveC);
+  LshProjection() : BaseOperator(kNameLshProjection) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -54,8 +50,8 @@ class MS_CORE_API LshProjection : public PrimitiveC {
   LshProjectionType get_type() const;
 };
 
-AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

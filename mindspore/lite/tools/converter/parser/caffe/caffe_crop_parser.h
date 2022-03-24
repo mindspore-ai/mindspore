@@ -28,7 +28,7 @@ class CaffeCropParser : public CaffeNodeParser {
   CaffeCropParser() : CaffeNodeParser("crop") {}
   ~CaffeCropParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

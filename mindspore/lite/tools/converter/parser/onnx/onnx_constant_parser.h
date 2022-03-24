@@ -27,10 +27,10 @@ class OnnxConstantParser : public OnnxNodeParser {
   OnnxConstantParser() : OnnxNodeParser("Constant") {}
   ~OnnxConstantParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 
  private:
-  STATUS AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *prim);
+  STATUS AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, PrimitiveCPtr prim);
 };
 }  // namespace lite
 }  // namespace mindspore

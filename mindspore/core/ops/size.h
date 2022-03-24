@@ -18,21 +18,19 @@
 #define MINDSPORE_CORE_OPS_SIZE_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSize = "Size";
 /// \brief Returns the size of a tensor. Refer to Python API @ref mindspore.ops.Size for more details.
-class MS_CORE_API Size : public PrimitiveC {
+class MIND_API Size : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Size);
   /// \brief Constructor.
-  Size() : PrimitiveC(kNameSize) {}
-  /// \brief Destructor.
-  ~Size() = default;
-  MS_DECLARE_PARENT(Size, PrimitiveC);
+  Size() : BaseOperator(kNameSize) {}
 };
 
 }  // namespace ops

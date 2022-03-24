@@ -20,6 +20,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include "ops/neg.h"
 #include "common/anf_util.h"
 #include "op/binary_math_operator.h"
 
@@ -40,8 +41,8 @@ const std::unordered_map<std::string, mapper::BinaryMathOp> kArithmeticOpMap = {
   {"X_DIV_Y", mapper::BinaryMathOp::X_DIV_Y_OP},
   {"X_LOG_Y", mapper::BinaryMathOp::X_LOG_Y_OP}};
 }  // namespace
-STATUS ArithmeticMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                             const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS ArithmeticMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                             const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -71,7 +72,7 @@ STATUS ArithmeticMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr>
   auto binary_math_op = kArithmeticOpMap.at(op_type_name);
   arithmetic_operator->SetBinaryMathOp(binary_math_op);
 
-  if (CheckPrimitiveType(cnode, prim::kPrimNeg)) {
+  if (CheckPrimitiveType(cnode, api::MakeShared<ops::Neg>())) {
     arithmetic_operator->PushOfflineArgs(std::make_pair(std::vector<float>{-1.0}, std::vector<int32_t>{}));
     arithmetic_operator->PushOfflineArgs(std::make_pair(std::vector<float>{}, std::vector<int32_t>{}));
   } else {

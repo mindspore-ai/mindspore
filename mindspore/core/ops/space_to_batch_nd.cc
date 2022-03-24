@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -37,7 +38,7 @@ void SpaceToBatchND::set_paddings(std::vector<std::vector<int64_t>> paddings) {
       (void)CheckAndConvertUtils::CheckInteger(kPaddings, paddings[i][j], kGreaterEqual, 0LL, this->name());
     }
   }
-  (void)this->AddAttr(kPaddings, MakeValue(paddings));
+  (void)this->AddAttr(kPaddings, api::MakeValue(paddings));
 }
 
 std::vector<std::vector<int64_t>> SpaceToBatchND::get_paddings() const {
@@ -51,7 +52,7 @@ void SpaceToBatchND::set_block_shape(std::vector<int64_t> block_shape) {
   for (size_t i = 0; i < block_shape.size(); i++) {
     (void)CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape[i], kGreaterEqual, 1LL, this->name());
   }
-  (void)this->AddAttr(kBlockShape, MakeValue(block_shape));
+  (void)this->AddAttr(kBlockShape, api::MakeValue(block_shape));
 }
 
 std::vector<int64_t> SpaceToBatchND::get_block_shape() const {
@@ -63,6 +64,7 @@ void SpaceToBatchND::Init(const std::vector<int64_t> block_shape, const std::vec
   this->set_block_shape(block_shape);
 }
 
+MIND_API_BASE_IMPL(SpaceToBatchND, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSpaceToBatchND, SpaceToBatchND);
 }  // namespace ops
 }  // namespace mindspore

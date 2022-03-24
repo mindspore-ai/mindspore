@@ -23,6 +23,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -91,6 +92,8 @@ TypePtr ApplyFtrlInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   return var_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(ApplyFtrl, PrimitiveC, BaseOperator);
 AbstractBasePtr ApplyFtrlInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -24,6 +24,8 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -392,9 +394,10 @@ TypePtr StridedSliceInferType(const PrimitivePtr &primitive, const std::vector<A
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(StridedSlice, PrimitiveC, BaseOperator);
 void StridedSlice::set_begin_mask(int64_t begin_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kBeginMask, begin_mask, kGreaterEqual, 0, this->name());
-  (void)this->AddAttr(kBeginMask, MakeValue(begin_mask));
+  (void)this->AddAttr(kBeginMask, api::MakeValue(begin_mask));
 }
 int64_t StridedSlice::get_begin_mask() const {
   auto value_ptr = GetAttr(kBeginMask);
@@ -402,7 +405,7 @@ int64_t StridedSlice::get_begin_mask() const {
 }
 void StridedSlice::set_end_mask(int64_t end_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kEndMask, end_mask, kGreaterEqual, 0, this->name());
-  (void)this->AddAttr(kEndMask, MakeValue(end_mask));
+  (void)this->AddAttr(kEndMask, api::MakeValue(end_mask));
 }
 int64_t StridedSlice::get_end_mask() const {
   auto value_ptr = GetAttr(kEndMask);
@@ -416,7 +419,7 @@ void StridedSlice::set_ellipsis_mask(int64_t ellipsis_mask) {
     buffer << "For" << this->name() << ", only support one ellipsis in the index, but got " << this->get_end_mask();
     MS_EXCEPTION(ValueError) << buffer.str();
   }
-  (void)this->AddAttr(kEllipsisMask, MakeValue(ellipsis_mask));
+  (void)this->AddAttr(kEllipsisMask, api::MakeValue(ellipsis_mask));
 }
 int64_t StridedSlice::get_ellipsis_mask() const {
   auto value_ptr = GetAttr(kEllipsisMask);
@@ -424,7 +427,7 @@ int64_t StridedSlice::get_ellipsis_mask() const {
 }
 void StridedSlice::set_new_axis_mask(int64_t new_axis_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kNewAxisMask, new_axis_mask, kGreaterEqual, 0, this->name());
-  (void)this->AddAttr(kNewAxisMask, MakeValue(new_axis_mask));
+  (void)this->AddAttr(kNewAxisMask, api::MakeValue(new_axis_mask));
 }
 int64_t StridedSlice::get_new_axis_mask() const {
   auto value_ptr = GetAttr(kNewAxisMask);
@@ -432,7 +435,7 @@ int64_t StridedSlice::get_new_axis_mask() const {
 }
 void StridedSlice::set_shrink_axis_mask(int64_t shrink_axis_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kShrinkAxisMask, shrink_axis_mask, kGreaterEqual, 0, this->name());
-  (void)this->AddAttr(kShrinkAxisMask, MakeValue(shrink_axis_mask));
+  (void)this->AddAttr(kShrinkAxisMask, api::MakeValue(shrink_axis_mask));
 }
 int64_t StridedSlice::get_shrink_axis_mask() const {
   auto value_ptr = GetAttr(kShrinkAxisMask);

@@ -22,7 +22,7 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include "api/ir/func_graph_manager.h"
+#include "mindapi/ir/common.h"
 #include "src/graph_split_info.h"
 #include "mapper/op_mapper.h"
 #include "op/base_operator.h"
@@ -37,11 +37,11 @@ class OmGenerator {
           mapper::ModelCoreInfo *om_model_info, bool use_origin_config);
 
  private:
-  int GenerateAippConfig(const std::string &aipp_cfg_path, const AnfNodePtrList &subgraph_inputs);
+  int GenerateAippConfig(const std::string &aipp_cfg_path, const api::AnfNodePtrList &subgraph_inputs);
   int GenerateMapperConfig(const api::FuncGraphPtr &func_graph, const Subgraph &sub_graph, int custom_id,
                            const std::string &cfg);
-  int TransformSubGraphInputs(const AnfNodePtrList &nodes, std::vector<BaseOperatorPtr> *base_operators);
-  int TransformSubGraphCNodes(const api::FuncGraphManagerPtr &manager, const CNodePtrList &Cnodes,
+  int TransformSubGraphInputs(const api::AnfNodePtrList &nodes, std::vector<BaseOperatorPtr> *base_operators);
+  int TransformSubGraphCNodes(const api::FuncGraphManagerPtr &manager, const api::CNodePtrList &Cnodes,
                               std::vector<BaseOperatorPtr> *base_operators);
 };
 }  // namespace dpico

@@ -19,24 +19,22 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API DropoutGrad : public PrimitiveC {
+class MIND_API DropoutGrad : public BaseOperator {
  public:
-  DropoutGrad() : PrimitiveC(prim::kPrimDropoutGrad->name()) {}
-  ~DropoutGrad() = default;
-  MS_DECLARE_PARENT(DropoutGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(DropoutGrad);
+  DropoutGrad() : BaseOperator("DropoutGrad") {}
   void Init(const float keep_prob = 0.5);
   void set_keep_prob(const float keep_prob);
   float get_keep_prob() const;
 };
 
-AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_

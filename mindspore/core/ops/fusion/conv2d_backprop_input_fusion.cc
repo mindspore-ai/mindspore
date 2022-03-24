@@ -19,9 +19,11 @@
 
 #include "ops/fusion/conv2d_backprop_input_fusion.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Conv2DBackpropInputFusion, PrimitiveC, Conv2DBackpropInput);
 void Conv2DBackpropInputFusion::Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size,
                                      int64_t mode, const PadMode &pad_mode, const std::vector<int64_t> &pad,
                                      const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,
@@ -42,12 +44,12 @@ void Conv2DBackpropInputFusion::Init(int64_t in_channel, int64_t out_channel, co
 }
 
 void Conv2DBackpropInputFusion::set_in_channel(int64_t in_channel) {
-  (void)this->AddAttr(kInChannel, MakeValue(in_channel));
+  (void)this->AddAttr(kInChannel, api::MakeValue(in_channel));
 }
 
 void Conv2DBackpropInputFusion::set_activation_type(const ActivationType &activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 int64_t Conv2DBackpropInputFusion::get_in_channel() const {
   auto value_ptr = GetAttr(kInChannel);

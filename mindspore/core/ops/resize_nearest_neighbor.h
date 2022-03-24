@@ -19,22 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResizeNearestNeighbor = "ResizeNearestNeighbor";
 /// \brief Resizes the input tensor by using the nearest neighbor algorithm.
 /// Refer to Python API @ref mindspore.ops.ResizeNearestNeighbor for more details.
-class MS_CORE_API ResizeNearestNeighbor : public PrimitiveC {
+class MIND_API ResizeNearestNeighbor : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ResizeNearestNeighbor);
   /// \brief Constructor.
-  ResizeNearestNeighbor() : PrimitiveC(kNameResizeNearestNeighbor) {}
-  /// \brief Destructor.
-  ~ResizeNearestNeighbor() = default;
-  MS_DECLARE_PARENT(ResizeNearestNeighbor, PrimitiveC);
+  ResizeNearestNeighbor() : BaseOperator(kNameResizeNearestNeighbor) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ResizeNearestNeighbor for the inputs.
   void Init(const std::vector<int64_t> &size, const bool align_corners = false);
   /// \brief Set size.

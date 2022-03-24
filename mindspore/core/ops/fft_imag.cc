@@ -18,9 +18,11 @@
 #include <memory>
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(FftImag, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameFftImag, FftImag);
 }  // namespace ops
 }  // namespace mindspore

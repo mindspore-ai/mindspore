@@ -24,9 +24,11 @@ namespace mindspore {
 namespace lite {
 constexpr auto kNamePadContiguous = "pad_contiguous";
 
-ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::PadFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   mindspore::PaddingMode padding_mode;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
@@ -57,9 +59,9 @@ ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const 
       prim->set_constant_value(onnx_node_attr.f());
     }
   }
-  prim->AddAttr(kNamePadContiguous, MakeValue(true));
+  prim_c->AddAttr(kNamePadContiguous, MakeValue(true));
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxPadParser("Pad", new OnnxPadParser());

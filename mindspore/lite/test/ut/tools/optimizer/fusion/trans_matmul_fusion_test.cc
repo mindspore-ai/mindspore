@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include <memory>
 #include <vector>
 #include "schema/inner/model_generated.h"

@@ -23,8 +23,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeRnnParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeRnnParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -34,21 +34,21 @@ ops::PrimitiveC *CaffeRnnParser::Parse(const caffe::LayerParameter &proto, const
   if (proto.has_recurrent_param()) {
     const auto &rnn_param = proto.recurrent_param();
     if (rnn_param.has_num_output()) {
-      prim->AddAttr(dpico::kNumOutput, MakeValue<uint32_t>(rnn_param.num_output()));
+      prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(rnn_param.num_output()));
     }
     if (rnn_param.has_expose_hidden()) {
-      prim->AddAttr(dpico::kExposeHidden, MakeValue<bool>(rnn_param.expose_hidden()));
-      prim->AddAttr(dpico::kOutputLastFrameFlag, MakeValue<bool>(rnn_param.expose_hidden()));
-      prim->AddAttr(dpico::kInitialHOnlineFlag, MakeValue<bool>(rnn_param.expose_hidden()));
-      prim->AddAttr(dpico::kUseDefaultInitialHFlag, MakeValue<bool>(!rnn_param.expose_hidden()));
+      prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(rnn_param.expose_hidden()));
+      prim->AddAttr(dpico::kOutputLastFrameFlag, api::MakeValue<bool>(rnn_param.expose_hidden()));
+      prim->AddAttr(dpico::kInitialHOnlineFlag, api::MakeValue<bool>(rnn_param.expose_hidden()));
+      prim->AddAttr(dpico::kUseDefaultInitialHFlag, api::MakeValue<bool>(!rnn_param.expose_hidden()));
     }
   }
 
   // set default value
-  prim->AddAttr(dpico::kKeepDirectionDimFlag, MakeValue<bool>(false));
-  prim->AddAttr(dpico::kHasOutputGateFlag, MakeValue<bool>(true));
+  prim->AddAttr(dpico::kKeepDirectionDimFlag, api::MakeValue<bool>(false));
+  prim->AddAttr(dpico::kHasOutputGateFlag, api::MakeValue<bool>(true));
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeRnnParser("RNN", new CaffeRnnParser());

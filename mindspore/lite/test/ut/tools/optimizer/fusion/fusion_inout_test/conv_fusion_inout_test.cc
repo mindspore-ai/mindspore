@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/conv_fusion_inout_test.h"
 #include <memory>
 #include "src/common/log_adapter.h"
@@ -25,9 +26,11 @@ namespace mindspore {
 ValueNodePtr ConvFusionInoutTest::CreateConvPrimitiveValue() {
   auto prim = std::make_unique<ops::Conv2DFusion>();
   MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create Conv2d primitivec failed");
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
   prim->Init(ic_, oc_, {kh_, kw_});
   prim->set_pad_mode(PadMode::SAME);
-  return NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim.release()));
+  return NewValueNode(prim_c);
 }
 
 CNodePtr ConvFusionInoutTest::AddConv(const FuncGraphPtr &graph, const AnfNodePtr &input, const std::string &name) {

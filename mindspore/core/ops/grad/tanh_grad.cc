@@ -25,6 +25,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -60,6 +61,8 @@ TypePtr TanhGradInfertype(const PrimitivePtr &prim, const std::vector<AbstractBa
   return x_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(TanhGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr TanhGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   auto shape = TanhGradInfershape(primitive, input_args);

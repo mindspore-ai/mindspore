@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include <unordered_map>
 #include <memory>
@@ -23,6 +24,7 @@
 #include "tools/optimizer/common/format_utils.h"
 #include "ops/fusion/scale_fusion.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 bool IsBNCNode(const BaseRef &n) {
@@ -160,7 +162,9 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   MS_ASSERT(func_graph != nullptr && input_node != nullptr);
   auto trans_prim = std::make_shared<ops::Transpose>();
   MS_CHECK_TRUE_RET(trans_prim != nullptr, nullptr);
-  auto cnode = func_graph->NewCNode(trans_prim, {input_node, perm});
+  auto trans_prim_c = trans_prim->GetPrim();
+  MS_CHECK_TRUE_RET(trans_prim_c != nullptr, nullptr);
+  auto cnode = func_graph->NewCNode(trans_prim_c, {input_node, perm});
   MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
   cnode->set_fullname_with_scope(cnode_name);
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(2, 1);

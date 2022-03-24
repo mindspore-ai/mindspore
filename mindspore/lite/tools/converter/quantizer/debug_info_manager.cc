@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include <fstream>
 #include <map>
 #include "tools/converter/quantizer/debug_info_manager.h"
@@ -27,7 +28,7 @@
 namespace mindspore::lite {
 namespace {
 constexpr int kNumUsPerMs = 1000;
-}
+}  // namespace
 std::string DebugInfoManager::ParseInOutTensorToString(InOutFlag in_out_flag) {
   switch (in_out_flag) {
     case INPUT:

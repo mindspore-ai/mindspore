@@ -20,23 +20,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLayerNorm = prim::kLayerNorm;
+constexpr auto kNameLayerNorm = "LayerNorm";
 /// \brief Applies the Layer Normalization to the input tensor.
 /// Refer to Python API @ref mindspore.ops.LayerNorm for more details.
-class MS_CORE_API LayerNorm : public PrimitiveC {
+class MIND_API LayerNorm : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(LayerNorm);
   /// \brief Constructor.
-  LayerNorm() : PrimitiveC(kNameLayerNorm) {}
-  explicit LayerNorm(const std::string k_name) : PrimitiveC(k_name) {}
-  /// \brief Destructor.
-  ~LayerNorm() = default;
-  MS_DECLARE_PARENT(LayerNorm, PrimitiveC);
+  LayerNorm() : BaseOperator(kNameLayerNorm) {}
+  explicit LayerNorm(const std::string k_name) : BaseOperator(k_name) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LayerNorm for the inputs.
   void Init(const int64_t begin_norm_axis = 1, const int64_t begin_params_axis = 1, const float epsilon = 1e-7);
   /// \brief Set begin_norm_axis.
@@ -59,8 +56,8 @@ class MS_CORE_API LayerNorm : public PrimitiveC {
   float get_epsilon() const;
 };
 
-AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLayerNormPtr = std::shared_ptr<LayerNorm>;
 
 }  // namespace ops

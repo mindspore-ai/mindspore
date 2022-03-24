@@ -18,22 +18,20 @@
 #define MINDSPORE_CORE_OPS_REVERSE_SEQUENCE_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReverseSequence = "ReverseSequence";
 /// \brief Reverses variable length slices.
 /// Refer to Python API @ref mindspore.ops.ReverseSequence for more details.
-class MS_CORE_API ReverseSequence : public PrimitiveC {
+class MIND_API ReverseSequence : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ReverseSequence);
   /// \brief Constructor.
-  ReverseSequence() : PrimitiveC(kNameReverseSequence) { InitIOName({"x", "seq_lengths"}, {"y"}); }
-  /// \brief Destructor.
-  ~ReverseSequence() = default;
-  MS_DECLARE_PARENT(ReverseSequence, PrimitiveC);
+  ReverseSequence() : BaseOperator(kNameReverseSequence) { InitIOName({"x", "seq_lengths"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ReverseSequence for the inputs.
   void Init(const int64_t seq_dim, const int64_t batch_dim = 0);
   /// \brief Set seq_dim.
@@ -49,8 +47,8 @@ class MS_CORE_API ReverseSequence : public PrimitiveC {
   /// \return batch_dim.
   int64_t get_batch_dim() const;
 };
-AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimReverseSequence = std::shared_ptr<ReverseSequence>;
 }  // namespace ops
 }  // namespace mindspore

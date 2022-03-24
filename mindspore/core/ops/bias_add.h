@@ -20,23 +20,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
-// Add
-#include "ops/op_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameBiasAdd = prim::kBiasAdd;
+constexpr auto kNameBiasAdd = "BiasAdd";
 /// \brief Returns sum of input and bias tensor. Refer to Python API @ref mindspore.ops.BiasAdd for more details.
-class MS_CORE_API BiasAdd : public PrimitiveC {
+class MIND_API BiasAdd : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(BiasAdd);
   /// \brief Constructor.
-  BiasAdd() : PrimitiveC(prim::kPrimBiasAdd->name()) { InitIOName({"x", "b"}, {"output"}); }
-  /// \brief Destructor.
-  ~BiasAdd() = default;
-  MS_DECLARE_PARENT(BiasAdd, PrimitiveC);
+  BiasAdd() : BaseOperator("BiasAdd") { InitIOName({"x", "b"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BiasAdd for the inputs.
   void Init(const Format &format = NCHW);
   /// \brief Set format.
@@ -46,8 +42,8 @@ class MS_CORE_API BiasAdd : public PrimitiveC {
   /// \return format.
   Format get_format() const;
 };
-AbstractBasePtr BiasAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BiasAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

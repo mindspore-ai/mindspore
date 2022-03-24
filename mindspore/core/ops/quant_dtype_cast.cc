@@ -15,15 +15,20 @@
  */
 
 #include "ops/quant_dtype_cast.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void QuantDTypeCast::set_src_t(const int64_t src_t) { (void)AddAttr(kSrcT, MakeValue(src_t)); }
+MIND_API_BASE_IMPL(QuantDTypeCast, PrimitiveC, BaseOperator);
+void QuantDTypeCast::set_src_t(const int64_t src_t) { (void)AddAttr(kSrcT, api::MakeValue(src_t)); }
 int64_t QuantDTypeCast::get_src_t() const {
   auto value_ptr = this->GetAttr(kSrcT);
   return GetValue<int64_t>(value_ptr);
 }
-void QuantDTypeCast::set_dst_t(const int64_t dst_t) { (void)AddAttr(kDstT, MakeValue(dst_t)); }
+void QuantDTypeCast::set_dst_t(const int64_t dst_t) { (void)AddAttr(kDstT, api::MakeValue(dst_t)); }
 int64_t QuantDTypeCast::get_dst_t() const { return GetValue<int64_t>(GetAttr(kDstT)); }
 void QuantDTypeCast::Init(const int64_t src_t, const int64_t dst_t) {
   this->set_src_t(src_t);

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/squeeze_fusion.h"
 #include <memory>
 #include "schema/inner/model_generated.h"
@@ -21,6 +22,7 @@
 #include "ops/unsqueeze.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 const BaseRef SqueezeFusion::DefinePattern() const {
@@ -91,8 +93,8 @@ const AnfNodePtr SqueezeFusion::Process(const FuncGraphPtr &func_graph, const An
     MS_LOG(ERROR) << "The squeeze or unsqueeze node has no axis value.";
     return nullptr;
   }
-  auto unsqueeze_prim = utils::cast<std::shared_ptr<mindspore::ops::Unsqueeze>>(unsqueeze_primitive);
-  auto squeeze_prim = utils::cast<std::shared_ptr<mindspore::ops::Squeeze>>(squeeze_primitive);
+  auto unsqueeze_prim = api::MakeShared<mindspore::ops::Unsqueeze>(unsqueeze_primitive);
+  auto squeeze_prim = api::MakeShared<mindspore::ops::Squeeze>(squeeze_primitive);
   MS_ASSERT(unsqueeze_prim != nullptr);
   MS_ASSERT(squeeze_prim != nullptr);
   if (squeeze_prim->get_axis() == unsqueeze_prim->get_axis()) {

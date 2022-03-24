@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxSplitParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxSplitParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Split>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_axis(0);
@@ -45,7 +45,7 @@ ops::PrimitiveC *OnnxSplitParser::Parse(const onnx::GraphProto &onnx_graph, cons
   }
   prim->set_output_num(split_num);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxSplitParser("Split", new OnnxSplitParser());

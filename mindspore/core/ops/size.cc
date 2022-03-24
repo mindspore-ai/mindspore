@@ -16,9 +16,12 @@
 
 #include <memory>
 #include "ops/size.h"
+#include "ops/primitive_c.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Size, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSize, Size);
 }  // namespace ops
 }  // namespace mindspore

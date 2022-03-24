@@ -18,21 +18,18 @@
 #define MINDSPORE_CORE_OPS_BATCH_MATMUL_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Computes matrix multiplication between two tensors by batch.
 /// Refer to Python API @ref mindspore.ops.BatchMatmul for more details.
-class MS_CORE_API BatchMatmul : public PrimitiveC {
+class MIND_API BatchMatmul : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(BatchMatmul);
   /// \brief Constructor.
-  BatchMatmul() : PrimitiveC(prim::kPrimBatchMatMul->name()) { InitIOName({"x1", "x2"}, {"output"}); }
-  /// \brief Destructor.
-  ~BatchMatmul() = default;
-  MS_DECLARE_PARENT(BatchMatmul, PrimitiveC);
+  BatchMatmul() : BaseOperator("BatchMatMul") { InitIOName({"x1", "x2"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BatchMatmul for the inputs.
   void Init(bool transpose_a = false, bool transpose_b = false);
   /// \brief Set transpose_a.
@@ -48,8 +45,8 @@ class MS_CORE_API BatchMatmul : public PrimitiveC {
   /// \return transpose_b.
   bool get_transpose_b() const;
 };
-AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

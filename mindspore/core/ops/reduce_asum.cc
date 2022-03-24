@@ -18,9 +18,11 @@
 
 #include "ops/reduce_asum.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ReduceASum, PrimitiveC, Reduce);
 REGISTER_PRIMITIVE_C(kNameReduceASum, ReduceASum);
 }  // namespace ops
 }  // namespace mindspore

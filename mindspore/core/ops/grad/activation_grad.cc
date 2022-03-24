@@ -23,9 +23,11 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ActivationGrad, PrimitiveC, BaseOperator);
 void ActivationGrad::Init(const ActivationType &type, const float alpha) {
   this->set_activation_type(type);
   this->set_alpha(alpha);
@@ -33,7 +35,7 @@ void ActivationGrad::Init(const ActivationType &type, const float alpha) {
 
 void ActivationGrad::set_activation_type(const ActivationType &type) {
   int64_t swi = type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 ActivationType ActivationGrad::get_activation_type() const {
@@ -42,7 +44,7 @@ ActivationType ActivationGrad::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-void ActivationGrad::set_alpha(const float alpha) { (void)this->AddAttr(kAlpha, MakeValue(alpha)); }
+void ActivationGrad::set_alpha(const float alpha) { (void)this->AddAttr(kAlpha, api::MakeValue(alpha)); }
 
 float ActivationGrad::get_alpha() const {
   auto value_ptr = GetAttr(kAlpha);

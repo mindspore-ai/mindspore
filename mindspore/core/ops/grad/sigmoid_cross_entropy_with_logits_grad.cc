@@ -23,6 +23,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -64,6 +65,8 @@ TypePtr SigmoidCrossEntropyWithLogitsGradInferType(const PrimitivePtr &primitive
   return dout_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(SigmoidCrossEntropyWithLogitsGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisEnginePtr &,
                                                        const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {

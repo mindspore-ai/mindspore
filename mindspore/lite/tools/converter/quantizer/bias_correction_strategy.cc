@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/bias_correction_strategy.h"
 #include <dirent.h>
 #include <future>

@@ -22,24 +22,22 @@
 #include <vector>
 #include <string>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyKerasMomentum = "ApplyKerasMomentum";
-class MS_CORE_API ApplyKerasMomentum : public PrimitiveC {
+class MIND_API ApplyKerasMomentum : public BaseOperator {
  public:
-  ApplyKerasMomentum() : PrimitiveC(kNameApplyKerasMomentum) {
+  MIND_API_BASE_MEMBER(ApplyKerasMomentum);
+  ApplyKerasMomentum() : BaseOperator(kNameApplyKerasMomentum) {
     InitIOName({"var", "accum", "lr", "grad", "momentum"}, {"var", "accum"});
   }
-  ~ApplyKerasMomentum() = default;
-  MS_DECLARE_PARENT(ApplyKerasMomentum, PrimitiveC);
 };
 
-AbstractBasePtr ApplyKerasMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyKerasMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimApplyKerasMomentumPtr = std::shared_ptr<ApplyKerasMomentum>;
 }  // namespace ops

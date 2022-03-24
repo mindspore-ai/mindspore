@@ -20,27 +20,24 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAtan = "Atan";
 /// \brief Computes the trigonometric inverse tangent of the input element-wise.
 /// Refer to Python API @ref mindspore.ops.Atan for more details.
-class MS_CORE_API Atan : public PrimitiveC {
+class MIND_API Atan : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Atan);
   /// \brief Constructor.
-  Atan() : PrimitiveC(kNameAtan) { InitIOName({"x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Atan() = default;
-  MS_DECLARE_PARENT(Atan, PrimitiveC);
+  Atan() : BaseOperator(kNameAtan) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Atan for the inputs.
   void Init() const {}
 };
-AbstractBasePtr AtanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AtanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

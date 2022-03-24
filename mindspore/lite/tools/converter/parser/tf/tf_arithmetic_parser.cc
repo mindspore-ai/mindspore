@@ -49,9 +49,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFAddParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFAddParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::AddFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -60,12 +60,12 @@ ops::PrimitiveC *TFAddParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFSubParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFSubParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::SubFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -74,12 +74,12 @@ ops::PrimitiveC *TFSubParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFMulParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFMulParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::MulFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -88,27 +88,29 @@ ops::PrimitiveC *TFMulParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFDivParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFDivParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::DivFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
     return nullptr;
   }
   std::string original_name = tf_op.op();
-  prim->AddAttr(ops::kOriginalOpName, MakeValue(original_name));
-  return prim.release();
+  prim_c->AddAttr(ops::kOriginalOpName, MakeValue(original_name));
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFMaximumParser::Parse(const tensorflow::NodeDef &tf_op,
-                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                        std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFMaximumParser::Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Maximum>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -117,12 +119,12 @@ ops::PrimitiveC *TFMaximumParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFMinimumParser::Parse(const tensorflow::NodeDef &tf_op,
-                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                        std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFMinimumParser::Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Minimum>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -131,12 +133,12 @@ ops::PrimitiveC *TFMinimumParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFGreaterParser::Parse(const tensorflow::NodeDef &tf_op,
-                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                        std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFGreaterParser::Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Greater>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -145,12 +147,12 @@ ops::PrimitiveC *TFGreaterParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFGreaterEqualParser::Parse(const tensorflow::NodeDef &tf_op,
-                                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                             std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFGreaterEqualParser::Parse(const tensorflow::NodeDef &tf_op,
+                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                          std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::GreaterEqual>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -159,12 +161,12 @@ ops::PrimitiveC *TFGreaterEqualParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFLessParser::Parse(const tensorflow::NodeDef &tf_op,
-                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                     std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFLessParser::Parse(const tensorflow::NodeDef &tf_op,
+                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                  std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Less>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -173,12 +175,12 @@ ops::PrimitiveC *TFLessParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFLessEqualParser::Parse(const tensorflow::NodeDef &tf_op,
-                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                          std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFLessEqualParser::Parse(const tensorflow::NodeDef &tf_op,
+                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                       std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::LessEqual>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -187,12 +189,12 @@ ops::PrimitiveC *TFLessEqualParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFEqualParser::Parse(const tensorflow::NodeDef &tf_op,
-                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                      std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFEqualParser::Parse(const tensorflow::NodeDef &tf_op,
+                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                   std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Equal>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -201,12 +203,12 @@ ops::PrimitiveC *TFEqualParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFNotEqualParser::Parse(const tensorflow::NodeDef &tf_op,
-                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                         std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFNotEqualParser::Parse(const tensorflow::NodeDef &tf_op,
+                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                      std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::NotEqual>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -215,12 +217,12 @@ ops::PrimitiveC *TFNotEqualParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFSquaredDifferenceParser::Parse(const tensorflow::NodeDef &tf_op,
-                                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                                  std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFSquaredDifferenceParser::Parse(const tensorflow::NodeDef &tf_op,
+                                               const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                               std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::SquaredDifference>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -229,12 +231,12 @@ ops::PrimitiveC *TFSquaredDifferenceParser::Parse(const tensorflow::NodeDef &tf_
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFRsqrtParser::Parse(const tensorflow::NodeDef &tf_op,
-                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                      std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFRsqrtParser::Parse(const tensorflow::NodeDef &tf_op,
+                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                   std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Rsqrt>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -242,12 +244,12 @@ ops::PrimitiveC *TFRsqrtParser::Parse(const tensorflow::NodeDef &tf_op,
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFRoundParser::Parse(const tensorflow::NodeDef &tf_op,
-                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                      std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFRoundParser::Parse(const tensorflow::NodeDef &tf_op,
+                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                   std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Round>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -256,12 +258,12 @@ ops::PrimitiveC *TFRoundParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFCeilParser::Parse(const tensorflow::NodeDef &tf_op,
-                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                     std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFCeilParser::Parse(const tensorflow::NodeDef &tf_op,
+                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                  std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Ceil>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -270,12 +272,12 @@ ops::PrimitiveC *TFCeilParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFExpParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFExpParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::ExpFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -284,12 +286,12 @@ ops::PrimitiveC *TFExpParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFFloorParser::Parse(const tensorflow::NodeDef &tf_op,
-                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                      std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFFloorParser::Parse(const tensorflow::NodeDef &tf_op,
+                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                   std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Floor>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -298,12 +300,12 @@ ops::PrimitiveC *TFFloorParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFFloorDivParser::Parse(const tensorflow::NodeDef &tf_op,
-                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                         std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFFloorDivParser::Parse(const tensorflow::NodeDef &tf_op,
+                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                      std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::FloorDiv>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -312,12 +314,12 @@ ops::PrimitiveC *TFFloorDivParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFFloorModParser::Parse(const tensorflow::NodeDef &tf_op,
-                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                         std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFFloorModParser::Parse(const tensorflow::NodeDef &tf_op,
+                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                      std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::FloorMod>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -326,12 +328,12 @@ ops::PrimitiveC *TFFloorModParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFLogParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFLogParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Log>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -340,12 +342,12 @@ ops::PrimitiveC *TFLogParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFSqrtParser::Parse(const tensorflow::NodeDef &tf_op,
-                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                     std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFSqrtParser::Parse(const tensorflow::NodeDef &tf_op,
+                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                  std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Sqrt>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -354,12 +356,12 @@ ops::PrimitiveC *TFSqrtParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFCosParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFCosParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Cos>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -368,12 +370,12 @@ ops::PrimitiveC *TFCosParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFSinParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFSinParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Sin>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -382,12 +384,12 @@ ops::PrimitiveC *TFSinParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFSquareParser::Parse(const tensorflow::NodeDef &tf_op,
-                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                       std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFSquareParser::Parse(const tensorflow::NodeDef &tf_op,
+                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                    std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Square>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -396,12 +398,12 @@ ops::PrimitiveC *TFSquareParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFPowParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFPowParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::PowFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -410,12 +412,12 @@ ops::PrimitiveC *TFPowParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
-ops::PrimitiveC *TFAbsParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFAbsParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Abs>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
@@ -424,7 +426,7 @@ ops::PrimitiveC *TFAbsParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfAddParser("Add", new TFAddParser());

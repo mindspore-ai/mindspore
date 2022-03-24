@@ -16,21 +16,28 @@
 
 #include <set>
 #include "ops/arg_min.h"
+#include "mindapi/ir/type.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ArgMin, PrimitiveC, BaseOperator);
 void ArgMin::Init(const int64_t axis, const TypeId output_type) {
   set_axis(axis);
   set_output_type(output_type);
 }
 
-void ArgMin::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
-void ArgMin::set_output_type(const TypeId output_type) { (void)this->AddAttr(kOutputType, TypeIdToType(output_type)); }
+void ArgMin::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+void ArgMin::set_output_type(const TypeId output_type) {
+  (void)this->AddAttr(kOutputType, api::Type::GetType(output_type));
+}
 
 int64_t ArgMin::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 TypeId ArgMin::get_output_type() const {
-  auto type_ptr = GetAttr(kOutputType)->cast<TensorTypePtr>()->element();
+  auto type_ptr = GetAttr(kOutputType)->cast<api::TensorTypePtr>()->element();
   return type_ptr->type_id();
 }
 

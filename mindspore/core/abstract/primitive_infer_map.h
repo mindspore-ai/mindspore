@@ -69,8 +69,8 @@ class RegisterStandardPrimitiveEvalHelper {
   static auto helper_##name =                                                                              \
     abstract::RegisterStandardPrimitiveEvalHelper(primitive, infer_impl, infer_value_impl, is_white_list); \
   std::shared_ptr<ops::PrimitiveC> GetDefaultPrimC##name() {                                               \
-    auto out = std::make_shared<name>();                                                                   \
-    return out;                                                                                            \
+    name out;                                                                                              \
+    return std::dynamic_pointer_cast<ops::PrimitiveC>(out.impl());                                         \
   }                                                                                                        \
   ops::OpPrimCRegisterHelper primc_gen_##name(#name, GetDefaultPrimC##name);
 }  // namespace abstract

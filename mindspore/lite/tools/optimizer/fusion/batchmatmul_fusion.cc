@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include <memory>
 #include <vector>
@@ -23,6 +25,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -100,6 +103,8 @@ std::shared_ptr<ops::MatMulFusion> BuildMatMulPrim(const CNodePtr &stack_cnode) 
     MS_LOG(ERROR) << "new MatMul failed";
     return nullptr;
   }
+  auto matmul_prim_c = matmul_cvalue->GetPrim();
+  MS_CHECK_TRUE_RET(matmul_prim_c != nullptr, nullptr);
 
   std::vector<schema::QuantParamT> jointed_quant_params;
   for (size_t i = 1; i < stack_cnode->inputs().size(); i++) {
@@ -144,7 +149,7 @@ std::shared_ptr<ops::MatMulFusion> BuildMatMulPrim(const CNodePtr &stack_cnode) 
   rmatmul_quant_params.emplace_back(jointed_quant_params);
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(rmatmul_quant_params, output_quant_params);
   MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
-  matmul_cvalue->AddAttr("quant_params", quant_params_holder);
+  matmul_prim_c->AddAttr("quant_params", quant_params_holder);
   return matmul_cvalue;
 }
 
@@ -333,7 +338,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   MS_ASSERT(right_reshape_node != nullptr);
   auto matmul_cvalue = BuildMatMulPrim(stack_cnode);
   MS_CHECK_TRUE_RET(matmul_cvalue != nullptr, nullptr);
-  auto matmul_value_node = NewValueNode(std::shared_ptr<ops::PrimitiveC>(matmul_cvalue));
+  auto matmul_value_node = NewValueNode(matmul_cvalue->GetPrim());
   MS_CHECK_TRUE_RET(matmul_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> matmul_inputs = {matmul_value_node, left_matmul_input};
 
@@ -346,7 +351,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
       MS_LOG(ERROR) << "GetRightMatmulInputParamter failed";
       return node;
     }
-    auto prim_matmul = GetValueNode<std::shared_ptr<mindspore::ops::MatMulFusion>>(matmul_value_node);
+    auto prim_matmul = ops::GetOperator<mindspore::ops::MatMulFusion>(matmul_value_node);
     MS_ASSERT(prim_matmul != nullptr);
     prim_matmul->set_transpose_b(true);
     matmul_inputs.push_back(rmatmul_paramter);
@@ -382,7 +387,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   MS_CHECK_TRUE_RET(stack_cnode->abstract() != nullptr, nullptr);
   matmul_cnode->set_abstract(stack_cnode->abstract()->Clone());
   if (right_transpose) {
-    auto matmul_primitive = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
+    auto matmul_primitive = ops::GetOperator<ops::MatMulFusion>(matmul_cnode->input(0));
     matmul_primitive->set_transpose_b(true);
   }
   MS_LOG(INFO) << "stack node:" << stack_cnode->fullname_with_scope() << " batchmatmul fusion success";

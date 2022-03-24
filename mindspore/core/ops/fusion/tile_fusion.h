@@ -19,22 +19,17 @@
 #include <vector>
 
 #include "ops/tile.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTileFusion = "TileFusion";
 /// \brief TileFusion defined Tile operator prototype of lite.
-class MS_CORE_API TileFusion : public Tile {
+class MIND_API TileFusion : public Tile {
  public:
+  MIND_API_BASE_MEMBER(TileFusion);
   /// \brief Constructor.
   TileFusion() : Tile(kNameTileFusion) {}
-
-  /// \brief Destructor.
-  ~TileFusion() = default;
-
-  MS_DECLARE_PARENT(TileFusion, Tile);
 
   /// \brief Method to init the op's attributes.
   ///

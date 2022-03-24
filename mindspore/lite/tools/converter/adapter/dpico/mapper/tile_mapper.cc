@@ -28,13 +28,13 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS TileMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                       const CNodePtrList &output_cnodes) {
+STATUS TileMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                       const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto tile_prim = utils::cast<std::shared_ptr<ops::TileFusion>>(prim);
+  auto tile_prim = api::utils::cast<api::SharedPtr<ops::TileFusion>>(prim);
   MS_ASSERT(tile_prim != nullptr);
 
   auto tile_operator = std::make_unique<mapper::TileOperator>();
@@ -50,7 +50,7 @@ STATUS TileMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
 
   tile_operator->SetOpType(mapper::OpType::TILE);
   if (tile_prim->GetAttr(ops::kDims) != nullptr) {
-    auto dims = GetValue<std::vector<int64_t>>(tile_prim->GetAttr(ops::kDims));
+    auto dims = api::GetValue<std::vector<int64_t>>(tile_prim->GetAttr(ops::kDims));
     if (dims.size() == 1) {  // tf tile has multiple axis
       tile_operator->SetAxis(dims.at(0));
     }
@@ -78,9 +78,7 @@ STATUS TileMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
                          [](const int64_t &value) { return static_cast<int64_t>(value); });
   } else if (tile_prim->GetAttr(dpico::kMultiples) != nullptr) {
     if (tile_prim->GetAttr(ops::kDims) != nullptr) {
-      auto data = GetValue<std::vector<int32_t>>(tile_prim->GetAttr(dpico::kMultiples));
-      (void)std::transform(data.begin(), data.end(), std::back_inserter(tiles),
-                           [](const int64_t &value) { return static_cast<int64_t>(value); });
+      tiles = api::GetValue<std::vector<int64_t>>(tile_prim->GetAttr(dpico::kMultiples));
     }
   } else {
     MS_LOG(ERROR) << "null param";

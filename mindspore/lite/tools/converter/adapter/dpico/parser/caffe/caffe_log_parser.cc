@@ -17,11 +17,12 @@
 #include "parser/caffe/caffe_log_parser.h"
 #include <memory>
 #include "ops/log.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeLogParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Log>();
+BaseOperatorPtr CaffeLogParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Log>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -30,19 +31,19 @@ ops::PrimitiveC *CaffeLogParser::Parse(const caffe::LayerParameter &proto, const
     const caffe::LogParameter &log_param = proto.log_param();
 
     if (log_param.has_base()) {
-      prim->AddAttr(ops::kBase, MakeValue<float>(log_param.base()));
+      prim->AddAttr(ops::kBase, api::MakeValue<float>(log_param.base()));
     }
 
     if (log_param.has_scale()) {
-      prim->AddAttr(ops::kScale, MakeValue<float>(log_param.scale()));
+      prim->AddAttr(ops::kScale, api::MakeValue<float>(log_param.scale()));
     }
 
     if (log_param.has_shift()) {
-      prim->AddAttr(ops::kShift, MakeValue<float>(log_param.shift()));
+      prim->AddAttr(ops::kShift, api::MakeValue<float>(log_param.shift()));
     }
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeLogParser("Log", new CaffeLogParser());

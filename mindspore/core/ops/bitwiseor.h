@@ -20,22 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBitwiseOr = "BitwiseOr";
-class BitwiseOr : public PrimitiveC {
+class MIND_API BitwiseOr : public BaseOperator {
  public:
-  BitwiseOr() : PrimitiveC(kNameBitwiseOr) { InitIOName({"x1", "x2"}, {"y"}); }
-  explicit BitwiseOr(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x1", "x2"}, {"y"}); }
-  ~BitwiseOr() = default;
-  MS_DECLARE_PARENT(BitwiseOr, PrimitiveC);
+  MIND_API_BASE_MEMBER(BitwiseOr);
+  BitwiseOr() : BaseOperator(kNameBitwiseOr) { InitIOName({"x1", "x2"}, {"y"}); }
+  explicit BitwiseOr(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-AbstractBasePtr BitwiseOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BitwiseOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBitwiseOrPtr = std::shared_ptr<BitwiseOr>;
 }  // namespace ops
 }  // namespace mindspore

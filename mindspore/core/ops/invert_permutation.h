@@ -18,22 +18,19 @@
 #define MINDSPORE_CORE_OPS_INVERT_PERMUTATION_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameInvertPermutation = "InvertPermutation";
 /// \brief Computes the inverse of an index permutation.
 /// Refer to Python API @ref mindspore.ops.InvertPermutation for more details.
-class MS_CORE_API InvertPermutation : public PrimitiveC {
+class MIND_API InvertPermutation : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(InvertPermutation);
   /// \brief Constructor.
-  InvertPermutation() : PrimitiveC(kNameInvertPermutation) {}
-  /// \brief Destructor.
-  ~InvertPermutation() = default;
-  MS_DECLARE_PARENT(InvertPermutation, PrimitiveC);
+  InvertPermutation() : BaseOperator(kNameInvertPermutation) {}
 };
 
 }  // namespace ops

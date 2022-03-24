@@ -20,28 +20,25 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePow = "Pow";
 /// \brief Computes a tensor to the power of the second input.
 /// Refer to Python API @ref mindspore.ops.Pow for more details.
-class MS_CORE_API Pow : public PrimitiveC {
+class MIND_API Pow : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Pow);
   /// \brief Constructor.
-  explicit Pow(const std::string &k_name = kNamePow) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Pow() = default;
-  MS_DECLARE_PARENT(Pow, PrimitiveC);
+  explicit Pow(const std::string &k_name = kNamePow) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Pow for the inputs.
   void Init();
 };
-AbstractBasePtr PowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr PowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimPowPtr = std::shared_ptr<Pow>;
 }  // namespace ops
 }  // namespace mindspore

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace dpico {
 const std::set<std::string> &GetAssignedFormatOpSet();
-bool IsSpecialType(const mindspore::CNodePtr &cnode);
+bool IsSpecialType(const api::CNodePtr &cnode);
 std::string FormatEnumToString(mindspore::Format format);
 }  // namespace dpico
 }  // namespace mindspore

@@ -28,15 +28,17 @@ namespace {
 constexpr int kInputIndexTwo = 2;
 constexpr int kInputSizeThree = 3;
 }  // namespace
-ops::PrimitiveC *TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
-                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                    std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::PadFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   if (tf_op.op() == "Pad") {
     prim->set_padding_mode(mindspore::PaddingMode::CONSTANT);
     prim->set_constant_value(0.0f);
-    prim->AddAttr(ops::kOriginalOpName, MakeValue("Pad"));
+    prim_c->AddAttr(ops::kOriginalOpName, MakeValue("Pad"));
   } else if (tf_op.op() == "PadV2") {
     prim->set_padding_mode(mindspore::PaddingMode::CONSTANT);
     if (tf_op.input_size() < kInputSizeThree) {
@@ -59,7 +61,7 @@ ops::PrimitiveC *TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
       return nullptr;
     }
     prim->set_constant_value(tensor_proto.float_val(0));
-    prim->AddAttr(ops::kOriginalOpName, MakeValue("PadV2"));
+    prim_c->AddAttr(ops::kOriginalOpName, MakeValue("PadV2"));
   } else if (tf_op.op() == "MirrorPad") {
     tensorflow::AttrValue attr_value;
     if (!TensorFlowUtils::FindAttrValue(tf_op, "mode", &attr_value)) {
@@ -75,7 +77,7 @@ ops::PrimitiveC *TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
       MS_LOG(ERROR) << "padding mode:" << attr_value.s() << " don't support";
       return nullptr;
     }
-    prim->AddAttr(ops::kOriginalOpName, MakeValue("MirrorPad"));
+    prim_c->AddAttr(ops::kOriginalOpName, MakeValue("MirrorPad"));
   }
 
   *output_size = 1;
@@ -84,7 +86,7 @@ ops::PrimitiveC *TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 TFNodeRegistrar g_tfPadParser("Pad", new TFPadParser());
 TFNodeRegistrar g_tfPadV2Parser("PadV2", new TFPadParser());

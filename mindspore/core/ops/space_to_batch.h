@@ -21,22 +21,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSpaceToBatch = "SpaceToBatch";
 /// \brief Divides spatial dimensions into blocks and combines the block size with the original batch.
 /// Refer to Python API @ref mindspore.ops.SpaceToBatch for more details.
-class MS_CORE_API SpaceToBatch : public PrimitiveC {
+class MIND_API SpaceToBatch : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SpaceToBatch);
   /// \brief Constructor.
-  SpaceToBatch() : PrimitiveC(kNameSpaceToBatch) {}
-  /// \brief Destructor.
-  ~SpaceToBatch() = default;
-  MS_DECLARE_PARENT(SpaceToBatch, PrimitiveC);
+  SpaceToBatch() : BaseOperator(kNameSpaceToBatch) {}
   /// \brief Init. Refer to the parameters of python API @ref mindspore.ops.SpaceToBatch for the inputs.
   void Init(const std::vector<int64_t> block_size, const std::vector<std::vector<int64_t>> &paddings);
   /// \brief Set paddings.
@@ -52,8 +50,8 @@ class MS_CORE_API SpaceToBatch : public PrimitiveC {
   /// \return paddings.
   std::vector<std::vector<int64_t>> get_paddings() const;
 };
-AbstractBasePtr SpaceToBatchInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SpaceToBatchInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

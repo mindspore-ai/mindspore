@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
 #include <memory>
 #include "ops/fusion/activation.h"
@@ -50,7 +52,7 @@ const AnfNodePtr SigmoidMulFusion::Process(const FuncGraphPtr &func_graph, const
     return nullptr;
   }
   // activation must sigmoid
-  auto activation_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(activation_cnode->input(0));
+  auto activation_prim = ops::GetOperator<mindspore::ops::Activation>(activation_cnode->input(0));
   MS_CHECK_TRUE_RET(activation_prim != nullptr, nullptr);
   if (activation_prim == nullptr || (activation_prim->GetAttr(ops::kActivationType) != nullptr &&
                                      activation_prim->get_activation_type() != mindspore::SIGMOID)) {

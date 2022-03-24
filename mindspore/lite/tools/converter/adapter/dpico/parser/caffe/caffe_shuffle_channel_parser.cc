@@ -17,14 +17,14 @@
 #include "parser/caffe/caffe_shuffle_channel_parser.h"
 #include <memory>
 #include <vector>
-#include "common/op_attr.h"
 #include "ops/custom.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeShuffleChannelParser::Parse(const caffe::LayerParameter &proto,
-                                                  const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeShuffleChannelParser::Parse(const caffe::LayerParameter &proto,
+                                                 const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -34,11 +34,11 @@ ops::PrimitiveC *CaffeShuffleChannelParser::Parse(const caffe::LayerParameter &p
   if (proto.has_shuffle_channel_param()) {
     const caffe::ShuffleChannelParameter &shuffle_channel_parameter = proto.shuffle_channel_param();
     if (shuffle_channel_parameter.has_group()) {
-      prim->AddAttr(ops::kGroup, MakeValue<uint32_t>(shuffle_channel_parameter.group()));
+      prim->AddAttr(ops::kGroup, api::MakeValue<int64_t>(shuffle_channel_parameter.group()));
     }
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeShuffleChannelParser("ShuffleChannel", new CaffeShuffleChannelParser());

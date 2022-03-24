@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/split_one_pass.h"
 #include "ops/op_utils.h"
 #include "src/common/utils.h"
@@ -46,7 +47,7 @@ bool SplitOnePass::Run(const FuncGraphPtr &func_graph) {
     if (cnode == nullptr) {
       return false;
     }
-    auto primitive_c = GetValueNode<std::shared_ptr<mindspore::ops::Split>>(cnode->input(0));
+    auto primitive_c = ops::GetOperator<mindspore::ops::Split>(cnode->input(0));
     if (primitive_c == nullptr) {
       return false;
     }

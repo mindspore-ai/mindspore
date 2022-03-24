@@ -16,6 +16,9 @@
 
 #include <set>
 #include "ops/grid_sampler_3d.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -60,6 +63,7 @@ TypePtr GridSampler3DInferType(const PrimitivePtr &primitive, const std::vector<
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(GridSampler3D, PrimitiveC, BaseOperator);
 AbstractBasePtr GridSampler3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

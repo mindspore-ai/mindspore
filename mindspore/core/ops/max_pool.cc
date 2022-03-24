@@ -23,35 +23,37 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void MaxPool::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
-  (void)this->AddAttr(kPadMode, MakeValue(swi));
+  (void)this->AddAttr(kPadMode, api::MakeValue(swi));
 }
 
 PadMode MaxPool::get_pad_mode() const { return PadMode(GetValue<int64_t>(GetAttr(kPadMode))); }
 void MaxPool::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  (void)this->AddAttr(kKernelSize,
-                      MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, this->name())));
+  (void)this->AddAttr(
+    kKernelSize, api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, this->name())));
 }
 
 std::vector<int64_t> MaxPool::get_kernel_size() const { return GetValue<std::vector<int64_t>>(GetAttr(kKernelSize)); }
 void MaxPool::set_strides(const std::vector<int64_t> &strides) {
-  (void)this->AddAttr(kStrides, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStrides, strides, this->name())));
+  (void)this->AddAttr(kStrides,
+                      api::MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStrides, strides, this->name())));
 }
 
 std::vector<int64_t> MaxPool::get_strides() const { return GetValue<std::vector<int64_t>>(GetAttr(kStrides)); }
 
 void MaxPool::set_format(const Format &format) {
   int64_t f = format;
-  (void)this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, api::MakeValue(f));
 }
 
 Format MaxPool::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
 
-void MaxPool::set_pad(const std::vector<int64_t> &pad) { (void)this->AddAttr(kPad, MakeValue(pad)); }
+void MaxPool::set_pad(const std::vector<int64_t> &pad) { (void)this->AddAttr(kPad, api::MakeValue(pad)); }
 
 std::vector<int64_t> MaxPool::get_pad() const {
   auto value_ptr = GetAttr(kPad);
@@ -60,7 +62,7 @@ std::vector<int64_t> MaxPool::get_pad() const {
 
 void MaxPool::set_round_mode(const RoundMode &round_mode) {
   int64_t swi = round_mode;
-  (void)this->AddAttr(kRoundMode, MakeValue(swi));
+  (void)this->AddAttr(kRoundMode, api::MakeValue(swi));
 }
 
 RoundMode MaxPool::get_round_mode() const {
@@ -78,6 +80,7 @@ void MaxPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<in
   this->set_round_mode(round_mode);
 }
 
+MIND_API_BASE_IMPL(MaxPool, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMaxPool, MaxPool);
 }  // namespace ops
 }  // namespace mindspore

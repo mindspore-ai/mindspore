@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/adapter/acl/src/acl_pass_impl.h"
 #include <set>
 #include <map>
@@ -28,6 +29,7 @@
 #include "tools/converter/adapter/acl/src/acl_model_process.h"
 #include "include/registry/pass_registry.h"
 #include "ops/custom.h"
+#include "ops/op_utils.h"
 #include "ops/tuple_get_item.h"
 #include "base/core_ops.h"
 #include "cxx_api/model/acl/model_converter.h"
@@ -537,8 +539,9 @@ CNodePtr AclPassImpl::CreateCustomNode(const FuncGraphPtr &func_graph) {
   auto prim = std::make_shared<mindspore::ops::Custom>();
   MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "New custom op failed.");
   prim->set_type(kCustomPrimTypeACL);
+  auto prim_c = prim->GetPrim();
   auto graph_input = func_graph->get_inputs();
-  CNodePtr custom_node = func_graph->NewCNode(prim, graph_input);
+  CNodePtr custom_node = func_graph->NewCNode(prim_c, graph_input);
   MS_CHECK_TRUE_MSG(custom_node != nullptr, nullptr, "Custom cnode failed.");
   custom_node->set_fullname_with_scope(kCustomNodeName);
   custom_node->add_input(om_parameter_);
@@ -580,7 +583,8 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
         MS_LOG(ERROR) << "New TupleGetItem failed for output " << j;
         return lite::RET_ERROR;
       }
-      auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+      auto tuple_get_item_prim_ptr_c = tuple_get_item_prim_ptr->GetPrim();
+      auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr_c);
       MS_CHECK_TRUE_MSG(tuple_get_item_prim != nullptr, lite::RET_ERROR, "item_prim is nullptr.");
       auto get_item_value = NewValueNode(MakeValue<int>(j));
       MS_CHECK_TRUE_MSG(get_item_value != nullptr, lite::RET_ERROR, "item_value is nullptr.");

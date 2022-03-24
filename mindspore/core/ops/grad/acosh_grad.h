@@ -22,25 +22,21 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAcoshGrad = "AcoshGrad";
 
-class AcoshGrad : public PrimitiveC {
+class MIND_API AcoshGrad : public BaseOperator {
  public:
-  AcoshGrad() : PrimitiveC(kNameAcoshGrad) { InitIOName({"y", "dy"}, {"z"}); }
-  ~AcoshGrad() = default;
-
-  MS_DECLARE_PARENT(AcoshGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(AcoshGrad);
+  AcoshGrad() : BaseOperator(kNameAcoshGrad) { InitIOName({"y", "dy"}, {"z"}); }
 };
 
-AbstractBasePtr AcoshGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr AcoshGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAcoshGradPtr = std::shared_ptr<AcoshGrad>;
 }  // namespace ops
 }  // namespace mindspore

@@ -19,9 +19,11 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Fill, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameFill, Fill);
 }  // namespace ops
 }  // namespace mindspore

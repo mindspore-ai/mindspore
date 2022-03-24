@@ -23,6 +23,7 @@
 #include "ops/resize_nearest_neighbor.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -30,9 +31,11 @@ void ResizeNearestNeighbor::Init(const std::vector<int64_t> &size, const bool al
   this->set_size(size);
   this->set_align_corners(align_corners);
 }
-void ResizeNearestNeighbor::set_size(const std::vector<int64_t> &size) { (void)this->AddAttr(kSize, MakeValue(size)); }
+void ResizeNearestNeighbor::set_size(const std::vector<int64_t> &size) {
+  (void)this->AddAttr(kSize, api::MakeValue(size));
+}
 void ResizeNearestNeighbor::set_align_corners(const bool align_corners) {
-  (void)this->AddAttr(kAlignCorners, MakeValue(align_corners));
+  (void)this->AddAttr(kAlignCorners, api::MakeValue(align_corners));
 }
 std::vector<int64_t> ResizeNearestNeighbor::get_size() const {
   auto value_ptr = GetAttr(kSize);
@@ -85,6 +88,8 @@ TypePtr ResizeNearestNeighborInferType(const PrimitivePtr &prim, const std::vect
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(ResizeNearestNeighbor, PrimitiveC, BaseOperator);
 AbstractBasePtr ResizeNearestNeighborInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();

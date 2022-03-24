@@ -18,18 +18,16 @@
 #define MINDSPORE_CORE_OPS_GRAD_RESIZE_GRAD_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResizeGrad = "ResizeGrad";
-class MS_CORE_API ResizeGrad : public PrimitiveC {
+class MIND_API ResizeGrad : public BaseOperator {
  public:
-  ResizeGrad() : PrimitiveC(kNameResizeGrad) {}
-  ~ResizeGrad() = default;
-  MS_DECLARE_PARENT(ResizeGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(ResizeGrad);
+  ResizeGrad() : BaseOperator(kNameResizeGrad) {}
   void Init(const ResizeMethod method, const bool align_corners);
   void set_method(const ResizeMethod method);
   void set_align_corners(const bool align_corners);
@@ -37,8 +35,8 @@ class MS_CORE_API ResizeGrad : public PrimitiveC {
   bool get_align_corners() const;
 };
 
-AbstractBasePtr ResizeGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ResizeGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

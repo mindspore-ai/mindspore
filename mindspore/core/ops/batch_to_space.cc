@@ -18,16 +18,18 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(BatchToSpace, PrimitiveC, BaseOperator);
 void BatchToSpace::Init(const std::vector<int64_t> &block_size, const std::vector<std::vector<int64_t>> &crops) {
   this->set_block_size(block_size);
   this->set_crops(crops);
 }
 
 void BatchToSpace::set_block_size(const std::vector<int64_t> &block_size) {
-  (void)this->AddAttr(kBlockSize, MakeValue(block_size));
+  (void)this->AddAttr(kBlockSize, api::MakeValue(block_size));
 }
 
 std::vector<int64_t> BatchToSpace::get_block_size() const {
@@ -36,7 +38,7 @@ std::vector<int64_t> BatchToSpace::get_block_size() const {
 }
 
 void BatchToSpace::set_crops(const std::vector<std::vector<int64_t>> &crops) {
-  (void)this->AddAttr(kCrops, MakeValue(crops));
+  (void)this->AddAttr(kCrops, api::MakeValue(crops));
 }
 
 std::vector<std::vector<int64_t>> BatchToSpace::get_crops() const {

@@ -19,22 +19,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameInvert = "Invert";
 
-class Invert : public PrimitiveC {
+class MIND_API Invert : public BaseOperator {
  public:
-  Invert() : PrimitiveC(kNameInvert) { InitIOName({"x"}, {"y"}); }
-  ~Invert() = default;
-  MS_DECLARE_PARENT(Invert, PrimitiveC);
+  MIND_API_BASE_MEMBER(Invert);
+  Invert() : BaseOperator(kNameInvert) { InitIOName({"x"}, {"y"}); }
 };
-AbstractBasePtr InvertInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr InvertInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimInvertPtr = std::shared_ptr<Invert>;
 }  // namespace ops
 }  // namespace mindspore

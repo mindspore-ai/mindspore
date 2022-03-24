@@ -17,22 +17,17 @@
 #ifndef MINDSPORE_CORE_OPS_POW_FUSION_H_
 #define MINDSPORE_CORE_OPS_POW_FUSION_H_
 #include "ops/pow.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePowFusion = "PowFusion";
 /// \brief PowFusion defined Pow operator prototype of lite.
-class MS_CORE_API PowFusion : public Pow {
+class MIND_API PowFusion : public Pow {
  public:
+  MIND_API_BASE_MEMBER(PowFusion);
   /// \brief Constructor.
   PowFusion() : Pow(kNamePowFusion) {}
-
-  /// \brief Destructor.
-  ~PowFusion() = default;
-
-  MS_DECLARE_PARENT(PowFusion, Pow);
 
   /// \brief Method to init the op's attributes.
   ///

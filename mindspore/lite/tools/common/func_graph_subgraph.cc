@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/common/func_graph_subgraph.h"
 #include <set>
 #include <string>
@@ -445,8 +446,10 @@ int SubGraph::CreatePartialInBelongAnf() {
   auto graph_value_node = NewValueNode(func_graph);
   MS_CHECK_TRUE_MSG(partial_prim != nullptr, RET_NULL_PTR, "partial_prim is nullptr");
   MS_CHECK_TRUE_MSG(graph_value_node != nullptr, RET_NULL_PTR, "graph_value_node is nullptr");
+  auto partial_prim_c = partial_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(partial_prim_c != nullptr, RET_NULL_PTR, "partial_prim_c is nullptr");
   partial_inputs.insert(partial_inputs.begin(), graph_value_node);
-  auto partial_cnode = belong_anf_->NewCNode(partial_prim, partial_inputs);
+  auto partial_cnode = belong_anf_->NewCNode(partial_prim_c, partial_inputs);
   MS_CHECK_TRUE_MSG(partial_cnode != nullptr, RET_NULL_PTR, "partial_cnode is nullptr");
   partial_cnode->set_fullname_with_scope(graph_name + "/partial");
   for (size_t i = 0; i < partial_inputs.size(); ++i) {

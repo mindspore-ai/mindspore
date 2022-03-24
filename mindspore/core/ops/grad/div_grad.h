@@ -16,18 +16,16 @@
 
 #ifndef MINDSPORE_CORE_OPS_DIV_GRAD_H_
 #define MINDSPORE_CORE_OPS_DIV_GRAD_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDivGrad = "DivGrad";
-class MS_CORE_API DivGrad : public PrimitiveC {
+class MIND_API DivGrad : public BaseOperator {
  public:
-  DivGrad() : PrimitiveC(kNameDivGrad) {}
-  ~DivGrad() = default;
-  MS_DECLARE_PARENT(DivGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(DivGrad);
+  DivGrad() : BaseOperator(kNameDivGrad) {}
   void Init() const {}
 };
 }  // namespace ops

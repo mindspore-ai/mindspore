@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr auto kNameNum = "num";
-}
+}  // namespace
 
 STATUS StackMapper::Mapper(const CNodePtr &cnode) {
   if (AddAttrForDynInputPrimitive(cnode, kNameNum) != RET_OK) {

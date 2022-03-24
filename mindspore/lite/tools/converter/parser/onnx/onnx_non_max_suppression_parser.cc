@@ -21,8 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxNonMaxSuppressionParser::Parse(const onnx::GraphProto &onnx_graph,
-                                                    const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxNonMaxSuppressionParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::NonMaxSuppression>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -34,7 +33,7 @@ ops::PrimitiveC *OnnxNonMaxSuppressionParser::Parse(const onnx::GraphProto &onnx
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxNonMaxSuppressionParser("NonMaxSuppression", new OnnxNonMaxSuppressionParser());

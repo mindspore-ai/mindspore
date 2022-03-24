@@ -18,6 +18,8 @@
 #include <string>
 #include "ops/maximum.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -75,6 +77,8 @@ TypePtr MaximumInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   return type_x;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Maximum, PrimitiveC, BaseOperator);
 AbstractBasePtr MaximumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = MaximumInferType(primitive, input_args);

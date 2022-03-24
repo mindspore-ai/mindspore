@@ -22,31 +22,26 @@
 #include <string>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyAdagradDA = "ApplyAdagradDA";
 /// \brief Update var according to the proximal adagrad scheme.
 /// Refer to Python API @ref mindspore.ops.ApplyAdagradDA for more details.
-class ApplyAdagradDA : public PrimitiveC {
+class MIND_API ApplyAdagradDA : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ApplyAdagradDA);
   /// \brief Constructor.
-  ApplyAdagradDA() : PrimitiveC(kNameApplyAdagradDA) {
+  ApplyAdagradDA() : BaseOperator(kNameApplyAdagradDA) {
     InitIOName({"var", "gradient_accumulator", "gradient_squared_accumulator", "grad", "lr", "l1", "l2", "global_step"},
                {"var", "gradient_accumulator", "gradient_squared_accumulator"});
   }
-
-  /// \brief Destructor.
-  ~ApplyAdagradDA() = default;
-
-  MS_DECLARE_PARENT(ApplyAdagradDA, PrimitiveC);
 };
 
-AbstractBasePtr ApplyAdagradDAInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyAdagradDAInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 }  // namespace ops
 }  // namespace mindspore

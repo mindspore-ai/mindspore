@@ -24,6 +24,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "utils/ms_context.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -97,9 +98,11 @@ TypePtr BiasAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim_name);
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(BiasAdd, PrimitiveC, BaseOperator);
 void BiasAdd::set_format(const Format &format) {
   int64_t f = format;
-  (void)this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, api::MakeValue(f));
 }
 Format BiasAdd::get_format() const {
   auto value_ptr = GetAttr(kFormat);

@@ -319,6 +319,11 @@ STATUS SetStringTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::
   delete tensor_data;
   return RET_OK;
 }
+
+FuncGraphPtr ConvertGraph(api::FuncGraphPtr func_graph) {
+  auto impl = func_graph->impl();
+  return std::dynamic_pointer_cast<FuncGraph>(impl);
+}
 }  // namespace
 
 STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info) {
@@ -536,14 +541,16 @@ api::FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &fla
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  res_graph_ = std::make_shared<FuncGraph>();
+  auto graph = std::make_shared<FuncGraph>();
+  MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "create FuncGraph failed");
+  res_graph_ = api::MakeShared<api::FuncGraph>(graph);
   if (res_graph_ == nullptr) {
     MS_LOG(ERROR) << "funGraphPtr is nullptr";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return nullptr;
   }
-  res_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTf)));
+  graph->set_attr("graph_name", MakeValue("main_graph"));
+  graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTf)));
 
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
@@ -551,9 +558,7 @@ api::FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &fla
     tf_root_graph_nodes_vec_.emplace_back(&node_def);
   }
 
-  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
-  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
-  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_vec_, func_graph, &anf_root_node_map_, true);
+  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_vec_, graph, &anf_root_node_map_, true);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
@@ -561,7 +566,7 @@ api::FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &fla
   bool success_flag = true;
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
-    status = ConvertOps(node_def, tf_root_graph_nodes_, func_graph, &anf_root_node_map_);
+    status = ConvertOps(node_def, tf_root_graph_nodes_, graph, &anf_root_node_map_);
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     if (status != RET_OK) {
       success_flag = false;
@@ -595,13 +600,13 @@ api::FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &fla
     return nullptr;
   }
 
-  if ((status = CommonAnfAdjust(func_graph)) != RET_OK) {
+  if ((status = CommonAnfAdjust(graph)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   std::set<FuncGraphPtr> all_func_graphs = {};
-  GetAllFuncGraph(func_graph, &all_func_graphs);
+  GetAllFuncGraph(graph, &all_func_graphs);
   if ((status = TF2AnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "TF2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -609,12 +614,12 @@ api::FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &fla
   }
   auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeTf, false);
   MS_CHECK_TRUE_RET(unify_format != nullptr, nullptr);
-  if (!unify_format->Run(func_graph)) {
+  if (!unify_format->Run(graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
-  func_graph->set_manager(nullptr);
-  static auto root_func_manager = Manage(func_graph);
+  graph->set_manager(nullptr);
+  static auto root_func_manager = Manage(graph);
   return res_graph_;
 }
 
@@ -806,7 +811,7 @@ STATUS TFModelParser::ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGr
                   << " second_func_map.size(): " << second_func_map.size();
     return RET_ERROR;
   }
-  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  auto func_graph = ConvertGraph(res_graph_);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is invalid.";
     return RET_ERROR;
@@ -828,7 +833,7 @@ STATUS TFModelParser::ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGr
     CHECK_NULL_RETURN(second_value_node);
     auto inputs = control_flow_node->inputs();
     inputs.insert(inputs.begin() + 1, {first_value_node, second_value_node});
-    auto new_node = res_graph_->NewCNode(inputs);  // must create new node, otherwise node_users won't update
+    auto new_node = func_graph->NewCNode(inputs);  // must create new node, otherwise node_users won't update
     if (new_node == nullptr) {
       MS_LOG(ERROR) << "new node failed";
       return RET_ERROR;
@@ -907,7 +912,9 @@ STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const C
         MS_LOG(ERROR) << "new TupleGetItem failed";
         return RET_NULL_PTR;
       }
-      auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+      auto prim_c = tuple_get_item_prim_ptr->GetPrim();
+      CHECK_NULL_RETURN(prim_c);
+      auto tuple_get_item_prim = NewValueNode(prim_c);
       CHECK_NULL_RETURN(tuple_get_item_prim);
       auto get_item_value = NewValueNode(MakeValue<int>(output_idx));
       CHECK_NULL_RETURN(get_item_value);
@@ -965,12 +972,12 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
     return RET_OK;
   }
   MS_LOG(INFO) << "parse op : " << op_type;
-  ops::PrimitiveC *primitive_c;
+  ops::PrimitiveCPtr primitive_c;
   auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeTf, op_type);
   int output_size;
   std::vector<std::string> input_names;
   if (node_parser != nullptr) {
-    primitive_c = node_parser->Parse(node_def, tf_node_map, &input_names, &output_size);
+    primitive_c = node_parser->Parse(node_def, tf_node_map, &input_names, &output_size)->GetPrim();
   } else {
     auto node_parser_builtin = TFNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
     if (node_parser_builtin == nullptr) {
@@ -989,7 +996,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   for (int i = 0; i < output_size; i++) {
     node_output_num_[node_def.name() + ":" + to_string(i)] = 1;
   }
-  auto value_node = NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c));
+  auto value_node = NewValueNode(primitive_c);
   if (value_node == nullptr) {
     MS_LOG(ERROR) << "value_node is nullptr";
     return RET_ERROR;
@@ -1067,7 +1074,7 @@ STATUS TFModelParser::ProcessControlFlowOp(const CNodePtr &anf_node, const strin
 }
 
 STATUS TFModelParser::ConvertQuantParams(const size_t &input_size, const size_t &output_size,
-                                         ops::PrimitiveC *primitive_c) {
+                                         PrimitiveCPtr primitive_c) {
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is null, get quant params failed.";
     return RET_NULL_PTR;
@@ -1142,7 +1149,7 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
     MS_LOG(ERROR) << "get graph outputs node error";
     return status;
   }
-  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  auto func_graph = ConvertGraph(res_graph_);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "unc graph is invalid.";
     return RET_ERROR;
@@ -1168,7 +1175,9 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
       MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
     }
-    auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
+    auto make_tuple_prim_c = make_tuple_prim_ptr->GetPrim();
+    CHECK_NULL_RETURN(make_tuple_prim_c);
+    auto make_tuple_prim = NewValueNode(make_tuple_prim_c);
     CHECK_NULL_RETURN(make_tuple_prim);
     make_tuple_inputs.insert(make_tuple_inputs.begin(), make_tuple_prim);
     auto make_tuple_cnode = anf_graph->NewCNode(make_tuple_inputs);
@@ -1180,7 +1189,9 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
     }
-    auto value_node = NewValueNode(return_prim_ptr);
+    auto return_prim_c = return_prim_ptr->GetPrim();
+    CHECK_NULL_RETURN(return_prim_c);
+    auto value_node = NewValueNode(return_prim_c);
     CHECK_NULL_RETURN(value_node);
     std::vector<AnfNodePtr> op_inputs = {value_node, make_tuple_cnode};
     auto cnode = anf_graph->NewCNode(op_inputs);
@@ -1193,7 +1204,9 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
     }
-    auto value_node = NewValueNode(return_prim_ptr);
+    auto return_prim_c = return_prim_ptr->GetPrim();
+    CHECK_NULL_RETURN(return_prim_c);
+    auto value_node = NewValueNode(return_prim_c);
     CHECK_NULL_RETURN(value_node);
     std::vector<AnfNodePtr> op_inputs{value_node, output_nodes.front()};
     auto return_cnode = anf_graph->NewCNode(op_inputs);

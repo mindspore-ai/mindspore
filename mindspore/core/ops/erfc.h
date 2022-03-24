@@ -18,22 +18,20 @@
 #define MINDSPORE_CORE_OPS_ERFC_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameErfc = "Erfc";
-class Erfc : public PrimitiveC {
+class Erfc : public BaseOperator {
  public:
-  Erfc() : PrimitiveC(kNameErfc) { InitIOName({"x"}, {"y"}); }
-  ~Erfc() = default;
-  MS_DECLARE_PARENT(Erfc, PrimitiveC);
+  MIND_API_BASE_MEMBER(Erfc);
+  Erfc() : BaseOperator(kNameErfc) { InitIOName({"x"}, {"y"}); }
 };
 
-AbstractBasePtr ErfcInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ErfcInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimErfc = std::shared_ptr<Erfc>;
 }  // namespace ops
 }  // namespace mindspore

@@ -17,6 +17,7 @@
 #include "ops/tensor_list_from_tensor.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -36,13 +37,14 @@ int64_t TensorListFromTensor::get_shape_type() const {
 }
 
 void TensorListFromTensor::set_element_dtype(const int64_t element_dtype) {
-  (void)this->AddAttr(kElement_dtype, MakeValue(element_dtype));
+  (void)this->AddAttr(kElement_dtype, api::MakeValue(element_dtype));
 }
 
 void TensorListFromTensor::set_shape_type(const int64_t shape_type) {
-  (void)this->AddAttr(kShapeType, MakeValue(shape_type));
+  (void)this->AddAttr(kShapeType, api::MakeValue(shape_type));
 }
 
+MIND_API_BASE_IMPL(TensorListFromTensor, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameTensorListFromTensor, TensorListFromTensor);
 }  // namespace ops
 }  // namespace mindspore

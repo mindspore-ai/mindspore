@@ -22,9 +22,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto,
-                                               const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Conv2DFusion>();
+BaseOperatorPtr CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Conv2DFusion>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -106,10 +105,10 @@ ops::PrimitiveC *CaffeConvolutionParser::Parse(const caffe::LayerParameter &prot
   }
 
   if (convParam.has_bias_term()) {
-    prim->AddAttr(dpico::kBiasTerm, MakeValue<bool>(convParam.bias_term()));
+    prim->AddAttr(dpico::kBiasTerm, api::MakeValue<bool>(convParam.bias_term()));
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeConvolutionParser("Convolution", new CaffeConvolutionParser());

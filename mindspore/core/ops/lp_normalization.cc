@@ -17,22 +17,24 @@
 #include "ops/lp_normalization.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(LpNormalization, PrimitiveC, BaseOperator);
 void LpNormalization::Init(const int64_t axis, const int64_t p) {
   this->set_axis(axis);
   this->set_p(p);
 }
 
-void LpNormalization::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void LpNormalization::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t LpNormalization::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
   return GetValue<int64_t>(value_ptr);
 }
 
-void LpNormalization::set_p(const int64_t p) { (void)this->AddAttr(kP, MakeValue(p)); }
+void LpNormalization::set_p(const int64_t p) { (void)this->AddAttr(kP, api::MakeValue(p)); }
 
 int64_t LpNormalization::get_p() const {
   auto value_ptr = this->GetAttr(kP);

@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFBatchNormParser::Parse(const tensorflow::NodeDef &tf_op,
-                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                          std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFBatchNormParser::Parse(const tensorflow::NodeDef &tf_op,
+                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                       std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::FusedBatchNorm>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
@@ -39,7 +39,7 @@ ops::PrimitiveC *TFBatchNormParser::Parse(const tensorflow::NodeDef &tf_op,
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TFNodeRegistrar g_tfBatchNormParser("FusedBatchNormV3", new TFBatchNormParser());

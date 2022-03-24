@@ -16,21 +16,17 @@
 
 #ifndef MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
 #define MINDSPORE_CORE_OPS_MAKE_TUPLE_H_
-#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMakeTuple = "MakeTuple";
 /// \brief MakeTuple op is used to pack multiple nodes into a whole, which is only used in FuncGraph.
-class MS_CORE_API MakeTuple : public PrimitiveC {
+class MIND_API MakeTuple : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(MakeTuple);
   /// \brief Constructor.
-  MakeTuple() : PrimitiveC(kNameMakeTuple) {}
-
-  /// \brief Destructor.
-  ~MakeTuple() = default;
-
-  MS_DECLARE_PARENT(MakeTuple, PrimitiveC);
+  MakeTuple() : BaseOperator(kNameMakeTuple) {}
 };
 }  // namespace ops
 }  // namespace mindspore

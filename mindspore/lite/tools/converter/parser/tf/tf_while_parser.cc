@@ -23,17 +23,17 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFWhileParser::Parse(const tensorflow::NodeDef &tf_op,
-                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                      std::vector<std::string> *inputs, int *output_size) {
-  auto prim = std::make_unique<While>();
+PrimitiveCPtr TFWhileParser::Parse(const tensorflow::NodeDef &tf_op,
+                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                   std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_shared<While>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = tf_op.input_size();
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return prim.release();
+  return prim;
 }
 
 TFNodeRegistrar g_tfStatelessWhileParser("StatelessWhile", new TFWhileParser());

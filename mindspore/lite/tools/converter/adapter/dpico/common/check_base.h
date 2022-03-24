@@ -32,6 +32,12 @@
 #define kNCHW_C 1
 #define kNCHW_H 2
 #define kNCHW_W 3
+#ifdef Debug
+#include <cassert>
+#define MS_ASSERT(f) assert(f)
+#else
+#define MS_ASSERT(f) ((void)0)
+#endif
 
 #define SIZE_MUL_OVERFLOW(x, y) (((x) == 0) ? false : (SIZE_MAX / (x)) < (y))
 #define INT_MUL_OVERFLOW(x, y)                                                                 \

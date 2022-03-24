@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
 #include <vector>
 #include <cmath>

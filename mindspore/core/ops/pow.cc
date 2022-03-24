@@ -21,6 +21,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -74,6 +75,8 @@ TypePtr PowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   return x1_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(Pow, PrimitiveC, BaseOperator);
 AbstractBasePtr PowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();

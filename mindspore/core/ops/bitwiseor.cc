@@ -23,6 +23,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -47,6 +48,8 @@ TypePtr BitwiseOrInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(BitwiseOr, PrimitiveC, BaseOperator);
 AbstractBasePtr BitwiseOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();

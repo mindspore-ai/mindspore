@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <algorithm>
 #include "common/op_enum.h"
 #include "common/data_transpose_utils.h"
 #include "common/fetch_content.h"
@@ -27,13 +28,13 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS PermuteMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS PermuteMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto permute_prim = utils::cast<std::shared_ptr<ops::Transpose>>(prim);
+  auto permute_prim = api::utils::cast<api::SharedPtr<ops::Transpose>>(prim);
   MS_ASSERT(permute_prim != nullptr);
 
   auto permute_operator = std::make_unique<mapper::PermuteOperator>();
@@ -72,7 +73,9 @@ STATUS PermuteMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *b
     }
     perm_val = {data[0], data[1], data[kAxis2], data[kAxis3]};
   } else if (permute_prim->GetAttr(kPerm) != nullptr) {
-    perm_val = GetValue<std::vector<int32_t>>(permute_prim->GetAttr(kPerm));
+    auto perm_vec = api::GetValue<std::vector<int64_t>>(permute_prim->GetAttr(kPerm));
+    (void)std::transform(perm_vec.begin(), perm_vec.end(), std::back_inserter(perm_val),
+                         [](int64_t p) { return static_cast<int32_t>(p); });
   } else {
     MS_LOG(ERROR) << "can't get perm value. " << cnode->fullname_with_scope();
     return RET_ERROR;

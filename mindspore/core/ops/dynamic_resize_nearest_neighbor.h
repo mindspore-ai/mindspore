@@ -19,19 +19,17 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDynamicResizeNearestNeighbor = "DynamicResizeNearestNeighbor";
 
-class DynamicResizeNearestNeighbor : public PrimitiveC {
+class DynamicResizeNearestNeighbor : public BaseOperator {
  public:
-  DynamicResizeNearestNeighbor() : PrimitiveC(kNameDynamicResizeNearestNeighbor) {}
-  ~DynamicResizeNearestNeighbor() = default;
-  MS_DECLARE_PARENT(DynamicResizeNearestNeighbor, PrimitiveC);
+  MIND_API_BASE_MEMBER(DynamicResizeNearestNeighbor);
+  DynamicResizeNearestNeighbor() : BaseOperator(kNameDynamicResizeNearestNeighbor) {}
 };
 }  // namespace ops
 }  // namespace mindspore

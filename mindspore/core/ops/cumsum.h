@@ -19,22 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCumSum = "CumSum";
 /// \brief Computes the cumulative sum of input tensor along axis.
 /// Refer to Python API @ref mindspore.ops.CumSum for more details.
-class MS_CORE_API CumSum : public PrimitiveC {
+class MIND_API CumSum : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(CumSum);
   /// \brief Constructor.
-  CumSum() : PrimitiveC(kNameCumSum) {}
-  /// \brief Destructor.
-  ~CumSum() = default;
-  MS_DECLARE_PARENT(CumSum, PrimitiveC);
+  CumSum() : BaseOperator(kNameCumSum) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CumSum for the inputs.
   void Init(const bool exclusive, const bool reverse);
   /// \brief Set exclusive.
@@ -50,8 +47,8 @@ class MS_CORE_API CumSum : public PrimitiveC {
   /// \return reverse.
   bool get_reverse() const;
 };
-AbstractBasePtr CumSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CumSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCumSum = std::shared_ptr<CumSum>;
 }  // namespace ops
 }  // namespace mindspore

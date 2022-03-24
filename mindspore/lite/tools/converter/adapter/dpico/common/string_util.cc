@@ -19,7 +19,7 @@
 #include <string>
 #include <algorithm>
 #include <fstream>
-#include "utils/log_adapter.h"
+#include "mindapi/base/logging.h"
 
 namespace mindspore {
 namespace dpico {

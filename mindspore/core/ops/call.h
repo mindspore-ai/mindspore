@@ -16,21 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_CALL_H_
 #define MINDSPORE_CORE_OPS_CALL_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCall = "call";
 /// \brief Call op means function call in the MindIR. This operator is defined for serialization.
-class MS_CORE_API Call : public PrimitiveC {
+class MIND_API Call : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Call);
   /// \brief Constructor.
-  Call() : PrimitiveC(kNameCall) {}
-  /// \brief Destructor.
-  ~Call() = default;
-  MS_DECLARE_PARENT(Call, PrimitiveC);
+  Call() : BaseOperator(kNameCall) {}
 };
 }  // namespace ops
 }  // namespace mindspore

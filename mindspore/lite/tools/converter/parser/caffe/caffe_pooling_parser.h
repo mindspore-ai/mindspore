@@ -28,7 +28,7 @@ class CaffePoolingParser : public CaffeNodeParser {
   CaffePoolingParser() : CaffeNodeParser("pooling") {}
   ~CaffePoolingParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 
   static STATUS ParsePads(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *pad);
 

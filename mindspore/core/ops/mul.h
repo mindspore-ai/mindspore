@@ -20,27 +20,24 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMul = prim::kMul;
+constexpr auto kNameMul = "Mul";
 /// \brief Multiply two tensors element-wise. Refer to Python API @ref mindspore.ops.Mul for more details.
-class MS_CORE_API Mul : public PrimitiveC {
+class MIND_API Mul : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Mul);
   /// \brief Constructor.
-  Mul() : PrimitiveC(kNameMul) { InitIOName({"x", "y"}, {"output"}); }
-  explicit Mul(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Destructor.
-  ~Mul() = default;
-  MS_DECLARE_PARENT(Mul, PrimitiveC);
+  Mul() : BaseOperator(kNameMul) { InitIOName({"x", "y"}, {"output"}); }
+  explicit Mul(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Mul for the inputs.
   void Init() const {}
 };
-AbstractBasePtr MulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

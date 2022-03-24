@@ -28,7 +28,7 @@ class CaffePermuteParser : public CaffeNodeParser {
   CaffePermuteParser() : CaffeNodeParser("Permute") {}
   ~CaffePermuteParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  PrimitiveCPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

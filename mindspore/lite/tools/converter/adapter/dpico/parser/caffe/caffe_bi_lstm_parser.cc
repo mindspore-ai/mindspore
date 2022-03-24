@@ -23,8 +23,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeBiLstmParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr CaffeBiLstmParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -33,15 +33,15 @@ ops::PrimitiveC *CaffeBiLstmParser::Parse(const caffe::LayerParameter &proto, co
   if (proto.has_recurrent_param()) {
     const auto &bi_lstm_param = proto.recurrent_param();
     if (bi_lstm_param.has_num_output()) {
-      prim->AddAttr(dpico::kNumOutput, MakeValue<uint32_t>(bi_lstm_param.num_output()));
-      prim->AddAttr(dpico::kOutputChannel, MakeValue<uint32_t>(bi_lstm_param.num_output()));
+      prim->AddAttr(dpico::kNumOutput, api::MakeValue<int64_t>(bi_lstm_param.num_output()));
+      prim->AddAttr(dpico::kOutputChannel, api::MakeValue<int64_t>(bi_lstm_param.num_output()));
     }
     if (bi_lstm_param.has_expose_hidden()) {
-      prim->AddAttr(dpico::kExposeHidden, MakeValue<bool>(bi_lstm_param.expose_hidden()));
+      prim->AddAttr(dpico::kExposeHidden, api::MakeValue<bool>(bi_lstm_param.expose_hidden()));
     }
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeBiLstmParser("BILSTM", new CaffeBiLstmParser());

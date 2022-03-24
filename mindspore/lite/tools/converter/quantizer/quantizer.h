@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_H
-
 #include <unordered_map>
 #include <utility>
 #include <memory>

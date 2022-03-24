@@ -17,6 +17,9 @@
 #include "ops/l2_loss.h"
 
 #include <set>
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -40,6 +43,7 @@ TypePtr L2LossInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(L2Loss, PrimitiveC, BaseOperator);
 AbstractBasePtr L2LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = L2LossInferType(primitive, input_args);

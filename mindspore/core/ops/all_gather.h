@@ -20,18 +20,16 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAllGather = "AllGather";
-class MS_CORE_API AllGather : public PrimitiveC {
+class MIND_API AllGather : public BaseOperator {
  public:
-  AllGather() : PrimitiveC(kNameAllGather) { InitIOName({"input_x"}, {"output"}); }
-  ~AllGather() = default;
-  MS_DECLARE_PARENT(AllGather, PrimitiveC);
+  MIND_API_BASE_MEMBER(AllGather);
+  AllGather() : BaseOperator(kNameAllGather) { InitIOName({"input_x"}, {"output"}); }
   void Init() {}
   void set_group(const std::string &format);
   std::string get_group() const;

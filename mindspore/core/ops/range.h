@@ -20,22 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRange = "Range";
 /// \brief Creates a sequence of numbers in range [start, limit) with step size delta.
 /// Refer to Python API @ref mindspore.nn.Range for more details.
-class MS_CORE_API Range : public PrimitiveC {
+class MIND_API Range : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Range);
   /// \brief Constructor.
-  Range() : PrimitiveC(kNameRange) {}
-  /// \brief Destructor.
-  ~Range() = default;
-  MS_DECLARE_PARENT(Range, PrimitiveC);
+  Range() : BaseOperator(kNameRange) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.nn.Range for the inputs.
   void Init(const int64_t d_type, const int64_t start, const int64_t limit, const int64_t delta);
   /// \brief Set d_type.
@@ -64,8 +62,8 @@ class MS_CORE_API Range : public PrimitiveC {
   int64_t get_delta() const;
 };
 
-AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

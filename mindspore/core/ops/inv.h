@@ -18,22 +18,20 @@
 #define MINDSPORE_CORE_OPS_INV_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameInv = "Inv";
-class Inv : public PrimitiveC {
+class Inv : public BaseOperator {
  public:
-  Inv() : PrimitiveC(kNameInv) { InitIOName({"x"}, {"y"}); }
-  ~Inv() = default;
-  MS_DECLARE_PARENT(Inv, PrimitiveC);
+  MIND_API_BASE_MEMBER(Inv);
+  Inv() : BaseOperator(kNameInv) { InitIOName({"x"}, {"y"}); }
   void Init() {}
 };
-AbstractBasePtr InvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr InvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimInvPtr = std::shared_ptr<Inv>;
 }  // namespace ops
 }  // namespace mindspore

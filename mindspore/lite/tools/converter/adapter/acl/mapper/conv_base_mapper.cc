@@ -19,6 +19,7 @@
 #include <map>
 #include "ops/op_utils.h"
 #include "nnacl/op_base.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace lite {

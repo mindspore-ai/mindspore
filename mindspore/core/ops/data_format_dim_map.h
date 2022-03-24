@@ -19,21 +19,19 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDataFormatDimMap = "DataFormatDimMap";
-class MS_CORE_API DataFormatDimMap : public PrimitiveC {
+class MIND_API DataFormatDimMap : public BaseOperator {
  public:
-  DataFormatDimMap() : PrimitiveC(kNameDataFormatDimMap) { InitIOName({"x"}, {"output"}); }
-  ~DataFormatDimMap() = default;
-  MS_DECLARE_PARENT(DataFormatDimMap, PrimitiveC);
+  MIND_API_BASE_MEMBER(DataFormatDimMap);
+  DataFormatDimMap() : BaseOperator(kNameDataFormatDimMap) { InitIOName({"x"}, {"output"}); }
 };
-AbstractBasePtr DataFormatDimMapInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr DataFormatDimMapInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using kDataFormatDimMapPtr = std::shared_ptr<DataFormatDimMap>;
 }  // namespace ops
 }  // namespace mindspore

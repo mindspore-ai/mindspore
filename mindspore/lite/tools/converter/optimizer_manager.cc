@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/converter/optimizer_manager.h"
 #include <map>
 #include <set>
@@ -47,7 +48,8 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
   for (auto &pass_name : pass_names) {
     auto pass_outer = registry::PassRegistry::GetPassFromStoreRoom(pass_name);
     if (pass_outer != nullptr) {
-      if (!pass_outer->Execute(func_graph)) {
+      auto api_graph = api::MakeShared<api::FuncGraph>(func_graph);
+      if (!pass_outer->Execute(api_graph)) {
         MS_LOG(WARNING) << "run pass failed, pass name is " << pass_name;
         return false;
       }

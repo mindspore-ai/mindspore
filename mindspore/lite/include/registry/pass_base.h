@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include "include/lite_utils.h"
-#include "api/ir/func_graph.h"
+#include "mindapi/ir/func_graph.h"
 
 namespace mindspore {
 namespace registry {

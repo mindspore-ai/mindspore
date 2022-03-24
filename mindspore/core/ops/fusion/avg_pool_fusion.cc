@@ -15,6 +15,9 @@
  */
 
 #include "ops/fusion/avg_pool_fusion.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -31,11 +34,11 @@ void AvgPoolFusion::Init(const std::vector<int64_t> &kernel_size, const std::vec
   this->set_activation_type(activation_type);
 }
 
-void AvgPoolFusion::set_global(const bool global) { (void)AddAttr(kGlobal, MakeValue(global)); }
+void AvgPoolFusion::set_global(const bool global) { (void)AddAttr(kGlobal, api::MakeValue(global)); }
 
 void AvgPoolFusion::set_activation_type(ActivationType activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 bool AvgPoolFusion::get_global() const {
@@ -50,6 +53,7 @@ ActivationType AvgPoolFusion::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
+MIND_API_BASE_IMPL(AvgPoolFusion, PrimitiveC, AvgPool);
 REGISTER_PRIMITIVE_C(kNameAvgPoolFusion, AvgPoolFusion);
 }  // namespace ops
 }  // namespace mindspore

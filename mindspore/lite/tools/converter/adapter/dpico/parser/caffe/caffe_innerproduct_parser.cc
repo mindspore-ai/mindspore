@@ -32,9 +32,9 @@ void TransformShape(caffe::BlobShape *shape) {
   shape->add_dim(origin_row);
 }
 }  // namespace
-ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto,
-                                                const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::FullConnection>();
+BaseOperatorPtr CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto,
+                                               const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::FullConnection>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -78,7 +78,7 @@ ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &pro
     MS_LOG(ERROR) << "InnerProduct Parse num_output for " << proto.name().c_str() << " failed.";
     return nullptr;
   } else {
-    prim->AddAttr(dpico::kNumOutput, MakeValue(static_cast<uint32_t>(innerProductParam.num_output())));
+    prim->AddAttr(dpico::kNumOutput, api::MakeValue(static_cast<int64_t>(innerProductParam.num_output())));
   }
 
   if (innerProductParam.axis() == 1 || innerProductParam.axis() == dpico::kAxis2) {
@@ -92,7 +92,7 @@ ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &pro
     prim->set_has_bias(true);
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeInnerProductParser("InnerProduct", new CaffeInnerProductParser());

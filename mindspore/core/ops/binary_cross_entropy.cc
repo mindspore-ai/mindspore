@@ -25,6 +25,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -80,9 +81,10 @@ TypePtr BinaryCrossEntroyInferType(const PrimitivePtr &prim, const std::vector<A
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(BinaryCrossEntropy, PrimitiveC, BaseOperator);
 void BinaryCrossEntropy::set_reduction(const Reduction &reduction) {
   int64_t swi = reduction;
-  (void)this->AddAttr(kReduction, MakeValue(swi));
+  (void)this->AddAttr(kReduction, api::MakeValue(swi));
 }
 
 Reduction BinaryCrossEntropy::get_reduction() const {

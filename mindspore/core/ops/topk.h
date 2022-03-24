@@ -19,24 +19,22 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTopK = "TopK";
 /// \brief Finds values and indices of the k largest entries along the last dimension.
 /// Refer to Python API @ref mindspore.ops.TopK for more details.
-class MS_CORE_API TopK : public PrimitiveC {
+class MIND_API TopK : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TopK);
   /// \brief Constructor.
-  explicit TopK(const std::string &k_name = kNameTopK) : PrimitiveC(k_name) {
+  explicit TopK(const std::string &k_name = kNameTopK) : BaseOperator(k_name) {
     InitIOName({"input", "k"}, {"values", "indices"});
   }
-  /// \brief Destructor.
-  ~TopK() = default;
-  MS_DECLARE_PARENT(TopK, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.TopK for the inputs.
   void Init(const bool sorted = false);
   /// \brief Set sorted.
@@ -46,8 +44,8 @@ class MS_CORE_API TopK : public PrimitiveC {
   /// \return sorted.
   bool get_sorted() const;
 };
-AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

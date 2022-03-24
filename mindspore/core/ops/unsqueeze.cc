@@ -18,12 +18,14 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Unsqueeze, PrimitiveC, BaseOperator);
 void Unsqueeze::Init(const std::vector<int64_t> axis) { this->set_axis(axis); }
 
-void Unsqueeze::set_axis(const std::vector<int64_t> axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void Unsqueeze::set_axis(const std::vector<int64_t> axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
 std::vector<int64_t> Unsqueeze::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
 

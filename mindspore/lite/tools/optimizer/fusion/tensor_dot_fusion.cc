@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/tensor_dot_fusion.h"
 #include <memory>
 #include <vector>

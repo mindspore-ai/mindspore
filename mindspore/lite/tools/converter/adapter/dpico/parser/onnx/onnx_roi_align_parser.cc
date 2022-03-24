@@ -23,11 +23,14 @@
 #include "ops/custom.h"
 #include "./onnx.pb.h"
 #include "include/registry/node_parser_registry.h"
+#include "mindapi/base/logging.h"
+#include "third_party/securec/include/securec.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxRoiAlignParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Custom>();
+ops::BaseOperatorPtr OnnxRoiAlignParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = api::MakeShared<ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "new Custom prim failed.";
     return nullptr;
@@ -52,11 +55,11 @@ ops::PrimitiveC *OnnxRoiAlignParser::Parse(const onnx::GraphProto &onnx_graph, c
     }
   }
   // set attr for mapper
-  prim->AddAttr(ops::kMode, MakeValue(pool_mode));
-  prim->AddAttr(dpico::kOutputHeight, MakeValue(output_height));
-  prim->AddAttr(dpico::kOutputWidth, MakeValue(output_width));
-  prim->AddAttr(dpico::kSamplingRatio, MakeValue(sampling_ratio));
-  prim->AddAttr(dpico::kSpatialScale, MakeValue(spatial_scale));
+  prim->AddAttr(ops::kMode, api::MakeValue(pool_mode));
+  prim->AddAttr(dpico::kOutputHeight, api::MakeValue(output_height));
+  prim->AddAttr(dpico::kOutputWidth, api::MakeValue(output_width));
+  prim->AddAttr(dpico::kSamplingRatio, api::MakeValue(sampling_ratio));
+  prim->AddAttr(dpico::kSpatialScale, api::MakeValue(spatial_scale));
 
   // set attr for infershape
   std::map<std::string, std::vector<uint8_t>> custom_attrs;
@@ -77,7 +80,7 @@ ops::PrimitiveC *OnnxRoiAlignParser::Parse(const onnx::GraphProto &onnx_graph, c
   custom_attrs[dpico::kOutputWidth] = output_width_attr;
   prim->set_attr(custom_attrs);
 
-  return prim.release();
+  return prim;
 }
 }  // namespace lite
 }  // namespace mindspore

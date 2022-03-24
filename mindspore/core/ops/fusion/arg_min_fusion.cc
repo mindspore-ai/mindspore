@@ -15,9 +15,12 @@
  */
 
 #include "ops/fusion/arg_min_fusion.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ArgMinFusion, PrimitiveC, ArgMin);
 void ArgMinFusion::Init(bool keep_dims, bool out_max_value, int64_t top_k, int64_t axis) {
   set_axis(axis);
   set_keep_dims(keep_dims);
@@ -25,9 +28,9 @@ void ArgMinFusion::Init(bool keep_dims, bool out_max_value, int64_t top_k, int64
   set_top_k(top_k);
 }
 
-void ArgMinFusion::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
-void ArgMinFusion::set_out_max_value(bool out_max_value) { (void)AddAttr(kOutMaxValue, MakeValue(out_max_value)); }
-void ArgMinFusion::set_top_k(int64_t top_k) { (void)this->AddAttr(kTopK, MakeValue(top_k)); }
+void ArgMinFusion::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }
+void ArgMinFusion::set_out_max_value(bool out_max_value) { (void)AddAttr(kOutMaxValue, api::MakeValue(out_max_value)); }
+void ArgMinFusion::set_top_k(int64_t top_k) { (void)this->AddAttr(kTopK, api::MakeValue(top_k)); }
 
 bool ArgMinFusion::get_keep_dims() const {
   auto keep_dims = GetAttr(kKeepDims);

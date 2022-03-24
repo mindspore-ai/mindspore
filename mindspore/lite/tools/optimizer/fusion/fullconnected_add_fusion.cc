@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/fullconnected_add_fusion.h"
 #include <vector>
 #include <memory>
@@ -21,6 +22,7 @@
 #include "ops/fusion/full_connection.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -58,14 +60,16 @@ bool IsPrimitiveProper(const CNodePtr &add_cnode, const CNodePtr &fc_cnode, int 
       return false;
     }
   }
-  auto fc_primc = GetValueNode<std::shared_ptr<ops::FullConnection>>(fc_cnode->input(0));
+  auto fc_primc = ops::GetOperator<ops::FullConnection>(fc_cnode->input(0));
   MS_CHECK_TRUE_RET(fc_primc != nullptr, false);
   if (fc_primc->GetAttr(ops::kActivationType) != nullptr &&
       fc_primc->get_activation_type() != ActivationType::NO_ACTIVATION) {
     MS_LOG(INFO) << fc_cnode->fullname_with_scope() << " has activation attr";
     return false;
   }
-  if (IsQuantParameterNode(fc_primc)) {
+  auto prim_c = fc_primc->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, false);
+  if (IsQuantParameterNode(prim_c)) {
     MS_LOG(INFO) << fc_cnode->fullname_with_scope() << "is quant node";
     return false;
   }
@@ -180,11 +184,11 @@ AnfNodePtr FullconnectedAddFusion::Process(const std::string &pattern_name, cons
   }
 
   if (CheckPrimitiveType(node, prim::kPrimAddFusion)) {
-    auto add_primc = GetValueNode<std::shared_ptr<ops::AddFusion>>(add_cnode->input(0));
+    auto add_primc = ops::GetOperator<ops::AddFusion>(add_cnode->input(0));
     MS_CHECK_TRUE_RET(add_primc != nullptr, nullptr);
     if (add_primc->GetAttr(ops::kActivationType) != nullptr &&
         add_primc->get_activation_type() != ActivationType::NO_ACTIVATION) {
-      auto fc_primc = GetValueNode<std::shared_ptr<ops::FullConnection>>(fc_cnode->input(0));
+      auto fc_primc = ops::GetOperator<ops::FullConnection>(fc_cnode->input(0));
       MS_CHECK_TRUE_RET(fc_primc != nullptr, nullptr);
       fc_primc->set_activation_type(add_primc->get_activation_type());
     }

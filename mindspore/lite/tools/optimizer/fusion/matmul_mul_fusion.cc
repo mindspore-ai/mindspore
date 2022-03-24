@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/matmul_mul_fusion.h"
 #include <memory>
 #include <vector>
@@ -21,6 +22,7 @@
 #include "ops/fusion/mul_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -50,7 +52,7 @@ int CalNewCnodeScale(const CNodePtr &mul_cnode, const CNodePtr &matmul_cnode) {
   auto matmul_weight_data = reinterpret_cast<float *>(matmul_weight_tensor->data_c());
   MS_CHECK_TRUE_RET(matmul_weight_data != nullptr, RET_ERROR);
 
-  auto matmul_prim = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
+  auto matmul_prim = ops::GetOperator<ops::MatMulFusion>(matmul_cnode->input(0));
   MS_CHECK_TRUE_RET(matmul_prim->GetAttr(ops::kTransposeB) != nullptr, RET_ERROR);
   bool transpose_b = matmul_prim->get_transpose_b();
 
@@ -141,15 +143,16 @@ bool IsPrimitiveProper(const CNodePtr &mul_cnode, const CNodePtr &matmul_cnode) 
     }
   }
 
-  auto matmul_primc = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
+  auto matmul_primc = ops::GetOperator<ops::MatMulFusion>(matmul_cnode->input(0));
   MS_CHECK_TRUE_RET(matmul_primc != nullptr, false);
   if (matmul_primc->GetAttr(ops::kActivationType) != nullptr &&
       matmul_primc->get_activation_type() != ActivationType::NO_ACTIVATION) {
     MS_LOG(INFO) << matmul_cnode->fullname_with_scope() << " has activation attr";
     return false;
   }
-  MS_CHECK_TRUE_RET(matmul_primc != nullptr, false);
-  if (IsQuantParameterNode(matmul_primc)) {
+  auto matmul_prim_c = matmul_primc->GetPrim();
+  MS_CHECK_TRUE_RET(matmul_prim_c != nullptr, false);
+  if (IsQuantParameterNode(matmul_prim_c)) {
     MS_LOG(INFO) << matmul_cnode->fullname_with_scope() << "is quant node";
     return false;
   }
@@ -165,7 +168,7 @@ bool IsPrimitiveProper(const CNodePtr &mul_cnode, const CNodePtr &matmul_cnode) 
   MS_CHECK_TRUE_RET(matmul_weight_tensor != nullptr, RET_ERROR);
   std::vector<int64_t> matmul_weight_shape = matmul_weight_tensor->shape();
   MS_CHECK_TRUE_RET(matmul_weight_shape.size() >= KMatmulWeightDims, false);
-  auto matmul_prim = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
+  auto matmul_prim = ops::GetOperator<ops::MatMulFusion>(matmul_cnode->input(0));
   MS_CHECK_TRUE_RET(matmul_prim->GetAttr(ops::kTransposeB) != nullptr, false);
   int64_t last_dim_size = matmul_prim->get_transpose_b()
                             ? matmul_weight_shape[matmul_weight_shape.size() - kSecondToLastDim]
@@ -226,9 +229,9 @@ const AnfNodePtr MatMulMulFusion::Process(const FuncGraphPtr &func_graph, const 
     return nullptr;
   }
 
-  auto mul_primc = GetValueNode<std::shared_ptr<ops::MulFusion>>(mul_cnode->input(0));
+  auto mul_primc = ops::GetOperator<ops::MulFusion>(mul_cnode->input(0));
   MS_CHECK_TRUE_RET(mul_primc != nullptr, nullptr);
-  auto matmul_primc = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
+  auto matmul_primc = ops::GetOperator<ops::MatMulFusion>(matmul_cnode->input(0));
   MS_CHECK_TRUE_RET(matmul_primc != nullptr, nullptr);
   if (mul_primc->GetAttr(ops::kActivationType) != nullptr &&
       mul_primc->get_activation_type() != ActivationType::NO_ACTIVATION) {

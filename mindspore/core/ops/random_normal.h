@@ -17,23 +17,18 @@
 #ifndef MINDSPORE_CORE_OPS_RANDOM_NORMAL_H_
 #define MINDSPORE_CORE_OPS_RANDOM_NORMAL_H_
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRandomNormal = "RandomNormal";
 /// \brief RandomNormal defined RandomNormal operator prototype of lite.
-class MS_CORE_API RandomNormal : public PrimitiveC {
+class MIND_API RandomNormal : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(RandomNormal);
   /// \brief Constructor.
-  RandomNormal() : PrimitiveC(kNameRandomNormal) {}
-
-  /// \brief Destructor.
-  ~RandomNormal() = default;
-
-  MS_DECLARE_PARENT(RandomNormal, PrimitiveC);
+  RandomNormal() : BaseOperator(kNameRandomNormal) {}
 
   /// \brief Method to init the op's attributes.
   ///

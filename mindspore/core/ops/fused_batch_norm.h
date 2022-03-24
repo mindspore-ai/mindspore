@@ -20,26 +20,21 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFusedBatchNorm = "FusedBatchNorm";
 /// \brief FusedBatchNorm defined Enhanced BatchNorm operator prototype.
-class MS_CORE_API FusedBatchNorm : public PrimitiveC {
+class MIND_API FusedBatchNorm : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(FusedBatchNorm);
   /// \brief Constructor.
-  FusedBatchNorm() : PrimitiveC(kNameFusedBatchNorm) {
+  FusedBatchNorm() : BaseOperator(kNameFusedBatchNorm) {
     InitIOName({"x", "scale", "b", "mean", "variance"},
                {"y", "running_mean", "running_variance", "save_mean", "save_inv_variance"});
   }
-
-  /// \brief Destructor.
-  ~FusedBatchNorm() = default;
-
-  MS_DECLARE_PARENT(FusedBatchNorm, PrimitiveC);
 
   /// \brief Method to init the op's attributes.
   ///

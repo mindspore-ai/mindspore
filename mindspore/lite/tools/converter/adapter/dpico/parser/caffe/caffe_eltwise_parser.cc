@@ -23,6 +23,7 @@
 #include "ops/custom.h"
 #include "common/op_attr.h"
 #include "common/check_base.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
@@ -38,44 +39,44 @@ bool IsEltwiseOp(const caffe::EltwiseParameter &eltwiseParam) {
           std::fabs(eltwiseParam.coeff(0) - 1) <= std::numeric_limits<float>::epsilon() &&
           std::fabs(eltwiseParam.coeff(1) - 1) <= std::numeric_limits<float>::epsilon());
 }
-int SetEltwiseMode(const caffe::EltwiseParameter &eltwiseParam, ops::PrimitiveC *prim) {
+int SetEltwiseMode(const caffe::EltwiseParameter &eltwiseParam, const BaseOperatorPtr &prim) {
   MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "prim is nullptr.");
   if (eltwiseParam.has_operation()) {
     switch (eltwiseParam.operation()) {
       case caffe::EltwiseParameter::PROD:
-        (void)prim->AddAttr(ops::kMode, MakeValue(static_cast<int64_t>(mindspore::EltwiseMode::PROD)));
+        (void)prim->AddAttr(ops::kMode, api::MakeValue(static_cast<int64_t>(mindspore::EltwiseMode::PROD)));
         break;
       case caffe::EltwiseParameter::SUM:
-        (void)prim->AddAttr(ops::kMode, MakeValue(static_cast<int64_t>(mindspore::EltwiseMode::SUM)));
+        (void)prim->AddAttr(ops::kMode, api::MakeValue(static_cast<int64_t>(mindspore::EltwiseMode::SUM)));
         break;
       case caffe::EltwiseParameter::MAX:
-        (void)prim->AddAttr(ops::kMode, MakeValue(static_cast<int64_t>(mindspore::EltwiseMode::MAXIMUM)));
+        (void)prim->AddAttr(ops::kMode, api::MakeValue(static_cast<int64_t>(mindspore::EltwiseMode::MAXIMUM)));
         break;
       default:
         MS_LOG(ERROR) << "Eltwise parse params fail, unsupported operation: " << eltwiseParam.operation();
         return RET_ERROR;
     }
   } else {
-    (void)prim->AddAttr(ops::kMode, MakeValue(static_cast<int64_t>(mindspore::EltwiseMode::SUM)));
+    (void)prim->AddAttr(ops::kMode, api::MakeValue(static_cast<int64_t>(mindspore::EltwiseMode::SUM)));
   }
   return RET_OK;
 }
-ops::PrimitiveC *ParseToCustomOp(const caffe::EltwiseParameter &eltwiseParam) {
-  auto prim = std::make_unique<ops::Custom>();
+BaseOperatorPtr ParseToCustomOp(const caffe::EltwiseParameter &eltwiseParam) {
+  auto prim = std::make_shared<ops::Custom>();
   MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr.");
   prim->set_type("Eltwise");
   if (eltwiseParam.coeff_size() != 0) {
     auto coeff_vals = std::vector<float>(eltwiseParam.coeff().begin(), eltwiseParam.coeff().end());
-    (void)prim->AddAttr(dpico::kCoeffs, MakeValue(coeff_vals));
+    (void)prim->AddAttr(dpico::kCoeffs, api::MakeValue(coeff_vals));
   }
-  if (SetEltwiseMode(eltwiseParam, prim.get()) != RET_OK) {
+  if (SetEltwiseMode(eltwiseParam, prim) != RET_OK) {
     MS_LOG(ERROR) << "set eltwise mode failed.";
     return nullptr;
   }
-  return prim.release();
+  return prim;
 }
 }  // namespace
-ops::PrimitiveC *CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+BaseOperatorPtr CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   const caffe::EltwiseParameter &eltwiseParam = proto.eltwise_param();
   if (eltwiseParam.coeff_size() != 0 && eltwiseParam.coeff_size() != proto.bottom_size()) {
     MS_LOG(ERROR) << "Coeff size(" << eltwiseParam.coeff_size()
@@ -88,17 +89,17 @@ ops::PrimitiveC *CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, c
     return nullptr;
   } else if (proto.bottom_size() == kNums2) {
     if (IsSubOp(eltwiseParam)) {
-      auto prim = std::make_unique<ops::SubFusion>();
+      auto prim = std::make_shared<ops::SubFusion>();
       MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr.");
-      return prim.release();
+      return prim;
     } else if (IsEltwiseOp(eltwiseParam)) {
-      auto prim = std::make_unique<ops::Eltwise>();
+      auto prim = std::make_shared<ops::Eltwise>();
       MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr.");
-      if (SetEltwiseMode(eltwiseParam, prim.get()) != RET_OK) {
+      if (SetEltwiseMode(eltwiseParam, prim) != RET_OK) {
         MS_LOG(ERROR) << "set eltwise mode failed. " << proto.name();
         return nullptr;
       }
-      return prim.release();
+      return prim;
     } else {
       return ParseToCustomOp(eltwiseParam);
     }

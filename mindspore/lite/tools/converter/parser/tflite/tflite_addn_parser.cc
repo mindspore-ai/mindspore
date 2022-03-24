@@ -23,12 +23,12 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                      const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::AddN>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteAddNParser(tflite::BuiltinOperator_ADD_N, new TfliteAddNParser());

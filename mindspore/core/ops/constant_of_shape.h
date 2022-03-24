@@ -18,23 +18,18 @@
 #define MINDSPORE_CORE_OPS_CONSTANT_OF_SHAPE_H_
 #include <memory>
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConstantOfShape = "ConstantOfShape";
 /// \brief ConstantOfShape defined ConstantOfShape operator prototype of lite.
-class MS_CORE_API ConstantOfShape : public PrimitiveC {
+class MIND_API ConstantOfShape : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ConstantOfShape);
   /// \brief Constructor.
-  ConstantOfShape() : PrimitiveC(kNameConstantOfShape) {}
-
-  /// \brief Destructor.
-  ~ConstantOfShape() = default;
-
-  MS_DECLARE_PARENT(ConstantOfShape, PrimitiveC);
+  ConstantOfShape() : BaseOperator(kNameConstantOfShape) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -63,8 +58,8 @@ class MS_CORE_API ConstantOfShape : public PrimitiveC {
   std::vector<float> get_value() const;
 };
 
-AbstractBasePtr ConstantOfShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ConstantOfShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

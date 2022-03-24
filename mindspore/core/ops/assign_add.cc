@@ -19,6 +19,7 @@
 #include "ops/assign_add.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -39,6 +40,8 @@ TypePtr AssignAddInferType(const PrimitivePtr &primitive, const std::vector<Abst
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "AssignAdd");
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(AssignAdd, PrimitiveC, BaseOperator);
 AbstractBasePtr AssignAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include <memory>
 #include "tools/optimizer/common/gllo_utils.h"

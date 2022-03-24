@@ -22,24 +22,22 @@
 #include <vector>
 #include <string>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseApplyAdadelta = "SparseApplyAdadelta";
-class SparseApplyAdadelta : public PrimitiveC {
+class SparseApplyAdadelta : public BaseOperator {
  public:
-  SparseApplyAdadelta() : PrimitiveC(kNameSparseApplyAdadelta) {
+  MIND_API_BASE_MEMBER(SparseApplyAdadelta);
+  SparseApplyAdadelta() : BaseOperator(kNameSparseApplyAdadelta) {
     InitIOName({"var", "accum", "accum_updata", "lr", "rho", "grad", "indices"}, {"var", "accum", "accum_updata"});
   }
-  ~SparseApplyAdadelta() = default;
-  MS_DECLARE_PARENT(SparseApplyAdadelta, PrimitiveC);
 };
 
-AbstractBasePtr SparseApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SparseApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimSparseApplyAdadeltaPtr = std::shared_ptr<SparseApplyAdadelta>;
 }  // namespace ops

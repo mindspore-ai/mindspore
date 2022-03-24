@@ -37,7 +37,7 @@ class Conv2DInfo : public OperatorInfo {
   int CheckStrategy(const SplitStrategy &strategy) override;
   int InferReplaceOp() override;
   int InferParallelCNodes() override;
-  virtual int ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+  virtual int ConstructOutputCNodes(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                                     const std::vector<AnfNodePtr> &feature_split_outputs,
                                     const std::vector<AnfNodePtr> &kernel_split_outputs,
                                     const std::vector<AnfNodePtr> &bias_split_outputs);
@@ -51,7 +51,7 @@ class Conv2DInfo : public OperatorInfo {
  private:
   int CheckConv2DPrimitiveType();
   int CheckIfSplit();
-  std::shared_ptr<ops::Conv2DFusion> GetNewConvPrimitive(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+  std::shared_ptr<ops::Conv2DFusion> GetNewConvPrimitive(const api::SharedPtr<ops::Conv2DFusion> &conv_prim,
                                                          size_t dev_index, int cin_sum, int cout_sum);
 };
 }  // namespace opt

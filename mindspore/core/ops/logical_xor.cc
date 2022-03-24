@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+#include "ops/logical_xor.h"
 #include <map>
 #include <string>
 #include <set>
 #include "ops/op_utils.h"
-#include "ops/logical_xor.h"
+#include "base/core_ops.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -38,6 +41,7 @@ TypePtr LogicalXorInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(LogicalXor, PrimitiveC, BaseOperator);
 AbstractBasePtr LogicalXorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

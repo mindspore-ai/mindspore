@@ -21,10 +21,12 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffePermuteParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffePermuteParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Transpose>();
-
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+
   std::vector<int32_t> perm;
   const caffe::PermuteParameter &permuteParam = proto.permute_param();
   const int num_order_dims = permuteParam.order_size();
@@ -34,9 +36,9 @@ ops::PrimitiveC *CaffePermuteParser::Parse(const caffe::LayerParameter &proto, c
   }
   auto value_ptr = MakeValue(perm);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim->AddAttr("perm", value_ptr);
+  prim_c->AddAttr("perm", value_ptr);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffePermuteParser("Permute", new CaffePermuteParser());

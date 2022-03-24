@@ -17,22 +17,18 @@
 #ifndef MINDSPORE_CORE_OPS_TENSOR_LIST_GET_ITEM_H_
 #define MINDSPORE_CORE_OPS_TENSOR_LIST_GET_ITEM_H_
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListGetItem = "TensorListGetItem";
 /// \brief TensorListGetItem defined TensorListGetItem operator prototype of lite.
-class MS_CORE_API TensorListGetItem : public PrimitiveC {
+class MIND_API TensorListGetItem : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TensorListGetItem);
   /// \brief Constructor.
-  TensorListGetItem() : PrimitiveC(kNameTensorListGetItem) {}
-  /// \brief Destructor.
-  ~TensorListGetItem() = default;
-
-  MS_DECLARE_PARENT(TensorListGetItem, PrimitiveC);
+  TensorListGetItem() : BaseOperator(kNameTensorListGetItem) {}
 
   /// \brief Method to init the op's attributes.
   ///

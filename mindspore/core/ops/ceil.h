@@ -19,27 +19,23 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCeil = "Ceil";
 /// \brief Rounds a tensor up to the closest integer element-wise.
 /// Refer to Python API @ref mindspore.ops.Ceil for more details.
-class MS_CORE_API Ceil : public PrimitiveC {
+class MIND_API Ceil : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Ceil);
   /// \brief Constructor.
-  Ceil() : PrimitiveC(kNameCeil) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Ceil() = default;
-  MS_DECLARE_PARENT(Ceil, PrimitiveC);
+  Ceil() : BaseOperator(kNameCeil) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Ceil for the inputs.
   void Init() const {}
 };
-AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CEIL_H_

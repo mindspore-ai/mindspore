@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *prim) {
+STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, PrimitiveCPtr prim) {
   MS_ASSERT(prim != nullptr);
   auto data_type =
     OnnxNodeParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type()));
@@ -47,8 +47,8 @@ STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_t
   return RET_OK;
 }
 
-ops::PrimitiveC *OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<lite::Constant>();
+PrimitiveCPtr OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_shared<lite::Constant>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   for (const auto &attr : onnx_node.attribute()) {
     if (attr.name() == "sparse_value") {
@@ -57,7 +57,7 @@ ops::PrimitiveC *OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, c
     }
     if (attr.name() == "value") {
       const auto &const_tensor = attr.t();
-      if (AddDataInfoAttr(const_tensor, prim.get()) != RET_OK) {
+      if (AddDataInfoAttr(const_tensor, prim) != RET_OK) {
         MS_LOG(ERROR) << "add basic attr failed.";
         return nullptr;
       }
@@ -66,7 +66,7 @@ ops::PrimitiveC *OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, c
       return nullptr;
     }
   }
-  return prim.release();
+  return prim;
 }
 
 OnnxNodeRegistrar g_onnxConstantParser("Constant", new OnnxConstantParser());

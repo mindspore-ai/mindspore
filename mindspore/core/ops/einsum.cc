@@ -24,6 +24,8 @@
 #include "ir/dtype/tensor_type.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
 namespace {
@@ -217,9 +219,10 @@ static void element_map_shape(const std::string &prim_name, const std::vector<st
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(Einsum, PrimitiveC, BaseOperator);
 void Einsum::Init(const std::string &equation) { this->set_equation(equation); }
 
-void Einsum::set_equation(const std::string &equation) { (void)this->AddAttr(kEquation, MakeValue(equation)); }
+void Einsum::set_equation(const std::string &equation) { (void)this->AddAttr(kEquation, api::MakeValue(equation)); }
 
 std::string Einsum::get_equation() const {
   auto value_ptr = this->GetAttr(kEquation);

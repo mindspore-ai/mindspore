@@ -33,6 +33,7 @@
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -909,7 +910,8 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   MS_CHECK_TRUE_RET(input_node != nullptr, nullptr);
   auto perm_node = BuildIntVecParameterNode(func_graph, perm, cnode_name + "_perm");
   MS_ASSERT(perm_node != nullptr);
-  auto trans_prim = std::make_shared<ops::Transpose>();
+  ops::Transpose transpose_node;
+  auto trans_prim = transpose_node.GetPrim();
   MS_CHECK_TRUE_RET(trans_prim != nullptr, nullptr);
   auto cnode = func_graph->NewCNode(trans_prim, {input_node, perm_node});
   MS_ASSERT(cnode != nullptr);
@@ -940,7 +942,8 @@ CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
     MS_LOG(ERROR) << "make indices node failed.";
     return nullptr;
   }
-  auto gather_prim = std::make_shared<ops::Gather>();
+  ops::Gather gather_node;
+  auto gather_prim = gather_node.GetPrim();
   MS_CHECK_TRUE_RET(gather_prim != nullptr, nullptr);
   auto cnode = func_graph->NewCNode(gather_prim, {input_node, indices_node, axis_node});
   MS_ASSERT(cnode != nullptr);
@@ -965,7 +968,9 @@ CNodePtr GenTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &inp
   MS_CHECK_TRUE_RET(tuple_get_item_prim != nullptr, nullptr);
   auto second_input = NewValueNode(MakeValue<int>(index));
   MS_CHECK_TRUE_RET(second_input != nullptr, nullptr);
-  auto tuple_cnode = func_graph->NewCNode(tuple_get_item_prim, {input, second_input});
+  auto tuple_get_item_prim_c = tuple_get_item_prim->GetPrim();
+  MS_CHECK_TRUE_RET(tuple_get_item_prim_c != nullptr, nullptr);
+  auto tuple_cnode = func_graph->NewCNode(tuple_get_item_prim_c, {input, second_input});
   MS_ASSERT(tuple_cnode != nullptr);
   tuple_cnode->set_fullname_with_scope(input->fullname_with_scope() + "_getitem_" + std::to_string(index));
   return tuple_cnode;
@@ -991,15 +996,15 @@ STATUS FetchShapeFromAbstract(const abstract::AbstractBasePtr &abstract, ShapeVe
 
 bool IsTrainOp(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  auto cnode_type = prim->type_name();
+  auto cnode_type = prim->name();
   // optimizer op
   if (cnode_type == "Adam" || cnode_type == "SGD" || cnode_type == "ApplyMomentum") {
     return true;
   }
   // loss op
-  if (cnode_type == "SoftmaxCrossEntropyWithLogits" || cnode_type == "SpareSoftmaxCrossEntropyWithLogits" ||
+  if (cnode_type == "SoftmaxCrossEntropyWithLogits" || cnode_type == "SparseSoftmaxCrossEntropyWithLogits" ||
       cnode_type == "SmoothL1Loss" || cnode_type == "SmoothL1LossGrad" ||
-      cnode_type == "SigmoidCrossEntropyWithLogits" || cnode_type == "SigmoidCrossEntropyWithLogpitsGrad") {
+      cnode_type == "SigmoidCrossEntropyWithLogits" || cnode_type == "SigmoidCrossEntropyWithLogitsGrad") {
     return true;
   }
   // grad op

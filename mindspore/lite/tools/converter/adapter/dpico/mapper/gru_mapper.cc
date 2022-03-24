@@ -25,8 +25,8 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS GruMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                      const CNodePtrList &output_cnodes) {
+STATUS GruMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                      const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   MS_CHECK_TRUE_MSG(base_operators != nullptr, RET_ERROR, "base_operators is nullptr.");
   auto gru_operator = std::make_unique<mapper::GruOperator>();
   MS_CHECK_TRUE_MSG(gru_operator != nullptr, RET_ERROR, "gru_operator is nullptr.");
@@ -37,50 +37,50 @@ STATUS GruMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_
   }
 
   if (prim->GetAttr(kNumOutput) != nullptr) {
-    gru_operator->SetRecurrentNumOutput(GetValue<uint32_t>(prim->GetAttr(kNumOutput)));
+    gru_operator->SetRecurrentNumOutput(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumOutput))));
   }
   if (prim->GetAttr(kExposeHidden) != nullptr) {
-    gru_operator->SetRecurrentExposeHidden(GetValue<bool>(prim->GetAttr(kExposeHidden)));
+    gru_operator->SetRecurrentExposeHidden(api::GetValue<bool>(prim->GetAttr(kExposeHidden)));
   }
   if (prim->GetAttr(kHasSplitBiasFlag) != nullptr) {
-    gru_operator->SetHasSplitBiasFlag(GetValue<bool>(prim->GetAttr(kHasSplitBiasFlag)));
+    gru_operator->SetHasSplitBiasFlag(api::GetValue<bool>(prim->GetAttr(kHasSplitBiasFlag)));
   }
   if (prim->GetAttr(kHasSplitHWeightFlag) != nullptr) {
-    gru_operator->SetHasSplitHWeightFlag(GetValue<bool>(prim->GetAttr(kHasSplitHWeightFlag)));
+    gru_operator->SetHasSplitHWeightFlag(api::GetValue<bool>(prim->GetAttr(kHasSplitHWeightFlag)));
   }
   if (prim->GetAttr(kGruWeightOrderZrhFlag) != nullptr) {
-    gru_operator->SetGruWeightOrderZrhFlag(GetValue<bool>(prim->GetAttr(kGruWeightOrderZrhFlag)));
+    gru_operator->SetGruWeightOrderZrhFlag(api::GetValue<bool>(prim->GetAttr(kGruWeightOrderZrhFlag)));
   }
   if (prim->GetAttr(kOnnxModeOutFlag) != nullptr) {
-    gru_operator->SetOnnxModeOutFlag(GetValue<bool>(prim->GetAttr(kOnnxModeOutFlag)));
+    gru_operator->SetOnnxModeOutFlag(api::GetValue<bool>(prim->GetAttr(kOnnxModeOutFlag)));
   }
   if (prim->GetAttr(kOutputLastFrameFlag) != nullptr) {
-    gru_operator->SetOutputLastFrameFlag(GetValue<bool>(prim->GetAttr(kOutputLastFrameFlag)));
+    gru_operator->SetOutputLastFrameFlag(api::GetValue<bool>(prim->GetAttr(kOutputLastFrameFlag)));
   }
   if (prim->GetAttr(kKeepDirectionDimFlag) != nullptr) {
-    gru_operator->SetKeepDirectionDimFlag(GetValue<bool>(prim->GetAttr(kKeepDirectionDimFlag)));
+    gru_operator->SetKeepDirectionDimFlag(api::GetValue<bool>(prim->GetAttr(kKeepDirectionDimFlag)));
   }
   if (prim->GetAttr(kInitialHOnlineFlag) != nullptr) {
-    gru_operator->SetInitialHOnlineFlag(GetValue<bool>(prim->GetAttr(kInitialHOnlineFlag)));
+    gru_operator->SetInitialHOnlineFlag(api::GetValue<bool>(prim->GetAttr(kInitialHOnlineFlag)));
   }
   if (prim->GetAttr(kUseDefaultInitialHFlag) != nullptr) {
-    gru_operator->SetUseDefaultInitialHFlag(GetValue<bool>(prim->GetAttr(kUseDefaultInitialHFlag)));
+    gru_operator->SetUseDefaultInitialHFlag(api::GetValue<bool>(prim->GetAttr(kUseDefaultInitialHFlag)));
   }
   if (prim->GetAttr(kActivateType) != nullptr) {
-    gru_operator->PushActivateType(GetValue<std::string>(prim->GetAttr(kActivateType)));
+    gru_operator->PushActivateType(api::GetValue<std::string>(prim->GetAttr(kActivateType)));
   }
   if (prim->GetAttr(kActivateAlpha) != nullptr) {
-    gru_operator->PushActivateAlpha(GetValue<float>(prim->GetAttr(kActivateAlpha)));
+    gru_operator->PushActivateAlpha(api::GetValue<float>(prim->GetAttr(kActivateAlpha)));
   }
   if (prim->GetAttr(kActivateBeta) != nullptr) {
-    gru_operator->PushActivateBeta(GetValue<float>(prim->GetAttr(kActivateBeta)));
+    gru_operator->PushActivateBeta(api::GetValue<float>(prim->GetAttr(kActivateBeta)));
   }
   if (prim->GetAttr(kAfClip) != nullptr) {
-    gru_operator->SetAfClip(GetValue<float>(prim->GetAttr(kAfClip)));
+    gru_operator->SetAfClip(api::GetValue<float>(prim->GetAttr(kAfClip)));
   }
   if (prim->GetAttr(kRecurrentDirection) != nullptr) {
-    gru_operator->SetRecurrentDirection(
-      static_cast<mapper::RecurrentDirection>(GetValue<uint32_t>(prim->GetAttr(kRecurrentDirection))));
+    gru_operator->SetRecurrentDirection(static_cast<mapper::RecurrentDirection>(
+      static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kRecurrentDirection)))));
   }
   if (SetRecurrentDataInfo(cnode, gru_operator.get()) != RET_OK) {
     MS_LOG(ERROR) << "set gru data info failed.";

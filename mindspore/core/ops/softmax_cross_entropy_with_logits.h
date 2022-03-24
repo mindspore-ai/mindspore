@@ -20,29 +20,28 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftmaxCrossEntropyWithLogits = "SoftmaxCrossEntropyWithLogits";
 /// \brief Gets the softmax cross-entropy value between logits and labels with one-hot encoding.
 /// Refer to Python API @ref mindspore.ops.SoftmaxCrossEntropyWithLogits for more details.
-class MS_CORE_API SoftmaxCrossEntropyWithLogits : public PrimitiveC {
+class MIND_API SoftmaxCrossEntropyWithLogits : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SoftmaxCrossEntropyWithLogits);
   /// \brief Constructor.
-  SoftmaxCrossEntropyWithLogits() : PrimitiveC(kNameSoftmaxCrossEntropyWithLogits) {
+  SoftmaxCrossEntropyWithLogits() : BaseOperator(kNameSoftmaxCrossEntropyWithLogits) {
     InitIOName({"features", "labels"}, {"loss", "backprop"});
   }
-  /// \brief Destructor.
-  ~SoftmaxCrossEntropyWithLogits() = default;
-  MS_DECLARE_PARENT(SoftmaxCrossEntropyWithLogits, PrimitiveC);
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSoftmaxCrossEntropyWithLogitsPtr = std::shared_ptr<SoftmaxCrossEntropyWithLogits>;
 }  // namespace ops
 }  // namespace mindspore

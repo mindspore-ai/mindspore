@@ -20,22 +20,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Outputs a tensor to a protocol buffer through a tensor summary operator.
 /// Refer to Python API @ref mindspore.ops.TensorSummary for more details.
-class MS_CORE_API TensorSummary : public PrimitiveC {
+class MIND_API TensorSummary : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(TensorSummary);
   /// \brief Constructor.
-  TensorSummary() : PrimitiveC(prim::kPrimTensorSummary->name()) {}
-  /// \brief Destructor.
-  ~TensorSummary() = default;
-  MS_DECLARE_PARENT(TensorSummary, PrimitiveC);
+  TensorSummary() : BaseOperator("TensorSummary") {}
   /// \brief Init.
   void Init();
   /// \brief Set side_effect_io.

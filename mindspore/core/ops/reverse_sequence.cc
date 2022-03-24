@@ -20,15 +20,19 @@
 #include "ops/reverse_sequence.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(ReverseSequence, PrimitiveC, BaseOperator);
 void ReverseSequence::Init(const int64_t seq_dim, const int64_t batch_dim) {
   this->set_seq_dim(seq_dim);
   this->set_batch_dim(batch_dim);
 }
-void ReverseSequence::set_seq_dim(const int64_t seq_dim) { (void)this->AddAttr(kSeqDim, MakeValue(seq_dim)); }
-void ReverseSequence::set_batch_dim(const int64_t batch_dim) { (void)this->AddAttr(kBatchDim, MakeValue(batch_dim)); }
+void ReverseSequence::set_seq_dim(const int64_t seq_dim) { (void)this->AddAttr(kSeqDim, api::MakeValue(seq_dim)); }
+void ReverseSequence::set_batch_dim(const int64_t batch_dim) {
+  (void)this->AddAttr(kBatchDim, api::MakeValue(batch_dim));
+}
 
 int64_t ReverseSequence::get_seq_dim() const { return GetValue<int64_t>(GetAttr(kSeqDim)); }
 int64_t ReverseSequence::get_batch_dim() const {

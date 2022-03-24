@@ -22,8 +22,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeTileParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::TileFusion>();
+BaseOperatorPtr CaffeTileParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::TileFusion>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -45,9 +45,9 @@ ops::PrimitiveC *CaffeTileParser::Parse(const caffe::LayerParameter &proto, cons
   } else {
     multiples.push_back(1);
   }
-  prim->AddAttr(dpico::kMultiples, MakeValue(multiples));
+  prim->AddAttr(dpico::kMultiples, api::MakeValue(multiples));
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeTileParser("Tile", new CaffeTileParser());

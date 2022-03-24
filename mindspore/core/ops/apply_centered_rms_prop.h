@@ -22,25 +22,23 @@
 #include <set>
 #include <map>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyCenteredRMSProp = "ApplyCenteredRMSProp";
-class ApplyCenteredRMSProp : public PrimitiveC {
+class MIND_API ApplyCenteredRMSProp : public BaseOperator {
  public:
-  ApplyCenteredRMSProp() : PrimitiveC(kNameApplyCenteredRMSProp) {
+  MIND_API_BASE_MEMBER(ApplyCenteredRMSProp);
+  ApplyCenteredRMSProp() : BaseOperator(kNameApplyCenteredRMSProp) {
     InitIOName(
       {"var", "mean_gradient", "mean_square", "moment", "grad", "learning_rate", "decay", "momentum", "epsilon"},
       {"var", "mean_gradient", "mean_square", "moment"});
   }
-  ~ApplyCenteredRMSProp() = default;
-  MS_DECLARE_PARENT(ApplyCenteredRMSProp, PrimitiveC);
 };
-AbstractBasePtr ApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyCenteredRMSPropPtr = std::shared_ptr<ApplyCenteredRMSProp>;
 }  // namespace ops
 }  // namespace mindspore

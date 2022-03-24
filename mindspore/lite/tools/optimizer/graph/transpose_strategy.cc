@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/graph/transpose_strategy.h"
 #include <algorithm>
 #include <functional>
@@ -156,7 +157,7 @@ STATUS ChangeOpCrop(const FuncGraphPtr &func_graph, const CNodePtr &cnode, Forma
     MS_LOG(ERROR) << "trans_type is invalid.";
     return lite::RET_ERROR;
   }
-  auto crop_prim = GetValueNode<std::shared_ptr<ops::Crop>>(cnode->input(0));
+  auto crop_prim = ops::GetOperator<ops::Crop>(cnode->input(0));
   if (crop_prim == nullptr) {
     MS_LOG(ERROR) << "cnode is invalid.";
     return lite::RET_ERROR;
@@ -275,7 +276,7 @@ STATUS ChangeOpSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode, Form
     return lite::RET_NOT_SUPPORT;
   }
   int element_num = shape.front();
-  auto prim = GetValueNode<std::shared_ptr<ops::SliceFusion>>(cnode->input(0));
+  auto prim = ops::GetOperator<ops::SliceFusion>(cnode->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "GetValueNode failed");
   std::vector<int> axes;
   if (prim->GetAttr(ops::kAxes) == nullptr || prim->get_axes().empty()) {
@@ -409,7 +410,7 @@ bool TransposeStrategy::CanFusionIfInsert(const FuncGraphPtr &func_graph, const 
   auto total_node_count = in_nodes.size() + out_nodes.size();
   bool can_insert = trans_count > total_node_count / kHalfDivisor;
   if (CheckPrimitiveType(cnode, prim::kPrimActivation)) {
-    auto prim_act = GetValueNode<std::shared_ptr<ops::Activation>>(cnode->input(0));
+    auto prim_act = ops::GetOperator<ops::Activation>(cnode->input(0));
     MS_CHECK_TRUE_MSG(prim_act != nullptr, false, "GetValueNode Failed");
     if (prim_act->get_activation_type() == mindspore::ActivationType::LEAKY_RELU) {
       can_insert = trans_count >= total_node_count / kHalfDivisor;

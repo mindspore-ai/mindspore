@@ -20,25 +20,22 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchNorm = "BatchNorm";
 /// \brief Batch Normalization for input data and updated parameters.
 /// Refer to Python API @ref mindspore.ops.BatchNorm for more details.
-class MS_CORE_API BatchNorm : public PrimitiveC {
+class MIND_API BatchNorm : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(BatchNorm);
   /// \brief Constructor.
-  BatchNorm() : PrimitiveC(kNameBatchNorm) {
+  BatchNorm() : BaseOperator(kNameBatchNorm) {
     InitIOName({"x", "scale", "offset", "mean", "variance"},
                {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
   }
-  /// \brief Destructor.
-  ~BatchNorm() = default;
-  MS_DECLARE_PARENT(BatchNorm, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BatchNorm for the inputs.
   void Init(const bool is_training = false, const float epsilon = 1e-5, const float momentun = 0.1,
             const Format &format = NCHW);
@@ -68,8 +65,8 @@ class MS_CORE_API BatchNorm : public PrimitiveC {
   float get_momentum() const;
 };
 
-AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimBatchNormPtr = std::shared_ptr<BatchNorm>;
 
 }  // namespace ops

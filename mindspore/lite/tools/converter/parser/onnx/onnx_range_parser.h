@@ -27,7 +27,7 @@ class OnnxRangeParser : public OnnxNodeParser {
   OnnxRangeParser() : OnnxNodeParser("Range") {}
   ~OnnxRangeParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

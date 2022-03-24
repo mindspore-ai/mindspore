@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Eltwise>();
 
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -69,7 +69,7 @@ ops::PrimitiveC *CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, c
     prim->set_mode(mindspore::EltwiseMode::SUM);
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeEltwiseParser("Eltwise", new CaffeEltwiseParser());

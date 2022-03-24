@@ -22,24 +22,20 @@
 #include <string>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFastGeLU = "FastGeLU";
-class FastGeLU : public PrimitiveC {
+class FastGeLU : public BaseOperator {
  public:
-  FastGeLU() : PrimitiveC(kNameFastGeLU) { InitIOName({"x"}, {"y"}); }
-
-  ~FastGeLU() = default;
-
-  MS_DECLARE_PARENT(FastGeLU, PrimitiveC);
+  MIND_API_BASE_MEMBER(FastGeLU);
+  FastGeLU() : BaseOperator(kNameFastGeLU) { InitIOName({"x"}, {"y"}); }
 };
 
-AbstractBasePtr FastGeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr FastGeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimFastGeLUPtr = std::shared_ptr<FastGeLU>;
 }  // namespace ops

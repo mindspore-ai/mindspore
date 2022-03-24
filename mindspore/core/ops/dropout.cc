@@ -21,14 +21,16 @@
 #include "ops/dropout.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(Dropout, PrimitiveC, BaseOperator);
 void Dropout::Init(const float keep_prob) { this->set_keep_prob(keep_prob); }
 
 void Dropout::set_keep_prob(const float keep_prob) {
   CheckAndConvertUtils::CheckInRange<float>(kKeepProb, keep_prob, kIncludeRight, {0.0, 1.0}, this->name());
-  (void)this->AddAttr(kKeepProb, MakeValue(keep_prob));
+  (void)this->AddAttr(kKeepProb, api::MakeValue(keep_prob));
 }
 
 float Dropout::get_keep_prob() const {

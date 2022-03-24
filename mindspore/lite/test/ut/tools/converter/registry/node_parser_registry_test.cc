@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
-#include "api/ir/func_graph.h"
+#define USE_DEPRECATED_API
+#include "include/registry/node_parser_registry.h"
 #include "common/common_test.h"
 #include "include/registry/model_parser.h"
 #include "include/registry/model_parser_registry.h"
-#include "include/registry/node_parser_registry.h"
+#include "mindapi/ir/func_graph.h"
+#include "mindspore/core/ir/anf.h"
+#include "mindspore/core/ir/func_graph.h"
 #include "ops/addn.h"
 #include "proto/graph.pb.h"
 
 using mindspore::converter::kFmkTypeTf;
+using PrimitiveCPtr = std::shared_ptr<mindspore::ops::PrimitiveC>;
 namespace mindspore {
 namespace converter {
 class AddNodeParser : public NodeParser {
  public:
-  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
-                         const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
-                         std::vector<std::string> *inputs, int *output_size) override {
-    auto prim = std::make_unique<ops::AddN>();
+  ops::BaseOperatorPtr Parse(const tensorflow::NodeDef &tf_op,
+                             const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
+                             std::vector<std::string> *inputs, int *output_size) override {
+    auto prim = api::MakeShared<ops::AddN>();
     if (prim == nullptr) {
       MS_LOG(ERROR) << "make a shared_ptr failed.";
       return nullptr;
@@ -39,7 +43,7 @@ class AddNodeParser : public NodeParser {
     for (int i = 0; i < tf_op.input_size(); ++i) {
       inputs->push_back(tf_op.input(i));
     }
-    return prim.release();
+    return prim;
   }
 };
 REG_NODE_PARSER(kFmkTypeTf, Add, std::make_shared<AddNodeParser>());
@@ -63,17 +67,17 @@ class NodeParserRegistryTest : public CommonTest {
 
 TEST_F(NodeParserRegistryTest, TestRegistry) {
   ASSERT_NE(func_graph_, nullptr);
-  auto node_list = api::FuncGraph::TopoSort(func_graph_->get_return());
-  std::vector<CNodePtr> cnodes;
+  auto node_list = mindspore::api::FuncGraph::TopoSort(func_graph_->get_return());
+  std::vector<api::CNodePtr> cnodes;
   for (auto &node : node_list) {
-    if (node->isa<CNode>()) {
-      cnodes.push_back(node->cast<CNodePtr>());
+    if (node->isa<api::CNode>()) {
+      cnodes.push_back(node->cast<api::CNodePtr>());
     }
   }
   ASSERT_EQ(cnodes.size(), 2);
   auto cnode = cnodes.front();
   ASSERT_EQ(cnode->size(), 3);
-  auto prim = GetValueNode<std::shared_ptr<ops::AddN>>(cnode->input(0));
+  auto prim = api::GetValueNode<api::PrimitivePtr>(cnode->input(0));
   ASSERT_NE(prim, nullptr);
 }
 }  // namespace mindspore

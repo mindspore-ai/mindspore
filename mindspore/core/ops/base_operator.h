@@ -17,26 +17,36 @@
 #ifndef MINDSPORE_CORE_OPS_BASE_OPERATOR_
 #define MINDSPORE_CORE_OPS_BASE_OPERATOR_
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "mindapi/ir/primitive.h"
 
+namespace mindspore {
 namespace abstract {
 class AnalysisEngine;
 using AnalysisEnginePtr = std::shared_ptr<AnalysisEngine>;
 
 class AbstractBase;
-using AbstractBasePtr = std::shared_ptr<abstract::AbstractBase>;
+using AbstractBasePtr = std::shared_ptr<AbstractBase>;
 }  // namespace abstract
+}  // namespace mindspore
+
+namespace mindspore {
+class Primitive;
+using PrimitivePtr = std::shared_ptr<Primitive>;
+}  // namespace mindspore
 
 namespace mindspore {
 namespace ops {
-class BaseOperator : public api::Primitive {
+class PrimitiveC;
+using PrimitiveCPtr = std::shared_ptr<PrimitiveC>;
+class MIND_API BaseOperator : public api::Primitive {
  public:
+  MIND_API_BASE_MEMBER(BaseOperator);
   explicit BaseOperator(const std::string &name);
-  ~BaseOperator() = default;
+  PrimitiveCPtr GetPrim();
 
  protected:
   void InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name);

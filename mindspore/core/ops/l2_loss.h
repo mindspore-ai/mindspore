@@ -19,23 +19,20 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameL2Loss = "L2Loss";
-class MS_CORE_API L2Loss : public PrimitiveC {
+class MIND_API L2Loss : public BaseOperator {
  public:
-  L2Loss() : PrimitiveC(kNameL2Loss) { InitIOName({"x"}, {"output"}); }
-  ~L2Loss() = default;
-  MS_DECLARE_PARENT(L2Loss, PrimitiveC);
+  MIND_API_BASE_MEMBER(L2Loss);
+  L2Loss() : BaseOperator(kNameL2Loss) { InitIOName({"x"}, {"output"}); }
   void Init() {}
 };
-AbstractBasePtr L2LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr L2LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimL2LossPtr = std::shared_ptr<L2Loss>;
 }  // namespace ops
 }  // namespace mindspore

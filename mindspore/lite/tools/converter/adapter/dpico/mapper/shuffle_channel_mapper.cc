@@ -18,14 +18,13 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "ops/op_utils.h"
 #include "common/anf_util.h"
 #include "op/shuffle_channel_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS ShuffleChannelMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                                 const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS ShuffleChannelMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                                 const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -44,7 +43,8 @@ STATUS ShuffleChannelMapper::Map(const CNodePtr &cnode, std::vector<BaseOperator
 
   shuffle_channel_operator->SetOpType(mapper::OpType::SHUFFLECHANNEL);
   if (prim->GetAttr(ops::kGroup) != nullptr) {
-    shuffle_channel_operator->SetShuffleChannelGroup(GetValue<uint32_t>(prim->GetAttr(ops::kGroup)));
+    shuffle_channel_operator->SetShuffleChannelGroup(
+      static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(ops::kGroup))));
   }
 
   base_operators->push_back(std::move(shuffle_channel_operator));

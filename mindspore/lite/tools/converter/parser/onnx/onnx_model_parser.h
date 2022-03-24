@@ -54,8 +54,8 @@ class OnnxModelParser : public converter::ModelParser {
   STATUS BuildParameterNodeForQuantParam(const void *data, const std::string &name, TypeId type);
   STATUS BuildCNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
                     std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, std::vector<AnfNodePtr> *graph_inputs,
-                    ops::PrimitiveC *primitive_c, std::string loop_name);
-  STATUS ConvertOpQuantParams(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c);
+                    ops::PrimitiveCPtr primitive_c, std::string loop_name);
+  STATUS ConvertOpQuantParams(const onnx::NodeProto &onnx_node, ops::PrimitiveCPtr primitive_c);
   STATUS ParseQuantParam(const onnx::NodeProto &onnx_node);
   STATUS SetTensorQuantParam(const std::string &tensor_name, std::vector<schema::QuantParamT> *quant_params);
   STATUS SetTensorQuantParamFromNode(const std::string &tensor_name, std::vector<schema::QuantParamT> *quant_params);

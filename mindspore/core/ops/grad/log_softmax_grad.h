@@ -20,26 +20,24 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogSoftmaxGrad = "LogSoftmaxGrad";
-class LogSoftmaxGrad : public PrimitiveC {
+class MIND_API LogSoftmaxGrad : public BaseOperator {
  public:
-  LogSoftmaxGrad() : PrimitiveC(kNameLogSoftmaxGrad) { InitIOName({"x", "grad"}, {"y"}); }
-  explicit LogSoftmaxGrad(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "grad"}, {"y"}); }
-  ~LogSoftmaxGrad() = default;
-  MS_DECLARE_PARENT(LogSoftmaxGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(LogSoftmaxGrad);
+  LogSoftmaxGrad() : BaseOperator(kNameLogSoftmaxGrad) { InitIOName({"x", "grad"}, {"y"}); }
+  explicit LogSoftmaxGrad(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "grad"}, {"y"}); }
   void Init(const int64_t axis = -1);
   void set_axis(const int64_t epsilon);
   int64_t get_axis() const;
 };
 
-AbstractBasePtr LogSoftmaxGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LogSoftmaxGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

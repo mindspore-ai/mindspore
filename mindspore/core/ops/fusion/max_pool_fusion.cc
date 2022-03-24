@@ -15,6 +15,9 @@
  */
 
 #include "ops/fusion/max_pool_fusion.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -31,11 +34,11 @@ void MaxPoolFusion::Init(const std::vector<int64_t> &kernel_size, const std::vec
   this->set_activation_type(activation_type);
 }
 
-void MaxPoolFusion::set_global(const bool global) { (void)AddAttr(kGlobal, MakeValue(global)); }
+void MaxPoolFusion::set_global(const bool global) { (void)AddAttr(kGlobal, api::MakeValue(global)); }
 
 void MaxPoolFusion::set_activation_type(ActivationType activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 
 bool MaxPoolFusion::get_global() const {
@@ -50,6 +53,7 @@ ActivationType MaxPoolFusion::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
+MIND_API_BASE_IMPL(MaxPoolFusion, PrimitiveC, MaxPool);
 REGISTER_PRIMITIVE_C(kNameMaxPoolFusion, MaxPoolFusion);
 }  // namespace ops
 }  // namespace mindspore

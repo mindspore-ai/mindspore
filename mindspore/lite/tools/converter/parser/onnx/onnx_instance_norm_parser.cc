@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxInstanceNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxInstanceNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::InstanceNorm>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   if (!onnx_node.attribute().empty()) {
@@ -31,7 +31,7 @@ ops::PrimitiveC *OnnxInstanceNormParser::Parse(const onnx::GraphProto &onnx_grap
     }
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxInstanceNormParser("InstanceNormalization", new OnnxInstanceNormParser());

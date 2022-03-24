@@ -19,21 +19,18 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Returns absolute value of a tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Abs for more details.
-class MS_CORE_API Abs : public PrimitiveC {
+class MIND_API Abs : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Abs);
   /// \brief Constructor.
-  Abs() : PrimitiveC(prim::kPrimAbs->name()) { InitIOName({"input_x"}, {"output"}); }
-  /// \brief Destructor.
-  ~Abs() = default;
-  MS_DECLARE_PARENT(Abs, PrimitiveC);
+  Abs() : BaseOperator("Abs") { InitIOName({"input_x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Abs for the inputs.
   void Init() const {}
 };

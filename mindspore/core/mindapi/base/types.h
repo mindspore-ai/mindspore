@@ -114,5 +114,10 @@ enum PaddingMode : int64_t {
   SYMMETRIC = 2,
   MODE_RESERVED = 3,
 };
+
+enum PoolMode : int64_t {
+  MAX_POOLING = 0,
+  MEAN_POOLING = 1,
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDAPI_BASE_TYPES_H_

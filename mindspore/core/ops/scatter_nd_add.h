@@ -19,22 +19,20 @@
 #include <memory>
 #include <vector>
 
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScatterNdAdd = "ScatterNdAdd";
-class ScatterNdAdd : public PrimitiveC {
+class MIND_API ScatterNdAdd : public BaseOperator {
  public:
-  ScatterNdAdd() : PrimitiveC(kNameScatterNdAdd) { InitIOName({"input_x", "indices", "updates"}, {"y"}); }
-  ~ScatterNdAdd() = default;
-  MS_DECLARE_PARENT(ScatterNdAdd, PrimitiveC);
+  MIND_API_BASE_MEMBER(ScatterNdAdd);
+  ScatterNdAdd() : BaseOperator(kNameScatterNdAdd) { InitIOName({"input_x", "indices", "updates"}, {"y"}); }
 };
 
-AbstractBasePtr ScatterNdAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ScatterNdAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimScatterNdAddPtr = std::shared_ptr<ScatterNdAdd>;
 }  // namespace ops
 }  // namespace mindspore

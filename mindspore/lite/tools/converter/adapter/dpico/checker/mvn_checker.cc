@@ -16,7 +16,6 @@
 
 #include "checker/mvn_checker.h"
 #include <vector>
-#include <algorithm>
 #include <string>
 #include "common/anf_util.h"
 #include "common/op_enum.h"
@@ -24,21 +23,21 @@
 
 namespace mindspore {
 namespace dpico {
-bool MvnChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
+bool MvnChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
   if (!CheckInputW(op, kInputIndex1, format, kMaxInputWOf4Dims)) {
     MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
     return false;
   }
 
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
 
   if (primitive->GetAttr(ops::kAxes) != nullptr) {
-    auto axes = GetValue<std::vector<uint32_t>>(primitive->GetAttr(ops::kAxes));
-    if (axes != std::vector<uint32_t>{0, kAxis2, kAxis3} && axes != std::vector<uint32_t>{0, 1, kAxis2, kAxis3}) {
+    auto axes = api::GetValue<std::vector<int64_t>>(primitive->GetAttr(ops::kAxes));
+    if (axes != std::vector<int64_t>{0, kAxis2, kAxis3} && axes != std::vector<int64_t>{0, 1, kAxis2, kAxis3}) {
       MS_LOG(WARNING) << "axes only supports [0,2,3] or [0,1,2,3] " << op->fullname_with_scope();
       return false;
     }

@@ -20,18 +20,16 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameActivationGrad = "ActivationGrad";
-class MS_CORE_API ActivationGrad : public PrimitiveC {
+class MIND_API ActivationGrad : public BaseOperator {
  public:
-  ActivationGrad() : PrimitiveC(kNameActivationGrad) {}
-  ~ActivationGrad() = default;
-  MS_DECLARE_PARENT(ActivationGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(ActivationGrad);
+  ActivationGrad() : BaseOperator(kNameActivationGrad) {}
   void Init(const ActivationType &type = NO_ACTIVATION, const float alpha = 0.2);
   void set_activation_type(const ActivationType &type);
   void set_alpha(const float alpha);

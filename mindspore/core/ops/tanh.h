@@ -21,27 +21,23 @@
 #include <vector>
 #include <string>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTanh = "Tanh";
 /// \brief Tanh activation function. Refer to Python API @ref mindspore.ops.Tanh for more details.
-class MS_CORE_API Tanh : public PrimitiveC {
+class MIND_API Tanh : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Tanh);
   /// \brief Constructor.
-  Tanh() : PrimitiveC(kNameTanh) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Tanh() = default;
-  MS_DECLARE_PARENT(Tanh, PrimitiveC);
+  Tanh() : BaseOperator(kNameTanh) { InitIOName({"x"}, {"y"}); }
   /// \brief Init.
   void Init() const {}
 };
-AbstractBasePtr TanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr TanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimTanhPtr = std::shared_ptr<Tanh>;
 }  // namespace ops
 }  // namespace mindspore

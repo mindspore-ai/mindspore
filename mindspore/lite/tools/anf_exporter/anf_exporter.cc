@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/anf_exporter/anf_exporter.h"
 #include <list>
 #include <memory>
@@ -24,6 +25,7 @@
 #include "tools/converter/converter_flags.h"
 #include "abstract/abstract_value.h"
 #include "mindspore/core/ir/primitive.h"
+#include "mindspore/core/ops/op_name.h"
 #include "mindspore/core/ops/op_utils.h"
 #include "ops/fusion/partial_fusion.h"
 #include "ops/call.h"
@@ -113,7 +115,7 @@ int AnfExporter::SetPostTrainOutputTensorType(const std::unique_ptr<schema::Meta
     if (primitive->name() != mindspore::ops::kNameQuantDTypeCast) {
       first_tensor_output->dataType = kNumberTypeInt8;
     } else {
-      auto primc = primitive->cast<std::shared_ptr<mindspore::ops::QuantDTypeCast>>();
+      auto primc = api::MakeShared<mindspore::ops::QuantDTypeCast>(primitive);
       MS_CHECK_TRUE_MSG(primc != nullptr, RET_ERROR, "cast ptr failed");
       if (primc->get_dst_t() != kNumberTypeFloat32) {
         first_tensor_output->dataType = kNumberTypeInt8;
@@ -639,7 +641,11 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
   MS_CHECK_TRUE_MSG(meta_graphT != nullptr, nullptr, "meta_graphT is nullptr");
   auto fmk = func_graph->get_attr("fmk");
   MS_CHECK_TRUE_MSG(fmk != nullptr, nullptr, "fmk is nullptr");
-  meta_graphT->fmkType = GetValue<int>(fmk);
+  if (fmk->isa<Int64Imm>()) {
+    meta_graphT->fmkType = GetValue<int64_t>(fmk);
+  } else {
+    meta_graphT->fmkType = GetValue<int>(fmk);
+  }
 
   graph_inputs_ = func_graph->get_inputs();
 

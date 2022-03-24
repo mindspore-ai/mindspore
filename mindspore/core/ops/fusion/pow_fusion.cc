@@ -20,6 +20,8 @@
 #include <vector>
 #include "ops/fusion/pow_fusion.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -28,12 +30,13 @@ void PowFusion::Init(const float &scale, const float &shift) {
   this->set_shift(shift);
 }
 
-void PowFusion::set_scale(const float &scale) { (void)this->AddAttr(kScale, MakeValue(scale)); }
-void PowFusion::set_shift(const float &shift) { (void)this->AddAttr(kShift, MakeValue(shift)); }
+void PowFusion::set_scale(const float &scale) { (void)this->AddAttr(kScale, api::MakeValue(scale)); }
+void PowFusion::set_shift(const float &shift) { (void)this->AddAttr(kShift, api::MakeValue(shift)); }
 
 float PowFusion::get_scale() const { return GetValue<float>(GetAttr(kScale)); }
 float PowFusion::get_shift() const { return GetValue<float>(GetAttr(kShift)); }
 
+MIND_API_BASE_IMPL(PowFusion, PrimitiveC, Pow);
 REGISTER_PRIMITIVE_C(kNamePowFusion, PowFusion);
 }  // namespace ops
 }  // namespace mindspore

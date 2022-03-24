@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CORE_OPS_SOFTPLUS_GRAD_H_
 #define MINDSPORE_CORE_OPS_SOFTPLUS_GRAD_H_
 #include <map>
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftplusGrad = "SoftplusGrad";
-class SoftplusGrad : public PrimitiveC {
+class MIND_API SoftplusGrad : public BaseOperator {
  public:
-  SoftplusGrad() : PrimitiveC(kNameSoftplusGrad) { InitIOName({"x"}, {"output"}); }
-  ~SoftplusGrad() = default;
-  MS_DECLARE_PARENT(SoftplusGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(SoftplusGrad);
+  SoftplusGrad() : BaseOperator(kNameSoftplusGrad) { InitIOName({"x"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore

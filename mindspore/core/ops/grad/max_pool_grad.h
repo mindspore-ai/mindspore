@@ -21,22 +21,20 @@
 #include <string>
 #include <memory>
 #include "ops/grad/pool_grad.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolGrad = "MaxPoolGrad";
-class MS_CORE_API MaxPoolGrad : public PoolGrad {
+class MIND_API MaxPoolGrad : public PoolGrad {
  public:
+  MIND_API_BASE_MEMBER(MaxPoolGrad);
   MaxPoolGrad() : PoolGrad(kNameMaxPoolGrad) { InitIOName({"x_origin", "out_origin", "grad"}, {"output"}); }
-  ~MaxPoolGrad() = default;
-  MS_DECLARE_PARENT(MaxPoolGrad, PoolGrad);
 };
 
-AbstractBasePtr MaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMaxPoolGradPtr = std::shared_ptr<MaxPoolGrad>;
 }  // namespace ops
 }  // namespace mindspore

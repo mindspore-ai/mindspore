@@ -21,22 +21,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchToSpaceND = "BatchToSpaceND";
 /// \brief Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 /// Refer to Python API @ref mindspore.ops.BatchToSpaceND for more details.
-class MS_CORE_API BatchToSpaceND : public PrimitiveC {
+class MIND_API BatchToSpaceND : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(BatchToSpaceND);
   /// \brief Constructor.
-  BatchToSpaceND() : PrimitiveC(kNameBatchToSpaceND) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~BatchToSpaceND() = default;
-  MS_DECLARE_PARENT(BatchToSpaceND, PrimitiveC);
+  BatchToSpaceND() : BaseOperator(kNameBatchToSpaceND) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BatchToSpaceND for the inputs.
   void Init(const std::vector<int64_t> block_shape, const std::vector<std::vector<int64_t>> crops);
   /// \brief Set crops.
@@ -52,8 +49,8 @@ class MS_CORE_API BatchToSpaceND : public PrimitiveC {
   /// \return crops.
   std::vector<std::vector<int64_t>> get_crops() const;
 };
-AbstractBasePtr BatchToSpaceNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BatchToSpaceNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBatchToSpaceNDPtr = std::shared_ptr<BatchToSpaceND>;
 }  // namespace ops
 }  // namespace mindspore

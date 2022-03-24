@@ -20,8 +20,8 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeReverseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto prim = std::make_unique<ops::ReverseV2>();
+BaseOperatorPtr CaffeReverseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_shared<ops::ReverseV2>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "prim is nullptr.";
     return nullptr;
@@ -33,7 +33,7 @@ ops::PrimitiveC *CaffeReverseParser::Parse(const caffe::LayerParameter &proto, c
     prim->set_axis({0});
   }
 
-  return prim.release();
+  return prim;
 }
 
 CaffeNodeRegistrar g_caffeReverseParser("Reverse", new CaffeReverseParser());

@@ -24,8 +24,8 @@
 
 namespace mindspore {
 namespace dpico {
-STATUS LstmMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                       const CNodePtrList &output_cnodes) {
+STATUS LstmMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                       const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
@@ -42,37 +42,37 @@ STATUS LstmMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base
   }
 
   if (prim->GetAttr(kNumOutput) != nullptr) {
-    lstm_operator->SetRecurrentNumOutput(GetValue<uint32_t>(prim->GetAttr(kNumOutput)));
+    lstm_operator->SetRecurrentNumOutput(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumOutput))));
   }
   if (prim->GetAttr(kExposeHidden) != nullptr) {
-    lstm_operator->SetRecurrentExposeHidden(GetValue<bool>(prim->GetAttr(kExposeHidden)));
+    lstm_operator->SetRecurrentExposeHidden(api::GetValue<bool>(prim->GetAttr(kExposeHidden)));
   }
   if (prim->GetAttr(kOutputLastFrameFlag) != nullptr) {
-    lstm_operator->SetOutputLastFrameFlag(GetValue<bool>(prim->GetAttr(kOutputLastFrameFlag)));
+    lstm_operator->SetOutputLastFrameFlag(api::GetValue<bool>(prim->GetAttr(kOutputLastFrameFlag)));
   }
   if (prim->GetAttr(kInitialHOnlineFlag) != nullptr) {
-    lstm_operator->SetInitialHOnlineFlag(GetValue<bool>(prim->GetAttr(kInitialHOnlineFlag)));
+    lstm_operator->SetInitialHOnlineFlag(api::GetValue<bool>(prim->GetAttr(kInitialHOnlineFlag)));
   }
   if (prim->GetAttr(kUseDefaultInitialHFlag) != nullptr) {
-    lstm_operator->SetUseDefaultInitialHFlag(GetValue<bool>(prim->GetAttr(kUseDefaultInitialHFlag)));
+    lstm_operator->SetUseDefaultInitialHFlag(api::GetValue<bool>(prim->GetAttr(kUseDefaultInitialHFlag)));
   }
   if (prim->GetAttr(kInitialCOnlineFlag) != nullptr) {
-    lstm_operator->SetInitialCOnlineFlag(GetValue<bool>(prim->GetAttr(kInitialCOnlineFlag)));
+    lstm_operator->SetInitialCOnlineFlag(api::GetValue<bool>(prim->GetAttr(kInitialCOnlineFlag)));
   }
   if (prim->GetAttr(kUseDefaultInitialCFlag) != nullptr) {
-    lstm_operator->SetUseDefaultInitialCFlag(GetValue<bool>(prim->GetAttr(kUseDefaultInitialCFlag)));
+    lstm_operator->SetUseDefaultInitialCFlag(api::GetValue<bool>(prim->GetAttr(kUseDefaultInitialCFlag)));
   }
   if (prim->GetAttr(kKeepDirectionDimFlag) != nullptr) {
-    lstm_operator->SetKeepDirectionDimFlag(GetValue<bool>(prim->GetAttr(kKeepDirectionDimFlag)));
+    lstm_operator->SetKeepDirectionDimFlag(api::GetValue<bool>(prim->GetAttr(kKeepDirectionDimFlag)));
   }
   if (prim->GetAttr(kPeepHoleFlag) != nullptr) {
-    lstm_operator->SetPeepholeFlag(GetValue<bool>(prim->GetAttr(kPeepHoleFlag)));
+    lstm_operator->SetPeepholeFlag(api::GetValue<bool>(prim->GetAttr(kPeepHoleFlag)));
   }
   if (prim->GetAttr(kLstmWeightOrderIofcFlag) != nullptr) {
-    lstm_operator->SetLstmWeightOrderIofcFlag(GetValue<bool>(prim->GetAttr(kLstmWeightOrderIofcFlag)));
+    lstm_operator->SetLstmWeightOrderIofcFlag(api::GetValue<bool>(prim->GetAttr(kLstmWeightOrderIofcFlag)));
   }
   if (prim->GetAttr(kSequenceLensOnlineFlag) != nullptr) {
-    lstm_operator->SetSequenceLensOnlineFlag(GetValue<bool>(prim->GetAttr(kSequenceLensOnlineFlag)));
+    lstm_operator->SetSequenceLensOnlineFlag(api::GetValue<bool>(prim->GetAttr(kSequenceLensOnlineFlag)));
   }
 
   if (SetRecurrentDataInfo(cnode, lstm_operator.get()) != RET_OK) {

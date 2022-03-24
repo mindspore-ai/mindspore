@@ -18,23 +18,18 @@
 #include <memory>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRfft = "Rfft";
 /// \brief Rfft defined the operator prototype of computing discrete fourier transform of a real-valued signal.
-class MS_CORE_API Rfft : public PrimitiveC {
+class MIND_API Rfft : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Rfft);
   /// \brief Constructor.
-  Rfft() : PrimitiveC(kNameRfft) {}
-
-  /// \brief Destructor.
-  ~Rfft() = default;
-
-  MS_DECLARE_PARENT(Rfft, PrimitiveC);
+  Rfft() : BaseOperator(kNameRfft) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -51,8 +46,8 @@ class MS_CORE_API Rfft : public PrimitiveC {
   /// \return the FFT length.
   int64_t get_fft_length() const;
 };
-AbstractBasePtr RfftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr RfftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

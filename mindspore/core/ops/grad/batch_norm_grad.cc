@@ -19,15 +19,17 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(BatchNormGrad, PrimitiveC, BaseOperator);
 void BatchNormGrad::Init(const bool is_training, const float epsilon) {
   this->set_is_training(is_training);
   this->set_epsilon(epsilon);
 }
 
-void BatchNormGrad::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, MakeValue(epsilon)); }
+void BatchNormGrad::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
 
 float BatchNormGrad::get_epsilon() const {
   auto value_ptr = this->GetAttr(kEpsilon);
@@ -36,7 +38,7 @@ float BatchNormGrad::get_epsilon() const {
 }
 
 void BatchNormGrad::set_is_training(const bool is_training) {
-  (void)this->AddAttr(kIsTraining, MakeValue(is_training));
+  (void)this->AddAttr(kIsTraining, api::MakeValue(is_training));
 }
 
 bool BatchNormGrad::get_is_training() const {

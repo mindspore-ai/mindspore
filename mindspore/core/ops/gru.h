@@ -22,29 +22,21 @@
 #include <string>
 #include <memory>
 #include <algorithm>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/primitive_infer_map.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGRU = "GRU";
 /// \brief GRU defined the GRU operator prototype.
-class MS_CORE_API GRU : public PrimitiveC {
+class MIND_API GRU : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(GRU);
   /// \brief Constructor.
-  GRU() : PrimitiveC(kNameGRU) {
+  GRU() : BaseOperator(kNameGRU) {
     InitIOName({"x", "weight_input", "weight_hidden", "bias_input", "bias_hidden", "seq_length", "init_h"},
                {"output", "output_h", "update", "reset", "new", "hidden_new"});
   }
-
-  /// \brief Destructor.
-  ~GRU() = default;
-
-  MS_DECLARE_PARENT(GRU, PrimitiveC);
-
   /// \brief Method to init the op's attributes.
   ///
   /// \param[in] bidirectional Define a boolean value to indicate whether the gru is single or double direction.

@@ -21,21 +21,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIsClose = "IsClose";
-class IsClose : public PrimitiveC {
+class IsClose : public BaseOperator {
  public:
-  IsClose() : PrimitiveC(kNameIsClose) { InitIOName({"x1", "x2"}, {"y"}); }
-  ~IsClose() = default;
-  MS_DECLARE_PARENT(IsClose, PrimitiveC);
+  MIND_API_BASE_MEMBER(IsClose);
+  IsClose() : BaseOperator(kNameIsClose) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-AbstractBasePtr IsCloseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr IsCloseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimIsClosePtr = std::shared_ptr<IsClose>;
 }  // namespace ops
 }  // namespace mindspore

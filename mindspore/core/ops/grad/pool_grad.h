@@ -20,21 +20,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePoolGrad = "PoolGrad";
-class MS_CORE_API PoolGrad : public PrimitiveC {
+class MIND_API PoolGrad : public BaseOperator {
  public:
-  PoolGrad() : PrimitiveC(kNamePoolGrad) { InitIOName({"x_origin", "out_origin", "grad"}, {"output"}); }
-  explicit PoolGrad(const std::string k_name) : PrimitiveC(k_name) {
+  MIND_API_BASE_MEMBER(PoolGrad);
+  PoolGrad() : BaseOperator(kNamePoolGrad) { InitIOName({"x_origin", "out_origin", "grad"}, {"output"}); }
+  explicit PoolGrad(const std::string k_name) : BaseOperator(k_name) {
     InitIOName({"x_origin", "out_origin", "grad"}, {"output"});
   }
-  ~PoolGrad() = default;
-  MS_DECLARE_PARENT(PoolGrad, PrimitiveC);
   virtual void Init(const std::vector<int64_t> &kernel_size = {1}, const std::vector<int64_t> &strides = {1},
                     const PadMode &pad_mode = VALID, const Format &format = NCHW);
   virtual void set_kernel_size(const std::vector<int64_t> &kernel_size);

@@ -19,26 +19,22 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 /// \brief Computes cosine of input element-wise. Refer to Python API @ref mindspore.ops.Cos for more details.
-class MS_CORE_API Cos : public PrimitiveC {
+class MIND_API Cos : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Cos);
   /// \brief Constructor.
-  Cos() : PrimitiveC(prim::kPrimCos->name()) {}
-  /// \brief Destructor.
-  ~Cos() = default;
-  MS_DECLARE_PARENT(Cos, PrimitiveC);
+  Cos() : BaseOperator("Cos") {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Cos for the inputs.
   void Init(float alpha = 0.0);
 };
 
-AbstractBasePtr CosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_COS_H_

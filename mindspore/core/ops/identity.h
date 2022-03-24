@@ -18,27 +18,24 @@
 #define MINDSPORE_CORE_OPS_IDENTITY_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIdentity = "Identity";
 /// \brief Returns a Tensor with the same shape and contents as input.
 /// Refer to Python API @ref mindspore.ops.Identity for more details.
-class MS_CORE_API Identity : public PrimitiveC {
+class MIND_API Identity : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Identity);
   /// \brief Constructor.
-  Identity() : PrimitiveC(kNameIdentity) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~Identity() = default;
-  MS_DECLARE_PARENT(Identity, PrimitiveC);
+  Identity() : BaseOperator(kNameIdentity) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Identity for the inputs.
   void Init() const {}
 };
-AbstractBasePtr IdentityInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr IdentityInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

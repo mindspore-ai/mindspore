@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+PrimitiveCPtr CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::ArgMaxFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_keep_dims(true);
@@ -39,7 +39,7 @@ ops::PrimitiveC *CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto, co
     prim->set_axis(argmaxParam.axis());
   }
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 CaffeNodeRegistrar g_caffeArgMaxParser("ArgMax", new CaffeArgMaxParser());

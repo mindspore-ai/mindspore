@@ -19,27 +19,24 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFill = "Fill";
 /// \brief Creates a tensor filled with a scalar value. Refer to Python API @ref mindspore.ops.Fill for more details.
-class MS_CORE_API Fill : public PrimitiveC {
+class MIND_API Fill : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Fill);
   /// \brief Constructor.
-  Fill() : PrimitiveC(kNameFill) {}
-  /// \brief Destructor.
-  ~Fill() = default;
-  MS_DECLARE_PARENT(Fill, PrimitiveC);
+  Fill() : BaseOperator(kNameFill) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Fill for the inputs.
   void Init() const {}
 };
 
-AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

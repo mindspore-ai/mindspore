@@ -20,6 +20,7 @@
 #include <vector>
 #include "parser/caffe/caffe_node_parser.h"
 #include "parser/caffe/caffe_node_parser_registry.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace lite {
@@ -28,7 +29,7 @@ class CaffePoolingParser : public CaffeNodeParser {
   CaffePoolingParser() : CaffeNodeParser("pooling") {}
   ~CaffePoolingParser() override = default;
 
-  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  BaseOperatorPtr Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 
   static STATUS ParsePads(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *pad);
 

@@ -234,7 +234,9 @@ STATUS FunctionalizeWhile::UpdateExitNodeUser() {
           MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
           return RET_NULL_PTR;
         }
-        auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+        auto tuple_get_item_prim_c = tuple_get_item_prim_ptr->GetPrim();
+        CHECK_NULL_RETURN(tuple_get_item_prim_c);
+        auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_c);
         CHECK_NULL_RETURN(tuple_get_item_prim);
         const auto &exit_node = node;
         auto switch_node = BlongToWhichSwitch(exit_node);
@@ -380,7 +382,9 @@ STATUS FunctionalizeWhile::IdentifyCondSubgraphOutput() {
     MS_LOG(ERROR) << "GetReturnPrim return nullptr";
     return RET_NULL_PTR;
   }
-  auto value_node = NewValueNode(return_prim_ptr);
+  auto return_prim_c = return_prim_ptr->GetPrim();
+  CHECK_NULL_RETURN(return_prim_c);
+  auto value_node = NewValueNode(return_prim_c);
   if (value_node == nullptr) {
     MS_LOG(ERROR) << "new value_node failed.";
     return RET_NULL_PTR;
@@ -541,7 +545,9 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
     MS_LOG(ERROR) << "GetReturnPrim return nullptr";
     return RET_NULL_PTR;
   }
-  auto value_node = NewValueNode(return_prim_ptr);
+  auto return_prim_c = return_prim_ptr->GetPrim();
+  CHECK_NULL_RETURN(return_prim_c);
+  auto value_node = NewValueNode(return_prim_c);
   CHECK_NULL_RETURN(value_node);
   // cond subgraph output is LoopCond's input
   std::vector<AnfNodePtr> op_inputs{value_node};
@@ -558,7 +564,9 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
       MS_LOG(ERROR) << "GetMakeTuplePrim return nullptr";
       return RET_NULL_PTR;
     }
-    auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
+    auto prim_c = make_tuple_prim_ptr->GetPrim();
+    CHECK_NULL_RETURN(prim_c);
+    auto make_tuple_prim = NewValueNode(prim_c);
     CHECK_NULL_RETURN(make_tuple_prim);
     make_tuple_inputs.insert(make_tuple_inputs.begin(), make_tuple_prim);
     auto make_tuple_cnode = body_sub_func_graph_->NewCNode(make_tuple_inputs);

@@ -19,19 +19,17 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBesselI0e = "BesselI0e";
 
-class BesselI0e : public PrimitiveC {
+class MIND_API BesselI0e : public BaseOperator {
  public:
-  BesselI0e() : PrimitiveC(kNameBesselI0e) { InitIOName({"x"}, {"output"}); }
-  ~BesselI0e() = default;
-  MS_DECLARE_PARENT(BesselI0e, PrimitiveC);
+  MIND_API_BASE_MEMBER(BesselI0e);
+  BesselI0e() : BaseOperator(kNameBesselI0e) { InitIOName({"x"}, {"output"}); }
   void Init() {}
 };
 }  // namespace ops

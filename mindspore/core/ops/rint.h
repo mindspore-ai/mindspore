@@ -19,22 +19,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRint = "Rint";
-class Rint : public PrimitiveC {
+class Rint : public BaseOperator {
  public:
-  Rint() : PrimitiveC(kNameRint) { InitIOName({"x"}, {"output"}); }
-  ~Rint() = default;
-  MS_DECLARE_PARENT(Rint, PrimitiveC);
+  MIND_API_BASE_MEMBER(Rint);
+  Rint() : BaseOperator(kNameRint) { InitIOName({"x"}, {"output"}); }
 };
 
-AbstractBasePtr RintInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr RintInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimRintPtr = std::shared_ptr<Rint>;
 }  // namespace ops

@@ -19,22 +19,20 @@
 #include <memory>
 #include <vector>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogMatrixDeterminant = "LogMatrixDeterminant";
-class LogMatrixDeterminant : public PrimitiveC {
+class MIND_API LogMatrixDeterminant : public BaseOperator {
  public:
-  LogMatrixDeterminant() : PrimitiveC(kNameLogMatrixDeterminant) { InitIOName({"x"}, {"sign", "output"}); }
-  ~LogMatrixDeterminant() = default;
-  MS_DECLARE_PARENT(LogMatrixDeterminant, PrimitiveC);
+  MIND_API_BASE_MEMBER(LogMatrixDeterminant);
+  LogMatrixDeterminant() : BaseOperator(kNameLogMatrixDeterminant) { InitIOName({"x"}, {"sign", "output"}); }
 };
 
-AbstractBasePtr LogMatrixDeterminantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LogMatrixDeterminantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLogMatrixDeterminantPtr = std::shared_ptr<LogMatrixDeterminant>;
 }  // namespace ops
 }  // namespace mindspore

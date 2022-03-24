@@ -20,23 +20,19 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameROIPooling = "ROIPooling";
 /// \brief ROIPooling defined the ROIPooling operator prototype.
-class MS_CORE_API ROIPooling : public PrimitiveC {
+class MIND_API ROIPooling : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ROIPooling);
   /// \brief Constructor.
-  ROIPooling() : PrimitiveC(kNameROIPooling) {}
-
-  /// \brief Destructor.
-  ~ROIPooling() = default;
-
-  MS_DECLARE_PARENT(ROIPooling, PrimitiveC);
+  ROIPooling() : BaseOperator(kNameROIPooling) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -77,8 +73,8 @@ class MS_CORE_API ROIPooling : public PrimitiveC {
   /// \return the size factor.
   float get_scale() const;
 };
-AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

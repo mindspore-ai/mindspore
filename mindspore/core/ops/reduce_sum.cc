@@ -16,9 +16,12 @@
 
 #include <memory>
 #include <algorithm>
+#include <set>
 
 #include "ops/reduce_sum.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -184,6 +187,7 @@ TypePtr ReduceSumInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(ReduceSum, PrimitiveC, Reduce);
 AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 1;

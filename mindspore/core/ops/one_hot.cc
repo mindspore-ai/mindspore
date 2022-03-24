@@ -19,11 +19,12 @@
 #include "ops/one_hot.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void OneHot::Init(const int64_t axis) { this->set_axis(axis); }
-void OneHot::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void OneHot::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t OneHot::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 namespace {
@@ -87,6 +88,8 @@ TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
     op_name);
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(OneHot, PrimitiveC, BaseOperator);
 AbstractBasePtr OneHotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

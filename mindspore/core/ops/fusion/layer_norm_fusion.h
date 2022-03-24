@@ -20,22 +20,17 @@
 #include <memory>
 
 #include "ops/layer_norm.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLayerNormFusion = "LayerNormFusion";
 /// \brief LayerNormFusion defined LayerNorm operator prototype of lite.
-class MS_CORE_API LayerNormFusion : public LayerNorm {
+class MIND_API LayerNormFusion : public LayerNorm {
  public:
+  MIND_API_BASE_MEMBER(LayerNormFusion);
   /// \brief Constructor.
   LayerNormFusion() : LayerNorm(kNameLayerNormFusion) {}
-
-  /// \brief Destructor.
-  ~LayerNormFusion() = default;
-
-  MS_DECLARE_PARENT(LayerNormFusion, LayerNorm);
 
   /// \brief Method to init the op's attributes.
   ///
@@ -57,8 +52,8 @@ class MS_CORE_API LayerNormFusion : public LayerNorm {
   bool get_elementwise_affine() const;
 };
 
-AbstractBasePtr LayerNormFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr LayerNormFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

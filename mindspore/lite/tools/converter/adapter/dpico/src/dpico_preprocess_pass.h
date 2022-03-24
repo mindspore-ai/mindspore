@@ -38,7 +38,7 @@ class DpicoPreprocessPass : public registry::PassBase {
   bool Execute(const api::FuncGraphPtr &func_graph) override;
 
  private:
-  STATUS PreProcessBiadAdd(const api::FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  STATUS PreProcessBiadAdd(const api::FuncGraphPtr &func_graph, const api::CNodePtr &cnode);
 };
 }  // namespace dpico
 }  // namespace mindspore

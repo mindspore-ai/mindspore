@@ -22,16 +22,17 @@ namespace mindspore {
 namespace dpico {
 namespace {
 constexpr uint32_t kLstmMaxNumOutput = 5456;
-}
-bool LstmChecker::Check(CNodePtr op, int32_t output_num, mindspore::Format format) {
-  auto primitive = GetValueNode<PrimitivePtr>(op->input(0));
+}  // namespace
+
+bool LstmChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Format format) {
+  auto primitive = api::GetValueNode<api::PrimitivePtr>(op->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
     return false;
   }
   auto num_outputs_ptr = primitive->GetAttr(dpico::kNumOutput);
   if (num_outputs_ptr != nullptr) {
-    auto num_outputs_data = GetValue<uint32_t>(num_outputs_ptr);
+    auto num_outputs_data = static_cast<uint32_t>(api::GetValue<int64_t>(num_outputs_ptr));
     if (num_outputs_data > kLstmMaxNumOutput) {
       MS_LOG(WARNING) << "num_output should less than " << kLstmMaxNumOutput;
       return false;

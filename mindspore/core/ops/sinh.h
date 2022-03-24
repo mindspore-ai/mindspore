@@ -18,22 +18,21 @@
 #define MINDSPORE_CORE_OPS_SINH_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSinh = "Sinh";
-class Sinh : public PrimitiveC {
+class Sinh : public BaseOperator {
  public:
-  Sinh() : PrimitiveC(kNameSinh) { InitIOName({"x"}, {"output"}); }
-  ~Sinh() = default;
-  MS_DECLARE_PARENT(Sinh, PrimitiveC);
+  MIND_API_BASE_MEMBER(Sinh);
+  Sinh() : BaseOperator(kNameSinh) { InitIOName({"x"}, {"output"}); }
   void Init() {}
 };
-AbstractBasePtr SinhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr SinhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSinhPtr = std::shared_ptr<Sinh>;
 }  // namespace ops
 }  // namespace mindspore

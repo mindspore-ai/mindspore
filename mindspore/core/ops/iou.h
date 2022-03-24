@@ -19,18 +19,15 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-class MS_CORE_API IOU : public PrimitiveC {
+class MIND_API IOU : public BaseOperator {
  public:
-  IOU() : PrimitiveC(prim::kPrimIOU->name()) { InitIOName({"x,y"}, {"output"}); }
-  ~IOU() = default;
-  MS_DECLARE_PARENT(IOU, PrimitiveC);
+  MIND_API_BASE_MEMBER(IOU);
+  IOU() : BaseOperator("IOU") { InitIOName({"x,y"}, {"output"}); }
   void Init() {}
 };
 }  // namespace ops

@@ -19,6 +19,9 @@
 #include <string>
 
 #include "ops/grad/binary_cross_entropy_grad.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -26,13 +29,14 @@ void BinaryCrossEntropyGrad::Init(const Reduction &reduction) { set_reduction(re
 
 void BinaryCrossEntropyGrad::set_reduction(const Reduction &reduction) {
   int64_t swi = reduction;
-  (void)this->AddAttr(kReduction, MakeValue(swi));
+  (void)this->AddAttr(kReduction, api::MakeValue(swi));
 }
 Reduction BinaryCrossEntropyGrad::get_reduction() const {
   auto value_ptr = GetAttr(kReduction);
   return Reduction(GetValue<int64_t>(value_ptr));
 }
 
+MIND_API_BASE_IMPL(BinaryCrossEntropyGrad, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameBinaryCrossEntropyGrad, BinaryCrossEntropyGrad);
 }  // namespace ops
 }  // namespace mindspore

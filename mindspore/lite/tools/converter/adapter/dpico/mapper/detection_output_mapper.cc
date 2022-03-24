@@ -18,19 +18,21 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "parser/detection_output_param_holder.h"
 #include "common/anf_util.h"
 #include "common/op_attr.h"
 #include "op/detection_output_operator.h"
+#include "parser/detection_output_param_helper.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS DetectionOutputMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                                  const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS DetectionOutputMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                                  const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
+  auto custom_prim = api::utils::cast<api::SharedPtr<ops::Custom>>(prim);
+  MS_CHECK_TRUE_MSG(custom_prim != nullptr, RET_ERROR, "custom_prim is nullptr");
   auto detection_output_operator = std::make_unique<mapper::DetectionOutputOperator>();
   if (detection_output_operator == nullptr) {
     MS_LOG(ERROR) << "detection_output_operator is nullptr.";
@@ -44,32 +46,33 @@ STATUS DetectionOutputMapper::Map(const CNodePtr &cnode, std::vector<BaseOperato
 
   detection_output_operator->SetOpType(mapper::OpType::DETECTION_OUTPUT);
   if (prim->GetAttr(kNumAnchors) != nullptr) {
-    detection_output_operator->SetNumAnchors(GetValue<uint32_t>(prim->GetAttr(kNumAnchors)));
+    detection_output_operator->SetNumAnchors(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumAnchors))));
   }
   if (prim->GetAttr(kNumBboxesPerGrid) != nullptr) {
-    detection_output_operator->SetNumBboxesPerGrid(GetValue<uint32_t>(prim->GetAttr(kNumBboxesPerGrid)));
+    detection_output_operator->SetNumBboxesPerGrid(
+      static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumBboxesPerGrid))));
   }
   if (prim->GetAttr(kNumCoords) != nullptr) {
-    detection_output_operator->SetNumCoords(GetValue<uint32_t>(prim->GetAttr(kNumCoords)));
+    detection_output_operator->SetNumCoords(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumCoords))));
   }
   if (prim->GetAttr(kNumClasses) != nullptr) {
-    detection_output_operator->SetNumClasses(GetValue<uint32_t>(prim->GetAttr(kNumClasses)));
+    detection_output_operator->SetNumClasses(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumClasses))));
   }
   if (prim->GetAttr(kNumGridsHeight) != nullptr) {
-    detection_output_operator->SetNumGridsHeight(GetValue<uint32_t>(prim->GetAttr(kNumGridsHeight)));
+    detection_output_operator->SetNumGridsHeight(
+      static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumGridsHeight))));
   }
   if (prim->GetAttr(kNumGridsWidth) != nullptr) {
-    detection_output_operator->SetNumGridsWidth(GetValue<uint32_t>(prim->GetAttr(kNumGridsWidth)));
+    detection_output_operator->SetNumGridsWidth(
+      static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumGridsWidth))));
   }
-  if (prim->GetAttr(kDetectionOutputParam) != nullptr) {
-    auto param_ptr_list =
-      GetValue<std::vector<lite::DetectionOutputParamHolderPtr>>(prim->GetAttr(kDetectionOutputParam));
-    std::vector<mapper::DetectionOutputParam> param_vec{};
-    (void)std::transform(
-      param_ptr_list.begin(), param_ptr_list.end(), std::back_inserter(param_vec),
-      [](const lite::DetectionOutputParamHolderPtr &param_ptr) { return param_ptr->GetDetectionOutputParam(); });
-    detection_output_operator->SetDetectionOutputParamVec(param_vec);
+
+  std::vector<mapper::DetectionOutputParam> param_vec;
+  if (GetDetectionOutputParamFromAttrs(&param_vec, custom_prim) != RET_OK) {
+    MS_LOG(ERROR) << "get detection output param from attrs failed.";
+    return RET_ERROR;
   }
+  detection_output_operator->SetDetectionOutputParamVec(param_vec);
   base_operators->push_back(std::move(detection_output_operator));
   return RET_OK;
 }

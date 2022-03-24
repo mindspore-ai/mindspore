@@ -23,8 +23,7 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_graph,
-                                                  const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::ConstantOfShape>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   int data_type = 0;
@@ -61,7 +60,7 @@ ops::PrimitiveC *OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_g
   prim->set_value(values);
   prim->set_data_type((int64_t)data_type);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxConstantOfShapeParser("ConstantOfShape", new OnnxConstantOfShapeParser());

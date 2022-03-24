@@ -16,23 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_SWITCH_LAYER_H_
 #define MINDSPORE_CORE_OPS_SWITCH_LAYER_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSwitchLayer = "switch_layer";
 /// \brief SwitchLayer defined SwitchLayer operator prototype of lite.
-class MS_CORE_API SwitchLayer : public PrimitiveC {
+class MIND_API SwitchLayer : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(SwitchLayer);
   /// \brief Constructor.
-  SwitchLayer() : PrimitiveC(kNameSwitchLayer) {}
-
-  /// \brief Destructor.
-  ~SwitchLayer() = default;
-
-  MS_DECLARE_PARENT(SwitchLayer, PrimitiveC);
+  SwitchLayer() : BaseOperator(kNameSwitchLayer) {}
 };
 }  // namespace ops
 }  // namespace mindspore

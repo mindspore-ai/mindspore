@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include "tools/converter/parser/conv1d_inout_adjust.h"
 #include <string>
 #include <vector>
@@ -25,6 +27,7 @@
 #include "ops/primitive_c.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::lite {
 namespace {
@@ -39,8 +42,10 @@ CNodePtr Conv1DInOutAdjust::NewUnsqueezeOpNode(const FuncGraphPtr &func_graph, c
   MS_CHECK_TRUE_MSG(!axis.empty(), nullptr, "axis is empty");
   auto unsqueeze_prim = std::make_shared<ops::Unsqueeze>();
   MS_CHECK_TRUE_MSG(unsqueeze_prim != nullptr, nullptr, "create unsqueeze failed.");
-  unsqueeze_prim->set_attr("axis", MakeValue(axis));
-  ValueNodePtr value_node = NewValueNode(unsqueeze_prim);
+  auto unsqueeze_prim_c = unsqueeze_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(unsqueeze_prim_c != nullptr, nullptr, "create unsqueeze_prim_c failed.");
+  unsqueeze_prim_c->set_attr("axis", MakeValue(axis));
+  ValueNodePtr value_node = NewValueNode(unsqueeze_prim_c);
   MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "new valueNode failed.");
   std::vector<AnfNodePtr> op_inputs = {value_node, input_node};
   auto unsqueeze = func_graph->NewCNode(op_inputs);
@@ -53,8 +58,10 @@ CNodePtr Conv1DInOutAdjust::NewSqueezeOpNode(const FuncGraphPtr &func_graph, con
                                              const std::vector<int64_t> &axis) {
   auto squeeze_prim = std::make_shared<ops::Squeeze>();
   MS_CHECK_TRUE_MSG(squeeze_prim != nullptr, nullptr, "create squeeze failed.");
-  squeeze_prim->set_attr("axis", MakeValue(axis));
-  ValueNodePtr value_node = NewValueNode(squeeze_prim);
+  auto squeeze_prim_c = squeeze_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(squeeze_prim_c != nullptr, nullptr, "create squeeze_prim_c failed.");
+  squeeze_prim_c->set_attr("axis", MakeValue(axis));
+  ValueNodePtr value_node = NewValueNode(squeeze_prim_c);
   MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "new valueNode failed.");
   std::vector<AnfNodePtr> op_inputs = {value_node, input_node};
   auto squeeze = func_graph->NewCNode(op_inputs);
@@ -110,17 +117,17 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
         !opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
       continue;
     }
-    auto conv2d_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    auto conv2d_prim = ops::GetOperator<mindspore::ops::Conv2D>(cnode->input(0));
     MS_CHECK_TRUE_MSG(conv2d_prim != nullptr, false, "conv2d is nullptr.");
     MS_CHECK_TRUE_MSG(conv2d_prim->GetAttr(ops::kOriginalFormat) != nullptr, false, "The format of conv2d is nullptr.");
     std::vector<int64_t> axis;
     switch (Format(GetValue<int64_t>(conv2d_prim->GetAttr(ops::kOriginalFormat)))) {
       case mindspore::Format::NWC:
-        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NHWC));
+        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat, api::MakeValue<int64_t>(mindspore::NHWC));
         axis = {1};
         break;
       case mindspore::Format::NCW:
-        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NCHW));
+        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat, api::MakeValue<int64_t>(mindspore::NCHW));
         axis = {2};
         break;
       default:

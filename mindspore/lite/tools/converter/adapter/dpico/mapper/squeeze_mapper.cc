@@ -19,20 +19,18 @@
 #include <utility>
 #include <algorithm>
 #include <vector>
-#include "common/anf_util.h"
-#include "ops/op_utils.h"
 #include "ops/squeeze.h"
 #include "op/squeeze_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS SqueezeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS SqueezeMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto squeeze_prim = utils::cast<std::shared_ptr<ops::Squeeze>>(prim);
+  auto squeeze_prim = api::utils::cast<api::SharedPtr<ops::Squeeze>>(prim);
   MS_ASSERT(squeeze_prim != nullptr);
 
   auto squeeze_operator = std::make_unique<mapper::SqueezeOperator>();
@@ -49,7 +47,7 @@ STATUS SqueezeMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *b
   squeeze_operator->SetOpType(mapper::OpType::SQUEEZE);
 
   if (squeeze_prim->GetAttr(ops::kAxis) != nullptr) {
-    auto axes = GetValue<std::vector<int64_t>>(squeeze_prim->GetAttr(ops::kAxis));
+    auto axes = api::GetValue<std::vector<int64_t>>(squeeze_prim->GetAttr(ops::kAxis));
     std::vector<int32_t> dims;
     (void)std::transform(axes.begin(), axes.end(), std::back_inserter(dims),
                          [](const int64_t &value) { return static_cast<int32_t>(value); });

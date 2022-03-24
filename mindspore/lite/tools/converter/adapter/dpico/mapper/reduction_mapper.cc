@@ -23,14 +23,13 @@
 #include "include/registry/converter_context.h"
 #include "common/op_enum.h"
 #include "common/fetch_content.h"
-#include "ops/op_utils.h"
 #include "ops/fusion/reduce_fusion.h"
 #include "op/reduction_operator.h"
 
 namespace mindspore {
 namespace dpico {
 namespace {
-int GetReductionAxes(const CNodePtr &cnode, const std::shared_ptr<ops::ReduceFusion> &reduction_prim,
+int GetReductionAxes(const api::CNodePtr &cnode, const api::SharedPtr<ops::ReduceFusion> &reduction_prim,
                      DataInfo *data_info, std::set<int> *axes) {
   if (data_info == nullptr || axes == nullptr) {
     MS_LOG(ERROR) << "input arg is nullptr." << cnode->fullname_with_scope();
@@ -51,19 +50,21 @@ int GetReductionAxes(const CNodePtr &cnode, const std::shared_ptr<ops::ReduceFus
     (void)std::transform(data, data + data_size, std::inserter(*axes, (*axes).begin()),
                          [](const int32_t &value) { return static_cast<int32_t>(value); });
   } else if (reduction_prim->GetAttr(ops::kAxes) != nullptr) {
-    auto axes_vec = GetValue<std::vector<int32_t>>(reduction_prim->GetAttr(ops::kAxes));
+    auto axes_vec = api::GetValue<std::vector<int64_t>>(reduction_prim->GetAttr(ops::kAxes));
+    (void)std::transform(axes_vec.begin(), axes_vec.end(), std::inserter(*axes, (*axes).begin()),
+                         [](int64_t axis) { return static_cast<int32_t>(axis); });
     *axes = std::set<int32_t>(axes_vec.begin(), axes_vec.end());
   }
   return RET_OK;
 }
 }  // namespace
-STATUS ReductionMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
-                            const PrimitivePtr &prim, const CNodePtrList &output_cnodes) {
+STATUS ReductionMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                            const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto reduction_prim = utils::cast<std::shared_ptr<ops::ReduceFusion>>(prim);
+  auto reduction_prim = api::utils::cast<api::SharedPtr<ops::ReduceFusion>>(prim);
   MS_ASSERT(reduction_prim != nullptr);
 
   auto reduction_operator = std::make_unique<mapper::ReductionOperator>();
@@ -118,14 +119,14 @@ STATUS ReductionMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> 
   reduction_operator->SetAxis(*axes.begin());
 
   if (reduction_prim->GetAttr(ops::kCoeff) != nullptr) {
-    reduction_operator->SetReductionCoeff(GetValue<float>(reduction_prim->GetAttr(ops::kCoeff)));
+    reduction_operator->SetReductionCoeff(api::GetValue<float>(reduction_prim->GetAttr(ops::kCoeff)));
   }
   if (reduction_prim->GetAttr(ops::kKeepDims) != nullptr) {
     reduction_operator->SetReduceKeepDims(
-      static_cast<int32_t>(GetValue<bool>(reduction_prim->GetAttr(ops::kKeepDims))));
+      static_cast<int32_t>(api::GetValue<bool>(reduction_prim->GetAttr(ops::kKeepDims))));
   }
   if (reduction_prim->GetAttr(ops::kFmkType) != nullptr) {
-    auto fmk_type = static_cast<converter::FmkType>(GetValue<int>(reduction_prim->GetAttr(ops::kFmkType)));
+    auto fmk_type = static_cast<converter::FmkType>(api::GetValue<int64_t>(reduction_prim->GetAttr(ops::kFmkType)));
     if (fmk_type == converter::kFmkTypeCaffe) {
       reduction_operator->SetReduceIsFromCaffe(true);
     }

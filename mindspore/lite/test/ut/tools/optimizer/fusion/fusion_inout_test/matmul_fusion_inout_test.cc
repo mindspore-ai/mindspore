@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/matmul_fusion_inout_test.h"
 #include <memory>
 #include "src/common/log_adapter.h"
@@ -26,8 +27,10 @@ CNodePtr MatMulFusionInoutTest::AddMatMul(const FuncGraphPtr &graph, const AnfNo
                                           const ActivationType &act_type, const std::string &name) {
   auto prim = std::make_unique<ops::MatMulFusion>();
   MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create MatMul primitivec failed");
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
   prim->Init(false, false, act_type);
-  auto matmul_primitive = NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim.release()));
+  auto matmul_primitive = NewValueNode(prim_c);
   auto matmul = graph->NewCNode({matmul_primitive, input1, input2});
   MS_CHECK_TRUE_MSG(matmul != nullptr, nullptr, "create MatMul failed");
   matmul->set_fullname_with_scope(name);

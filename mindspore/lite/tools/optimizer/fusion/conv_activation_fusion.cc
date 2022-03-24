@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_activation_fusion.h"
+
 #include <memory>
+
+#include "nnacl/op_base.h"
 #include "ops/fusion/activation.h"
 #include "ops/op_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 const BaseRef ConvActivationFusion::DefinePattern() const {
@@ -37,16 +39,15 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     return nullptr;
   }
   auto act_node = node->cast<CNodePtr>();
-  if (IsMarkedTrainOp(act_node)) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(IsMarkedTrainOp(act_node) != true, nullptr);
   if (act_node == nullptr || act_node->size() != kInputSizeTwo ||
       !CheckPrimitiveType(act_node, prim::kPrimActivation)) {
     return nullptr;
   }
-  auto act_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(act_node->input(0));
+  auto act_prim = ops::GetOperator<mindspore::ops::Activation>(act_node->input(0));
   MS_CHECK_TRUE_MSG(act_prim != nullptr, nullptr, "activation prim is nullptr.");
-  if (act_prim->GetAttr(ops::kActivationType) != nullptr && act_prim->get_activation_type() != mindspore::RELU &&
+  auto act_prim_c = act_prim->GetPrim();
+  if (act_prim_c->GetAttr(ops::kActivationType) != nullptr && act_prim->get_activation_type() != mindspore::RELU &&
       act_prim->get_activation_type() != mindspore::RELU6) {
     return nullptr;
   }

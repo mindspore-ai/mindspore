@@ -20,12 +20,14 @@
 #include <memory>
 #include <vector>
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(MulFusion, PrimitiveC, Mul);
 void MulFusion::set_activation_type(const ActivationType &activation_type) {
   int64_t swi = activation_type;
-  (void)this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, api::MakeValue(swi));
 }
 ActivationType MulFusion::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);

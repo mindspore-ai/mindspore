@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_pad_fusion.h"
 #include <memory>
 #include <vector>
@@ -22,6 +23,8 @@
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -64,7 +67,7 @@ void ReplaceParamsAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &conv_
     pad_list_data.push_back(pad_data[kRight + NCHWTopPadPos]);
   }
 
-  auto conv_primitive = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(conv_cnode->input(0));
+  auto conv_primitive = ops::GetOperator<ops::Conv2DFusion>(conv_cnode->input(0));
   MS_ASSERT(conv_primitive != nullptr);
   int64_t conv_pad_mode = conv_primitive->GetAttr(ops::kPadMode) == nullptr ? 0 : conv_primitive->get_pad_mode();
   if (conv_pad_mode == PadMode::PAD) {
@@ -79,7 +82,7 @@ void ReplaceParamsAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &conv_
       }
     }
   } else if (conv_pad_mode == PadMode::SAME) {
-    ValuePtr kernel_node = conv_primitive->GetAttr(ops::kKernelSize);
+    auto kernel_node = conv_primitive->GetAttr(ops::kKernelSize);
     MS_ASSERT(kernel_node != nullptr);
     std::vector<int64_t> kernel_list = GetValue<std::vector<int64_t>>(kernel_node);
     if (kernel_list.size() != kFilterDimsSize) {
@@ -130,16 +133,18 @@ bool IsPrimitiveProper(const CNodePtr &pad_cnode) {
   if (tensor->data_c() == nullptr || tensor->ElementsNum() != kPadElementNum) {
     return false;
   }
-  auto pad_primitive = GetValueNode<std::shared_ptr<ops::PadFusion>>(pad_cnode->input(0));
-  MS_ASSERT(pad_primitive != nullptr);
-  if (!pad_primitive->HasAttr(ops::kPaddingMode)) {
+  auto prim = GetValueNode<PrimitiveCPtr>(pad_cnode->input(0));
+  MS_ASSERT(prim != nullptr);
+  auto pad_primitive = api::MakeShared<ops::PadFusion>(prim);
+  if (!prim->HasAttr(ops::kPaddingMode)) {
     return false;
   }
+  MS_ASSERT(pad_primitive != nullptr);
   int64_t pad_mode = pad_primitive->get_padding_mode();
   if (pad_mode != PaddingMode::CONSTANT) {
     return false;
   }
-  ValuePtr pad_constant_node = pad_primitive->GetAttr(ops::kConstantValue);
+  auto pad_constant_node = pad_primitive->GetAttr(ops::kConstantValue);
   if (pad_constant_node == nullptr) {
     return false;
   }

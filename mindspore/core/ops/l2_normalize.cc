@@ -17,17 +17,21 @@
 #include <set>
 
 #include "ops/l2_normalize.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+MIND_API_BASE_IMPL(L2Normalize, PrimitiveC, BaseOperator);
 void L2Normalize::Init(const std::vector<int64_t> &axis, const float epsilon) {
   this->set_axis(axis);
   this->set_epsilon(epsilon);
 }
 
-void L2Normalize::set_axis(const std::vector<int64_t> &axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
+void L2Normalize::set_axis(const std::vector<int64_t> &axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 
-void L2Normalize::set_epsilon(const float epsilon) { (void)AddAttr(kEpsilon, MakeValue(epsilon)); }
+void L2Normalize::set_epsilon(const float epsilon) { (void)AddAttr(kEpsilon, api::MakeValue(epsilon)); }
 
 std::vector<int64_t> L2Normalize::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
 

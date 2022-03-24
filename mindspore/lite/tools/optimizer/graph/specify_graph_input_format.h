@@ -19,6 +19,7 @@
 
 #include "backend/common/optimizer/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "include/api/format.h"
 
 namespace mindspore {
 namespace opt {

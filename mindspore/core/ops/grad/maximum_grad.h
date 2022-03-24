@@ -18,26 +18,24 @@
 #define MINDSPORE_CORE_OPS_MAXIMUM_GRAD_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaximumGrad = "MaximumGrad";
-class MS_CORE_API MaximumGrad : public PrimitiveC {
+class MIND_API MaximumGrad : public BaseOperator {
  public:
-  MaximumGrad() : PrimitiveC(kNameMaximumGrad) { InitIOName({"x1", "x2", "grads"}, {"y1", "y2"}); }
-  ~MaximumGrad() = default;
-  MS_DECLARE_PARENT(MaximumGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(MaximumGrad);
+  MaximumGrad() : BaseOperator(kNameMaximumGrad) { InitIOName({"x1", "x2", "grads"}, {"y1", "y2"}); }
   void Init(const bool grad_x = true, const bool grad_y = true);
   void set_grad_x(const bool grad_x);
   void set_grad_y(const bool grad_y);
   bool get_grad_x() const;
   bool get_grad_y() const;
 };
-AbstractBasePtr MaximumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MaximumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMaximumGradPtr = std::shared_ptr<MaximumGrad>;
 }  // namespace ops
 }  // namespace mindspore

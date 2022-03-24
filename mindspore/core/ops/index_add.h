@@ -21,26 +21,23 @@
 #include <string>
 #include <memory>
 #include <set>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIndexAdd = "IndexAdd";
 /// \brief Adds tensor y to specified axis and indices of tensor x.
 /// Refer to Python API @ref mindspore.ops.IndexAdd for more details.
-class IndexAdd : public PrimitiveC {
+class IndexAdd : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(IndexAdd);
   /// \brief Constructor.
-  IndexAdd() : PrimitiveC(kNameIndexAdd) { InitIOName({"input_x", "indices", "input_y"}, {"output"}); }
-  /// \brief Destructor.
-  ~IndexAdd() = default;
-  MS_DECLARE_PARENT(IndexAdd, PrimitiveC);
+  IndexAdd() : BaseOperator(kNameIndexAdd) { InitIOName({"input_x", "indices", "input_y"}, {"output"}); }
 };
 
-AbstractBasePtr IndexAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr IndexAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 
 }  // namespace ops
 }  // namespace mindspore

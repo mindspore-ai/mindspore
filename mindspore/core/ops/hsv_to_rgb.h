@@ -19,21 +19,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHSVToRGB = "HSVToRGB";
-class HSVToRGB : public PrimitiveC {
+class MIND_API HSVToRGB : public BaseOperator {
  public:
-  HSVToRGB() : PrimitiveC(kNameHSVToRGB) { InitIOName({"x"}, {"y"}); }
-  ~HSVToRGB() = default;
-  MS_DECLARE_PARENT(HSVToRGB, PrimitiveC);
+  MIND_API_BASE_MEMBER(HSVToRGB);
+  HSVToRGB() : BaseOperator(kNameHSVToRGB) { InitIOName({"x"}, {"y"}); }
 };
-AbstractBasePtr HSVToRGBInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr HSVToRGBInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using HSVToRGBPtr = std::shared_ptr<HSVToRGB>;
 }  // namespace ops
 }  // namespace mindspore

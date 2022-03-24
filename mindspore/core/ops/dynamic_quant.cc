@@ -15,15 +15,20 @@
  */
 
 #include "ops/dynamic_quant.h"
+#include "ops/op_utils.h"
+#include "abstract/primitive_infer_map.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-void DynamicQuant::set_symmetric(const bool symmetric) { (void)AddAttr(kSymmetric, MakeValue(symmetric)); }
+MIND_API_BASE_IMPL(DynamicQuant, PrimitiveC, BaseOperator);
+void DynamicQuant::set_symmetric(const bool symmetric) { (void)AddAttr(kSymmetric, api::MakeValue(symmetric)); }
 bool DynamicQuant::get_symmetric() const {
   auto value_ptr = this->GetAttr(kSymmetric);
   return GetValue<bool>(value_ptr);
 }
-void DynamicQuant::set_dst_type(const int64_t dst_type) { (void)AddAttr(kDstType, MakeValue(dst_type)); }
+void DynamicQuant::set_dst_type(const int64_t dst_type) { (void)AddAttr(kDstType, api::MakeValue(dst_type)); }
 int64_t DynamicQuant::get_dst_type() const { return GetValue<int64_t>(GetAttr(kDstType)); }
 void DynamicQuant::Init(const bool symmetric, const int64_t dst_type) {
   this->set_symmetric(symmetric);

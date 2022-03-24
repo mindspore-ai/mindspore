@@ -19,24 +19,22 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyAdamWithAmsgrad = "ApplyAdamWithAmsgrad";
-class ApplyAdamWithAmsgrad : public PrimitiveC {
+class MIND_API ApplyAdamWithAmsgrad : public BaseOperator {
  public:
-  ApplyAdamWithAmsgrad() : PrimitiveC(kNameApplyAdamWithAmsgrad) {
+  MIND_API_BASE_MEMBER(ApplyAdamWithAmsgrad);
+  ApplyAdamWithAmsgrad() : BaseOperator(kNameApplyAdamWithAmsgrad) {
     InitIOName({"var", "m", "v", "vhat", "beta1_power", "beta2_power", "lr", "grad"}, {"var", "m", "v", "vhat"});
   }
-  ~ApplyAdamWithAmsgrad() = default;
-  MS_DECLARE_PARENT(ApplyAdamWithAmsgrad, PrimitiveC);
 };
 
-AbstractBasePtr ApplyAdamWithAmsgradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ApplyAdamWithAmsgradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimApplyAdamWithAmsgradPtr = std::shared_ptr<ApplyAdamWithAmsgrad>;
 }  // namespace ops

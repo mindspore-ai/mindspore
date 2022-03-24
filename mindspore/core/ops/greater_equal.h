@@ -19,25 +19,21 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGreaterEqual = "GreaterEqual";
 /// \brief Computes the boolean value of \f$x>=y\f$ element-wise.
 /// Refer to Python API @ref mindspore.ops.GreaterEqual for more details.
-class MS_CORE_API GreaterEqual : public PrimitiveC {
+class MIND_API GreaterEqual : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(GreaterEqual);
   /// \brief Constructor.
-  GreaterEqual() : PrimitiveC(kNameGreaterEqual) {}
-  /// \brief Destructor.
-  ~GreaterEqual() = default;
-  MS_DECLARE_PARENT(GreaterEqual, PrimitiveC);
+  GreaterEqual() : BaseOperator(kNameGreaterEqual) {}
 };
-AbstractBasePtr GreaterEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr GreaterEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimGreaterEqualPtr = std::shared_ptr<GreaterEqual>;
 }  // namespace ops
 }  // namespace mindspore

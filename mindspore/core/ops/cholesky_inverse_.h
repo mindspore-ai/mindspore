@@ -21,21 +21,20 @@
 #include <set>
 #include <memory>
 #include <vector>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCholeskyInverse = "CholeskyInverse";
-class CholeskyInverse : public PrimitiveC {
+class MIND_API CholeskyInverse : public BaseOperator {
  public:
-  CholeskyInverse() : PrimitiveC(kNameCholeskyInverse) { InitIOName({"x"}, {"y"}); }
-  ~CholeskyInverse() = default;
-  MS_DECLARE_PARENT(CholeskyInverse, PrimitiveC);
+  MIND_API_BASE_MEMBER(CholeskyInverse);
+  CholeskyInverse() : BaseOperator(kNameCholeskyInverse) { InitIOName({"x"}, {"y"}); }
 };
-AbstractBasePtr CholeskyInverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CholeskyInverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCholeskyInversePtr = std::shared_ptr<CholeskyInverse>;
 }  // namespace ops
 }  // namespace mindspore

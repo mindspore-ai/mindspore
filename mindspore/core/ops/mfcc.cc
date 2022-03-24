@@ -18,6 +18,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -30,7 +31,7 @@ void Mfcc::Init(const float freq_upper_limit, const float freq_lower_limit, cons
 }
 
 void Mfcc::set_freq_upper_limit(const float freq_upper_limit) {
-  (void)this->AddAttr(kFreqUpperLimit, MakeValue(freq_upper_limit));
+  (void)this->AddAttr(kFreqUpperLimit, api::MakeValue(freq_upper_limit));
 }
 
 float Mfcc::get_freq_upper_limit() const {
@@ -39,7 +40,7 @@ float Mfcc::get_freq_upper_limit() const {
 }
 
 void Mfcc::set_freq_lower_limit(const float freq_lower_limit) {
-  (void)this->AddAttr(kFreqLowerLimit, MakeValue(freq_lower_limit));
+  (void)this->AddAttr(kFreqLowerLimit, api::MakeValue(freq_lower_limit));
 }
 
 float Mfcc::get_freq_lower_limit() const {
@@ -48,7 +49,7 @@ float Mfcc::get_freq_lower_limit() const {
 }
 
 void Mfcc::set_filter_bank_channel_num(const int64_t filter_bank_channel_num) {
-  (void)this->AddAttr(kFilterBankChannelNum, MakeValue(filter_bank_channel_num));
+  (void)this->AddAttr(kFilterBankChannelNum, api::MakeValue(filter_bank_channel_num));
 }
 
 int64_t Mfcc::get_filter_bank_channel_num() const {
@@ -57,11 +58,12 @@ int64_t Mfcc::get_filter_bank_channel_num() const {
 }
 
 void Mfcc::set_dct_coeff_num(const int64_t dct_coeff_num) {
-  (void)this->AddAttr(kDctCoeffNum, MakeValue(dct_coeff_num));
+  (void)this->AddAttr(kDctCoeffNum, api::MakeValue(dct_coeff_num));
 }
 
 int64_t Mfcc::get_dct_coeff_num() const { return GetValue<int64_t>(GetAttr(kDctCoeffNum)); }
 
+MIND_API_BASE_IMPL(Mfcc, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMfcc, Mfcc);
 }  // namespace ops
 }  // namespace mindspore

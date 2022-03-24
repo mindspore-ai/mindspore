@@ -21,27 +21,24 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameGetNext = prim::kGetNext;
+constexpr auto kNameGetNext = "GetNext";
 /// \brief Returns the next element in the dataset queue.
 /// Refer to Python API @ref mindspore.ops.GetNext for more details.
-class MS_CORE_API GetNext : public PrimitiveC {
+class MIND_API GetNext : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(GetNext);
   /// \brief Constructor.
-  GetNext() : PrimitiveC(prim::kPrimGetNext->name()) {}
-  /// \brief Destructor.
-  ~GetNext() = default;
-  MS_DECLARE_PARENT(GetNext, PrimitiveC);
+  GetNext() : BaseOperator("GetNext") {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GetNext for the inputs.
   void Init() const {}
 };
-AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GETNEXT_H_

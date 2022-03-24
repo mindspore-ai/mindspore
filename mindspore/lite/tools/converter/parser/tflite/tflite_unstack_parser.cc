@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteUnstackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Unstack>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -36,7 +36,7 @@ ops::PrimitiveC *TfliteUnstackParser::Parse(const std::unique_ptr<tflite::Operat
   }
   prim->set_axis(tflite_attr->axis);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteUnstackParser(tflite::BuiltinOperator_UNPACK, new TfliteUnstackParser());

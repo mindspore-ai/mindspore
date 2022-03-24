@@ -19,19 +19,16 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameControlDepend = "ControlDepend";
-class MS_CORE_API ControlDepend : public PrimitiveC {
+class MIND_API ControlDepend : public BaseOperator {
  public:
-  ControlDepend() : PrimitiveC(kNameControlDepend) {}
-  ~ControlDepend() = default;
-  MS_DECLARE_PARENT(ControlDepend, PrimitiveC);
+  MIND_API_BASE_MEMBER(ControlDepend);
+  ControlDepend() : BaseOperator(kNameControlDepend) {}
   void Init(const int64_t depend_mode);
   void set_depend_mode(const int64_t depend_mode = 0);
   int64_t get_depend_mode() const;

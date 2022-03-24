@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
 #include <memory>
 #include <vector>
@@ -21,6 +22,7 @@
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -39,12 +41,12 @@ bool IsCommonConvNode(const BaseRef &n) {
     if (!CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion)) {
       return false;
     }
-    std::shared_ptr<ops::Conv2DFusion> conv = nullptr;
+    api::SharedPtr<ops::Conv2DFusion> conv = nullptr;
     if (utils::isa<CNodePtr>(anf_node)) {
       auto c_node = anf_node->cast<CNodePtr>();
-      conv = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(c_node->input(0));
+      conv = ops::GetOperator<ops::Conv2DFusion>(c_node->input(0));
     } else if (utils::isa<ValueNodePtr>(anf_node)) {
-      conv = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(anf_node);
+      conv = ops::GetOperator<ops::Conv2DFusion>(anf_node);
     }
     if (conv == nullptr) {
       return false;
@@ -215,9 +217,9 @@ STATUS ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr 
 
 bool IsPrimitiveProper(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_cnode) {
   MS_ASSERT(up_conv_cnode != nullptr && down_conv_cnode != nullptr);
-  auto down_conv_primitive = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(down_conv_cnode->input(0));
+  auto down_conv_primitive = ops::GetOperator<ops::Conv2DFusion>(down_conv_cnode->input(0));
   MS_ASSERT(down_conv_primitive != nullptr);
-  auto up_conv_primitive = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(up_conv_cnode->input(0));
+  auto up_conv_primitive = ops::GetOperator<ops::Conv2DFusion>(up_conv_cnode->input(0));
   MS_ASSERT(up_conv_primitive != nullptr);
   int64_t up_conv_group = up_conv_primitive->GetAttr(ops::kGroup) == nullptr ? 1 : up_conv_primitive->get_group();
   int64_t down_conv_group = down_conv_primitive->GetAttr(ops::kGroup) == nullptr ? 1 : down_conv_primitive->get_group();

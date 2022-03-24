@@ -20,23 +20,21 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBitwiseXor = "BitwiseXor";
-class BitwiseXor : public PrimitiveC {
+class MIND_API BitwiseXor : public BaseOperator {
  public:
-  BitwiseXor() : PrimitiveC(kNameBitwiseXor) { InitIOName({"x1", "x2"}, {"y"}); }
-  explicit BitwiseXor(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x1", "x2"}, {"y"}); }
-  ~BitwiseXor() = default;
-  MS_DECLARE_PARENT(BitwiseXor, PrimitiveC);
+  MIND_API_BASE_MEMBER(BitwiseXor);
+  BitwiseXor() : BaseOperator(kNameBitwiseXor) { InitIOName({"x1", "x2"}, {"y"}); }
+  explicit BitwiseXor(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x1", "x2"}, {"y"}); }
   void Init() {}
 };
-AbstractBasePtr BitwiseXorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BitwiseXorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBitwiseXorPtr = std::shared_ptr<BitwiseXor>;
 }  // namespace ops
 }  // namespace mindspore

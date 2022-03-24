@@ -30,7 +30,7 @@ class OnnxConvParser : public OnnxConvBaseParser {
   OnnxConvParser() : OnnxConvBaseParser("Conv") {}
   ~OnnxConvParser() override = default;
 
-  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 
  private:
   STATUS ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t *group, mindspore::Format *format,

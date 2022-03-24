@@ -25,6 +25,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -86,6 +87,7 @@ abstract::AbstractBasePtr GetnextInferShape(const PrimitivePtr &primitive) {
 }
 }  // namespace
 
+MIND_API_BASE_IMPL(GetNext, PrimitiveC, BaseOperator);
 AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   return GetnextInferShape(primitive);

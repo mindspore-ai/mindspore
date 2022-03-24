@@ -20,19 +20,16 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
-class ResizeNearestNeighborGrad : public PrimitiveC {
+class ResizeNearestNeighborGrad : public BaseOperator {
  public:
-  ResizeNearestNeighborGrad() : PrimitiveC(kNameResizeNearestNeighborGrad) {}
-  ~ResizeNearestNeighborGrad() = default;
-  MS_DECLARE_PARENT(ResizeNearestNeighborGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(ResizeNearestNeighborGrad);
+  ResizeNearestNeighborGrad() : BaseOperator(kNameResizeNearestNeighborGrad) {}
 };
 }  // namespace ops
 }  // namespace mindspore

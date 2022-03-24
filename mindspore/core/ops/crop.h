@@ -19,23 +19,18 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCrop = "Crop";
 /// \brief Crop defined the Crop operator prototype of lite, which can be replaced by slice operator.
-class MS_CORE_API Crop : public PrimitiveC {
+class MIND_API Crop : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Crop);
   /// \brief Constructor.
-  Crop() : PrimitiveC(kNameCrop) {}
-
-  /// \brief Destructor.
-  ~Crop() = default;
-
-  MS_DECLARE_PARENT(Crop, PrimitiveC);
+  Crop() : BaseOperator(kNameCrop) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -63,8 +58,8 @@ class MS_CORE_API Crop : public PrimitiveC {
   /// \return a vector which indicates the start index to slice on the corresponding axis.
   std::vector<int64_t> get_offsets() const;
 };
-AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCrop = std::shared_ptr<Crop>;
 }  // namespace ops
 }  // namespace mindspore

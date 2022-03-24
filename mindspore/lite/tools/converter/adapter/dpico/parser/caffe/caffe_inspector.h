@@ -32,9 +32,9 @@ class CaffeInspector {
   ~CaffeInspector() = default;
 
   STATUS InspectModel(const caffe::NetParameter &proto);
-  STATUS ParseInput();
-  STATUS FindGraphInputsAndOutputs();
-  STATUS SetLayerTopsAndBottoms();
+  void ParseInput();
+  void FindGraphInputsAndOutputs();
+  void SetLayerTopsAndBottoms();
 
   std::set<std::string> GetGraphInput() { return graphInput; }
   std::set<std::string> GetGraphOutput() { return graphOutput; }

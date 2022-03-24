@@ -15,13 +15,11 @@
  */
 
 #include "common/fetch_content.h"
-#include <algorithm>
 #include <string>
-#include <functional>
 #include <vector>
-#include <unordered_map>
 #include "common/anf_util.h"
 #include "common/check_base.h"
+#include "third_party/securec/include/securec.h"
 
 namespace mindspore {
 namespace dpico {
@@ -29,7 +27,7 @@ namespace {
 constexpr size_t kTensorListMinSize = 3 * sizeof(int32_t);
 }  // namespace
 
-int FetchFromDefaultParam(const ParameterPtr &param_node, DataInfo *data_info) {
+int FetchFromDefaultParam(const api::ParameterPtr &param_node, DataInfo *data_info) {
   MS_ASSERT(param_node != nullptr && data_info != nullptr);
   ShapeVector shape_vector;
   TypeId data_type;
@@ -39,7 +37,7 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, DataInfo *data_info) {
     return RET_ERROR;
   }
   data_info->data_type_ = data_type;
-  auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
+  auto tensor_info = param_node->default_param()->cast<api::TensorPtr>();
   size_t offset = 0;
   if (!shape_vector.empty() && data_type == kObjectTypeString) {
     status = GetShapeVectorFromStringTensor(tensor_info, &shape_vector, &offset);
@@ -58,7 +56,7 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, DataInfo *data_info) {
       }
       data_info->data_.resize(tensor_info->Size() - offset);
       if (EOK != memcpy_s(data_info->data_.data(), data_info->data_.size(),
-                          static_cast<uint8_t *>(tensor_info->data_c()) + offset, tensor_info->Size() - offset)) {
+                          static_cast<uint8_t *>(tensor_info->data()) + offset, tensor_info->Size() - offset)) {
         MS_LOG(ERROR) << "memcpy_s failed.";
         return RET_ERROR;
       }
@@ -68,13 +66,13 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, DataInfo *data_info) {
   return RET_OK;
 }
 
-int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, DataInfo *data_info) {
+int FetchDataFromParameterNode(const api::CNodePtr &cnode, size_t index, DataInfo *data_info) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
   if (index >= cnode->inputs().size()) {
     MS_LOG(ERROR) << "input index: " << index << " is greater than cnode inputs size " << cnode->inputs().size();
     return RET_ERROR;
   }
-  auto param_node = cnode->input(index)->cast<ParameterPtr>();
+  auto param_node = cnode->input(index)->cast<api::ParameterPtr>();
   if (param_node == nullptr) {
     MS_LOG(ERROR) << "input node is not parameter node.";
     return RET_ERROR;

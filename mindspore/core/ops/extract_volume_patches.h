@@ -21,26 +21,23 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExtractVolumePatches = "ExtractVolumePatches";
 /// \brief Extract patches from input and put them in the "depth" output dimension.
 /// Refer to Python API @ref mindspore.ops.ExtractVolumePatches for more details.
-class MS_CORE_API ExtractVolumePatches : public PrimitiveC {
+class MIND_API ExtractVolumePatches : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(ExtractVolumePatches);
   /// \brief Constructor.
-  ExtractVolumePatches() : PrimitiveC(kNameExtractVolumePatches) { InitIOName({"x"}, {"y"}); }
-  /// \brief Destructor.
-  ~ExtractVolumePatches() = default;
-  MS_DECLARE_PARENT(ExtractVolumePatches, PrimitiveC);
+  ExtractVolumePatches() : BaseOperator(kNameExtractVolumePatches) { InitIOName({"x"}, {"y"}); }
 };
 
-AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimExtractVolumePatchesPtr = std::shared_ptr<ExtractVolumePatches>;
 }  // namespace ops
 }  // namespace mindspore

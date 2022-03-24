@@ -25,7 +25,6 @@
 #include "include/registry/model_parser.h"
 #include "include/registry/model_parser_registry.h"
 #include "./pico_caffe.pb.h"
-#include "ops/primitive_c.h"
 
 using STATUS = int;
 namespace mindspore::lite {
@@ -48,18 +47,18 @@ class CaffeModelParser : public converter::ModelParser {
 
   STATUS ConvertLayers();
 
-  STATUS ConvertBlobs(const caffe::LayerParameter &layer, std::vector<ParameterPtr> *const_parameters);
+  STATUS ConvertBlobs(const caffe::LayerParameter &layer, std::vector<api::ParameterPtr> *const_parameters);
 
-  STATUS ConvertBottom(const caffe::LayerParameter &layer, std::vector<AnfNodePtr> *input_nodes);
+  STATUS ConvertBottom(const caffe::LayerParameter &layer, std::vector<api::AnfNodePtr> *input_nodes);
 
-  STATUS ConvertTop(const caffe::LayerParameter &layer, const CNodePtr &cnode);
+  STATUS ConvertTop(const caffe::LayerParameter &layer, const api::CNodePtr &cnode);
 
   std::string GetOriginLayerName(const std::string &layer_name);
 
   caffe::NetParameter caffe_model_;
   caffe::NetParameter caffe_weight_;
   std::unordered_map<std::string, caffe::LayerParameter> caffe_layers_;
-  std::unordered_map<std::string, AnfNodePtr> nodes_;
+  std::unordered_map<std::string, api::AnfNodePtr> nodes_;
 };
 }  // namespace mindspore::lite
 

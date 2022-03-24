@@ -18,20 +18,19 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "ops/op_utils.h"
 #include "common/anf_util.h"
 #include "ops/fusion/arg_max_fusion.h"
 #include "op/argmax_operator.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS ArgMaxMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                         const CNodePtrList &output_cnodes) {
+STATUS ArgMaxMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                         const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
-  auto argmax_prim = utils::cast<std::shared_ptr<ops::ArgMaxFusion>>(prim);
+  auto argmax_prim = api::utils::cast<api::SharedPtr<ops::ArgMaxFusion>>(prim);
   MS_ASSERT(argmax_prim != nullptr);
 
   auto argmax_operator = std::make_unique<mapper::ArgmaxOperator>();

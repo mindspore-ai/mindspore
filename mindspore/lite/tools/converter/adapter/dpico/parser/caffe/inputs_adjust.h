@@ -20,20 +20,18 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "ir/anf.h"
-#include "api/ir/func_graph.h"
-#include "ops/primitive_c.h"
+#include "mindapi/ir/anf.h"
+#include "mindapi/ir/func_graph.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::STATUS;
-using PrimitiveCPtr = std::shared_ptr<mindspore::ops::PrimitiveC>;
 namespace mindspore::lite {
 class InputAdjust {
  public:
   InputAdjust() {}
   ~InputAdjust() = default;
 
-  STATUS AddAttrToInput(const api::FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
+  STATUS AddAttrToInput(const api::FuncGraphPtr &func_graph, const api::CNodePtr &cnode, int input_num,
                         const std::string &attr_name, int flag);
   bool Run(const api::FuncGraphPtr &func_graph);
 };

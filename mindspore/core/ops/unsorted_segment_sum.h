@@ -21,30 +21,28 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnsortedSegmentSum = "UnsortedSegmentSum";
 /// \brief Computes the sum of a tensor along segments.
 /// Refer to Python API @ref mindspore.ops.UnsortedSegmentSum for more details.
-class MS_CORE_API UnsortedSegmentSum : public PrimitiveC {
+class MIND_API UnsortedSegmentSum : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(UnsortedSegmentSum);
   /// \brief Constructor.
-  UnsortedSegmentSum() : PrimitiveC(kNameUnsortedSegmentSum) {
+  UnsortedSegmentSum() : BaseOperator(kNameUnsortedSegmentSum) {
     InitIOName({"x", "segment_ids", "num_segments"}, {"y"});
   }
-  /// \brief Destructor.
-  ~UnsortedSegmentSum() = default;
-  MS_DECLARE_PARENT(UnsortedSegmentSum, PrimitiveC);
   /// \brief Init.
   void Init() const {}
 };
 
-AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
 #include <vector>
 #include <memory>
@@ -21,6 +22,7 @@
 #include "ops/fusion/mat_mul_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -58,14 +60,16 @@ bool IsPrimitiveProper(const CNodePtr &add_cnode, const CNodePtr &matmul_cnode, 
       return false;
     }
   }
-  auto matmul_primc = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
+  auto matmul_primc = ops::GetOperator<ops::MatMulFusion>(matmul_cnode->input(0));
   MS_CHECK_TRUE_RET(matmul_primc != nullptr, false);
   if (matmul_primc->GetAttr(ops::kActivationType) != nullptr &&
       matmul_primc->get_activation_type() != ActivationType::NO_ACTIVATION) {
     MS_LOG(INFO) << matmul_cnode->fullname_with_scope() << " has activation attr";
     return false;
   }
-  if (IsQuantParameterNode(matmul_primc)) {
+  auto matmul_prim_c = matmul_primc->GetPrim();
+  MS_CHECK_TRUE_RET(matmul_prim_c != nullptr, false);
+  if (IsQuantParameterNode(matmul_prim_c)) {
     MS_LOG(INFO) << matmul_cnode->fullname_with_scope() << "is quant node";
     return false;
   }
@@ -154,11 +158,11 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
     }
 
     if (CheckPrimitiveType(node, prim::kPrimAddFusion)) {
-      auto add_primc = GetValueNode<std::shared_ptr<ops::AddFusion>>(add_cnode->input(0));
+      auto add_primc = ops::GetOperator<ops::AddFusion>(add_cnode->input(0));
       MS_CHECK_TRUE_RET(add_primc != nullptr, false);
       if (add_primc->GetAttr(ops::kActivationType) != nullptr &&
           add_primc->get_activation_type() != ActivationType::NO_ACTIVATION) {
-        auto matmul_primc = GetValueNode<std::shared_ptr<ops::MatMulFusion>>(matmul_cnode->input(0));
+        auto matmul_primc = ops::GetOperator<ops::MatMulFusion>(matmul_cnode->input(0));
         MS_CHECK_TRUE_RET(matmul_primc != nullptr, false);
         matmul_primc->set_activation_type(add_primc->get_activation_type());
       }

@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define USE_DEPRECATED_API
 #include <memory>
 #include <vector>
 #include <string>
+#include "ops/base_operator.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
@@ -23,15 +26,18 @@
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "backend/common/optimizer/helper.h"
 #include "common/common_test.h"
+
 namespace mindspore {
 namespace opt {
-class TestAttr : public ops::PrimitiveC {
+class TestAttr : public ops::BaseOperator {
  public:
-  TestAttr() : PrimitiveC("") {}
+  MIND_API_BASE_MEMBER(TestAttr);
+  TestAttr() : BaseOperator("") {}
 };
-class TestDynamicInput : public ops::PrimitiveC {
+class TestDynamicInput : public ops::BaseOperator {
  public:
-  TestDynamicInput() : PrimitiveC("") {}
+  MIND_API_BASE_MEMBER(TestDynamicInput);
+  TestDynamicInput() : BaseOperator("") {}
 };
 constexpr auto kAttrConvertTestName = "attr_convert_test";
 constexpr auto kDynamicInputTestName = "dynamic_input_test";

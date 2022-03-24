@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -45,6 +46,8 @@ TypePtr BesselI0eInferType(const PrimitivePtr &primitive, const std::vector<Abst
   return x_type;
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(BesselI0e, PrimitiveC, BaseOperator);
 AbstractBasePtr BesselI0eInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

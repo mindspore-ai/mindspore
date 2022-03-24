@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define USE_DEPRECATED_API
 #include <memory>
 #include "tools/optimizer/fusion/transpose_matmul_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -76,8 +77,10 @@ class TransMatMulFusionInoutTest : public MatMulFusionInoutTest {
                                const std::string &name) {
     auto prim = std::make_unique<ops::Transpose>();
     MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create Act primitivec failed");
+    auto prim_c = prim->GetPrim();
+    MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
     prim->Init();
-    auto trans_primitive = NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim.release()));
+    auto trans_primitive = NewValueNode(prim_c);
     auto perm = opt::BuildIntVecParameterNode(graph, perm_val, name + "_perm");
     auto transpose = graph->NewCNode({trans_primitive, perm});
     MS_CHECK_TRUE_MSG(transpose != nullptr, nullptr, "create Transpose failed");

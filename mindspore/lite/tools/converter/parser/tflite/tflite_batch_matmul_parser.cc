@@ -22,9 +22,9 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteBatchMatmulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
+PrimitiveCPtr TfliteBatchMatmulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::MatMulFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -36,7 +36,7 @@ ops::PrimitiveC *TfliteBatchMatmulParser::Parse(const std::unique_ptr<tflite::Op
   prim->set_transpose_a(tflite_attr->adj_x);
   prim->set_transpose_b(tflite_attr->adj_y);
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 TfliteNodeRegister g_tfliteBatchMatmulParser(tflite::BuiltinOperator_BATCH_MATMUL, new TfliteBatchMatmulParser());

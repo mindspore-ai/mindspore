@@ -18,16 +18,19 @@
 
 #include "ops/op_utils.h"
 #include "ops/reverse_v2.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 void ReverseV2::Init(const std::vector<int64_t> &axis) { this->set_axis(axis); }
-void ReverseV2::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void ReverseV2::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 std::vector<int64_t> ReverseV2::get_axis() const {
   auto value_ptr = GetAttr(kAxis);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
+MIND_API_BASE_IMPL(ReverseV2, PrimitiveC, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameReverseV2, ReverseV2);
 }  // namespace ops
 }  // namespace mindspore

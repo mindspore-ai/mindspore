@@ -22,24 +22,20 @@
 #include <string>
 #include <memory>
 #include <algorithm>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/primitive_infer_map.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePack = "Pack";
 /// \brief Stacks a list of tensors in specified axis.
 /// Refer to Python API @ref mindspore.ops.Stack for more details.
-class MS_CORE_API Pack : public PrimitiveC {
+class MIND_API Pack : public BaseOperator {
  public:
+  MIND_API_BASE_MEMBER(Pack);
   /// \brief Constructor.
-  Pack() : PrimitiveC(kNamePack) {}
-  /// \brief Destructor.
-  ~Pack() = default;
-  MS_DECLARE_PARENT(Pack, PrimitiveC);
+  Pack() : BaseOperator(kNamePack) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Stack for the inputs.
   void Init(const int64_t &axis = 0);
   /// \brief Set axis.
@@ -49,8 +45,8 @@ class MS_CORE_API Pack : public PrimitiveC {
   /// \return axis.
   int64_t get_axis() const;
 };
-AbstractBasePtr PackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr PackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_PACK_H_

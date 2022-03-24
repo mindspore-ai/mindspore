@@ -28,15 +28,15 @@ constexpr auto kInputSizeIndex = 0;
 constexpr auto kFilterIndex = 1;
 constexpr auto kOutBackpropIndex = 2;
 
-ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
-                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                       std::vector<std::string> *inputs, int *output_size) {
+PrimitiveCPtr TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
+                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                    std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_group(1);
   prim->set_pad({0, 0, 0, 0});
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
+  prim->AddAttr(mindspore::ops::kOriginalFormat, api::MakeValue<int64_t>(format));
   prim->set_output_paddings({0, 0});
 
   std::vector<int64_t> dilations(2);
@@ -69,8 +69,8 @@ ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
 
   bool is_original_pad_mode = false;
   prim->set_pad_mode(ParsePadMode(tf_op, &is_original_pad_mode));
-  prim->AddAttr(ops::kIsOriginalPadMode, MakeValue<bool>(is_original_pad_mode));
-  prim->AddAttr(ops::kOriginalOpName, MakeValue("Conv2DBackpropInput"));
+  prim->AddAttr(ops::kIsOriginalPadMode, api::MakeValue<bool>(is_original_pad_mode));
+  prim->AddAttr(ops::kOriginalOpName, api::MakeValue("Conv2DBackpropInput"));
 
   *output_size = 1;
 #ifdef ENABLE_LITE_ACL
@@ -85,7 +85,7 @@ ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 #endif
-  return prim.release();
+  return prim->GetPrim();
 }
 TFNodeRegistrar g_tf_deconv_parser("Conv2DBackpropInput", new TFDeconvParser());
 }  // namespace lite

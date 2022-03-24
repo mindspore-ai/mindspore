@@ -28,9 +28,11 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::StridedSlice>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   std::vector<int32_t> starts;
   std::vector<int32_t> ends;
   std::vector<int32_t> axes;
@@ -75,7 +77,7 @@ ops::PrimitiveC *OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, cons
     size = static_cast<int>(steps.size());
   }
   if (size == -1) {
-    return prim.release();
+    return prim->GetPrim();
   }
   if (axes.empty()) {
     for (size_t i = 0; i < starts.size(); ++i) {
@@ -86,14 +88,14 @@ ops::PrimitiveC *OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, cons
     steps.assign(starts.size(), 1);
   }
 
-  prim->AddAttr("starts", MakeValue(starts));
-  prim->AddAttr("axes", MakeValue(axes));
-  prim->AddAttr("ends", MakeValue(ends));
-  prim->AddAttr("steps", MakeValue(steps));
-  int fmk_type = converter::FmkType::kFmkTypeOnnx;
-  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
+  prim_c->AddAttr("starts", MakeValue(starts));
+  prim_c->AddAttr("axes", MakeValue(axes));
+  prim_c->AddAttr("ends", MakeValue(ends));
+  prim_c->AddAttr("steps", MakeValue(steps));
+  int64_t fmk_type = converter::FmkType::kFmkTypeOnnx;
+  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
 
-  return prim.release();
+  return prim->GetPrim();
 }
 
 OnnxNodeRegistrar g_onnxSliceParser("Slice", new OnnxSliceParser());

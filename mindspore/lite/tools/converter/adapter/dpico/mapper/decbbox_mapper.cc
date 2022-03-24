@@ -18,19 +18,22 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "parser/detection_output_param_holder.h"
 #include "common/anf_util.h"
 #include "common/op_attr.h"
 #include "op/dec_bbox_operator.h"
+#include "ops/custom.h"
+#include "parser/detection_output_param_helper.h"
 
 namespace mindspore {
 namespace dpico {
-STATUS DecBBoxMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators, const PrimitivePtr &prim,
-                          const CNodePtrList &output_cnodes) {
+STATUS DecBBoxMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> *base_operators,
+                          const api::PrimitivePtr &prim, const api::CNodePtrList &output_cnodes) {
   if (base_operators == nullptr) {
     MS_LOG(ERROR) << "base_operators is nullptr.";
     return RET_ERROR;
   }
+  auto custom_prim = api::utils::cast<api::SharedPtr<ops::Custom>>(prim);
+  MS_CHECK_TRUE_MSG(custom_prim != nullptr, RET_ERROR, "custom_prim is nullptr");
   auto decbbox_operator = std::make_unique<mapper::DecBboxOperator>();
   if (decbbox_operator == nullptr) {
     MS_LOG(ERROR) << "decbbox_operator is nullptr.";
@@ -44,30 +47,31 @@ STATUS DecBBoxMapper::Map(const CNodePtr &cnode, std::vector<BaseOperatorPtr> *b
 
   decbbox_operator->SetOpType(mapper::OpType::DECBBOX);
   if (prim->GetAttr(kNumAnchors) != nullptr) {
-    decbbox_operator->SetNumAnchors(GetValue<uint32_t>(prim->GetAttr(kNumAnchors)));
+    decbbox_operator->SetNumAnchors(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumAnchors))));
   }
   if (prim->GetAttr(kNumBboxesPerGrid) != nullptr) {
-    decbbox_operator->SetNumBboxesPerGrid(GetValue<uint32_t>(prim->GetAttr(kNumBboxesPerGrid)));
+    decbbox_operator->SetNumBboxesPerGrid(
+      static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumBboxesPerGrid))));
   }
   if (prim->GetAttr(kNumCoords) != nullptr) {
-    decbbox_operator->SetNumCoords(GetValue<uint32_t>(prim->GetAttr(kNumCoords)));
+    decbbox_operator->SetNumCoords(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumCoords))));
   }
   if (prim->GetAttr(kNumClasses) != nullptr) {
-    decbbox_operator->SetNumClasses(GetValue<uint32_t>(prim->GetAttr(kNumClasses)));
+    decbbox_operator->SetNumClasses(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumClasses))));
   }
   if (prim->GetAttr(kNumGridsHeight) != nullptr) {
-    decbbox_operator->SetNumGridsHeight(GetValue<uint32_t>(prim->GetAttr(kNumGridsHeight)));
+    decbbox_operator->SetNumGridsHeight(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumGridsHeight))));
   }
   if (prim->GetAttr(kNumGridsWidth) != nullptr) {
-    decbbox_operator->SetNumGridsWidth(GetValue<uint32_t>(prim->GetAttr(kNumGridsWidth)));
+    decbbox_operator->SetNumGridsWidth(static_cast<uint32_t>(api::GetValue<int64_t>(prim->GetAttr(kNumGridsWidth))));
   }
-  if (prim->GetAttr(kDecBBoxParam) != nullptr) {
-    auto param_ptr = GetValue<lite::DetectionOutputParamHolderPtr>(prim->GetAttr(kDecBBoxParam));
-    if (param_ptr == nullptr) {
-      MS_LOG(ERROR) << "decbbox param holder ptr is nullptr.";
-      return RET_ERROR;
-    }
-    decbbox_operator->SetDecBboxParam(param_ptr->GetDetectionOutputParam());
+  std::vector<mapper::DetectionOutputParam> param_vec;
+  if (GetDetectionOutputParamFromAttrs(&param_vec, custom_prim) != RET_OK) {
+    MS_LOG(ERROR) << "get detection output param from attrs failed.";
+    return RET_ERROR;
+  }
+  if (param_vec.size() == 1) {
+    decbbox_operator->SetDecBboxParam(param_vec.at(0));
   }
   base_operators->push_back(std::move(decbbox_operator));
   return RET_OK;

@@ -17,14 +17,15 @@
 #include "parser/caffe/caffe_depthwise_conv_parser.h"
 #include <memory>
 #include "ops/fusion/conv2d_fusion.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *CaffeDepthwiseConvolutionParser::Parse(const caffe::LayerParameter &proto,
-                                                        const caffe::LayerParameter &weight) {
+BaseOperatorPtr CaffeDepthwiseConvolutionParser::Parse(const caffe::LayerParameter &proto,
+                                                       const caffe::LayerParameter &weight) {
   auto prim = CaffeConvolutionParser::Parse(proto, weight);
   if (prim != nullptr) {
-    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    prim->AddAttr(ops::kIsDepthWise, api::MakeValue<bool>(true));
   }
   return prim;
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include <memory>
 #include "include/common/utils/utils.h"

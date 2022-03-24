@@ -18,6 +18,9 @@
 #include <string>
 
 #include "ops/greater_equal.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -40,6 +43,8 @@ TypePtr GreaterEqualInferType(const PrimitivePtr &prim, const std::vector<Abstra
   return std::make_shared<TensorType>(kBool);
 }
 }  // namespace
+
+MIND_API_BASE_IMPL(GreaterEqual, PrimitiveC, BaseOperator);
 AbstractBasePtr GreaterEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = GreaterEqualInferType(primitive, input_args);
