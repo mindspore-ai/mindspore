@@ -81,8 +81,8 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < num_output_; i++) {
     std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
     std::vector<int64_t> out_shape_tmp;
-    std::for_each(out_shape.begin(), out_shape.end(),
-                  [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
+    (void)std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(out_shape_tmp),
+                         [](const size_t &c) { return SizeToLong(c); });
     shape_list_.emplace_back(out_shape_tmp);
     ndims_.push_back(SizeToInt(out_shape_tmp.size()));
     type_list_.emplace_back(TypeIdToString(output_type_list[i], true));

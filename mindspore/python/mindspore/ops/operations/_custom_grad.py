@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,10 +44,12 @@ bprop_factory = Registry()
 
 
 def autodiff_bprop(n):
+    """get bprop function"""
     return bprop_factory.get(n)
 
 
 def get_outs(out, dout):
+    """combine out and dout to a tuple"""
     if isinstance(out, tuple):
         tupleout = out
     else:
@@ -61,6 +63,7 @@ def get_outs(out, dout):
 
 @bprop_factory.register(1)
 def bprop_one(op):
+    """bprop func for custom op with one input"""
     def bprop(x1, out, dout):
         inputs = (x1,) + get_outs(out, dout)
         res = op(*inputs)
@@ -70,6 +73,7 @@ def bprop_one(op):
 
 @bprop_factory.register(2)
 def bprop_two(op):
+    """bprop func for custom op with two inputs"""
     def bprop(x1, x2, out, dout):
         inputs = (x1, x2) + get_outs(out, dout)
         res = op(*inputs)
@@ -79,6 +83,7 @@ def bprop_two(op):
 
 @bprop_factory.register(3)
 def bprop_three(op):
+    """bprop func for custom op with three inputs"""
     def bprop(x1, x2, x3, out, dout):
         inputs = (x1, x2, x3) + get_outs(out, dout)
         res = op(*inputs)
@@ -88,6 +93,7 @@ def bprop_three(op):
 
 @bprop_factory.register(4)
 def bprop_four(op):
+    """bprop func for custom op with four inputs"""
     def bprop(x1, x2, x3, x4, out, dout):
         inputs = (x1, x2, x3, x4) + get_outs(out, dout)
         res = op(*inputs)
@@ -97,6 +103,7 @@ def bprop_four(op):
 
 @bprop_factory.register(5)
 def bprop_five(op):
+    """bprop func for custom op with five inputs"""
     def bprop(x1, x2, x3, x4, x5, out, dout):
         inputs = (x1, x2, x3, x4, x5) + get_outs(out, dout)
         res = op(*inputs)
@@ -106,6 +113,7 @@ def bprop_five(op):
 
 @bprop_factory.register(6)
 def bprop_six(op):
+    """bprop func for custom op with six inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, out, dout):
         inputs = (x1, x2, x3, x4, x5, x6) + get_outs(out, dout)
         res = op(*inputs)
@@ -115,6 +123,7 @@ def bprop_six(op):
 
 @bprop_factory.register(7)
 def bprop_seven(op):
+    """bprop func for custom op with seven inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, x7, out, dout):
         inputs = (x1, x2, x3, x4, x5, x6, x7) + get_outs(out, dout)
         res = op(*inputs)
@@ -124,6 +133,7 @@ def bprop_seven(op):
 
 @bprop_factory.register(8)
 def bprop_eight(op):
+    """bprop func for custom op with eight inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, x7, x8, out, dout):
         inputs = (x1, x2, x3, x4, x5, x6, x7, x8) + get_outs(out, dout)
         res = op(*inputs)
@@ -133,6 +143,7 @@ def bprop_eight(op):
 
 @bprop_factory.register(9)
 def bprop_nine(op):
+    """bprop func for custom op with nine inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, x7, x8, x9, out, dout):
         inputs = (x1, x2, x3, x4, x5, x6, x7, x8, x9) + get_outs(out, dout)
         res = op(*inputs)
@@ -142,6 +153,7 @@ def bprop_nine(op):
 
 @bprop_factory.register(10)
 def bprop_ten(op):
+    """bprop func for custom op with ten inputs"""
     def bprop(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, out, dout):
         inputs = (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) + get_outs(out, dout)
         res = op(*inputs)

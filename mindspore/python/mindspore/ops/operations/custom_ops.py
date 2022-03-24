@@ -750,7 +750,7 @@ class Custom(ops.PrimitiveWithInfer):
 
             if any(i[1] != -1 for i in inplace_assign_output):
                 self.add_prim_attr("inplace_assign_output", " ".join(
-                    [str(j) for i in inplace_assign_output for j in i]))
+                    (str(j) for i in inplace_assign_output for j in i)))
 
     def _auto_infer(self, *args):
         """

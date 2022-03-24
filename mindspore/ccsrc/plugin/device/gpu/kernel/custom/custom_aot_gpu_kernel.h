@@ -174,19 +174,19 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
   }
 
  private:
-  std::vector<std::vector<int64_t>> shape_list_;
-  std::vector<int> ndims_;
-  std::vector<std::string> type_list_;
-
-  std::vector<int64_t *> shapes_;
-  std::vector<const char *> type_pointer_list_;
-
   size_t num_input_;
   size_t num_output_;
   std::string file_path_;
   std::string func_name_;
   void *handle_;
   int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);
+
+  std::vector<std::vector<int64_t>> shape_list_;
+  std::vector<int> ndims_;
+  std::vector<std::string> type_list_;
+
+  std::vector<int64_t *> shapes_;
+  std::vector<const char *> type_pointer_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

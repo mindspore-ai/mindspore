@@ -16,7 +16,7 @@
 
 import copy
 from . import op_infer
-from .model import Tensor, Value, Operator, Graph, AlignShape, AddControlBuddy
+from .model import Tensor, Value, Operator, Graph, AlignShape
 
 
 class GraphBuilder:
@@ -123,7 +123,6 @@ class CompositeGraph:
     def refine(self):
         """Refine Graph"""
         AlignShape().visit_graph(self.graph)
-        AddControlBuddy().visit_graph(self.graph)
 
     def load(self, desc):
         """Load Graph from json"""
@@ -207,14 +206,14 @@ class CompositeGraph:
         def dump_output(t):
             if t.name in inplace_assign:
                 z = inplace_assign_z if inplace_assign_z is not None else self.tensors[t.name]
-                return {'data_type': z.dtype, 'shape': z.shape, 'tensor_name': inplace_assign[t.name]}
+                return {'data_type': z.dtype, 'shape': z.shape, 'tensor_name': inplace_assign.get(t.name)}
             return {'data_type': t.dtype, 'shape': t.shape, 'tensor_name': t.name}
 
         def dump_op_desc(d):
             if d['name'] == 'InplaceAssign':
                 y = d['input_desc'][1][0]['tensor_name']
                 if self.tensors[y].op in graph_ops:
-                    z, fake = (inplace_assign_z, False) if inplace_assign_z is not None else (self.tensors[y], True)
+                    z, fake = (inplace_assign_z, False) if inplace_assign_z is not None else (self.tensors.get(y), True)
                     inplace_desc = copy.deepcopy(d)
                     inplace_desc['attr'] = {'name': 'fake_output', 'value': fake}
                     z_desc, out_desc = inplace_desc['input_desc'][2][0], inplace_desc['output_desc'][0]

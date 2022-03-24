@@ -348,7 +348,8 @@ class Value:
     def __repr__(self):
         return "%s.%s%s" % (self.name, self.dtype, str(list(self.shape)))
 
-    def get_size(self):
+    @staticmethod
+    def get_size():
         """Get size"""
         return 1
 
@@ -368,7 +369,7 @@ class Operator:
         self.all_inputs = []  # include Tensor inputs and Value inputs.
 
     def __str__(self):
-        args = ', '.join([str(t) for t in self.all_inputs])
+        args = ', '.join((str(t) for t in self.all_inputs))
         expr = "%s = %s.%s(%s) id:%s" % (
             str(self.output), self.prim, self.output.dtype, args, id(self))
         return expr if not self.attrs else '%s // %s' % (expr, str(self.attrs))
@@ -429,7 +430,7 @@ class Graph:
             if op.output.para_type == Tensor.PARA_OUTPUT or not op.output.to_ops:
                 outputs.append(op.output)
                 continue
-            if any([succ not in self.ops for succ in op.output.to_ops]):
+            if any((succ not in self.ops for succ in op.output.to_ops)):
                 outputs.append(op.output)
         if self.inputs:
             inputs = self.inputs
@@ -440,8 +441,8 @@ class Graph:
 
     def __str__(self):
         inputs, outputs = self.deduce_parameters()
-        para_str = ', '.join([repr(t) for t in inputs])
-        out_str = ', '.join([repr(t) for t in outputs])
+        para_str = ', '.join((repr(t) for t in inputs))
+        out_str = ', '.join((repr(t) for t in outputs))
         lines = []
         lines.append("%s(%s) -> %s {" % (self.name, para_str, out_str))
         if self.stitch_info:
@@ -522,7 +523,8 @@ class AlignShape(GraphVisitor):
     def __init__(self):
         super(AlignShape, self).__init__()
 
-    def visit(self, op):
+    @staticmethod
+    def visit(op):
         """Visit op node"""
         prim = PrimLib.get_prim(op)
         if prim.iter_type in (PrimLib.ELEMWISE, PrimLib.BROADCAST, PrimLib.REDUCE):
@@ -533,35 +535,6 @@ class AlignShape(GraphVisitor):
                     align_dim = len(t.shape)
             if align_dim > out_dim:
                 op.output.shape = [1] * (align_dim - out_dim) + op.output.shape
-
-
-class AddControlBuddy(GraphVisitor):
-    """Add control buddy"""
-
-    def __init__(self):
-        super(AddControlBuddy, self).__init__()
-        self.buddies = {}  # {op : [ctrl_op]}
-
-    def visit(self, op):
-        """Visit op node"""
-        if op.prim == "MakeTuple":
-            if len(op.output.to_ops) != 1:
-                raise ValueError("For '{}', the output size is abnormal".format(op.prim))
-            owner = op.output.to_ops[0]
-            if owner in self.buddies:
-                self.buddies[owner].append(op)
-            else:
-                self.buddies[owner] = [op]
-            if op in self.buddies:
-                ops = self.buddies.pop(op)
-                self.buddies[owner].extend(ops)
-
-    def visit_graph(self, graph):
-        """Visit graph nodes"""
-        super(AddControlBuddy, self).visit_graph(graph)
-        for owner in self.buddies:
-            for op in self.buddies[owner]:
-                owner.add_buddy(op.output)
 
 
 class GraphKernelUnsupportedException(Exception):
