@@ -119,7 +119,7 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.get_numa_enable()
 
-    获取NUMA的启动状态。
+    获取NUMA的启动/禁用状态。
     该状态将用于所有进程。
 
     **返回：**
@@ -317,7 +317,7 @@ API示例所需模块的导入代码如下：
 
     **返回：**
 
-    int，表示多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔（秒）。
+    int，表示多进程/多线程下，主进程/主线程获取数据超时时，告警日志打印的时间间隔（默认300秒）。
 
 .. automodule:: mindspore.dataset.config
     :members:
