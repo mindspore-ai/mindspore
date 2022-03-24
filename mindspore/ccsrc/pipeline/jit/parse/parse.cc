@@ -1836,6 +1836,7 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
     }
     auto rolled_body_func_graph = rolled_body_block->func_graph();
     rolled_body_func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+    rolled_body_func_graph->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE, true);
   }
 
   header_block->Mature();

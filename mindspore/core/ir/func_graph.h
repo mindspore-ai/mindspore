@@ -81,7 +81,7 @@ using CNodeIndexCounterMap = CounterOrderedMap<CNodeIndexPairPtr, CNodeIndexHash
 
 using FuncGraphMap = OrderedMap<FuncGraphPtr, int>;
 
-const char FUNC_GRAPH_FLAG_IGNORE_VALUES[] = "ignore_values";
+const char FUNC_GRAPH_FLAG_IGNORE_VALUE[] = "ignore_value";
 const char FUNC_GRAPH_FLAG_DEFER_INLINE[] = "defer_inline";
 const char FUNC_GRAPH_FLAG_NO_INLINE[] = "no_inline";
 const char FUNC_GRAPH_FLAG_AFTER_BLOCK[] = "after_block";

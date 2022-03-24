@@ -534,13 +534,18 @@ bool InferenceOptPrepareAction(const ResourcePtr &res) {
 
 bool EliminateUnusedParameterAction(const ResourcePtr &res) {
   static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") == "1");
-  if (!transform_tail_call_to_parallel_call) {
+  static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
+  if (!transform_tail_call_to_parallel_call && !transform_for_half_unroll_call) {
     return true;
   }
   MS_EXCEPTION_IF_NULL(res);
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  bool changed = opt::irpass::ParameterEliminator()(func_graph, nullptr);
+  auto parameter_eliminator = opt::irpass::ParameterEliminator();
+  if (transform_for_half_unroll_call) {
+    parameter_eliminator.set_eliminate_only_returned_parameter(true);
+  }
+  bool changed = parameter_eliminator(func_graph, nullptr);
   MS_LOG(DEBUG) << "Eliminate parameter, changed: " << changed;
   return true;
 }

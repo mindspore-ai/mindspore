@@ -821,8 +821,8 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
   for (auto &item : func_graph->parameter_default_value()) {
     new_func_graph->set_param_default_value(item.first, cloner[item.second]);
   }
-  if (func_graph->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
-    new_func_graph->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
+  if (func_graph->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
+    new_func_graph->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE, true);
   }
   if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
     new_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
