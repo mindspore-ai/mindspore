@@ -19,10 +19,18 @@
 #include <memory>
 #include <sstream>
 #include <utility>
+
+#ifdef ENABLE_GPU
+#include <cuda.h>
+#endif
+
 #include "base/core_ops.h"
 #include "utils/anf_utils.h"
+#include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
+
+constexpr int MINIMUM_MAJOR_VERSION = 7;
 
 namespace mindspore::graphkernel {
 std::string GkUtils::ExtractGraphKernelName(const AnfNodePtrList &nodes, const std::string &prefix,
@@ -87,6 +95,56 @@ std::vector<PrimitivePtr> GkUtils::GetValidOps(const std::vector<OpWithLevel> &o
     });
     (void)ops.erase(iter, ops.end());
   }
+  return ops;
+}
+
+std::vector<PrimitivePtr> GkUtils::FilterExcludedOps(const std::vector<PrimitivePtr> &ops) {
+#ifdef ENABLE_GPU
+  if (Callback::Instance()->GetTargetFromContext() != kGPUDevice) {
+    return ops;
+  }
+
+  // Check device computing capacity.
+  int major_version = 0;
+  auto ret = cuDeviceGetAttribute(&major_version, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
+  if (ret != CUDA_SUCCESS) {
+    const char *msg = nullptr;
+    cuGetErrorName(ret, &msg);
+    MS_LOG(ERROR) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, error message: " << msg;
+  }
+  if (major_version >= MINIMUM_MAJOR_VERSION) {
+    return ops;
+  }
+
+  // Filter excluded ops.
+  std::vector<std::string> excluded_ops{prim::kPrimConv2D->name(), prim::kPrimMatMul->name(),
+                                        prim::kPrimBatchMatMul->name()};
+  std::vector<PrimitivePtr> res;
+  (void)std::copy_if(ops.begin(), ops.end(), std::back_inserter(res), [&excluded_ops](const PrimitivePtr &p) {
+    return std::find(excluded_ops.begin(), excluded_ops.end(), p->name()) == excluded_ops.end();
+  });
+
+  // Give hint for excluded ops.
+  static bool give_hint = false;
+  if (!give_hint && res.size() != ops.size()) {
+    give_hint = true;
+    std::stringstream ss;
+    ss << "(";
+    for (size_t i = 0; i < excluded_ops.size(); ++i) {
+      if (i > 0) {
+        ss << ", ";
+      }
+      ss << excluded_ops[i];
+    }
+    ss << ")";
+    MS_LOG(WARNING) << "Some operators" << ss.str()
+                    << " can not be enabled in GraphKernel because the current device's computing capacity is "
+                    << major_version << ", which is < " << MINIMUM_MAJOR_VERSION
+                    << ". For better performance, it is recommended to use devices with a computing capacity >= "
+                    << MINIMUM_MAJOR_VERSION;
+  }
+  return res;
+#endif
   return ops;
 }
 

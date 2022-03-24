@@ -107,8 +107,9 @@ std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
     {kCPUDevice, OpLevel_0, prim::kPrimLessEqual},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
-  return GkUtils::GetValidOps(clusterable_ops_with_level, flags.fusion_ops_level, flags.enable_cluster_ops_only,
-                              flags.enable_cluster_ops, flags.disable_cluster_ops);
+  auto ops = GkUtils::GetValidOps(clusterable_ops_with_level, flags.fusion_ops_level, flags.enable_cluster_ops_only,
+                                  flags.enable_cluster_ops, flags.disable_cluster_ops);
+  return GkUtils::FilterExcludedOps(ops);
 }
 
 bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
