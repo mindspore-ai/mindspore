@@ -75,6 +75,8 @@ class OPIntermediateParser:
         except (IOError, OSError) as err:
             logger.critical('Error occurred when read timeline intermediate file: %s', err)
             raise ProfilerIOException()
+        finally:
+            pass
 
         return timeline_list
 

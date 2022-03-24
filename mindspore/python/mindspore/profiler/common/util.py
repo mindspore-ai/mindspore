@@ -86,6 +86,7 @@ def fwrite_format(output_data_path, data_source=None, is_print=False, is_start=F
 
 
 def get_log_slice_id(file_name):
+    """Get log slice id."""
     pattern = re.compile(r'(?<=slice_)\d+')
     slice_list = pattern.findall(file_name)
     index = re.findall(r'\d+', slice_list[0])

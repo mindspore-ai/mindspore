@@ -57,14 +57,14 @@ class StructType(Enum):
         if isinstance(cpp_type, dict):
             cpp_type = cpp_type.values()
         if isinstance(cpp_type, StructType):
-            return size_map[cpp_type.name]
+            return size_map.get(cpp_type.name)
 
         size = 0
         for member in cpp_type:
             if isinstance(member, list):
                 size += cls.sizeof(member)
             else:
-                size += size_map[member.name]
+                size += size_map.get(member.name)
         return size
 
     @classmethod

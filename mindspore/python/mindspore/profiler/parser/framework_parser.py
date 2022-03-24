@@ -295,7 +295,8 @@ class FrameworkParser:
         unpack_data = struct.unpack(tensor_num_struct.value, item_binary_data[cursor:cursor + size])[0]
         return unpack_data
 
-    def _construct_task_id_full_op_name_dict(self, task_desc_info):
+    @staticmethod
+    def _construct_task_id_full_op_name_dict(task_desc_info):
         """The task desc info is a list[task_desc], task_desc is a dict, key is same as TASK_DESC_STRUCT."""
         task_id_full_op_name = {}
         for task_desc in task_desc_info:
@@ -303,7 +304,8 @@ class FrameworkParser:
             task_id_full_op_name[task_id] = task_desc['opName']
         return task_id_full_op_name
 
-    def _construct_point_info(self, task_id_full_op_name_dict, step_point_data):
+    @staticmethod
+    def _construct_point_info(task_id_full_op_name_dict, step_point_data):
         """step_point_data is a list[step_data], step data is a dict, key is same as STEP_INFO_STRUCT."""
         point_info = {}
         for step_point in step_point_data:
@@ -313,7 +315,8 @@ class FrameworkParser:
             point_info[tag] = full_op_name
         return point_info
 
-    def _construct_task_id_op_attr_dict(self, prof_tensor_data):
+    @staticmethod
+    def _construct_task_id_op_attr_dict(prof_tensor_data):
         """prof_tensor_data is a list[tensor_data], tensor_data is a dict, key is same as TENSOR_DATA_STRUCT."""
         task_id_op_attr_dict = defaultdict(list)
         for tensor_data in prof_tensor_data:

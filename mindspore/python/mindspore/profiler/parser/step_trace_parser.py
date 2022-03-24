@@ -31,6 +31,7 @@ from mindspore.profiler.common.util import combine_stream_task_id
 
 
 class PointTag(Enum):
+    """Initializing indexes."""
     MODEL_START = 0
     MODEL_END = 1
     FP_START = 2
@@ -352,6 +353,8 @@ class GpuStepTraceParser(BaseStepTraceParser):
         except (IOError, OSError) as err:
             log.warning(f'Failed to read {source_file}', err)
             raise ProfilerIOException
+        finally:
+            pass
 
         for step_num in range(num_of_step):
             step_trace = {
@@ -458,6 +461,7 @@ class AscendStepTraceParser(BaseStepTraceParser):
         self._task_id_op_name_dict = {}
 
     def set_task_id_op_name_dict(self, task_id_op_name_dict):
+        """The operator task id matches the operator name."""
         self._task_id_op_name_dict = task_id_op_name_dict
 
     def record_point_info(self, output_path):
@@ -567,7 +571,7 @@ class AscendStepTraceParser(BaseStepTraceParser):
         """Save step trace data to result."""
         step_trace = {'reduce': defaultdict(list), 'start': '-'}
         for ts_track in ts_tracks:
-            if ts_track['rptType'] != STEP_TRACE_RPT_TYPE:
+            if ts_track.get('rptType') != STEP_TRACE_RPT_TYPE:
                 continue
             self._construct_step_trace(ts_track, step_trace)
 
@@ -599,6 +603,8 @@ class AscendStepTraceParser(BaseStepTraceParser):
             except (IOError, OSError) as err:
                 log.critical("Can not parse profiler file, open file %s failed, detail: %s.", path, str(err))
                 raise ProfilerIOException()
+            finally:
+                pass
         log.info("Profiler found %d ts track step trace data.", len(ts_tracks))
         return ts_tracks
 

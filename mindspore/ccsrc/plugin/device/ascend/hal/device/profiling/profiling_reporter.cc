@@ -104,7 +104,7 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     step_point.curIterNum = 0;
     step_point.threadId = 0;
     step_point.tag = point->tag();
-    (void)ReportData(device_id_, reinterpret_cast<unsigned char *>(&step_point), sizeof(step_point), "step_info");
+    ReportData(device_id_, reinterpret_cast<unsigned char *>(&step_point), sizeof(step_point), "step_info");
 
     auto cnode = GetCNode(op_name);
     MS_EXCEPTION_IF_NULL(cnode);
@@ -165,7 +165,7 @@ void ProfilingReporter::ConstructNodeNameIndexMap() {
   size_t task_index = 0;
   for (const auto &node : cnode_list_) {
     MS_EXCEPTION_IF_NULL(node);
-    node_name_index_map_.insert(pair<string, int>(node->fullname_with_scope(), task_index));
+    (void)node_name_index_map_.insert(pair<string, size_t>(node->fullname_with_scope(), task_index));
     ++task_index;
   }
 }

@@ -129,7 +129,7 @@ class MinddataPipelineParser:
         """
         try:
             output_dir = validate_and_normalize_path(output_path)
-        except ValidationError:
+        except RuntimeError:
             logger.warning('Output path is invalid.')
             raise ProfilerPathErrorException('Output path is invalid.')
         if not os.path.isdir(output_dir):
