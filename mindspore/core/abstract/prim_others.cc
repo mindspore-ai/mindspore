@@ -379,16 +379,17 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
                             << " dimension tensor";
   }
   auto values_shp = values->shape()->shape();
-  if (values_shp.size() != 1) {
+  if (values_shp.size() != kSizeOne) {
     MS_EXCEPTION(TypeError) << "Values must be a 1 dimensional tensor, but got a " << values_shp.size()
                             << " dimension tensor";
   }
-  if (indices_shp[0] != values_shp[0]) {
+  if (indices_shp[kIndexZero] != values_shp[kIndexZero]) {
     MS_EXCEPTION(TypeError) << "Indices and values must equal in their shape, but got indices shape: " << indices_shp[0]
-                            << ", values shape: " << values_shp[0];
+                            << ", values shape: " << values_shp[kIndexZero];
   }
-  if (indices_shp[1] != kSizeTwo) {
-    MS_EXCEPTION(ValueError) << "COOTensor only support " << kSizeTwo << " dimensions, but got " << indices_shp[1];
+  constexpr int64_t kDimTwo = 2;
+  if (indices_shp[kIndexOne] != kDimTwo) {
+    MS_EXCEPTION(ValueError) << "COOTensor only support " << kDimTwo << " dimensions, but got " << indices_shp[1];
   }
 
   for (const auto &elem_type : dense_shape->ElementsType()) {

@@ -281,17 +281,17 @@ void HandleStrategyForMatMul(std::vector<ValuePtr> *strategy, const CNodePtr &cn
 }
 
 void HandleStrategyForElementWiseNode(std::vector<ValuePtr> *strategy, const CNodePtr &cnode) {
-  auto left_strategy = GetValue<std::vector<int64_t>>(strategy->at(0));
-  auto right_strategy = GetValue<std::vector<int64_t>>(strategy->at(1));
+  auto left_strategy = GetValue<std::vector<int64_t>>(strategy->at(kIndexZero));
+  auto right_strategy = GetValue<std::vector<int64_t>>(strategy->at(kIndexOne));
   if (left_strategy.size() != right_strategy.size()) {
     return;
   }
   int64_t strategy_mul = 1;
   std::for_each(left_strategy.begin(), left_strategy.end(), [&](int64_t const &data) { strategy_mul *= data; });
-  auto left_shape = cnode->input(1)->Shape()->cast<abstract::ShapePtr>();
-  auto left_batch = left_shape->shape()[0];
-  auto right_shape = cnode->input(2)->Shape()->cast<abstract::ShapePtr>();
-  auto right_batch = right_shape->shape()[0];
+  auto left_shape = cnode->input(kIndexOne)->Shape()->cast<abstract::ShapePtr>();
+  auto left_batch = left_shape->shape()[kIndexZero];
+  auto right_shape = cnode->input(kIndexTwo)->Shape()->cast<abstract::ShapePtr>();
+  auto right_batch = right_shape->shape()[kIndexZero];
 
   if (strategy_mul == 1) {
     left_strategy = right_strategy;
@@ -300,13 +300,13 @@ void HandleStrategyForElementWiseNode(std::vector<ValuePtr> *strategy, const CNo
   }
 
   if (left_batch == 1) {
-    left_strategy[0] = 1;
+    left_strategy[kIndexZero] = 1;
   }
   if (right_batch == 1) {
-    right_strategy[0] = 1;
+    right_strategy[kIndexZero] = 1;
   }
-  strategy->at(0) = MakeValue(left_strategy);
-  strategy->at(1) = MakeValue(right_strategy);
+  strategy->at(kIndexZero) = MakeValue(left_strategy);
+  strategy->at(kIndexOne) = MakeValue(right_strategy);
 }
 
 void HandleSpecialStrategy(std::vector<ValuePtr> *strategy, const CNodePtr &cnode) {
