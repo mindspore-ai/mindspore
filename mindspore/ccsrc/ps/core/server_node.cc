@@ -27,15 +27,12 @@ bool ServerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "[Server start]: 4. The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << " successfully registered to the scheduler!";
 
-  StartHeartbeatTimer(client_to_scheduler_);
-  MS_LOG(INFO) << "[Server start]: 5. Server start heartbeat timer!";
-
   if (!WaitForStart(timeout)) {
     MS_LOG(ERROR) << "Start server node timeout!";
     return false;
   }
   MsException::Instance().CheckException();
-  MS_LOG(INFO) << "[Server start]: 6. Successfully start server node!";
+  MS_LOG(INFO) << "[Server start]: 5. Successfully start server node!";
   return true;
 }
 
@@ -94,11 +91,10 @@ bool ServerNode::Finish(const uint32_t &timeout) {
     return true;
   }
 
-  if (!is_connected_to_scheduler_) {
+  if (client_to_scheduler_->connection_status() != 1) {
     MS_LOG(INFO) << "[Server finish]: Not connect to scheduler, no need to disconnect!";
     return true;
   }
-  client_to_scheduler_->set_disconnected();
 
   MS_LOG(INFO) << "[Server finish]: 1. Begin to finish server node!";
   bool res = Disconnect(client_to_scheduler_, timeout);

@@ -43,8 +43,7 @@ TcpClient::TcpClient(const std::string &address, std::uint16_t port, NodeRole pe
       server_address_(std::move(address)),
       server_port_(port),
       peer_role_(peer_role),
-      disconnected_(false),
-      connected_(false) {
+      connection_status_(-1) {
   message_handler_.SetCallback(
     [this](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
       if (message_callback_) {
@@ -86,16 +85,20 @@ std::string TcpClient::PeerRoleName() const {
 bool TcpClient::WaitConnected(const uint32_t &connected_timeout) {
   std::unique_lock<std::mutex> lock(connection_mutex_);
   bool res = connection_cond_.wait_for(lock, std::chrono::seconds(connected_timeout),
-                                       [this] { return this->connected_.load(); });
+                                       [this] { return this->connection_status_ == 1; });
   return res;
 }
 
 void TcpClient::Init() {
-  if (disconnected_) {
+  std::lock_guard<std::mutex> lock(connection_mutex_);
+  if (connection_status_ != -1) {
     return;
   }
-
-  std::lock_guard<std::mutex> lock(connection_mutex_);
+  connection_status_ = 0;
+  if (buffer_event_) {
+    bufferevent_free(buffer_event_);
+    buffer_event_ = nullptr;
+  }
   if (!CommUtil::CheckIp(server_address_)) {
     MS_LOG(EXCEPTION) << "The tcp client ip:" << server_address_ << " is illegal!";
   }
@@ -117,10 +120,10 @@ void TcpClient::Init() {
   sin.sin_addr.s_addr = inet_addr(server_address_.c_str());
   sin.sin_port = htons(server_port_);
 
-  if (!PSContext::instance()->enable_ssl() && buffer_event_ == nullptr) {
+  if (!PSContext::instance()->enable_ssl()) {
     MS_LOG(INFO) << "SSL is disable.";
     buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
-  } else if (buffer_event_ == nullptr) {
+  } else {
     if (!EstablishSSL()) {
       MS_LOG(WARNING) << "Establish SSL failed.";
       return;
@@ -228,7 +231,7 @@ void TcpClient::TimerCallback(evutil_socket_t, int16_t, void *arg) {
 void TcpClient::NotifyConnected() {
   MS_LOG(INFO) << "Client connected to the server! Peer " << PeerRoleName() << " ip: " << server_address_
                << ", port: " << server_port_;
-  connected_ = true;
+  connection_status_ = 1;
   connection_cond_.notify_all();
 }
 
@@ -269,12 +272,14 @@ void TcpClient::EventCallbackInner(struct bufferevent *bev, std::int16_t events)
   } else if (events & BEV_EVENT_ERROR) {
     MS_LOG(WARNING) << "The client will retry to connect to the server! Peer " << PeerRoleName()
                     << " ip: " << server_address_ << ", port: " << server_port_;
+    connection_status_ = -1;
     if (disconnected_callback_) {
       disconnected_callback_();
     }
   } else if (events & BEV_EVENT_EOF) {
     MS_LOG(WARNING) << "Client connected end of file! Peer " << PeerRoleName() << " ip: " << server_address_
                     << ", port: " << server_port_;
+    connection_status_ = -1;
     if (disconnected_callback_) {
       disconnected_callback_();
     }
