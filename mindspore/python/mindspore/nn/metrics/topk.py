@@ -14,7 +14,7 @@
 # ============================================================================
 """Topk."""
 import numpy as np
-from .metric import Metric, rearrange_inputs
+from .metric import Metric, rearrange_inputs, _check_onehot_data
 
 
 class TopKCategoricalAccuracy(Metric):
@@ -84,7 +84,7 @@ class TopKCategoricalAccuracy(Metric):
                              "but got 'inputs' size: {}.".format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
-        if y_pred.ndim == y.ndim and self._check_onehot_data(y):
+        if y_pred.ndim == y.ndim and _check_onehot_data(y):
             y = y.argmax(axis=1)
         indices = np.argsort(-y_pred, axis=1)[:, :self.k]
         repeated_y = y.reshape(-1, 1).repeat(self.k, axis=1)

@@ -77,12 +77,9 @@ class RootMeanSquareDistance(Metric):
         self.distance_metric = validator.check_string(distance_metric, self.distance_metric_list, "distance_metric")
         self.symmetric = validator.check_value_type("symmetric", symmetric, [bool])
         self.clear()
-
-    def clear(self):
-        """Clears the internal evaluation result."""
-        self._y_pred_edges = 0
-        self._y_edges = 0
-        self._is_update = False
+        self._y_pred_edges = None
+        self._is_update = None
+        self._y_edges = None
 
     def _get_surface_distance(self, y_pred_edges, y_edges):
         """
@@ -92,10 +89,8 @@ class RootMeanSquareDistance(Metric):
             y_pred_edges (np.ndarray): the edge of the predictions.
             y_edges (np.ndarray): the edge of the ground truth.
         """
-
         if not np.any(y_pred_edges):
             return np.array([])
-
         if not np.any(y_edges):
             dis = np.full(y_edges.shape, np.inf)
         else:
@@ -104,9 +99,13 @@ class RootMeanSquareDistance(Metric):
             elif self.distance_metric in self.distance_metric_list[-2:]:
                 dis = morphology.distance_transform_cdt(~y_edges, metric=self.distance_metric)
 
-        surface_distance = dis[y_pred_edges]
+        return dis[y_pred_edges]
 
-        return surface_distance
+    def clear(self):
+        """Clears the internal evaluation result."""
+        self._y_pred_edges = 0
+        self._y_edges = 0
+        self._is_update = False
 
     @rearrange_inputs
     def update(self, *inputs):

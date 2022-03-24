@@ -320,8 +320,8 @@ class _ConfusionMatrix:
 
         if self.calculation_method:
             if isinstance(self.metric_name, str):
-                confusion_matrix = _compute_confusion_matrix_metric(self.metric_name, confusion_matrix)
-                chart, not_nans = _decrease_metric(confusion_matrix, self.decrease)
+                sub_confusion_matrix = _compute_confusion_matrix_metric(self.metric_name, confusion_matrix)
+                chart, not_nans = _decrease_metric(sub_confusion_matrix, self.decrease)
                 return chart, not_nans
 
             if not self.metric_name:

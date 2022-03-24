@@ -87,45 +87,6 @@ class OcclusionSensitivity(Metric):
         self._sensitivity_im = 0
         self._is_update = False
 
-    def _check_input_bounding_box(self, b_box, im_shape):
-        """Check that the bounding box (if supplied) is as expected."""
-        # If no bounding box has been supplied, set min and max to None
-        if b_box is None:
-            b_box_min = b_box_max = None
-        else:
-            if len(b_box) != 2 * len(im_shape):
-                raise ValueError(f"For 'OcclusionSensitivity', the bounding box should contain upper and lower for "
-                                 f"all dimensions (except batch number), and the length of 'b_box' should be twice "
-                                 f"as long as predicted value's (except batch number), but got 'b_box' length "
-                                 f"{len(b_box)}, predicted value length (except batch number) {len(im_shape)}.")
-
-            b_box_min = np.array(b_box[::2])
-            b_box_max = np.array(b_box[1::2])
-            b_box_min[b_box_min < 0] = 0
-            b_box_max[b_box_max < 0] = im_shape[b_box_max < 0] - 1
-            if np.any(b_box_max >= im_shape):
-                raise ValueError("For 'OcclusionSensitivity', maximum bounding box should be smaller than image size "
-                                 "for all values.")
-            if np.any(b_box_min > b_box_max):
-                raise ValueError("For 'OcclusionSensitivity', minimum bounding box should be smaller than maximum "
-                                 "bounding box for all values.")
-
-        return b_box_min, b_box_max
-
-    def _append_to_sensitivity_im(self, model, batch_images, batch_ids, sensitivity_im):
-        """
-        For a given number of images, the probability of predicting a given label is obtained. Attach to previous
-        assessment.
-        """
-        batch_images = np.vstack(batch_images)
-        batch_ids = np.expand_dims(batch_ids, 1)
-        model_numpy = model(Tensor(batch_images)).asnumpy()
-        first_indices = np.arange(batch_ids.shape[0])[:, None]
-        scores = model_numpy[first_indices, batch_ids]
-        if sensitivity_im.size == 0:
-            return np.vstack(scores)
-        return np.vstack((sensitivity_im, scores))
-
     @rearrange_inputs
     def update(self, *inputs):
         """
@@ -165,7 +126,7 @@ class OcclusionSensitivity(Metric):
                                f"and batches {y_pred.shape[0]}.")
 
         y_pred_shape = np.array(y_pred.shape[1:])
-        b_box_min, b_box_max = self._check_input_bounding_box(self.b_box, y_pred_shape)
+        b_box_min, b_box_max = _check_input_bounding_box(self.b_box, y_pred_shape)
 
         temp = model(Tensor(y_pred)).asnumpy()
         self._baseline = temp[0, label].item()
@@ -193,7 +154,7 @@ class OcclusionSensitivity(Metric):
             batch_ids.append(label)
 
             if len(batch_images) == self.n_batch or i == num_required_predictions - 1:
-                sensitivity_im = self._append_to_sensitivity_im(model, batch_images, batch_ids, sensitivity_im)
+                sensitivity_im = _append_to_sensitivity_im(model, batch_images, batch_ids, sensitivity_im)
                 batch_images = []
                 batch_ids = []
 
@@ -217,3 +178,44 @@ class OcclusionSensitivity(Metric):
         sensitivity = self._baseline - np.squeeze(self._sensitivity_im)
 
         return sensitivity
+
+
+def _append_to_sensitivity_im(model, batch_images, batch_ids, sensitivity_im):
+    """
+    For a given number of images, the probability of predicting a given label is obtained. Attach to previous
+    assessment.
+    """
+    batch_images = np.vstack(batch_images)
+    batch_ids = np.expand_dims(batch_ids, 1)
+    model_numpy = model(Tensor(batch_images)).asnumpy()
+    first_indices = np.arange(batch_ids.shape[0])[:, None]
+    scores = model_numpy[first_indices, batch_ids]
+    if sensitivity_im.size == 0:
+        return np.vstack(scores)
+    return np.vstack((sensitivity_im, scores))
+
+
+def _check_input_bounding_box(b_box, im_shape):
+    """Check that the bounding box (if supplied) is as expected."""
+    # If no bounding box has been supplied, set min and max to None
+    if b_box is None:
+        b_box_min = b_box_max = None
+    else:
+        if len(b_box) != 2 * len(im_shape):
+            raise ValueError(f"For 'OcclusionSensitivity', the bounding box should contain upper and lower for "
+                             f"all dimensions (except batch number), and the length of 'b_box' should be twice "
+                             f"as long as predicted value's (except batch number), but got 'b_box' length "
+                             f"{len(b_box)}, predicted value length (except batch number) {len(im_shape)}.")
+
+        b_box_min = np.array(b_box[::2])
+        b_box_max = np.array(b_box[1::2])
+        b_box_min[b_box_min < 0] = 0
+        b_box_max[b_box_max < 0] = im_shape[b_box_max < 0] - 1
+        if np.any(b_box_max >= im_shape):
+            raise ValueError("For 'OcclusionSensitivity', maximum bounding box should be smaller than image size "
+                             "for all values.")
+        if np.any(b_box_min > b_box_max):
+            raise ValueError("For 'OcclusionSensitivity', minimum bounding box should be smaller than maximum "
+                             "bounding box for all values.")
+
+    return b_box_min, b_box_max

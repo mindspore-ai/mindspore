@@ -16,7 +16,7 @@
 import sys
 import numpy as np
 from mindspore._checkparam import Validator as validator
-from .metric import Metric, rearrange_inputs
+from .metric import Metric, rearrange_inputs, _check_onehot_data
 
 
 class Fbeta(Metric):
@@ -84,7 +84,7 @@ class Fbeta(Metric):
                              "but got {}.".format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
-        if y_pred.ndim == y.ndim and self._check_onehot_data(y):
+        if y_pred.ndim == y.ndim and _check_onehot_data(y):
             y = y.argmax(axis=1)
 
         if self._class_num == 0:

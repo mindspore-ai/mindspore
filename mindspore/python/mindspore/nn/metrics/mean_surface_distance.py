@@ -76,6 +76,9 @@ class MeanSurfaceDistance(Metric):
         self.distance_metric = validator.check_string(distance_metric, self.distance_metric_list, "distance_metric")
         self.symmetric = validator.check_value_type("symmetric", symmetric, [bool])
         self.clear()
+        self._is_update = None
+        self._y_edges = None
+        self._y_pred_edges = None
 
     def clear(self):
         """Clears the internal evaluation result."""
@@ -91,21 +94,18 @@ class MeanSurfaceDistance(Metric):
             y_pred_edges (np.ndarray): the edge of the predictions.
             y_edges (np.ndarray): the edge of the ground truth.
         """
-
         if not np.any(y_pred_edges):
             return np.array([])
 
-        if not np.any(y_edges):
-            dis = np.full(y_edges.shape, np.inf)
-        else:
+        if np.any(y_edges):
             if self.distance_metric == "euclidean":
                 dis = morphology.distance_transform_edt(~y_edges)
             elif self.distance_metric in self.distance_metric_list[-2:]:
                 dis = morphology.distance_transform_cdt(~y_edges, metric=self.distance_metric)
+        else:
+            dis = np.full(y_edges.shape, np.inf)
 
-        surface_distance = dis[y_pred_edges]
-
-        return surface_distance
+        return dis[y_pred_edges]
 
     @rearrange_inputs
     def update(self, *inputs):
