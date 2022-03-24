@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ from mindspore import log as logger
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from mindspore.dataset.engine.offload import GetOffloadModel
 
+import mindspore.dataset.transforms.c_transforms as c_transforms
 import mindspore.dataset.transforms.py_transforms as py_transforms
 from mindspore.dataset.text.utils import SentencePieceModel, DE_C_INTER_SENTENCEPIECE_MODE
 from mindspore.parallel._utils import _get_device_num
@@ -3180,6 +3181,17 @@ class MapDataset(UnionBaseDataset):
                  offload=None):
         super().__init__(children=input_dataset, num_parallel_workers=num_parallel_workers, cache=cache)
         self.operations = to_list(operations)
+        for op in self.operations:
+            # user define c_vision.HWC2CHW without parentheses is error
+            if type(op) == type:  # pylint: disable=unidiomatic-typecheck
+                raise ValueError("Parameter operations's element of method map should be a dataset processing "
+                                 "operation instance, but got: {}. It may be missing parentheses for "
+                                 "instantiation.".format(op))
+            if not isinstance(op, (c_transforms.TensorOperation, py_transforms.PyTensorOperation)) \
+                    and not callable(op):
+                raise ValueError("Parameter operations's element of method map should be a python function or "
+                                 "class method which should be callable, but got: {}. It doesn't need parentheses "
+                                 "for python function or class method.".format(op))
         self.operations = py_transforms.Compose.reduce(self.operations)
         self.input_columns = to_list(input_columns)
         self.output_columns = to_list(output_columns)

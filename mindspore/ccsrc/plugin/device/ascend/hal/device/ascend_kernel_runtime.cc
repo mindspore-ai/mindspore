@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
+#include <locale>
 #include <string>
 #include <vector>
 #include <memory>
@@ -719,6 +720,23 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph &) {
     auto full_scope_name = node->fullname_with_scope();
     MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/output data to: " << path
                   << trace::DumpSourceLines(node);
+
+    // full_scope_name: Default/GetNext-op1
+    std::string lower_full_scope_name(full_scope_name.length(), ' ');
+    (void)std::transform(full_scope_name.begin(), full_scope_name.end(), lower_full_scope_name.begin(), ::tolower);
+    if (lower_full_scope_name.find("getnext") != std::string::npos) {
+      MS_LOG(WARNING) << "GetNext error may be caused by slow data processing (bigger than 20s / batch) or "
+                      << "transfer data to device error.";
+      MS_LOG(WARNING) << "Suggestion: ";
+      MS_LOG(WARNING) << "    1) Set the parameter dataset_sink_mode=False of model.train(...) or "
+                      << "model.eval(...) and try again.";
+      MS_LOG(WARNING) << "    2) Reduce the batch_size in data processing and try again.";
+      MS_LOG(WARNING) << "    3) You can create iterator by interface create_dict_iterator() of dataset class to "
+                      << "independently verify the performance of data processing without training. "
+                      << "Refer to the link for data processing optimization suggestions: "
+                      << "https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/optimize_data_processing.html";
+    }
+
     E2eDump::DumpInputData(node, false, path, &full_scope_name);
     E2eDump::DumpOutputData(node, false, path, &full_scope_name);
   }
