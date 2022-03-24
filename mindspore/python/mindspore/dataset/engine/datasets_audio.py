@@ -26,8 +26,8 @@ After declaring the dataset object, you can further apply dataset operations
 import mindspore._c_dataengine as cde
 
 from .datasets import AudioBaseDataset, MappableDataset
-from .validators import check_cmu_arctic_dataset, check_gtzan_dataset, check_libri_tts_dataset, check_lj_speech_dataset, \
-    check_speech_commands_dataset, check_tedlium_dataset, check_yes_no_dataset
+from .validators import check_cmu_arctic_dataset, check_gtzan_dataset, check_libri_tts_dataset, \
+    check_lj_speech_dataset, check_speech_commands_dataset, check_tedlium_dataset, check_yes_no_dataset
 
 from ..core.validator_helpers import replace_none
 
