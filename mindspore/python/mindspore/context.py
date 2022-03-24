@@ -279,6 +279,7 @@ class _Context:
         self.set_param(ms_ctx_param.max_device_memory, max_device_memory_value)
 
     def set_mempool_block_size(self, mempool_block_size):
+        """Set the block size of memory pool."""
         if _get_mode() == GRAPH_MODE:
             logger.warning("Graph mode not support mempool_block_size context currently")
             return
