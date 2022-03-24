@@ -128,6 +128,7 @@ class Scheduler {
 
   bool IsControlFlowPattern(const lite::Model::Node &partial_node);
   STATUS DelQuantDTypeCastKernel(std::vector<kernel::LiteKernel *> *kernels);
+  STATUS UpdateDataTypeToFp32(std::vector<kernel::LiteKernel *> *kernels);
 #ifdef ENABLE_FP16
   int SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type);
 #endif

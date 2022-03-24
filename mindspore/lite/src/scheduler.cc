@@ -313,6 +313,28 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels
   return ConstructNormalSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
 }
 
+STATUS Scheduler::UpdateDataTypeToFp32(std::vector<kernel::LiteKernel *> *kernels) {
+  for (auto cur_kernel : *kernels) {
+    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph) {
+      auto sub_inner_graph = reinterpret_cast<kernel::SubGraphKernel *>(cur_kernel);
+      auto &subgraph_nodes = sub_inner_graph->nodes();
+      if (UpdateDataTypeToFp32(&subgraph_nodes) != RET_OK) {
+        MS_LOG(ERROR) << "DeleteRedundantTrans failed in subgraph.";
+        return RET_ERROR;
+      }
+    }
+    if (cur_kernel->op_parameter()->quant_type_ == schema::QuantType_QUANT_ALL) {
+      for (auto tensor : cur_kernel->out_tensors()) {
+        if (!tensor->quant_params().empty() &&
+            (tensor->data_type() == kNumberTypeInt8 || tensor->data_type() == kNumberTypeUInt8)) {
+          tensor->set_data_type(kNumberTypeFloat32);
+        }
+      }
+    }
+  }
+  return RET_OK;
+}
+
 STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::LiteKernel *> *kernels) {
   for (auto iter = (*kernels).begin(); iter != (*kernels).end();) {
     auto cur_kernel = *iter;
@@ -330,35 +352,61 @@ STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::LiteKernel *> *ker
     }
     auto &post_kernels = cur_kernel->out_kernels();
     auto &pre_kernels = cur_kernel->in_kernels();
-    if (pre_kernels.size() != 1 || cur_kernel->in_tensors().size() != 1) {
-      MS_LOG(ERROR) << "kernel input size error.";
+    if (cur_kernel->in_tensors().size() != 1) {
+      MS_LOG(ERROR) << cur_kernel->name() << " input size error."
+                    << " cur_kernel in tensors size:" << cur_kernel->in_tensors().size();
       return RET_ERROR;
     }
-    // modify post kernel input to new kernel and new tensor
-    for (auto post_kernel : post_kernels) {
-      auto post_in_kernels = post_kernel->in_kernels();
-      auto post_input_iter = std::find(post_in_kernels.begin(), post_in_kernels.end(), cur_kernel);
-      *post_input_iter = pre_kernels[0];
-      post_kernel->set_in_tensor(cur_kernel->in_tensors()[0], post_input_iter - post_in_kernels.begin());
-      post_kernel->set_in_kernels(post_in_kernels);
+    bool graph_input = pre_kernels.empty();
+    if (!graph_input) {
+      // modify post kernel input to new kernel and new tensor
+      for (auto post_kernel : post_kernels) {
+        auto post_in_kernels = post_kernel->in_kernels();
+        auto post_input_iter = std::find(post_in_kernels.begin(), post_in_kernels.end(), cur_kernel);
+        *post_input_iter = pre_kernels[0];
+        post_kernel->set_in_tensor(cur_kernel->in_tensors()[0], post_input_iter - post_in_kernels.begin());
+        post_kernel->set_in_kernels(post_in_kernels);
+      }
+      auto pre_out_kernels = pre_kernels[0]->out_kernels();
+      auto pre_out_iter = std::find(pre_out_kernels.begin(), pre_out_kernels.end(), cur_kernel);
+      if (pre_out_iter != pre_out_kernels.end()) {
+        pre_out_kernels.erase(pre_out_iter);
+        pre_out_kernels.insert(pre_out_iter, post_kernels.begin(), post_kernels.end());
+        pre_kernels[0]->set_out_kernels(pre_kernels);
+      }
+    } else {
+      for (auto post_kernel : post_kernels) {
+        auto post_in_kernels = post_kernel->in_kernels();
+        auto post_input_iter = std::find(post_in_kernels.begin(), post_in_kernels.end(), cur_kernel);
+        *post_input_iter = {};
+        post_kernel->set_in_tensor(cur_kernel->in_tensors()[0], post_input_iter - post_in_kernels.begin());
+        post_kernel->set_in_kernels(post_in_kernels);
+      }
     }
-    auto pre_out_kernels = pre_kernels[0]->out_kernels();
-    auto pre_out_iter = std::find(pre_out_kernels.begin(), pre_out_kernels.end(), cur_kernel);
-    if (pre_out_iter != pre_out_kernels.end()) {
-      pre_out_kernels.erase(pre_out_iter);
-      pre_out_kernels.insert(pre_out_iter, post_kernels.begin(), post_kernels.end());
-      pre_kernels[0]->set_out_kernels(pre_kernels);
+
+    // update data type
+    for (auto tensor : cur_kernel->in_tensors()) {
+      tensor->set_data_type(kNumberTypeFloat32);
     }
-    // update model output
+    for (auto tensor : cur_kernel->out_tensors()) {
+      tensor->set_data_type(kNumberTypeFloat32);
+    }
+
+    // update model output kernel & tensor
     if (cur_kernel->is_model_output()) {
       pre_kernels[0]->set_is_model_output(true);
       cur_kernel->in_tensors()[0]->set_category(Category::GRAPH_OUTPUT);
       pre_kernels[0]->set_out_kernels({});
+      // If the current kernel is the output kernel, use the current output tensor as the output tensor of the previous
+      // node.
+      auto pre_out_tensors = pre_kernels[0]->out_tensors();
+      auto tensor_iter = std::find(pre_out_tensors.begin(), pre_out_tensors.end(), cur_kernel->in_tensors()[0]);
+      if (tensor_iter != pre_kernels[0]->out_tensors().end()) {
+        *tensor_iter = cur_kernel->out_tensors()[0];
+      }
     }
-    auto tensor_iter = std::find((*outputs_).begin(), (*outputs_).end(), cur_kernel->out_tensors()[0]);
-    if (tensor_iter != (*outputs_).end()) {
-      *tensor_iter = cur_kernel->in_tensors()[0];
-    }
+
+    // delete cur kernel
     iter = kernels->erase(iter);
     MS_LOG(DEBUG) << "Delete kernel: " << cur_kernel->name();
     delete cur_kernel;
@@ -400,6 +448,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     ret = DelQuantDTypeCastKernel(dst_kernels);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Delete quant_dtype_cast kernel failed.";
+      return ret;
+    }
+    ret = UpdateDataTypeToFp32(dst_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Update data type to fp32 failed.";
       return ret;
     }
   }
@@ -677,9 +730,6 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
 
   parameter->quant_type_ = node->quant_type_;
   parameter->thread_num_ = context_->thread_num_;
-  if (context_->float_mode && parameter->quant_type_ == schema::QuantType_QUANT_ALL) {
-    parameter->quant_type_ = schema::QuantType_QUANT_WEIGHT;
-  }
   if (node->output_indices_.empty()) {
     MS_LOG(ERROR) << "The output size is invalid";
     if (parameter->destroy_func_ != nullptr) {
@@ -1016,7 +1066,8 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   }
   int ret;
 #ifndef WEIGHT_DECODE_CLIP
-  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type, src_model_->version_);
+  ret =
+    WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type, src_model_->version_, context_->float_mode);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
     return RET_NOT_SUPPORT;
@@ -1066,7 +1117,8 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   int ret;
 #ifndef WEIGHT_DECODE_CLIP
   // weight dequant
-  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32, src_model_->version_);
+  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32, src_model_->version_,
+                                   context_->float_mode);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
     return RET_NOT_SUPPORT;
@@ -1144,7 +1196,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   MS_ASSERT(node != nullptr);
   // why we need this
   TypeId data_type;
-  if (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) {
+  if (node->quant_type_ == schema::QuantType_QUANT_WEIGHT || context_->float_mode) {
     if (in_tensors.front()->data_type() == kNumberTypeBool) {
       data_type = kNumberTypeBool;
     } else {
@@ -1152,14 +1204,6 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     }
   } else {
     data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
-  }
-  if (context_->float_mode) {
-    data_type = kNumberTypeFloat32;
-    for (auto tensor : in_tensors) {
-      if (tensor->data() == nullptr) {
-        tensor->set_data_type(kNumberTypeFloat32);
-      }
-    }
   }
   kernel::LiteKernel *kernel = nullptr;
   int status;
