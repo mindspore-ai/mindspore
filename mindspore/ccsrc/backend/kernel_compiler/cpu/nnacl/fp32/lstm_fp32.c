@@ -36,6 +36,37 @@ void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, 
   }
 }
 
+void PackLstmWeightWithStride(float *dst, const float *src, int batch, int deep, int col, int col_align,
+                              bool is_bidirectional, int stride, const int *order) {
+  int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
+  for (int i = 0; i < unidirectional_batch; i++) {
+    const float *src_batch = src + i * col * deep;
+    float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align * deep;
+#ifdef ENABLE_AVX
+    RowMajor2Col16Major(src_batch, dst_batch, col, deep);
+#elif defined(ENABLE_ARM32)
+    RowMajor2Col4Major(src_batch, dst_batch, col, deep);
+#else
+    RowMajor2Col8Major(src_batch, dst_batch, col, deep);
+#endif
+  }
+  src += stride;
+  dst += unidirectional_batch * col_align * deep;
+  if (is_bidirectional) {
+    for (int i = 0; i < unidirectional_batch; i++) {
+      const float *src_batch = src + i * col * deep;
+      float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align * deep;
+#ifdef ENABLE_AVX
+      RowMajor2Col16Major(src_batch, dst_batch, col, deep);
+#elif defined(ENABLE_ARM32)
+      RowMajor2Col4Major(src_batch, dst_batch, col, deep);
+#else
+      RowMajor2Col8Major(src_batch, dst_batch, col, deep);
+#endif
+    }
+  }
+}
+
 void PackLstmBias(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
                   const int *order) {
   int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
@@ -46,6 +77,25 @@ void PackLstmBias(float *dst, const float *src, int batch, int col, int col_alig
   }
   if (is_bidirectional) {
     const float *backward_src = src + batch * col;
+    float *backward_dst = dst + unidirectional_batch * col_align;
+    for (int i = 0; i < unidirectional_batch; i++) {
+      const float *backward_src_batch = backward_src + i * col;
+      float *backward_dst_batch = backward_dst + ((order == NULL) ? i : order[i]) * col_align;
+      memcpy(backward_dst_batch, backward_src_batch, col * sizeof(float));
+    }
+  }
+}
+
+void PackLstmBiasWithStride(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
+                            int b_stride, const int *order) {
+  int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
+  for (int i = 0; i < unidirectional_batch; i++) {
+    const float *src_batch = src + i * col;
+    float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align;
+    memcpy(dst_batch, src_batch, col * sizeof(float));
+  }
+  if (is_bidirectional) {
+    const float *backward_src = src + b_stride;
     float *backward_dst = dst + unidirectional_batch * col_align;
     for (int i = 0; i < unidirectional_batch; i++) {
       const float *backward_src_batch = backward_src + i * col;

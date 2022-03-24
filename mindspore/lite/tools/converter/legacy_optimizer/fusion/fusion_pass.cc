@@ -174,7 +174,6 @@ STATUS FusionPass::MatchOnePattern(const schema::MetaGraphT &graph, const Fusion
 }
 
 bool FusionPass::CheckMatch(const schema::MetaGraphT &graph, const std::shared_ptr<PatternOp> &patternOp) {
-  MS_ASSERT(patternOp != nullptr);
   // find included nodes
   std::queue<std::shared_ptr<PatternOp>> opQueue;
   std::vector<size_t> matchedNodeIdxes;

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+#include "nnacl/infer/lstm_grad_infer.h"
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/fp32/lstm_fp32.h"
+#include "nnacl/fp32_grad/lstm_grad_fp32.h"
 
 int LstmGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                        OpParameter *parameter) {
@@ -43,9 +44,9 @@ int LstmGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   }
 
   SetShapeArray(output, input->shape_, input->shape_size_);
-  SetShapeArray(outputs[1], H->shape_, H->shape_size_);
-  SetShapeArray(outputs[2], C->shape_, C->shape_size_);
-  SetShapeArray(outputs[3], weight->shape_, weight->shape_size_);
+  SetShapeArray(outputs[SECOND_INPUT], H->shape_, H->shape_size_);
+  SetShapeArray(outputs[THIRD_INPUT], C->shape_, C->shape_size_);
+  SetShapeArray(outputs[FOURTH_INPUT], weight->shape_, weight->shape_size_);
 
   return NNACL_OK;
 }
