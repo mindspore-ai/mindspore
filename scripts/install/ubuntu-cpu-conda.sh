@@ -23,7 +23,7 @@
 #   - install mindspore-cpu by conda
 #
 # Augments:
-#   - PYTHON_VERSION: python version to set up. [3.7(default), 3.9]
+#   - PYTHON_VERSION: python version to set up. [3.7(default), 3.8, 3.9]
 #   - MINDSPORE_VERSION: mindspore version to install, default 1.6.0
 #
 # Usage:
@@ -35,7 +35,7 @@ set -e
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
 MINDSPORE_VERSION=${MINDSPORE_VERSION:-1.6.0}
 
-available_py_version=(3.7 3.9)
+available_py_version=(3.7 3.8 3.9)
 if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
     echo "PYTHON_VERSION is '$PYTHON_VERSION', but available versions are [${available_py_version[*]}]."
     exit 1

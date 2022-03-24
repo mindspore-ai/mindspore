@@ -23,11 +23,10 @@
 # Augments:
 #   - PYTHON_VERSION: python version to set up. [3.7(default), 3.8, 3.9]
 #   - MINDSPORE_VERSION: mindspore version to install, default 1.6.0
-#   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
 #
 # Usage:
-#   Run script like `bash ./euleros-ascend-pip.sh`.
-#   To set augments, run it as `PYTHON_VERSION=3.9 MINDSPORE_VERSION=1.5.0 bash ./euleros-ascend-pip.sh`.
+#   Run script like `bash ./euleros-ascend310-pip.sh`.
+#   To set augments, run it as `PYTHON_VERSION=3.9 MINDSPORE_VERSION=1.5.0 bash ./euleros-ascend310-pip.sh`.
 
 set -e
 
@@ -97,20 +96,15 @@ env_name=mindspore_py3${PYTHON_VERSION##*.}
 conda create -n $env_name python=${PYTHON_VERSION} -y
 conda activate $env_name
 
-# optional openmpi for distributed training
-if [[ X"$OPENMPI" == "Xon" ]]; then
-    origin_wd=$PWD
-    cd /tmp
-    curl -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz
-    tar xzf openmpi-4.0.3.tar.gz
-    cd openmpi-4.0.3
-    ./configure --prefix=$HOME/openmpi-4.0.3
-    make
-    sudo make install
-    add_env PATH $HOME/openmpi-4.0.3/bin
-    add_env LD_LIBRARY_PATH $HOME/openmpi-4.0.3/lib
-    cd $origin_wd
-fi
+# cmake
+cd /tmp
+cmake_file_name="cmake-3.19.8-Linux-$(arch).sh"
+curl -O "https://cmake.org/files/v3.19/${cmake_file_name}"
+sudo mkdir $HOME/cmake-3.19.8
+sudo bash cmake-3.19.8-Linux-*.sh --prefix=$HOME/cmake-3.19.8 --exclude-subdir
+add_env PATH $HOME/cmake-3.19.8/bin
+source ~/.bashrc
+cd -
 
 ARCH=`uname -m`
 pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_VERSION}/MindSpore/ascend/${ARCH}/mindspore_ascend-${version_map["$PYTHON_VERSION"]}-linux_${ARCH}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
