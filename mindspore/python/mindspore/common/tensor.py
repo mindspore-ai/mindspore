@@ -2636,17 +2636,17 @@ class CSRTensor(CSRTensor_):
         If the length of values or indices exceeds the range indicated by indptr, its behavior will be undefined.
 
     Args:
-        indptr (Tensor): 1-D Tensor of size `shape[0] + 1`, which indicates the
+        indptr (Tensor): 1-D Tensor of shape `[M]`, which equals to `shape[0] + 1`, which indicates the
             start and end point for `values` in each row. Default: None. If provided,
             must be :class:`mindspore.int16`, :class:`mindspore.int32` or :class:`mindspore.int64`.
-        indices (Tensor): 1-D Tensor, which has the same length as `values`. `indices`
+        indices (Tensor): 1-D Tensor of shape `[N]`, which has the same length as `values`. `indices`
             indicates the which column `values` should be placed. Default: None. If provided,
             must be :class:`mindspore.int16`, :class:`mindspore.int32` or :class:`mindspore.int64`.
-        values (Tensor): 1-D Tensor, which has the same length as `indices`. `values`
+        values (Tensor): 1-D Tensor of shape `[N]`, which has the same length as `indices`. `values`
             stores the data for CSRTensor. Default: None.
         shape (Tuple): A tuple indicates the shape of the CSRTensor, its length must
             be `2`, as only 2-D CSRTensor is currently supported, and `shape[0]` must
-            equal to `indptr[0] - 1`, which all equal to number of rows of the CSRTensor. Default: None.
+            equal to `M - 1`, which all equal to number of rows of the CSRTensor. Default: None.
         csr_tensor (CSRTensor): A CSRTensor object. Default: None.
 
     Outputs:
@@ -2813,7 +2813,7 @@ class CSRTensor(CSRTensor_):
         Sparse matrix-vector multiplication.
 
         Args:
-            dense_vector (Tensor) - A dense Tensor.
+            dense_vector (Tensor) - A dense Tensor, its shape must be (csr_tensor.shape[1], 1)
 
         Returns:
             Tensor.
@@ -2834,6 +2834,7 @@ class CSRTensor(CSRTensor_):
             [[2.]
             [1.]]
         """
+        validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'Tensor')
         return tensor_operator_registry.get("csr_mv")(self, dense_vector)
 
     def sum(self, axis):
