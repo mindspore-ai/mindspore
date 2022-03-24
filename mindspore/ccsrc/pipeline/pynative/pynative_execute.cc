@@ -951,6 +951,15 @@ bool TopCellInfo::IsSubCell(const std::string &cell_id) const {
   return false;
 }
 
+void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op) {
+  MS_EXCEPTION_IF_NULL(hook_op);
+  cell_backward_hook_op_[cell_order].emplace_back(hook_op);
+  constexpr size_t cell_backward_hook_max_num = 2;
+  if (cell_backward_hook_op_[cell_order].size() > cell_backward_hook_max_num) {
+    MS_LOG(EXCEPTION) << "Cell order: " << cell_order << " only has two backward hook op.";
+  }
+}
+
 void TopCellInfo::CheckSubCellHookChanged() {
   if (!hook_changed_) {
     for (const auto &sub_cell : sub_cell_list_) {
@@ -1139,6 +1148,45 @@ void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
   }
 }
 
+AnfNodePtr ForwardExecutor::GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) {
+  if (input_node == nullptr) {
+    MS_LOG(DEBUG) << "The input node is nullptr.";
+    return input_node;
+  }
+  const auto &cell_backward_hook_op = grad()->top_cell()->cell_backward_hook_op();
+  for (const auto &elem : cell_backward_hook_op) {
+    constexpr size_t cell_backward_hook_num = 2;
+    if (elem.second.size() < cell_backward_hook_num) {  // In cell own scope, no need to skip backward hook op.
+      continue;
+    }
+    // The input node is the first backward hook op of another cell, skip the backward hook op.
+    if (IsPrimitiveCNode(input_node, prim::kPrimCellBackwardHook) && input_node == elem.second[0]) {
+      // Single input.
+      auto backward_hook_op = input_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(backward_hook_op);
+      return backward_hook_op->input(1);
+    } else if (IsPrimitiveCNode(input_node, prim::kPrimTupleGetItem)) {
+      // Multi inputs.
+      auto tuple_get_item = input_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_get_item);
+      auto inp_in_tuple = tuple_get_item->input(1);
+      MS_EXCEPTION_IF_NULL(inp_in_tuple);
+      if (IsPrimitiveCNode(inp_in_tuple, prim::kPrimCellBackwardHook) && inp_in_tuple == elem.second[0]) {
+        constexpr size_t idx = 2;
+        auto idx_node = tuple_get_item->input(idx);
+        MS_EXCEPTION_IF_NULL(idx_node);
+        auto value_node = idx_node->cast<ValueNodePtr>();
+        MS_EXCEPTION_IF_NULL(value_node);
+        auto out_idx = GetValue<int64_t>(value_node->value());
+        auto backward_hook_op = inp_in_tuple->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(backward_hook_op);
+        return backward_hook_op->input(1 + out_idx);
+      }
+    }
+  }
+  return input_node;
+}
+
 CNodePtr ForwardExecutor::ConstructForwardGraph(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   auto prim = op_exec_info->py_primitive;
@@ -1162,7 +1210,7 @@ CNodePtr ForwardExecutor::ConstructForwardGraph(const OpExecInfoPtr &op_exec_inf
     if (grad()->need_construct_graph()) {
       const auto &id = GetId(obj);
       AnfNodePtr input_node = nullptr;
-      input_node = grad()->GetInput(obj, op_mask);
+      input_node = GetRealInputNodeBySkipHook(grad()->GetInput(obj, op_mask));
       // update abstract
       if (input_node != nullptr) {
         if (input_node->abstract() != nullptr) {
@@ -1177,6 +1225,9 @@ CNodePtr ForwardExecutor::ConstructForwardGraph(const OpExecInfoPtr &op_exec_inf
   CNodePtr cnode = nullptr;
   if (grad()->need_construct_graph()) {
     cnode = grad()->curr_g()->NewCNodeInOrder(inputs);
+    if (IsPrimitiveCNode(cnode, prim::kPrimCellBackwardHook)) {
+      grad()->top_cell()->RecordCellBackwardHookOp(grad()->GetCurCellOrder(), cnode);
+    }
     MS_LOG(DEBUG) << "Make CNode for " << op_exec_info->op_name << ", new cnode is " << cnode->DebugString();
   }
   return cnode;
@@ -2229,13 +2280,23 @@ FuncGraphPtr GradExecutor::curr_g() const {
   return fg;
 }
 
-void GradExecutor::PushCellStack(const std::string &cell_id) { cell_stack_.push(cell_id); }
+void GradExecutor::PushCellStack(const std::string &cell_id) {
+  cell_stack_.push(cell_id);
+  ++cell_order_;
+}
 
 void GradExecutor::PopCellStack() {
   if (cell_stack_.empty()) {
     MS_LOG(EXCEPTION) << "Stack cell_stack_ is empty";
   }
   cell_stack_.pop();
+}
+
+std::string GradExecutor::GetCurCellOrder() const {
+  if (cell_stack_.empty()) {
+    MS_LOG(EXCEPTION) << "The cell_stack_ is empty!";
+  }
+  return cell_stack_.top() + "_" + std::to_string(cell_order_);
 }
 
 void GradExecutor::PushHighOrderGraphStack(const TopCellInfoPtr &top_cell) { high_order_stack_.push(top_cell); }
@@ -2600,6 +2661,8 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
     MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
     k_pynative_cell_ptr->UpdateOutputNodeOfTopCell(GetObjNode(out, GetId(out)));
+    top_cell()->ClearCellHookOp();
+    cell_order_ = 0;
     set_grad_flag(false);
   }
   // Checkout whether need to compile graph when each top cell has ran finished

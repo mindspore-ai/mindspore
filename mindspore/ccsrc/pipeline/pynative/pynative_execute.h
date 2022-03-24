@@ -44,6 +44,7 @@ namespace py = pybind11;
 using OpInfoWithTensorId = mindspore::HashMap<std::string, std::vector<std::string>>;
 using TensorIdWithTensorObject = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
 using OpInfoWithMsFuncForwardTensors = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
+using CellIdWithBackwardHookOp = mindspore::HashMap<std::string, std::vector<AnfNodePtr>>;
 
 py::object RealRunOp(const py::args &args);
 
@@ -81,6 +82,9 @@ class TopCellInfo {
   bool hook_changed() const { return hook_changed_; }
   void set_hook_changed(bool hook_changed) { hook_changed_ = hook_changed; }
   void set_sub_cell_hook_changed(const std::string &sub_cell) { sub_cell_hook_changed_.emplace(sub_cell); }
+  const CellIdWithBackwardHookOp &cell_backward_hook_op() const { return cell_backward_hook_op_; }
+  void RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op);
+  void ClearCellHookOp() { cell_backward_hook_op_.clear(); }
   bool vm_compiled() const { return vm_compiled_; }
   void set_vm_compiled(bool vm_compiled) { vm_compiled_ = vm_compiled; }
   bool ms_function_flag() const { return ms_function_flag_; }
@@ -148,6 +152,9 @@ class TopCellInfo {
   // Record `register hook` or `remove hook` function has been called by sub cell
   // The record range between the begin and end of top cell.
   mindspore::HashSet<std::string> sub_cell_hook_changed_;
+  // Record backward hook ops for each cell object.
+  // Each cell object has two backward hook ops.
+  CellIdWithBackwardHookOp cell_backward_hook_op_;
   // Record forward output tensor id
   std::set<std::string> forward_op_output_id_;
   OpInfoWithTensorId op_info_with_tensor_id_;
@@ -198,6 +205,7 @@ class GradExecutor {
   void PushHighOrderGraphStack(const TopCellInfoPtr &top_cell);
   size_t GetHighOrderStackSize() const { return high_order_stack_.size(); }
   TopCellInfoPtr GetTopCell(const string &already_run_cell_id);
+  std::string GetCurCellOrder() const;
   void EnableOpGraphCache(bool is_enable);
   void SetHookChanged(const py::object &cell);
   bool need_renormalize() const { return need_renormalize_; }
@@ -307,6 +315,7 @@ class GradExecutor {
   bool need_renormalize_{false};
   bool eliminate_forward_{true};
   int custom_bprop_cell_count_{0};
+  size_t cell_order_{0};
   size_t grad_order_{0};
   size_t top_cell_switch_counts_{0};
 
@@ -348,6 +357,8 @@ class ForwardExecutor {
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
   void ClearRes();
   CNodePtr ConstructForwardGraph(const OpExecInfoPtr &op_exec_info);
+  // Replace input hook node with its input node when not in its own cell scope.
+  AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node);
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
 
  private:
