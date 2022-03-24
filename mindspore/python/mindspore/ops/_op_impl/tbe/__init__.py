@@ -387,6 +387,7 @@ from .bn_training_update_v2 import _bn_training_update_v2_tbe
 from .bn_training_update_v3 import _bn_training_update_v3_tbe
 from .square_sum_all import _square_sum_all_tbe
 from .pack import _pack_tbe
+from .pack_ds import _pack_ds_tbe
 from .unpack import _unpack_tbe
 from .scatter_update import _scatter_update_tbe
 from .scatter_update_ds import _scatter_update_ds_tbe
