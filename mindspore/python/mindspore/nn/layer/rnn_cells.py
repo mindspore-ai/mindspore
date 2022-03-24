@@ -40,12 +40,14 @@ def _check_is_tensor(param_name, input_data, cls_name):
         raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.tensor_type}', "
                         f"but got '{P.typeof(input_data)}'")
 
+
 @constexpr
 def _check_is_tuple(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(P.typeof(input_data), mstype.Tuple):
         raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.Tuple}', "
                         f"but got '{P.typeof(input_data)}'")
+
 
 @constexpr
 def _check_tuple_length(param_name, input_data, length, cls_name):
@@ -54,11 +56,13 @@ def _check_tuple_length(param_name, input_data, length, cls_name):
         raise TypeError(f"For '{cls_name}', the length of '{param_name}' should be '{length}', "
                         f"but got '{len(input_data)}'")
 
+
 @constexpr
 def _check_batch_size_equal(batch_size_x, batch_size_hx, cls_name):
     if batch_size_x != batch_size_hx:
         raise ValueError(f"For '{cls_name}' batch size of x and hx should be equal, but got {batch_size_x} of x "
                          f"and {batch_size_hx} of hx.")
+
 
 def _check_lstmcell_init(func):
     def wrapper(*args, **kwargs):
@@ -71,6 +75,7 @@ def _check_lstmcell_init(func):
         return func(*args, **kwargs)
     return wrapper
 
+
 def _rnn_tanh_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     '''RNN cell function with tanh activation'''
     if b_ih is None:
@@ -81,6 +86,7 @@ def _rnn_tanh_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
         hgates = P.MatMul(False, True)(hidden, w_hh) + b_hh
     return P.Tanh()(igates + hgates)
 
+
 def _rnn_relu_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     '''RNN cell function with relu activation'''
     if b_ih is None:
@@ -90,6 +96,7 @@ def _rnn_relu_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
         igates = P.MatMul(False, True)(inputs, w_ih) + b_ih
         hgates = P.MatMul(False, True)(hidden, w_hh) + b_hh
     return P.ReLU()(igates + hgates)
+
 
 def _lstm_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     '''LSTM cell function'''
@@ -109,6 +116,7 @@ def _lstm_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     hy = outgate * P.Tanh()(cy)
 
     return hy, cy
+
 
 def _gru_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     '''GRU cell function'''
@@ -152,6 +160,7 @@ class RNNCellBase(Cell):
         stdv = 1 / math.sqrt(self.hidden_size)
         for weight in self.get_parameters():
             weight.set_data(initializer(Uniform(stdv), weight.shape))
+
 
 class RNNCell(RNNCellBase):
     r"""
@@ -218,6 +227,7 @@ class RNNCell(RNNCellBase):
         else:
             ret = _rnn_relu_cell(x, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
         return ret
+
 
 class LSTMCell(RNNCellBase):
     r"""
@@ -293,12 +303,13 @@ class LSTMCell(RNNCellBase):
 
     def _check_construct_args(self, *inputs, **kwargs):
         if len(inputs) == 4:
-            raise ValueError(f"The number of input args of construct is {len(inputs)}, if you are using "
-                             f"the implementation of `nn.LSTMCell` from old MindSpore version(<1.6), "
+            raise ValueError(f"For '{self.cls_name}', the number of input args of construct is {len(inputs)}, if you "
+                             f"are using the implementation of `nn.LSTMCell` from old MindSpore version(<1.6), "
                              f"please notice that: LSTMCell has been changed from 'single LSTM layer' to "
                              f"'single LSTM cell', if you still need use single LSTM layer, "
                              f"please use `nn.LSTM` instead.")
         return super()._check_construct_args(*inputs, **kwargs)
+
 
 class GRUCell(RNNCellBase):
     r"""

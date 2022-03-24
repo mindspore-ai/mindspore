@@ -157,6 +157,7 @@ def _list_getitem_by_number(data, number_index):
     """
     return F.list_getitem(data, number_index)
 
+
 @getitem.register("List", "Slice")
 def _list_getitem_by_slice(data, slice_index):
     """
@@ -170,6 +171,7 @@ def _list_getitem_by_slice(data, slice_index):
         List, element type is the same as the element type of data.
     """
     return _list_slice(data, slice_index)
+
 
 @getitem.register("Dictionary", "String")
 def _dict_getitem_by_key(data, key):

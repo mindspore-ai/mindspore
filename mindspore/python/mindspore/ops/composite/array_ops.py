@@ -209,6 +209,7 @@ def sequence_mask(lengths, maxlen=None):
     result = range_vector < mask
     return result
 
+
 def masked_fill(inputs, mask, value):
     masked_value = P.Fill()(inputs.dtype, inputs.shape, value)
     return P.Select()(mask, masked_value, inputs)

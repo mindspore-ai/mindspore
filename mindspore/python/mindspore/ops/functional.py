@@ -151,6 +151,7 @@ tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 stack = P.Stack()
 
+
 def csr_mul(x, y):
     """
     Returns x * y where x is CSRTensor and y is Tensor.
@@ -172,6 +173,7 @@ def csr_mul(x, y):
         ``GPU`` ``CPU``
     """
     return _csr_ops.CSRMul()(x, y)
+
 
 def csr_div(x, y):
     """
@@ -203,6 +205,7 @@ coo2csr = _csr_ops.COO2CSR()
 
 _select = P.Select()
 
+
 def pack(x):
     """Call stack in this pack function."""
     print("WARNING: 'pack' is deprecated from version 1.1 and will be removed in a future version, use 'stack' instead"
@@ -214,6 +217,7 @@ partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
 identity = P.identity()
+
 
 @constexpr
 def _convert_grad_position_type(grad_position):
@@ -237,6 +241,7 @@ def _convert_grad_position_type(grad_position):
 
 grad_by_position = _Grad(get_by_list=False, sens_param=False, get_by_position=True)
 grad_by_position_with_sens = _Grad(get_by_list=False, sens_param=True, get_by_position=True)
+
 
 def grad(fn, grad_position=0, sens_param=False):
     r"""
@@ -282,6 +287,7 @@ def grad(fn, grad_position=0, sens_param=False):
         return grad_by_position_with_sens(fn, None, grad_position)
     return grad_by_position(fn, None, grad_position)
 
+
 @constexpr
 def _trans_jet_inputs(primals_item, series_item):
     """Trans inputs of jet"""
@@ -293,6 +299,7 @@ def _trans_jet_inputs(primals_item, series_item):
     if dtype(primals_item) in [mstype.int32, mstype.int64]:
         return cast(primals_item, mstype.float64), cast(series_item, mstype.float64)
     return primals_item, series_item
+
 
 @constexpr
 def _check_jet_inputs(primals, series):
@@ -316,6 +323,7 @@ def _check_jet_inputs(primals, series):
     return check_primals, check_series
 
 _taylor = _TaylorOperation()
+
 
 def jet(fn, primals, series):
     """
@@ -571,6 +579,8 @@ def vjp(fn, inputs, v):
     return wrap_container(inputs, v)
 
 shard_fn = Shard()
+
+
 def shard(fn, in_axes, out_axes, device="Ascend", level=0):
     return shard_fn(fn, in_axes, out_axes, device, level)
 
@@ -842,6 +852,7 @@ def select(cond, x, y):
 
 vmap_instance = _Vmap()
 
+
 def vmap(fn, in_axes=0, out_axes=0):
     r"""
     Vectorizing map (vmap) is a higher-order function to map `fn` over argument axes, which is pioneered by Jax.
@@ -990,6 +1001,7 @@ make_coo_tensor = Primitive('MakeCOOTensor')
 coo_tensor_get_values = Primitive('COOTensorGetValues')
 coo_tensor_get_indices = Primitive('COOTensorGetIndices')
 coo_tensor_get_dense_shape = Primitive('COOTensorGetDenseShape')
+
 
 @constexpr
 def print_info(info):
