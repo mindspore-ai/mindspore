@@ -78,7 +78,9 @@ class SyncBatchNormGpuKernel : public NcclGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto root_rank = common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrRootRank);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto root_rank = prim->GetAttr(kAttrRootRank);
     kernel_node_ = kernel_node;
     if (root_rank) {
       root_ = static_cast<int>(GetValue<int64_t>(root_rank));
@@ -131,7 +133,7 @@ class SyncBatchNormGpuKernel : public NcclGpuKernelMod {
     // MULTI DEVICE SPECIFICS
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
     MS_LOG(INFO) << common::AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
-    auto comm_stream_attr = common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stream_id");
+    auto comm_stream_attr = prim->GetAttr("stream_id");
     if (comm_stream_attr) {
       comm_stream_ = reinterpret_cast<cudaStream_t>(GetValue<uintptr_t>(comm_stream_attr));
       MS_EXCEPTION_IF_NULL(comm_stream_);

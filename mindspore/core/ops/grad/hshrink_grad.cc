@@ -58,8 +58,10 @@ TypePtr HShrinkGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 
 AbstractBasePtr HShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(HShrinkGradInferType(primitive, input_args),
-                                                    HShrinkGradInferShape(primitive, input_args)->shape());
+  auto infer_type = HShrinkGradInferType(primitive, input_args);
+  auto infer_shape = HShrinkGradInferShape(primitive, input_args);
+  MS_EXCEPTION_IF_NULL(infer_shape);
+  return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape->shape());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(HShrinkGrad, prim::kPrimHShrinkGrad, HShrinkGradInfer, nullptr, true);
 }  // namespace ops
