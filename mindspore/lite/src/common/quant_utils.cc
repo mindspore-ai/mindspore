@@ -141,11 +141,12 @@ int GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vecto
 
 int CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim) {
   auto elem_count = std::accumulate(std::begin(dims), std::end(dims), 1, std::multiplies<>());
-  static const int quant_param_size = 32 * 8;
+  const int bits_per_byte = 8;
+  const int quant_param_size = 32;
   int channels = dims.at(preferred_dim);
   CHECK_LESS_RETURN(channels, 1);
   size_t bucket_size = elem_count / channels;
-  bool do_quant = quant_param_size / (sizeof(float) * 8 - bit_num) < bucket_size;
+  bool do_quant = (quant_param_size * bits_per_byte) / (sizeof(float) * bits_per_byte - bit_num) < bucket_size;
   if (do_quant) {
     return RET_OK;
   } else {

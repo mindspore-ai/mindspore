@@ -24,7 +24,6 @@ constexpr size_t kLengthOfParentheses = 2;
 constexpr size_t kMinSectionLineLength = 2;
 constexpr size_t kMaxValidLineCount = 100000;
 constexpr size_t kMaxLineCount = 100100;
-
 }  // namespace
 
 namespace mindspore {
