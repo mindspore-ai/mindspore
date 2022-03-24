@@ -1569,6 +1569,8 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
           continue;
         }
         from_actor = graph_output_to_actor_[front_output_with_index].first;
+      } else if (from_node->isa<Parameter>()) {
+        continue;
       } else {
         auto from_kernel_type = FetchKernelTransformType(from_node, graph, graph_compiler_info.origin_parameters_order_,
                                                          graph_compiler_info.strategy_);
