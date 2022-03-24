@@ -1793,7 +1793,7 @@ void CollectEffectiveInputByGraph(const KernelGraphPtr &graph, const DeviceConte
     if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter) ||
         outputs.find(front_node_with_index) != outputs.end() || front_node_with_index.first->isa<ValueNode>()) {
       if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter)) {
-        kernel_graph_group_info->monad_inputs_.emplace(front_node_with_index.first);
+        (void)kernel_graph_group_info->monad_inputs_.emplace(front_node_with_index.first);
         MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString()
                       << " add front monad input node:" << front_node_with_index.first->DebugString();
       }
