@@ -18,6 +18,9 @@
 #include "src/common/utils.h"
 #include "src/common/common.h"
 namespace mindspore {
+namespace {
+const int kNumInitBatch = 2000;
+}
 void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue) {
   while (!predict_task_queue->IsPredictTaskDone()) {
     auto task = predict_task_queue->GetPredictTask(node_id);
@@ -59,6 +62,38 @@ void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &pred
   }
 }
 
+Status ModelWorker::ResizeInit() {
+  auto inputs = model_->GetInputs();
+  std::vector<std::vector<int64_t>> new_input_shape;
+  for (size_t input_idx = 0; input_idx < inputs.size(); input_idx++) {
+    new_input_shape.push_back(inputs[input_idx].Shape());
+    if (new_input_shape[input_idx][0] == -1) {
+      // only support resize for batch dim
+      new_input_shape[input_idx][0] = kNumInitBatch;
+    } else {
+      // If the batch dimension is not -1, no resize processing is performed
+      return kSuccess;
+    }
+  }
+  auto status = model_->Resize(inputs, new_input_shape);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "model resize failed in init. ret=" << status;
+    return kLiteError;
+  }
+  inputs = model_->GetInputs();
+  for (auto &input : inputs) {
+    auto data = malloc(input.DataSize());
+    input.SetData(data);
+  }
+  std::vector<MSTensor> out;
+  status = model_->Predict(inputs, &out);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "init resize failed. ret=" << status;
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
 Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
                          int node_id) {
   model_ = std::make_shared<Model>();
@@ -72,6 +107,13 @@ Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_p
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
     return status;
+  }
+  if (need_init_resize_) {
+    status = ResizeInit();
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "init resize failed. ret=" << status;
+      return kLiteError;
+    }
   }
   return kSuccess;
 }

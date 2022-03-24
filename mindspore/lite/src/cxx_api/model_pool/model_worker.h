@@ -46,8 +46,10 @@ class ModelWorker {
  private:
   std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,
                                                                     const std::vector<MSTensor> &inputs);
+  Status ResizeInit();
 
  private:
+  bool need_init_resize_ = true;
   std::shared_ptr<mindspore::Model> model_ = nullptr;
   std::mutex mtx_model_;
   bool need_copy_output_ = true;

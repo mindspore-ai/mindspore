@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace {
-constexpr int32_t kNumThreads = 4;
+constexpr int32_t kNumThreads = 8;
 constexpr int kNumDeviceInfo = 2;
 int GetCoreNum() {
   int core_num = 1;
