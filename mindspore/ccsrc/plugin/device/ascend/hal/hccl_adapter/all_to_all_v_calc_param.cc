@@ -123,7 +123,7 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
     (*displs)[i] = SizeToLong(offset);
     auto iter = rank_id_map.find(i);
     if (iter != rank_id_map.end()) {
-      (*counts)[i] = real_sizes[iter->second];
+      (*counts)[i] = static_cast<int64_t>(real_sizes[iter->second]);
       offset += mem_sizes[iter->second];
     } else {
       (*counts)[i] = 0;

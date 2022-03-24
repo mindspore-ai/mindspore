@@ -62,7 +62,7 @@ class AicpuExtInfoHandler {
                                            NotNull<TypeId *> data_type);
 
  private:
-  [[nodiscard]] bool ParseExtShapeType(AicpuExtInfo *aicpu_ext_info);
+  [[nodiscard]] bool ParseExtShapeType(const AicpuExtInfo &aicpu_ext_info) const;
   [[nodiscard]] bool ParseExtInputShape(AicpuExtInfo *aicpu_ext_info);
   [[nodiscard]] bool ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info);
 
