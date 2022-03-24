@@ -502,6 +502,14 @@ class BaddbmmNet(nn.Cell):
         return self.baddbmm(x, batch1, batch2, self.beta, self.alpha)
 
 
+class Log2Net(nn.Cell):
+    def __init__(self):
+        super(Log2Net, self).__init__()
+        self.log2 = ops.log2
+
+    def construct(self, x):
+        return self.log2(x)
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -619,6 +627,10 @@ test_case_math_ops = [
                         Tensor(np.ones([1, 4, 3]).astype(np.float32))],
         'skip': ['backward']
     }),
+    ('Log2', {
+        'block': Log2Net(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))]}),
 ]
 
 test_case_lists = [test_case_math_ops]
@@ -719,6 +731,14 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([1, 3, 3]).astype(np.float32)),
                         Tensor(np.ones([1, 3, 4]).astype(np.float32)),
                         [1, 2]],
+        'skip': ['backward']}),
+    ('Log2_Error_2', {
+        'block': (Log2Net(), {'exception;': TypeError}),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4]], np.int32))],
+        'skip': ['backward']}),
+    ('Log2_Error_1', {
+        'block': (Log2Net(), {'exception;': TypeError}),
+        'desc_inputs': [[1]],
         'skip': ['backward']}),
 ]
 

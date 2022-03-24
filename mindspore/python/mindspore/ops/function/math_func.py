@@ -3843,6 +3843,51 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
     return y
 
 
+def log2(x):
+    r"""
+    Returns a new tensor with the logarithm to the base 2 of the elements of input.
+
+    .. math::
+        y_i = log_2(x_i)
+
+    .. warning::
+        If the input value of operator Log2 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
+        be affacted. If the input value of operator Log2 is less than or equal to 0, it will not raise Error.
+
+    .. note::
+        The dimension of the input Tensor on Ascend should be less than or equal to 8, and the dimension of the
+        input Tensor on the CPU or GPU should be less than 8.
+
+    Args:
+        x (Tensor): Input Tensor of any dimension. The value must be greater than 0.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32 or float64 on CPU and GPU, if dtype of `x` is not float16
+        or float32 on Ascend.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([2, 4, 8]).astype(np.float16))
+        >>> output = ops.log2(x)
+        >>> print(output)
+        [1. 2. 3.]
+    """
+
+    dtype_op = P.DType()
+
+    x_dtype = dtype_op(x)
+    denominator = log_(_make_tensor(2, x_dtype))
+    frac = log_(x)
+    output = frac / denominator
+    return output
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -3957,5 +4002,6 @@ __all__ = [
     'cummin',
     'cummax',
     'sparse_segment_mean',
+    'log2'
 ]
 __all__.sort()
