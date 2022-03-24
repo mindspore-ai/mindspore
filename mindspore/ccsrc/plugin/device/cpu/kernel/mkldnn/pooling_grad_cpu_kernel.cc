@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/mkldnn/pooling_grad_cpu_kernel.h"
 
 #include <algorithm>
+#include <functional>
 #include <unordered_map>
 
 #include "utils/ms_utils.h"
@@ -27,14 +28,18 @@ namespace {
 constexpr size_t kAvgPooling3DGradInputsNum = 1;
 constexpr size_t kPoolingGradInputsNum = 3;
 constexpr size_t kPoolingGradOutputsNum = 1;
-constexpr size_t kPoolingGradWorkSpaceNum = 1;
+constexpr size_t kPoolingGradWorkSpaceNum = 2;
 constexpr size_t kGradIndex = 2;
 }  // namespace
 
 void PoolingGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (algorithm_ == dnnl::algorithm::pooling_max) {
-    (void)workspace_size_list_.emplace_back(workspace_size_);
+    size_t work_space = GetSize(workspace_desc_);
+    size_t dst_space =
+      std::accumulate(dst_shape_.begin(), dst_shape_.end(), size_t(1), std::multiplies<size_t>()) * sizeof(float);
+    workspace_size_list_.push_back(work_space);
+    workspace_size_list_.push_back(dst_space);
   }
 }
 
@@ -53,7 +58,7 @@ void PoolingGradCpuKernelMod::InitPoolingGradFields(const CNodePtr &kernel_node)
       algorithm_ = dnnl::algorithm::pooling_avg_include_padding;
     }
     if (prim->HasAttr(DIVISOR_OVERRIDE) && GetValue<int64_t>(prim->GetAttr(DIVISOR_OVERRIDE)) != 0) {
-      divisor_override_ = LongToFloat(GetValue<int64_t>(prim->GetAttr(DIVISOR_OVERRIDE)));
+      divisor_override_ = GetValue<int64_t>(prim->GetAttr(DIVISOR_OVERRIDE));
     }
   }
   grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? 0 : kGradIndex;
@@ -93,8 +98,7 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   const dnnl::memory::dims dilation(kernel.size(), kPoolingDilation);
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
-  (void)std::transform(kernel.begin(), kernel.end(), std::back_inserter(kernel_),
-                       [](const int64_t &k) { return LongToFloat(k); });
+  kernel_ = kernel;
   PaddingInfo padding_info{pad_mode, kernel, strides, dilation, &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
   GetPadding(kernel_node, src_shape, padding_info);
 
@@ -115,7 +119,6 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   // For pooling_max, need a workspace that generated in forward and stored the max value indexes to compute grad.
   if (algorithm_ == dnnl::algorithm::pooling_max) {
     workspace_desc_ = GetWorkspaceDesc(forward_prim_desc_);
-    workspace_size_ = GetSize(workspace_desc_);
     AddArgument(DNNL_ARG_WORKSPACE, workspace_desc_);
   }
 }
@@ -150,18 +153,18 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
   // For pooling_max, get the workspace that store the max value indexes.
   if (algorithm_ == dnnl::algorithm::pooling_max) {
     CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kPoolingGradWorkSpaceNum, kernel_name_);
-    ComputeMaxValueIndex(inputs[0]->addr, inputs[1]->addr, workspace[0]->addr);
+    ComputeMaxValueIndex(inputs[0]->addr, workspace[1]->addr, workspace[0]->addr);
     SetArgumentHandle(DNNL_ARG_WORKSPACE, workspace[0]->addr);
     ExecutePrimitive();
     return true;
   }
 
   float *dst = reinterpret_cast<float *>(inputs[grad_index_]->addr);
-  if (divisor_override_ != 0.f) {
+  if (divisor_override_ != 0) {
     ReComputeDivisor(dst);
   } else {
-    bool has_invalid_padding =
-      std::any_of(padding_invalid_.begin(), padding_invalid_.end(), [](const float &padding) { return padding != 0; });
+    bool has_invalid_padding = std::any_of(padding_invalid_.begin(), padding_invalid_.end(),
+                                           [](const int64_t &padding) { return padding != 0; });
     if (algorithm_ == dnnl::algorithm::pooling_avg_include_padding && has_invalid_padding) {
       EliminateInvalidPadding(dst);
     }

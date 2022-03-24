@@ -41,20 +41,20 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
+  std::vector<KernelAttr> GetOpSupport() override;
   void EliminateInvalidPadding(float *output);
   void ReComputeDivisor(float *output);
 
   dnnl::algorithm algorithm_{dnnl::algorithm::pooling_max};
   bool ceil_mode_{false};
-  float divisor_override_{0.f};
+  int64_t divisor_override_{0};
   std::vector<size_t> dst_shape_;
-  std::vector<float> padding_invalid_;
-  std::vector<float> kernel_;
-
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<int64_t> kernel_;
+  std::vector<int64_t> padding_invalid_;
 
  private:
   void InitPoolingFields(const CNodePtr &kernel_node);
+
   std::string kernel_type_{kUnkown};
 };
 }  // namespace kernel
