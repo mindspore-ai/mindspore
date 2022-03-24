@@ -115,7 +115,7 @@ class ExpanderInfoValidator:
                 if len(formats) != len(inp_formats):
                     raise GKException("For '{}', length of registered format is different from the length of inputs "
                                       "format: {} vs {}".format(obj.name, len(formats), len(inp_formats)))
-                if all([fmt == inp for fmt, inp in zip(formats, inp_formats)]):
+                if all((fmt == inp for fmt, inp in zip(formats, inp_formats))):
                     return
             raise GKException("Unregistered format ({}) for op {}".format(','.join(inp_formats), obj.name))
 
@@ -138,7 +138,7 @@ class ExpanderInfoValidator:
         def _check(*args):
             def _check_format(obj):
                 inp_formats = [inp['format'] for inp in obj.inputs]
-                if all([fmt == inp_formats[0] for fmt in inp_formats[1:]]):
+                if all((fmt == inp_formats[0] for fmt in inp_formats[1:])):
                     return
                 raise GKException("[check_all_formats_same] unmatched formats ({}) for op {}".format(
                     ','.join(inp_formats), obj.name))
