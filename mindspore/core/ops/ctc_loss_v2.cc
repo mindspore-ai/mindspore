@@ -73,6 +73,9 @@ TuplePtr CTCLossV2InferType(const PrimitivePtr &primitive, const std::vector<Abs
 
 AbstractBasePtr CTCLossV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   return abstract::MakeAbstract(CTCLossV2InferShape(primitive, input_args), CTCLossV2InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(CTCLossV2, prim::kPrimCTCLossV2, CTCLossV2Infer, nullptr, true);

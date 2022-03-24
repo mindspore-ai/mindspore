@@ -167,6 +167,9 @@ TypePtr DropoutGenMaskInferType(const PrimitivePtr &primitive, const std::vector
 AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   return abstract::MakeAbstract(DropoutGenMaskInferShape(primitive, input_args),
                                 DropoutGenMaskInferType(primitive, input_args));
 }

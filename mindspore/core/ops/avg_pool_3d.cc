@@ -99,6 +99,7 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
 void GetPadsByPadding(const PrimitivePtr &primitive, int64_t in_d, int64_t in_h, int64_t in_w, int64_t kernel_d,
                       int64_t kernel_h, int64_t kernel_w, int64_t stride_d, int64_t stride_h, int64_t stride_w,
                       const int64_t &pad_mode, const std::vector<int64_t> &padding, std::vector<int64_t> *pad_list) {
+  MS_EXCEPTION_IF_NULL(pad_list);
   if (pad_mode == PadMode::VALID) {
     (void)pad_list->insert(pad_list->begin(), kAvgPool3DPadDims, 0);
   } else if (pad_mode == PadMode::SAME) {

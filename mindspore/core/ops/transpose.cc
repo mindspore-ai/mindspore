@@ -38,6 +38,7 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of input_perm is required!";
     }
     ValuePtr perm = primitive->GetAttr("perm");
+    MS_EXCEPTION_IF_NULL(perm);
     auto perm_val = perm->cast<ValueTuplePtr>();
     MS_EXCEPTION_IF_NULL(perm_val);
     auto perm_val_data = perm_val->value();
@@ -97,6 +98,9 @@ TypePtr TransposeInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   // The second input is optional.
   constexpr size_t input_size1 = 1;
   (void)CheckAndConvertUtils::CheckInteger("Transpose infer", SizeToLong(input_args.size()), kGreaterEqual, input_size1,

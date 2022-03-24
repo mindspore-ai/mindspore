@@ -25,12 +25,18 @@ AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   // Inputs: five tensors(y_backprob, x, variance, mean, gamma).
   // Outputs: x_backprob, gamma_backprob, beta_backprob
   MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto op_name = primitive->name();
   const int64_t input_num = 5;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   auto x_backprob = input_args[kInputIndex0]->Broaden();
   auto gamma_backprob = input_args[kInputIndex4]->Broaden();
   auto beta_backprob = input_args[kInputIndex4]->Broaden();
+  MS_EXCEPTION_IF_NULL(x_backprob);
+  MS_EXCEPTION_IF_NULL(gamma_backprob);
+  MS_EXCEPTION_IF_NULL(beta_backprob);
 
   auto shapes = std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
     x_backprob->BuildShape(), gamma_backprob->BuildShape(), beta_backprob->BuildShape()});

@@ -38,6 +38,8 @@ int64_t InferImplReduceFuncCheckAxis(const PrimitivePtr &prim, const int64_t &ax
 
 void InferImplReduceFuncCalShape(const PrimitivePtr &primitive, ShapeVector *shape, const ShapeVector &x_shape,
                                  const ValuePtr &axis, bool keep_dims_value) {
+  MS_EXCEPTION_IF_NULL(axis);
+  MS_EXCEPTION_IF_NULL(shape);
   if (axis->isa<ValueTuple>() || axis->isa<ValueList>()) {
     auto axis_ptr_list =
       axis->isa<ValueTuple>() ? axis->cast<ValueTuplePtr>()->value() : axis->cast<ValueListPtr>()->value();
@@ -81,9 +83,15 @@ void InferImplReduceFuncCalShape(const PrimitivePtr &primitive, ShapeVector *sha
   return;
 }
 
+bool CheckShapeValid(const std::vector<AbstractBasePtr> &input_args, const uint64_t input_num_ascend) {
+  return input_args.size() == input_num_ascend && input_args[1] && input_args[1]->isa<abstract::AbstractTensor>() &&
+         input_args[1]->BuildValue() && input_args[1]->BuildValue()->isa<AnyValue>();
+}
+
 abstract::ShapePtr ReduceSumInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape("ReduceSum", input_args, 0);
+  MS_EXCEPTION_IF_NULL(shape_ptr);
   auto input_shape = shape_ptr->shape();
   auto input_min_shape = shape_ptr->min_shape();
   auto input_max_shape = shape_ptr->max_shape();
@@ -102,11 +110,13 @@ abstract::ShapePtr ReduceSumInferShape(const PrimitivePtr &primitive, const std:
   } else {
     max_v = *max_element(input_shape.begin(), input_shape.end());
   }
-  const int64_t input_num_ascend = 2;
-  if (input_args.size() == input_num_ascend && input_args[1]->isa<abstract::AbstractTensor>() &&
-      input_args[1]->BuildValue()->isa<AnyValue>()) {
+  const uint64_t input_num_ascend = 2;
+  if (CheckShapeValid(input_args, input_num_ascend)) {
     auto axis_tensor = input_args[1]->cast<abstract::AbstractTensorPtr>();
-    auto axis_shape = axis_tensor->shape()->shape();
+    MS_EXCEPTION_IF_NULL(axis_tensor);
+    auto axis_tensor_shape = axis_tensor->shape();
+    MS_EXCEPTION_IF_NULL(axis_tensor_shape);
+    auto axis_shape = axis_tensor_shape->shape();
     if (axis_shape.size() == 1 && axis_shape[0] == -1 && !keep_dims) {
       out_shape.push_back(-2);
       out_min_shape = input_min_shape;
@@ -128,13 +138,13 @@ abstract::ShapePtr ReduceSumInferShape(const PrimitivePtr &primitive, const std:
   } else {
     ValuePtr axis_value;
     ValuePtr axis_ptr;
-    if (input_args.size() == input_num_ascend) {
+    if (input_args.size() == input_num_ascend && input_args[1]) {
       axis_ptr = input_args[1]->BuildValue();
     } else {
       axis_ptr = primitive->GetAttr("axis");
     }
     MS_EXCEPTION_IF_NULL(axis_ptr);
-    if (axis_ptr->isa<tensor::Tensor>()) {
+    if (axis_ptr->isa<tensor::Tensor>() && input_args[1]) {
       auto axis_type = input_args[1]->BuildType();
       MS_EXCEPTION_IF_NULL(axis_type);
       auto axis_type_id = axis_type->cast<TensorTypePtr>();
@@ -143,7 +153,9 @@ abstract::ShapePtr ReduceSumInferShape(const PrimitivePtr &primitive, const std:
       MS_EXCEPTION_IF_NULL(axis_tensor);
       size_t data_size = axis_tensor->DataSize();
       std::vector<ValuePtr> value_list;
-      if (axis_type_id->element()->type_id() == kNumberTypeInt32) {
+      auto element = axis_type_id->element();
+      MS_EXCEPTION_IF_NULL(element);
+      if (element->type_id() == kNumberTypeInt32) {
         auto shape_data = reinterpret_cast<int *>(axis_tensor->data_c());
         MS_EXCEPTION_IF_NULL(shape_data);
         for (size_t i = 0; i < data_size; i++) {
@@ -176,6 +188,7 @@ abstract::ShapePtr ReduceSumInferShape(const PrimitivePtr &primitive, const std:
 
 TypePtr ReduceSumInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   std::set<TypePtr> valid_types = common_valid_types;
   valid_types.insert(kBool);
@@ -187,6 +200,7 @@ TypePtr ReduceSumInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 1;
+  MS_EXCEPTION_IF_NULL(primitive);
   CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                      primitive->name());
   return abstract::MakeAbstract(ReduceSumInferShape(primitive, input_args), ReduceSumInferType(primitive, input_args));

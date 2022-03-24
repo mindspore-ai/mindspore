@@ -64,6 +64,9 @@ TypePtr SigmoidCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
 }  // namespace
 AbstractBasePtr SigmoidCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto infer_type = SigmoidCrossEntropyWithLogitsInferType(primitive, input_args);
   auto infer_shape = SigmoidCrossEntropyWithLogitsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

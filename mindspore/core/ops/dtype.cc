@@ -48,6 +48,9 @@ ValuePtr DTypeInferValue(const PrimitivePtr &primitive, const std::vector<Abstra
 
 AbstractBasePtr DTypeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto value = DTypeInferValue(primitive, input_args);
   MS_EXCEPTION_IF_NULL(value);
   auto type = value->cast<TypePtr>();
