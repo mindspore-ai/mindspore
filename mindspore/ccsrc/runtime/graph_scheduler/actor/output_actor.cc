@@ -262,7 +262,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
     if (IsOutputAddressPersisted(device_tensor, output_node)) {
       auto device_context = device_contexts_[i];
       MS_EXCEPTION_IF_NULL(device_context);
-      device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name());
+      device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
       if (!device_context->AllocateMemory(tensor_device_address.get(), tensor_device_address->GetSize())) {
         MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
                           << ") memory isn't enough and alloc failed, kernel name: "
