@@ -246,7 +246,7 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
       if (tensor_device_address.get() == device_tensor) {
         continue;
       }
-      if ((!Copy(device_tensor, tensor_device_address.get()))) {
+      if (!Copy(device_tensor, tensor_device_address.get())) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
       }
       continue;

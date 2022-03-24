@@ -1182,6 +1182,15 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
     kernel_type = actor_pair.first->type_;
   }
 
+  // Update the real input node.
+  MS_EXCEPTION_IF_NULL(to_kernel_with_input_idx.first);
+  if (to_kernel_with_input_idx.first->isa<CNode>()) {
+    auto kernel_mod = AnfAlgo::GetKernelMod(to_kernel_with_input_idx.first->cast<CNodePtr>());
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    kernel_mod->InsertRealInputNode(real_from_kernel_with_output_idx.first, real_from_kernel_with_output_idx.second,
+                                    to_kernel_with_input_idx.second);
+  }
+
   if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
     MS_LOG(EXCEPTION) << "Invalid internal parameter:" << internal_parameter->DebugString() << ", type:" << kernel_type;
   }
@@ -2036,8 +2045,8 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
         front_node = FetchFrontNodeByBackendNode(input_node, graph);
       }
       // The front node may be value node in the heterogeneous scene, needs to handle.
-      if ((front_node == nullptr) || ((front_node->isa<Parameter>() || front_node->isa<CNode>()) &&
-                                      (!parser->IsRootGraphPersistentDeviceTensor(front_node)))) {
+      if ((front_node == nullptr) ||
+          (!front_node->isa<ValueNode>() && !parser->IsRootGraphPersistentDeviceTensor(front_node))) {
         continue;
       }
 

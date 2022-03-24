@@ -168,9 +168,7 @@ class COMMON_EXPORT AnfAlgo {
   static std::vector<int64_t> GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index);
   static std::vector<int64_t> GetOutputMinShape(const AnfNodePtr &anf_node, size_t index);
   static bool IsHostKernel(const CNodePtr &node);
-  // return true if use cnode_input's abstract, false if use real_input's abstract
-  static void AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &cnode_input,
-                         const AnfNodePtr &real_input);
+  static void AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &real_input, size_t real_input_index);
   // Find real input nodes.
   static void GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *result,
                                    std::set<AnfNodePtr> *visited);

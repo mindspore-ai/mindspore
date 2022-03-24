@@ -1421,29 +1421,22 @@ bool AnfAlgo::IsHostKernel(const CNodePtr &kernel_node) {
   return true;
 }
 
-void AnfAlgo::AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &cnode_input,
-                         const AnfNodePtr &real_input) {
-  if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {
-    // cppcheck-suppress unreadVariable
-    auto lock = AnfUtils::GetAbstractLock(real_input.get());
-    auto base_shape = real_input->Shape();
-    if (!base_shape->isa<abstract::TupleShape>()) {
-      MS_LOG(EXCEPTION) << "Node input is a tuple_get_item but real input node shape is not a TupleShape. trace: "
-                        << trace::DumpSourceLines(real_input);
-    }
-    auto abs = real_input->abstract()->Clone()->cast<abstract::AbstractTuplePtr>();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto tuple_get_item_indexk = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
-    auto abs_i = abs->elements()[tuple_get_item_indexk];
-    (void)args_spec_list->emplace_back(abs_i);
-  } else if (cnode_input->isa<CNode>() && AnfAlgo::GetCNodeName(cnode_input) == prim::kPrimReshape->name()) {
-    // cppcheck-suppress unreadVariable
-    auto lock = AnfUtils::GetAbstractLock(cnode_input.get());
-    (void)args_spec_list->emplace_back(cnode_input->abstract()->Clone());
+void AnfAlgo::AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &real_input, size_t real_input_index) {
+  MS_EXCEPTION_IF_NULL(args_spec_list);
+  MS_EXCEPTION_IF_NULL(real_input);
+
+  // cppcheck-suppress unreadVariable
+  auto lock = AnfUtils::GetAbstractLock(real_input.get());
+  auto real_abs = real_input->abstract();
+  MS_EXCEPTION_IF_NULL(real_abs);
+  if (real_abs->isa<abstract::AbstractTuple>()) {
+    auto abs_tuple = real_abs->Clone()->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(abs_tuple);
+    MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abs_tuple->elements().size()), "Index is out of range.");
+    auto abs_index = abs_tuple->elements()[real_input_index];
+    (void)args_spec_list->emplace_back(abs_index);
   } else {
-    // cppcheck-suppress unreadVariable
-    auto lock = AnfUtils::GetAbstractLock(real_input.get());
-    (void)args_spec_list->emplace_back(real_input->abstract()->Clone());
+    (void)args_spec_list->emplace_back(real_abs->Clone());
   }
 }
 
