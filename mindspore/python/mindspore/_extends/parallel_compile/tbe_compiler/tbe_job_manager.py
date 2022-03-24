@@ -191,22 +191,7 @@ class TbeJobManager:
         """ Compile job handler """
         compute_op_list = get_compute_op_list(job.content)
         if len(compute_op_list) == 1:  # pylint: disable=no-else-return
-            res = do_fuzz_build_tbe_op(job)
-            if not res:
-                job.error("Process do fuzz build tbe op failed, job json string:{}".format(job.json_string))
-                return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
-            if job.result == "NOT_CHANGED":
-                job.result = ""
-                before_build_process(job)
-                res = build_single_pre_op(job)
-                if not res:
-                    job.error("Process build single pre op failed, job json string:{}".format(job.json_string))
-                    return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
-                return self.add_to_running_jobs(job)
-            if job.result == "SUCCESS":
-                return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
-            job.error("Process do fuzz build tbe op failed, job json string:{}".format(job.json_string))
-            return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+            return self.single_op_compile(job)
         else:
             before_build_process(job)
             if self.fusion_need_sync:
@@ -218,6 +203,25 @@ class TbeJobManager:
                 return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
             return self.add_to_running_jobs(job)
 
+    def single_op_compile(self, job: TbeJob):
+        """Single operator compile"""
+        res = do_fuzz_build_tbe_op(job)
+        if not res:
+            job.error("Process do fuzz build tbe op failed, job json string:{}".format(job.json_string))
+            return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+        if job.result == "NOT_CHANGED":
+            job.result = ""
+            before_build_process(job)
+            res = build_single_pre_op(job)
+            if not res:
+                job.error("Process build single pre op failed, job json string:{}".format(job.json_string))
+                return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+            return self.add_to_running_jobs(job)
+        if job.result == "SUCCESS":
+            return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
+        job.error("Process do fuzz build tbe op failed, job json string:{}".format(job.json_string))
+        return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+
     def tune_handler(self, job: TbeJob):
         """ Tune job handler """
         before_build_process(job)
@@ -226,31 +230,47 @@ class TbeJobManager:
             return self.compile_handler(job)
         compute_op_list = get_compute_op_list(job.content)
         if len(compute_op_list) == 1:
-            if tune_mode == TuneMode.RL_TUNE:
-                res = rl_tune_single_op(job)
-            else:
-                if self.fusion_need_sync:
-                    sync_fusion_env(self.fusion_need_sync, self.imported_module)
-                    self.fusion_need_sync = 0
-                res = ga_tune(job)
-                if not res:
-                    job.error("ga tune Job failed, job json string:{}".format(job.json_string))
-                    return self.compile_handler(job)
+            return self.single_op_tune(job)
+        return self.fusion_op_tune(job)
+
+    def single_op_tune(self, job: TbeJob):
+        """Single operator tune"""
+        tune_mode = self._select_tune_mode(job)
+        if tune_mode == TuneMode.RL_TUNE:
+            res = rl_tune_single_op(job)
+            if not res:
+                job.error(
+                    "Tune Job failed, tune type {}, job json string:{}".format(tune_mode, job.json_string))
+                return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
         else:
             if self.fusion_need_sync:
                 sync_fusion_env(self.fusion_need_sync, self.imported_module)
                 self.fusion_need_sync = 0
+            res = ga_tune(job)
+            if not res:
+                job.error("ga tune Job failed, job json string:{}".format(job.json_string))
+                return self.compile_handler(job)
+        if job.status == JobStatus.JOB_RUNNING:
             if tune_mode == TuneMode.RL_TUNE:
-                res = rl_tune_fusion_op(job)
-            else:
-                res = ga_tune(job)
+                self._update_imported_op_module(job)
+            return self.add_to_running_jobs(job)
+        return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
+
+    def fusion_op_tune(self, job: TbeJob):
+        """Fusion operator tune"""
+        tune_mode = self._select_tune_mode(job)
+        if self.fusion_need_sync:
+            sync_fusion_env(self.fusion_need_sync, self.imported_module)
+            self.fusion_need_sync = 0
+        if tune_mode == TuneMode.RL_TUNE:
+            res = rl_tune_fusion_op(job)
+        else:
+            res = ga_tune(job)
         if not res:
             job.error(
                 "Tune Job failed, tune type {}, job json string:{}".format(tune_mode, job.json_string))
             return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
         if job.status == JobStatus.JOB_RUNNING:
-            if tune_mode == TuneMode.RL_TUNE and len(compute_op_list) == 1:
-                self._update_imported_op_module(job)
             return self.add_to_running_jobs(job)
         return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
 
@@ -435,6 +455,7 @@ class TbeJobManager:
 
 
 class TuneMode(Enum):
+    """Class of tune mode: NO_TUNE, GA, RL"""
     NO_TUNE = "NO_TUNE"
     GA_TUNE = "GA"
     RL_TUNE = "RL"
