@@ -15,9 +15,7 @@
 """minimize"""
 from typing import Optional
 from typing import NamedTuple
-
 from ...common import Tensor
-
 from ._bfgs import minimize_bfgs
 
 

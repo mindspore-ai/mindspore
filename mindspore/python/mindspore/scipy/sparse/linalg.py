@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Sparse linear algebra submodule"""
-from ... import nn, ms_function
+from ... import nn
 from ... import numpy as mnp
 from ...ops import functional as F
 from ...common import Tensor, CSRTensor, dtype as mstype
@@ -26,9 +26,7 @@ from ..utils_const import _raise_value_error, _raise_type_error, is_within_graph
 
 
 def gram_schmidt(Q, q):
-    """
-    do Gram–Schmidt process to normalize vector v
-    """
+    """Do Gram–Schmidt process to normalize vector v"""
     h = mnp.dot(Q.T, q)
     Qh = mnp.dot(Q, h)
     q = q - Qh
@@ -36,7 +34,7 @@ def gram_schmidt(Q, q):
 
 
 def arnoldi_iteration(k, A, M, V, H):
-    """ Performs a single (the k'th) step of the Arnoldi process."""
+    """Performs a single (the k'th) step of the Arnoldi process."""
     v_ = V[..., k]
     v = M(A(v_))
     v, h = gram_schmidt(V, v)
@@ -50,8 +48,8 @@ def arnoldi_iteration(k, A, M, V, H):
     return V, H, breakdown
 
 
-@ms_function
 def rotate_vectors(H, i, cs, sn):
+    """Rotate vectors."""
     x1 = H[i]
     y1 = H[i + 1]
     x2 = cs * x1 - sn * y1
@@ -62,6 +60,7 @@ def rotate_vectors(H, i, cs, sn):
 
 
 def _high_precision_cho_solve(a, b, data_type=mstype.float64):
+    """As a core computing module of gmres, cholesky solver must explicitly cast to double precision."""
     a = a.astype(mstype.float64)
     b = b.astype(mstype.float64)
     a_a = mnp.dot(a, a.T)
@@ -378,8 +377,10 @@ def _cg(A, b, x0, tol, atol, maxiter, M):
 
 
 class CG(nn.Cell):
-    """Figure 2.5 from Barrett R, et al. 'Templates for the sulution of linear systems:
-    building blocks for iterative methods', 1994, pg. 12-14
+    """Use Conjugate Gradient iteration to solve the linear system:
+
+    .. math::
+        A x = b
     """
 
     def __init__(self, A, M):
