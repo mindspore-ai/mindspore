@@ -531,16 +531,20 @@ class Cell(Cell_):
         return self
 
     class CellGuard:
+        """Detecting whether the cell is a top-level cell with the 'with statement'."""
         def __enter__(self):
+            """Enter cell and increase recursion depth count."""
             _pynative_executor.set_lazy_build(True)
             _pynative_executor.enter_cell()
 
         def __exit__(self, exc_type, exc_val, exc_tb):
+            """Exit cell and decrease recursion depth count."""
             _pynative_executor.exit_cell()
             if _pynative_executor.is_top_cell():
                 _pynative_executor.set_lazy_build(False)
 
     def auto_cast_inputs(self, inputs):
+        """Auto cast inputs in mixed precision scenarios."""
         cast_inputs = inputs
         mixed_type = self.get_mixed_precision_type()
         if mixed_type == MixedPrecisionType.FP16:

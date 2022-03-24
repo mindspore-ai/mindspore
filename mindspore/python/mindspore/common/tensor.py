@@ -416,6 +416,7 @@ class Tensor(Tensor_):
         return Tensor(Tensor_.from_numpy(array))
 
     def assign_value(self, value):
+        """Assign another tensor value to this tensor."""
         self.assign_value_cpp(value)
         return self
 
