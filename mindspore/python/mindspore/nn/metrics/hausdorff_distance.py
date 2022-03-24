@@ -127,7 +127,7 @@ class HausdorffDistance(Metric):
 
         """
         result = None
-        if not self._is_iterable_sequence(tup):
+        if not _is_iterable_sequence(tup):
             result = (tup,) * dim
         elif len(tup) == dim:
             result = tuple(tup)
@@ -141,18 +141,10 @@ class HausdorffDistance(Metric):
         """
         Returns a tuple of inputs.
         """
-        if not self._is_iterable_sequence(inputs):
+        if not _is_iterable_sequence(inputs):
             inputs = (inputs,)
 
         return tuple(inputs)
-
-    def _is_iterable_sequence(self, inputs):
-        """
-        Determine if the input is an iterable sequence and it is not a string.
-        """
-        if isinstance(inputs, Tensor):
-            return int(inputs.dim()) > 0
-        return isinstance(inputs, abc.Iterable) and not isinstance(inputs, str)
 
     def _create_space_bounding_box(self, image, func=lambda x: x > 0, channel_indices=None, margin=0):
         """
@@ -322,3 +314,12 @@ class HausdorffDistance(Metric):
 
         hd2 = self._calculate_percent_hausdorff_distance(self.y_edges, self.y_pred_edges)
         return max(hd, hd2)
+
+
+def _is_iterable_sequence(inputs):
+    """
+    Determine if the input is an iterable sequence and it is not a string.
+    """
+    if isinstance(inputs, Tensor):
+        return int(inputs.dim()) > 0
+    return isinstance(inputs, abc.Iterable) and not isinstance(inputs, str)

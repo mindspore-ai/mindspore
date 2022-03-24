@@ -15,7 +15,7 @@
 """ROC"""
 import numpy as np
 from mindspore._checkparam import Validator as validator
-from .metric import Metric, rearrange_inputs
+from .metric import Metric, rearrange_inputs, _binary_clf_curve
 
 
 class ROC(Metric):
@@ -81,39 +81,6 @@ class ROC(Metric):
         self.sample_weights = None
         self._is_update = False
 
-    def _precision_recall_curve_update(self, y_pred, y, class_num, pos_label):
-        """update curve"""
-        if not (len(y_pred.shape) == len(y.shape) or len(y_pred.shape) == len(y.shape) + 1):
-            raise ValueError(f"For 'ROC', predicted value (input[0]) and true value (input[1]) should have same "
-                             f"dimensions, or the dimension of predicted value equal the dimension of true value add "
-                             f"1, but got predicted value ndim: {len(y_pred.shape)}, true value ndim: {len(y.shape)}.")
-
-        # single class evaluation
-        if len(y_pred.shape) == len(y.shape):
-            if class_num is not None and class_num != 1:
-                raise ValueError(f"For 'ROC', when predicted value (input[0]) and true value (input[1]) have the same "
-                                 f"shape, the 'class_num' should be 1, but got {class_num}.")
-            class_num = 1
-            if pos_label is None:
-                pos_label = 1
-            y_pred = y_pred.flatten()
-            y = y.flatten()
-
-        # multi class evaluation
-        elif len(y_pred.shape) == len(y.shape) + 1:
-            if pos_label is not None:
-                raise ValueError(f"For 'ROC', when the dimension of predicted value (input[0]) equals the dimension "
-                                 f"of true value (input[1]) add 1, the 'pos_label' should be None, "
-                                 f"but got {pos_label}.")
-            if class_num != y_pred.shape[1]:
-                raise ValueError("For 'ROC', the 'class_num' should equal the number of classes from predicted value "
-                                 "(input[0]), but got 'class_num' {}, the number of classes from predicted value {}."
-                                 .format(class_num, y_pred.shape[1]))
-            y_pred = y_pred.transpose(0, 1).reshape(class_num, -1).transpose(0, 1)
-            y = y.flatten()
-
-        return y_pred, y, class_num, pos_label
-
     @rearrange_inputs
     def update(self, *inputs):
         """
@@ -132,7 +99,7 @@ class ROC(Metric):
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
 
-        y_pred, y, class_num, pos_label = self._precision_recall_curve_update(y_pred, y, self.class_num, self.pos_label)
+        y_pred, y, class_num, pos_label = _precision_recall_curve_update(y_pred, y, self.class_num, self.pos_label)
 
         self.y_pred = y_pred
         self.y = y
@@ -143,8 +110,7 @@ class ROC(Metric):
     def _roc_eval(self, y_pred, y, class_num, pos_label, sample_weights=None):
         """Computes the ROC curve."""
         if class_num == 1:
-            fps, tps, thresholds = self._binary_clf_curve(y_pred, y, sample_weights=sample_weights,
-                                                          pos_label=pos_label)
+            fps, tps, thresholds = _binary_clf_curve(y_pred, y, sample_weights=sample_weights, pos_label=pos_label)
             tps = np.squeeze(np.hstack([np.zeros(1, dtype=tps.dtype), tps]))
             fps = np.squeeze(np.hstack([np.zeros(1, dtype=fps.dtype), fps]))
             thresholds = np.hstack([thresholds[0][None] + 1, thresholds])
@@ -188,7 +154,7 @@ class ROC(Metric):
             sample_weights (Union[None, np.ndarray]): If sample_weights is None, the weight value is 1.
                 If sample_weights is ndarray, the weight value is the ndarray value.
         """
-        y_pred, y, class_num, pos_label = self._precision_recall_curve_update(y_pred, y, class_num, pos_label)
+        y_pred, y, class_num, pos_label = _precision_recall_curve_update(y_pred, y, class_num, pos_label)
 
         return self._roc_eval(y_pred, y, class_num, pos_label, sample_weights)
 
@@ -218,3 +184,37 @@ class ROC(Metric):
         y = np.squeeze(np.vstack(self.y))
 
         return self._roc_eval(y_pred, y, self.class_num, self.pos_label)
+
+
+def _precision_recall_curve_update(y_pred, y, class_num, pos_label):
+    """update curve"""
+    if not (len(y_pred.shape) == len(y.shape) or len(y_pred.shape) == len(y.shape) + 1):
+        raise ValueError(f"For 'ROC', predicted value (input[0]) and true value (input[1]) should have same "
+                         f"dimensions, or the dimension of predicted value equal the dimension of true value add "
+                         f"1, but got predicted value ndim: {len(y_pred.shape)}, true value ndim: {len(y.shape)}.")
+
+    # single class evaluation
+    if len(y_pred.shape) == len(y.shape):
+        if class_num is not None and class_num != 1:
+            raise ValueError(f"For 'ROC', when predicted value (input[0]) and true value (input[1]) have the same "
+                             f"shape, the 'class_num' should be 1, but got {class_num}.")
+        class_num = 1
+        if pos_label is None:
+            pos_label = 1
+        y_pred = y_pred.flatten()
+        y = y.flatten()
+
+    # multi class evaluation
+    elif len(y_pred.shape) == len(y.shape) + 1:
+        if pos_label is not None:
+            raise ValueError(f"For 'ROC', when the dimension of predicted value (input[0]) equals the dimension "
+                             f"of true value (input[1]) add 1, the 'pos_label' should be None, "
+                             f"but got {pos_label}.")
+        if class_num != y_pred.shape[1]:
+            raise ValueError("For 'ROC', the 'class_num' should equal the number of classes from predicted value "
+                             "(input[0]), but got 'class_num' {}, the number of classes from predicted value {}."
+                             .format(class_num, y_pred.shape[1]))
+        y_pred = y_pred.transpose(0, 1).reshape(class_num, -1).transpose(0, 1)
+        y = y.flatten()
+
+    return y_pred, y, class_num, pos_label
