@@ -857,6 +857,7 @@ class Validator:
 
     @staticmethod
     def check_type_support(dtype, device, supported_dtypes):
+        """Checks whether the data type is supported."""
         return dtype in supported_dtypes or not context.get_context('device_target') == device
 
     @staticmethod
