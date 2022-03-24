@@ -39,7 +39,7 @@ PythonRuntimeContext::~PythonRuntimeContext() {
   if (rc.IsError()) {
     MS_LOG(ERROR) << "Error while terminating the consumer. Message:" << rc;
   }
-  {
+  if (tree_consumer_) {
     py::gil_scoped_acquire gil_acquire;
     tree_consumer_.reset();
   }
