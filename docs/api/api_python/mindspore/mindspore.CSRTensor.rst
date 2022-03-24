@@ -15,7 +15,7 @@ mindspore.CSRTensor
     - **indptr** (Tensor) - 形状为 `[M]` 的一维整数张量，其中M等于 `shape[0] + 1` , 表示每行非零元素的在 `values` 中存储的起止位置。默认值：None。支持的数据类型为 `int16` ， `int32` 和 `int64` 。
     - **indices** (Tensor) - 形状为 `[N]` 的一维整数张量，其中N等于非零元素数量，表示每个元素的列索引值。默认值：None。支持的数据类型为 `int16` ， `int32` 和 `int64` 。
     - **values** (Tensor) - 形状为 `[N]` 的一维张量，用来表示索引对应的数值。默认值：None。
-    - **shape** (tuple(int)) - 形状为ndims的整数元组，用来指定稀疏矩阵的稠密形状。目前只支持2维CSRTensor，所以 `shape` 长度只能为2。`shape[0]` 表示行数，因此必须和 `indptr[0] - 1` 值相等。默认值：None。
+    - **shape** (tuple(int)) - 形状为ndims的整数元组，用来指定稀疏矩阵的稠密形状。目前只支持2维CSRTensor，所以 `shape` 长度只能为2。`shape[0]` 表示行数，因此必须和 `M - 1` 值相等。默认值：None。
     - **csr_tensor** (CSRTensor) - CSRTensor对象，用来初始化新的CSRTensor。默认值：None。
 
     **输出：**
@@ -69,7 +69,7 @@ mindspore.CSRTensor
 
         **参数：**
 
-        - **dense_vector** (Tensor) - 形状为 `[N，1]` 的一维张量，其中N等于CSRTensor的列数。
+        - **dense_vector** (Tensor) - 形状为 `[N，1]` 的二维张量，其中N等于CSRTensor的列数。
 
         **返回：**
 
