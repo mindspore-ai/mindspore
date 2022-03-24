@@ -682,21 +682,15 @@ Status Decoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
 Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
                      int32_t quantization_channels) {
-  if (input->type().IsInt() || input->type() == DataType(DataType::DE_FLOAT16) ||
-      input->type() == DataType(DataType::DE_FLOAT32)) {
+  if (input->type() != DataType::DE_FLOAT64) {
     float f_mu = static_cast<float>(quantization_channels) - 1;
-
     // convert the data type to float
     std::shared_ptr<Tensor> input_tensor;
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
-
     RETURN_IF_NOT_OK(Decoding<float>(input_tensor, output, f_mu));
-  } else if (input->type() == DataType(DataType::DE_FLOAT64)) {
-    double f_mu = static_cast<double>(quantization_channels) - 1;
-
-    RETURN_IF_NOT_OK(Decoding<double>(input, output, f_mu));
   } else {
-    RETURN_IF_NOT_OK(ValidateTensorNumeric("MuLawDecoding", input));
+    double f_mu = static_cast<double>(quantization_channels) - 1;
+    RETURN_IF_NOT_OK(Decoding<double>(input, output, f_mu));
   }
   return Status::OK();
 }
@@ -721,24 +715,15 @@ Status Encoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
 Status MuLawEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
                      int32_t quantization_channels) {
-  if (input->type().IsInt() || input->type() == DataType(DataType::DE_FLOAT16)) {
+  if (input->type() != DataType::DE_FLOAT64) {
     float f_mu = static_cast<float>(quantization_channels) - 1;
-
     // convert the data type to float
     std::shared_ptr<Tensor> input_tensor;
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
-
     RETURN_IF_NOT_OK(Encoding<float>(input_tensor, output, f_mu));
-  } else if (input->type() == DataType(DataType::DE_FLOAT32)) {
-    float f_mu = static_cast<float>(quantization_channels) - 1;
-
-    RETURN_IF_NOT_OK(Encoding<float>(input, output, f_mu));
-  } else if (input->type() == DataType(DataType::DE_FLOAT64)) {
-    double f_mu = static_cast<double>(quantization_channels) - 1;
-
-    RETURN_IF_NOT_OK(Encoding<double>(input, output, f_mu));
   } else {
-    RETURN_IF_NOT_OK(ValidateTensorNumeric("MuLawEncoding", input));
+    double f_mu = static_cast<double>(quantization_channels) - 1;
+    RETURN_IF_NOT_OK(Encoding<double>(input, output, f_mu));
   }
   return Status::OK();
 }
