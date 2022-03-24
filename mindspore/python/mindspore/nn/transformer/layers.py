@@ -142,6 +142,7 @@ class _LayerInputCheck:
 
     @staticmethod
     def check_shape_value_on_axis(input_shape, dim, param_name, cls_name, target_value):
+        """ Check whether the input_shape[dim] is equal to target value"""
         if input_shape[dim] != target_value:
             raise ValueError(f"{cls_name} {param_name} at {dim} shape should be {target_value},"
                              f"but got {input_shape[dim]}")

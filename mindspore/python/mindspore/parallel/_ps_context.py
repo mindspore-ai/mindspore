@@ -305,18 +305,12 @@ def _check_value(key, value):
         Validator.check_positive_float(value, key)
 
     if key in _check_string_keys:
-        try:
-            string_keys = _check_string_keys[key]
-            Validator.check_string(value, string_keys)
-        except KeyError:
-            pass
+        string_keys = _check_string_keys[key]
+        Validator.check_string(value, string_keys)
 
     if key in _check_float_range_keys:
-        try:
-            range_keys = _check_float_range_keys[key]
-            Validator.check_float_range(value, **range_keys)
-        except KeyError:
-            pass
+        range_keys = _check_float_range_keys[key]
+        Validator.check_float_range(value, **range_keys)
 
     if key in _check_port_keys:
         if value < 1 or value > 65535:
