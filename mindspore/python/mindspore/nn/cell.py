@@ -1674,7 +1674,8 @@ class Cell(Cell_):
             hook_fn (function): Python function. Forward pre hook function.
 
         Returns:
-            - **handle** - The handle corresponding to the 'hook_fn'.
+            Handle, it is an instance of `mindspore.common.hook_handle.HookHandle` and corresponding to the `hook_fn` .
+            The handle can be used to remove the added `hook_fn` by calling `handle.remove()` .
 
         Raises:
             TypeError: If the `hook_fn` is not a function of python.
@@ -1774,7 +1775,8 @@ class Cell(Cell_):
             hook_fn (function): Python function. Forward hook function.
 
         Returns:
-            - **handle** - The handle corresponding to the 'hook_fn'.
+            Handle, it is an instance of `mindspore.common.hook_handle.HookHandle` and corresponding to the `hook_fn` .
+            The handle can be used to remove the added `hook_fn` by calling `handle.remove()` .
 
         Raises:
             TypeError: If the `hook_fn` is not a function of python.
@@ -1879,7 +1881,8 @@ class Cell(Cell_):
             hook_fn (function): Python function. Backward hook function.
 
         Returns:
-            - **handle** - The handle corresponding to the 'hook_fn'.
+            Handle, it is an instance of `mindspore.common.hook_handle.HookHandle` and corresponding to the `hook_fn` .
+            The handle can be used to remove the added `hook_fn` by calling `handle.remove()` .
 
         Raises:
             TypeError: If the `hook_fn` is not a function of python.
