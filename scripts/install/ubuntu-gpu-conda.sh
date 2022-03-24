@@ -24,23 +24,23 @@
 #   - compile and install Open MPI if OPENMPI is set to on.
 #
 # Augments:
-#   - PYTHON_VERSION: python version to install. [3.7(default), 3.9]
+#   - PYTHON_VERSION: python version to install. [3.7(default), 3.8, 3.9]
 #   - MINDSPORE_VERSION: mindspore version to install, default 1.6.0
-#   - CUDA_VERSION: CUDA version to install. [10.1(default), 11.1]
+#   - CUDA_VERSION: CUDA version to install. [10.1, 11.1(default)]
 #   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
 #
 # Usage:
 #   Run script like `bash -i ./ubuntu-gpu-conda.sh`.
-#   To set augments, run it as `PYTHON_VERSION=3.9 CUDA_VERSION=11.1 OPENMPI=on bash -i ./ubuntu-gpu-conda.sh`.
+#   To set augments, run it as `PYTHON_VERSION=3.9 CUDA_VERSION=10.1 OPENMPI=on bash -i ./ubuntu-gpu-conda.sh`.
 
 set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
 MINDSPORE_VERSION=${MINDSPORE_VERSION:-1.6.0}
-CUDA_VERSION=${CUDA_VERSION:-10.1}
+CUDA_VERSION=${CUDA_VERSION:-11.1}
 OPENMPI=${OPENMPI:-off}
 
-available_py_version=(3.7 3.9)
+available_py_version=(3.7 3.8 3.9)
 if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
     echo "PYTHON_VERSION is '$PYTHON_VERSION', but available versions are [${available_py_version[*]}]."
     exit 1
@@ -115,6 +115,33 @@ if [[ $? -eq 0 ]]; then
 else
     install_conda
 fi
+set -e
+
+# install cuda/cudnn
+cd /tmp
+declare -A cuda_url_map=()
+cuda_url_map["10.1"]=https://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run
+cuda_url_map["11.1"]=https://developer.download.nvidia.com/compute/cuda/11.1.1/local_installers/cuda_11.1.1_455.32.00_linux.run
+cuda_url=${cuda_url_map[$CUDA_VERSION]}
+wget $cuda_url
+sudo sh ${cuda_url##*/} --silent --toolkit
+cd -
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+sudo add-apt-repository "deb https://developer.download.nvidia.cn/compute/machine-learning/repos/ubuntu1804/x86_64/ /"
+sudo apt-get update
+declare -A cudnn_name_map=()
+cudnn_name_map["10.1"]="libcudnn7=7.6.5.32-1+cuda10.1 libcudnn7-dev=7.6.5.32-1+cuda10.1"
+cudnn_name_map["11.1"]="libcudnn8=8.0.4.30-1+cuda11.1 libcudnn8-dev=8.0.4.30-1+cuda11.1"
+sudo apt-get install --no-install-recommends ${cudnn_name_map[$CUDA_VERSION]} -y
+
+# add cuda to path
+set +e && source ~/.bashrc
+set -e
+add_env PATH /usr/local/cuda/bin
+add_env LD_LIBRARY_PATH /usr/local/cuda/lib64
+add_env LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu
+set +e && source ~/.bashrc
 set -e
 
 # set up conda env and install mindspore-cpu

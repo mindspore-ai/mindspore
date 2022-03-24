@@ -14,10 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-# Prepare and Install mindspore ascend by pip on EulerOS 2.8.
+# Prepare environment for mindspore ascend compilation on EulerOS 2.8.
 #
 # This file will:
-#   - install mindspore dependencies via apt like gcc, libgmp
+#   - install mindspore dependencies via apt like gcc, cmake
 #   - install conda and set up environment for mindspore
 #
 # Augments:
@@ -26,8 +26,8 @@
 #   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
 #
 # Usage:
-#   Run script like `bash ./euleros-ascend-pip.sh`.
-#   To set augments, run it as `PYTHON_VERSION=3.9 MINDSPORE_VERSION=1.5.0 bash ./euleros-ascend-pip.sh`.
+#   Run script like `bash -i ./euleros-ascend-source.sh`.
+#   To set augments, run it as `PYTHON_VERSION=3.9 MINDSPORE_VERSION=1.5.0 bash -i ./euleros-ascend-source.sh`.
 
 set -e
 
@@ -41,11 +41,6 @@ if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
     exit 1
 fi
 
-declare -A version_map=()
-version_map["3.7"]="${MINDSPORE_VERSION}-cp37-cp37m"
-version_map["3.8"]="${MINDSPORE_VERSION}-cp38-cp38"
-version_map["3.9"]="${MINDSPORE_VERSION}-cp39-cp39"
-
 # add value to environment variable if value is not in it
 add_env() {
     local name=$1
@@ -54,7 +49,11 @@ add_env() {
     fi
 }
 
-sudo yum install gcc gmp-devel -y
+sudo yum install gcc git gmp-devel tcl patch numactl-devel flex -y
+
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | sudo os=el dist=7 bash
+sudo yum install git-lfs -y
+git lfs install
 
 install_conda() {
     conda_file_name="Miniconda3-py3${PYTHON_VERSION##*.}_4.10.3-Linux-$(arch).sh"
@@ -97,6 +96,19 @@ env_name=mindspore_py3${PYTHON_VERSION##*.}
 conda create -n $env_name python=${PYTHON_VERSION} -y
 conda activate $env_name
 
+pip install wheel
+pip install -U setuptools
+
+# cmake
+cd /tmp
+cmake_file_name="cmake-3.19.8-Linux-$(arch).sh"
+curl -O "https://cmake.org/files/v3.19/${cmake_file_name}"
+sudo mkdir $HOME/cmake-3.19.8
+sudo bash cmake-3.19.8-Linux-*.sh --prefix=$HOME/cmake-3.19.8 --exclude-subdir
+add_env PATH $HOME/cmake-3.19.8/bin
+source ~/.bashrc
+cd -
+
 # optional openmpi for distributed training
 if [[ X"$OPENMPI" == "Xon" ]]; then
     origin_wd=$PWD
@@ -112,5 +124,4 @@ if [[ X"$OPENMPI" == "Xon" ]]; then
     cd $origin_wd
 fi
 
-ARCH=`uname -m`
-pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_VERSION}/MindSpore/ascend/${ARCH}/mindspore_ascend-${version_map["$PYTHON_VERSION"]}-linux_${ARCH}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
+echo "The environment is ready to clone and compile mindspore."
