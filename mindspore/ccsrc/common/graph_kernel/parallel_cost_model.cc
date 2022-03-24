@@ -38,11 +38,12 @@ int ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) const {
 
   auto json_desc_str = json_desc.dump();
   auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelGetNodeCalAmount, json_desc_str);
-  if (py::isinstance<py::none>(ret)) {
-    MS_LOG(EXCEPTION) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
+  auto bottleneck = py::cast<int>(ret);
+  if (bottleneck == -1) {
+    MS_LOG(EXCEPTION) << "CallPyFn: [" << kGraphKernelGetNodeCalAmount << "] return invalid result. input json:\n"
                       << json_desc_str;
   }
-  return py::cast<int>(ret);
+  return bottleneck;
 }
 
 std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFuseInfo(
@@ -59,7 +60,7 @@ std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFu
   auto json_desc_str = json_desc.dump();
   auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelEstimateOps, json_desc_str);
   if (py::isinstance<py::none>(ret)) {
-    MS_LOG(EXCEPTION) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
+    MS_LOG(EXCEPTION) << "CallPyFn: [" << kGraphKernelEstimateOps << "] return invalid result. input json:\n"
                       << json_desc_str;
   }
 

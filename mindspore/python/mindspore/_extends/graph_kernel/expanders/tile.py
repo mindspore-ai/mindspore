@@ -25,11 +25,9 @@ class Tile(Expander):
 
     def _get_output_shape(self):
         """Get output shape"""
-        shape = self.inputs[0].shape
-        multiples = self.attrs["multiples"]
+        shape = list(self.inputs[0].shape)
+        multiples = list(self.attrs["multiples"])
 
-        shape = list(shape)
-        multiples = list(multiples)
         diff_len = len(multiples) - len(shape)
         if diff_len < 0:
             raise GKException("For 'Tile', dimensions of attr 'multiples' should be greater than or equal to "

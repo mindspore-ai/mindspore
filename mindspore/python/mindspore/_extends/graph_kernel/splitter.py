@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,13 +41,13 @@ def split_with_json(json_str, flags_str):
         return json.dumps(result)
     except jd.JSONDecodeError:
         logger.error(traceback.format_exc())
-        return None
+        return ""
 
 
 def _reset_graphmode_for_inplaceassign(graph_list, graph_mode):
     """Operator with InplaceAssign should always be composite op"""
     for i, g in enumerate(graph_list):
-        if any([op['name'] == 'InplaceAssign' for op in g['op_desc']]):
+        if any((op['name'] == 'InplaceAssign' for op in g['op_desc'])):
             graph_mode[i] = 'composite'
 
 

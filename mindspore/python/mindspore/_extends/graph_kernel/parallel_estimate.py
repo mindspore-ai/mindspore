@@ -55,6 +55,6 @@ def estimate_calculation_amount(json_str):
         return estimation.bottleneck
     except jd.JSONDecodeError:
         logger.error(traceback.format_exc())
-        return None
+        return -1
     finally:
         pass
