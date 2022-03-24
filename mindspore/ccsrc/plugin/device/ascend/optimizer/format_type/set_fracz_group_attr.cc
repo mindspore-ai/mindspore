@@ -239,11 +239,19 @@ bool SetFraczGroupAttr::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   bool changed = false;
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
-  for (auto node : node_list) {
+  // clear cnode fracz_group first, since the fracz_group info may be out-of-date in later graph of multi-graph scene
+  for (auto &node : node_list) {
+    if (node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, node->cast<CNodePtr>())) {
+      common::AnfAlgo::EraseNodeAttr(kAttrFracZGroup, node);
+    }
+  }
+  // set fracz_group attr
+  for (auto &node : node_list) {
     if (node == nullptr) {
       continue;
     }
     if (node->isa<Parameter>()) {
+      // transmit fracz_group attr through multi graph by parameter
       auto param = node->cast<ParameterPtr>();
       changed = SetAttrFraczGroup(func_graph, param) || changed;
     }
