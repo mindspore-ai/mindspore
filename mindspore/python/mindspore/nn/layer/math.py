@@ -915,7 +915,8 @@ class Moments(Cell):
           [ 5.00000000e+00, 6.00000000e+00]]]), Tensor(shape=[1, 2, 2], dtype=Float32, value=
         [[[ 4.00000000e+00, 4.00000000e+00],
           [ 4.00000000e+00, 4.00000000e+00]]]))
-        >>> # case2: axis = 1, keep_dims=True)
+        >>> # case2: axis = 1, keep_dims=True
+        >>> net = nn.Moments(axis=1, keep_dims=True)
         >>> output = net(x)
         >>> print(output)
         (Tensor(shape=[2, 1, 2], dtype=Float32, value=
