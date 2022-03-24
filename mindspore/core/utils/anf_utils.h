@@ -108,6 +108,12 @@ class MS_CORE_API AnfUtils {
   static CNodePtr GetCustomActorBaseNode(const AnfNodePtr &node);
   static CustomActorCallback GetCustomFunc(const AnfNodePtr &node);
   static bool IsCutomActorNodeSame(const AnfNodePtr &node1, const AnfNodePtr &node2);
+  // set the inferop,initop, updateop to base_node's user_data
+  static void SetCustomInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &inferop, const AnfNodePtr &initop,
+                                      const AnfNodePtr &updateop = nullptr);
+  static void ResetCustomUpdateInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &updateop);
+  static AnfNodePtr GetCustomUpdateopNode(const AnfNodePtr &base_cnode);
+  static AnfNodePtr GetCustomInferopNode(const AnfNodePtr &base_cnode);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_ANF_UTILS_H_
