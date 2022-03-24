@@ -35,6 +35,9 @@ class AbstractPSNode : public AbstractNode {
   void StartHeartbeatTimer();
 
  private:
+  // Register collective communication initialization response methods.
+  void RegisterInitCollectCommResphandler() override;
+
   // Indicate whether the heartbeat thread should be stopped.
   std::atomic<bool> stop_heartbeat_{false};
 

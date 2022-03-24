@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_COLLECTIVE_COLLECTIVE_COMMUNICATION_LIB_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_COLLECTIVE_COLLECTIVE_COMMUNICATION_LIB_H_
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <vector>
@@ -44,7 +45,8 @@ enum CollectiveOpReduceType : int64_t {
 // MsCollectiveCommLib which uses the host-side communication library developed by MindSpore.
 class CollectiveCommunicationLib {
  public:
-  CollectiveCommunicationLib() : initialized_(false), global_rank_id_(0), local_rank_id_(0), global_rank_size_(0) {}
+  CollectiveCommunicationLib()
+      : initialized_(false), finalized_(false), global_rank_id_(0), local_rank_id_(0), global_rank_size_(0) {}
   virtual ~CollectiveCommunicationLib() { groups_.clear(); }
 
   // Initialize collecitve communication library.
@@ -76,6 +78,15 @@ class CollectiveCommunicationLib {
 
   // Return communication group pointer.
   virtual CommunicationGroupPtr GetGroup(const std::string &group_name);
+
+  // AllGather host names of all nodes, used to initialize collective communication.
+  virtual bool AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) const { return true; }
+
+  // Broadcast the device root information to all nodes on host side, used to initialize collective communication.
+  virtual bool BroadcastUniqueID(const std::string &group_name, bool is_root_node, size_t root_info_size,
+                                 void *root_info) const {
+    return true;
+  }
 
   // Primitive of collective operations.
   virtual bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
@@ -121,6 +132,9 @@ class CollectiveCommunicationLib {
  protected:
   // Whether this collective communication library is initialized.
   bool initialized_;
+
+  // Whether this collective communication library is finalized.
+  std::atomic_bool finalized_;
 
   // The global group name.
   std::string global_group_name_;

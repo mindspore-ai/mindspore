@@ -17,6 +17,12 @@
 #ifndef MINDSPORE_CCSRC_PS_CORE_PS_SCHEDULER_NODE_H_
 #define MINDSPORE_CCSRC_PS_CORE_PS_SCHEDULER_NODE_H_
 
+#include <map>
+#include <memory>
+#include <vector>
+#include <set>
+#include <string>
+
 #include "ps/core/scheduler_node.h"
 #include "ps/core/node_info.h"
 #include "include/backend/visible.h"
@@ -29,7 +35,7 @@ namespace core {
 // the registration request of alive nodes.
 class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
  public:
-  PSSchedulerNode() = default;
+  PSSchedulerNode() : worker_num_(ps::PSContext::instance()->worker_num()) { host_hash_names_.resize(worker_num_); }
   ~PSSchedulerNode() override = default;
 
  protected:
@@ -40,6 +46,37 @@ class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
   // Determine whether the registration request of the node should be rejected, the registration of the
   // alive node should be rejected.
   bool NeedRejectRegister(const NodeInfo &node_info) override { return node_info.is_alive; }
+
+  // Register collective communication initialization service.
+  void RegisterInitCollectCommServiceHandler() override;
+
+  // Process message for sending node's host name.
+  void ProcessSendHostName(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
+  // Process message for querying all nodes' host name.
+  void ProcessQueryHostNames(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                             const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
+  // Process message for send unique id.
+  void ProcessSendUniqueID(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
+  // Process message for querying unique id.
+  void ProcessQueryUniqueID(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                            const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
+  // Record received host hash name from workers.
+  std::vector<size_t> host_hash_names_;
+  // Record rank id of the nodes which sended host name.
+  std::set<uint32_t> recv_rank_id_send_host_name_;
+  // Record rank id of the nodes which queried host name.
+  std::set<uint32_t> recv_rank_id_query_host_name_;
+
+  // Record unique id of every group, key: group name, value: unique id.
+  std::map<std::string, std::string> unique_id_group_;
+
+  uint32_t worker_num_;
 };
 }  // namespace core
 }  // namespace ps

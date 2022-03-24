@@ -49,6 +49,14 @@ enum NodeCommand {
   DELETE_ACTOR_ROUTE = 16;
   // Lookup address of the actor.
   LOOKUP_ACTOR_ROUTE = 17;
+  // Send host name to scheduler.
+  SEND_HOST_NAME = 18;
+  // Query all worker nodes' host name.
+  QUERY_HOST_NAMES = 19;
+  // Send unique id used to initialize collective communication.
+  SEND_UNIQUE_ID = 20;
+  // Query unique id used to initialize collective communication.
+  QUERY_UNIQUE_ID = 21;
 }
 
 enum NodeRole {
@@ -240,4 +248,53 @@ message ActorAddress {
   string actor_id = 1;
   string ip = 2;
   uint32 port = 3;
+}
+
+message GeneralQueryMessage {
+  // The unique node id.
+  string node_id = 1;
+  // The rank id of the node in the cluster.
+  uint32 rank_id = 2;
+}
+
+message SendHostHashNameMessage {
+  // The unique node id.
+  string node_id = 1;
+  // The rank id of the node in the cluster.
+  uint32 rank_id = 2;
+  // The host hash name of the node.
+  uint64 host_hash_name = 3;
+}
+
+message QueryHostHashNameRespMessage {
+  bool is_success = 1;
+  // The host hash names of all worker nodes.
+  repeated uint64 host_hash_names = 2;
+}
+
+message SendUniqueIDMessage {
+  // The unique node id.
+  string node_id = 1;
+  // The rank id of the node in the cluster.
+  uint32 rank_id = 2;
+  // The group name of goupt which need to initialize collective communication.
+  string group_name = 3;
+  // The unique id used to initialize collective communication.
+  bytes unique_id = 4;
+}
+
+message QueryUniqueIDMessage {
+  // The unique node id.
+  string node_id = 1;
+  // The rank id of the node in the cluster.
+  uint32 rank_id = 2;
+  // The group name of goupt which need to initialize collective communication.
+  string group_name = 3;
+}
+
+
+message QueryUniqueIDRespMessage {
+  bool is_success = 1;
+  // The unique id used to initialize collective communication.
+  bytes unique_id = 2;
 }

@@ -32,6 +32,10 @@ constexpr char kMSGlobalGroupName[] = "ms_world_group";
 using ClusterContext = mindspore::distributed::cluster::ClusterContext;
 using CollectiveOpsImpl = mindspore::fl::server::CollectiveOpsImpl;
 using CommunicationGroupInfo = mindspore::fl::server::CommunicationGroupInfo;
+using ps::core::NodeCommand;
+
+// The time interval for send info or query info between worker and scheduler.
+constexpr uint32_t kWaitDuration = 3;
 
 // The collective communication library for MindSpore self developed communication framework.
 class MsCollectiveCommLib : public CollectiveCommunicationLib {
@@ -44,6 +48,11 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   bool Initialize(uint32_t global_rank, uint32_t global_rank_size) override;
 
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
+
+  bool AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) const override;
+
+  bool BroadcastUniqueID(const std::string &group_name, bool is_root_node, size_t root_info_size,
+                         void *root_info) const override;
 
   bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
                  const std::string &group_name, void *stream = nullptr) override;
@@ -64,6 +73,18 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
  private:
   MsCollectiveCommLib();
   ~MsCollectiveCommLib() override = default;
+
+  // Send host hash name to scheduler.
+  bool SendHostHashName(size_t host_hash_name) const;
+
+  // Query host hash names of all nodes from scheduler.
+  bool QueryHostHashNames(std::vector<size_t> *host_hash_names) const;
+
+  // Send unique id to scheduler.
+  bool SendUniqueID(const std::string &group_name, size_t root_info_size, const void *root_info) const;
+
+  // Query unique id from scheduler.
+  bool QueryUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) const;
 
   std::shared_ptr<ps::core::AbstractNode> node_;
 };

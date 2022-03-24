@@ -120,18 +120,14 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   // Step 3: Generate device information of the root node.
   CommunicationGroupPtr group = device_comm_lib_instance_->GetGroup(group_name);
   MS_EXCEPTION_IF_NULL(group);
+  bool is_root_node = (group->GetGroupRank(global_rank_id_) == 0);
   size_t root_info_size = 0;
   void *root_info = group->GenerateRootInfo(&root_info_size);
   MS_EXCEPTION_IF_NULL(root_info);
 
   // Step 4: Broadcast the device root information to all nodes on host side.
-  if (!host_comm_lib_instance_->Broadcast(root_info, root_info, root_info_size, TypeId::kNumberTypeInt8, 0,
-                                          group_name)) {
+  if (!host_comm_lib_instance_->BroadcastUniqueID(group_name, is_root_node, root_info_size, root_info)) {
     MS_LOG(ERROR) << "Broadcast for device root info failed on the host side.";
-    if (runtime::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
-      runtime::recovery::RecoveryContext::GetInstance()->set_recovery_status(
-        runtime::recovery::RecoveryErrCode::kBroadcastUniqueIDFailed);
-    }
     return false;
   }
 
@@ -305,7 +301,7 @@ bool CollectiveManager::AssignLocalRank() {
   // that local rank id won't repeat.
   size_t host_hash = std::hash<std::string>()(host_name);
   const uint32_t kGlobalRankSize = global_rank_size_;
-  size_t all_host_hashs[kGlobalRankSize];
+  std::vector<size_t> all_host_hashs(kGlobalRankSize);
   if (global_rank_id_ >= global_rank_size_) {
     MS_LOG(ERROR) << "The global rank id " << global_rank_id_ << " should be less than global rank size "
                   << global_rank_size_;
@@ -314,13 +310,7 @@ bool CollectiveManager::AssignLocalRank() {
   all_host_hashs[global_rank_id_] = host_hash;
 
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
-  // AllGather host names across the global communication group.
-  if (!host_comm_lib_instance_->AllGather(&host_hash, all_host_hashs, 1, TypeId::kNumberTypeUInt64,
-                                          host_global_group_name_)) {
-    if (runtime::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
-      runtime::recovery::RecoveryContext::GetInstance()->set_recovery_status(
-        runtime::recovery::RecoveryErrCode::kAllGatherHostNameFailed);
-    }
+  if (!host_comm_lib_instance_->AllGatherHostHashName(host_hash, &all_host_hashs)) {
     MS_LOG(ERROR) << "AllGather for host names failed.";
     return false;
   }

@@ -169,6 +169,13 @@ bool AbstractPSNode::HandleHeartbeatTimeout() {
   stop_heartbeat_thread->detach();
   return true;
 }
+
+void AbstractPSNode::RegisterInitCollectCommResphandler() {
+  handlers_[NodeCommand::SEND_HOST_NAME] = &AbstractPSNode::ProcessReceiveSchedulerResp;
+  handlers_[NodeCommand::QUERY_HOST_NAMES] = &AbstractPSNode::ProcessReceiveSchedulerResp;
+  handlers_[NodeCommand::SEND_UNIQUE_ID] = &AbstractPSNode::ProcessReceiveSchedulerResp;
+  handlers_[NodeCommand::QUERY_UNIQUE_ID] = &AbstractPSNode::ProcessReceiveSchedulerResp;
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

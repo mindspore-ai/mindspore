@@ -89,6 +89,9 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   void RegisterActorRouteTableServiceHandler();
   void InitializeActorRouteTableService();
 
+  // Register collective communication initialization service.
+  virtual void RegisterInitCollectCommServiceHandler() {}
+
   const std::shared_ptr<TcpClient> &GetOrCreateClient(const NodeInfo &node_info);
 
   void ProcessHeartbeat(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
