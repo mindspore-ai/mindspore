@@ -119,7 +119,7 @@ class _AddFakeQuantAfterSubCell(nn.Cell):
         self.max_init = 6
         self.min_init = -6
 
-        if OptimizeOption.LEARNED_SCALE in kwargs["optimize_option"]:
+        if kwargs.get("optimize_option") is not None and OptimizeOption.LEARNED_SCALE in kwargs["optimize_option"]:
             self.mode = "LEARNED_SCALE"
             self.max_init = 16
             self.min_init = -16
@@ -244,24 +244,24 @@ class QuantizationAwareTraining(Quantizer):
                 raise ValueError("input `{}` len should less then 2".format(name))
             return value
 
-        quant_delay = convert2list("quant delay", quant_delay)
-        quant_dtype = convert2list("quant dtype", quant_dtype)
-        per_channel = convert2list("per channel", per_channel)
-        symmetric = convert2list("symmetric", symmetric)
-        narrow_range = convert2list("narrow range", narrow_range)
+        quant_delay_list = convert2list("quant delay", quant_delay)
+        quant_dtype_list = convert2list("quant dtype", quant_dtype)
+        per_channel_list = convert2list("per channel", per_channel)
+        symmetric_list = convert2list("symmetric", symmetric)
+        narrow_range_list = convert2list("narrow range", narrow_range)
 
-        self.weight_qdelay = Validator.check_non_negative_int(quant_delay[0], "quant delay")
-        self.act_qdelay = Validator.check_int(quant_delay[-1], 0, Rel.GE, "quant delay")
+        self.weight_qdelay = Validator.check_non_negative_int(quant_delay_list[0], "quant delay")
+        self.act_qdelay = Validator.check_int(quant_delay_list[-1], 0, Rel.GE, "quant delay")
         self.bn_fold = Validator.check_bool(bn_fold, "bn fold")
         self.freeze_bn = Validator.check_non_negative_int(freeze_bn, "freeze bn")
-        self.weight_dtype = Validator.check_isinstance("weights dtype", quant_dtype[0], QuantDtype)
-        self.act_dtype = Validator.check_isinstance("activations dtype", quant_dtype[-1], QuantDtype)
-        self.weight_channel = Validator.check_bool(per_channel[0], "per channel")
-        self.act_channel = Validator.check_bool(per_channel[-1], "per channel")
-        self.weight_symmetric = Validator.check_bool(symmetric[0], "symmetric")
-        self.act_symmetric = Validator.check_bool(symmetric[-1], "symmetric")
-        self.weight_range = Validator.check_bool(narrow_range[0], "narrow range")
-        self.act_range = Validator.check_bool(narrow_range[-1], "narrow range")
+        self.weight_dtype = Validator.check_isinstance("weights dtype", quant_dtype_list[0], QuantDtype)
+        self.act_dtype = Validator.check_isinstance("activations dtype", quant_dtype_list[-1], QuantDtype)
+        self.weight_channel = Validator.check_bool(per_channel_list[0], "per channel")
+        self.act_channel = Validator.check_bool(per_channel_list[-1], "per channel")
+        self.weight_symmetric = Validator.check_bool(symmetric_list[0], "symmetric")
+        self.act_symmetric = Validator.check_bool(symmetric_list[-1], "symmetric")
+        self.weight_range = Validator.check_bool(narrow_range_list[0], "narrow range")
+        self.act_range = Validator.check_bool(narrow_range_list[-1], "narrow range")
         self.one_conv_fold = Validator.check_bool(one_conv_fold, "one conv fold")
         self._convert_method_map = {nn.Conv2dBnAct: self._convert_conv,
                                     nn.DenseBnAct: self._convert_dense}
@@ -279,11 +279,11 @@ class QuantizationAwareTraining(Quantizer):
                                  "but get freeze_bn={}".format(self.freeze_bn))
             if self.weight_qdelay != 0 or self.act_qdelay != 0:
                 raise ValueError("OptimizeOption.LEARNED_SCALE currently only support quant_delay=(0, 0)")
-        self.quant_config = create_quant_config(quant_delay=quant_delay,
-                                                quant_dtype=quant_dtype,
-                                                per_channel=per_channel,
-                                                symmetric=symmetric,
-                                                narrow_range=narrow_range,
+        self.quant_config = create_quant_config(quant_delay=quant_delay_list,
+                                                quant_dtype=quant_dtype_list,
+                                                per_channel=per_channel_list,
+                                                symmetric=symmetric_list,
+                                                narrow_range=narrow_range_list,
                                                 mode=self.mode)
         self.eps = 1e-5
 
@@ -600,7 +600,9 @@ class QuantizationAwareTraining(Quantizer):
                 continue
             else:
                 if isinstance(cell, (nn.Conv2dBnAct, nn.DenseBnAct)):
-                    cell.weight_dtype = type_map[quantizable_layer_bit_dict[i][0]]
+                    cell.weight_dtype = type_map.get(quantizable_layer_bit_dict[i][0])
+                    if cell.weight_dtype is None:
+                        raise ValueError("Input strategy is invalid: ", quantizable_layer_bit_dict[i][0])
                     if isinstance(cell, nn.Conv2dBnAct):
                         subcell_weight_para = cell.conv.weight.data.asnumpy()
                         if hasattr(cell.conv, 'gamma'):
