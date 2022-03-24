@@ -24,10 +24,6 @@
 namespace mindspore {
 namespace numa {
 namespace {
-static constexpr int kSuccess = 0;
-static constexpr int kBitsPerByte = 8;
-static constexpr auto kBitsPerMask = static_cast<int>(sizeof(uint64_t) * kBitsPerByte);
-constexpr size_t kMaxValidLineCount = 10;
 static auto kNodeBase = "/sys/devices/system/node/node";
 }  // namespace
 
