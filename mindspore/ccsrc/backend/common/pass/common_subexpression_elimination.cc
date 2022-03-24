@@ -77,8 +77,9 @@ void EliminateDuplicatedTupleGetItem(const FuncGraphPtr &graph, const FuncGraphM
     auto &getitem_list = item.second;
     if (getitem_list.size() > 1) {
       auto first_getitem = getitem_list[0];
-      std::for_each(getitem_list.begin() + 1, getitem_list.end(),
-                    [first_getitem, manager](const AnfNodePtr &getitem) { manager->Replace(getitem, first_getitem); });
+      std::for_each(getitem_list.begin() + 1, getitem_list.end(), [first_getitem, manager](const AnfNodePtr &getitem) {
+        (void)manager->Replace(getitem, first_getitem);
+      });
     }
   }
 }

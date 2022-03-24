@@ -17,6 +17,8 @@
 #include "include/common/duplex_pipe.h"
 
 namespace mindspore {
+DuplexPipe::~DuplexPipe() {}
+
 int DuplexPipe::Open(const std::initializer_list<std::string> &arg_list, bool append_fds) {
   DP_EXCEPTION << "Not support for Windows by now.";
 }
@@ -35,7 +37,7 @@ DuplexPipe &DuplexPipe::operator<<(const std::string &buf) { DP_EXCEPTION << "No
 
 DuplexPipe &DuplexPipe::operator>>(std::string &buf) { DP_EXCEPTION << "Not support for Windows by now."; }
 
-void DuplexPipe::Close() { DP_EXCEPTION << "Not support for Windows by now."; }
+void DuplexPipe::Close() noexcept { DP_EXCEPTION << "Not support for Windows by now."; }
 
 void DuplexPipe::SignalHandler::SetAlarm(unsigned int interval_secs) const {
   DP_EXCEPTION << "Not support for Windows by now.";

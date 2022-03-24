@@ -80,7 +80,7 @@ class KernelBuildClient {
       }
     }
   }
-  void Close() {
+  void Close() noexcept {
     if (init_) {
       dp_->Close();
       init_ = false;
@@ -88,12 +88,12 @@ class KernelBuildClient {
   }
 
   // Send a request and fetch its response
-  std::string SendRequest(std::string data) {
+  std::string SendRequest(const std::string &data) {
     std::lock_guard<std::mutex> locker(mutex_);
     Request(data);
     return Response();
   }
-  void Request(std::string req) {
+  void Request(const std::string &req) {
     if (!init_) {
       MS_LOG(EXCEPTION) << "Try to send request before Open()";
     }
@@ -182,7 +182,7 @@ static std::string GetScriptFilePath(const std::string &cmd_env, const std::stri
       }
     }
   }
-  pclose(fpipe);
+  (void)pclose(fpipe);
   const std::string py_suffix = ".py";
   if (result.empty() || result.rfind(py_suffix) != (result.length() - py_suffix.length())) {
     MS_LOG(EXCEPTION) << "py file seems incorrect, result: {" << result << "}";
@@ -217,10 +217,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
   constexpr inline static auto kFormat = "FORMAT";
   constexpr inline static auto kSupport = "SUPPORT";
 
-  static AscendKernelBuildClient &Instance() {
-    static AscendKernelBuildClient instance;
-    return instance;
-  }
+  static AscendKernelBuildClient &Instance();
 
   std::string GetEnv() override { return GetPyExe(); }
 
@@ -237,9 +234,11 @@ class AscendKernelBuildClient : public KernelBuildClient {
   AscendKernelBuildClient(AscendKernelBuildClient &&) = delete;
   AscendKernelBuildClient &operator=(AscendKernelBuildClient &&) = delete;
 
+ protected:
+  ~AscendKernelBuildClient() override { Close(); }
+
  private:
   AscendKernelBuildClient() { Open(); }
-  ~AscendKernelBuildClient() override { Close(); }
 };
 
 class AkgKernelBuildClient : public KernelBuildClient {
@@ -257,10 +256,7 @@ class AkgKernelBuildClient : public KernelBuildClient {
 
   constexpr inline static auto kServerScript = "kernel_build_server_akg.py";
 
-  static AkgKernelBuildClient &Instance() {
-    static AkgKernelBuildClient instance;
-    return instance;
-  }
+  static AkgKernelBuildClient &Instance();
 
   std::string GetEnv() override { return GetPyExe(); }
 
@@ -275,9 +271,11 @@ class AkgKernelBuildClient : public KernelBuildClient {
   AkgKernelBuildClient(AkgKernelBuildClient &&) = delete;
   AkgKernelBuildClient &operator=(AkgKernelBuildClient &&) = delete;
 
+ protected:
+  ~AkgKernelBuildClient() override { Close(); }
+
  private:
   AkgKernelBuildClient() { Open(); }
-  ~AkgKernelBuildClient() override { Close(); }
 };
 }  // namespace kernel
 }  // namespace mindspore
