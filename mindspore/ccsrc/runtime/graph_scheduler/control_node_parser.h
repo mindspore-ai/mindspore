@@ -97,6 +97,7 @@ struct KernelGraphGroupInfo {
   size_t level_;
   std::string group_name_;
   std::set<KernelGraphPtr> graphs_;
+  std::set<AnfNodePtr> monad_inputs_;
   std::map<KernelWithIndex, const DeviceContext *> front_input_nodes_;
   FrontToBackendKernelWithContext front_output_nodes_;
 };

@@ -1144,6 +1144,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     MS_EXCEPTION_IF_NULL(exit_actor);
     LinkControlArrow(copy_actor.get(), exit_actor);
   }
+  LinkControlArrowByKernelGraphGroup(graph_compiler_info);
 }
 
 void ControlNodeScheduler::LinkControlArrowForEntranceActor(ActorSet *const actor_set,
@@ -1362,6 +1363,25 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
   }
   MS_LOG(DEBUG) << "Link auto monad control arrow from node:" << from_node->DebugString()
                 << " to actor:" << to_actor->GetAID() << " end";
+}
+
+void ControlNodeScheduler::LinkControlArrowByKernelGraphGroup(const GraphCompilerInfo &graph_compiler_info) {
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  for (const auto &graph_group : parser->kernel_graph_group_infos_) {
+    MS_EXCEPTION_IF_NULL(graph_group);
+    if (!graph_group->need_stack_) {
+      continue;
+    }
+    auto stack_actor = FetchActor(graph_group->group_name_ + kStackActorNameSuffix);
+    MS_EXCEPTION_IF_NULL(stack_actor);
+    auto to_actor = dynamic_cast<ControlActor *>(stack_actor);
+    MS_EXCEPTION_IF_NULL(to_actor);
+    for (const auto &monad_input : graph_group->monad_inputs_) {
+      LinkControlArrowByAutoMonad(to_actor, monad_input, parser);
+    }
+  }
 }
 
 void ControlNodeScheduler::LinkBranchIDArrowForControlActor(ControlActorSet *const control_actor_set) {
