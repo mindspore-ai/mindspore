@@ -47,6 +47,11 @@ struct OperatorLabel {
   bool operator<(const OperatorLabel &label) const;
   bool operator==(const OperatorLabel &label) const;
   bool operator!=(const OperatorLabel &label) const;
+
+  // Judge whether the labels are equal but with looser conditions according to different modes. For example, this
+  // method returns true when comparing the workers in PS mode.
+  bool LooseEqual(const OperatorLabel &label) const;
+
   std::string to_string() const;
 };
 
@@ -273,6 +278,10 @@ class ParameterServerMode : public DistributedExecutionMode {
 
   // Normally after gradients accumulation, the mean value should be calculated.
   CNodePtr CreateGradMeanNode(const AnfNodePtr &gradient, size_t divisor);
+
+  // Create MakeTupe and TupleGetItem nodes for the multiple inputs.
+  std::pair<CNodePtr, CNodePtr> CreateNodesForMakeTuple(const AnfNodePtr &input, size_t input_index,
+                                                        size_t total_inputs_number);
 
   // Create node with multiple inputs. Some of the inputs could be fake nodes.
   // 'many_to_one_node_name' represents the name of the node to be created.
