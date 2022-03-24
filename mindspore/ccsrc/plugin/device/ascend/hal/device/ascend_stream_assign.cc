@@ -667,8 +667,9 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
   std::map<uint32_t, std::vector<CNodePtr>> graph_nodes_map;
   ClassifyNodeByGraph(independent_node_list, &graph_nodes_map);
   for (auto iter_graph : graph_nodes_map) {
-    independent_stream_ = AssignNodeStreamInOrder(iter_graph.second);
-    independent_graph_map_[iter_graph.first] = independent_stream_;
+    auto stream_set = AssignNodeStreamInOrder(iter_graph.second);
+    independent_stream_.insert(stream_set.begin(), stream_set.end());
+    independent_graph_map_[iter_graph.first] = stream_set;
   }
 
   auto total_stream_num =
