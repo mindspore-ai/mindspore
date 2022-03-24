@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+import pytest
 import numpy as np
 
 import mindspore as ms
-import mindspore.ops.operations as P
-from mindspore import context, Tensor
+from mindspore import context
+from mindspore import ops, Tensor, dtype, ms_function
 
 
 def test_cast():
-    """ tests cast for same dtype"""
+    """
+    Feature: test cast operator
+    Description: Cast original data type to target data type
+    Expectation: success
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_x = Tensor(input_np)
     type_dst = ms.float32
-    cast = P.Cast()
+    cast = ops.Cast()
     result = cast(input_x, type_dst)
     assert result.dtype == type_dst
+
+
+@ms_function
+def expand_tensor(a, b):
+    out = ops.tile(a, b)
+    return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tile_eliminate():
+    """
+    Feature: tile_eliminate
+    Description: All value of multiplier is '1' but length of multiplier is greater than tensor dims, can't do eliminate
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    tensor_ = Tensor(np.ndarray([1, 448, 448]), dtype=dtype.float32)
+    out = ops.tile(tensor_, (1, 1, 1))
+    assert out.shape == (1, 448, 448)
+    out = ops.tile(tensor_, (1, 1, 1, 1))
+    assert out.shape == (1, 1, 448, 448)
+    out = expand_tensor(tensor_, (1, 1, 1))
+    assert out.shape == (1, 448, 448)
+    out = expand_tensor(tensor_, (1, 1, 1, 1))
+    assert out.shape == (1, 1, 448, 448)

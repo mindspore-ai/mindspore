@@ -2079,7 +2079,8 @@ class Tile(PrimitiveWithInfer):
             raise TypeError(f"For '{self.name}', the type of 'input_x' should be Tensor, "
                             f"but got {type(base_tensor).__name__}.")
         if all(v == 1 for v in multiplier) and len(base_tensor.shape) >= len(multiplier):
-            return (True, base_tensor.copy())
+            ret = Identity()(base_tensor)
+            return (True, ret)
         return (False, None)
 
     def _get_shape_and_range(self, x, multiples):
