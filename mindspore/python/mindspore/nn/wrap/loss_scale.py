@@ -521,18 +521,16 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         self.opt_shard = _get_enable_parallel_optimizer()
 
     def construct(self, *inputs):
-        weights = self.weights
         loss = self.network(*inputs)
         scaling_sens = self.scale_sense
         init = self.alloc_status()
-        status_clear = self.clear_before_grad(init)
         scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
-        grads = self.grad(self.network, weights)(*inputs, scaling_sens_filled)
+        grads = self.grad(self.network, self.weights)(*inputs, scaling_sens_filled)
         init = F.depend(init, grads)
         get_status = self.get_status(init)
         init = F.depend(init, get_status)
         flag_sum = self.reduce_sum(init, (0,))
-        loss = F.depend(loss, status_clear)
+        loss = F.depend(loss, self.clear_before_grad(init))
         if self.opt_shard:
             grads = self.grad_reducer(grads)
             grads = self.hyper_map(F.partial(shard_grad_scale, scaling_sens * self.degree), grads, self.accu_grads)
