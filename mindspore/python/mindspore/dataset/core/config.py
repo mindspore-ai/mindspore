@@ -605,7 +605,7 @@ def set_sending_batches(batch_num):
          increase, default is 0 which means will send all batches in dataset.
 
     Raises:
-        TypeError: If batch_num is not in int type.
+        TypeError: If batch_num is not of type int.
 
     Examples:
         >>> # Set a new global configuration value for the sending batches

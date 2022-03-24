@@ -25,8 +25,8 @@ mindspore.dataset.vision.c_transforms.Pad
 
     **异常：**
 
-    - **TypeError** - 如果 `padding` 不是int或sequence类型或元素不为int类型。
-    - **TypeError** - 如果 `fill_value` 不是int或tuple类型或元素不为int类型。
+    - **TypeError** - 如果 `padding` 不是整型或整型序列类型。
+    - **TypeError** - 如果 `fill_value` 不是整型或整型元组类型。
     - **TypeError** - 如果 `padding_mode` 不是 :class:`mindspore.dataset.vision.Border` 的类型。
     - **ValueError** - 如果 `padding` 为负数。
     - **ValueError** - 如果 `fill_value` 不在 [0, 255] 范围内。

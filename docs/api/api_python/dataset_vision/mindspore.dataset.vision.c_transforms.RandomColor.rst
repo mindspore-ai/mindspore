@@ -12,6 +12,6 @@ mindspore.dataset.vision.c_transforms.RandomColor
 
     **异常：**
 
-    - **TypeError** - 如果 `degrees` 不是sequence类型或元素不为float类型。
+    - **TypeError** - 如果 `degrees` 不是浮点序列类型。
     - **ValueError** - 如果 `degrees` 为负数。
     - **RuntimeError** - 如果输入图像的shape不是 <H, W, C>。

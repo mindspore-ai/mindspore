@@ -31,10 +31,10 @@ mindspore.dataset.vision.c_transforms.RandomCrop
 
     **异常：**
 
-    - **TypeError** - 如果 `size` 不是int或sequence类型或元素不为int类型。
-    - **TypeError** - 如果 `padding` 不是int或sequence类型或元素不为int类型。
-    - **TypeError** - 如果 `pad_if_needed` 不是bool类型。
-    - **TypeError** - 如果 `fill_value` 不是int或sequence类型或元素不为int类型。
+    - **TypeError** - 如果 `size` 不是整型或整型序列类型。
+    - **TypeError** - 如果 `padding` 不是整型或整型序列类型。
+    - **TypeError** - 如果 `pad_if_needed` 不是布尔类型。
+    - **TypeError** - 如果 `fill_value` 不是整型或整型序列类型。
     - **TypeError** - 如果 `padding_mode` 不是 :class:`mindspore.dataset.vision.Border` 的类型。
     - **ValueError** - 如果 `size` 不是正数。
     - **ValueError** - 如果 `padding` 为负数。

@@ -17,8 +17,8 @@ mindspore.dataset.vision.c_transforms.GaussianBlur
 
     **异常：**
 
-    - **TypeError** - 如果 `kernel_size` 不是int或sequence类型或元素不为int类型。
-    - **TypeError** - 如果 `sigma` 不是float类型或sequence类型或元素不为float类型。
+    - **TypeError** - 如果 `kernel_size` 不是整型或整型序列类型。
+    - **TypeError** - 如果 `sigma` 不是浮点或浮点序列类型。
     - **ValueError** - 如果 `kernel_size` 不是正数和奇数。
     - **ValueError** - 如果 `sigma` 不是正数。
     - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。

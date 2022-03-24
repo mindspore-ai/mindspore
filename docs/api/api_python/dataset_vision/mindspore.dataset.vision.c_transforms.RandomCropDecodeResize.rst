@@ -25,11 +25,11 @@ mindspore.dataset.vision.c_transforms.RandomCropDecodeResize
 
     **异常：**
 
-    - **TypeError** - 如果 `size` 不是int或sequence类型或元素不为int类型。
-    - **TypeError** - 如果 `scale` 不是tuple类型。
-    - **TypeError** - 如果 `ratio` 不是tuple类型。
+    - **TypeError** - 如果 `size` 不是整型或整型序列类型。
+    - **TypeError** - 如果 `scale` 不是元组类型。
+    - **TypeError** - 如果 `ratio` 不是元组类型。
     - **TypeError** - 如果 `interpolation` 不是 :class:`mindspore.dataset.vision.Inter` 的类型。
-    - **TypeError** - 如果 `max_attempts` 不是int类型。
+    - **TypeError** - 如果 `max_attempts` 不是整型类型。
     - **ValueError** - 如果 `size` 不是正数。
     - **ValueError** - 如果 `scale` 为负数。
     - **ValueError** - 如果 `ratio` 为负数。

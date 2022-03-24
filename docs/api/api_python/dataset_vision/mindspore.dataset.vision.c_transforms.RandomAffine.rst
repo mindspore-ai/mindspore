@@ -31,12 +31,12 @@ mindspore.dataset.vision.c_transforms.RandomAffine
 
     **异常：**
 
-    - **TypeError** - 如果 `degrees` 不是int、float或sequence类型。
-    - **TypeError** - 如果 `translate` 不是sequence类型。
-    - **TypeError** - 如果 `scale` 不是sequence类型。
-    - **TypeError** - 如果 `shear` 不是int、float或sequence类型。
+    - **TypeError** - 如果 `degrees` 不是整型、浮点或序列类型。
+    - **TypeError** - 如果 `translate` 不是序列类型。
+    - **TypeError** - 如果 `scale` 不是序列类型。
+    - **TypeError** - 如果 `shear` 不是整型、浮点或序列类型。
     - **TypeError** - 如果 `resample` 不是 :class:`mindspore.dataset.vision.Inter` 的类型。
-    - **TypeError** - 如果 `fill_value` 不是int或tuple类型或元素不为int类型。
+    - **TypeError** - 如果 `fill_value` 不是整型或整型元组类型。
     - **ValueError** - 如果 `degrees` 为负数。
     - **ValueError** - 如果 `translate` 不在范围 [-1.0, 1.0] 内。
     - **ValueError** - 如果 `scale` 为负数。
