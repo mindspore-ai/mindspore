@@ -389,7 +389,8 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
   }
   constexpr int64_t kDimTwo = 2;
   if (indices_shp[kIndexOne] != kDimTwo) {
-    MS_EXCEPTION(ValueError) << "COOTensor only support " << kDimTwo << " dimensions, but got " << indices_shp[1];
+    MS_EXCEPTION(ValueError) << "Indices must be a 2 dimensional tensor, and the second dimension must be 2, but got "
+                             << indices_shp[kIndexOne];
   }
 
   for (const auto &elem_type : dense_shape->ElementsType()) {
@@ -545,10 +546,13 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
     int64_t axis_value = GetValue<int64_t>(axis->BuildValue());
     int64_t dim = static_cast<int64_t>(sparse_shape.size());
     if (axis_value < -dim || axis_value >= dim) {
-      MS_LOG(EXCEPTION) << "axis should be in [" << -dim << ", " << dim << "). But got axis = " << axis_value;
+      MS_EXCEPTION(ValueError) << "axis should be in [" << -dim << ", " << dim << "). But got axis = " << axis_value;
     }
     if (axis_value >= -dim && axis_value < 0) {
       axis_value += dim;
+    }
+    if (axis_value != 1) {
+      MS_EXCEPTION(ValueError) << "axis must be 1, but got " << axis_value;
     }
     out_shape[LongToSize(axis_value)] = 1;
     primitive->set_attr(kCSRAxis, MakeValue(axis_value));

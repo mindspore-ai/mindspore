@@ -2426,10 +2426,10 @@ class COOTensor(COOTensor_):
     """
     A sparse representation of a set of nonzero elements from a tensor at given indices.
 
-    For a tensor dense, its COOTensor(indices, values, dense_shape) has
+    For a tensor dense, its COOTensor(indices, values, shape) has
     `dense[indices[i]] = values[i]`.
 
-    For example, if indices is [[0, 1], [1, 2]], values is [1, 2], dense_shape is
+    For example, if indices is [[0, 1], [1, 2]], values is [1, 2], shape is
     (3, 4), then the dense representation of the sparse tensor will be:
 
     .. code-block::
@@ -2839,7 +2839,7 @@ class CSRTensor(CSRTensor_):
             axis (int) - The dimensions to reduce.
 
         Returns:
-            Tensor, the dtype is the same as `sparse_tensor.values`.
+            Tensor, the dtype is the same as `CSRTensor.values`.
 
         Supported Platforms:
             ``GPU`` ``CPU``
