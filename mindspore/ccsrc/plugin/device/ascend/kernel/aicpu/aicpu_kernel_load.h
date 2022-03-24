@@ -62,7 +62,7 @@ class AicpuOpKernelLoad {
  private:
   bool GetBinaryFileName(const std::string &so_name, const std::string &bin_folder_path, std::string *bin_file_path);
   bool ReadBytesFromBinaryFile(const std::string &file_name, std::vector<char> *buffer) const;
-  bool GetSoNeedLoadPath(const std::string &so_name, std::string *file_path) const;
+  bool GetSoNeedLoadPath(std::string *file_path) const;
   bool PackageBinaryFile(const std::string &so_name, std::map<std::string, OpKernelBinPtr> *so_name_with_bin_info);
   bool CacheBinaryFileToDevice(const uintptr_t &resource_id, std::vector<void *> *allocated_mem, void **batch_args);
 

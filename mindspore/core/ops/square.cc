@@ -74,7 +74,6 @@ ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
     return nullptr;
   }
   auto x_tensor = x->cast<tensor::TensorPtr>();
-
   if (x_tensor == nullptr) {
     return nullptr;
   }

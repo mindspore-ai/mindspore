@@ -90,6 +90,5 @@ MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
   ReverseSequenceFwdGpuKernelMod, bool, int64_t)
-
 }  // namespace kernel
 }  // namespace mindspore

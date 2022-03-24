@@ -91,7 +91,7 @@ bool AicpuOpKernelLoad::ReadBytesFromBinaryFile(const std::string &file_name, st
   return true;
 }
 
-bool AicpuOpKernelLoad::GetSoNeedLoadPath(const std::string &so_name, std::string *file_path) const {
+bool AicpuOpKernelLoad::GetSoNeedLoadPath(std::string *file_path) const {
   MS_EXCEPTION_IF_NULL(file_path);
   Dl_info dl_info;
   if (dladdr(reinterpret_cast<void *>(const_cast<AicpuOpKernelLoad *>(this)), &dl_info) == 0) {
@@ -106,7 +106,6 @@ bool AicpuOpKernelLoad::GetSoNeedLoadPath(const std::string &so_name, std::strin
     return false;
   }
   auto real_cust_kernel_so_path = cust_kernel_so_path.substr(0, pos) + "/";
-
   if (real_cust_kernel_so_path.size() > PATH_MAX) {
     MS_LOG(ERROR) << "Current path [" << real_cust_kernel_so_path << "] is too long.";
     return false;
@@ -119,7 +118,7 @@ bool AicpuOpKernelLoad::GetSoNeedLoadPath(const std::string &so_name, std::strin
 bool AicpuOpKernelLoad::PackageBinaryFile(const std::string &so_name,
                                           std::map<std::string, OpKernelBinPtr> *so_name_with_bin_info) {
   std::string bin_folder_path;
-  bool ret = GetSoNeedLoadPath(so_name, &bin_folder_path);
+  bool ret = GetSoNeedLoadPath(&bin_folder_path);
   if (!ret) {
     MS_LOG(ERROR) << "GetSoNeedLoadPath failed.";
     return false;
@@ -144,7 +143,7 @@ bool AicpuOpKernelLoad::PackageBinaryFile(const std::string &so_name,
     MS_LOG(ERROR) << "Create OpKernelBin object failed.";
     return false;
   }
-  so_name_with_bin_info->insert({so_name, cust_aicpu_kernel_ptr});
+  so_name_with_bin_info->emplace(so_name, cust_aicpu_kernel_ptr);
 
   return true;
 }

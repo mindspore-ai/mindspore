@@ -80,6 +80,5 @@ AbstractBasePtr IndexAddInfer(const abstract::AnalysisEnginePtr &, const Primiti
   return abstract::MakeAbstract(IndexAddInferShape(primitive, input_args), IndexAddInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(IndexAdd, prim::kPrimIndexAdd, IndexAddInfer, nullptr, true);
-
 }  // namespace ops
 }  // namespace mindspore

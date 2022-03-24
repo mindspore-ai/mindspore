@@ -77,7 +77,6 @@ ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
     return nullptr;
   }
   auto x_tensor = x->cast<tensor::TensorPtr>();
-
   if (x_tensor == nullptr) {
     return nullptr;
   }
