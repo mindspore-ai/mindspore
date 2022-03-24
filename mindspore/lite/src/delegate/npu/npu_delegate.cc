@@ -256,9 +256,13 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
     if (op_func_lists_.find(node_type) != op_func_lists_.end()) {
       npu_op = op_func_lists_[node_type](primitive, kernel->inputs(), kernel->outputs(), name);
     } else {
-      MS_LOG(DEBUG) << "Unsupported op type for NPU.";
+      MS_LOG(DEBUG) << "Unsupported op type for NPU: " << node_type;
       return nullptr;
     }
+  }
+  if (npu_op == nullptr) {
+    MS_LOG(DEBUG) << "Get NPU op failed, op name: " << name;
+    return nullptr;
   }
 
   for (int i = 0; i < kernel->inputs().size(); i++) {
@@ -274,11 +278,9 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
     }
   }
 
-  if (npu_op != nullptr) {
-    MS_LOG(DEBUG) << "kernel: [" << kernel->name().c_str() << "] op success. "
-                  << "op_type: " << lite::PrimitiveCurVersionTypeName(kernel->type()) << ", "
-                  << "arch: " << kKirinNPU;
-  }
+  MS_LOG(DEBUG) << "kernel: [" << kernel->name().c_str() << "] op success. "
+                << "op_type: " << lite::PrimitiveCurVersionTypeName(kernel->type()) << ", "
+                << "arch: " << kKirinNPU;
   return npu_op;
 }
 
