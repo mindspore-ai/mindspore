@@ -293,7 +293,7 @@ class BoundingBoxAugment(ImageTensorOperation):
     Raises:
         TypeError: If `transform` is an image processing operation in :class:`mindspore.dataset.vision.c_transforms`.
         TypeError: If `ratio` is not of type float.
-        ValueError: If `ratio` is not in range [0, 1].
+        ValueError: If `ratio` is not in range [0.0, 1.0].
         RuntimeError: If given bounding box is invalid.
 
     Supported Platforms:

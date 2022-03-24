@@ -7,8 +7,8 @@ mindspore.dataset.transforms.c_transforms.Fill
 
     **参数：**
 
-    - **fill_value** (Union[str, bytes, int, float, bool]) - 用于填充Tensor的值。
+    - **fill_value** (Union[string, bytes, int, float, bool]) - 用于填充Tensor的值。
 
     **异常：**
       
-    - **TypeError** - 参数 `fill_value` 类型不为 string、float、bool、int 或 bytes。
+    - **TypeError** - 参数 `fill_value` 类型不为 str、float、bool、int 或 bytes。

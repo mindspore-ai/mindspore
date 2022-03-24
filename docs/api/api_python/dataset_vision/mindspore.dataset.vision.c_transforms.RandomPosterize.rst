@@ -12,6 +12,6 @@ mindspore.dataset.vision.c_transforms.RandomPosterize
 
     **异常：**
 
-    - **TypeError** - 如果 `bits` 不是int或整数序列类型。
+    - **TypeError** - 如果 `bits` 不是整型或整型序列类型。
     - **ValueError** - 如果 `bits` 不在 [1, 8] 范围内。
     - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。

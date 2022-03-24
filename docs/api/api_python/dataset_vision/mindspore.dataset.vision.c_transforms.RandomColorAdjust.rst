@@ -22,10 +22,10 @@ mindspore.dataset.vision.c_transforms.RandomColorAdjust
 
     **异常：**
 
-    - **TypeError** - 如果 `brightness` 不是float或sequence类型或元素不为float类型。
-    - **TypeError** - 如果 `contrast` 不是float或sequence类型或元素不为float类型。
-    - **TypeError** - 如果 `saturation` 不是float或sequence类型或元素不为float类型。
-    - **TypeError** - 如果 `hue` 不是float或sequence类型或元素不为float类型。
+    - **TypeError** - 如果 `brightness` 不是浮点或浮点序列类型。
+    - **TypeError** - 如果 `contrast` 不是浮点或浮点序列类型。
+    - **TypeError** - 如果 `saturation` 不是浮点或浮点序列类型。
+    - **TypeError** - 如果 `hue` 不是浮点或浮点序列类型。
     - **ValueError** - 如果 `brightness` 为负数。
     - **ValueError** - 如果 `contrast` 为负数。
     - **ValueError** - 如果 `saturation` 为负数。

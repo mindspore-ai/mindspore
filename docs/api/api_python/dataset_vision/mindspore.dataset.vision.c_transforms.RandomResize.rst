@@ -13,6 +13,6 @@ mindspore.dataset.vision.c_transforms.RandomResize
 
     **异常：**
 
-    - **TypeError** - 如果 `size` 不是int或sequence类型或元素不为int类型。
+    - **TypeError** - 如果 `size` 不是整型或整型序列类型。
     - **ValueError** - 如果 `size` 不是正数。
     - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。
