@@ -317,4 +317,3 @@ def type_size_in_bytes(dtype):
     if not isinstance(dtype, typing.Type):
         raise TypeError("The argument `dtype` should be instance of ", typing.Type)
     return typing.type_size_in_bytes(dtype)
-

@@ -583,7 +583,9 @@ class Parameter(Tensor_):
         self.sliced = slice_shape
         return self
 
-    def _get_init_data_args(self, layout=None):
+    @staticmethod
+    def _get_init_data_args(layout=None):
+        """Get the data layout args."""
         init_data_args = ()
         if layout:
             if not isinstance(layout, tuple):
