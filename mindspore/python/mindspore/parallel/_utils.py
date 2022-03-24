@@ -186,9 +186,11 @@ def _get_device_num():
         device_num = auto_parallel_context().get_device_num()
     return device_num
 
+
 def _get_stage_device_num():
     """Get the device number of each pipeline stage"""
     return _get_device_num() // _get_pipeline_stages()
+
 
 def _get_global_rank():
     """Get the global rank."""
