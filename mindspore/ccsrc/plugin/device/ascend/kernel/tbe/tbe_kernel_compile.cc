@@ -137,13 +137,13 @@ void PrintInfo(const nlohmann::json &info, const std::string &job_name, const in
   auto message = GetJsonValue<std::string>(info, kMessage);
   if (level == 0) {
     MS_LOG(DEBUG) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == static_cast<size_t>(INFO)) {
+  } else if (level == static_cast<int>(INFO)) {
     MS_LOG(INFO) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == static_cast<size_t>(WARNING)) {
+  } else if (level == static_cast<int>(WARNING)) {
     MS_LOG(WARNING) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == static_cast<size_t>(ERROR)) {
+  } else if (level == static_cast<int>(ERROR)) {
     MS_LOG(ERROR) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == static_cast<size_t>(EXCEPTION)) {
+  } else if (level == static_cast<int>(EXCEPTION)) {
     ReportToErrorManager(message);
   }
 }
