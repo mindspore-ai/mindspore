@@ -1242,7 +1242,7 @@ def tril(m, k=0):
         m = m.astype(mstype.float32)
         assist = nn_tril(m.shape, mstype.float32, k)
     # MindSpore binary op do not support bool
-    elif dtype == mstype.Bool:
+    elif dtype == mstype.bool_:
         m = m.astype(mstype.float32)
         assist = nn_tril(m.shape, mstype.float32, k)
     else:
@@ -1286,6 +1286,10 @@ def triu(m, k=0):
     device_target = _device_target()
     # Only Ascend hardware will reduce accuracy
     if device_target == "Ascend":
+        m = m.astype(mstype.float32)
+        assist = nn_triu(m.shape, mstype.float32, k)
+    # MindSpore binary op do not support bool
+    elif dtype == mstype.bool_:
         m = m.astype(mstype.float32)
         assist = nn_triu(m.shape, mstype.float32, k)
     else:
