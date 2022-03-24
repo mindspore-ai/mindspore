@@ -366,26 +366,26 @@ bool CheckDeviceNum(const std::vector<std::vector<int64_t>> &strategies, const i
   return true;
 }
 
-void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &out_axes, const int64_t &device_num) {
-  auto out_axes_tuple = out_axes->cast<ValueNodePtr>();
+void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &out_strategy, const int64_t &device_num) {
+  auto out_strategy_tuple = out_strategy->cast<ValueNodePtr>();
   bool need_default_strategy = false;
-  size_t out_axes_size = 0;
-  if (!IsValueNode<ValueTuple>(out_axes_tuple) ||
-      !CheckLayout(out_axes_tuple, &need_default_strategy, &out_axes_size)) {
-    MS_LOG(EXCEPTION) << "out_axes should be a two-dimension tuple";
+  size_t out_strategy_size = 0;
+  if (!IsValueNode<ValueTuple>(out_strategy_tuple) ||
+      !CheckLayout(out_strategy_tuple, &need_default_strategy, &out_strategy_size)) {
+    MS_LOG(EXCEPTION) << "out_strategy should be a two-dimension tuple";
   }
   std::vector<AnfNodePtr> output_nodes;
   GetOutputNodes(func_graph, &output_nodes);
-  if (output_nodes.size() != out_axes_size) {
+  if (output_nodes.size() != out_strategy_size) {
     MS_LOG(EXCEPTION) << "Output number: " << output_nodes.size()
-                      << " is not equal to out_axes number: " << out_axes_size;
+                      << " is not equal to out_strategy number: " << out_strategy_size;
   }
 
   std::vector<std::vector<int64_t>> output_strategy;
   if (need_default_strategy) {
-    GenerateDefaultStrategy(out_axes_tuple, output_nodes, device_num, &output_strategy);
+    GenerateDefaultStrategy(out_strategy_tuple, output_nodes, device_num, &output_strategy);
   } else {
-    output_strategy = GetValue<std::vector<std::vector<int64_t>>>(out_axes_tuple->value());
+    output_strategy = GetValue<std::vector<std::vector<int64_t>>>(out_strategy_tuple->value());
   }
   MS_LOG(WARNING) << "The output strategy will be overwritten as data-parallel";
 
@@ -394,7 +394,8 @@ void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &out_axes,
     auto output_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
     if (output_shape.size() != output_strategy[i].size()) {
       MS_LOG(EXCEPTION) << "Output dimension: " << output_shape.size()
-                        << " is not equal to out_axes dimension: " << output_strategy[i].size() << " at index " << i;
+                        << " is not equal to out_strategy dimension: " << output_strategy[i].size() << " at index "
+                        << i;
     }
     std::vector<ValuePtr> elements;
     elements.push_back(MakeValue(output_strategy[i]));
@@ -430,24 +431,25 @@ std::vector<ValuePtr> GetStrategyElements(const CNodePtr &cnode, const std::vect
   return elements;
 }
 
-void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_axes, const int64_t &device_num) {
-  auto in_axes_tuple = in_axes->cast<ValueNodePtr>();
+void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_strategy, const int64_t &device_num) {
+  auto in_strategy_tuple = in_strategy->cast<ValueNodePtr>();
   bool need_default_strategy = false;
-  size_t in_axes_size = 0;
-  if (!IsValueNode<ValueTuple>(in_axes_tuple) || !CheckLayout(in_axes_tuple, &need_default_strategy, &in_axes_size)) {
-    MS_LOG(EXCEPTION) << "in_axes should be a two-dimension tuple";
+  size_t in_strategy_size = 0;
+  if (!IsValueNode<ValueTuple>(in_strategy_tuple) ||
+      !CheckLayout(in_strategy_tuple, &need_default_strategy, &in_strategy_size)) {
+    MS_LOG(EXCEPTION) << "in_strategy should be a two-dimension tuple";
   }
   std::vector<AnfNodePtr> input_nodes;
   GetInputNodes(func_graph, &input_nodes);
-  if (input_nodes.size() != in_axes_size) {
+  if (input_nodes.size() != in_strategy_size) {
     MS_LOG(EXCEPTION) << "Input numbers: " << input_nodes.size()
-                      << " is not equal to in_axes numbers: " << in_axes_size;
+                      << " is not equal to in_strategy numbers: " << in_strategy_size;
   }
   std::vector<std::vector<int64_t>> input_strategy;
   if (need_default_strategy) {
-    GenerateDefaultStrategy(in_axes_tuple, input_nodes, device_num, &input_strategy);
+    GenerateDefaultStrategy(in_strategy_tuple, input_nodes, device_num, &input_strategy);
   } else {
-    input_strategy = GetValue<std::vector<std::vector<int64_t>>>(in_axes_tuple->value());
+    input_strategy = GetValue<std::vector<std::vector<int64_t>>>(in_strategy_tuple->value());
   }
   if (!CheckDeviceNum(input_strategy, device_num)) {
     MS_LOG(EXCEPTION) << "check device number failed";
@@ -463,7 +465,7 @@ void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_axes, c
     auto output_shape = common::AnfAlgo::GetOutputInferShape(parameter, 0);
     if (output_shape.size() != input_strategy[i].size()) {
       MS_LOG(EXCEPTION) << "Input dimension: " << output_shape.size()
-                        << " is not equal to in_axes dimension: " << input_strategy[i].size() << " at index " << i;
+                        << " is not equal to in_strategy dimension: " << input_strategy[i].size() << " at index " << i;
     }
     AnfNodeIndexSet param_sub_set = manager->node_users()[parameter];
     for (auto &param_pair : param_sub_set) {
@@ -492,13 +494,13 @@ void SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfNodePtr>
       root->set_flag("auto_parallel", true);
       auto cnode = node->cast<CNodePtr>();
       auto vnode = cnode->input(1)->cast<ValueNodePtr>();
-      auto in_axes = cnode->input(2);
-      auto out_axes = cnode->input(3);
+      auto in_strategy = cnode->input(2);
+      auto out_strategy = cnode->input(3);
       ScopeGuard scope_guard(vnode->scope());
       auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
       MS_EXCEPTION_IF_NULL(func_graph);
-      SetInputLayout(func_graph, in_axes, device_num);
-      SetOutputLayout(func_graph, out_axes, device_num);
+      SetInputLayout(func_graph, in_strategy, device_num);
+      SetOutputLayout(func_graph, out_strategy, device_num);
     }
   }
 }
