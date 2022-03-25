@@ -65,6 +65,7 @@ class DefaultAllocator : public Allocator {
   // 6 is empirical value
   unsigned shiftFactor_ = 6;
   bool lockFlag_ = true;
+  size_t max_malloc_size_ = 0;
 };
 
 constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;
