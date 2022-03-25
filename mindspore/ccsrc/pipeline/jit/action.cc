@@ -51,6 +51,7 @@
 #include "utils/ms_utils.h"
 #include "backend/graph_compiler/transform.h"
 #include "load_mindir/infer_mindir.h"
+#include "debug/data_dump/dump_json_parser.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
@@ -971,6 +972,9 @@ bool TaskEmitAction(const ResourcePtr &res) {
   }
 
   func_graph->SetMultiTarget();
+  if (DumpJsonParser::GetInstance().IsDumpEnabled() && func_graph->exist_multi_target()) {
+    MS_LOG(WARNING) << "Multi device target is detected, CPU data is dumped in rank_0 directory";
+  }
   DisableMindRT(res);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
