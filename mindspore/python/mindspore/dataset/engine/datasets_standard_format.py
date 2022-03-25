@@ -332,7 +332,6 @@ class OBSMindDataset(GeneratorDataset):
     The columns of generated dataset depend on the source MindRecord files.
 
     Args:
-
         dataset_files (list[str]): List of files in OBS to be read and file path is in
             the format of s3://.
         server (str): Endpoint for accessing OBS. For example: <https://your-endpoint:9000>.
@@ -383,7 +382,6 @@ class OBSMindDataset(GeneratorDataset):
         >>> sync_obs_dir = "s3://sync-dir"
         >>> dataset = ds.MindDataset(dataset_obs_dir, "https://your-endpoint:9000", "AK of OBS", "SK of OBS",
         ...                          sync_obs_dir, shuffle=True, num_shards=num_shards, shard_id=shard_id)
-
     """
 
     @check_obsminddataset

@@ -110,6 +110,7 @@ mindspore.dataset
 
     mindspore.dataset.CSVDataset
     mindspore.dataset.MindDataset
+    mindspore.dataset.OBSMindDataset
     mindspore.dataset.TFRecordDataset
 
 用户自定义
@@ -130,7 +131,7 @@ mindspore.dataset
 
 .. mscnautosummary::
     :toctree: dataset
-    
+
     mindspore.dataset.GraphData
 
 
@@ -169,5 +170,6 @@ mindspore.dataset
     mindspore.dataset.deserialize
     mindspore.dataset.serialize
     mindspore.dataset.show
+    mindspore.dataset.sync_wait_dataset
     mindspore.dataset.utils.imshow_det_bbox
     mindspore.dataset.zip
