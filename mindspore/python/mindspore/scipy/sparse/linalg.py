@@ -16,7 +16,8 @@
 from ... import nn
 from ... import numpy as mnp
 from ...ops import functional as F
-from ...common import Tensor, CSRTensor, dtype as mstype
+from ...ops import operations as P
+from ...common import Tensor, CSRTensor, COOTensor, dtype as mstype
 from ...ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
@@ -209,6 +210,17 @@ class GMRESV2(nn.Cell):
         super(GMRESV2, self).__init__()
         self.solve_method = solve_method
 
+    def transpose(self, a):
+        if isinstance(a, CSRTensor):
+            a_coo = a.to_coo()
+            row_indices = a_coo.indices[:, 0]
+            col_indices = a_coo.indices[:, 1]
+            coo_indices = P.Stack(1)([col_indices, row_indices])
+            a_t_coo = COOTensor(coo_indices, a_coo.values, a_coo.shape)
+            a_t_csr = a_t_coo.to_csr()
+            return a_t_csr
+        return a.T
+
     def construct(self, A, b, x0, tol, restart, maxiter, M, atol):
         A = _normalize_matvec(A)
         M = _normalize_matvec(M)
@@ -232,7 +244,8 @@ class GMRESV2(nn.Cell):
         n = b.shape[0]
         if not isinstance(M, (Tensor, CSRTensor)):
             M = F.eye(n, n, b.dtype)
-        grad_b, _ = self.construct(A.T, dout[0], x0, tol, restart, maxiter, M, atol)
+        A_T = self.transpose(A)
+        grad_b, _ = self.construct(A_T, dout[0], x0, tol, restart, maxiter, M, atol)
         if isinstance(A, CSRTensor):
             grad_a_dense = -1 * F.reshape(grad_b, (n, 1)) * F.reshape(out[0], (1, n))
             values = F.csr_gather(A.indptr, A.indices, grad_a_dense, A.shape)
