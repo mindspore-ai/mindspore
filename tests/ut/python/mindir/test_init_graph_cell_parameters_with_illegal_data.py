@@ -90,7 +90,8 @@ def test_init_graph_cell_parameters_with_wrong_value_type():
         load_net = nn.GraphCell(graph, params_init=new_params)
         load_net(input_a, input_b)
 
-    assert "The key of the 'params_init' must be str, and the value must be Tensor or Parameter" in str(err.value)
+    assert "For 'GraphCell', the key of the 'params_init' must be str, " \
+           "and the value must be Tensor or Parameter" in str(err.value)
     remove_generated_file(mindir_name)
 
 

@@ -167,7 +167,8 @@ class CheckpointConfig:
 
         if not save_checkpoint_steps and not save_checkpoint_seconds and \
                 not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
-            raise ValueError("The input arguments 'save_checkpoint_steps', 'save_checkpoint_seconds', "
+            raise ValueError("For 'CheckpointConfig', the input arguments 'save_checkpoint_steps', "
+                             "'save_checkpoint_seconds', "
                              "'keep_checkpoint_max' and 'keep_checkpoint_per_n_minutes' can't be all None or 0.")
         Validator.check_bool(exception_save)
         self.exception_save = exception_save
@@ -308,7 +309,8 @@ class CheckpointConfig:
         if append_info is None or append_info == []:
             return None
         if not isinstance(append_info, list):
-            raise TypeError(f"The type of 'append_info' must be list, but got {str(type(append_info))}.")
+            raise TypeError(f"For 'CheckpointConfig', the type of 'append_info' must be list,"
+                            f"but got {str(type(append_info))}.")
         handle_append_info = {}
         if "epoch_num" in append_info:
             handle_append_info["epoch_num"] = 0
@@ -317,20 +319,22 @@ class CheckpointConfig:
         dict_num = 0
         for element in append_info:
             if not isinstance(element, str) and not isinstance(element, dict):
-                raise TypeError(f"The type of 'append_info' element must be str or dict, "
+                raise TypeError(f"For 'CheckpointConfig', the type of 'append_info' element must be str or dict,"
                                 f"but got {str(type(element))}.")
             if isinstance(element, str) and element not in _info_list:
-                raise ValueError(f"The value of element in the argument 'append_info' must be in {_info_list}, "
+                raise ValueError(f"For 'CheckpointConfig', the value of element in the argument 'append_info' "
+                                 f"must be in {_info_list}, "
                                  f"but got {element}.")
             if isinstance(element, dict):
                 dict_num += 1
                 if dict_num > 1:
-                    raise TypeError(f"The element of 'append_info' must has only one dict.")
+                    raise TypeError(f"For 'CheckpointConfig', the element of 'append_info' must has only one dict.")
                 for key, value in element.items():
                     if isinstance(key, str) and isinstance(value, (int, float, bool)):
                         handle_append_info[key] = value
                     else:
-                        raise TypeError(f"The type of dict in 'append_info' must be key: string, value: int or float, "
+                        raise TypeError(f"For 'CheckpointConfig', the type of dict in 'append_info' "
+                                        f"must be key: string, value: int or float, "
                                         f"but got key: {type(key)}, value: {type(value)}")
 
         return handle_append_info
@@ -369,7 +373,8 @@ class ModelCheckpoint(Callback):
         self._last_triggered_step = 0
 
         if not isinstance(prefix, str) or prefix.find('/') >= 0:
-            raise ValueError("The argument 'prefix' for checkpoint file name is invalid, 'prefix' must be "
+            raise ValueError("For 'ModelCheckpoint', the argument 'prefix' "
+                             "for checkpoint file name is invalid, 'prefix' must be "
                              "string and does not contain '/', but got {}.".format(prefix))
         self._prefix = prefix
         self._exception_prefix = prefix
@@ -386,7 +391,8 @@ class ModelCheckpoint(Callback):
             self._config = CheckpointConfig()
         else:
             if not isinstance(config, CheckpointConfig):
-                raise TypeError("The argument 'config' should be 'CheckpointConfig' type, "
+                raise TypeError("For 'ModelCheckpoint', the argument 'config' should be "
+                                "'CheckpointConfig' type, "
                                 "but got {}.".format(type(config)))
             self._config = config
 

@@ -376,14 +376,14 @@ class Validator:
         rel_fn = Rel.get_fns(rel)
         if not rel_fn(arg_value, value):
             rel_str = Rel.get_strs(rel).format(value)
-            raise ValueError(f'For \'{prim_name}\' the `{arg_name}` must {rel_str}, but got {arg_value}.')
+            raise ValueError(f'For \'{prim_name}\' the argument `{arg_name}` must {rel_str}, but got {arg_value}.')
         return arg_value
 
     @staticmethod
     def check_isinstance(arg_name, arg_value, classes):
         """Check arg isinstance of classes"""
         if not isinstance(arg_value, classes):
-            raise ValueError(f'The `{arg_name}` should be isinstance of {classes}, but got {arg_value}.')
+            raise ValueError(f'The argument `{arg_name}` should be isinstance of {classes}, but got {arg_value}.')
         return arg_value
 
     @staticmethod
@@ -501,7 +501,7 @@ class Validator:
     def check_valid_input(arg_name, arg_value, prim_name):
         """Checks valid value."""
         if arg_value is None:
-            raise ValueError(f"For \'{prim_name}\', the '{arg_name}' can not be None, but got {arg_value}.")
+            raise ValueError(f"For \'{prim_name}\', the argument '{arg_name}' can not be None, but got {arg_value}.")
         return arg_value
 
     @staticmethod
@@ -627,7 +627,8 @@ class Validator:
         axis = axis if isinstance(axis, Iterable) else (axis,)
         exp_shape = [ori_shape[i] for i in range(len(ori_shape)) if i not in axis]
         if list(shape) != exp_shape:
-            raise ValueError(f"For '{prim_name}', the '{arg_name1}'.shape reduce on 'axis': {axis_origin} should "
+            raise ValueError(f"For '{prim_name}', "
+                             f"the argument '{arg_name1}'.shape reduce on 'axis': {axis_origin} should "
                              f"be equal to '{arg_name2}'.shape: {shape}, but got {ori_shape}.")
 
     @staticmethod
@@ -657,7 +658,8 @@ class Validator:
                 perm = tuple(perm)
             else:
                 if not isinstance(perm, tuple):
-                    raise TypeError(f"The `axes` should be a tuple/list, or series of int, but got {type(axes[0])}")
+                    raise TypeError(f"The argument `axes` should be a tuple/list, "
+                                    f"or series of int, but got {type(axes[0])}")
             return perm
 
         # if multiple arguments provided, it must be `ndim` number of ints
@@ -679,7 +681,8 @@ class Validator:
             else:
                 if not isinstance(new_shape, tuple):
                     raise TypeError(
-                        f"The `shape` should be an int, or tuple/list, or series of int, but got {type(shp[0])}")
+                        f"The argument `shape` should be an int, or tuple/list, "
+                        f"or series of int, but got {type(shp[0])}")
             return new_shape
 
         return shp
@@ -706,7 +709,7 @@ class Validator:
                 Validator.check_axis_in_range(axis, ndim)
             axes = tuple(map(lambda x: x % ndim, axes))
             return axes
-        raise TypeError(f"The axes should be integer, list or tuple for check, but got {type(axes)}.")
+        raise TypeError(f"The argument 'axes' should be integer, list or tuple for check, but got {type(axes)}.")
 
     @staticmethod
     def prepare_shape_for_squeeze(shape, axes):
@@ -1078,7 +1081,7 @@ def args_unreset_check(*unreset_args, **unreset_kwargs):
                 argument_dict = argument_dict["kwargs"]
             for name, value in argument_dict.items():
                 if name in _set_record.keys():
-                    raise TypeError('Argument {} is non-renewable parameter {}.'.format(name, bound_unreset[name]))
+                    raise TypeError('The argument {} is non-renewable parameter {}.'.format(name, bound_unreset[name]))
                 if name in bound_unreset:
                     _set_record[name] = value
             return func(*args, **kwargs)
