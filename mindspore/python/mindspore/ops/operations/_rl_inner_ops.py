@@ -17,6 +17,7 @@
 
 import functools
 from mindspore.common.dtype import type_size_in_bytes
+import mindspore.context as context
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ..primitive import prim_attr_register, PrimitiveWithInfer
@@ -467,4 +468,316 @@ class PriorityReplayBufferUpdate(PrimitiveWithInfer):
         return (1,)
 
     def infer_dtype(self, indices, priorities):
+        return mstype.int64
+
+
+class BatchAssign(PrimitiveWithInfer):
+    """
+    Assign the parameters of the source to overwrite the target.
+
+    Args:
+        lock (bool): Lock when the operator is Write, else shared the mutex. Default: True.
+
+    Inputs:
+        - **dst_model** (tuple) - A parameters tuple of the dst model.
+        - **source_model** (tuple) - A parameters tuple of the source model.
+
+    Outputs:
+        None.
+
+    Raises:
+        TypeError: If `lock` is not a bool.
+        ValueError: If elements shape between inputs are not the same.
+        TypeError: If inputs are not in Tensor type.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, lock=True):
+        """Initialize BatchAssign."""
+        self.lock = validator.check_value_type("lock", lock, (bool,), self.name)
+        self.add_prim_attr("lock", self.lock)
+        self.add_prim_attr('side_effect_mem', True)
+        if context.get_context('device_target') == "Ascend":
+            self.add_prim_attr('device_target', "CPU")
+
+    def infer_shape(self, dst_shape, source_shape):
+        validator.check_equal_int(len(dst_shape), len(source_shape), "inputs elements", self.name)
+        for i, shp in enumerate(dst_shape):
+            if shp != source_shape[i]:
+                raise ValueError(f'{self.name} element should be same, ',
+                                 f'but got {shp} and {dst_shape[i]}.')
+        return []
+
+    def infer_dtype(self, dst_dtype, source_dtype):
+        for i, dst_type in enumerate(dst_dtype):
+            args = {'dst': dst_type, 'source': source_dtype[i]}
+            validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type + (mstype.bool_,), self.name)
+        return mstype.int64
+
+
+class TensorsQueueCreate(PrimitiveWithInfer):
+    r"""
+    TensorsQueueCreate used to create a TensorsQueue and return an unique handle.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        dtype (mindspore.dtype): the data type in the TensorsQueue.
+        shapes (tuple(tuple(int))): the shape of each tensor in element.
+        size (int): The size of the TensorsQueue.
+        name (string): the name of this TensorsQueue. Default: "Q".
+
+    Inputs:
+        None.
+
+    Outputs:
+        - **output** (Tensor[mindspore.int64]) - an unique handle binded to the TensorsQueue.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.ops.operations._rl_inner_ops as rl_ops
+        >>> create_op = rl_ops.TensorsQueueCreate(mindspore.float32,((), (1, 16)), 10, "q")
+        >>> handle = create_op()
+        >>> print(handle)
+        0
+    """
+    @prim_attr_register
+    def __init__(self, dtype, shapes, size=0, name="Q"):
+        validator.check_type_name("dtype", dtype, mstype.number_type + (mstype.bool_,), self.name)
+        validator.check_int(size, 0, Rel.GE, "size", self.name)
+        elements_num = len(shapes)
+        validator.check_int(elements_num, 1, Rel.GE, "elements_num", self.name)
+        self.add_prim_attr('shapes', shapes)
+        self.add_prim_attr('dtype', dtype)
+        self.add_prim_attr('elements_num', elements_num)
+        self.add_prim_attr('size', size)
+        self.add_prim_attr('side_effect_mem', True)
+        self.add_prim_attr('name', name)
+
+    def infer_shape(self):
+        return ()
+
+    def infer_dtype(self):
+        return mstype.int64
+
+
+class TensorsQueuePut(PrimitiveWithInfer):
+    r"""
+    TensorsQueuePut used to put tensors into a created TensorsQueue.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        dtype (mindspore.dtype): the data type in the TensorsQueue.
+        shapes (tuple(tuple(int))): the shape of each tensor in element.
+
+    Inputs:
+        - **handle** (Tensor[int64]) - The handle pointed to the TensorsQueue.
+        - **value** (list[Tensor] or tuple(Tensors)) - The element to add into the TensorsQueue.
+
+    Outputs:
+        None.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.ops.operations._rl_inner_ops as rl_ops
+        >>> create_op = rl_ops.TensorsQueueCreate(mstype.float32, ((), (1, 16)), 10)
+        >>> handle = create_op()
+        >>> out_op = rl_ops.TensorsQueuePut(mstype.float32, ((), (1, 16)))
+        >>> out_op.put(handle, (Tensor(1, mstype.float32), Tensor(2, mstype.float32)))
+    """
+    @prim_attr_register
+    def __init__(self, dtype, shapes):
+        validator.check_type_name("dtype", dtype, mstype.number_type + (mstype.bool_,), self.name)
+        elements_num = len(shapes)
+        self.elements_num = validator.check_positive_int(elements_num, "elements_num", self.name)
+        self.shapes = shapes
+        self.add_prim_attr('dtype', dtype)
+        self.add_prim_attr('elements_num', elements_num)
+        self.add_prim_attr('side_effect_mem', True)
+
+    def infer_shape(self, handle_shape, elements_shape):
+        validator.check_equal_int(len(elements_shape), self.elements_num, "inputs elements", self.name)
+        for i, shape in enumerate(elements_shape):
+            if tuple(shape) != self.shapes[i]:
+                raise ValueError(f'{self.name} init shape and ipnut shape should be same, ',
+                                 f'but got {self.shapes[i]} and input {shape} in position {i}.')
+        return ()
+
+    def infer_dtype(self, handle_type, elements_type):
+        validator.check_type_name("handle", handle_type, (mstype.int64), self.name)
+        return mstype.int64
+
+
+class TensorsQueueGet(PrimitiveWithInfer):
+    r"""
+    TensorsQueueGet used to get tensors in the front of the TensorsQueue.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        shapes (tuple(tuple(int))): the shape of each tensor in element.
+        dtype (mindspore.dtype): the data type in the TensorsQueue.
+        pop_after_get (bool): if true, pop the element from TensorsQueue after get.
+
+    Inputs:
+        - **handle** (Tensor[int64]) - The handle pointed to the TensorsQueue.
+
+    Outputs:
+        - **value** (list[Tensor] or tuple(Tensors)) - The element in the front of the TensorsQueue.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.ops.operations._rl_inner_ops as rl_ops
+        >>> create_op = rl_ops.TensorsQueueCreate(mstype.float32, ((), (1,2)), 10)
+        >>> handle = create_op()
+        >>> get_op = rl_ops.TensorsQueueGet(mstype.float32, ((), (1,2)))
+        >>> tensors_list = get_op.get(handle)
+    """
+    @prim_attr_register
+    def __init__(self, dtype, shapes, pop_after_get=False):
+        validator.check_type_name("dtype", dtype, mstype.number_type + (mstype.bool_,), self.name)
+        elements_num = len(shapes)
+        self.elements_num = validator.check_positive_int(elements_num, "elements_num", self.name)
+        validator.check_bool(pop_after_get, "pop_after_get", self.name)
+        self.shapes = shapes
+        self.dtype = dtype
+        self.add_prim_attr('dtype', dtype)
+        self.add_prim_attr("shapes", shapes)
+        self.add_prim_attr('elements_num', elements_num)
+        self.add_prim_attr("pop_after_get", pop_after_get)
+        self.add_prim_attr('side_effect_mem', True)
+
+    def infer_shape(self, handle_shape):
+        return tuple(self.shapes)
+
+    def infer_dtype(self, handle_type):
+        validator.check_type_name("handle", handle_type, (mstype.int64), self.name)
+        out_shape = []
+        for _ in range(self.elements_num):
+            out_shape.append(self.dtype)
+        return tuple(out_shape)
+
+
+class TensorsQueueClose(PrimitiveWithInfer):
+    r"""
+    TensorsQueueClose used to close the created TensorsQueue. The resources in TensorsQueue will be deleted.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Inputs:
+        - **handle** (mindspore.int64) - The handle pointed to the TensorsQueue.
+
+    Outputs:
+        None.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.ops.operations._rl_inner_ops as rl_ops
+        >>> create_op = rl_ops.TensorsQueueCreate(mindspore.float32, ((), (3, 3)), 10)
+        >>> handle = create_op()
+        >>> close_op = ops.TensorsQueueClose()
+        >>> close_op(handle)
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.add_prim_attr('side_effect_mem', True)
+
+    def infer_shape(self, handle_shape):
+        return ()
+
+    def infer_dtype(self, handle_type):
+        validator.check_type_name("handle", handle_type, (mstype.int64), self.name)
+        return mstype.int64
+
+
+class TensorsQueueSize(PrimitiveWithInfer):
+    r"""
+    TensorsQueueSize used get the indeed size of TensorsQueue.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Inputs:
+        - **handle** (mindspore.int64) - The handle pointed to the TensorsQueue.
+
+    Outputs:
+        - **size** (mindspore.int64) - The used size of the TensorsQueue.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.ops.operations._rl_inner_ops as rl_ops
+        >>> create_op = rl_ops.TensorsQueueCreate(mindspore.int32, ((), (3, 2)), 10)
+        >>> handle = create_op()
+        >>> size_op = ops.TensorsQueueSize()
+        >>> print(size_op())
+        >>> 0
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.add_prim_attr('side_effect_mem', True)
+
+    def infer_shape(self, handle_shape):
+        return ()
+
+    def infer_dtype(self, handle_type):
+        validator.check_type_name("handle", handle_type, (mstype.int64), self.name)
+        return mstype.int64
+
+
+class TensorsQueueClear(PrimitiveWithInfer):
+    r"""
+    TensorsQueueClear used to reset the created TensorsQueue. The instance of TensorsQueue is still aviliable.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Inputs:
+        - **handle** (mindspore.int64) - The handle pointed to the TensorsQueue.
+
+    Outputs:
+        None.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.ops.operations._rl_inner_ops as rl_ops
+        >>> create_op = rl_ops.TensorsQueueCreate(mindspore.float32, ((), (2, 2)), 4)
+        >>> handle = create_op()
+        >>> clear_op = ops.TensorsQueueClear()
+        >>> clear_op(handle)
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.add_prim_attr('side_effect_mem', True)
+
+    def infer_shape(self, handle_shape):
+        return ()
+
+    def infer_dtype(self, handle_type):
+        validator.check_type_name("handle", handle_type, (mstype.int64), self.name)
         return mstype.int64
