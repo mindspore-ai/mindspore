@@ -15,8 +15,6 @@
  */
 
 #include "ops/custom.h"
-#include <memory>
-#include <map>
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 

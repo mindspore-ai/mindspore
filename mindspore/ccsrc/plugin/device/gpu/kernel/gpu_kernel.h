@@ -155,6 +155,26 @@ class NativeGpuKernelMod : public GpuKernelMod {
     }
     return GetValue<T>(attr);
   }
+
+  inline std::vector<ValuePtr> GetAttrAndConvertValueTuple(const CNodePtr &kernel_node, const std::string &key) const {
+    const PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    const ValuePtr &attr = prim->GetAttr(key);
+    if (attr == nullptr) {
+      const std::string &prim_name = common::AnfAlgo::GetCNodeName(kernel_node);
+      MS_LOG(EXCEPTION) << "The attr(" << key << ") of kernel(" << prim_name << ") not exist";
+    }
+
+    auto attr_ptr = attr->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(attr_ptr);
+
+    auto values = attr_ptr->value();
+    for (auto value : values) {
+      MS_EXCEPTION_IF_NULL(value);
+    }
+    return values;
+  }
+
   // expand Nd Shape to 4d (N in [0,4])
   void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<size_t> *dst) {
     const size_t nd_maximum_size = 4;

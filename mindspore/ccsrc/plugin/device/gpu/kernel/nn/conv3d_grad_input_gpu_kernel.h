@@ -265,11 +265,13 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    auto shp_tuple_x = prim->GetAttr("input_size")->cast<ValueTuplePtr>()->value();
+    auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "input_size");
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
-                         [](const ValuePtr &e) -> size_t { return static_cast<int>(e->cast<Int64ImmPtr>()->value()); });
+                         [](const ValuePtr &e) -> size_t {
+                           auto cast_value = e->cast<Int64ImmPtr>();
+                           MS_EXCEPTION_IF_NULL(cast_value);
+                           return static_cast<int>(cast_value->value());
+                         });
   }
 
   void SetNDDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &input_shape,

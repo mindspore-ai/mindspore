@@ -139,6 +139,7 @@ class PrintGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitDeviceData(const std::vector<AddressPtr> &inputs, std::vector<void *> *input_device_data) {
+    MS_EXCEPTION_IF_NULL(input_device_data);
     for (size_t i = 0; i < inputs.size(); i++) {
       TypeId type_id = std::get<1>(input_info_[i]);
       switch (type_id) {

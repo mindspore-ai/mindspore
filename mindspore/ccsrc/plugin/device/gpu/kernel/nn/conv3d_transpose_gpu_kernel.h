@@ -355,10 +355,13 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
-    auto shp_tuple_x =
-      common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("input_size")->cast<ValueTuplePtr>()->value();
+    auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "input_size");
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
-                         [](const ValuePtr &e) -> size_t { return static_cast<int>(e->cast<Int64ImmPtr>()->value()); });
+                         [](const ValuePtr &e) -> size_t {
+                           auto cast_value = e->cast<Int64ImmPtr>();
+                           MS_EXCEPTION_IF_NULL(cast_value);
+                           return static_cast<int>(cast_value->value());
+                         });
   }
 
   void Set5DDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape,

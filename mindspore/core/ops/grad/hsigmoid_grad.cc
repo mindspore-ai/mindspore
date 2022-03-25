@@ -62,8 +62,10 @@ TypePtr HSigmoidGradInferType(const PrimitivePtr &prim, const std::vector<Abstra
 MIND_API_BASE_IMPL(HSigmoidGrad, PrimitiveC, BaseOperator);
 AbstractBasePtr HSigmoidGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(HSigmoidGradInferType(primitive, input_args),
-                                                    HSigmoidGradInferShape(primitive, input_args)->shape());
+  auto infer_type = HSigmoidGradInferType(primitive, input_args);
+  auto infer_shape = HSigmoidGradInferShape(primitive, input_args);
+  MS_EXCEPTION_IF_NULL(infer_shape);
+  return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape->shape());
 }
 }  // namespace ops
 }  // namespace mindspore

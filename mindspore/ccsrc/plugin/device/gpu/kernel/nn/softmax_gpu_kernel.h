@@ -279,24 +279,24 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeByAxisND(const std::vector<size_t> &input_shape, const int &axis) {
-    size_t axis_pos = axis;
+    int axis_pos = axis;
     if (axis_pos < 0) {
       axis_pos += input_shape.size();
     }
 
-    if (axis_pos >= input_shape.size()) {
+    if (axis_pos >= SizeToInt(input_shape.size())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' should be in range [-"
                         << input_shape.size() << ", " << input_shape.size() << "), but got " << axis;
     }
     // n keep tracks of squeezed size
     size_t n = 1;
-    for (size_t i = 0; i < input_shape.size(); i++) {
+    for (int i = 0; i < SizeToInt(input_shape.size()); i++) {
       input_shape_.push_back(input_shape[i]);
       if (i == axis_pos) {
         size_t lastIndex = input_shape.size() - 1;
         transpose_shape_.push_back(input_shape[lastIndex]);
         transpose_axis_.push_back(lastIndex);
-      } else if (i == (input_shape.size() - 1)) {
+      } else if (i == SizeToInt(input_shape.size() - 1)) {
         transpose_shape_.push_back(input_shape[axis_pos]);
         transpose_axis_.push_back(axis_pos);
         n *= input_shape[i];
