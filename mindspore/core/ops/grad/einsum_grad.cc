@@ -32,7 +32,6 @@ std::string EinsumGrad::get_equation() const {
   auto value_ptr = this->GetAttr(kEquation);
   return GetValue<std::string>(value_ptr);
 }
-// REGISTER_PRIMITIVE_EVAL_IMPL(EinsumGrad, prim::kPrimEinsumGrad, EinsumGradInfer, nullptr, true);
 REGISTER_PRIMITIVE_C(kNameEinsumGrad, EinsumGrad);
 }  // namespace ops
 }  // namespace mindspore

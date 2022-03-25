@@ -29,7 +29,7 @@ class MIND_API SliceGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SliceGrad);
   SliceGrad() : BaseOperator(kNameSliceGrad) { InitIOName({"dy", "x", "begin", "size"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr SliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<abstract::AbstractBasePtr> &input_args);

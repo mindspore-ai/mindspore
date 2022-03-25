@@ -421,6 +421,5 @@ MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).Add
                       CastGpuKernelMod, Complex<double>, bool)
 MS_REG_GPU_KERNEL_TWO(Cast, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex64),
                       CastGpuKernelMod, Complex<double>, Complex<float>)
-
 }  // namespace kernel
 }  // namespace mindspore

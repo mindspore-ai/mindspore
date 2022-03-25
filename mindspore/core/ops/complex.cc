@@ -82,7 +82,6 @@ ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
     return nullptr;
   }
   auto real_tensor = real->cast<tensor::TensorPtr>();
-
   if (real_tensor == nullptr) {
     return nullptr;
   }
@@ -92,7 +91,6 @@ ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
     return nullptr;
   }
   auto imag_tensor = imag->cast<tensor::TensorPtr>();
-
   if (imag_tensor == nullptr) {
     return nullptr;
   }
