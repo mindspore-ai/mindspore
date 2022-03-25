@@ -6,6 +6,7 @@
     SummaryCollector还可以允许通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#summarysummarycollector>`_ 将数据收集到summary文件中。
 
     .. note::
+        - 使用SummaryCollector时，需要将代码放置到 `if __name__ == "__main__"` 中运行。
         - 不允许在回调列表中存在多个SummaryCollector实例。
         - 并非所有信息都可以在训练阶段或评估阶段收集。
         - SummaryCollector始终记录summary算子收集的数据。

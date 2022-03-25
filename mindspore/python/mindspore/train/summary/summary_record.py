@@ -101,11 +101,12 @@ class SummaryRecord:
     can be added by calling add_value.
 
     Note:
-        1. Make sure to close the SummaryRecord at the end, otherwise the process will not exit.
+        1. When using SummaryRecord, you need to run the code in `if __name__ == "__main__"` .
+        2. Make sure to close the SummaryRecord at the end, otherwise the process will not exit.
            Please see the Example section below to learn how to close properly in two ways.
-        2. Only one SummaryRecord instance is allowed at a time, otherwise it will cause data writing problems.
-        3. SummaryRecord only supports Linux systems.
-        4. The Summary is not supported when compile source with `-s on` option.
+        3. Only one SummaryRecord instance is allowed at a time, otherwise it will cause data writing problems.
+        4. SummaryRecord only supports Linux systems.
+        5. The Summary is not supported when compile source with `-s on` option.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
@@ -334,7 +335,7 @@ class SummaryRecord:
             step (int): Represents training step number.
             train_network (Cell): The spare network for saving graph.
                 Default: None, it means just do not save the graph summary when the original network graph is None.
-            plugin_filter (Optional[Callable[[str], bool]]): The filter function, \
+            plugin_filter (Callable[[str], bool], optional): The filter function, \
                 which is used to filter out which plugin should be written. Default: None.
 
         Returns:

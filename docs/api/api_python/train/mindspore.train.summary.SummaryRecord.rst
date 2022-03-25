@@ -7,6 +7,7 @@
     它通过执行 `record` 方法将数据写入文件。除了通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#summarysummarycollector>`_ 记录网络的数据外，SummaryRecord还支持通过 `自定义回调函数和自定义训练循环 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#callback>`_ 记录数据。
 
     .. note::
+        - 使用SummaryRecord时，需要将代码放置到 `if __name__ == "__main__"` 中运行。
         - 确保在最后关闭SummaryRecord，否则进程不会退出。请参阅下面的示例部分，了解如何用两种方式正确关闭SummaryRecord。
         - 每次训练只允许创建一个SummaryRecord实例，否则会导致数据写入异常。
         - SummaryRecord仅支持Linux系统。
@@ -93,7 +94,7 @@
 
         - **step** (int) - 表示当前的step。
         - **train_network** (Cell) - 表示用于保存计算图的训练网络。默认值：None，表示当原始网络的图为None时，不保存计算图。
-        - **plugin_filter** (Callable[[str], bool]) - 过滤器函数，用于过滤需要写入的标签项。默认值：None。
+        - **plugin_filter** (Callable[[str], bool], 可选) - 过滤器函数，用于过滤需要写入的标签项。默认值：None。
 
         **返回：**
 
