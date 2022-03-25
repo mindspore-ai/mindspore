@@ -119,6 +119,64 @@ TEST_F(MindDataTestPipeline, TestSemeionDatasetWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: SemeionIteratorOneColumn.
+/// Description: test iterator of SemeionDataset with only the "image" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestSemeionIteratorOneColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionIteratorOneColumn.";
+  // Create a Semeion Dataset.
+  std::string folder_path = datasets_root_path_ + "/testSemeionData";
+  std::shared_ptr<Dataset> ds = Semeion(folder_path, std::make_shared<RandomSampler>(false, 5), nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Only select "image" column and drop others
+  std::vector<std::string> columns = {"image"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expect_image = {1, 16, 16};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "image shape:" << v.Shape();
+      EXPECT_EQ(expect_image, v.Shape());
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 5);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: SemeionIteratorWrongColumn.
+/// Description: test iterator of SemeionDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestSemeionIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionIteratorWrongColumn.";
+  // Create a Semeion Dataset.
+  std::string folder_path = datasets_root_path_ + "/testSemeionData";
+  std::shared_ptr<Dataset> ds = Semeion(folder_path, std::make_shared<RandomSampler>(false, 5), nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: SemeionDataset.
 /// Description: read number of all samples from all files according to different versions.
 /// Expectation: 10.
