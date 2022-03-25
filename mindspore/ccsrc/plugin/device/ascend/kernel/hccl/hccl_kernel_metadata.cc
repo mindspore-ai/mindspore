@@ -49,7 +49,7 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   }
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
   if (op_name == kAllGatherOpName && input_shape.size() <= kShape4dDims) {
-    auto pad_shape = trans::PaddingShapeTo4dDefault(input_shape);
+    auto pad_shape = trans::PaddingShapeTo4dDefault(input_shape, kernel_node);
     if (pad_shape[N_nchw] % kCubeSize != 0 || pad_shape[C_nchw] % kCubeSize != 0) {
       return kOpFormat_DEFAULT;
     }
