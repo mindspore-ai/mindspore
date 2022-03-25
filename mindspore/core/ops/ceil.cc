@@ -58,6 +58,9 @@ TypePtr CeilInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 MIND_API_BASE_IMPL(Ceil, PrimitiveC, BaseOperator);
 AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto type = CeilInferType(primitive, input_args);
   auto shape = CeilInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

@@ -30,6 +30,7 @@ abstract::ShapePtr TensorSummaryInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   // check
+  MS_EXCEPTION_IF_NULL(input_args[1]);
   auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("v rank", int64_t(v_shape.size()), kGreaterEqual, 1, prim_name);
   return std::make_shared<abstract::Shape>(ShapeVector(1));

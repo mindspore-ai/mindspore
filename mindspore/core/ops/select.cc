@@ -45,6 +45,9 @@ void SelectImpl(const bool *conds, void *x, void *y, void *result, size_t size) 
 }
 abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->BuildShape());
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->BuildShape());
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->BuildShape());
@@ -61,12 +64,15 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std
     }
   }
   if (error_flag) {
-    MS_LOG(ERROR) << "For '" << primitive->name()
-                  << "', cond shape :" << input_args[kSelectCondIndex]->BuildShape()->ToString();
-    MS_LOG(ERROR) << "For '" << primitive->name()
-                  << "', x shape :" << input_args[kSelectXIndex]->BuildShape()->ToString();
-    MS_LOG(ERROR) << "For '" << primitive->name()
-                  << "', y shape :" << input_args[kSelectYIndex]->BuildShape()->ToString();
+    auto input_cond_index = input_args[kSelectCondIndex]->BuildShape();
+    auto input_x_index = input_args[kSelectXIndex]->BuildShape();
+    auto input_y_index = input_args[kSelectYIndex]->BuildShape();
+    MS_EXCEPTION_IF_NULL(input_cond_index);
+    MS_EXCEPTION_IF_NULL(input_x_index);
+    MS_EXCEPTION_IF_NULL(input_y_index);
+    MS_LOG(ERROR) << "For '" << primitive->name() << "', cond shape :" << input_cond_index->ToString();
+    MS_LOG(ERROR) << "For '" << primitive->name() << "', x shape :" << input_x_index->ToString();
+    MS_LOG(ERROR) << "For '" << primitive->name() << "', y shape :" << input_y_index->ToString();
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of cond, x and y should be the same.";
   }
   return input_args[1]->BuildShape();
@@ -74,9 +80,14 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std
 
 TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto x_type = input_args[kSelectXIndex]->BuildType();
   auto y_type = input_args[kSelectYIndex]->BuildType();
   auto cond_type = input_args[kSelectCondIndex]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  MS_EXCEPTION_IF_NULL(y_type);
   (void)CheckAndConvertUtils::CheckSubClass("x_type", x_type, {kTensorType}, prim_name);
   (void)CheckAndConvertUtils::CheckSubClass("y_type", y_type, {kTensorType}, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("cond", cond_type, {kBool}, prim_name);
@@ -165,25 +176,36 @@ void SelectInnerInferValue(const PrimitivePtr &prim, const tensor::TensorPtr &co
       break;
     }
     default: {
+      auto result_type = result_tensor->type();
+      MS_EXCEPTION_IF_NULL(result_type);
       MS_EXCEPTION(TypeError) << "For '" << prim->name()
                               << "', the supported data type is ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', "
                                  "'uint16','uint32', 'uint64','float16', 'float32', 'float64'], but got "
-                              << result_tensor->type()->ToString();
+                              << result_type->ToString();
     }
   }
 }
 
 ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   (void)SelectInferType(prim, input_args);
-  auto result_shape = SelectInferShape(prim, input_args)->cast<abstract::ShapePtr>();
+  auto select_shape = SelectInferShape(prim, input_args);
+  MS_EXCEPTION_IF_NULL(select_shape);
+  auto result_shape = select_shape->cast<abstract::ShapePtr>();
   auto cond_value = input_args[kSelectCondIndex]->BuildValue();
   auto x = input_args[kSelectXIndex]->BuildValue();
   auto y = input_args[kSelectYIndex]->BuildValue();
+  MS_EXCEPTION_IF_NULL(result_shape);
   if (x == nullptr || y == nullptr || cond_value == nullptr || result_shape->IsDynamic()) {
     return nullptr;
   }
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(y);
   auto x_tensor = x->cast<tensor::TensorPtr>();
   auto y_tensor = y->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(cond_value);
   auto cond_tensor = cond_value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   MS_EXCEPTION_IF_NULL(y_tensor);
@@ -192,6 +214,7 @@ ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
   MS_EXCEPTION_IF_NULL(conds);
   auto type_id = x_tensor->data_type();
   auto result_tensor = std::make_shared<tensor::Tensor>(type_id, result_shape->shape());
+  MS_EXCEPTION_IF_NULL(result_tensor);
   SelectInnerInferValue(prim, cond_tensor, x_tensor, y_tensor, result_tensor);
   return result_tensor;
 }

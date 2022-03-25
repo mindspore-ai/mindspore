@@ -26,7 +26,6 @@ namespace mindspore {
 namespace ops {
 namespace {
 TuplePtr AdamInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto var_type = input_args[kInputIndex0]->BuildType();
   auto m_type = input_args[kInputIndex1]->BuildType();
@@ -58,7 +57,6 @@ TuplePtr AdamInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, m_type, v_type});
 }
 abstract::TupleShapePtr AdamInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto m_shape_ptr = input_args[kInputIndex1]->BuildShape();
@@ -105,7 +103,11 @@ bool Adam::get_use_nesterov() const {
 
 AbstractBasePtr AdamInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   const int64_t kInputNum = 10;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto infer_type = AdamInferType(primitive, input_args);

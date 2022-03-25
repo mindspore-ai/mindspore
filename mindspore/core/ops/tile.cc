@@ -66,6 +66,7 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   auto max_shape = shape_map[kMaxShape];
   std::vector<int64_t> multiples_v;
   auto multiple_value = input_args[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(multiple_value);
   if (multiple_value->isa<tensor::Tensor>()) {
     multiples_v = CheckAndConvertUtils::CheckTensorIntValue("multiples", multiple_value, prim_name);
   } else {

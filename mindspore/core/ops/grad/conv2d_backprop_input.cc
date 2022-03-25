@@ -44,6 +44,7 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
     CheckAndConvertUtils::CheckIntOrTupleInt("attribute[dilation]", primitive->GetAttr(kDilation), prim_name);
   // default pad mode is valid
   auto attr_pad_list_prt = primitive->GetAttr(kPadList);
+  MS_EXCEPTION_IF_NULL(attr_pad_list_prt);
   int64_t pad_mode;
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
   ShapeVector pad_list = {0, 0, 0, 0};

@@ -49,6 +49,7 @@ void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
 }
 
 int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, const std::string &attr_name) {
+  MS_EXCEPTION_IF_NULL(attr);
   int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
   if (attr_val <= 0) {
     MS_LOG(EXCEPTION) << op << " invalid " << attr_name << " value: " << attr_val << ", should be greater then 0";
@@ -75,6 +76,7 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
                        const int64_t x_w, const std::vector<int64_t> &kernel, const std::vector<int64_t> &stride,
                        const std::vector<int64_t> &dilation, const int64_t &pad_mode,
                        const std::vector<int64_t> &padding, const bool is_min_shape = false) {
+  MS_EXCEPTION_IF_NULL(pad_list);
   if (pad_mode == PadMode::VALID) {
     int64_t out_h = -1;
     int64_t out_w = -1;
@@ -369,6 +371,9 @@ Format Conv2D::get_format() const {
 
 AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("Conv2d infer", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            primitive->name());

@@ -65,25 +65,31 @@ AbstractBasePtr SquareInfer(const abstract::AnalysisEnginePtr &, const Primitive
 }
 
 ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   if (input_args.empty()) {
     return nullptr;
   }
-
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto x = input_args[kInputIndex0]->BuildValue();
   if (x == nullptr) {
     return nullptr;
   }
+  MS_EXCEPTION_IF_NULL(x);
   auto x_tensor = x->cast<tensor::TensorPtr>();
-
   if (x_tensor == nullptr) {
     return nullptr;
   }
-
+  MS_EXCEPTION_IF_NULL(x_tensor);
   auto data_size = x_tensor->DataSize();
   auto dtype = x_tensor->data_type();
-  auto shape = SquareInferShape(prim, input_args)->shape();
+  auto infer_shape = SquareInferShape(prim, input_args);
+  MS_EXCEPTION_IF_NULL(infer_shape);
+  auto shape = infer_shape->shape();
   auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape);  // same shape and dtype
   auto x_datac = x_tensor->data_c();
+  MS_EXCEPTION_IF_NULL(result_tensor);
   auto result_datac = result_tensor->data_c();
   switch (dtype) {
     case kNumberTypeInt8: {

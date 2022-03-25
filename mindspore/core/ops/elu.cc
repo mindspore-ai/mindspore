@@ -69,6 +69,9 @@ float Elu::get_alpha() const {
 }
 AbstractBasePtr EluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto infer_type = EluInferType(primitive, input_args);
   auto infer_shape = EluInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

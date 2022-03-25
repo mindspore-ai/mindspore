@@ -111,6 +111,9 @@ MIND_API_BASE_IMPL(CTCLoss, PrimitiveC, BaseOperator);
 AbstractBasePtr CTCLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto types = CTCLossInferType(primitive, input_args);
   auto shapes = CTCLossInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

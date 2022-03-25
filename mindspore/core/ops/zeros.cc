@@ -49,6 +49,7 @@ TypePtr ZerosInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   auto prim_name = prim->name();
   // check
   auto dtype_value = input_args[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {
     MS_EXCEPTION(TypeError)
       << "For '" << prim_name
@@ -63,6 +64,9 @@ TypePtr ZerosInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 AbstractBasePtr ZerosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   return abstract::MakeAbstract(ZerosInferShape(primitive, input_args), ZerosInferType(primitive, input_args));
 }
 
@@ -72,6 +76,7 @@ ValuePtr ZerosInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, prim->name());
   auto abs = ZerosInfer(nullptr, prim, input_args);
   // check
+  MS_EXCEPTION_IF_NULL(abs);
   auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
   auto out_type = abs->BuildType();
   MS_EXCEPTION_IF_NULL(out_type);

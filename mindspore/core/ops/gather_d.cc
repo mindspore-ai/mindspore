@@ -65,6 +65,9 @@ MIND_API_BASE_IMPL(GatherD, PrimitiveC, BaseOperator);
 AbstractBasePtr GatherDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto prim_name = primitive->name();
   // check
   std::set<TypePtr> valid_types = {kInt32, kInt64};

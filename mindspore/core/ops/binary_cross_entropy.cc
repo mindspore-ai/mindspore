@@ -95,6 +95,9 @@ void BinaryCrossEntropy::Init(const Reduction &reduction) { this->set_reduction(
 
 AbstractBasePtr BinaryCrossEntropyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto infer_type = BinaryCrossEntroyInferType(primitive, input_args);
   auto infer_shape = BinaryCrossEntroyInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

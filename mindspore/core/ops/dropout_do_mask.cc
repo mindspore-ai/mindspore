@@ -47,6 +47,8 @@ abstract::ShapePtr DropoutDoMaskInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
   auto mask_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 1);
+  MS_EXCEPTION_IF_NULL(x_shape);
+  MS_EXCEPTION_IF_NULL(mask_shape);
 
   auto x_shape_vector = x_shape->shape();
   auto mask_shape_vector = mask_shape->shape();
@@ -125,6 +127,9 @@ MIND_API_BASE_IMPL(DropoutDoMask, PrimitiveC, BaseOperator);
 AbstractBasePtr DropoutDoMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   const int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInteger("infer shape", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            primitive->name());

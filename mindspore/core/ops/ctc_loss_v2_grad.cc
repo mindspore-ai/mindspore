@@ -70,6 +70,9 @@ TypePtr CTCLossV2GradInferType(const PrimitivePtr &primitive, const std::vector<
 MIND_API_BASE_IMPL(CTCLossV2Grad, PrimitiveC, BaseOperator);
 AbstractBasePtr CTCLossV2GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto infer_shape = CTCLossV2GradInferShape(primitive, input_args);
   auto infer_type = CTCLossV2GradInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

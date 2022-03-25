@@ -150,6 +150,7 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   }
 
   size_t ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + num;
+  MS_EXCEPTION_IF_NULL(infer_shape);
   (void)infer_shape->insert(infer_shape->end(), x_shape.begin() + LongToSize(i),
                             x_shape.begin() + SizeToLong(i + ellipsis_occupied_dims));
   j += 1;
@@ -294,6 +295,7 @@ std::vector<int64_t> DynamicComputeInferShape(const PrimitivePtr &primitive, con
 bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string &arg_name, ShapeVector *slice_value,
                              size_t *slice_len) {
   bool is_dynamic = false;
+  MS_EXCEPTION_IF_NULL(input_arg);
   auto input_value = input_arg->BuildValue();
   MS_EXCEPTION_IF_NULL(input_value);
   if (input_arg->isa<abstract::AbstractTuple>()) {
@@ -389,6 +391,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr StridedSliceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   const size_t x_index = 0;
   return CheckAndConvertUtils::GetTensorInputType(primitive->name(), input_args, x_index);
 }
