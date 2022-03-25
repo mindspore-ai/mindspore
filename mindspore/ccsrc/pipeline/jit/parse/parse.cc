@@ -131,9 +131,9 @@ void Parser::CleanParserResource() {
 
 void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseFunctionAst> &ast) {
   // Check whether the functions referred by this function and itself are missing 'return' statement
-  auto mng = Manage(fn, false);
+  auto manager = Manage(fn, false);
   MS_EXCEPTION_IF_NULL(ast);
-  for (const auto &func_graph : mng->func_graphs()) {
+  for (const auto &func_graph : manager->func_graphs()) {
     MS_EXCEPTION_IF_NULL(func_graph);
     if (func_graph->get_return() != nullptr) {
       continue;
@@ -151,37 +151,43 @@ void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseFunction
   }
 }
 
+std::vector<std::pair<CNodePtr, size_t>> GetFreeVariable(const FuncGraphPtr &func_graph) {
+  // Considering the performance, we didn't use Manager here.
+  std::vector<std::pair<CNodePtr, size_t>> free_variables;
+  std::vector<AnfNodePtr> nodes =
+    TopoSort(func_graph->get_return(), SuccIncoming, [&func_graph](const AnfNodePtr &node) -> IncludeType {
+      MS_EXCEPTION_IF_NULL(node);
+      // Not follow FV's inputs.
+      if (node->func_graph() != nullptr && node->func_graph() != func_graph) {
+        return NOFOLLOW;
+      }
+      return FOLLOW;
+    });
+  for (auto &node : nodes) {
+    // Only check Non-FV CNode.
+    auto cnode = dyn_cast<CNode>(node);
+    if (cnode == nullptr || cnode->func_graph() != func_graph) {
+      continue;
+    }
+
+    for (size_t i = 0; i < cnode->inputs().size(); ++i) {
+      auto &input = cnode->input(i);
+      if (input->func_graph() != nullptr && input->func_graph() != func_graph) {
+        (void)free_variables.emplace_back(std::make_pair(cnode, i));
+        constexpr auto recur_2 = 2;
+        MS_LOG(DEBUG) << "Found FV: input[" << i << "] of " << cnode->DebugString(recur_2);
+      }
+    }
+  }
+  return free_variables;
+}
+
 void Parser::LiftRolledBodyGraphFV() {
   for (auto &rolled_call_pair : rolled_body_calls_) {
     auto rolled_call_cnode = rolled_call_pair.first;
     auto rolled_graph = rolled_call_pair.second->func_graph();
     MS_EXCEPTION_IF_NULL(rolled_graph);
-    std::vector<std::pair<CNodePtr, size_t>> free_variables;
-    std::vector<AnfNodePtr> nodes =
-      TopoSort(rolled_graph->get_return(), SuccIncoming, [&rolled_graph](const AnfNodePtr &node) -> IncludeType {
-        MS_EXCEPTION_IF_NULL(node);
-        // Not follow FV's inputs.
-        if (node->func_graph() != nullptr && node->func_graph() != rolled_graph) {
-          return NOFOLLOW;
-        }
-        return FOLLOW;
-      });
-    for (auto &node : nodes) {
-      // Only check Non-FV CNode.
-      auto cnode = dyn_cast<CNode>(node);
-      if (cnode == nullptr || cnode->func_graph() != rolled_graph) {
-        continue;
-      }
-
-      for (size_t i = 0; i < cnode->inputs().size(); ++i) {
-        auto &input = cnode->input(i);
-        if (input->func_graph() != nullptr && input->func_graph() != rolled_graph) {
-          (void)free_variables.emplace_back(std::pair(cnode, i));
-          constexpr auto recur_2 = 2;
-          MS_LOG(DEBUG) << "Found FV: input[" << i << "] of " << cnode->DebugString(recur_2);
-        }
-      }
-    }
+    const auto &free_variables = GetFreeVariable(rolled_graph);
     for (auto &free_node_pair : free_variables) {
       auto &cnode = free_node_pair.first;
       auto index = free_node_pair.second;
@@ -193,6 +199,46 @@ void Parser::LiftRolledBodyGraphFV() {
       cnode->set_input(index, parameter);
       constexpr auto recur_2 = 2;
       MS_LOG(DEBUG) << "Change FV: " << cnode->DebugString(recur_2);
+    }
+  }
+}
+
+void Parser::LiftIfBranchGraphFV() {
+  for (auto &branch_call_tuple : if_branch_calls_) {
+    auto call_cnode = std::get<0>(branch_call_tuple);
+    auto true_branch_graph = std::get<1>(branch_call_tuple)->func_graph();
+    auto false_branch_graph = std::get<2>(branch_call_tuple)->func_graph();
+    const auto &true_free_variables = GetFreeVariable(true_branch_graph);
+    const auto &false_free_variables = GetFreeVariable(false_branch_graph);
+    // Handle true branch.
+    for (auto &free_node_pair : true_free_variables) {
+      auto &cnode = free_node_pair.first;
+      auto index = free_node_pair.second;
+      // Move the free variable to parent.
+      auto &free_node = cnode->input(index);
+      call_cnode->add_input(free_node);
+      // Change the free variable to the parameter.
+      auto parameter = true_branch_graph->add_parameter();
+      cnode->set_input(index, parameter);
+      // Add a unused parameter in other branch.
+      (void)false_branch_graph->add_parameter();
+      constexpr auto recur_2 = 2;
+      MS_LOG(DEBUG) << "True branch, change FV: " << cnode->DebugString(recur_2);
+    }
+    // Handle false branch.
+    for (auto &free_node_pair : false_free_variables) {
+      auto &cnode = free_node_pair.first;
+      auto index = free_node_pair.second;
+      // Move the free variable to parent.
+      auto &free_node = cnode->input(index);
+      call_cnode->add_input(free_node);
+      // Change the free variable to the parameter.
+      auto parameter = false_branch_graph->add_parameter();
+      cnode->set_input(index, parameter);
+      // Add a unused parameter in other branch.
+      (void)true_branch_graph->add_parameter();
+      constexpr auto recur_2 = 2;
+      MS_LOG(DEBUG) << "False branch, change FV: " << cnode->DebugString(recur_2);
     }
   }
 }
@@ -322,6 +368,8 @@ void Parser::TransformParallelCall() {
                   << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
   }
 
+  // Lift inner, then lift outer.
+  LiftIfBranchGraphFV();
   LiftRolledBodyGraphFV();
 }
 
@@ -1600,7 +1648,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     MS_LOG(DEBUG) << "The false_end block jump to after, false_block: " << false_block->ToString()
                   << ", false_end: " << false_end->ToString();
   }
-  block->ConditionalJump(bool_node, true_block, false_block);
+  auto switch_app = block->ConditionalJump(bool_node, true_block, false_block);
 
   // Record the former, middle, latter graphs info.
   if (true_end->func_graph()->get_return() != nullptr || false_end->func_graph()->get_return() != nullptr) {
@@ -1620,6 +1668,12 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     (void)parallel_call_graphs_.emplace_back(false_branch_graphs);
     MS_LOG(DEBUG) << "Record tail call graphs, false: {former: " << false_branch_graphs.first->func_graph()->ToString()
                   << ", middle: " << false_branch_graphs.second->func_graph()->ToString() << "}";
+  }
+
+  static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
+  if (transform_for_half_unroll_call) {
+    // Lift the if branches in for statement.
+    if_branch_calls_.emplace_back(std::make_tuple(switch_app, true_block, false_block));
   }
 
   if (after_block->prev_blocks().empty()) {
@@ -1887,7 +1941,7 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
                   << ", middle: " << loop_graphs.second->func_graph()->ToString() << "}";
     // Record the rolled body function, for later lifting operation.
     if (rolled_body_call != nullptr) {
-      (void)rolled_body_calls_.emplace_back(std::pair(rolled_body_call, rolled_body_block));
+      (void)rolled_body_calls_.emplace_back(std::make_pair(rolled_body_call, rolled_body_block));
       constexpr int recursive_level = 2;
       MS_LOG(DEBUG) << "Record rolled body call: {CNode: " << rolled_body_call->DebugString(recursive_level)
                     << ", rolled_graph: " << rolled_body_block->ToString() << "}";
@@ -2509,13 +2563,13 @@ void Parser::RemoveUnnecessaryPhis() {
   if (removable_phis.empty()) {
     return;
   }
-  auto mng = Manage(func_graph_, false);
+  auto manager = Manage(func_graph_, false);
   // Replace the nodes
   // Remove from inside to outside
   for (int64_t idx = SizeToLong(phis.size() - 1); idx >= 0; idx--) {
     auto phi = phis[LongToSize(idx)];
     auto new_node = FindPhis(removable_phis, phi);
-    mng->Replace(phi, new_node);
+    manager->Replace(phi, new_node);
   }
   // Remove the parameter
   for (FunctionBlockPtr &block : func_block_list_) {

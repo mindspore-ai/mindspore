@@ -1042,7 +1042,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   auto possible_parent_fg = out_conf->node()->func_graph();
   for (auto eval : evaluators) {
     MS_EXCEPTION_IF_NULL(eval);
-    (void)SetUndeterminedFlag(eval, possible_parent_fg);
+    SetUndeterminedFlag(eval, possible_parent_fg);
     const auto current_inf = EvaluatorArgs(eval, args_spec_list);
     MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
     // If current evaluator is under tracing, then skip current evaluator to avoid recursively evaluating.
