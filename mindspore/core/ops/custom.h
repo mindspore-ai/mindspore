@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ class MIND_API Custom : public BaseOperator {
   /// \return a map which contains all attributes of the custom op.
   std::map<std::string, std::vector<uint8_t>> get_attr() const;
 };
-
 }  // namespace ops
 }  // namespace mindspore
 

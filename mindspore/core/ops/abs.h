@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameAbs = "Abs";
+
 /// \brief Returns absolute value of a tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Abs for more details.
 class MIND_API Abs : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Abs);
   /// \brief Constructor.
-  Abs() : BaseOperator("Abs") { InitIOName({"input_x"}, {"output"}); }
+  Abs() : BaseOperator(kNameAbs) { InitIOName({"input_x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Abs for the inputs.
   void Init() const {}
 };

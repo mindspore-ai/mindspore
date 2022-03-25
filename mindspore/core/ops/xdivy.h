@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,11 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameXdivy = "Xdivy";
-class Xdivy : public BaseOperator {
+
+class MIND_API Xdivy : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Xdivy);
-  Xdivy() : BaseOperator("Xdivy") { InitIOName({"x", "y"}, {"output"}); }
+  Xdivy() : BaseOperator(kNameXdivy) { InitIOName({"x", "y"}, {"output"}); }
 };
 
 using PrimXdivyPtr = std::shared_ptr<Xdivy>;

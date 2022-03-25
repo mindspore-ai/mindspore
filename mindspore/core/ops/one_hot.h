@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameOneHot = "OneHot";
+
 /// \brief Computes a one-hot tensor. Refer to Python API @ref mindspore.ops.OneHot for more details.
 class MIND_API OneHot : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(OneHot);
   /// \brief Constructor.
-  OneHot() : BaseOperator("OneHot") { InitIOName({"indices", "depth", "on_value", "off_value"}, {"output"}); }
+  OneHot() : BaseOperator(kNameOneHot) { InitIOName({"indices", "depth", "on_value", "off_value"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.OneHot for the inputs.
   void Init(const int64_t axis);
   /// \brief Set axis.

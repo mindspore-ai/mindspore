@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,14 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameSquare = "Square";
+
 /// \brief Returns square of a tensor element-wise. Refer to Python API @ref mindspore.ops.Square for more details.
 class MIND_API Square : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Square);
   /// \brief Constructor.
-  Square() : BaseOperator("Square") { InitIOName({"input_x"}, {"output"}); }
+  Square() : BaseOperator(kNameSquare) { InitIOName({"input_x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };

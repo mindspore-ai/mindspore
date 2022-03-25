@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameZerosLike = "ZerosLike";
+
 /// \brief Creates a new tensor. Refer to Python API @ref mindspore.ops.ZerosLike for more details.
 class MIND_API ZerosLike : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ZerosLike);
   /// \brief Constructor.
-  ZerosLike() : BaseOperator("ZerosLike") { InitIOName({"x"}, {"y"}); }
+  ZerosLike() : BaseOperator(kNameZerosLike) { InitIOName({"x"}, {"y"}); }
   /// \brief Init.
   void Init() const {}
 };

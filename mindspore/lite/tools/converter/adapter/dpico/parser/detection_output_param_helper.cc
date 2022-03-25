@@ -242,6 +242,5 @@ int GetDetectionOutputParamFromAttrs(std::vector<mapper::DetectionOutputParam> *
   }
   return RET_OK;
 }
-
 }  // namespace dpico
 }  // namespace mindspore

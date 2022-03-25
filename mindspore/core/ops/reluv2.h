@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class MIND_API ReLUV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ReLUV2);
   /// \brief Constructor.
-  ReLUV2() : BaseOperator("ReluV2") { InitIOName({"x"}, {"output", "mask"}); }
+  ReLUV2() : BaseOperator(kNameReLUV2) { InitIOName({"x"}, {"output", "mask"}); }
   /// \brief Constructor.
   explicit ReLUV2(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"output", "mask"}); }
   /// \brief Init.

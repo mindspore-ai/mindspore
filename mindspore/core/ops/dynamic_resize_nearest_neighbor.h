@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameDynamicResizeNearestNeighbor = "DynamicResizeNearestNeighbor";
 
-class DynamicResizeNearestNeighbor : public BaseOperator {
+class MIND_API DynamicResizeNearestNeighbor : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DynamicResizeNearestNeighbor);
   DynamicResizeNearestNeighbor() : BaseOperator(kNameDynamicResizeNearestNeighbor) {}

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameBroadcastTo = "BroadcastTo";
+
 /// \brief Broadcasts input tensor to a given shape.
 /// Refer to Python API @ref mindspore.ops.BroadcastTo for more details.
 class MIND_API BroadcastTo : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BroadcastTo);
   /// \brief Constructor.
-  BroadcastTo() : BaseOperator("BroadcastTo") {}
+  BroadcastTo() : BaseOperator(kNameBroadcastTo) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BroadcastTo for the inputs.
   void Init(const std::vector<int64_t> &shape);
   /// \brief Set shape.

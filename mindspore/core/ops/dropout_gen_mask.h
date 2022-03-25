@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameDropoutGenMask = "DropoutGenMask";
+
 /// \brief Generates the mask value for the input shape.
 /// Refer to Python API @ref mindspore.ops.DropoutGenMask for more details.
 class MIND_API DropoutGenMask : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DropoutGenMask);
   /// \brief Constructor.
-  DropoutGenMask() : BaseOperator("DropoutGenMask") {}
+  DropoutGenMask() : BaseOperator(kNameDropoutGenMask) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DropoutGenMask for the inputs.
   void Init() const {}
 };

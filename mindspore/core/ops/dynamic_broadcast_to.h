@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,12 @@
 
 namespace mindspore {
 namespace ops {
-class DynamicBroadcastTo : public BaseOperator {
+constexpr auto kNameDynamicBroadcastTo = "DynamicBroadcastTo";
+
+class MIND_API DynamicBroadcastTo : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DynamicBroadcastTo);
-  DynamicBroadcastTo() : BaseOperator("DynamicBroadcastTo") { InitIOName({"x", "shape"}, {"y"}); }
+  DynamicBroadcastTo() : BaseOperator(kNameDynamicBroadcastTo) { InitIOName({"x", "shape"}, {"y"}); }
   void Init() {}
 };
 

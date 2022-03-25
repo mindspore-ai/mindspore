@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameCeLU = "CeLU";
 /// \brief Computes CeLU (Continuously differentiable exponential linear units) of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.CeLU for more details.
-class CeLU : public BaseOperator {
+class MIND_API CeLU : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CeLU);
   /// \brief Constructor.

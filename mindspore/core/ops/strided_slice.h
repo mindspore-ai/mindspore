@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameStridedSlice = "StridedSlice";
+
 /// \brief Extracts a strided slice of a tensor. Refer to Python API @ref mindspore.ops.StridedSlice for more details.
 class MIND_API StridedSlice : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(StridedSlice);
   /// \brief Constructor.
-  StridedSlice() : BaseOperator("StridedSlice") { InitIOName({"x", "begin", "end", "strides"}, {"output"}); }
+  StridedSlice() : BaseOperator(kNameStridedSlice) { InitIOName({"x", "begin", "end", "strides"}, {"output"}); }
   /// \brief Init. Refer to the parameters of python API @ref mindspore.ops.StridedSlice for the inputs.
   void Init(int64_t begin_mask = 0, int64_t end_mask = 0, int64_t ellipsis_mask = 0, int64_t new_axis_mask = 0,
             int64_t shrink_axis_mask = 0);

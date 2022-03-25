@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameReal = "Real";
+
 /// \brief Returns a Tensor that is the real part of the input.
 /// Refer to Python API @ref mindspore.ops.Real for more details.
 class MIND_API Real : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Real);
   /// \brief Constructor.
-  Real() : BaseOperator("Real") { InitIOName({"input"}, {"output"}); }
+  Real() : BaseOperator(kNameReal) { InitIOName({"input"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Real for the inputs.
   void Init() {}
 };

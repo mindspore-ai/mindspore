@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameTrunc = "Trunc";
 /// \brief Returns a new tensor with the truncated integer values of the elements of input.
-class Trunc : public BaseOperator {
+class MIND_API Trunc : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Trunc);
   /// \brief Constructor.

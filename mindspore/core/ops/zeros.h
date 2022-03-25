@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,14 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameZeros = "Zeros";
+
 /// \brief Creates a tensor filled with value zeros. Refer to Python API @ref mindspore.ops.Zeros for more details.
 class MIND_API Zeros : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Zeros);
   /// \brief Constructor.
-  Zeros() : BaseOperator("Zeros") {}
+  Zeros() : BaseOperator(kNameZeros) {}
   /// \brief Init.
   void Init() const {}
 };

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,6 @@ class MIND_API LpNormalization : public BaseOperator {
   /// \return the norm series.
   int64_t get_p() const;
 };
-
 }  // namespace ops
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ class MIND_API ResizeNearestNeighbor : public BaseOperator {
   /// \return align_corners.
   bool get_align_corners() const;
 };
-
 }  // namespace ops
 }  // namespace mindspore
 

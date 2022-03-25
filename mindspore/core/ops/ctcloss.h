@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameCTCLoss = "CTCLoss";
+
 /// \brief Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
 /// Refer to Python API @ref mindspore.ops.CTCLoss for more details.
 class MIND_API CTCLoss : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CTCLoss);
   /// \brief Constructor.
-  CTCLoss() : BaseOperator("CTCLoss") {}
+  CTCLoss() : BaseOperator(kNameCTCLoss) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CTCLoss for the inputs.
   void Init() const {}
 };

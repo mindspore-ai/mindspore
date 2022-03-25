@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameImag = "Imag";
+
 /// \brief Returns a Tensor that is the imag part of the input.
 /// Refer to Python API @ref mindspore.ops.Imag for more details.
 class MIND_API Imag : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Imag);
   /// \brief Constructor.
-  Imag() : BaseOperator("Imag") { InitIOName({"input"}, {"output"}); }
+  Imag() : BaseOperator(kNameImag) { InitIOName({"input"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Imag for the inputs.
   void Init() {}
 };

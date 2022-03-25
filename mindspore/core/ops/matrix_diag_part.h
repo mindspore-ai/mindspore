@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,14 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMatrixDiagPart = "MatrixDiagPartV3";
+constexpr auto kNameMatrixDiagPartV3 = "MatrixDiagPartV3";
 /// \brief get the specified part of the inner most diag matrix of a matrix, fill with padding value .
 /// Refer to Python API @ref mindspore.ops.MatrixDiagPart for more details.
-class MatrixDiagPartV3 : public BaseOperator {
+class MIND_API MatrixDiagPartV3 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixDiagPartV3);
   /// \brief Constructor.
-  MatrixDiagPartV3() : BaseOperator(kNameMatrixDiagPart) { InitIOName({"input", "k", "padding_value"}, {"output"}); }
+  MatrixDiagPartV3() : BaseOperator(kNameMatrixDiagPartV3) { InitIOName({"input", "k", "padding_value"}, {"output"}); }
 };
 
 abstract::AbstractBasePtr MatrixDiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
