@@ -245,7 +245,6 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void ResetResource() noexcept override {
-    MS_LOG(ERROR) << "czrrr conv2d_grad_input ResetResource";
     cudnn_handle_ = nullptr;
     w_desc_ = nullptr;
     conv_desc_ = nullptr;
