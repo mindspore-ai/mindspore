@@ -174,7 +174,7 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorMemSize(const AnfNodePtr &node, size_
   auto format = AnfAlgo::GetOutputFormat(node, output_index);
   auto dtype = AnfAlgo::GetOutputDeviceDataType(node, output_index);
   if (shape.empty() && format != kOpFormat_DEFAULT) {
-    shape = trans::PaddingShape(shape, format, AnfAlgo::GetOutputReshapeType(node, output_index));
+    shape = trans::PaddingShape(shape, format, AnfAlgo::GetOutputReshapeType(node, output_index), node);
     shape = trans::TransShapeToDevice(shape, format, node, output_index, dtype);
   }
   // scalar's output shape is a empty vector
@@ -322,7 +322,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const 
 
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
   if (trans::IsNeedPadding(format, infer_shape.size())) {
-    infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx));
+    infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx), node);
   }
   auto dtype = GetOutputDeviceDataType(node, output_idx);
   return trans::TransShapeToDevice(infer_shape, format, node, output_idx, dtype);
@@ -336,7 +336,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &
   }
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
   if (trans::IsNeedPadding(format, infer_shape.size())) {
-    infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx));
+    infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx), node);
   }
   auto dtype = GetOutputDeviceDataType(node, output_idx);
   return trans::TransShapeToDevice(infer_shape, format, node, output_idx, dtype);
@@ -357,7 +357,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShapeForTbeBuild(const A
 
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
   if (trans::IsNeedPadding(format, infer_shape.size())) {
-    infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx));
+    infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx), node);
   }
   auto dtype = GetInputDeviceDataType(node, input_idx);
   return trans::TransShapeToDevice(infer_shape, format, node, input_idx, dtype, false);
@@ -371,7 +371,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &n
   }
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
   if (trans::IsNeedPadding(format, infer_shape.size())) {
-    infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx));
+    infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx), node);
   }
   auto dtype = GetInputDeviceDataType(node, input_idx);
   return trans::TransShapeToDevice(infer_shape, format, node, input_idx, dtype, false);

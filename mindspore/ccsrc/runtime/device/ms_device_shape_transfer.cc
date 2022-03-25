@@ -246,7 +246,7 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
   }
   auto format = AnfAlgo::GetOutputFormat(node, index);
   if (IsNeedPadding(format, host_shape.size())) {
-    host_shape = PaddingShape(host_shape, format, AnfAlgo::GetOutputReshapeType(node, index));
+    host_shape = PaddingShape(host_shape, format, AnfAlgo::GetOutputReshapeType(node, index), node);
   }
   (void)std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(shape), SizeToLong);
   return shape;

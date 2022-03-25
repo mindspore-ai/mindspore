@@ -332,9 +332,13 @@ bool IsNeedPadding(const std::string &format, size_t shape_size);
  * Padding shape to 5D by default mode
  * */
 template <typename T>
-std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape) {
+std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape, const AnfNodePtr &node = nullptr) {
   if (shape.size() >= kNcdhw) {
     return shape;
+  }
+  if (node != nullptr) {
+    MS_LOG(INFO) << "Start padding shape to 5d by default reshape type, node [" << node->fullname_with_scope()
+                 << "], detail info: " << node->DebugString();
   }
   std::vector<T> shape_5d(kNcdhw, 1);
   switch (shape.size()) {
@@ -368,7 +372,11 @@ std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape) {
  * Padding shape to 4D by default mode
  * */
 template <typename T>
-std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape) {
+std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape, const AnfNodePtr &node = nullptr) {
+  if (node != nullptr) {
+    MS_LOG(INFO) << "Start padding shape to 4d by default reshape type, node [" << node->fullname_with_scope()
+                 << "], detail info: " << node->DebugString();
+  }
   std::vector<T> shape_4d(kNchwDims, 1);
   switch (shape.size()) {
     case kN:
@@ -432,8 +440,12 @@ std::vector<T> PaddingShapeTo4d(const std::vector<T> &shape, const std::string &
  * Interface of padding shape
  * */
 template <typename T>
-std::vector<T> PaddingShape(const std::vector<T> &shape, const std::string &format,
-                            const std::string &pad_index = {""}) {
+std::vector<T> PaddingShape(const std::vector<T> &shape, const std::string &format, const std::string &pad_index = {""},
+                            const AnfNodePtr &node = nullptr) {
+  if (node != nullptr) {
+    MS_LOG(INFO) << "Start padding shape for node: [" << node->fullname_with_scope() << "], format: " << format
+                 << ", detail info: " << node->DebugString();
+  }
   std::vector<T> host_shape;
   if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
     if (shape.size() >= kNcdhw) {
