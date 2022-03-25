@@ -20,7 +20,10 @@
 #include "src/common/utils.h"
 
 namespace mindspore {
-DefaultAllocator::DefaultAllocator(size_t aligned_size) { aligned_size_ = aligned_size; }
+DefaultAllocator::DefaultAllocator(size_t aligned_size) {
+  aligned_size_ = aligned_size;
+  max_malloc_size_ = lite::GetMaxMallocSize();
+}
 
 DefaultAllocator::~DefaultAllocator() { Clear(); }
 
@@ -47,11 +50,11 @@ bool DefaultAllocator::ReuseMemory(size_t free_size, size_t size) const {
 }
 
 void *DefaultAllocator::Malloc(size_t size) {
-  if (size > lite::GetMaxMallocSize()) {
+  if (size > max_malloc_size_) {
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
     return nullptr;
   }
-  if (this->total_size_ >= lite::GetMaxMallocSize()) {
+  if (this->total_size_ >= max_malloc_size_) {
     MS_LOG(ERROR) << "Memory pool is exhausted";
     return nullptr;
   }
