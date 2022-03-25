@@ -73,6 +73,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int InitSaveFP16();
 
+  void InitAclDefaultOption();
+
   int Init(int argc, const char **argv);
 
   int PreInit(int argc, const char **argv);

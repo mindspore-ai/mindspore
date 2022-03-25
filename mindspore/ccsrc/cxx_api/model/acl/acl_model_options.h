@@ -38,6 +38,8 @@ class AclModelOptions {
   // return tuple<init_options, build_options>
   std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> GenAclOptions() const;
   void SetFirstGraph(bool is_first_graph) noexcept { first_graph_flag_ = is_first_graph; }
+  void SetOmFilePath(const std::string &file_path) noexcept { om_file_path_ = file_path; }
+  std::string GetOmFilePath() const { return om_file_path_; }
 
  private:
   std::string output_node_;  // todo: at convert.cc::BuildGraph(), no atc options
@@ -57,6 +59,7 @@ class AclModelOptions {
   // other options
   uint32_t device_id_;
   std::optional<bool> first_graph_flag_;
+  std::string om_file_path_;
 };
 }  // namespace mindspore
 
