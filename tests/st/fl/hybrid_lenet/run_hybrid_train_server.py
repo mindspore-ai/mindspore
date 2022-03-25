@@ -63,6 +63,13 @@ parser.add_argument("--sign_eps", type=float, default=100)
 parser.add_argument("--sign_thr_ratio", type=float, default=0.6)
 parser.add_argument("--sign_global_lr", type=float, default=0.1)
 parser.add_argument("--sign_dim_out", type=int, default=0)
+parser.add_argument("--global_iteration_time_window", type=int, default=3600000)
+# parameters for "compression"
+parser.add_argument("--upload_compress_type", type=str, default="NO_COMPRESS",
+                    choices=["NO_COMPRESS", "DIFF_SPARSE_QUANT"])
+parser.add_argument("--upload_sparse_rate", type=float, default=0.5)
+parser.add_argument("--download_compress_type", type=str, default="NO_COMPRESS",
+                    choices=["NO_COMPRESS", "QUANT"])
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -103,6 +110,10 @@ sign_eps = args.sign_eps
 sign_thr_ratio = args.sign_thr_ratio
 sign_global_lr = args.sign_global_lr
 sign_dim_out = args.sign_dim_out
+global_iteration_time_window = args.global_iteration_time_window
+upload_compress_type = args.upload_compress_type
+upload_sparse_rate = args.upload_sparse_rate
+download_compress_type = args.download_compress_type
 
 if local_server_num == -1:
     local_server_num = server_num
@@ -154,6 +165,10 @@ for i in range(local_server_num):
     cmd_server += " --sign_thr_ratio=" + str(sign_thr_ratio)
     cmd_server += " --sign_global_lr=" + str(sign_global_lr)
     cmd_server += " --sign_dim_out=" + str(sign_dim_out)
+    cmd_server += " --global_iteration_time_window=" + str(global_iteration_time_window)
+    cmd_server += " --upload_compress_type=" + str(upload_compress_type)
+    cmd_server += " --upload_sparse_rate=" + str(upload_sparse_rate)
+    cmd_server += " --download_compress_type=" + str(download_compress_type)
     cmd_server += " > server.log 2>&1 &"
 
     import time

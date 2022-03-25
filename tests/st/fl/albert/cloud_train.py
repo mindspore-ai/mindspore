@@ -21,7 +21,7 @@ from time import time
 import numpy as np
 from mindspore import context, Tensor
 from mindspore.train.serialization import save_checkpoint
-from src.adam import AdamWeightDecayOp as AdamWeightDecay
+from mindspore.nn import Adam as AdamWeightDecay
 from src.config import train_cfg, server_net_cfg
 from src.model import AlbertModelCLS
 from src.cell_wrapper import NetworkWithCLSLoss, NetworkTrainCell
@@ -82,6 +82,13 @@ def parse_args():
     parser.add_argument("--sign_thr_ratio", type=float, default=0.6)
     parser.add_argument("--sign_global_lr", type=float, default=0.1)
     parser.add_argument("--sign_dim_out", type=int, default=0)
+    parser.add_argument("--global_iteration_time_window", type=int, default=3600000)
+    # parameters for "compression"
+    parser.add_argument("--upload_compress_type", type=str, default="NO_COMPRESS",
+                        choices=["NO_COMPRESS", "DIFF_SPARSE_QUANT"])
+    parser.add_argument("--upload_sparse_rate", type=float, default=0.5)
+    parser.add_argument("--download_compress_type", type=str, default="NO_COMPRESS",
+                        choices=["NO_COMPRESS", "QUANT"])
     return parser.parse_args()
 
 
@@ -129,6 +136,10 @@ def server_train(args):
     sign_thr_ratio = args.sign_thr_ratio
     sign_global_lr = args.sign_global_lr
     sign_dim_out = args.sign_dim_out
+    global_iteration_time_window = args.global_iteration_time_window
+    upload_compress_type = args.upload_compress_type
+    upload_sparse_rate = args.upload_sparse_rate
+    download_compress_type = args.download_compress_type
 
     # Replace some parameters with federated learning parameters.
     train_cfg.max_global_epoch = fl_iteration_num
@@ -171,7 +182,11 @@ def server_train(args):
         "sign_eps": sign_eps,
         "sign_thr_ratio": sign_thr_ratio,
         "sign_global_lr": sign_global_lr,
-        "sign_dim_out": sign_dim_out
+        "sign_dim_out": sign_dim_out,
+        "global_iteration_time_window": global_iteration_time_window,
+        "upload_compress_type": upload_compress_type,
+        "upload_sparse_rate": upload_sparse_rate,
+        "download_compress_type": download_compress_type,
     }
 
     if not os.path.exists(output_dir):
