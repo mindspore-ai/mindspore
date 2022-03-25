@@ -73,6 +73,7 @@ class TcpClient {
   void set_timer_callback(const OnTimer &timer);
   const event_base &eventbase() const;
   int connection_status() { return connection_status_; }
+  static bool is_started() { return is_started_; }
 
  protected:
   static void SetTcpNoDelay(const evutil_socket_t &fd);
