@@ -86,9 +86,12 @@ class MinMaximumGrad : public AnfVisitor {
     (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
 
     auto fg = node->func_graph();
-    auto tuple = fg->NewCNode(args);
+    auto new_code = fg->NewCNode(args);
+    if (AnfUtils::GetDumpFlag(grad_)) {
+      AnfUtils::SetDumpFlag(new_code);
+    }
 
-    return fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), tuple, NewValueNode(MakeValue(idx_))});
+    return fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), new_code, NewValueNode(MakeValue(idx_))});
   }
 
   void Visit(const CNodePtr &cnode) override { grad_ = cnode; }
