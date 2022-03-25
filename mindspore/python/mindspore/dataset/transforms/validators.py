@@ -219,12 +219,22 @@ def check_random_transform_ops(method):
             raise ValueError("op_list can not be empty.")
         for ind, op in enumerate(arg_list[0]):
             check_tensor_op(op, "op_list[{0}]".format(ind))
+            check_transform_op_type(ind, op)
         if len(arg_list) == 2:  # random apply takes an additional arg
             type_check(arg_list[1], (float, int), "prob")
             check_value(arg_list[1], (0, 1), "prob")
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_transform_op_type(ind, op):
+    """Check the operator."""
+    # c_vision.HWC2CHW error
+    # py_vision.HWC2CHW error
+    if type(op) == type:  # pylint: disable=unidiomatic-typecheck
+        raise ValueError("op_list[{}] should be a dataset processing operation instance, "
+                         "but got: {}. It may be missing parentheses for instantiation.".format(ind, op))
 
 
 def check_compose_list(method):
@@ -240,6 +250,7 @@ def check_compose_list(method):
         for i, transform in enumerate(transforms):
             if not callable(transform):
                 raise ValueError("transforms[{}] is not callable.".format(i))
+            check_transform_op_type(i, transform)
         return method(self, *args, **kwargs)
 
     return new_method
@@ -274,6 +285,7 @@ def check_random_apply(method):
                 raise ValueError(
                     "transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
                         .format(i))
+            check_transform_op_type(i, transform)
 
         if prob is not None:
             type_check(prob, (float, int,), "prob")
@@ -297,6 +309,7 @@ def check_transforms_list(method):
                 raise ValueError(
                     "transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
                         .format(i))
+            check_transform_op_type(i, transform)
         return method(self, *args, **kwargs)
 
     return new_method
