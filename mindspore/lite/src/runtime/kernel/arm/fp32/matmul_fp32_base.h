@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/inner_kernel.h"
-#ifdef SERVER_INFERENCE
+#ifdef SHARING_MODEL_WEIGHT
 #include "src/pack_weight_manager.h"
 #endif
 #include "nnacl/matmul_parameter.h"
