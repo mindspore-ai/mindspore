@@ -82,48 +82,31 @@ class EmbeddingOpParallelConfig(_Config):
 
     @property
     def data_parallel(self):
-        """Return the attribute of the data_parallel"""
         return self._dp_mp_config.data_parallel
 
     @data_parallel.setter
     def data_parallel(self, value):
-        """Set the attribute of the data_parallel"""
         self._dp_mp_config.data_parallel = value
 
     @property
     def model_parallel(self):
-        """Return the attribute of the model_parallel"""
         return self._dp_mp_config.model_parallel
 
     @model_parallel.setter
     def model_parallel(self, value):
-        """Set the attribute of the model_parallel"""
         self._dp_mp_config.model_parallel = value
 
     @property
     def vocab_emb_dp(self):
-        """Return the attribute of the vocab_emb_dp"""
         return self._vocab_emb_dp
 
     @vocab_emb_dp.setter
     def vocab_emb_dp(self, value):
-        """Set the attribute of the vocab_emb_dp"""
         Validator.check_bool(value, "vocab_emb_dp")
         self._vocab_emb_dp = value
 
     @property
     def dp_mp_config(self):
-        r"""
-            To obtain the DPMPlConfig for the setting data parallel, model parallel
-
-            Supported Platforms:
-                ``Ascend`` ``GPU``
-
-            Examples:
-                >>> from mindspore.nn.transformer import EmbeddingOpParallelConfig
-                >>> config=EmbeddingOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
-                >>> parallel_config = config.dp_mp_config
-        """
         return self._dp_mp_config
 
 
@@ -162,45 +145,37 @@ class TransformerRecomputeConfig(_Config):
 
     @property
     def recompute(self):
-        """Return the attribute of recompute"""
         return self._recompute
 
     @recompute.setter
     def recompute(self, value):
-        """Set the attribute of recompute"""
         Validator.check_bool(value, "recompute")
         self._recompute = value
 
     @property
     def parallel_optimizer_comm_recompute(self):
-        """Return the parallel_optimizer_comm_recompute"""
         return self._parallel_optimizer_comm_recompute
 
     @parallel_optimizer_comm_recompute.setter
     def parallel_optimizer_comm_recompute(self, value):
-        """Set the parallel_optimizer_comm_recompute"""
         Validator.check_bool(value, "parallel_optimizer_comm_recompute")
         self._parallel_optimizer_comm_recompute = value
 
     @property
     def mp_comm_recompute(self):
-        """Return the mp_comm_recompute"""
         return self._mp_comm_recompute
 
     @mp_comm_recompute.setter
     def mp_comm_recompute(self, value):
-        """Set the mp_comm_recompute"""
         Validator.check_bool(value, "mp_comm_recompute")
         self._mp_comm_recompute = value
 
     @property
     def recompute_slice_activation(self):
-        """Return the recompute_slice_activation"""
         return self._recompute_slice_activation
 
     @recompute_slice_activation.setter
     def recompute_slice_activation(self, value):
-        """Set the recompute_slice_activation"""
         Validator.check_bool(value, "recompute_slice_activation")
         self._recompute_slice_activation = value
 
@@ -261,12 +236,10 @@ class TransformerOpParallelConfig(_Config):
 
     @property
     def recompute(self):
-        """Return the recompute attribute"""
         return self._recompute
 
     @recompute.setter
     def recompute(self, value):
-        """Set the recompute attribute"""
         if not isinstance(value, TransformerRecomputeConfig) and not isinstance(value, bool):
             raise TypeError(f"recompute should be a TransformerRecomputeConfig/bool, but got {type(value).__name__}.")
         if isinstance(value, bool):
@@ -275,123 +248,83 @@ class TransformerOpParallelConfig(_Config):
 
     @property
     def vocab_emb_dp(self):
-        """Return the vocab_emb_dp"""
         return self._embed_dp_mp_config.vocab_emb_dp
 
     @vocab_emb_dp.setter
     def vocab_emb_dp(self, value):
-        """Set the vocab_emb_dp"""
         self._embed_dp_mp_config.vocab_emb_dp = value
 
     @property
     def gradient_aggregation_group(self):
-        """Return the gradient_aggregation_group"""
         return self._gradient_aggregation_group
 
     @gradient_aggregation_group.setter
     def gradient_aggregation_group(self, value):
-        """Set the gradient_aggregation_group"""
         Validator.check_positive_int(value, "gradient_aggregation_group")
         self._gradient_aggregation_group = value
 
     @property
     def micro_batch_num(self):
-        """Return the micro_batch_num"""
         return self._pp_config.micro_batch_num
 
     @micro_batch_num.setter
     def micro_batch_num(self, value):
-        """Set the micro_batch_num"""
         self._pp_config.micro_batch_num = value
 
     @property
     def model_parallel(self):
-        """Return the model parallel"""
         return self._embed_dp_mp_config.model_parallel
 
     @model_parallel.setter
     def model_parallel(self, value):
-        """Set the model parallel"""
         self._embed_dp_mp_config.model_parallel = value
         self._moe_config.model_parallel = value
 
     @property
     def data_parallel(self):
-        """Return the data parallel"""
         return self._embed_dp_mp_config.data_parallel
 
     @data_parallel.setter
     def data_parallel(self, value):
-        """Set the data parallel"""
         self._embed_dp_mp_config.data_parallel = value
         self._moe_config.data_parallel = value
 
     @property
     def expert_parallel(self):
-        """Return the expert parallel"""
         return self._moe_config.expert_parallel
 
     @expert_parallel.setter
     def expert_parallel(self, value):
-        """Set the expert parallel"""
         self._moe_config.expert_parallel = value
 
     @property
     def pipeline_stage(self):
-        """Return the number of pipeline stages"""
         return self._pp_config.pipeline_stage
 
     @pipeline_stage.setter
     def pipeline_stage(self, value):
-        """Set the number of pipeline stages"""
         self._pp_config.pipeline_stage = value
 
     @property
     def optimizer_shard(self):
-        """Return the optimizer shard attribute"""
         return self._optimizer_shard
 
     @optimizer_shard.setter
     def optimizer_shard(self, value):
-        """Set the optimizer shard attribute"""
         Validator.check_bool(value, "optimizer_shard")
         self._optimizer_shard = value
         context.set_auto_parallel_context(enable_parallel_optimizer=value)
 
     @property
     def embedding_dp_mp_config(self):
-        r"""
-            To obtain the EmbeddingParallelConfig for the setting data parallel, model parallel and embedding
-            parallel.
-
-            Supported Platforms:
-                ``Ascend`` ``GPU``
-
-            Examples:
-                >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
-                >>> parallel_config = config.embedding_dp_mp_config
-        """
         return self._embed_dp_mp_config
 
     @property
     def dp_mp_config(self):
-        r"""
-        To obtain the EmbeddingParallelConfig for the setting data parallel, model parallel and embedding
-        parallel.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU``
-
-        Examples:
-            >>> from mindspore.nn.transformer import TransformerOpParallelConfig
-            >>> config=TransformerOpParallelConfig(data_parallel=1, model_parallel=1, vocab_emb_dp=True)
-            >>> parallel_config = config.dp_mp_config
-        """
         return self._embed_dp_mp_config.dp_mp_config
 
     @property
     def moe_parallel_config(self):
-        """Return the MoE parallel config"""
         return self._moe_config
 
 
