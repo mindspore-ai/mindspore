@@ -73,6 +73,7 @@ if(ENABLE_MINDDATA)
             ./distributed/rpc/tcp/*.cc
             ./distributed/cluster/*.cc
             ./distributed/cluster/topology/*.cc
+            ./distributed/recovery/*.cc
             ./cxx_api/*.cc
             ./tbe/*.cc
             ./mindapi/*.cc
