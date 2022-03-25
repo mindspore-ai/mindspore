@@ -136,6 +136,7 @@ def _gru_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
     return hy
 
+
 class RNNCellBase(Cell):
     '''Basic class for RNN Cells'''
     def __init__(self, input_size: int, hidden_size: int, has_bias: bool, num_chunks: int):

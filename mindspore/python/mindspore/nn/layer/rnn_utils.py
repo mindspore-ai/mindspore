@@ -79,6 +79,7 @@ class _ReverseSequence(Cell):
 
     @staticmethod
     def make_shape(shape, dtype, range_dim):
+        """Calculates the shape according by the inputs."""
         output = P.Ones()(shape, mstype.float32)
         output = P.CumSum()(output, range_dim)
         output = P.Cast()(output, dtype)

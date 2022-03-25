@@ -191,18 +191,18 @@ class _BatchNorm(Cell):
                 self.is_global = True
                 global SYNC_BN_GROUP_NAME
                 if SYNC_BN_GROUP_NAME == "":
-                    SYNC_BN_GROUP_NAME = "sync_bn_group" + str(i)
+                    SYNC_BN_GROUP_NAME = "sync_bn_group%d" % i
                     management.create_group(SYNC_BN_GROUP_NAME, self.rank_list[i])
 
     def _create_sync_groups(self):
         for i in range(len(self.process_groups)):
-            validator.check_isinstance("process_groups[" + str(i) + "]", self.process_groups[i], list)
+            validator.check_isinstance("process_groups[%d]" % i, self.process_groups[i], list)
             self.group_device_num = len(self.process_groups[i])
             if self.rank_id in self.process_groups[i] and self.group_device_num > 1:
                 self.is_global = True
                 global SYNC_BN_GROUP_NAME
                 if SYNC_BN_GROUP_NAME == "":
-                    SYNC_BN_GROUP_NAME = "sync_bn_group" + str(i)
+                    SYNC_BN_GROUP_NAME = "sync_bn_group%d" % i
                     management.create_group(SYNC_BN_GROUP_NAME, self.process_groups[i])
 
     def construct(self, x):
