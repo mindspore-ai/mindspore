@@ -132,8 +132,9 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplusGrad},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
-  return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
-                              flags.enable_expand_ops, flags.disable_expand_ops);
+  auto ops = GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
+                                  flags.enable_expand_ops, flags.disable_expand_ops);
+  return GkUtils::FilterExcludedOps(ops);
 }
 
 ExpanderPtr GraphKernelExpanderWithPy::GetExpander(const AnfNodePtr &node) {

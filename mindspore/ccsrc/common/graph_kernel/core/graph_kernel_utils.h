@@ -72,6 +72,13 @@ class GkUtils {
                                                const std::vector<std::string> &disable_ops);
 
   /**
+   * @brief Filter excluded operators which can not be enabled from operator list.
+   * @param[in] ops the default operator list
+   * @return The operator list after removing the excluded operators
+   */
+  static std::vector<PrimitivePtr> FilterExcludedOps(const std::vector<PrimitivePtr> &ops);
+
+  /**
    * @brief Check whether graphkernel supports the node
    */
   static bool IsKeepBasicNode(const AnfNodePtr &node);
