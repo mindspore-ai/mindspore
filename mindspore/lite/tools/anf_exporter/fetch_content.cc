@@ -436,11 +436,9 @@ int RemoveIfDepend(const CNodePtr &cnode) {
       for (size_t j = 1; j < depend_node->inputs().size(); ++j) {
         AnfNodePtr depend_input_node = depend_node->input(j);
         MS_CHECK_TRUE_MSG(depend_input_node != nullptr, RET_NULL_PTR, "depend_input_node is nullptr");
-        if (depend_input_node->isa<CNode>()) {
-          inputs.emplace_back(depend_input_node);
-          if (mask_out) {
-            break;
-          }
+        inputs.emplace_back(depend_input_node);
+        if (mask_out) {
+          break;
         }
       }
     } else {

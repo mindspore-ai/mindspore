@@ -23,8 +23,14 @@ extern "C" {
 #endif
 void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align, const int *order);
 
+void PackLstmWeightWithStride(float *dst, const float *src, int batch, int deep, int col, int col_align,
+                              bool is_bidirectional, int stride, const int *order);
+
 void PackLstmBias(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
                   const int *order);
+
+void PackLstmBiasWithStride(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
+                            int b_stride, const int *order);
 
 void PackLstmInput(const float *src, float *dst, int row, int deep);
 

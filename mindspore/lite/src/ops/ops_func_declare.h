@@ -185,6 +185,8 @@
 #include "ops/grad/layer_norm_grad.h"
 #include "ops/grad/log_grad.h"
 #include "ops/grad/lstm_grad.h"
+#include "ops/grad/lstm_grad_data.h"
+#include "ops/grad/lstm_grad_weight.h"
 #include "ops/grad/max_pool_grad.h"
 #include "ops/grad/maximum_grad.h"
 #include "ops/grad/minimum_grad.h"
@@ -250,6 +252,7 @@
 #include "ops/affine.h"
 #include "ops/all_gather.h"
 #include "ops/reduce_scatter.h"
+#include "ops/dynamic_quant.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);
@@ -349,6 +352,8 @@ FUNC_MSOP2SCHEMAOP_DECLARE(LRN)
 FUNC_MSOP2SCHEMAOP_DECLARE(LshProjection)
 FUNC_MSOP2SCHEMAOP_DECLARE(LSTM)
 FUNC_MSOP2SCHEMAOP_DECLARE(LSTMGrad)
+FUNC_MSOP2SCHEMAOP_DECLARE(LSTMGradData)
+FUNC_MSOP2SCHEMAOP_DECLARE(LSTMGradWeight)
 FUNC_MSOP2SCHEMAOP_DECLARE(L2NormalizeFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(MatMulFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(Maximum)
@@ -467,6 +472,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(Affine)
 FUNC_MSOP2SCHEMAOP_DECLARE(ScatterNdUpdate)
 FUNC_MSOP2SCHEMAOP_DECLARE(AllGather)
 FUNC_MSOP2SCHEMAOP_DECLARE(ReduceScatter)
+FUNC_MSOP2SCHEMAOP_DECLARE(DynamicQuant)
 #endif
 }  // namespace mindspore::lite::ops
 #else
