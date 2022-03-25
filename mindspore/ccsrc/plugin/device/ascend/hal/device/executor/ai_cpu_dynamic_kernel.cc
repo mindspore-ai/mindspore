@@ -165,7 +165,7 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
 
   MS_EXCEPTION_IF_NULL(ext_info_handler_);
   for (size_t i = 0; i < input_num_; ++i) {
-    if (!ext_info_handler_->UpdateInputShapeAndType(LongToInt(i), NOT_NULL(cnode))) {
+    if (!ext_info_handler_->UpdateInputShapeAndType(static_cast<uint32_t>(i), NOT_NULL(cnode))) {
       MS_LOG(ERROR) << "Update input shape failed, cnode:" << cnode->fullname_with_scope() << " input:" << i;
       return false;
     }
@@ -173,7 +173,7 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
 
   if (common::AnfAlgo::IsDynamicShape(cnode) && unknow_type_ != DEPEND_COMPUTE) {
     for (size_t i = 0; i < output_num_; ++i) {
-      if (!ext_info_handler_->UpdateOutputShapeAndType(LongToInt(i), NOT_NULL(cnode))) {
+      if (!ext_info_handler_->UpdateOutputShapeAndType(static_cast<uint32_t>(i), NOT_NULL(cnode))) {
         MS_LOG(ERROR) << "Update output shape failed, cnode:" << cnode->fullname_with_scope() << " output:" << i;
         return false;
       }
