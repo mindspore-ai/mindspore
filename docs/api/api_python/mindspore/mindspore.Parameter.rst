@@ -6,7 +6,7 @@
     `Parameter` 是 `Tensor` 的子类，当它们被绑定为Cell的属性时，会自动添加到其参数列表中，并且可以通过Cell的某些方法获取，例如 `cell.get_parameters()` 。
 
     .. note::
-        - 在"semi_auto_parallel"和"auto_parallel"的并行模式下，如果使用 `Initializer` 模块初始化参数，参数的类型将为 `Tensor` ，:class:`mindspore.ops.AllGather` 。`Tensor` 仅保存张量的形状和类型信息，而不占用内存来保存实际数据。
+        - 在 `SEMI_AUTO_PARALLEL` 和 `AUTO_PARALLEL` 的并行模式下，如果使用 `Initializer` 模块初始化参数，参数的类型将为 `Tensor` 。`Tensor` 仅保存张量的形状和类型信息，而不占用内存来保存实际数据。
         - 并行场景下存在参数的形状发生变化的情况，用户可以调用 `Parameter` 的 `init_data` 方法得到原始数据。
         - 如果网络中存在需要部分输入为 `Parameter` 的算子，则不允许这部分输入的 `Parameter` 进行转换。
 

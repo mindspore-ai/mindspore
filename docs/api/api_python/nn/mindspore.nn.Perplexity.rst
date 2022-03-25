@@ -8,9 +8,11 @@ mindspore.nn.Perplexity
     .. math::
         PP(W)=P(w_{1}w_{2}...w_{N})^{-\frac{1}{N}}=\sqrt[N]{\frac{1}{P(w_{1}w_{2}...w_{N})}}
 
+    其中 :math:`w` 代表语料库中的单词.
+
     **参数：**
 
-    - **ignore_label** (int) - 计数时要忽略的无效标签的索引。如果设置为None，它将包括所有条目。默认值：-1。
+    - **ignore_label** (int) - 计数时要忽略的无效标签的索引。如果设置为None，它将包括所有条目。默认值：None。
 
     .. py:method:: clear()
 
@@ -31,7 +33,7 @@ mindspore.nn.Perplexity
 
     .. py:method:: update(*inputs)
 
-        使用 :math:`preds` 和 :math:`labels` 更新内部评估结果。
+        使用 `preds` 和 `labels` 更新内部评估结果。
 
         **参数：**
 
