@@ -3,11 +3,11 @@ mindspore.dataset.vision.c_transforms.RandomHorizontalFlipWithBBox
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomHorizontalFlipWithBBox(prob=0.5)
 
-    以给定的概率水平随机翻转输入图像并相应地调整边界框。
+    对输入图像按给定的概率进行水平随机翻转并相应地调整边界框。
 
     **参数：**
 
-    - **prob**  (float, 可选) - 图像被翻转的概率，必须在 [0, 1] 范围内, 默认值：0.5。
+    - **prob**  (float, 可选) - 图像被翻转的概率，必须在 [0, 1] 范围内，默认值：0.5。
 
     **异常：**
 

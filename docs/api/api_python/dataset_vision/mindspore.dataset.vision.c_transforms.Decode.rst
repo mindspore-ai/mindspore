@@ -3,12 +3,11 @@ mindspore.dataset.vision.c_transforms.Decode
 
 .. py:class:: mindspore.dataset.vision.c_transforms.Decode(rgb=True)
 
-    以 RGB 模式（默认）或 BGR 模式（选项已弃用）解码输入图像。
+    对输入图像进行解码。
 
     **参数：**
 
-    - **rgb**  (bool，可选) - 解码输入图像的模式, 默认值：True。
-      如果 True 表示解码图像的格式为 RGB，否则为 BGR（选项已弃用）。
+    - **rgb**  (bool，可选) - 解码输入图像的模式。若为True，将输入解码为RGB图像；否则为BGR图像(已弃用)。默认值：True。
 
     **异常：**
 

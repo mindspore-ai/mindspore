@@ -3,7 +3,7 @@ mindspore.dataset.vision.c_transforms.HWC2CHW
 
 .. py:class:: mindspore.dataset.vision.c_transforms.HWC2CHW()
 
-    将输入图像从形状 (H, W, C) 转置为形状 (C, H, W)。 输入图像应为 3 通道图像。
+    将输入图像的shape从 <H, W, C> 转换为 <C, H, W>。输入图像应为 3 通道图像。
 
     **异常：**
 

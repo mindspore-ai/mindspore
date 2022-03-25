@@ -3,7 +3,7 @@ mindspore.dataset.vision.c_transforms.RandomSelectSubpolicy
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomSelectSubpolicy(policy)
 
-    从策略列表中选择一个随机子策略以应用于输入图像。
+    从策略列表中随机选择一个子策略以应用于输入图像。
 
     **参数：**
 
