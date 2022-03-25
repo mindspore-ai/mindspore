@@ -236,8 +236,11 @@ uint32_t Fp32ToFp16(float value) {
   const unsigned int FP16_E = 16 - 1 - FP16_M;
 
   uint32_t fp32_bits;
-  memcpy_s(reinterpret_cast<std::byte *>(&fp32_bits), sizeof(fp32_bits), reinterpret_cast<std::byte *>(&value),
-           sizeof(value));
+  auto ret = memcpy_s(reinterpret_cast<std::byte *>(&fp32_bits), sizeof(fp32_bits),
+                      reinterpret_cast<std::byte *>(&value), sizeof(value));
+  if (ret != 0) {
+    MS_LOG(ERROR) << "Set data memcpy_s failed, ret = " << ret;
+  }
 
   uint32_t mantissa = fp32_bits & FieldMask(FP32_M);
   uint32_t fp32_exp_mask = FieldMask(FP32_E);

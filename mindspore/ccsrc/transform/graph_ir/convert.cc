@@ -432,11 +432,11 @@ void DfGraphConvertor::BuildSaveCheckpointGraph() {
   size_t index = 0;
   string name;
 
-  size_t count_size = std::count_if(vars_.begin(), vars_.end(), [](const auto &it) {
+  auto count_size = std::count_if(vars_.begin(), vars_.end(), [](const auto &it) {
     return LongToUlong(it.second == nullptr || it.first.find("/") != std::string::npos);
   });
 
-  (void)save_op.create_dynamic_input_tensors(static_cast<uint32_t>(vars_.size() - count_size));
+  (void)save_op.create_dynamic_input_tensors(static_cast<uint32_t>(vars_.size() - static_cast<size_t>(count_size)));
 
   // for each "parameter" in anf graph excluding "input"
   for (const auto &it : vars_) {

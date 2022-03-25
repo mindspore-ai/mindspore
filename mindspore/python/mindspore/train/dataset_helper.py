@@ -404,8 +404,10 @@ class _DatasetIter:
         return self.op()
 
     def types_shapes(self):
-        """Return the types and shapes of the dataset. The type and shape of each data in the dataset
-        should be consistent."""
+        """
+        Return the types and shapes of the dataset. The type and shape of each data in the dataset
+        should be consistent.
+        """
         return self.dataset_types, self.dataset_shapes
 
     def get_sink_count(self, dataset):

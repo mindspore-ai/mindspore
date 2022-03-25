@@ -1028,8 +1028,8 @@ class Tensor(Tensor_):
         Return a copy of the tensor, cast to a specified type.
 
         Args:
-            dtype (Union[:class:`mindspore.dtype`, str]): Designated tensor dtype, can be in format
-                of :class:`mindspore.dtype.float32` or `float32`.
+            dtype (Union[:class:`mindspore.dtype`, :class:`numpy.dtype`, str]): Designated tensor dtype, can be in
+                format of :class:`mindspore.dtype.float32` or :class:`numpy.float32` or `float32`.
             copy (bool, optional): By default, astype always returns a newly allocated
                 tensor. If this is set to false, the input tensor is returned instead
                 of a copy. Default: True.
@@ -1998,9 +1998,13 @@ class Tensor(Tensor_):
             v = tensor_operator_registry.get('make_tensor')(v)
         shape = v.shape
         if sorter is not None:
+            if not isinstance(sorter, (int, float, bool, list, tuple, Tensor)):
+                raise TypeError("For Tensor.searchsorted, the type of the argument 'sorter' must be one of 'int', "
+                                "'float', 'bool', 'list', 'tuple', 'Tensor', but got {}.".format(type(sorter)))
+            if not isinstance(sorter, Tensor):
+                sorter = tensor_operator_registry.get('make_tensor')(sorter)
             if sorter.ndim != 1 or sorter.size != a.size:
                 raise ValueError('sorter must be 1-D array with the same size as the Tensor')
-            sorter = tensor_operator_registry.get('make_tensor')(sorter)
             sorter = sorter.reshape(sorter.shape + (1,))
             a = tensor_operator_registry.get('gather_nd')(a, sorter)
         less_op = tensor_operator_registry.get('__le__') if side == 'left' else tensor_operator_registry.get('__lt__')
