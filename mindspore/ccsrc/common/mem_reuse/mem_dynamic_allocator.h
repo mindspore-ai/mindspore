@@ -32,7 +32,11 @@ namespace device {
 using DeviceMemPtr = void(*);
 
 // The status of memory buf.
-enum DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed };
+enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed };
+
+// Memory allocator type is used to record the memory classification statistics information.
+enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kOther };
+static const int ALLOCATOR_TYPE_NUM = 4;
 
 // Alloc memory aligned according to 512 bytes.
 static const size_t DYNAMIC_MEM_ALIGN_SIZE = 512;
@@ -48,6 +52,7 @@ struct DeviceAddrCmp {
 // Recording information for debugging the memory allocator.
 struct AllocatorDebugInfo {
   std::string name_{"Unknown"};
+  AllocatorType type_{AllocatorType::kOther};
   int input_index_{-1};
   int output_index_{-1};
 };
@@ -58,8 +63,9 @@ class DynamicMemAllocatorDebugInfo {
   static AllocatorDebugInfo &GetDebugInfo() noexcept { return debug_info_; }
 
   // Set the debug info when memory alloc.
-  static void SetDebugInfo(const std::string &name, int input_index = -1, int output_index = -1) {
+  static void SetDebugInfo(const std::string &name, AllocatorType type, int input_index = -1, int output_index = -1) {
     debug_info_.name_ = name;
+    debug_info_.type_ = type;
     debug_info_.input_index_ = input_index;
     debug_info_.output_index_ = output_index;
   }
@@ -75,12 +81,19 @@ class DynamicMemAllocatorDebugInfo {
 // Memory buf is the smallest operation object of dynamic memory pool.
 struct DynamicMemBuf {
   DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size,
-                const std::string &allocator_name = "Unknown")
-      : device_addr_(addr), status_(status), size_(size), allocator_name_(allocator_name) {}
+                const std::string &allocator_name = "Unknown", AllocatorType allocator_type = AllocatorType::kOther)
+      : device_addr_(addr),
+        status_(status),
+        size_(size),
+        allocator_name_(allocator_name),
+        allocator_type_{allocator_type} {}
   DeviceMemPtr device_addr_;
   DynamicMemBufStatus status_;
   size_t size_;
+
+  // Debug info.
   std::string allocator_name_;
+  AllocatorType allocator_type_;
 };
 using DynamicMemBufPtr = std::shared_ptr<DynamicMemBuf>;
 // Multimap key is the tensor size, for finding the idle memory buf by tensor size.
