@@ -3,9 +3,9 @@ mindspore.nn.BatchNorm1d
 
 .. py:class:: mindspore.nn.BatchNorm1d(num_features,eps=1e-5,momentum=0.9,affine=True,gamma_init='ones',beta_init='zeros',moving_mean_init='zeros',moving_var_init='ones',use_batch_statistics=None)
 
-    对输入的二维数据进行批归一化层(Batch Normalization Layer)。
+    对输入的二维数据进行批归一化(Batch Normalization Layer)。
 
-    归一化在卷积网络中被广泛的应用。此层在二维输入（mini-batch 一维输入）上应用批归一化，避免内部协变量偏移。请见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。
+    在二维输入（mini-batch 一维输入）上应用批归一化，避免内部协变量偏移。归一化在卷积网络中被广泛的应用。请见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。
 
     使用mini-batch数据和学习参数进行训练，计算公式如下。
 
@@ -18,13 +18,13 @@ mindspore.nn.BatchNorm1d
     **参数：**
 
     - **num_features** (int) - 指定输入Tensor的通道数量，输入Tensor的size为(N, C)。
-    - **eps** (float) - 确保数值稳定加在分母上的值。默认值：1e-5。
+    - **eps** (float) - 加在分母上的值，以确保数值稳定。默认值：1e-5。
     - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值：0.9。
     - **affine** (bool) - bool类型。设置为True时，可学习到gama和beta值。默认值：True。
-    - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gama参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。默认值：'ones'。
-    - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。默认值：'zeros'。
-    - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态平均值的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。默认值：'zeros'。
-    - **moving_var_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态方差的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'等。默认值：'ones'。
+    - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'ones'。
+    - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'zeros'。
+    - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态平均值的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'zeros'。
+    - **moving_var_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态方差的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'等。默认值：'ones'。
     - **use_batch_statistics** (bool) - 如果为True，则使用当前批次数据的平均值和方差值。如果为False，则使用指定的平均值和方差值。如果为None，训练时，将使用当前批次数据的均值和方差，并更新动态均值和方差，验证过程将直接使用动态均值和方差。默认值：None。
 
     **输入：**

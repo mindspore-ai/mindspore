@@ -5,9 +5,9 @@ mindspore.nn.GroupNorm
 
     在mini-batch输入上进行组归一化。
 
-    近来，组归一化在递归神经网络中得到了广泛的应用。适用单个训练用例的mini-batch输入归一化，详见论文 `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_ 。
+    适用单个训练用例的mini-batch输入归一化，详见论文 `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_ 。
 
-    把通道划分为组，然后计算每一组之内的均值和方差，已进行归一化，在batch size上表现非常稳定。
+    把通道划分为组，然后计算每一组之内的均值和方差，以进行归一化。
 
     公式如下，
 
@@ -20,12 +20,12 @@ mindspore.nn.GroupNorm
     - **num_channels** (int) - 输入的通道数。
     - **eps** (float) - 添加到分母中的值，以确保数值稳定。默认值：1e-5。
     - **affine** (bool) - Bool类型，当设置为True时，给该层添加可学习的仿射变换参数，即gama与beta。默认值：True。
-    - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gama参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'、'xavier_uniform'、'he_uniform'等。默认值：'ones'。如果gamma_init是tensor，则shape必须为[num_channels]。
-    - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `initializer` ，包括'zeros'、'ones'、'xavier_uniform'、'he_uniform'等。默认值：'zeros'如果gamma_init是tensor，则shape必须为[num_channels]。
+    - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'、'xavier_uniform'、'he_uniform'等。默认值：'ones'。如果gamma_init是Tensor，则shape必须为[num_channels]。
+    - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `mindspore.common.initializer` ，包括'zeros'、'ones'、'xavier_uniform'、'he_uniform'等。默认值：'zeros'如果gamma_init是Tensor，则shape必须为[num_channels]。
 
     **输入：**
 
-    - **x** (Tensor)** - shape为[N, C, H, W]的特征输入。
+    - **x** (Tensor) - shape为 `(N, C, H, W)` 的特征输入。
 
     **输出：**
 

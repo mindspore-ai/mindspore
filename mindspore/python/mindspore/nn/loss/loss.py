@@ -1374,13 +1374,13 @@ class FocalLoss(LossBase):
                          If "none", do not perform reduction. Default: "mean".
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape should be :math:`(B, C)` or :math:`(B, C, H)` or :math:`(B, C, H, W)`.
-          Where :math:`C` is the number of classes. Its value is greater than 1. If the shape is :math:`(B, C, H, W)`
-          or :math:`(B, C, H)`, the :math:`H` or product of :math:`H` and :math:`W` should be the same as labels.
-        - **labels** (Tensor) - Tensor of shape should be :math:`(B, C)` or :math:`(B, C, H)` or :math:`(B, C, H, W)`.
+        - **logits** (Tensor) - Tensor of shape should be :math:`(N, C)` or :math:`(N, C, H)` or :math:`(N, C, H, W)`.
+          Where :math:`C` is the number of classes. Its value is greater than 1. If the shape is :math:`(N, C, H, W)`
+          or :math:`(N, C, H)`, the :math:`H` or product of :math:`H` and :math:`W` should be the same as labels.
+        - **labels** (Tensor) - Tensor of shape should be :math:`(N, C)` or :math:`(N, C, H)` or :math:`(N, C, H, W)`.
           The value of :math:`C` is 1 or it needs to be the same as predict's :math:`C`. If :math:`C` is not 1,
           the shape of target should be the same as that of predict, where :math:`C` is the number of classes.
-          If the shape is :math:`(B, C, H, W)` or :math:`(B, C, H)`, the :math:`H` or product of :math:`H`
+          If the shape is :math:`(N, C, H, W)` or :math:`(N, C, H)`, the :math:`H` or product of :math:`H`
           and :math:`W` should be the same as logits. The value of `labels` is should be in the
           range [-:math:`C`, :math:`C`). Where :math:`C` is the number of classes in logits.
 
