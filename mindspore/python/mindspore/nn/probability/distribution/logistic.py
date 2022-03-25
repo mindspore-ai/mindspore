@@ -179,6 +179,7 @@ class Logistic(Distribution):
         self.softplus = self._softplus
         self.sqrt = P.Sqrt()
         self.uniform = C.uniform
+        self.neg = P.Neg()
 
         self.threshold = np.log(np.finfo(np.float32).eps) + 1.
         self.tiny = np.finfo(np.float).tiny
@@ -382,7 +383,7 @@ class Logistic(Distribution):
         l_zero = self.const(self.tiny)
         h_one = self.const(1.0)
         sample_uniform = self.uniform(sample_shape, l_zero, h_one, self.seed)
-        sample = self.log(sample_uniform) - self.log1p(-sample_uniform)  # pylint: disable=invalid-unary-operand-type
+        sample = self.log(sample_uniform) - self.log1p(self.neg(sample_uniform))
         sample = sample * scale + loc
         value = self.cast(sample, self.dtype)
         if origin_shape == ():
