@@ -39,6 +39,7 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
       MS_LOG(DEBUG) << "Recover the server node is failed.";
     }
   }
+  RecoverFromPersistence();
 
   if (PSContext::instance()->scheduler_manage_port() != 0) {
     MS_LOG(INFO) << "Start the restful scheduler http service, the ip is 127.0.0.1 "
