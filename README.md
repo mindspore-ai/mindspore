@@ -239,7 +239,7 @@ please check out [docker](https://gitee.com/mindspore/mindspore/blob/master/scri
 
 ## Quickstart
 
-See the [Quick Start](https://www.mindspore.cn/tutorials/en/master/quick_start.html)
+See the [Quick Start](https://www.mindspore.cn/tutorials/en/master/beginner/quick_start.html)
 to implement the image classification.
 
 ## Docs

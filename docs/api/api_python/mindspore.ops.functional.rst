@@ -260,7 +260,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
    * - mindspore.ops.stack
      - Refer to :class:`mindspore.ops.Stack`.
    * - mindspore.ops.stop_gradient
-     - Disable update during back propagation. (`stop_gradient <https://www.mindspore.cn/tutorials/en/master/beginner/autograd.html#stop-gradient>`_)
+     - Disable update during back propagation. (`stop_gradient <https://www.mindspore.cn/tutorials/en/master/beginner/autograd.html#stopping-gradient>`_)
    * - mindspore.ops.strided_slice
      - Refer to :class:`mindspore.ops.StridedSlice`.
    * - mindspore.ops.string_concat
