@@ -27,6 +27,10 @@ namespace mindspore {
 namespace proposal {
 constexpr int kNumInput2 = 2;
 constexpr int kNCHWDims = 4;
+constexpr int kScoreSizeIndex = 2;
+constexpr int kKeyConfidenceIndex = 4;
+constexpr int kPredWeightIndex = 2;
+constexpr int KPredHeightIndex = 3;
 uint32_t RpnTmpBufSize(uint32_t num_ratio_anchors, uint32_t num_scale_anchors, uint32_t input_height,
                        uint32_t input_width) {
   uint32_t anchors_num = num_ratio_anchors * num_scale_anchors * input_height * input_width;
@@ -35,7 +39,7 @@ uint32_t RpnTmpBufSize(uint32_t num_ratio_anchors, uint32_t num_scale_anchors, u
   uint32_t proposal_size = sizeof(uint32_t) * PROPOSAL_WIDTH * anchors_num;
   uint32_t ratio_anchors_size = sizeof(float) * num_ratio_anchors * COORDI_NUM;
   uint32_t scale_anchors_size = sizeof(float) * num_ratio_anchors * num_scale_anchors * COORDI_NUM;
-  uint32_t score_size = sizeof(float) * anchors_num * 2;
+  uint32_t score_size = sizeof(float) * anchors_num * kScoreSizeIndex;
   uint32_t stack_size = sizeof(Stack) * anchors_num;
   uint32_t total_size =
     anchors_size + bbox_delta_size + proposal_size + ratio_anchors_size + scale_anchors_size + score_size + stack_size;
@@ -117,7 +121,7 @@ static int32_t NonRecursiveArgQuickSort(int32_t *array, int32_t low, int32_t hig
     int32_t i = low;
     int32_t j = high;
 
-    int32_t key_confidence = array[PROPOSAL_WIDTH * low + 4];
+    int32_t key_confidence = array[PROPOSAL_WIDTH * low + kKeyConfidenceIndex];
     top--;
     while (i < j) {
       while ((i < j) && (key_confidence > array[j * PROPOSAL_WIDTH + 4])) {
@@ -479,8 +483,8 @@ static void Rpn(float **inputs, uint32_t num_ratio_anchors, uint32_t num_scale_a
     int32_t pred_center_y =
       static_cast<int32_t>((static_cast<float>(*(ptr3 + 1)) / QUANT_BASE) * proposal_height + proposal_center_y);
 
-    int32_t pred_w = static_cast<int32_t>(proposal_width * QuickExp(static_cast<int32_t>(*(ptr3 + 2))));
-    int32_t pred_h = static_cast<int32_t>(proposal_height * QuickExp(static_cast<int32_t>(*(ptr3 + 3))));
+    int32_t pred_w = static_cast<int32_t>(proposal_width * QuickExp(static_cast<int32_t>(*(ptr3 + kPredWeightIndex))));
+    int32_t pred_h = static_cast<int32_t>(proposal_height * QuickExp(static_cast<int32_t>(*(ptr3 + KPredHeightIndex))));
     *(ptr2) = static_cast<int32_t>(pred_center_x - HALF_VAL * pred_w);
     *(ptr2 + 1) = static_cast<int32_t>(pred_center_y - HALF_VAL * pred_h);
     *(ptr2 + 2) = static_cast<int32_t>(pred_center_x + HALF_VAL * pred_w);
