@@ -16,6 +16,7 @@
 
 #include <memory>
 #include "ps/core/ps_scheduler_node.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ps {
@@ -58,6 +59,13 @@ void PSSchedulerNode::RegisterInitCollectCommServiceHandler() {
   handlers_[NodeCommand::QUERY_UNIQUE_ID] = static_cast<ResponseHandler>(&PSSchedulerNode::ProcessQueryUniqueID);
 }
 
+void PSSchedulerNode::RegisterRecoveryServiceHandler() {
+  handlers_[NodeCommand::SEND_FINISH_TRANSFORM] =
+    static_cast<ResponseHandler>(&PSSchedulerNode::ProcessSendFinishTransform);
+  handlers_[NodeCommand::QUERY_FINISH_TRANSFORM] =
+    static_cast<ResponseHandler>(&PSSchedulerNode::ProcessQueryFinishTransform);
+}
+
 void PSSchedulerNode::ProcessSendHostName(const std::shared_ptr<TcpServer> &server,
                                           const std::shared_ptr<TcpConnection> &conn,
                                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
@@ -71,7 +79,7 @@ void PSSchedulerNode::ProcessSendHostName(const std::shared_ptr<TcpServer> &serv
   std::string node_id = send_host_name_msg.node_id();
   uint32_t rank_id = send_host_name_msg.rank_id();
   size_t host_hash_name = send_host_name_msg.host_hash_name();
-  MS_LOG(INFO) << "Received send host name request, node id: " << node_id << ", rank id: " << rank_id;
+  MS_LOG(INFO) << "Receive send host name request, node id: " << node_id << ", rank id: " << rank_id;
 
   bool ret = false;
   std::string error = "";
@@ -100,7 +108,7 @@ void PSSchedulerNode::ProcessQueryHostNames(const std::shared_ptr<TcpServer> &se
   query_msg.ParseFromArray(data, SizeToInt(size));
   std::string node_id = query_msg.node_id();
   uint32_t rank_id = query_msg.rank_id();
-  MS_LOG(INFO) << "Received query host name request, node id: " << node_id << ", rank id: " << rank_id;
+  MS_LOG(INFO) << "Receive query host name request, node id: " << node_id << ", rank id: " << rank_id;
 
   bool is_success = recv_rank_id_send_host_name_.size() == host_hash_names_.size();
   QueryHostHashNameRespMessage resp_msg;
@@ -121,6 +129,7 @@ void PSSchedulerNode::ProcessQueryHostNames(const std::shared_ptr<TcpServer> &se
     if (recv_rank_id_query_host_name_.size() == recv_rank_id_send_host_name_.size()) {
       recv_rank_id_send_host_name_.clear();
       recv_rank_id_query_host_name_.clear();
+      node_timeout_ = false;
     }
   }
 }
@@ -138,7 +147,7 @@ void PSSchedulerNode::ProcessSendUniqueID(const std::shared_ptr<TcpServer> &serv
   std::string node_id = send_unique_id_msg.node_id();
   uint32_t rank_id = send_unique_id_msg.rank_id();
   std::string group_name = send_unique_id_msg.group_name();
-  MS_LOG(INFO) << "Received send unique id request, group name: " << group_name << ", node id: " << node_id
+  MS_LOG(INFO) << "Receive send unique id request, group name: " << group_name << ", node id: " << node_id
                << ", rank id: " << rank_id;
 
   bool ret = false;
@@ -169,7 +178,7 @@ void PSSchedulerNode::ProcessQueryUniqueID(const std::shared_ptr<TcpServer> &ser
   std::string node_id = query_msg.node_id();
   uint32_t rank_id = query_msg.rank_id();
   std::string group_name = query_msg.group_name();
-  MS_LOG(INFO) << "Received query unique id request, group name: " << group_name << ", node id: " << node_id
+  MS_LOG(INFO) << "Receive query unique id request, group name: " << group_name << ", node id: " << node_id
                << ", rank id: " << rank_id;
 
   auto iter = unique_id_group_.find(group_name);
@@ -189,6 +198,89 @@ void PSSchedulerNode::ProcessQueryUniqueID(const std::shared_ptr<TcpServer> &ser
 
   MS_LOG(INFO) << "Respond query unique id request, group name: " << group_name << ", node id: " << node_id
                << ", rank id: " << rank_id;
+}
+
+void PSSchedulerNode::ProcessSendFinishTransform(const std::shared_ptr<TcpServer> &server,
+                                                 const std::shared_ptr<TcpConnection> &conn,
+                                                 const std::shared_ptr<MessageMeta> &meta, const void *data,
+                                                 size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+
+  SendFinishTransformMessage send_ready_to_run_msg;
+  send_ready_to_run_msg.ParseFromArray(data, SizeToInt(size));
+  std::string node_id = send_ready_to_run_msg.node_id();
+  uint32_t rank_id = send_ready_to_run_msg.rank_id();
+  MS_LOG(INFO) << "Receive send finish transform request, node id: " << node_id << ", rank id: " << rank_id;
+  bool is_ready = send_ready_to_run_msg.is_ready();
+  if (is_ready) {
+    std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
+    (void)nodes_finish_trans_.insert(rank_id);
+  }
+
+  GeneralResponse(server, conn, meta, true, "");
+  MS_LOG(INFO) << "Respond send finish transform request, node id: " << node_id << ", rank id: " << rank_id;
+}
+
+void PSSchedulerNode::ProcessQueryFinishTransform(const std::shared_ptr<TcpServer> &server,
+                                                  const std::shared_ptr<TcpConnection> &conn,
+                                                  const std::shared_ptr<MessageMeta> &meta, const void *data,
+                                                  size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+
+  GeneralQueryMessage query_msg;
+  query_msg.ParseFromArray(data, SizeToInt(size));
+  std::string node_id = query_msg.node_id();
+  uint32_t rank_id = query_msg.rank_id();
+  MS_LOG(INFO) << "Receive query finish transform request, node id: " << node_id << ", rank id: " << rank_id;
+
+  std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
+  bool is_ready = nodes_finish_trans_.size() == worker_num_;
+
+  QueryFinishTransformRespMessage resp_msg;
+  resp_msg.set_is_ready(is_ready);
+
+  if (node_timeout_) {
+    (void)resp_msg.set_is_worker_timeout(true);
+  } else {
+    resp_msg.set_is_worker_timeout(false);
+  }
+
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, resp_msg.SerializeAsString().data(),
+                           resp_msg.ByteSizeLong())) {
+    MS_LOG(ERROR) << "Scheduler failed to respond message.";
+    return;
+  }
+  MS_LOG(INFO) << "Respond query finish transform request, node id: " << node_id << ", rank id: " << rank_id;
+}
+
+void PSSchedulerNode::HandleNodeTimeoutForRecovery(
+  const std::unordered_map<std::string, NodeInfo> &timeout_nodes_infos) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_RECOVERY)) {
+    return;
+  }
+
+  if (timeout_nodes_infos.empty()) {
+    return;
+  }
+
+  std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
+  node_timeout_ = true;
+  for (const auto &item : timeout_nodes_infos) {
+    (void)nodes_finish_trans_.erase(item.second.rank_id_);
+  }
+}
+
+void PSSchedulerNode::HandleNodeRecoverByHeartBeat(uint32_t rank_id) {
+  std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
+  (void)nodes_finish_trans_.insert(rank_id);
 }
 }  // namespace core
 }  // namespace ps

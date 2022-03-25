@@ -306,8 +306,7 @@ add_library(backend_static STATIC
         $<TARGET_OBJECTS:_mindspore_runtime_device_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_graph_scheduler_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_hardware_obj>
-        $<TARGET_OBJECTS:_mindspore_runtime_pynative_obj>
-        $<TARGET_OBJECTS:_mindspore_runtime_recovery_obj>)
+        $<TARGET_OBJECTS:_mindspore_runtime_pynative_obj>)
 target_link_libraries(ut_tests PRIVATE mindspore securec -Wl,--start-group proto_input mindspore::protobuf
         backend_static -Wl,--end-group)
 target_link_libraries(ut_tests PRIVATE mindspore::grpc++)

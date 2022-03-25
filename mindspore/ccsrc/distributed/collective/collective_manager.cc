@@ -15,18 +15,24 @@
  */
 
 #include "distributed/collective/collective_manager.h"
+#include <algorithm>
 #include <string>
 #include <vector>
+#include <functional>
+#include <csignal>
 #include <memory>
 #include "utils/ms_context.h"
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace distributed {
 namespace collective {
+using recovery::RecoveryContext;
+
 CollectiveManager::CollectiveManager()
     : inited_(false),
       finalized_(true),
+      need_reinit_(false),
       host_ctx_(nullptr),
       device_ctx_(nullptr),
       host_comm_lib_instance_(nullptr),
@@ -60,8 +66,75 @@ std::shared_ptr<CollectiveManager> CollectiveManager::instance() {
   return instance;
 }
 
+namespace {
+// The wrapper to provide a timeout mechanism for executing functions.
+bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeout) {
+  bool execute_success = false;
+  bool execute_fail = false;
+  std::mutex exec_ret_mutex;
+  std::condition_variable thread_blocker;
+
+  std::unique_ptr<std::thread> executive_thread = std::make_unique<std::thread>([&] {
+    if (!func()) {
+      MS_LOG(ERROR) << "Failed to execute function asynchronously";
+      std::unique_lock<std::mutex> lock(exec_ret_mutex);
+      execute_fail = true;
+      thread_blocker.notify_one();
+      return;
+    }
+
+    {
+      std::unique_lock<std::mutex> lock(exec_ret_mutex);
+      execute_success = true;
+      thread_blocker.notify_one();
+    }
+  });
+  executive_thread->detach();
+
+  std::unique_lock<std::mutex> locker(exec_ret_mutex);
+  (void)thread_blocker.wait_for(locker, std::chrono::seconds(timeout), [&] { return execute_success || execute_fail; });
+
+  if (!execute_success && !execute_fail) {
+    std::string node_id = common::GetEnv("MS_NODE_ID");
+#if !defined(_WIN32) && !defined(_WIN64)
+    MS_LOG(ERROR) << "Execute function asynchronously timeout, node id: " << node_id << " exit process";
+    (void)kill(getpid(), SIGTERM);
+#endif
+  }
+  return execute_success;
+}
+
+// In a disaster recovery scenario, the comparison between the current unique id and the last generated unique id
+// ensures that the acquired unique id is newly generated, and the latest unique id will be persisted.
+bool CheckUniqueIDLatest(const std::string &group_name, size_t root_info_size, const void *root_info) {
+  MS_EXCEPTION_IF_NULL(root_info);
+  auto persistent_json = RecoveryContext::GetInstance()->persistent_json();
+  MS_EXCEPTION_IF_NULL(persistent_json);
+
+  std::string new_unique_id(static_cast<const char *>(root_info), root_info_size);
+  std::vector<int> new_unique_id_integer_seq;
+  (void)std::transform(new_unique_id.begin(), new_unique_id.end(), std::back_inserter(new_unique_id_integer_seq),
+                       [](char c) { return static_cast<int>(c); });
+
+  const char unique_id_str[] = "_unique_id";
+  std::string unique_id_key = group_name + unique_id_str;
+  if (!persistent_json->Exists(unique_id_key)) {
+    persistent_json->Insert(unique_id_key, new_unique_id_integer_seq);
+    return true;
+  }
+
+  std::vector<int> old_unique_id_integer_seq = persistent_json->Get<std::vector<int>>(unique_id_key);
+  if (new_unique_id_integer_seq == old_unique_id_integer_seq) {
+    return false;
+  }
+
+  persistent_json->Insert(unique_id_key, new_unique_id_integer_seq);
+  return true;
+}
+}  // namespace
+
 bool CollectiveManager::Initialize() {
-  if (inited_ && !runtime::recovery::RecoveryContext::GetInstance()->need_reinit_collective()) {
+  if (inited_ && !need_reinit_) {
     return true;
   }
 
@@ -98,6 +171,8 @@ bool CollectiveManager::Initialize() {
   MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type_;
   inited_ = true;
   finalized_ = false;
+  need_reinit_ = false;
+
   return true;
 }
 
@@ -125,50 +200,36 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   void *root_info = group->GenerateRootInfo(&root_info_size);
   MS_EXCEPTION_IF_NULL(root_info);
 
+  bool ret = false;
   // Step 4: Broadcast the device root information to all nodes on host side.
-  if (!host_comm_lib_instance_->BroadcastUniqueID(group_name, is_root_node, root_info_size, root_info)) {
-    MS_LOG(ERROR) << "Broadcast for device root info failed on the host side.";
-    return false;
+  while (!ret) {
+    ret = host_comm_lib_instance_->BroadcastUniqueID(group_name, is_root_node, root_info_size, root_info);
+    if (!ret) {
+      MS_LOG(ERROR) << "Broadcast for device root info failed on the host side.";
+      return false;
+    }
+
+    // In disaster recovery scenarios, it is necessary to ensure that the unique id obtained from the Scheduler is a
+    // newly generated one.
+    if (RecoveryContext::GetInstance()->enable_recovery()) {
+      ret = CheckUniqueIDLatest(group_name, root_info_size, root_info);
+    }
   }
 
   // Step 5: Initialize communication group on the device side.
-  return InitDeviceCommGroup(group, root_info);
-}
-
-bool CollectiveManager::InitDeviceCommGroup(const CommunicationGroupPtr &group, void *root_info) {
-  bool init_group_success = false;
-  bool init_group_fail = false;
-  std::condition_variable thread_blocker;
-  init_group_thread_ = std::make_unique<std::thread>([&, this] {
+  std::function<bool()> init_device_comm_group_func = [&, this]() {
     device_ctx_->Initialize();
-    if (!group->Initialize(root_info)) {
-      MS_LOG(ERROR) << "Initialize group on the device side failed.";
-      std::unique_lock<std::mutex> lock(init_group_mutex_);
-      init_group_fail = true;
-      thread_blocker.notify_one();
-      return;
-    }
+    return group->Initialize(root_info);
+  };
+  MS_LOG(INFO) << "Begin initialize communication group on the device side.";
 
-    {
-      std::unique_lock<std::mutex> lock(init_group_mutex_);
-      init_group_success = true;
-      thread_blocker.notify_one();
-    }
-  });
-  init_group_thread_->detach();
-
-  // Timeout limit 180 seconds to wait finishing init device communication group.
+  // Timeout limit 180 seconds to wait finish initializing device communication group.
   const int64_t kTimeToWait = 180;
-  std::unique_lock<std::mutex> locker(init_group_mutex_);
-  (void)thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait),
-                                [&] { return init_group_success || init_group_fail; });
+  // Initialize communication group on the device side in thread with timeout limit.
+  ret = ExecuteFuncInThread(init_device_comm_group_func, kTimeToWait);
 
-  if (!init_group_success && runtime::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
-    runtime::recovery::RecoveryContext::GetInstance()->set_recovery_status(
-      runtime::recovery::RecoveryErrCode::kInitNcclFailed);
-    MS_LOG(ERROR) << "Initialize group on the device side failed.";
-  }
-  return init_group_success;
+  MS_LOG(INFO) << "End initialize communication group on the device side.";
+  return ret;
 }
 
 bool CollectiveManager::DestroyCommunicationGroup(const std::string &group_name) {
@@ -197,22 +258,34 @@ uint32_t CollectiveManager::GetGroupSize(const std::string &group_name) {
 }
 
 bool CollectiveManager::Finalize() {
-  if (finalized_) {
+  if (!inited_.load() || finalized_.load()) {
     return true;
   }
 
-  MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
-  if (!host_comm_lib_instance_->Finalize()) {
-    MS_LOG(WARNING) << "Failed to finalize host communication library.";
-  }
+  std::function<bool()> finalize_func = [&, this]() {
+    MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+    if (!host_comm_lib_instance_->Finalize()) {
+      MS_LOG(WARNING) << "Failed to finalize host communication library.";
+    }
 
-  MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
-  if (!device_comm_lib_instance_->Finalize()) {
-    MS_LOG(WARNING) << "Failed to finalize device communication library.";
-  }
+    MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+    if (!device_comm_lib_instance_->Finalize()) {
+      MS_LOG(WARNING) << "Failed to finalize device communication library.";
+    }
 
-  finalized_ = true;
-  return true;
+    finalized_ = true;
+    return true;
+  };
+
+  MS_LOG(INFO) << "Begin finalize collective manager.";
+
+  // Timeout limit 5 seconds to wait to finish finalizing device communication group.
+  const int64_t kTimeToWait = 5;
+  // Finalize collective manager in thread with timeout limit.
+  bool ret = ExecuteFuncInThread(finalize_func, kTimeToWait);
+
+  MS_LOG(INFO) << "End finalize collective manager.";
+  return ret;
 }
 
 void CollectiveManager::set_global_rank_id(uint32_t global_rank_id) { global_rank_id_ = global_rank_id; }

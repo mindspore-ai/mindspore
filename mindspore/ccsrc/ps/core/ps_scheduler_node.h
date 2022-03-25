@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_PS_CORE_PS_SCHEDULER_NODE_H_
 
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <vector>
 #include <set>
@@ -47,8 +48,15 @@ class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
   // alive node should be rejected.
   bool NeedRejectRegister(const NodeInfo &node_info) override { return node_info.is_alive; }
 
+  bool SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos) override {
+    return true;
+  };
+
   // Register collective communication initialization service.
   void RegisterInitCollectCommServiceHandler() override;
+
+  // Register recovery service.
+  void RegisterRecoveryServiceHandler() override;
 
   // Process message for sending node's host name.
   void ProcessSendHostName(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
@@ -66,6 +74,20 @@ class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
   void ProcessQueryUniqueID(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
                             const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
+  // Process message for sending the ready status to finish transform graph of computed node,
+  void ProcessSendFinishTransform(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                                  const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
+  // Process message for querying the ready status to finish transform graph of computed node,
+  void ProcessQueryFinishTransform(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                                   const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
+  // Handle node timeout info and update nodes which finish transform graph.
+  void HandleNodeTimeoutForRecovery(const std::unordered_map<std::string, NodeInfo> &timeout_nodes_infos) override;
+
+  // Recover finish transform nodes info when nodes recover heartbeat.
+  void HandleNodeRecoverByHeartBeat(uint32_t rank_id) override;
+
   // Record received host hash name from workers.
   std::vector<size_t> host_hash_names_;
   // Record rank id of the nodes which sended host name.
@@ -77,6 +99,11 @@ class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
   std::map<std::string, std::string> unique_id_group_;
 
   uint32_t worker_num_;
+
+  std::mutex nodes_finish_trans_mutex_;
+  // Record the rank ids of nodes who finish transform graph.
+  std::set<uint32_t> nodes_finish_trans_;
+  std::atomic_bool node_timeout_{false};
 };
 }  // namespace core
 }  // namespace ps

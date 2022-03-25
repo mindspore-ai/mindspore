@@ -35,7 +35,7 @@ using CommunicationGroupInfo = mindspore::fl::server::CommunicationGroupInfo;
 using ps::core::NodeCommand;
 
 // The time interval for send info or query info between worker and scheduler.
-constexpr uint32_t kWaitDuration = 3;
+constexpr uint32_t kWaitDuration = 5;
 
 // The collective communication library for MindSpore self developed communication framework.
 class MsCollectiveCommLib : public CollectiveCommunicationLib {

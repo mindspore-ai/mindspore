@@ -57,6 +57,12 @@ enum NodeCommand {
   SEND_UNIQUE_ID = 20;
   // Query unique id used to initialize collective communication.
   QUERY_UNIQUE_ID = 21;
+  // Send the ready status to finish transform graph of computed node,
+  // used in disaster recovery mode to prevent timeout of waiting for graph transformation.
+  SEND_FINISH_TRANSFORM = 22;
+  // Query the ready status to finish transform graph of computed node,
+  // used in disaster recovery mode to prevent timeout of waiting for graph transformation.
+  QUERY_FINISH_TRANSFORM = 23;
 }
 
 enum NodeRole {
@@ -297,4 +303,20 @@ message QueryUniqueIDRespMessage {
   bool is_success = 1;
   // The unique id used to initialize collective communication.
   bytes unique_id = 2;
+}
+
+message SendFinishTransformMessage {
+  // the current Node unique id:0,1,2...
+  string node_id = 1;
+  // The rank id of the node in the cluster.
+  uint32 rank_id = 2;
+  // Whether finish transform graph.
+  bool is_ready = 3;
+}
+
+message QueryFinishTransformRespMessage {
+  // Whether all computed nodes are ready to run dag.
+  bool is_ready = 1;
+  // Whether there is any worker timeout.
+  bool is_worker_timeout = 2;
 }

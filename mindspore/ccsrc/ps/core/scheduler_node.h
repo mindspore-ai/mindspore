@@ -92,6 +92,15 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   // Register collective communication initialization service.
   virtual void RegisterInitCollectCommServiceHandler() {}
 
+  // Register recovery service.
+  virtual void RegisterRecoveryServiceHandler() {}
+
+  // Handle node timeout info and update nodes which finish transform graph.
+  virtual void HandleNodeTimeoutForRecovery(const std::unordered_map<std::string, NodeInfo> &timeout_nodes_infos) {}
+
+  // Recover finish transform nodes info when nodes recover heartbeat.
+  virtual void HandleNodeRecoverByHeartBeat(uint32_t rank_id) {}
+
   const std::shared_ptr<TcpClient> &GetOrCreateClient(const NodeInfo &node_info);
 
   void ProcessHeartbeat(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
@@ -197,7 +206,7 @@ class BACKEND_EXPORT SchedulerNode : public Node {
 
   void SetRegisterConnectionFd(const std::shared_ptr<TcpConnection> &conn, const std::string &node_id);
 
-  bool SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos);
+  virtual bool SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos);
 
   // Responding peer with the general response message.
   void GeneralResponse(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,

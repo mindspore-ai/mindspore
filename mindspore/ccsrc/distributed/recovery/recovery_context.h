@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_RECOVERY_RECOVERY_H_
-#define MINDSPORE_CCSRC_RUNTIME_RECOVERY_RECOVERY_H_
+#ifndef MINDSPORE_CCSRC_DISTRIBUTED_RECOVERY_RECOVERY_H_
+#define MINDSPORE_CCSRC_DISTRIBUTED_RECOVERY_RECOVERY_H_
 
 #include <vector>
 #include <string>
@@ -27,12 +27,10 @@
 #include "include/backend/visible.h"
 
 namespace mindspore {
-namespace runtime {
+namespace distributed {
 namespace recovery {
 using distributed::storage::FileIOUtils;
 using distributed::storage::JsonUtils;
-
-enum class RecoveryErrCode { kUnKnownError, kAllGatherHostNameFailed, kBroadcastUniqueIDFailed, kInitNcclFailed };
 
 // Used to save disaster recovery-related state quantities and provide disaster recovery-related
 // functions, such as reinitializing collective communication, etc.
@@ -47,14 +45,6 @@ class BACKEND_EXPORT RecoveryContext {
   }
   ~RecoveryContext() = default;
 
-  // Reinitializing collective communication.
-  bool ReInitializeCollective();
-
-  // Obtain the global step corresponding to the global latest checkpoint in each training process. Since there may be
-  // some processes that fails to save the checkpoint, it is necessary for AllGather to save the latest step of the
-  // successful checkpoint in each training process, and then take the minimum value as the final reset position.
-  void ObtainGlobalLatestCkptInfo();
-
   // Get whether enable recovery or not.
   bool enable_recovery() const { return enable_recovery_; }
 
@@ -64,18 +54,14 @@ class BACKEND_EXPORT RecoveryContext {
   // Get interval to persist model.
   int recovery_interval() const { return recovery_interval_; }
 
-  // Get the error status of recovery.
-  RecoveryErrCode recovery_status() const { return recovery_status_; }
-  // Set the error status of recovery.
-  void set_recovery_status(RecoveryErrCode recovery_status) { recovery_status_ = recovery_status; }
-
   // Set the path used to save checkpoint.
   void SetCkptPath(const std::string &path);
   // Get the path used to save checkpoint.
   std::string GetCkptPath();
 
   // Get the latest checkpoint in this node.
-  std::string latest_ckpt_file() const { return latest_ckpt_file_; }
+  std::string latest_ckpt_file();
+
   // Get the epoch of latest checkpoint in this node.
   int latest_ckpt_epoch() const { return latest_ckpt_epoch_; }
   // Get the step of latest checkpoint in this node.
@@ -99,10 +85,13 @@ class BACKEND_EXPORT RecoveryContext {
   // Set global rank size.
   void set_global_rank_size(uint32_t global_rank_size) { global_rank_size_ = global_rank_size; }
 
-  // Set whether need reinitialize collective communication.
-  void set_need_reinit_collective(bool need_reinit_collective) { need_reinit_collective_ = need_reinit_collective; }
-  // Get whether need reinitialize collective communication.
-  bool need_reinit_collective() const { return need_reinit_collective_.load(); }
+  // Obtain the global step corresponding to the global latest checkpoint in each training process. Since there may be
+  // some processes that fails to save the checkpoint, it is necessary for AllGather to save the latest step of the
+  // successful checkpoint in each training process, and then take the minimum value as the final reset position.
+  void ObtainGlobalLatestCkptInfo();
+
+  // Get the persistent json file pointer.
+  const std::shared_ptr<JsonUtils> &persistent_json();
 
  private:
   inline static std::shared_ptr<RecoveryContext> instance_{};
@@ -155,20 +144,14 @@ class BACKEND_EXPORT RecoveryContext {
   // performs load checkpoint.
   bool need_sync_weight_to_device_{false};
 
-  // Whether need reinitialize collective communication, this value should be set to true once a training process
-  // exits unexpectedly is detected.
-  std::atomic_bool need_reinit_collective_{false};
-
   // Whether the recovery context is already initialized.
   bool initialized_{false};
 
-  // The error status of recovery.
-  RecoveryErrCode recovery_status_{RecoveryErrCode::kUnKnownError};
-
+  std::mutex create_persist_json_mtx_;
   // The persitent json file util, used to persist recovery config.
-  std::unique_ptr<JsonUtils> persistent_json_;
+  std::shared_ptr<JsonUtils> persistent_json_;
 };
 }  // namespace recovery
-}  // namespace runtime
+}  // namespace distributed
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_RUNTIME_RECOVERY_RECOVERY_H_
+#endif  // MINDSPORE_CCSRC_DISTRIBUTED_RECOVERY_RECOVERY_H_

@@ -37,7 +37,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/run_op_helper.h"
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
 #include "include/common/utils/scoped_long_running.h"
 #ifdef ENABLE_D
 #include "include/common/utils/callbacks_ge.h"
@@ -953,8 +953,8 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
 
-  bool need_contruct_output = !(runtime::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
-                                runtime::recovery::RecoveryContext::GetInstance()->need_reset());
+  bool need_contruct_output = !(distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
+                                distributed::recovery::RecoveryContext::GetInstance()->need_reset());
   if (need_contruct_output) {
     // Update device address for output node of graph.
     // Summary processing will use the output device address, so must be after the summary processing.

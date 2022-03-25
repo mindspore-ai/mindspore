@@ -38,6 +38,9 @@ class AbstractPSNode : public AbstractNode {
   // Register collective communication initialization response methods.
   void RegisterInitCollectCommResphandler() override;
 
+  // Register recovery response methods.
+  void RegisterRecoveryRespHandler() override;
+
   // Indicate whether the heartbeat thread should be stopped.
   std::atomic<bool> stop_heartbeat_{false};
 

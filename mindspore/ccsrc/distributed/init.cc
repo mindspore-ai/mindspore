@@ -17,11 +17,11 @@
 #include "distributed/init.h"
 #include <vector>
 #include <string>
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace distributed {
-using runtime::recovery::RecoveryContext;
+using distributed::recovery::RecoveryContext;
 
 bool Initialize() {
   if (!InitializeCluster()) {
@@ -43,7 +43,8 @@ bool Initialize() {
       collective::CollectiveManager::instance()->set_global_rank_size(abstract_node->worker_num());
 
       if (RecoveryContext::GetInstance()->enable_recovery()) {
-        cluster::ClusterContext::instance()->WaitForClusterReady();
+        RecoveryContext::GetInstance()->set_global_rank_id(abstract_node->rank_id());
+        RecoveryContext::GetInstance()->set_global_rank_size(abstract_node->worker_num());
       }
 
       if (!InitializeCollective()) {
@@ -52,8 +53,6 @@ bool Initialize() {
       }
 
       if (RecoveryContext::GetInstance()->enable_recovery()) {
-        RecoveryContext::GetInstance()->set_global_rank_id(abstract_node->rank_id());
-        RecoveryContext::GetInstance()->set_global_rank_size(abstract_node->worker_num());
         RecoveryContext::GetInstance()->ObtainGlobalLatestCkptInfo();
       }
     }

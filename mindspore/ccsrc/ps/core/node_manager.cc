@@ -67,7 +67,7 @@ uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message
       return rank_id;
     }
   } else {
-    ReAddNodeIfNotExists(node_id, register_message.ip(), register_message.port());
+    (void)ReAddNodeIfNotExists(node_id, register_message.ip(), register_message.port(), &rank_id);
   }
   return rank_id;
 }
@@ -206,11 +206,16 @@ std::vector<ServersMeta> NodeManager::FetchAllNodesMeta() {
   return servers_meta_list;
 }
 
+const std::unordered_map<std::string, NodeInfo> &NodeManager::QueryTimeOutNodesInfo() const {
+  return timeout_nodes_info_;
+}
+
 void NodeManager::UpdateCluster() {
   // 1. update cluster timeout state
   struct timeval current_time {};
   (void)gettimeofday(&current_time, nullptr);
   timeout_nodes_info_.clear();
+  std::lock_guard<std::mutex> lock(heartbeat_mutex_);
   for (auto it = heartbeats_.begin(); it != heartbeats_.end(); ++it) {
     if (it->second.tv_sec + PSContext::instance()->cluster_config().heartbeat_timeout < current_time.tv_sec) {
       if (registered_nodes_info_.count(it->first)) {

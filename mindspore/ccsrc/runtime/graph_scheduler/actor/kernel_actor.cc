@@ -21,11 +21,13 @@
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
+#include "distributed/collective/collective_manager.h"
 
 namespace mindspore {
 namespace runtime {
-using recovery::RecoveryContext;
+using distributed::collective::CollectiveManager;
+using distributed::recovery::RecoveryContext;
 
 void KernelActor::Init() {
   // Check device contexts number.
@@ -243,7 +245,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   PreLaunchKernel(context);
 
   try {
-    if (RecoveryContext::GetInstance()->enable_recovery() && RecoveryContext::GetInstance()->need_reinit_collective()) {
+    if (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) {
       // In disaster recovery scenarios, run dag in this step failed, the rest operators of graph do not need launch,
       // especially the collective communication operators.
       MS_LOG(WARNING) << "Collective communication need reinitialize, skip launch kernel: "

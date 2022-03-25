@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/recovery/recovery_context.h"
+#include "distributed/recovery/recovery_context.h"
 
 #include <dirent.h>
 #include <algorithm>
@@ -26,13 +26,12 @@
 #include "utils/file_utils.h"
 #include "distributed/constants.h"
 #include "distributed/cluster/topology/common.h"
-#include "distributed/init.h"
-#include "runtime/hardware/device_context.h"
+#include "runtime/hardware/device_context_manager.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
-namespace runtime {
+namespace distributed {
 namespace recovery {
 constexpr char kEnvEnableRecovery[] = "MS_ENABLE_RECOVERY";
 constexpr char kEnvRecoveryPath[] = "MS_RECOVERY_PATH";
@@ -140,30 +139,6 @@ void RecoveryContext::Initialize() {
   ps::PSContext::instance()->set_node_id(common::GetEnv(distributed::cluster::topology::kEnvNodeId));
 
   initialized_ = true;
-}
-
-bool RecoveryContext::ReInitializeCollective() {
-  auto ret = distributed::Initialize();
-  if (ret) {
-    recovery_status_ = RecoveryErrCode::kUnKnownError;
-    set_need_reset(true);
-    set_need_sync_weight_to_device(true);
-    return true;
-  }
-
-  if (recovery_status_ == RecoveryErrCode::kBroadcastUniqueIDFailed ||
-      recovery_status_ == RecoveryErrCode::kAllGatherHostNameFailed) {
-    MS_LOG(WARNING) << "Prepare to initialize NCCL failed, retrying.";
-    // Retry duration: 30s.
-    const int kRetryDuration = 30;
-    std::this_thread::sleep_for(std::chrono::seconds(kRetryDuration));
-    return ReInitializeCollective();
-  } else if (recovery_status_ == RecoveryErrCode::kInitNcclFailed) {
-    MS_LOG(EXCEPTION) << "Initialize NCCL failed.";
-  }
-
-  MS_LOG(EXCEPTION) << "ReInitialize collective failed.";
-  return false;
 }
 
 void RecoveryContext::ObtainGlobalLatestCkptInfo() {
@@ -326,6 +301,7 @@ void RecoveryContext::ParseLatestCkptInfo(const int *recv_buffer, const uint32_t
 }
 
 void RecoveryContext::CreatePersistentFile() {
+  std::unique_lock<std::mutex> lock(create_persist_json_mtx_);
   if (node_role_ == distributed::kEnvRoleOfScheduler) {
     return;
   }
@@ -344,7 +320,7 @@ void RecoveryContext::CreatePersistentFile() {
   // The directory used to save ckpt is persisted to json file.
   std::string persistent_file_path =
     recovery_path_ + "/" + node_role_ + "_" + std::to_string(global_rank_id_) + "_persistent.json";
-  persistent_json_ = std::make_unique<JsonUtils>(persistent_file_path);
+  persistent_json_ = std::make_shared<JsonUtils>(persistent_file_path);
   if (!persistent_json_->Initialize()) {
     MS_LOG(EXCEPTION) << "Initialize json failed, file path: " << persistent_file_path;
   }
@@ -388,6 +364,24 @@ std::string RecoveryContext::GetCkptPath() {
 
   return persistent_json_->Get<std::string>(kCkptPath);
 }
+
+const std::shared_ptr<JsonUtils> &RecoveryContext::persistent_json() {
+  if (persistent_json_ == nullptr) {
+    CreatePersistentFile();
+  }
+
+  MS_EXCEPTION_IF_NULL(persistent_json_);
+  return persistent_json_;
+}
+
+std::string RecoveryContext::latest_ckpt_file() {
+  // For standalone training.
+  if (enable_recovery_ && global_rank_size_ == 0 && latest_ckpt_file_.empty()) {
+    ObtainLocalLatestCkptInfo();
+  }
+
+  return latest_ckpt_file_;
+}
 }  // namespace recovery
-}  // namespace runtime
+}  // namespace distributed
 }  // namespace mindspore

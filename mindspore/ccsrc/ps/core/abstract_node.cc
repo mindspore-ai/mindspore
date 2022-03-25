@@ -1301,6 +1301,7 @@ void AbstractNode::InitCommandHandler() {
   handlers_[NodeCommand::SEND_EVENT] = nullptr;
   RegisterActorRouteTableRspHandler();
   RegisterInitCollectCommResphandler();
+  RegisterRecoveryRespHandler();
 }
 
 void AbstractNode::RegisterActorRouteTableRspHandler() {
