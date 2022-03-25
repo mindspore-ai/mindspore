@@ -57,7 +57,7 @@ class AbstractNode : public Node {
         persistent_state_(PersistentState::NOT_ENABLE_PERSIST),
         scheduler_ip_(""),
         scheduler_port_(0) {}
-  ~AbstractNode() override = default;
+  ~AbstractNode() override;
 
   typedef void (AbstractNode::*ResponseHandler)(const std::shared_ptr<MessageMeta> &meta, const void *data,
                                                 size_t size);

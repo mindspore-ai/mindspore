@@ -1296,7 +1296,7 @@ void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t
     MS_LOG(EXCEPTION) << "The scheduler init http server failed.";
   }
 
-  if (!http_server_->Start(false)) {
+  if (!http_server_->Start()) {
     MS_LOG(EXCEPTION) << "The scheduler start http server failed.";
   }
   restful_thread_ = std::make_unique<std::thread>([&]() { http_server_->Wait(); });

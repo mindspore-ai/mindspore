@@ -105,6 +105,10 @@ bool HttpRequestHandler::Stop() {
   MS_LOG(INFO) << "Stop http server!";
 
   MS_EXCEPTION_IF_NULL(evbase_);
+  if (event_base_got_break(evbase_)) {
+    MS_LOG(INFO) << "The event base has already been stopped!";
+    return true;
+  }
   int ret = event_base_loopbreak(evbase_);
   if (ret != 0) {
     MS_LOG(ERROR) << "event base loop break failed!";

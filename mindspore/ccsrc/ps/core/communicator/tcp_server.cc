@@ -214,7 +214,7 @@ void TcpServer::Stop() {
   std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Stop tcp server!";
   if (event_base_got_break(base_)) {
-    MS_LOG(DEBUG) << "The event base has stopped!";
+    MS_LOG(DEBUG) << "The event base has already been stopped!";
     is_stop_ = true;
     return;
   }
