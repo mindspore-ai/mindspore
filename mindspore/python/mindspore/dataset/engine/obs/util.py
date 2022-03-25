@@ -59,7 +59,6 @@ def try_load_from_obs(remote_path, dataset_file, local_path):
         remote_path (str): OBS path of dataset files.
         dataset_file (str): Name of dataset file.
         local_path (str): Local path of dataset files.
-
     """
 
     if not os.path.exists(os.path.join(local_path, dataset_file)):
@@ -76,7 +75,6 @@ def detect_all_meta_files(meta_files, local_path):
     Args:
         meta_files (List[str]): Names of meta files.
         local_path (str): Local path of dataset files.
-
     """
 
     all_meta_files = True
@@ -98,9 +96,7 @@ def make_sampler(shuffle, is_full_dataset, start, end):
         is_full_dataset (bool): Whether to include full dataset file.
         start (int): Start index of sample for non-full dataset file.
         end (int): End index of sample for non-full dataset file.
-
     """
-
 
     sampler = None
     if shuffle in (Shuffle.GLOBAL, Shuffle.INFILE):
@@ -124,8 +120,8 @@ def make_shard_samples(dataset_file_size_list, size_per_shard, shard_id):
         dataset_file_size_list (List[tuple]): List of dataset file name and size.
         size_per_shard (int): Size of each sharding.
         shard_id (int): ID of sharding.
-
     """
+
     pre_cnt = 0
     shard_files = []
     finish = False
@@ -169,7 +165,6 @@ def make_dataset_tuple(dataset_files, local_path):
     Args:
         dataset_files (List[str]): Full paths of dataset files.
         local_path (str): Local directory path of dataset files.
-
     """
 
     dataset_file_size_list = []
@@ -199,7 +194,6 @@ def fetch_meta_files(meta_files, local_path):
     Args:
         meta_files (List[str]): Full paths of meta files.
         local_path (str): Local directory path of dataset files.
-
     """
 
     for df in meta_files:
@@ -217,7 +211,6 @@ def make_shard_files(dataset_files, num_shards, shard_id):
         dataset_files (List[str]): Names of dataset files.
         num_shards (int): Number of all sharding.
         sharding (int): ID of sharding.
-
     """
 
     idx = 0
@@ -239,7 +232,6 @@ def get_bucket_and_key(obs_path):
 
     Returns:
         bucketName and objectKey.
-
     """
 
     start = obs_path.find('//')
@@ -322,7 +314,6 @@ def _check_file_exists_in_obs(obs_path):
 
     Args:
         obs_path (str): OBS path of dataset file.
-
     """
 
     bucket_name, object_key = get_bucket_and_key(obs_path)
@@ -353,7 +344,6 @@ def _file_download_from_obs(obs_path, local_path):
     Args:
         obs_path (str): OBS path of dataset file.
         local_path (str): Local path of dataset file.
-
     """
 
     bucket_name, object_key = get_bucket_and_key(obs_path)
@@ -382,7 +372,6 @@ def _download_file(remote_path, object_name, des_path, lock_file='tmp'):
         object_name (str): Name of dataset file.
         des_path (str): Local directory path which dataset file is stored.
         lock_file (str): File name to lock.
-
     """
 
     local_path = os.path.join(des_path, object_name)
@@ -409,7 +398,6 @@ def init_cache_and_queue(cache, q, path, shard_file, idx, is_full_dataset, lock_
         idx (int): Index of dataset file.
         is_full_dataset (bool): Whether to include full dataset file.
         lock_file (str): File name to lock.
-
     """
 
     dataset_file = os.path.basename(shard_file)
@@ -433,7 +421,6 @@ def _detect_file_exist(local_path, meta_file, lock_file='tmp'):
         local_path (str): Local directory path of meta file.
         meta_file (str): Name of meta file.
         lock_file (str): File name to lock.
-
     """
     if os.path.exists(os.path.join(local_path, meta_file)):
         return True
@@ -449,7 +436,6 @@ def file_upload_to_obs(obs_path, sync_dir, ready_file_name):
         obs_path (str): OBS path of dataset file.
         sync_fir (str): OBS directory path used for synchronization.
         ready_file_name (str): Name of synchronization file.
-
     """
 
     bucket_name, object_key = get_bucket_and_key(obs_path)

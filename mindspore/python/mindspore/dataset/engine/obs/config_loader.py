@@ -25,7 +25,7 @@ class Config():
     DATASET_LOCAL_PATH = os.path.join(WORKING_PATH, "dataset")
     DISK_THRESHOLD = 0.75
     TASK_NUM = 8
-    PART_SIZE = 10*1024*1024
+    PART_SIZE = 10 * 1024 * 1024
     MAX_RETRY = 3
     RETRY_DELTA_TIME = 10
 
@@ -39,8 +39,8 @@ class _Config:
     """ Internal class that get and set global variables. """
 
     def __init__(self):
-        self.config = dict((k, v) for k, v in Config.__dict__.items(
-        ) if not callable(v) and not k.startswith('__'))
+        self.config = dict((k, v) for k, v in Config.__dict__.items()
+                           if not callable(v) and not k.startswith('__'))
 
     def __getattr__(self, key):
         if key in os.environ:
