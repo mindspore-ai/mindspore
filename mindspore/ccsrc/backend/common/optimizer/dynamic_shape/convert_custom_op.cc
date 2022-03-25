@@ -23,6 +23,7 @@
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "utils/ms_context.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {
@@ -47,6 +48,7 @@ void ConvertCustomOp::ConvertCustomOpForNode(const AnfNodePtr &node) const {
   if (is_dynamic_node) {
     infer_node = GenInferNode(node);
     init_node = GenInitNode(node);
+    AnfUtils::SetCustomInfoToBaseNode(node, infer_node, init_node);
   }
 
   auto ms_context = MsContext::GetInstance();

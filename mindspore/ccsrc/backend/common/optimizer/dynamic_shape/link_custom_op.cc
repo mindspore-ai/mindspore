@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <utility>
+#include "utils/anf_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
@@ -74,6 +75,7 @@ bool LinkInternalOp(const FuncGraphPtr &g, const AnfNodePtr &node, AnfNodePtrLis
 
   if (IsNeedUpdateOp(node) && custom_nodes.update_node != nullptr) {
     InsertDepend(g, node, custom_nodes.update_node, depend_nodes);  // link launch => update
+    AnfUtils::ResetCustomUpdateInfoToBaseNode(node, custom_nodes.update_node);
     changed = true;
   }
 
@@ -164,6 +166,7 @@ bool LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList
       InsertDepend(g, prev_node, prev_custom_nodes.update_node, depend_nodes);
       // 2. Link prev_node.update => cur_node.infer.
       InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node, depend_nodes);
+      AnfUtils::ResetCustomUpdateInfoToBaseNode(prev_node, prev_custom_nodes.update_node);
     } else {
       // for CPU, its Updateop is in Launch function, so its update_node is set to nullptr, for reduce the time cast of
       // send messages between actors

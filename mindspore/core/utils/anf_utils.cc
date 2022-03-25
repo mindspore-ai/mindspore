@@ -69,6 +69,19 @@ struct CustomActorInfo {
 };
 using CustomActorInfoPtr = std::shared_ptr<CustomActorInfo>;
 
+struct CNodeCustomInfo {
+  CNodeCustomInfo(const AnfNodePtr &inferop, const AnfNodePtr &initop) : infer_node(inferop), init_node(initop) {}
+  CNodeCustomInfo(const AnfNodePtr &inferop, const AnfNodePtr &initop, const AnfNodePtr &updateop)
+      : infer_node(inferop), init_node(initop), update_node(updateop) {}
+  ~CNodeCustomInfo() = default;
+  // Key for user data.
+  constexpr static char key[] = "CustomNodeInfo";
+  AnfNodeWeakPtr infer_node;
+  AnfNodeWeakPtr init_node;
+  AnfNodeWeakPtr update_node;
+};
+using CNodeCustomInfoPtr = std::shared_ptr<CNodeCustomInfo>;
+
 AnfNodePtr NewCustomActorNode(const CustomActorInfoPtr &actor_info, const FuncGraphPtr &g) {
   MS_EXCEPTION_IF_NULL(g);
   auto custom_actor_node = std::make_shared<AnfNode>(g);
@@ -522,5 +535,49 @@ AnfNodePtr AnfUtils::NewUpdateActorNode(AnfUtils::CustomActorCallback f, const C
   MS_EXCEPTION_IF_NULL(base_cnode);
   auto actor_info = std::make_shared<CustomActorInfo>(f, kUpdate, base_cnode, false);
   return NewCustomActorNode(actor_info, base_cnode->func_graph());
+}
+
+void AnfUtils::SetCustomInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &inferop,
+                                       const AnfNodePtr &initop, const AnfNodePtr &updateop) {
+  MS_EXCEPTION_IF_NULL(base_cnode);
+  MS_EXCEPTION_IF_NULL(inferop);
+  MS_EXCEPTION_IF_NULL(initop);
+  if (updateop == nullptr) {
+    auto actor_info = std::make_shared<CNodeCustomInfo>(inferop, initop);
+    base_cnode->set_user_data<CNodeCustomInfo>(actor_info);
+  } else {
+    auto actor_info = std::make_shared<CNodeCustomInfo>(inferop, initop, updateop);
+    base_cnode->set_user_data<CNodeCustomInfo>(actor_info);
+  }
+}
+void AnfUtils::ResetCustomUpdateInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &updateop) {
+  MS_EXCEPTION_IF_NULL(base_cnode);
+  auto actor_info = base_cnode->user_data<CNodeCustomInfo>();
+  if (actor_info == nullptr) {
+    MS_LOG(WARNING) << "base_cnode " << base_cnode->fullname_with_scope() << " don't have custom node info yet.";
+    auto new_actor_info = std::make_shared<CNodeCustomInfo>(nullptr, nullptr, updateop);
+    base_cnode->set_user_data<CNodeCustomInfo>(new_actor_info);
+  } else {
+    actor_info->update_node = updateop;
+    base_cnode->set_user_data<CNodeCustomInfo>(actor_info);
+  }
+}
+
+AnfNodePtr AnfUtils::GetCustomUpdateopNode(const AnfNodePtr &base_cnode) {
+  MS_EXCEPTION_IF_NULL(base_cnode);
+  auto actor_info = base_cnode->user_data<CNodeCustomInfo>();
+  if (actor_info == nullptr) {
+    return nullptr;
+  }
+  return actor_info->update_node.lock();
+}
+
+AnfNodePtr AnfUtils::GetCustomInferopNode(const AnfNodePtr &base_cnode) {
+  MS_EXCEPTION_IF_NULL(base_cnode);
+  auto actor_info = base_cnode->user_data<CNodeCustomInfo>();
+  if (actor_info == nullptr) {
+    return nullptr;
+  }
+  return actor_info->infer_node.lock();
 }
 }  // namespace mindspore
