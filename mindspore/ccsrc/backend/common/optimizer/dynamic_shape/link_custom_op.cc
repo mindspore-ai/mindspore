@@ -97,6 +97,15 @@ bool LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *d
       continue;
     }
     if (!CustomActorNodeManager::Instance().IsRegistered(prev_node)) {
+      // when its subgraph and its input is a dynamic_shape_parameter, link prev_parameter => curr.infer
+      if (prev_node->isa<Parameter>()) {
+        auto prev_parameter = prev_node->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(prev_parameter);
+        if (prev_parameter->has_dynamic_shape()) {
+          InsertDepend(g, prev_node, custom_nodes.infer_node, depend_nodes);
+          changed = true;
+        }
+      }
       continue;
     }
     auto prev_custom_nodes = CustomActorNodeManager::Instance().GetCustomActorNodes(prev_node);
