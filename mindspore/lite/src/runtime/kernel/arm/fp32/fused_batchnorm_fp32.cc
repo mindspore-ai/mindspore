@@ -153,7 +153,7 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
 int FusedBatchnormCPUKernel::Run() {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   MS_ASSERT(param != nullptr);
-  if (IsTrain() && IsTrainable() && in_tensors_.size() >= DIMENSION_5D) {
+  if (IsTrain() && param->is_training_ && in_tensors_.size() >= DIMENSION_5D) {
     float *in = static_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
     float *scale = static_cast<float *>(in_tensors_.at(SECOND_INPUT)->data());
     float *offset = static_cast<float *>(in_tensors_.at(THIRD_INPUT)->data());
@@ -185,6 +185,13 @@ int FusedBatchnormCPUKernel::Run() {
     (void)memcpy(offset_, offset, in_tensors_.at(THIRD_INPUT)->Size());
 
     trained_ = true;  // trained at least once
+  } else {
+    if (out_tensors_.size() >= DIMENSION_5D) {
+      (void)memcpy(out_tensors_.at(SECOND_INPUT)->data(), scale_, out_tensors_.at(SECOND_INPUT)->Size());
+      (void)memcpy(out_tensors_.at(THIRD_INPUT)->data(), offset_, out_tensors_.at(THIRD_INPUT)->Size());
+      (void)memcpy(out_tensors_.at(FOURTH_INPUT)->data(), mean_, out_tensors_.at(FOURTH_INPUT)->Size());
+      (void)memcpy(out_tensors_.at(FIFTH_INPUT)->data(), variance_, out_tensors_.at(FIFTH_INPUT)->Size());
+    }
   }
   auto ret = ParallelLaunch(this->ms_context_, BatchNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
