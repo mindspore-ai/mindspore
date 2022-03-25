@@ -313,28 +313,6 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels
   return ConstructNormalSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
 }
 
-STATUS Scheduler::UpdateDataTypeToFp32(std::vector<kernel::LiteKernel *> *kernels) {
-  for (auto cur_kernel : *kernels) {
-    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph) {
-      auto sub_inner_graph = reinterpret_cast<kernel::SubGraphKernel *>(cur_kernel);
-      auto &subgraph_nodes = sub_inner_graph->nodes();
-      if (UpdateDataTypeToFp32(&subgraph_nodes) != RET_OK) {
-        MS_LOG(ERROR) << "DeleteRedundantTrans failed in subgraph.";
-        return RET_ERROR;
-      }
-    }
-    if (cur_kernel->op_parameter()->quant_type_ == schema::QuantType_QUANT_ALL) {
-      for (auto tensor : cur_kernel->out_tensors()) {
-        if (!tensor->quant_params().empty() &&
-            (tensor->data_type() == kNumberTypeInt8 || tensor->data_type() == kNumberTypeUInt8)) {
-          tensor->set_data_type(kNumberTypeFloat32);
-        }
-      }
-    }
-  }
-  return RET_OK;
-}
-
 STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::LiteKernel *> *kernels) {
   for (auto iter = (*kernels).begin(); iter != (*kernels).end();) {
     auto cur_kernel = *iter;
@@ -448,11 +426,6 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     ret = DelQuantDTypeCastKernel(dst_kernels);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Delete quant_dtype_cast kernel failed.";
-      return ret;
-    }
-    ret = UpdateDataTypeToFp32(dst_kernels);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Update data type to fp32 failed.";
       return ret;
     }
   }
@@ -1196,7 +1169,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   MS_ASSERT(node != nullptr);
   // why we need this
   TypeId data_type;
-  if (node->quant_type_ == schema::QuantType_QUANT_WEIGHT || context_->float_mode) {
+  if (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) {
     if (in_tensors.front()->data_type() == kNumberTypeBool) {
       data_type = kNumberTypeBool;
     } else {
@@ -1204,6 +1177,15 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     }
   } else {
     data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
+  }
+  if (context_->float_mode) {
+    for (auto tensor : out_tensors) {
+      if (!tensor->quant_params().empty() &&
+          (tensor->data_type() == kNumberTypeInt8 || tensor->data_type() == kNumberTypeUInt8)) {
+        data_type = kNumberTypeFloat32;
+        tensor->set_data_type(kNumberTypeFloat32);
+      }
+    }
   }
   kernel::LiteKernel *kernel = nullptr;
   int status;
