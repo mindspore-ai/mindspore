@@ -28,7 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 constexpr int kMinCostPerThread = 1 << 16;
 #endif
 int BiasAddRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
@@ -81,7 +81,7 @@ int BiasCPUKernel::ReSize() {
 int BiasCPUKernel::ChooseThreadCuttingstrategy() {
   split_points_.clear();
   int64_t block_size = 1;
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   block_size = MSMAX(total_num_ / op_parameter_->thread_num_, kMinCostPerThread);
   thread_num_ = MSMIN(UP_DIV(total_num_, block_size), op_parameter_->thread_num_);
 #else

@@ -74,7 +74,7 @@ int MatmulFp32BaseCPUKernel::PackMatrixA() {
         reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_.pack_size * sizeof(float)));
     }
   } else {
-#ifdef SERVER_INFERENCE
+#ifdef SHARING_MODEL_WEIGHT
     auto a_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
       in_tensors()[FIRST_INPUT], static_cast<size_t>(matrix_a_.pack_size) * sizeof(float));
     matrix_a_.pack_ptr = reinterpret_cast<float *>(a_packed.second);
@@ -125,7 +125,7 @@ int MatmulFp32BaseCPUKernel::PackMatrixB() {
         reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_b_.pack_size * sizeof(float)));
     }
   } else {
-#ifdef SERVER_INFERENCE
+#ifdef SHARING_MODEL_WEIGHT
     auto b_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
       in_tensors()[SECOND_INPUT], static_cast<size_t>(matrix_b_.pack_size) * sizeof(float));
     matrix_b_.pack_ptr = reinterpret_cast<float *>(b_packed.second);
