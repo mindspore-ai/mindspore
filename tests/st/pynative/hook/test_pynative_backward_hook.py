@@ -54,7 +54,7 @@ def backward_hook_fn3(cell_id, grad_inp, grad_outp):
 
 
 def backward_hook_fn4(cell_id, grad_inp, grad_outp):
-    return Tensor(np.ones([2, 2, 2, 2]).astype(np.float32) * 10)
+    return (Tensor(np.ones([2, 2, 2, 2]).astype(np.float32) * 10),)
 
 
 class Net(nn.Cell):

@@ -70,12 +70,12 @@ def forward_hook_fn_with_ms_func(cell_id, inp, outp):
 
 def backward_hook_fn(cell_id, grad_inp, grad_outp):
     print("Enter backward hook function.")
-    return grad_outp[0]
+    return grad_outp
 
 
 def backward_hook_fn_inner(cell_id, grad_inp, grad_outp):
     print("Enter backward hook function inner.")
-    return grad_outp[0]
+    return grad_outp
 
 
 class SingleNet(nn.Cell):

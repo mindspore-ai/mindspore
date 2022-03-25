@@ -48,7 +48,7 @@ class HookBase(MetaFactory):
         mul = P.Mul()
         grad = grad_output[0]
         output = mul(grad, y)
-        return output
+        return (output,)
 
 class FinalNet(nn.Cell, HookBase):
     def __init__(self):
