@@ -42,14 +42,14 @@ void GeneratePaddingForPadMode(const PaddingInfo &padding_info, std::vector<int6
     if (padding_info.ceil_mode) {
       int64_t len = shape_exclude_nc[i] + pad[l_index] + pad[r_index] - padding_info.kernel_size[i];
       int64_t padding_iv =
-        FloatToLong(std::ceil(LongToDouble(len) / LongToDouble(padding_info.stride[i]))) * padding_info.stride[i] - len;
+        FloatToLong(std::ceil(LongToFloat(len) / LongToFloat(padding_info.stride[i]))) * padding_info.stride[i] - len;
       int64_t padding_r = pad[r_index] + padding_iv;
       if (padding_r > pad[r_index] && padding_r < padding_info.kernel_size[i]) {
         padding_info.padding_r->push_back(padding_r);
-        padding_info.padding_invalid->push_back(LongToFloat(padding_iv));
+        padding_info.padding_invalid->push_back(padding_iv);
         continue;
       }
-      padding_info.padding_invalid->push_back(LongToFloat(0.0));
+      padding_info.padding_invalid->push_back(0);
     }
     padding_info.padding_r->push_back(pad[r_index]);
   }

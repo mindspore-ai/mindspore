@@ -160,7 +160,7 @@ struct PaddingInfo {
   const dnnl::memory::dims &dilation;
   dnnl::memory::dims *padding_l{nullptr};
   dnnl::memory::dims *padding_r{nullptr};
-  std::vector<float> *padding_invalid{nullptr};
+  std::vector<int64_t> *padding_invalid{nullptr};
   bool ceil_mode{false};
 };
 

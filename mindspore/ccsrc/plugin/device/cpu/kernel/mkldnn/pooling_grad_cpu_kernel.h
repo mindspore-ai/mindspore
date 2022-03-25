@@ -84,7 +84,6 @@ class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
   dnnl::pooling_forward::primitive_desc forward_prim_desc_{};
   size_t grad_index_{0};
   std::string kernel_type_{kUnknown};
-  size_t workspace_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
