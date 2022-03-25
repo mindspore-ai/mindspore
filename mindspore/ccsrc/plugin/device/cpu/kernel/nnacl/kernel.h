@@ -16,38 +16,41 @@
 #ifndef MINDSPORE_NNACL_KERNEL_H_
 #define MINDSPORE_NNACL_KERNEL_H_
 #include "nnacl/op_base.h"
-#include "nnacl/tensor_c.h"
+#include "nnacl/infer/common_infer.h"
 
-typedef struct KernelContext {
+typedef struct ExecEnv {
   void *(*alloc)(size_t sz);
   void (*free)(void *ptr);
   int threadNum;
   void (*parallelLaunch)(void *task, void *param, int taskNr);
-} KernelContext;
+} ExecEnv;
 
-typedef struct KernelStru {
-  int (*init)(struct KernelStru *self, KernelContext *ctx);
-  int (*release)(struct KernelStru *self);
-  int (*compute)(struct KernelStru *self);
-  int (*infershape)(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+typedef struct KernelBase {
+  int (*prepare)(struct KernelBase *self, ExecEnv *env);  // prepare, e.g. pack weight
+  int (*release)(struct KernelBase *self);
+  int (*compute)(struct KernelBase *self);
+  int (*inferShape)(struct KernelBase *self);
+  int (*resize)(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
   OpParameter *param;
-  TensorC **in;  // in/out tensor's space should be managed by the invoker
+  // by design, kernelBase's methods are not responsible for input/output tensors' management, user should invokes
+  // KernelBase's infer shape and allocate/free input/output tensor at necessary time.
+  TensorC **in;
   size_t insize;
   TensorC **out;
   size_t outsize;
-  KernelContext *ctx;
-  void *buf[4];
-} KernelStru;
+  ExecEnv *env;
+  bool inferShape_;
+} KernelBase;
 
-KernelStru *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
-typedef KernelStru *(*KernelCreator)(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
-void RegKernelCreator(int opType, LiteDataType dataType, TensorCFormat format, KernelCreator func);
+KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+typedef KernelBase *(*KernelCreator)(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+void RegKernelCreator(int opType, int dataType, KernelCreator func);
 
 #ifdef _MSC_VER
-#define REG_KERNEL_CREATOR(op, op_type, data_type, format, func)
+#define REG_KERNEL_CREATOR(op, op_type, data_type, func)
 #else
-#define REG_KERNEL_CREATOR(op, op_type, data_type, format, func) \
-  __attribute__((constructor(102))) void Reg##op##Creator() { RegKernelCreator(op_type, data_type, format, func); }
+#define REG_KERNEL_CREATOR(op, op_type, data_type, func) \
+  __attribute__((constructor(102))) void Reg##op##Creator() { RegKernelCreator(op_type, data_type, func); }
 #endif
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_NNACL_EXPERIMENT_CONV_H_
+#define MINDSPORE_NNACL_EXPERIMENT_CONV_H_
+#include "nnacl/conv_parameter.h"
 #include "nnacl/kernel.h"
-static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][16];
 
-void RegKernelCreator(int opType, int dataType, KernelCreator creator) {
-  g_kernelCreatorRegistry[opType][dataType - kNumberTypeBegin - 1] = creator;
-}
+typedef struct KConv2d {
+  KernelBase base;
+  char *im2colBuf;
+  char *packedWeight;
+} KConv2d;
 
-KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
-  int dtype = in[kInputIndex]->data_type_;
-  return g_kernelCreatorRegistry[param->type_][dtype - kNumberTypeBegin - 1](param, in, insize, out, outsize);
-}
+#endif

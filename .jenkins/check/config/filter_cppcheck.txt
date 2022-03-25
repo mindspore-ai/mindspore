@@ -50,3 +50,4 @@
 "mindspore/mindspore/lite/src/runtime/kernel/opencl/kernel/"                                          "unreadVariable"
 "mindspore/mindspore/lite/src/runtime/kernel/opencl/cl/"                                              "unreadVariable"
 "mindspore/mindspore/lite/examples/quick_start_micro/"                                                "syntaxError"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experiment"                                 "unreadVariable"

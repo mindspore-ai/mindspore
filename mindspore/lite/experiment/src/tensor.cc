@@ -209,10 +209,9 @@ int32_t Tensor::Width() const {
 
 size_t Tensor::Size() const {
   size_t element_size = DataTypeSize(this->data_type_);
-  auto element_num = (format_ == mindspore::NC4HW4 || format_ == mindspore::NHWC4) ? ElementsC4Num() : ElementsNum();
-  if (element_num < 0) {
-    MS_LOG(INFO) << "Element number of tensor should large than 0 : " << element_num;
-    return 0;
+  size_t element_num = 1;
+  for (auto i = 0; i < tensorc.data_shape_size_; i++) {
+    element_num *= tensorc.data_shape_[i];
   }
   return element_size * element_num;
 }

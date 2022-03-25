@@ -13,27 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "nnacl/op_base.h"
-
 #include "experiment/kernel/convolution_fp32.h"
 
 namespace mindspore::kernel {
 ConvolutionCPUFp32::ConvolutionCPUFp32(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors,
                                        std::vector<lite::Tensor *> out_tensors, const lite::Context *ctx)
     : InnerKernel(parameter, in_tensors, out_tensors, ctx) {
-  TensorC *in[C4NUM];
-  size_t insize = 0;
-  for (; insize < in_tensors.size() && insize < C4NUM; insize++) {
-    in[insize] = &in_tensors[insize]->TensorC();
-  }
-
-  TensorC *out[1];
-  size_t outsize = 0;
-  for (; outsize < out_tensors.size() && outsize < 1; outsize++) {
-    out[outsize] = &out_tensors[outsize]->TensorC();
-  }
-  kernel = CreateKernel(parameter, in, insize, out, outsize);
+  in[0] = &in_tensors[0]->TensorC();
+  in[1] = &in_tensors[1]->TensorC();
+  out[0] = &out_tensors[0]->TensorC();
 }
 
 ConvolutionCPUFp32::~ConvolutionCPUFp32() {
@@ -42,20 +31,18 @@ ConvolutionCPUFp32::~ConvolutionCPUFp32() {
 }
 
 int ConvolutionCPUFp32::Prepare() {
+  kernel = CreateKernel(parameter, in, 2, out, 1);
   if (kernel == nullptr) {
     return -1;
   }
-  kernel->init(kernel, &ctx_);  // init kernel, pack weight
-  return 0;
-}
 
-int ConvolutionCPUFp32::PreProcess() {
-  // allocate output tensor
+  if (kernel->resize(kernel, in, 2, out, 1) != NNACL_OK) {
+    return ret;
+  }
 
-  return 0;
+  return kernel->prepare(kernel, NULL);
 }
 
 int ConvolutionCPUFp32::Run() { return kernel->compute(kernel); }
-
-int ConvolutionCPUFp32::PostProcess() { return kernel->compute(kernel); }
+int ConvolutionCPUFp32::Resize() { return kernel->resize(kernel, in, 2, out, 1); }
 }  // namespace mindspore::kernel
