@@ -50,10 +50,9 @@ class COMMON_EXPORT GraphKernelFlags {
 
   GraphKernelFlags(const GraphKernelFlags &flags) = delete;
   GraphKernelFlags(GraphKernelFlags &&flags) = delete;
-  void operator=(const GraphKernelFlags &flags) = delete;
+  GraphKernelFlags &operator=(const GraphKernelFlags &flags) = delete;
   ~GraphKernelFlags() = default;
 
- public:
   /**
    * Dump info as human-readable text.
    * A directory "graph_kernel_dump" will be created, and all information will be dumped in this directory.
