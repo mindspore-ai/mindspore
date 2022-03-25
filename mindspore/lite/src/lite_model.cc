@@ -450,7 +450,7 @@ int LiteModel::GenerateModelByVersion() {
   }
 #endif
   if (this->version_ != Version()) {
-    MS_LOG(WARNING) << "model version is " << this->version_ << ", inference version is " << Version() << " not equal";
+    MS_LOG(INFO) << "model version is " << this->version_ << ", inference version is " << Version() << " not equal";
   }
   MS_LOG(INFO) << "MindSpore Lite inference version: " << Version();
   return status;
