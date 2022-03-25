@@ -48,3 +48,95 @@ mindspore.nn.probability.distribution.TransformedDistribution
         **返回：**
 
         Bool, 概率映射函数为线性映射则返回True，否则返回False。
+
+   .. py:method:: cdf(value)
+
+        在给定值下计算累积分布函数（Cumulatuve Distribution Function, CDF）。
+
+        **参数：**
+
+        - **value** (Tensor) - 要计算的值。
+
+        **返回：**
+
+        Tensor，累积分布函数的值。
+
+    .. py:method:: log_cdf(value)
+
+        计算给定值对于的累积分布函数的对数。
+
+        **参数：**
+
+        - **value** (Tensor) - 要计算的值。
+
+        **返回：**
+
+        Tensor，累积分布函数的对数。
+
+    .. py:method:: log_prob(value)
+
+        计算给定值对应的概率的对数。
+
+        **参数：**
+
+        - **value** (Tensor) - 要计算的值。
+
+        **返回：**
+
+        Tensor，累积分布函数的对数。
+
+    .. py:method:: log_survival(value)
+
+        计算给定值对应的生存函数的对数。
+
+        **参数：**
+
+        - **value** (Tensor) - 要计算的值。
+
+        **返回：**
+
+        Tensor，生存函数的对数。
+
+    .. py:method:: mean
+
+        计算期望。
+
+        **返回：**
+
+        Tensor，概率分布的期望。
+
+    .. py:method:: prob(value)
+
+        计算给定值下的概率。
+
+        **参数：**
+
+        - **value** (Tensor) - 要计算的值。
+
+        **返回：**
+
+        Tensor，概率值。
+
+    .. py:method:: sample(shape)
+
+        采样函数。
+
+        **参数：**
+
+        - **shape** (tuple) - 样本的shape。
+
+        **返回：**
+
+        Tensor，根据概率分布采样的样本。
+
+    .. py:method:: survival_function(value)
+
+        计算给定值对应的生存函数。
+
+        **参数：**
+
+        - **value** (Tensor) - 要计算的值。
+
+        **返回：**
+
+        Tensor，生存函数的值。

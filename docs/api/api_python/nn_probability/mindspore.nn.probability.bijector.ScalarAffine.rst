@@ -24,6 +24,24 @@ mindspore.nn.probability.bijector.ScalarAffine
 
     - **TypeError** - `shift` 或 `scale` 中元素的数据类型不为float，或 `shift` 和 `scale` 的数据类型不相同。
 
+    .. py:method:: loc
+        :property:
+
+        返回映射的位置。
+
+        **返回：**
+
+        Tensor，映射的位置值。
+
+    .. py:method:: scale
+        :property:
+
+        返回映射的比例。
+
+        **返回：**
+
+        Tensor，映射的比例值。
+
     .. py:method:: forward(value)
 
         正映射，计算输入随机变量 :math:`X = value` 经过映射后的值 :math:`Y = g(value)`。
@@ -34,7 +52,7 @@ mindspore.nn.probability.bijector.ScalarAffine
 
         **返回：**
 
-        Tensor, 输入随机变量的值。
+        Tensor，输入随机变量的值。
 
     .. py:method:: forward_log_jacobian(value)
 
@@ -46,7 +64,7 @@ mindspore.nn.probability.bijector.ScalarAffine
 
         **返回：**
 
-        Tensor, 正映射导数的对数值。
+        Tensor，正映射导数的对数值。
 
     .. py:method:: inverse(value)
 
@@ -58,7 +76,7 @@ mindspore.nn.probability.bijector.ScalarAffine
 
         **返回：**
 
-        Tensor, 输出随机变量的值。
+        Tensor，输出随机变量的值。
 
     .. py:method:: inverse_log_jacobian(value)
 
@@ -70,4 +88,4 @@ mindspore.nn.probability.bijector.ScalarAffine
 
         **返回：**
 
-        Tensor, 逆映射导数的对数值。
+        Tensor，逆映射导数的对数值。

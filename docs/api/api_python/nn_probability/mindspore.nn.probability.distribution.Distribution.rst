@@ -22,7 +22,7 @@ mindspore.nn.probability.distribution.Distribution
         **参数：**
 
         - **value** (Tensor) - 要计算的值。
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -30,7 +30,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 累积分布函数的值。
+        Tensor，累积分布函数的值。
 
     .. py:method:: construct(name, *args, **kwargs)
 
@@ -48,7 +48,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, name对应函数的值。
+        Tensor，name对应函数的值。
 
     .. py:method:: cross_entropy(dist, *args, **kwargs)
 
@@ -57,7 +57,7 @@ mindspore.nn.probability.distribution.Distribution
         **参数：**
 
         - **dist** (str) - 分布的类型。
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -65,7 +65,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 交叉熵的值。
+        Tensor，交叉熵的值。
 
     .. py:method:: entropy(*args, **kwargs)
 
@@ -73,7 +73,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **参数：**
 
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -81,7 +81,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 熵的值。
+        Tensor，熵的值。
 
     .. py:method:: get_dist_args(*args, **kwargs)
 
@@ -89,7 +89,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **参数：**
 
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note:: 
@@ -114,7 +114,7 @@ mindspore.nn.probability.distribution.Distribution
         **参数：**
 
         - **dist** (str) - 分布的类型。
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -122,7 +122,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, KL散度。
+        Tensor，KL散度。
 
     .. py:method:: log_cdf(value, *args, **kwargs)
 
@@ -131,7 +131,7 @@ mindspore.nn.probability.distribution.Distribution
         **参数：**
 
         - **value** (Tensor) - 要计算的值。
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -139,7 +139,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 累积分布函数的对数。
+        Tensor，累积分布函数的对数。
 
     .. py:method:: log_prob(value, *args, **kwargs)
 
@@ -148,7 +148,7 @@ mindspore.nn.probability.distribution.Distribution
         **参数：**
 
         - **value** (Tensor) - 要计算的值。
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -156,7 +156,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 累积分布函数的对数。
+        Tensor，累积分布函数的对数。
 
     .. py:method:: log_survival(value, *args, **kwargs)
 
@@ -165,7 +165,7 @@ mindspore.nn.probability.distribution.Distribution
         **参数：**
 
         - **value** (Tensor) - 要计算的值。
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -173,7 +173,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 生存函数的对数。
+        Tensor，生存函数的对数。
 
     .. py:method:: mean(*args, **kwargs)
 
@@ -181,7 +181,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **参数：**
 
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -189,7 +189,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 概率分布的期望。
+        Tensor，概率分布的期望。
 
     .. py:method:: mode(*args, **kwargs)
 
@@ -197,7 +197,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **参数：**
 
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -205,7 +205,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 概率分布的众数。
+        Tensor，概率分布的众数。
 
     .. py:method:: prob(value, *args, **kwargs)
 
@@ -214,7 +214,7 @@ mindspore.nn.probability.distribution.Distribution
         **参数：**
 
         - **value** (Tensor) - 要计算的值。
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -222,7 +222,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 概率值。
+        Tensor，概率值。
 
     .. py:method:: sample(*args, **kwargs)
 
@@ -231,7 +231,7 @@ mindspore.nn.probability.distribution.Distribution
         **参数：**
 
         - **shape** (tuple) - 样本的shape。
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -239,7 +239,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 根据概率分布采样的样本。
+        Tensor，根据概率分布采样的样本。
 
     .. py:method:: sd(*args, **kwargs)
 
@@ -247,7 +247,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **参数：**
 
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -255,7 +255,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 概率分布的标准差。
+        Tensor，概率分布的标准差。
 
     .. py:method:: survival_function(value, *args, **kwargs)
 
@@ -264,7 +264,7 @@ mindspore.nn.probability.distribution.Distribution
         **参数：**
 
         - **value** (Tensor) - 要计算的值。
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -272,7 +272,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 生存函数的值。
+        Tensor，生存函数的值。
 
     .. py:method:: var(*args, **kwargs)
 
@@ -280,7 +280,7 @@ mindspore.nn.probability.distribution.Distribution
 
         **参数：**
 
-        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。。
+        - **args** (list) - 位置参数列表，具体需要的参数根据子类的实现确定。
         - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
@@ -288,5 +288,5 @@ mindspore.nn.probability.distribution.Distribution
 
         **返回：**
 
-        Tensor, 概率分布的方差。
+        Tensor，概率分布的方差。
 

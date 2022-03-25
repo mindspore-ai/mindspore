@@ -41,8 +41,7 @@ class Poisson(Distribution):
         The accessible APIs of the Poisson distribution are defined in the base class, including:
 
         - `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`
-        - `mean`, `sd`, `mode`, `var`, and `entropy`
-        - `kl_loss` and `cross_entropy`
+        - `mean`, `sd`, `mode`, `var`
         - `sample`
 
         For more details of all APIs, including the inputs and outputs of all APIs of the Poisson distribution,

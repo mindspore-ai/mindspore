@@ -43,7 +43,7 @@ class PowerTransform(Bijector):
         - **forward**
         - **inverse**
         - **forward_log_jacobian**
-        - **backward_log_jacobian**
+        - **inverse_log_jacobian**
 
         It should be notice that the inputs to APIs of the PowerTransform bijector should be always a tensor,
         with a shape that can be broadcasted to that of `power`.

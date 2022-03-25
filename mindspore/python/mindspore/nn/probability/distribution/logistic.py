@@ -382,7 +382,7 @@ class Logistic(Distribution):
         l_zero = self.const(self.tiny)
         h_one = self.const(1.0)
         sample_uniform = self.uniform(sample_shape, l_zero, h_one, self.seed)
-        sample = self.log(sample_uniform) - self.log1p(sample_uniform)
+        sample = self.log(sample_uniform) - self.log1p(-sample_uniform)  # pylint: disable=invalid-unary-operand-type
         sample = sample * scale + loc
         value = self.cast(sample, self.dtype)
         if origin_shape == ():

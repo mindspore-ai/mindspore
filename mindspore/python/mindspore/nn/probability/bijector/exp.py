@@ -33,7 +33,7 @@ class Exp(PowerTransform):
         - **forward**
         - **inverse**
         - **forward_log_jacobian**
-        - **backward_log_jacobian**
+        - **inverse_log_jacobian**
 
         It should be notice that the inputs to the APIs of the Exp bijector should be always a tensor.
         For more details of all APIs, including the inputs and outputs of the APIs of the Exp bijector,

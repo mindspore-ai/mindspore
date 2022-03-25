@@ -23,6 +23,15 @@ mindspore.nn.probability.bijector.Softplus
 
     - **TypeError** - sharpness中元素的数据类型不为float。
 
+    .. py:method:: scale
+        :property:
+
+        返回映射的锐度因子。
+
+        **返回：**
+
+        Tensor，映射的锐度因子。
+
     .. py:method:: forward(value)
 
         正映射，计算输入随机变量 :math:`X = value` 经过映射后的值 :math:`Y = g(value)`。
@@ -33,7 +42,7 @@ mindspore.nn.probability.bijector.Softplus
 
         **返回：**
 
-        Tensor, 输入随机变量的值。
+        Tensor，输入随机变量的值。
 
     .. py:method:: forward_log_jacobian(value)
 
@@ -45,7 +54,7 @@ mindspore.nn.probability.bijector.Softplus
 
         **返回：**
 
-        Tensor, 正映射导数的对数值。
+        Tensor，正映射导数的对数值。
 
     .. py:method:: inverse(value)
 
@@ -57,7 +66,7 @@ mindspore.nn.probability.bijector.Softplus
 
         **返回：**
 
-        Tensor, 输出随机变量的值。
+        Tensor，输出随机变量的值。
 
     .. py:method:: inverse_log_jacobian(value)
 
@@ -69,4 +78,4 @@ mindspore.nn.probability.bijector.Softplus
 
         **返回：**
 
-        Tensor, 逆映射导数的对数值。
+        Tensor，逆映射导数的对数值。
