@@ -65,11 +65,11 @@ int ConvolutionGradInputCPUKernelFp16::ReSize() {
                   ? false
                   : true;
 
-  do_dw_ = (conv_param->output_channel_ == conv_param->group_) &&
-               (conv_param->input_channel_ == conv_param->output_channel_) && (conv_param->dilation_h_ == 1) &&
-               (conv_param->dilation_w_ == 1)
-             ? true
-             : false;
+  do_dw_fp16_ = (conv_param->output_channel_ == conv_param->group_) &&
+                    (conv_param->input_channel_ == conv_param->output_channel_) && (conv_param->dilation_h_ == 1) &&
+                    (conv_param->dilation_w_ == 1)
+                  ? true
+                  : false;
   return RET_OK;
 }
 
@@ -86,18 +86,18 @@ int ConvolutionGradInputCPUKernelFp16::DoExecute(int task_id) {
   auto dx_addr = reinterpret_cast<float16_t *>(out_dx->data());
 
   int i, j;
-  int nweights = input_w->ElementsNum();
   int in_ch = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
-  int in_w = conv_param->input_w_;
-  int k_h = conv_param->kernel_h_;  // out_dw->shape()[1];
-  int k_w = conv_param->kernel_w_;  // out_dw->shape()[2];
-  int batch = conv_param->output_batch_;
-  int out_ch = conv_param->output_channel_;
-  int groups = conv_param->group_;
+  int nweights = input_w->ElementsNum();
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
+  int in_w = conv_param->input_w_;
+  int k_w = conv_param->kernel_w_;
+  int k_h = conv_param->kernel_h_;
+  int batch = conv_param->output_batch_;
+  int groups = conv_param->group_;
   int thread_num = ms_context_->thread_num_;
+  int out_ch = conv_param->output_channel_;
   int m = out_h * out_w;
   int n = k_w * k_h * in_ch / groups;
   int k = out_ch / groups;
@@ -109,7 +109,7 @@ int ConvolutionGradInputCPUKernelFp16::DoExecute(int task_id) {
   int start = stride * task_id;
   int end = start + count;
 
-  if (do_dw_) {
+  if (do_dw_fp16_) {
     stride = UP_DIV(groups, thread_num);
     count = MSMIN(stride, groups - stride * task_id);
     count = (count < 0) ? 0 : count;

@@ -51,6 +51,8 @@ int GetRunWorkspaceSize(const LstmGradParameter *lstm_param);
 
 size_t GetRunWorkspaceGemmOffset(const LstmGradParameter *lstm_param);
 
+void LstmGradReorderDy(float *src, float *dst, LstmGradParameter *lstm_param);
+
 void PackLstmWeightTranspose(float *dst, const float *src, int batch, int col, int row, int row_align,
                              const int *order);
 

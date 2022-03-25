@@ -99,10 +99,10 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::DoExecute(int task_id) {
     case 0:
       SoftMaxP1(ins, losses, sum_data, task_id * stride, count, length, inner_size_);
       break;
-    case 1:
+    case C1NUM:
       SoftMaxP2(ins, losses, sum_data, task_id * stride, count, length, inner_size_);
       break;
-    case 2:
+    case C2NUM:
       if (sce_param->is_grad_) {
         return GradPostExecute(labels, losses, out);
       } else {

@@ -84,16 +84,16 @@ int DeConvolutionGradFilterCPUKernel::DoExecute(int task_id) {
   CHECK_NULL_RETURN(dw_addr);
 
   int i, j;
-  int in_ch = conv_param->input_channel_;
-  int in_h = conv_param->input_h_;
-  int in_w = conv_param->input_w_;
-  int k_h = conv_param->kernel_h_;
-  int k_w = conv_param->kernel_w_;
-  int batch = conv_param->output_batch_;
-  int out_ch = conv_param->output_channel_;
-  int groups = conv_param->group_;
-  int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
+  int out_h = conv_param->output_h_;
+  int out_ch = conv_param->output_channel_;
+  int k_w = conv_param->kernel_w_;
+  int k_h = conv_param->kernel_h_;
+  int in_w = conv_param->input_w_;
+  int in_h = conv_param->input_h_;
+  int in_ch = conv_param->input_channel_;
+  int groups = conv_param->group_;
+  int batch = conv_param->output_batch_;
 
   MS_CHECK_GT(groups, 0, RET_ERROR);
   const int m = in_ch / groups;

@@ -105,6 +105,15 @@ size_t GetRunWorkspaceGemmOffset(const LstmGradParameter *lstm_param) {
   return no_of_temp_matrices_sized_output_step * time_stamp_len;
 }
 
+void LstmGradReorderDy(float *src, float *dst, LstmGradParameter *lstm_param) {
+  int dir_mult = lstm_param->bidirectional_ ? C2NUM : C1NUM;
+  for (int b = 0; b < lstm_param->batch_; b++) {
+    int batch_offset = b * dir_mult * lstm_param->hidden_size_;
+    float *dy = src + batch_offset;
+    memcpy(dst + b * lstm_param->hidden_size_, dy, lstm_param->hidden_size_ * sizeof(float));
+  }
+}
+
 void LstmGradDoInputStep(const float *output_gate, float *cell_state, float *prev_cell_state, float *cell_gate,
                          float *input_gate, float *forget_gate, float *dY, float *dC, float *dH, float **dA, float *dX,
                          float *w, float *v, float *workspace, const LstmGradParameter *lstm_param) {

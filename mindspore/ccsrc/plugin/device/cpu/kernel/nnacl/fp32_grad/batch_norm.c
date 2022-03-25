@@ -27,6 +27,23 @@ void var2Invar(float *save_var, int size, float eps) {
 void backwardAll(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
                  int ch, float *dbias, float *dscale, float *dx, bool is_train) {
 #else
+
+static void backwardComputeDx(const float *in, const float *yt, const float *mean, const float *invar,
+                              const float *scale, int size, int ch, const float *dbias, const float *dscale, float *dx,
+                              float N, bool is_train) {
+  for (int i = 0; i < size; i++) {
+    for (int c = 0; c < ch; c++) {
+      // dx_2
+      int ix = i * ch + c;
+      dx[ix] = yt[ix];
+      if (is_train) {
+        dx[ix] -= dbias[c] / N + (in[ix] - mean[c]) * dscale[c] * invar[c] / N;
+      }
+      dx[ix] *= scale[c] * invar[c];
+    }
+  }
+}
+
 void backwardAll(const float *restrict in, const float *restrict yt, const float *restrict mean,
                  const float *restrict invar, const float *restrict scale, int size, int ch, float *restrict dbias,
                  float *restrict dscale, float *restrict dx, bool is_train) {
@@ -42,17 +59,7 @@ void backwardAll(const float *restrict in, const float *restrict yt, const float
       dscale[c] += (yt[ix] * x_hat);
     }
   }
-  for (int i = 0; i < size; i++) {
-    for (int c = 0; c < ch; c++) {
-      // dx_2
-      int ix = i * ch + c;
-      dx[ix] = yt[ix];
-      if (is_train) {
-        dx[ix] -= dbias[c] / N + (in[ix] - mean[c]) * dscale[c] * invar[c] / N;
-      }
-      dx[ix] *= scale[c] * invar[c];
-    }
-  }
+  backwardComputeDx(in, yt, mean, invar, scale, size, ch, dbias, dscale, dx, N, is_train);
 }
 
 #ifdef _MSC_VER
@@ -84,15 +91,5 @@ void backwardP2(const float *restrict in, const float *restrict yt, const float 
 #endif
   NNACL_CHECK_ZERO_RETURN(total_size);
   const float N = (float)total_size;
-  for (int i = 0; i < size; i++) {
-    for (int c = 0; c < ch; c++) {
-      // dx_2
-      int ix = i * ch + c;
-      dx[ix] = yt[ix];
-      if (is_train) {
-        dx[ix] -= dbias[c] / N + (in[ix] - mean[c]) * dscale[c] * invar[c] / N;
-      }
-      dx[ix] *= scale[c] * invar[c];
-    }
-  }
+  backwardComputeDx(in, yt, mean, invar, scale, size, ch, dbias, dscale, dx, N, is_train);
 }
