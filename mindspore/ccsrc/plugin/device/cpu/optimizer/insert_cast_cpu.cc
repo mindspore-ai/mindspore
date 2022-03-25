@@ -39,7 +39,7 @@ namespace {
 constexpr unsigned int kLstmReserveIndex = 3;
 AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                                 const TypeId &input_type, const TypeId &output_type,
-                                const abstract::BaseShapePtr &origin_shape, const TypeId &origin_type) {
+                                const abstract::BaseShapePtr &origin_shape) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::string input_format = format;
   std::string output_format = format;
@@ -61,7 +61,7 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   }
   common::AnfAlgo::SetNodeAttr("dst_type", TypeIdToType(output_type), cast);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
-  common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, cast.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({output_type}, {origin_shape}, cast.get());
   common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
   std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel =
     kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(kCastOpName);
@@ -100,8 +100,7 @@ void SyncWeightNodeWithCast(const FuncGraphPtr &func_graph, const CNodePtr &cnod
   auto first_depend_node =
     func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), cast, cnode});
   first_depend_node->set_abstract(cast->abstract());
-  auto post_cast =
-    AddCastOpNodeToGraph(func_graph, first_depend_node, format, device_type, origin_type, origin_shape, origin_type);
+  auto post_cast = AddCastOpNodeToGraph(func_graph, first_depend_node, format, device_type, origin_type, origin_shape);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->AddRefCorrespondPairs(std::make_pair(post_cast, 0), common::AnfAlgo::VisitKernel(cur_input, 0));
@@ -124,8 +123,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     const abstract::BaseShapePtr origin_shape =
       common::AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
     if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {
-      auto cast =
-        AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape, device_type);
+      auto cast = AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, origin_type, device_type, origin_shape);
       MS_EXCEPTION_IF_NULL(cast);
       cast->set_scope(cnode->scope());
       cnode->set_input(input_index + 1, cast);
@@ -156,34 +154,40 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   }
 }
 
-void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const AnfNodePtr &func_output) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
-  for (size_t i = 0; i < output_num; i++) {
-    auto infer_type = common::AnfAlgo::GetOutputInferDataType(cnode, i);
-    auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, i);
-    const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, i);
-    // The shape of LSTM's reserved output will be changed in InitKernel, and this output is only used
-    // by its gradient operator, so we don't handle it in this pass.
-    if (IsPrimitiveCNode(cnode, prim::kPrimLstm) && i == kLstmReserveIndex) {
+void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &func_output) {
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(func_output);
+  if (!func_output->isa<CNode>()) {
+    return;
+  }
+  auto func_output_node = func_output->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(func_output_node);
+  for (size_t i = 0; i < input_num; i++) {
+    auto input_node = common::AnfAlgo::GetInputNode(func_output_node, i);
+    auto abstract = input_node->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    if (!abstract->isa<abstract::AbstractTensor>()) {
+      MS_LOG(INFO) << "The " << i << "th output of graph is not a tensor type, skipping insert cast.";
       continue;
     }
-    if (infer_type != device_type) {
-      auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, cnode, i);
-      for (size_t j = 0; j < used_node_list->size(); j++) {
-        auto used_node = used_node_list->at(j).first;
-        if (used_node != func_output) {
-          continue;
-        }
-        auto used_node_index = static_cast<size_t>(used_node_list->at(j).second - 1);
-        auto cur_input = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(used_node), used_node_index);
-        const abstract::BaseShapePtr origin_shape =
-          common::AnfAlgo::GetPrevNodeOutputDetailShape(utils::cast<CNodePtr>(used_node), used_node_index);
-        auto cast =
-          AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, device_type, infer_type, origin_shape, infer_type);
-        MS_EXCEPTION_IF_NULL(cast);
-        cast->set_scope(used_node->scope());
-        utils::cast<CNodePtr>(used_node)->set_input(used_node_index + 1, cast);
+    if (!input_node->isa<CNode>()) {
+      MS_LOG(INFO) << "The " << i << "th output of graph is not a CNode, skipping insert cast.";
+      continue;
+    }
+    auto kernel_node = common::AnfAlgo::VisitKernel(input_node, 0).first;
+    auto infer_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(func_output, i);
+    auto device_type = AnfAlgo::GetPrevNodeOutputDeviceDataType(func_output, i);
+    const std::string dev_fmt = AnfAlgo::GetPrevNodeOutputFormat(func_output, i);
+    if (infer_type != device_type && device_type != kTypeUnknown) {
+      const abstract::BaseShapePtr origin_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(func_output_node, i);
+      auto cast = AddCastOpNodeToGraph(func_graph, input_node, dev_fmt, device_type, infer_type, origin_shape);
+      MS_EXCEPTION_IF_NULL(cast);
+      cast->set_scope(func_output->scope());
+      func_output_node->set_input(i + 1, cast);
+      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(func_graph);
+      if (kernel_graph != nullptr) {
+        MS_LOG(INFO) << "Replace internal output from:" << kernel_node->DebugString() << " to:" << cast->DebugString()
+                     << " for graph:" << kernel_graph->ToString();
+        kernel_graph->ReplaceInternalOutput(kernel_node, cast);
       }
     }
   }
@@ -202,15 +206,8 @@ bool InsertCastCPU::Run(const FuncGraphPtr &func_graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    AnfNodePtrList outputs;
-    kernel::GetFuncGraphOutputNodes(func_graph, &outputs);
     auto func_output = func_graph->output();
-    for (auto node : outputs) {
-      if (node != nullptr && node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
-        auto cnode = node->cast<CNodePtr>();
-        InsertCastForGraphOutput(func_graph, cnode, func_output);
-      }
-    }
+    InsertCastForGraphOutput(func_graph, func_output);
   }
   return true;
 }
