@@ -1006,6 +1006,7 @@ coo_tensor_get_dense_shape = Primitive('COOTensorGetDenseShape')
 
 @constexpr
 def print_info(info):
+    """Print given error info"""
     print(info)
 
 

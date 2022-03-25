@@ -56,7 +56,7 @@ def _check_dtype(dtype):
     # convert the string dtype to mstype.dtype
     if isinstance(dtype, str):
         dtype = dtype.lower()
-        dtype = dtype_map[dtype]
+        dtype = dtype_map.get(dtype, "")
     elif isinstance(dtype, type):
         if dtype is int:
             dtype = mstype.int32
@@ -264,13 +264,19 @@ def _promote(dtype1, dtype2):
     if dtype1 == dtype2:
         return dtype1
     if (dtype1, dtype2) in promotion_rule:
-        return promotion_rule[dtype1, dtype2]
-    return promotion_rule[dtype2, dtype1]
+        return promotion_rule.get((dtype1, dtype2))
+    res = promotion_rule.get((dtype2, dtype1))
+    if res is None:
+        raise TypeError(f"input dtype: {dtype1}, {dtype2} are not all mindspore datatypes.")
+    return res
 
 
 @constexpr
 def _promote_for_trigonometric(dtype):
-    return rule_for_trigonometric[dtype]
+    res_dtype = rule_for_trigonometric.get(dtype)
+    if res_dtype is None:
+        raise TypeError(f"input dtype: {dtype} is not a mindspore datatype.")
+    return res_dtype
 
 
 @constexpr
