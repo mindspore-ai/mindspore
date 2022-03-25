@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 class MatmulConfusionTranposeFusionPass : public FusionBasePass {
  public:
-  explicit MatmulConfusionTranposeFusionPass(FusionIdAllocatorPtr idAllocator)
+  explicit MatmulConfusionTranposeFusionPass(const FusionIdAllocatorPtr &idAllocator)
       : FusionBasePass("MatmulConfusionTranposeFusionPass", idAllocator) {
     PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::MatmulConfusiontransposeUbFusion);
   }
