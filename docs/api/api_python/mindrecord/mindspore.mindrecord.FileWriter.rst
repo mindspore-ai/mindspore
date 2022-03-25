@@ -52,7 +52,7 @@
         **参数：**
 
         - **content** (dict) - schema内容的字典。
-        - **desc** (str，可选)) - schema的描述字符。默认值：None。
+        - **desc** (str，可选) - schema的描述字符。默认值：None。
 
         **返回：**
 
