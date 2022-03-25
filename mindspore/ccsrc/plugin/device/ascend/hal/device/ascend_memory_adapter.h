@@ -30,7 +30,7 @@ namespace ascend {
 class AscendMemAdapter {
  public:
   static AscendMemAdapter &GetInstance() {
-    static AscendMemAdapter instance;
+    static AscendMemAdapter instance{};
     return instance;
   }
 

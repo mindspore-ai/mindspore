@@ -82,7 +82,7 @@ T DivCeil(T n1, T n2) {
 
 template <typename T>
 bool CheckDims(const std::vector<T> &shape) {
-  if (shape.size() != kNchwDims) {
+  if (shape.size() != kDim4) {
     MS_LOG(ERROR) << "Host shape dims should be 4";
     return false;
   }
@@ -217,7 +217,7 @@ bool IsNeedPadding(const std::string &format, size_t shape_size) {
   if (format == kOpFormat_DEFAULT || format == kOpFormat_NCHW ||
       kNoPaddingFormatSet.find(format) != kNoPaddingFormatSet.end()) {
     return false;
-  } else if (shape_size < kNchwDims) {
+  } else if (shape_size < kDim4) {
     return true;
   }
   return false;
@@ -449,11 +449,11 @@ ShapeVector DeviceShapeTransfer::TransCore(const ShapeVector &shape, const std::
   }
   auto temp_shape = shape;
   if (kNoPaddingFormatSet.find(format) == kNoPaddingFormatSet.end() && format != kOpFormat_FRACTAL_ZN_LSTM &&
-      shape.size() < kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+      shape.size() < kDim4 && k3DFormatSet.find(format) == k3DFormatSet.end()) {
     MS_LOG(WARNING) << "Origin shape size is less than 4, should be Padding shape by Default firstly";
     temp_shape = PaddingShapeTo4dDefault(shape);
   }
-  if (shape.size() != kNcdhw && k3DFormatSet.find(format) != k3DFormatSet.end()) {
+  if (shape.size() != kDim5 && k3DFormatSet.find(format) != k3DFormatSet.end()) {
     temp_shape = PaddingShapeTo5dDefault(shape);
   }
   auto iter = device_shape_map.find(format);
@@ -533,7 +533,7 @@ ShapeVector DeviceShapeTransfer::NC1HWC0DeviceShape(const ShapeVector &shape, co
 }
 
 ShapeVector DeviceShapeTransfer::NDC1HWC0DeviceShape(const ShapeVector &shape, const TypeId &type) {
-  if (shape.size() != kNcdhw) {
+  if (shape.size() != kDim5) {
     MS_LOG(EXCEPTION) << "Check dims failed, expect shape dim 5, but got shape dim : " << shape.size();
   }
   ShapeVector device_shape;
@@ -549,7 +549,7 @@ ShapeVector DeviceShapeTransfer::NDC1HWC0DeviceShape(const ShapeVector &shape, c
 }
 
 ShapeVector DeviceShapeTransfer::FRAC_Z3DDeviceShape(const ShapeVector &shape, const TypeId &type) {
-  if (shape.size() != kNcdhw) {
+  if (shape.size() != kDim5) {
     MS_LOG(EXCEPTION) << "Check dims failed, expect shape dim 5, but got shape dim : " << shape.size();
   }
   ShapeVector device_shape;
@@ -622,7 +622,7 @@ ShapeVector DeviceShapeTransfer::NC1HWC04DeviceShape(const ShapeVector &shape, c
 }
 
 ShapeVector DeviceShapeTransfer::NCDHWDeviceShape(const ShapeVector &shape, const TypeId &) {
-  if (shape.size() < kNcdhw) {
+  if (shape.size() < kDim5) {
     MS_LOG(EXCEPTION) << "Shape dims must be 5 when format is ndhwc.";
   }
   return shape;
@@ -867,7 +867,7 @@ bool FormatTransfer::TransDataBackwordCore(const FormatArgs &args, void *result,
 }
 
 bool FormatTransfer::CheckArgs(const FormatArgs &args, int64_t *size) {
-  if (args.host_shape.size() != kNchwDims) {
+  if (args.host_shape.size() != kDim4) {
     MS_LOG(ERROR) << "Invalid host shape, host shape dims:" << args.host_shape.size() << ", expect dims:" << kNchwDims;
     return false;
   }
@@ -1229,7 +1229,7 @@ bool FormatTransfer::NCDHW_TO_NDC1HWC0(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans from ncdhw to ndc1hwc0";
   MS_EXCEPTION_IF_NULL(result);
 
-  if (args.host_shape.size() != kNcdhw) {
+  if (args.host_shape.size() != kDim5) {
     MS_LOG(ERROR) << "Illegal host shape dim, expect dim: 5, but got " << args.host_shape.size();
     return false;
   }
@@ -1288,7 +1288,7 @@ bool FormatTransfer::NCDHW_TO_FRAC_Z3D(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans from ncdhw to frac_z_3d";
   MS_EXCEPTION_IF_NULL(result);
 
-  if (args.host_shape.size() != kNcdhw) {
+  if (args.host_shape.size() != kDim5) {
     MS_LOG(ERROR) << "Illegal host shape dim, expect dim: 5, but got " << args.host_shape.size();
     return false;
   }
@@ -1422,8 +1422,8 @@ bool FormatTransfer::NC1HWC0_TO_NCHW(const FormatArgs &args, void *result) {
   auto c = args.host_shape[kC];
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
-  auto c1 = args.device_shape[1];
-  auto c0 = args.device_shape[4];
+  auto c1 = args.device_shape[kDim1];
+  auto c0 = args.device_shape[kDim4];
 
   auto hw = h * w;
   auto chw = c * hw;
@@ -1601,7 +1601,7 @@ bool FormatTransfer::FRAC_Z3D_TO_NCDHW(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans from frac_z_3d to ncdhw";
   MS_EXCEPTION_IF_NULL(result);
 
-  if (args.host_shape.size() != kNcdhw) {
+  if (args.host_shape.size() != kDim5) {
     MS_LOG(ERROR) << "Illegal host shape dim, expect dim: 5, but got " << args.host_shape.size();
     return false;
   }
@@ -1660,7 +1660,7 @@ bool FormatTransfer::NDC1HWC0_TO_NCDHW(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans from ndc1hwc0 to ncdhw";
   MS_EXCEPTION_IF_NULL(result);
 
-  if (args.host_shape.size() != kNcdhw) {
+  if (args.host_shape.size() != kDim5) {
     MS_LOG(ERROR) << "Illegal host shape dim, expect dim: 5, but got " << args.host_shape.size();
     return false;
   }
@@ -1717,7 +1717,7 @@ bool FormatTransfer::FRAC_Z_TO_NCHW_WITH_GROUPS(const FormatArgs &args, void *re
 }
 
 int64_t FormatTransfer::Common4DCheck(const FormatArgs &args) {
-  if (args.host_shape.size() != kNchwDims) {
+  if (args.host_shape.size() != kDim4) {
     MS_LOG(EXCEPTION) << "Invalid host shape, host shape dims:" << args.host_shape.size()
                       << ", expect dims:" << kNchwDims;
   }
@@ -1752,11 +1752,11 @@ RangePair ShapeRangeTransfer::GetRealRange(const RangePair &ori_range, const std
     return FRAC_NZRange(ori_range, type);
   }
   auto temp_range = ori_range;
-  if (ori_range.size() < kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+  if (ori_range.size() < kDim4 && k3DFormatSet.find(format) == k3DFormatSet.end()) {
     MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 4, so padding the range firstly";
     temp_range = PaddingRangeTo4D(ori_range);
   }
-  if (ori_range.size() < kNcdhw && k3DFormatSet.find(format) != k3DFormatSet.end()) {
+  if (ori_range.size() < kDim5 && k3DFormatSet.find(format) != k3DFormatSet.end()) {
     MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 5, so padding the range firstly";
     temp_range = PaddingRangeTo5D(ori_range);
   }
