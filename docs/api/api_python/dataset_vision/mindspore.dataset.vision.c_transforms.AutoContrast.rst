@@ -7,8 +7,8 @@ mindspore.dataset.vision.c_transforms.AutoContrast
 
     **参数：**
 
-    - **cutoff**  (float, 可选) - 输入图像直方图中最亮和最暗像素的百分比。该值必须在 [0.0, 50.0) 范围内, 默认值：0.0。
-    - **ignore**  (Union[int, sequence], 可选) - 要忽略的背景像素值，忽略值必须在 [0, 255] 范围内, 默认值：None。
+    - **cutoff**  (float, 可选) - 输入图像直方图中最亮和最暗像素的百分比。该值必须在 [0.0, 50.0) 范围内，默认值：0.0。
+    - **ignore**  (Union[int, sequence], 可选) - 要忽略的背景像素值，忽略值必须在 [0, 255] 范围内，默认值：None。
 
     **异常：**
 

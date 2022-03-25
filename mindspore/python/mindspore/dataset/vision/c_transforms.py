@@ -288,10 +288,11 @@ class BoundingBoxAugment(ImageTensorOperation):
         transform (TensorOperation): C++ transformation operation to be applied on random selection
             of bounding box regions of a given image.
         ratio (float, optional): Ratio of bounding boxes to apply augmentation on.
-            Range: [0, 1] (default=0.3).
+            Range: [0.0, 1.0] (default=0.3).
 
     Raises:
-        TypeError: If `transform` is an image processing operation in :class:`mindspore.dataset.vision.c_transforms`.
+        TypeError: If `transform` is not an image processing operation
+            in :class:`mindspore.dataset.vision.c_transforms`.
         TypeError: If `ratio` is not of type float.
         ValueError: If `ratio` is not in range [0.0, 1.0].
         RuntimeError: If given bounding box is invalid.
@@ -330,7 +331,7 @@ class CenterCrop(ImageTensorOperation):
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
             The size value(s) must be larger than 0.
 
     Raises:
@@ -445,7 +446,7 @@ class Crop(ImageTensorOperation):
             values, in the form of (top, left).
         size (Union[int, sequence]): The output size of the cropped image.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
             The size value(s) must be larger than 0.
 
     Raises:
@@ -555,11 +556,11 @@ class CutOut(ImageTensorOperation):
 
 class Decode(ImageTensorOperation):
     """
-    Decode the input image in RGB mode(default) or BGR mode(option is deprecated).
+    Decode the input image.
 
     Args:
         rgb (bool, optional): Mode of decoding input image (default=True).
-            If True means format of decoded image is RGB else BGR(option is deprecated).
+            If True means format of decoded image is RGB else BGR (deprecated).
 
     Raises:
         RuntimeError: If `rgb` is False, since this option is deprecated.
@@ -624,11 +625,11 @@ class GaussianBlur(ImageTensorOperation):
 
     Args:
         kernel_size (Union[int, sequence]): Size of the Gaussian kernel to use. The value must be positive and odd. If
-            only an integer is provided, the kernel size will be (size, size). If a sequence of integer is provided, it
-            must be a sequence of 2 values which represents (width, height).
+            only an integer is provided, the kernel size will be (kernel_size, kernel_size). If a sequence of integer
+            is provided, it must be a sequence of 2 values which represents (width, height).
         sigma (Union[float, sequence], optional): Standard deviation of the Gaussian kernel to use (default=None). The
             value must be positive. If only a float is provided, the sigma will be (sigma, sigma). If a sequence of
-            float is provided, it must be a sequence of 2 values which represents the sigma of width and height. If None
+            float is provided, it must be a sequence of 2 values which represents (width, height). If None
             is provided, the sigma will be calculated as ((kernel_size - 1) * 0.5 - 1) * 0.3 + 0.8.
 
     Raises:
@@ -684,7 +685,7 @@ class HorizontalFlip(ImageTensorOperation):
 
 class HWC2CHW(ImageTensorOperation):
     """
-    Transpose the input image from shape (H, W, C) to shape (C, H, W). The input image should be 3 channels image.
+    Transpose the input image from shape <H, W, C> to shape <C, H, W>. The input image should be 3 channels image.
 
     Raises:
         RuntimeError: If given tensor shape is not <H, W, C>.
@@ -812,14 +813,14 @@ class NormalizePad(ImageTensorOperation):
             The mean values must be in range (0.0, 255.0].
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
-        dtype (str, optional): Set the output data type of normalized image (default is "float32").
+        dtype (str, optional): Set the dtype of the output image (default is "float32").
 
     Raises:
         TypeError: If `mean` is not of type sequence.
         TypeError: If `std` is not of type sequence.
         TypeError: If `dtype` is not of type string.
         ValueError: If `mean` is not in range [0.0, 255.0].
-        ValueError: If `mean` is not in range (0.0, 255.0].
+        ValueError: If `std` is not in range (0.0, 255.0].
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
@@ -847,10 +848,10 @@ class NormalizePad(ImageTensorOperation):
 
 class Pad(ImageTensorOperation):
     """
-    Pad the image according to padding parameters.
+    Pad the image.
 
     Args:
-        padding (Union[int, sequence]): The number of pixels to pad the image.
+        padding (Union[int, sequence]): The number of pixels to pad each border of the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or lists of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
@@ -1096,7 +1097,7 @@ class RandomAutoContrast(ImageTensorOperation):
 class RandomColor(ImageTensorOperation):
     """
     Adjust the color of the input image by a fixed or random degree.
-    This operation works only with 3-channel color images.
+    This operation works only with 3-channel RGB images.
 
     Args:
          degrees (sequence, optional): Range of random color adjustment degrees, which must be non-negative.
@@ -1207,8 +1208,8 @@ class RandomCrop(ImageTensorOperation):
     Args:
         size (Union[int, sequence]): The output size of the cropped image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        padding (Union[int, sequence], optional): The number of pixels to pad the image
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+        padding (Union[int, sequence], optional): The number of pixels to pad each border of the image.
             The padding value(s) must be non-nagetive (default=None).
             If padding is not None, pad image first with padding values.
             If a single number is provided, pad all borders with this value.
@@ -1288,10 +1289,10 @@ class RandomCropDecodeResize(ImageTensorOperation):
     Args:
         size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        scale (list, tuple, optional): Range [min, max) of respective size of the
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+        scale (Union[list, tuple], optional): Range [min, max) of respective size of the
             original size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
+        ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
         interpolation (Inter, optional): Image interpolation mode for resize operator(default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
@@ -1312,8 +1313,8 @@ class RandomCropDecodeResize(ImageTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type integer or sequence of integer.
-        TypeError: If `scale` is not of type tuple.
-        TypeError: If `ratio` is not of type tuple.
+        TypeError: If `scale` is not of type tuple or list.
+        TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
@@ -1369,7 +1370,7 @@ class RandomCropWithBBox(ImageTensorOperation):
     Args:
         size (Union[int, sequence]): The output size of the cropped image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
         padding (Union[int, sequence], optional): The number of pixels to pad the image
             The padding value(s) must be non-nagetive (default=None).
             If padding is not None, first pad image with padding values.
@@ -1591,10 +1592,10 @@ class RandomLighting(ImageTensorOperation):
 
 class RandomPosterize(ImageTensorOperation):
     """
-    Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
+    Reduce the number of bits for each RGB channel to posterize the input image randomly with a given probability.
 
     Args:
-        bits (sequence or int, optional): Range of random posterize to compress image.
+        bits (Union[int, Sequence[int]], optional): Range of random posterize to compress image.
             Bits values must be in range of [1,8], and include at
             least one integer value in the given range. It must be in
             (min, max) or integer format. If min=max, then it is a single fixed
@@ -1634,13 +1635,13 @@ class RandomResizedCrop(ImageTensorOperation):
 
     Args:
         size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        scale (list, tuple, optional): Range [min, max) of respective size of the original
+            If size is an integer, a square of size (size, size) will be cropped with this value.
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+        scale (Union[list, tuple], optional): Range [min, max) of respective size of the original
             size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
+        ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
-        interpolation (Inter, optional): Image interpolation mode for resize operator (default=Inter.BILINEAR).
+        interpolation (Inter, optional): Method of interpolation (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
 
             - Inter.BILINEAR, means interpolation method is bilinear interpolation.
@@ -1659,8 +1660,8 @@ class RandomResizedCrop(ImageTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type integer or sequence of integer.
-        TypeError: If `scale` is not of type tuple.
-        TypeError: If `ratio` is not of type tuple.
+        TypeError: If `scale` is not of type tuple or list.
+        TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
@@ -1704,14 +1705,14 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
     Args:
         size (Union[int, sequence]): The size of the output image. The size value(s) must be positive.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        scale (list, tuple, optional): Range (min, max) of respective size of the original
+            If size is an integer, a square of size (size, size) will be cropped with this value.
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+        scale (Union[list, tuple], optional): Range (min, max) of respective size of the original
             size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (list, tuple, optional): Range (min, max) of aspect ratio to be
+        ratio (Union[list, tuple], optional): Range (min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
-        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
-            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
+        interpolation (Inter mode, optional): Method of interpolation (default=Inter.BILINEAR).
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC] .
 
             - Inter.BILINEAR, means interpolation method is bilinear interpolation.
 
@@ -1724,8 +1725,8 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
     Raises:
         TypeError: If `size` is not of type integer or sequence of integer.
-        TypeError: If `scale` is not of type tuple.
-        TypeError: If `ratio` is not of type tuple.
+        TypeError: If `scale` is not of type tuple or list.
+        TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `interpolation` is not of type Inter.
         TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
@@ -1768,9 +1769,8 @@ class RandomResize(ImageTensorOperation):
 
     Args:
         size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, smaller edge of the image will be resized to this value with
-            the same image aspect ratio.
-            If size is a sequence of length 2, it should be (height, width).
+            If size is an integer, a square of size (size, size) will be cropped with this value.
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
 
     Raises:
         TypeError: If `size` is not of type integer or sequence of integer.
@@ -1809,9 +1809,8 @@ class RandomResizeWithBBox(ImageTensorOperation):
 
     Args:
         size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, smaller edge of the image will be resized to this value with
-            the same image aspect ratio.
-            If size is a sequence of length 2, it should be (height, width).
+            If size is an integer, a square of size (size, size) will be cropped with this value.
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
 
     Raises:
         TypeError: If `size` is not of type integer or sequence of integer.
@@ -1975,7 +1974,7 @@ class RandomSharpness(ImageTensorOperation):
             it is a single fixed magnitude operation (default = (0.1, 1.9)).
 
     Raises:
-        TypeError : If `degrees` is not a list or a tuple.
+        TypeError : If `degrees` is not of type list or tuple.
         ValueError: If `degrees` is negative.
         ValueError: If `degrees` is in (max, min) format instead of (min, max).
 
@@ -2123,9 +2122,8 @@ class Resize(ImageTensorOperation):
 
     Args:
         size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, the smaller edge of the image will be resized to this value with
-            the same image aspect ratio.
-            If size is a sequence of length 2, it should be (height, width).
+            If size is an integer, a square of size (size, size) will be cropped with this value.
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
         interpolation (Inter, optional): Image interpolation mode (default=Inter.LINEAR).
             It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
 
@@ -2178,7 +2176,7 @@ class ResizeWithBBox(ImageTensorOperation):
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
-        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.LINEAR).
+        interpolation (Inter, optional): Image interpolation mode (default=Inter.LINEAR).
             It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.LINEAR, means interpolation method is bilinear interpolation.
@@ -2248,7 +2246,7 @@ class Rotate(ImageTensorOperation):
     Args:
         degrees (Union[int, float]): Rotation degrees.
 
-        resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
+        resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means resample method is bilinear interpolation.
@@ -2267,7 +2265,7 @@ class Rotate(ImageTensorOperation):
             The fill_value values must be in range [0, 255] (default=0).
 
     Raises:
-        TypeError: If `degrees` is not of type integer, float or sequence.
+        TypeError: If `degrees` is not of type integer or float.
         TypeError: If `resample` is not of type Inter.
         TypeError: If `expand` is not of type bool.
         TypeError: If `center` is not of type tuple.
@@ -2373,18 +2371,18 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
     Args:
         size (Union[int, sequence]): The size of the output image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        scale (list, tuple, optional): Range [min, max) of respective size of the
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+        scale (Union[list, tuple], optional): Range [min, max) of respective size of the
             original size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
+        ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
         max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area (default=10).
             If exceeded, fall back to use center_crop instead. The max_attempts value must be positive.
 
     Raises:
         TypeError: If `size` is not of type integer or sequence of integer.
-        TypeError: If `scale` is not of type tuple.
-        TypeError: If `ratio` is not of type tuple.
+        TypeError: If `scale` is not of type tuple or list.
+        TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
@@ -2435,7 +2433,7 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
         size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
-            If size is a sequence of length 2, it should be (height, width).
+            If size is a sequence of length 2, an image of size (height, width) will be cropped.
 
     Raises:
         TypeError: If `size` is not of type integer or sequence of integer.
@@ -2471,11 +2469,13 @@ class UniformAugment(ImageTensorOperation):
     Perform randomly selected augmentation on input image.
 
     Args:
-        transforms: List of C++ operations (Python operations are not accepted).
+        transforms (TensorOperation): C++ transformation operation to be applied on random selection
+            of bounding box regions of a given image (Python operations are not accepted).
         num_ops (int, optional): Number of operations to be selected and applied, which must be positive (default=2).
 
     Raises:
-        TypeError: If `transforms` contains uncallable Python object.
+        TypeError: If `transform` is not an image processing operation
+            in :class:`mindspore.dataset.vision.c_transforms`.
         TypeError: If `num_ops` is not of type integer.
         ValueError: If `num_ops` is not positive.
 

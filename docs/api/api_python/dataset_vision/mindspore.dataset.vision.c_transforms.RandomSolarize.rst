@@ -3,13 +3,13 @@ mindspore.dataset.vision.c_transforms.RandomSolarize
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomSolarize(threshold=(0, 255))
 
-    从给定阈值范围内随机选择一个子范围，并对像素值位于给定子范围内的像素，将其值设置为（255 - 原本像素值）。
+    从给定阈值范围内随机选择一个子范围，对位于给定子范围内的像素，将其像素值设置为(255 - 原本像素值)。
 
     **参数：**
 
-    - **threshold** (tuple, optional) - 随机曝光的阈值范围，默认值：（0, 255）。`threshold` 输入格式应该为 (min, max)，其中 `min` 和 `max` 是 (0, 255) 范围内的整数，并且 min <= max。 如果 min=max，则反转所有高于 min(或max) 的像素值。
+    - **threshold** (tuple, 可选) - 随机曝光的阈值范围，默认值：(0, 255)。 `threshold` 输入格式应该为 (min, max)，其中min和max是 (0, 255) 范围内的整数，并且min小于等于max。如果min与max相等，则反转所有高于 min(或max) 的像素值。
 
     **异常：**
 
-    - **TypeError** - 当 `threshold` 的类型不为元组。
+    - **TypeError** - 当 `threshold` 的类型不为tuple。
     - **ValueError** - 当 `threshold` 取值不在[0, 255]范围内。
