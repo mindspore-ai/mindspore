@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameShape = "Shape";
+
 /// \brief Returns the shape of the input tensor.
 /// Refer to Python API @ref mindspore.ops.Shape for more details.
 class MIND_API Shape : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Shape);
   /// \brief Constructor.
-  Shape() : BaseOperator("Shape") {}
+  Shape() : BaseOperator(kNameShape) {}
   /// \brief Init.
   void Init() const {}
 };

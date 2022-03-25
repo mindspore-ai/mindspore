@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,12 @@
 
 namespace mindspore {
 namespace ops {
-class LayerNormBetaGammaBackpropV2 : public BaseOperator {
+constexpr auto kNameLayerNormBetaGammaBackpropV2 = "LayerNormBetaGammaBackpropV2";
+
+class MIND_API LayerNormBetaGammaBackpropV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LayerNormBetaGammaBackpropV2);
-  LayerNormBetaGammaBackpropV2() : BaseOperator("LayerNormBetaGammaBackpropV2") {}
+  LayerNormBetaGammaBackpropV2() : BaseOperator(kNameLayerNormBetaGammaBackpropV2) {}
   void Init(const std::vector<int64_t> &shape_gamma);
   void set_shape_gamma(const std::vector<int64_t> &shape_gamma);
   std::vector<int64_t> get_shape_gamma() const;

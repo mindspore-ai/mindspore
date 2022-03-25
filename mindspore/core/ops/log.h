@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class MIND_API Log : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Log);
   /// \brief Constructor.
-  Log() : BaseOperator("Log") { InitIOName({"x"}, {"y"}); }
+  Log() : BaseOperator(kNameLog) { InitIOName({"x"}, {"y"}); }
 };
 abstract::AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<abstract::AbstractBasePtr> &input_args);

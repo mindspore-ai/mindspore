@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMulNoNan = "MulNoNan";
-class MulNoNan : public BaseOperator {
+class MIND_API MulNoNan : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MulNoNan);
   MulNoNan() : BaseOperator(kNameMulNoNan) { InitIOName({"x", "y"}, {"output"}); }

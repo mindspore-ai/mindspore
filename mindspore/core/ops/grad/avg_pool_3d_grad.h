@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,12 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameAvgPool3DGrad = "AvgPool3DGrad";
+
 class MIND_API AvgPool3DGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AvgPool3DGrad);
-  AvgPool3DGrad() : BaseOperator("AvgPool3DGrad") { InitIOName({"origin_input_size", "grad"}, {"output"}); }
+  AvgPool3DGrad() : BaseOperator(kNameAvgPool3DGrad) { InitIOName({"origin_input_size", "grad"}, {"output"}); }
 };
 
 abstract::AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

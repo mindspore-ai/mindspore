@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameComplex = "Complex";
+
 /// \brief Returns a complex Tensor from the real and imaginary part.
 /// Refer to Python API @ref mindspore.ops.Complex for more details.
 class MIND_API Complex : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Complex);
   /// \brief Constructor.
-  Complex() : BaseOperator("Square") { InitIOName({"s", "input_imag"}, {"output"}); }
+  Complex() : BaseOperator(kNameComplex) { InitIOName({"s", "input_imag"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Complex for the inputs.
   void Init() {}
 };

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameMaskedFill = "MaskedFill";
 /// \brief Fills elements of self tensor with value where mask is True.
 /// Refer to Python API @ref mindspore.ops.MaskedFill for more details.
-class MaskedFill : public BaseOperator {
+class MIND_API MaskedFill : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaskedFill);
   /// \brief Constructor.

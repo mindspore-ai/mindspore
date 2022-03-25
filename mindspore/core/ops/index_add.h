@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameIndexAdd = "IndexAdd";
 /// \brief Adds tensor y to specified axis and indices of tensor x.
 /// Refer to Python API @ref mindspore.ops.IndexAdd for more details.
-class IndexAdd : public BaseOperator {
+class MIND_API IndexAdd : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IndexAdd);
   /// \brief Constructor.
@@ -38,7 +38,6 @@ class IndexAdd : public BaseOperator {
 
 abstract::AbstractBasePtr IndexAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args);
-
 }  // namespace ops
 }  // namespace mindspore
 

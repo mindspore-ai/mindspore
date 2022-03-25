@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameSplitV = "SplitV";
 /// \brief Splits the input tensor into num_split tensors along the given dimension.
 /// Refer to Python API @ref mindspore.ops.SplitV for more details.
-class SplitV : public BaseOperator {
+class MIND_API SplitV : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SplitV);
   /// \brief Constructor.

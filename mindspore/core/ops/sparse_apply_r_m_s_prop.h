@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseApplyRMSProp = "SparseApplyRMSProp";
 /// \brief Update relevant entries according to the rmsprop algorithm.
-class SparseApplyRMSProp : public BaseOperator {
+class MIND_API SparseApplyRMSProp : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseApplyRMSProp);
   /// \brief Constructor.

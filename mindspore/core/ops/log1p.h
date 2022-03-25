@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameLog1p = "Log1p";
+
 /// \brief Returns the natural logarithm of one plus the input tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Log1p for more details.
 class MIND_API Log1p : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Log1p);
   /// \brief Constructor.
-  Log1p() : BaseOperator("Log1p") { InitIOName({"x"}, {"y"}); }
+  Log1p() : BaseOperator(kNameLog1p) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Log1p for the inputs.
   void Init() const {}
 };

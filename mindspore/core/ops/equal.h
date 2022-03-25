@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class MIND_API Equal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Equal);
   /// \brief Constructor.
-  Equal() : BaseOperator("Equal") { InitIOName({"x", "y"}, {"output"}); }
+  Equal() : BaseOperator(kNameEqual) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Equal for the inputs.
   void Init() const {}
 };

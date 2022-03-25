@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameDropoutGrad = "DropoutGrad";
+
 class MIND_API DropoutGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DropoutGrad);
-  DropoutGrad() : BaseOperator("DropoutGrad") {}
+  DropoutGrad() : BaseOperator(kNameDropoutGrad) {}
   void Init(const float keep_prob = 0.5);
   void set_keep_prob(const float keep_prob);
   float get_keep_prob() const;

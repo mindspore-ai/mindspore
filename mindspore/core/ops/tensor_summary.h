@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameTensorSummary = "TensorSummary";
+
 /// \brief Outputs a tensor to a protocol buffer through a tensor summary operator.
 /// Refer to Python API @ref mindspore.ops.TensorSummary for more details.
 class MIND_API TensorSummary : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorSummary);
   /// \brief Constructor.
-  TensorSummary() : BaseOperator("TensorSummary") {}
+  TensorSummary() : BaseOperator(kNameTensorSummary) {}
   /// \brief Init.
   void Init();
   /// \brief Set side_effect_io.

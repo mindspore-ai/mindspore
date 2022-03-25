@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameErfc = "Erfc";
-class Erfc : public BaseOperator {
+class MIND_API Erfc : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Erfc);
   Erfc() : BaseOperator(kNameErfc) { InitIOName({"x"}, {"y"}); }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,15 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kNameDType = "DType";
+
 /// \brief Returns the data type of the input tensor as mindspore.dtype.
 /// Refer to Python API @ref mindspore.ops.DType for more details.
 class MIND_API DType : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DType);
   /// \brief Constructor.
-  DType() : BaseOperator("DType") { InitIOName({"x"}, {"output"}); }
+  DType() : BaseOperator(kNameDType) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DType for the inputs.
   void Init() const {}
 };
