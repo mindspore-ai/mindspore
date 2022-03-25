@@ -45,6 +45,11 @@ HttpServer::~HttpServer() {
   if (!Stop()) {
     MS_LOG(WARNING) << "Stop http server failed.";
   }
+  for (size_t i = 0; i < worker_threads_.size(); i++) {
+    if (worker_threads_[i] != nullptr && worker_threads_[i]->joinable()) {
+      worker_threads_[i]->join();
+    }
+  }
 }
 
 bool HttpServer::InitServer() {
@@ -139,7 +144,7 @@ bool HttpServer::RegisterRoute(const std::string &url, OnRequestReceive *functio
   return true;
 }
 
-bool HttpServer::Start(bool is_detach) {
+bool HttpServer::Start() {
   MS_LOG(INFO) << "Start http server!";
   for (size_t i = 0; i < thread_num_; i++) {
     auto http_request_handler = std::make_shared<HttpRequestHandler>();
@@ -151,9 +156,6 @@ bool HttpServer::Start(bool is_detach) {
     http_request_handlers.push_back(http_request_handler);
     auto thread = std::make_shared<std::thread>(&HttpRequestHandler::Run, http_request_handler);
     MS_EXCEPTION_IF_NULL(thread);
-    if (is_detach) {
-      thread->detach();
-    }
     worker_threads_.emplace_back(thread);
   }
   return true;
