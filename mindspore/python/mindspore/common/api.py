@@ -44,10 +44,10 @@ from .._checkparam import Validator
 # store ms_function class compiled pipeline cache
 ms_compile_cache = set()
 # store cell compiled pipeline cache,
-# {cell1:set_cache1, cell2:set_cache2, ...}
 cells_compile_cache = {}
 
 BROADCAST_PHASE = "_broadcast_"
+
 
 def _convert_data(data):
     """
@@ -72,6 +72,7 @@ def _convert_data(data):
     if isinstance(data, dict):
         return dict((_convert_data(key), _convert_data(value)) for key, value in data.items())
     return data
+
 
 def _wrap_func(fn):
     """
@@ -214,6 +215,7 @@ class _MindsporeFunctionExecutor:
         if obj and hasattr(obj, fn.__name__):
             self.obj = obj
         self.shard_parent_obj = obj
+        self.enable_tuple_broaden = False
         self._graph_executor = GraphExecutor_.get_instance()
         self._create_time = ms_create_time
 
@@ -310,8 +312,7 @@ class _MindsporeFunctionExecutor:
 
         if hasattr(self.obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = self.obj.enable_tuple_broaden
-        else:
-            self.enable_tuple_broaden = False
+
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(args_list, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
@@ -579,6 +580,11 @@ class _PynativeExecutor:
         self._optimizer = None
         self._top_cell = None
 
+    @staticmethod
+    def parameter_broadcast(obj, phase, auto_parallel_mode):
+        if BROADCAST_PHASE not in phase and _get_parameter_broadcast():
+            _parameter_broadcast(obj, auto_parallel_mode)
+
     def new_graph(self, obj, *args, **kwargs):
         self._executor.new_graph(obj, *args, *(kwargs.values()))
 
@@ -628,10 +634,6 @@ class _PynativeExecutor:
     def set_grad_flag(self, flag):
         self._executor.set_grad_flag(flag)
 
-    def parameter_broadcast(self, obj, phase, auto_parallel_mode):
-        if BROADCAST_PHASE not in phase and _get_parameter_broadcast():
-            _parameter_broadcast(obj, auto_parallel_mode)
-
     def enter_cell(self):
         self._executor.enter_cell()
 
@@ -677,6 +679,7 @@ class _CellGraphExecutor:
     def __init__(self):
         # create needed graph by lazy mode
         self.is_init = False
+        self.enable_tuple_broaden = False
         self._graph_executor = GraphExecutor_.get_instance()
         self._graph_executor.set_py_exe_path(sys.executable)
         self._graph_executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
@@ -766,8 +769,7 @@ class _CellGraphExecutor:
         args_list = args
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
-        else:
-            self.enable_tuple_broaden = False
+
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(args_list, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
