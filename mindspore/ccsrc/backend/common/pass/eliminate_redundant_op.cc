@@ -137,6 +137,8 @@ void EliminateRedundantOp::Init() {
     prim::kPrimCast->name(), std::pair<std::string, ConditionFunc>(prim::kPrimCast->name(), CastEliminateCondition)));
   (void)redundant_process_map_.emplace(std::pair<std::string, RedundantOpPair>(
     kTransDataOpName, std::pair<std::string, ConditionFunc>(kTransDataOpName, TransDataOpEliminateCondition)));
+  (void)redundant_process_map_.emplace(std::pair<std::string, RedundantOpPair>(
+    kTransDataRNNOpName, std::pair<std::string, ConditionFunc>(kTransDataRNNOpName, TransDataOpEliminateCondition)));
 }
 
 const AnfNodePtr EliminateRedundantOp::DoEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {
