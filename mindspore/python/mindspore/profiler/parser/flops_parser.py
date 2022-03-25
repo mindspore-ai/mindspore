@@ -20,7 +20,7 @@ import stat
 
 from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException, \
-    ProfilerFileNotFoundException, ProfilerRawFileException
+    ProfilerFileNotFoundException, ProfilerRawFileException, ProfilerPathErrorException
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
 
@@ -72,6 +72,43 @@ class FlopsParser:
         self._flops_sankey_diagram = {}
         self._max_scope_num = 0
 
+    @staticmethod
+    def _read_line(start_dot, end_dot, op_avg_time_lines, op_all_step_time, op_all_step_comp):
+        """Read the bp and fp time from line."""
+        for op_avg_idx in op_avg_time_lines:
+            line = op_avg_idx.split(',')
+            fp = float(line[start_dot]) / 100000.0
+            bp = float(line[end_dot]) / 100000.0
+            op_all_step_time.append([fp, bp])
+            op_all_step_comp.append([0.0, bp - fp])
+        return op_all_step_time, op_all_step_comp
+
+    @staticmethod
+    def _add_step_flops_time(op_name, task_fops, op_idx, step_idx, op_start_time,
+                             op_all_step_time, op_all_step_comp):
+        """Get the start time from the current task."""
+        while((op_idx < len(op_start_time)) and (op_name != op_start_time[op_idx][0])):
+            op_idx += 1
+        if op_idx >= len(op_start_time):
+            logger.info(f"Op name {op_name} does not exist in timeline dict.")
+            return op_idx, step_idx, op_all_step_comp
+
+        # do not add the op FLOPS that not in fp_and_bp time.
+        while((step_idx < len(op_all_step_time)) and
+              (op_start_time[op_idx][1] >= op_all_step_time[step_idx][1])):
+            step_idx += 1
+        if step_idx >= len(op_all_step_time):
+            logger.info(f"Op name {op_name} does not exist in timeline dict.")
+
+        # add the op FLOPS that in fp_and_bp time.
+        if ((step_idx < len(op_all_step_time)) and
+                (op_start_time[op_idx][1] >= op_all_step_time[step_idx][0]) and
+                (op_start_time[op_idx][1] <= op_all_step_time[step_idx][1])):
+            op_all_step_comp[step_idx][0] += task_fops
+        # next op.
+        op_idx += 1
+        return op_idx, step_idx, op_all_step_comp
+
     def execute(self):
         """Get the flops of aicore operators and write to file."""
         peak_flops = self._get_peak_flops()
@@ -106,7 +143,7 @@ class FlopsParser:
                     continue
                 # Convert the unit of task_fops to MFLOPs(1e6).
                 if op_name in op_compute_dict:
-                    task_fops = op_compute_dict[op_name]
+                    task_fops = op_compute_dict.get(op_name)
                 else:
                     task_fops = self._compute_task_flops(result) * 1e-6
                     op_compute_dict[op_name] = task_fops
@@ -119,7 +156,7 @@ class FlopsParser:
                 # calculate averge op FLOPS.
                 if op_name in op_name_set:
                     continue
-                op_avg_time = op_avg_time_dict[op_name]
+                op_avg_time = op_avg_time_dict.get(op_name)
                 # Time unit of op_avg_time is ms.
                 # The unit of gflop_per_second is GFLOPS(1e9).
                 if float(op_avg_time) == 0.0:
@@ -439,11 +476,11 @@ class FlopsParser:
                 op_all_step_time, op_all_step_comp = \
                     self._get_bp_fp_time_by_line(lines, op_all_step_time, op_all_step_comp)
         except (IOError, OSError) as err:
-            logger.critical(f'Error occurred when read {optime_file_path} file: {err}')
+            logger.critical(f'Error occurred when read {_step_trace_file_path} file: {err}')
             raise ProfilerIOException()
         logger.info("the train step is %d .", len(op_all_step_time))
         if not op_all_step_time:
-            logger.warning(f'Empty when read {optime_file_path} file, please check the valid'
+            logger.warning(f'Empty when read {_step_trace_file_path} file, please check the valid'
                            'data of this file.')
         return op_all_step_time, op_all_step_comp
 
@@ -459,16 +496,6 @@ class FlopsParser:
             # eval mode.
             op_all_step_time, op_all_step_comp = \
                 self._read_line(4, 2, op_avg_time_lines, op_all_step_time, op_all_step_comp)
-        return op_all_step_time, op_all_step_comp
-
-    def _read_line(self, start_dot, end_dot, op_avg_time_lines, op_all_step_time, op_all_step_comp):
-        """Read the bp and fp time from line."""
-        for op_avg_idx in op_avg_time_lines:
-            line = op_avg_idx.split(',')
-            fp = float(line[start_dot]) / 100000.0
-            bp = float(line[end_dot]) / 100000.0
-            op_all_step_time.append([fp, bp])
-            op_all_step_comp.append([0.0, bp - fp])
         return op_all_step_time, op_all_step_comp
 
     def _get_op_start_time(self):
@@ -489,34 +516,9 @@ class FlopsParser:
                     op_start = float(line[2])
                     op_start_time.append([op_name, op_start])
         except (IOError, OSError) as err:
-            logger.critical(f'Error occurred when read {optime_file_path} file: {err}')
+            logger.critical(f'Error occurred when read {_timeline_file_path} file: {err}')
             raise ProfilerIOException()
         if not op_start_time:
-            logger.warning(f'Empty when read {optime_file_path} file, please check the valid'
+            logger.warning(f'Empty when read {_timeline_file_path} file, please check the valid'
                            'data of this file.')
         return op_start_time
-
-    def _add_step_flops_time(self, op_name, task_fops, op_idx, step_idx, op_start_time,
-                             op_all_step_time, op_all_step_comp):
-        """Get the start time from the current task."""
-        while((op_idx < len(op_start_time)) and (op_name != op_start_time[op_idx][0])):
-            op_idx += 1
-        if op_idx >= len(op_start_time):
-            logger.info(f"Op name {op_name} does not exist in timeline dict.")
-            return op_idx, step_idx, op_all_step_comp
-
-        # do not add the op FLOPS that not in fp_and_bp time.
-        while((step_idx < len(op_all_step_time)) and
-              (op_start_time[op_idx][1] >= op_all_step_time[step_idx][1])):
-            step_idx += 1
-        if step_idx >= len(op_all_step_time):
-            logger.info(f"Op name {op_name} does not exist in timeline dict.")
-
-        # add the op FLOPS that in fp_and_bp time.
-        if ((step_idx < len(op_all_step_time)) and
-                (op_start_time[op_idx][1] >= op_all_step_time[step_idx][0]) and
-                (op_start_time[op_idx][1] <= op_all_step_time[step_idx][1])):
-            op_all_step_comp[step_idx][0] += task_fops
-        # next op.
-        op_idx += 1
-        return op_idx, step_idx, op_all_step_comp

@@ -437,6 +437,56 @@ class MinddataProfilingAnalyzer:
         return_dict['avg_cpu_pct'] = oplist_avg_cpu_pct
         return return_dict
 
+    @staticmethod
+    def _compute_composite_info(summary_dict):
+        """
+        Compute composite analysis information from the current summary pipeline data.
+
+        Args:
+            summary_dict (dict): Input summary pipeline information.
+
+        Returns:
+            Dictionary with composite analysis output information
+            Dictionary consists of:
+                avg_cpu_pct_per_worker: Average CPU utilization percentage per worker
+        """
+        return_dict = {}
+
+        # Build list: average CPU utilization percentage per worker - for each op
+        avg_cpu_pct_per_worker = []
+        for c, n in zip(summary_dict.get('avg_cpu_pct'), summary_dict.get('num_workers')):
+            avg_cpu_pct_per_worker.append(round(c / n if (n != 0 and c >= 0) else -1, 2))
+        return_dict['avg_cpu_pct_per_worker'] = avg_cpu_pct_per_worker
+
+        return return_dict
+
+    @staticmethod
+    def _analyze_for_bottleneck_op(summary_dict):
+        """
+        Analyze the MindData summary information and identify any potential bottleneck operator
+        in the MindData pipeline.
+
+        Args:
+            summary_dict (dict): Input summary pipeline information.
+
+        Returns:
+            Dictionary with the following information, if applicable:
+            - CPU utilization analysis
+            - queue utilization analysis
+            - bottleneck warning: Information on the bottleneck op
+                (This is returned only if a potential bottleneck is identified.)
+            - bottleneck suggestion: Reason why the subject op is it is identified as
+                a potential bottleneck, plus suggestion on how to resolve the bottleneck.
+                (This is returned only if a potential bottleneck is identified.)
+        """
+        try:
+            bottleneck_analyzer = BottleneckAnalyzer(summary_dict)
+            return_dict = bottleneck_analyzer.analyze()
+        except IndexError:
+            return_dict = {}
+
+        return return_dict
+
     def _parse_device_trace_info(self, device_trace_info):
         """
         Parse and process the device trace profiling information.
@@ -491,55 +541,6 @@ class MinddataProfilingAnalyzer:
         return_dict['per_batch_time'] = [round(avg_batch_time, 3)]
         return_dict['per_pipeline_time'] = [round(avg_pipeline_time, 3)]
         return_dict['per_push_queue_time'] = [round(avg_push_queue_time, 3)]
-
-        return return_dict
-
-    def _compute_composite_info(self, summary_dict):
-        """
-        Compute composite analysis information from the current summary pipeline data.
-
-        Args:
-            summary_dict (dict): Input summary pipeline information.
-
-        Returns:
-            Dictionary with composite analysis output information
-            Dictionary consists of:
-                avg_cpu_pct_per_worker: Average CPU utilization percentage per worker
-        """
-        return_dict = {}
-
-        # Build list: average CPU utilization percentage per worker - for each op
-        avg_cpu_pct_per_worker = []
-        for c, n in zip(summary_dict.get('avg_cpu_pct'), summary_dict.get('num_workers')):
-            avg_cpu_pct_per_worker.append(round(c / n if (n != 0 and c >= 0) else -1, 2))
-        return_dict['avg_cpu_pct_per_worker'] = avg_cpu_pct_per_worker
-
-        return return_dict
-
-    @staticmethod
-    def _analyze_for_bottleneck_op(summary_dict):
-        """
-        Analyze the MindData summary information and identify any potential bottleneck operator
-        in the MindData pipeline.
-
-        Args:
-            summary_dict (dict): Input summary pipeline information.
-
-        Returns:
-            Dictionary with the following information, if applicable:
-            - CPU utilization analysis
-            - queue utilization analysis
-            - bottleneck warning: Information on the bottleneck op
-                (This is returned only if a potential bottleneck is identified.)
-            - bottleneck suggestion: Reason why the subject op is it is identified as
-                a potential bottleneck, plus suggestion on how to resolve the bottleneck.
-                (This is returned only if a potential bottleneck is identified.)
-        """
-        try:
-            bottleneck_analyzer = BottleneckAnalyzer(summary_dict)
-            return_dict = bottleneck_analyzer.analyze()
-        except IndexError:
-            return_dict = {}
 
         return return_dict
 

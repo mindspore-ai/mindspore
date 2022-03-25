@@ -524,8 +524,6 @@ class BaseTimelineGenerator:
     _HOST_CPU_PID = 11000
     _OP_OVERLAP_PID = 12000
 
-    _OP_GPU_ACTIVITY_PID = 13000
-
     _RECEIVE_ALONE = 7997
     _ALLREDUCE_ALONE = 7998
     _MERGED_COMPUTATION_TID = 7999
@@ -569,6 +567,7 @@ class BaseTimelineGenerator:
             "communication": (self._MERGED_COMMUNICATION_TID, self._OP_OVERLAP_PID),
             "free_time": (self._FREE_TIME_TID, self._OP_OVERLAP_PID)
         }
+        self._step_end_op_name = ""
 
     def get_thread_label_name(self):
         """Get process and thread config."""
@@ -580,8 +579,6 @@ class BaseTimelineGenerator:
             {"name": "process_labels", "ph": "M", "pid": self._HOST_CPU_PID, "args": {"labels": "Host CPU Op"}},
             {"name": "process_labels", "ph": "M", "pid": self._OP_OVERLAP_PID,
              "args": {"labels": "Op Overlap Analyse"}},
-            {"name": "process_labels", "ph": "M", "pid": self._OP_GPU_ACTIVITY_PID,
-             "args": {"labels": "Activity Op"}},
 
             {"name": "process_sort_index", "ph": "M", "pid": self._device_id, "args": {"sort_index": 0}},
             {"name": "process_sort_index", "ph": "M", "pid": self._AI_CPU_PID, "args": {"sort_index": 10}},
@@ -877,6 +874,8 @@ class BaseTimelineGenerator:
                            "is not supported in offline parse mode.")
             parallel_mode = "data_parallel"
             stage_num = 1
+        finally:
+            pass
         if stage_num > 1:
             parallel_mode = "pipeline-parallel"
         elif parallel_mode != "data_parallel":
@@ -1310,6 +1309,8 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 computation_time.append(step_info[step][self._duration_idx] - comm_alone_time[step])
             except IndexError as e:
                 logger.error(e)
+            finally:
+                pass
 
         metrices_per_step_list = [computation_time, comm_alone_time, stage_time,
                                   recieve_alone_time, collective_comm_alone_time]
@@ -1705,6 +1706,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 computation_time.append(step_info[step][self._duration_idx] - comm_alone_time[step])
             except IndexError as err:
                 logger.error(err)
+            finally:
+                pass
         metrices_per_step_list = [computation_time, comm_alone_time, stage_time,
                                   recieve_alone_time, collective_comm_alone_time]
         if step_num > 1:
@@ -1837,6 +1840,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
             raise ProfilerIOException()
+        finally:
+            pass
         time_diff = gpu_start_time * 1000 - host_monotonic_start_time
         for idx, time_item in enumerate(timeline_list):
             timeline_list[idx][self._start_time_idx] = int(time_item[self._start_time_idx]) + time_diff

@@ -26,6 +26,7 @@ class FileDataType(Enum):
 
     @classmethod
     def members(cls):
+        """Initializes a value of an object."""
         return {member.value for member in cls}
 
 

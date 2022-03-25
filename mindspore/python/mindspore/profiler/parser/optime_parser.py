@@ -49,6 +49,50 @@ class OPComputeTimeParser:
         self._device_id = device_id
         self._min_cycle_counter = float("inf")
 
+    @property
+    def min_cycle_counter(self):
+        """Get minimum cycle counter."""
+        return self._min_cycle_counter
+
+    @staticmethod
+    def _convert_op_time_unit(op_data_list, op_name_time_dict, op_name_stream_dict,
+                              op_name_count_dict, op_name_task_dict, op_name_start_time):
+        """
+        Calculate the execution time of operator and convert it into millisecond.
+
+        Args:
+            op_data_list (list): The list of operator metadata.
+            op_name_time_dict (dict): The mapping relation of operator name and its execution time.
+            op_name_stream_dict (dict): The mapping relation of operator name and its stream id.
+            op_name_count_dict (dict): The mapping relation of operator name and its count.
+            op_name_task_dict (dict): The mapping relation of operator name and its task id.
+            op_name_start_time (dict): The mapping relation of operator name and its start time.
+        """
+        factor = 1e5
+        for item in op_data_list:
+            op_name = item.op_name
+            # Unit conversion: converting the cycle counter into ms.
+            op_start_time_str = str(item.cycle_counter / factor)
+            op_duration = item.duration / factor
+            op_duration_str = str(item.duration / factor)
+            if op_name in op_name_time_dict.keys():
+                op_name_time_dict[op_name] += op_duration
+                if item.task_id == op_name_task_dict[op_name]:
+                    op_name_count_dict[op_name] += 1
+                op_name_start_time[op_name].append(
+                    (op_start_time_str, op_duration_str)
+                )
+
+            else:
+                op_name_time_dict[op_name] = op_duration
+                op_name_stream_dict[op_name] = item.stream_id
+                op_name_task_dict[op_name] = item.task_id
+                op_name_count_dict[op_name] = 1
+                op_name_start_time[op_name] = []
+                op_name_start_time[op_name].append(
+                    (op_start_time_str, op_duration_str)
+                )
+
     def _get_op_task_id_map(self):
         """
         Read hwts data file, get the task time info.
@@ -102,10 +146,10 @@ class OPComputeTimeParser:
         total_time = 0
         for op_name, time in op_name_time_dict.items():
             if op_name in op_name_stream_dict.keys():
-                stream_id = op_name_stream_dict[op_name]
-                if op_name_count_dict[op_name] == 0:
+                stream_id = op_name_stream_dict.get(op_name)
+                if op_name_count_dict.get(op_name) == 0:
                     raise ValueError("The number of operations can not be 0.")
-                avg_time = time / op_name_count_dict[op_name]
+                avg_time = time / op_name_count_dict.get(op_name)
                 total_time += avg_time
                 result_data += ("%s %s  %s\n" % (op_name, str(avg_time), stream_id))
         result_data += ("total op  %s 0" % (str(total_time)))
@@ -205,46 +249,3 @@ class OPComputeTimeParser:
         self._min_cycle_counter = min_cycle_counter / 1e5  # Convert the time unit from 10ns to 1ms
 
         return tmp_result_data
-
-    def _convert_op_time_unit(self, op_data_list, op_name_time_dict, op_name_stream_dict,
-                              op_name_count_dict, op_name_task_dict, op_name_start_time):
-        """
-        Calculate the execution time of operator and convert it into millisecond.
-
-        Args:
-            op_data_list (list): The list of operator metadata.
-            op_name_time_dict (dict): The mapping relation of operator name and its execution time.
-            op_name_stream_dict (dict): The mapping relation of operator name and its stream id.
-            op_name_count_dict (dict): The mapping relation of operator name and its count.
-            op_name_task_dict (dict): The mapping relation of operator name and its task id.
-            op_name_start_time (dict): The mapping relation of operator name and its start time.
-        """
-        factor = 1e5
-        for item in op_data_list:
-            op_name = item.op_name
-            # Unit conversion: converting the cycle counter into ms.
-            op_start_time_str = str(item.cycle_counter / factor)
-            op_duration = item.duration / factor
-            op_duration_str = str(item.duration / factor)
-            if op_name in op_name_time_dict.keys():
-                op_name_time_dict[op_name] += op_duration
-                if item.task_id == op_name_task_dict[op_name]:
-                    op_name_count_dict[op_name] += 1
-                op_name_start_time[op_name].append(
-                    (op_start_time_str, op_duration_str)
-                )
-
-            else:
-                op_name_time_dict[op_name] = op_duration
-                op_name_stream_dict[op_name] = item.stream_id
-                op_name_task_dict[op_name] = item.task_id
-                op_name_count_dict[op_name] = 1
-                op_name_start_time[op_name] = []
-                op_name_start_time[op_name].append(
-                    (op_start_time_str, op_duration_str)
-                )
-
-    @property
-    def min_cycle_counter(self):
-        """Get minimum cycle counter."""
-        return self._min_cycle_counter

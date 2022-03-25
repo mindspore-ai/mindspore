@@ -51,6 +51,7 @@ INIT_OP_NAME = 'Default/InitDataSetQueue'
 
 
 def deprecated(name, version):
+    """Warning notices."""
     msg = f"The {name} is deprecated from MindSpore {version} and will be removed in a future version."
     logger.warning(msg)
 
@@ -418,6 +419,8 @@ class Profiler:
             pipeline_parser.parse()
         except ProfilerException as err:
             logger.warning(err.message)
+        finally:
+            pass
 
         # Analyze minddata information
         try:
@@ -426,6 +429,8 @@ class Profiler:
             md_analyzer.analyze()
         except ProfilerException as err:
             logger.warning(err.message)
+        finally:
+            pass
 
     def _ascend_graph_analyse(self):
         """Ascend graph mode analyse."""
@@ -450,6 +455,8 @@ class Profiler:
             self._analyser_op_info()
         except ProfilerException as err:
             logger.warning(err.message)
+        finally:
+            pass
 
         # analyse step trace info
         points = None
@@ -460,6 +467,8 @@ class Profiler:
             points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
         except ProfilerException as err:
             logger.warning(err.message)
+        finally:
+            pass
 
         # analyse timeline info
         try:
@@ -467,6 +476,8 @@ class Profiler:
             self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
+        finally:
+            pass
 
         # analyse memory usage info
         if self._profile_memory:
@@ -475,6 +486,8 @@ class Profiler:
                 self._analyse_memory_usage(points)
             except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
                 logger.warning(err.message)
+            finally:
+                pass
 
         # analyse hccl profiler info
         if self._profile_communication:
@@ -483,6 +496,8 @@ class Profiler:
                 self._analyse_hccl_info()
             except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
                 logger.warning(err.message)
+            finally:
+                pass
 
         # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
         flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
@@ -492,10 +507,13 @@ class Profiler:
 
     @staticmethod
     def _check_output_path(output_path):
+        """Checking path validity."""
         try:
             output_path = validate_and_normalize_path(output_path)
         except RuntimeError:
             raise ProfilerPathErrorException(f'profiling data output path {output_path} is invalid.')
+        finally:
+            pass
         if not os.path.isdir(output_path):
             raise ProfilerDirNotFoundException(output_path)
         return output_path
@@ -582,9 +600,6 @@ class Profiler:
         data_path = validate_and_normalize_path(data_path)
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
-
-        # add job id env through user input later
-        self._job_id_env = 0
 
         self._ascend_profiler.start()
 
@@ -683,6 +698,8 @@ class Profiler:
             )
         except ProfilerException as err:
             logger.warning(err.message)
+        finally:
+            pass
 
         logger.warning(
             '\nThe training and inference process does not support profiler currently, '
