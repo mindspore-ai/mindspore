@@ -356,11 +356,12 @@ class ExportToQuantInferNetwork:
             weight = np.transpose(weight)
             weight_b = np.transpose(weight_b)
 
-        weight = Tensor(weight, self.data_type)
-        weight_b = Tensor(weight_b)
+        weight_tensor = Tensor(weight, self.data_type)
+        weight_b_tensor = Tensor(weight_b)
         if bias_b is not None:
-            bias_b = Tensor(bias_b, mstype.float32)
-        return weight, bias, weight_b, bias_b
+            bias_b_tensor = Tensor(bias_b, mstype.float32)
+            return weight_tensor, bias, weight_b_tensor, bias_b_tensor
+        return weight_tensor, bias, weight_b_tensor, None
 
     def _add_output_min_max_for_op(self, origin_op, fake_quant_cell):
         """add output quant info for quant op for export mindir."""

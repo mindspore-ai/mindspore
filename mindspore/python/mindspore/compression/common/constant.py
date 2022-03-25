@@ -98,7 +98,7 @@ class QuantDtype(enum.Enum):
             QuantDtype.UINT7: QuantDtype.INT7,
             QuantDtype.UINT8: QuantDtype.INT8
         }
-        return type_map[dtype]
+        return type_map.get(dtype)
 
     @DynamicClassAttribute
     def _value(self):
