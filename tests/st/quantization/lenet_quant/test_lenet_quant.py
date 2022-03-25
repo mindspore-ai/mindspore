@@ -182,3 +182,18 @@ def test_lenet_quant_ascend():
     train_lenet_quant(optim_option="LEARNED_SCALE")
     eval_quant(optim_option="LEARNED_SCALE")
     export_lenet(optim_option="LEARNED_SCALE", file_format="AIR")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_lenet_quant_ascend_pynative():
+    """
+    test_lenet_quant_ascend_pynative
+    Features: test_lenet_quant_ascend_pynative
+    Description: test_lenet_quant_ascend_pynative pynative mode
+    Expectation: None
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    train_lenet_quant(optim_option="QAT")

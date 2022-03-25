@@ -55,13 +55,8 @@ config_ascend_quant = ed({
 dataset_path = "/home/workspace/mindspore_dataset/cifar-10-batches-bin/"
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
-def test_mobilenetv2_quant():
-    set_seed(1)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+def train():
+    """train"""
     config = config_ascend_quant
     print("training configure: {}".format(config))
 
@@ -121,5 +116,38 @@ def test_mobilenetv2_quant():
     assert avg_step_loss < expect_avg_step_loss
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_mobilenetv2_quant():
+    """
+    test_mobilenetv2_quant
+    Features: test_mobilenetv2_quant
+    Description: test_mobilenetv2_quant graph mode
+    Expectation: None
+    """
+    set_seed(1)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    train()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_mobilenetv2_quant_pynative():
+    """
+    test_mobilenetv2_quant_pynative
+    Features: test_mobilenetv2_quant_pynative
+    Description: test_mobilenetv2_quant_pynative pynative mode
+    Expectation: None
+    """
+    set_seed(1)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    train()
+
+
 if __name__ == '__main__':
     test_mobilenetv2_quant()
+    test_mobilenetv2_quant_pynative()
