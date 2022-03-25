@@ -190,7 +190,7 @@ class Bijector(Cell):
         """
         if 'param_dict' not in self.parameters.keys():
             return None
-        param_dict = self.parameters['param_dict']
+        param_dict = self.parameters.get('param_dict')
         broadcast_shape_tensor = None
         for value in param_dict.values():
             if value is None:
@@ -208,7 +208,7 @@ class Bijector(Cell):
         """
         if 'param_dict' not in self.parameters.keys():
             return False
-        param_dict = self.parameters['param_dict']
+        param_dict = self.parameters.get('param_dict')
         for value in param_dict.values():
             if value is None:
                 continue
@@ -327,4 +327,4 @@ class Bijector(Cell):
             return self.forward_log_jacobian(*args, **kwargs)
         if name == 'inverse_log_jacobian':
             return self.inverse_log_jacobian(*args, **kwargs)
-        return None
+        raise Exception('Invalid name')

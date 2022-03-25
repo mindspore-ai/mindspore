@@ -67,10 +67,10 @@ class Gumbel(TransformedDistribution):
         TypeError: When the input `dtype` is not a subclass of float.
 
     Examples:
-        >>> import numpy as np
         >>> import mindspore
-        >>> import mindspore.nn as nn
+        >>> import numpy as np
         >>> import mindspore.nn.probability.distribution as msd
+        >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> class Prob(nn.Cell):
         ...     def __init__(self):
