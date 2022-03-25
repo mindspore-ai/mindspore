@@ -67,12 +67,12 @@ class Buffer::Impl {
   std::vector<uint8_t> data_;
 };
 
-MSTensor::MSTensor() : impl_(std::make_shared<Impl>()) {}
+MSTensor::MSTensor() : impl_(std::make_shared<LiteTensorImpl>()) {}
 MSTensor::MSTensor(std::nullptr_t) : impl_(nullptr) {}
 MSTensor::MSTensor(const std::shared_ptr<Impl> &impl) : impl_(impl) {}
 MSTensor::MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                    const void *data, size_t data_len)
-    : impl_(Impl::CreateTensorImplByDeepCopy(CharToString(name), type, shape, data, data_len)) {}
+    : impl_(LiteTensorImpl::CreateTensorImplByDeepCopy(CharToString(name), type, shape, data, data_len)) {}
 MSTensor::~MSTensor() = default;
 
 bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
@@ -80,7 +80,17 @@ bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
 bool MSTensor::operator!=(std::nullptr_t) const { return impl_ != nullptr; }
 
 bool MSTensor::operator==(const MSTensor &tensor) const {
-  return impl_ == nullptr ? false : impl_->lite_tensor() == tensor.impl_->lite_tensor();
+  if (impl_ == nullptr) {
+    return false;
+  }
+  auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(impl_);
+  auto lite_tensor_impl = std::static_pointer_cast<LiteTensorImpl>(tensor.impl_);
+  if (lite_tensor_impl == nullptr) {
+    MS_LOG(ERROR) << "Cast lite tensor impl ptr failed.";
+    return false;
+  }
+
+  return lite_impl->lite_tensor() == lite_tensor_impl->lite_tensor();
 }
 
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
@@ -107,7 +117,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
     }
     (void)memcpy(new_data, data, data_len);
   }
-  auto impl = Impl::CreateTensorImpl(CharToString(name), type, shape, new_data, data_len);
+  auto impl = LiteTensorImpl::CreateTensorImpl(CharToString(name), type, shape, new_data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     if (new_data != nullptr) {
@@ -130,7 +140,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
 
 MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type,
                                     const std::vector<int64_t> &shape, const void *data, size_t data_len) noexcept {
-  auto impl = Impl::CreateTensorImpl(CharToString(name), type, shape, data, data_len);
+  auto impl = LiteTensorImpl::CreateTensorImpl(CharToString(name), type, shape, data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     return nullptr;
@@ -157,7 +167,7 @@ MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum Dat
 
 MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &inputs) {
 #ifndef STRING_KERNEL_CLIP
-  auto impl = Impl::StringsToTensorImpl(CharToString(name), VectorCharToString(inputs));
+  auto impl = LiteTensorImpl::StringsToTensorImpl(CharToString(name), VectorCharToString(inputs));
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     return nullptr;
@@ -178,10 +188,10 @@ std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &ten
 #ifndef STRING_KERNEL_CLIP
   if (tensor.impl_ == nullptr) {
     MS_LOG(ERROR) << "Invalid tensor.";
-    std::vector<std::vector<char>> empty;
-    return empty;
+    return {{}};
   }
-  return VectorStringToChar(Impl::TensorImplToStrings(tensor.impl_));
+  auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(tensor.impl_);
+  return VectorStringToChar(LiteTensorImpl::TensorImplToStrings(lite_impl));
 #else
   std::vector<std::vector<char>> empty;
   MS_LOG(ERROR) << unsupport_string_tensor_log;
@@ -218,7 +228,7 @@ MSTensor *MSTensor::Clone() const {
     (void)memcpy(new_data, impl_->MutableData(), data_len);
   }
 
-  auto impl = Impl::CreateTensorImpl(this->Name(), this->DataType(), this->Shape(), new_data, data_len);
+  auto impl = LiteTensorImpl::CreateTensorImpl(this->Name(), this->DataType(), this->Shape(), new_data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     if (new_data != nullptr) {
@@ -252,7 +262,7 @@ int64_t MSTensor::ElementNum() const {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return -1;
   }
-  return impl_->ElementNum();
+  return std::static_pointer_cast<LiteTensorImpl>(impl_)->ElementNum();
 }
 
 enum DataType MSTensor::DataType() const {
@@ -293,7 +303,7 @@ bool MSTensor::IsConst() const {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return false;
   }
-  return impl_->IsConst();
+  return std::static_pointer_cast<LiteTensorImpl>(impl_)->IsConst();
 }
 
 size_t MSTensor::DataSize() const {
@@ -320,7 +330,8 @@ void MSTensor::SetShape(const std::vector<int64_t> &shape) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
-  impl_->SetShape(shape);
+
+  std::static_pointer_cast<LiteTensorImpl>(impl_)->SetShape(shape);
 }
 
 void MSTensor::SetDataType(enum DataType data_type) {
@@ -328,7 +339,8 @@ void MSTensor::SetDataType(enum DataType data_type) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
-  impl_->SetDataType(data_type);
+
+  std::static_pointer_cast<LiteTensorImpl>(impl_)->SetDataType(data_type);
 }
 
 void MSTensor::SetTensorName(const std::vector<char> &name) {
@@ -336,7 +348,7 @@ void MSTensor::SetTensorName(const std::vector<char> &name) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
-  impl_->SetName(CharToString(name));
+  std::static_pointer_cast<LiteTensorImpl>(impl_)->SetName(CharToString(name));
 }
 
 void MSTensor::SetAllocator(std::shared_ptr<Allocator> allocator) {
@@ -344,7 +356,8 @@ void MSTensor::SetAllocator(std::shared_ptr<Allocator> allocator) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
-  return impl_->SetAllocator(allocator);
+
+  return std::static_pointer_cast<LiteTensorImpl>(impl_)->SetAllocator(allocator);
 }
 
 std::shared_ptr<Allocator> MSTensor::allocator() const {
@@ -352,7 +365,8 @@ std::shared_ptr<Allocator> MSTensor::allocator() const {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return nullptr;
   }
-  return impl_->allocator();
+
+  return std::static_pointer_cast<LiteTensorImpl>(impl_)->allocator();
 }
 
 void MSTensor::SetFormat(mindspore::Format format) {
@@ -360,7 +374,8 @@ void MSTensor::SetFormat(mindspore::Format format) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
-  return impl_->SetFormat(format);
+
+  return std::static_pointer_cast<LiteTensorImpl>(impl_)->SetFormat(format);
 }
 
 mindspore::Format MSTensor::format() const {
@@ -368,7 +383,8 @@ mindspore::Format MSTensor::format() const {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return mindspore::Format::NHWC;
   }
-  return impl_->format();
+
+  return std::static_pointer_cast<LiteTensorImpl>(impl_)->format();
 }
 
 void MSTensor::SetData(void *data) {
@@ -376,7 +392,8 @@ void MSTensor::SetData(void *data) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
-  return impl_->SetData(data);
+
+  return std::static_pointer_cast<LiteTensorImpl>(impl_)->SetData(data);
 }
 
 std::vector<QuantParam> MSTensor::QuantParams() const {
@@ -384,7 +401,8 @@ std::vector<QuantParam> MSTensor::QuantParams() const {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return std::vector<QuantParam>{};
   }
-  return impl_->QuantParams();
+
+  return std::static_pointer_cast<LiteTensorImpl>(impl_)->QuantParams();
 }
 
 void MSTensor::SetQuantParams(std::vector<QuantParam> quant_params) {
@@ -392,7 +410,8 @@ void MSTensor::SetQuantParams(std::vector<QuantParam> quant_params) {
     MS_LOG(ERROR) << "Invalid tensor implement.";
     return;
   }
-  return impl_->SetQuantParams(quant_params);
+
+  return std::static_pointer_cast<LiteTensorImpl>(impl_)->SetQuantParams(quant_params);
 }
 
 Buffer::Buffer() : impl_(std::make_shared<Impl>()) {}

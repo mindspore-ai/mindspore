@@ -285,9 +285,8 @@ int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
 
 std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::Tensor *> &lite_tensors) {
   std::vector<mindspore::MSTensor> tensors;
-  std::transform(lite_tensors.begin(), lite_tensors.end(), std::back_inserter(tensors), [](lite::Tensor *tensor) {
-    return mindspore::MSTensor(std::make_shared<mindspore::MSTensor::Impl>(tensor));
-  });
+  std::transform(lite_tensors.begin(), lite_tensors.end(), std::back_inserter(tensors),
+                 [](lite::Tensor *tensor) { return mindspore::MSTensor(std::make_shared<LiteTensorImpl>(tensor)); });
 
   return tensors;
 }

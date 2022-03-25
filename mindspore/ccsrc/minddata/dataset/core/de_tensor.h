@@ -22,11 +22,7 @@
 #include <functional>
 #include "include/api/status.h"
 #include "include/api/types.h"
-#if defined(ENABLE_ANDROID) || defined(ENABLE_LITE_TENSOR)
-#include "mindspore/lite/src/cxx_api/tensor/tensor_impl.h"
-#else
 #include "mindspore/core/ir/api_tensor_impl.h"
-#endif
 #include "minddata/dataset/core/tensor.h"
 
 namespace mindspore {
@@ -47,11 +43,7 @@ class DETensor : public mindspore::MSTensor::Impl {
 
   const std::vector<int64_t> &Shape() const override;
 
-#if defined(ENABLE_ANDROID) || defined(ENABLE_LITE_TENSOR)
-  int64_t ElementNum() const override;
-#else
   int64_t ElementNum() const;
-#endif
 
   std::shared_ptr<const void> Data() const override;
 

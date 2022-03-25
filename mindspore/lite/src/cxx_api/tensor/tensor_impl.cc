@@ -29,7 +29,7 @@
 namespace mindspore {
 using mindspore::lite::RET_OK;
 
-std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImpl(const std::string &name, enum DataType type,
+std::shared_ptr<LiteTensorImpl> LiteTensorImpl::CreateTensorImpl(const std::string &name, enum DataType type,
                                                                  const std::vector<int64_t> &shape, const void *data,
                                                                  size_t data_len) {
   std::vector<int32_t> truncated_shape;
@@ -47,7 +47,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImpl(const std::stri
     MS_LOG(ERROR) << "Failed to allocate lite tensor.";
     return nullptr;
   }
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) Impl(lite_tensor));
+  auto impl = std::make_shared<LiteTensorImpl>(lite_tensor);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
     return nullptr;
@@ -56,7 +56,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImpl(const std::stri
   return impl;
 }
 
-std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImplByDeepCopy(const std::string &name, enum DataType type,
+std::shared_ptr<LiteTensorImpl> LiteTensorImpl::CreateTensorImplByDeepCopy(const std::string &name, enum DataType type,
                                                                            const std::vector<int64_t> &shape,
                                                                            const void *data, size_t data_len) {
   std::vector<int32_t> truncated_shape;
@@ -67,7 +67,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImplByDeepCopy(const
     MS_LOG(ERROR) << "Failed to allocate lite tensor.";
     return nullptr;
   }
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) Impl(lite_tensor));
+  auto impl = std::make_shared<LiteTensorImpl>(lite_tensor);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
     return nullptr;
@@ -77,7 +77,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImplByDeepCopy(const
 }
 
 #ifndef STRING_KERNEL_CLIP
-std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::string &name,
+std::shared_ptr<LiteTensorImpl> LiteTensorImpl::StringsToTensorImpl(const std::string &name,
                                                                     const std::vector<std::string> &str) {
   auto lite_tensor = new (std::nothrow) lite::Tensor();
   if (lite_tensor == nullptr) {
@@ -91,7 +91,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::s
     delete lite_tensor;
     return nullptr;
   }
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) Impl(lite_tensor));
+  auto impl = std::make_shared<LiteTensorImpl>(lite_tensor);
   if (impl == nullptr) {
     delete lite_tensor;
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
@@ -102,7 +102,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::s
   return impl;
 }
 
-std::vector<std::string> MSTensor::Impl::TensorImplToStrings(const std::shared_ptr<Impl> &impl) {
+std::vector<std::string> LiteTensorImpl::TensorImplToStrings(const std::shared_ptr<LiteTensorImpl> &impl) {
   std::vector<std::string> empty;
   auto lite_tensor = impl->lite_tensor();
   if (lite_tensor == nullptr) {

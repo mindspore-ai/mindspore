@@ -118,7 +118,7 @@ class InnerKernel : public Kernel {
   const std::vector<mindspore::MSTensor> &inputs() override {
     if (inputs_.empty()) {
       std::transform(in_tensors_.begin(), in_tensors_.end(), std::back_inserter(inputs_), [](lite::Tensor *tensor) {
-        return mindspore::MSTensor(std::make_shared<mindspore::MSTensor::Impl>(tensor));
+        return mindspore::MSTensor(std::make_shared<LiteTensorImpl>(tensor));
       });
     }
     return inputs_;
@@ -127,7 +127,7 @@ class InnerKernel : public Kernel {
   const std::vector<mindspore::MSTensor> &outputs() override {
     if (outputs_.empty()) {
       std::transform(out_tensors_.begin(), out_tensors_.end(), std::back_inserter(outputs_), [](lite::Tensor *tensor) {
-        return mindspore::MSTensor(std::make_shared<mindspore::MSTensor::Impl>(tensor));
+        return mindspore::MSTensor(std::make_shared<LiteTensorImpl>(tensor));
       });
     }
     return outputs_;

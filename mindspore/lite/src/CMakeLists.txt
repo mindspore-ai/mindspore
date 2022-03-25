@@ -3,6 +3,7 @@ if(MSLITE_ENABLE_V0)
     add_definitions(-DENABLE_V0)
 endif()
 include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
+include_directories(${CORE_DIR})
 
 set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../tools)
 add_compile_definitions(BUILD_LITE_INFERENCE)

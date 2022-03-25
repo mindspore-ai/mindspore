@@ -31,15 +31,16 @@
 #include "include/ms_tensor.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
+#include "ir/api_tensor_impl.h"
 
 namespace mindspore {
 using mindspore::lite::RET_OK;
 
-class MSTensor::Impl {
+class LiteTensorImpl : public mindspore::MSTensor::Impl {
  public:
-  Impl() {}
+  LiteTensorImpl() {}
 
-  virtual ~Impl() {
+  ~LiteTensorImpl() override {
     if (lite_tensor_ == nullptr) {
       return;
     }
@@ -52,26 +53,27 @@ class MSTensor::Impl {
     }
   }
 
-  explicit Impl(tensor::MSTensor *tensor) : lite_tensor_(tensor), from_session_(true) {
+  explicit LiteTensorImpl(tensor::MSTensor *tensor) : lite_tensor_(tensor), from_session_(true) {
     if (tensor != nullptr) {
       tensor_name_ = tensor->tensor_name();
     }
   }
 
-  static std::shared_ptr<Impl> MS_API CreateTensorImpl(const std::string &name, enum DataType type,
-                                                       const std::vector<int64_t> &shape, const void *data,
-                                                       size_t data_len);
-  static std::shared_ptr<Impl> MS_API CreateTensorImplByDeepCopy(const std::string &name, enum DataType type,
+  static std::shared_ptr<LiteTensorImpl> MS_API CreateTensorImpl(const std::string &name, enum DataType type,
                                                                  const std::vector<int64_t> &shape, const void *data,
                                                                  size_t data_len);
+  static std::shared_ptr<LiteTensorImpl> MS_API CreateTensorImplByDeepCopy(const std::string &name, enum DataType type,
+                                                                           const std::vector<int64_t> &shape,
+                                                                           const void *data, size_t data_len);
 
 #ifndef STRING_KERNEL_CLIP
-  static std::shared_ptr<Impl> MS_API StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str);
+  static std::shared_ptr<LiteTensorImpl> MS_API StringsToTensorImpl(const std::string &name,
+                                                                    const std::vector<std::string> &str);
 
-  static std::vector<std::string> MS_API TensorImplToStrings(const std::shared_ptr<Impl> &impl);
+  static std::vector<std::string> MS_API TensorImplToStrings(const std::shared_ptr<LiteTensorImpl> &impl);
 #endif
 
-  virtual const std::string &Name() const {
+  const std::string &Name() const override {
     static const std::string empty = "";
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
@@ -89,7 +91,7 @@ class MSTensor::Impl {
     tensor_name_ = name;
   }
 
-  virtual enum DataType DataType() const {
+  enum DataType DataType() const override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return DataType::kTypeUnknown;
@@ -105,7 +107,7 @@ class MSTensor::Impl {
     lite_tensor_->set_data_type(static_cast<enum TypeId>(data_type));
   }
 
-  virtual int64_t ElementNum() const {
+  int64_t ElementNum() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return -1;
@@ -113,7 +115,7 @@ class MSTensor::Impl {
     return static_cast<int64_t>(lite_tensor_->ElementsNum());
   }
 
-  virtual const std::vector<int64_t> &Shape() const {
+  const std::vector<int64_t> &Shape() const override {
     static std::vector<int64_t> empty{};
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
@@ -125,7 +127,7 @@ class MSTensor::Impl {
     return lite_shape_;
   }
 
-  virtual std::shared_ptr<Impl> Clone() const { return nullptr; }
+  std::shared_ptr<mindspore::MSTensor::Impl> Clone() const override { return nullptr; }
 
   void SetShape(const std::vector<int64_t> &shape) {
     if (lite_tensor_ == nullptr) {
@@ -170,7 +172,7 @@ class MSTensor::Impl {
     lite_tensor_->set_format(format);
   }
 
-  virtual std::shared_ptr<const void> Data() const {
+  std::shared_ptr<const void> Data() const override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
@@ -178,7 +180,7 @@ class MSTensor::Impl {
     return std::shared_ptr<const void>(lite_tensor_->data(), [](const void *) {});
   }
 
-  virtual void *MutableData() {
+  void *MutableData() override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
@@ -193,7 +195,7 @@ class MSTensor::Impl {
     return lite_tensor_->IsConst();
   }
 
-  virtual size_t DataSize() const {
+  size_t DataSize() const override {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return 0;
@@ -244,7 +246,7 @@ class MSTensor::Impl {
     lite_tensor_->set_quant_params(lite_quant_params);
   }
 
-  virtual bool IsDevice() const { return false; }
+  bool IsDevice() const override { return false; }
 
   tensor::MSTensor *lite_tensor() const { return lite_tensor_; }
 
