@@ -246,7 +246,7 @@ class VariableUsage(ast.NodeVisitor):
         # If it is from the argument list or loop variable, we do not worry about it!
         if node.id in self.args_index.keys():
             return
-        fors = [loop.target.id for loop in self.scope_level if isinstance(loop, ast.For)]
+        fors = list(loop.target.id for loop in self.scope_level if isinstance(loop, ast.For))
         if node.id in fors:
             # The loop variable cannot be overwritten when iteration
             if isinstance(node.ctx, ast.Store):
@@ -434,7 +434,7 @@ class VariableUsage(ast.NodeVisitor):
                 if not isinstance(i, ast.Name):
                     raise TypeError("In the function {} written in the Hybrid DSL, the element in the return value "
                                     "should be the name of a tensor, but get a {}.".format(self.func_name, type(i)))
-            symbols = [i.id for i in node.value.elts]
+            symbols = list(i.id for i in node.value.elts)
         for sy in symbols:
             if not sy in list(self.args_index.keys()) + self.output_tensor:
                 raise TypeError("In the function {} written in the Hybrid DSL, the element in the return value "
@@ -444,8 +444,8 @@ class VariableUsage(ast.NodeVisitor):
             if not sy in symbols:
                 raise TypeError("In the function {} written in the Hybrid DSL, the tensor is allocated as an output "
                                 "tensor but not in the return value: {}".format(self.func_name, sy))
-        self.inplace_assign_output = [[idx, self.args_index.get(val, -1)]
-                                      for idx, val in enumerate(symbols) if val in self.args_index]
+        self.inplace_assign_output = list([idx, self.args_index.get(val, -1)]
+                                          for idx, val in enumerate(symbols) if val in self.args_index)
 
 
 def determine_variable_usage(root, func_name):

@@ -464,7 +464,7 @@ class Custom(ops.PrimitiveWithInfer):
                 inplace_assign_output = determine_variable_usage(root, self.func_name)
                 if inplace_assign_output:
                     self.add_prim_attr("inplace_assign_output",
-                                       " ".join([str(j) for i in inplace_assign_output for j in i]))
+                                       " ".join((str(j) for i in inplace_assign_output for j in i)))
                 self.add_prim_attr('func_source_str', self.func_source_str)
 
             # unique func name
@@ -773,7 +773,16 @@ class Custom(ops.PrimitiveWithInfer):
 
         fake_output = self.func(*fake_input)
 
-        return fake_output, enable_infer_value
+        if hasattr(fake_output, 'shape'):
+            infer_shape = fake_output.shape
+            infer_dtype = mstype.tensor_type(mstype.pytype_to_dtype(fake_output.dtype))
+        else:
+            infer_shape = (1,)
+            infer_dtype = mstype.pytype_to_dtype(fake_output.dtype)
+
+        infer_value = Tensor(fake_output) if enable_infer_value else None
+
+        return infer_shape, infer_dtype, infer_value
 
     def __infer__(self, *args):
         if callable(self.out_shape):
@@ -794,18 +803,12 @@ class Custom(ops.PrimitiveWithInfer):
             logger.warning("Now Custom Op is inferring the shape and dtype automatically. "
                            "There might be some Python RuntimeWarning but it wouldn't influence the result.")
 
-            fake_output, enable_infer_value = self._auto_infer(*args)
+            auto_infer_result = self._auto_infer(*args)
 
             # use automatically inferred shape/dtype if the input infer values are null
-            infer_shape = fake_output.shape if infer_shape is None else infer_shape
-            if infer_dtype is None:
-                if hasattr(fake_output, 'shape'):
-                    infer_dtype = mstype.tensor_type(
-                        mstype.pytype_to_dtype(fake_output.dtype))
-                else:
-                    infer_dtype = mstype.pytype_to_dtype(fake_output.dtype)
-
-            infer_value = Tensor(fake_output) if enable_infer_value else None
+            infer_shape = auto_infer_result[0] if infer_shape is None else infer_shape
+            infer_dtype = auto_infer_result[1] if infer_dtype is None else infer_dtype
+            infer_value = auto_infer_result[2]
 
         # deal with case that the custom op is of type pyfunc with empty output
         if self.func_type == "pyfunc":
