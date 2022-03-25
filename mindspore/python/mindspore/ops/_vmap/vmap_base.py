@@ -466,6 +466,7 @@ def get_print_vmap_rule(prim, axis_size):
     """VmapRule for `Print` operation."""
     if isinstance(prim, str):
         prim = Primitive(prim)
+
     def vmap_rule(*args):
         vals = ()
         args_len = len(args)

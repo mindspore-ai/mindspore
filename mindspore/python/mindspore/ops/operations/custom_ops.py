@@ -574,7 +574,7 @@ class Custom(ops.PrimitiveWithInfer):
                     if isinstance(item, dict) and item.get("value") is None:
                         reg_info["attr"][i]["value"] = "all"
             reg_info["async_flag"] = reg_info.get("async_flag", False)
-            reg_info["binfile_name"] = self.func_name + ".so"
+            reg_info["binfile_name"] = "%s.so" % self.func_name
             reg_info["compute_cost"] = reg_info.get("compute_cost", 10)
             reg_info["kernel_name"] = self.func_name
             reg_info["partial_flag"] = reg_info.get("partial_flag", True)
