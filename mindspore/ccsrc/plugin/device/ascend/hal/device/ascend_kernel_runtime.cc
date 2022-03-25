@@ -1417,4 +1417,17 @@ std::string AscendKernelRuntime::GetRealPath(const std::string &path) {
   }
   return std::string(real_path_mem);
 }
+
+void AscendKernelRuntime::SetReuseCommunicationAddress(const session::KernelGraph &graph) {
+  auto cnode_list = graph.execution_order();
+  for (const auto &cnode : cnode_list) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (common::AnfAlgo::HasNodeAttr(kAttrReuseCommunication, cnode)) {
+      auto reuse_index = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrReuseCommunication);
+      if (reuse_communication_address_.find(reuse_index) == reuse_communication_address_.end()) {
+        (void)reuse_communication_address_.emplace(reuse_index, std::make_pair(nullptr, nullptr));
+      }
+    }
+  }
+}
 }  // namespace mindspore::device::ascend

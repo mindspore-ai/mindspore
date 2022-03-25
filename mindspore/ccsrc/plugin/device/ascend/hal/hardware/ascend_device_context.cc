@@ -479,6 +479,7 @@ void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &roo
   AssignInputMemory(root_graph, NOT_NULL(&memo_));
   device::KernelAdjust::GetInstance().AssignLoopCtrlMemory(*root_graph.get());
   InitMemReuseExecOrder(root_graph.get().get());
+  runtime_instance_->SetReuseCommunicationAddress(*root_graph.get());
   runtime_instance_->AssignStaticMemoryOutput(*root_graph.get());
   runtime_instance_->AssignDynamicMemory(*root_graph.get());
   runtime_instance_->UpdateRefNodeOutputMem(*root_graph.get());

@@ -403,9 +403,9 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, fused_node.get());
   auto kernel_build_info = GenerateKernelBuildInfo(communication_op_info, start_index, end_index);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, fused_node.get());
-  const std::vector<std::string> kHcclFusionAttrs = {kAttrFusion,   kAttrGroup,       kAttrGroupBack, kAttrSrTag,
-                                                     kAttrDestRank, kAttrSrcRank,     kAttrDType,     kAttrOp,
-                                                     kAttrRankSize, kAttrGroupRankIds};
+  const std::vector<std::string> kHcclFusionAttrs = {
+    kAttrFusion, kAttrGroup, kAttrGroupBack, kAttrSrTag,        kAttrDestRank,          kAttrSrcRank,
+    kAttrDType,  kAttrOp,    kAttrRankSize,  kAttrGroupRankIds, kAttrReuseCommunication};
   for (const auto &attr : kHcclFusionAttrs) {
     if (common::AnfAlgo::HasNodeAttr(attr, final_node)) {
       common::AnfAlgo::CopyNodeAttr(attr, final_node, fused_node);
