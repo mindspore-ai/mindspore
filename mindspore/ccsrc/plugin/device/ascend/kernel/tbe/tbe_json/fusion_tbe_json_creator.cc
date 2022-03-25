@@ -296,7 +296,7 @@ std::vector<size_t> FusionBuildTbeJsonCreator::GetDescOutputIndex(const std::vec
     auto index = idx;
     (void)desc_output_index.emplace_back(index);
     if (output_used_nums[index] > 1) {
-      desc_output_index.emplace_back(index);
+      (void)desc_output_index.emplace_back(index);
     }
   }
   return desc_output_index;
