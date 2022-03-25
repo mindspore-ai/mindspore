@@ -5,9 +5,9 @@ mindspore.COOTensor
 
     用来表示某一张量在给定索引上非零元素的集合，其中索引(indices)指示了每一个非零元素的位置。
 
-    对一个稠密Tensor `dense` 来说，它对应的COOTensor(indices, values, dense_shape)，满足 `dense[indices[i]] = values[i]` 。
+    对一个稠密Tensor `dense` 来说，它对应的COOTensor(indices, values, shape)，满足 `dense[indices[i]] = values[i]` 。
 
-    如果 `indices` 是[[0, 1], [1, 2]]， `values` 是[1, 2]， `dense_shape` 是(3, 4)，那么它对应的稠密Tensor如下：
+    如果 `indices` 是[[0, 1], [1, 2]]， `values` 是[1, 2]， `shape` 是(3, 4)，那么它对应的稠密Tensor如下：
 
     .. code-block::
 
