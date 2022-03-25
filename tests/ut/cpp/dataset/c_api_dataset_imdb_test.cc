@@ -189,6 +189,66 @@ TEST_F(MindDataTestPipeline, TestIMDBBasicWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: IMDBIteratorOneColumn.
+/// Description: test iterator of IMDBDataset with only the "text" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestIMDBIteratorOneColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBIteratorOneColumn.";
+  std::string dataset_path = datasets_root_path_ + "/testIMDBDataset";
+  std::string usage = "all";  // 'train', 'test', 'all'
+
+  // Create a IMDB Dataset
+  std::shared_ptr<Dataset> ds = IMDB(dataset_path, usage);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Only select "text" column and drop others
+  std::vector<std::string> columns = {"text"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "text shape:" << v.Shape();
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 8);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: IMDBIteratorWrongColumn.
+/// Description: test iterator of IMDBDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestIMDBIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBIteratorWrongColumn.";
+  std::string dataset_path = datasets_root_path_ + "/testIMDBDataset";
+  std::string usage = "all";  // 'train', 'test', 'all'
+
+  // Create a IMDB Dataset
+  std::shared_ptr<Dataset> ds = IMDB(dataset_path, usage);
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: Test IMDB Dataset.
 /// Description: read IMDB data with GetDatasetSize, GetColumnNames, GetBatchSize.
 /// Expectation: the data is processed successfully.

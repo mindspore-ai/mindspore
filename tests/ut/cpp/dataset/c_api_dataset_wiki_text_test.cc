@@ -146,6 +146,80 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetBasicWithPipeline) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: WikiTextIteratorOneColumn.
+/// Description: test iterator of WikiTextDataset with only the "text" column.
+/// Expectation: get correct data.
+TEST_F(MindDataTestPipeline, TestWikiTextIteratorOneColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextIteratorOneColumn.";
+  // Test WikiText Dataset with single text file and many default inputs
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(987);
+  GlobalContext::config_manager()->set_num_parallel_workers(4);
+
+  std::string dataset_dir = datasets_root_path_ + "/testWikiText";
+  std::shared_ptr<Dataset> ds = WikiText(dataset_dir, "test", 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // Only select "text" column and drop others
+  std::vector<std::string> columns = {"text"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::vector<mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expect_image = {1};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    for (auto &v : row) {
+      MS_LOG(INFO) << "image shape:" << v.Shape();
+      EXPECT_EQ(expect_image, v.Shape());
+    }
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: WikiTextIteratorWrongColumn.
+/// Description: test iterator of WikiTextDataset with wrong column.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestWikiTextIteratorWrongColumn) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextIteratorWrongColumn.";
+  // Test WikiText Dataset with single text file and many default inputs
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(987);
+  GlobalContext::config_manager()->set_num_parallel_workers(4);
+
+  std::string dataset_dir = datasets_root_path_ + "/testWikiText";
+  std::shared_ptr<Dataset> ds = WikiText(dataset_dir, "test", 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Pass wrong column name
+  std::vector<std::string> columns = {"digital"};
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: Test WikiText Dataset.
 /// Description: read WikiText data and get data.
 /// Expectation: the data is processed successfully.
