@@ -28,7 +28,6 @@ from mindspore import context
 from mindspore.common.initializer import Zero
 from .. import signature as sig
 from .._utils import get_broadcast_shape, is_shape_unknown
-from .._utils import get_concat_offset
 from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from ..._checkparam import Rel
@@ -2567,7 +2566,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
         return out
 
 
-class Concat(PrimitiveWithInfer):
+class Concat(Primitive):
     r"""
     Connect tensor in the specified axis.
 
@@ -2601,6 +2600,10 @@ class Concat(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `axis` is not an int.
+        TypeError: If `input_x` have different type of tensor.
+        ValueError: If `input_x` have different dimension of tensor.
+        ValueError: If `axis` not in [-dims, dims - 1].
+        RuntimeError: If tensor's shape in `input_x` except for `axis` are different.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2626,35 +2629,6 @@ class Concat(PrimitiveWithInfer):
     def __init__(self, axis=0):
         """Initialize Concat"""
         validator.check_value_type("axis", axis, [int], self.name)
-
-    def __infer__(self, input_x):
-        axis = self.axis
-        x_shp = input_x['shape']
-        x_type = input_x['dtype']
-        _, all_shp, _ = get_concat_offset(x_shp, x_type, axis, self.name)
-        self.add_prim_attr('inputNums', len(x_shp))
-        ret_shp = x_shp[0].copy()
-        value = None
-        if input_x['value'] is not None:
-            value = Tensor(np.concatenate([x.asnumpy() for x in input_x['value']], axis=axis))
-        ret_shp[axis] = all_shp
-        out = {'shape': ret_shp,
-               'dtype': x_type[0],
-               'value': value}
-        if -1 in x_shp[0]:
-            x_min_shp = input_x['min_shape']
-            ret_min_shp = x_min_shp[0].copy()
-            ret_min_shp[axis] = 0
-            for all_min_shp in x_min_shp:
-                ret_min_shp[axis] += all_min_shp[axis]
-            out['min_shape'] = ret_min_shp
-            x_max_shp = input_x['max_shape']
-            ret_max_shp = x_max_shp[0].copy()
-            ret_max_shp[axis] = 0
-            for all_max_shp in x_max_shp:
-                ret_max_shp[axis] += all_max_shp[axis]
-            out['max_shape'] = ret_max_shp
-        return out
 
 
 class ParallelConcat(PrimitiveWithInfer):

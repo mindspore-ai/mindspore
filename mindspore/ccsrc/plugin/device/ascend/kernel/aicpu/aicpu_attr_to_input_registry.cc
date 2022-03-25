@@ -30,7 +30,7 @@ namespace kernel {
  * }
  */
 std::map<string, std::vector<std::pair<string, size_t>>> AicpuOpAttrToInputMap = {
-  {prim::kPrimOneHot->name(), {{"depth", 1}}}};
+  {prim::kPrimOneHot->name(), {{"depth", 1}}}, {prim::kPrimConcat->name(), {{"axis", 0}}}};
 
 bool GetAicpuOpAttrToInputInfo(const CNodePtr &kernel_node, std::vector<std::pair<string, size_t>> *info) {
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);

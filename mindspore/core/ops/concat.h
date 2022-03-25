@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class MIND_API Concat : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Concat);
   /// \brief Constructor.
-  Concat() : BaseOperator(kNameConcat) {}
+  Concat() : BaseOperator(kNameConcat) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Concat for the inputs.
   void Init(const int64_t axis = 0);
   /// \brief Set axis.

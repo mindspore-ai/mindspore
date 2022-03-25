@@ -117,6 +117,7 @@ constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kOnes = "Ones";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kIdentity = "Identity";
+constexpr auto kConcat = "Concat";
 constexpr auto kDiag = "Diag";
 constexpr auto kDiagPart = "DiagPart";
 constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
@@ -262,7 +263,7 @@ GVAR_DEF(PrimitivePtr, kPrimBroadcastShape, std::make_shared<Primitive>("broadca
 GVAR_DEF(PrimitivePtr, kPrimArrayMap, std::make_shared<Primitive>("array_map"));
 GVAR_DEF(PrimitivePtr, kPrimArrayReduce, std::make_shared<Primitive>("array_reduce"));
 GVAR_DEF(PrimitivePtr, kPrimCast, std::make_shared<Primitive>("Cast"));
-GVAR_DEF(PrimitivePtr, kPrimConcat, std::make_shared<Primitive>("Concat"));
+GVAR_DEF(PrimitivePtr, kPrimConcat, std::make_shared<Primitive>(kConcat));
 GVAR_DEF(PrimitivePtr, kPrimSqueeze, std::make_shared<Primitive>("Squeeze"));
 GVAR_DEF(PrimitivePtr, kPrimUnsqueeze, std::make_shared<Primitive>("Unsqueeze"));
 GVAR_DEF(PrimitivePtr, kPrimTranspose, std::make_shared<Primitive>(kTranspose));

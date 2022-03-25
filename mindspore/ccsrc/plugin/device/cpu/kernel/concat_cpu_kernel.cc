@@ -97,6 +97,8 @@ bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
 }
 
 std::vector<std::pair<KernelAttr, ConcatCpuKernelMod::ConcatFunc>> ConcatCpuKernelMod::func_list_ = {
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &ConcatCpuKernelMod::LaunchKernel<float16>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &ConcatCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
@@ -117,6 +119,10 @@ std::vector<std::pair<KernelAttr, ConcatCpuKernelMod::ConcatFunc>> ConcatCpuKern
    &ConcatCpuKernelMod::LaunchKernel<uint32_t>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
    &ConcatCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &ConcatCpuKernelMod::LaunchKernel<complex64>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &ConcatCpuKernelMod::LaunchKernel<complex128>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
    &ConcatCpuKernelMod::LaunchKernel<bool>}};
 
