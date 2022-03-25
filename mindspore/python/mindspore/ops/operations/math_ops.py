@@ -236,7 +236,8 @@ class Add(_MathBinaryOp):
         Float32
     """
 
-    def _infer_specified_add_value(self, a, b):
+    @staticmethod
+    def _infer_specified_add_value(a, b):
         """Calculate min/max value for output for Add op"""
         if a is not None and b is not None:
             if isinstance(a, (Tensor, Tensor_)):
@@ -1939,7 +1940,8 @@ class Mul(_MathBinaryOp):
         [ 4. 10. 18.]
     """
 
-    def _infer_specified_mul_value(self, x, y):
+    @staticmethod
+    def _infer_specified_mul_value(x, y):
         """Calculate min/max value for output of Mul op"""
         if x is not None and y is not None:
             if isinstance(x, (Tensor, Tensor_)):
@@ -2870,7 +2872,8 @@ class Div(_MathBinaryOp):
         Float32
     """
 
-    def _infer_specified_div_value(self, x, y):
+    @staticmethod
+    def _infer_specified_div_value(x, y):
         """Calculate min/max value for output of Div op"""
         if x is not None and y is not None:
             if isinstance(x, (Tensor, Tensor_)):

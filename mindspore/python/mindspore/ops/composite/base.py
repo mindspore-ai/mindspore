@@ -417,6 +417,7 @@ class _TaylorOperation(TaylorOperation_):
         taylor_grad_ = _TaylorOperation()
 
         # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
+
         @ms_function
         def after_taylor_grad(*args):
             return taylor_grad_(fn)(*args)
@@ -475,6 +476,7 @@ class _Grad(GradOperation_):
                         return grad_(fn)(*args)
         elif self.pynative_:
             _pynative_executor.set_grad_position(grad_, grad_position)
+
             @_wrap_func
             def after_grad(*args, **kwargs):
                 if _pynative_executor.check_graph(fn, *args, **kwargs):

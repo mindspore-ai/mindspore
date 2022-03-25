@@ -144,6 +144,7 @@ def get_seq_get_item_vmap_rule(prim, axis_size):
     """VmapRule for `list_getitem` or `TupleGetItem` operation."""
     if isinstance(prim, str):
         prim = Primitive(prim)
+
     def vmap_rule(inputs_seq, index_in):
         index, _ = index_in
         out = prim(inputs_seq, index)
@@ -158,6 +159,7 @@ def get_unop_vmap_rule(prim, axis_size):
     """VmapRule for unary operations, such as `Sin` and `Cos`."""
     if isinstance(prim, str):
         prim = Primitive(prim)
+
     def vmap_rule(x_in):
         var, dim = x_in
         out = prim(var)
@@ -263,6 +265,7 @@ def get_reshape_vmap_rule(prim, axis_size):
 def get_broadcast_to_vmap_rule(prim, axis_size):
     """VmapRule for `BroadcastTo` operation."""
     shape = prim.shape
+
     def vmap_rule(operand_in):
         is_all_none, result = vmap_general_preprocess(prim, operand_in)
         if is_all_none:
@@ -286,6 +289,7 @@ def get_reducer_vmap_rule(prim, axis_size):
     """VmapRule for reduce operations, such as `ReduceSum`."""
     keep_dims = prim.keep_dims
     prim_name = prim.name
+
     def vmap_rule(operand_in, axis_in):
         is_all_none, result = vmap_general_preprocess(prim, operand_in, axis_in)
         if is_all_none:
@@ -328,6 +332,7 @@ def get_reducer_vmap_rule(prim, axis_size):
 
     return vmap_rule
 
+
 @vmap_rules_getters.register("Switch")
 @vmap_rules_getters.register("Partial")
 def get_partical_vmap_rule(prim, axis_size):
@@ -337,6 +342,7 @@ def get_partical_vmap_rule(prim, axis_size):
         prim = Primitive(prim)
     else:
         prim_name = prim.name
+
     def vmap_rule(*args):
         vals = ()
         for val_in in args:
@@ -359,6 +365,7 @@ def get_load_vmap_rule(prim, axis_size):
     """VmapRule for `Load` operation."""
     if isinstance(prim, str):
         prim = Primitive(prim)
+
     def vmap_rule(ref_in, u_monad):
         var, dim = ref_in
         out = prim(var, u_monad)
@@ -376,6 +383,7 @@ def get_assign_vmap_rule(prim, axis_size):
         prim = Primitive(prim)
     else:
         prim_name = prim.name
+
     def vmap_rule(variable, value, u_monad):
         var, var_dim = variable
         val, val_dim = value

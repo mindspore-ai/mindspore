@@ -145,6 +145,7 @@ class CropAndResize(PrimitiveWithInfer):
                 'dtype': mstype.float32,
                 'value': None}
 
+
 class NonMaxSuppressionV3(Primitive):
     r"""
         Greedily selects a subset of bounding boxes in descending order of score.
@@ -206,6 +207,7 @@ class NonMaxSuppressionV3(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NonMaxSuppressionV3"""
+
 
 class HSVToRGB(Primitive):
     """

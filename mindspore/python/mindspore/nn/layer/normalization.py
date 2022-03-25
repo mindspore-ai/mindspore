@@ -496,6 +496,7 @@ def _check_3d_shape(input_shape, prim_name=None):
         raise ValueError(f"{msg_prefix} input_shape must be 5-dimensional, but got the length of input_shape: "
                          f"{len(input_shape)}.")
 
+
 @constexpr
 def _check_dtype(dtype, valid_dtypes, args_name, prim_name=None):
     validator.check_type_name(args_name, dtype, valid_dtypes, prim_name)

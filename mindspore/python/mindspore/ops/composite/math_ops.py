@@ -40,9 +40,11 @@ def _check_validate_keepdims(keep_dims, name):
     keep_dims = validator.check_value_type('keep_dims', keep_dims, [bool], name)
     return keep_dims
 
+
 @constexpr
 def is_const(x):
     return x is not None
+
 
 def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     r"""

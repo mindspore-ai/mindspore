@@ -815,6 +815,7 @@ class AlltoAll(PrimitiveWithInfer):
     def __call__(self, tensor):
         raise NotImplementedError
 
+
 class NeighborExchangeV2(Primitive):
     """
     NeighborExchangeV2 is a collective operation.
@@ -893,6 +894,7 @@ class NeighborExchangeV2(Primitive):
 
     def __call__(self, tensor):
         raise NotImplementedError
+
 
 class _MirrorOperator(PrimitiveWithInfer):
     """

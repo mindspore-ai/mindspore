@@ -80,6 +80,7 @@ def _check_tuple_length(param_name, input_data, length, cls_name):
         raise TypeError(f"For '{cls_name}', the length of '{param_name}' should be '{length}', "
                         f"but got '{len(input_data)}'")
 
+
 @constexpr
 def _check_seq_length_size(batch_size_x, seq_length_size, cls_name):
     if batch_size_x != seq_length_size:

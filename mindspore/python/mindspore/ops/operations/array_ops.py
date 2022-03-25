@@ -499,7 +499,8 @@ class Reshape(PrimitiveWithInfer):
         """Initialize Reshape"""
         self.init_prim_io_names(inputs=['tensor', 'shape'], outputs=['output'])
 
-    def _get_shape_and_range(self, x, shape):
+    @staticmethod
+    def _get_shape_and_range(x, shape):
         """ get min and max shape when output shape is dynamic"""
         min_shape = None
         max_shape = None
@@ -529,7 +530,8 @@ class Reshape(PrimitiveWithInfer):
             max_shape = [int(np.prod(x["max_shape"]))] * shape_rank
         return out_shape, min_shape, max_shape
 
-    def _update_shape_range(self, out, x, shape_v, neg_index, dim_prod):
+    @staticmethod
+    def _update_shape_range(out, x, shape_v, neg_index, dim_prod):
         """ update min and max shape of output when input shape is dynamic"""
         x_min_shape = x['shape']
         x_max_shape = x['shape']
@@ -661,6 +663,7 @@ class Shape(Primitive):
     def __init__(self):
         """Initialize Shape"""
 
+
 class TensorShape(Primitive):
     """
     Returns the shape of the input tensor.
@@ -688,6 +691,7 @@ class TensorShape(Primitive):
     def __init__(self):
         """init Shape"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+
 
 class DynamicShape(Primitive):
     """
@@ -4491,6 +4495,7 @@ class ScatterNdUpdate(Primitive):
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['input_x', 'indices', 'value'], outputs=['y'])
         self.add_prim_attr('side_effect_mem', True)
+
 
 class ScatterMax(_ScatterOp):
     r"""

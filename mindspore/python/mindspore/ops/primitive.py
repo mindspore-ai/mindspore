@@ -578,6 +578,7 @@ class PrimitiveWithInfer(Primitive):
         if not is_graph_mode:
             return out
         # output does not contain dynamic shape, no need to calculate min/max shape
+
         def has_dynamic_shape(shp):
             if isinstance(shp, int):
                 return shp < 0

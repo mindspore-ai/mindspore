@@ -1085,6 +1085,7 @@ class BNTrainingUpdate(Primitive):
                              f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
 
+
 class BatchNorm(PrimitiveWithInfer):
     r"""
     Batch Normalization for input data and updated parameters.

@@ -20,9 +20,11 @@ from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
 from mindspore.common.tensor import Tensor
 
+
 @constexpr
 def arange(start, stop, step):
     return Tensor(np.arange(start, stop, step), mstype.int32)
+
 
 class _Reverse(Cell):
     """Reverse operator, like Reverse in mindspore"""
@@ -35,6 +37,7 @@ class _Reverse(Cell):
         reversed_indexes = arange(dim_size-1, -1, -1)
         output = P.Gather()(input_x, reversed_indexes, self.dim)
         return output
+
 
 class _ReverseSequence(Cell):
     """Reverse sequence operator, like ReverseSequenceV2 in mindspore"""
@@ -73,7 +76,9 @@ class _ReverseSequence(Cell):
 
         return output
 
-    def make_shape(self, shape, dtype, range_dim):
+
+    @staticmethod
+    def make_shape(shape, dtype, range_dim):
         output = P.Ones()(shape, mstype.float32)
         output = P.CumSum()(output, range_dim)
         output = P.Cast()(output, dtype)
