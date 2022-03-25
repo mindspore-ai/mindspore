@@ -54,7 +54,7 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
     MS_EXCEPTION_IF_NULL(aicpu_ext_info);
     switch (aicpu_ext_info->infoType) {
       case kernel::FWK_ADPT_EXT_SHAPE_TYPE:
-        if (!ParseExtShapeType(aicpu_ext_info)) {
+        if (!ParseExtShapeType(*aicpu_ext_info)) {
           MS_LOG(ERROR) << "Parse aicpu_ext_info shape type failed, node: " << node_name_;
           return false;
         }
@@ -89,22 +89,21 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
   return true;
 }
 
-bool AicpuExtInfoHandler::ParseExtShapeType(AicpuExtInfo *aicpu_ext_info) {
-  MS_EXCEPTION_IF_NULL(aicpu_ext_info);
-  if (aicpu_ext_info->infoLen != sizeof(int32_t)) {
+bool AicpuExtInfoHandler::ParseExtShapeType(const AicpuExtInfo &aicpu_ext_info) const {
+  if (aicpu_ext_info.infoLen != sizeof(int32_t)) {
     MS_LOG(ERROR) << "Node:" << node_name_ << " parse ext shape type failed as infoLen must be " << sizeof(int32_t)
-                  << " but got:" << aicpu_ext_info->infoLen;
+                  << " but got:" << aicpu_ext_info.infoLen;
     return false;
   }
 
-  auto type = reinterpret_cast<const int32_t *>(aicpu_ext_info->infoMsg);
+  auto type = reinterpret_cast<const int32_t *>(aicpu_ext_info.infoMsg);
 
   if (*type != unknown_type_) {
     MS_LOG(ERROR) << "Node:" << node_name_ << " parse ext shape type failed as need:" << unknown_type_
                   << " but got:" << *type;
     return false;
   }
-  MS_LOG(INFO) << "Node:" << node_name_ << "parse ext shape type success infoLen=" << aicpu_ext_info->infoLen;
+  MS_LOG(INFO) << "Node:" << node_name_ << "parse ext shape type success infoLen=" << aicpu_ext_info.infoLen;
   return true;
 }
 
