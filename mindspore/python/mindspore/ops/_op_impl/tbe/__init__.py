@@ -355,7 +355,6 @@ from .ones_like import _ones_like_tbe
 from .ones_like_ds import _ones_like_ds_tbe
 from .batch_to_space import _batch_to_space_tbe
 from .space_to_batch import _space_to_batch_tbe
-from .depth_to_space import _depth_to_space_tbe
 from .depth_to_space_ds import _depth_to_space_ds_tbe
 from .space_to_depth import _space_to_depth_tbe
 from .extract_image_patches import _extract_image_patches_tbe

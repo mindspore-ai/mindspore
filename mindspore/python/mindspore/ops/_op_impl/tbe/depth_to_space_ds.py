@@ -23,6 +23,7 @@ depth_to_space_ds_op_info = TBERegOp("DepthToSpace") \
     .compute_cost(10) \
     .kernel_name("depth_to_space") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
     .dynamic_shape(True) \
     .attr("block_size", "required", "int", "all") \
     .attr("mode", "optional", "str", "all", "DCR") \
