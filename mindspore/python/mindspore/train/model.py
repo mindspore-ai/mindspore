@@ -879,8 +879,8 @@ class Model:
             raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
 
         if hasattr(train_dataset, '_warmup_epoch') and train_dataset._warmup_epoch != epoch:
-            raise ValueError("Use Model.build to initialize model, but the value of parameter `epoch` in Model.build "
-                             "is not equal to value in Model.train, got {} and {} separately."
+            raise ValueError("when use Model.build to initialize model, the value of parameter `epoch` in Model.build "
+                             "should be equal to value in Model.train, but got {} and {} separately."
                              .format(train_dataset._warmup_epoch, epoch))
 
         Validator.check_is_int(sink_size)
@@ -890,7 +890,8 @@ class Model:
         if sink_size == -1:
             sink_size = dataset_size
         if sink_size < -1 or sink_size == 0:
-            raise ValueError("The argument 'sink_size' must be -1 or positive, but got {}.".format(sink_size))
+            raise ValueError("For 'Model.train', The argument 'sink_size' must be -1 or positive, "
+                             "but got {}.".format(sink_size))
 
         _device_number_check(self._parallel_mode, self._device_number)
 
@@ -1140,7 +1141,8 @@ class Model:
         if sink_size == -1:
             sink_size = dataset_size
         if sink_size < -1 or sink_size == 0:
-            raise ValueError("The 'sink_size' must be -1 or positive, but got sink_size {}.".format(sink_size))
+            raise ValueError("For 'infer_train_layout', the argument 'sink_size' must be -1 or positive, "
+                             "but got sink_size {}.".format(sink_size))
 
     def infer_train_layout(self, train_dataset, dataset_sink_mode=True, sink_size=-1):
         """

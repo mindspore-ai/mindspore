@@ -411,7 +411,7 @@ class Optimizer(Cell):
             self.dynamic_weight_decay = True
             weight_decay = _WrappedWeightDecay(weight_decay, self.loss_scale)
         else:
-            raise TypeError("Weight decay should be int, float or Cell.")
+            raise TypeError("For 'Optimizer', the argument 'Weight_decay' should be int, float or Cell.")
         return weight_decay
 
     def _preprocess_single_lr(self, learning_rate):
@@ -431,12 +431,13 @@ class Optimizer(Cell):
                 raise ValueError(f"For 'Optimizer', if 'learning_rate' is Tensor type, then the dimension of it should "
                                  f"be 0 or 1, but got {learning_rate.ndim}.")
             if learning_rate.ndim == 1 and learning_rate.size < 2:
-                logger.warning("If use `Tensor` type dynamic learning rate, please make sure that the number "
+                logger.warning("For 'Optimizer', if use `Tensor` type dynamic learning rate, "
+                               "please make sure that the number "
                                "of elements in the tensor is greater than 1.")
             return learning_rate
         if isinstance(learning_rate, LearningRateSchedule):
             return learning_rate
-        raise TypeError("For 'Optimizer', 'learning_rate' should be int, float, Tensor, Iterable or "
+        raise TypeError("For 'Optimizer', the argument 'learning_rate' should be int, float, Tensor, Iterable or "
                         "LearningRateSchedule, but got {}.".format(type(learning_rate)))
 
     def _build_single_lr(self, learning_rate, name):

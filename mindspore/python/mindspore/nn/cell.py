@@ -434,7 +434,7 @@ class Cell(Cell_):
     def _check_construct_args(self, *inputs, **kwargs):
         """Check the args needed by the function construct"""
         if kwargs:
-            raise ValueError(f"Expect no kwargs here. Did you pass wrong arguments? args: {inputs}, kwargs: {kwargs}")
+            raise ValueError(f"Expect no kwargs here. maybe you pass wrong arguments, rgs: {inputs}, kwargs: {kwargs}")
         positional_args = 0
         default_args = 0
         for value in inspect.signature(self.construct).parameters.values():
@@ -665,7 +665,7 @@ class Cell(Cell_):
                 continue
             exist_objs.add(item)
             if item.name == PARAMETER_NAME_DEFAULT:
-                logger.warning("The parameter definition is deprecated.\n"
+                logger.warning("For 'Cell', the parameter definition is deprecated.\n"
                                "Please set a unique name for the parameter in ParameterTuple '{}'.".format(value))
                 item.name = item.name + "$" + str(self._id)
                 self._id += 1
@@ -2206,7 +2206,8 @@ class GraphCell(Cell):
             raise TypeError(f"The 'params_init' must be a dict, but got {type(params_init)}.")
         for name, value in params_init.items():
             if not isinstance(name, str) or not isinstance(value, Tensor):
-                raise TypeError("The key of the 'params_init' must be str, and the value must be Tensor or Parameter, "
+                raise TypeError("For 'GraphCell', the key of the 'params_init' must be str, "
+                                "and the value must be Tensor or Parameter, "
                                 f"but got the key type: {type(name)}, and the value type: {type(value)}")
 
         params_dict = update_func_graph_hyper_params(self.graph, params_init)
