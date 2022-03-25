@@ -17,6 +17,8 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 
     mindspore.nn.Cell
     mindspore.nn.GraphCell
+    mindspore.nn.LossBase
+    mindspore.nn.Optimizer
 
 容器
 -----------
@@ -27,7 +29,28 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.CellList
     mindspore.nn.SequentialCell
 
-卷积层
+封装层
+-----------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.DistributedGradReducer
+    mindspore.nn.DynamicLossScaleUpdateCell
+    mindspore.nn.FixedLossScaleUpdateCell
+    mindspore.nn.ForwardValueAndGrad
+    mindspore.nn.GetNextSingleOp
+    mindspore.nn.MicroBatchInterleaved
+    mindspore.nn.ParameterUpdate
+    mindspore.nn.PipelineCell
+    mindspore.nn.TimeDistributed
+    mindspore.nn.TrainOneStepCell
+    mindspore.nn.TrainOneStepWithLossScaleCell
+    mindspore.nn.WithEvalCell
+    mindspore.nn.WithGradCell
+    mindspore.nn.WithLossCell
+
+卷积神经网络层
 --------------------
 
 .. mscnplatformautosummary::
@@ -39,33 +62,25 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Conv2dTranspose
     mindspore.nn.Conv3d
     mindspore.nn.Conv3dTranspose
+    mindspore.nn.Unfold
 
-梯度
------
-
-.. mscnplatformautosummary::
-    :toctree: nn
-
-    mindspore.nn.Jvp
-    mindspore.nn.Vjp
-
-循环层
---------
+循环神经网络层
+-----------------
 
 .. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.GRUCell
-    mindspore.nn.GRU
-    mindspore.nn.LSTMCell
-    mindspore.nn.LSTM
-    mindspore.nn.RNNCell
     mindspore.nn.RNN
-
-稀疏层
--------------
+    mindspore.nn.RNNCell
+    mindspore.nn.GRU
+    mindspore.nn.GRUCell
+    mindspore.nn.LSTM
+    mindspore.nn.LSTMCell
+    
+嵌入层
+-----------------
 
 .. mscnplatformautosummary::
     :toctree: nn
@@ -75,10 +90,8 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Embedding
     mindspore.nn.EmbeddingLookup
     mindspore.nn.MultiFieldEmbeddingLookup
-    mindspore.nn.SparseToDense
-    mindspore.nn.SparseTensorDenseMatmul
 
-非线性激活函数
+非线性激活函数层
 --------------
 
 .. mscnplatformautosummary::
@@ -90,7 +103,6 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.ELU
     mindspore.nn.FastGelu
     mindspore.nn.GELU
-    mindspore.nn.get_activation
     mindspore.nn.HShrink
     mindspore.nn.HSigmoid
     mindspore.nn.HSwish
@@ -104,43 +116,26 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Softmax
     mindspore.nn.SoftShrink
     mindspore.nn.Tanh
-
-工具
------
+    
+线性层
+-----------------
 
 .. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.ClipByNorm
     mindspore.nn.Dense
-    mindspore.nn.Dropout
-    mindspore.nn.Flatten
-    mindspore.nn.L1Regularizer
-    mindspore.nn.Norm
-    mindspore.nn.OneHot
-    mindspore.nn.Pad
-    mindspore.nn.Range
-    mindspore.nn.ResizeBilinear
-    mindspore.nn.Roll
-    mindspore.nn.Tril
-    mindspore.nn.Triu
-    mindspore.nn.Unfold
 
-图像
------
+Dropout层
+-----------------
 
 .. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.CentralCrop
-    mindspore.nn.ImageGradients
-    mindspore.nn.MSSSIM
-    mindspore.nn.PSNR
-    mindspore.nn.SSIM
+    mindspore.nn.Dropout
 
 归一化层
 ---------
@@ -157,9 +152,6 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.GroupNorm
     mindspore.nn.InstanceNorm2d
     mindspore.nn.LayerNorm
-    mindspore.nn.MatrixDiag
-    mindspore.nn.MatrixDiagPart
-    mindspore.nn.MatrixSetDiag
     mindspore.nn.SyncBatchNorm
 
 池化层
@@ -175,6 +167,15 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.MaxPool1d
     mindspore.nn.MaxPool2d
 
+填充层
+--------------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.Pad
 
 损失函数
 --------
@@ -190,7 +191,6 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.DiceLoss
     mindspore.nn.FocalLoss
     mindspore.nn.L1Loss
-    mindspore.nn.LossBase
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
     mindspore.nn.RMSELoss
@@ -219,48 +219,11 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.LARS
     mindspore.nn.LazyAdam
     mindspore.nn.Momentum
-    mindspore.nn.Optimizer
     mindspore.nn.ProximalAdagrad
     mindspore.nn.RMSProp
     mindspore.nn.Rprop
     mindspore.nn.SGD
     mindspore.nn.thor
-
-
-Wrapper
----------
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.DistributedGradReducer
-    mindspore.nn.DynamicLossScaleUpdateCell
-    mindspore.nn.FixedLossScaleUpdateCell
-    mindspore.nn.ForwardValueAndGrad
-    mindspore.nn.GetNextSingleOp
-    mindspore.nn.MicroBatchInterleaved
-    mindspore.nn.ParameterUpdate
-    mindspore.nn.PipelineCell
-    mindspore.nn.TimeDistributed
-    mindspore.nn.TrainOneStepCell
-    mindspore.nn.TrainOneStepWithLossScaleCell
-    mindspore.nn.WithEvalCell
-    mindspore.nn.WithGradCell
-    mindspore.nn.WithLossCell
-
-数学运算
-----------
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.MatMul
-    mindspore.nn.Moments
-    mindspore.nn.ReduceLogSumExp
 
 评估指标
 --------
@@ -358,3 +321,81 @@ Dynamic LR函数
     mindspore.nn.piecewise_constant_lr
     mindspore.nn.polynomial_decay_lr
     mindspore.nn.warmup_lr
+
+稀疏层
+-------------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.SparseTensorDenseMatmul
+    mindspore.nn.SparseToDense
+
+图像处理层
+-----------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.CentralCrop
+    mindspore.nn.ImageGradients
+    mindspore.nn.MSSSIM
+    mindspore.nn.PSNR
+    mindspore.nn.ResizeBilinear
+    mindspore.nn.SSIM
+
+矩阵处理
+-----------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.MatrixDiag
+    mindspore.nn.MatrixDiagPart
+    mindspore.nn.MatrixSetDiag
+
+工具
+-----
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.ClipByNorm
+    mindspore.nn.Flatten
+    mindspore.nn.get_activation
+    mindspore.nn.L1Regularizer
+    mindspore.nn.Norm
+    mindspore.nn.OneHot
+    mindspore.nn.Range
+    mindspore.nn.Roll
+    mindspore.nn.Tril
+    mindspore.nn.Triu
+
+数学运算
+----------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.MatMul
+    mindspore.nn.Moments
+    mindspore.nn.ReduceLogSumExp
+
+梯度
+-----
+
+.. mscnplatformautosummary::
+    :toctree: nn
+
+    mindspore.nn.Jvp
+    mindspore.nn.Vjp
