@@ -429,17 +429,17 @@ bool IsFindWrong(const OperatorInfoPtr current_op_ptr, const std::string &prim_n
   return is_find_wrong;
 }
 
-void AddSharedTensorWhenMultiUsers(
+void AddUsersUniqueIdWhenSharingParameter(
   const std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>> &parameter_users_info) {
   auto users_set = parameter_users_info.second.second;
   if (users_set.size() > 1) {
     MS_LOG(INFO) << "Parameter " << parameter_users_info.first << " has " << users_set.size() << " users.";
-    std::vector<std::string> user_names;
+    std::vector<std::string> param_users_uniqueid;
     for (auto user : users_set) {
       MS_LOG(INFO) << "with ID: " << user.first->UniqueId();
-      user_names.push_back(user.first->UniqueId());
+      param_users_uniqueid.push_back(user.first->UniqueId());
     }
-    entire_costgraph->add_shared_tensor(user_names);
+    entire_costgraph->add_param_users_uniqueid(param_users_uniqueid);
   }
 }
 
@@ -539,7 +539,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
   for (auto &node : all_nodes) {
     if (node->isa<Parameter>()) {
       ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode);
-      AddSharedTensorWhenMultiUsers(parameter_users_info);
+      AddUsersUniqueIdWhenSharingParameter(parameter_users_info);
     }
   }
 
@@ -658,7 +658,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
   for (auto &node : all_nodes) {
     if (node->isa<Parameter>()) {
       ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode);
-      AddSharedTensorWhenMultiUsers(parameter_users_info);
+      AddUsersUniqueIdWhenSharingParameter(parameter_users_info);
     }
   }
 
@@ -1161,21 +1161,21 @@ size_t FindOperatorIndexById(const std::string &unique_id,
   return SIZE_MAX;
 }
 
-std::vector<std::vector<size_t>> GetSharedTensorsOps(
-  const std::vector<std::vector<std::string>> &shared_tensors_ops_names,
+std::vector<std::vector<size_t>> GetIndexOfOpsSharingInputTensor(
+  const std::vector<std::vector<std::string>> &param_users_uniqueid_list,
   const std::vector<std::vector<std::string>> &input_tensor_names) {
-  std::vector<std::vector<size_t>> shared_tensors_ops;
-  for (auto user_names : shared_tensors_ops_names) {
+  std::vector<std::vector<size_t>> param_users_ops_index;
+  for (auto users_uniqueid : param_users_uniqueid_list) {
     std::vector<size_t> users_index;
-    for (size_t i = 0; i < user_names.size(); i++) {
-      size_t user_index = FindOperatorIndexById(user_names[i], input_tensor_names);
+    for (size_t i = 0; i < users_uniqueid.size(); i++) {
+      size_t user_index = FindOperatorIndexById(users_uniqueid[i], input_tensor_names);
       if (user_index != SIZE_MAX) {
         users_index.push_back(user_index);
       }
     }
-    shared_tensors_ops.push_back(users_index);
+    param_users_ops_index.push_back(users_index);
   }
-  return shared_tensors_ops;
+  return param_users_ops_index;
 }
 
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
@@ -1201,14 +1201,14 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   auto ops = entire_costgraph->GetOperators();
   std::vector<std::vector<std::string>> input_tensor_names = entire_costgraph->get_inputs_tensor_name_list();
   // Needed by rec_parser 2
-  auto shared_tensors_ops_name_list = entire_costgraph->get_shared_tensors_ops_name_list();
+  auto param_users_uniqueid_list = entire_costgraph->get_param_users_uniqueid_list();
   auto tuple_getitem_list = entire_costgraph->get_tuple_getitem_list();
   for (auto it = tuple_getitem_list.begin(); it != tuple_getitem_list.end();) {
     input_tensor_names = RecInputTensorNames(it++, input_tensor_names);
   }
   std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
-  std::vector<std::vector<size_t>> shared_tensors_ops =
-    GetSharedTensorsOps(shared_tensors_ops_name_list, input_tensor_names);
+  std::vector<std::vector<size_t>> param_users_ops_index =
+    GetIndexOfOpsSharingInputTensor(param_users_uniqueid_list, input_tensor_names);
 
   std::shared_ptr<std::vector<std::vector<size_t>>> eli_list = std::make_shared<std::vector<std::vector<size_t>>>();
   std::shared_ptr<std::vector<size_t>> index_list = std::make_shared<std::vector<size_t>>();
@@ -1227,7 +1227,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   if (!root->has_flag(kTraining)) {
     is_training = false;
   }
-  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, is_training, shared_tensors_ops);
+  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, is_training, param_users_ops_index);
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
     MS_LOG(INFO) << "Init selected strategy succeeded.";

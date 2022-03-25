@@ -117,8 +117,8 @@ void GenerateRemainingOperatorStrategy(const std::shared_ptr<Graph> &graph,
                                        const std::vector<std::vector<std::string>> &input_tensor_names,
                                        const std::shared_ptr<std::vector<size_t>> &index_list,
                                        const std::shared_ptr<std::vector<size_t>> &no_stra_op_list);
-void ModifySharingTensorOps(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                            const std::vector<std::vector<size_t>> &shared_tensors_ops);
+void ModifyParamSharingOpsStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                   const std::vector<std::vector<size_t>> &shared_tensors_ops);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_GENERATE_STRATEGY_H_

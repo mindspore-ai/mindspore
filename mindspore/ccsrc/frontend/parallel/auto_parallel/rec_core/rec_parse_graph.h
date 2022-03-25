@@ -38,8 +38,6 @@ static const std::set<OperatorType> ElementWiseOpType = {
   OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,     OperatorType::kRecExpandDims,
   OperatorType::kRecStridedSlice, OperatorType::kRecBatchMatMul};
 
-static const std::set<OperatorType> StrictElementWiseOpType = {OperatorType::kRecElmWiseOp, OperatorType::kRecCast};
-
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
   {BATCH_MATMUL, OperatorType::kRecBatchMatMul},
@@ -181,8 +179,6 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
 std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
                                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                                       const std::shared_ptr<std::vector<size_t>> &index_list);
-
-bool IsStrictElementWise(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_PARSE_GRAPH_H_

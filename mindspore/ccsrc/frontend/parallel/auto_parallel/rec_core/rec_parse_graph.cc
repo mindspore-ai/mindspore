@@ -282,14 +282,5 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
   }
   return new_graph;
 }
-bool IsStrictElementWise(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
-  std::string op_type = ops[iter_ops]->type();
-  auto idx = DictOpType.find(op_type);
-  if (idx == DictOpType.end()) {
-    return false;
-  } else {
-    return StrictElementWiseOpType.find(DictOpType.at(op_type)) != ElementWiseOpType.end();
-  }
-}
 }  // namespace parallel
 }  // namespace mindspore

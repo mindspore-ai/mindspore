@@ -191,11 +191,11 @@ class CostGraph {
     inputs_tensor_name_list_ = inputs_tensor_name_list;
   }
   // Needed by rec_parser 2
-  void add_shared_tensor(const std::vector<std::string> &shared_tensor_ops_names) {
-    shared_tensors_ops_name_list_.push_back(shared_tensor_ops_names);
+  void add_param_users_uniqueid(const std::vector<std::string> &param_users_uniqueid) {
+    param_users_uniqueid_list_.push_back(param_users_uniqueid);
   }
-  const std::vector<std::vector<std::string>> get_shared_tensors_ops_name_list() const {
-    return shared_tensors_ops_name_list_;
+  const std::vector<std::vector<std::string>> get_param_users_uniqueid_list() const {
+    return param_users_uniqueid_list_;
   }
   void add_tuple_getitem(const std::pair<std::string, std::string> &tuple_getitem) {
     auto ret = tuple_getitem_list_.insert(tuple_getitem);
@@ -213,7 +213,7 @@ class CostGraph {
   // Needed by rec_parser
   std::vector<std::vector<std::string>> inputs_tensor_name_list_;
   // Needed by rec_parser 2
-  std::vector<std::vector<std::string>> shared_tensors_ops_name_list_;
+  std::vector<std::vector<std::string>> param_users_uniqueid_list_;
   std::map<std::string, std::string> tuple_getitem_list_;
   std::vector<OperatorInfoPtr> ops_;
   std::map<std::pair<OperatorInfoPtr, OperatorInfoPtr>, std::vector<EdgePtr>> edges_;
