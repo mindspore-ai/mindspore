@@ -27,6 +27,8 @@ class Perplexity(Metric):
     .. math::
         PP(W)=P(w_{1}w_{2}...w_{N})^{-\frac{1}{N}}=\sqrt[N]{\frac{1}{P(w_{1}w_{2}...w_{N})}}
 
+    Where :math:`w` represents words in corpus.
+
     Args:
         ignore_label (Union[int, None]): Index of an invalid label to be ignored when counting. If set to `None`,
                 it will include all entries. Default: None.
@@ -64,7 +66,7 @@ class Perplexity(Metric):
     @rearrange_inputs
     def update(self, *inputs):
         """
-        Updates the internal evaluation result: :math:`preds` and :math:`labels`.
+        Updates the internal evaluation result `preds` and `labels`.
 
         Args:
             inputs: Input `preds` and `labels`. `preds` and `labels` are a `Tensor`, list or numpy.ndarray.
