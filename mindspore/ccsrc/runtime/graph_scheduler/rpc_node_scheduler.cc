@@ -19,16 +19,30 @@
 
 namespace mindspore {
 namespace runtime {
-void RpcNodeScheduler::Initialize() {
-  rpc_actor_set_ = std::make_shared<RpcActorSet>();
-  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
-}
+RpcActorSetPtr RpcNodeScheduler::Build(const ActorSet *actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
 
-RpcActorSetPtr RpcNodeScheduler::Build(const GraphCompilerInfo &) {
-  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
+  // RpcActor inherits from KernelActor, so we need to filter out the rpc actors from kernel actors list.
+  std::vector<KernelActorPtr> kernel_actors = actor_set->kernel_actors_;
+  RpcActorSetPtr rpc_actor_set = std::make_shared<RpcActorSet>();
+  MS_EXCEPTION_IF_NULL(rpc_actor_set);
+
   std::vector<RpcActorPtr> rpc_actors;
-  (void)rpc_actors.insert(rpc_actors.end(), rpc_actor_set_->send_actors_.begin(), rpc_actor_set_->send_actors_.end());
-  (void)rpc_actors.insert(rpc_actors.end(), rpc_actor_set_->recv_actors_.begin(), rpc_actor_set_->recv_actors_.end());
+  for (const auto &kernel_actor : kernel_actors) {
+    auto rpc_actor = std::dynamic_pointer_cast<RpcActor>(kernel_actor);
+    if (std::dynamic_pointer_cast<RpcActor>(kernel_actor) == nullptr) {
+      continue;
+    } else {
+      rpc_actors.emplace_back(rpc_actor);
+      if (std::dynamic_pointer_cast<SendActor>(rpc_actor) != nullptr) {
+        rpc_actor_set->send_actors_.emplace_back(std::dynamic_pointer_cast<SendActor>(rpc_actor));
+      } else if (std::dynamic_pointer_cast<RecvActor>(rpc_actor) != nullptr) {
+        rpc_actor_set->recv_actors_.emplace_back(std::dynamic_pointer_cast<RecvActor>(rpc_actor));
+      } else {
+        MS_LOG(EXCEPTION) << "Rpc actor should be either SendActor or RecvActor.";
+      }
+    }
+  }
 
   // Create route table proxy for each rpc actor and set.
   for (auto &rpc_actor : rpc_actors) {
@@ -37,13 +51,16 @@ RpcActorSetPtr RpcNodeScheduler::Build(const GraphCompilerInfo &) {
     rpc_actor->SetActorRouteRableProxy(proxy);
   }
 
-  return rpc_actor_set_;
+  return rpc_actor_set;
 }
 
-void RpcNodeScheduler::Link(const ActorSet *) {
-  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
-  std::vector<SendActorPtr> send_actors = rpc_actor_set_->send_actors_;
-  std::vector<RecvActorPtr> recv_actors = rpc_actor_set_->recv_actors_;
+void RpcNodeScheduler::Link(const ActorSet *actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  RpcActorSetPtr rpc_actor_set = actor_set->rpc_actors_;
+  MS_EXCEPTION_IF_NULL(rpc_actor_set);
+  std::vector<SendActorPtr> send_actors = rpc_actor_set->send_actors_;
+  std::vector<RecvActorPtr> recv_actors = rpc_actor_set->recv_actors_;
+
   // The inter-process edge is connected to a remote peer. So the peer info attributes in the kernel should be
   // sufficient for route table.
   for (auto &send_actor : send_actors) {
@@ -84,19 +101,21 @@ void RpcNodeScheduler::Link(const ActorSet *) {
   }
 }
 
-void RpcNodeScheduler::Schedule() {
-  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
+void RpcNodeScheduler::Schedule(const ActorSet *actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  RpcActorSetPtr rpc_actor_set = actor_set->rpc_actors_;
+  MS_EXCEPTION_IF_NULL(rpc_actor_set);
   // Must start server and register route table before looking up route and connecting.
 
   // Start servers of recv actors and register route table.
-  for (auto &recv_actor : rpc_actor_set_->recv_actors_) {
+  for (auto &recv_actor : rpc_actor_set->recv_actors_) {
     MS_EXCEPTION_IF_NULL(recv_actor);
     if (!recv_actor->StartServer()) {
       MS_LOG(EXCEPTION) << "Failed to start server for the recv actor.";
     }
   }
   // Lookup route and connect to servers for send actors.
-  for (auto &send_actor : rpc_actor_set_->send_actors_) {
+  for (auto &send_actor : rpc_actor_set->send_actors_) {
     MS_EXCEPTION_IF_NULL(send_actor);
     if (!send_actor->ConnectServer()) {
       MS_LOG(EXCEPTION) << "Failed to connect servers for the send actor.";
@@ -104,40 +123,28 @@ void RpcNodeScheduler::Schedule() {
   }
 }
 
-void RpcNodeScheduler::InsertSendActor(const SendActorPtr &send_actor) {
-  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
-  MS_EXCEPTION_IF_NULL(send_actor);
-  (void)rpc_actor_set_->send_actors_.emplace_back(send_actor);
-}
-
-void RpcNodeScheduler::InsertRecvActor(const RecvActorPtr &recv_actor) {
-  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
-  MS_EXCEPTION_IF_NULL(recv_actor);
-  (void)rpc_actor_set_->recv_actors_.emplace_back(recv_actor);
-}
-
-void RpcNodeScheduler::SetOpcontext(OpContext<DeviceTensor> *const op_context) {
+void RpcNodeScheduler::SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context) {
   MS_EXCEPTION_IF_NULL(op_context);
-  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
+  MS_EXCEPTION_IF_NULL(rpc_actors);
 
-  for (auto &recv_actor : rpc_actor_set_->recv_actors_) {
+  for (auto &recv_actor : rpc_actors->recv_actors_) {
     MS_EXCEPTION_IF_NULL(recv_actor);
     recv_actor->SetOpcontext(op_context);
   }
-  for (auto &send_actor : rpc_actor_set_->send_actors_) {
+  for (auto &send_actor : rpc_actors->send_actors_) {
     MS_EXCEPTION_IF_NULL(send_actor);
     send_actor->SetOpcontext(op_context);
   }
 }
 
-void RpcNodeScheduler::ResetOpcontext() {
-  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
+void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) {
+  MS_EXCEPTION_IF_NULL(rpc_actors);
 
-  for (auto &recv_actor : rpc_actor_set_->recv_actors_) {
+  for (auto &recv_actor : rpc_actors->recv_actors_) {
     MS_EXCEPTION_IF_NULL(recv_actor);
     recv_actor->ResetOpcontext();
   }
-  for (auto &send_actor : rpc_actor_set_->send_actors_) {
+  for (auto &send_actor : rpc_actors->send_actors_) {
     MS_EXCEPTION_IF_NULL(send_actor);
     send_actor->ResetOpcontext();
   }
