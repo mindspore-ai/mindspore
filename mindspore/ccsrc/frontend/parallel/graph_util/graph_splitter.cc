@@ -196,15 +196,26 @@ void GraphSplitter::Run() {
   MS_EXCEPTION_IF_NULL(func_graph_);
   MS_EXCEPTION_IF_NULL(func_graph_->manager());
 
+  // Step 1: Dye all the nodes of the whole func_graph_.
   DyeGraph();
+  // If all nodes are all on this process, no need to split the graph. So return.
+  if (std::find_if(node_labels_.begin(), node_labels_.end(), [&](const auto &node_to_label) {
+        return node_to_label.second != this_process_label_;
+      }) == node_labels_.end()) {
+    return;
+  }
 
+  // Step 2: Generate the node segments with different labels.
   std::vector<SplitGraphSegment> segments = GenerateSplitSegments();
   // If the segment number is 0, there will be no distributed execution.
   if (segments.empty()) {
     return;
   }
+
+  // Step 3: Create inter-process operators for segments with different labels.
   InterProcessOpEdgesInfo comm_edges = GenerateInterProcessOperators();
 
+  // Step 4: Split the graph and eliminate extra nodes.
   SplitGraph(segments, comm_edges);
 }
 
