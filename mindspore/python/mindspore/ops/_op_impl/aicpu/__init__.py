@@ -71,6 +71,7 @@ from .matrix_determinant import _matrix_determinant_aicpu
 from .log_matrix_determinant import _log_matrix_determinant_aicpu
 from .lstsq import _lstsq_aicpu
 from .crop_and_resize import _crop_and_resize_aicpu
+from .crop_and_resize_grad_boxes import _crop_and_resize_grad_boxes_aicpu
 from .acosh import _acosh_aicpu
 from .acosh_grad import _acosh_grad_aicpu
 from .rnnt_loss import _rnnt_loss_aicpu

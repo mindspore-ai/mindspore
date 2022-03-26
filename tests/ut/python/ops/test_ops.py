@@ -26,6 +26,7 @@ from mindspore import ms_function
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
@@ -3133,6 +3134,14 @@ test_case_other_ops = [
         'desc_inputs': [Tensor([2, 3], mstype.int32),
                         Tensor(1, mstype.float32)],
         'desc_bprop': [Tensor([[1, 1, 1], [1, 1, 1]], mstype.float32)]}),
+    ('CropAndResizeGradBoxes', {
+        'block': CropAndResizeGradBoxes(),
+        'desc_inputs': [Tensor(np.random.uniform(0, 10, size=(4, 10, 10, 3)).astype(np.float32)),
+                        Tensor(np.random.randint(0, 10, size=(4, 50, 50, 3)).astype(np.int32)),
+                        Tensor(np.random.uniform(0, 1, size=(4, 4)).astype(np.float32)),
+                        Tensor(np.random.randint(0, 4, size=(4)).astype(np.int32))
+                       ],
+        'skip': ['backward']}),
 ]
 
 test_case_quant_ops = [
