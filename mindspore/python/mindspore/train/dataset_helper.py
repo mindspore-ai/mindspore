@@ -369,7 +369,7 @@ class _DatasetIter:
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
                 # PS mode does not support loop sink and need get the real sink size.
-                if not _is_role_worker():
+                if not (_is_role_worker() and _is_ps_mode()):
                     self.sink_size = dataset.__loop_size__
             create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and dataset.get_dataset_size() != 1
                                       and context.get_context("device_target") == "Ascend")

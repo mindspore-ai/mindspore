@@ -434,7 +434,6 @@ void GraphScheduler::Initialize() {
   // Create and initialize RpcNodeScheduler.
   rpc_node_scheduler_ = std::make_unique<RpcNodeScheduler>();
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
-  rpc_node_scheduler_->Initialize();
 #endif
 
   BuildAndScheduleGlobalActor();
@@ -544,7 +543,7 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
 #ifdef ENABLE_RPC_ACTOR
   // Build physical connections in 'RpcNodeScheduler::Schedule()' method. This costs some time.
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
-  rpc_node_scheduler_->Schedule();
+  rpc_node_scheduler_->Schedule(actor_set);
 #endif
 }
 
@@ -565,7 +564,8 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
 
 #ifdef ENABLE_RPC_ACTOR
   // Set OpContext to rpc node scheduler.
-  auto op_context_setter = std::make_shared<RpcActorOpContextSetter>(rpc_node_scheduler_.get(), &op_context);
+  auto op_context_setter =
+    std::make_shared<RpcActorOpContextSetter>(rpc_node_scheduler_.get(), actor_set->rpc_actors_, &op_context);
   MS_EXCEPTION_IF_NULL(op_context_setter);
 #endif
 
@@ -696,7 +696,7 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
 
 #ifdef ENABLE_RPC_ACTOR
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
-  actor_set->rpc_actors_ = rpc_node_scheduler_->Build(graph_compiler_info);
+  actor_set->rpc_actors_ = rpc_node_scheduler_->Build(actor_set.get());
 #endif
   return actor_set;
 }
@@ -1095,14 +1095,12 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
       std::make_shared<SendActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
                                   debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
     MS_EXCEPTION_IF_NULL(send_actor);
-    rpc_node_scheduler_->InsertSendActor(send_actor);
     return send_actor;
   } else if (common::AnfAlgo::GetCNodeName(kernel) == kRpcRecvOpName) {
     auto recv_actor =
       std::make_shared<RecvActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
                                   debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
     MS_EXCEPTION_IF_NULL(recv_actor);
-    rpc_node_scheduler_->InsertRecvActor(recv_actor);
     return recv_actor;
   } else {
     MS_LOG(EXCEPTION) << "Kernel " << kernel->fullname_with_scope() << " is not an rpc kernel.";
