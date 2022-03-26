@@ -255,7 +255,7 @@ TEST_F(TCPTest, SendSyncMessage) {
 
   // Create the message.
   auto message = CreateMessage(server_url, client_url);
-  auto msg_size = GetMessageSize(*message);
+  auto msg_size = message->body.size();
 
   // Send the message.
   client->Connect(server_url);
@@ -270,6 +270,109 @@ TEST_F(TCPTest, SendSyncMessage) {
   client->Disconnect(server_url);
   client->Finalize();
   server->Finalize();
+}
+
+/// Feature: test sending large messages.
+/// Description: start a socket server and send several large messages to it.
+/// Expectation: the server received these large messages sented from client.
+TEST_F(TCPTest, SendLargeMessages) {
+  Init();
+
+  // Start the tcp server.
+  std::unique_ptr<TCPServer> server = std::make_unique<TCPServer>();
+  bool ret = server->Initialize();
+  ASSERT_TRUE(ret);
+
+  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> void { IncrDataMsgNum(1); });
+
+  // Start the tcp client.
+  auto client_url = "127.0.0.1:1234";
+  std::unique_ptr<TCPClient> client = std::make_unique<TCPClient>();
+  ret = client->Initialize();
+  ASSERT_TRUE(ret);
+
+  // Send the message.
+  auto ip = server->GetIP();
+  auto port = server->GetPort();
+  auto server_url = ip + ":" + std::to_string(port);
+  client->Connect(server_url);
+
+  size_t msg_cnt = 5;
+  size_t large_msg_size = 1024000;
+  for (int i = 0; i < msg_cnt; ++i) {
+    auto message = CreateMessage(server_url, client_url, large_msg_size);
+    client->SendAsync(std::move(message));
+  }
+
+  // Wait timeout: 15s
+  WaitForDataMsg(msg_cnt, 15);
+
+  // Check result
+  EXPECT_EQ(msg_cnt, GetDataMsgNum());
+
+  // Destroy
+  client->Disconnect(server_url);
+  client->Finalize();
+  server->Finalize();
+}
+
+/// Feature: test creating many TCP connections.
+/// Description: create many servers and clients, then connect each client to a server.
+/// Expectation: all the servers and clients are created successfully.
+TEST_F(TCPTest, CreateManyConnectionPairs) {
+  Init();
+
+  std::vector<std::shared_ptr<TCPServer>> servers;
+  std::vector<std::shared_ptr<TCPClient>> clients;
+  std::vector<std::string> server_urls;
+
+  size_t total_connection_num = 10;
+
+  for (size_t i = 0; i < total_connection_num; ++i) {
+    // Start the tcp server.
+    std::shared_ptr<TCPServer> server = std::make_shared<TCPServer>();
+    bool ret = server->Initialize();
+    auto ip = server->GetIP();
+    auto port = server->GetPort();
+    ASSERT_TRUE(ret);
+
+    server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> void { IncrDataMsgNum(1); });
+
+    // Start the tcp client.
+    auto client_url = "127.0.0.1:1234";
+    std::shared_ptr<TCPClient> client = std::make_shared<TCPClient>();
+    ret = client->Initialize();
+    ASSERT_TRUE(ret);
+
+    // Send the message.
+    auto server_url = ip + ":" + std::to_string(port);
+    server_urls.push_back(server_url);
+    auto success = client->Connect(server_url);
+    EXPECT_EQ(true, success);
+
+    size_t msg_cnt = 100;
+    size_t large_msg_size = 10240;
+    for (int i = 0; i < msg_cnt; ++i) {
+      auto message = CreateMessage(server_url, client_url, large_msg_size);
+      client->SendAsync(std::move(message));
+    }
+
+    // Check result
+    servers.push_back(server);
+    clients.push_back(client);
+  }
+
+  // Check result
+  EXPECT_EQ(total_connection_num, servers.size());
+  EXPECT_EQ(total_connection_num, clients.size());
+
+  // Destroy
+  for (size_t i = 0; i < total_connection_num; ++i) {
+    while (!clients[i]->Disconnect(server_urls[i]))
+      ;
+    clients[i]->Finalize();
+    servers[i]->Finalize();
+  }
 }
 }  // namespace rpc
 }  // namespace distributed

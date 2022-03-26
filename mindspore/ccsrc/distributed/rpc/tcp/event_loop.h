@@ -70,6 +70,9 @@ class EventLoop {
   // These tasks are executed asynchronously.
   size_t AddTask(std::function<int()> &&task);
 
+  // The number of tasks in the pending task queue.
+  size_t RemainingTaskNum();
+
   // Set event handler for events(read/write/..) occurred on the socket fd.
   int SetEventHandler(int sock_fd, uint32_t events, EventHandler handler, void *data);
 
