@@ -153,7 +153,7 @@ class TransformerNet(nn.Cell):
                                    ffn_hidden_size=64,
                                    moe_config=moe_config,
                                    parallel_config=parallel_config)
-        self.loss = CrossEntropyLoss(parallel_config=parallel_config.moe_parallel_config)
+        self.loss = CrossEntropyLoss(parallel_config=parallel_config.dp_mp_config)
 
     def construct(self, x1, x2, x3, x4, x5, y, mask):
         predict, _, _ = self.network(x1, x2, x3, x4, x5)
@@ -212,7 +212,8 @@ def test_moe_expert_parallel3():
     Expectation: Successful graph compilation.
     """
     local_p_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, expert_parallel=2)
-    moe_with_loss_plus_mutiparallel(local_p_config)
+    with pytest.raises(ValueError):
+        moe_with_loss_plus_mutiparallel(local_p_config)
 
 def test_moe_expert_parallel_exception():
     """
