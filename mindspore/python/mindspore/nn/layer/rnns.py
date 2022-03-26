@@ -691,7 +691,7 @@ class GRU(_RNNBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked GRU. Default: 1.
-        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
+        has_bias (bool): Whether the cell has bias `b_in` and `b_hn`. Default: True.
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: False.
         dropout (float): If not 0.0, append `Dropout` layer on the outputs of each
             GRU layer except the last layer. Default 0.0. The range of dropout is [0.0, 1.0).
@@ -775,6 +775,15 @@ class LSTM(_RNNBase):
     <https://www.bioinf.jku.at/publications/older/2604.pdf>`_ and
     `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling
     <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_.
+
+    LSTM hides the cycle of the whole cyclic neural network on the time step of the sequence,
+    and input the sequence and initial state to obtain the matrix spliced by
+    the hidden state of each time step and the hidden state of the last time step.
+    We use the hidden state of the last time step as the coding feature of the input sentence and
+    output it to the next layer.
+
+    .. math::
+        h_{0:n},(h_{n}, c_{n}) = LSTM(x_{0:n},(h_{0},c_{0}))
 
     Args:
         input_size (int): Number of features of input.
