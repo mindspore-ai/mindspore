@@ -106,7 +106,7 @@ def test_if_in_for_tensor_4():
     @ms_function
     def control_flow_for():
         x = Tensor(7)
-        y = Tensor(0)
+        y = Tensor(0.0)
         for _ in range(3):
             x = x + y/2
             if y < Tensor(10) and x < Tensor(20):
@@ -131,7 +131,7 @@ def test_if_in_for_tensor_5():
     @ms_function
     def control_flow_for():
         x = Tensor(7)
-        y = Tensor(0)
+        y = Tensor(0.0)
         for _ in range(3):
             x = x + y/2
             if y < Tensor(10):
@@ -141,7 +141,7 @@ def test_if_in_for_tensor_5():
             y += Tensor(1)
         return x + y
     res = control_flow_for()
-    assert res == 60
+    assert res == 62
 
 
 @pytest.mark.level0

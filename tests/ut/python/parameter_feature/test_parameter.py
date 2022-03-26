@@ -29,9 +29,6 @@ grad_all_with_sens = C.GradOperation(sens_param=True)
 
 def test_parser_three_default_mixed_args_subnet():
     class SubNetDefaultMixedArgs(Cell):
-        def __init__(self):
-            super().__init__()
-
         def construct(self, y, x=3, x1=None, x2=(1, 2)):
             if x == 3:
                 if x1 == None:
@@ -66,9 +63,6 @@ def test_net_vararg_kwonlyarg_kwarg():
             return c
 
     class SecondNet(Cell):
-        def __init__(self):
-            super(SecondNet, self).__init__()
-
         def construct(self, x, y=2, p=5, q=40, *var, key1=1, key2=3, **kwargs):
             a = x - y
             b = p * q
@@ -93,9 +87,6 @@ def test_net_vararg_normal_input():
             return c
 
     class SecondNet(Cell):
-        def __init__(self):
-            super(SecondNet, self).__init__()
-
         def construct(self, x, y=2, p=5, q=40, *var, key1=1, key2=3, **kwargs):
             a = x - y
             b = p * q
@@ -162,9 +153,6 @@ def test_no_vararg():
             return c
 
     class SecondNet(Cell):
-        def __init__(self):
-            super(SecondNet, self).__init__()
-
         def construct(self, x, y, *, z=0, r=1):
             ret = x + y + z + r
             return ret
@@ -228,9 +216,6 @@ def test_net_vargs_expand():
             return self.grad(self.network)(*inputs)
 
     class AddNet(Cell):
-        def __init__(self):
-            super(AddNet, self).__init__()
-
         def construct(self, x, y):
             return x + y
 
@@ -289,9 +274,6 @@ def test_mixed_precision_const_parameter():
 
 def test_pass_args_by_key_ward_way():
     class KeyWardNet(Cell):
-        def __init__(self):
-            super(KeyWardNet, self).__init__()
-
         def construct(self, x, y, z):
             return x + y - z
 
@@ -333,3 +315,350 @@ def test_none_input():
     x = Tensor(np.array([1, 2, 3, 4]).astype(np.float32).reshape((1, 1, 2, 2,)))
     net = Net()
     net(x, (4, 4), None, True)
+
+
+def test_args_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are varargs and kwargs properly.
+    Description: Function with unused parameters which are varargs and kwargs.
+    Expectation: compile success and result == 0
+    """
+    class Net(Cell):
+        def trivial(self, *args, **kwargs):
+            return 0
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == 0
+
+
+def test_args_kwonlyargs_1_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are varargs, kwonlyargs and
+    kwargs properly.
+    Description: Function with unused parameters which are varargs, 1 kwonlyargs and kwargs.
+    Expectation: compile success and result == 0
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, **kwargs):
+            return 0
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == 0
+
+
+def test_args_kwonlyargs_2_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are varargs, kwonlyargs and
+    kwargs properly.
+    Description: Function with unused parameters which are varargs, 2 kwonlyargs and kwargs.
+    Expectation: compile success and result == 0
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return 0
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == 0
+
+
+def test_args_1_used_kwonlyargs_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are kwonlyargs and
+    kwargs properly.
+    Description: Function with unused parameters which are 1 kwonlyargs and kwargs.
+    Expectation: compile success and result == x
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, **kwargs):
+            return args[0]
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == x
+
+
+def test_args_2_used_kwonlyargs_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are kwonlyargs and
+    kwargs properly.
+    Description: Function with unused parameters which are 1 kwonlyargs and kwargs.
+    Expectation: compile success and result == y
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, **kwargs):
+            return args[1]
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == y
+
+
+def test_kwonlyargs_1_used_args_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are varargs and
+    kwargs properly.
+    Description: Function with unused parameters which are varargs and kwargs.
+    Expectation: compile success and result == only1
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, **kwargs):
+            return only1
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == 3
+
+
+def test_kwonlyargs_2_used_args_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are varargs and
+    kwargs properly.
+    Description: Function with unused parameters which are varargs and kwargs.
+    Expectation: compile success and result == only2
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return only2
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == 4
+
+
+def test_kwarg_used_args_kwonlyargs_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are varargs and
+    kwonlyargs properly.
+    Description: Function with unused parameters which are varargs and kwonlyargs.
+    Expectation: compile success and result == kw1
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return kwargs["kw1"]
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y, kw1=5)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == 5
+
+
+def test_args_1_kwonlyargs_1_used_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are kwargs properly.
+    Description: Function with unused parameters which are kwargs.
+    Expectation: compile success and result == (x, 3)
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return (args[0], only1)
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == (x, 3)
+
+
+def test_args_2_kwonlyargs_1_used_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are kwargs properly.
+    Description: Function with unused parameters which are kwargs.
+    Expectation: compile success and result == (x, y, 3)
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return (args[0], args[1], only1)
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == (x, y, 3)
+
+
+def test_args_2_kwonlyargs_2_used_kwarg_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are kwargs properly.
+    Description: Function with unused parameters which are kwargs.
+    Expectation: compile success and result == (x, y, only1, only2)
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return (args[0], args[1], only1, only2)
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == (x, y, 3, 4)
+
+
+def test_kwonlyargs_1_kwarg_used_args_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are varargs properly.
+    Description: Function with unused parameters which are varargs.
+    Expectation: compile success and result == (y, kw1)
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return (only1, kwargs["kw1"])
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y, kw1=5)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == (3, 5)
+
+
+def test_kwonlyargs_2_kwarg_used_args_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are varargs properly.
+    Description: Function with unused parameters which are varargs.
+    Expectation: compile success and result == (only1, only2, kw1)
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return (only1, only2, kwargs["kw1"])
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y, kw1=5)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == (3, 4, 5)
+
+
+def test_args_1_kwarg_used_kwonlyargs_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are kwonlyargs properly.
+    Description: Function with unused parameters which are kwonlyargs.
+    Expectation: compile success and result == (x, kw1)
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return (args[0], kwargs["kw1"])
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y, kw1=5)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == (x, 5)
+
+
+def test_args_2_kwarg_used_kwonlyargs_not_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which are kwonlyargs properly.
+    Description: Function with unused parameters which are kwonlyargs.
+    Expectation: compile success and result == (x, y, kw1)
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return (args[0], args[1], kwargs["kw1"])
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y, kw1=5)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == (x, y, 5)
+
+
+def test_args_1_kwonlyargs_1_kwarg_used():
+    """
+    Feature: Eliminate Parameter pass can remove unused parameters and arguments which is kwonlyarg properly.
+    Description: Function with unused parameters which is kwonlyarg.
+    Expectation: compile success and result == (x, only1, kw1)
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return (args[0], only1, kwargs["kw1"])
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y, kw1=5)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == (x, 3, 5)
+
+
+def test_args_2_kwonlyargs_2_kwarg_used():
+    """
+    Feature: Eliminate Parameter pass should not remove parameters and arguments all used.
+    Description: Function without unused parameters.
+    Expectation: compile success and result == (x, y, only1, only2, kw1)
+    """
+    class Net(Cell):
+        def trivial(self, *args, only1=3, only2=4, **kwargs):
+            return (args[0], args[1], only1, only2, kwargs["kw1"])
+
+        def construct(self, x, y):
+            ret = self.trivial(x, y, kw1=5)
+            return ret
+
+    net = Net()
+    x = 1
+    y = 2
+    assert net(x, y) == (x, y, 3, 4, 5)

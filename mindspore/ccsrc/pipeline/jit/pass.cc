@@ -518,6 +518,8 @@ OptPassGroupMap GetOptPassesC(const opt::irpass::OptimizeIRPassLib &) {
 OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &) {
   opt::OptPassConfig control_group = opt::OptPassConfig(opt::irpass::ConvertSwitchReplacement());
   OptPassGroupMap map({
+    // After CleanAfterOptA, it may need renormalize to eliminate unused elements in Tuple.
+    {"renormalize", opt::OptPassConfig::Renormalize()},
     {"control_group", control_group},
     {"renormalize", opt::OptPassConfig::Renormalize()},
   });

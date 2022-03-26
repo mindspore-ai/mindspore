@@ -124,11 +124,33 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
   }
   // Erase unused parameters.
   std::vector<AnfNodePtr> new_parameters;
+  const auto &var_arg_node = fg->GetVariableArgParameter();
+  const auto &kw_arg_node = fg->GetVariableKwargParameter();
+  const auto &kw_only_args = fg->GetKwOnlyArgsParameters();
   for (size_t i = 0; i < parameters.size(); i++) {
+    const auto &param_i = parameters[i];
     if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
-      (void)new_parameters.emplace_back(parameters[i]);
+      (void)new_parameters.emplace_back(param_i);
     } else {
-      MS_LOG(DEBUG) << "Erase parameter:" << parameters[i]->DebugString() << ",index:" << i;
+      // VarArgs, KwArgs, KwOnlyArgs may not following the index as the Positional Arguments.
+      if (param_i == var_arg_node) {
+        fg->set_has_vararg(false);
+        (void)unused_parameter_indexes.erase(i);
+      } else if (param_i == kw_arg_node) {
+        fg->set_has_kwarg(false);
+        (void)unused_parameter_indexes.erase(i);
+      } else {
+        bool is_kw_only_arg = std::any_of(kw_only_args.cbegin(), kw_only_args.cend(),
+                                          [param_i](const auto &kw_only_arg) { return kw_only_arg == param_i; });
+        if (is_kw_only_arg) {
+          if (fg->kwonlyargs_count() <= 0) {
+            MS_LOG(EXCEPTION) << "The kw_only_args_count is 0 when a kw_only_arg should be removed";
+          }
+          fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
+          (void)unused_parameter_indexes.erase(i);
+        }
+      }
+      MS_LOG(DEBUG) << "Erase parameter:" << param_i->DebugString() << ", index:" << i;
     }
   }
   manager->SetParameters(fg, new_parameters);
@@ -136,7 +158,7 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
 }
 
 // Adjust the call arguments of func graph whose parameter's eliminated.
-static inline void AdjustCallerArgs(const CNodePtr &caller,
+static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &caller,
                                     const mindspore::HashSet<size_t> &unused_parameter_indexes) {
   const FuncGraphManagerPtr &manager = caller->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -148,6 +170,18 @@ static inline void AdjustCallerArgs(const CNodePtr &caller,
       MS_LOG(DEBUG) << "Erase arg:" << caller->inputs()[i + 1]->DebugString() << ",index:" << i;
     }
   }
+  // Remove any Args which may be packed into VarArgs if VarArgs is not used in called FuncGraph;
+  // Note: 1. If there is any *args or key=value argument in call site, it will be converted to unpack_call
+  // CNode. So in this direct call case, all arguments should be plain arguments.
+  //       2. The arguments in caller may be less than the formal parameters in called as some parameters can have
+  //       default value.
+  if (!called->has_vararg() &&
+      caller->inputs().size() > (1 + called->GetPositionalArgsCount() + called->hyper_param_count())) {
+    size_t start_offset = called->GetPositionalArgsCount() + 1;
+    size_t end_offset = called->hyper_param_count();
+    new_args.erase(new_args.begin() + start_offset, new_args.end() - end_offset);
+  }
+
   TraceGuard trace_guard(std::make_shared<TraceCopy>(caller->debug_info()));
   auto new_caller = caller->func_graph()->NewCNode(new_args);
   new_caller->set_abstract(caller->abstract());
@@ -229,7 +263,7 @@ class ParameterEliminator {
           AdjustGetItemCall(caller, only_return_parameter_indexes);
         }
         // Erase the arguments for eliminated parameters.
-        AdjustCallerArgs(caller, unused_parameter_indexes);
+        AdjustCallerArgs(fg, caller, unused_parameter_indexes);
       }
       changes = true;
     }

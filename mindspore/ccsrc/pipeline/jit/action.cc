@@ -538,7 +538,7 @@ bool InferenceOptPrepareAction(const ResourcePtr &res) {
 }
 
 bool EliminateUnusedParameterAction(const ResourcePtr &res) {
-  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") == "1");
+  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") != "0");
   static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
   if (!transform_tail_call_to_parallel_call && !transform_for_half_unroll_call) {
     return true;

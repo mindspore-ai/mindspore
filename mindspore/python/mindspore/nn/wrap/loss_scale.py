@@ -543,9 +543,6 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         overflow = cond
         if self.loss_scaling_manager is not None:
             overflow = self.loss_scaling_manager(self.scale_sense, cond)
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
-        ret = (loss, overflow, scaling_sens)
-        return F.depend(ret, succ)
+        if not overflow:
+            self.optimizer(grads)
+        return (loss, overflow, scaling_sens)

@@ -664,6 +664,7 @@ void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const Fu
   if (possible_parent_fg != nullptr) {
     possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
     MS_LOG(DEBUG) << "Set graph undetermined: " << possible_parent_fg->ToString();
+    return;
   }
   auto fg_eval = evaluator->cast<FuncGraphEvaluatorPtr>();
   if (fg_eval == nullptr) {
@@ -671,14 +672,7 @@ void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const Fu
   }
   auto fg = fg_eval->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
-  auto fg_parent = fg->parent();
-  if (fg_parent != nullptr) {
-    fg_parent->set_flag(kFuncGraphFlagUndetermined, true);
-    MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString() << " for fg: " << fg->ToString();
-    return;
-  } else {
-    MS_LOG(DEBUG) << "cannot find parent for fg: " << fg->ToString();
-  }
+  MS_LOG(EXCEPTION) << "cannot set Undetermined flag for fg: " << fg->ToString();
 }
 
 EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators,
