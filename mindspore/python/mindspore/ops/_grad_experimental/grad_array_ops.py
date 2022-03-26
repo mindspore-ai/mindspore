@@ -19,6 +19,7 @@ from ...common import dtype as mstype
 from .._grad.grad_math_ops import binop_grad_common
 from .._grad.grad_base import bprop_getters
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from ..operations.array_ops import Tril
 from .. import functional as F
 from .. import operations as P
 
@@ -164,6 +165,19 @@ def get_bprop_extract_volume_patches(self):
         jac = matmul(sp_tensor, grad_flat)
         dx = P.Reshape()(jac, (x_d, x_h, x_w, x_n, x_c))
         dx = P.Transpose()(dx, (3, 4, 0, 1, 2))
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Tril)
+def get_bprop_tril(self):
+    """Grad definition for 'Tril' operation"""
+    diagonal = self.diagonal
+    tril = Tril(diagonal)
+
+    def bprop(x, out, dout):
+        dx = tril(dout)
         return (dx,)
 
     return bprop

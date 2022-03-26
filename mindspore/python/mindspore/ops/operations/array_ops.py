@@ -7298,3 +7298,43 @@ class Cummax(Primitive):
         """Initialize Cummax"""
         validator.check_value_type("dim", dim, [int], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y', 'indices'])
+
+
+class Tril(Primitive):
+    """
+    Returns the lower triangular part of the matrix (2-D tensor) or batch of matrices input,
+    the other elements of the result tensor out are set to 0.
+    The lower triangular part of the matrix is defined as the elements on and below the diagonal.
+
+    Args:
+        diagonal (int): An optional attribute indicates the diagonal to consider, default to 0.
+
+    Inputs:
+        - **x** (Tensor) - A Tensor with shape :math:`(x_1, x_2, ..., x_R)`. The rank must be at least 2.
+          Supporting all number types including bool.
+
+    Outputs:
+        Tensor, the same shape and data type as the input.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `diagonal` is not an int.
+        TypeError: If the type of `x` is neither number nor bool.
+        ValueError: If the rank of `x` is less than 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> tril = ops.Tril()
+        >>> output = tril(Tensor(np.array([[-13.5383, 2.5474, ], [-5.7496, -3.4548]]), mindspore.float32))
+        >>> print(output)
+        [[ -13.5383  0.    ]
+         [  -5.7496 -3.4548]]
+    """
+
+    @prim_attr_register
+    def __init__(self, diagonal=0):
+        """Initialize Tril."""
+        self.init_prim_io_names(inputs=["x"], outputs=["y"])
+        validator.check_value_type("diagonal", diagonal, [int], self.name)
