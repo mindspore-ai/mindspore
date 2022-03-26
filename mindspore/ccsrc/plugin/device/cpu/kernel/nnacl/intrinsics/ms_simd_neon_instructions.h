@@ -58,6 +58,8 @@
 #define MS_MIN128_EPI32 vminq_s32
 #define MS_MUL128_F32(src1, src2) vmulq_f32(src1, src2)
 #define MS_MUL128_EPI32(src1, src2) vmulq_s32(src1, src2)
+#define MS_FMADD128_F32(src1, src2, src3) vmlaq_f32(src3, src1, src2)
+#define MS_FMSUB128_EPI32(src1, src2, src3) vmlsq_s32(src3, src1, src2)
 #ifdef ENABLE_ARM64
 #define MS_DIVQ_F32(src1, src2) vdivq_f32(src1, src2)
 #define MS_DIV128_F32(src1, src2) vdivq_f32(src1, src2)
@@ -101,6 +103,14 @@ static inline float MS_GET_MAX128_F32(MS_FLOAT32X4 src) {
   return result;
 }
 #endif
+
+static inline float MS_GET_SUM128_F32(MS_FLOAT32X4 src) {
+  float result = MS_F32X4_GETI(src, 0);
+  for (int i = 1; i < 4; i++) {  // neon block num : 4
+    result = result + MS_F32X4_GETI(src, i);
+  }
+  return result;
+}
 
 static inline int32x4_t MS_DIV128_EPI32(int32x4_t src1, int32x4_t src2) {
   int32x4_t result;

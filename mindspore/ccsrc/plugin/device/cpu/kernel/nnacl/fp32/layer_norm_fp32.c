@@ -18,24 +18,30 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdLayerNormMeanAndSquareCoreCalc(block_size, block_num, src, num, mean, square_mean, index) \
+  do {                                                                                                \
+    MS_FLOAT_32xN(block_num) sum_##block_num = MS_MOVN_F32(block_size, 0.0f);                         \
+    MS_FLOAT_32xN(block_num) square_sum_##block_num = MS_MOVN_F32(block_size, 0.0f);                  \
+    for (int block_max_size = num - block_num + 1; index < block_max_size; index += block_num) {      \
+      MS_FLOAT_32xN(block_num) value = MS_LD_F32(block_size, src + index);                            \
+      MS_FLOAT_32xN(block_num) square_value = MS_MUL_F32(block_size, value, value);                   \
+      sum_##block_num = MS_ADD_F32(block_size, sum_##block_num, value);                               \
+      square_sum_##block_num = MS_ADD_F32(block_size, square_sum_##block_num, square_value);          \
+    }                                                                                                 \
+    *mean += MS_GET_SUM_F32(block_size, sum_##block_num);                                             \
+    square_mean += MS_GET_SUM_F32(block_size, square_sum_##block_num);                                \
+  } while (0)
+
 int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *variance) {
   if (num <= 0) {
     return NNACL_ERR;
   }
   int index = 0;
   float square_mean = 0.f;
-#ifdef ENABLE_NEON
-  float32x4_t sum = vdupq_n_f32(0);
-  float32x4_t square_sum = vdupq_n_f32(0);
-  for (; index <= num - C4NUM; index += C4NUM) {
-    float32x4_t srcv = vld1q_f32(src + index);
-    float32x4_t squarev = vmulq_f32(srcv, srcv);
-    sum = vaddq_f32(sum, srcv);
-    square_sum = vaddq_f32(square_sum, squarev);
-  }
-  *mean = sum[0] + sum[1] + sum[2] + sum[3];
-  square_mean = square_sum[0] + square_sum[1] + square_sum[2] + square_sum[3];
-#endif
+
+  MS_SIMD_RUN_NO_SCALAR(SimdLayerNormMeanAndSquareCoreCalc, src, num, mean, square_mean, index);
+
   for (; index < num; index++) {
     *mean += src[index];
     square_mean += src[index] * src[index];
@@ -46,23 +52,27 @@ int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *varian
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdLayerNormGammaAndBetaCoreCalc(block_size, block_num, dst, src, gamma, beta, num, mean, deno, index) \
+  do {                                                                                                          \
+    MS_FLOAT_32xN(block_num) mean_##block_num = MS_MOVN_F32(block_size, mean);                                  \
+    MS_FLOAT_32xN(block_num) deno_##block_num = MS_MOVN_F32(block_size, deno);                                  \
+    for (int block_max_size = num - block_num + 1; index < block_max_size; index += block_num) {                \
+      MS_FLOAT_32xN(block_num) value = MS_LD_F32(block_size, src + index);                                      \
+      MS_FLOAT_32xN(block_num) out_value = MS_SUB_F32(block_size, value, mean_##block_num);                     \
+      out_value = MS_MUL_F32(block_size, out_value, deno_##block_num);                                          \
+      out_value = MS_FMADD_F32(block_size, out_value, MS_LD_F32(block_size, gamma + index),                     \
+                               MS_LD_F32(block_size, beta + index));                                            \
+      MS_ST_F32(block_size, dst + index, out_value);                                                            \
+    }                                                                                                           \
+  } while (0)
+
 void LayerNormGammaAndBeta(float *dst, const float *src, const float *gamma_data, const float *beta_data, int num,
                            const float mean, const float deno) {
   int index = 0;
-#ifdef ENABLE_NEON
-  float32x4_t meanv = vdupq_n_f32(mean);
-  float32x4_t denov = vdupq_n_f32(deno);
-  for (; index <= num - C4NUM; index += C4NUM) {
-    float32x4_t srcv = vld1q_f32(src + index);
-    float32x4_t outv = vsubq_f32(srcv, meanv);
-    outv = vmulq_f32(outv, denov);
-    float32x4_t gammav = vld1q_f32(gamma_data + index);
-    float32x4_t betav = vld1q_f32(beta_data + index);
-    outv = vmulq_f32(outv, gammav);
-    outv = vaddq_f32(outv, betav);
-    vst1q_f32(dst + index, outv);
-  }
-#endif
+
+  MS_SIMD_RUN_NO_SCALAR(SimdLayerNormGammaAndBetaCoreCalc, dst, src, gamma_data, beta_data, num, mean, deno, index);
+
   for (; index < num; index++) {
     dst[index] = (src[index] - mean) * (deno);
     dst[index] = dst[index] * gamma_data[index] + beta_data[index];
