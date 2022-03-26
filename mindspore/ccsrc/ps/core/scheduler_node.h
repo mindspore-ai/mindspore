@@ -101,6 +101,9 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   // Recover finish transform nodes info when nodes recover heartbeat.
   virtual void HandleNodeRecoverByHeartBeat(uint32_t rank_id) {}
 
+  // Disaster recovery for operation aspects in PS mode.
+  virtual void RecoverFromPersistence() {}
+
   const std::shared_ptr<TcpClient> &GetOrCreateClient(const NodeInfo &node_info);
 
   void ProcessHeartbeat(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,

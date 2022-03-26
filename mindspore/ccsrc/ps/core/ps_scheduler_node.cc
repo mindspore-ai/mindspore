@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <memory>
 #include "ps/core/ps_scheduler_node.h"
 #include "utils/ms_context.h"
@@ -21,6 +22,9 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+constexpr char kActorSetNames[] = "actor_set_names";
+constexpr char kRecoveryStorage[] = "scheduler_persistent.json";
+
 void PSSchedulerNode::RunRecovery() {
   const auto &clusterConfig = PSContext::instance()->cluster_config();
   // create tcp client to myself in case of event dispatch failed when Send reconnect msg to server failed
@@ -209,15 +213,26 @@ void PSSchedulerNode::ProcessSendFinishTransform(const std::shared_ptr<TcpServer
   MS_ERROR_IF_NULL_WO_RET_VAL(meta);
   MS_ERROR_IF_NULL_WO_RET_VAL(data);
 
-  SendFinishTransformMessage send_ready_to_run_msg;
-  send_ready_to_run_msg.ParseFromArray(data, SizeToInt(size));
-  std::string node_id = send_ready_to_run_msg.node_id();
-  uint32_t rank_id = send_ready_to_run_msg.rank_id();
+  SendFinishTransformMessage send_finish_transform_msg;
+  send_finish_transform_msg.ParseFromArray(data, SizeToInt(size));
+  std::string node_id = send_finish_transform_msg.node_id();
+  uint32_t rank_id = send_finish_transform_msg.rank_id();
+  std::string actor_set_name = send_finish_transform_msg.actor_set_name();
   MS_LOG(INFO) << "Receive send finish transform request, node id: " << node_id << ", rank id: " << rank_id;
-  bool is_ready = send_ready_to_run_msg.is_ready();
+  bool is_ready = send_finish_transform_msg.is_ready();
   if (is_ready) {
     std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
-    (void)nodes_finish_trans_.insert(rank_id);
+    if (nodes_finish_trans_.count(actor_set_name) == 0) {
+      MS_ERROR_IF_NULL_WO_RET_VAL(recovery_storage_);
+      std::vector<std::string> actor_set_names;
+      if (recovery_storage_->Exists(kActorSetNames)) {
+        actor_set_names = recovery_storage_->GetValue<std::vector<std::string>>(kActorSetNames);
+      }
+      actor_set_names.push_back(actor_set_name);
+      recovery_storage_->PutValue(kActorSetNames, actor_set_names);
+    }
+
+    (void)nodes_finish_trans_[actor_set_name].insert(rank_id);
   }
 
   GeneralResponse(server, conn, meta, true, "");
@@ -233,14 +248,15 @@ void PSSchedulerNode::ProcessQueryFinishTransform(const std::shared_ptr<TcpServe
   MS_ERROR_IF_NULL_WO_RET_VAL(meta);
   MS_ERROR_IF_NULL_WO_RET_VAL(data);
 
-  GeneralQueryMessage query_msg;
+  QueryFinishTransformMessage query_msg;
   query_msg.ParseFromArray(data, SizeToInt(size));
   std::string node_id = query_msg.node_id();
   uint32_t rank_id = query_msg.rank_id();
+  std::string actor_set_name = query_msg.actor_set_name();
   MS_LOG(INFO) << "Receive query finish transform request, node id: " << node_id << ", rank id: " << rank_id;
 
   std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
-  bool is_ready = nodes_finish_trans_.size() == worker_num_;
+  bool is_ready = nodes_finish_trans_[actor_set_name].size() == worker_num_;
 
   QueryFinishTransformRespMessage resp_msg;
   resp_msg.set_is_ready(is_ready);
@@ -274,13 +290,63 @@ void PSSchedulerNode::HandleNodeTimeoutForRecovery(
   std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
   node_timeout_ = true;
   for (const auto &item : timeout_nodes_infos) {
-    (void)nodes_finish_trans_.erase(item.second.rank_id_);
+    for (auto &node_item : nodes_finish_trans_) {
+      (void)node_item.second.erase(item.second.rank_id_);
+    }
   }
 }
 
 void PSSchedulerNode::HandleNodeRecoverByHeartBeat(uint32_t rank_id) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_RECOVERY)) {
+    return;
+  }
+
   std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
-  (void)nodes_finish_trans_.insert(rank_id);
+  for (auto &node_item : nodes_finish_trans_) {
+    (void)node_item.second.insert(rank_id);
+  }
+}
+
+void PSSchedulerNode::RecoverFromPersistence() {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_RECOVERY)) {
+    return;
+  }
+
+  if (recovery_storage_ == nullptr) {
+    if (!config_->Exists(kKeyRecovery)) {
+      MS_LOG(EXCEPTION) << "The " << kKeyRecovery << " is not existed.";
+    }
+
+    nlohmann::json recovery_json;
+    try {
+      recovery_json = nlohmann::json::parse(config_->Get(kKeyRecovery, ""));
+    } catch (nlohmann::json::exception &e) {
+      MS_LOG(EXCEPTION) << "Parse the json failed.";
+    }
+
+    if (!recovery_json.contains(kStoreFilePath)) {
+      MS_LOG(EXCEPTION) << "The " << kStoreFilePath << " is not existed.";
+    }
+    std::string storage_file_path = recovery_json.at(kStoreFilePath);
+    std::string storage_file_dir = storage_file_path.substr(0, storage_file_path.rfind('/') + 1);
+
+    recovery_storage_ = std::make_unique<FileConfiguration>(storage_file_dir + kRecoveryStorage);
+    (void)recovery_storage_->Initialize();
+  }
+
+  if (recovery_storage_->Exists(kActorSetNames)) {
+    std::vector<std::string> actor_set_names = recovery_storage_->GetValue<std::vector<std::string>>(kActorSetNames);
+    std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
+    (void)std::for_each(actor_set_names.begin(), actor_set_names.end(), [this](const std::string &name) {
+      if (nodes_finish_trans_.count(name) == 0) {
+        nodes_finish_trans_.emplace(name, std::set<uint32_t>());
+      }
+    });
+  }
 }
 }  // namespace core
 }  // namespace ps
