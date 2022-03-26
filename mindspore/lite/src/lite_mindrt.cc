@@ -18,7 +18,7 @@
 #include <algorithm>
 #include "src/lite_mindrt.h"
 #include "mindrt/include/mindrt.hpp"
-#include "src/lite_kernel_util.h"
+#include "src/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
 #include "src/common/common.h"
 #include "src/runtime/inner_allocator.h"
@@ -53,7 +53,7 @@ void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor
   return;
 }
 
-bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const kernel::LiteKernel &this_kernel,
+bool OfflineIsolated(const std::vector<kernel::KernelExec *> &kernels, const kernel::KernelExec &this_kernel,
                      const lite::Tensor &this_input_tensor) {
   if (this_input_tensor.IsGraphInput()) {
     return false;
@@ -70,7 +70,7 @@ bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const ker
   return true;
 }
 
-TypeId GetSubgraphInTensorDataType(const kernel::LiteKernel *kernel, const lite::Tensor *tensor) {
+TypeId GetSubgraphInTensorDataType(const kernel::KernelExec *kernel, const lite::Tensor *tensor) {
 #ifdef ENABLE_LITE_ACL
   if (kernel->subgraph_type() == kernel::kCustomSubGraph) {
     return tensor->data_type();
@@ -93,7 +93,7 @@ int LiteOpActor::PostInit() { return PrepareOutputData(); }
 int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                                   std::unordered_map<Tensor *, Tensor *> *input_map) {
   isolate_input_map_ = input_map;
-  std::vector<kernel::LiteKernel *> kernels{};
+  std::vector<kernel::KernelExec *> kernels{};
   std::transform(actors->begin(), actors->end(), std::back_inserter(kernels),
                  [](const std::shared_ptr<LiteOpActor> &actor) { return actor->kernel_; });
   size_t in_tensor_size = kernel_->in_tensors().size();
@@ -135,7 +135,7 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
       new_tensor->AddQuantParam(quant);
     }
     isolate_input_map_->insert(std::make_pair(new_tensor, old_tensor));
-    auto ret = kernel::LiteKernelUtil::ReplaceSubGraphNodesInTensor(kernel_, old_tensor, new_tensor);
+    auto ret = kernel::KernelExecUtil::ReplaceSubGraphNodesInTensor(kernel_, old_tensor, new_tensor);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ReplaceSubGraphNodesInTensor failed.";
       return ret;
@@ -197,7 +197,7 @@ int LiteOpActor::UpdateActorOutput() {
     return RET_OK;
   }
   auto output_kernels = subgraph_kernel->out_nodes();
-  std::vector<kernel::LiteKernel *> call_kernels{};
+  std::vector<kernel::KernelExec *> call_kernels{};
   for (auto output_kernel : output_kernels) {
     if (output_kernel->type() == schema::PrimitiveType_Call) {
       call_kernels.push_back(output_kernel);
@@ -225,7 +225,7 @@ int LiteOpActor::UpdateActorOutput() {
     }
   }
 
-  auto partial_nodes = kernel::LiteKernelUtil::GetCallInputPartials(call_node_);
+  auto partial_nodes = kernel::KernelExecUtil::GetCallInputPartials(call_node_);
   if (partial_nodes.size() != 1) {
     MS_LOG(ERROR) << "partial output is not right.";
     return RET_ERROR;
@@ -392,7 +392,7 @@ int LiteOpActor::PrepareOutputData() {
   return RET_OK;
 }
 
-std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
+std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::KernelExec *> &kernels,
                                                         lite::InnerContext *ctx) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
   ActorThreadPool *thread_pool = reinterpret_cast<ActorThreadPool *>(ctx->thread_pool());
@@ -406,7 +406,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
     kernel->set_name(kernel->name() + "_" + to_string(actor_count++));
     std::shared_ptr<LiteOpActor> actor = nullptr;
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-    if ((kernel::LiteKernelUtil::IsSwitchTypeCall(kernel))) {
+    if ((kernel::KernelExecUtil::IsSwitchTypeCall(kernel))) {
       actor = std::make_shared<LiteSwitchOpActor>(kernel, ctx);
     } else if (kernel->subgraph_type() == kernel::kEntranceSubGraph) {
       actor = std::make_shared<LiteEntranceOpActor>(kernel, ctx);

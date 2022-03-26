@@ -19,15 +19,15 @@
 
 #ifndef RUNTIME_PASS_CLIP
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/sub_graph_kernel.h"
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"
 
 namespace mindspore::lite {
 
-STATUS RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Tensor *> *tensors);
-STATUS GraphOptimizePass(std::vector<kernel::LiteKernel *> *sub_graphs);
+STATUS RuntimePass(std::vector<kernel::KernelExec *> *subgraphs, std::vector<Tensor *> *tensors);
+STATUS GraphOptimizePass(std::vector<kernel::KernelExec *> *sub_graphs);
 /* Nc4hw4 PASS
  * before  : --(nhwc)-- CONV --(nhwc)-- TRANSPOSE --(nchw)-- IN --(nchw)-- TRANSPOSE --(nhwc)--
  * after   : --(nhwc)-- CONV --(nc4hw4)-- IN --(nhwc)--

@@ -25,8 +25,8 @@
 #include "src/cxx_api/converters.h"
 #include "src/cxx_api/model/model_impl.h"
 
+using mindspore::kernel::KernelExec;
 using mindspore::kernel::KernelKey;
-using mindspore::kernel::LiteKernel;
 using mindspore::lite::InnerContext;
 using mindspore::lite::LiteSession;
 using mindspore::lite::Tensor;
@@ -222,7 +222,7 @@ void CreateMultyModel2(mindspore::schema::MetaGraphT *meta_graph) {
 }
 
 enum MultyDeviceMode1 { CPU, NPU, GPU, CPU_GPU, GPU_CPU, NPU_CPU, NPU_GPU_CPU, NPU2, GPU_NPU2 };
-void CheckResult(std::vector<mindspore::kernel::LiteKernel *> kernels, int mode) {
+void CheckResult(std::vector<mindspore::kernel::KernelExec *> kernels, int mode) {
   /*
    *          cos     exp   where   sin
    * CPU       *       *      *      *

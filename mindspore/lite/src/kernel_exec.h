@@ -79,19 +79,19 @@ enum SubGraphType {
   kStackSubGraph
 };
 
-class LiteKernel {
+class KernelExec {
  public:
-  LiteKernel() {
+  KernelExec() {
     this->in_kernels_.clear();
     this->out_kernels_.clear();
   }
 
-  explicit LiteKernel(std::shared_ptr<Kernel> kernel) : kernel_(kernel) {
+  explicit KernelExec(std::shared_ptr<Kernel> kernel) : kernel_(kernel) {
     this->in_kernels_.clear();
     this->out_kernels_.clear();
   }
 
-  virtual ~LiteKernel() = default;
+  virtual ~KernelExec() = default;
 
   virtual int Execute() { return DoExecute(); }
 
@@ -305,29 +305,29 @@ class LiteKernel {
     }
   }
 
-  void AddInKernel(LiteKernel *kernel) {
+  void AddInKernel(KernelExec *kernel) {
     if (!lite::IsContain(this->in_kernels_, kernel)) {
       this->in_kernels_.emplace_back(kernel);
     }
   }
 
-  void AddOutKernel(LiteKernel *kernel) {
+  void AddOutKernel(KernelExec *kernel) {
     if (!lite::IsContain(this->out_kernels_, kernel)) {
       this->out_kernels_.emplace_back(kernel);
     }
   }
 
-  void set_in_kernels(const std::vector<LiteKernel *> &kernel) { this->in_kernels_ = kernel; }
+  void set_in_kernels(const std::vector<KernelExec *> &kernel) { this->in_kernels_ = kernel; }
 
-  void set_out_kernels(const std::vector<LiteKernel *> &kernel) { this->out_kernels_ = kernel; }
+  void set_out_kernels(const std::vector<KernelExec *> &kernel) { this->out_kernels_ = kernel; }
 
-  const std::vector<LiteKernel *> &in_kernels() const { return this->in_kernels_; }
+  const std::vector<KernelExec *> &in_kernels() const { return this->in_kernels_; }
 
-  const std::vector<LiteKernel *> &out_kernels() const { return this->out_kernels_; }
+  const std::vector<KernelExec *> &out_kernels() const { return this->out_kernels_; }
 
   virtual bool IsReady(const std::vector<lite::Tensor *> &in_tensor);
 
-  virtual void InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels = nullptr);
+  virtual void InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask_kernels = nullptr);
 
   KernelKey desc() const { return desc_; }
 
@@ -353,8 +353,8 @@ class LiteKernel {
   std::shared_ptr<Kernel> kernel_ = nullptr;
   KernelKey desc_;
   // tensor will free in ~lite_session()
-  std::vector<LiteKernel *> in_kernels_;
-  std::vector<LiteKernel *> out_kernels_;
+  std::vector<KernelExec *> in_kernels_;
+  std::vector<KernelExec *> out_kernels_;
   mutable std::vector<lite::Tensor *> mutable_in_tensors_;
   mutable std::vector<lite::Tensor *> mutable_out_tensors_;
   bool is_model_output_ = false;

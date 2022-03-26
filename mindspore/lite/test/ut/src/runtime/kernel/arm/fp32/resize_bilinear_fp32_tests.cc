@@ -16,7 +16,7 @@
 #include <vector>
 #include "common/common_test.h"
 #include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/src/lite_kernel.h"
+#include "mindspore/lite/src/kernel_exec.h"
 #include "mindspore/lite/src/tensor.h"
 #include "nnacl/resize_parameter.h"
 #include "schema/ops_generated.h"

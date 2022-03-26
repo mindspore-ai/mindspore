@@ -21,7 +21,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "include/model.h"
 #include "tools/converter/micro/coder/config.h"
 namespace mindspore::lite::micro {

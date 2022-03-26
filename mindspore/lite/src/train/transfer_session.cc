@@ -215,7 +215,7 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
     }
   }
   if (!out_put_tensor_name.empty() && model_type == MT_INFERENCE) {
-    std::vector<kernel::LiteKernel *> export_kernels = {};
+    std::vector<kernel::KernelExec *> export_kernels = {};
     status = FindExportKernels(&export_kernels, out_put_tensor_name, inference_kernels_);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "FindExportKernels failed.";

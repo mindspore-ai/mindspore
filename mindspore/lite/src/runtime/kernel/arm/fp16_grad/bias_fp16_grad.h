@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_BIAS_FP16_GRAD_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
 
 namespace mindspore::kernel {

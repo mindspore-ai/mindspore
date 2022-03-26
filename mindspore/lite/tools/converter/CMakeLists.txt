@@ -112,8 +112,8 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/kernel_registry.cc
         ${SRC_DIR}/registry/register_kernel_impl.cc
         ${SRC_DIR}/inner_kernel.cc
-        ${SRC_DIR}/lite_kernel.cc
-        ${SRC_DIR}/lite_kernel_util.cc
+        ${SRC_DIR}/kernel_exec.cc
+        ${SRC_DIR}/kernel_exec_util.cc
         ${SRC_DIR}/scheduler.cc
         ${SRC_DIR}/sub_graph_kernel.cc
         ${SRC_DIR}/sub_graph_split.cc

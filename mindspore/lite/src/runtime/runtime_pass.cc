@@ -22,12 +22,12 @@ const constexpr int kMaxDepth = 2048;
 }
 
 namespace mindspore::lite {
-void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors, size_t index) {
-  kernel::LiteKernel *conv_kernel = kernels->at(index);
-  kernel::LiteKernel *transpose_kernel = conv_kernel->out_kernels().front();
-  kernel::LiteKernel *c4_kernel = transpose_kernel->out_kernels().front();
-  kernel::LiteKernel *transpose2_kernel = c4_kernel->out_kernels().front();
-  std::vector<kernel::LiteKernel *> end_kernels = transpose2_kernel->out_kernels();
+void Nc4hw4PassReplace(std::vector<kernel::KernelExec *> *kernels, std::vector<Tensor *> *tensors, size_t index) {
+  kernel::KernelExec *conv_kernel = kernels->at(index);
+  kernel::KernelExec *transpose_kernel = conv_kernel->out_kernels().front();
+  kernel::KernelExec *c4_kernel = transpose_kernel->out_kernels().front();
+  kernel::KernelExec *transpose2_kernel = c4_kernel->out_kernels().front();
+  std::vector<kernel::KernelExec *> end_kernels = transpose2_kernel->out_kernels();
 
   /* tensor */
   {
@@ -84,8 +84,8 @@ void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<T
   return;
 }
 
-bool Nc4hw4PassMatch(const std::vector<kernel::LiteKernel *> *kernels, size_t index) {
-  kernel::LiteKernel *start_kernel = kernels->at(index);
+bool Nc4hw4PassMatch(const std::vector<kernel::KernelExec *> *kernels, size_t index) {
+  kernel::KernelExec *start_kernel = kernels->at(index);
   if (IsContain(Nc4hw4FormatOutOpList, start_kernel->type()) == false) {
     return false;
   }
@@ -98,7 +98,7 @@ bool Nc4hw4PassMatch(const std::vector<kernel::LiteKernel *> *kernels, size_t in
     return false;
   }
 
-  kernel::LiteKernel *traspose_nhwc2nchw_kernel = start_kernel->out_kernels().front();
+  kernel::KernelExec *traspose_nhwc2nchw_kernel = start_kernel->out_kernels().front();
   if (traspose_nhwc2nchw_kernel->type() != Nc4hw4FormatTransposeOp) {
     return false;
   }
@@ -106,7 +106,7 @@ bool Nc4hw4PassMatch(const std::vector<kernel::LiteKernel *> *kernels, size_t in
     return false;
   }
 
-  kernel::LiteKernel *end_kernel = traspose_nhwc2nchw_kernel->out_kernels().front();
+  kernel::KernelExec *end_kernel = traspose_nhwc2nchw_kernel->out_kernels().front();
   if (IsContain(Nc4hw4FormatInOpList, end_kernel->type()) == false) {
     return false;
   }
@@ -114,7 +114,7 @@ bool Nc4hw4PassMatch(const std::vector<kernel::LiteKernel *> *kernels, size_t in
     return false;
   }
 
-  kernel::LiteKernel *transpose_nchw2nhwc_kernel = end_kernel->out_kernels().front();
+  kernel::KernelExec *transpose_nchw2nhwc_kernel = end_kernel->out_kernels().front();
   if (transpose_nchw2nhwc_kernel->type() != Nc4hw4FormatTransposeOp) {
     return false;
   }
@@ -159,7 +159,7 @@ bool RuntimePassValid(kernel::SubGraphKernel *subgraph) {
   return true;
 }
 
-void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors, int i) {
+void Nc4hw4PassAct(std::vector<kernel::KernelExec *> *kernels, std::vector<Tensor *> *tensors, int i) {
   if (i > kMaxDepth) {
     MS_LOG(ERROR) << "exceed max depth 2048, i " << i;
     return;
@@ -168,11 +168,11 @@ void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tenso
   size_t kernel_size = kernels->size();
   size_t index = 0;
   for (; index + 3 < kernel_size; index++) {
-    kernel::LiteKernel *kernel = kernels->at(index);
+    kernel::KernelExec *kernel = kernels->at(index);
 
     if (kernel->subgraph_type() != kernel::kNotSubGraph) {
       kernel::SubGraphKernel *subgraph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
-      std::vector<kernel::LiteKernel *> &particial_nodes = subgraph->nodes();
+      std::vector<kernel::KernelExec *> &particial_nodes = subgraph->nodes();
       Nc4hw4PassAct(&particial_nodes, tensors, i);
     }
 
@@ -185,13 +185,13 @@ void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tenso
   return;
 }
 
-void ConvNormC4PassActReplace(const kernel::LiteKernel *conv_op, const kernel::LiteKernel *in_op) {
+void ConvNormC4PassActReplace(const kernel::KernelExec *conv_op, const kernel::KernelExec *in_op) {
   conv_op->out_tensors().front()->set_format(NC4HW4);
   in_op->in_tensors().front()->set_format(NC4HW4);
 }
 
-void ConvNormC4PassActIndex(std::vector<kernel::LiteKernel *> *kernels, size_t index) {
-  kernel::LiteKernel *start_kernel = kernels->at(index);
+void ConvNormC4PassActIndex(std::vector<kernel::KernelExec *> *kernels, size_t index) {
+  kernel::KernelExec *start_kernel = kernels->at(index);
   if (start_kernel->type() != ConvNormC4OpConv2DFusion) {
     return;
   }
@@ -204,12 +204,12 @@ void ConvNormC4PassActIndex(std::vector<kernel::LiteKernel *> *kernels, size_t i
     return;
   }
 
-  kernel::LiteKernel *after_kernel = start_kernel->out_kernels().front();
+  kernel::KernelExec *after_kernel = start_kernel->out_kernels().front();
   if (after_kernel->type() == ConvNormC4OpActivation) {
     if (after_kernel->out_kernels().size() != 1) {
       return;
     }
-    kernel::LiteKernel *end_kernel = after_kernel->out_kernels().front();
+    kernel::KernelExec *end_kernel = after_kernel->out_kernels().front();
     if (end_kernel->type() == ConvNormC4OpInstanceNorm) {
       ConvNormC4PassActReplace(start_kernel, end_kernel);
       return;
@@ -225,7 +225,7 @@ void ConvNormC4PassActIndex(std::vector<kernel::LiteKernel *> *kernels, size_t i
   return;
 }
 
-void ConvNormC4PassAct(std::vector<kernel::LiteKernel *> *kernels) {
+void ConvNormC4PassAct(std::vector<kernel::KernelExec *> *kernels) {
   size_t kernel_size = kernels->size();
   size_t index = 0;
   for (; index < kernel_size; index++) {
@@ -234,7 +234,7 @@ void ConvNormC4PassAct(std::vector<kernel::LiteKernel *> *kernels) {
   return;
 }
 
-STATUS DeleteRedundantTrans(std::vector<kernel::LiteKernel *> *kernels) {
+STATUS DeleteRedundantTrans(std::vector<kernel::KernelExec *> *kernels) {
   for (auto *pre_kernel : *kernels) {
     if (pre_kernel->subgraph_type() != kernel::kNotSubGraph) {
       auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(pre_kernel);
@@ -276,7 +276,7 @@ STATUS DeleteRedundantTrans(std::vector<kernel::LiteKernel *> *kernels) {
     }
     auto pre_in_kernel = pre_kernel->in_kernels().front();
     pre_in_kernel->set_out_kernels({post_kernel});
-    std::vector<kernel::LiteKernel *> post_in_kernels = {pre_in_kernel};
+    std::vector<kernel::KernelExec *> post_in_kernels = {pre_in_kernel};
     if (post_kernel->in_kernels().size() == kInputSize1) {
       post_in_kernels.push_back(post_kernel->in_kernels()[1]);
     }
@@ -288,7 +288,7 @@ STATUS DeleteRedundantTrans(std::vector<kernel::LiteKernel *> *kernels) {
   return RET_OK;
 }
 
-STATUS RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Tensor *> *tensors) {
+STATUS RuntimePass(std::vector<kernel::KernelExec *> *subgraphs, std::vector<Tensor *> *tensors) {
   for (auto subgraph : *subgraphs) {
     auto sub = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
     if (RuntimePassValid(sub) == false) {
@@ -308,7 +308,7 @@ STATUS RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Ten
   return RET_OK;
 }
 
-STATUS GraphOptimizePass(std::vector<kernel::LiteKernel *> *sub_graphs) {
+STATUS GraphOptimizePass(std::vector<kernel::KernelExec *> *sub_graphs) {
   for (auto subgraph : *sub_graphs) {
     auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
     if (RuntimePassValid(sub_graph) == false) {

@@ -125,8 +125,8 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_model.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/inner_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_exec.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_exec_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc

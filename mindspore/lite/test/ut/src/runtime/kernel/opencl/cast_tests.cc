@@ -82,7 +82,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
     delete param;
     return;
   }
-  auto *cast_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+  auto *cast_kernel = new (std::nothrow) kernel::KernelExec(inner_kernel);
   if (cast_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
@@ -100,7 +100,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
     input_tensor->MallocData(allocator);
   }
   MS_LOG(INFO) << " initialize sub_graph ";
-  std::vector<kernel::LiteKernel *> kernels{cast_kernel};
+  std::vector<kernel::KernelExec *> kernels{cast_kernel};
   auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, inputs, outputs, nullptr);
   if (sub_inner_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::OpenCLSubGraph Inner Kernel failed ";
@@ -191,7 +191,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
     delete param;
     return;
   }
-  auto *cast_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+  auto *cast_kernel = new (std::nothrow) kernel::KernelExec(inner_kernel);
   if (cast_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
@@ -209,7 +209,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
     input_tensor->MallocData(allocator);
   }
   MS_LOG(INFO) << " initialize sub_graph ";
-  std::vector<kernel::LiteKernel *> kernels{cast_kernel};
+  std::vector<kernel::KernelExec *> kernels{cast_kernel};
   auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, inputs, outputs, nullptr);
   if (sub_inner_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::OpenCLSubGraph Inner Kernel failed ";

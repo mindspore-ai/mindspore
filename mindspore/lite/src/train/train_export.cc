@@ -82,7 +82,7 @@ bool TrainExport::NeedQuantization(const lite::Tensor *t) {
           ((quant_type_ == QT_DEFAULT) && (t->quant_params().size() > 0) && (t->quant_params().at(0).inited)));
 }
 
-schema::QuantType TrainExport::GetNodeQuantType(const kernel::LiteKernel *kernel) {
+schema::QuantType TrainExport::GetNodeQuantType(const kernel::KernelExec *kernel) {
   if (std::any_of(kernel->in_tensors().cbegin(), kernel->in_tensors().cend(), [](const lite::Tensor *t) {
         return (t->IsConst() && (t->quant_params().size() > 0) && (t->quant_params().at(0).inited));
       })) {
@@ -180,7 +180,7 @@ std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite
   return tensorT;
 }
 
-Model::Node *TrainExport::FindNode(const mindspore::kernel::LiteKernel *kernel, const Model *model) {
+Model::Node *TrainExport::FindNode(const mindspore::kernel::KernelExec *kernel, const Model *model) {
   auto nodes = model->all_nodes_;
   auto it = std::find_if(nodes.begin(), nodes.end(),
                          [&kernel](mindspore::lite::Model::Node *n) { return (kernel->name() == n->name_); });
@@ -190,7 +190,7 @@ Model::Node *TrainExport::FindNode(const mindspore::kernel::LiteKernel *kernel, 
   return *it;
 }
 
-int TrainExport::CreateAndAddCNode(const mindspore::kernel::LiteKernel *kernel, std::vector<uint32_t> inputIndex,
+int TrainExport::CreateAndAddCNode(const mindspore::kernel::KernelExec *kernel, std::vector<uint32_t> inputIndex,
                                    std::vector<uint32_t> outputIndex, const Model *model) {
   auto cnode = CreateCNode(kernel, inputIndex, outputIndex, model);
   if (cnode == nullptr) {
@@ -204,7 +204,7 @@ int TrainExport::CreateAndAddCNode(const mindspore::kernel::LiteKernel *kernel, 
   return RET_OK;
 }
 
-std::unique_ptr<schema::CNodeT> TrainExport::CreateCNode(const mindspore::kernel::LiteKernel *kernel,
+std::unique_ptr<schema::CNodeT> TrainExport::CreateCNode(const mindspore::kernel::KernelExec *kernel,
                                                          std::vector<uint32_t> inputIndex,
                                                          std::vector<uint32_t> outputIndex, const Model *model) {
   auto cnodeT = std::make_unique<schema::CNodeT>();
@@ -395,7 +395,7 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
   return RET_OK;
 }
 
-int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &kernels,
+int TrainExport::ExportNet(const std::vector<mindspore::kernel::KernelExec *> &kernels,
                            const std::vector<mindspore::lite::Tensor *> &tensors,
                            const std::vector<std::string> &output_names, const Model *model,
                            QuantizationType quant_type) {

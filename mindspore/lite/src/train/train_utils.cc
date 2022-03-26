@@ -19,7 +19,7 @@
 #include "include/errorcode.h"
 #include "include/ms_tensor.h"
 #include "src/common/utils.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
@@ -44,9 +44,9 @@ size_t TSFindTensorByName(const std::vector<lite::Tensor *> &where, const std::s
   return where.size();
 }
 
-kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where, const std::string &searchParameter) {
+kernel::KernelExec *TSFindKernel(const std::vector<kernel::KernelExec *> &where, const std::string &searchParameter) {
   auto it = std::find_if(where.begin(), where.end(),
-                         [&searchParameter](const kernel::LiteKernel *k) { return (k->name() == searchParameter); });
+                         [&searchParameter](const kernel::KernelExec *k) { return (k->name() == searchParameter); });
   if (it == where.end()) {
     return nullptr;
   }

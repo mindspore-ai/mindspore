@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <map>
 #include <atomic>
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "include/ms_tensor.h"
 #include "include/lite_session.h"
 #include "src/lite_model.h"
@@ -83,7 +83,7 @@ class LiteSession : public session::LiteSession {
              const std::vector<std::vector<int>> &dims) override;
   void InitExecutionConfig(std::map<std::string, TypeId> *config) { execution_plan_ = config; }
   void set_model(Model *model) { this->model_ = model; }
-  const std::vector<kernel::LiteKernel *> &get_kernels() const { return this->kernels_; }
+  const std::vector<kernel::KernelExec *> &get_kernels() const { return this->kernels_; }
   const Delegate *get_delegate() const { return this->delegate_.get(); }
   void SetConfigInfo(const std::map<std::string, std::map<std::string, std::string>> *config_info) {
     config_info_ = config_info;
@@ -106,19 +106,19 @@ class LiteSession : public session::LiteSession {
   void AdjustModelOutputTensorInitRefCount(const lite::Model *model);
   int UpdateInputShapeMap();
   int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims);
-  int SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel);
+  int SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel);
   int PrepareKernels(const Model *model);
   int SetTensorInitRefCount(const Model *model);
 #ifdef ENABLE_V0
   void TensorNameCompatibleWithV0(const lite::Model *model);
 #endif
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-  int SetNonTaiCallSubgraphOutputInitRefCount(const std::vector<kernel::LiteKernel *> &non_tail_call_kernels);
+  int SetNonTaiCallSubgraphOutputInitRefCount(const std::vector<kernel::KernelExec *> &non_tail_call_kernels);
 #endif
   static int ReSizeKernels(
-    const std::vector<kernel::LiteKernel *> &kernels,
+    const std::vector<kernel::KernelExec *> &kernels,
     const std::unordered_map<Tensor *, Tensor *> &isolate_input_map = std::unordered_map<Tensor *, Tensor *>());
-  static void FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels);
+  static void FreePackOpWeight(const std::vector<kernel::KernelExec *> &kernels);
 #ifdef SHARING_MODEL_WEIGHT
   int IniPackWeightData(Model *model);
 #endif
@@ -135,8 +135,8 @@ class LiteSession : public session::LiteSession {
 
  private:
   int IsolateOutputTensor();
-  bool IsIsolatedSubGraph(const kernel::LiteKernel *kernel);
-  void UpdateGraphOutputMap(const std::vector<kernel::LiteKernel *> &kernel);
+  bool IsIsolatedSubGraph(const kernel::KernelExec *kernel);
+  void UpdateGraphOutputMap(const std::vector<kernel::KernelExec *> &kernel);
   void UpdateLinkInfoForIsolateOutput();
   std::unordered_map<Tensor *, Tensor *> isolate_graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
   std::unordered_map<Tensor *, Tensor *> isolate_input_map_;        /* <calculate-tensor,  src-subgraph-input-tensor> */
@@ -152,7 +152,7 @@ class LiteSession : public session::LiteSession {
  protected:
   InnerContext *context_ = nullptr;
   mindspore::Context *ms_context_ = nullptr;
-  std::vector<kernel::LiteKernel *> kernels_;
+  std::vector<kernel::KernelExec *> kernels_;
   std::vector<Tensor *> tensors_;
   // graph input tensors
   std::vector<Tensor *> inputs_;
@@ -186,7 +186,7 @@ class LiteSession : public session::LiteSession {
   int delegate_device_type_ = -1;  // -1: not specified; 0: CPU; 1: GPU; 2: NPU
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
   const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
-  std::vector<kernel::LiteKernel *> non_tail_call_kernels_;
+  std::vector<kernel::KernelExec *> non_tail_call_kernels_;
 };
 }  // namespace lite
 }  // namespace mindspore

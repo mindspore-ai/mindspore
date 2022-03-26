@@ -22,7 +22,7 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/executor.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"

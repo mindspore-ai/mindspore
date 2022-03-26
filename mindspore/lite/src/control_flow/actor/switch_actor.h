@@ -27,7 +27,7 @@
 namespace mindspore::lite {
 class LiteSwitchOpActor : public LiteOpActor {
  public:
-  explicit LiteSwitchOpActor(kernel::LiteKernel *kernel, lite::InnerContext *ctx) : LiteOpActor(kernel, ctx) {}
+  explicit LiteSwitchOpActor(kernel::KernelExec *kernel, lite::InnerContext *ctx) : LiteOpActor(kernel, ctx) {}
   ~LiteSwitchOpActor() override {
     delete call_node_;
     delete switch_type_node_;
@@ -38,8 +38,8 @@ class LiteSwitchOpActor : public LiteOpActor {
   void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override;
   int CompileArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map) override;
   int PrepareOutputData() override;
-  std::set<kernel::LiteKernel *> GetPartialKernels() const override {
-    std::set<kernel::LiteKernel *> ret{};
+  std::set<kernel::KernelExec *> GetPartialKernels() const override {
+    std::set<kernel::KernelExec *> ret{};
     for (auto &item : partial_nodes_) {
       ret.insert(item);
     }
@@ -65,9 +65,9 @@ class LiteSwitchOpActor : public LiteOpActor {
   // each element is a set of data arrow sent to the next target actor.
   std::vector<std::vector<DataArrowPtr>> all_branch_output_data_arrows_;
 
-  std::vector<kernel::LiteKernel *> partial_nodes_{};
-  kernel::LiteKernel *switch_type_node_ = nullptr;
-  kernel::LiteKernel *call_node_ = nullptr;
+  std::vector<kernel::KernelExec *> partial_nodes_{};
+  kernel::KernelExec *switch_type_node_ = nullptr;
+  kernel::KernelExec *call_node_ = nullptr;
 
   // each element is a set of output data which is going to be send to the next target actor.
   std::vector<std::vector<OpDataPtr<Tensor>>> all_branchs_output_data_;

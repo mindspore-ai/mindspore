@@ -23,7 +23,7 @@
 #include <set>
 #include <utility>
 #include "actor/op_actor.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "actor/actor.h"
 #include "async/uuid_base.h"
 #include "async/future.h"
@@ -38,7 +38,7 @@ namespace mindspore::lite {
 typedef enum { GRAPH, OP_BY_OP } MindRTMode;
 class LiteOpActor : public OpActor<lite::Tensor> {
  public:
-  explicit LiteOpActor(kernel::LiteKernel *kernel, lite::InnerContext *ctx)
+  explicit LiteOpActor(kernel::KernelExec *kernel, lite::InnerContext *ctx)
       : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel), ctx_(ctx) {
     inputs_data_.resize(kernel_->in_tensors().size());
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
@@ -68,14 +68,14 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
  public:
   void AddResultIndex(size_t index);
-  const kernel::LiteKernel *GetKernel() { return kernel_; }
+  const kernel::KernelExec *GetKernel() { return kernel_; }
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   // call this function after CompileArrow
-  virtual std::set<kernel::LiteKernel *> GetPartialKernels() const {
+  virtual std::set<kernel::KernelExec *> GetPartialKernels() const {
     if (partial_node_ == nullptr) {
       return {};
     }
-    std::set<kernel::LiteKernel *> ret{partial_node_};
+    std::set<kernel::KernelExec *> ret{partial_node_};
     return ret;
   }
 #endif
@@ -95,7 +95,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   virtual int UpdateActorOutput();
 #endif
 
-  kernel::LiteKernel *kernel_;
+  kernel::KernelExec *kernel_;
   std::vector<size_t> results_index_{};
   std::vector<OpDataPtr<Tensor>> outputs_data_{};
   std::vector<Tensor *> inputs_data_{};
@@ -113,8 +113,8 @@ class LiteOpActor : public OpActor<lite::Tensor> {
                            std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
 
  private:
-  kernel::LiteKernel *partial_node_ = nullptr;
-  kernel::LiteKernel *call_node_ = nullptr;
+  kernel::KernelExec *partial_node_ = nullptr;
+  kernel::KernelExec *call_node_ = nullptr;
   bool support_fp16_ = false;
 };
 
@@ -122,7 +122,7 @@ int MindrtInit();
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &);
 static std::atomic_int64_t actor_count = 0;
 
-std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
+std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::KernelExec *> &kernels,
                                                         lite::InnerContext *ctx);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_LITE_MINDRT_H_

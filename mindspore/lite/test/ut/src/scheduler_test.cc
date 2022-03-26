@@ -20,8 +20,8 @@
 #include "ir/dtype/type_id.h"
 #include "include/version.h"
 
+using mindspore::kernel::KernelExec;
 using mindspore::kernel::KernelKey;
-using mindspore::kernel::LiteKernel;
 using mindspore::lite::InnerContext;
 using mindspore::lite::LiteSession;
 using mindspore::lite::Tensor;

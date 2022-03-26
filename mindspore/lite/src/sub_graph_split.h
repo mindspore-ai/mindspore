@@ -23,7 +23,7 @@
 #include <set>
 #include <unordered_map>
 #include "include/model.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/lite_model.h"
 #include "src/inner_context.h"
 #include "src/common/prim_util.h"

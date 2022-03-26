@@ -40,7 +40,7 @@
 #include "src/lite_model.h"
 #include "src/weight_decoder.h"
 #include "src/runtime/runtime_allocator.h"
-#include "src/lite_kernel_util.h"
+#include "src/kernel_exec_util.h"
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 #include "src/registry/register_kernel_impl.h"
 #endif
@@ -614,7 +614,7 @@ void LiteSession::UpdateLinkInfoForIsolateOutput() {
   return;
 }
 
-void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels) {
+void LiteSession::FreePackOpWeight(const std::vector<kernel::KernelExec *> &kernels) {
   // For reducing runtime RAM
   // free pack-op weight because pack-op will not access origin weight in runtime
   for (auto *kernel : kernels) {
@@ -740,7 +740,7 @@ int LiteSession::CompileGraph(Model *model) {
   return RET_OK;
 }
 
-bool LiteSession::IsIsolatedSubGraph(const kernel::LiteKernel *kernel) {
+bool LiteSession::IsIsolatedSubGraph(const kernel::KernelExec *kernel) {
   auto cur_in_tensors = kernel->in_tensors();
   for (auto cur_kernel : this->kernels_) {
     if (cur_kernel == kernel) {
@@ -756,7 +756,7 @@ bool LiteSession::IsIsolatedSubGraph(const kernel::LiteKernel *kernel) {
   return true;
 }
 
-int LiteSession::SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel) {
+int LiteSession::SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel) {
   if (kernel == nullptr) {
     return RET_NULL_PTR;
   }
@@ -773,9 +773,9 @@ int LiteSession::SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel
 
 int LiteSession::PrepareKernels(const Model *model) {
   // find kernel's in_kernels and out_kernels in every subgraph
-  kernel::LiteKernelUtil::FindAllInoutKernelsInSubgraphKernel(this->kernels_);
+  kernel::KernelExecUtil::FindAllInoutKernelsInSubgraphKernel(this->kernels_);
   // find in_kernels and out_kernels between subgraph kernels
-  kernel::LiteKernelUtil::FindAllInoutKernels(this->kernels_);
+  kernel::KernelExecUtil::FindAllInoutKernels(this->kernels_);
 
   // init init_ref_count for subgraphs and kernels
   auto ret = SetTensorInitRefCount(model);
@@ -840,10 +840,10 @@ int LiteSession::SetTensorInitRefCount(const Model *model) {
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount(
-  const std::vector<kernel::LiteKernel *> &non_tail_call_kernels) {
+  const std::vector<kernel::KernelExec *> &non_tail_call_kernels) {
   for (auto call_kernel : non_tail_call_kernels_) {
     auto call_output = call_kernel->out_tensors();
-    auto all_out_subgraphs = kernel::LiteKernelUtil::GetCallInputPartialsCorrespondingOutputSubgraph(call_kernel);
+    auto all_out_subgraphs = kernel::KernelExecUtil::GetCallInputPartialsCorrespondingOutputSubgraph(call_kernel);
     for (auto subgraph : all_out_subgraphs) {
       MS_CHECK_TRUE_MSG(subgraph->out_tensors().size() == call_output.size(), RET_ERROR,
                         "non tail call output size is not same as subgraph output.");
@@ -1209,7 +1209,7 @@ void LiteSession::ResetInputsShape(const std::vector<std::vector<int>> &dims) {
   }
 }
 
-int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels,
+int LiteSession::ReSizeKernels(const std::vector<kernel::KernelExec *> &kernels,
                                const std::unordered_map<Tensor *, Tensor *> &isolate_input_map) {
   for (auto kernel : kernels) {
     if (kernel == nullptr) {
@@ -1469,7 +1469,7 @@ void LiteSession::RuntimeAllocatorInitGraphOutput() {
   return;
 }
 
-void RuntimeAllocatorInitSubgraphInputs(const kernel::LiteKernel *subgraph, const AllocatorPtr &default_allocator,
+void RuntimeAllocatorInitSubgraphInputs(const kernel::KernelExec *subgraph, const AllocatorPtr &default_allocator,
                                         const RuntimeAllocatorPtr &runtime_allocator,
                                         const std::unordered_map<Tensor *, Tensor *> &isolate_input_map,
                                         std::unordered_map<Tensor *, int> *tensor_ref_count,

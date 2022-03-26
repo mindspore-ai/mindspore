@@ -100,20 +100,20 @@ class TrainSession : virtual public lite::LiteSession {
   std::vector<tensor::MSTensor *> GetFeatureMaps() const override;
 
   int UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features_map) override;
-  int FindUseInTensorKernel(std::vector<kernel::LiteKernel *> *use_in_tensor_kernels,
+  int FindUseInTensorKernel(std::vector<kernel::KernelExec *> *use_in_tensor_kernels,
                             const std::vector<lite::Tensor *> &kernel_in_tensors,
-                            const std::vector<kernel::LiteKernel *> &inference_kernels);
-  int FindExportKernels(std::vector<kernel::LiteKernel *> *export_kernels,
+                            const std::vector<kernel::KernelExec *> &inference_kernels);
+  int FindExportKernels(std::vector<kernel::KernelExec *> *export_kernels,
                         const std::vector<std::string> &export_output_tensor_names,
-                        const std::vector<kernel::LiteKernel *> &inference_kernels);
+                        const std::vector<kernel::KernelExec *> &inference_kernels);
 
  protected:
   int AllocWorkSpace();
-  bool IsLossKernel(const kernel::LiteKernel *kernel) const;
-  bool IsGradKernel(const kernel::LiteKernel *kernel) const;
-  bool IsOptimizer(kernel::LiteKernel *kernel) const;
-  bool IsMaskOutput(kernel::LiteKernel *kernel) const;
-  bool IsBN(kernel::LiteKernel *kernel) const;
+  bool IsLossKernel(const kernel::KernelExec *kernel) const;
+  bool IsGradKernel(const kernel::KernelExec *kernel) const;
+  bool IsOptimizer(kernel::KernelExec *kernel) const;
+  bool IsMaskOutput(kernel::KernelExec *kernel) const;
+  bool IsBN(kernel::KernelExec *kernel) const;
 
   virtual std::vector<CreatorOp> ReplaceOps();
   virtual void RestoreOps(const std::vector<CreatorOp> &restore);
@@ -137,31 +137,31 @@ class TrainSession : virtual public lite::LiteSession {
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> train_output_tensor_map_;
   std::vector<std::string> train_output_tensor_names_;
 
-  std::vector<kernel::LiteKernel *> inference_kernels_;
-  std::vector<kernel::LiteKernel *> train_kernels_;
+  std::vector<kernel::KernelExec *> inference_kernels_;
+  std::vector<kernel::KernelExec *> train_kernels_;
   TrainCfg cfg_;
 
  private:
   std::vector<std::string> get_loss_name() const { return cfg_.loss_name_; }
-  void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
+  void BuildInferenceKernelsRecursive(kernel::KernelExec *ker, std::vector<kernel::KernelExec *> *req_kernels);
   int AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum);
   int OptimizerStep();
   int ExecKernels(const KernelCallBack &before, const KernelCallBack &after,
-                  const std::vector<kernel::LiteKernel *> &run_kernel);
+                  const std::vector<kernel::KernelExec *> &run_kernel);
   int MixPrecisionExecKernels(const KernelCallBack &before, const KernelCallBack &after,
-                              const std::vector<kernel::LiteKernel *> &run_kernel);
-  int MixPrecisionPreProcess(kernel::LiteKernel *kernel, float scale);
-  int MixPrecisionPostProcess(kernel::LiteKernel *kernel);
+                              const std::vector<kernel::KernelExec *> &run_kernel);
+  int MixPrecisionPreProcess(kernel::KernelExec *kernel, float scale);
+  int MixPrecisionPostProcess(kernel::KernelExec *kernel);
   bool IsLossTensor(Tensor *tensor);
   void RestoreTensorData();
   void FreeRestoreTensors();
-  bool AllInputsNeedScale(kernel::LiteKernel *kernel);
+  bool AllInputsNeedScale(kernel::KernelExec *kernel);
   void FreeWorkSpace();
-  int AllocTensors(const std::vector<kernel::LiteKernel *> &kernels);
-  bool IsInPlaceKernel(kernel::LiteKernel *kernel);
-  bool IsInPlaceTensor(kernel::LiteKernel *kernel, uint32_t idx,
+  int AllocTensors(const std::vector<kernel::KernelExec *> &kernels);
+  bool IsInPlaceKernel(kernel::KernelExec *kernel);
+  bool IsInPlaceTensor(kernel::KernelExec *kernel, uint32_t idx,
                        const std::unordered_map<lite::Tensor *, int> &ref_count, uint32_t *input_idx);
-  size_t GetInplaceTensorOffset(kernel::LiteKernel *kernel,
+  size_t GetInplaceTensorOffset(kernel::KernelExec *kernel,
                                 const std::unordered_map<lite::Tensor *, size_t> &offset_map,
                                 std::unordered_map<lite::Tensor *, int> *ref_count, uint32_t input_idx);
 

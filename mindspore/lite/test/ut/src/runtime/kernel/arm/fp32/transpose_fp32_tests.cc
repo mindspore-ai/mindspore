@@ -21,7 +21,7 @@
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/transpose.h"
 #include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/src/lite_kernel.h"
+#include "mindspore/lite/src/kernel_exec.h"
 
 namespace mindspore {
 

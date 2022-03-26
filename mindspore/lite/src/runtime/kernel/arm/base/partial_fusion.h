@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/tensor.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 
 // this file is going to be removed when move create actor before schedule.
 namespace mindspore::kernel {
@@ -31,11 +31,11 @@ class PartialFusionKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  void set_subgraph_kernels(const std::vector<LiteKernel *> &subgraph_kernels) { subgraph_kernels_ = subgraph_kernels; }
-  std::vector<LiteKernel *> subgraph_kernels() const { return subgraph_kernels_; }
+  void set_subgraph_kernels(const std::vector<KernelExec *> &subgraph_kernels) { subgraph_kernels_ = subgraph_kernels; }
+  std::vector<KernelExec *> subgraph_kernels() const { return subgraph_kernels_; }
   // One partial corresponds to a subgraph at offline stage, after graph schedule, a subgraph may be split into many
   // graphs, so use a vector.
-  std::vector<LiteKernel *> subgraph_kernels_{};
+  std::vector<KernelExec *> subgraph_kernels_{};
 };
 }  // namespace mindspore::kernel
 

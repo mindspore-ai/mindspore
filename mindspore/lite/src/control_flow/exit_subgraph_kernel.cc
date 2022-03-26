@@ -29,5 +29,5 @@ SubGraphKernel *ExitSubGraphKernel::Create(Kernel *kernel) {
   return sub_kernel;
 }
 
-void ExitSubGraphKernel::SetPartial(kernel::LiteKernel *partial_node) { partials_.insert(partial_node); }
+void ExitSubGraphKernel::SetPartial(kernel::KernelExec *partial_node) { partials_.insert(partial_node); }
 }  // namespace mindspore::kernel

@@ -26,7 +26,7 @@
 #include <cmath>
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/gather_parameter.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
 #include "src/lite_model.h"

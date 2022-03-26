@@ -21,7 +21,7 @@
 #include <string>
 #include "include/context.h"
 #include "include/api/context.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 
 namespace mindspore {
 namespace lite {

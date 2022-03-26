@@ -23,7 +23,7 @@
 #include "src/common/file_utils.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/tensor.h"
-#include "mindspore/lite/src/lite_kernel.h"
+#include "mindspore/lite/src/kernel_exec.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/activation_grad.h"
 #include "nnacl/fp32_grad/activation_grad.h"
 

@@ -27,7 +27,7 @@
 #include <set>
 #include "include/errorcode.h"
 #include "src/lite_model.h"
-#include "src/lite_kernel_util.h"
+#include "src/kernel_exec_util.h"
 #include "src/tensor.h"
 #include "src/kernel_registry.h"
 #include "src/common/prim_util.h"
@@ -252,7 +252,7 @@ int TrainSession::UpdateWeights(std::vector<tensor::MSTensor *> modify_tensors) 
   return ret;
 }
 
-int TrainSession::AllocTensors(const std::vector<kernel::LiteKernel *> &kernels) {
+int TrainSession::AllocTensors(const std::vector<kernel::KernelExec *> &kernels) {
   if (!IS_STATIC_ALLOCATOR(allocator_)) return RET_OK;
   OptAllocator allocator;
   std::unordered_map<lite::Tensor *, int> ref_count;
@@ -376,7 +376,7 @@ TrainSession::~TrainSession() {
 }
 
 int TrainSession::ExecKernels(const KernelCallBack &before, const KernelCallBack &after,
-                              const std::vector<kernel::LiteKernel *> &run_kernels) {
+                              const std::vector<kernel::KernelExec *> &run_kernels) {
   for (auto *kernel : run_kernels) {
     MS_ASSERT(kernel != nullptr);
     auto ret = kernel->Execute(before, after);
@@ -430,7 +430,7 @@ bool TrainSession::IsLossTensor(Tensor *tensor) {
   return isLoss;
 }
 
-bool TrainSession::AllInputsNeedScale(kernel::LiteKernel *kernel) {
+bool TrainSession::AllInputsNeedScale(kernel::KernelExec *kernel) {
   auto type = kernel->type();
   bool is_scale = false;
   switch (type) {
@@ -448,7 +448,7 @@ bool TrainSession::AllInputsNeedScale(kernel::LiteKernel *kernel) {
   return false;
 }
 
-int TrainSession::MixPrecisionPreProcess(kernel::LiteKernel *kernel, float scale) {
+int TrainSession::MixPrecisionPreProcess(kernel::KernelExec *kernel, float scale) {
   auto kernel_type = kernel->desc().data_type;
   auto all_scale = AllInputsNeedScale(kernel);
 
@@ -467,7 +467,7 @@ int TrainSession::MixPrecisionPreProcess(kernel::LiteKernel *kernel, float scale
   return RET_OK;
 }
 
-int TrainSession::MixPrecisionPostProcess(kernel::LiteKernel *kernel) {
+int TrainSession::MixPrecisionPostProcess(kernel::KernelExec *kernel) {
   RestoreTensorData();
   FreeRestoreTensors();
 
@@ -494,7 +494,7 @@ int TrainSession::MixPrecisionPostProcess(kernel::LiteKernel *kernel) {
 }
 
 int TrainSession::MixPrecisionExecKernels(const KernelCallBack &before, const KernelCallBack &after,
-                                          const std::vector<kernel::LiteKernel *> &run_kernels) {
+                                          const std::vector<kernel::KernelExec *> &run_kernels) {
   float scale = cfg_.mix_precision_cfg_.loss_scale_;
   for (auto *kernel : run_kernels) {
     MS_ASSERT(kernel != nullptr);
@@ -601,7 +601,7 @@ int TrainSession::Train() {
   output_node_map_ = train_output_node_map_;
   output_tensor_map_ = train_output_tensor_map_;
   output_tensor_names_ = train_output_tensor_names_;
-  kernel::LiteKernelUtil::InitTensorInitRefCount(train_kernels_);
+  kernel::KernelExecUtil::InitTensorInitRefCount(train_kernels_);
   for (auto &ms_tensors : eval_output_node_map_) {  // Allow to look at prediction also during training
     for (auto &ms_tensor : ms_tensors.second) {
       lite::Tensor *lite_tensor = static_cast<lite::Tensor *>(ms_tensor);
@@ -633,7 +633,7 @@ int TrainSession::Eval() {
   output_node_map_ = eval_output_node_map_;
   output_tensor_map_ = eval_output_tensor_map_;
   output_tensor_names_ = eval_output_tensor_names_;
-  kernel::LiteKernelUtil::InitTensorInitRefCount(inference_kernels_);
+  kernel::KernelExecUtil::InitTensorInitRefCount(inference_kernels_);
   for (auto &ms_tensors : eval_output_node_map_) {
     for (auto &ms_tensor : ms_tensors.second) {
       lite::Tensor *lite_tensor = static_cast<lite::Tensor *>(ms_tensor);
@@ -713,7 +713,7 @@ void TrainSession::CompileTrainOutputs() {
   if (train_output_tensor_names_.empty()) train_output_tensor_names_ = orig_output_tensor_names_;
 }
 
-void TrainSession::BuildInferenceKernelsRecursive(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *v) {
+void TrainSession::BuildInferenceKernelsRecursive(kernel::KernelExec *kernel, std::vector<kernel::KernelExec *> *v) {
   MS_ASSERT(kernel != nullptr);
   MS_ASSERT(v != nullptr);
   if (std::find(v->begin(), v->end(), kernel) == v->end()) {  // kernel is not already in vector
@@ -993,7 +993,7 @@ int TrainSession::OptimizerStep() {
   return RET_OK;
 }
 
-bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
+bool TrainSession::IsLossKernel(const kernel::KernelExec *kernel) const {
   bool isLoss = false;
   for (auto &s : cfg_.loss_name_) {
     if (kernel->name().find(s) != std::string::npos) {
@@ -1004,20 +1004,20 @@ bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
   return isLoss;
 }
 
-bool TrainSession::IsGradKernel(const kernel::LiteKernel *kernel) const {
+bool TrainSession::IsGradKernel(const kernel::KernelExec *kernel) const {
   return kernel->name().find(kGradName) != std::string::npos;
 }
 
-bool TrainSession::IsOptimizer(kernel::LiteKernel *kernel) const {
+bool TrainSession::IsOptimizer(kernel::KernelExec *kernel) const {
   return ((kernel->type() == schema::PrimitiveType_Adam) || (kernel->type() == schema::PrimitiveType_SGD) ||
           (kernel->type() == schema::PrimitiveType_ApplyMomentum));
 }
 
-bool TrainSession::IsMaskOutput(kernel::LiteKernel *kernel) const {
+bool TrainSession::IsMaskOutput(kernel::KernelExec *kernel) const {
   return (IsOptimizer(kernel) || (kernel->type() == schema::PrimitiveType_Assign));
 }
 
-bool TrainSession::IsBN(kernel::LiteKernel *kernel) const {
+bool TrainSession::IsBN(kernel::KernelExec *kernel) const {
   return ((kernel->type() == schema::PrimitiveType_BatchNorm) ||
           (kernel->type() == schema::PrimitiveType_FusedBatchNorm));
 }
@@ -1046,9 +1046,9 @@ int TrainSession::Resize(const std::vector<tensor::MSTensor *> &inputs, const st
   return RET_OK;
 }
 
-int TrainSession::FindUseInTensorKernel(std::vector<kernel::LiteKernel *> *use_in_tensor_kernels,
+int TrainSession::FindUseInTensorKernel(std::vector<kernel::KernelExec *> *use_in_tensor_kernels,
                                         const std::vector<lite::Tensor *> &kernel_in_tensors,
-                                        const std::vector<kernel::LiteKernel *> &inference_kernels) {
+                                        const std::vector<kernel::KernelExec *> &inference_kernels) {
   for (size_t i = 0; i < inference_kernels.size(); i++) {
     for (size_t j = 0; j < kernel_in_tensors.size(); j++) {
       if (IsContain(inference_kernels[i]->out_tensors(), kernel_in_tensors[j])) {
@@ -1059,12 +1059,12 @@ int TrainSession::FindUseInTensorKernel(std::vector<kernel::LiteKernel *> *use_i
   return RET_OK;
 }
 
-int TrainSession::FindExportKernels(std::vector<kernel::LiteKernel *> *export_kernels,
+int TrainSession::FindExportKernels(std::vector<kernel::KernelExec *> *export_kernels,
                                     const std::vector<std::string> &export_output_tensor_names,
-                                    const std::vector<kernel::LiteKernel *> &inference_kernels) {
+                                    const std::vector<kernel::KernelExec *> &inference_kernels) {
   std::vector<std::string> all_kernel_name = {};
   std::transform(inference_kernels.begin(), inference_kernels.end(), std::back_inserter(all_kernel_name),
-                 [](kernel::LiteKernel *kernel) { return kernel->name(); });
+                 [](kernel::KernelExec *kernel) { return kernel->name(); });
   std::queue<std::string> need_kernel_names;
   // Find the kernel name according to the tensor name
   for (auto &kernel : inference_kernels) {
@@ -1092,7 +1092,7 @@ int TrainSession::FindExportKernels(std::vector<kernel::LiteKernel *> *export_ke
       export_kernels->push_back(kernel);
     }
     auto kernel_in_tensors = kernel->in_tensors();
-    std::vector<kernel::LiteKernel *> use_in_tensor_kernels;
+    std::vector<kernel::KernelExec *> use_in_tensor_kernels;
     auto status = FindUseInTensorKernel(&use_in_tensor_kernels, kernel_in_tensors, inference_kernels);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "FindUseInTensorKernel failed.";
@@ -1124,7 +1124,7 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
   }
 
   if (!out_put_tensor_name.empty() && model_type == MT_INFERENCE) {
-    std::vector<kernel::LiteKernel *> export_kernels = {};
+    std::vector<kernel::KernelExec *> export_kernels = {};
     status = FindExportKernels(&export_kernels, out_put_tensor_name, inference_kernels_);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "FindExportKernels failed.";
@@ -1218,7 +1218,7 @@ std::set<schema::PrimitiveType> inPlaceSupportedKernels = {
   mindspore::schema::PrimitiveType_Flatten,    mindspore::schema::PrimitiveType_FlattenGrad,
   mindspore::schema::PrimitiveType_Squeeze,    mindspore::schema::PrimitiveType_Unsqueeze};
 
-bool TrainSession::IsInPlaceKernel(kernel::LiteKernel *kernel) {
+bool TrainSession::IsInPlaceKernel(kernel::KernelExec *kernel) {
   if (inPlaceSupportedKernels.find(kernel->type()) != inPlaceSupportedKernels.end() &&
       !(kernel->type() == mindspore::schema::PrimitiveType_Activation &&
         kernel->op_parameter()->type_ == schema::ActivationType_SIGMOID)) {
@@ -1227,7 +1227,7 @@ bool TrainSession::IsInPlaceKernel(kernel::LiteKernel *kernel) {
   return false;
 }
 
-bool TrainSession::IsInPlaceTensor(kernel::LiteKernel *kernel, uint32_t idx,
+bool TrainSession::IsInPlaceTensor(kernel::KernelExec *kernel, uint32_t idx,
                                    const std::unordered_map<lite::Tensor *, int> &ref_count, uint32_t *input_idx) {
   if (IsInPlaceKernel(kernel)) {
     auto out_tensor = kernel->out_tensors().at(idx);
@@ -1244,7 +1244,7 @@ bool TrainSession::IsInPlaceTensor(kernel::LiteKernel *kernel, uint32_t idx,
   return false;
 }
 
-size_t TrainSession::GetInplaceTensorOffset(kernel::LiteKernel *kernel,
+size_t TrainSession::GetInplaceTensorOffset(kernel::KernelExec *kernel,
                                             const std::unordered_map<lite::Tensor *, size_t> &offset_map,
                                             std::unordered_map<lite::Tensor *, int> *ref_count, uint32_t input_idx) {
   auto tensor = kernel->in_tensors().at(input_idx);

@@ -27,7 +27,7 @@
 #include "tools/common/tensor_util.h"
 #include "src/common/context_util.h"
 #include "src/ops/populate/populate_register.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/kernel_registry.h"
 #include "src/inner_context.h"
 #include "src/tensor.h"
@@ -70,7 +70,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   }
   return parameter;
 }
-kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> *outputs, const CNodePtr &cnode,
+kernel::KernelExec *GetKernelExec(std::vector<Tensor *> inputs, std::vector<Tensor *> *outputs, const CNodePtr &cnode,
                                   lite::InnerContext *context, mindspore::Context *ms_context) {
   MS_ASSERT(outputs != nullptr && cnode != nullptr && context != nullptr && ms_context != nullptr);
   OpParameter *parameter = nullptr;
@@ -91,9 +91,9 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
   }
   auto data_type = inputs.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(parameter->type_)};
-  kernel::LiteKernel *lite_kernel = nullptr;
+  kernel::KernelExec *kernel_exec = nullptr;
   ret = lite::KernelRegistry::GetInstance()->GetKernel(inputs, *outputs, context, ms_context, desc, parameter,
-                                                       &lite_kernel);
+                                                       &kernel_exec);
   if (ret != lite::RET_OK) {
     if (parameter->destroy_func_ != nullptr) {
       parameter->destroy_func_(parameter);
@@ -101,13 +101,13 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
     free(parameter);
     return nullptr;
   }
-  ret = lite_kernel->Prepare();
+  ret = kernel_exec->Prepare();
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "init failed.";
-    delete lite_kernel;  // parameter will be freed in destructor of lite-kernel.
+    delete kernel_exec;  // parameter will be freed in destructor of lite-kernel.
     return nullptr;
   }
-  return lite_kernel;
+  return kernel_exec;
 }
 
 lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<Tensor *> output_tensors) {
@@ -248,8 +248,8 @@ int ConstFoldProcessor::DoConstantFold(const FuncGraphPtr &func_graph, const CNo
     MS_LOG(ERROR) << "copy quant params failed.";
     return lite::RET_ERROR;
   }
-  auto lite_kernel = GetLiteKernel(input_tensors, &output_tensors, cnode, context_.get(), ms_context_.get());
-  if (lite_kernel == nullptr) {
+  auto kernel_exec = GetKernelExec(input_tensors, &output_tensors, cnode, context_.get(), ms_context_.get());
+  if (kernel_exec == nullptr) {
     MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
     return lite::RET_ERROR;
   }
@@ -257,13 +257,13 @@ int ConstFoldProcessor::DoConstantFold(const FuncGraphPtr &func_graph, const CNo
     auto status = output_tensor->MallocData();
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "MallocData failed";
-      delete (lite_kernel);
+      delete (kernel_exec);
       return lite::RET_ERROR;
     }
   }
-  auto status = static_cast<mindspore::kernel::InnerKernel *>(lite_kernel->kernel())->Run();
-  delete (lite_kernel);
-  lite_kernel = nullptr;
+  auto status = static_cast<mindspore::kernel::InnerKernel *>(kernel_exec->kernel())->Run();
+  delete (kernel_exec);
+  kernel_exec = nullptr;
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "run kernel failed, name: " << cnode->fullname_with_scope();
     return lite::RET_ERROR;

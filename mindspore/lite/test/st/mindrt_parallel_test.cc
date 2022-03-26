@@ -22,7 +22,7 @@
 #include "tools/benchmark/run_benchmark.h"
 #include "src/mindrt_executor.h"
 #include "src/lite_session.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/common/file_utils.h"
 
 namespace mindspore {
@@ -41,7 +41,7 @@ int CheckOffline1(session::LiteSession *session) {
 
   /* sub-graph-0 */
   kernel::SubGraphKernel *subgraph0 = reinterpret_cast<kernel::SubGraphKernel *>(kernels[0]);
-  std::vector<kernel::LiteKernel *> nodes0 = subgraph0->nodes();
+  std::vector<kernel::KernelExec *> nodes0 = subgraph0->nodes();
   if (nodes0.size() != 1) {
     return -2;
   }
@@ -51,7 +51,7 @@ int CheckOffline1(session::LiteSession *session) {
 
   /* sub-graph-1 */
   kernel::SubGraphKernel *subgraph1 = reinterpret_cast<kernel::SubGraphKernel *>(kernels[1]);
-  std::vector<kernel::LiteKernel *> nodes1 = subgraph1->nodes();
+  std::vector<kernel::KernelExec *> nodes1 = subgraph1->nodes();
   if (nodes1.size() != 3) {
     return -4;
   }
@@ -63,7 +63,7 @@ int CheckOffline1(session::LiteSession *session) {
 
   /* sub-graph-2 */
   kernel::SubGraphKernel *subgraph2 = reinterpret_cast<kernel::SubGraphKernel *>(kernels[2]);
-  std::vector<kernel::LiteKernel *> nodes2 = subgraph2->nodes();
+  std::vector<kernel::KernelExec *> nodes2 = subgraph2->nodes();
   if (nodes2.size() != 3) {
     return -6;
   }
@@ -75,7 +75,7 @@ int CheckOffline1(session::LiteSession *session) {
 
   /* sub-graph-3 */
   kernel::SubGraphKernel *subgraph3 = reinterpret_cast<kernel::SubGraphKernel *>(kernels[3]);
-  std::vector<kernel::LiteKernel *> nodes3 = subgraph3->nodes();
+  std::vector<kernel::KernelExec *> nodes3 = subgraph3->nodes();
   if (nodes3.size() != 12) {
     return -8;
   }

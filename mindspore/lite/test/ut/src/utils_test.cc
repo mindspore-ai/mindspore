@@ -23,8 +23,8 @@
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
-#include "mindspore/lite/src/lite_kernel.h"
-#include "mindspore/lite/src/lite_kernel_util.h"
+#include "mindspore/lite/src/kernel_exec.h"
+#include "mindspore/lite/src/kernel_exec_util.h"
 
 namespace mindspore {
 class UtilsTest : public mindspore::CommonTest {
@@ -33,9 +33,9 @@ class UtilsTest : public mindspore::CommonTest {
 };
 
 TEST_F(UtilsTest, TestSubgraph) {
-  auto kernel0 = std::make_shared<kernel::LiteKernel>();
-  auto kernel1 = std::make_shared<kernel::LiteKernel>();
-  auto kernel2 = std::make_shared<kernel::LiteKernel>();
+  auto kernel0 = std::make_shared<kernel::KernelExec>();
+  auto kernel1 = std::make_shared<kernel::KernelExec>();
+  auto kernel2 = std::make_shared<kernel::KernelExec>();
 
   auto tensor0 = std::make_shared<lite::Tensor>();
   auto tensor1 = std::make_shared<lite::Tensor>();
@@ -55,15 +55,15 @@ TEST_F(UtilsTest, TestSubgraph) {
   kernel2->set_in_tensors({tensor3.get()});
   kernel2->set_out_tensors({tensor4.get()});
 
-  std::vector<kernel::LiteKernel *> kernels = {kernel0.get(), kernel1.get(), kernel2.get()};
+  std::vector<kernel::KernelExec *> kernels = {kernel0.get(), kernel1.get(), kernel2.get()};
 
-  auto input_kernels = kernel::LiteKernelUtil::SubgraphInputNodes(kernels);
+  auto input_kernels = kernel::KernelExecUtil::SubgraphInputNodes(kernels);
   ASSERT_EQ(input_kernels.size(), 1);
-  auto output_kernels = kernel::LiteKernelUtil::SubgraphOutputNodes(kernels);
+  auto output_kernels = kernel::KernelExecUtil::SubgraphOutputNodes(kernels);
   ASSERT_EQ(output_kernels.size(), 1);
-  auto input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
+  auto input_tensors = kernel::KernelExecUtil::SubgraphInputTensors(kernels);
   ASSERT_EQ(input_tensors.size(), 2);
-  auto output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
+  auto output_tensors = kernel::KernelExecUtil::SubgraphOutputTensors(kernels);
   ASSERT_EQ(output_tensors.size(), 1);
 }
 }  // namespace mindspore

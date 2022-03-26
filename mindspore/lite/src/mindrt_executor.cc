@@ -23,10 +23,10 @@
 #ifdef ENABLE_FP16
 #include "nnacl/base/cast_base.h"
 #endif
-#include "src/lite_kernel_util.h"
+#include "src/kernel_exec_util.h"
 
 namespace mindspore::lite {
-int MindrtExecutor::PrepareGraphInput(const std::vector<kernel::LiteKernel *> &kernels,
+int MindrtExecutor::PrepareGraphInput(const std::vector<kernel::KernelExec *> &kernels,
                                       const std::vector<Tensor *> &inputs) {
   auto kernels_size = kernels.size();
   for (size_t j = 0; j < kernels_size; ++j) {
@@ -52,7 +52,7 @@ int MindrtExecutor::PrepareGraphInput(const std::vector<kernel::LiteKernel *> &k
   return RET_OK;
 }
 
-int MindrtExecutor::PrepareGraphOutput(const std::vector<kernel::LiteKernel *> &kernels,
+int MindrtExecutor::PrepareGraphOutput(const std::vector<kernel::KernelExec *> &kernels,
                                        const std::vector<Tensor *> &outputs) {
   auto outputs_size = outputs.size();
   for (size_t i = 0; i < outputs_size; ++i) {
@@ -152,7 +152,7 @@ int MindrtExecutor::PostInitActors() {
   return RET_OK;
 }
 
-int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+int MindrtExecutor::Prepare(const std::vector<kernel::KernelExec *> &kernels, const std::vector<Tensor *> &inputs,
                             const std::vector<Tensor *> &outputs, lite::InnerContext *ctx) {
   MS_ASSERT(ctx != nullptr);
   ctx_ = ctx;
@@ -246,7 +246,7 @@ void MindrtExecutor::FreeOutputTensor() {
 }
 
 int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                        const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before,
+                        const std::vector<kernel::KernelExec *> &kernels, const KernelCallBack &before,
                         const KernelCallBack &after) {
   CHECK_NULL_RETURN(ctx_);
   auto thread_pool = ctx_->thread_pool();

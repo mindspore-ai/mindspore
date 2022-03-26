@@ -18,7 +18,7 @@
 #include <utility>
 #include <algorithm>
 #include "mindrt/include/mindrt.hpp"
-#include "src/lite_kernel_util.h"
+#include "src/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
 #include "src/runtime/inner_allocator.h"
 #ifdef ENABLE_FP16
@@ -66,8 +66,8 @@ int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_ker
       continue;
     }
     call_node_ = node;
-    auto switch_node = kernel::LiteKernelUtil::GetInputsSpecificNode(node, schema::PrimitiveType_Switch);
-    auto switch_layer_node = kernel::LiteKernelUtil::GetInputsSpecificNode(node, schema::PrimitiveType_SwitchLayer);
+    auto switch_node = kernel::KernelExecUtil::GetInputsSpecificNode(node, schema::PrimitiveType_Switch);
+    auto switch_layer_node = kernel::KernelExecUtil::GetInputsSpecificNode(node, schema::PrimitiveType_SwitchLayer);
     if (switch_node != nullptr) {
       switch_type_node_ = switch_node;
       return SetSwitchPartialNodes();
