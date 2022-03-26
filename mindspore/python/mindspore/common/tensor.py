@@ -139,10 +139,9 @@ class Tensor(Tensor_):
                     raise TypeError(f"For Tensor, the input_data is a numpy array, "
                                     f"but it's data type: {input_data.dtype} is not in supported list: "
                                     f"{list(i.__name__ for i in valid_dtypes)}.")
-                if isinstance(input_data, (tuple, list)):
-                    if np.array(input_data).dtype not in valid_dtypes:
-                        raise TypeError(
-                            f"For Tensor, the input_data is {input_data} that contain unsupported element.")
+                if isinstance(input_data, (tuple, list)) and np.array(input_data).dtype not in valid_dtypes:
+                    raise TypeError(
+                        f"For Tensor, the input_data is {input_data} that contain unsupported element.")
 
                 if dtype is not None:
                     validator.check_type_name(
@@ -152,6 +151,7 @@ class Tensor(Tensor_):
 
                 if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
                     input_data = np.ascontiguousarray(input_data)
+
                 if dtype is not None:
                     Tensor_.__init__(self, input_data, dtype)
                 else:
@@ -223,7 +223,8 @@ class Tensor(Tensor_):
             return bool(data[0])
         raise ValueError("The truth value of an array with several elements is ambiguous.")
 
-    def _convert_scalar_(self, data, func, message):
+    @staticmethod
+    def _convert_scalar_(data, func, message):
         if data.shape == ():
             return func(data)
         if data.shape == (1,):
