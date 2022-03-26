@@ -25,6 +25,9 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+static const size_t max_malloc_size_ = GetMaxMallocSize();
+}
 #if ENABLE_HIGH_PERFORMANCE
 #define CHECK_INT64_MUL_OVERFLOW(x, y)
 #else
@@ -349,7 +352,7 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
     MS_LOG(INFO) << "Data size=" << data_size << " bytes";
     // expect return, currently not return for case (0,xx) shape tensor (where_fp32)
   }
-  if (data_size > GetMaxMallocSize()) {
+  if (data_size > max_malloc_size_) {
     MS_LOG(ERROR) << "Malloc size is too big while coping data, " << data_size << " bytes";
     return RET_ERROR;
   }

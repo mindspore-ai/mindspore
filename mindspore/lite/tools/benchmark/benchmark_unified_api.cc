@@ -949,15 +949,8 @@ int BenchmarkUnifiedApi::PrintInputData() {
 }
 #ifdef PARALLEL_INFERENCE
 int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> context) {
-  if (flags_->warm_up_loop_count_ > kMaxRequestNum) {
+  if (flags_->warm_up_loop_count_ > kMaxRequestNum || flags_->parallel_request_num_ > kMaxRequestNum) {
     MS_LOG(WARNING) << "in parallel predict warm up loop count should less than" << kMaxRequestNum;
-  }
-  if (flags_->parallel_request_num_ > kMaxRequestNum) {
-    MS_LOG(WARNING) << "parallel request num should less than" << kMaxRequestNum;
-  }
-  if (flags_->resize_dims_.empty()) {
-    MS_LOG(ERROR) << "use parallel predict, inputShapes can not use empty.";
-    return RET_ERROR;
   }
   // model pool init
   ModelParallelRunner model_pool;
@@ -966,78 +959,93 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
   runner_config->workers_num = flags_->workers_num_;
   auto model_init_start = GetTimeUs();
   auto ret = model_pool.Init(flags_->model_file_, runner_config);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "model pool init failed.";
-    return RET_ERROR;
-  }
+  MS_CHECK_FALSE_MSG(ret != kSuccess, RET_ERROR, "model pool init failed.");
   auto model_init_end = GetTimeUs();
   // load data
   ms_inputs_for_api_ = model_pool.GetInputs();
-  if (ms_inputs_for_api_.empty()) {
-    MS_LOG(ERROR) << "model pool input is empty.";
-    return RET_ERROR;
-  }
-  for (int i = 0; i < flags_->parallel_request_num_ + flags_->warm_up_loop_count_; i++) {
+  MS_CHECK_FALSE_MSG(ms_inputs_for_api_.empty(), RET_ERROR, "model pool input is empty.");
+  for (int i = 0; i < flags_->loop_count_ + flags_->warm_up_loop_count_; i++) {
     auto status = LoadInput();
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Generate input data error";
-      return status;
-    }
+    MS_CHECK_FALSE_MSG(status != RET_OK, status, "Generate input data error");
     std::vector<MSTensor> output;
     all_outputs_.push_back(output);
   }
   if (!flags_->benchmark_data_file_.empty()) {
     auto status = PrintInputData();
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "PrintInputData error " << status;
-      return status;
-    }
+    MS_CHECK_FALSE_MSG(status != RET_OK, status, "PrintInputData error ");
     status = ReadCalibData();
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "ReadCalibData error " << status;
-      return status;
-    }
+    MS_CHECK_FALSE_MSG(status != RET_OK, status, "ReadCalibData error ");
   }
-  // model pool predict
-  auto model_pool_run = [&](int num) {
-    auto input = all_inputs_[num];
-    auto output = all_outputs_[num];
-    auto predict_start = GetTimeUs();
+  auto model_pool_warm_up = [&](int idx) {
+    auto input = all_inputs_[idx];
+    auto output = all_outputs_[idx];
+    auto warm_up_start = GetTimeUs();
     auto ret = model_pool.Predict(input, &output);
     if (ret != kSuccess) {
+      model_parallel_runner_ret_failed_ = true;
       MS_LOG(ERROR) << "model pool predict failed.";
+      return;
     }
-    auto predict_end = GetTimeUs();
-    std::cout << "per predict time: " << (predict_end - predict_start) / kFloatMSEC << " ms\n";
-    if (!flags_->benchmark_data_file_.empty()) {
-      auto status = CompareOutputForModelPool(&output);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "Compare output error " << status;
+    auto warm_up_end = GetTimeUs();
+    std::cout << "warm up index: " << idx << " | time: " << (warm_up_end - warm_up_start) / kFloatMSEC << " ms\n";
+  };
+  auto model_pool_run = [&](int loop_count) {
+    while (true) {
+      all_require_num_++;
+      if (all_require_num_ >= loop_count) {
+        return;
+      }
+      int idx = all_require_num_ + flags_->warm_up_loop_count_;
+      auto input = all_inputs_[idx];
+      auto output = all_outputs_[idx];
+      auto predict_start = GetTimeUs();
+      auto ret = model_pool.Predict(input, &output);
+      if (ret != kSuccess) {
+        model_parallel_runner_ret_failed_ = true;
+        MS_LOG(ERROR) << "model pool predict failed.";
+        return;
+      }
+      auto predict_end = GetTimeUs();
+      std::cout << "require index: " << idx - flags_->warm_up_loop_count_
+                << " | predict time: " << (predict_end - predict_start) / kFloatMSEC << " ms\n";
+      if (!flags_->benchmark_data_file_.empty()) {
+        auto status = CompareOutputForModelPool(&output);
+        if (status != RET_OK) {
+          model_parallel_runner_ret_failed_ = true;
+          MS_LOG(ERROR) << "Compare output error " << status;
+          return;
+        }
       }
     }
   };
+  // warm up
   std::vector<std::thread> model_thread_warm_up;
   for (int i = 0; i < flags_->warm_up_loop_count_; i++) {
-    model_thread_warm_up.push_back(std::thread(model_pool_run, i));
+    model_thread_warm_up.push_back(std::thread(model_pool_warm_up, i));
   }
   for (auto &warm_up_thread : model_thread_warm_up) {
     warm_up_thread.join();
   }
-  std::cout << "================ end warm up ================\n";
-  auto all_start = GetTimeUs();
-  for (int loop_count_num = 0; loop_count_num < flags_->loop_count_; loop_count_num++) {
-    std::vector<std::thread> model_thread_run;
-    for (int i = 0; i < flags_->parallel_request_num_; i++) {
-      model_thread_run.push_back(std::thread(model_pool_run, i + flags_->warm_up_loop_count_));
-    }
-    for (auto &run_thread : model_thread_run) {
-      run_thread.join();
-    }
+  if (model_parallel_runner_ret_failed_) {
+    return RET_ERROR;
   }
-  auto all_end = GetTimeUs();
+  std::cout << "=============== end warm up ===============\n";
+  // do loop count
+  auto start_run_time = lite::GetTimeUs();
+  std::vector<std::thread> model_thread_run;
+  for (int parallel_request_num = 0; parallel_request_num < flags_->parallel_request_num_; parallel_request_num++) {
+    model_thread_run.push_back(std::thread(model_pool_run, flags_->loop_count_));
+  }
+  for (auto &run_thread : model_thread_run) {
+    run_thread.join();
+  }
+  auto end_run_time = lite::GetTimeUs();
+  if (model_parallel_runner_ret_failed_) {
+    return RET_ERROR;
+  }
   std::cout << "=================================" << std::endl;
   std::cout << "parallel predict init time: " << (model_init_end - model_init_start) / kFloatMSEC << " ms\n";
-  std::cout << "parallel predict all run time: " << (all_end - all_start) / kFloatMSEC / flags_->loop_count_ << " ms\n";
+  std::cout << "parallel predict all run time: " << (end_run_time - start_run_time) / kFloatMSEC << " ms\n";
   std::cout << "=================================" << std::endl;
   return RET_OK;
 }
@@ -1115,11 +1123,9 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   UpdateConfigInfo();
 #ifdef PARALLEL_INFERENCE
   if (flags_->enable_parallel_predict_) {
+    MS_CHECK_FALSE_MSG(flags_->resize_dims_.empty(), RET_ERROR, "use parallel predict, inputShapes can not use empty.");
     status = RunModelPool(context);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "run model pool failed.";
-      return RET_ERROR;
-    }
+    MS_CHECK_FALSE_MSG(status != RET_OK, RET_ERROR, "run model pool failed.");
     return RET_OK;
   }
 #endif

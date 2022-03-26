@@ -29,6 +29,7 @@
 #include <memory>
 #include <cfloat>
 #include <utility>
+#include <atomic>
 #ifndef BENCHMARK_CLIP_JSON
 #include <nlohmann/json.hpp>
 #endif
@@ -134,6 +135,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   MSKernelCallBack ms_after_call_back_ = nullptr;
   std::vector<std::vector<mindspore::MSTensor>> all_inputs_;
   std::vector<std::vector<mindspore::MSTensor>> all_outputs_;
+  std::atomic<int> all_require_num_{-1};
+  std::atomic<bool> model_parallel_runner_ret_failed_{false};
 };
 
 }  // namespace mindspore::lite
