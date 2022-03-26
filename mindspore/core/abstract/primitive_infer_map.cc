@@ -66,6 +66,7 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   static const auto &kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
   static const auto &kTile = prim::kPrimTile->name();
   static const auto &kSlice = prim::kPrimSlice->name();
+  static const auto &kNonDeterministicInts = prim::kPrimNonDeterministicInts->name();
   static const auto &kSliceGrad = prim::kPrimSliceGrad->name();
   static const auto &kReshape = prim::kPrimReshape->name();
   static const auto &kFillV2 = prim::kPrimFillV2->name();
@@ -88,6 +89,7 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
                                                         {kSliceGrad, ShapeSet{2, 3}},
                                                         {kFillV2, ShapeSet{0}},
                                                         {kDynamicBroadcastTo, ShapeSet{1}},
+                                                        {kNonDeterministicInts, ShapeSet{0}},
                                                         {kReduceSum, ShapeSet{1}}};
 
   MS_EXCEPTION_IF_NULL(cnode);

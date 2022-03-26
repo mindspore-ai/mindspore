@@ -349,6 +349,7 @@ constexpr auto kEnvironCreateOpName = "EnvironCreate";
 constexpr auto kEnvironSetOpName = "EnvironSet";
 constexpr auto kEnvironGetOpName = "EnvironGet";
 constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
+constexpr auto kNonDeterministicInts = "NonDeterministicInts";
 constexpr auto kUpdateStateOpName = "UpdateState";
 constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
@@ -775,7 +776,7 @@ const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat
 const std::set<std::string> kComputeDepend = {
   kUniqueOpName,           kComputeAccidentalHitsOpName, kSubAndFilterOpName, kPadAndShiftOpName,
   kCTCGreedyDecoderOpName, kDropoutGenMaskOpName,        kMaskedSelectOpName, kDynamicStitchOpName,
-  kGetNextOpName,          kNonMaxSuppressionV3OpName,   kCoalesceOpName};
+  kGetNextOpName,          kNonMaxSuppressionV3OpName,   kCoalesceOpName,     kNonDeterministicInts};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
