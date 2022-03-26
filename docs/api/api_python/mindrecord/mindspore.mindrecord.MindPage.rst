@@ -5,7 +5,7 @@
 
     **参数：**
 
-    - **file_name** (str) - MindRecord格式的数据集文件或文件列表。
+    - **file_name** (Union[str, list[str]]) - MindRecord格式的数据集文件或文件列表。
     - **num_consumer** (int，可选) - 加载数据的并发数。默认值：4。不应小于1或大于处理器的核数。
 
     **异常：**

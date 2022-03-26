@@ -43,8 +43,9 @@ class Cifar10ToMR:
         www.mindspore.cn/docs/programming_guide/en/master/dataset_conversion.html#converting-the-cifar-10-dataset>`_.
 
     Args:
-        source (str): the cifar10 directory to be transformed.
-        destination (str): the MindRecord file path to transform into.
+        source (str): The cifar10 directory to be transformed.
+        destination (str): MindRecord file path to transform into, ensure that no file with the same name
+            exists in the directory.
 
     Raises:
         ValueError: If source or destination is invalid.
@@ -80,8 +81,9 @@ class Cifar10ToMR:
             fields (list[str], optional): A list of index fields. Default: None.
 
         Returns:
-            MSRStatus, whether cifar10 is successfully transformed to MindRecord.
+            MSRStatus, SUCCESS or FAILED.
         """
+
         if fields and not isinstance(fields, list):
             raise ValueError("The parameter fields should be None or list")
 
@@ -115,7 +117,7 @@ class Cifar10ToMR:
             fields (list[str], optional): A list of index fields. Default: None.
 
         Returns:
-            MSRStatus, whether cifar10 is successfully transformed to MindRecord.
+            MSRStatus, SUCCESS or FAILED.
         """
 
         t = ExceptionThread(target=self.run, kwargs={'fields': fields})
@@ -138,6 +140,7 @@ def _construct_raw_data(images, labels):
     Returns:
         list[dict], data dictionary constructed from cifar10.
     """
+
     if not cv2:
         raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
 
@@ -164,8 +167,9 @@ def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
         schema_desc (str): String of schema description.
 
     Returns:
-        MSRStatus, whether successfully written into MindRecord.
+        MSRStatus, SUCCESS or FAILED.
     """
+
     schema = {"id": {"type": "int64"}, "label": {"type": "int64"},
               "data": {"type": "bytes"}}
 

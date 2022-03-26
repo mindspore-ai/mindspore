@@ -38,11 +38,12 @@ class MnistToMR:
     A class to transform from Mnist to MindRecord.
 
     Args:
-        source (str): directory that contains t10k-images-idx3-ubyte.gz,
+        source (str): Directory that contains t10k-images-idx3-ubyte.gz,
                       train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
                       and train-labels-idx1-ubyte.gz.
-        destination (str): the MindRecord file directory to transform into.
-        partition_number (int, optional): partition size. Default: 1.
+        destination (str): MindRecord file path to transform into, ensure that no file with the same name
+            exists in the directory.
+        partition_number (int, optional): The partition size. Default: 1.
 
     Raises:
         ValueError: If `source`, `destination`, `partition_number` is invalid.
@@ -225,8 +226,9 @@ class MnistToMR:
         Execute transformation from Mnist to MindRecord.
 
         Returns:
-            MSRStatus, whether successfully written into MindRecord.
+            MSRStatus, SUCCESS or FAILED.
         """
+
         if not cv2:
             raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
 
@@ -239,7 +241,10 @@ class MnistToMR:
 
     def transform(self):
         """
-        Encapsulate the run function to exit normally
+        Encapsulate the run function to exit normally.
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
         """
 
         t = ExceptionThread(target=self.run)

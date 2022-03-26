@@ -19,12 +19,12 @@
 
     .. py:method:: add_index(index_fields)
 
-        指定schema中的字段作为索引来加速MindRecord文件的读取。schema可以通过 `add_schema` 通过来添加。
+        指定schema中的字段作为索引来加速MindRecord文件的读取。schema可以通过 `add_schema` 来添加。
 
         .. note::
             - 索引字段应为Primitive类型，例如 `int` 、`float` 、`str` 。
             - 如果不调用该函数，则默认将schema中所有的Primitive类型的字段设置为索引。
-              请参考类的示例：`mindspore.mindrecord.FileWriter`。
+              请参考类的示例 :class:`mindspore.mindrecord.FileWriter` 。
 
         **参数：**
 
@@ -47,7 +47,7 @@
         增加描述用户自定义数据的schema。
 
         .. note::
-            请参考类的示例：`mindspore.mindrecord.FileWriter`。
+            请参考类的示例 :class:`mindspore.mindrecord.FileWriter` 。
 
         **参数：**
 
@@ -70,7 +70,7 @@
         将内存中的数据同步到磁盘，并生成相应的数据库文件。
 
         .. note::
-            请参考类的示例：`mindspore.mindrecord.FileWriter`。
+            请参考类的示例 :class:`mindspore.mindrecord.FileWriter` 。
 
         **返回：**
 
@@ -126,7 +126,7 @@
 
         **参数：**
 
-        - **header_size** (int) - header大小，可设置范围为16*1024(16KB)和128*1024*1024(128MB)。
+        - **header_size** (int) - header大小，可设置范围为16*1024(16KB)到128*1024*1024(128MB)。
 
         **返回：**
 
@@ -144,7 +144,7 @@
 
         **参数：**
 
-        - **page_size** (int) - page大小，可设置范围为32*1024(32KB)和256*1024*1024(256MB)。
+        - **page_size** (int) - page大小，可设置范围为32*1024(32KB)到256*1024*1024(256MB)。
 
         **返回：**
 
@@ -161,7 +161,7 @@
         根据schema校验用户自定义数据后，将数据转换为一系列连续的MindRecord格式的数据集文件。
 
         .. note::
-            请参考类的示例：`mindspore.mindrecord.FileWriter`。
+            请参考类的示例 :class:`mindspore.mindrecord.FileWriter` 。
 
         **参数：**
 
