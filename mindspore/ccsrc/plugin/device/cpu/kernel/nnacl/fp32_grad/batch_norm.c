@@ -23,11 +23,6 @@ void var2Invar(float *save_var, int size, float eps) {
   }
 }
 
-#ifdef _MSC_VER
-void backwardAll(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
-                 int ch, float *dbias, float *dscale, float *dx, bool is_train) {
-#else
-
 static void backwardComputeDx(const float *in, const float *yt, const float *mean, const float *invar,
                               const float *scale, int size, int ch, const float *dbias, const float *dscale, float *dx,
                               float N, bool is_train) {
@@ -44,6 +39,10 @@ static void backwardComputeDx(const float *in, const float *yt, const float *mea
   }
 }
 
+#ifdef _MSC_VER
+void backwardAll(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
+                 int ch, float *dbias, float *dscale, float *dx, bool is_train) {
+#else
 void backwardAll(const float *restrict in, const float *restrict yt, const float *restrict mean,
                  const float *restrict invar, const float *restrict scale, int size, int ch, float *restrict dbias,
                  float *restrict dscale, float *restrict dx, bool is_train) {
