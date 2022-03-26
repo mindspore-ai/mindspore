@@ -60,6 +60,19 @@ inline void CheckSparseShape(ShapeVector sparse_shp, ShapeVector dense_shp) {
     }
   }
 }
+inline void CheckSparseShape(const size_t shape_size, const size_t expected_dim, const std::string &arg_name) {
+  if (shape_size != expected_dim) {
+    MS_EXCEPTION(mindspore::ValueError) << arg_name << " must be a " << expected_dim
+                                        << "-dimensional tensor, but got a " << shape_size << "-dimensional tensor.";
+  }
+}
+inline void CheckSparseIndicesDtype(const mindspore::TypePtr data_type, const std::string &arg_name) {
+  if (!(data_type->equal(mindspore::kInt16) || data_type->equal(mindspore::kInt32) ||
+        data_type->equal(mindspore::kInt64))) {
+    MS_EXCEPTION(mindspore::TypeError) << "The dtype of " << arg_name << " must be Int16 or Int32 or Int64, but got "
+                                       << data_type->ToString() << ".";
+  }
+}
 }  // namespace
 
 namespace mindspore {
@@ -370,19 +383,14 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
   auto dense_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, kIndexTwo);
 
   auto indices_dtype = indices->element()->BuildType();
-  if (!indices_dtype->isa<Int>()) {
-    MS_EXCEPTION(TypeError) << "The dtype of indices must be a Int, but got " << indices_dtype->ToString();
-  }
+  CheckSparseIndicesDtype(indices_dtype, "indices");
+
   auto indices_shp = indices->shape()->shape();
-  if (indices_shp.size() != kSizeTwo) {
-    MS_EXCEPTION(TypeError) << "Indices must be a 2 dimensional tensor, but got a " << indices_shp.size()
-                            << " dimension tensor";
-  }
+  CheckSparseShape(indices_shp.size(), kSizeTwo, "Indices");
+
   auto values_shp = values->shape()->shape();
-  if (values_shp.size() != kSizeOne) {
-    MS_EXCEPTION(TypeError) << "Values must be a 1 dimensional tensor, but got a " << values_shp.size()
-                            << " dimension tensor";
-  }
+  CheckSparseShape(values_shp.size(), kSizeOne, "Values");
+
   if (indices_shp[kIndexZero] != values_shp[kIndexZero]) {
     MS_EXCEPTION(TypeError) << "Indices and values must equal in their shape, but got indices shape: " << indices_shp[0]
                             << ", values shape: " << values_shp[kIndexZero];
@@ -506,14 +514,19 @@ AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &pr
                              << "but sparse tensor has " << sparse_shape.size() << " dimensions, "
                              << "and dense tensor has " << dense_shape.size() << " dimensions, ";
   }
+  if (dense_shape[kIndexZero] != sparse_shape[kIndexOne] || dense_shape[kIndexOne] != 1) {
+    MS_EXCEPTION(ValueError) << "The dense_vector's shape should be (" << sparse_shape[kIndexOne] << ", 1)"
+                             << ", but its current shape is: "
+                             << "(" << dense_shape[kIndexZero] << ", " << dense_shape[kIndexOne] << ").";
+  }
 
   MS_EXCEPTION_IF_NULL(sparse->values()->element());
-  ShapeVector out_shape = {sparse_shape[0], dense_shape[1]};
+  ShapeVector out_shape = {sparse_shape[kIndexZero], dense_shape[kIndexOne]};
   auto ret = std::make_shared<AbstractTensor>(sparse->values()->element()->BuildType(), out_shape);
 
   MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
   auto nnz_vec = sparse->indices()->shape()->shape();
-  auto csr_avg_rows = nnz_vec[0] / dense_shape[0];
+  auto csr_avg_rows = nnz_vec[kIndexZero] / dense_shape[kIndexZero];
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
   primitive->set_attr(kIsCSR, MakeValue(true));
@@ -672,34 +685,25 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
   auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexTwo);
   auto shape = CheckArg<AbstractTuple>(op_name, args_spec_list, kIndexThree);
 
+  auto indptr_dtype = indptr->element()->BuildType();
   auto indices_dtype = indices->element()->BuildType();
-  if (!indices_dtype->isa<Int>()) {
-    MS_EXCEPTION(TypeError) << "The dtype of indices must be a Int, but got " << indices_dtype->ToString();
-  }
+  CheckSparseIndicesDtype(indptr_dtype, "indptr");
+  CheckSparseIndicesDtype(indices_dtype, "indices");
+
   auto indptr_shp = indptr->shape()->shape();
-  if (indptr_shp.size() != 1) {
-    MS_EXCEPTION(ValueError) << "Indptr must be a 1-dimensional tensor, but got a " << indptr_shp.size()
-                             << "-dimensional tensor";
-  }
+  CheckSparseShape(indptr_shp.size(), kSizeOne, "Indptr");
+
   auto indices_shp = indices->shape()->shape();
-  if (indices_shp.size() != 1) {
-    MS_EXCEPTION(ValueError) << "Indices must be a 1-dimensional tensor, but got a " << indices_shp.size()
-                             << "-dimensional tensor";
-  }
+  CheckSparseShape(indices_shp.size(), kSizeOne, "Indices");
+
   auto values_shp = values->shape()->shape();
-  if (values_shp.size() != 1) {
-    MS_EXCEPTION(ValueError) << "Values must be a 1-dimensional tensor, but got a " << values_shp.size()
-                             << "-dimensional tensor";
+  CheckSparseShape(values_shp.size(), kSizeOne, "Values");
+
+  if (indices_shp[kIndexZero] != values_shp[kIndexZero]) {
+    MS_EXCEPTION(ValueError) << "Indices and values must have same size, but got: values length: "
+                             << values_shp[kIndexZero] << ", indices length " << indices_shp[kIndexZero];
   }
-  if (indices_shp[0] != values_shp[0]) {
-    MS_EXCEPTION(ValueError) << "Indices and values must have same size, but got: values length: " << values_shp[0]
-                             << ", indices length " << indices_shp[0];
-  }
-  for (const auto &elem_type : shape->ElementsType()) {
-    if (!elem_type->isa<Int>()) {
-      MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << elem_type->ToString();
-    }
-  }
+
   auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
   auto shp = shape_value->value();
@@ -708,19 +712,33 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
     auto elem = GetValue<int64_t>(e);
     return elem;
   });
+  if (shape_vec.size() != kSizeTwo) {
+    MS_EXCEPTION(ValueError) << "Currently only supports 2-dimensional csr tensor, got shape length = "
+                             << shape_vec.size() << ".";
+  }
   if (values_shp.size() + 1 != shape_vec.size()) {
     MS_EXCEPTION(ValueError) << "Values' dimension should equal to csr_tensor's dimension - 1.";
   }
-  if (shape_vec[0] + 1 != indptr_shp[0]) {
-    MS_EXCEPTION(ValueError) << "Indptr must have length (1 + shape[0]), but got: " << indptr_shp[0];
+  if (shape_vec[kIndexZero] + 1 != indptr_shp[kIndexZero]) {
+    MS_EXCEPTION(ValueError) << "Indptr must have length (1 + shape[0]), but got: " << indptr_shp[kIndexZero];
   }
+  size_t shape_size = 1;
+  auto shape_types = shape->ElementsType();
   for (size_t i = 0; i < shape_vec.size(); ++i) {
     if (shape_vec[i] <= 0) {
-      MS_EXCEPTION(TypeError) << "The element of shape must be positive, but got " << shape_value->ToString();
+      MS_EXCEPTION(ValueError) << "The element of shape must be positive, but got " << shape_value->ToString();
     }
     if ((i > 1) && (shape_vec[i] != values_shp[i - 1])) {
       MS_EXCEPTION(ValueError) << "csr_tensor's shape should match with values' shape.";
     }
+    if (!shape_types[i]->isa<Int>()) {
+      MS_EXCEPTION(TypeError) << "The element type of shape must be Int, but got " << shape_types[i]->ToString();
+    }
+    shape_size *= shape_vec[i];
+  }
+  if (static_cast<int64_t>(shape_size) < values_shp[kIndexZero]) {
+    MS_EXCEPTION(ValueError) << "Shape total size: " << shape_size << " is too small to hold " << values_shp[kIndexZero]
+                             << " non-zero values.";
   }
   auto ret = std::make_shared<AbstractCSRTensor>(values->element()->BuildType(), shape_vec);
   ret->set_indptr(indptr);
