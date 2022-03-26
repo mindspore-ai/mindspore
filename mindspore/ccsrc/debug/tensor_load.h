@@ -244,29 +244,20 @@ class TensorLoader {
    * Runtime category: Old runtime, MindRT.
    * Description: Load tensor data from debugger backend cache (tensor_list_map_) and dump to file in npy format.
    */
-  bool DumpTensorToFile(const std::string &filepath, bool trans_flag, const std::string &host_fmt,
-                        const std::string &addr_format, const std::string &tensor_name, size_t slot,
-                        const std::vector<int64_t> &host_shape, TypeId host_type) {
+  bool DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) {
     if (filepath.empty()) {
       MS_LOG(ERROR) << "Dump file path is null!";
       return false;
     }
-    std::string path = "";
-    if (trans_flag) {
-      path = filepath + '.' + host_fmt;
-    } else {
-      path = filepath + '.' + addr_format;
-    }
-
-    MS_LOG(INFO) << "Dump path is " << path;
 
     std::string tensor_loader_name = tensor_name + ":" + std::to_string(slot);
     auto iter = tensor_list_map_.find(tensor_loader_name);
     if (iter != tensor_list_map_.end()) {
       std::shared_ptr<TensorData> node = iter->second;
-      size_t host_size = node->GetByteSize();
+      std::string path = filepath + '.' + node->GetFormat();
 
-      return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), host_size, host_shape, host_type);
+      return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), node->GetByteSize(), node->GetShape(),
+                                        StringToTypeId(node->GetTypeString()));
     }
     MS_LOG(INFO) << "Tensor name:" << tensor_name << " not found in tensor_list_map_";
     return false;

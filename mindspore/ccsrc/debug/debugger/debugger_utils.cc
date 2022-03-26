@@ -66,12 +66,12 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
 
 /*
  * Feature group: Dump, Online debugger.
- * Target device group: GPU.
+ * Target device group: GPU, Ascend.
  * Runtime category: MindRT.
  * Description: Get kernel inputs from launch_info and load the inputs from device to host.
  */
 void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order, uint32_t root_graph_id,
-                const DeviceContext *device_context) {
+                const DeviceContext *device_context, const bool trans_flag) {
   // get inputs
   auto kernel_inputs = launch_info->inputs_;
   auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
@@ -79,33 +79,40 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     auto input_kernel = cnode->input(j + 1);
     std::string input_kernel_name = GetKernelNodeName(input_kernel);
     auto addr = kernel_inputs[j];
-    auto type = common::AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto device_type = AnfAlgo::GetOutputDeviceDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto host_type = common::AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto type = trans_flag ? host_type : device_type;
     // For example, this happens with the Depend op
     if (type == kMetaTypeNone) {
       continue;
     }
 
-    auto format = kOpFormat_DEFAULT;
-    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type, ShapeVector());
+    auto host_format = kOpFormat_DEFAULT;
+    auto device_format =
+      E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto device_addr =
+      device_context->CreateDeviceAddress(addr->addr, addr->size, device_format, device_type, ShapeVector());
     string input_tensor_name = input_kernel_name + ':' + "0";
-    ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, PARAMETER_OUTPUT_INDEX);
-    auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), format, int_shapes, type, 0, true,
-                                          root_graph_id, false);
+    ShapeVector int_shapes;
+    GetDumpIntShape(input_kernel, PARAMETER_OUTPUT_INDEX, NOT_NULL(&int_shapes), trans_flag);
+    auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), host_format, int_shapes, type, 0,
+                                          true, root_graph_id, false, trans_flag);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
+                    << ", tensor_name:" << input_tensor_name << ", host_format:" << host_format
+                    << ", device_format:" << device_format << ".";
     }
   }
 }
 
 /*
  * Feature group: Dump, Online debugger.
- * Target device group: GPU.
+ * Target device group: GPU, Ascend.
  * Runtime category: MindRT.
  * Description: Get kernel outputs from launch_info and load the inputs from device to host.
  */
 void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
-                 uint32_t root_graph_id, const DeviceContext *device_context) {
+                 uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag) {
   // get outputs
   auto kernel_outputs = launch_info->outputs_;
   auto output_size = common::AnfAlgo::GetOutputTensorNum(cnode);
@@ -115,21 +122,27 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
 
   for (size_t j : real_outputs) {
     auto addr = kernel_outputs[j];
-    auto type = common::AnfAlgo::GetOutputInferDataType(cnode, j);
+    auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, j);
+    auto host_type = common::AnfAlgo::GetOutputInferDataType(cnode, j);
+    auto type = trans_flag ? host_type : device_type;
     // For example, this happens with the Depend op
     if (type == kMetaTypeNone) {
       continue;
     }
 
-    auto format = kOpFormat_DEFAULT;
-    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type, ShapeVector());
+    auto host_format = kOpFormat_DEFAULT;
+    auto device_format = E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(cnode, j);
+    auto device_addr =
+      device_context->CreateDeviceAddress(addr->addr, addr->size, device_format, device_type, ShapeVector());
     string tensor_name = kernel_name + ':' + std::to_string(j);
-    ShapeVector int_shapes = trans::GetRuntimePaddingShape(cnode, j);
-    auto ret = device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), format, int_shapes, type, j, false,
-                                          root_graph_id, false);
+    ShapeVector int_shapes;
+    GetDumpIntShape(cnode, j, NOT_NULL(&int_shapes), trans_flag);
+    auto ret = device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), host_format, int_shapes, type, j, false,
+                                          root_graph_id, false, trans_flag);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+                    << ", tensor_name:" << tensor_name << ", host_format:" << host_format
+                    << ", device_format:" << device_format << ".!";
     }
   }
 }
@@ -168,6 +181,13 @@ bool IsDeviceTargetGPU() {
   return context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice;
 }
 
+bool GetTransFlag() {
+  if (Debugger::GetInstance()->debugger_enabled() || IsDeviceTargetGPU()) {
+    return true;
+  }
+  return DumpJsonParser::GetInstance().trans_flag();
+}
+
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
@@ -187,11 +207,12 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
   auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(cnode->func_graph());
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto root_graph_id = kernel_graph->root_graph_id();
+  bool trans_flag = GetTransFlag();
   if (debugger->debugger_enabled() || dump_json_parser.InputNeedDump()) {
-    LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context);
+    LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
   }
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
-    LoadOutputs(cnode, launch_info, exec_order, root_graph_id, device_context);
+    LoadOutputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
   }
   // Dump kernel
   if (dump_enabled) {
@@ -202,7 +223,7 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
       debugger->DumpSingleNode(cnode, graph_id);
     } else {
       // for Ascend, node are dumped in root_graph_id directory.
-      debugger->DumpSingleNode(cnode, root_graph_id, launch_info);
+      debugger->DumpSingleNode(cnode, root_graph_id);
     }
     // Clear Dumped data when online debugger is not enabled
     if (!debugger->debugger_enabled()) {
