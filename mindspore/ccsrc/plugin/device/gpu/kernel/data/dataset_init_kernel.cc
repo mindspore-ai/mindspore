@@ -59,7 +59,7 @@ bool DatasetInitKernelMod::Launch(const std::vector<AddressPtr> &, const std::ve
                       << len << "].";
   }
 
-  auto status = GpuBufferMgr::GetInstance().Create(0, queue_name_, addr, shapes_, buffer_q_capacity_);
+  auto status = GpuBufferMgr::GetInstance().Create(queue_name_, addr, shapes_, buffer_q_capacity_);
   if (status) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', init Dataset Failed. len: " << len << ", status:" << status;
   }
