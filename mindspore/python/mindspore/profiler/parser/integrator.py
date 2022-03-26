@@ -18,8 +18,10 @@ import json
 import os
 import stat
 from decimal import Decimal
+from enum import Enum
 
 from mindspore import log as logger
+from mindspore import context
 from mindspore.context import get_auto_parallel_context
 from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException, \
     ProfilerFileNotFoundException, ProfilerRawFileException, ProfilerParamValueErrorException
@@ -508,6 +510,13 @@ class Integrator:
             self._display_col_names_detail.append(self._col_names_detail[5])
 
 
+class DeviceTarget(Enum):
+    """The device target enum."""
+    CPU = 'cpu'
+    GPU = 'gpu'
+    ASCEND = 'ascend'
+
+
 class BaseTimelineGenerator:
     """
     Analyse timeline data from file.
@@ -524,6 +533,8 @@ class BaseTimelineGenerator:
     _HOST_CPU_PID = 11000
     _OP_OVERLAP_PID = 12000
 
+    _OP_GPU_ACTIVITY_PID = 13000
+
     _RECEIVE_ALONE = 7997
     _ALLREDUCE_ALONE = 7998
     _MERGED_COMPUTATION_TID = 7999
@@ -536,7 +547,7 @@ class BaseTimelineGenerator:
     _HOST_CPU_OP_TID = 100003
     _SINGLE_TID = 0
 
-    _STEPS_SORT_INDEX = -1
+    _STEPS_SORT_INDEX = -4
 
     _map_tid_name_to_int = {
         "Steps": (-4, _STEPS_TID),
@@ -553,32 +564,45 @@ class BaseTimelineGenerator:
     }
     _op_name_idx, _tid_idx, _start_time_idx, _duration_idx = 0, 1, 2, 3
     _max_scope_name_num = 0
-    _host_cpu_op_label = 'HostCpuOps'
+    _host_cpu_op_label = 'Host CPU OP'
+    _gpu_op_label = "GPU Op"
+    _ascend_op_label = "Ascend Op"
+    _aicore_op_label = "AICORE OP"
+    _aicpu_op_label = "AICPU OP"
 
     _device_id = 0
     _profiling_dir = ""
     _timeline_summary_filename = ""
     _display_filename = ""
+    _op_name_list = []
+    _device_target = DeviceTarget.ASCEND.value
+    _model = context.GRAPH_MODE
 
-    def __init__(self):
+    def __init__(self, device_target, model):
         self._tid_dict = {
             "computation_op": (self._MERGED_COMPUTATION_TID, self._OP_OVERLAP_PID),
             "communication_not_overlapped": (self._PURE_COMMUNICATION_TID, self._OP_OVERLAP_PID),
             "communication": (self._MERGED_COMMUNICATION_TID, self._OP_OVERLAP_PID),
             "free_time": (self._FREE_TIME_TID, self._OP_OVERLAP_PID)
         }
+        self._device_target = str(device_target).lower()
+        self._model = model
         self._step_end_op_name = ""
 
     def get_thread_label_name(self):
         """Get process and thread config."""
+        device_process_label = self._get_device_process_label()
         return [
-            {"name": "process_labels", "ph": "M", "pid": self._device_id, "args": {"labels": "AI Core Op"}},
-            {"name": "process_labels", "ph": "M", "pid": self._AI_CPU_PID, "args": {"labels": "AI CPU Op"}},
+            {"name": "process_labels", "ph": "M", "pid": self._device_id, "args": {"labels": device_process_label}},
+            {"name": "process_labels", "ph": "M", "pid": self._AI_CPU_PID, "args": {"labels": self._aicpu_op_label}},
             {"name": "process_labels", "ph": "M", "pid": self._COMMUNICATION_OP_PID,
              "args": {"labels": "Communication Op"}},
-            {"name": "process_labels", "ph": "M", "pid": self._HOST_CPU_PID, "args": {"labels": "Host CPU Op"}},
+            {"name": "process_labels", "ph": "M", "pid": self._HOST_CPU_PID,
+             "args": {"labels": self._host_cpu_op_label}},
             {"name": "process_labels", "ph": "M", "pid": self._OP_OVERLAP_PID,
              "args": {"labels": "Op Overlap Analyse"}},
+            {"name": "process_labels", "ph": "M", "pid": self._OP_GPU_ACTIVITY_PID,
+             "args": {"labels": "Activity Op"}},
 
             {"name": "process_sort_index", "ph": "M", "pid": self._device_id, "args": {"sort_index": 0}},
             {"name": "process_sort_index", "ph": "M", "pid": self._AI_CPU_PID, "args": {"sort_index": 10}},
@@ -612,6 +636,20 @@ class BaseTimelineGenerator:
             {"name": "thread_sort_index", "ph": "M", "pid": self._device_id, "tid": self._STEPS_TID,
              "args": {"sort_index": self._STEPS_SORT_INDEX}},
         ]
+
+    def _get_device_process_label(self):
+        """Get device process label."""
+        device_process_label = self._aicore_op_label
+        if self._device_target == DeviceTarget.ASCEND.value:
+            if self._model == context.GRAPH_MODE:
+                device_process_label = self._aicore_op_label
+            elif self._model == context.PYNATIVE_MODE:
+                device_process_label = self._ascend_op_label
+        elif self._device_target == DeviceTarget.GPU.value:
+            device_process_label = self._gpu_op_label
+        elif self._device_target == DeviceTarget.CPU.value:
+            device_process_label = self._host_cpu_op_label
+        return device_process_label
 
     def _get_merged_time_list(self, time_list, get_interval_time=False, display_name="computation_op", factor=1):
         """
@@ -874,8 +912,6 @@ class BaseTimelineGenerator:
                            "is not supported in offline parse mode.")
             parallel_mode = "data_parallel"
             stage_num = 1
-        finally:
-            pass
         if stage_num > 1:
             parallel_mode = "pipeline-parallel"
         elif parallel_mode != "data_parallel":
@@ -917,6 +953,12 @@ class BaseTimelineGenerator:
             logger.warning(f'Failed to save {cluster_analyse_file_path}. {err}')
             raise ProfilerIOException
 
+    def _register_op_name(self, timeline_list):
+        """Register op name to op name list."""
+        for timeline in timeline_list:
+            if timeline and timeline[self._op_name_idx] not in self._op_name_list:
+                self._op_name_list.append(timeline[self._op_name_idx])
+
 
 class GpuTimelineGenerator(BaseTimelineGenerator):
     """Generate gpu Timeline data from file."""
@@ -929,8 +971,8 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
     _cluster_analyse_filename = 'gpu_cluster_analyse_{}_{}_{}_{}.csv'
     _activity_keys_list = []
 
-    def __init__(self, profiling_dir, device_id, rank_size):
-        super().__init__()
+    def __init__(self, profiling_dir, device_id, rank_size, model):
+        super().__init__(DeviceTarget.GPU.value, model)
         self._device_id = device_id
         self._rank_size = rank_size
         self._profiling_dir = profiling_dir
@@ -1011,7 +1053,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         timeline_list, communication_info = self._load_op_data(op_file_path, reduce_op_type)
         communication_info.sort(key=lambda x: float(x[2]))
         # Add host cpu op timeline.
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._device_id, self._rank_size)
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
         cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
         if cpu_timeline_list:
             self._clock_synchronize_to_gpu(cpu_timeline_list)
@@ -1309,8 +1351,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 computation_time.append(step_info[step][self._duration_idx] - comm_alone_time[step])
             except IndexError as e:
                 logger.error(e)
-            finally:
-                pass
 
         metrices_per_step_list = [computation_time, comm_alone_time, stage_time,
                                   recieve_alone_time, collective_comm_alone_time]
@@ -1401,14 +1441,24 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     _timeline_summary_filename = 'ascend_timeline_summary_{}.json'
     _cluster_analyse_filename = 'ascend_cluster_analyse_{}_{}_{}_{}.csv'
 
-    def __init__(self, profiling_dir, device_id, rank_id, rank_size):
-        super().__init__()
+    def __init__(self, profiling_dir, device_id, rank_id, rank_size, model):
+        super().__init__(DeviceTarget.ASCEND.value, model)
         self._profiling_dir = profiling_dir
         self._device_id = device_id
         self._rank_id = rank_id
         self._rank_size = rank_size
         self._display_filename = self._display_filename.format(rank_id)
         self._timeline_summary_filename = self._timeline_summary_filename.format(rank_id)
+
+    @staticmethod
+    def _get_all_reduce_names(communication_info):
+        names = []
+        for info in communication_info:
+            # all_reduce_name format: stream_stream_id_stream_op_index_opname
+            all_reduce_name = info[0][info[0].rindex('_') + 1:]
+            if all_reduce_name not in names:
+                names.append(all_reduce_name)
+        return names
 
     def _parse_timeline_data(self, timeline, min_cycle_counter):
         """Parse timeline data."""
@@ -1440,16 +1490,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self._update_format_meta_data(timeline_dict)
         self._timeline_meta.append(timeline_dict)
 
-    @staticmethod
-    def _get_all_reduce_names(communication_info):
-        names = []
-        for info in communication_info:
-            # all_reduce_name format: stream_stream_id_stream_op_index_opname
-            all_reduce_name = info[0][info[0].rindex('_') + 1:]
-            if all_reduce_name not in names:
-                names.append(all_reduce_name)
-        return names
-
     def _get_op_timeline(self, communication_info, source_path):
         """get ai_core and cpu timeline."""
         all_reduce_names = AscendTimelineGenerator._get_all_reduce_names(communication_info)
@@ -1457,7 +1497,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         for timeline in timeline_list:
             timeline[self._tid_idx] = f"Stream #{timeline[self._tid_idx]}"
 
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._rank_size)
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
         cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
         if cpu_timeline_list:
             self._clock_synchronize_to_device(cpu_timeline_list, source_path)
@@ -1706,8 +1746,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 computation_time.append(step_info[step][self._duration_idx] - comm_alone_time[step])
             except IndexError as err:
                 logger.error(err)
-            finally:
-                pass
         metrices_per_step_list = [computation_time, comm_alone_time, stage_time,
                                   recieve_alone_time, collective_comm_alone_time]
         if step_num > 1:
@@ -1775,15 +1813,17 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     def init_pynative_timeline(self):
         """Init timeline for pynative model."""
         timeline_list = OPIntermediateParser(self._profiling_dir, self._rank_id).get_timeline_data()
-        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._rank_id, self._rank_size)
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._model)
         cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
         if cpu_timeline_list:
             self._pynative_clock_synchronize(cpu_timeline_list)
             timeline_list.extend(cpu_timeline_list)
 
+        self._register_op_name(timeline_list)
         self._timeline_summary['op_exe_times'] = len(timeline_list)
         self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
         self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
+        self._timeline_summary['num_of_ops'] = len(self._op_name_list)
 
         timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
         min_cycle_counter = float(timeline_list[0][self._start_time_idx])
@@ -1840,8 +1880,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
             raise ProfilerIOException()
-        finally:
-            pass
         time_diff = gpu_start_time * 1000 - host_monotonic_start_time
         for idx, time_item in enumerate(timeline_list):
             timeline_list[idx][self._start_time_idx] = int(time_item[self._start_time_idx]) + time_diff
@@ -1854,6 +1892,10 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
     _output_op_execute_time_file_path = "cpu_op_execute_timestamp_{}.txt"
     _display_filename = 'cpu_timeline_display_{}.json'
     _timeline_summary_filename = 'cpu_timeline_summary_{}.json'
+
+    def __init__(self, profiling_dir, model):
+        super().__init__(profiling_dir, 0, 0, model)
+        self._device_target = DeviceTarget.CPU.value
 
     def _get_and_validate_path(self, file_name):
         """Generate op or activity file path from file name, and validate this path."""
