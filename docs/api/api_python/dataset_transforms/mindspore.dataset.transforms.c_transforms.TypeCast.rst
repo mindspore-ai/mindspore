@@ -11,4 +11,4 @@ mindspore.dataset.transforms.c_transforms.TypeCast
 
     **异常：**
       
-    - **TypeError** - 参数 `data_type` 类型不为 MindSpore支持的数据类型，如bool、int、float 或 string。
+    - **TypeError** - 参数 `data_type` 类型不为MindSpore支持的数据类型 :class:`mindspore.dtype` 。

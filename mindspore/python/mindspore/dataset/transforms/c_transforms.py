@@ -195,13 +195,14 @@ class Slice(TensorOperation):
 
             1.  :py:obj:`int`: Slice this index only along the first dimension. Negative index is supported.
             2.  :py:obj:`list(int)`: Slice these indices along the first dimension. Negative indices are supported.
-            3.  :py:obj:`slice`: Slice the generated indices from the slice object along the first dimension.
-                Similar to start:stop:step.
+            3.  :py:obj:`slice`: Slice the generated indices from the
+                `slice <https://docs.python.org/3.7/library/functions.html?highlight=slice#slice>`_ object along the
+                first dimension. Similar to start:stop:step.
             4.  :py:obj:`None`: Slice the whole dimension. Similar to :py:obj:`[:]` in Python indexing.
             5.  :py:obj:`Ellipsis`: Slice the whole dimension, same result with `None`.
 
     Raises:
-        TypeError: If `slices` is not of type int, list[int], slice, None or Ellipsis.
+        TypeError: If `slices` is not of type int, list[int], :py:obj:'slice', :py:obj:'None' or :py:obj:'Ellipsis'.
 
     Supported Platforms:
         ``CPU``
@@ -433,12 +434,10 @@ class Unique(TensorOperation):
 
     Return 3 tensor: unique output tensor, index tensor, count tensor.
 
-    Unique output tensor contains all the unique elements of the input tensor
-    in the same order that they occur in the input tensor.
-
-    Index tensor that contains the index of each element of the input tensor in the unique output tensor.
-
-    Count tensor that contains the count of each element of the output tensor in the input tensor.
+    - Output tensor contains all the unique elements of the input tensor
+      in the same order that they occur in the input tensor.
+    - Index tensor that contains the index of each element of the input tensor in the unique output tensor.
+    - Count tensor that contains the count of each element of the output tensor in the input tensor.
 
     Note:
         Call batch op before calling this function.

@@ -11,6 +11,6 @@ mindspore.dataset.transforms.c_transforms.OneHot
 
     **异常：**
       
-    - **TypeError** - 参数 `num_classes` 类型不为 int。
-    - **RuntimeError** - 输入Tensor的类型不为 int。
+    - **TypeError** - 参数 `num_classes` 类型不为int。
+    - **RuntimeError** - 输入Tensor的数据类型不为int。
     - **RuntimeError** - 参数Tensor的shape不是1-D。

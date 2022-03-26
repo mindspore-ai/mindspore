@@ -17,6 +17,6 @@ mindspore.dataset.audio.transforms.Contrast
 
     **异常：**
 
-    - **TypeError** - 当 `enhancement_amount` 的类型不为浮点型。
+    - **TypeError** - 当 `enhancement_amount` 的类型不为float。
     - **ValueError** - 当 `enhancement_amount` 取值不在[0, 100]范围内。
     - **RuntimeError** - 当输入音频的shape不为<..., time>。

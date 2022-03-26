@@ -5,12 +5,12 @@ mindspore.dataset.text.transforms.NormalizeUTF8
 
     对UTF-8编码的字符串进行规范化处理。
 
-    .. note:: Windows 平台尚不支持 NormalizeUTF8。
+    .. note:: Windows平台尚不支持 `NormalizeUTF8` 。
 
     **参数：**
 
     - **normalize_form** (NormalizeForm, 可选) - 指定不同的规范化形式，可以取值为
-      NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC、NormalizeForm.NFD、NormalizeForm.NFKD 此四种unicode中的
+      NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC、NormalizeForm.NFD、NormalizeForm.NFKD此四种unicode中的
       任何一种形式，默认值：NormalizeForm.NFKC。
 
       - NormalizeForm.NONE，对输入字符串不做任何处理。
@@ -23,4 +23,4 @@ mindspore.dataset.text.transforms.NormalizeUTF8
 
     **异常：**
 
-    - **TypeError** - 参数 `normalize_form` 的类型不是NormalizeForm。
+    - **TypeError** - 参数 `normalize_form` 的类型不是 :class:`mindspore.dataset.text.NormalizeForm` 。

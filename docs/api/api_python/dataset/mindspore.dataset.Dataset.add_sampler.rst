@@ -4,4 +4,4 @@
 
     **参数：**
 
-    - **new_sampler** (Sampler) ：作用于当前数据集对象的采样器。
+    - **new_sampler** (Sampler) ：指定作用于当前数据集对象的新采样器。

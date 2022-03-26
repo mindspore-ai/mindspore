@@ -13,6 +13,6 @@ mindspore.dataset.audio.transforms.ComplexNorm
 
     **异常：**
 
-    - **TypeError** - 当 `power` 的类型不为浮点型。
+    - **TypeError** - 当 `power` 的类型不为float。
     - **ValueError** - 当 `power` 为负数。
     - **RuntimeError** - 当输入音频的shape不为<..., complex=2>。

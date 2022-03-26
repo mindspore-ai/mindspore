@@ -24,9 +24,9 @@ mindspore.dataset.audio.transforms.BandrejectBiquad
 
     **异常：**
 
-    - **TypeError** - 当 `sample_rate` 的类型不为整型。
-    - **ValueError** - 当 `sample_rate` 为0。
-    - **TypeError** - 当 `central_freq` 的类型不为浮点型。
-    - **TypeError** - 当 `Q` 的类型不为浮点型。
+    - **TypeError** - 当 `sample_rate` 的类型不为int。
+    - **ValueError** - 当 `sample_rate` 的数值为0。
+    - **TypeError** - 当 `central_freq` 的类型不为float。
+    - **TypeError** - 当 `Q` 的类型不为float。
     - **ValueError** - 当 `Q` 取值不在(0, 1]范围内。
     - **RuntimeError** - 当输入音频的shape不为<..., time>。

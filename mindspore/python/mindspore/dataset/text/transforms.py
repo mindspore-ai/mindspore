@@ -356,8 +356,9 @@ class SentencePieceTokenizer(TextTensorOperation):
     Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
 
     Args:
-        mode (Union[str, SentencePieceVocab]): If the input parameter is a file, then its type should be string.
-            If the input parameter is a SentencePieceVocab object, then its type should be SentencePieceVocab.
+        mode (Union[str, SentencePieceVocab]): SentencePiece model.
+            If the input parameter is a file, it represents the path of SentencePiece mode to be loaded.
+            If the input parameter is a SentencePieceVocab object, it should be constructed in advanced.
         out_type (SPieceTokenizerOutType): The type of output, it can be any of [SPieceTokenizerOutType.STRING,
             SPieceTokenizerOutType.INT].
 
@@ -847,7 +848,8 @@ if platform.system().lower() != 'windows':
     class CaseFold(TextTensorOperation):
         """
         Apply case fold operation on UTF-8 string tensor, which is aggressive that can convert more characters into
-        lower case.
+        lower case. Supported normalization forms please refer to
+        `ICU_Normalizer2 <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classicu_1_1Normalizer2.html>`_ .
 
         Note:
             CaseFold is not supported on Windows platform yet.

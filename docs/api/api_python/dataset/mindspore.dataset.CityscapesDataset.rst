@@ -12,7 +12,7 @@ mindspore.dataset.CityscapesDataset
 
     - **dataset_dir** (str) - 包含数据集文件的根目录路径。
     - **usage** (str, 可选) - 指定数据集的子集。当参数 `quality_mode` 取值为'fine'时，此参数可取值为'train'、'test'、'val'或'all'。
-      在参数 `quality_mode` 的其他取值下，此参数可取值为'train'、'train_extra'、'val'或'all'。默认值：'train'，全部样本图片。
+      当参数 `quality_mode` 取值为'coarse'时，此参数可取值为'train'、'train_extra'、'val'或'all'。默认值：'train'，全部样本图片。
     - **quality_mode** (str, 可选) - 指定数据集的质量模式，可取值为'fine'或'coarse'。默认值：'fine'。
     - **task** (str, 可选) - 指定数据集的任务类型，可取值为'instance'、'semantic'、'polygon'或'color'。默认值：'instance'。
     - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
