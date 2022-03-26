@@ -571,8 +571,12 @@ Parameter操作算子
     :template: classtemplate.rst
 
     mindspore.ops.Depend
+    mindspore.ops.GradOperation
     mindspore.ops.HookBackward
+    mindspore.ops.HyperMap
     mindspore.ops.InsertGradientOf
+    mindspore.ops.Map
+    mindspore.ops.MultitypeFuncGraph
     mindspore.ops.Partial
 
 算子信息注册
