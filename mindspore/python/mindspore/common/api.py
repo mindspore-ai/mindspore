@@ -582,77 +582,290 @@ class _PynativeExecutor:
 
     @staticmethod
     def parameter_broadcast(obj, phase, auto_parallel_mode):
+        """
+        Run broadcast for parameter.
+
+        Args:
+            obj (Cell): The cell instance.
+            phase (str): The phase of cell instance.
+            auto_parallel_mode (bool): The flag of running auto parallel.
+
+        Return:
+            None.
+        """
         if BROADCAST_PHASE not in phase and _get_parameter_broadcast():
             _parameter_broadcast(obj, auto_parallel_mode)
 
     def new_graph(self, obj, *args, **kwargs):
+        """
+        Initialize resources for building forward and backward graph.
+
+        Args:
+            obj (Function/Cell): The function or cell instance.
+            args (tuple): Function or cell input arguments.
+            kwargs (dict): keyword arguments.
+
+        Return:
+            None.
+        """
         self._executor.new_graph(obj, *args, *(kwargs.values()))
 
     def end_graph(self, obj, output, *args, **kwargs):
+        """
+        Clean resources after building forward and backward graph.
+
+        Args:
+            obj (Function/Cell): The function or cell instance.
+            output (Tensor/tuple/list): Function or cell output object.
+            args (tuple): Function or cell input arguments.
+            kwargs (dict): keyword arguments.
+
+        Return:
+            None.
+        """
         self._executor.end_graph(obj, output, *args, *(kwargs.values()))
 
     def check_graph(self, obj, *args, **kwargs):
+        """
+        Determines the order of the function or cell.
+
+        Args:
+            obj (Function/Cell): The function or cell instance.
+            args (tuple): Function or cell input arguments.
+            kwargs (dict): keyword arguments.
+
+        Return:
+            bool, specifies whether the running function or cell is high-order.
+        """
         return self._executor.check_graph(obj, *args, *(kwargs.values()))
 
     def check_run(self, grad, obj, *args, **kwargs):
+        """
+        Whether the forward graph need to construct.
+
+        Args:
+            grad (GradOperation): The gradoperation object.
+            obj (Function/Cell): The function or cell instance.
+            args (tuple): Function or cell input arguments.
+            kwargs (dict): keyword arguments.
+
+        Return:
+            bool, specifies whether the forward graph need to construct.
+        """
         return self._executor.check_run(grad, obj, *args, *(kwargs.values()))
 
     def set_grad_position(self, grad, grad_position):
-        """Set position of grad"""
+        """
+        Set position of grad.
+
+        Args:
+            grad (GradOperation): The gradoperation object.
+            grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
+              If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
+
+        Return:
+            None.
+        """
         return self._executor.set_grad_position(grad, grad_position)
 
     def grad(self, grad, obj, weights, grad_position, *args, **kwargs):
+        """
+        Get grad graph.
+
+        Args:
+            grad (GradOperation): The gradoperation object.
+            obj (Function/Cell): The function or cell instance.
+            weights (ParameterTuple): The weights of cell instance.
+            grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
+              If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
+            args (tuple): Function or cell input arguments.
+            kwargs (dict): keyword arguments.
+
+        Return:
+            None.
+        """
         self._executor.grad_net(grad, obj, weights, grad_position, *args, *(kwargs.values()))
 
     def del_cell(self, cell_id=""):
+        """
+        Clean resource for cell.
+
+        Args:
+            cell_id (str): The ID of cell object.
+
+        Return:
+            None.
+        """
         self._executor.clear_cell(cell_id)
 
     def clear_res(self):
+        """
+        Clean resource for _PynativeExecutor.
+
+        Return:
+            None.
+        """
         return self._executor.clear_res()
 
     def clear_grad(self, obj, *args, **kwargs):
+        """
+        Clean resource after building grad graph.
+
+        Args:
+            obj (Function/Cell): The function or cell instance.
+            args (tuple): Function or cell input arguments.
+            kwargs (dict): keyword arguments.
+
+        Return:
+            None.
+        """
         self._executor.clear_grad(obj, *args, *(kwargs.values()))
 
     def sync(self):
+        """
+        SyncStream.
+
+        Return:
+            None.
+        """
         self._executor.sync()
 
     def set_lazy_build(self, enable):
+        """
+        The switch of lazy build.
+
+        Args:
+            enable (bool): Specifies whether the lazy build is enable.
+
+        Return:
+            None.
+        """
         self._executor.set_lazy_build(enable)
 
     def execute_lazy_task(self):
+        """
+        Executing lazy task.
+
+        Return:
+            None.
+        """
         self._executor.execute_lazy_task()
 
     def grad_ms_function(self, output, *args):
+        """
+        Building grad graph decorated by ms_function.
+
+        Args:
+            output (tuple): The function or cell decorated by ms_function output object.
+            args (tuple): Function or cell decorated by ms_function input arguments.
+
+        Return:
+            None.
+        """
         return self._executor.grad_ms_function(output, *args)
 
     def set_graph_phase(self, phase):
+        """
+        Set the phase of cell/function instance.
+
+        Args:
+            phase (str): The phase of cell/function instance.
+
+        Return:
+            None.
+        """
         self._executor.set_graph_phase(phase)
 
     def grad_flag(self):
+        """
+        The flag of building grad graph.
+
+        Return:
+            bool, whether building grad graph.
+        """
         return self._executor.grad_flag()
 
     def set_grad_flag(self, flag):
+        """
+        Set the flag of building grad graph.
+
+        Args:
+            flag (bool): Specifying whether building grad graph.
+
+        Return:
+            None.
+        """
         self._executor.set_grad_flag(flag)
 
     def enter_cell(self):
+        """
+        The flag of enter cell instance.
+
+        Return:
+            None.
+        """
         self._executor.enter_cell()
 
     def exit_cell(self):
+        """
+        The flag of exit cell instance.
+
+        Return:
+            None.
+        """
         self._executor.exit_cell()
 
     def is_top_cell(self):
+        """
+        The flag of top cell instance.
+
+        Return:
+            bool, specifies whether is the top cell.
+        """
         return self._executor.is_top_cell()
 
     def set_hook_changed(self, cell):
+        """
+        The flag of registering or removing a hook function on Cell instance.
+
+        Args:
+            cell (Cell): The cell instance.
+
+        Return:
+            None.
+        """
         self._executor.set_hook_changed(cell)
 
     def get_optimizer(self):
+        """
+        Get the optimizer.
+
+        Return:
+            The optimizer.
+        """
         return self._optimizer
 
     def get_top_cell(self):
+        """
+        Get the top cell object.
+
+        Return:
+            The top cell object.
+        """
         return self._top_cell
 
     def __call__(self, obj, *args, **kwargs):
+        """
+        PyNative executor run grad graph.
+
+        Args:
+            obj (Function/Cell): The function or cell instance.
+            args (tuple): Function or cell input arguments.
+            kwargs (dict): keyword arguments.
+
+        Return:
+            The return object after running grad graph.
+        """
         args = args + tuple(kwargs.values())
         return self._executor(obj, args)
 
