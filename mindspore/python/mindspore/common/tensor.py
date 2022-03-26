@@ -254,7 +254,10 @@ class Tensor(Tensor_):
         return self
 
     def __abs__(self):
-        return Tensor(abs(self.asnumpy()))
+        data = abs(self.asnumpy())
+        if isinstance(data, np.number):
+            data = np.array(data)
+        return Tensor(data)
 
     def __add__(self, other):
         return tensor_operator_registry.get('__add__')(self, other)
