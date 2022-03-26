@@ -874,19 +874,23 @@ class Validator:
     def check_csr_tensor_input(indptr, indices, values, shape):
         """Checks inputs type for CSRTensor."""
         if not isinstance(indptr, Tensor_):
-            raise TypeError(f"indptr should be Tensor, but got {type(indices)}.")
+            raise TypeError(f"indptr should be Tensor, but got {type(indptr)}.")
         Validator.check_sparse_tensor_input(indices, values, shape)
 
     @staticmethod
     def check_csr_tensor_shape(indptr_shp, indices_shp, values_shp, csr_shp):
         """Checks input tensors' shapes for CSRTensor."""
         if len(csr_shp) != 2:
-            raise ValueError("Currently only supports 2-dimensional csr tensor.")
+            raise ValueError(f"Currently only supports 2-dimensional csr tensor, got `shape length`={len(csr_shp)}.")
+        shape_size = 1
         for item in csr_shp:
             if item <= 0:
                 raise ValueError(f"The element of shape must be positive, but got {item}")
             if not isinstance(item, int):
                 raise TypeError(f"The element type of shape must be int, but got {type(item)}")
+            shape_size *= item
+        if shape_size < values_shp[0]:
+            raise ValueError(f"Shape total size: {shape_size} is too small to hold {values_shp[0]} non-zero values.")
         if len(values_shp) != 1:
             raise ValueError(f"Values must be a 1-dimensional tensor, but got a {len(values_shp)} dimension tensor.")
         if len(indices_shp) != 1:
@@ -904,9 +908,9 @@ class Validator:
     def check_csr_tensor_dtype(indptr_dtype, indices_dtype):
         """Checks input tensors' data types for CSRTensor."""
         if indptr_dtype not in (mstype.int16, mstype.int32, mstype.int64):
-            raise TypeError("Indptr must have integer data type.")
+            raise TypeError(f"Indptr must have int16 or int32 or int64 data type, but got {indptr_dtype}.")
         if indices_dtype not in (mstype.int16, mstype.int32, mstype.int64):
-            raise TypeError("Indices must have integer data type.")
+            raise TypeError(f"Indices must have int16 or int32 or int64 data type, but got {indices_dtype}.")
 
     @staticmethod
     def check_coo_tensor_input(indices, values, shape):
@@ -938,7 +942,7 @@ class Validator:
     def check_coo_tensor_dtype(indices_dtype):
         """Checks input tensors' data types for COOTensor."""
         if indices_dtype not in (mstype.int16, mstype.int32, mstype.int64):
-            raise TypeError("Indices must have integer data type.")
+            raise TypeError(f"Indices must have int16 or int32 or int64 data type, but got {indices_dtype}.")
 
 
 def check_input_format(input_param):
