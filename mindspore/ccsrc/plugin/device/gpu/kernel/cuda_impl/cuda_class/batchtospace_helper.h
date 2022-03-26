@@ -38,7 +38,7 @@ struct BatchToSpaceAttr : public GpuKernelAttrBase {
 template <typename T>
 class BatchToSpaceHelperGpuKernel : public GpuKernelHelperBase {
  public:
-  explicit BatchToSpaceHelperGpuKernel(std::string &kernel_name) : GpuKernelHelperBase(kernel_name) {}
+  explicit BatchToSpaceHelperGpuKernel(const std::string &kernel_name) : GpuKernelHelperBase(kernel_name) {}
   virtual ~BatchToSpaceHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<size_t>> &input_shapes,
                  const std::vector<std::vector<size_t>> &output_shapes) override {

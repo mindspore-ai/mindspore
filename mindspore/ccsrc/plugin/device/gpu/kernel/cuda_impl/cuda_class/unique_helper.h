@@ -33,7 +33,7 @@ constexpr size_t CROPS_SHAPE_1 = 2;
 template <typename T, typename S>
 class UniqueHelperGpuKernel : public GpuKernelHelperBase {
  public:
-  explicit UniqueHelperGpuKernel(std::string &kernel_name) : GpuKernelHelperBase(kernel_name) {}
+  explicit UniqueHelperGpuKernel(const std::string &kernel_name) : GpuKernelHelperBase(kernel_name) {}
   virtual ~UniqueHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<size_t>> &input_shapes,
                  const std::vector<std::vector<size_t>> &output_shapes) override {
@@ -94,7 +94,11 @@ class UniqueHelperGpuKernel : public GpuKernelHelperBase {
     work_size_list_.clear();
   }
 
-  int GetOutSize() { return post_output_size_; }
+  DynamicOutInfo GetDynOutInfo() override {
+    DynamicOutInfo dyn_out;
+    dyn_out.shapes.push_back({{post_output_size_}});
+    return dyn_out;
+  }
 
  private:
   int num_elements_;

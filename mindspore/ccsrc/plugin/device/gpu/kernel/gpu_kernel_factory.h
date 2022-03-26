@@ -77,14 +77,6 @@ class GpuKernelRegister {
   ~GpuKernelRegister() = default;
 };
 
-// This is necessary for gpu kernels to support uint8 data type. In cuda, an unsigned,
-// 8 bit integral type is represented by an unsigned char, but the MS_REG_GPU_KERNEL
-// macros defined below will create compilation errors when datatype T contains a space,
-// because the variable created by the macro will also contain a space. So, we solve this
-// problem by writing uchar when calling these macros, and expanding uchar after the
-// variable has been created.
-using uchar = unsigned char;
-
 #define UNIQUE_KERNEL_NAME(kernel) KERNEL_NAME(g_##kernel##_gpu_kernel_reg, __COUNTER__)
 #define KERNEL_NAME(kernel, cnt) MERGE(kernel, cnt)
 #define MERGE(kernel, cnt) kernel##cnt

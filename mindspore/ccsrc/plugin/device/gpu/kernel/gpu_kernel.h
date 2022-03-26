@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_GPU_KERNEL_H_
 
 #include <cuda.h>
 #include <cudnn.h>
@@ -28,14 +28,21 @@
 #include <numeric>
 #include <functional>
 #include <algorithm>
+#include <tuple>
+#include <set>
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_mod.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/executor/dynamic_kernel.h"
+#include "kernel/kernel_build_info.h"
+#include "kernel/common_utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
 // The max_limit of tensor shape size: 2 Giga-elements(2^31, the largest number in 32 bits).
@@ -82,15 +89,47 @@ class NativeGpuKernelMod : public GpuKernelMod {
   }
   virtual void DestroyResource() noexcept {}
 
-  bool IsDynamicShape() { return common::AnfAlgo::IsDynamicShape(kernel_node_.lock()); }
+  static std::vector<KernelAttr> GetGpuSupportedList(const std::string &kernel_name) {
+    if (!Factory<NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
+      return {};
+    }
+    return Factory<NativeGpuKernelMod>::Instance().Create(kernel_name)->GetAllSupportedList(kernel_name);
+  }
 
+  static bool GpuCheckSupport(const std::string &kernel_name, const KernelAttr &kernel_attr);
+
+  using ReduceDetail = std::tuple<size_t, TypeId, TypeId>;
+  using ReducePrecisonRes = std::tuple<bool, std::vector<ReduceDetail>, std::vector<ReduceDetail>>;
+  static ReducePrecisonRes GpuReducePrecisionCheck(const std::string &kernel_name, const KernelAttr &kernel_attr) {
+    return Factory<NativeGpuKernelMod>::Instance().Create(kernel_name)->ReducePrecisionCheck(kernel_name, kernel_attr);
+  }
+
+  void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
+  bool IsDynamicShape() { return common::AnfAlgo::IsDynamicShape(kernel_node_.lock()); }
   void InferOp() override;
   void InitOp() override;
 
  protected:
   virtual void InitResource() {}
   virtual void InitSizeLists() = 0;
+  virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
+  bool CheckSupport(const std::string &kernel_name, const KernelAttr &kernel_attr);
+  std::vector<KernelAttr> GetAllSupportedList(const std::string &kernel_name);
+  ReducePrecisonRes ReducePrecisionCheck(const std::string &kernel_name, const KernelAttr &kernel_attr);
+
   std::weak_ptr<CNode> kernel_node_;
+  static std::map<std::string, std::vector<KernelAttr>> support_map_;
+  static std::set<std::string> initialize_;
+
+  size_t GetMatchKernelAttrIdxWithException(const AnfNodePtr &node, const std::vector<KernelAttr> &kernel_attrs) {
+    auto kernel_attr = GetKernelAttrFromNode(node);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, kernel_attrs);
+    if (!is_match) {
+      MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(node)
+                        << " does not support this kernel data type: " << kernel_attr;
+    }
+    return index;
+  }
 
   inline void ResetSizeLists() {
     input_size_list_.clear();
@@ -401,7 +440,15 @@ class NativeGpuKernelMod : public GpuKernelMod {
     return true;
   }
 };
+
+// This is necessary for gpu kernels to support uint8 data type. In cuda, an unsigned,
+// 8 bit integral type is represented by an unsigned char, but the MS_REG_GPU_KERNEL
+// macros defined below will create compilation errors when datatype T contains a space,
+// because the variable created by the macro will also contain a space. So, we solve this
+// problem by writing uchar when calling these macros, and expanding uchar after the
+// variable has been created.
+using uchar = unsigned char;
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_GPU_KERNEL_H_
