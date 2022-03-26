@@ -17,6 +17,7 @@
 #include "runtime/graph_scheduler/actor/custom_actor.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "utils/log_adapter.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace runtime {
@@ -40,6 +41,15 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     std::string error_info = "Launch custom kernel exception: " + node->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
   }
+  // update the output addr size after initop && updateop, because after the initop & updateop, the shape of output
+  // maybe changed
+  if (AnfUtils::GetCustomActorType(kernel_.lock()) == kInit ||
+      AnfUtils::GetCustomActorType(kernel_.lock()) == kUpdate) {
+    auto base_node = AnfUtils::GetCustomActorBaseNode(kernel_.lock());
+    auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());
+    UpdateOutputAddrSize(kernel_info, base_node);
+  }
+
   EraseInput(ctx);
   SendOutput(ctx);
 }
