@@ -3,9 +3,9 @@ mindspore.nn.LossBase
 
 .. py:class:: mindspore.nn.LossBase(reduction='mean')
 
-    构建损失函数的基类。
+    损失函数的基类。
 
-    自定义损失函数时应实现自己的 `construct` ，并使用方法 `self.get_loss` 将reduction应用于loss计算。
+    自定义损失函数时应重写 `construct` ，并使用方法 `self.get_loss` 将 `reduction` 应用于loss计算。
 
     **参数：**
 
@@ -32,4 +32,4 @@ mindspore.nn.LossBase
         **参数：**
 
         - **x** (Tensor) - 输入数据，任意维度的Tensor。
-        - **weights** (Union[float, Tensor]) - 可选值，要么rank为0，要么rank与输入相同，并且必须可广播到输入（即，所有维度必须为 `1` ，或与相应输入的维度相同）。
+        - **weights** (Union[float, Tensor]) - 可选值，要么rank为0，要么rank与输入相同，并且必须可广播到输入（即，所有维度必须为 `1` ，或与相应输入的维度相同）。默认值: 1.0。

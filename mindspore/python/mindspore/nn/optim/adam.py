@@ -229,7 +229,7 @@ class Adam(Optimizer):
             &\hline \\[-1.ex]
         \end{array}
 
-    :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
+    :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector,
     :math:`g` represents `gradients`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
     :math:`t` represents the current step while :math:`beta_1^t` and :math:`beta_2^t` represent
     `beta1_power` and `beta2_power`, :math:`\gamma` represents `learning_rate`, :math:`w` represents `params`,
