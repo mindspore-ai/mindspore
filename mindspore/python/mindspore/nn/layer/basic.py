@@ -45,6 +45,8 @@ class L1Regularizer(Cell):
     .. math::
         \text{loss}=\lambda * \text{reduce_sum}(\text{abs}(\omega))
 
+    where :math:`\lambda` is `scale` .
+
     Note:
         scale(regularization factor) should be a number which greater than 0
 
