@@ -10,7 +10,7 @@ mindspore.nn.Dense
     .. math::
         \text{outputs} = \text{activation}(\text{X} * \text{kernel} + \text{bias}),
 
-    其中  :math:`X` 是输入Tensor， :math:`\text{activation}` 是激活函数（如果传递的话）， :math:`\text{kernel}` 是一个权重矩阵，其数据类型与 :math:`X` 相同， :math:`\text{bias}` 是一个偏置向量，其数据类型与 :math:`X` 相同（仅当has_bias为True时）。
+    其中  :math:`X` 是输入Tensor， :math:`\text{activation}` 是激活函数， :math:`\text{kernel}` 是一个权重矩阵，其数据类型与 :math:`X` 相同， :math:`\text{bias}` 是一个偏置向量，其数据类型与 :math:`X` 相同（仅当has_bias为True时）。
 
     **参数：**
 
@@ -18,12 +18,12 @@ mindspore.nn.Dense
     - **out_channels** (int) - Dense层输出Tensor的空间维度。
     - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 `initializer`。默认值：'normal'。
     - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 `initializer`。默认值：'zeros'。
-    - **has_bias** (bool) - 指定图层是否使用偏置向量。默认值：True。
+    - **has_bias** (bool) - 是否使用偏置向量。默认值：True。
     - **activation** (Union[str, Cell, Primitive]) - 应用于全连接层输出的激活函数，例如‘ReLU’。默认值：None。
 
     **输入：**
 
-    - **x** (Tensor) - shape为 :math:`(*,in\_channels)` 的Tensor。 `Args` 中的 `in_channels` 应等于 `Inputs` 中的 :math:`in\_channels` 。
+    - **x** (Tensor) - shape为 :math:`(*,in\_channels)` 的Tensor。 参数中的 `in_channels` 应等于输入中的 :math:`in\_channels` 。
 
     **输出：**
 

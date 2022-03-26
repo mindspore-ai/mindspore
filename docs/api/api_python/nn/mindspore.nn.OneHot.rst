@@ -3,9 +3,9 @@ mindspore.nn.OneHot
 
 .. py:class:: mindspore.nn.OneHot(axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32)
 
-    返回一个one-hot类型的Tensor。
+    对输入进行one-hot编码并返回。
 
-    参数 `indices` 表示的位置取值为on_value，其他所有位置取值为off_value。
+    输入的 `indices` 表示的位置取值为on_value，其他所有位置取值为off_value。
 
     .. note::
         如果indices是n阶Tensor，那么返回的one-hot Tensor则为n+1阶Tensor。
@@ -32,11 +32,11 @@ mindspore.nn.OneHot
 
     **参数：**
 
-    - **axis** (int) - 指定第几阶为depth维one-hot向量，如果轴为-1，则 features x depth，如果轴为0，则 depth x features。默认值：-1。
-    - **depth** (int) - 定义one-hot向量的维度深度。默认值：1。
-    - **on_value** (float) - one-hot值，当indices[j] = i时，填充output[i][j]的取值。默认值：1.0。
-    - **off_value** (float) - 非one-hot值，当indices[j] != i时，填充output[i][j]的取值。默认值：0.0。
-    - **dtype** (:class:`mindspore.dtype`) - 是'on_value'和'off_value'的数据类型，而不是索引的数据类型。默认值：mindspore.float32。
+    - **axis** (int) - 指定第几阶为 `depth` 维one-hot向量，如果轴为-1，则 `features * depth` ，如果轴为0，则 `depth * features` 。默认值：-1。
+    - **depth** (int) - 定义one-hot向量的深度。默认值：1。
+    - **on_value** (float) - one-hot值，当 `indices[j] = i` 时，填充output[i][j]的取值。默认值：1.0。
+    - **off_value** (float) - 非one-hot值，当 `indices[j] != i` 时，填充output[i][j]的取值。默认值：0.0。
+    - **dtype** (:class:`mindspore.dtype`) - 是'on_value'和'off_value'的数据类型，而不是输入的数据类型。默认值：mindspore.float32。
 
     **输入：**
 
@@ -44,11 +44,11 @@ mindspore.nn.OneHot
 
     **输出：**
 
-    Tensor，数据类型 `dtype` 的独热Tensor，维度为 `axis` 扩展到 `depth`，并填充on_value和off_value。`Outputs` 的维度等于 `indices` 的维度加1。
+    Tensor，输出Tensor，数据类型 `dtype` 的one-hot Tensor，维度为 `axis` 扩展到 `depth`，并填充on_value和off_value。`Outputs` 的维度等于 `indices` 的维度加1。
 
     **异常：**
 
-    - **TypeError** - `axis` 或 `depth` 不是整数。
+    - **TypeError** - `axis` 或 `depth` 不是int。
     - **TypeError** - `indices` 的dtype既不是int32，也不是int64。
     - **ValueError** - 如果 `axis` 不在范围[-1, len(indices_shape)]内。
     - **ValueError** - `depth` 小于0。

@@ -3,10 +3,12 @@ mindspore.nn.L1Regularizer
 
 .. py:class:: mindspore.nn.L1Regularizer(scale)
 
-    对权重计算L1正则化的值。
+    对权重计算L1正则化。
 
     .. math::
         \text{loss}=\lambda * \text{reduce_sum}(\text{abs}(\omega))
+
+    :math:`\lambda` 代表 `scale` 。
 
     .. note::
         正则化因子应为大于0。

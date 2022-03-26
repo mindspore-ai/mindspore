@@ -5,7 +5,7 @@ mindspore.nn.FocalLoss
 
     FocalLoss函数。
 
-    解决了类别不平衡和分类难度差异的问题。
+    解决了类别不平衡的问题。
 
     论文 `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_ 中提出的loss函数提高了图像目标检测的效果。
 
@@ -18,12 +18,12 @@ mindspore.nn.FocalLoss
 
     - **gamma** (float) - gamma用于调整Focal Loss的权重曲线的陡峭程度。默认值：2.0。
     - **weight** (Union[Tensor, None]) - Focal Loss的权重，维度为1。如果为None，则不使用权重。默认值：None。
-    - **reduction** (str) - 应用于loss的计算方式。取值为"mean"，"sum"，或"none"。默认值："mean"。
+    - **reduction** (str) - loss的计算方式。取值为"mean"，"sum"，或"none"。默认值："mean"。
 
     **输入：**
 
-    - **logits** (Tensor) - shape为 :math:`(B, C)` 、 :math:`(B, C, H)` 、或 :math:`(B, C, H, W)` 的Tensor，其中 :math:`C` 是分类的数量，值大于1。如果shape为 :math:`(B, C, H, W)` 或 :math:`(B, C, H)` ，则 :math:`H` 或 :math:`H` 和 :math:`W` 的乘积应与 `labels` 的相同。
-    - **labels** (Tensor) - shape为 :math:`(B, C)` 、 :math:`(B, C, H)` 、或 :math:`(B, C, H, W)` 的Tensor， :math:`C` 的值为1，或者与 `logits` 的 :math:`C` 相同。如果 :math:`C` 不为1，则shape应与 `logits` 的shape相同，其中 :math:`C` 是分类的数量。如果shape为 :math:`(B, C, H, W)` 或 :math:`(B, C, H)` ，则 :math:`H` 或 :math:`H` 和 :math:`W` 的乘积应与 `logits` 相同。   
+    - **logits** (Tensor) - shape为 :math:`(N, C)` 、 :math:`(N, C, H)` 、或 :math:`(N, C, H, W)` 的Tensor，其中 :math:`C` 是分类的数量，值大于1。如果shape为 :math:`(N, C, H, W)` 或 :math:`(N, C, H)` ，则 :math:`H` 或 :math:`H` 和 :math:`W` 的乘积应与 `labels` 的相同。
+    - **labels** (Tensor) - shape为 :math:`(N, C)` 、 :math:`(N, C, H)` 、或 :math:`(N, C, H, W)` 的Tensor， :math:`C` 的值为1，或者与 `logits` 的 :math:`C` 相同。如果 :math:`C` 不为1，则shape应与 `logits` 的shape相同，其中 :math:`C` 是分类的数量。如果shape为 :math:`(N, C, H, W)` 或 :math:`(N, C, H)` ，则 :math:`H` 或 :math:`H` 和 :math:`W` 的乘积应与 `logits` 相同。
 
     **输出：**
 
