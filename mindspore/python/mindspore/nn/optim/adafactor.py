@@ -70,7 +70,6 @@ def _run_opt_with_one_number(eps, clip_threshold, beta1, beta2t, weight_decay, s
         rms = _rms(p_data_fp32)
         param_scale = P.Maximum()(eps[1], rms)
         learning_rate_update = learning_rate * param_scale * F.ones_like(rms)
-        learning_rate_update = F.assign(learning_rate, F.cast(learning_rate_update, F.dtype(learning_rate)))
     else:
         learning_rate_update = learning_rate
 
