@@ -273,6 +273,8 @@ int Flags::InitExtendedIntegrationInfo(const lite::ConfigFileParser &config_file
   return RET_OK;
 }
 
+void Flags::InitAclDefaultOption() { this->aclModelOptionCfgParam.om_file_path = this->outputFile; }
+
 int Flags::InitConfigFile() {
   lite::ConfigFileParser config_file_parser;
   auto ret = config_file_parser.ParseConfigFile(this->configFile);
@@ -421,6 +423,8 @@ int Flags::PreInit(int argc, const char **argv) {
       return RET_INPUT_PARAM_INVALID;
     }
   }
+
+  InitAclDefaultOption();
   return RET_OK;
 }
 
