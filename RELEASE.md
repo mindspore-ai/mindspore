@@ -6,23 +6,23 @@
 
 #### OS
 
-* [STABLE] Support macOS with CPU(X86)
-* [BETA] Supoport macOS with CPU(M1)
+- [STABLE] Support macOS with CPU(X86)
+- [BETA] Supoport macOS with CPU(M1)
 
 #### FrontEnd
 
-* [STABLE] Support JIT Fallback feature in Graph mode.
-* [STABLE] Support compile cache feature in Graph mode.
-* [STABLE] Add new optimizers, including ASGD and Rprop.
-* [STABLE] Add new initializers, including Identity, Orthogonal, Dirac, Sparse and VarianceScaling.
-* [STABLE] Support resuming training when an exception occurs in the process.
-* [STABLE] Change `mindspore.nn.LSTMCell` from single-layer LSTM to single-cell LSTM.
-* [BETA] Introduce `mindspore.ops.Custom` to customize your own operators for Ascend(AICore, AICPU), GPU, CPU backends, and the custom type can be one of TBE, AKG, pure Python function or prebuild binary(called aot operator).
+- [STABLE] Support JIT Fallback feature in Graph mode.
+- [STABLE] Support compile cache feature in Graph mode.
+- [STABLE] Add new optimizers, including ASGD and Rprop.
+- [STABLE] Add new initializers, including Identity, Orthogonal, Dirac, Sparse and VarianceScaling.
+- [STABLE] Support resuming training when an exception occurs in the process.
+- [STABLE] Change `mindspore.nn.LSTMCell` from single-layer LSTM to single-cell LSTM.
+- [BETA] Introduce `mindspore.ops.Custom` to customize your own operators for Ascend(AICore, AICPU), GPU, CPU backends, and the custom type can be one of TBE, AKG, pure Python function or prebuild binary(called aot operator).
 
 #### PyNative
 
-* [STABLE] Support heterogeneous feature in PyNative mode.
-* [STABLE] Optimize memory allocation in PyNative mode.
+- [STABLE] Support heterogeneous feature in PyNative mode.
+- [STABLE] Optimize memory allocation in PyNative mode.
 
 #### Auto Parallel
 
@@ -39,33 +39,33 @@
 
 #### Executor
 
-* [STABLE] Support multigraph sink and subgraph sink of MindRT.
-* [STABLE] Support memory swap to break the device memory size limit on Ascend platform.
-* [STABLE] Support dynamic deployment of distributed training cluster(GPU).
-* [BETA] Support automatic failover of parameter server.
+- [STABLE] Support multigraph sink and subgraph sink of MindRT.
+- [STABLE] Support memory swap to break the device memory size limit on Ascend platform.
+- [STABLE] Support dynamic deployment of distributed training cluster(GPU).
+- [BETA] Support automatic failover of parameter server.
 
 #### DataSet
 
-* [STABLE] Support overwrite feature in MindRecord.
-* [STABLE] Log improvement and more friendly to users.
-* [BETA] Support new feature [Dataset Offload](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_offload.html) to speed up data processing by heterogeneous computing.
-* [BETA] Support new feature [Dataset Autotune](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_autotune.html) to adjust parallelism of dataset pipeline automatically.
+- [STABLE] Support overwrite feature in MindRecord.
+- [STABLE] Log improvement and more friendly to users.
+- [BETA] Support new feature [Dataset Offload](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_offload.html) to speed up data processing by heterogeneous computing.
+- [BETA] Support new feature [Dataset Autotune](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_autotune.html) to adjust parallelism of dataset pipeline automatically.
 
 #### GraphKernel Fusion
 
-* [STABLE] Support kernel fusion and generation for CPU backend.
+- [STABLE] Support kernel fusion and generation for CPU backend.
 
 #### Federated Learning
 
-* [STABLE] FL-Client framework and model decoupling.
-* [BETA] Support Cross-silo federated learning framework.
+- [STABLE] FL-Client framework and model decoupling.
+- [BETA] Support Cross-silo federated learning framework.
 
 #### Debug
 
-* [STABLE] Support dump in cell level(Ascend).
-* [STABLE] Support dump Tensor statistics(Ascend/GPU).
-* [STABLE] Support displaying corresponding code lines for fusion nodes.
-* [STABLE] Support passing dump flag in Ascend backend in order to dump correct operators after fusion transformation.
+- [STABLE] Support dump in cell level(Ascend).
+- [STABLE] Support dump Tensor statistics(Ascend/GPU).
+- [STABLE] Support displaying corresponding code lines for fusion nodes.
+- [STABLE] Support passing dump flag in Ascend backend in order to dump correct operators after fusion transformation.
 
 ### API Change
 
@@ -76,6 +76,10 @@
 ###### `mindspore.dataset.MindDataset` interface changes input parameter dataset_file([!27542](https://gitee.com/mindspore/mindspore/pulls/27542))
 
 `MindDataset` contains the input parameter `dataset_file`, which is in the singular format. It can receive a single file path or a list that stores multiple file paths. Thus It is preferred to change the input parameter `dataset_file` into plural format. In addition, the input parameters of most dataset API, such as `TFRecordDataset`, are in plural formart (`dataset_files`). To ensure consistency, the input parameter `dataset_file` of MindDataset is changed to plural formart as `dataset_files`,  we can see the updated version in api of [mindspore.dataset.MindDataset](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/dataset/mindspore.dataset.MindDataset.html#mindspore.dataset.MindDataset).
+
+###### Deprecated usage: `import mindspore.dataset.engine.datasets as ds`. Use `import mindspore.dataset as ds` instead as recommended
+
+We're reconstructed `mindspore/dataset/engine/datasets.py` to `datasets.py`, `datasets_version.py`, `datasets_text.py`, `datasets_audio.py`, `datasets_standard_format.py` and `datasets_user_defined.py`. This is more convenient for subsequent maintenance, the specific dataset loading classes will be scattered in various files, which will cause that the corresponding class cannot be found from the file name, so it is recommended to use a unified usage `import mindspore.dataset as ds`.
 
 ###### Delete `mindspore.Tensor`'s property `virtual_flag`([!26989](https://gitee.com/mindspore/mindspore/pulls/26989))
 
@@ -105,14 +109,14 @@
 
 #### Executor
 
-* Fix process hanging while calling MPI_comm_create in asymmetric pipeline split scenario. ([!28707](https://gitee.com/mindspore/mindspore/pulls/28707))
-* Fix the execution error when the weights are shared between graph mode and PyNative mode.([!26635](https://gitee.com/mindspore/mindspore/pulls/26635))
-* Fixed the probability coredump when free memory under PyNative mode.([!25472](https://gitee.com/mindspore/mindspore/pulls/25472))
+- Fix process hanging while calling MPI_comm_create in asymmetric pipeline split scenario. ([!28707](https://gitee.com/mindspore/mindspore/pulls/28707))
+- Fix the execution error when the weights are shared between graph mode and PyNative mode.([!26635](https://gitee.com/mindspore/mindspore/pulls/26635))
+- Fixed the probability coredump when free memory under PyNative mode.([!25472](https://gitee.com/mindspore/mindspore/pulls/25472))
 
 #### Dataset
 
-* Fix memory increase abnormally when running dataset for a long time. ([!26237](https://gitee.com/mindspore/mindspore/pulls/26237))
-* Fix saving MindRecord files with Chinese path on Windows. ([!28378](https://gitee.com/mindspore/mindspore/pulls/28378))
+- Fix memory increase abnormally when running dataset for a long time. ([!26237](https://gitee.com/mindspore/mindspore/pulls/26237))
+- Fix saving MindRecord files with Chinese path on Windows. ([!28378](https://gitee.com/mindspore/mindspore/pulls/28378))
 
 ## MindSpore Lite
 
@@ -120,29 +124,29 @@
 
 #### Converter and runtime
 
-* [STABLE] Add more fusion patterns in the converter tool to improve runtime performance.
-* [STABLE] Support take OpenGL texture as input and output of inference.
-* [STABLE] Refactor the JAVA API.
-* [BETA] Support inference on Ascend310.
+- [STABLE] Add more fusion patterns in the converter tool to improve runtime performance.
+- [STABLE] Support take OpenGL texture as input and output of inference.
+- [STABLE] Refactor the JAVA API.
+- [BETA] Support inference on Ascend310.
 
 #### x86 backend optimization
 
-* [STABLE] Optimize kernels for x86 using Advanced Vector Extensions(AVX512).
+- [STABLE] Optimize kernels for x86 using Advanced Vector Extensions(AVX512).
 
 #### ARM backend optimization
 
-* [STABLE] Support heterogeneous parallel inference, including splitting operators, constructing heterogeneous subgraphs, and heterogeneous parallel scheduling between CPUs and GPUs.
-* [STABLE] Add more FP16 operators.
+- [STABLE] Support heterogeneous parallel inference, including splitting operators, constructing heterogeneous subgraphs, and heterogeneous parallel scheduling between CPUs and GPUs.
+- [STABLE] Add more FP16 operators.
 
 #### Post quantization
 
-* [STABLE] Post quantization supports debugging.
-* [STABLE] Full quantization supports choosing non-quantized nodes.
-* [STABLE] Mixed bit quantization supports auto-tune.
+- [STABLE] Post quantization supports debugging.
+- [STABLE] Full quantization supports choosing non-quantized nodes.
+- [STABLE] Mixed bit quantization supports auto-tune.
 
 #### Training on Device
 
-* [STABLE] Support user-defined algorithm models to access the federated learning framework.
+- [STABLE] Support user-defined algorithm models to access the federated learning framework.
 
 ### Contributors
 
