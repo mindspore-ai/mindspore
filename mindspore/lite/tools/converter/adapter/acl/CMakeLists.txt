@@ -9,10 +9,6 @@ include_directories(${TOP_DIR}/graphengine/third_party/fwkacllib/inc/aicpu)
 include_directories(${TOP_DIR}/graphengine/third_party/fwkacllib/inc/toolchain)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-if(MSLITE_ENABLE_RUNTIME_CONVERT)
-    add_compile_definitions(ENABLE_ONLINE_MODEL_INFER)
-endif()
-
 file(GLOB ACL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cc

@@ -273,7 +273,10 @@ int Flags::InitExtendedIntegrationInfo(const lite::ConfigFileParser &config_file
   return RET_OK;
 }
 
-void Flags::InitAclDefaultOption() { this->aclModelOptionCfgParam.om_file_path = this->outputFile; }
+void Flags::InitAclDefaultOption() {
+  this->aclModelOptionCfgParam.om_file_path = this->outputFile;
+  this->aclModelOptionCfgParam.offline = true;
+}
 
 int Flags::InitConfigFile() {
   lite::ConfigFileParser config_file_parser;
