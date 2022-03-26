@@ -334,7 +334,7 @@ class SummaryRecord:
             step (int): Represents training step number.
             train_network (Cell): The spare network for saving graph.
                 Default: None, it means just do not save the graph summary when the original network graph is None.
-            plugin_filter (Optional[Callable[[str], bool]]): The filter function, \
+            plugin_filter (Callable[[str], bool], optional): The filter function, \
                 which is used to filter out which plugin should be written. Default: None.
 
         Returns:
