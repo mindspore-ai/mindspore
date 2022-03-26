@@ -20,8 +20,8 @@ import stat
 from queue import Queue
 
 from mindspore.profiler.common.exceptions.exceptions import \
-    ProfilerPathErrorException, ProfilerFileNotFoundException, \
-    ProfilerDirNotFoundException, ProfilerRawFileException
+    ProfilerPathErrorException, ProfilerRawFileException, \
+    ProfilerDirNotFoundException
 from mindspore import log as logger
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
@@ -39,8 +39,6 @@ class MinddataPipelineParser:
     Raises:
         ProfilerPathErrorException: If the minddata pipeline file path or
             the output path is invalid.
-        ProfilerFileNotFoundException: If the minddata pipeline file or
-            the output dir does not exist.
     """
     _raw_pipeline_file_name = 'pipeline_profiling_{}.json'
     _parsed_pipeline_file_name = 'minddata_pipeline_raw_{}.csv'
@@ -73,6 +71,8 @@ class MinddataPipelineParser:
             ProfilerRawFileException: If fails to parse the raw file of
                 minddata pipeline or the file is empty.
         """
+        if not self._pipeline_path:
+            return
         with open(self._pipeline_path, 'r') as file:
             try:
                 pipeline_info = json.load(file)
@@ -113,7 +113,7 @@ class MinddataPipelineParser:
             logger.warning(
                 'The minddata pipeline file <%s> not found.', pipeline_path
             )
-            raise ProfilerFileNotFoundException(pipeline_path)
+            pipeline_path = ""
 
         return pipeline_path
 
