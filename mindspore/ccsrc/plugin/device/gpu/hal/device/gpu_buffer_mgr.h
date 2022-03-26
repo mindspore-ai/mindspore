@@ -62,33 +62,31 @@ class Semaphore {
 
 class GpuBufferMgr {
  public:
-  static const unsigned int INVALID_HANDLE = 0xffffffffUL;
-
   EXPORT GpuBufferMgr() : cur_dev_id_(0), init_(false), closed_(false), open_by_dataset_(0) {}
 
   EXPORT virtual ~GpuBufferMgr() = default;
 
   EXPORT static GpuBufferMgr &GetInstance() noexcept;
 
-  EXPORT BlockQueueStatus_T Create(unsigned int device_id, const std::string &channel_name, void *addr,
-                                   const std::vector<size_t> &shape, const size_t &capacity);
+  EXPORT BlockQueueStatus_T Create(const std::string &channel_name, void *addr, const std::vector<size_t> &shape,
+                                   const size_t &capacity);
 
   // call for Push thread
-  EXPORT unsigned int Open(unsigned int device_id, const std::string &channel_name, const std::vector<size_t> &shape,
-                           std::function<void(void *, int32_t)> func);
+  EXPORT BlockQueueStatus_T Open(const std::string &channel_name, const std::vector<size_t> &shape,
+                                 std::function<void(void *, int32_t)> func);
 
   // call for Front/Pop thread
-  EXPORT unsigned int Open(unsigned int device_id, const std::string &channel_name, const std::vector<size_t> &shape);
+  EXPORT BlockQueueStatus_T Open(const std::string &channel_name, const std::vector<size_t> &shape);
 
-  EXPORT BlockQueueStatus_T Push(unsigned int handle, const std::vector<DataItemGpu> &data,
+  EXPORT BlockQueueStatus_T Push(const std::string &channel_name, const std::vector<DataItemGpu> &data,
                                  unsigned int timeout_in_sec);
-  EXPORT BlockQueueStatus_T Front(unsigned int handle, std::vector<DataItemGpu> *data);
-  EXPORT BlockQueueStatus_T Pop(unsigned int handle);
-  EXPORT BlockQueueStatus_T Clear(unsigned int handle);
+  EXPORT BlockQueueStatus_T Front(const std::string &channel_name, std::vector<DataItemGpu> *data);
+  EXPORT BlockQueueStatus_T Pop(const std::string &channel_name);
+  EXPORT BlockQueueStatus_T Clear(const std::string &channel_name);
 
   EXPORT void set_device_id(int device_id);
 
-  EXPORT void Close(unsigned int handle) noexcept;
+  EXPORT void Close(const std::string &channel_name) noexcept;
 
   EXPORT bool IsInit() const;
 
@@ -102,13 +100,9 @@ class GpuBufferMgr {
   // call for dataset send thread
   EXPORT void CloseConfirm();
 
-  EXPORT size_t Size(unsigned int handle);
+  EXPORT size_t Size(const std::string &channel_name);
 
-  EXPORT size_t Size(unsigned int device_id, const std::string &channel_name);
-
-  EXPORT size_t Capacity(unsigned int handle);
-
-  EXPORT size_t Capacity(unsigned int device_id, const std::string &channel_name);
+  EXPORT size_t Capacity(const std::string &channel_name);
 
  private:
   void set_device() const;
@@ -122,10 +116,9 @@ class GpuBufferMgr {
   int open_by_dataset_;
   Semaphore sema;
 
-  std::map<unsigned int, std::shared_ptr<BlockingQueue>> handle_queue_map_;
   std::map<std::string, std::shared_ptr<BlockingQueue>> name_queue_map_;
 
-  inline bool isCreated(unsigned int device_id, const std::string &channel_name);
+  inline bool isCreated(const std::string &channel_name);
 
   GpuBufferMgr(const GpuBufferMgr &) = delete;
   GpuBufferMgr &operator=(const GpuBufferMgr &) = delete;
