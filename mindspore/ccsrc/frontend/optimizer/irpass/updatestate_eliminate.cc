@@ -126,6 +126,12 @@ AnfNodePtr NewUpdateStateWithAttach(const CNodePtr &update_state, const AnfNodeP
 
 AnfNodePtr EliminateUpdateStateWithDepend(const CNodePtr &update_state) {
   auto depend = update_state->input(kAttachIndex)->cast<CNodePtr>();
+  // If same Depend CNode is used by multiple UpdateState CNode, it may be replaced by previous elimination.
+  if (depend == nullptr) {
+    constexpr auto recur_2 = 2;
+    MS_LOG(DEBUG) << "UpdateState's input 2 Depend had been replaced: " << update_state->DebugString(recur_2);
+    return nullptr;
+  }
   auto input_monad = depend->inputs().back();
   if (!HasAbstractMonad(input_monad)) {
     // Skip if Depend attach input is not a monad.
