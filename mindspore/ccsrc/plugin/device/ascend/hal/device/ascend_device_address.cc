@@ -289,8 +289,13 @@ std::shared_ptr<LaunchKernel> AscendDeviceAddress::CreateLaunchTransData(const s
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto stream = runtime_instance->compute_stream();
+  auto node = GetNodeIndex();
+  int64_t groups = 1;
+  if (format_ == kOpFormat_FRAC_Z && node.first != nullptr) {
+    groups = common::AnfAlgo::GetAttrGroups(node.first, node.second);
+  }
   auto launch_trans_data =
-    std::make_shared<AscendLaunchTransData>(stream, type_id_, size_, ori_format, dst_format, host_shape);
+    std::make_shared<AscendLaunchTransData>(stream, type_id_, size_, ori_format, dst_format, host_shape, groups);
   MS_EXCEPTION_IF_NULL(launch_trans_data);
   return launch_trans_data;
 }
