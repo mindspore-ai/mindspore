@@ -836,3 +836,58 @@ class ResizeBicubic(Primitive):
         return {'shape': out_shape,
                 'dtype': mstype.float32,
                 'value': None}
+
+
+class ResizeArea(Primitive):
+    """
+    Resize images to a certain size using area interpolation.
+
+    The resizing process only changes the two dimensions of images, which represent the width and height of images.
+
+    .. warning::
+        The values of "size" must be greater than zero.
+
+    Args:
+        align_corners (bool): If true, the centers of the 4 corner pixels of the input and output tensors are aligned,
+            preserving the values at the corner pixels. Defaults： False.
+
+    Inputs:
+        - **images** (Tensor) -  Input images must be a 4-D tensor with shape which is [batch, height, width, channels].
+            The format must be NHWC.
+            Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
+        - **size** (Tensor) - Input size must be a 1-D tensor of 2 elements: new_height, new_width.
+            The new size of output image.
+            Types allowed: int32.
+
+    Outputs:
+        A 4-D tensor of shape [batch, new_height, new_width, channels] with type: float32.
+
+    Raises:
+        TypeError: If dtype of `images` is not supported.
+        TypeError: If dtype of `size` is not int32.
+        TypeError: If dtype of `align_corners` is not bool.
+        ValueError: If the num of inputs is not 2.
+        ValueError: If the dimension of `images` shape is not 4.
+        ValueError: If the dimension of `size` shape is not 1.
+        ValueError: If the element num of `size` is not [new_height, new_width].
+        ValueError: The size is not positive.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> images = Tensor([[[[2], [4], [6], [8]], [[10], [12], [14], [16]]]], mindspore.float16)
+        >>> size = Tensor([1, 2], mindspore.int32)
+        >>> resizearea = ops.ResizeArea()
+        >>> output = resizearea(images, size)
+        >>> print(output.asnumpy())
+            [[[[ 7.]
+               [11.]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, align_corners=False):
+        """Initialize ResizeArea"""
+        self.init_prim_io_names(inputs=['images', 'size'], outputs=['y'])
+        validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.align_corners = align_corners

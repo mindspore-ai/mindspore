@@ -59,6 +59,7 @@ from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.random_ops import ParameterizedTruncatedNormal
 from mindspore.ops.operations.image_ops import NonMaxSuppressionWithOverlaps
+from mindspore.ops.operations.image_ops import ResizeArea
 from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
 from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import ResizeNearestNeighborV2
@@ -2811,6 +2812,12 @@ test_case_nn_ops = [
         'block': ResizeNearestNeighborV2Grad(),
         'desc_inputs': [Tensor(np.random.rand(16, 16, 8, 8).astype(np.float32)),
                         Tensor(np.array([32, 32]).astype(np.int32))],
+        'skip': ['backward']}),
+    ('ResizeArea', {
+        'block': ResizeArea(),
+        'desc_inputs': [Tensor([[[[2], [4], [6], [8]], [[10], [12], [14], [16]]]], mstype.float16),
+                        Tensor([1, 2], mstype.int32)],
+        'desc_bprop': [],
         'skip': ['backward']}),
     ('ROIAlign', {
         'block': P.ROIAlign(7, 7, 0.03125, 2),
