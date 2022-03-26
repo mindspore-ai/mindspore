@@ -25,6 +25,8 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 
 .. mscnplatformautosummary::
     :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
 
     mindspore.nn.CellList
     mindspore.nn.SequentialCell
@@ -34,6 +36,8 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 
 .. mscnplatformautosummary::
     :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
 
     mindspore.nn.DistributedGradReducer
     mindspore.nn.DynamicLossScaleUpdateCell
@@ -55,6 +59,8 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 
 .. mscnplatformautosummary::
     :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
 
     mindspore.nn.Conv1d
     mindspore.nn.Conv1dTranspose
