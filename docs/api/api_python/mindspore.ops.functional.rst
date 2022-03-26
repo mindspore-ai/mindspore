@@ -331,14 +331,10 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.dot
     mindspore.ops.gamma
     mindspore.ops.grad
-    mindspore.ops.GradOperation
-    mindspore.ops.HyperMap
     mindspore.ops.jvp
     mindspore.ops.laplace
-    mindspore.ops.Map
     mindspore.ops.matmul
     mindspore.ops.multinomial
-    mindspore.ops.MultitypeFuncGraph
     mindspore.ops.narrow
     mindspore.ops.normal
     mindspore.ops.poisson
