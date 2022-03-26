@@ -234,6 +234,7 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
   // Put device tensor into host tensor.
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
+  device_tensor->SetNodeIndex(output_node, output_index);
   tensor->set_device_address(device_tensor);
   tensor->set_sync_status(kNeedSyncDeviceToHost);
 
@@ -260,6 +261,8 @@ device::DeviceAddressPtr CloneEmptyDeviceAddress(const device::DeviceAddressPtr 
   MS_EXCEPTION_IF_NULL(new_device_address);
   new_device_address->set_original_ref_count(old_device_address->original_ref_count());
   new_device_address->ResetRefCount();
+  auto node = old_device_address->GetNodeIndex();
+  new_device_address->SetNodeIndex(node.first, node.second);
   return new_device_address;
 }
 
