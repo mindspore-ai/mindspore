@@ -88,6 +88,7 @@ def get_bprop_sparse_tensor_dense_matmul(self):
         return zeros_like(indices), values_grad, zeros_like(dense_shape), dense_grad
     return bprop
 
+
 @bprop_getters.register(_csr_ops.CSRReduceSum)
 def get_bprop_csr_reduce_sum(self):
     "Back-propagation for CSRReduceSum."
@@ -102,6 +103,7 @@ def get_bprop_csr_reduce_sum(self):
         values_grad = F.csr_gather(indptr, indices, values_grad_dense, shape)
         return F.make_csr_tensor(indptr, indices, values_grad, shape), zeros_like(axis)
     return bprop
+
 
 @bprop_getters.register(_csr_ops.CSRMV)
 def get_bprop_csr_mv(self):
@@ -129,6 +131,7 @@ def get_bprop_csr_mv(self):
         return F.make_csr_tensor(indptr, indices, values_grad, csr_tensor.shape), dense_grad
     return bprop
 
+
 @bprop_getters.register(_csr_ops.CSRMul)
 def get_bprop_csr_mul(self):
     "Back-propagation for CSRMul."
@@ -153,11 +156,13 @@ def get_bprop_csr_mul(self):
         return csr_tensor_grad, dense_grad
     return bprop
 
+
 @bprop_getters.register(_csr_ops.CSR2COO)
 def get_bprop_csr2coo(self):
     def bprop(indptr, nnz, out, dout):
         return zeros_like(dout)
     return bprop
+
 
 @bprop_getters.register(_csr_ops.COO2CSR)
 def get_bprop_coo2csr(self):
