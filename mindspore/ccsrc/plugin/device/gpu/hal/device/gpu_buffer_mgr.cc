@@ -26,67 +26,51 @@ namespace py = pybind11;
 
 namespace mindspore {
 namespace device {
-static unsigned int AllocHandle() {
-  static std::atomic<unsigned int> handle(1);
-  return handle.fetch_add(1, std::memory_order_relaxed);
-}
-
 GpuBufferMgr &GpuBufferMgr::GetInstance() noexcept {
   static GpuBufferMgr instance;
   return instance;
 }
 
-BlockQueueStatus_T GpuBufferMgr::Create(unsigned int device_id, const std::string &channel_name, void *addr,
-                                        const std::vector<size_t> &shape, const size_t &capacity) {
-  std::string name = std::to_string(device_id) + std::string("_") + channel_name;
-  if (name_queue_map_.count(name)) {
-    MS_LOG(ERROR) << "Queue already exist: " << name;
+BlockQueueStatus_T GpuBufferMgr::Create(const std::string &channel_name, void *addr, const std::vector<size_t> &shape,
+                                        const size_t &capacity) {
+  MS_LOG(INFO) << "Gpu queue: " << channel_name << " created.";
+  if (name_queue_map_.count(channel_name)) {
+    MS_LOG(ERROR) << "Queue already exist: " << channel_name;
     return QUEUE_EXIST;
   }
   std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
   BlockQueueStatus_T rt = queue->Create(addr, shape, capacity);
   if (rt != SUCCESS) {
+    MS_LOG(ERROR) << "Queue: " << channel_name << "create failed: " << rt;
     return rt;
   }
-  (void)name_queue_map_.insert(std::make_pair(name, queue));
+  (void)name_queue_map_.insert(std::make_pair(channel_name, queue));
   init_ = true;
   return SUCCESS;
 }
 
-unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &channel_name,
-                                const std::vector<size_t> &shape, const std::function<void(void *, int32_t)> func) {
+BlockQueueStatus_T GpuBufferMgr::Open(const std::string &channel_name, const std::vector<size_t> &shape,
+                                      const std::function<void(void *, int32_t)> func) {
+  MS_LOG(INFO) << "Gpu queue: " << channel_name << " open.";
   set_device();
-  std::string name = std::to_string(device_id) + std::string("_") + channel_name;
-  if (!name_queue_map_.count(name)) {
-    MS_LOG(ERROR) << "Queue not exist " << name;
-    return INVALID_HANDLE;
+  if (!name_queue_map_.count(channel_name)) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
+    return QUEUE_NOT_EXIST;
   }
-  unsigned int handle = AllocHandle();
-  if (handle == INVALID_HANDLE) {
-    MS_LOG(ERROR) << "handle is invalid";
-    return INVALID_HANDLE;
-  }
-  (void)handle_queue_map_.insert(std::make_pair(handle, name_queue_map_[name]));
-  name_queue_map_[name]->RegisterRelease(func);
+
+  name_queue_map_[channel_name]->RegisterRelease(func);
   open_by_dataset_++;
-  return handle;
+  return SUCCESS;
 }
 
-unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &channel_name,
-                                const std::vector<size_t> &shape) {
+BlockQueueStatus_T GpuBufferMgr::Open(const std::string &channel_name, const std::vector<size_t> &shape) {
+  MS_LOG(INFO) << "Gpu queue: " << channel_name << " open.";
   set_device();
-  std::string name = std::to_string(device_id) + std::string("_") + channel_name;
-  if (!name_queue_map_.count(name)) {
-    MS_LOG(ERROR) << "Queue not exist " << name;
-    return INVALID_HANDLE;
+  if (!name_queue_map_.count(channel_name)) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
+    return QUEUE_NOT_EXIST;
   }
-  unsigned int handle = AllocHandle();
-  if (handle == INVALID_HANDLE) {
-    MS_LOG(ERROR) << "handle is invalid";
-    return INVALID_HANDLE;
-  }
-  (void)handle_queue_map_.insert(std::make_pair(handle, name_queue_map_[name]));
-  return handle;
+  return SUCCESS;
 }
 
 void GpuBufferMgr::set_device_id(int device_id) { cur_dev_id_ = device_id; }
@@ -105,44 +89,48 @@ void GpuBufferMgr::set_device() const {
   }
 }
 
-BlockQueueStatus_T GpuBufferMgr::Push(unsigned int handle, const std::vector<DataItemGpu> &data,
+BlockQueueStatus_T GpuBufferMgr::Push(const std::string &channel_name, const std::vector<DataItemGpu> &data,
                                       unsigned int timeout_in_sec) {
-  auto iter = handle_queue_map_.find(handle);
-  if (iter == handle_queue_map_.end()) {
-    return HANDLE_NOT_EXIST;
+  auto iter = name_queue_map_.find(channel_name);
+  if (iter == name_queue_map_.end()) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
+    return QUEUE_NOT_EXIST;
   }
   return iter->second->Push(data, timeout_in_sec);
 }
 
-BlockQueueStatus_T GpuBufferMgr::Front(unsigned int handle, std::vector<DataItemGpu> *data) {
-  auto iter = handle_queue_map_.find(handle);
-  if (iter == handle_queue_map_.end()) {
-    return HANDLE_NOT_EXIST;
+BlockQueueStatus_T GpuBufferMgr::Front(const std::string &channel_name, std::vector<DataItemGpu> *data) {
+  auto iter = name_queue_map_.find(channel_name);
+  if (iter == name_queue_map_.end()) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
+    return QUEUE_NOT_EXIST;
   }
+
   return iter->second->Front(data);
 }
 
-BlockQueueStatus_T GpuBufferMgr::Pop(unsigned int handle) {
-  auto iter = handle_queue_map_.find(handle);
-  if (iter == handle_queue_map_.end()) {
-    return HANDLE_NOT_EXIST;
+BlockQueueStatus_T GpuBufferMgr::Pop(const std::string &channel_name) {
+  auto iter = name_queue_map_.find(channel_name);
+  if (iter == name_queue_map_.end()) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
+    return QUEUE_NOT_EXIST;
   }
+
   return iter->second->Pop();
 }
 
-BlockQueueStatus_T GpuBufferMgr::Clear(unsigned int handle) {
-  auto iter = handle_queue_map_.find(handle);
-  if (iter == handle_queue_map_.end()) {
-    return HANDLE_NOT_EXIST;
+BlockQueueStatus_T GpuBufferMgr::Clear(const std::string &channel_name) {
+  auto iter = name_queue_map_.find(channel_name);
+  if (iter == name_queue_map_.end()) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
+    return QUEUE_NOT_EXIST;
   }
+
   return iter->second->Clear();
 }
 
-void GpuBufferMgr::Close(unsigned int handle) noexcept {
-  if (!handle_queue_map_.count(handle)) {
-    return;
-  }
-  (void)handle_queue_map_.erase(handle);
+void GpuBufferMgr::Close(const std::string &channel_name) noexcept {
+  MS_LOG(INFO) << "Close the queue: " << channel_name;
   return;
 }
 
@@ -151,6 +139,7 @@ bool GpuBufferMgr::IsInit() const { return init_; }
 bool GpuBufferMgr::IsClosed() const { return closed_; }
 
 bool GpuBufferMgr::Destroy() {
+  MS_LOG(INFO) << "Destroy all GPU queue.";
   for (auto iter = name_queue_map_.begin(); iter != name_queue_map_.end(); ++iter) {
     std::shared_ptr<BlockingQueue> queue = iter->second;
     if (queue != nullptr) {
@@ -164,9 +153,8 @@ bool GpuBufferMgr::Destroy() {
   return true;
 }
 
-inline bool GpuBufferMgr::isCreated(unsigned int device_id, const std::string &channel_name) {
-  std::string name = std::to_string(device_id) + std::string("_") + channel_name;
-  if (name_queue_map_.count(name) != 0) {
+inline bool GpuBufferMgr::isCreated(const std::string &channel_name) {
+  if (name_queue_map_.count(channel_name) != 0) {
     return true;
   }
   return false;
@@ -195,46 +183,20 @@ bool GpuBufferMgr::CloseNotify() {
 
 void GpuBufferMgr::CloseConfirm() { sema.Signal(); }
 
-size_t GpuBufferMgr::Size(unsigned int handle) {
-  if (handle == INVALID_HANDLE) {
-    MS_LOG(ERROR) << "handle is invalid";
+size_t GpuBufferMgr::Size(const std::string &channel_name) {
+  if (!name_queue_map_.count(channel_name)) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
     return 0;
   }
-  if (handle_queue_map_.count(handle) == 0) {
-    MS_LOG(ERROR) << "Handle not exist " << handle;
-    return 0;
-  }
-  return handle_queue_map_.at(handle)->Size();
+  return name_queue_map_.at(channel_name)->Size();
 }
 
-size_t GpuBufferMgr::Size(unsigned int device_id, const std::string &channel_name) {
-  std::string name = std::to_string(device_id) + std::string("_") + channel_name;
-  if (!name_queue_map_.count(name)) {
-    MS_LOG(ERROR) << "Queue not exist " << name;
+size_t GpuBufferMgr::Capacity(const std::string &channel_name) {
+  if (!name_queue_map_.count(channel_name)) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
     return 0;
   }
-  return name_queue_map_.at(name)->Size();
-}
-
-size_t GpuBufferMgr::Capacity(unsigned int handle) {
-  if (handle == INVALID_HANDLE) {
-    MS_LOG(ERROR) << "handle is invalid";
-    return 0;
-  }
-  if (handle_queue_map_.count(handle) == 0) {
-    MS_LOG(ERROR) << "Handle not exist " << handle;
-    return 0;
-  }
-  return handle_queue_map_.at(handle)->Capacity();
-}
-
-size_t GpuBufferMgr::Capacity(unsigned int device_id, const std::string &channel_name) {
-  std::string name = std::to_string(device_id) + std::string("_") + channel_name;
-  if (!name_queue_map_.count(name)) {
-    MS_LOG(ERROR) << "Queue not exist " << name;
-    return 0;
-  }
-  return name_queue_map_.at(name)->Capacity();
+  return name_queue_map_.at(channel_name)->Capacity();
 }
 }  // namespace device
 }  // namespace mindspore

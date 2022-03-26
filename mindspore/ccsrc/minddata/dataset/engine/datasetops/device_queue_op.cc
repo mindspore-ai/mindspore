@@ -442,10 +442,9 @@ Status DeviceQueueOp::PushDataToGPU() {
   auto items = std::move(item.data_item);
   bool eoe_flag = item.eoe_flag;
   int64_t send_batch = 0;
-  uint32_t handle = INVALID_HANDLE;
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
-  handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, {}, release_function);
-  if (handle == INVALID_HANDLE) {
+  auto ret = GpuBufferMgr::GetInstance().Open(channel_name_, {}, release_function);
+  if (ret != BlockQueueStatus_T::SUCCESS) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "[Internal ERROR] Failed to open channel for sending data.");
   }
@@ -463,7 +462,7 @@ Status DeviceQueueOp::PushDataToGPU() {
         return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__,
                       "[Internal ERROR] Failed to prefetch data in current PS mode(cache data when sending).");
       }
-      RETURN_IF_NOT_OK(RetryPushData(handle, items, is_profiling_enable, &push_cost));
+      RETURN_IF_NOT_OK(RetryPushData(items, is_profiling_enable, &push_cost));
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, push_cost, &batch_start_time, &end_time,
                         gpu_connector_->capacity(), gpu_connector_->size());
@@ -491,7 +490,7 @@ Status DeviceQueueOp::PushDataToGPU() {
       eoe_flag = item.eoe_flag;
       // If the batches send by dataset are more than gpu calculate, gpu will core for no signal notify.
       if (rc.IsError()) {
-        GpuBufferMgr::GetInstance().Close(handle);
+        GpuBufferMgr::GetInstance().Close(channel_name_);
         GpuBufferMgr::GetInstance().CloseConfirm();
         return rc;
       }
@@ -507,13 +506,12 @@ Status DeviceQueueOp::PushDataToGPU() {
   tree_->SetFinished();
   MS_LOG(INFO) << "ExecutionTree finished.  Device queue pushed number of batches: " << send_batch;
 
-  GpuBufferMgr::GetInstance().Close(handle);
+  GpuBufferMgr::GetInstance().Close(channel_name_);
   GpuBufferMgr::GetInstance().CloseConfirm();
   return Status::OK();
 }
 
-Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataItemGpu> &items, const bool profiling,
-                                    uint64_t *push_time) {
+Status DeviceQueueOp::RetryPushData(const std::vector<DataItemGpu> &items, const bool profiling, uint64_t *push_time) {
   bool flag_log = false;
 #ifndef ENABLE_SECURITY
   uint64_t start_time = 0;
@@ -522,7 +520,7 @@ Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataI
   }
 #endif
   while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
-    BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
+    BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(channel_name_, items, WAIT_TIME);
     if (ret) {
       if (ret == BlockQueueStatus_T::ERROR_INPUT) {
         return Status(
@@ -673,16 +671,16 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
 Status DeviceQueueOp::ClearDevice() {
   MS_LOG(INFO) << "Clearing the data in GPU device: " << device_id_ << " channel: " << channel_name_;
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
-  auto handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, {}, release_function);
-  if (handle == INVALID_HANDLE) {
+  auto ret = GpuBufferMgr::GetInstance().Open(channel_name_, {}, release_function);
+  if (ret != BlockQueueStatus_T::SUCCESS) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "[Internal ERROR] Failed to open channel for clearing the device.");
   }
 
-  BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Clear(handle);
+  ret = GpuBufferMgr::GetInstance().Clear(channel_name_);
   CHECK_FAIL_RETURN_UNEXPECTED(!ret, "Failed to clear the device.");
 
-  GpuBufferMgr::GetInstance().Close(handle);
+  GpuBufferMgr::GetInstance().Close(channel_name_);
   GpuBufferMgr::GetInstance().CloseConfirm();
   return Status::OK();
 }

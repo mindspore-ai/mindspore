@@ -37,9 +37,9 @@ namespace kernel {
 using mindspore::device::GpuBufferMgr;
 
 DatasetIteratorKernelMod::DatasetIteratorKernelMod()
-    : handle_(GpuBufferMgr::INVALID_HANDLE), profiling_enable_(false), profiling_op_(nullptr) {}
+    : is_opened_(false), profiling_enable_(false), profiling_op_(nullptr) {}
 
-DatasetIteratorKernelMod::~DatasetIteratorKernelMod() { GpuBufferMgr::GetInstance().Close(handle_); }
+DatasetIteratorKernelMod::~DatasetIteratorKernelMod() { GpuBufferMgr::GetInstance().Close(queue_name_); }
 
 bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -92,10 +92,10 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataItemGpu> *data) {
     profiling_enable_ = profiler_inst->GetEnableFlag();
     if (profiling_enable_) {
       start_time_stamp = profiling_op_->GetTimeStamp();
-      queue_size = GpuBufferMgr::GetInstance().Size(handle_);
+      queue_size = GpuBufferMgr::GetInstance().Size(queue_name_);
     }
 #endif
-    auto ret = GpuBufferMgr::GetInstance().Front(handle_, data);
+    auto ret = GpuBufferMgr::GetInstance().Front(queue_name_, data);
     if (ret == device::SUCCESS) {
 #ifndef ENABLE_SECURITY
       if (profiling_enable_) {
@@ -115,7 +115,7 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataItemGpu> *data) {
 #ifdef ENABLE_DUMP_IR
         mindspore::RDR::TriggerAll();
 #endif
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', get data timeout";
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', get data timeout. Queue name: " << queue_name_;
       }
     }
 #ifndef ENABLE_SECURITY
@@ -124,7 +124,8 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataItemGpu> *data) {
       profiling_op_->RecordData(queue_size, start_time_stamp, end_time_stamp);
     }
 #endif
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', get data failed, errcode " << ret;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', get data failed, errcode " << ret
+                  << ", queue name: " << queue_name_;
     return false;
   }
   return true;
@@ -132,11 +133,12 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataItemGpu> *data) {
 
 bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                       const std::vector<AddressPtr> &outputs, void *stream) {
-  if (handle_ == GpuBufferMgr::INVALID_HANDLE) {
-    handle_ = GpuBufferMgr::GetInstance().Open(0, queue_name_, output_size_list_);
-    if (handle_ == GpuBufferMgr::INVALID_HANDLE) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', gpu Queue(" << queue_name_ << ") Open Failed";
+  if (!is_opened_) {
+    auto ret = GpuBufferMgr::GetInstance().Open(queue_name_, output_size_list_);
+    if (ret != device::BlockQueueStatus_T::SUCCESS) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', gpu Queue(" << queue_name_ << ") Open Failed: " << ret;
     }
+    is_opened_ = true;
   }
 
   if (!ReadDevice(&output_data_)) {
@@ -155,7 +157,7 @@ bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std
 
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream)),
                              "cudaStreamSynchronize failed");
-  (void)GpuBufferMgr::GetInstance().Pop(handle_);
+  (void)GpuBufferMgr::GetInstance().Pop(queue_name_);
   return true;
 }
 

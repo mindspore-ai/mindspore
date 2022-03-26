@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace device {
-enum BlockQueueStatus_T : int { SUCCESS = 0, QUEUE_EXIST, HANDLE_NOT_EXIST, ERROR_INPUT, INTERNAL_ERROR, TIMEOUT };
+enum BlockQueueStatus_T : int { SUCCESS = 0, QUEUE_EXIST, QUEUE_NOT_EXIST, ERROR_INPUT, INTERNAL_ERROR, TIMEOUT };
 
 struct DataItemGpu {
   int32_t worker_id_{0};

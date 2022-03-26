@@ -44,7 +44,7 @@ class DatasetIteratorKernelMod : public NativeGpuKernelMod {
  private:
   bool ReadDevice(std::vector<DataItemGpu> *data);
   std::string queue_name_;
-  unsigned int handle_;
+  bool is_opened_;
   bool profiling_enable_;
   std::shared_ptr<GetNextProfiling> profiling_op_;
   std::vector<TypeId> types_;
