@@ -282,9 +282,9 @@ class HeUniform(Initializer):
             (only used when `nonlinearity` is 'leaky_relu'). Default: 0.
         mode (str): Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the
             variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes
-            in the backwards pass. Default: fan_in.
+            in the backwards pass. Default: 'fan_in'.
         nonlinearity (str): The non-linear function, recommended to use only with 'relu' or 'leaky_relu'.
-            Default: leaky_relu.
+            Default: 'leaky_relu'.
 
 
     Examples:
@@ -328,9 +328,9 @@ class HeNormal(Initializer):
             (only used when `nonlinearity` is 'leaky_relu'). Default: 0.
         mode (str): Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the
             variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes
-            in the backwards pass. Default: fan_in.
+            in the backwards pass. Default: 'fan_in'.
         nonlinearity (str): The non-linear function, recommended to use only with 'relu' or 'leaky_relu'.
-            Default: leaky_relu.
+            Default: 'leaky_relu'.
 
 
     Examples:
@@ -445,7 +445,7 @@ class Dirac(Initializer):
         groups (int): The number of group in convolution layer. Default: 1.
 
     Raises:
-        ValueError: If the value of group is not in [3, 4, 5].
+        ValueError: If the dimension of the initialized tensor is not in [3, 4, 5].
         ValueError: The first dimension of the initialized tensor cannot be divisible by group.
 
     Examples:
@@ -536,12 +536,12 @@ class Orthogonal(Initializer):
 class VarianceScaling(Initializer):
     r"""
     Generates an random array with scaling in order to initialize a tensor.
-    When distribution is truncated_normal or untruncated_normal, the value will be sampled from truncated or
-    untruncated normal distribution with a mean of 0 and a scaled standard deviation :math:`stddev = sqrt(scale/n)`.
-    :math:`n` will be the number of input units if mode is fan_in, the number of output units if mode is fan_out,
-    the average of fan_in and fan_out if mode is fan_avg.
-    When distribution is uniform, the value will be sampled from a uniform distribution within the limit of
-    [`-sqrt(3*scale/n)`, `sqrt(3*scale/n)`].
+    When `distribution` is 'truncated_normal' or 'untruncated_normal', the value will be sampled from truncated or
+    untruncated normal distribution with a mean of 0 and a scaled standard deviation
+    :math:`stddev = \sqrt{\scale{6}{n}}`. :math:`n` will be the number of input units if `mode` is 'fan_in',
+    the number of output units if `mode` is 'fan_out', the average of 'fan_in' and 'fan_out' if `mode` is 'fan_avg'.
+    When `distribution` is 'uniform', the value will be sampled from a uniform distribution within the limit of
+    :math:`[-\sqrt{\scale{3*scale}{n}}, \sqrt{\scale{3*scale}{n}}]`.
 
     Args:
         scale (float): The scaling factor. Default: 1.0.
@@ -550,9 +550,9 @@ class VarianceScaling(Initializer):
             'uniform', 'truncated_normal' or 'untruncated_normal'. Default: 'truncated_normal'.
 
     Raises:
-        ValueError: If scale is not greater than 0.
-        ValueError: If mode is not fan_in, fan_out or fan_avg.
-        ValueError: If distribution is not uniform, truncated_normal or untruncated_normal.
+        ValueError: If `scale` is not greater than 0.
+        ValueError: If `mode` is not 'fan_in', 'fan_out' or 'fan_avg'.
+        ValueError: If `distribution` is not 'uniform', 'truncated_normal' or 'untruncated_normal'.
 
     Examples:
         >>> import mindspore
@@ -694,6 +694,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
             - `Initializer`: The `init` should be the class inheriting from `Initializer` to initialize tensor.
 
             - `numbers.Number`: The `Constant` will be called to initialize tensor.
+
+            - `Tensor`: The tensor will be called to initialize tensor.
 
         shape (Union[tuple, list, int]): The shape of the initialized tensor. Default: None.
         dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mindspore.float32.
