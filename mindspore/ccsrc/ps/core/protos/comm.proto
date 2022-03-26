@@ -298,7 +298,6 @@ message QueryUniqueIDMessage {
   string group_name = 3;
 }
 
-
 message QueryUniqueIDRespMessage {
   bool is_success = 1;
   // The unique id used to initialize collective communication.
@@ -306,12 +305,23 @@ message QueryUniqueIDRespMessage {
 }
 
 message SendFinishTransformMessage {
-  // the current Node unique id:0,1,2...
+  // The unique node id.
   string node_id = 1;
   // The rank id of the node in the cluster.
   uint32 rank_id = 2;
   // Whether finish transform graph.
   bool is_ready = 3;
+  // The actor set name of actor set which finish transform.
+  string actor_set_name = 4;
+}
+
+message QueryFinishTransformMessage {
+  // The unique node id.
+  string node_id = 1;
+  // The rank id of the node in the cluster.
+  uint32 rank_id = 2;
+  // The actor set name of actor set which queries finish transform status.
+  string actor_set_name = 3;
 }
 
 message QueryFinishTransformRespMessage {

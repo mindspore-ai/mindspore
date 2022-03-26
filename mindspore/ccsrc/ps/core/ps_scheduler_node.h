@@ -88,6 +88,8 @@ class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
   // Recover finish transform nodes info when nodes recover heartbeat.
   void HandleNodeRecoverByHeartBeat(uint32_t rank_id) override;
 
+  void RecoverFromPersistence() override;
+
   // Record received host hash name from workers.
   std::vector<size_t> host_hash_names_;
   // Record rank id of the nodes which sended host name.
@@ -101,9 +103,11 @@ class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
   uint32_t worker_num_;
 
   std::mutex nodes_finish_trans_mutex_;
-  // Record the rank ids of nodes who finish transform graph.
-  std::set<uint32_t> nodes_finish_trans_;
+  // Key: actor set name, value: the set of rank ids of nodes who finish transform this actor.
+  std::map<std::string, std::set<uint32_t>> nodes_finish_trans_;
   std::atomic_bool node_timeout_{false};
+
+  std::unique_ptr<FileConfiguration> recovery_storage_{nullptr};
 };
 }  // namespace core
 }  // namespace ps

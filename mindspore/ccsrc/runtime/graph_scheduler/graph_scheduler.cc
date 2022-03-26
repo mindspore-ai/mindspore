@@ -206,7 +206,7 @@ void IntHandler(int, siginfo_t *, void *) {
 #endif
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
-bool SendFinishTransform() {
+bool SendFinishTransform(const std::string &actor_set_name) {
   auto node = ClusterContext::instance()->node();
   MS_EXCEPTION_IF_NULL(node);
   if (node->role() != ps::core::NodeRole::WORKER) {
@@ -220,6 +220,7 @@ bool SendFinishTransform() {
   send_ready_to_run_msg.set_node_id(abstract_node->node_id());
   send_ready_to_run_msg.set_rank_id(abstract_node->rank_id());
   send_ready_to_run_msg.set_is_ready(true);
+  send_ready_to_run_msg.set_actor_set_name(actor_set_name);
   std::shared_ptr<std::vector<unsigned char>> output = nullptr;
   if (!abstract_node->SendToScheduler(send_ready_to_run_msg.SerializeAsString().data(),
                                       send_ready_to_run_msg.SerializeAsString().size(),
@@ -238,7 +239,7 @@ bool SendFinishTransform() {
   return true;
 }
 
-bool QueryFinishTransform() {
+bool QueryFinishTransform(const std::string &actor_set_name) {
   auto node = ClusterContext::instance()->node();
   MS_EXCEPTION_IF_NULL(node);
   if (node->role() != ps::core::NodeRole::WORKER) {
@@ -248,14 +249,14 @@ bool QueryFinishTransform() {
   auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(ClusterContext::instance()->node());
   MS_EXCEPTION_IF_NULL(abstract_node);
 
-  ps::core::GeneralQueryMessage general_query_msg;
-  general_query_msg.set_node_id(abstract_node->node_id());
-  general_query_msg.set_rank_id(abstract_node->rank_id());
+  ps::core::QueryFinishTransformMessage query_msg;
+  query_msg.set_node_id(abstract_node->node_id());
+  query_msg.set_rank_id(abstract_node->rank_id());
+  query_msg.set_actor_set_name(actor_set_name);
   std::shared_ptr<std::vector<unsigned char>> output = nullptr;
   bool ret = false;
   while (!ret) {
-    if (!abstract_node->SendToScheduler(general_query_msg.SerializeAsString().data(),
-                                        general_query_msg.SerializeAsString().size(),
+    if (!abstract_node->SendToScheduler(query_msg.SerializeAsString().data(), query_msg.SerializeAsString().size(),
                                         ps::core::NodeCommand::QUERY_FINISH_TRANSFORM, &output)) {
       MS_LOG(WARNING) << "Failed to send query finish transform request to scheduler.";
       ret = false;
@@ -282,7 +283,7 @@ bool QueryFinishTransform() {
   return ret;
 }
 
-void DoDisasterRecovery() {
+void DoDisasterRecovery(const std::string &actor_set_name) {
   if (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) {
     MS_LOG(INFO) << "Begin reinitialize collective communication for recovery.";
     bool ret = false;
@@ -294,7 +295,7 @@ void DoDisasterRecovery() {
 
       RecoveryContext::GetInstance()->ObtainGlobalLatestCkptInfo();
 
-      ret = QueryFinishTransform();
+      ret = QueryFinishTransform(actor_set_name);
       if (!ret) {
         CollectiveManager::instance()->set_need_reinit(true);
         (void)CollectiveManager::instance()->Finalize();
@@ -518,7 +519,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
   if (ClusterContext::instance()->initialized() && RecoveryContext::GetInstance()->enable_recovery()) {
-    while (!SendFinishTransform()) {
+    while (!SendFinishTransform(graph_compiler_info.name_)) {
       MS_LOG(WARNING) << "Send finish transform graph failed.";
       // The time interval for sending finish transform graph to scheduler.
       constexpr uint32_t kWaitDuration = 10;
@@ -611,7 +612,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   SetActorExecutionStrategy(actor_set, strategy, (end_time - start_time) * kSecondsToMilliseconds);
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
-  DoDisasterRecovery();
+  DoDisasterRecovery(actor_set->name_);
 #endif
 }
 
