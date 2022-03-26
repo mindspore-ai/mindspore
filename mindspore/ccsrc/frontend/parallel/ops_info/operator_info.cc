@@ -1470,6 +1470,13 @@ Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &in
       }
     }
   }
+  // add the repeated strategy
+  auto repeated_stra_arrays{splittable_inputs};
+  for (auto &stra_array : repeated_stra_arrays) {
+    std::fill(stra_array.begin(), stra_array.end(), 1);
+  }
+  StrategyPtr repeated_stra = std::make_shared<Strategy>(stage_id, repeated_stra_arrays);
+  sp_vector->push_back(repeated_stra);
   return SUCCESS;
 }
 
