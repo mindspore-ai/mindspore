@@ -9,9 +9,10 @@
     **参数：**
 
     - **source** (str) - 待转换的TFRecord文件路径。
-    - **destination** (str) - 转换生成的MindRecord文件路径。
-    - **feature_dict** (dict) - TFRecord的feature类别的字典，不支持 `VarLenFeature` 类别。
-    - **bytes_fields** (list，可选) - `feature_dict` 中的字节字段，可以为字节类型的图像字段。
+    - **destination** (str) - 转换生成的MindRecord文件路径，需提前创建目录并且目录下不能存在同名文件。
+    - **feature_dict** (dict[str, `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ ]) - TFRecord的feature类别的字典，
+      不支持 `VarLenFeature  <https://www.tensorflow.org/api_docs/python/tf/io/VarLenFeature>`_ 类别。
+    - **bytes_fields** (list[str]，可选) - `feature_dict` 中的字节字段，可以为字节类型的图像字段。
 
     **异常：**
 
@@ -25,7 +26,7 @@
 
         **返回：**
 
-        MSRStatus，TFRecord格式的数据集是否成功转换为MindRecord格式数据集。
+        MSRStatus，SUCCESS或FAILED。
 
 
     .. py:method:: tfrecord_iterator()
@@ -48,4 +49,8 @@
 
     .. py:method:: transform()
 
-        :func:`mindspore.mindrecord.TFRecordToMR.run` 函数的包装函数来保证异常时正常退出。
+        :func:`mindspore.mindrecord.TFRecordToMR.run` 的包装函数来保证异常时正常退出。
+
+        **返回：**
+
+        MSRStatus，SUCCESS或FAILED。

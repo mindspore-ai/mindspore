@@ -39,10 +39,11 @@ class CsvToMR:
         www.mindspore.cn/docs/programming_guide/en/master/dataset_conversion.html#converting-csv-dataset>`_.
 
     Args:
-        source (str): the file path of csv.
-        destination (str): the MindRecord file path to transform into.
+        source (str): The file path of csv.
+        destination (str): The MindRecord file path to transform into, ensure that no file with the same name
+            exists in the directory.
         columns_list(list[str], optional): A list of columns to be read. Default: None.
-        partition_number (int, optional): partition size, Default: 1.
+        partition_number (int, optional): The partition size, Default: 1.
 
     Raises:
         ValueError: If `source`, `destination`, `partition_number` is invalid.
@@ -130,7 +131,7 @@ class CsvToMR:
         Execute transformation from csv to MindRecord.
 
         Returns:
-            MSRStatus, whether csv is successfully transformed to MindRecord.
+            MSRStatus, SUCCESS or FAILED.
         """
         if not os.path.exists(self.source):
             raise IOError("Csv file {} do not exist.".format(self.source))
@@ -178,7 +179,10 @@ class CsvToMR:
 
     def transform(self):
         """
-        Encapsulate the run function to exit normally
+        Encapsulate the run function to exit normally.
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
         """
 
         t = ExceptionThread(target=self.run)

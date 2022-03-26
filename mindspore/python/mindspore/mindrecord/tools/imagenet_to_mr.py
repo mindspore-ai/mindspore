@@ -35,7 +35,7 @@ class ImageNetToMR:
         www.mindspore.cn/docs/programming_guide/en/master/dataset_conversion.html#converting-the-imagenet-dataset>`_.
 
     Args:
-        map_file (str): the map file that indicates label. The map file content should be like this:
+        map_file (str): The map file that indicates label. The map file content should be like this:
 
             .. code-block::
 
@@ -44,9 +44,10 @@ class ImageNetToMR:
               n02110185 2
               n02096294 3
 
-        image_dir (str): image directory contains n02119789, n02100735, n02110185 and n02096294 directory.
-        destination (str): the MindRecord file path to transform into.
-        partition_number (int, optional): partition size. Default: 1.
+        image_dir (str): Image directory contains n02119789, n02100735, n02110185 and n02096294 directory.
+        destination (str): MindRecord file path to transform into, ensure that no file with the same name
+            exists in the directory.
+        partition_number (int, optional): The partition size. Default: 1.
 
     Raises:
         ValueError: If `map_file`, `image_dir` or `destination` is invalid.
@@ -129,8 +130,9 @@ class ImageNetToMR:
         Execute transformation from imagenet to MindRecord.
 
         Returns:
-            MSRStatus, whether imagenet is successfully transformed to MindRecord.
+            MSRStatus, SUCCESS or FAILED.
         """
+
         t0_total = time.time()
 
         imagenet_schema_json = {"label": {"type": "int32"},
@@ -179,7 +181,10 @@ class ImageNetToMR:
 
     def transform(self):
         """
-        Encapsulate the run function to exit normally
+        Encapsulate the run function to exit normally.
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
         """
 
         t = ExceptionThread(target=self.run)
