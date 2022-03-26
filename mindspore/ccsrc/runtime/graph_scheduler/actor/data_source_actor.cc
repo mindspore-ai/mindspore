@@ -162,10 +162,6 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     return;
   }
 
-  if (common::AnfAlgo::IsDynamicShape(data_kernel_)) {
-    UpdateOutputAddrSize(kernel_info_, data_kernel_);
-  }
-
   PostRun(context);
 }
 
