@@ -645,7 +645,8 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
                    << ", block: " << block << "/"
                    << (block->func_graph() ? block->func_graph()->ToString() : "FG(Null)")
                    << ", Line: " << trace::GetDebugInfo(no_return_node->debug_info(), "", kSourceLineTipDiscard);
-      block->AddIsolatedNode(no_return_node);
+      auto isolated_node = HandleInterpret(block, no_return_node, value_object);
+      block->AddIsolatedNode(isolated_node);
     } else {
       // Expand the assign statement,
       // e.g.: x.append(y)  -> x = x.append(y)

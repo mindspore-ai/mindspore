@@ -147,3 +147,18 @@ def test_fallback_abs_ms_function_tensor():
         return x
 
     assert np.allclose(foo().asnumpy(), abs(np.array([-1, 2, -3])))
+
+
+def test_fallback_isolated_node():
+    """
+    Feature: JIT Fallback
+    Description: Test abs(Tensor) the tensor is construct in ms_function
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        a = abs(-1)
+        abs(2)
+        return a
+    assert foo() == 1
