@@ -91,7 +91,7 @@ class DataTypeTransfer {
  public:
   DataTypeTransfer() = default;
   ~DataTypeTransfer() = default;
-  bool TransDataType(const TypeIdArgs &args, void *result);
+  bool TransDataType(const TypeIdArgs &args, void *result) const;
 
  private:
   enum class DataTypeTransMode {
@@ -333,7 +333,7 @@ bool IsNeedPadding(const std::string &format, size_t shape_size);
  * */
 template <typename T>
 std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape, const AnfNodePtr &node = nullptr) {
-  if (shape.size() >= kNcdhw) {
+  if (shape.size() >= kDim5) {
     return shape;
   }
   if (node != nullptr) {
@@ -448,7 +448,7 @@ std::vector<T> PaddingShape(const std::vector<T> &shape, const std::string &form
   }
   std::vector<T> host_shape;
   if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
-    if (shape.size() >= kNcdhw) {
+    if (shape.size() >= kDim5) {
       return shape;
     }
     host_shape = PaddingShapeTo5d(shape, pad_index);
