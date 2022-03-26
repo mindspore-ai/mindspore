@@ -349,7 +349,7 @@ bool DataTypeTransfer::CastKernel(const TypeIdArgs &args, void *dst, int64_t dat
   }
 }
 
-bool DataTypeTransfer::TransDataType(const TypeIdArgs &args, void *result) {
+bool DataTypeTransfer::TransDataType(const TypeIdArgs &args, void *result) const {
   MS_LOG(DEBUG) << "Begin trans datatype from " << TypeIdLabel(args.src_data_type) << " to "
                 << TypeIdLabel(args.dst_data_type);
   MS_EXCEPTION_IF_NULL(result);

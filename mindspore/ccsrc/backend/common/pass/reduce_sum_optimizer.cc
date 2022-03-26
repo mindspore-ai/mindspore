@@ -91,21 +91,10 @@ AnfNodePtr ReduceSumOptimizer::NewRangeOp(const AnfNodePtr &rank_op, const Kerne
 }
 
 AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
-  // the input dim is unknown, need rank + range, can not supported now;
+  // the input dim is unknown, need rank + range, don't supported now;
   MS_LOG(EXCEPTION)
     << "Can not support the case that input is dim unknown and axis is empty or axis contain value less 0. node: "
     << trace::DumpSourceLines(cnode);
-  // new rank op
-  auto rank_op = NewRankOp(cnode, kernel_graph);
-  // new range op
-  auto range_op = NewRangeOp(rank_op, kernel_graph);
-  std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
-  new_inputs.push_back(cnode->input(1));
-  new_inputs.push_back(range_op);
-  auto new_node = NewCNode(cnode, kernel_graph);
-  MS_EXCEPTION_IF_NULL(new_node);
-  new_node->set_inputs(new_inputs);
-  return new_node;
 }
 
 // create a new assist value node to deal with the following two case
