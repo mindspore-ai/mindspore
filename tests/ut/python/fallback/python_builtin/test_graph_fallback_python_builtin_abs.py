@@ -162,3 +162,17 @@ def test_fallback_isolated_node():
         abs(2)
         return a
     assert foo() == 1
+
+
+def test_fallback_tensor_one_element():
+    """
+    Feature: JIT Fallback
+    Description: Test abs(Tensor) the tensor is construct in ms_function
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        a = abs(Tensor(-1))
+        return a
+    assert foo() == 1
