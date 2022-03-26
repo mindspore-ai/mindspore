@@ -19,7 +19,8 @@ import os
 import pytest
 
 import mindspore.dataset as ds
-from util_minddataset import add_and_remove_cv_file # pylint: disable=unused-import
+from mindspore import log as logger
+from util_minddataset import add_and_remove_cv_file, add_and_remove_file # pylint: disable=unused-import
 
 
 # pylint: disable=redefined-outer-name
@@ -64,13 +65,13 @@ def test_minddtaset_generatordataset_01(add_and_remove_cv_file):
 
     dataset = ds.GeneratorDataset(source=MyIterable(data_set, dataset_size),
                                   column_names=["data", "file_name", "label"], num_parallel_workers=1)
-    num_epoches = 3
-    iter_ = dataset.create_dict_iterator(num_epochs=3, output_numpy=True)
+    num_epochs = 3
+    iter_ = dataset.create_dict_iterator(num_epochs=num_epochs, output_numpy=True)
     num_iter = 0
-    for _ in range(num_epoches):
+    for _ in range(num_epochs):
         for _ in iter_:
             num_iter += 1
-    assert num_iter == num_epoches * dataset_size
+    assert num_iter == num_epochs * dataset_size
 
 
 # pylint: disable=redefined-outer-name
@@ -115,11 +116,74 @@ def test_minddtaset_generatordataset_exception_01(add_and_remove_cv_file):
 
     dataset = ds.GeneratorDataset(source=MyIterable(data_set, dataset_size),
                                   column_names=["data", "file_name", "label"], num_parallel_workers=1)
-    num_epoches = 3
-    iter_ = dataset.create_dict_iterator(num_epochs=3, output_numpy=True)
+    num_epochs = 3
+    iter_ = dataset.create_dict_iterator(num_epochs=num_epochs, output_numpy=True)
     num_iter = 0
     with pytest.raises(RuntimeError) as error_info:
-        for _ in range(num_epoches):
+        for _ in range(num_epochs):
             for _ in iter_:
+                num_iter += 1
+    assert 'Unexpected error. Invalid data, column name:' in str(error_info.value)
+
+
+# pylint: disable=redefined-outer-name
+def test_minddtaset_generatordataset_exception_02(add_and_remove_file):
+    """
+    Feature: Test basic two level pipeline for mixed dataset.
+    Description: Invalid column name in MindDataset
+    Expectation: Throw expected exception.
+    """
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 1
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    file_paths = [file_name + "_cv" + str(i) for i in range(4)]
+    file_paths += [file_name + "_nlp" + str(i) for i in range(4)]
+    class MyIterable:
+        """ custom iteration """
+        def __init__(self, file_paths):
+            self._iter = None
+            self._index = 0
+            self._idx = 0
+            self._file_paths = file_paths
+
+        def __next__(self):
+            if self._index >= len(self._file_paths) * 10:
+                raise StopIteration
+            if self._iter:
+                try:
+                    item = next(self._iter)
+                    self._index += 1
+                except StopIteration:
+                    if self._idx >= len(self._file_paths):
+                        raise StopIteration
+                    self._iter = None
+                    return next(self)
+                return item
+            logger.info("load <<< {}.".format(self._file_paths[self._idx]))
+            self._iter = ds.MindDataset(self._file_paths[self._idx],
+                                        columns_list, num_parallel_workers=num_readers,
+                                        shuffle=None).create_tuple_iterator(num_epochs=1, output_numpy=True)
+            self._idx += 1
+            return next(self)
+
+        def __iter__(self):
+            self._index = 0
+            self._idx = 0
+            self._iter = None
+            return self
+
+        def __len__(self):
+            return len(self._file_paths) * 10
+
+    dataset = ds.GeneratorDataset(source=MyIterable(file_paths),
+                                  column_names=["data", "file_name", "label"], num_parallel_workers=1)
+    num_epochs = 1
+    iter_ = dataset.create_dict_iterator(num_epochs=num_epochs, output_numpy=True)
+    num_iter = 0
+    with pytest.raises(RuntimeError) as error_info:
+        for _ in range(num_epochs):
+            for item in iter_:
+                print("item: ", item)
                 num_iter += 1
     assert 'Unexpected error. Invalid data, column name:' in str(error_info.value)
