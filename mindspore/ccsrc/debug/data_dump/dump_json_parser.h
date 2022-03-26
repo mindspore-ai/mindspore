@@ -73,6 +73,7 @@ class BACKEND_EXPORT DumpJsonParser {
   std::string GetOpOverflowBinPath(uint32_t graph_id) const;
   void GetCellDumpFlag(const session::KernelGraph &kernel_graph);
   void UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph);
+  bool IsDumpEnabled();
 
   void ClearGraph() { graphs_.clear(); }
   void SaveGraph(session::KernelGraph *graph) { (void)graphs_.emplace_back(graph); }
@@ -111,7 +112,6 @@ class BACKEND_EXPORT DumpJsonParser {
 
   void ParseCommonDumpSetting(const nlohmann::json &content);
   void ParseE2eDumpSetting(const nlohmann::json &content);
-  bool IsDumpEnabled();
 
   auto CheckJsonKeyExist(const nlohmann::json &content, const std::string &key);
 
