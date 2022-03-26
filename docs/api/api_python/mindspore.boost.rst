@@ -11,7 +11,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **level** (str) – Boost的配置级别。
+    - **level** (str) – Boost的配置级别，默认值："O0"。
     - **boost_config_dict** (dict) – 用户可配置的超参字典，建议的格式如下：
 
       .. code-block::
