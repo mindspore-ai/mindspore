@@ -92,6 +92,14 @@
 #define MS_CAST_F32_S32(src) _mm_castsi128_ps(src)
 #define MS_DIV128_EPI32(src1, src2) _mm_cvttps_epi32(MS_DIV128_F32(_mm_cvtepi32_ps(src1), _mm_cvtepi32_ps(src2)))
 
+#ifdef ENABLE_AVX  // only enable sse, dont support fma instruction.
+#define MS_FMADD128_F32(src1, src2, src3) _mm_fmadd_ps(src1, src2, src3)
+#define MS_FMSUB128_F32(src1, src2, src3) _mm_fmsub_ps(src1, src2, src3)
+#else
+#define MS_FMADD128_F32(src1, src2, src3) _mm_add_ps(_mm_mul_ps(src1, src2), src3)
+#define MS_FMSUB128_F32(src1, src2, src3) _mm_sub_ps(_mm_mul_ps(src1, src2), src3)
+#endif
+
 static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;
   MS_F32X4_GETI(dst, 0) = sqrtf(MS_F32X4_GETI(src, 0));
@@ -105,6 +113,14 @@ static inline float MS_GET_MAX128_F32(__m128 src) {
   float result = MS_F32X4_GETI(src, 0);
   for (int i = 1; i < 4; i++) {  // sse block num : 4
     result = fmaxf(result, MS_F32X4_GETI(src, i));
+  }
+  return result;
+}
+
+static inline float MS_GET_SUM128_F32(__m128 src) {
+  float result = MS_F32X4_GETI(src, 0);
+  for (int i = 1; i < 4; i++) {  // sse block num : 4
+    result = result + MS_F32X4_GETI(src, i);
   }
   return result;
 }
