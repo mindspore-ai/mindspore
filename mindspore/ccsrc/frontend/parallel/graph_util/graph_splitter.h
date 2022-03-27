@@ -70,8 +70,8 @@ inline bool MatchLabelForPSMode(const OperatorLabel &label1, const OperatorLabel
   }
   return false;
 }
-const std::map<distributed::DistributedExecutionMode, LabelMatchingFunc> kLabelMatchingFuncMap = {
-  {distributed::DistributedExecutionMode::kPSMode, MatchLabelForPSMode}};
+const std::map<distributed::DistExecutionMode, LabelMatchingFunc> kLabelMatchingFuncMap = {
+  {distributed::DistExecutionMode::kPSMode, MatchLabelForPSMode}};
 
 // Split graph segment which is generated according to the topo sort of the graph.
 struct SplitGraphSegment {
@@ -150,72 +150,6 @@ void SetRecvNodeAttr(const AnfNodePtr &recv_node, const InterProcessOpEdge &inte
 CNodePtr CreateSendNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge &inter_process_edge);
 CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge &inter_process_edge);
 
-// The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the
-// cluster.
-class GraphSplitter {
- public:
-  GraphSplitter(const FuncGraphPtr &func_graph, uint32_t rank_id, const std::string &role);
-  ~GraphSplitter();
-
-  // Launch the action.
-  void Run();
-
- private:
-  // Dyeing the func_graph according to the split label passed by frontend. Only nodes with the same label will be dyed
-  // with the same 'color'.
-  void DyeGraph();
-
-  // Traverse all nodes and split these nodes to multiple segments according to the split label.
-  std::vector<SplitGraphSegment> GenerateSplitSegments();
-
-  // Generate Send-Recv pairs for the nodes which has different split.
-  // Because nodes with different split label from this proccess's with be on another machine, we use Send-Recv pairs to
-  // do network communication.
-  InterProcessOpEdgesInfo GenerateInterProcessOperators();
-
-  // Eliminate nodes which are on other machine's graphs and add control edges for nodes of this process's graph.
-  void SplitGraph(const std::vector<SplitGraphSegment> &segments, const InterProcessOpEdgesInfo &comm_edges);
-
-  // Split the graph but don't eliminate the nodes so that a global graph ir could be exported.
-  void DumpDistributedGraph(const InterProcessOpEdgesInfo &comm_edges);
-
-  // Return the split label of this node. Only CNode is supported for now.
-  // If the node has no split label, return the label of this process, which means this node should be in this process's
-  // graph.
-  OperatorLabel GetSplitLabel(const AnfNodePtr &node);
-
-  // Consider Node-X is the split node. Node-In is Node-X's one input, Node-Out takes Node-X as one input.
-  // So the graph should be like this:
-  // Node-In-->Node-X-->Node-Out.
-  // After send and recv op is inserted, the graph should be:
-  // Node-In-->Send-->Recv-->Node-X-->Send-->Recv-->Node-Out.
-  // So method GenerateInterProcessOpsForNodeInputs is for generating Send-Recv pair between Node-In and Node-X.
-  InterProcessOpEdgesInfo GenerateInterProcessOpsForNodeInputs(const AnfNodePtr &node);
-
-  // Segments will be independent with each other after the graph is cut, so in-degrees and out-degrees of each segment
-  // should be connected with control edges in case that the nodes are optimized out.
-  std::vector<AnfNodePtr> FindInterProcessInDegree(const std::vector<AnfNodePtr> &nodes,
-                                                   const InterProcessOpEdgesInfo &comm_edges);
-  std::vector<AnfNodePtr> FindInterProcessOutDegree(const std::vector<AnfNodePtr> &nodes,
-                                                    const InterProcessOpEdgesInfo &comm_edges);
-
-  // Judge whether two nodes have the same distributed label.
-  bool IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodePtr &node2);
-
-  FuncGraphPtr func_graph_;
-
-  // The label of this process which consists of its rank and role.
-  OperatorLabel this_process_label_;
-
-  // For each mode, there is a default label. Every node in the graph should be launched on the process with this label
-  // defaultly unless it has a different split label.
-  OperatorLabel default_label_;
-
-  // The map of all nodes in the graph to their distributed split label.
-  NodeLabels node_labels_;
-};
-using GraphSplitterPtr = std::shared_ptr<GraphSplitter>;
-
 // Base class for different execution modes. It builds distributed graphs, optimize execution performance, etc.
 class DistributedExecutionMode {
  public:
@@ -292,6 +226,84 @@ class ParameterServerMode : public DistributedExecutionMode {
                                                    const AnfNodePtr &real_input, size_t index_of_real_input,
                                                    uint32_t total_inputs_number);
 };
+
+// The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the
+// cluster.
+class GraphSplitter {
+ public:
+  GraphSplitter(const FuncGraphPtr &func_graph, uint32_t rank_id, const std::string &role);
+  ~GraphSplitter();
+
+  // Launch the action.
+  void Run();
+
+ private:
+  // Dyeing the func_graph according to the split label passed by frontend. Only nodes with the same label will be dyed
+  // with the same 'color'.
+  void DyeGraph();
+
+  // Create the execution mode.
+  void CreateExecutionMode();
+
+  // Traverse all nodes and split these nodes to multiple segments according to the split label.
+  std::vector<SplitGraphSegment> GenerateSplitSegments();
+
+  // Generate Send-Recv pairs for the nodes which has different split.
+  // Because nodes with different split label from this proccess's with be on another machine, we use Send-Recv pairs to
+  // do network communication.
+  InterProcessOpEdgesInfo GenerateInterProcessOperators();
+
+  // Eliminate nodes which are on other machine's graphs and add control edges for nodes of this process's graph.
+  void SplitGraph(const std::vector<SplitGraphSegment> &segments, const InterProcessOpEdgesInfo &comm_edges);
+
+  // Split the graph but don't eliminate the nodes so that a global graph ir could be exported.
+  void DumpDistributedGraph(const InterProcessOpEdgesInfo &comm_edges);
+
+  // Return the split label of this node. Only CNode is supported for now.
+  // If the node has no split label, return the label of this process, which means this node should be in this process's
+  // graph.
+  OperatorLabel GetSplitLabel(const AnfNodePtr &node);
+
+  // Consider Node-X is the split node. Node-In is Node-X's one input, Node-Out takes Node-X as one input.
+  // So the graph should be like this:
+  // Node-In-->Node-X-->Node-Out.
+  // After send and recv op is inserted, the graph should be:
+  // Node-In-->Send-->Recv-->Node-X-->Send-->Recv-->Node-Out.
+  // So method GenerateInterProcessOpsForNodeInputs is for generating Send-Recv pair between Node-In and Node-X.
+  InterProcessOpEdgesInfo GenerateInterProcessOpsForNodeInputs(const AnfNodePtr &node);
+
+  // Segments will be independent with each other after the graph is cut, so in-degrees and out-degrees of each segment
+  // should be connected with control edges in case that the nodes are optimized out.
+  std::vector<AnfNodePtr> FindInterProcessInDegree(const std::vector<AnfNodePtr> &nodes,
+                                                   const InterProcessOpEdgesInfo &comm_edges);
+  std::vector<AnfNodePtr> FindInterProcessOutDegree(const std::vector<AnfNodePtr> &nodes,
+                                                    const InterProcessOpEdgesInfo &comm_edges);
+
+  // Judge whether two nodes have the same distributed label.
+  bool IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodePtr &node2);
+
+  FuncGraphPtr func_graph_;
+
+  // Rank id and node role of this process. They are used to dye graph with different labels, help build split graph,
+  // etc.
+  uint32_t rank_id_;
+  std::string role_;
+
+  // Created according to the execution mode. Used to build the distributed graph.
+  distributed::DistExecutionMode mode_;
+  std::unique_ptr<DistributedExecutionMode> exec_mode_;
+
+  // The label of this process which consists of its rank and role.
+  OperatorLabel this_process_label_;
+
+  // For each mode, there is a default label. Every node in the graph should be launched on the process with this label
+  // defaultly unless it has a different split label.
+  OperatorLabel default_label_;
+
+  // The map of all nodes in the graph to their distributed split label.
+  NodeLabels node_labels_;
+};
+using GraphSplitterPtr = std::shared_ptr<GraphSplitter>;
 }  // namespace parallel
 }  // namespace mindspore
 

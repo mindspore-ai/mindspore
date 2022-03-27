@@ -36,7 +36,7 @@ constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfWorker, kEnvRoleOfScheduler};
 
 // The distributed execution mode enum.
-enum class DistributedExecutionMode { kPSMode = 0, kInvalidMode };
+enum class DistExecutionMode { kPSMode = 0, kInvalidMode };
 
 // The operator's label in distributed execution.
 constexpr char kOpLabelRankId[] = "rank_id";
