@@ -19,17 +19,17 @@
 
 #include <vector>
 
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/tensorlist.h"
 #include "schema/model_generated.h"
 #include "nnacl/tensorlist_parameter.h"
 
 namespace mindspore::kernel {
-class TensorListStackCPUKernel : public InnerKernel {
+class TensorListStackCPUKernel : public LiteKernel {
  public:
   TensorListStackCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx),
+      : LiteKernel(parameter, inputs, outputs, ctx),
         num_element_(reinterpret_cast<TensorListParameter *>(parameter)->num_element_),
         dtype_(static_cast<TypeId>(reinterpret_cast<TensorListParameter *>(parameter)->element_dtype_)) {}
   ~TensorListStackCPUKernel() = default;

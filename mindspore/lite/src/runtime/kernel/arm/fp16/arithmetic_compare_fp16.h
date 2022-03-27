@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_ARITHMETIC_COMPARE_FP16_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
 #include "schema/model_generated.h"
 
@@ -34,11 +34,11 @@ typedef struct {
   ArithmeticCompareOptFuncFp16 opt_func_;
 } ARITHMETIC_COMPARE_FUNC_INFO_FP16;
 
-class ArithmeticCompareFP16CPUKernel : public InnerKernel {
+class ArithmeticCompareFP16CPUKernel : public LiteKernel {
  public:
   ArithmeticCompareFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~ArithmeticCompareFP16CPUKernel() = default;

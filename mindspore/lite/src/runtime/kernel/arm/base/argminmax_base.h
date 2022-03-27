@@ -23,14 +23,14 @@
 #include "nnacl/fp16/arg_min_max_fp16.h"
 #endif
 #include "nnacl/common_func.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class ArgMinMaxCPUKernel : public InnerKernel {
+class ArgMinMaxCPUKernel : public LiteKernel {
  public:
   ArgMinMaxCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     arg_param_ = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   }
 

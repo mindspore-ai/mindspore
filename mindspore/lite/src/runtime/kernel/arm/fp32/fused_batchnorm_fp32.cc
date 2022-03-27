@@ -201,7 +201,7 @@ int FusedBatchnormCPUKernel::Run() {
 }
 
 int FusedBatchnormCPUKernel::Eval() {
-  auto ret = InnerKernel::Eval();
+  auto ret = LiteKernel::Eval();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Inner kernel eval error.";
     return ret;

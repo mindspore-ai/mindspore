@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include <algorithm>
 #include "src/tensor.h"
 #include "src/common/utils.h"
@@ -24,7 +24,7 @@ namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-void InnerKernel::AllocWorkspace() {
+void LiteKernel::AllocWorkspace() {
   workspace_ = malloc(workspace_size());
   if (workspace_ == nullptr) {
     MS_LOG(ERROR) << "fail to alloc " << workspace_size() << "in kernel" << name();
@@ -33,7 +33,7 @@ void InnerKernel::AllocWorkspace() {
   ws_allocated_ = true;
 }
 
-void InnerKernel::FreeWorkspace() {
+void LiteKernel::FreeWorkspace() {
   if (ws_allocated_) {
     free(workspace_);
   }
@@ -41,7 +41,7 @@ void InnerKernel::FreeWorkspace() {
   ws_allocated_ = false;
 }
 
-int InnerKernel::PreProcess() {
+int LiteKernel::PreProcess() {
   if (!InferShapeDone()) {
     auto ret = lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_);
     if (ret != 0) {
@@ -80,7 +80,7 @@ int InnerKernel::PreProcess() {
   return RET_OK;
 }
 
-int InnerKernel::Execute() {
+int LiteKernel::Execute() {
   auto ret = PreProcess();
   if (lite::RET_OK != ret) {
     MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();

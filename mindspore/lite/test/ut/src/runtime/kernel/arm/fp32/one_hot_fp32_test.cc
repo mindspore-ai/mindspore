@@ -43,7 +43,7 @@ class TestOneHotFp32 : public mindspore::CommonTest {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt32, schema::PrimitiveType_OneHot};
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
-  kernel::InnerKernel *kernel_ = nullptr;
+  kernel::LiteKernel *kernel_ = nullptr;
 };
 
 void TestOneHotFp32::TearDown() {

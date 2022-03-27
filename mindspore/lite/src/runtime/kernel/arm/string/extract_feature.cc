@@ -79,9 +79,9 @@ int ExtractFeatureCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuExtractFeatureKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                    const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuExtractFeatureKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc) {
   auto *kernel = new (std::nothrow)
     ExtractFeatureCPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {

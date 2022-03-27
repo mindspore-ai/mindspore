@@ -42,7 +42,7 @@ class TestResizeBilinearInt8 : public mindspore::CommonTest {
   kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Resize};
   kernel::KernelCreator creator_ = nullptr;
   lite::InnerContext ctx_ = lite::InnerContext();
-  kernel::InnerKernel *kernel_ = nullptr;
+  kernel::LiteKernel *kernel_ = nullptr;
   float err_percent_ = 0.2f;
 };
 

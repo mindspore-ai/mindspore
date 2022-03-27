@@ -19,7 +19,7 @@
 
 #include <utility>
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/op_base.h"
 #include "src/runtime/kernel/arm/base/group_convolution_base.h"
 

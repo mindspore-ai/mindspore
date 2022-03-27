@@ -18,7 +18,7 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
@@ -26,11 +26,11 @@
 #define BIAS_NEED_FREE 0010
 
 namespace mindspore::kernel {
-class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
+class ConvolutionDelegateFP16CPUKernel : public LiteKernel {
  public:
   ConvolutionDelegateFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDelegateFP16CPUKernel() override {
     FreeCopiedData();
     if (fp16_conv_kernel_ != nullptr) {
@@ -49,15 +49,15 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
     return fp16_conv_kernel_->Run();
   }
   int Train() override {
-    InnerKernel::Train();
+    LiteKernel::Train();
     return fp16_conv_kernel_->Train();
   }
   void SetTrainable(bool trainable) override {
-    InnerKernel::SetTrainable(trainable);
+    LiteKernel::SetTrainable(trainable);
     return fp16_conv_kernel_->SetTrainable(trainable);
   }
   size_t workspace_size() override {
-    InnerKernel::workspace_size();
+    LiteKernel::workspace_size();
     return fp16_conv_kernel_->workspace_size();
   }
 
@@ -78,13 +78,13 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
   }
 
  private:
-  kernel::InnerKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                               const lite::InnerContext *ctx, void *origin_weight, void *origin_bias);
+  kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                              const lite::InnerContext *ctx, void *origin_weight, void *origin_bias);
   uint8_t need_free_ = 0b00;
   void *origin_weight_ = nullptr;
   void *origin_bias_ = nullptr;
-  kernel::InnerKernel *fp16_conv_kernel_ = nullptr;
+  kernel::LiteKernel *fp16_conv_kernel_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

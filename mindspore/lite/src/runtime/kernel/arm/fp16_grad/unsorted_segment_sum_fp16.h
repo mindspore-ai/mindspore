@@ -21,11 +21,11 @@
 #include "src/kernel_exec.h"
 
 namespace mindspore::kernel {
-class UnsortedSegmentSumCPUKernelFp16 : public InnerKernel {
+class UnsortedSegmentSumCPUKernelFp16 : public LiteKernel {
  public:
   UnsortedSegmentSumCPUKernelFp16(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~UnsortedSegmentSumCPUKernelFp16() override = default;
 
   int Prepare() override;

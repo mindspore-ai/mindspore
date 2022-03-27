@@ -462,8 +462,8 @@ SubGraphKernel *KernelExecUtil::CreateSubGraphKernel(const std::vector<KernelExe
   } else {
     output_tensors = SubgraphOutputTensors(kernels);
   }
-  auto inner_kernel = new (std::nothrow) InnerKernel(nullptr, input_tensors, output_tensors, &context);
-  if (inner_kernel == nullptr) {
+  auto lite_kernel = new (std::nothrow) LiteKernel(nullptr, input_tensors, output_tensors, &context);
+  if (lite_kernel == nullptr) {
     return nullptr;
   }
   std::vector<KernelExec *> input_kernels = SubgraphInputNodes(kernels);
@@ -471,11 +471,11 @@ SubGraphKernel *KernelExecUtil::CreateSubGraphKernel(const std::vector<KernelExe
   SubGraphKernel *sub_graph = nullptr;
   switch (type) {
     case kCpuFP32SubGraph: {
-      sub_graph = new (std::nothrow) CpuFp32SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+      sub_graph = new (std::nothrow) CpuFp32SubGraph(input_kernels, output_kernels, kernels, lite_kernel);
     } break;
     case kCpuFP16SubGraph: {
 #ifdef ENABLE_FP16
-      sub_graph = new (std::nothrow) CpuFp16SubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+      sub_graph = new (std::nothrow) CpuFp16SubGraph(input_kernels, output_kernels, kernels, lite_kernel);
       for (auto out_tensor : output_tensors) {
         if (out_tensor->data_type() == kNumberTypeFloat32) {
           out_tensor->set_data_type(kNumberTypeFloat16);
@@ -486,28 +486,28 @@ SubGraphKernel *KernelExecUtil::CreateSubGraphKernel(const std::vector<KernelExe
     case kGpuFp32SubGraph:
     case kGpuFp16SubGraph: {
 #if GPU_OPENCL
-      sub_graph = new (std::nothrow) OpenCLSubGraph(input_kernels, output_kernels, kernels, inner_kernel);
+      sub_graph = new (std::nothrow) OpenCLSubGraph(input_kernels, output_kernels, kernels, lite_kernel);
 #endif
     } break;
     case kCustomSubGraph: {
-      sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, inner_kernel);
+      sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, lite_kernel);
     } break;
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     case kEntranceSubGraph: {
-      sub_graph = EntranceSubGraphKernel::Create(inner_kernel);
+      sub_graph = EntranceSubGraphKernel::Create(lite_kernel);
     } break;
     case kExitSubGraph: {
-      sub_graph = ExitSubGraphKernel::Create(inner_kernel);
+      sub_graph = ExitSubGraphKernel::Create(lite_kernel);
     } break;
 #endif
     default: {
       MS_LOG(ERROR) << "not support subgraph type: " << type;
-      delete inner_kernel;
+      delete lite_kernel;
       return nullptr;
     }
   }
   if (sub_graph == nullptr) {
-    delete inner_kernel;
+    delete lite_kernel;
     MS_LOG(ERROR) << "create subgraph type " << type << "failed.";
     return nullptr;
   }

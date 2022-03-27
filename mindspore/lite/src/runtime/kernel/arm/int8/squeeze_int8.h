@@ -20,17 +20,17 @@
 #include <vector>
 #include "include/context.h"
 #include "include/errorcode.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/int8/squeeze_int8.h"
 #include "nnacl/squeeze_parameter.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
-class SqueezeInt8CPUKernel : public InnerKernel {
+class SqueezeInt8CPUKernel : public LiteKernel {
  public:
   SqueezeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~SqueezeInt8CPUKernel() override;
 
   int Prepare() override;

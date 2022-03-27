@@ -20,18 +20,18 @@
 #include <string.h>
 #include <vector>
 #include "nnacl/fp32/gatherNd_fp32.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/op_base.h"
 
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class GatherNdCPUKernel : public InnerKernel {
+class GatherNdCPUKernel : public LiteKernel {
  public:
   GatherNdCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                     const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
   ~GatherNdCPUKernel() override;
 
   int Prepare() override;

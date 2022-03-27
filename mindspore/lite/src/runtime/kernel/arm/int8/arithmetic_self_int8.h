@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_ARITHMETIC_SELF_INT8_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/arithmetic_self_parameter.h"
 #include "nnacl/int8/arithmetic_self_int8.h"
 #include "schema/model_generated.h"
@@ -39,13 +39,13 @@ using mindspore::schema::PrimitiveType_Sqrt;
 using mindspore::schema::PrimitiveType_Square;
 
 namespace mindspore::kernel {
-class ArithmeticSelfInt8CPUKernel : public InnerKernel {
+class ArithmeticSelfInt8CPUKernel : public LiteKernel {
   typedef int (*ArithmeticSelfInt8Run)(const int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
  public:
   explicit ArithmeticSelfInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
+      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
     switch (parameter->type_) {
       case PrimitiveType_Round:
         arithmeticSelf_run_ = Int8ElementRound;

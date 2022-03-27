@@ -168,7 +168,7 @@ int MatmulFP16CPUKernel::Run() {
 }
 
 int MatmulFP16CPUKernel::Eval() {
-  InnerKernel::Eval();
+  LiteKernel::Eval();
   if (IsTrainable()) {
     is_repack_ = true;
   }

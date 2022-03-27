@@ -19,7 +19,7 @@
 
 #include <utility>
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "src/tensor_category.h"
 
@@ -48,7 +48,7 @@ class GroupConvCreator {
   ~GroupConvCreator() = default;
 
   void SetShapeOfTensors();
-  int CreateConvs(std::vector<kernel::InnerKernel *> *group_convs);
+  int CreateConvs(std::vector<kernel::LiteKernel *> *group_convs);
   void CopyQuantParam(const std::vector<lite::Tensor *> *tensors);
   int GetSingleConvParam(ConvParameter *conv_param, std::vector<lite::Tensor *> *new_inputs,
                          std::vector<lite::Tensor *> *new_outputs, int group_id);
@@ -66,7 +66,7 @@ class GroupConvCreator {
  private:
   std::vector<lite::Tensor *> origin_inputs_;
   std::vector<lite::Tensor *> origin_outputs_;
-  std::vector<kernel::InnerKernel *> group_convs_;
+  std::vector<kernel::LiteKernel *> group_convs_;
   std::vector<int> input_shape_;
   std::vector<int> output_shape_;
   std::vector<int> filter_shape_;

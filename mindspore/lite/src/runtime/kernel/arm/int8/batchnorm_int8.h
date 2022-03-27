@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_BATCHNORM_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/int8/batchnorm_int8.h"
 #include "nnacl/batchnorm_parameter.h"
@@ -26,11 +26,11 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class BatchnormInt8CPUKernel : public InnerKernel {
+class BatchnormInt8CPUKernel : public LiteKernel {
  public:
   BatchnormInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);
   }
   ~BatchnormInt8CPUKernel() override;

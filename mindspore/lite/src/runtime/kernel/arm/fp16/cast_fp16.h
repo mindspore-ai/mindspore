@@ -17,17 +17,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CAST_FP16_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/base/cast_base.h"
 
 namespace mindspore::kernel {
-class CastFp16CPUKernel : public InnerKernel {
+class CastFp16CPUKernel : public LiteKernel {
  public:
   CastFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
 
   ~CastFp16CPUKernel() = default;
 

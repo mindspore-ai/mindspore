@@ -70,8 +70,8 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   std::vector<lite::Tensor *> inputs{input_tensor};
   std::vector<lite::Tensor *> outputs{output_tensor};
 
-  auto inner_kernel = std::make_shared<kernel::CastOpenCLKernel>(param, inputs, outputs, nullptr);
-  if (inner_kernel == nullptr) {
+  auto lite_kernel = std::make_shared<kernel::CastOpenCLKernel>(param, inputs, outputs, nullptr);
+  if (lite_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
       delete tensor;
@@ -82,7 +82,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
     delete param;
     return;
   }
-  auto *cast_kernel = new (std::nothrow) kernel::KernelExec(inner_kernel);
+  auto *cast_kernel = new (std::nothrow) kernel::KernelExec(lite_kernel);
   if (cast_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
@@ -101,8 +101,8 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   }
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::KernelExec *> kernels{cast_kernel};
-  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, inputs, outputs, nullptr);
-  if (sub_inner_kernel == nullptr) {
+  auto sub_lite_kernel = new (std::nothrow) kernel::LiteKernel(nullptr, inputs, outputs, nullptr);
+  if (sub_lite_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::OpenCLSubGraph Inner Kernel failed ";
     for (auto tensor : inputs) {
       delete tensor;
@@ -114,7 +114,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
     delete cast_kernel;
     return;
   }
-  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
+  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(kernels, kernels, kernels, sub_lite_kernel);
   if (sub_graph == nullptr) {
     MS_LOG(INFO) << " new kernel::OpenCLSubGraph failed ";
     for (auto tensor : inputs) {
@@ -125,7 +125,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
     }
     delete param;
     delete cast_kernel;
-    delete sub_inner_kernel;
+    delete sub_lite_kernel;
     return;
   }
   sub_graph->Prepare();
@@ -179,8 +179,8 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   std::vector<lite::Tensor *> inputs{input_tensor};
   std::vector<lite::Tensor *> outputs{output_tensor};
 
-  auto inner_kernel = std::make_shared<kernel::CastOpenCLKernel>(param, inputs, outputs, nullptr);
-  if (inner_kernel == nullptr) {
+  auto lite_kernel = std::make_shared<kernel::CastOpenCLKernel>(param, inputs, outputs, nullptr);
+  if (lite_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
       delete tensor;
@@ -191,7 +191,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
     delete param;
     return;
   }
-  auto *cast_kernel = new (std::nothrow) kernel::KernelExec(inner_kernel);
+  auto *cast_kernel = new (std::nothrow) kernel::KernelExec(lite_kernel);
   if (cast_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
@@ -210,8 +210,8 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   }
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::KernelExec *> kernels{cast_kernel};
-  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, inputs, outputs, nullptr);
-  if (sub_inner_kernel == nullptr) {
+  auto sub_lite_kernel = new (std::nothrow) kernel::LiteKernel(nullptr, inputs, outputs, nullptr);
+  if (sub_lite_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::OpenCLSubGraph Inner Kernel failed ";
     for (auto tensor : inputs) {
       delete tensor;
@@ -224,7 +224,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
     return;
   }
 
-  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
+  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(kernels, kernels, kernels, sub_lite_kernel);
   if (sub_graph == nullptr) {
     MS_LOG(INFO) << " new kernel::OpenCLSubGraph failed ";
     for (auto tensor : inputs) {
@@ -235,7 +235,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
     }
     delete param;
     delete cast_kernel;
-    delete sub_inner_kernel;
+    delete sub_lite_kernel;
     return;
   }
   sub_graph->Prepare();

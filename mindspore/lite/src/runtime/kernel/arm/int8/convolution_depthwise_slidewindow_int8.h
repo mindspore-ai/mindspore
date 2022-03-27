@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_DEPTHWISE_SLIDEWINDOW_INT8_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/common/log_util.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"

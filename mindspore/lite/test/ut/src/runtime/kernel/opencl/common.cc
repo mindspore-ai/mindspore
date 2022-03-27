@@ -112,14 +112,14 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
     free(op_parameter);
     FAIL();
   }
-  auto *inner_kernel = creator(kernel_inputs, outputs, op_parameter, nullptr, key);
-  if (inner_kernel == nullptr) {
+  auto *lite_kernel = creator(kernel_inputs, outputs, op_parameter, nullptr, key);
+  if (lite_kernel == nullptr) {
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);
     FAIL();
   }
 
-  std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
+  std::shared_ptr<kernel::Kernel> shared_kernel(lite_kernel);
   auto *kernel = new (std::nothrow) kernel::KernelExec(shared_kernel);
   if (kernel == nullptr) {
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
@@ -131,14 +131,14 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> ConstructSubGraphs()
   MS_LOG(DEBUG) << "create SubGraph";
   std::vector<KernelExec *> kernels{kernel};
-  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, subgraph_inputs, outputs, nullptr);
-  if (sub_inner_kernel == nullptr) {
+  auto sub_lite_kernel = new (std::nothrow) kernel::LiteKernel(nullptr, subgraph_inputs, outputs, nullptr);
+  if (sub_lite_kernel == nullptr) {
     return;
   }
 
-  auto sub_graph = new (std::nothrow) OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
+  auto sub_graph = new (std::nothrow) OpenCLSubGraph(kernels, kernels, kernels, sub_lite_kernel);
   if (sub_graph == nullptr) {
-    delete sub_inner_kernel;
+    delete sub_lite_kernel;
     return;
   }
 
@@ -272,15 +272,15 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
     free(op_parameter);
     FAIL();
   }
-  auto *inner_kernel = creator(kernel_inputs, {&output}, op_parameter, nullptr, key);
-  if (inner_kernel == nullptr) {
+  auto *lite_kernel = creator(kernel_inputs, {&output}, op_parameter, nullptr, key);
+  if (lite_kernel == nullptr) {
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);
     FAIL();
   }
 
-  inner_kernel->set_registry_data_type(key.data_type);
-  std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
+  lite_kernel->set_registry_data_type(key.data_type);
+  std::shared_ptr<kernel::Kernel> shared_kernel(lite_kernel);
   auto *kernel = new (std::nothrow) kernel::KernelExec(shared_kernel);
   if (kernel == nullptr) {
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
@@ -292,13 +292,13 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> ConstructSubGraphs()
   MS_LOG(DEBUG) << "create SubGraph";
   std::vector<KernelExec *> kernels{kernel};
-  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, subgraph_inputs, {&output}, nullptr);
-  if (sub_inner_kernel == nullptr) {
+  auto sub_lite_kernel = new (std::nothrow) kernel::LiteKernel(nullptr, subgraph_inputs, {&output}, nullptr);
+  if (sub_lite_kernel == nullptr) {
     return;
   }
-  auto sub_graph = new (std::nothrow) OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
+  auto sub_graph = new (std::nothrow) OpenCLSubGraph(kernels, kernels, kernels, sub_lite_kernel);
   if (sub_graph == nullptr) {
-    delete sub_inner_kernel;
+    delete sub_lite_kernel;
     return;
   }
 

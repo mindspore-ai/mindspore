@@ -49,7 +49,7 @@ int TensorArrayCPUKernel::Prepare() {
   // element shape to vector
   std::vector<int> element_shape_v(element_shape, element_shape + element_shape_size);
   // get size from input
-  lite::Tensor *input = InnerKernel::in_tensors_.at(kInputIndex);
+  lite::Tensor *input = LiteKernel::in_tensors_.at(kInputIndex);
   // check input tensor's datatype is int or not
   if (input->data_type() != TypeId::kNumberTypeInt32 || input->ElementsNum() != 1) {
     MS_LOG(ERROR) << "checked invalid tensor array's input!";
@@ -73,7 +73,7 @@ int TensorArrayCPUKernel::Prepare() {
 
 int TensorArrayCPUKernel::Run() {
   // set handle to outputs, fake malloc, call set_data
-  void *delta = InnerKernel::ms_context_->allocator->Malloc(sizeof(char *));
+  void *delta = LiteKernel::ms_context_->allocator->Malloc(sizeof(char *));
   CHECK_NULL_RETURN(delta);
   auto tensor_list = this->tensor_list_.get();
   CHECK_NULL_RETURN(tensor_list);

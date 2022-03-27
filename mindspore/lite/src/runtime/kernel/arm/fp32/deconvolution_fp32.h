@@ -19,7 +19,7 @@
 
 #include <float.h>
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "schema/model_generated.h"

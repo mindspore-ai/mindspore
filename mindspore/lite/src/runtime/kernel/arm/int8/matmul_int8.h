@@ -21,7 +21,7 @@
 #include "include/context.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/int8/quantize.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/int8/matmul_base_int8.h"
 
 namespace mindspore::kernel {

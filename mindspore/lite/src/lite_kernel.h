@@ -37,12 +37,12 @@
 #endif
 
 namespace mindspore::kernel {
-class InnerKernel : public Kernel {
+class LiteKernel : public Kernel {
  public:
-  InnerKernel() = default;
+  LiteKernel() = default;
 
-  InnerKernel(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
-              const lite::Context *ctx)
+  LiteKernel(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
+             const lite::Context *ctx)
       : op_parameter_(parameter),
         in_tensors_(std::move(in_tensors)),
         out_tensors_(std::move(out_tensors)),
@@ -52,7 +52,7 @@ class InnerKernel : public Kernel {
     }
   }
 
-  virtual ~InnerKernel() {
+  virtual ~LiteKernel() {
     if (op_parameter_ != nullptr) {
       free(op_parameter_);
       op_parameter_ = nullptr;

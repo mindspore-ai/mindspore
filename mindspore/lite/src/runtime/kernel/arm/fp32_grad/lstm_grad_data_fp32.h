@@ -18,16 +18,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_LSTM_GRAD_DATA_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp32_grad/lstm_grad_fp32.h"
 
 namespace mindspore {
 namespace kernel {
-class LSTMGradDataCPUKernel : public InnerKernel {
+class LSTMGradDataCPUKernel : public LiteKernel {
  public:
   explicit LSTMGradDataCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     lstm_param_ = reinterpret_cast<LstmGradParameter *>(op_parameter_);
   }
   ~LSTMGradDataCPUKernel() {}

@@ -18,14 +18,14 @@
 
 #include <vector>
 #include "nnacl/transpose.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class TransposeBaseCPUKernel : public InnerKernel {
+class TransposeBaseCPUKernel : public LiteKernel {
  public:
   explicit TransposeBaseCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx) {
+      : LiteKernel(param, inputs, outputs, ctx) {
     param_ = reinterpret_cast<TransposeParameter *>(param);
   }
   ~TransposeBaseCPUKernel() override = default;

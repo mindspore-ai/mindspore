@@ -121,10 +121,10 @@ int PoolingGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuPoolingGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                     const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *opParameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuPoolingGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                    const std::vector<lite::Tensor *> &outputs,
+                                                    OpParameter *opParameter, const lite::Context *ctx,
+                                                    const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   auto *kernel =
     new (std::nothrow) PoolingGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

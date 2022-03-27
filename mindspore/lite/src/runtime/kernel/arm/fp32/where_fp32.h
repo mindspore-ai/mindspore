@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_WHERE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/fp32/where_fp32.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
@@ -25,11 +25,11 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class WhereCPUKernel : public InnerKernel {
+class WhereCPUKernel : public LiteKernel {
  public:
   WhereCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     where_param_ = reinterpret_cast<WhereParameter *>(op_parameter_);
   }
   ~WhereCPUKernel() = default;

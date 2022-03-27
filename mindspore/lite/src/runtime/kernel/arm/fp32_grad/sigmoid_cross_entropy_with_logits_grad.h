@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SIGMOID_CROSS_ENTROPY_WITH_LOGITS_GRAD_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class SigmoidCrossEntropyWithLogitsGradCPUKernel : public InnerKernel {
+class SigmoidCrossEntropyWithLogitsGradCPUKernel : public LiteKernel {
  public:
   explicit SigmoidCrossEntropyWithLogitsGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
                                                       const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~SigmoidCrossEntropyWithLogitsGradCPUKernel() override {}
   int Prepare() override;
   int ReSize() override;

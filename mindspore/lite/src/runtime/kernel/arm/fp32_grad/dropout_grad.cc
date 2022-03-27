@@ -102,10 +102,10 @@ int DropoutGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuDropoutGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                     const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *opParameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuDropoutGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                    const std::vector<lite::Tensor *> &outputs,
+                                                    OpParameter *opParameter, const lite::Context *ctx,
+                                                    const kernel::KernelKey &desc) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "DropoutGrad opParameter nullptr.";
     return nullptr;

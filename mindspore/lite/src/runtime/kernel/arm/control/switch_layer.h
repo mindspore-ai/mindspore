@@ -17,14 +17,14 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_LAYER_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class SwitchLayerCPUKernel : public InnerKernel {
+class SwitchLayerCPUKernel : public LiteKernel {
  public:
   SwitchLayerCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~SwitchLayerCPUKernel() override = default;
   int Prepare() override;
   int ReSize() override;

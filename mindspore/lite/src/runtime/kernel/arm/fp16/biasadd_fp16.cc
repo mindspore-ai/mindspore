@@ -138,7 +138,7 @@ void BiasAddCPUFp16Kernel::PackWeight() {
 }
 
 int BiasAddCPUFp16Kernel::Eval() {
-  InnerKernel::Eval();
+  LiteKernel::Eval();
   if (IsTrainable()) {
     is_repack_ = true;
   }

@@ -25,11 +25,11 @@
 #include "nnacl/base/split_with_over_lap_base.h"
 
 namespace mindspore::kernel {
-class SplitWithOverlapBaseCPUKernel : public InnerKernel {
+class SplitWithOverlapBaseCPUKernel : public LiteKernel {
  public:
   SplitWithOverlapBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<SplitWithOverlapParameter *>(op_parameter_);
   }
   ~SplitWithOverlapBaseCPUKernel() override = default;

@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_REDUCE_BASE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/reduce_parameter.h"
 
 namespace mindspore::kernel {
-class ReduceBaseCPUKernel : public InnerKernel {
+class ReduceBaseCPUKernel : public LiteKernel {
  public:
   ReduceBaseCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx) {}
+      : LiteKernel(param, inputs, outputs, ctx) {}
   virtual ~ReduceBaseCPUKernel() = default;
 
   int Prepare() override;

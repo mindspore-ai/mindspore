@@ -19,11 +19,11 @@
 
 #include <vector>
 #include "nnacl/op_base.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-InnerKernel *CpuConvInt8KernelSelect(const std::vector<lite::Tensor *> &inputs,
-                                     const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                     const lite::InnerContext *ctx);
+LiteKernel *CpuConvInt8KernelSelect(const std::vector<lite::Tensor *> &inputs,
+                                    const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                    const lite::InnerContext *ctx);
 }
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_INT8_CREATOR_H_

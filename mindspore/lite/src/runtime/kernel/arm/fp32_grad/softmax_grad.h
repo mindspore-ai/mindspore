@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SOFTMAX_GRAD_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/softmax_parameter.h"
 
 namespace mindspore::kernel {
-class SoftmaxGradCPUKernel : public InnerKernel {
+class SoftmaxGradCPUKernel : public LiteKernel {
  public:
   explicit SoftmaxGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param = reinterpret_cast<SoftmaxParameter *>(parameter);
   }
   ~SoftmaxGradCPUKernel() override {}

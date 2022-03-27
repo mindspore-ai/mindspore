@@ -18,17 +18,17 @@
 #define MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_LITE_ADAPTER_RUNTIME_AKG_KERNEL_H_
 #include <vector>
 #include <string>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "common/graph_kernel/lite_adapter/common/graph_kernel_op_parameter.h"
 
 namespace mindspore::kernel {
 using AkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
 
-class AkgKernel : public InnerKernel {
+class AkgKernel : public LiteKernel {
  public:
   AkgKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     params_ = reinterpret_cast<GraphKernelParameter *>(op_parameter_);
     ExtractKernelName();
   }

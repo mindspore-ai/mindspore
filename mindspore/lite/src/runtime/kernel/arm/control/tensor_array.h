@@ -20,15 +20,15 @@
 #include <vector>
 #include <memory>
 #include "nnacl/tensor_array_parameter.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/tensorlist.h"
 
 namespace mindspore::kernel {
-class TensorArrayCPUKernel : public InnerKernel {
+class TensorArrayCPUKernel : public LiteKernel {
  public:
   TensorArrayCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     ta_param_ = reinterpret_cast<TensorArrayParameter *>(parameter);
   }
 
@@ -43,11 +43,11 @@ class TensorArrayCPUKernel : public InnerKernel {
   std::unique_ptr<lite::TensorList> tensor_list_;
 };
 
-class TensorArrayBaseCPUKernel : public InnerKernel {
+class TensorArrayBaseCPUKernel : public LiteKernel {
  public:
   TensorArrayBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~TensorArrayBaseCPUKernel() = default;
 
   int Prepare() override;

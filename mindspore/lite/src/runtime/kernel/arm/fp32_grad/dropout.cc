@@ -109,9 +109,9 @@ int DropoutCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuDropoutFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuDropoutFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Dropout opParameter nullptr.";
     return nullptr;

@@ -21,15 +21,15 @@
 #include <limits>
 #include "nnacl/int8/concat_int8.h"
 #include "include/errorcode.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 
 namespace mindspore::kernel {
-class ConcatInt8CPUKernel : public InnerKernel {
+class ConcatInt8CPUKernel : public LiteKernel {
  public:
   ConcatInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
   }
   ~ConcatInt8CPUKernel() override {

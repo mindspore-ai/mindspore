@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCHNORM_FP32_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/fp32/batchnorm_fp32.h"
 #include "nnacl/batchnorm_parameter.h"
@@ -26,11 +26,11 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class BatchnormCPUKernel : public InnerKernel {
+class BatchnormCPUKernel : public LiteKernel {
  public:
   BatchnormCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   virtual ~BatchnormCPUKernel() { FreeMeanAndVariance(); }
 
   int Prepare() override;

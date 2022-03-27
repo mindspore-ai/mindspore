@@ -17,17 +17,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DELEGATE_FP32_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
-class ConvolutionDelegateCPUKernel : public InnerKernel {
+class ConvolutionDelegateCPUKernel : public LiteKernel {
  public:
   ConvolutionDelegateCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDelegateCPUKernel() override {
     FreeCopiedData();
     if (conv_kernel_ != nullptr) {
@@ -67,9 +67,9 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
   int GetBiasData();
 
   int SetInputOutputShapeInfo();
-  kernel::InnerKernel *CpuConvFp32KernelSelect();
-  kernel::InnerKernel *CpuConvFp32NC4KernelSelect();
-  kernel::InnerKernel *CpuConvFp32NHWCKernelSelect();
+  kernel::LiteKernel *CpuConvFp32KernelSelect();
+  kernel::LiteKernel *CpuConvFp32NC4KernelSelect();
+  kernel::LiteKernel *CpuConvFp32NHWCKernelSelect();
   bool CheckAvxUseSWConv(const ConvParameter *conv_param);
   // If inferShape process can't complete in Init part, initialization of weight and bis will be implemented in runtime
   // via Resize() API. However,data of const tensor(weight and bias) doesn't exist anymore in runtime stage.Thus,
@@ -89,20 +89,20 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
   }
   // Train API
   int Train() override {
-    (void)InnerKernel::Train();
+    (void)LiteKernel::Train();
     return conv_kernel_->Train();
   }
   void SetTrainable(bool trainable) override {
-    InnerKernel::SetTrainable(trainable);
+    LiteKernel::SetTrainable(trainable);
     return conv_kernel_->SetTrainable(trainable);
   }
   size_t workspace_size() override {
-    (void)InnerKernel::workspace_size();
+    (void)LiteKernel::workspace_size();
     return conv_kernel_->workspace_size();
   }
 
  protected:
-  kernel::InnerKernel *conv_kernel_{nullptr};
+  kernel::LiteKernel *conv_kernel_{nullptr};
   float *origin_weight_{nullptr};
   float *origin_bias_{nullptr};
   bool need_free_weight_{false};

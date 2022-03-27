@@ -19,15 +19,15 @@
 
 #include <float.h>
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/reduce_scatter_parameter.h"
 
 namespace mindspore::kernel {
-class ReduceScatterCPUKernel : public InnerKernel {
+class ReduceScatterCPUKernel : public LiteKernel {
  public:
   ReduceScatterCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<ReduceScatterParameter *>(parameter);
   }
   ~ReduceScatterCPUKernel() override = default;

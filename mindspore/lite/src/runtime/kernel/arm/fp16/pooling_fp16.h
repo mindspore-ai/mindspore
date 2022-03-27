@@ -19,7 +19,7 @@
 #include <arm_neon.h>
 #include <vector>
 #include <cfloat>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/pooling_base.h"
 
 namespace mindspore::kernel {

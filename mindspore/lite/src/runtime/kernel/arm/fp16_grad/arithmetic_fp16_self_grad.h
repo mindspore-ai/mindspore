@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_ARITHMETIC_SELF_GRAD_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp16_grad/arithmetic_self_grad.h"
 
 namespace mindspore::kernel {
-class ArithmeticSelfGradFp16CPUKernel : public InnerKernel {
+class ArithmeticSelfGradFp16CPUKernel : public LiteKernel {
  public:
   explicit ArithmeticSelfGradFp16CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
+      : LiteKernel(param, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
     param_act_grad_ = reinterpret_cast<ArithmeticSelfGradParameterFp16 *>(param);
   }
   ~ArithmeticSelfGradFp16CPUKernel() override = default;

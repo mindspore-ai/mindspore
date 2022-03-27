@@ -22,11 +22,11 @@
 #include "nnacl/fp16/arithmetic_fp16.h"
 
 namespace mindspore::kernel {
-class BiasGradCPUKernelFp16 : public InnerKernel {
+class BiasGradCPUKernelFp16 : public LiteKernel {
  public:
   explicit BiasGradCPUKernelFp16(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     bias_param = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~BiasGradCPUKernelFp16() override = default;

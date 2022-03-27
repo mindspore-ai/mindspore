@@ -20,7 +20,7 @@
 #include <algorithm>
 #include "include/errorcode.h"
 #include "nnacl/fp32/resize_fp32.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/resize_base.h"
 
 struct ResizeCoordinate {

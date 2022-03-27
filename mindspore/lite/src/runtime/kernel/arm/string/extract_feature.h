@@ -17,16 +17,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_EXTRACT_FEATURE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "src/common/string_utils.h"
 
 namespace mindspore::kernel {
-class ExtractFeatureCPUKernel : public InnerKernel {
+class ExtractFeatureCPUKernel : public LiteKernel {
  public:
   ExtractFeatureCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ExtractFeatureCPUKernel() {}
 
   int Prepare() override;

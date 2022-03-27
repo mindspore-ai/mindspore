@@ -141,10 +141,10 @@ int DeConvolutionGradFilterCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuDeConvGradFilterFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                          const std::vector<lite::Tensor *> &outputs,
-                                                          OpParameter *opParameter, const lite::Context *ctx,
-                                                          const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuDeConvGradFilterFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                         const std::vector<lite::Tensor *> &outputs,
+                                                         OpParameter *opParameter, const lite::Context *ctx,
+                                                         const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2DGradFilter);
 
   auto *kernel = new (std::nothrow)

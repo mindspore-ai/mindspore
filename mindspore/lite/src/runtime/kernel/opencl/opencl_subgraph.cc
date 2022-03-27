@@ -113,7 +113,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
     parameter->op_parameter.type_ = PrimType_Inner_ToFormat;
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
-    InnerKernel *in_convert_op_inner = nullptr;
+    LiteKernel *in_convert_op_inner = nullptr;
     if (mem_type == MemType::IMG) {
       in_convert_op_inner = OpenCLKernelCreator<ToFormatOpenCLKernel>(
         {in_tensor}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter), this->Context(), desc);
@@ -209,7 +209,7 @@ int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
     parameter->op_parameter.type_ = PrimType::PrimType_Inner_GltextureToOpencl;
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
-    InnerKernel *in_convert_op_inner = nullptr;
+    LiteKernel *in_convert_op_inner = nullptr;
     if (mem_type == MemType::IMG) {
       in_convert_op_inner = OpenCLKernelCreator<GLToCLOpenCLKernel>(
         {in_tensor}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter), this->Context(), desc);

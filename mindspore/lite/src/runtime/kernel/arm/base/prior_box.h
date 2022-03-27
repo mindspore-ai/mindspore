@@ -18,18 +18,18 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_PRIOR_BOX_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/reshape_parameter.h"
 #include "nnacl/fp32/prior_box_fp32.h"
 
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class PriorBoxCPUKernel : public InnerKernel {
+class PriorBoxCPUKernel : public LiteKernel {
  public:
   PriorBoxCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                     const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
+      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
     prior_box_param_ = reinterpret_cast<PriorBoxParameter *>(op_parameter_);
   }
   ~PriorBoxCPUKernel() = default;

@@ -19,15 +19,15 @@
 
 #include <vector>
 
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/nllloss_parameter.h"
 
 namespace mindspore::kernel {
-class NLLLossCPUKernel : public InnerKernel {
+class NLLLossCPUKernel : public LiteKernel {
  public:
   NLLLossCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx) {
+      : LiteKernel(param, inputs, outputs, ctx) {
     nllloss_param_ = reinterpret_cast<NLLLossParameter *>(op_parameter_);
   }
   ~NLLLossCPUKernel() = default;

@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_ARITHMETIC_FP16_GRAD_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
 #include "schema/model_generated.h"
 
@@ -33,14 +33,14 @@ namespace mindspore::kernel {
 
 class ArithmeticGradCPUKernelFp16;
 
-class ArithmeticGradCPUKernelFp16 : public InnerKernel {
+class ArithmeticGradCPUKernelFp16 : public LiteKernel {
   typedef int (ArithmeticGradCPUKernelFp16::*ArithmeticGradOperation)(float16_t *, int, float16_t *, int, float16_t *,
                                                                       int);
 
  public:
   explicit ArithmeticGradCPUKernelFp16(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), tile_data0(NULL), tile_data1(NULL), tile_data2(NULL) {
+      : LiteKernel(parameter, inputs, outputs, ctx), tile_data0(NULL), tile_data1(NULL), tile_data2(NULL) {
     switch (type()) {
       case PrimitiveType_MaximumGrad:
         arithmetic_grad_ = &ArithmeticGradCPUKernelFp16::ArithmeticGradMaximum;

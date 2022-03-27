@@ -39,7 +39,7 @@ class TestReduceFp16 : public mindspore::CommonTest {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat16, schema::PrimitiveType_ReduceFusion};
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
-  kernel::InnerKernel *kernel_ = nullptr;
+  kernel::LiteKernel *kernel_ = nullptr;
 };
 
 void TestReduceFp16::TearDown() {

@@ -87,10 +87,10 @@ int SoftmaxGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuSoftmaxGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                     const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *opParameter, const lite::Context *ctx,
-                                                     const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuSoftmaxGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                    const std::vector<lite::Tensor *> &outputs,
+                                                    OpParameter *opParameter, const lite::Context *ctx,
+                                                    const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   auto *kernel =
     new (std::nothrow) SoftmaxGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

@@ -182,9 +182,9 @@ int BNGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuBNGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuBNGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_BatchNormGrad);
   auto *kernel =
     new (std::nothrow) BNGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

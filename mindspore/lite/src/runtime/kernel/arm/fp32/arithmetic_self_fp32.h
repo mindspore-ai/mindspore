@@ -19,7 +19,7 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 using mindspore::schema::PrimitiveType_Abs;
 using mindspore::schema::PrimitiveType_Ceil;
@@ -39,11 +39,11 @@ using mindspore::schema::PrimitiveType_Square;
 namespace mindspore::kernel {
 typedef int (*ArithmeticSelfFunc)(const float *input, float *output, const int element_size);
 typedef int (*ArithmeticSelfBoolFunc)(const bool *input, bool *output, const int element_size);
-class ArithmeticSelfCPUKernel : public InnerKernel {
+class ArithmeticSelfCPUKernel : public LiteKernel {
  public:
   explicit ArithmeticSelfCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     func_ = GetArithmeticSelfFun(parameter->type_);
     func_bool_ = GetArithmeticSelfBoolFun(parameter->type_);
   }

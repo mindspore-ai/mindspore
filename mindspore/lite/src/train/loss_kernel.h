@@ -19,12 +19,12 @@
 #include "src/kernel_exec.h"
 namespace mindspore::kernel {
 
-class LossKernel : public InnerKernel {
+class LossKernel : public LiteKernel {
  public:
   LossKernel() = default;
   LossKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~LossKernel() override = default;
 };
 

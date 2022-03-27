@@ -27,7 +27,7 @@
 #include <android/log.h>
 #endif
 #endif
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
 #endif
@@ -39,12 +39,12 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class ConvolutionBaseCPUKernel : public InnerKernel {
+class ConvolutionBaseCPUKernel : public LiteKernel {
  public:
   ConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx, void *origin_weight,
                            void *origin_bias)
-      : InnerKernel(parameter, inputs, outputs, ctx),
+      : LiteKernel(parameter, inputs, outputs, ctx),
         ctx_(ctx),
         thread_count_(op_parameter_->thread_num_),
         origin_weight_(origin_weight),

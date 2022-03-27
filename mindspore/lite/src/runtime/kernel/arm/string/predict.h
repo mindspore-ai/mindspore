@@ -17,16 +17,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_PREDICT_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/predict_parameter.h"
 
 namespace mindspore::kernel {
-class PredictCPUKernel : public InnerKernel {
+class PredictCPUKernel : public LiteKernel {
  public:
   PredictCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~PredictCPUKernel() {}
 
   int Prepare() override;

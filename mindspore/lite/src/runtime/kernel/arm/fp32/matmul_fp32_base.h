@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #ifdef SHARING_MODEL_WEIGHT
 #include "src/pack_weight_manager.h"
 #endif
@@ -38,11 +38,11 @@ using GemvFun = void (*)(const float *a, const float *b, float *c, const float *
                          const int depth, const int cur_col, const int col_align);
 using GemmIsNotPackFun = void (*)(const float *a, const float *b, float *c, const float *bias, int m, int k);
 
-class MatmulFp32BaseCPUKernel : public InnerKernel {
+class MatmulFp32BaseCPUKernel : public LiteKernel {
  public:
   MatmulFp32BaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~MatmulFp32BaseCPUKernel() override;

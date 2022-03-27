@@ -18,18 +18,18 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/constant_of_shape_parameter.h"
 #include "nnacl/fp32/constant_of_shape_fp32.h"
 #include "nnacl/fp16/constant_of_shape_fp16.h"
 
 namespace mindspore::kernel {
-class ConstantOfShapeCPUKernel : public InnerKernel {
+class ConstantOfShapeCPUKernel : public LiteKernel {
  public:
   ConstantOfShapeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<ConstantOfShapeParameter *>(parameter);
   }
   ~ConstantOfShapeCPUKernel() override = default;
