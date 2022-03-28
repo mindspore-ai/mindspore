@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """
-Profiler Module Introduction.
-
 This module provides Python APIs to enable the profiling of MindSpore neural networks.
 Users can import the mindspore.profiler.Profiler, initialize the Profiler object to start profiling,
 and use Profiler.analyse() to stop profiling and analyse the results.
-To visualize the profiling results, users can open MindSpore Web, find the corresponding 'run'
-button/option and click the profile link.
-Now, Profiler supports the AICore operator analysis.
+Users can visualize the results using the MindInsight tool.
+Now, Profiler supports AICORE operator, AICPU operator, HostCPU operator, memory,
+correspondence, cluster, etc data analysis.
 """
 from mindspore.profiler.profiling import Profiler
-from mindspore.profiler.profiling import ProfileOption
 
-__all__ = ["Profiler", "ProfileOption"]
+__all__ = ["Profiler"]
