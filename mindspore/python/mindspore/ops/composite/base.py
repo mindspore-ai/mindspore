@@ -800,12 +800,12 @@ class Shard(Shard_):
         Shard_.__init__(self, 'Shard')
         self.shard_fn = None
         self.fn = None
-        self.in_axes = None
-        self.out_axes = None
+        self.in_strategy = None
+        self.out_strategy = None
         self.device = None
         self.level = None
 
-    def __call__(self, fn, in_axes, out_axes, device="Ascend", level=0):
+    def __call__(self, fn, in_strategy, out_strategy, device="Ascend", level=0):
         if context.get_context("mode") != context.PYNATIVE_MODE or \
             context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
             raise AssertionError(f"'Shard' only supports auto parallel under PyNative mode")
@@ -815,30 +815,30 @@ class Shard(Shard_):
             raise AssertionError(f"'Shard' doesn't support 'full_batch'. Please set 'full_batch' as False")
         if context.get_auto_parallel_context("search_mode") != "sharding_propagation":
             raise AssertionError(f"'search_mode' must be 'sharding_propagation' for 'Shard'")
-        if not isinstance(in_axes, tuple):
-            raise TypeError(f"For 'Shard', the 'in_axes' should be a tuple, but got {type(in_axes).__name__}")
-        if not isinstance(out_axes, tuple):
-            raise TypeError(f"For 'Shard', the 'out_axes' should be a tuple, "
-                            f"but got {type(out_axes).__name__}")
+        if not isinstance(in_strategy, tuple):
+            raise TypeError(f"For 'Shard', the 'in_strategy' should be a tuple, but got {type(in_strategy).__name__}")
+        if not isinstance(out_strategy, tuple):
+            raise TypeError(f"For 'Shard', the 'out_strategy' should be a tuple, "
+                            f"but got {type(out_strategy).__name__}")
         if not isinstance(device, str):
             raise TypeError(f"For 'Shard', the 'device' should be a string, "
                             f"but got {type(device).__name__}")
         if not isinstance(level, int):
             raise TypeError(f"For 'Shard', the 'level' should be an integer, "
                             f"but got {type(level).__name__}")
-        if self.shard_fn is not None and self.fn == fn and self.in_axes == in_axes and self.out_axes == out_axes and \
-            self.device == device and self.level == level:
+        if self.shard_fn is not None and self.fn == fn and self.in_strategy == in_strategy and \
+                self.out_strategy == out_strategy and self.device == device and self.level == level:
             return self.shard_fn
         shard_ = Shard()
 
         @ms_function(obj=fn)
         def after_shard(*args):
-            return shard_(fn, in_axes, out_axes, device, level)(*args)
+            return shard_(fn, in_strategy, out_strategy, device, level)(*args)
 
         self.shard_fn = after_shard
         self.fn = fn
-        self.in_axes = in_axes
-        self.out_axes = out_axes
+        self.in_strategy = in_strategy
+        self.out_strategy = out_strategy
         self.device = device
         self.level = level
         return self.shard_fn
