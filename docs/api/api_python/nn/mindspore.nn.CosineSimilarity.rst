@@ -3,11 +3,11 @@ mindspore.nn.CosineSimilarity
 
 .. py:class:: mindspore.nn.CosineSimilarity(similarity='cosine', reduction='none', zero_diagonal=True)
 
-    计算表示相似性。
+    计算余弦相似度。
 
     **参数：** 
 
-    - **similarity** (str) - "dot"或"cosine"。默认值："cosine"。
+    - **similarity** (str) - "dot"或"cosine"。"cosine"表示相似度计算逻辑, "dot"表示矩阵点乘矩阵计算逻辑。默认值："cosine"。
     - **reduction** (str) - "none"、"sum"或"mean"。默认值："none"。
     - **zero_diagonal** (bool) - 如果为True，则对角线将设置为零。默认值：True。
 
