@@ -329,6 +329,13 @@ if(MSLITE_ENABLE_CONVERTER)
     add_compile_definitions(ENABLE_CONVERTER)
 endif()
 
+if(MSLITE_ENABLE_FP16 AND PLATFORM_ARM32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 12.0)
+        message(STATUS "If you want to build fp16 in arm82_a32, please use android nkd r21e or r22b!")
+        set(MSLITE_ENABLE_FP16 off)
+    endif()
+endif()
+
 message(STATUS "************MindSpore Lite Build Option:************")
 message(STATUS "\tMSLITE_GPU_BACKEND                = \t${MSLITE_GPU_BACKEND}")
 message(STATUS "\tMSLITE_REGISTRY_DEVICE            = \t${MSLITE_REGISTRY_DEVICE}")
@@ -381,13 +388,6 @@ if(((MSLITE_GPU_BACKEND STREQUAL tensorrt) OR MSLITE_ENABLE_NPU) AND (
         NOT MSLITE_ENABLE_DELEGATE))
     message(FATAL_ERROR "If MSLITE_ENABLE_DELEGATE use is configured as off, MSLITE_ENABLE_NPU must also be configured
     as off and MSLITE_GPU_BACKEND nor can it be configured as tensorrt.")
-endif()
-
-if(MSLITE_ENABLE_FP16 AND PLATFORM_ARM32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
-        AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-    message(STATUS "If you want to build fp16 in arm82_a32, \
-    your Clang version:[${CMAKE_CXX_COMPILER_VERSION}] must not be less than 9.0 and please use android nkd r21e!")
-    set(MSLITE_ENABLE_FP16 off)
 endif()
 
 if(MSLITE_ENABLE_HIGH_PERFORMANCE)
