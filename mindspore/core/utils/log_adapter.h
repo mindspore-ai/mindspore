@@ -34,6 +34,7 @@
 #define google mindspore_private
 #include "glog/logging.h"
 #undef google
+#elif defined(BUILD_CORE_RUNTIME)
 #else
 #include "toolchain/slog.h"
 #endif
@@ -238,7 +239,7 @@ class MS_CORE_API LogWriter {
   /// \param[in] stream The input log stream.
   void operator<(const LogStream &stream) const noexcept;
 
-#ifndef BUILD_LITE_INFERENCE
+#if !defined(BUILD_LITE_INFERENCE) || defined(BUILD_CORE_RUNTIME)
   /// \brief Output log message from the input log stream and then throw exception.
   ///
   /// \param[in] stream The input log stream.
@@ -266,7 +267,7 @@ class MS_CORE_API LogWriter {
                : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, SUBMODULE_ID, \
                                       excp_type) < mindspore::LogStream()
 
-#ifndef BUILD_LITE_INFERENCE
+#if !defined(BUILD_LITE_INFERENCE) || defined(BUILD_CORE_RUNTIME)
 #define MSLOG_THROW(excp_type)                                                                                         \
   mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::EXCEPTION, SUBMODULE_ID, \
                        excp_type) ^                                                                                    \

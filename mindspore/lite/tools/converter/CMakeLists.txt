@@ -67,6 +67,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${SRC_DIR}/common/dynamic_library_loader.cc
         ${SRC_DIR}/train/train_populate_parameter.cc
         ${SRC_DIR}/common/config_file.cc
+        ${SRC_DIR}/common/primitive_t_utils.cc
         ../optimizer/*.cc
         )
 
@@ -117,6 +118,7 @@ set(LITE_SRC ${API_SRC}
         ${RUNTIME_PASS_SRCS}
         ${SRC_DIR}/ops/ops_def.cc
         ${SRC_DIR}/ops/ops_utils.cc
+        ${SRC_DIR}/ops/anf_utils.cc
         ${SRC_DIR}/common/utils.cc
         ${SRC_DIR}/common/file_utils.cc
         ${SRC_DIR}/common/context_util.cc

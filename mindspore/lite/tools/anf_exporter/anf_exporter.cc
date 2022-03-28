@@ -41,7 +41,7 @@
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/meta_graph_utils.h"
-#include "src/ops/ops_utils.h"
+#include "src/ops/anf_utils.h"
 #include "src/weight_decoder.h"
 #include "tools/common/node_util.h"
 #include "src/common/log_util.h"

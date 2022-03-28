@@ -41,6 +41,7 @@
 #include "tools/common/tensor_util.h"
 #include "include/api/model.h"
 #include "tools/mindir_serializer/mindir_serializer.h"
+#include "src/common/primitive_t_utils.h"
 
 namespace mindspore {
 namespace lite {

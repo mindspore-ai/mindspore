@@ -31,7 +31,7 @@
 #include "src/kernel_registry.h"
 #include "src/inner_context.h"
 #include "src/tensor.h"
-#include "src/ops/ops_utils.h"
+#include "src/ops/anf_utils.h"
 #include "src/runtime/infer_manager.h"
 #include "tools/optimizer/graph/lite_tensor_extractor.h"
 

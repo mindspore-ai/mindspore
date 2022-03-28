@@ -642,6 +642,20 @@ if(PLATFORM_ARM64)
             endif()
         endif()
     endif()
+    if(MSLITE_ENABLE_KERNEL_EXECUTOR)
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/ops/ DESTINATION ${RUNTIME_INC_DIR}/core/ops
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/mindapi/ DESTINATION ${RUNTIME_INC_DIR}/core/mindapi
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(FILES ${TOP_DIR}/mindspore/lite/src/cxx_api/kernel_executor/kernel_executor.h DESTINATION
+                ${RUNTIME_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS kernel_executor DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_CONVERTER)
+            install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${GLOG_DIR} RENAME libglog.so.0
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+    endif()
 elseif(PLATFORM_ARM32)
     if(SUPPORT_NPU)
         install(FILES ${DDK_LIB_PATH}/libhiai.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
@@ -996,6 +1010,20 @@ else()
         if(SUPPORT_TRAIN)
             install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu_train.cfg
                     DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+    endif()
+    if(MSLITE_ENABLE_KERNEL_EXECUTOR)
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/ops/ DESTINATION ${RUNTIME_INC_DIR}/core/ops
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/mindapi/ DESTINATION ${RUNTIME_INC_DIR}/core/mindapi
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(FILES ${TOP_DIR}/mindspore/lite/src/cxx_api/kernel_executor/kernel_executor.h DESTINATION
+                ${RUNTIME_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS kernel_executor DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_CONVERTER)
+            install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${GLOG_DIR} RENAME libglog.so.0
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
     endif()
 endif()

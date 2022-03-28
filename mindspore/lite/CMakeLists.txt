@@ -56,6 +56,7 @@ option(MSLITE_ENABLE_SHARING_MODEL_WEIGHT "enable sharing model weight" off)
 option(MSLITE_ENABLE_EXPERIMENTAL_KERNEL "enable experimental kernel" on)
 option(MSLITE_ENABLE_GRAPH_KERNEL "enable graph kernel" off)
 option(MSLITE_ENABLE_CONVERT_PYTORCH_MODEL "enable to convert pytorch model" off)
+option(MSLITE_ENABLE_KERNEL_EXECUTOR "enable kernel executor" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -174,6 +175,9 @@ endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_SERVING})
     set(MSLITE_ENABLE_SERVING $ENV{MSLITE_ENABLE_SERVING})
+endif()
+if(DEFINED ENV{MSLITE_ENABLE_KERNEL_EXECUTOR})
+    set(MSLITE_ENABLE_KERNEL_EXECUTOR $ENV{MSLITE_ENABLE_KERNEL_EXECUTOR})
 endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_CONVERT_PYTORCH_MODEL} AND DEFINED ENV{LIB_TORCH_PATH})
@@ -404,6 +408,7 @@ message(STATUS "\tMSLITE_ENABLE_PARALLEL_INFERENCE           = \t${MSLITE_ENABLE
 message(STATUS "\tMSLITE_ENABLE_SHARING_MODEL_WEIGHT         = \t${MSLITE_ENABLE_SHARING_MODEL_WEIGHT}")
 message(STATUS "\tMSLITE_ENABLE_EXPERIMENTAL_KERNEL          = \t${MSLITE_ENABLE_EXPERIMENTAL_KERNEL}")
 message(STATUS "\tMSLITE_ENABLE_GRAPH_KERNEL                 = \t${MSLITE_ENABLE_GRAPH_KERNEL}")
+message(STATUS "\tMSLITE_ENABLE_KERNEL_EXECUTOR              = \t${MSLITE_ENABLE_KERNEL_EXECUTOR}")
 
 if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
         NOT MSLITE_ENABLE_MINDRT
@@ -531,7 +536,7 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
 endif()
 
 if(MSLITE_ENABLE_CONVERTER OR MSLITE_MINDDATA_IMPLEMENT STREQUAL "full" OR MSLITE_MINDDATA_IMPLEMENT STREQUAL "wrapper"
-    OR MSLITE_ENABLE_TOOLS)
+    OR MSLITE_ENABLE_TOOLS OR MSLITE_ENABLE_KERNEL_EXECUTOR)
     if(NOT ENABLE_CLOUD_AND_LITE)
         include(${TOP_DIR}/cmake/external_libs/json.cmake)
     endif()
@@ -635,6 +640,13 @@ function(find_required_package pkg_name)
     endif()
 endfunction()
 
+if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_KERNEL_EXECUTOR)
+    find_required_package(Patch)
+    if(NOT ENABLE_CLOUD_AND_LITE)
+        include(${TOP_DIR}/cmake/external_libs/protobuf.cmake)
+    endif()
+endif()
+
 if(MSLITE_ENABLE_CONVERTER)
     if(ENABLE_FAST_HASH_TABLE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_FAST_HASH_TABLE=1")
@@ -645,7 +657,6 @@ if(MSLITE_ENABLE_CONVERTER)
     if(NOT ENABLE_CLOUD_AND_LITE)
         include(${TOP_DIR}/cmake/external_libs/opencv.cmake)
         include(${TOP_DIR}/cmake/external_libs/eigen.cmake)
-        include(${TOP_DIR}/cmake/external_libs/protobuf.cmake)
     endif()
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter)
 endif()

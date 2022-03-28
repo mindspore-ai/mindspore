@@ -46,17 +46,6 @@ std::vector<CNodePtr> GetInputCNode(const CNodePtr &cnode) {
   return inputs;
 }
 
-const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb) {
-  if (primitive_t == nullptr || fbb == nullptr) {
-    MS_LOG(ERROR) << "primitiveT or fbb is nullptr.";
-    return nullptr;
-  }
-  auto prim_offset = schema::CreatePrimitive(*fbb, primitive_t);
-  fbb->Finish(prim_offset);
-  auto prim_buf = fbb->GetBufferPointer();
-  return flatbuffers::GetRoot<schema::Primitive>(prim_buf);
-}
-
 STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::vector<int32_t> &src_dims,
                               mindspore::schema::Format dst_format, std::vector<int32_t> *dst_dims) {
   MS_ASSERT(dst_dims != nullptr);
