@@ -62,7 +62,7 @@ class TCPComm {
   // Connection operation for a specified destination.
   void Connect(const std::string &dst_url);
   bool IsConnected(const std::string &dst_url);
-  void Disconnect(const std::string &dst_url);
+  bool Disconnect(const std::string &dst_url);
 
   // Send the message from the source to the destination.
   // The flag sync means if the message is sent directly or added to the task queue.
