@@ -114,6 +114,8 @@ void AscendLaunchTransData::ConstructKernelGraphAndSetAttr() {
     // set attr
     common::AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(src_format_), transdata_node);
     common::AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(dst_format_), transdata_node);
+    common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups_), transdata_node);
+    common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups_), transdata_node);
   }
 }
 }  // namespace mindspore::device::ascend
