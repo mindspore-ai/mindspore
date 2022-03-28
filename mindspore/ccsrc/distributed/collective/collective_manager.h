@@ -74,6 +74,9 @@ class BACKEND_EXPORT CollectiveManager {
   // Get whether need reinitialize collective communication.
   bool need_reinit() const { return need_reinit_.load(); }
 
+  // Return collective manager is initialized.
+  bool initialized() const { return inited_.load(); }
+
  private:
   CollectiveManager();
 
