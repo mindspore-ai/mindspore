@@ -1145,19 +1145,8 @@ void ParameterServer::RecoverHandler::Init() {
   MS_EXCEPTION_IF_NULL(ps_->server_node_);
   std::string persistent_storage_file_path =
     std::string(kCurrentDirOfServer) + std::to_string(ps_->server_node_->rank_id()) + "_persistent_storage.json";
-  if (!distributed::storage::FileIOUtils::IsFileOrDirExist(persistent_storage_file_path)) {
-    distributed::storage::FileIOUtils::CreateFile(persistent_storage_file_path);
-  }
-
-  auto ret = FileUtils::GetRealPath(persistent_storage_file_path.c_str());
-  if (!ret.has_value()) {
-    MS_LOG(EXCEPTION) << "Cannot get real path for persistent storage file";
-  }
-
-  storage_ = std::make_unique<core::FileConfiguration>(ret.value());
-  if (!storage_->Initialize()) {
-    MS_LOG(EXCEPTION) << "Initialize file storage module failed, file path: " << ret.value();
-  }
+  storage_ = std::make_unique<core::FileConfiguration>(persistent_storage_file_path);
+  (void)storage_->Initialize();
 }
 
 void ParameterServer::RecoverHandler::Recover() {
