@@ -24,6 +24,7 @@
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "include/common/utils/context/graph_kernel_flags.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/parallel_context.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/memory_manager.h"
@@ -737,7 +738,19 @@ std::shared_ptr<Bucket> AscendDeviceContext::CreateBucket(uint32_t bucket_id, ui
   auto bucket = std::make_shared<AscendBucket>(bucket_id, bucket_size);
   MS_EXCEPTION_IF_NULL(bucket);
 
-  bucket->Init({compute_stream_}, {communication_stream_});
+  // For data-parallel, there is no communication in forward and backward process, the only communication ops arise
+  // from this allreduce bucket. All the ops in forward and backward process are assigned on the compute stream and
+  // allreduce for gradients is assigned on communication stream.
+  // But for semi/auto_parallel mode, there will be communication ops in forward and backward process. To avoid stream
+  // sync error, for semi/auto_parallel mode, the allreduce for gradients is assigned on compute stream as well.
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  if (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel) {
+    bucket->Init({compute_stream_}, {compute_stream_});
+  } else {
+    bucket->Init({compute_stream_}, {communication_stream_});
+  }
   return bucket;
 }
 
