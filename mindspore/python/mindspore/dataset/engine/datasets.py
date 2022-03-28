@@ -175,6 +175,10 @@ def shuffle_to_bool(shuffle):
     Returns:
         bool, True / False
     """
+    if shuffle is not None and not isinstance(shuffle, (bool, Shuffle)):
+        raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like 'Shuffle.GLOBAL' or "
+                        "'Shuffle.FILES' or 'Shuffle.INFILE'.")
+
     shuffle_bool = True
     if not isinstance(shuffle, Shuffle):
         if shuffle is None:
@@ -449,14 +453,14 @@ class Dataset:
                     setattr(new_op, arg, value)
         return new_op
 
-    def iterator_bootstrap(self):
-        pass
-
     @staticmethod
     def _noop_mode():
         if _is_role_sched() or _is_role_pserver():
             return True
         return False
+
+    def iterator_bootstrap(self):
+        pass
 
     def __add__(self, datasets):
         return self.concat(datasets)
