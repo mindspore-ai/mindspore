@@ -53,6 +53,9 @@ class InstanceManager {
   void DisableFLSAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager, const uint64_t &request_id,
                        const NodeInfo &node_info);
 
+  void QueryNodeScaleState(const std::shared_ptr<TcpClient> &client, const NodeManager &, const uint64_t &request_id,
+                           const NodeInfo &node_info);
+
  private:
   // The node_ will only be instantiated with scheduler node.
   Node *const node_;

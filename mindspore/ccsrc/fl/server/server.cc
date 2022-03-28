@@ -400,6 +400,8 @@ void Server::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunic
                                     std::bind(&Server::HandleQueryInstanceRequest, this, std::placeholders::_1));
   communicator->RegisterMsgCallBack("syncAfterRecover",
                                     std::bind(&Server::HandleSyncAfterRecoveryRequest, this, std::placeholders::_1));
+  communicator->RegisterMsgCallBack("queryNodeScaleState",
+                                    std::bind(&Server::HandleQueryNodeScaleStateRequest, this, std::placeholders::_1));
 }
 
 void Server::InitExecutor() {
@@ -699,6 +701,22 @@ void Server::HandleSyncAfterRecoveryRequest(const std::shared_ptr<ps::core::Mess
       return;
     }
   }
+}
+
+void Server::HandleQueryNodeScaleStateRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+
+  nlohmann::basic_json<std::map, std::vector, std::string> response;
+  response["node_scale_state"] = server_node_->node_scale_state_str();
+
+  auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
+  if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Response query node scale state success, response data is " << response.dump().c_str();
 }
 }  // namespace server
 }  // namespace fl
