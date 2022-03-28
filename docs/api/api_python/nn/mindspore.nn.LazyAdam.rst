@@ -23,7 +23,7 @@ mindspore.nn.LazyAdam
     .. note::
        .. include:: mindspore.nn.optim_note_sparse.rst
 
-       需要注意的是，梯度稀疏时该优化器只更新网络参数的当前的索引位置，稀疏行为不等同于Adam算法。
+       需要注意的是，梯度稀疏时该优化器只更新网络参数的当前的索引位置，稀疏行为不等同于Adam算法。如果想执行稀疏策略，那么需要把target设置为CPU。
 
        .. include:: mindspore.nn.optim_note_weight_decay.rst
 

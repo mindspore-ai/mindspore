@@ -3,13 +3,13 @@ mindspore.nn.ConfusionMatrixMetric
 
 .. py:class:: mindspore.nn.ConfusionMatrixMetric(skip_channel=True, metric_name='sensitivity', calculation_method=False, decrease='mean')
 
-    度量分类模型的性能矩阵是输出为二进制或多类的模型。
+    计算与混淆矩阵相关的度量。
 
-    从满量程Tensor计算混淆矩阵的相关性度量，并收集批次、类通道和迭代的平均值。
-    此函数支持计算以下描述的所有度量：参数metric_name中的度量名称。
+    该计算基于全尺度张量，并收集批处理平均值，类通道数和迭代数。
+    此函数支持计算参数metric_name中描述中列出的所有度量名称。
     
     如果要使用混淆矩阵计算，如"PPV"、"TPR"、"TNR"，请使用此类。
-    如果您只想计算混淆矩阵，请使用'mindspore.nn.ConfusionMatrix'。
+    如果只想计算混淆矩阵，请使用'mindspore.nn.ConfusionMatrix'。
 
     **参数：** 
 
@@ -17,7 +17,7 @@ mindspore.nn.ConfusionMatrixMetric
     - **metric_name** (str) - 建议采用如下指标。当然，也可以为这些指标设置通用别名。
       取值范围：["sensitivity", "specificity", "precision", "negative predictive value", "miss rate", "fall out", "false discovery rate", "false omission rate", "prevalence threshold", "threat score", "accuracy", "balanced accuracy", "f1 score", "matthews correlation coefficient", "fowlkes mallows index", "informedness", "markedness"]。
       默认值："sensitivity"。
-    - **calculation_method** (bool) - 如果为True，则计算每个样品的度量值。如果为False，则累积所有样本的混淆矩阵。
+    - **calculation_method** (bool) - 如果为True，则计算每个样本的度量值。如果为False，则累积所有样本的混淆矩阵。
       对于分类任务， `calculation_method` 应为False。默认值：False。
     - **decrease** (str) - 定义减少一批数据计算结果的模式。仅当 `calculation_method` 为True时，才生效。
       取值范围：["none", "mean", "sum", "mean_batch", "sum_batch", "mean_channel", "sum_channel"]。默认值："mean"。

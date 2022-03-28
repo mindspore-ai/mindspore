@@ -421,7 +421,15 @@ class Tensor(Tensor_):
         return Tensor(Tensor_.from_numpy(array))
 
     def assign_value(self, value):
-        """Assign another tensor value to this tensor."""
+        """
+        Assign another tensor value to this tensor.
+
+        Args:
+            value (Tensor): Tensor for assignment.
+
+        Returns:
+            Tensor, Tensor that's been assigned.
+        """
         self.assign_value_cpp(value)
         return self
 
@@ -1032,7 +1040,7 @@ class Tensor(Tensor_):
         Return a copy of the tensor, cast to a specified type.
 
         Args:
-            dtype (Union[:class:`mindspore.dtype`, :class:`numpy.dtype`, str]): Designated tensor dtype, can be in
+            dtype (Union[:class:`mindspore.dtype`, numpy.dtype, str]): Designated tensor dtype, can be in
                 format of :class:`mindspore.dtype.float32` or :class:`numpy.float32` or `float32`.
             copy (bool, optional): By default, astype always returns a newly allocated
                 tensor. If this is set to false, the input tensor is returned instead
