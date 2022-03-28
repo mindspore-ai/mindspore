@@ -10,7 +10,7 @@ mindspore.dataset.DIV2KDataset
     **参数：**
 
     - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-    - **usage** (str, 可选) - 指定数据集的子集。可取值为'train'、'valid'或'all'。默认值：'train'，全部样本图片。
+    - **usage** (str, 可选) - 指定数据集的子集。可取值为'train'、'valid'或'all'。默认值：'train'。
     - **downgrade** (str, 可选) - 指定数据集的下采样的模式，可取值为'bicubic'、'unknown'、'mild'、'difficult'或'wild'。默认值：'bicubic'。
     - **scale** (str, 可选) - 指定数据集的缩放尺度。当参数 `downgrade` 取值为'bicubic'时，此参数可以取值为2、3、4、8。
       当参数 `downgrade` 取值为'unknown'时，此参数可以取值为2、3、4。当参数 `downgrade` 取值为'mild'、'difficult'、'wild'时，此参数仅可以取值为4。默认值：2。

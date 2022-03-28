@@ -669,8 +669,8 @@ Status ShardHeader::Initialize(const std::shared_ptr<ShardHeader> *header_ptr, c
                                uint64_t &schema_id) {
   RETURN_UNEXPECTED_IF_NULL(header_ptr);
   auto schema_ptr = Schema::Build("mindrecord", schema);
-  CHECK_FAIL_RETURN_UNEXPECTED(schema_ptr != nullptr,
-                               "[Internal ERROR] Failed to build schema: " + schema.dump() + ".");
+  CHECK_FAIL_RETURN_UNEXPECTED(schema_ptr != nullptr, "[Internal ERROR] Failed to build schema: " + schema.dump() +
+                                                        "." + "Check the [ERROR] logs before for more details.");
   schema_id = (*header_ptr)->AddSchema(schema_ptr);
   // create index
   std::vector<std::pair<uint64_t, std::string>> id_index_fields;
