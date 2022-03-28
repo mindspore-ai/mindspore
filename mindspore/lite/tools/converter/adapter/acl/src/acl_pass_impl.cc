@@ -155,10 +155,10 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
-#ifdef ENABLE_ONLINE_MODEL_INFER
-  MS_LOG(DEBUG) << "Online model infer no need to change to nhwc format.";
-  return lite::RET_OK;
-#endif
+  if (!user_options_cfg_.offline) {
+    MS_LOG(DEBUG) << "Online model infer no need to change to nhwc format.";
+    return lite::RET_OK;
+  }
   if (fmk_type_ == converter::kFmkTypeTf) {
     MS_LOG(DEBUG) << "Tf no need to change to nhwc format.";
     return lite::RET_OK;
