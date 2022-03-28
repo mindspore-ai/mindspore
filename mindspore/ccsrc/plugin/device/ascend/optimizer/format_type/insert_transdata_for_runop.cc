@@ -67,7 +67,7 @@ bool RunOpInsertTransData::InsertTransdataForOutput(const FuncGraphPtr &graph) {
         has_changed = true;
       }
     }
-  } else if (!common::AnfAlgo::IsTupleOutput(cnode) && NeedInsertTransDataForOutput(cnode, 0, false)) {
+  } else if (common::AnfAlgo::GetOutputTensorNum(cnode) == 1 && NeedInsertTransDataForOutput(cnode, 0, false)) {
     auto trans_node = AddTransOpNodeToGraph(graph, cnode, kernel_select_, 0, false);
     has_changed = true;
     graph->set_output(trans_node);
