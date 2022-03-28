@@ -91,13 +91,13 @@ int DoStridedSliceIntFp64Bool(const void *in_data, void *out_data, StridedSliceP
                   int32_t in_offset = dim0 * dim_offset[0] + dim1 * dim_offset[1] + dim2 * dim_offset[2] +
                                       dim3 * dim_offset[3] + dim4 * dim_offset[4] + dim5 * dim_offset[5] +
                                       dim6 * dim_offset[6] + dim7;
-                  if (param->data_type == kDataTypeInt) {
+                  if (param->data_type == kNumberTypeInt32) {
                     *((int32_t *)out_data + out_offset) = *((int32_t *)in_data + in_offset);
-                  } else if (param->data_type == kDataTypeInt8) {
+                  } else if (param->data_type == kNumberTypeInt8) {
                     *((int8_t *)out_data + out_offset) = *((int8_t *)in_data + in_offset);
-                  } else if (param->data_type == kDataTypeBool) {
+                  } else if (param->data_type == kNumberTypeBool) {
                     *((bool *)out_data + out_offset) = *((bool *)in_data + in_offset);
-                  } else if (param->data_type == kDataTypeFloat64) {
+                  } else if (param->data_type == kNumberTypeFloat64) {
                     *((double *)out_data + out_offset) = *((double *)in_data + in_offset);
                   } else {
                     return NNACL_ERR;
@@ -118,7 +118,7 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
   if (in_data == NULL || out_data == NULL || param == NULL) {
     return NNACL_NULL_PTR;
   }
-  if (param->data_type != kDataTypeFloat && param->data_type != kDataTypeFloat16) {
+  if (param->data_type != kNumberTypeFloat32 && param->data_type != kNumberTypeFloat16) {
     return DoStridedSliceIntFp64Bool(in_data, out_data, param);
   }
   if (param->num_axes_ > DIMENSION_8D) {
@@ -153,10 +153,10 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
                   int32_t in_offset = dim0 * dim_offset[0] + dim1 * dim_offset[1] + dim2 * dim_offset[2] +
                                       dim3 * dim_offset[3] + dim4 * dim_offset[4] + dim5 * dim_offset[5] +
                                       dim6 * dim_offset[6] + dim7;
-                  if (param->data_type == kDataTypeFloat) {
+                  if (param->data_type == kNumberTypeFloat32) {
                     *((float *)out_data + out_offset) = *((float *)in_data + in_offset);
 #ifdef ENABLE_ARM64
-                  } else if (param->data_type == kDataTypeFloat16) {
+                  } else if (param->data_type == kNumberTypeFloat16) {
                     *((float16_t *)out_data + out_offset) = *((float16_t *)in_data + in_offset);
 #endif
                   } else {

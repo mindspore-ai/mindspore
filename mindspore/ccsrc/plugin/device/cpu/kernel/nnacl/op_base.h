@@ -107,6 +107,10 @@
 #define kNHWC_H 1
 #define kNHWC_W 2
 #define kNHWC_C 3
+#define kNCHW_N 0
+#define kNCHW_C 1
+#define kNCHW_H 2
+#define kNCHW_W 3
 #define kNDHWC_N 0
 #define kNDHWC_D 1
 #define kNDHWC_H 2
@@ -497,15 +501,87 @@ enum PrimType {
   PrimType_InnerOpMax = PrimType_Inner_ShapeFusion + 1
 };
 
-typedef enum LiteDataType {
-  kDataTypeFloat,
-  kDataTypeFloat16,
-  kDataTypeInt,
-  kDataTypeInt8,
-  kDataTypeBool,
-  kDataTypeFloat64,
-  kDataTypeMax
-} LiteDataType;
+typedef enum FormatC {
+  Format_NCHW = 0,
+  Format_NHWC = 1,
+  Format_NHWC4 = 2,
+  Format_HWKC = 3,
+  Format_HWCK = 4,
+  Format_KCHW = 5,
+  Format_CKHW = 6,
+  Format_KHWC = 7,
+  Format_CHWK = 8,
+  Format_HW = 9,
+  Format_HW4 = 10,
+  Format_NC = 11,
+  Format_NC4 = 12,
+  Format_NC4HW4 = 13,
+  Format_NCDHW = 14,
+  Format_NWC = 15,
+  Format_NCW = 16,
+  Format_NC16HW16 = 17,
+  Format_MAX,
+  Format_MIN = Format_NCHW
+} FormatC;
+
+typedef enum TypeIdC {
+  kTypeUnknown = 0,
+  kMetaTypeBegin = kTypeUnknown,
+  kMetaTypeType,  // Type
+  kMetaTypeAnything,
+  kMetaTypeObject,
+  kMetaTypeTypeType,  // TypeType
+  kMetaTypeProblem,
+  kMetaTypeExternal,
+  kMetaTypeNone,
+  kMetaTypeNull,
+  kMetaTypeEllipsis,
+  kMetaTypeEnd,
+  //
+  // Object types
+  //
+  kObjectTypeBegin = kMetaTypeEnd,
+  kObjectTypeNumber,
+  kObjectTypeString,
+  kObjectTypeList,
+  kObjectTypeTuple,
+  kObjectTypeSlice,
+  kObjectTypeKeyword,
+  kObjectTypeTensorType,
+  kObjectTypeRowTensorType,
+  kObjectTypeCOOTensorType,
+  kObjectTypeUndeterminedType,
+  kObjectTypeClass,
+  kObjectTypeDictionary,
+  kObjectTypeFunction,
+  kObjectTypeJTagged,
+  kObjectTypeSymbolicKeyType,
+  kObjectTypeEnvType,
+  kObjectTypeRefKey,
+  kObjectTypeRef,
+  kObjectTypeEnd,
+  //
+  // Number Types
+  //
+  kNumberTypeBegin = kObjectTypeEnd,
+  kNumberTypeBool,
+  kNumberTypeInt,
+  kNumberTypeInt8,
+  kNumberTypeInt16,
+  kNumberTypeInt32,
+  kNumberTypeInt64,
+  kNumberTypeUInt,
+  kNumberTypeUInt8,
+  kNumberTypeUInt16,
+  kNumberTypeUInt32,
+  kNumberTypeUInt64,
+  kNumberTypeFloat,
+  kNumberTypeFloat16,
+  kNumberTypeFloat32,
+  kNumberTypeFloat64,
+  kNumberTypeComplex64,
+  kNumberTypeEnd
+} TypeIdC;
 
 typedef enum DataOrder {
   RowMajor,

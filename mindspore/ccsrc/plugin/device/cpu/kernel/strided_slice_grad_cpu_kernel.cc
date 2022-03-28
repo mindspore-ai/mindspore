@@ -34,7 +34,7 @@ void StridedSliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   switch (dtype_) {
     case kNumberTypeFloat32:
-      param_->data_type = kDataTypeFloat;
+      param_->data_type = ::kNumberTypeFloat32;
       break;
     default:
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input should be float32, but got " << dtype_;

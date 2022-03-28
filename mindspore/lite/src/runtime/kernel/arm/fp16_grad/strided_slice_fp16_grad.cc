@@ -45,7 +45,7 @@ int StridedSliceGradCPUKernelFp16::Prepare() {
     MS_LOG(ERROR) << "Not supported data type: " << input->data_type();
     return RET_ERROR;
   }
-  param_->data_type = kDataTypeFloat16;
+  param_->data_type = ::kNumberTypeFloat16;
   FillEmptyDims();
   FillOutputDim();
   return ReSize();

@@ -19,6 +19,7 @@
 #include "src/lite_session.h"
 #include "src/sub_graph_kernel.h"
 #include "ir/dtype/type_id.h"
+
 #include "include/version.h"
 #include "include/model.h"
 #include "include/api/model.h"
@@ -30,7 +31,6 @@ using mindspore::kernel::KernelKey;
 using mindspore::lite::InnerContext;
 using mindspore::lite::LiteSession;
 using mindspore::lite::Tensor;
-using mindspore::TypeId::kNumberTypeFloat32;
 
 class MultipleDeviceTest : public mindspore::CommonTest {
  public:
