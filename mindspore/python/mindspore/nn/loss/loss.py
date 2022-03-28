@@ -330,7 +330,7 @@ class RMSELoss(LossBase):
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, weighted loss float tensor and its shape is zero.
+        Tensor, weighted loss float tensor and its shape is ().
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -509,6 +509,8 @@ class SoftMarginLoss(LossBase):
 
     .. math::
         \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
+
+    :math:`x.nelement()` represents the number of element of `x` .
 
     Args:
         reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".

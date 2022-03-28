@@ -706,7 +706,7 @@ class Pad(Cell):
 
     Raises:
         TypeError: If `paddings` is not a tuple.
-        ValueError: If length of `paddings` is more than 4 or its shape is not (n, 2).
+        ValueError: If length of `paddings` is more than 4 or its shape is not (N, 2).
         ValueError: If `mode` is not one of 'CONSTANT', 'REFLECT', 'SYMMETRIC'.
 
     Supported Platforms:

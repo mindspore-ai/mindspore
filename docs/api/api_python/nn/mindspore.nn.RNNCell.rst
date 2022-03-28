@@ -8,7 +8,7 @@ mindspore.nn.RNNCell
     .. math::
         h_t = \tanh(W_{ih} x_t + b_{ih} + W_{hh} h_{(t-1)} + b_{hh})
 
-    其中 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t` 是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是在 `t-1` 时刻的隐藏状态，或在 `0` 时刻的初始隐藏状态。
+    其中 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t` 是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是在 :math:`t-1` 时刻的隐藏状态，或初始隐藏状态。
 
     如果 `nonlinearity` 是'relu'，则使用'relu'而不是'tanh'。
 

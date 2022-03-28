@@ -612,7 +612,7 @@ class RNN(_RNNBase):
           use this input when **x** has padding elements.
 
     Outputs:
-        Tuple, a tuple contains (`output`, `h_n`).
+        Tuple, a tuple contains (`output`, `hx_n`).
 
         - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`) or
           (batch_size, seq_len, num_directions * `hidden_size`).
