@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_COMMON_H_
 
 #include <string>
+#include <chrono>
 
 namespace mindspore {
 namespace distributed {
@@ -40,6 +41,9 @@ constexpr char kEnvNodeId[] = "MS_NODE_ID";
 
 // For port number conversion.
 static const int kDecimal = 10;
+
+// The timeout for initializing the cluster topology.
+static const std::chrono::milliseconds kTopoInitTimeout = std::chrono::milliseconds(1000 * 60 * 10);
 
 // All kinds of messages sent between compute graph nodes and meta server node.
 enum class MessageName { kRegistration, kHeartbeat };

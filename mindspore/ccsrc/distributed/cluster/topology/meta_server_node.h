@@ -21,6 +21,9 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <thread>
+#include <chrono>
+#include <shared_mutex>
 #include "distributed/cluster/topology/common.h"
 #include "distributed/rpc/tcp/tcp_server.h"
 #include "distributed/cluster/topology/node_base.h"
@@ -39,12 +42,31 @@ struct ComputeGraphNodeState {
   time_t last_update;
 };
 
+// Indicates the state of the cluster physical topology.
+enum class TopoState {
+  // All the nodes of this cluster are in the process of starting up.
+  kInitializing = 0,
+
+  // All the nodes of this cluster has been started and registered to the meta server node successfully.
+  kInitialized = 1,
+
+  // The topo of this cluster failed to construct at specified time.
+  kFailed = 2
+};
+
 // The MetaServerNode is a separate process representing the meta server node which stores all the metadata and status
 // of computation graph nodes.
 class MetaServerNode : public NodeBase {
  public:
-  explicit MetaServerNode(const std::string &node_id) : NodeBase(node_id) {}
+  explicit MetaServerNode(const std::string &node_id, const size_t &node_num)
+      : NodeBase(node_id), total_node_num_(node_num), topo_state_(TopoState::kInitializing), enable_monitor_(true) {}
   ~MetaServerNode() override = default;
+
+  // Get the current topology state.
+  TopoState TopologyState();
+
+  // Get the number of alive compute graph node.
+  size_t GetAliveNodeNum();
 
   bool Initialize() override;
   bool Finalize() override;
@@ -62,6 +84,9 @@ class MetaServerNode : public NodeBase {
   // Process the received heartbeat message sent from compute graph nodes.
   void ProcessHeartbeat(const std::shared_ptr<MessageBase> &message);
 
+  // Maintain the state which is type of `TopoState` of this cluster topology.
+  void UpdateTopoState();
+
   // The meta server address used to manage the tcp server.
   MetaServerAddress meta_server_addr_;
 
@@ -73,6 +98,23 @@ class MetaServerNode : public NodeBase {
 
   // Stores the registered compute graph nodes.
   std::map<std::string, std::shared_ptr<ComputeGraphNodeState>> nodes_;
+
+  mutable std::shared_mutex nodes_mutex_;
+
+  // The total legal number of compute graph nodes.
+  size_t total_node_num_;
+
+  // The state of the topology consisting of compute graph nodes.
+  TopoState topo_state_;
+
+  // The monitor thread for update the topo state.
+  std::thread topo_monitor_;
+
+  // The switch for the topo monitor thread.
+  std::atomic<bool> enable_monitor_;
+
+  // The start time of this meta server node.
+  std::chrono::high_resolution_clock::time_point start_time_;
 };
 }  // namespace topology
 }  // namespace cluster
