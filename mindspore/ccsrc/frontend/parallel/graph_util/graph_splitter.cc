@@ -37,7 +37,7 @@ bool OperatorLabel::operator==(const OperatorLabel &label) const { return to_str
 bool OperatorLabel::operator!=(const OperatorLabel &label) const { return !(*this == label); }
 
 bool OperatorLabel::LooseEqual(const OperatorLabel &label) const {
-  auto mode = distributed::DistributedExecutionMode::kPSMode;
+  auto mode = distributed::DistExecutionMode::kPSMode;
   if (kLabelMatchingFuncMap.count(mode) == 0) {
     MS_LOG(ERROR) << "The mode " << mode << " is invalid.";
     return false;
@@ -185,8 +185,276 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
   return recv_node;
 }
 
+void ParameterServerMode::PreBuildDistributedGraph() {
+  MS_EXCEPTION_IF_NULL(node_labels_);
+  ProcessForSplittedOptimizer();
+}
+
+void ParameterServerMode::PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {
+  MS_EXCEPTION_IF_NULL(node_labels_);
+  // Judge the node role number validation.
+  uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
+  if (worker_num == 0) {
+    MS_LOG(EXCEPTION) << "In PS mode, worker number should be greater than 0.";
+  }
+  uint32_t server_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfServer);
+  if (server_num == 0) {
+    MS_LOG(EXCEPTION) << "In PS mode, server number should be greater than 0.";
+  }
+  // Only multiple worker scenario needs this optimizer.
+  if (worker_num < kMinGradAccumWorkerNum) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  auto return_node = func_graph_->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  std::vector<AnfNodePtr> nodes = FuncGraph::TopoSort(return_node);
+  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList(nodes);
+
+  // Duplicate out degrees for ps optimizers because defaultly there's only one edge to the rank 0 worker.
+  for (const auto &ps_optimizer : ps_optimizer_node_list) {
+    for (const auto &edge_info : comm_edges) {
+      if (edge_info.first.src_node == ps_optimizer) {
+        // The optimizer's output should always connect to Send node which is the input of a MakeTuple node.
+        // We need to replace the MakeTuple node with a new one.
+        const auto &origin_send_node = std::get<0>(edge_info.second);
+        std::vector<AnfNodePtr> new_make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), origin_send_node};
+        AnfNodePtr dst_node = edge_info.first.dst_node;
+        for (uint32_t i = 1; i < worker_num; i++) {
+          OperatorLabel worker_label = {i, distributed::kEnvRoleOfWorker};
+          InterProcessOpEdge edge = {ps_optimizer, node_labels_->at(ps_optimizer), dst_node, worker_label};
+          auto duplicated_send_node = CreateSendNode(func_graph_, edge);
+          node_labels_->at(duplicated_send_node) = edge.src_label;
+          new_make_tuple_inputs.emplace_back(duplicated_send_node);
+        }
+        auto new_make_tuple_node = func_graph_->NewCNode(new_make_tuple_inputs);
+        new_make_tuple_node->set_abstract(new_make_tuple_inputs.back()->abstract());
+        (void)func_graph_->manager()->Replace(origin_send_node, new_make_tuple_node);
+      }
+    }
+  }
+}
+
+void ParameterServerMode::ProcessForSplittedOptimizer() {
+  // Judge the node role number validation.
+  uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
+  if (worker_num == 0) {
+    MS_LOG(EXCEPTION) << "In PS mode, worker number should be greater than 0.";
+  }
+  uint32_t server_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfServer);
+  if (server_num == 0) {
+    MS_LOG(EXCEPTION) << "In PS mode, server number should be greater than 0.";
+  }
+  // Only multiple worker scenario needs this optimizer.
+  if (worker_num < kMinGradAccumWorkerNum) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  auto return_node = func_graph_->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  std::vector<AnfNodePtr> nodes = FuncGraph::TopoSort(return_node);
+  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList(nodes);
+  for (const auto &ps_optimizer : ps_optimizer_node_list) {
+    MS_EXCEPTION_IF_NULL(ps_optimizer);
+
+    // Load attributes for this optimizer.
+    size_t gradient_index = common::AnfAlgo::HasNodeAttr(kAttrGradientInputIndex, ps_optimizer)
+                              ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrGradientInputIndex)
+                              : UINT64_MAX;
+    size_t indices_index = common::AnfAlgo::HasNodeAttr(kAttrIndicesInputIndex, ps_optimizer)
+                             ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrIndicesInputIndex)
+                             : UINT64_MAX;
+    std::string gradient_type = (common::AnfAlgo::HasNodeAttr(kAttrGradientType, ps_optimizer))
+                                  ? common::AnfAlgo::GetNodeAttr<std::string>(ps_optimizer, kAttrGradientType)
+                                  : kDenseGradient;
+    if (kGradTypeToAccumOpName.count(gradient_type) == 0) {
+      MS_LOG(EXCEPTION) << "The gradient type " << gradient_type << " is invalid.";
+    }
+
+    for (size_t i = 0; i < common::AnfAlgo::GetInputNum(ps_optimizer); i++) {
+      auto input = common::AnfAlgo::GetInputNode(ps_optimizer, i);
+      // If the input is not a cnode, no inter-process edge is added so no node with multiple inputs should be created.
+      if (!input->isa<CNode>()) {
+        continue;
+      }
+
+      if (i == gradient_index) {
+        // Create the node to replace origin gradient which could be a RealDiv node.
+        std::pair<CNodePtr, CNodePtr> grad_accum_nodes = CreateNodesForGradAccumulation(
+          input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, gradient_type, worker_num);
+
+        const auto &accum_node = grad_accum_nodes.first;
+        const auto &real_div_node = grad_accum_nodes.second;
+        func_graph_->manager()->SetEdge(ps_optimizer, i + 1, real_div_node);
+        node_labels_->insert(std::make_pair(accum_node, node_labels_->at(ps_optimizer)));
+        node_labels_->insert(std::make_pair(real_div_node, node_labels_->at(ps_optimizer)));
+      } else if (i == indices_index) {
+        // Create the node to replace origin indices.
+        AnfNodePtr new_indices_input = CreateNodeWithInterProcessEdgeOnPServer(
+          kConcatOpName, input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, worker_num);
+
+        func_graph_->manager()->SetEdge(ps_optimizer, i + 1, new_indices_input);
+        node_labels_->insert(std::make_pair(new_indices_input, node_labels_->at(ps_optimizer)));
+      } else {
+        std::pair<CNodePtr, CNodePtr> make_tuple_get_item_nodes =
+          CreateNodesForMakeTuple(input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, worker_num);
+
+        auto &make_tuple_node = make_tuple_get_item_nodes.first;
+        auto &tuple_get_item_node = make_tuple_get_item_nodes.second;
+        func_graph_->manager()->SetEdge(ps_optimizer, i + 1, tuple_get_item_node);
+        node_labels_->insert(std::make_pair(make_tuple_node, node_labels_->at(ps_optimizer)));
+        node_labels_->insert(std::make_pair(tuple_get_item_node, node_labels_->at(ps_optimizer)));
+      }
+    }
+  }
+}
+
+std::vector<CNodePtr> ParameterServerMode::FilterServerAwareOptimizerList(const std::vector<AnfNodePtr> &nodes) {
+  std::vector<CNodePtr> ps_optim_list = {};
+  for (const auto &node : nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    const auto &cnode = node->cast<CNodePtr>();
+    if (common::AnfAlgo::HasNodeAttr(kAttrUpdateParameter, cnode)) {
+      ps_optim_list.emplace_back(cnode);
+    }
+  }
+  return ps_optim_list;
+}
+
+std::pair<CNodePtr, CNodePtr> ParameterServerMode::CreateNodesForGradAccumulation(const AnfNodePtr &gradient_input,
+                                                                                  size_t gradient_input_index,
+                                                                                  const std::string &gradient_type,
+                                                                                  size_t total_gradient_number) {
+  MS_EXCEPTION_IF_NULL(gradient_input);
+
+  if (kGradTypeToAccumOpName.count(gradient_type) == 0) {
+    MS_LOG(EXCEPTION) << "The gradient type " << gradient_type << " is invalid.";
+  }
+  const std::string &accum_node_name = kGradTypeToAccumOpName.at(gradient_type);
+  CNodePtr grad_accum_node = CreateNodeWithInterProcessEdgeOnPServer(accum_node_name, gradient_input,
+                                                                     gradient_input_index, total_gradient_number);
+  MS_EXCEPTION_IF_NULL(grad_accum_node);
+
+  CNodePtr grad_mean_node = CreateGradMeanNode(grad_accum_node, total_gradient_number);
+  MS_EXCEPTION_IF_NULL(grad_mean_node);
+  return std::make_pair(grad_accum_node, grad_mean_node);
+}
+
+CNodePtr ParameterServerMode::CreateGradMeanNode(const AnfNodePtr &gradient, size_t divisor) {
+  MS_EXCEPTION_IF_NULL(gradient);
+
+  // Step 1: Create the value node of divisor. The divisor's value is worker number.
+  auto addn_abstract = gradient->abstract()->cast<abstract::AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(addn_abstract);
+  // Use reciprocal of the divisor so Mul node should be created.
+  auto divisor_tensor =
+    std::make_shared<tensor::Tensor>(1 / static_cast<double>(divisor), addn_abstract->element()->BuildType());
+  MS_EXCEPTION_IF_NULL(divisor_tensor);
+  auto divisor_value_node = NewValueNode(divisor_tensor);
+  MS_EXCEPTION_IF_NULL(divisor_value_node);
+  divisor_value_node->set_abstract(divisor_tensor->ToAbstract());
+
+  // Step 2: Create Mul node.
+  std::vector<AnfNodePtr> real_div_inputs = {NewValueNode(std::make_shared<Primitive>(kMulOpName)), gradient,
+                                             divisor_value_node};
+  CNodePtr grad_mean_node = func_graph_->NewCNode(real_div_inputs);
+  MS_EXCEPTION_IF_NULL(grad_mean_node);
+  grad_mean_node->set_abstract(gradient->abstract());
+  return grad_mean_node;
+}
+
+std::pair<CNodePtr, CNodePtr> ParameterServerMode::CreateNodesForMakeTuple(const AnfNodePtr &input, size_t input_index,
+                                                                           size_t total_inputs_number) {
+  MS_EXCEPTION_IF_NULL(input);
+  CNodePtr make_tuple_node = CreateNodeWithInterProcessEdgeOnPServer(
+    prim::kMakeTuple, input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, total_inputs_number);
+  MS_EXCEPTION_IF_NULL(make_tuple_node);
+  abstract::AbstractTuplePtr tuple_abstract = make_tuple_node->abstract()->cast<abstract::AbstractTuplePtr>();
+
+  // For MakeTuple node on Parameter Server, we get the first input as its abstract because the other inputs are
+  // supposed to be the same as the first one.
+  size_t item_index = 0;
+  auto item_index_value_node = NewValueNode(MakeValue(UlongToLong(item_index)));
+  MS_EXCEPTION_IF_NULL(item_index_value_node);
+  std::vector<AnfNodePtr> tuple_get_item_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kTupleGetItem)),
+                                                   make_tuple_node, item_index_value_node};
+  CNodePtr tuple_get_item_node = func_graph_->NewCNode(tuple_get_item_inputs);
+  MS_EXCEPTION_IF_NULL(tuple_get_item_node);
+  tuple_get_item_node->set_abstract(tuple_abstract->elements()[0]);
+  return std::make_pair(make_tuple_node, tuple_get_item_node);
+}
+
+CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std::string &many_to_one_node_name,
+                                                                      const AnfNodePtr &real_input,
+                                                                      size_t index_of_real_input,
+                                                                      uint32_t total_inputs_number) {
+  if (index_of_real_input >= total_inputs_number) {
+    MS_LOG(EXCEPTION) << "The index of real input for " << many_to_one_node_name << " " << index_of_real_input
+                      << " is greater or equal to worker number " << total_inputs_number;
+  }
+
+  // Step 1: Create multiple inputs of new node including extra nodes.
+  std::vector<AnfNodePtr> new_node_inputs;
+  new_node_inputs.resize(total_inputs_number);
+  std::vector<AnfNodePtr> mock_node_inputs = {NewValueNode(
+    std::make_shared<Primitive>(IsPrimitiveCNode(real_input, prim::kPrimUpdateState) ? "UpdateState" : kVirtualNode))};
+  for (size_t i = 0; i < new_node_inputs.size(); i++) {
+    new_node_inputs[i] = func_graph_->NewCNode(mock_node_inputs);
+    MS_EXCEPTION_IF_NULL(new_node_inputs[i]);
+    new_node_inputs[i]->set_abstract(real_input->abstract());
+    new_node_inputs[i]->cast<CNodePtr>()->set_fullname_with_scope(real_input->fullname_with_scope());
+
+    // Set operator label for new node's inputs.
+    OperatorLabel input_label = {SizeToUint(i), distributed::kEnvRoleOfWorker};
+    node_labels_->insert(std::make_pair(new_node_inputs[i], input_label));
+  }
+  new_node_inputs[index_of_real_input] = real_input;
+
+  // Step 2: Create the new node.
+  auto new_node_prim = NewValueNode(std::make_shared<Primitive>(many_to_one_node_name));
+  new_node_inputs.insert(new_node_inputs.begin(), new_node_prim);
+
+  auto new_node = func_graph_->NewCNode(new_node_inputs);
+  MS_EXCEPTION_IF_NULL(new_node);
+
+  // Step 3: Set the new node's abstract and attrs.
+  if (many_to_one_node_name == kConcatOpName) {
+    auto origin_abs = real_input->abstract()->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(origin_abs);
+
+    auto new_abs = origin_abs->Clone()->cast<abstract::AbstractTensorPtr>();
+    ShapeVector new_shape = new_abs->shape()->shape();
+    new_shape[0] = new_shape[0] * total_inputs_number;
+    new_abs->shape()->set_shape(new_shape);
+    new_node->set_abstract(new_abs);
+
+    // Concat node must have attribute "axis" or kernel building will fail.
+    size_t axis_index = 0;
+    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(UlongToLong(axis_index)), new_node);
+  } else if (many_to_one_node_name == prim::kMakeTuple) {
+    AbstractBasePtrList abstract_list = {};
+    auto first_input = new_node_inputs.begin();
+    std::advance(first_input, 1);
+    (void)std::for_each(first_input, new_node_inputs.end(),
+                        [&](const auto &input) { abstract_list.emplace_back(input->abstract()); });
+    new_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+  } else {
+    new_node->set_abstract(real_input->abstract());
+  }
+  return new_node;
+}
+
 GraphSplitter::GraphSplitter(const FuncGraphPtr &func_graph, uint32_t rank_id, const std::string &role)
-    : func_graph_(func_graph), this_process_label_({rank_id, role}) {
+    : func_graph_(func_graph),
+      rank_id_(rank_id),
+      role_(role),
+      mode_(distributed::DistExecutionMode::kPSMode),
+      exec_mode_(nullptr),
+      this_process_label_({rank_id, role}) {
   default_label_ = {0, distributed::kEnvRoleOfWorker};
 }
 
@@ -205,18 +473,27 @@ void GraphSplitter::Run() {
     return;
   }
 
-  // Step 2: Generate the node segments with different labels.
+  // Step 2: Create exec_mode_ according to the current execution mode.
+  CreateExecutionMode();
+
+  // Step 3: Prebuild the distributed graph before it gets split.
+  exec_mode_->PreBuildDistributedGraph();
+
+  // Step 4: Generate the node segments with different labels.
   std::vector<SplitGraphSegment> segments = GenerateSplitSegments();
   // If the segment number is 0, there will be no distributed execution.
   if (segments.empty()) {
     return;
   }
 
-  // Step 3: Create inter-process operators for segments with different labels.
+  // Step 5: Create inter-process operators for segments with different labels.
   InterProcessOpEdgesInfo comm_edges = GenerateInterProcessOperators();
 
-  // Step 4: Split the graph and eliminate extra nodes.
+  // Step 6: Split the graph and eliminate extra nodes.
   SplitGraph(segments, comm_edges);
+
+  // Step 7: Postbuild the graph after splitting.
+  exec_mode_->PostBuildDistributedGraph(comm_edges);
 }
 
 void GraphSplitter::DyeGraph() {
@@ -241,6 +518,17 @@ void GraphSplitter::DyeGraph() {
       node_labels_[node] = this_process_label_;
     }
   });
+}
+
+void GraphSplitter::CreateExecutionMode() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  if (node_labels_.empty()) {
+    MS_LOG(EXCEPTION) << "Must dye the original graph before creating execution mode.";
+  }
+  if (mode_ == distributed::DistExecutionMode::kPSMode) {
+    exec_mode_ = std::make_unique<ParameterServerMode>(func_graph_, &node_labels_, rank_id_, role_);
+  }
+  MS_EXCEPTION_IF_NULL(exec_mode_);
 }
 
 std::vector<SplitGraphSegment> GraphSplitter::GenerateSplitSegments() {
@@ -510,269 +798,6 @@ bool GraphSplitter::IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodeP
                       << " or 'node2': " << node2->fullname_with_scope() << " is not marked with split label.";
   }
   return node_labels_[node1] == node_labels_[node2];
-}
-
-void ParameterServerMode::PreBuildDistributedGraph() {
-  MS_EXCEPTION_IF_NULL(node_labels_);
-  ProcessForSplittedOptimizer();
-}
-
-void ParameterServerMode::PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {
-  MS_EXCEPTION_IF_NULL(node_labels_);
-  // Judge the node role number validation.
-  uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
-  if (worker_num == 0) {
-    MS_LOG(EXCEPTION) << "In PS mode, worker number should be greater than 0.";
-  }
-  uint32_t server_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfServer);
-  if (server_num == 0) {
-    MS_LOG(EXCEPTION) << "In PS mode, server number should be greater than 0.";
-  }
-  // Only multiple worker scenario needs this optimizer.
-  if (worker_num < kMinGradAccumWorkerNum) {
-    return;
-  }
-
-  MS_EXCEPTION_IF_NULL(func_graph_);
-  auto return_node = func_graph_->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  std::vector<AnfNodePtr> nodes = FuncGraph::TopoSort(return_node);
-  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList(nodes);
-
-  // Duplicate out degrees for ps optimizers because defaultly there's only one edge to the rank 0 worker.
-  for (const auto &ps_optimizer : ps_optimizer_node_list) {
-    for (const auto &edge_info : comm_edges) {
-      if (edge_info.first.src_node == ps_optimizer) {
-        // The optimizer's output should always connect to Send node which is the input of a MakeTuple node.
-        // We need to replace the MakeTuple node with a new one.
-        const auto &origin_send_node = std::get<0>(edge_info.second);
-        std::vector<AnfNodePtr> new_make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), origin_send_node};
-        AnfNodePtr dst_node = edge_info.first.dst_node;
-        for (uint32_t i = 1; i < worker_num; i++) {
-          OperatorLabel worker_label = {i, distributed::kEnvRoleOfWorker};
-          InterProcessOpEdge edge = {ps_optimizer, node_labels_->at(ps_optimizer), dst_node, worker_label};
-          auto duplicated_send_node = CreateSendNode(func_graph_, edge);
-          node_labels_->at(duplicated_send_node) = edge.src_label;
-          new_make_tuple_inputs.emplace_back(duplicated_send_node);
-        }
-        auto new_make_tuple_node = func_graph_->NewCNode(new_make_tuple_inputs);
-        new_make_tuple_node->set_abstract(new_make_tuple_inputs.back()->abstract());
-        (void)func_graph_->manager()->Replace(origin_send_node, new_make_tuple_node);
-      }
-    }
-  }
-}
-
-void ParameterServerMode::ProcessForSplittedOptimizer() {
-  // Judge the node role number validation.
-  uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
-  if (worker_num == 0) {
-    MS_LOG(EXCEPTION) << "In PS mode, worker number should be greater than 0.";
-  }
-  uint32_t server_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfServer);
-  if (server_num == 0) {
-    MS_LOG(EXCEPTION) << "In PS mode, server number should be greater than 0.";
-  }
-  // Only multiple worker scenario needs this optimizer.
-  if (worker_num < kMinGradAccumWorkerNum) {
-    return;
-  }
-
-  MS_EXCEPTION_IF_NULL(func_graph_);
-  auto return_node = func_graph_->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  std::vector<AnfNodePtr> nodes = FuncGraph::TopoSort(return_node);
-  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList(nodes);
-  for (const auto &ps_optimizer : ps_optimizer_node_list) {
-    MS_EXCEPTION_IF_NULL(ps_optimizer);
-
-    // Load attributes for this optimizer.
-    size_t gradient_index = common::AnfAlgo::HasNodeAttr(kAttrGradientInputIndex, ps_optimizer)
-                              ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrGradientInputIndex)
-                              : UINT64_MAX;
-    size_t indices_index = common::AnfAlgo::HasNodeAttr(kAttrIndicesInputIndex, ps_optimizer)
-                             ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrIndicesInputIndex)
-                             : UINT64_MAX;
-    std::string gradient_type = (common::AnfAlgo::HasNodeAttr(kAttrGradientType, ps_optimizer))
-                                  ? common::AnfAlgo::GetNodeAttr<std::string>(ps_optimizer, kAttrGradientType)
-                                  : kDenseGradient;
-    if (kGradTypeToAccumOpName.count(gradient_type) == 0) {
-      MS_LOG(EXCEPTION) << "The gradient type " << gradient_type << " is invalid.";
-    }
-
-    for (size_t i = 0; i < common::AnfAlgo::GetInputNum(ps_optimizer); i++) {
-      auto input = common::AnfAlgo::GetInputNode(ps_optimizer, i);
-      // If the input is not a cnode, no inter-process edge is added so no node with multiple inputs should be created.
-      if (!input->isa<CNode>()) {
-        continue;
-      }
-
-      if (i == gradient_index) {
-        // Create the node to replace origin gradient which could be a RealDiv node.
-        std::pair<CNodePtr, CNodePtr> grad_accum_nodes = CreateNodesForGradAccumulation(
-          input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, gradient_type, worker_num);
-
-        const auto &accum_node = grad_accum_nodes.first;
-        const auto &real_div_node = grad_accum_nodes.second;
-        func_graph_->manager()->SetEdge(ps_optimizer, i + 1, real_div_node);
-        node_labels_->insert(std::make_pair(accum_node, node_labels_->at(ps_optimizer)));
-        node_labels_->insert(std::make_pair(real_div_node, node_labels_->at(ps_optimizer)));
-      } else if (i == indices_index) {
-        // Create the node to replace origin indices.
-        AnfNodePtr new_indices_input = CreateNodeWithInterProcessEdgeOnPServer(
-          kConcatOpName, input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, worker_num);
-
-        func_graph_->manager()->SetEdge(ps_optimizer, i + 1, new_indices_input);
-        node_labels_->insert(std::make_pair(new_indices_input, node_labels_->at(ps_optimizer)));
-      } else {
-        std::pair<CNodePtr, CNodePtr> make_tuple_get_item_nodes =
-          CreateNodesForMakeTuple(input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, worker_num);
-
-        auto &make_tuple_node = make_tuple_get_item_nodes.first;
-        auto &tuple_get_item_node = make_tuple_get_item_nodes.second;
-        func_graph_->manager()->SetEdge(ps_optimizer, i + 1, tuple_get_item_node);
-        node_labels_->insert(std::make_pair(make_tuple_node, node_labels_->at(ps_optimizer)));
-        node_labels_->insert(std::make_pair(tuple_get_item_node, node_labels_->at(ps_optimizer)));
-      }
-    }
-  }
-}
-
-std::vector<CNodePtr> ParameterServerMode::FilterServerAwareOptimizerList(const std::vector<AnfNodePtr> &nodes) {
-  std::vector<CNodePtr> ps_optim_list = {};
-  for (const auto &node : nodes) {
-    if (!node->isa<CNode>()) {
-      continue;
-    }
-    const auto &cnode = node->cast<CNodePtr>();
-    if (common::AnfAlgo::HasNodeAttr(kAttrUpdateParameter, cnode)) {
-      ps_optim_list.emplace_back(cnode);
-    }
-  }
-  return ps_optim_list;
-}
-
-std::pair<CNodePtr, CNodePtr> ParameterServerMode::CreateNodesForGradAccumulation(const AnfNodePtr &gradient_input,
-                                                                                  size_t gradient_input_index,
-                                                                                  const std::string &gradient_type,
-                                                                                  size_t total_gradient_number) {
-  MS_EXCEPTION_IF_NULL(gradient_input);
-
-  if (kGradTypeToAccumOpName.count(gradient_type) == 0) {
-    MS_LOG(EXCEPTION) << "The gradient type " << gradient_type << " is invalid.";
-  }
-  const std::string &accum_node_name = kGradTypeToAccumOpName.at(gradient_type);
-  CNodePtr grad_accum_node = CreateNodeWithInterProcessEdgeOnPServer(accum_node_name, gradient_input,
-                                                                     gradient_input_index, total_gradient_number);
-  MS_EXCEPTION_IF_NULL(grad_accum_node);
-
-  CNodePtr grad_mean_node = CreateGradMeanNode(grad_accum_node, total_gradient_number);
-  MS_EXCEPTION_IF_NULL(grad_mean_node);
-  return std::make_pair(grad_accum_node, grad_mean_node);
-}
-
-CNodePtr ParameterServerMode::CreateGradMeanNode(const AnfNodePtr &gradient, size_t divisor) {
-  MS_EXCEPTION_IF_NULL(gradient);
-
-  // Step 1: Create the value node of divisor. The divisor's value is worker number.
-  auto addn_abstract = gradient->abstract()->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(addn_abstract);
-  // Use reciprocal of the divisor so Mul node should be created.
-  auto divisor_tensor =
-    std::make_shared<tensor::Tensor>(1 / static_cast<double>(divisor), addn_abstract->element()->BuildType());
-  MS_EXCEPTION_IF_NULL(divisor_tensor);
-  auto divisor_value_node = NewValueNode(divisor_tensor);
-  MS_EXCEPTION_IF_NULL(divisor_value_node);
-  divisor_value_node->set_abstract(divisor_tensor->ToAbstract());
-
-  // Step 2: Create Mul node.
-  std::vector<AnfNodePtr> real_div_inputs = {NewValueNode(std::make_shared<Primitive>(kMulOpName)), gradient,
-                                             divisor_value_node};
-  CNodePtr grad_mean_node = func_graph_->NewCNode(real_div_inputs);
-  MS_EXCEPTION_IF_NULL(grad_mean_node);
-  grad_mean_node->set_abstract(gradient->abstract());
-  return grad_mean_node;
-}
-
-std::pair<CNodePtr, CNodePtr> ParameterServerMode::CreateNodesForMakeTuple(const AnfNodePtr &input, size_t input_index,
-                                                                           size_t total_inputs_number) {
-  MS_EXCEPTION_IF_NULL(input);
-  CNodePtr make_tuple_node = CreateNodeWithInterProcessEdgeOnPServer(
-    prim::kMakeTuple, input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, total_inputs_number);
-  MS_EXCEPTION_IF_NULL(make_tuple_node);
-  abstract::AbstractTuplePtr tuple_abstract = make_tuple_node->abstract()->cast<abstract::AbstractTuplePtr>();
-
-  // For MakeTuple node on Parameter Server, we get the first input as its abstract because the other inputs are
-  // supposed to be the same as the first one.
-  size_t item_index = 0;
-  auto item_index_value_node = NewValueNode(MakeValue(UlongToLong(item_index)));
-  MS_EXCEPTION_IF_NULL(item_index_value_node);
-  std::vector<AnfNodePtr> tuple_get_item_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kTupleGetItem)),
-                                                   make_tuple_node, item_index_value_node};
-  CNodePtr tuple_get_item_node = func_graph_->NewCNode(tuple_get_item_inputs);
-  MS_EXCEPTION_IF_NULL(tuple_get_item_node);
-  tuple_get_item_node->set_abstract(tuple_abstract->elements()[0]);
-  return std::make_pair(make_tuple_node, tuple_get_item_node);
-}
-
-CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std::string &many_to_one_node_name,
-                                                                      const AnfNodePtr &real_input,
-                                                                      size_t index_of_real_input,
-                                                                      uint32_t total_inputs_number) {
-  if (index_of_real_input >= total_inputs_number) {
-    MS_LOG(EXCEPTION) << "The index of real input for " << many_to_one_node_name << " " << index_of_real_input
-                      << " is greater or equal to worker number " << total_inputs_number;
-  }
-
-  // Step 1: Create multiple inputs of new node including extra nodes.
-  std::vector<AnfNodePtr> new_node_inputs;
-  new_node_inputs.resize(total_inputs_number);
-  std::vector<AnfNodePtr> mock_node_inputs = {NewValueNode(
-    std::make_shared<Primitive>(IsPrimitiveCNode(real_input, prim::kPrimUpdateState) ? "UpdateState" : kVirtualNode))};
-  for (size_t i = 0; i < new_node_inputs.size(); i++) {
-    new_node_inputs[i] = func_graph_->NewCNode(mock_node_inputs);
-    MS_EXCEPTION_IF_NULL(new_node_inputs[i]);
-    new_node_inputs[i]->set_abstract(real_input->abstract());
-    new_node_inputs[i]->cast<CNodePtr>()->set_fullname_with_scope(real_input->fullname_with_scope());
-
-    // Set operator label for new node's inputs.
-    OperatorLabel input_label = {SizeToUint(i), distributed::kEnvRoleOfWorker};
-    node_labels_->insert(std::make_pair(new_node_inputs[i], input_label));
-  }
-  new_node_inputs[index_of_real_input] = real_input;
-
-  // Step 2: Create the new node.
-  auto new_node_prim = NewValueNode(std::make_shared<Primitive>(many_to_one_node_name));
-  new_node_inputs.insert(new_node_inputs.begin(), new_node_prim);
-
-  auto new_node = func_graph_->NewCNode(new_node_inputs);
-  MS_EXCEPTION_IF_NULL(new_node);
-
-  // Step 3: Set the new node's abstract and attrs.
-  if (many_to_one_node_name == kConcatOpName) {
-    auto origin_abs = real_input->abstract()->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(origin_abs);
-
-    auto new_abs = origin_abs->Clone()->cast<abstract::AbstractTensorPtr>();
-    ShapeVector new_shape = new_abs->shape()->shape();
-    new_shape[0] = new_shape[0] * total_inputs_number;
-    new_abs->shape()->set_shape(new_shape);
-    new_node->set_abstract(new_abs);
-
-    // Concat node must have attribute "axis" or kernel building will fail.
-    size_t axis_index = 0;
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(UlongToLong(axis_index)), new_node);
-  } else if (many_to_one_node_name == prim::kMakeTuple) {
-    AbstractBasePtrList abstract_list = {};
-    auto first_input = new_node_inputs.begin();
-    std::advance(first_input, 1);
-    (void)std::for_each(first_input, new_node_inputs.end(),
-                        [&](const auto &input) { abstract_list.emplace_back(input->abstract()); });
-    new_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
-  } else {
-    new_node->set_abstract(real_input->abstract());
-  }
-  return new_node;
 }
 }  // namespace parallel
 }  // namespace mindspore
