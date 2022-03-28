@@ -49,7 +49,7 @@ mindspore.nn.probability.distribution.TransformedDistribution
 
         Bool, 概率映射函数为线性映射则返回True，否则返回False。
 
-   .. py:method:: cdf(value)
+    .. py:method:: cdf(value)
 
         在给定值下计算累积分布函数（Cumulatuve Distribution Function, CDF）。
 
