@@ -132,6 +132,7 @@ constexpr auto kLstsq = "Lstsq";
 constexpr auto kLowerBound = "LowerBound";
 constexpr auto kUpperBound = "UpperBound";
 constexpr auto kCummax = "Cummax";
+constexpr auto kTril = "Tril";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -372,6 +373,7 @@ GVAR_DEF(PrimitivePtr, kPrimLstsq, std::make_shared<Primitive>(kLstsq));
 GVAR_DEF(PrimitivePtr, kPrimLowerBound, std::make_shared<Primitive>(kLowerBound));
 GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBound));
 GVAR_DEF(PrimitivePtr, kPrimCummax, std::make_shared<Primitive>(kCummax));
+GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTril));
 
 // image
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));
