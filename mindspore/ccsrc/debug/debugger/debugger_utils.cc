@@ -79,21 +79,25 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     auto input_kernel = cnode->input(j + 1);
     std::string input_kernel_name = GetKernelNodeName(input_kernel);
     auto addr = kernel_inputs[j];
-    auto type = common::AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto device_type = AnfAlgo::GetOutputDeviceDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto host_type = common::AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
     // For example, this happens with the Depend op
-    if (type == kMetaTypeNone) {
+    if (host_type == kMetaTypeNone) {
       continue;
     }
 
-    auto format = kOpFormat_DEFAULT;
-    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type, ShapeVector());
+    auto host_format = kOpFormat_DEFAULT;
+    auto device_format =
+      E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto device_addr =
+      device_context->CreateDeviceAddress(addr->addr, addr->size, device_format, device_type, ShapeVector());
     string input_tensor_name = input_kernel_name + ':' + "0";
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, PARAMETER_OUTPUT_INDEX);
-    auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), format, int_shapes, type, 0, true,
-                                          root_graph_id, false);
+    auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), host_format, int_shapes, host_type,
+                                          0, true, root_graph_id, false);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
+                    << ", tensor_name:" << input_tensor_name << ", host_format:" << host_format << ".!";
     }
   }
 }
@@ -115,21 +119,24 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
 
   for (size_t j : real_outputs) {
     auto addr = kernel_outputs[j];
-    auto type = common::AnfAlgo::GetOutputInferDataType(cnode, j);
+    auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, j);
+    auto host_type = common::AnfAlgo::GetOutputInferDataType(cnode, j);
     // For example, this happens with the Depend op
-    if (type == kMetaTypeNone) {
+    if (host_type == kMetaTypeNone) {
       continue;
     }
 
-    auto format = kOpFormat_DEFAULT;
-    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type, ShapeVector());
+    auto host_format = kOpFormat_DEFAULT;
+    auto device_format = E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(cnode, j);
+    auto device_addr =
+      device_context->CreateDeviceAddress(addr->addr, addr->size, device_format, device_type, ShapeVector());
     string tensor_name = kernel_name + ':' + std::to_string(j);
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(cnode, j);
-    auto ret = device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), format, int_shapes, type, j, false,
-                                          root_graph_id, false);
+    auto ret = device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), host_format, int_shapes, host_type, j,
+                                          false, root_graph_id, false);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+                    << ", tensor_name:" << tensor_name << ", host_format:" << host_format << ".!";
     }
   }
 }

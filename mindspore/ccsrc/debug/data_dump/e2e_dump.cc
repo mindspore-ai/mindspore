@@ -273,7 +273,7 @@ void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_
 }
 
 std::shared_ptr<device::DeviceAddress> CreateAscendDeviceAddress(const KernelLaunchInfo *launch_info, size_t index,
-                                                                 TypeId type) {
+                                                                 const AnfNodePtr &input_kernel) {
   MS_EXCEPTION_IF_NULL(launch_info);
   auto addr_ptr = launch_info->inputs_[index];
   auto ms_context = MsContext::GetInstance();
@@ -281,9 +281,10 @@ std::shared_ptr<device::DeviceAddress> CreateAscendDeviceAddress(const KernelLau
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
-  auto format = kOpFormat_DEFAULT;
+  auto device_format = AnfAlgo::GetOutputFormat(input_kernel, PARAMETER_OUTPUT_INDEX);
+  auto device_type = AnfAlgo::GetOutputDeviceDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
   MS_EXCEPTION_IF_NULL(addr_ptr);
-  return device_context->CreateDeviceAddress(addr_ptr->addr, addr_ptr->size, format, type, ShapeVector());
+  return device_context->CreateDeviceAddress(addr_ptr->addr, addr_ptr->size, device_format, device_type, ShapeVector());
 }
 
 void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
@@ -300,8 +301,9 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     }
     std::string tensor_name = GetKernelNodeName(node);
     size_t slot = j;
+    AnfNodePtr input_kernel;
     if (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
-      auto input_kernel = node->input(j + 1);
+      input_kernel = node->input(j + 1);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
       tensor_name = input_kernel_name;
       slot = 0;
@@ -328,7 +330,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
         DumpGPUMemToFile(debugger, file_path, trans_flag, *addr, tensor_name, slot, int_shapes, type);
       } else if (Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
         // load address from launch_info when it's Ascend Kernel by kernel mode.
-        auto ascend_device_addr = CreateAscendDeviceAddress(launch_info, j, type);
+        auto ascend_device_addr = CreateAscendDeviceAddress(launch_info, j, input_kernel);
         DumpMemToFile(file_path, *ascend_device_addr, int_shapes, type, trans_flag);
       } else {
         DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
