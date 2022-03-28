@@ -921,28 +921,31 @@ class Validator:
     def check_coo_tensor_shape(indices_shp, values_shp, coo_shp):
         """Checks input tensors' shapes for COOTensor."""
         if len(coo_shp) != 2:
-            raise ValueError("Currently only supports 2-dimensional coo tensor.")
-        for item in coo_shp:
-            if item <= 0:
-                raise ValueError(f"The element of shape must be positive, but got {item}")
-            if not isinstance(item, int):
-                raise TypeError(f"The element type of shape must be int, but got {type(item)}")
+            raise ValueError(f"Currently only supports 2-dimensional COOTensor. COOTensor's `shape` should be a " \
+                             f"tuple with length of 2, but got {coo_shp} with length of {len(coo_shp)}.")
+        for sh in coo_shp:
+            if sh <= 0:
+                raise ValueError(f"For COOTensor, the element of `shape` must be positive, but got {sh} in {coo_shp}.")
+            if not isinstance(sh, int):
+                raise TypeError(f"For COOTensor, the element type of `shape` must be int, but got {type(sh)}")
         if len(indices_shp) != 2:
-            raise ValueError(f"Indices must be a 2-dimensional tensor, but got a {len(indices_shp)} dimension tensor.")
+            raise ValueError(f"For COOTensor, `indices` must be a 2-dimensional tensor, but got a {len(indices_shp)}" \
+                             f"dimension tensor.")
         if len(values_shp) != 1:
-            raise ValueError(f"Values must be a 1-dimensional tensor, but got a {len(values_shp)} dimension tensor.")
+            raise ValueError(f"For COOTensor, `values` must be a 1-dimensional tensor, but got a {len(values_shp)}" \
+                             f"dimension tensor.")
         if indices_shp[0] != values_shp[0]:
-            raise ValueError(f"Indices.shape must be (N, 2), where N equals to number of nonzero values in coo tensor.")
+            raise ValueError(f"For COOTensor, `indices.shape[0]` must be euqla to `values.shape[0]`, but got " \
+                             f"`indices.shape[0]` = {indices_shp[0]} and `values.shape[0]` = {values_shp[0]}.")
         if indices_shp[1] != 2:
-            raise ValueError(f"Indices.shape must be (N, 2), where N equals to number of nonzero values in coo tensor.")
-        if min(coo_shp) <= 0:
-            raise ValueError(f"Dense shape must be a tuple of positive integers.")
+            raise ValueError(f"For COOTensor, `indices.shape[1]` must be 2, but got {indices_shp[1]}.")
 
     @staticmethod
     def check_coo_tensor_dtype(indices_dtype):
         """Checks input tensors' data types for COOTensor."""
         if indices_dtype not in (mstype.int16, mstype.int32, mstype.int64):
-            raise TypeError(f"Indices must have int16 or int32 or int64 data type, but got {indices_dtype}.")
+            raise TypeError(f"For COOTensor, `indices` must have int16 or int32 or int64 data type, but got " \
+                            f"{indices_dtype}.")
 
 
 def check_input_format(input_param):

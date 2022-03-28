@@ -2817,7 +2817,7 @@ class CSRTensor(CSRTensor_):
         Sparse matrix-vector multiplication.
 
         Args:
-            dense_vector (Tensor) - A dense Tensor, its shape must be (csr_tensor.shape[1], 1)
+            dense_vector (Tensor): A dense Tensor, its shape must be (csr_tensor.shape[1], 1)
 
         Returns:
             Tensor.
@@ -2846,7 +2846,7 @@ class CSRTensor(CSRTensor_):
         Reduces a dimension of a CSRTensor by summing all elements in the dimension.
 
         Args:
-            axis (int) - The dimensions to reduce.
+            axis (int): The dimensions to reduce.
 
         Returns:
             Tensor, the dtype is the same as `CSRTensor.values`.
