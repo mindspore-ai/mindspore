@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-constexpr int EAGAIN_RETRY = 2;
+constexpr int EAGAIN_RETRY = 100;
 
 ssize_t TCPSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) {
   return recv(connection->socket_fd, recvBuf, recvLen, MSG_PEEK);
@@ -107,18 +107,23 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
 int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendMsg, size_t totalSendLen,
                                     size_t *sendLen) {
   int eagainCount = EAGAIN_RETRY;
+  *sendLen = 0;
 
   while (*sendLen != totalSendLen) {
     auto retval = sendmsg(connection->socket_fd, sendMsg, MSG_NOSIGNAL);
     if (retval < 0) {
       --eagainCount;
       if (errno != EAGAIN) {
+        MS_LOG(ERROR) << "Failed to call sendmsg and errno is: " << errno;
         connection->error_code = errno;
         return IO_RW_ERROR;
       } else if (eagainCount == 0) {
+        MS_LOG(ERROR) << "Failed to call sendmsg after retry " + std::to_string(EAGAIN_RETRY) + " times and errno is: "
+                      << errno;
         *sendLen = 0;
-        break;
+        return IO_RW_OK;
       }
+      MS_LOG(ERROR) << "retry(" + std::to_string(eagainCount) + "/" + std::to_string(EAGAIN_RETRY) + ") sending ...";
     } else {
       *sendLen += retval;
 
@@ -137,7 +142,7 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
             reinterpret_cast<char *>(sendMsg->msg_iov[i].iov_base) + static_cast<unsigned int>(retval) - tmpBytes;
 
           sendMsg->msg_iov = &sendMsg->msg_iov[i];
-          sendMsg->msg_iovlen -= (i + 1);
+          sendMsg->msg_iovlen -= i;
           break;
         }
       }
