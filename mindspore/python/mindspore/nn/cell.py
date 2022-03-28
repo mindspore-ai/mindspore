@@ -284,11 +284,11 @@ class Cell(Cell_):
     @pipeline_stage.setter
     def pipeline_stage(self, value):
         if not isinstance(value, int) or isinstance(value, bool):
-            raise TypeError("For 'context.set_auto_parallel_context', the argument 'pipeline_stages' "
+            raise TypeError("For 'Cell', the property 'pipeline_stage' "
                             "must be int type, but got type : {}".format(type(value)))
 
         if value < 0:
-            raise ValueError("For 'context.set_auto_parallel_context', the argument 'pipeline_stages' "
+            raise ValueError("For 'Cell', the property 'pipeline_stage' "
                              "can not be less than 0, but got {}".format(value))
         self._pipeline_stage = value
         for item in self.trainable_params():

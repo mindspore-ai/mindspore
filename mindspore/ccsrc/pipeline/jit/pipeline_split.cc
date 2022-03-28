@@ -131,6 +131,29 @@ static CNodePtr CreateVirtualDataset(const FuncGraphPtr &func_graph) {
 
 static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   std::set<FuncGraphPtr> graph_sets;
+  if (!root->has_flag(parallel::kAutoParallel)) {
+    return graph_sets;
+  }
+  std::set<AnfNodePtr> input_parameters;
+  for (auto &anf_param : root->parameters()) {
+    auto param = anf_param->cast<ParameterPtr>();
+    if (!param->has_default()) {
+      input_parameters.insert(anf_param);
+    }
+  }
+  for (auto input_parameter : input_parameters) {
+    auto node_users_map = root->manager()->node_users();
+    auto node_users = node_users_map[input_parameter];
+    for (auto node_user : node_users) {
+      auto cnode = node_user.first->cast<CNodePtr>();
+      if (IsValueNode<FuncGraph>(cnode->inputs()[0])) {
+        graph_sets.insert(GetValueNode<FuncGraphPtr>(cnode->inputs()[0]));
+      }
+      if (IsValueNode<Primitive>(cnode->inputs()[0])) {
+        graph_sets.insert(cnode->func_graph());
+      }
+    }
+  }
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
@@ -151,7 +174,6 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
       graph_sets.insert(fun_graph);
     }
   }
-  graph_sets.insert(root);
   return graph_sets;
 }
 
