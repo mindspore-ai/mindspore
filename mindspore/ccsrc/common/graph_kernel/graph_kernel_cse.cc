@@ -23,6 +23,7 @@
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/anfalgo.h"
+#include "common/graph_kernel/reshape_reduce_for_cse.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -97,10 +98,6 @@ bool GraphKernelBackendCSE::CheckEqualCnodeInputs(const AnfNodePtr &main, const 
   auto c_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(c_node);
 
-  if (!common::AnfAlgo::IsNodeInGraphKernel(c_main)) {
-    return BackendCSE::CheckEqualCnodeInputs(main, node);
-  }
-
   const auto &inp1 = c_main->inputs();
   const auto &inp2 = c_node->inputs();
   if (inp1.size() != inp2.size()) {
@@ -118,15 +115,28 @@ bool GraphKernelBackendCSE::CheckEqualCnodeInputs(const AnfNodePtr &main, const 
   return IsCNodePrimitveEqual(c_main, c_node, black_list_);
 }
 
+bool CseForSingleGraph(const std::shared_ptr<GraphKernelBackendCSE> &graphkernel_backend_cse,
+                       const std::shared_ptr<ReshapeReduceForCSE> &reshape_reduce, const FuncGraphPtr &fg) {
+  bool continue_cse = true;
+  bool has_change = false;
+  while (continue_cse) {
+    has_change = graphkernel_backend_cse->Cse(fg, fg->manager()) || has_change;
+    continue_cse = reshape_reduce->Run(fg);
+    has_change = has_change || continue_cse;
+  }
+  return has_change;
+}
+
 bool GraphKernelCSE::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto graphkernel_backend_cse = std::make_shared<GraphKernelBackendCSE>(black_list_);
-  auto changed = graphkernel_backend_cse->Cse(func_graph, func_graph->manager());
+  auto reshape_reduce = std::make_shared<ReshapeReduceForCSE>();
+  auto changed = CseForSingleGraph(graphkernel_backend_cse, reshape_reduce, func_graph);
   auto nodes = TopoSort(func_graph->get_return());
   for (auto node : nodes) {
     auto graph_kernel_fg = GetCNodeFuncGraph(node);
     if (graph_kernel_fg != nullptr) {
-      changed = graphkernel_backend_cse->Cse(graph_kernel_fg, graph_kernel_fg->manager()) || changed;
+      changed = CseForSingleGraph(graphkernel_backend_cse, reshape_reduce, graph_kernel_fg) || changed;
     }
   }
   return changed;
