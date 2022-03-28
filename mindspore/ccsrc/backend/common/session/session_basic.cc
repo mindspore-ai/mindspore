@@ -2635,7 +2635,12 @@ std::vector<uint32_t> SessionBasic::GetAllReduceSplitIndex() {
 }
 
 uint32_t GetBpropGraphGradsCount(const KernelGraphPtr &graph) {
-  return common::AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem}).size();
+  auto outputs = common::AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+  MS_LOG(DEBUG) << "Get total graph output size:" << outputs.size();
+  // The type of output is CNode or ValueNode.
+  // There is no need to calculate grad if the type of output is not CNode.
+  return std::count_if(outputs.begin(), outputs.end(),
+                       [](const AnfNodePtr &output) { return output != nullptr && output->isa<CNode>(); });
 }
 
 void SetGraphBpropAttr(const KernelGraphPtr &graph) {
@@ -2652,6 +2657,7 @@ void SetGraphBpropAttr(const KernelGraphPtr &graph) {
 std::vector<uint32_t> GenerateBucketSizeList(const KernelGraphPtr &graph, const std::vector<uint32_t> &split_index) {
   if (split_index.empty()) {
     auto grads_count = GetBpropGraphGradsCount(graph);
+    MS_LOG(DEBUG) << "Get valid grads size:" << grads_count;
     if (grads_count == 0) {
       MS_LOG(EXCEPTION) << "Bprop graph has no grad";
     }
