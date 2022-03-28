@@ -29,6 +29,8 @@
 namespace mindspore {
 namespace parallel {
 #define DOUBLE_MAX (std::numeric_limits<double>::max)()
+#define MATMUL_MEM_COEF 0.25
+#define REDIS_COEF 16
 
 double CostRedis(const Graph::NodeType &node,
                  const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
@@ -45,11 +47,12 @@ class CostMatMul {
                             const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                             const Graph &graph);
 
-  double GetMinCostIn(const OperatorRec &op);
+  double GetMaxCostIn(const OperatorRec &op);
 
  private:
   double StrConcatDimI(int64_t a, int64_t b) {
     cost_in_i_ = (static_cast<double>(a) * static_cast<double>(b)) / 2.0;
+    cost_in_i_ = cost_in_i_ * MATMUL_MEM_COEF;
 
     return cost_in_i_;
   }

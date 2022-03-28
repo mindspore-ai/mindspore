@@ -29,7 +29,8 @@ namespace parallel {
 
 class TestPartition : public UT::Common {
  public:
-  void Create(std::shared_ptr<Graph> graph, int node_num, std::vector<int64_t> edge_head, std::vector<int64_t> edge_tail);
+  void Create(std::shared_ptr<Graph> graph, int node_num, std::vector<int64_t> edge_head,
+              std::vector<int64_t> edge_tail);
   void InitEdge(std::shared_ptr<Graph> graph, int vHead, int vTail);
   void InitNode(std::shared_ptr<Graph> graph, int num_node);
   TensorParam *MakeTensor(int n, int c, int h, int w);
@@ -85,9 +86,10 @@ TensorParam *TestPartition::MakeTensor(int n, int c, int h, int w) {
 std::shared_ptr<Graph> TestPartition::MakeMatMulData(int numNode) {
   // Build Edges
   int edgeNum = 0;
-  if (0 == numNode % 2 && numNode != 0) {
-    edgeNum = numNode - 2;
-  } else if (1 == numNode % 2) {
+  constexpr int INTERVAL = 2;
+  if (numNode % INTERVAL == 0 && numNode != 0) {
+    edgeNum = numNode - INTERVAL;
+  } else if (numNode % INTERVAL == 1) {
     edgeNum = numNode - 1;
   } else {
     edgeNum = 0;
@@ -98,14 +100,14 @@ std::shared_ptr<Graph> TestPartition::MakeMatMulData(int numNode) {
 
   for (int i = 0; i < edgeNum; i++) {
     edgeHead[i] = i;
-    if (0 == i % 2) {
-      edgeTail[i] = i + 2;
+    if (i % INTERVAL == 0) {
+      edgeTail[i] = i + INTERVAL;
     } else {
       edgeTail[i] = i + 1;
     };
   };
 
-  // Creat graph
+  // Create graph
   std::shared_ptr<Graph> graph(new Graph);
   TestPartition::Create(graph, numNode, edgeHead, edgeTail);
 
@@ -221,8 +223,8 @@ TEST_F(TestPartition, test_PartitionNode) {
   Graph::NodeType node2 = graph->nodes[2];
   std::vector<std::pair<std::string, StrategyRec>> nameToStrategy;
   StrategyRec str = PartitionNode(node2, nameToStrategy, graph);
-  ASSERT_EQ(str.outputTensor.str_h, 1);
-  ASSERT_EQ(str.outputTensor.str_w, 0.5);
+  ASSERT_EQ(str.outputTensor.str_h, 0.5);
+  ASSERT_EQ(str.outputTensor.str_w, 1);
 }
 
 TEST_F(TestPartition, test_PartitionForAllDevices) {
@@ -237,7 +239,7 @@ TEST_F(TestPartition, test_PartitionForAllDevices2) {
   ASSERT_EQ(PartitionForAllDevices(2, device_memory, graph), SUCCESS);
 }
 
-// Negative case: parition on 0 device
+// Negative case: partition on 0 device
 TEST_F(TestPartition, test_PartitionForAllDevices0) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
   double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
@@ -248,9 +250,9 @@ TEST_F(TestPartition, test_PartitionForAllDevices0) {
 TEST_F(TestPartition, test_ApplyStrToTensor) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
   std::vector<std::pair<std::string, StrategyRec>> nameToStrategy;
-  StrategyRec str = PartitionNode(graph->nodes[4], nameToStrategy, graph);
-  auto h_str = str.outputTensor.str_h;
-  auto w_str = str.outputTensor.str_w;
+  graph->nodes[4].apply.str = PartitionNode(graph->nodes[4], nameToStrategy, graph);
+  auto h_str = graph->nodes[4].apply.str.outputTensor.str_h;
+  auto w_str = graph->nodes[4].apply.str.outputTensor.str_w;
 
   Graph::NodeType n_node = ApplyStrToTensor(graph->nodes[4]);
   auto h_node = n_node.tensor_parm.tensor_str.str_h;
