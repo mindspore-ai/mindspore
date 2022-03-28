@@ -27,7 +27,7 @@
 #include "tools/converter/quantizer/quant_helper/only_need_inputs_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/quant_dtype_cast_quant_param_propogator.h"
 #include "tools/converter/quantizer/quant_helper/matmul_quant_type_determiner.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/kernel_registry.h"
 
 namespace mindspore::lite {

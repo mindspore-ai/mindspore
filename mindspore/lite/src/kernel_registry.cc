@@ -178,7 +178,7 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                     const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
-                                    kernel::LiteKernel **kernel, const void *primitive) {
+                                    kernel::KernelExec **kernel, const void *primitive) {
   MS_ASSERT(ms_ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
   KernelDesc desc;
@@ -191,8 +191,8 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
   auto base_kernel = creator(LiteTensorsToMSTensors(in_tensors), LiteTensorsToMSTensors(out_tensors),
                              static_cast<const schema::Primitive *>(primitive), ms_ctx);
   if (base_kernel != nullptr) {
-    auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel);
-    if (lite_kernel != nullptr) {
+    auto *kernel_exec = new (std::nothrow) kernel::KernelExec(base_kernel);
+    if (kernel_exec != nullptr) {
       kernel::KernelKey tmp_key = key;
       if (desc.arch == kArchCPU) {
         tmp_key.arch = kernel::kCPU;
@@ -201,8 +201,8 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
       } else {
         tmp_key.arch = kernel::kCustom;
       }
-      lite_kernel->set_desc(tmp_key);
-      *kernel = lite_kernel;
+      kernel_exec->set_desc(tmp_key);
+      *kernel = kernel_exec;
       return RET_OK;
     }
   }
@@ -212,7 +212,7 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
 
 int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                               const InnerContext *ctx, const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
-                              OpParameter *parameter, kernel::LiteKernel **kernel, const void *primitive) {
+                              OpParameter *parameter, kernel::KernelExec **kernel, const void *primitive) {
   MS_ASSERT(ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
@@ -224,11 +224,11 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       if (inner_kernel != nullptr) {
         inner_kernel->set_registry_data_type(key.data_type);
         std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
-        auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
-        if (lite_kernel != nullptr) {
-          lite_kernel->set_desc(key);
-          lite_kernel->set_context(ctx);
-          *kernel = lite_kernel;
+        auto *kernel_exec = new (std::nothrow) kernel::KernelExec(shared_kernel);
+        if (kernel_exec != nullptr) {
+          kernel_exec->set_desc(key);
+          kernel_exec->set_context(ctx);
+          *kernel = kernel_exec;
           return RET_OK;
         }
       }

@@ -59,7 +59,7 @@ int IdentityKernel::PostProcess() { return lite::RET_OK; }
 
 int IdentityKernel::ReSize() { return PreProcess(); }
 
-LiteKernel *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
+KernelExec *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
                                    const lite::InnerContext *ctx) {
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
@@ -71,8 +71,8 @@ LiteKernel *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::
   auto inner_kernel = new IdentityKernel(param, in_tensors, out_tensors, ctx);
   MS_CHECK_TRUE_MSG(inner_kernel != nullptr, nullptr, "new inner kernel failed.");
   std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
-  auto *lite_kernel = new LiteKernel(shared_kernel);
-  lite_kernel->set_context(ctx);
-  return lite_kernel;
+  auto *kernel_exec = new KernelExec(shared_kernel);
+  kernel_exec->set_context(ctx);
+  return kernel_exec;
 }
 }  // namespace mindspore::kernel

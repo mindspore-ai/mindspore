@@ -151,13 +151,13 @@ void SubGraphKernel::InitInputOutputTensorInitRefCount() {
   }
 }
 
-void SubGraphKernel::InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) {
+void SubGraphKernel::InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask_kernels) {
   for (auto *node : nodes_) {
     node->InitOutTensorInitRefCount(mask_kernels);
   }
 }
 
-void SubGraphKernel::DropNode(LiteKernel *node) {
+void SubGraphKernel::DropNode(KernelExec *node) {
   lite::VectorErase(&nodes_, node);
   lite::VectorErase(&in_nodes_, node);
   lite::VectorErase(&out_nodes_, node);

@@ -25,7 +25,7 @@
 namespace mindspore::lite {
 class LiteEntranceOpActor : public LiteOpActor {
  public:
-  explicit LiteEntranceOpActor(kernel::LiteKernel *kernel, lite::InnerContext *ctx) : LiteOpActor(kernel, ctx) {}
+  explicit LiteEntranceOpActor(kernel::KernelExec *kernel, lite::InnerContext *ctx) : LiteOpActor(kernel, ctx) {}
   ~LiteEntranceOpActor() override = default;
   void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override;
 

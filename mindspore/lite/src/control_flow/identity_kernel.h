@@ -47,7 +47,7 @@ class IdentityKernel : public InnerKernel {
   int PostProcess() override;
   int ReSize() override;
   int Run() override;
-  static LiteKernel *Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
+  static KernelExec *Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
                             const lite::InnerContext *ctx);
 
  protected:

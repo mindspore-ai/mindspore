@@ -20,7 +20,7 @@
 #include "include/errorcode.h"
 #include "tools/converter/converter.h"
 #include "src/lite_session.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/common/file_utils.h"
 #include "include/api/types.h"
 #include "include/api/graph.h"

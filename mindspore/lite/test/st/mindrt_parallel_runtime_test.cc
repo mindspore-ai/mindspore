@@ -18,7 +18,7 @@
 #include "include/errorcode.h"
 #include "src/mindrt_executor.h"
 #include "src/lite_session.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 
 class MindrtRuntimeTest : public mindspore::CommonTest {
  public:

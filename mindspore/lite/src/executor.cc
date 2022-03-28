@@ -21,7 +21,7 @@
 
 namespace mindspore::lite {
 int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before,
+                  const std::vector<kernel::KernelExec *> &kernels, const KernelCallBack &before,
                   const KernelCallBack &after) {
   // init the max spin count.
   CHECK_NULL_RETURN(ctx_);

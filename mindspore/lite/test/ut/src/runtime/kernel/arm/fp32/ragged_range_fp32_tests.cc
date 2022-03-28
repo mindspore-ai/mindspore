@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #include "nnacl/fp32/ragged_range_fp32.h"
 #include "src/tensor.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/kernel_registry.h"
 
 namespace mindspore {

@@ -25,7 +25,7 @@
 namespace mindspore::lite {
 class LiteExitOpActor : public LiteOpActor {
  public:
-  explicit LiteExitOpActor(kernel::LiteKernel *kernel, lite::InnerContext *ctx) : LiteOpActor(kernel, ctx) {}
+  explicit LiteExitOpActor(kernel::KernelExec *kernel, lite::InnerContext *ctx) : LiteOpActor(kernel, ctx) {}
   ~LiteExitOpActor() override = default;
   void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override;
   int PreInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
@@ -40,9 +40,9 @@ class LiteExitOpActor : public LiteOpActor {
 
  private:
   struct MappingInfo {
-    MappingInfo(kernel::LiteKernel *partial, kernel::LiteKernel *call) : partial_node(partial), call_node(call) {}
-    kernel::LiteKernel *partial_node = nullptr;
-    kernel::LiteKernel *call_node = nullptr;
+    MappingInfo(kernel::KernelExec *partial, kernel::KernelExec *call) : partial_node(partial), call_node(call) {}
+    kernel::KernelExec *partial_node = nullptr;
+    kernel::KernelExec *call_node = nullptr;
     AID partial_input_aid;
     AID call_output_aid;
   };

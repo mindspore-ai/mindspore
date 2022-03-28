@@ -38,70 +38,70 @@ class ControlFlowScheduler {
   ControlFlowScheduler(InnerContext *ctx, const mindspore::Context *ms_ctx, std::vector<Tensor *> *src_tensors)
       : context_(ctx), src_tensors_(src_tensors) {}
   ~ControlFlowScheduler() = default;
-  int Schedule(std::vector<kernel::LiteKernel *> *dst_kernels);
-  void SetSubgraphForPartialNode(std::unordered_map<kernel::LiteKernel *, size_t> *partial_kernel_subgraph_index_map,
-                                 std::unordered_map<size_t, kernel::LiteKernel *> *subgraph_index_subgraph_kernel_map);
-  std::vector<kernel::LiteKernel *> GetNonTailCalls() const { return non_tail_calls_; }
-  void RecordSubgraphCaller(const size_t &subgraph_index, kernel::LiteKernel *partial_node);
+  int Schedule(std::vector<kernel::KernelExec *> *dst_kernels);
+  void SetSubgraphForPartialNode(std::unordered_map<kernel::KernelExec *, size_t> *partial_kernel_subgraph_index_map,
+                                 std::unordered_map<size_t, kernel::KernelExec *> *subgraph_index_subgraph_kernel_map);
+  std::vector<kernel::KernelExec *> GetNonTailCalls() const { return non_tail_calls_; }
+  void RecordSubgraphCaller(const size_t &subgraph_index, kernel::KernelExec *partial_node);
 
  protected:
-  int SplitNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int SplitNonTailCallSubGraphs(std::vector<kernel::KernelExec *> *dst_kernels);
   // We insert entrance subgraph kernel and exit subgraph kernel define the boundary of the subgraph.
-  int BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int BuildBoundaryForMultipleCalledGraph(std::vector<kernel::KernelExec *> *dst_kernels);
   // When graph output is switch call node, output tensors not fixed, we need output subgraph holds the output tensors.
-  int IsolateOutputForCallOutputGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int IsolateOutputForCallOutputGraph(std::vector<kernel::KernelExec *> *dst_kernels);
   // Partial nodes which have same input, need isolate partial's input. For creating actor form this kind of
   // graph, actor's input will be graph's input tensors, and actor's output will be partial's input tensors. So in this
   // case, actor input will be same as output. And we can not link the actors in the right order in this situation.
-  int IsolateSameInputPartials(std::vector<kernel::LiteKernel *> *dst_kernels);
-  int RecordLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
-  int IsolateInputOfMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int IsolateSameInputPartials(std::vector<kernel::KernelExec *> *dst_kernels);
+  int RecordLinkInfo(std::vector<kernel::KernelExec *> *dst_kernels);
+  int IsolateInputOfMultipleCalledGraph(std::vector<kernel::KernelExec *> *dst_kernels);
 
  private:
   int SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
-                                     std::vector<kernel::LiteKernel *> *subgraph_kernels);
+                                     std::vector<kernel::KernelExec *> *subgraph_kernels);
   int SplitSubGraphNodesIntoTwoParts(kernel::SubGraphKernel *subgraph_kernel,
-                                     std::vector<kernel::LiteKernel *> *first_part_nodes,
-                                     std::vector<kernel::LiteKernel *> *second_part_nodes);
-  int AdjustNodesForTailCallSubGraph(std::vector<kernel::LiteKernel *> *first_part_nodes,
-                                     std::vector<kernel::LiteKernel *> *second_part_nodes);
-  std::set<kernel::LiteKernel *> GetNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels);
-  void RemoveUselessKernels(std::vector<kernel::LiteKernel *> *dst_kernels,
-                            std::set<kernel::LiteKernel *> *useless_kernels);
-  void AppendToProcessQ(std::vector<kernel::LiteKernel *> *new_subgraphs,
-                        std::set<kernel::LiteKernel *> *all_non_tail_subgraphs);
+                                     std::vector<kernel::KernelExec *> *first_part_nodes,
+                                     std::vector<kernel::KernelExec *> *second_part_nodes);
+  int AdjustNodesForTailCallSubGraph(std::vector<kernel::KernelExec *> *first_part_nodes,
+                                     std::vector<kernel::KernelExec *> *second_part_nodes);
+  std::set<kernel::KernelExec *> GetNonTailCallSubGraphs(std::vector<kernel::KernelExec *> *dst_kernels);
+  void RemoveUselessKernels(std::vector<kernel::KernelExec *> *dst_kernels,
+                            std::set<kernel::KernelExec *> *useless_kernels);
+  void AppendToProcessQ(std::vector<kernel::KernelExec *> *new_subgraphs,
+                        std::set<kernel::KernelExec *> *all_non_tail_subgraphs);
   kernel::SubGraphKernel *CreateEntranceSubGraph(kernel::SubGraphKernel *subgraph, lite::Tensor *link_tensor);
   kernel::SubGraphKernel *CreateExitSubGraph(kernel::SubGraphKernel *subgraph, lite::Tensor *link_tensor);
   kernel::SubGraphKernel *AddOutputKernel(kernel::SubGraphKernel *subgraph);
-  int GetTailCallFinalSubgraphs(std::queue<kernel::LiteKernel *> *tail_call_q,
-                                std::vector<kernel::LiteKernel *> *final_graphs,
-                                std::set<kernel::LiteKernel *> reviewed_graphs);
-  kernel::SubGraphKernel *IsolatePartialInputs(kernel::SubGraphKernel *subgraph, kernel::LiteKernel *partial);
-  std::set<kernel::LiteKernel *> GetSameInputPartials();
-  void UpdateSubGraphMap(kernel::LiteKernel *new_subgraph, kernel::LiteKernel *old_subgraph);
+  int GetTailCallFinalSubgraphs(std::queue<kernel::KernelExec *> *tail_call_q,
+                                std::vector<kernel::KernelExec *> *final_graphs,
+                                std::set<kernel::KernelExec *> reviewed_graphs);
+  kernel::SubGraphKernel *IsolatePartialInputs(kernel::SubGraphKernel *subgraph, kernel::KernelExec *partial);
+  std::set<kernel::KernelExec *> GetSameInputPartials();
+  void UpdateSubGraphMap(kernel::KernelExec *new_subgraph, kernel::KernelExec *old_subgraph);
   int GetSubGraphsWhichNeedBoundary();
   // link partial inputs to partial's corresponding subgraph's inputs.
   int RecordPartialInputLinkInfo();
   // link partial's corresponding final subgraph's outputs to tail call's outputs.
-  int RecordAllTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
-  int RecordTailCallLinkInfo(kernel::LiteKernel *tail_call);
+  int RecordAllTailCallLinkInfo(std::vector<kernel::KernelExec *> *dst_kernels);
+  int RecordTailCallLinkInfo(kernel::KernelExec *tail_call);
   // link partial's corresponding final subgraph's outputs to non-tail call's outputs.
-  int RecordAllNonTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
-  int RecordNonTailCallLinkInfo(kernel::LiteKernel *non_tail_call);
+  int RecordAllNonTailCallLinkInfo(std::vector<kernel::KernelExec *> *dst_kernels);
+  int RecordNonTailCallLinkInfo(kernel::KernelExec *non_tail_call);
 
  private:
   InnerContext *context_ = nullptr;
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   std::vector<Tensor *> *src_tensors_ = nullptr;
-  std::queue<kernel::LiteKernel *> to_process_q_{};
-  std::vector<kernel::LiteKernel *> non_tail_calls_{};
+  std::queue<kernel::KernelExec *> to_process_q_{};
+  std::vector<kernel::KernelExec *> non_tail_calls_{};
   // key is subgraph index, value is the corresponding partial nodes.
-  std::unordered_map<size_t, std::set<kernel::LiteKernel *>> more_than_once_called_partial_nodes_{};
+  std::unordered_map<size_t, std::set<kernel::KernelExec *>> more_than_once_called_partial_nodes_{};
   // record partial nodes which corresponding subgraph need build boundary, key is subgraph, value is corresponding
   // partial nodes
-  std::unordered_map<kernel::SubGraphKernel *, std::set<kernel::LiteKernel *>> subgraphs_need_boundary_{};
-  std::unordered_map<size_t, kernel::LiteKernel *> *subgraph_index_subgraph_kernel_map_{};
-  std::unordered_map<kernel::LiteKernel *, size_t> *partial_kernel_subgraph_index_map_{};
+  std::unordered_map<kernel::SubGraphKernel *, std::set<kernel::KernelExec *>> subgraphs_need_boundary_{};
+  std::unordered_map<size_t, kernel::KernelExec *> *subgraph_index_subgraph_kernel_map_{};
+  std::unordered_map<kernel::KernelExec *, size_t> *partial_kernel_subgraph_index_map_{};
 };
 
 using ControlFlowSchedulerPtr = std::shared_ptr<ControlFlowScheduler>;

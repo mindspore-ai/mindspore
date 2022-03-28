@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_UNSORTED_SEGMENT_SUM_FP16_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 
 namespace mindspore::kernel {
 class UnsortedSegmentSumCPUKernelFp16 : public InnerKernel {

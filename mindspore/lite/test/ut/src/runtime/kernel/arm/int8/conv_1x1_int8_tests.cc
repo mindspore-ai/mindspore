@@ -15,7 +15,7 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/lite_kernel.h"
+#include "mindspore/lite/src/kernel_exec.h"
 #include "src/common/file_utils.h"
 #include "nnacl/int8/quantize.h"
 #include "nnacl/common_func.h"

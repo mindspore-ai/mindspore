@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <string>
 #include <iostream>
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "include/ms_tensor.h"
 #include "include/errorcode.h"
 using mindspore::lite::RET_ERROR;

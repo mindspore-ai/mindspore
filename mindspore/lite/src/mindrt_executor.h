@@ -23,7 +23,7 @@
 #include <set>
 #include <utility>
 #include "src/runtime/inner_allocator.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/lite_mindrt.h"
 #include "src/executor.h"
 #include "include/lite_session.h"
@@ -36,11 +36,11 @@ class MindrtExecutor : public Executor {
       : isolate_output_map_(output_map), isolate_input_map_(input_map) {}
   virtual ~MindrtExecutor() { MindrtTerminate(op_actors_); }
 
-  int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+  int Prepare(const std::vector<kernel::KernelExec *> &kernels, const std::vector<Tensor *> &inputs,
               const std::vector<Tensor *> &outputs, lite::InnerContext *ctx) override;
 
   int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-          const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before = nullptr,
+          const std::vector<kernel::KernelExec *> &kernels, const KernelCallBack &before = nullptr,
           const KernelCallBack &after = nullptr) override;
 
   int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
@@ -52,8 +52,8 @@ class MindrtExecutor : public Executor {
   std::unordered_map<void *, std::set<std::pair<AID, size_t>>> BuildReceiverMap();
 
  protected:
-  int PrepareGraphInput(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs);
-  int PrepareGraphOutput(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &outputs);
+  int PrepareGraphInput(const std::vector<kernel::KernelExec *> &kernels, const std::vector<Tensor *> &inputs);
+  int PrepareGraphOutput(const std::vector<kernel::KernelExec *> &kernels, const std::vector<Tensor *> &outputs);
   int PreInitActors();
   int LinkActors();
   int PostInitActors();

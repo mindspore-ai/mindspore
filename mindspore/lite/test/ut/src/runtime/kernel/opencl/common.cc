@@ -21,7 +21,7 @@
 #include "nnacl/conv_parameter.h"
 #include "schema/model_v0_generated.h"
 
-using mindspore::kernel::LiteKernel;
+using mindspore::kernel::KernelExec;
 using mindspore::kernel::OpenCLSubGraph;
 using mindspore::lite::KernelRegistry;
 
@@ -120,7 +120,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
   }
 
   std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
-  auto *kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
+  auto *kernel = new (std::nothrow) kernel::KernelExec(shared_kernel);
   if (kernel == nullptr) {
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);
@@ -130,7 +130,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
   kernel->set_desc(key);
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> ConstructSubGraphs()
   MS_LOG(DEBUG) << "create SubGraph";
-  std::vector<LiteKernel *> kernels{kernel};
+  std::vector<KernelExec *> kernels{kernel};
   auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, subgraph_inputs, outputs, nullptr);
   if (sub_inner_kernel == nullptr) {
     return;
@@ -281,7 +281,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
 
   inner_kernel->set_registry_data_type(key.data_type);
   std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
-  auto *kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
+  auto *kernel = new (std::nothrow) kernel::KernelExec(shared_kernel);
   if (kernel == nullptr) {
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);
@@ -291,7 +291,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
   kernel->set_desc(key);
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> ConstructSubGraphs()
   MS_LOG(DEBUG) << "create SubGraph";
-  std::vector<LiteKernel *> kernels{kernel};
+  std::vector<KernelExec *> kernels{kernel};
   auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, subgraph_inputs, {&output}, nullptr);
   if (sub_inner_kernel == nullptr) {
     return;

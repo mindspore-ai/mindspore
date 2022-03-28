@@ -36,15 +36,15 @@ using PrimType::PrimType_Inner_ToFormat;
 OpenCLSubGraph::~OpenCLSubGraph() { UnInit(); }
 
 void OpenCLSubGraph::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
-                                                        const std::vector<kernel::LiteKernel *> &in_kernels,
-                                                        lite::Tensor *new_tensor, kernel::LiteKernel *in_convert_op,
+                                                        const std::vector<kernel::KernelExec *> &in_kernels,
+                                                        lite::Tensor *new_tensor, kernel::KernelExec *in_convert_op,
                                                         MemType mem_type) {
   MS_ASSERT(in_convert_op);
   auto in_opencl_op = in_convert_op;
   for (auto &iv : in_kernels) {
     MS_ASSERT(iv);
     auto kernels = (mem_type == MemType::IMG) ? iv->in_kernels() : iv->out_kernels();
-    auto fk = std::find_if(kernels.begin(), kernels.end(), [&](kernel::LiteKernel *kv) { return kv == iv; });
+    auto fk = std::find_if(kernels.begin(), kernels.end(), [&](kernel::KernelExec *kv) { return kv == iv; });
     if (fk != kernels.end()) {
       *fk = in_convert_op;
     } else {
@@ -70,17 +70,17 @@ void OpenCLSubGraph::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_t
 }
 
 int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
-                                  const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
+                                  const std::vector<std::vector<kernel::KernelExec *>> &in_kernels,
                                   std::vector<lite::Tensor *> *out_tensors,
                                   std::vector<OpenCLToFormatParameter *> *out_parameters,
-                                  std::vector<LiteKernel *> *out_convert_ops, MemType mem_type) {
+                                  std::vector<KernelExec *> *out_convert_ops, MemType mem_type) {
   MS_ASSERT(out_tensors);
   MS_ASSERT(out_parameters);
   MS_ASSERT(out_convert_ops);
   out_tensors->clear();
   out_parameters->clear();
   out_convert_ops->clear();
-  std::vector<std::vector<kernel::LiteKernel *>> loop_kernels;
+  std::vector<std::vector<kernel::KernelExec *>> loop_kernels;
   if (mem_type == MemType::BUF) {
     GetKernelFromToTensor(in_tensors, nodes_, &loop_kernels, true);
   }
@@ -132,7 +132,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       return RET_ERROR;
     }
     std::shared_ptr<kernel::Kernel> inner_convert_op(in_convert_op_inner);
-    auto *in_convert_op = new (std::nothrow) kernel::LiteKernel(inner_convert_op);
+    auto *in_convert_op = new (std::nothrow) kernel::KernelExec(inner_convert_op);
     if (in_convert_op == nullptr) {
       MS_LOG(ERROR) << "OpenCLSubGraph create op failed!";
       delete new_tensor;
@@ -166,17 +166,17 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
 
 #ifdef ENABLE_OPENGL_TEXTURE
 int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
-                                const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
+                                const std::vector<std::vector<kernel::KernelExec *>> &in_kernels,
                                 std::vector<lite::Tensor *> *out_tensors,
                                 std::vector<OpenGLTexture2DToOpenCLParameter *> *out_parameters,
-                                std::vector<LiteKernel *> *out_convert_ops, MemType mem_type) {
+                                std::vector<KernelExec *> *out_convert_ops, MemType mem_type) {
   MS_ASSERT(out_tensors);
   MS_ASSERT(out_parameters);
   MS_ASSERT(out_convert_ops);
   out_tensors->clear();
   out_parameters->clear();
   out_convert_ops->clear();
-  std::vector<std::vector<kernel::LiteKernel *>> loop_kernels;
+  std::vector<std::vector<kernel::KernelExec *>> loop_kernels;
   if (mem_type == MemType::GLTexture) {
     GetKernelFromToTensor(in_tensors, nodes_, &loop_kernels, true);
   }
@@ -228,7 +228,7 @@ int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
       return RET_ERROR;
     }
     std::shared_ptr<kernel::Kernel> inner_convert_op(in_convert_op_inner);
-    auto *in_convert_op = new (std::nothrow) kernel::LiteKernel(inner_convert_op);
+    auto *in_convert_op = new (std::nothrow) kernel::KernelExec(inner_convert_op);
     if (in_convert_op == nullptr) {
       MS_LOG(ERROR) << "OpenCLSubGraph create op failed!";
       delete new_tensor;
@@ -262,7 +262,7 @@ int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
 int OpenCLSubGraph::InsertOpsPass() {
   GetInOutNodes();
 
-  std::vector<std::vector<kernel::LiteKernel *>> from_kernels_;
+  std::vector<std::vector<kernel::KernelExec *>> from_kernels_;
   GetKernelFromToTensor(in_tensors(), in_nodes_, &from_kernels_, true);
   int ret = 0;
 #ifdef ENABLE_OPENGL_TEXTURE
@@ -282,7 +282,7 @@ int OpenCLSubGraph::InsertOpsPass() {
   }
   nodes_.insert(nodes_.begin(), in_convert_ops_.begin(), in_convert_ops_.end());
 
-  std::vector<std::vector<kernel::LiteKernel *>> to_kernels_;
+  std::vector<std::vector<kernel::KernelExec *>> to_kernels_;
   GetKernelFromToTensor(out_tensors(), out_nodes_, &to_kernels_, false);
 #if defined(ENABLE_OPENGL_TEXTURE)
   if (this->GetOpenGLTextureEnable()) {
@@ -370,8 +370,8 @@ int OpenCLSubGraph::UpdateTensorDataTypePass() {
 }
 
 void OpenCLSubGraph::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
-                                           const std::vector<kernel::LiteKernel *> &in_kernels,
-                                           std::vector<std::vector<kernel::LiteKernel *>> *out_kernels, bool is_from) {
+                                           const std::vector<kernel::KernelExec *> &in_kernels,
+                                           std::vector<std::vector<kernel::KernelExec *>> *out_kernels, bool is_from) {
   std::vector<std::set<lite::Tensor *>> ksets;
   for (auto jv : in_kernels) {
     MS_ASSERT(jv);
@@ -382,7 +382,7 @@ void OpenCLSubGraph::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in
   }
   MS_ASSERT(out_kernels);
   for (auto in_tensor : in_tensors) {
-    std::vector<kernel::LiteKernel *> kvec;
+    std::vector<kernel::KernelExec *> kvec;
     for (size_t j = 0; j < in_kernels.size(); ++j) {
       if (ksets[j].count(in_tensor)) {
         kvec.emplace_back(in_kernels[j]);

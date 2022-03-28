@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include <algorithm>
 #include "src/tensor.h"
 #include "src/common/utils.h"
@@ -24,7 +24,7 @@ namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
+bool KernelExec::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   MS_ASSERT(kernel_ != nullptr);
   auto &in_tensors = this->in_tensors();
   return std::all_of(in_tensors.begin(), in_tensors.end(), [&](lite::Tensor *in_tensor) {
@@ -36,7 +36,7 @@ bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   });
 }
 
-void LiteKernel::InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) {
+void KernelExec::InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask_kernels) {
   for (auto *tensor : this->out_tensors()) {
     MS_ASSERT(tensor != nullptr);
     int init_ref_count = 0;
@@ -53,9 +53,9 @@ void LiteKernel::InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask
   }
 }
 
-std::string LiteKernel::ToString() const {
+std::string KernelExec::ToString() const {
   std::ostringstream oss;
-  oss << "LiteKernel: " << this->name();
+  oss << "KernelExec: " << this->name();
   oss << ", Type: " << this->type_str();
   oss << ", " << this->in_tensors().size() << " InputTensors:";
   for (auto tensor : in_tensors()) {
@@ -76,7 +76,7 @@ std::string LiteKernel::ToString() const {
   return oss.str();
 }
 
-int LiteKernel::DoExecute() {
+int KernelExec::DoExecute() {
   auto ret = kernel_->Execute();
   if ((ret == lite::RET_OK) && (desc_.provider != kBuiltin)) {
     for (auto *output : out_tensors()) {

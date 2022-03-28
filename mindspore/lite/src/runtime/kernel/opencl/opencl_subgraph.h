@@ -28,8 +28,8 @@
 namespace mindspore::kernel {
 class OpenCLSubGraph : public SubGraphKernel {
  public:
-  OpenCLSubGraph(const std::vector<kernel::LiteKernel *> &inKernels,
-                 const std::vector<kernel::LiteKernel *> &outKernels, const std::vector<kernel::LiteKernel *> &nodes,
+  OpenCLSubGraph(const std::vector<kernel::KernelExec *> &inKernels,
+                 const std::vector<kernel::KernelExec *> &outKernels, const std::vector<kernel::KernelExec *> &nodes,
                  Kernel *kernel)
       : SubGraphKernel(inKernels, outKernels, nodes, kernel) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
@@ -44,7 +44,7 @@ class OpenCLSubGraph : public SubGraphKernel {
     static std::atomic_int index = 0;
     this->set_name("GpuSubGraph" + std::to_string(index++));
     nodes_set_.insert(nodes.begin(), nodes.end());
-    all_kernels_infer_done_ = std::all_of(nodes_.begin(), nodes_.end(), [](const kernel::LiteKernel *kernel) {
+    all_kernels_infer_done_ = std::all_of(nodes_.begin(), nodes_.end(), [](const kernel::KernelExec *kernel) {
       return kernel && kernel->InferShapeDone();
     });
   }
@@ -61,23 +61,23 @@ class OpenCLSubGraph : public SubGraphKernel {
   void UnInit();
   int UpdateTensorDataTypePass();
   void ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
-                                          const std::vector<kernel::LiteKernel *> &in_kernels, lite::Tensor *new_tensor,
-                                          kernel::LiteKernel *in_convert_op, lite::opencl::MemType mem_type);
+                                          const std::vector<kernel::KernelExec *> &in_kernels, lite::Tensor *new_tensor,
+                                          kernel::KernelExec *in_convert_op, lite::opencl::MemType mem_type);
   void GetInOutNodes();
   int GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
-                    const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
+                    const std::vector<std::vector<kernel::KernelExec *>> &in_kernels,
                     std::vector<lite::Tensor *> *out_tensors, std::vector<OpenCLToFormatParameter *> *out_parameters,
-                    std::vector<LiteKernel *> *out_convert_ops, lite::opencl::MemType mem_type);
+                    std::vector<KernelExec *> *out_convert_ops, lite::opencl::MemType mem_type);
 #ifdef ENABLE_OPENGL_TEXTURE
   int GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
-                  const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
+                  const std::vector<std::vector<kernel::KernelExec *>> &in_kernels,
                   std::vector<lite::Tensor *> *out_tensors,
                   std::vector<OpenGLTexture2DToOpenCLParameter *> *out_parameters,
-                  std::vector<LiteKernel *> *out_convert_ops, lite::opencl::MemType mem_type);
+                  std::vector<KernelExec *> *out_convert_ops, lite::opencl::MemType mem_type);
 #endif
   void GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
-                             const std::vector<kernel::LiteKernel *> &in_kernels,
-                             std::vector<std::vector<kernel::LiteKernel *>> *out_kernels, bool is_from);
+                             const std::vector<kernel::KernelExec *> &in_kernels,
+                             std::vector<std::vector<kernel::KernelExec *>> *out_kernels, bool is_from);
   int FusionPass();
 
   int InsertOpsPass();
@@ -95,9 +95,9 @@ class OpenCLSubGraph : public SubGraphKernel {
   std::vector<OpenGLTexture2DToOpenCLParameter *> gl_in_parameters_;
   std::vector<OpenGLTexture2DToOpenCLParameter *> gl_out_parameters_;
 #endif
-  std::vector<LiteKernel *> in_convert_ops_;
-  std::vector<LiteKernel *> out_convert_ops_;
-  std::set<LiteKernel *> nodes_set_;
+  std::vector<KernelExec *> in_convert_ops_;
+  std::vector<KernelExec *> out_convert_ops_;
+  std::set<KernelExec *> nodes_set_;
   lite::opencl::OpenCLRuntimeInnerWrapper ocl_runtime_wrap_;
   lite::opencl::OpenCLRuntime *ocl_runtime_{nullptr};
   bool all_kernels_infer_done_ = false;

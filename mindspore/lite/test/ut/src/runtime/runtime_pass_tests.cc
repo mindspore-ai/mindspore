@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_pass.h"
 #include "nnacl/conv_parameter.h"
 
 namespace mindspore {
 namespace lite {
-extern void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors, int i);
-extern void ConvNormC4PassAct(std::vector<kernel::LiteKernel *> *kernels);
+extern void Nc4hw4PassAct(std::vector<kernel::KernelExec *> *kernels, std::vector<Tensor *> *tensors, int i);
+extern void ConvNormC4PassAct(std::vector<kernel::KernelExec *> *kernels);
 }  // namespace lite
 
 class RuntimePass : public mindspore::CommonTest {
@@ -30,7 +30,7 @@ class RuntimePass : public mindspore::CommonTest {
   RuntimePass() = default;
 };
 
-void Nc4hw4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::vector<lite::Tensor *> *tensors,
+void Nc4hw4PassConstruct(std::vector<kernel::KernelExec *> *kernels, std::vector<lite::Tensor *> *tensors,
                          lite::InnerContext *ctx) {
   auto reg = lite::KernelRegistry::GetInstance();
 
@@ -47,7 +47,7 @@ void Nc4hw4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::vector
   conv_param->group_ = 1;
   OpParameter *op_conv = reinterpret_cast<OpParameter *>(conv_param);
   kernel::KernelKey conv_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2DFusion};
-  kernel::LiteKernel *conv_kernel = nullptr;
+  kernel::KernelExec *conv_kernel = nullptr;
   reg->GetKernel(conv_in, conv_out, ctx, nullptr, conv_desc, op_conv, &conv_kernel, nullptr);
   kernels->push_back(conv_kernel);
 
@@ -58,7 +58,7 @@ void Nc4hw4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::vector
   OpParameter *trans_param = new OpParameter();
   trans_param->type_ = schema::PrimitiveType_Transpose;
   kernel::KernelKey trans_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Transpose};
-  kernel::LiteKernel *trans_kernel = nullptr;
+  kernel::KernelExec *trans_kernel = nullptr;
   std::vector<lite::Tensor *> trans_in = {conv_out_tensor, trans_param_tensor};
   std::vector<lite::Tensor *> trans_out = {trans_out_tensor};
   reg->GetKernel(trans_in, trans_out, ctx, nullptr, trans_desc, trans_param, &trans_kernel, nullptr);
@@ -71,7 +71,7 @@ void Nc4hw4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::vector
   OpParameter *in_param = new OpParameter();
   in_param->type_ = schema::PrimitiveType_InstanceNorm;
   kernel::KernelKey in_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_InstanceNorm};
-  kernel::LiteKernel *in_kernel = nullptr;
+  kernel::KernelExec *in_kernel = nullptr;
   std::vector<lite::Tensor *> in_in = {trans_out_tensor, in_param_tensor};
   std::vector<lite::Tensor *> in_out = {in_out_tensor};
   reg->GetKernel(in_in, in_out, ctx, nullptr, in_desc, in_param, &in_kernel, nullptr);
@@ -84,7 +84,7 @@ void Nc4hw4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::vector
   OpParameter *trans2_param = new OpParameter();
   trans2_param->type_ = schema::PrimitiveType_Transpose;
   kernel::KernelKey trans2_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Transpose};
-  kernel::LiteKernel *trans2_kernel = nullptr;
+  kernel::KernelExec *trans2_kernel = nullptr;
   std::vector<lite::Tensor *> trans2_in = {in_out_tensor, trans2_param_tensor};
   std::vector<lite::Tensor *> trans2_out = {trans2_out_tensor};
   reg->GetKernel(trans2_in, trans2_out, ctx, nullptr, trans2_desc, trans2_param, &trans2_kernel, nullptr);
@@ -101,7 +101,7 @@ void Nc4hw4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::vector
   conv2_param->group_ = 1;
   OpParameter *op2_conv = reinterpret_cast<OpParameter *>(conv2_param);
   kernel::KernelKey conv2_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2DFusion};
-  kernel::LiteKernel *conv2_kernel = nullptr;
+  kernel::KernelExec *conv2_kernel = nullptr;
   reg->GetKernel(conv2_in, conv2_out, ctx, nullptr, conv2_desc, op2_conv, &conv2_kernel, nullptr);
   kernels->push_back(conv2_kernel);
 
@@ -116,7 +116,7 @@ void Nc4hw4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::vector
   return;
 }
 
-void ConvNormC4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::vector<lite::Tensor *> *tensors,
+void ConvNormC4PassConstruct(std::vector<kernel::KernelExec *> *kernels, std::vector<lite::Tensor *> *tensors,
                              lite::InnerContext *ctx) {
   auto reg = lite::KernelRegistry::GetInstance();
 
@@ -133,7 +133,7 @@ void ConvNormC4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::ve
   conv1_param->group_ = 1;
   OpParameter *op1_conv = reinterpret_cast<OpParameter *>(conv1_param);
   kernel::KernelKey conv1_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2DFusion};
-  kernel::LiteKernel *conv1_kernel = nullptr;
+  kernel::KernelExec *conv1_kernel = nullptr;
   reg->GetKernel(conv1_in, conv1_out, ctx, nullptr, conv1_desc, op1_conv, &conv1_kernel, nullptr);
   kernels->push_back(conv1_kernel);
 
@@ -144,7 +144,7 @@ void ConvNormC4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::ve
   OpParameter *in_param = new OpParameter();
   in_param->type_ = schema::PrimitiveType_InstanceNorm;
   kernel::KernelKey in_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_InstanceNorm};
-  kernel::LiteKernel *in_kernel = nullptr;
+  kernel::KernelExec *in_kernel = nullptr;
   std::vector<lite::Tensor *> in_in = {conv1_out_tensor, in_param_tensor};
   std::vector<lite::Tensor *> in_out = {in_out_tensor};
   reg->GetKernel(in_in, in_out, ctx, nullptr, in_desc, in_param, &in_kernel, nullptr);
@@ -162,7 +162,7 @@ void ConvNormC4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::ve
   conv2_param->group_ = 1;
   OpParameter *op2_conv = reinterpret_cast<OpParameter *>(conv2_param);
   kernel::KernelKey conv2_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2DFusion};
-  kernel::LiteKernel *conv2_kernel = nullptr;
+  kernel::KernelExec *conv2_kernel = nullptr;
   reg->GetKernel(conv2_in, conv2_out, ctx, nullptr, conv2_desc, op2_conv, &conv2_kernel, nullptr);
   kernels->push_back(conv2_kernel);
 
@@ -173,7 +173,7 @@ void ConvNormC4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::ve
   OpParameter *act_param = new OpParameter();
   act_param->type_ = schema::PrimitiveType_Activation;
   kernel::KernelKey act_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
-  kernel::LiteKernel *act_kernel = nullptr;
+  kernel::KernelExec *act_kernel = nullptr;
   reg->GetKernel(act_in, act_out, ctx, nullptr, act_desc, act_param, &act_kernel, nullptr);
   kernels->push_back(act_kernel);
 
@@ -184,7 +184,7 @@ void ConvNormC4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::ve
   OpParameter *in2_param = new OpParameter();
   in2_param->type_ = schema::PrimitiveType_InstanceNorm;
   kernel::KernelKey in2_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_InstanceNorm};
-  kernel::LiteKernel *in2_kernel = nullptr;
+  kernel::KernelExec *in2_kernel = nullptr;
   std::vector<lite::Tensor *> in2_in = {act_out_tensor, in2_param_tensor};
   std::vector<lite::Tensor *> in2_out = {in2_out_tensor};
   reg->GetKernel(in2_in, in2_out, ctx, nullptr, in2_desc, in2_param, &in2_kernel, nullptr);
@@ -203,7 +203,7 @@ void ConvNormC4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::ve
 
 TEST_F(RuntimePass, Nc4hw4Pass1) {
   auto ctx = std::make_shared<lite::InnerContext>();
-  std::vector<kernel::LiteKernel *> kernels;
+  std::vector<kernel::KernelExec *> kernels;
   std::vector<lite::Tensor *> tensors;
   Nc4hw4PassConstruct(&kernels, &tensors, ctx.get());
 
@@ -227,7 +227,7 @@ TEST_F(RuntimePass, Nc4hw4Pass1) {
 
 TEST_F(RuntimePass, ConvNormC4Pass1) {
   auto ctx = std::make_shared<lite::InnerContext>();
-  std::vector<kernel::LiteKernel *> kernels;
+  std::vector<kernel::KernelExec *> kernels;
   std::vector<lite::Tensor *> tensors;
   ConvNormC4PassConstruct(&kernels, &tensors, ctx.get());
 

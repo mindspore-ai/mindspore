@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #include "nnacl/fp32/batchnorm_fp32.h"
 #include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/src/lite_kernel.h"
+#include "mindspore/lite/src/kernel_exec.h"
 
 namespace mindspore {
 class TestBatchnormFp32 : public mindspore::CommonTest {

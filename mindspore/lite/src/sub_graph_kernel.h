@@ -23,7 +23,7 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/executor.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
@@ -57,11 +57,11 @@ struct DataStore {
   }
 };
 
-class SubGraphKernel : public LiteKernel {
+class SubGraphKernel : public KernelExec {
  public:
-  SubGraphKernel(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
-                 std::vector<LiteKernel *> nodes, Kernel *kernel)
-      : LiteKernel(std::shared_ptr<Kernel>(kernel)),
+  SubGraphKernel(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
+                 std::vector<KernelExec *> nodes, Kernel *kernel)
+      : KernelExec(std::shared_ptr<Kernel>(kernel)),
         nodes_(std::move(nodes)),
         in_nodes_(std::move(in_kernels)),
         out_nodes_(std::move(out_kernels)) {
@@ -78,7 +78,7 @@ class SubGraphKernel : public LiteKernel {
 
   bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override {
     return std::all_of(this->in_nodes_.begin(), this->in_nodes_.end(),
-                       [&](LiteKernel *kernel) { return kernel->IsReady(scope_tensors); });
+                       [&](KernelExec *kernel) { return kernel->IsReady(scope_tensors); });
   }
 
   // called while compiling graph. Call node->Prepare() by default.
@@ -91,7 +91,7 @@ class SubGraphKernel : public LiteKernel {
   // called after Run
   int ReSize() override;
 
-  void InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) override;
+  void InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask_kernels) override;
 
   void InitInputOutputTensorInitRefCount();
 
@@ -99,32 +99,32 @@ class SubGraphKernel : public LiteKernel {
 
   std::string ToString() const override;
 
-  void set_nodes(const std::vector<LiteKernel *> &node) { this->nodes_ = node; }
+  void set_nodes(const std::vector<KernelExec *> &node) { this->nodes_ = node; }
 
-  std::vector<LiteKernel *> &nodes() { return this->nodes_; }
+  std::vector<KernelExec *> &nodes() { return this->nodes_; }
 
-  void DropNode(LiteKernel *node);
+  void DropNode(KernelExec *node);
 
-  std::vector<LiteKernel *> in_nodes() { return this->in_nodes_; }
+  std::vector<KernelExec *> in_nodes() { return this->in_nodes_; }
 
-  std::vector<LiteKernel *> out_nodes() { return this->out_nodes_; }
+  std::vector<KernelExec *> out_nodes() { return this->out_nodes_; }
 
   void SetSchemaVersion(int schema_version) { schema_version_ = schema_version; }
 
  protected:
-  std::vector<LiteKernel *> nodes_{};
+  std::vector<KernelExec *> nodes_{};
   // entry nodes in nodes
-  std::vector<LiteKernel *> in_nodes_{};
+  std::vector<KernelExec *> in_nodes_{};
   // exit nodes in nodes
-  std::vector<LiteKernel *> out_nodes_{};
+  std::vector<KernelExec *> out_nodes_{};
   mindspore::lite::Executor *executor_ = nullptr;
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
 };
 
 class CpuSubGraph : public SubGraphKernel {
  public:
-  CpuSubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
-              std::vector<LiteKernel *> nodes, Kernel *kernel)
+  CpuSubGraph(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
+              std::vector<KernelExec *> nodes, Kernel *kernel)
       : SubGraphKernel(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP32SubGraph;
     desc_.arch = kernel::KERNEL_ARCH::kCPU;
@@ -139,8 +139,8 @@ class CpuSubGraph : public SubGraphKernel {
 
 class CpuFp32SubGraph : public CpuSubGraph {
  public:
-  CpuFp32SubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
-                  std::vector<LiteKernel *> nodes, Kernel *kernel)
+  CpuFp32SubGraph(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
+                  std::vector<KernelExec *> nodes, Kernel *kernel)
       : CpuSubGraph(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP32SubGraph;
     static std::atomic_int index = {0};
@@ -153,8 +153,8 @@ class CpuFp32SubGraph : public CpuSubGraph {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 class CpuFp16SubGraph : public CpuSubGraph {
  public:
-  CpuFp16SubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
-                  std::vector<LiteKernel *> nodes, Kernel *kernel)
+  CpuFp16SubGraph(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
+                  std::vector<KernelExec *> nodes, Kernel *kernel)
       : CpuSubGraph(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP16SubGraph;
     static std::atomic_int index = 0;
@@ -221,8 +221,8 @@ class CpuFp16SubGraph : public CpuSubGraph {
 
 class CustomSubGraph : public SubGraphKernel {
  public:
-  CustomSubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
-                 std::vector<LiteKernel *> nodes, Kernel *kernel)
+  CustomSubGraph(std::vector<KernelExec *> in_kernels, std::vector<KernelExec *> out_kernels,
+                 std::vector<KernelExec *> nodes, Kernel *kernel)
       : SubGraphKernel(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCustomSubGraph;
     desc_.arch = kernel::KERNEL_ARCH::kCustom;

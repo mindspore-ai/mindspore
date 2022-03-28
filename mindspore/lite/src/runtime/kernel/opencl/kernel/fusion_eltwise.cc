@@ -45,7 +45,7 @@ static std::set<EltwiseOperator> SupportedOperators = {
   Operator_Act_TANH,
 };
 
-bool CheckSupport(LiteKernel *node) {
+bool CheckSupport(KernelExec *node) {
   MS_ASSERT(node);
   PrimitiveType node_type = node->type();
   auto operator_ = static_cast<const EltwiseOperator>(node_type);
@@ -78,7 +78,7 @@ bool CheckSupport(LiteKernel *node) {
   return false;
 }
 
-FusionEltwiseParameter *CreateParam(LiteKernel *node,
+FusionEltwiseParameter *CreateParam(KernelExec *node,
                                     const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map = {}) {
   MS_ASSERT(node);
   PrimitiveType node_type = node->type();
@@ -125,10 +125,10 @@ FusionEltwiseParameter *CreateParam(LiteKernel *node,
   return param;
 }
 
-bool IsOperatorSupported(LiteKernel *node) { return CheckSupport(node); }
+bool IsOperatorSupported(KernelExec *node) { return CheckSupport(node); }
 
 FusionEltwiseParameter *CreateFusionEltwiseParameter(
-  LiteKernel *node, const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map) {
+  KernelExec *node, const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map) {
   return CreateParam(node, replace_map);
 }
 
@@ -139,7 +139,7 @@ bool CheckDateTypeSupport(lite::Tensor *tensor) {
   return true;
 }
 
-bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
+bool IsEltwiseAndOperatorSupported(KernelExec *node) {
   MS_ASSERT(node);
   if (!IsOperatorSupported(node)) {
     return false;

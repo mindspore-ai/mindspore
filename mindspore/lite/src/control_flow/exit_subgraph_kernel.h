@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <set>
 #include <memory>
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "src/executor.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
@@ -47,13 +47,13 @@ class ExitSubGraphKernel : public SubGraphKernel {
 
   int ReSize() override { return RET_OK; };
 
-  void SetPartial(kernel::LiteKernel *partial_node);
+  void SetPartial(kernel::KernelExec *partial_node);
 
-  std::set<kernel::LiteKernel *> GetPartials() const { return partials_; }
+  std::set<kernel::KernelExec *> GetPartials() const { return partials_; }
 
  protected:
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
-  std::set<kernel::LiteKernel *> partials_;
+  std::set<kernel::KernelExec *> partials_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXIT_SUBGRAPH_KERNEL_H_

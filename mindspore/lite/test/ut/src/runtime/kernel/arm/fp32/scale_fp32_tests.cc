@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <vector>
-#include "mindspore/lite/src/lite_kernel.h"
+#include "mindspore/lite/src/kernel_exec.h"
 #include "mindspore/lite/src/tensor.h"
 #include "common/common_test.h"
 #include "nnacl/pad_parameter.h"

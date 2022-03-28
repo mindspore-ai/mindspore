@@ -143,9 +143,9 @@ constexpr EltwiseOperator Activation2Operator(ActivationType act_type) {
 }
 
 FusionEltwiseParameter *CreateFusionEltwiseParameter(
-  LiteKernel *node, const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map = {});
+  KernelExec *node, const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map = {});
 
-bool IsEltwiseAndOperatorSupported(LiteKernel *node);
+bool IsEltwiseAndOperatorSupported(KernelExec *node);
 
 class FusionEltwiseOpenCLKernel : public OpenCLKernel {
  public:
@@ -175,7 +175,7 @@ class FusionEltwiseOpenCLKernel : public OpenCLKernel {
   static inline bool IsScalar(const std::vector<int> &shape) {
     return shape.empty() || (shape.size() == 1 && shape.front() == 1);
   }
-  const std::vector<LiteKernel *> *in_kernels_;
+  const std::vector<KernelExec *> *in_kernels_;
 
  private:
   std::map<std::string, std::string> var_names_;  // origin name -> simplified name

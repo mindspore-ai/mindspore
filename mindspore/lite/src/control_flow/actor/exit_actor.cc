@@ -17,7 +17,7 @@
 #include "src/control_flow/actor/exit_actor.h"
 #include <algorithm>
 #include "src/control_flow/exit_subgraph_kernel.h"
-#include "src/lite_kernel_util.h"
+#include "src/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
 
 namespace {
@@ -177,7 +177,7 @@ int LiteExitOpActor::CreateMappingInfo() {
   }
   auto partial_set = exit_subgraph_kernel->GetPartials();
   for (auto partial : partial_set) {
-    auto call_node = kernel::LiteKernelUtil::GetPartialOutputCall(partial);
+    auto call_node = kernel::KernelExecUtil::GetPartialOutputCall(partial);
     if (call_node == nullptr) {
       MS_LOG(ERROR) << "get partial node: " << partial->name() << " 's call output node failed.";
       return RET_ERROR;

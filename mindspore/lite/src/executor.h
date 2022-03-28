@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/inner_allocator.h"
-#include "src/lite_kernel.h"
+#include "src/kernel_exec.h"
 #include "include/lite_session.h"
 
 namespace mindspore::lite {
@@ -28,14 +28,14 @@ class Executor {
   Executor() = default;
   virtual ~Executor() = default;
 
-  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+  virtual int Prepare(const std::vector<kernel::KernelExec *> &kernels, const std::vector<Tensor *> &inputs,
                       const std::vector<Tensor *> &outputs, lite::InnerContext *ctx) {
     ctx_ = ctx;
     return RET_OK;
   }
 
   virtual int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const std::vector<kernel::LiteKernel *> &kernels, const KernelCallBack &before = nullptr,
+                  const std::vector<kernel::KernelExec *> &kernels, const KernelCallBack &before = nullptr,
                   const KernelCallBack &after = nullptr);
 
   virtual int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,

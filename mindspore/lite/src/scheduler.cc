@@ -30,7 +30,7 @@
 #include "src/common/utils.h"
 #include "src/kernel_registry.h"
 #include "include/registry/register_kernel.h"
-#include "src/lite_kernel_util.h"
+#include "src/kernel_exec_util.h"
 #include "src/sub_graph_kernel.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
@@ -104,7 +104,7 @@ int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16)
 }
 
 // support_fp16: current device and package support float16
-int CastKernelWeight(const kernel::SubGraphType &belong_subgraph_type, const kernel::LiteKernel *kernel,
+int CastKernelWeight(const kernel::SubGraphType &belong_subgraph_type, const kernel::KernelExec *kernel,
                      bool support_fp16) {
   MS_ASSERT(kernel != nullptr);
   MS_ASSERT(kernel->subgraph_type() == kernel::kNotSubGraph);
@@ -183,7 +183,7 @@ int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
 
 // support_fp16: current device and package support float16
 int Scheduler::HandleBuildinCpuKernelWeight(const kernel::SubGraphType &belong_subgraph_type,
-                                            const kernel::LiteKernel *kernel) {
+                                            const kernel::KernelExec *kernel) {
   MS_ASSERT(kernel != nullptr);
   MS_ASSERT(kernel->subgraph_type() == kernel::kNotSubGraph);
   if (is_train_session_ || kernel->type() == schema::PrimitiveType_Custom ||
@@ -207,7 +207,7 @@ int Scheduler::HandleBuildinCpuKernelWeight(const kernel::SubGraphType &belong_s
   return RET_OK;
 }
 
-int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> &&dst_kernels) {
+int Scheduler::InitKernels(std::vector<kernel::KernelExec *> &&dst_kernels) {
   if (is_train_session_) {
     return RET_OK;
   }
@@ -287,7 +287,7 @@ int Scheduler::SchedulePreProcess() {
   return RET_OK;
 }
 
-int Scheduler::CheckCpuValid(const std::vector<kernel::LiteKernel *> *dst_kernels) const {
+int Scheduler::CheckCpuValid(const std::vector<kernel::KernelExec *> *dst_kernels) const {
   if (context_->IsCpuEnabled()) {
     return RET_OK;
   }
@@ -300,7 +300,7 @@ int Scheduler::CheckCpuValid(const std::vector<kernel::LiteKernel *> *dst_kernel
   return RET_OK;
 }
 
-int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels) {
+int Scheduler::ConstructSubGraphs(std::vector<kernel::KernelExec *> *dst_kernels) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
     return ConstructControlFlowMainGraph(dst_kernels);
@@ -309,11 +309,11 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels
 
   auto src_kernel = *dst_kernels;
   dst_kernels->clear();
-  std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
+  std::map<const kernel::KernelExec *, bool> is_kernel_finish;
   return ConstructNormalSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
 }
 
-STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::LiteKernel *> *kernels) {
+STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::KernelExec *> *kernels) {
   for (auto iter = (*kernels).begin(); iter != (*kernels).end();) {
     auto cur_kernel = *iter;
     if (cur_kernel->subgraph_type() != kernel::kNotSubGraph) {
@@ -392,7 +392,7 @@ STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::LiteKernel *> *ker
   return RET_OK;
 }
 
-int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
+int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   int check_input_ret = CheckInputParam(dst_kernels);
   if (check_input_ret != RET_OK) {
     MS_LOG(ERROR) << "CheckInputParam failed! ret: " << check_input_ret;
@@ -422,7 +422,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
   if (context_->float_mode) {
-    kernel::LiteKernelUtil::FindAllInoutKernels(*dst_kernels);
+    kernel::KernelExecUtil::FindAllInoutKernels(*dst_kernels);
     ret = DelQuantDTypeCastKernel(dst_kernels);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Delete quant_dtype_cast kernel failed.";
@@ -451,7 +451,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
 
-  kernel::LiteKernelUtil::FindAllInoutKernels(*dst_kernels);
+  kernel::KernelExecUtil::FindAllInoutKernels(*dst_kernels);
 
   ret = ConstructSubGraphs(dst_kernels);
   if (ret != RET_OK) {
@@ -488,7 +488,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
       if (subgraph->desc().arch == kernel::KERNEL_ARCH::kDelegate) {
         continue;
       }
-      std::vector<kernel ::LiteKernel *> kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
+      std::vector<kernel ::KernelExec *> kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
       for (auto kernel : kernel_list) {
         MS_LOG(DEBUG) << "kernel: [" << kernel->name() << "] "
                       << "TypeId(" << kernel->desc().data_type << "); "
@@ -500,7 +500,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   return RET_OK;
 }
 
-int Scheduler::CheckInputParam(std::vector<kernel::LiteKernel *> *dst_kernels) {
+int Scheduler::CheckInputParam(std::vector<kernel::KernelExec *> *dst_kernels) {
   if (dst_kernels == nullptr) {
     return RET_ERROR;
   }
@@ -516,7 +516,7 @@ int Scheduler::CheckInputParam(std::vector<kernel::LiteKernel *> *dst_kernels) {
 }
 
 #ifndef DELEGATE_CLIP
-int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels) {
+int Scheduler::ReplaceDelegateKernels(std::vector<kernel::KernelExec *> *dst_kernels) {
   std::vector<kernel::Kernel *> kernels;
   for (size_t i = 0; i < dst_kernels->size(); i++) {
     kernels.push_back((*dst_kernels)[i]->kernel());
@@ -540,7 +540,7 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
 
   auto src_kernels = *dst_kernels;
   dst_kernels->clear();
-  std::map<const kernel::LiteKernel *, bool> delegate_support;
+  std::map<const kernel::KernelExec *, bool> delegate_support;
   for (auto kernel : src_kernels) {
     delegate_support[kernel] = true;
   }
@@ -557,10 +557,10 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
     if (index == src_kernels.size()) {
       // New liteKernel to save delegate subgraph
       std::shared_ptr<kernel::Kernel> shared_kernel(kernel);
-      auto lite_kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
-      if (lite_kernel == nullptr) {
+      auto kernel_exec = new (std::nothrow) kernel::KernelExec(shared_kernel);
+      if (kernel_exec == nullptr) {
         delete model;
-        MS_LOG(ERROR) << "New LiteKernel for delegate subgraph failed.";
+        MS_LOG(ERROR) << "New KernelExec for delegate subgraph failed.";
         return RET_NULL_PTR;
       }
       auto delegate_type = kNumberTypeFloat32;
@@ -571,8 +571,8 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
         }
       }
       kernel::KernelKey delegate_desc{kernel::kDelegate, delegate_type, schema::PrimitiveType_NONE, "", ""};
-      lite_kernel->set_desc(delegate_desc);
-      dst_kernels->push_back(lite_kernel);
+      kernel_exec->set_desc(delegate_desc);
+      dst_kernels->push_back(kernel_exec);
     }
   }
   // Release the cpu kernel that has been replace by delegate subgraph
@@ -585,7 +585,7 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
   return RET_OK;
 }
 
-int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels) {
+int Scheduler::InitDelegateKernels(std::vector<kernel::KernelExec *> *dst_kernels) {
   /* no delegate valid */
   if (delegate_ == nullptr) {
     return RET_OK;
@@ -604,12 +604,12 @@ int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernel
   }
 
   /* Inner delegate  :  check Priority */
-  std::vector<kernel::LiteKernel *> src_kernels = *dst_kernels;
+  std::vector<kernel::KernelExec *> src_kernels = *dst_kernels;
   dst_kernels->clear();
 
   while (!src_kernels.empty()) {
-    std::vector<kernel::LiteKernel *> tmp_kernels;
-    kernel::LiteKernel *remain_kernel = nullptr;
+    std::vector<kernel::KernelExec *> tmp_kernels;
+    kernel::KernelExec *remain_kernel = nullptr;
 
     /* Loop for inner delegate npu and TensorRT subgraph */
     while (!src_kernels.empty()) {
@@ -1023,7 +1023,7 @@ void Scheduler::ResetByExecutionPlan(std::string node_name, TypeId *data_type) {
 
 int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                              OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
-                             kernel::LiteKernel **kernel) {
+                             kernel::KernelExec **kernel) {
   MS_ASSERT(op_parameter != nullptr);
   auto op_type = op_parameter->type_;
   if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
@@ -1071,7 +1071,7 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 
 #ifdef GPU_OPENCL
 int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                             OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel,
+                             OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::KernelExec **kernel,
                              TypeId prefer_data_type) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(kernel != nullptr);
@@ -1116,7 +1116,7 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                  const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel) {
+                                  const Model::Node *node, TypeId data_type, kernel::KernelExec **kernel) {
   MS_ASSERT(kernel != nullptr);
   int ret = RET_NOT_SUPPORT;
   auto prim_type = GetPrimitiveType(node->primitive_, schema_version_);
@@ -1163,7 +1163,7 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
 }
 #endif
 
-kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in_tensors,
+kernel::KernelExec *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in_tensors,
                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
                                                  TypeId prefer_data_type) {
   MS_ASSERT(node != nullptr);
@@ -1187,7 +1187,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       }
     }
   }
-  kernel::LiteKernel *kernel = nullptr;
+  kernel::KernelExec *kernel = nullptr;
   int status;
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
@@ -1286,7 +1286,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
 }
 
 namespace {
-kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, const InnerContext &context,
+kernel::SubGraphType GetKernelSubGraphType(const kernel::KernelExec *kernel, const InnerContext &context,
                                            bool is_controlflow = false) {
   if (kernel == nullptr) {
     return kernel::kNotSubGraph;
@@ -1318,7 +1318,7 @@ kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, con
 }
 }  // namespace
 
-kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *src_node) {
+kernel::KernelExec *Scheduler::SchedulePartialToKernel(const lite::Model::Node *src_node) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(src_node != nullptr);
   auto *primitive = src_node->primitive_;
@@ -1379,8 +1379,8 @@ int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_
 }
 #endif
 
-std::vector<kernel::LiteKernel *> Scheduler::ScheduleMainSubGraphToKernels() {
-  std::vector<kernel::LiteKernel *> kernels;
+std::vector<kernel::KernelExec *> Scheduler::ScheduleMainSubGraphToKernels() {
+  std::vector<kernel::KernelExec *> kernels;
   std::vector<lite::Tensor *> in_tensors;
   std::vector<lite::Tensor *> out_tensors;
   auto ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, &kernels, &in_tensors, &out_tensors);
@@ -1395,7 +1395,7 @@ std::vector<kernel::LiteKernel *> Scheduler::ScheduleMainSubGraphToKernels() {
   return kernels;
 }
 
-kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgraph_index) {
+kernel::KernelExec *Scheduler::SchedulePartialToSubGraphKernel(const int &subgraph_index) {
   TypeId prefer_data_type = kTypeUnknown;
 #ifdef ENABLE_FP16
   if (SubGraphPreferDataType(subgraph_index, &prefer_data_type) != RET_OK) {
@@ -1403,7 +1403,7 @@ kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgra
     return nullptr;
   }
 #endif
-  std::vector<kernel::LiteKernel *> kernels;
+  std::vector<kernel::KernelExec *> kernels;
   std::vector<lite::Tensor *> in_tensors;
   std::vector<lite::Tensor *> out_tensors;
   auto ret = ScheduleSubGraphToKernels(subgraph_index, &kernels, &in_tensors, &out_tensors, prefer_data_type);
@@ -1411,13 +1411,13 @@ kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgra
     MS_LOG(ERROR) << "Schedule subgraph failed, index: " << subgraph_index;
     return nullptr;
   }
-  kernel::LiteKernelUtil::FindAllInoutKernels(kernels);
+  kernel::KernelExecUtil::FindAllInoutKernels(kernels);
   kernel::SubGraphType cur_sub_graph_type = kernel::kCpuFP32SubGraph;
   if (!kernels.empty()) {
     cur_sub_graph_type = GetKernelSubGraphType(kernels.front(), *context_, true);
   }
   MS_LOG(INFO) << "cur_sub_graph_type: " << cur_sub_graph_type;
-  auto subgraph_kernel = kernel::LiteKernelUtil::CreateSubGraphKernel(kernels, &in_tensors, &out_tensors,
+  auto subgraph_kernel = kernel::KernelExecUtil::CreateSubGraphKernel(kernels, &in_tensors, &out_tensors,
                                                                       cur_sub_graph_type, *context_, schema_version_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(ERROR) << "CreateSubGraphKernel failed, cur_sub_graph_type: " << cur_sub_graph_type;
@@ -1426,7 +1426,7 @@ kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgra
   return subgraph_kernel;
 }
 
-std::vector<kernel::LiteKernel *> Scheduler::ScheduleSubGraphToSubGraphKernels(const int &subgraph_index) {
+std::vector<kernel::KernelExec *> Scheduler::ScheduleSubGraphToSubGraphKernels(const int &subgraph_index) {
   if (subgraph_index == kMainSubGraphIndex) {
     return ScheduleMainSubGraphToKernels();
   }
@@ -1440,7 +1440,7 @@ std::vector<kernel::LiteKernel *> Scheduler::ScheduleSubGraphToSubGraphKernels(c
   return {subgraph_kernel};
 }
 
-kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src_node, TypeId prefer_data_type) {
+kernel::KernelExec *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src_node, TypeId prefer_data_type) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   MS_ASSERT(src_node != nullptr);
@@ -1479,7 +1479,7 @@ bool Scheduler::IsControlFlowPattern(const lite::Model::Node &partial_node) {
                                             IsSwitchLayerNode(partial_node_output->primitive_, schema_version_));
 }
 
-int Scheduler::ScheduleGraphToKernels(std::vector<kernel::LiteKernel *> *dst_kernels, TypeId prefer_data_type) {
+int Scheduler::ScheduleGraphToKernels(std::vector<kernel::KernelExec *> *dst_kernels, TypeId prefer_data_type) {
   subgraphs_to_schedule_.push_back(kMainSubGraphIndex);
   while (!subgraphs_to_schedule_.empty()) {
     auto cur_subgraph_index = subgraphs_to_schedule_.front();
@@ -1494,7 +1494,7 @@ int Scheduler::ScheduleGraphToKernels(std::vector<kernel::LiteKernel *> *dst_ker
   return RET_OK;
 }
 
-int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kernel::LiteKernel *> *dst_kernels,
+int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kernel::KernelExec *> *dst_kernels,
                                          std::vector<lite::Tensor *> *in_tensors,
                                          std::vector<lite::Tensor *> *out_tensors, TypeId prefer_data_type) {
   MS_ASSERT(src_model_ != nullptr);
@@ -1509,7 +1509,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
     MS_ASSERT(node != nullptr);
     auto *primitive = node->primitive_;
     MS_ASSERT(primitive != nullptr);
-    kernel::LiteKernel *kernel = nullptr;
+    kernel::KernelExec *kernel = nullptr;
 
     if (IsPartialNode(primitive, schema_version_)) {
       if (IsControlFlowPattern(*node)) {
@@ -1563,7 +1563,7 @@ bool KernelFitCurrentSubGraphCPUFp32(TypeId data_type) {
           data_type == kNumberTypeUInt8 || data_type == kNumberTypeBool);
 }
 
-bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const kernel::LiteKernel &kernel) {
+bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const kernel::KernelExec &kernel) {
   switch (subgraph_type) {
     case kernel::SubGraphType::kNotSubGraph:
     case kernel::SubGraphType::kApuSubGraph:
@@ -1599,9 +1599,9 @@ bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const ke
   }
 }
 
-kernel::LiteKernel *FindAllSubGraphKernels(const std::vector<kernel::LiteKernel *> &sorted_kernels,
+kernel::KernelExec *FindAllSubGraphKernels(const std::vector<kernel::KernelExec *> &sorted_kernels,
                                            const InnerContext &context, size_t *cur_index, int schema_version) {
-  std::vector<kernel::LiteKernel *> sub_kernels;
+  std::vector<kernel::KernelExec *> sub_kernels;
   sub_kernels.emplace_back(sorted_kernels[*cur_index]);
   auto cur_sub_graph_type = GetKernelSubGraphType(sorted_kernels[*cur_index], context);
   for (*cur_index = *cur_index + 1; *cur_index < sorted_kernels.size(); ++(*cur_index)) {
@@ -1621,14 +1621,14 @@ kernel::LiteKernel *FindAllSubGraphKernels(const std::vector<kernel::LiteKernel 
     }
     sub_kernels.emplace_back(cur_kernel);
   }
-  return kernel::LiteKernelUtil::CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type, context,
+  return kernel::KernelExecUtil::CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type, context,
                                                       schema_version);
 }
 }  // namespace
 
-int Scheduler::ConstructNormalSubGraphs(const std::vector<kernel::LiteKernel *> &src_kernel,
-                                        std::vector<kernel::LiteKernel *> *dst_kernel,
-                                        std::map<const kernel::LiteKernel *, bool> *is_kernel_finish) {
+int Scheduler::ConstructNormalSubGraphs(const std::vector<kernel::KernelExec *> &src_kernel,
+                                        std::vector<kernel::KernelExec *> *dst_kernel,
+                                        std::map<const kernel::KernelExec *, bool> *is_kernel_finish) {
   if (src_kernel.empty()) {
     return RET_OK;
   }
@@ -1705,7 +1705,7 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
   return in_tensors[0]->data_type() == kObjectTypeTensorType ? kNumberTypeFloat32 : in_tensors[0]->data_type();
 }
 
-void Scheduler::SetKernelTensorDataType(kernel::LiteKernel *kernel) {
+void Scheduler::SetKernelTensorDataType(kernel::KernelExec *kernel) {
   MS_ASSERT(kernel != nullptr);
   if (kernel->desc().arch != kernel::KERNEL_ARCH::kCPU) {
     return;
@@ -1730,9 +1730,9 @@ void Scheduler::SetKernelTensorDataType(kernel::LiteKernel *kernel) {
   }
 }
 
-kernel::SubGraphType Scheduler::PartialSubGraphType(const std::vector<kernel::LiteKernel *> &kernels) {
+kernel::SubGraphType Scheduler::PartialSubGraphType(const std::vector<kernel::KernelExec *> &kernels) {
   if (std::any_of(kernels.begin(), kernels.end(),
-                  [](const kernel::LiteKernel *item) { return item->desc().data_type == kNumberTypeFloat16; })) {
+                  [](const kernel::KernelExec *item) { return item->desc().data_type == kNumberTypeFloat16; })) {
     return kernel::kCpuFP16SubGraph;
   }
   return kernel::kCpuFP32SubGraph;
@@ -1800,10 +1800,10 @@ void CopyTensorList(TensorList *dst_tensor, TensorList *src_tensor) {
   dst_tensor->set_tensors(cpy_tensors);
 }
 
-int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *kernels) {
+int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::KernelExec *> *kernels) {
   auto back_kernels = *kernels;
   kernels->clear();
-  std::vector<kernel::LiteKernel *> main_graph_kernels{};
+  std::vector<kernel::KernelExec *> main_graph_kernels{};
   for (auto &kernel : back_kernels) {
     if (kernel->subgraph_type() != kernel::kNotSubGraph) {
       kernels->push_back(kernel);
@@ -1812,7 +1812,7 @@ int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *
     }
   }
   auto cur_subgraph_type = PartialSubGraphType(main_graph_kernels);
-  auto subgraph_kernel = kernel::LiteKernelUtil::CreateSubGraphKernel(main_graph_kernels, nullptr, nullptr,
+  auto subgraph_kernel = kernel::KernelExecUtil::CreateSubGraphKernel(main_graph_kernels, nullptr, nullptr,
                                                                       cur_subgraph_type, *context_, schema_version_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(ERROR) << "create main graph for control flow model failed.";
@@ -1823,8 +1823,8 @@ int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *
 }
 #endif
 
-std::vector<kernel::LiteKernel *> Scheduler::NonTailCallNodes() {
-  std::vector<kernel::LiteKernel *> ret{};
+std::vector<kernel::KernelExec *> Scheduler::NonTailCallNodes() {
+  std::vector<kernel::KernelExec *> ret{};
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
     ret = control_flow_scheduler_->GetNonTailCalls();
