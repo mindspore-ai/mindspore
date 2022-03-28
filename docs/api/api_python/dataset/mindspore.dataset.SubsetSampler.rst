@@ -12,8 +12,8 @@ mindspore.dataset.SubsetSampler
 
     **异常：**
 
-    - **TypeError** `indices` 的类型不是整数。
-    - **TypeError** `num_samples` 不是整数值。
+    - **TypeError** `indices` 的类型不是int。
+    - **TypeError** `num_samples` 的类型不是int。
     - **ValueError** `num_samples` 为负值。
 
     .. include:: mindspore.dataset.BuiltinSampler.rst

@@ -194,7 +194,7 @@ def zip(datasets):
     Zip the datasets in the input tuple of datasets.
 
     Args:
-        datasets (tuple of class Dataset): A tuple of datasets to be zipped together.
+        datasets (tuple[Dataset]): A tuple of datasets to be zipped together.
             The number of datasets must be more than 1.
 
     Returns:
@@ -596,10 +596,11 @@ class Dataset:
             BatchDataset, dataset batched.
 
         Examples:
-            >>> # Create a dataset where every 100 rows are combined into a batch
+            >>> # 1) Create a dataset where every 100 rows are combined into a batch
             >>> # and drops the last incomplete batch if there is one.
             >>> dataset = dataset.batch(100, True)
-            >>> # resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
+            >>>
+            >>> # 2）resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
             >>> def np_resize(col, BatchInfo):
             ...     output = col.copy()
             ...     s = (BatchInfo.get_batch_num() + 1) ** 2
@@ -611,6 +612,16 @@ class Dataset:
             ...         index += 1
             ...     return (output,)
             >>> dataset = dataset.batch(batch_size=8, input_columns=["image"], per_batch_map=np_resize)
+            >>>
+            >>> # 3）Create a dataset where its batch size is dynamic
+            >>> # Define a callable batch size function and let batch size increase 1 each time.
+            >>> def add_one(BatchInfo):
+            ...     return BatchInfo.get_batch_num() + 1
+            >>> dataset = dataset.batch(batch_size=add_one, drop_remainder=True)
+            >>>
+            >>> # 4）Create a dataset with batch, then specify the column order.
+            >>> # Assume that the original coulmn order is ["image", "label"] and change to ["label", "image"].
+            >>> dataset = dataset.batch(32, column_order=["label", "image"])
         """
         return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns,
                             output_columns, column_order, pad_info, python_multiprocessing, max_rowsize)

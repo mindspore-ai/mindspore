@@ -15,11 +15,11 @@ mindspore.dataset.DistributedSampler
 
     **异常：**
 
-    - **TypeError** - `num_shards` 不是整数值。
-    - **TypeError** - `shard_id` 不是整数值。
-    - **TypeError** - `shuffle` 不是Boolean值。
-    - **TypeError** - `num_samples` 不是整数值。
-    - **TypeError** - `offset` 不是整数值。
+    - **TypeError** - `num_shards` 的类型不是int。
+    - **TypeError** - `shard_id` 的类型不是int。
+    - **TypeError** - `shuffle` 的类型不是bool。
+    - **TypeError** - `num_samples` 的类型不是int。
+    - **TypeError** - `offset` 的类型不是int。
     - **ValueError** - `num_samples` 为负值。
     - **RuntimeError** - `num_shards` 不是正值。
     - **RuntimeError** - `shard_id` 小于0或大于等于 `num_shards` 。

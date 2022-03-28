@@ -12,6 +12,6 @@ mindspore.dataset.transforms.py_transforms.OneHotOp
 
     **异常：**
       
-    - **TypeError** - 参数 `num_classes` 类型不为 int。
-    - **TypeError** - 参数 `smoothing_rate` 类型不为 float。
+    - **TypeError** - 参数 `num_classes` 类型不为int。
+    - **TypeError** - 参数 `smoothing_rate` 类型不为float。
     - **ValueError** - 参数 `smoothing_rate` 取值范围不为[0.0, 1.0]。
