@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/op_base.h"
-#include "experiment/kernel/convolution_fp32.h"
+#include "experimental/kernel/convolution_fp32.h"
 
 namespace mindspore::kernel {
 ConvolutionCPUFp32::ConvolutionCPUFp32(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors,

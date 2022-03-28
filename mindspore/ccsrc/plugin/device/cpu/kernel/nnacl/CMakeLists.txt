@@ -37,7 +37,7 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/infer/*.c
     ${NNACL_DIR}/base/*.c
     ${NNACL_DIR}/fp32_grad/*.c
-    #${NNACL_DIR}/experiment/HPC-generator/*.c
+    #${NNACL_DIR}/experimental/HPC-generator/*.c
 )
 if(NOT MSLITE_ENABLE_RUNTIME_PASS)
   list(REMOVE_ITEM KERNEL_SRC ${NNACL_DIR}/infer/shape_fusion_infer.c)
@@ -115,7 +115,7 @@ if("${X86_64_SIMD}" STREQUAL "avx512")
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        file(GLOB HPC_SRC ${NNACL_DIR}/experiment/HPC-generator/gemm_avx512/*.c)
+        file(GLOB HPC_SRC ${NNACL_DIR}/experimental/HPC-generator/gemm_avx512/*.c)
         set_property(SOURCE ${HPC_SRC} PROPERTY LANGUAGE C)
     endif()
 endif()

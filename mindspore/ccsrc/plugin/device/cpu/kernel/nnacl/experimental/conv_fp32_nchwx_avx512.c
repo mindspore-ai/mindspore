@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/experiment/conv_fp32_nchwx_avx512.h"
-#include "nnacl/experiment/conv.h"
+#include "nnacl/experimental/conv_fp32_nchwx_avx512.h"
+#include "nnacl/experimental/conv.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/infer/conv2d_infer.h"
 // #include "nnacl/intrinsics/ms_simd_avx512_instructions.h"

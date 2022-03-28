@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/experiment/conv.h"
-#include "nnacl/experiment/conv_fp32_nchwx_avx512.h"
+#include "nnacl/experimental/conv.h"
+#include "nnacl/experimental/conv_fp32_nchwx_avx512.h"
 
 static KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
   if (in[0]->format_ == Format_NHWC) {
