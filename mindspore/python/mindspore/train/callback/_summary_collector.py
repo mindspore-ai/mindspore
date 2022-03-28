@@ -115,7 +115,9 @@ class SummaryCollector(Callback):
               It is not recommended to collect too many parameters at once, as it can affect performance.
               Note that if you collect too many parameters and run out of memory, the training will fail.
               Default: None, it means only the first five parameters are collected.
-            - collect_landscape (Union[dict,None]): Collect the parameters needed to create the loss landscape.
+            - collect_landscape (Union[dict,None]): Whether to collect the parameters needed to create the
+              loss landscape. If set to None, collect_landscape parameters will not be collected. All parameter
+              information is collected by default and stored in file `{summary_dir}/ckpt_dir/train_metadata.json`.
 
               - landscape_size (int): Specify the image resolution of the generated loss landscape.
                 For example, if it is set to 128, the resolution of the landscape is 128 * 128.
@@ -404,7 +406,7 @@ class SummaryCollector(Callback):
 
     def _check_collect_landscape_data(self, collect_landscape):
         """Check collect landscape data type and value."""
-        unexpected_params = set(collect_landscape) - set(self._DEFAULT_SPECIFIED_DATA["collect_landscape"])
+        unexpected_params = set(collect_landscape) - set(self._DEFAULT_SPECIFIED_DATA.get("collect_landscape"))
         if unexpected_params:
             raise ValueError(f'For `collect_landscape` the keys {unexpected_params} are unsupported, expect'
                              f'the follow keys: {list(self._DEFAULT_SPECIFIED_DATA["collect_landscape"].keys())}')
