@@ -230,10 +230,16 @@ bool CudaDriver::ElapsedTime(float *cost_time, const CudaDeviceEvent &start, con
 }
 
 int CudaDriver::device_count() {
-  int dev_count;
+  auto last_error = cudaGetLastError();
+  if (last_error != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "There is a cuda error, errorno[" << static_cast<int>(last_error) << "], "
+                      << cudaGetErrorString(last_error);
+  }
+
+  int dev_count = 0;
   auto ret = cudaGetDeviceCount(&dev_count);
   if (ret != cudaSuccess) {
-    MS_LOG(ERROR) << "cudaGetDeviceCount failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    MS_LOG(EXCEPTION) << "cudaGetDeviceCount failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
   }
   return dev_count;
 }
