@@ -458,6 +458,8 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
 
         - `cg` is not supported on Windows platform yet.
 
+        - Currently, when `A` is a CSRTensor, the derivatives of `cg` is not supported on PyNative mode.
+
     Args:
         A (Union[Tensor, CSRTensor, function]): 2D Tensor, CSRTensor or function that calculates the linear
             map (matrix-vector product) :math:`Ax` when called like :math:`A(x)`.
@@ -471,7 +473,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None, callback=None
         atol (float, optional): The same as `tol`. Default: 0.0.
         maxiter (int): Maximum number of iterations.  Iteration will stop after maxiter
             steps even if the specified tolerance has not been achieved. Default: None.
-        M (Union[Tensor, function]): Preconditioner for A.  The preconditioner should approximate the
+        M (Union[Tensor, CSRTensor, function]): Preconditioner for A.  The preconditioner should approximate the
             inverse of A. Effective preconditioning dramatically improves the
             rate of convergence, which implies that fewer iterations are needed
             to reach a given error tolerance. Default: None.
