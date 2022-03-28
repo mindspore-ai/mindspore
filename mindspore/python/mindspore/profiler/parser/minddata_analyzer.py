@@ -348,7 +348,7 @@ class MinddataProfilingAnalyzer:
         for op_info in reversed(pipeline_info['op_info']):
             op_id = op_info.get('op_id')
             op_name = op_info.get('op_type')[0:-2]
-            dict_opid_pipeline_ops[op_id] = op_name + '(id=' + str(op_id) + ')'
+            dict_opid_pipeline_ops[op_id] = '{}(id={})'.format(op_name, str(op_id))
             dict_opid_opname[op_id] = op_name
             dict_opid_numworkers[op_id] = op_info.get('num_workers')
 
