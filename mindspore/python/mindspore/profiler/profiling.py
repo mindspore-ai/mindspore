@@ -17,9 +17,7 @@ import os
 import stat
 import time
 import json
-from enum import Enum
 
-from mindspore.nn.cell import Cell
 from mindspore import log as logger, context
 from mindspore.communication.management import GlobalComm, get_rank, get_group_size
 import mindspore._c_expression as c_expression
@@ -50,20 +48,9 @@ from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParse
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
 
-def deprecated(name, version):
-    """Warning notices."""
-    msg = f"The {name} is deprecated from MindSpore {version} and will be removed in a future version."
-    logger.warning(msg)
-
-
 def _environment_check():
     if c_expression.security.enable_security():
         raise RuntimeError("Profiler is not supported if compiled with \'-s on\'")
-
-
-class ProfileOption(Enum):
-    """This Class is deprecated. Profile Option Enum which be used in Profiler.profile."""
-    trainable_parameters = 0
 
 
 class Profiler:
@@ -71,24 +58,20 @@ class Profiler:
     Performance profiling API.
 
     This API enables MindSpore users to profile the performance of neural network.
-    Profiler supports Ascend and GPU, both of them are used in the same way,
-    but only output_path in args works on GPU. And it can only be initialized once.
+    Profiler supports Ascend and GPU, both of them are used in the same way.
 
     Args:
         output_path (str): Output data path.
-        optypes_not_deal (str): This parameter is deprecated. (Ascend only) Op type names, determine the data of
-            which optype should be collected and analysed, will deal with all op if null.
-            Different op types should be separated by comma.
-        ascend_job_id (str): This parameter is deprecated. (Ascend only) The directory where the profiling files
-            to be parsed are located. This parameter is used to support offline parsing.
-        profile_communication (bool): Whether to collect communication performance data in a multi devices training,
-            collect when True. Default is False. Setting this parameter has no effect during single device training.
+        profile_communication (bool): (Ascend only) Whether to collect communication
+            performance data in a multi devices training, collect when True. Default is False.
+            Setting this parameter has no effect during single device training.
         profile_memory (bool): Whether to collect tensor memory data, collect when True. Default is False.
         start_profile (bool): The start_profile parameter controls whether to enable or disable performance data
             collection based on conditions. The default value is True.
 
     Raises:
-        RuntimeError: If ascend_job_id is transferred with data that does not match the current MindSpore version.
+        RuntimeError: When the version of CANN does not match the version of MindSpore,
+            MindSpore cannot parse the generated ascend_job_id directory structure.
 
     Examples:
         >>> import numpy as np
@@ -147,6 +130,14 @@ class Profiler:
             msg = "Do not init twice in the profiler."
             raise RuntimeError(msg)
         Profiler._has_initialized = True
+        self._dev_id = None
+        self._cpu_profiler = None
+        self._gpu_profiler = None
+        self._init_time = None
+        self._ascend_job_id = ''
+        self._job_id_env = None
+        self._filt_optype_names = ''
+        self._output_path = ''
         _environment_check()
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
@@ -160,7 +151,14 @@ class Profiler:
         # Setup and start MindData Profiling
         self._md_profiler = cde.GlobalContext.profiling_manager()
         self._md_profiler.init()
+        self._decide_device_target(kwargs)
+        if self.start_profile:
+            self.start()
+        elif context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Pynative model does not support conditional collection of performance data.")
 
+    def _decide_device_target(self, kwargs):
+        """Complete Profiler initialization according to device_target"""
         if self._device_target:
             cpu_profiler = c_expression.CPUProfiler
             self._cpu_profiler = cpu_profiler.get_instance()
@@ -200,11 +198,6 @@ class Profiler:
                       f"the limit (2048), please input valid parameters."
                 logger.critical(msg)
                 raise ValueError(msg)
-
-        if self.start_profile:
-            self.start()
-        elif context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative model does not support conditional collection of performance data.")
 
     def _construct_profiling_options(self):
         """
@@ -258,24 +251,6 @@ class Profiler:
 
     def _parse_parameter_for_ascend(self, **kwargs):
         """Parse parameter in Proflier when the device target is Ascend."""
-        if 'optypes_not_deal' in kwargs:
-            deprecated('optypes_not_deal', '1.6')
-        optypes_not_deal = kwargs.pop("optypes_not_deal", "Variable")
-        if not isinstance(optypes_not_deal, str):
-            raise TypeError(f"For '{self.__class__.__name__}', the parameter optypes_not_deal "
-                            f"must be str, but got type {type(optypes_not_deal)}")
-        self._filt_optype_names = optypes_not_deal.split(",") if optypes_not_deal else []
-
-        self._ascend_job_id = kwargs.pop("ascend_job_id", "")
-        if self._ascend_job_id:
-            deprecated('ascend_job_id', '1.6')
-            self._ascend_job_id = validate_and_normalize_path(self._ascend_job_id)
-            if not os.path.exists(self._ascend_job_id):
-                msg = f"Invalid ascend_job_id: {self._ascend_job_id}, Please pass the absolute path of the JOB dir"
-                logger.critical(msg)
-                raise ValueError(msg)
-            self._output_path, _ = os.path.split(self._ascend_job_id)
-
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
@@ -302,6 +277,15 @@ class Profiler:
         task_sink = os.getenv("GRAPH_OP_RUN")
         if task_sink and task_sink == "1":
             logger.warning("Profiling is not supported when task is not sink.")
+
+    def _set_ascend_job_id(self, ascend_job_id):
+        """Set output_path for offline parsing performance data."""
+        self._ascend_job_id = validate_and_normalize_path(ascend_job_id)
+        if not os.path.exists(self._ascend_job_id):
+            msg = f"Invalid ascend_job_id: {self._ascend_job_id}, Please pass the absolute path of the JOB dir"
+            logger.critical(msg)
+            raise ValueError(msg)
+        self._output_path, _ = os.path.split(self._ascend_job_id)
 
     def _is_offline_parser(self):
         """Return whether offline parser or online parser."""
@@ -1100,30 +1084,3 @@ class Profiler:
         hccl_parse = HcclParser(hccl_path, self._dev_id, self._rank_id, self._output_path)
         hccl_parse.parse()
         logger.info("Analyse hccl info successfully.")
-
-    @staticmethod
-    def profile(network, profile_option):
-        """
-        Get the number of trainable parameters in the training network.
-
-        Args:
-            network (Cell): The training network.
-            profile_option (ProfileOption): The profile option.
-
-        Returns:
-            dict, the key is the option name, the value is the result of option.
-        """
-        deprecated('profile', '1.6')
-        if not profile_option:
-            raise ValueError("The parameter profile_option must pass a value using ProfileOption.")
-
-        if profile_option == ProfileOption.trainable_parameters:
-            if not isinstance(network, Cell):
-                msg = "Profiling: The network should be an object of nn.Cell"
-                raise ValueError(msg)
-            param_nums = len(network.parameters_dict())
-            result = {"trainable_parameters": param_nums}
-        else:
-            raise ValueError("profile_option value must be ProfileOption.trainable_parameters")
-
-        return result

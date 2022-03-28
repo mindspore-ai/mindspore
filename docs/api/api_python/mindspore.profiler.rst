@@ -18,8 +18,6 @@ profiler模块简介。
     **参数：**
 
     - **output_path** (str) – 表示输出数据的路径。
-    - **optypes_not_deal** (str) – （仅限Ascend）该参数已弃用，该功能已不再支持。
-    - **ascend_job_id** (str) – （仅限Ascend）该参数已弃用，该功能已不再支持。
     - **profile_communication** (bool) – （仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为True时，收集这些数据。默认值为False。在单台设备训练中，该参数的设置无效。
     - **profile_memory** (bool) – （仅限Ascend）表示是否收集Tensor内存数据。当值为True时，收集这些数据。默认值为False。
     - **start_profile** (bool) – 该参数控制是否在Profiler初始化的时候开启采集数据。默认值为True。
@@ -31,19 +29,6 @@ profiler模块简介。
     .. py:method:: analyse()
 
         收集和分析训练后或训练期间调用的性能数据。样例如上所示。
-
-    .. py:method:: profile(network,profile_option)
-
-        获取训练网络中可训练参数的数量。
-
-        **参数：**
-
-        - **network** (Cell) - 表示训练网络。
-        - **profile_option** (ProfileOption) - 该参数已弃用，该功能已不再支持。
-
-        **返回：**
-
-        dict，其中key为选项名称，value为选项结果。
 
     .. py:method:: start()
 
@@ -62,7 +47,3 @@ profiler模块简介。
         **异常：**
 
         - **RuntimeError** – profiler没有开启。
-
-.. py:class:: mindspore.profiler.ProfileOption
-
-    这个类已经弃用，该功能已不再支持。
