@@ -48,6 +48,9 @@
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#include "ps/ps_context.h"
+#endif
 
 namespace mindspore {
 namespace compile {
@@ -347,6 +350,15 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   // Call ms RunGraphAsync or RunOpsInGraph (graphId, input ,output)
   const session::SessionPtr &exe_session = ((target != target_device_ && !target.empty()) ? other_sess_ : target_sess_);
   MS_EXCEPTION_IF_NULL(exe_session);
+
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  // If in PS mode, must use sync mode to run graph in case that the weights on server are not updated in the last step.
+  if (ps::PSContext::instance()->is_ps_mode()) {
+    exe_session->RunGraph(g, inputs, &outputs);
+    return outputs;
+  }
+#endif
+
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (pynative_mode) {
