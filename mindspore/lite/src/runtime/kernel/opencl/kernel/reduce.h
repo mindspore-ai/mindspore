@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <string>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/reduce_parameter.h"
 

@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <set>
 #include <memory>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/executor.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
@@ -32,11 +32,11 @@
 
 namespace mindspore::kernel {
 // Identity kernel is used to update a reference to a tensor. This is useful in control flow model.
-class IdentityKernel : public InnerKernel {
+class IdentityKernel : public LiteKernel {
  public:
   IdentityKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx) {
+      : LiteKernel(param, inputs, outputs, ctx) {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
     lite::CpuInfo cpu_info;
     support_fp16_ = cpu_info.ArmIsSupportFp16();

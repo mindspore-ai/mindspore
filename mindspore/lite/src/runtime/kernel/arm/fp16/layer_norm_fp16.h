@@ -16,18 +16,18 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LAYER_NORM_FP16_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LAYER_NORM_FP16_H_
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/layer_norm_parameter.h"
 
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class LayerNormFp16CPUKernel : public InnerKernel {
+class LayerNormFp16CPUKernel : public LiteKernel {
  public:
   LayerNormFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<LayerNormParameter *>(parameter);
   }
   ~LayerNormFp16CPUKernel() override{};

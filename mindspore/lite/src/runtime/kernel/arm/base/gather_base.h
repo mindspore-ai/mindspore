@@ -19,14 +19,14 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class GatherBaseCPUKernel : public InnerKernel {
+class GatherBaseCPUKernel : public LiteKernel {
  public:
   GatherBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~GatherBaseCPUKernel() = default;
 
   int Prepare() override;

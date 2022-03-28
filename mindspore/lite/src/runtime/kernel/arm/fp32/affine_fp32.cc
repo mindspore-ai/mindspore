@@ -230,7 +230,7 @@ int AffineFp32CPUKernel::ReSize() {
   return RET_OK;
 }
 
-kernel::InnerKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
+kernel::LiteKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
   auto input_shape = in_tensors_.front()->shape();
   int out_dim = affine_parameter_->output_dim_;
   int context_min = affine_parameter_->context_[0];
@@ -260,7 +260,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
     return nullptr;
   }
 
-  kernel::InnerKernel *kernel = new (std::nothrow) kernel::MatmulCPUKernel(
+  kernel::LiteKernel *kernel = new (std::nothrow) kernel::MatmulCPUKernel(
     params, input_tensors, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_));
 
   if (kernel != nullptr) {
@@ -274,7 +274,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
   return kernel;
 }
 
-kernel::InnerKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
+kernel::LiteKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
   auto input_shape = in_tensors_.front()->shape();
   int src_col = input_shape.at(input_shape.size() - 1);
   int context_dims = affine_parameter_->context_size_;
@@ -314,7 +314,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
     return nullptr;
   }
 
-  kernel::InnerKernel *kernel = new (std::nothrow) kernel::MatmulCPUKernel(
+  kernel::LiteKernel *kernel = new (std::nothrow) kernel::MatmulCPUKernel(
     params, input_tensors, {increment_output_}, static_cast<const lite::InnerContext *>(this->ms_context_));
 
   if (kernel != nullptr) {

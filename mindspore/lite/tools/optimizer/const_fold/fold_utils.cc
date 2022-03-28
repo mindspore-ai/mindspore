@@ -261,7 +261,7 @@ int ConstFoldProcessor::DoConstantFold(const FuncGraphPtr &func_graph, const CNo
       return lite::RET_ERROR;
     }
   }
-  auto status = static_cast<mindspore::kernel::InnerKernel *>(kernel_exec->kernel())->Run();
+  auto status = static_cast<mindspore::kernel::LiteKernel *>(kernel_exec->kernel())->Run();
   delete (kernel_exec);
   kernel_exec = nullptr;
   if (status != lite::RET_OK) {

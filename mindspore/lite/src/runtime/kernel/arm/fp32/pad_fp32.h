@@ -24,15 +24,15 @@
 #include "nnacl/fp32/pad_fp32.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/common_func.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 namespace mindspore::kernel {
-class PadCPUKernel : public InnerKernel {
+class PadCPUKernel : public LiteKernel {
  public:
   PadCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     pad_param_ = reinterpret_cast<PadParameter *>(parameter);
   }
 

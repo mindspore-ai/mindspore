@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SIZE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp32/invert_permutation_fp32.h"
 #include "include/errorcode.h"
 #include "include/context.h"
@@ -25,11 +25,11 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class SizeCPUKernel : public InnerKernel {
+class SizeCPUKernel : public LiteKernel {
  public:
   SizeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
 
   ~SizeCPUKernel() = default;
 

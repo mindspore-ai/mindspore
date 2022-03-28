@@ -23,11 +23,11 @@
 
 namespace mindspore::kernel {
 
-class BNGradCPUKernelFp16 : public InnerKernel {
+class BNGradCPUKernelFp16 : public LiteKernel {
  public:
   explicit BNGradCPUKernelFp16(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~BNGradCPUKernelFp16() override {}
   int Prepare() override;
   int ReSize() override;

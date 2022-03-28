@@ -96,9 +96,9 @@ int BiasGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuBiasGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuBiasGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_BiasAddGrad);
   auto *kernel =
     new (std::nothrow) BiasGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

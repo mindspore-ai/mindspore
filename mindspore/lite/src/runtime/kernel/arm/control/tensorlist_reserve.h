@@ -18,17 +18,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_TENSORLISTRESERVE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/tensorlist.h"
 #include "schema/model_generated.h"
 #include "nnacl/tensorlist_parameter.h"
 
 namespace mindspore::kernel {
-class TensorListReserveCPUKernel : public InnerKernel {
+class TensorListReserveCPUKernel : public LiteKernel {
  public:
   TensorListReserveCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx),
+      : LiteKernel(parameter, inputs, outputs, ctx),
         element_dtype_(static_cast<TypeId>(reinterpret_cast<TensorListParameter *>(parameter)->element_dtype_)) {}
   ~TensorListReserveCPUKernel() = default;
 

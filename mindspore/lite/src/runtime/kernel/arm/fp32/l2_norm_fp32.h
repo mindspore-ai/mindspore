@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_L2_NORM_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/l2_norm_parameter.h"
 #include "schema/model_generated.h"
@@ -27,11 +27,11 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class L2NormCPUKernel : public InnerKernel {
+class L2NormCPUKernel : public LiteKernel {
  public:
   L2NormCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     l2_norm_param_ = reinterpret_cast<L2NormParameter *>(op_parameter_);
   }
   ~L2NormCPUKernel() { FreeTmpBuffer(); }

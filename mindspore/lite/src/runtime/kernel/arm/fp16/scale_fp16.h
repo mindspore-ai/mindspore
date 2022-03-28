@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_SCALE_FP16_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/fp32/scale_fp32.h"
 #include "nnacl/scale.h"
 

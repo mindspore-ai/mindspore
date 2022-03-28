@@ -18,17 +18,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_SKIP_GRAM_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/skip_gram_parameter.h"
 #include "src/common/string_utils.h"
 
 namespace mindspore::kernel {
 
-class SkipGramCPUKernel : public InnerKernel {
+class SkipGramCPUKernel : public LiteKernel {
  public:
   explicit SkipGramCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {}
   ~SkipGramCPUKernel() override = default;
 
   int Prepare() override;

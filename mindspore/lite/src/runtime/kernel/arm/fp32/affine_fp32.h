@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_AFFINE_FP32_H
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/affine_parameter.h"
 #include "nnacl/splice_parameter.h"
 
@@ -28,11 +28,11 @@ constexpr auto kAffineMaxInputNum = 3;
 constexpr auto kAffineMaxOutputNum = 1;
 constexpr auto kInputRow = 1;
 constexpr auto kInputCol = 2;
-class AffineFp32CPUKernel : public InnerKernel {
+class AffineFp32CPUKernel : public LiteKernel {
  public:
   AffineFp32CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx) {
+      : LiteKernel(param, inputs, outputs, ctx) {
     affine_parameter_ = reinterpret_cast<AffineParameter *>(param);
   }
   ~AffineFp32CPUKernel() override;
@@ -46,8 +46,8 @@ class AffineFp32CPUKernel : public InnerKernel {
   int IncrementInit();
   bool CheckAffineValid();
   int CheckActivationValid();
-  kernel::InnerKernel *FullMatmulKernelCreate();
-  kernel::InnerKernel *IncrementMatmulKernelCreate();
+  kernel::LiteKernel *FullMatmulKernelCreate();
+  kernel::LiteKernel *IncrementMatmulKernelCreate();
   OpParameter *MatmulParameterCreate();
 
   int IncrementSplice();
@@ -57,8 +57,8 @@ class AffineFp32CPUKernel : public InnerKernel {
   int DoActivation(lite::Tensor *tensor);
 
   AffineParameter *affine_parameter_{nullptr};
-  kernel::InnerKernel *full_mult_kernel_{nullptr};
-  kernel::InnerKernel *increment_mult_kernel_{nullptr};
+  kernel::LiteKernel *full_mult_kernel_{nullptr};
+  kernel::LiteKernel *increment_mult_kernel_{nullptr};
 
   lite::Tensor *full_input_{nullptr};
   lite::Tensor *increment_input_{nullptr};

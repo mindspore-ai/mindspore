@@ -715,9 +715,9 @@ bool UseWinograd4x4To6x6(const ConvParameter *param, const std::vector<lite::Ten
   return attr_valid && shape_valid && channel_good && hw_good;
 }
 
-kernel::InnerKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inputs,
-                                         const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                         const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inputs,
+                                        const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                        const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(!inputs.empty());
   MS_ASSERT(!outputs.empty());
   MS_ASSERT(opParameter);

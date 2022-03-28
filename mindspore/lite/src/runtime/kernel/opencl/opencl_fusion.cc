@@ -538,14 +538,14 @@ void CreateEltwiseKernelReplaceOld(FusionEltwiseParameter *param, KernelExec *ol
   MS_ASSERT(old);
   MS_ASSERT(nodes);
   MS_ASSERT(removed_set);
-  auto inner_kernel = std::make_shared<FusionEltwiseOpenCLKernel>(reinterpret_cast<OpParameter *>(param),
-                                                                  old->in_tensors(), old->out_tensors(), nullptr);
-  if (inner_kernel == nullptr) {
+  auto lite_kernel = std::make_shared<FusionEltwiseOpenCLKernel>(reinterpret_cast<OpParameter *>(param),
+                                                                 old->in_tensors(), old->out_tensors(), nullptr);
+  if (lite_kernel == nullptr) {
     MS_LOG(ERROR) << "create FusionEltwiseOpenCLKernel error.";
     return;
   }
-  inner_kernel->set_registry_data_type(old->desc().data_type);
-  auto *eltwise = new (std::nothrow) kernel::KernelExec(inner_kernel);
+  lite_kernel->set_registry_data_type(old->desc().data_type);
+  auto *eltwise = new (std::nothrow) kernel::KernelExec(lite_kernel);
   if (eltwise == nullptr) {
     MS_LOG(ERROR) << "create FusionEltwiseOpenCLKernel error.";
     return;
@@ -556,7 +556,7 @@ void CreateEltwiseKernelReplaceOld(FusionEltwiseParameter *param, KernelExec *ol
   eltwise->set_out_kernels(old->out_kernels());
   eltwise->set_desc(old->desc());
 
-  inner_kernel->in_kernels_ = &eltwise->in_kernels();
+  lite_kernel->in_kernels_ = &eltwise->in_kernels();
 
   for (auto *pred : old->in_kernels()) {
     MS_ASSERT(pred);

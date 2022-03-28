@@ -42,7 +42,7 @@ int WhereCPUKernel::Prepare() {
 
 int WhereCPUKernel::PreProcess() {
   if (in_tensors_.size() == kTripleNum) {
-    return InnerKernel::PreProcess();
+    return LiteKernel::PreProcess();
   } else {
     return RET_OK;
   }

@@ -19,7 +19,7 @@
 
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 

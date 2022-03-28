@@ -18,18 +18,18 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_RELATIVE_POSITION_ATTENTION_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp32/attention_fp32.h"
 #include "nnacl/matmul_parameter.h"
 
 namespace mindspore::kernel {
 // inputs: 0:Q 1:K 2:V 3:P 4:WQ 5:WK 6:WV 7:WP 8:PU 9:PV 10:WO 11:BQ 12:BK 13:BV 14:BO 15:output
 // if use_bias == true: has BQ BK BV BO inputs
-class RelativePositionAttentionCPUKernel : public InnerKernel {
+class RelativePositionAttentionCPUKernel : public LiteKernel {
  public:
   RelativePositionAttentionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<RelativePositionAttentionParameter *>(op_parameter_);
   }
 

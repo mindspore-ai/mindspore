@@ -19,7 +19,7 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "src/common/utils.h"
 #include "nnacl/matmul_parameter.h"

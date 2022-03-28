@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "nnacl/matmul_parameter.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp32/transpose_fp32.h"
 
 namespace mindspore::kernel {
@@ -32,11 +32,11 @@ struct SparsityWeight {
 
 using MatrixPackFun = void (*)(const float *src_ptr, float *dst_ptr, int row, int col);
 
-class MatmulSparseCPUKernel : public InnerKernel {
+class MatmulSparseCPUKernel : public LiteKernel {
  public:
   explicit MatmulSparseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~MatmulSparseCPUKernel() override;

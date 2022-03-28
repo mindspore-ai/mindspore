@@ -91,8 +91,8 @@ void TrainSession::RestoreOps(const std::vector<CreatorOp> &restore) {
 int TrainSession::AllocWorkSpace() {
   size_t workspace_size = 0;
   for (auto kernel : this->train_kernels_) {
-    if (workspace_size < static_cast<kernel::InnerKernel *>(kernel->kernel())->workspace_size()) {
-      workspace_size = static_cast<kernel::InnerKernel *>(kernel->kernel())->workspace_size();
+    if (workspace_size < static_cast<kernel::LiteKernel *>(kernel->kernel())->workspace_size()) {
+      workspace_size = static_cast<kernel::LiteKernel *>(kernel->kernel())->workspace_size();
     }
   }
   workspace_ = malloc(workspace_size);
@@ -101,7 +101,7 @@ int TrainSession::AllocWorkSpace() {
     return RET_ERROR;
   }
   for (auto kernel : this->train_kernels_) {
-    static_cast<kernel::InnerKernel *>(kernel->kernel())->set_workspace(workspace_);
+    static_cast<kernel::LiteKernel *>(kernel->kernel())->set_workspace(workspace_);
   }
   return RET_OK;
 }
@@ -112,7 +112,7 @@ void TrainSession::FreeWorkSpace() {
     workspace_ = nullptr;
   }
   for (auto kernel : this->train_kernels_) {
-    static_cast<kernel::InnerKernel *>(kernel->kernel())->FreeWorkspace();
+    static_cast<kernel::LiteKernel *>(kernel->kernel())->FreeWorkspace();
   }
 }
 
@@ -961,7 +961,7 @@ int TrainSession::AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr,
     }
 
     if (IsBN(kernel) && kernel->IsTrainable()) {
-      auto batchnorm = static_cast<kernel::InnerKernel *>(kernel->kernel());
+      auto batchnorm = static_cast<kernel::LiteKernel *>(kernel->kernel());
       auto ret = batchnorm->SetupVirtualBatch(virtual_batch_multiplier_, momentum);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << kernel->name() << " failed to set momentum";

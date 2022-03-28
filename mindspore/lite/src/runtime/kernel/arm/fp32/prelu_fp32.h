@@ -17,16 +17,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_PRELU_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/prelu_parameter.h"
 
 namespace mindspore::kernel {
-class PReluCPUKernel : public InnerKernel {
+class PReluCPUKernel : public LiteKernel {
  public:
   PReluCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<PReluParameter *>(op_parameter_);
   }
   ~PReluCPUKernel() = default;

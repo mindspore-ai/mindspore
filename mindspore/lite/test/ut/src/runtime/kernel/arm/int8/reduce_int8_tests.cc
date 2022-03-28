@@ -50,7 +50,7 @@ class TestReduceInt8 : public mindspore::CommonTest {
   kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_ReduceFusion};
   kernel::KernelCreator creator_ = nullptr;
   lite::InnerContext ctx_ = lite::InnerContext();
-  kernel::InnerKernel *kernel_ = nullptr;
+  kernel::LiteKernel *kernel_ = nullptr;
   const LiteQuantParam quant_in_ = {0.005f, 5};
   const LiteQuantParam quant_out_ = {0.01f, 1};
   float err_tol_ = 0.05;

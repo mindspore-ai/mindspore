@@ -20,7 +20,7 @@
 #include "include/errorcode.h"
 #include "nnacl/fp32/crop_fp32.h"
 #include "nnacl/crop_parameter.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/runtime/kernel/arm/base/crop_base.h"
 

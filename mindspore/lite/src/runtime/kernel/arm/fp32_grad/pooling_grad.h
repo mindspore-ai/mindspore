@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_POOLING_GRAD_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
 using mindspore::schema::PadMode;
@@ -26,11 +26,11 @@ using mindspore::schema::PoolMode;
 using mindspore::schema::QuantType;
 using mindspore::schema::RoundMode;
 
-class PoolingGradCPUKernel : public InnerKernel {
+class PoolingGradCPUKernel : public LiteKernel {
  public:
   explicit PoolingGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~PoolingGradCPUKernel() override = default;
 
   int Prepare() override;

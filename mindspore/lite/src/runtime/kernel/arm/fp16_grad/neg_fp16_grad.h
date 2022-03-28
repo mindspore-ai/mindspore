@@ -18,16 +18,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_NEG_FP16_GRAD_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "schema/model_generated.h"
 
 namespace mindspore::kernel {
 
-class NegGradCPUKernelFp16 : public InnerKernel {
+class NegGradCPUKernelFp16 : public LiteKernel {
  public:
   explicit NegGradCPUKernelFp16(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
   ~NegGradCPUKernelFp16() override {}
   int Prepare() override;
   int ReSize() override;

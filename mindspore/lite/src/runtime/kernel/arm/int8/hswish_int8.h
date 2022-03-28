@@ -18,16 +18,16 @@
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_INT8_HSWISH_INT8_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/int8/hswish_int8.h"
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::kernel {
-class HswishInt8CPUKernel : public InnerKernel {
+class HswishInt8CPUKernel : public LiteKernel {
  public:
   HswishInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
+      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
   ~HswishInt8CPUKernel() override = default;
 
   int Prepare() override;

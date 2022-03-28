@@ -20,7 +20,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "include/context.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/common_func.h"
 #include "nnacl/int8/quantize.h"
@@ -28,13 +28,13 @@
 #include "nnacl/int8/matmul_int8.h"
 
 namespace mindspore::kernel {
-class MatmulBaseInt8CPUKernel : public InnerKernel {
+class MatmulBaseInt8CPUKernel : public LiteKernel {
   typedef void (*PackFunc)(const int8_t *src, int8_t *dst, int row, int col);
 
  public:
   MatmulBaseInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~MatmulBaseInt8CPUKernel() override;

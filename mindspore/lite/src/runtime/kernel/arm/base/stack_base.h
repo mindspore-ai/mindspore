@@ -17,16 +17,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_STACK_BASE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/stack_parameter.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
-class StackBaseCPUKernel : public InnerKernel {
+class StackBaseCPUKernel : public LiteKernel {
  public:
   StackBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     stack_param_ = reinterpret_cast<StackParameter *>(op_parameter_);
   }
   ~StackBaseCPUKernel() override = default;

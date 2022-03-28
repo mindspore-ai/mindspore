@@ -20,17 +20,17 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/non_max_suppression_parameter.h"
 
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-class NonMaxSuppressionCPUKernel : public InnerKernel {
+class NonMaxSuppressionCPUKernel : public LiteKernel {
  public:
   NonMaxSuppressionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
 
   ~NonMaxSuppressionCPUKernel() override = default;
 

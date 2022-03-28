@@ -192,9 +192,9 @@ int DynamicQuantCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *DynamicQuantCPUCreator(const std::vector<lite::Tensor *> &inputs,
-                                            const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                            const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *DynamicQuantCPUCreator(const std::vector<lite::Tensor *> &inputs,
+                                           const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                           const lite::Context *ctx, const kernel::KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;

@@ -170,7 +170,7 @@ int ConvolutionDelegateCPUKernel::SetInputOutputShapeInfo() {
   return RET_OK;
 }
 
-kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NC4KernelSelect() {
+kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NC4KernelSelect() {
   /* runtime c4 pass
    * arm64: conv1x1 convComm support nc4
    * Avx: convComm support nc4
@@ -207,8 +207,8 @@ bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_p
   }
 }
 
-kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() {
-  kernel::InnerKernel *kernel = nullptr;
+kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() {
+  kernel::LiteKernel *kernel = nullptr;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
 #ifdef ENABLE_AVX
@@ -255,8 +255,8 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect()
   return kernel;
 }
 
-kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
-  kernel::InnerKernel *kernel = nullptr;
+kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
+  kernel::LiteKernel *kernel = nullptr;
   if (out_tensors().front()->format() == NC4HW4) {
     kernel = CpuConvFp32NC4KernelSelect();
   } else {
@@ -287,14 +287,14 @@ bool ConvolutionDelegateCPUKernel::CheckInputsValid() const {
   return input_tensor->data_type() == weight_tensor->data_type();
 }
 
-kernel::InnerKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const InnerContext *ctx) {
+kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const InnerContext *ctx) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Get null opParameter for CpuConvDwFp32KernelCreator.";
     return nullptr;
   }
-  kernel::InnerKernel *kernel = nullptr;
+  kernel::LiteKernel *kernel = nullptr;
   auto shape = outputs.front()->shape();
   if (std::find(shape.begin(), shape.end(), -1) == shape.end()) {
 #ifdef ENABLE_AVX
@@ -322,9 +322,9 @@ kernel::InnerKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *
   return kernel;
 }
 
-kernel::InnerKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                   const std::vector<lite::Tensor *> &outputs,
-                                                   OpParameter *op_parameter, const lite::InnerContext *ctx) {
+kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                  const lite::InnerContext *ctx) {
   auto *group_conv_creator = new GroupConvCreator(inputs, outputs, op_parameter, false, kNumberTypeFloat32);
   auto group_kernel = new (std::nothrow) GroupConvolutionFp32CPUKernel(
     op_parameter, inputs, outputs, ctx, group_conv_creator, reinterpret_cast<ConvParameter *>(op_parameter)->group_);
@@ -336,15 +336,15 @@ kernel::InnerKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tenso
 }
 
 /* creator func */
-kernel::InnerKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
   MS_ASSERT(desc.data_type == kNumberTypeFloat32);
 
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  kernel::InnerKernel *kernel = nullptr;
+  kernel::LiteKernel *kernel = nullptr;
   if (conv_param->group_ == 1) {
     kernel = new (std::nothrow)
       kernel::ConvolutionDelegateCPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

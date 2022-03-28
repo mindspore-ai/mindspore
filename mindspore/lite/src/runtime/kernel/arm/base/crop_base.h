@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CROP_BASE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/crop_parameter.h"
 
 namespace mindspore::kernel {
-class CropBaseCPUKernel : public InnerKernel {
+class CropBaseCPUKernel : public LiteKernel {
  public:
   CropBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                     const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);
     crop_para_->thread_count_ = op_parameter_->thread_num_;
   }

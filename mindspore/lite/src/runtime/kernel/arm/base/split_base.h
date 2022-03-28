@@ -20,16 +20,16 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "include/context.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/base/split_base.h"
 
 namespace mindspore::kernel {
-class SplitBaseCPUKernel : public InnerKernel {
+class SplitBaseCPUKernel : public LiteKernel {
  public:
   SplitBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param = reinterpret_cast<SplitParameter *>(op_parameter_);
   }
   ~SplitBaseCPUKernel() override {

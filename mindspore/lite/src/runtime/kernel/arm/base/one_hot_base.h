@@ -17,15 +17,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ONE_HOT_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/one_hot_parameter.h"
 
 namespace mindspore::kernel {
-class OneHotCPUKernel : public InnerKernel {
+class OneHotCPUKernel : public LiteKernel {
  public:
   OneHotCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     one_hot_param_ = reinterpret_cast<OneHotParameter *>(parameter);
   }
 

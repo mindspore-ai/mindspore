@@ -169,9 +169,9 @@ int AdamCPUKernel::OptimizerStep() {
   return ret;
 }
 
-kernel::InnerKernel *CpuAdamFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuAdamFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_CHECK_TRUE_MSG(opParameter != nullptr, nullptr, "Op parameter is nullptr.");
   MS_ASSERT(desc.type == schema::PrimitiveType_Adam);
   auto *kernel =

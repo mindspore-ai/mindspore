@@ -282,10 +282,10 @@ int ArithmeticGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                        const std::vector<lite::Tensor *> &outputs,
-                                                        OpParameter *opParameter, const lite::Context *ctx,
-                                                        const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
+                                                       OpParameter *opParameter, const lite::Context *ctx,
+                                                       const kernel::KernelKey &desc) {
   MS_CHECK_TRUE_MSG(opParameter != nullptr, nullptr, "Op parameter is nullptr.");
   auto *kernel = new (std::nothrow)
     ArithmeticGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

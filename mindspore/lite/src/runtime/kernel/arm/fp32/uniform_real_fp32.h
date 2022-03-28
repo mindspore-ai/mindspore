@@ -17,15 +17,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_UNIFORM_REAL_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/random_parameter.h"
 
 namespace mindspore::kernel {
-class UniformRealCPUKernel : public InnerKernel {
+class UniformRealCPUKernel : public LiteKernel {
  public:
   UniformRealCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx),
+      : LiteKernel(parameter, inputs, outputs, ctx),
         seed_(reinterpret_cast<RandomParam *>(parameter)->seed_),
         seed2_(reinterpret_cast<RandomParam *>(parameter)->seed2_) {}
   ~UniformRealCPUKernel() = default;

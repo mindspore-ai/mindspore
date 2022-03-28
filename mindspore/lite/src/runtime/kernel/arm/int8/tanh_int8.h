@@ -20,17 +20,17 @@
 #include <vector>
 #include <limits>
 #include <algorithm>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/int8/tanh_int8.h"
 #include "nnacl/int8/quantize.h"
 #include "include/errorcode.h"
 
 namespace mindspore::kernel {
-class TanhInt8CPUKernel : public InnerKernel {
+class TanhInt8CPUKernel : public LiteKernel {
  public:
   TanhInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~TanhInt8CPUKernel() override = default;
 
   int Prepare() override;

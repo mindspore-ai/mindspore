@@ -18,18 +18,18 @@
 
 #include <vector>
 #include "src/tensor.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
 #endif
 
 // this file is useless when move create actor before schedule.
 namespace mindspore::kernel {
-class CallCPUKernel : public InnerKernel {
+class CallCPUKernel : public LiteKernel {
  public:
   CallCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~CallCPUKernel() override = default;
   int Prepare() override;
   int ReSize() override;

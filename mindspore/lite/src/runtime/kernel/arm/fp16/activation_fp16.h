@@ -18,16 +18,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_ACTIVATION_FP16_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp16/activation_fp16.h"
 
 namespace mindspore::kernel {
-class ActivationFp16CPUKernel : public InnerKernel {
+class ActivationFp16CPUKernel : public LiteKernel {
  public:
   ActivationFp16CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
+      : LiteKernel(param, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
     type_ = (reinterpret_cast<ActivationParameter *>(param))->type_;
     alpha_ = (float16_t)((reinterpret_cast<ActivationParameter *>(param))->alpha_);
     min_val_ = (reinterpret_cast<ActivationParameter *>(param))->min_val_;

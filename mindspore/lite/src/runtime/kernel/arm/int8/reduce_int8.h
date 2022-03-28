@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_REDUCE_INT8_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/reduce_parameter.h"
 #include "nnacl/int8/reduce_int8.h"
 #include "nnacl/int8/quantize.h"

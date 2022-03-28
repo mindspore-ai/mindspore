@@ -20,7 +20,7 @@
 #ifdef ENABLE_OPENGL_TEXTURE
 #include <vector>
 #include "EGL/egl.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {

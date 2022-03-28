@@ -20,15 +20,15 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp32/activation_fp32.h"
 
 namespace mindspore::kernel {
-class ActivationCPUKernel : public InnerKernel {
+class ActivationCPUKernel : public LiteKernel {
  public:
   ActivationCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx) {
+      : LiteKernel(param, inputs, outputs, ctx) {
     type_ = (reinterpret_cast<ActivationParameter *>(param))->type_;
     alpha_ = (reinterpret_cast<ActivationParameter *>(param))->alpha_;
     min_val_ = (reinterpret_cast<ActivationParameter *>(param))->min_val_;

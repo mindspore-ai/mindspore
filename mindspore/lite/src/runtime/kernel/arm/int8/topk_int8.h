@@ -17,15 +17,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_TOPK_INT8_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/int8/topk_int8.h"
 
 namespace mindspore::kernel {
-class TopKInt8CPUKernel : public InnerKernel {
+class TopKInt8CPUKernel : public LiteKernel {
  public:
   explicit TopKInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     TopkParameter *param = reinterpret_cast<TopkParameter *>(op_parameter_);
     param->topk_node_list_ = nullptr;
   }

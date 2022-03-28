@@ -220,10 +220,10 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
 #endif
     auto creator = GetCreator(key);
     if (creator != nullptr) {
-      auto inner_kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
-      if (inner_kernel != nullptr) {
-        inner_kernel->set_registry_data_type(key.data_type);
-        std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
+      auto lite_kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
+      if (lite_kernel != nullptr) {
+        lite_kernel->set_registry_data_type(key.data_type);
+        std::shared_ptr<kernel::Kernel> shared_kernel(lite_kernel);
         auto *kernel_exec = new (std::nothrow) kernel::KernelExec(shared_kernel);
         if (kernel_exec != nullptr) {
           kernel_exec->set_desc(key);

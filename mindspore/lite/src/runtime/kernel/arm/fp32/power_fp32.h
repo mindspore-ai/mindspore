@@ -18,16 +18,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_POWER_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/fp32/power_fp32.h"
 
 namespace mindspore::kernel {
-class PowerCPUKernel : public InnerKernel {
+class PowerCPUKernel : public LiteKernel {
  public:
   PowerCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx),
+      : LiteKernel(param, inputs, outputs, ctx),
         thread_count_(ctx->thread_num_),
         scale_(reinterpret_cast<PowerParameter *>(op_parameter_)->scale_),
         shift_(reinterpret_cast<PowerParameter *>(op_parameter_)->shift_) {}

@@ -118,7 +118,7 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
 }
 
 int FusedBatchnormFp16CPUKernel::Eval() {
-  InnerKernel::Eval();
+  LiteKernel::Eval();
   if (trained_) {
     float16_t *save_mean = reinterpret_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data());
     float16_t *save_var = reinterpret_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data());

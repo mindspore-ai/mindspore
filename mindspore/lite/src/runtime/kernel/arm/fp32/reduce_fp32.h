@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_REDUCE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 #include "nnacl/fp32/reduce_fp32.h"
 #include "src/runtime/kernel/arm/base/reduce_base.h"

@@ -17,17 +17,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_RESHAPE_BASE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
-class ReshapeBaseCPUKernel : public InnerKernel {
+class ReshapeBaseCPUKernel : public LiteKernel {
  public:
   ReshapeBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ReshapeBaseCPUKernel() override = default;
   int Prepare() override { return lite::RET_OK; };
   int ReSize() override { return lite::RET_OK; };

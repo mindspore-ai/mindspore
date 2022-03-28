@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSETODENSE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 #include "include/context.h"
 #include "nnacl/fp32/sparse_to_dense_fp32.h"
@@ -26,11 +26,11 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class SparseToDenseCPUKernel : public InnerKernel {
+class SparseToDenseCPUKernel : public LiteKernel {
  public:
   SparseToDenseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = (reinterpret_cast<SparseToDenseParameter *>(parameter));
   }
   ~SparseToDenseCPUKernel() = default;

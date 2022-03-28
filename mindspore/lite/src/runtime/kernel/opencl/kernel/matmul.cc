@@ -433,9 +433,9 @@ int MatMulOpenCLKernel::StoreConstData() {
   return RET_OK;
 }
 
-kernel::InnerKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
   kernel::OpenCLKernel *kernel = nullptr;
   auto shape = outputs.front()->shape();
   bool infer_shape_done = std::find(shape.begin(), shape.end(), -1) == shape.end();

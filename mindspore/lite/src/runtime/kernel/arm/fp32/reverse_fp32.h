@@ -17,17 +17,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_REVERSE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class ReverseCPUKernel : public InnerKernel {
+class ReverseCPUKernel : public LiteKernel {
  public:
   ReverseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ReverseCPUKernel() override {
     if (tmp_ != nullptr) {
       free(tmp_);

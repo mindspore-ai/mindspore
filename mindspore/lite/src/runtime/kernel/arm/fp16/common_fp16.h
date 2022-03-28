@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
 float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::InnerContext *ctx);

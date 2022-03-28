@@ -20,18 +20,18 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "include/context.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/common_func.h"
 #include "nnacl/int8/quantize.h"
 #include "nnacl/int8/common_func_int8.h"
 
 namespace mindspore::kernel {
-class MatmulDynamicBaseInt8CPUKernel : public InnerKernel {
+class MatmulDynamicBaseInt8CPUKernel : public LiteKernel {
  public:
   MatmulDynamicBaseInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~MatmulDynamicBaseInt8CPUKernel() override;

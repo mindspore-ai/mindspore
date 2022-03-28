@@ -17,17 +17,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SELECT_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
 #endif
 
 namespace mindspore::kernel {
-class SelectCPUKernel : public InnerKernel {
+class SelectCPUKernel : public LiteKernel {
  public:
   SelectCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~SelectCPUKernel() override = default;
   int Prepare() override;
   int ReSize() override;

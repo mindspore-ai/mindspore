@@ -34,7 +34,7 @@
 #include "include/context.h"
 #include "include/api/kernel.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
 #endif
@@ -130,7 +130,7 @@ class KernelExec {
   OpParameter *op_parameter() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->op_parameter();
+      return std::static_pointer_cast<LiteKernel>(kernel_)->op_parameter();
     }
     return nullptr;
   }
@@ -148,7 +148,7 @@ class KernelExec {
   virtual int Train() {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->Train();
+      return std::static_pointer_cast<LiteKernel>(kernel_)->Train();
     }
     return mindspore::lite::RET_OK;
   }
@@ -156,7 +156,7 @@ class KernelExec {
   virtual bool IsTrain() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->IsTrain();
+      return std::static_pointer_cast<LiteKernel>(kernel_)->IsTrain();
     }
     return false;
   }
@@ -164,7 +164,7 @@ class KernelExec {
   virtual int Eval() {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->Eval();
+      return std::static_pointer_cast<LiteKernel>(kernel_)->Eval();
     }
     return mindspore::lite::RET_OK;
   }
@@ -172,7 +172,7 @@ class KernelExec {
   virtual bool IsEval() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->IsEval();
+      return std::static_pointer_cast<LiteKernel>(kernel_)->IsEval();
     }
     return false;
   }
@@ -180,14 +180,14 @@ class KernelExec {
   virtual void SetTrainable(bool trainable = true) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      std::static_pointer_cast<InnerKernel>(kernel_)->SetTrainable(trainable);
+      std::static_pointer_cast<LiteKernel>(kernel_)->SetTrainable(trainable);
     }
   }
 
   virtual bool IsTrainable() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->IsTrainable();
+      return std::static_pointer_cast<LiteKernel>(kernel_)->IsTrainable();
     }
     return false;
   }
@@ -216,7 +216,7 @@ class KernelExec {
   void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensors(in_tensors);
+      std::static_pointer_cast<LiteKernel>(kernel_)->set_in_tensors(in_tensors);
     } else {
       std::vector<MSTensor> tensors_in;
       std::transform(in_tensors.begin(), in_tensors.end(), std::back_inserter(tensors_in), [](lite::Tensor *tensor) {
@@ -230,7 +230,7 @@ class KernelExec {
   void set_in_tensor(lite::Tensor *in_tensor, size_t index) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensor(in_tensor, index);
+      std::static_pointer_cast<LiteKernel>(kernel_)->set_in_tensor(in_tensor, index);
     } else {
       MS_ASSERT(index < kernel_->inputs().size());
       auto impl = std::make_shared<mindspore::LiteTensorImpl>(in_tensor);
@@ -242,7 +242,7 @@ class KernelExec {
   void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      std::static_pointer_cast<InnerKernel>(kernel_)->set_out_tensors(out_tensors);
+      std::static_pointer_cast<LiteKernel>(kernel_)->set_out_tensors(out_tensors);
     } else {
       std::vector<MSTensor> tensors_out;
       std::transform(out_tensors.begin(), out_tensors.end(), std::back_inserter(tensors_out), [](lite::Tensor *tensor) {
@@ -256,7 +256,7 @@ class KernelExec {
   virtual void set_out_tensor(lite::Tensor *out_tensor, size_t index) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      std::static_pointer_cast<InnerKernel>(kernel_)->set_out_tensor(out_tensor, index);
+      std::static_pointer_cast<LiteKernel>(kernel_)->set_out_tensor(out_tensor, index);
     } else {
       MS_ASSERT(index < kernel_->outputs().size());
       auto impl = std::make_shared<mindspore::LiteTensorImpl>(out_tensor);
@@ -268,7 +268,7 @@ class KernelExec {
   const std::vector<lite::Tensor *> &in_tensors() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->in_tensors();
+      return std::static_pointer_cast<LiteKernel>(kernel_)->in_tensors();
     } else {
       auto &ms_tensors = kernel_->inputs();
       mutable_in_tensors_.resize(ms_tensors.size());
@@ -288,7 +288,7 @@ class KernelExec {
   const std::vector<lite::Tensor *> &out_tensors() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->out_tensors();
+      return std::static_pointer_cast<LiteKernel>(kernel_)->out_tensors();
     } else {
       auto &ms_tensors = kernel_->outputs();
       mutable_out_tensors_.resize(ms_tensors.size());
@@ -365,14 +365,14 @@ class KernelExec {
 #endif
 };
 
-typedef InnerKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
-                                      const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                      const lite::Context *ctx, const KernelKey &desc);
+typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
+                                     const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                     const lite::Context *ctx, const KernelKey &desc);
 
 template <class T>
-kernel::InnerKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                       const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                       const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                      const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                      const lite::Context *ctx, const kernel::KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;

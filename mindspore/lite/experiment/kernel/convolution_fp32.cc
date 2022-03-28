@@ -19,7 +19,7 @@
 namespace mindspore::kernel {
 ConvolutionCPUFp32::ConvolutionCPUFp32(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors,
                                        std::vector<lite::Tensor *> out_tensors, const lite::Context *ctx)
-    : InnerKernel(parameter, in_tensors, out_tensors, ctx) {
+    : LiteKernel(parameter, in_tensors, out_tensors, ctx) {
   in[0] = &in_tensors[0]->TensorC();
   in[1] = &in_tensors[1]->TensorC();
   out[0] = &out_tensors[0]->TensorC();

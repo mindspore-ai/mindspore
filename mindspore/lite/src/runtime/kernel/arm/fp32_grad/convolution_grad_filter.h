@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class ConvolutionGradFilterCPUKernel : public InnerKernel {
+class ConvolutionGradFilterCPUKernel : public LiteKernel {
  public:
   explicit ConvolutionGradFilterCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
 
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionGradFilterCPUKernel() override {}
 
   int Prepare() override;

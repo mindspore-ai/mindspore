@@ -177,10 +177,10 @@ int ArithmeticInt8CPUKernel::Run() {
   return ret;
 }
 
-kernel::InnerKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                    const lite::Context *ctx, const kernel::KernelKey &desc) {
-  kernel::InnerKernel *kernel = nullptr;
+kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc) {
+  kernel::LiteKernel *kernel = nullptr;
   ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(parameter);
   if (desc.type == PrimitiveType_Eltwise && param->eltwise_mode_ == static_cast<int>(schema::EltwiseMode_SUM)) {
     kernel = new (std::nothrow)

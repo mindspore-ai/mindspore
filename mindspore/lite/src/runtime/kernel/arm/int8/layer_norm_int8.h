@@ -23,11 +23,11 @@
 #include "include/errorcode.h"
 
 namespace mindspore::kernel {
-class LayerNormInt8CPUKernel : public InnerKernel {
+class LayerNormInt8CPUKernel : public LiteKernel {
  public:
   LayerNormInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<LayerNormParameter *>(parameter);
   }
   ~LayerNormInt8CPUKernel() override;

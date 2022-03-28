@@ -17,16 +17,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPACE_TO_BATCH_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp32/space_to_batch_fp32.h"
 #include "nnacl/common_func.h"
 
 namespace mindspore::kernel {
-class SpaceToBatchCPUKernel : public InnerKernel {
+class SpaceToBatchCPUKernel : public LiteKernel {
  public:
   SpaceToBatchCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<SpaceToBatchParameter *>(op_parameter_);
   }
   ~SpaceToBatchCPUKernel() {}

@@ -318,16 +318,16 @@ int DeConvInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_CHECK_TRUE_RET(op_parameter != nullptr, nullptr);
   MS_CHECK_TRUE_RET(ctx != nullptr, nullptr);
 
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  kernel::InnerKernel *kernel = nullptr;
+  kernel::LiteKernel *kernel = nullptr;
 
   if (conv_param->group_ == 1) {
     kernel = new (std::nothrow)

@@ -19,14 +19,14 @@
 
 #include <vector>
 #include "nnacl/fp32/local_response_norm_fp32.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class LocalResponseNormCPUKernel : public InnerKernel {
+class LocalResponseNormCPUKernel : public LiteKernel {
  public:
   LocalResponseNormCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
+      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
     lrn_param_ = reinterpret_cast<LocalResponseNormParameter *>(parameter);
   }
   ~LocalResponseNormCPUKernel() override = default;

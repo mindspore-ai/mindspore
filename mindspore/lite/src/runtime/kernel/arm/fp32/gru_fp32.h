@@ -16,15 +16,15 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRU_FP32_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRU_FP32_H_
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/gru_parameter.h"
 
 namespace mindspore::kernel {
-class GruCPUKernel : public InnerKernel {
+class GruCPUKernel : public LiteKernel {
  public:
   GruCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     gru_param_ = reinterpret_cast<GruParameter *>(op_parameter_);
   }
 

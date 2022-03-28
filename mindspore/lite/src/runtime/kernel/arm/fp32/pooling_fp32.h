@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/base/pooling_base.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
 class PoolingCPUKernel : public PoolingBaseCPUKernel {

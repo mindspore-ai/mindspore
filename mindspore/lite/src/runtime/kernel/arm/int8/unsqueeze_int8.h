@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_UNSQUEEZE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/int8/unsqueeze_int8.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
@@ -25,11 +25,11 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class Unsqueezeint8CPUKernel : public InnerKernel {
+class Unsqueezeint8CPUKernel : public LiteKernel {
  public:
   Unsqueezeint8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
+      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
     param_ = reinterpret_cast<UnSqueezeParameter *>(op_parameter_);
     param_->thread_count_ = op_parameter_->thread_num_;
   }

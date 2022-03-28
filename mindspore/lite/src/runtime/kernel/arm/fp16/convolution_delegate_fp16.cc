@@ -132,12 +132,12 @@ bool ConvolutionDelegateFP16CPUKernel::CheckInputsValid() const {
   return input_tensor->data_type() == weight_tensor->data_type();
 }
 
-kernel::InnerKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const InnerContext *ctx) {
+kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const InnerContext *ctx) {
   MS_ASSERT(opParameter != nullptr);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  kernel::InnerKernel *kernel = nullptr;
+  kernel::LiteKernel *kernel = nullptr;
 #if defined(ENABLE_ARM)
   if (CheckConvDw1DWinograd(conv_param, ctx->thread_num_)) {
     kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3Fp16CPUKernel(opParameter, inputs, outputs, ctx);
@@ -162,14 +162,14 @@ kernel::InnerKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *
   return kernel;
 }
 
-kernel::InnerKernel *ConvolutionDelegateFP16CPUKernel::CpuConvFp16KernelSelect(
+kernel::LiteKernel *ConvolutionDelegateFP16CPUKernel::CpuConvFp16KernelSelect(
   const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
   const lite::InnerContext *ctx, void *origin_weight, void *origin_bias) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   bool use_winograd = false;
   int out_unit;
   CheckIfUseWinogradFp16(&use_winograd, &out_unit, conv_param);
-  kernel::InnerKernel *kernel = nullptr;
+  kernel::LiteKernel *kernel = nullptr;
 
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
     kernel = new (std::nothrow)
@@ -198,9 +198,9 @@ kernel::InnerKernel *ConvolutionDelegateFP16CPUKernel::CpuConvFp16KernelSelect(
   return kernel;
 }
 
-kernel::InnerKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                   const std::vector<lite::Tensor *> &outputs,
-                                                   OpParameter *op_parameter, const InnerContext *ctx) {
+kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                  const InnerContext *ctx) {
   auto *group_conv_creator =
     new (std::nothrow) GroupConvCreator(inputs, outputs, op_parameter, false, kNumberTypeFloat16);
   if (group_conv_creator == nullptr) {
@@ -218,13 +218,13 @@ kernel::InnerKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tenso
 }
 
 /* creator func */
-kernel::InnerKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  kernel::InnerKernel *kernel = nullptr;
+  kernel::LiteKernel *kernel = nullptr;
   if (conv_param->group_ == 1) {
     kernel = new (std::nothrow) kernel::ConvolutionDelegateFP16CPUKernel(opParameter, inputs, outputs,
                                                                          static_cast<const lite::InnerContext *>(ctx));

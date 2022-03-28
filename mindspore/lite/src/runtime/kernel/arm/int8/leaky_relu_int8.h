@@ -23,14 +23,14 @@
 #include "include/context.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/int8/leaky_relu_int8.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class LeakyReluInt8CPUKernel : public InnerKernel {
+class LeakyReluInt8CPUKernel : public LiteKernel {
  public:
   LeakyReluInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~LeakyReluInt8CPUKernel() override;
 
   int Prepare() override;

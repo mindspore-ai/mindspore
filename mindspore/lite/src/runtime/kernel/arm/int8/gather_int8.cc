@@ -142,15 +142,15 @@ int GatherInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *GatherInt8CPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *GatherInt8CPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;
   }
 
-  InnerKernel *kernel = nullptr;
+  LiteKernel *kernel = nullptr;
   if (parameter->quant_type_ == schema::QuantType_QUANT_ALL) {
     kernel =
       new (std::nothrow) GatherInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

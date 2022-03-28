@@ -17,15 +17,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_TILE_BASE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/base/tile_base.h"
 
 namespace mindspore::kernel {
-class TileCPUKernel : public InnerKernel {
+class TileCPUKernel : public LiteKernel {
  public:
   TileCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
   }
   ~TileCPUKernel() override = default;

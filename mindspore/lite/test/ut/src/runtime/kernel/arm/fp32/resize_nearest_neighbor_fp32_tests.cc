@@ -38,7 +38,7 @@ class TestResizeNearestNeighborFp32 : public mindspore::CommonTest {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Resize};
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
-  kernel::InnerKernel *kernel_ = nullptr;
+  kernel::LiteKernel *kernel_ = nullptr;
 };
 
 void TestResizeNearestNeighborFp32::TearDown() {

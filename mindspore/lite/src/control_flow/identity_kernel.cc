@@ -16,7 +16,7 @@
 
 #include "src/control_flow/identity_kernel.h"
 #include "src/tensor.h"
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "src/common/tensor_util.h"
 #include "src/common/prim_inner.h"
 
@@ -68,9 +68,9 @@ KernelExec *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::
   }
   memset(param, 0, sizeof(OpParameter));
   param->type_ = PrimType::PrimType_Inner_Identity;
-  auto inner_kernel = new IdentityKernel(param, in_tensors, out_tensors, ctx);
-  MS_CHECK_TRUE_MSG(inner_kernel != nullptr, nullptr, "new inner kernel failed.");
-  std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
+  auto lite_kernel = new IdentityKernel(param, in_tensors, out_tensors, ctx);
+  MS_CHECK_TRUE_MSG(lite_kernel != nullptr, nullptr, "new inner kernel failed.");
+  std::shared_ptr<kernel::Kernel> shared_kernel(lite_kernel);
   auto *kernel_exec = new KernelExec(shared_kernel);
   kernel_exec->set_context(ctx);
   return kernel_exec;

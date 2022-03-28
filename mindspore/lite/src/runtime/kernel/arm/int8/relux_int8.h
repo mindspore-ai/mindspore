@@ -18,16 +18,16 @@
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_INT8_RELUX_INT8_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/int8/relux_int8.h"
 
 namespace mindspore::kernel {
-class ReluXInt8CPUKernel : public InnerKernel {
+class ReluXInt8CPUKernel : public LiteKernel {
  public:
   ReluXInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     type_ = (reinterpret_cast<ActivationParameter *>(parameter))->type_;
   }
   ~ReluXInt8CPUKernel() override = default;

@@ -18,11 +18,11 @@
 #define MINDSPORE_LITE_CONVOLUTION_FP32_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/kernel.h"
 
 namespace mindspore::kernel {
-class ConvolutionCPUFp32 : public InnerKernel {
+class ConvolutionCPUFp32 : public LiteKernel {
  public:
   ConvolutionCPUFp32(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors,
                      std::vector<lite::Tensor *> out_tensors, const lite::Context *ctx);

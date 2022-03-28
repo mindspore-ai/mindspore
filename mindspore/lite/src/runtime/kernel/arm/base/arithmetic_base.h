@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_ARITHMETIC_BASE_H_
 
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "nnacl/arithmetic.h"
 
 namespace mindspore::kernel {
-class ArithmeticBaseCPUKernel : public InnerKernel {
+class ArithmeticBaseCPUKernel : public LiteKernel {
  public:
   ArithmeticBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~ArithmeticBaseCPUKernel() override {

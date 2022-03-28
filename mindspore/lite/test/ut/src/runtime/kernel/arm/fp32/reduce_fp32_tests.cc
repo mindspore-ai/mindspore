@@ -55,7 +55,7 @@ class TestReduceFp32 : public mindspore::CommonTest {
   kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_ReduceFusion};
   kernel::KernelCreator creator_ = nullptr;
   lite::InnerContext *ctx_ = nullptr;
-  kernel::InnerKernel *kernel_ = nullptr;
+  kernel::LiteKernel *kernel_ = nullptr;
 };
 
 void TestReduceFp32::TearDown() {

@@ -36,12 +36,12 @@ static __attribute__((always_inline)) inline bool MS_ISNAN(float var) {
 namespace mindspore::kernel {
 enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH, ACCUMULATE_GRADS };
 
-class OptimizerKernel : public InnerKernel {
+class OptimizerKernel : public LiteKernel {
  public:
   OptimizerKernel() = default;
   OptimizerKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx, int lr_idx, int grad_idx)
-      : InnerKernel(parameter, inputs, outputs, ctx), lr_idx_(lr_idx), grad_idx_(grad_idx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx), lr_idx_(lr_idx), grad_idx_(grad_idx) {}
   ~OptimizerKernel() = default;
 
   WeightUpdateMode get_optimizer_mode() { return weight_update_mod_; }
@@ -179,11 +179,11 @@ class OptimizerKernel : public InnerKernel {
         return RET_ERROR;
       }
     }
-    return InnerKernel::Eval();
+    return LiteKernel::Eval();
   }
 
   int PreProcess() override {
-    auto ret = InnerKernel::PreProcess();
+    auto ret = LiteKernel::PreProcess();
     if (ret != RET_OK) {
       return ret;
     }

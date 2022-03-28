@@ -77,9 +77,9 @@ int NegGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::InnerKernel *CpuNegGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *param,
-                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuNegGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *param,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr!";
     return nullptr;

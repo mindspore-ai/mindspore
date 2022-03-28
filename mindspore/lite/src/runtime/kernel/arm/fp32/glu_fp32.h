@@ -19,7 +19,7 @@
 
 #include <cstring>
 #include <vector>
-#include "src/inner_kernel.h"
+#include "src/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/op_base.h"
 #include "nnacl/split_parameter.h"
@@ -30,11 +30,11 @@ using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
 constexpr size_t kSplitNum = 2;
 
-class GluCPUKernel : public InnerKernel {
+class GluCPUKernel : public LiteKernel {
  public:
   GluCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     glu_param_ = reinterpret_cast<GluParameter *>(op_parameter_);
     split_ptr_.resize(kSplitNum, nullptr);
   }
