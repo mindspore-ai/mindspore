@@ -14,23 +14,18 @@
  * limitations under the License.
 */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_TENSOR_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_TENSOR_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_TENSOR_H
+#define MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_TENSOR_H
 
 #include <memory>
 #include <set>
 #include <vector>
 
 #include "utils/hash_map.h"
-#include "backend/common/somas/somas_node.h"
 #include "backend/common/somas/somas_solver_pre.h"
-#include "backend/common/somas/somas_stream.h"
 
 namespace mindspore {
 namespace somas {
-class SomasNode;
-class SomasStream;
-
 // Lifetime type
 struct Lifetime {
   size_t start_;
@@ -62,10 +57,6 @@ enum LifeLongType {
 
 class SomasTensor {
  public:
-  using SomasNodePtr = std::shared_ptr<SomasNode>;
-  using SomasStreamPtr = std::shared_ptr<SomasStream>;
-  using SomasTensorPtr = std::shared_ptr<SomasTensor>;
-
   size_t aligned_size_{0};
   LifeLongType lifelong_value_;
 
@@ -77,12 +68,11 @@ class SomasTensor {
 
   size_t offset_{0};
 
-  std::set<SomasNodePtr> destinations_;
-  std::set<SomasStreamPtr> destinationStreams_;
-  mindspore::HashMap<SomasStreamPtr, SomasNodePtr> max_destinations_;
+  std::set<size_t> destination_nodes_;
+  mindspore::HashMap<size_t, size_t> stream_max_destination_node_;
 
   // Constructors/Destructors
-  explicit SomasTensor(size_t id, SomasNodePtr source_node, SomasStreamPtr source_stream, size_t real_size,
+  explicit SomasTensor(size_t id, size_t source_node_id, size_t source_stream_id, size_t real_size,
                        LifeLongType lifelong_value = kLifeLongNone);
   SomasTensor(const SomasTensor &) = delete;
   SomasTensor &operator=(const SomasTensor &) = delete;
@@ -90,8 +80,8 @@ class SomasTensor {
 
   // Accessors
   const size_t &GetId() const { return id_; }
-  SomasNodePtr GetSourceNode() const { return source_node_; }
-  SomasStreamPtr GetSourceStream() const { return source_stream_; }
+  size_t GetSourceNodeId() const { return source_node_id_; }
+  size_t GetSourceStreamId() const { return source_stream_id_; }
   const size_t &GetOriginalSize() const { return original_size_; }
   const size_t &GetAlignedSize() const { return aligned_size_; }
   const size_t &GetNumConstraints() const { return num_constraints_; }
@@ -111,20 +101,19 @@ class SomasTensor {
     }
   }
   SomasSolverTensorDescPtr GetSolverTensorDesc();
-  void ComputeMaxDestinationId();
+  size_t num_constraints_{0};
 
  private:
   bool ref_overlap_;
-  size_t num_constraints_{0};
-  mindspore::HashMap<SomasStreamPtr, size_t> max_destination_id_;
   const size_t id_{0};
-  const SomasNodePtr source_node_;
-  SomasStreamPtr const source_stream_;
+  const size_t source_node_id_;
+  const size_t source_stream_id_;
   const size_t original_size_{0};
 
   SomasSolverTensorDescPtr solver_tensor_desc_;
 };
+using SomasTensorPtr = std::shared_ptr<SomasTensor>;
 }  // namespace somas
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_TENSOR_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_TENSOR_H

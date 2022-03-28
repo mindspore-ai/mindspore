@@ -14,11 +14,10 @@
  * limitations under the License.
 */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_STREAM_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_STREAM_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_STREAM_H_
+#define MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_STREAM_H_
 
 #include "backend/common/somas/somas_node.h"
-#include "backend/common/somas/somas_tensor.h"
 
 #include <memory>
 #include <set>
@@ -26,18 +25,9 @@
 
 namespace mindspore {
 namespace somas {
-class SomasNode;
-class SomasTensor;
-
 class SomasStream {
  public:
-  using SomasNodePtr = std::shared_ptr<SomasNode>;
-  using SomasTensorPtr = std::shared_ptr<SomasTensor>;
-  using SomasStreamPtr = std::shared_ptr<SomasStream>;
-
   // Attributes mutated in code
-  std::vector<SomasTensorPtr> tensors_;  // vector needed for same-stream loop in ConflictComputing()
-  std::set<SomasStreamPtr> ancestor_streams_;
   std::vector<SomasNodePtr> nodes_;
 
   // Constructors/Destructors
@@ -47,12 +37,13 @@ class SomasStream {
   ~SomasStream() = default;
 
   // Accessors
-  const int64_t &GetId() const { return id_; }
+  const size_t &GetId() const { return id_; }
 
  private:
-  const int64_t id_{0};
+  const size_t id_{0};
 };
+using SomasStreamPtr = std::shared_ptr<SomasStream>;
 }  // namespace somas
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_SOMAS_SOMAS_STREAM_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_SOMAS_SOMAS_STREAM_H_

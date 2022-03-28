@@ -16,21 +16,16 @@
 
 #include "backend/common/somas/somas_tensor.h"
 
-#include <utility>
-#include "backend/common/somas/somas_node.h"
-#include "backend/common/somas/somas_stream.h"
-#include "backend/common/somas/somas.h"
-
 namespace mindspore {
 namespace somas {
-SomasTensor::SomasTensor(size_t id, SomasNodePtr source_node, SomasStreamPtr source_stream, size_t real_size,
+SomasTensor::SomasTensor(size_t id, size_t source_node_id, size_t source_stream_id, size_t real_size,
                          LifeLongType lifelong_value)
     : lifelong_value_(lifelong_value),
       type_(kUnknown),
       offset_(0),
       id_(id),
-      source_node_(std::move(source_node)),
-      source_stream_(std::move(source_stream)),
+      source_node_id_(source_node_id),
+      source_stream_id_(source_stream_id),
       original_size_(real_size) {
   const size_t alignment = 512;
   const size_t alignment_complement = 31;
@@ -54,16 +49,6 @@ SomasSolverTensorDescPtr SomasTensor::GetSolverTensorDesc() {
     return nullptr;
   } else {
     return solver_tensor_desc_;
-  }
-}
-
-void SomasTensor::ComputeMaxDestinationId() {
-  for (const auto &node : destinations_) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (node->GetId() > max_destination_id_[node->GetStream()]) {
-      max_destination_id_[node->GetStream()] = node->GetId();
-      max_destinations_[node->GetStream()] = node;
-    }
   }
 }
 }  // namespace somas
