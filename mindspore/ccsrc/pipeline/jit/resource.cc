@@ -31,9 +31,8 @@ namespace pipeline {
 
 BuiltInTypeMap &GetMethodMap() {
   static BuiltInTypeMap method_map = {{kObjectTypeString,
-                                       {
-                                         {"__bool__", std::string("str_bool")}  // C.str_bool
-                                       }},
+                                       {{"__bool__", std::string("str_bool")},  // C.str_bool
+                                        {"format", std::string("_format")}}},
                                       {kMetaTypeNone,
                                        {
                                          {"__bool__", std::string("none_bool")}  // C.none_bool

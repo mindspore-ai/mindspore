@@ -30,6 +30,7 @@ from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add,
 from ...ops.composite.base import _append, _insert
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
+from ...ops.operations._inner_ops import Format
 from ...ops.primitive import constexpr
 
 
@@ -41,6 +42,7 @@ abs_ = P.Abs()
 ndim_ = P.Rank()
 cumsum_ = P.CumSum()
 size_op_ = P.Size()
+_format = Format()
 _reduce_sum_default = P.ReduceSum()
 _reduce_sum_keepdims = P.ReduceSum(True)
 _mean_keepdims = P.ReduceMean(True)
