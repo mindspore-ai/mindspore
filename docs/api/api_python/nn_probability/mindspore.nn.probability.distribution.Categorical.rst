@@ -29,7 +29,7 @@ mindspore.nn.probability.distribution.Categorical
 
         Tensor，事件发生的概率。
 
-   .. py:method:: cdf(value, probs)
+    .. py:method:: cdf(value, probs)
 
         在给定值下计算累积分布函数（Cumulatuve Distribution Function, CDF）。
 

@@ -1,8 +1,7 @@
 ﻿mindspore.dataset.OBSMindDataset
 ================================
 
-.. py:class:: mindspore.dataset.OBSMindDataset(dataset_files, server, ak, sk, sync_obs_path, columns_list=None,
-                                            shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=True)
+.. py:class:: mindspore.dataset.OBSMindDataset(dataset_files, server, ak, sk, sync_obs_path, columns_list=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=True)
 
     读取和解析存放在OBS上的MindRecord格式数据集。生成的数据集的列名和列类型取决于MindRecord文件中的保存的列名与类型。
 
@@ -40,6 +39,5 @@
         - 需要用户提前在OBS上创建同步用的目录，然后通过 `sync_obs_path` 指定。
         - 如果线下训练，建议为每次训练设置 `BATCH_JOB_ID` 环境变量。
         - 分布式训练中，假如使用多个节点（服务器），则必须使用每个节点全部的8张卡。如果只有一个节点（服务器），则没有这样的限制。
-
 
     .. include:: mindspore.dataset.Dataset.sync_wait_dataset.rst
