@@ -121,6 +121,9 @@ static inline int32x4_t MS_DIV128_EPI32(int32x4_t src1, int32x4_t src2) {
   return result;
 }
 
+#define MS128_INT32_TO_FLOAT32(src) vcvtq_f32_s32(src)
+#define MS128_FLOAT32_TO_INT32(src) vcvtq_s32_f32(src)
+
 static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;
   MS_F32X4_GETI(dst, 0) = sqrtf(MS_F32X4_GETI(src, 0));
