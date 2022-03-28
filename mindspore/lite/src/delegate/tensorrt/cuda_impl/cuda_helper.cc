@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/tensorrt/cuda_impl/cuda_helper.h"
+#include "src/common/log_util.h"
 
 CudaHelper &CudaHelper::GetInstance() {
   static CudaHelper instance;

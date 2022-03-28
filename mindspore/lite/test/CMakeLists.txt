@@ -72,6 +72,17 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
     endif()
 endif()
 
+if(MSLITE_GPU_BACKEND STREQUAL cuda)
+    set(CUDA_PATH $ENV{CUDA_HOME})
+    include_directories(${CUDA_PATH}/include)
+    include_directories(${CCSRC_DIR}/plugin/device/gpu/kernel)
+    include_directories(${CUDA_PATH})
+    file(GLOB_RECURSE TEST_GPU_UT_SRC
+            ${TEST_DIR}/ut/src/runtime/kernel/cuda/*.cc
+            )
+    list(APPEND TEST_UT_SRC ${TEST_GPU_UT_SRC})
+endif()
+
 if(MSLITE_ENABLE_INT8)
     file(GLOB_RECURSE TEST_INT8_UT_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
