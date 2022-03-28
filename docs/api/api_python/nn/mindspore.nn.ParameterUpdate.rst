@@ -13,7 +13,7 @@ mindspore.nn.ParameterUpdate
 
     **输入：**
 
-    - **x** （Tensor）- shape和类型与 `param` 相同的Tensor。
+    - **x** （Tensor）- shape和type与 `param` 相同的Tensor。
 
     **输出：**
 

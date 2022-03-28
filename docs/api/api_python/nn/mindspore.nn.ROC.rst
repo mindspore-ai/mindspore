@@ -8,7 +8,7 @@ mindspore.nn.ROC
     **参数：**
 
     - **class_num** (int) - 类别数。对于二分类问题，此入参可以不设置。默认值：None。
-    - **pos_label** (int) - 正类的类别值。二进制问题中，默认为1；多分类问题中，不应设置此参数，因为它将在[0,num_classes-1]范围内迭代更改。默认值：None。
+    - **pos_label** (int) - 正类的类别值。二分类问题中，不设置此入参，即 `pos_label` 为None时，正类类别值默认为1；用户可以自行设置正类类别值为其他值。多分类问题中，用户不应设置此参数，因为它将在[0,num_classes-1]范围内迭代更改。默认值：None。
 
     .. py:method:: clear()
 
@@ -22,8 +22,8 @@ mindspore.nn.ROC
 
         tuple，由 `fpr`、`tpr` 和 `thresholds` 组成。
 
-        - **fpr** (np.array) - 假正率。二分类情况下，返回不同阈值下的fpr；多分类情况下，则为fpr的列表，列表的每个元素代表一个类别。
-        - **tps** (np.array) - 真正率。二分类情况下，返回不同阈值下的tps；多分类情况下，则为tps的列表，列表的每个元素代表一个类别。
+        - **fpr** (np.array) - 假正率。二分类情况下，返回不同阈值下的fpr；多分类情况下，则为fpr(false positive rate)的列表，列表的每个元素代表一个类别。
+        - **tps** (np.array) - 真正率。二分类情况下，返回不同阈值下的tps；多分类情况下，则为tps(true positive rate)的列表，列表的每个元素代表一个类别。
         - **thresholds** (np.array) - 用于计算假正率和真正率的阈值。
 
         **异常：**
