@@ -43,8 +43,9 @@ class Cifar100ToMR:
         www.mindspore.cn/docs/programming_guide/en/master/dataset_conversion.html#converting-the-cifar-10-dataset>`_.
 
     Args:
-        source (str): the cifar100 directory to be transformed.
-        destination (str): the MindRecord file path to transform into.
+        source (str): The cifar100 directory to be transformed.
+        destination (str): MindRecord file path to transform into, ensure that no file with the same name
+            exists in the directory.
 
     Raises:
         ValueError: If source or destination is invalid.
@@ -80,7 +81,7 @@ class Cifar100ToMR:
             fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"]. Default: None.
 
         Returns:
-            MSRStatus, whether cifar100 is successfully transformed to MindRecord.
+            MSRStatus, SUCCESS or FAILED.
         """
         if fields and not isinstance(fields, list):
             raise ValueError("The parameter fields should be None or list")
@@ -119,7 +120,7 @@ class Cifar100ToMR:
             fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"]. Default: None.
 
         Returns:
-            MSRStatus, whether cifar100 is successfully transformed to MindRecord.
+            MSRStatus, SUCCESS or FAILED.
         """
 
         t = ExceptionThread(target=self.run, kwargs={'fields': fields})
@@ -171,7 +172,7 @@ def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
         schema_desc (str): String of schema description.
 
     Returns:
-        MSRStatus, whether successfully written into MindRecord.
+        MSRStatus, SUCCESS or FAILED.
     """
     schema = {"id": {"type": "int64"}, "fine_label": {"type": "int64"},
               "coarse_label": {"type": "int64"}, "data": {"type": "bytes"}}

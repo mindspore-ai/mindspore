@@ -72,11 +72,14 @@ class TFRecordToMR:
         www.mindspore.cn/docs/programming_guide/en/master/dataset_conversion.html#converting-tfrecord-dataset>`_.
 
     Args:
-        source (str): the TFRecord file to be transformed.
-        destination (str): the MindRecord file path to transform into.
-        feature_dict (dict): a dictionary that states the feature type, and
-            `VarLenFeature` is not supported.
-        bytes_fields (list, optional): the bytes fields which are in `feature_dict` and can be images bytes.
+        source (str): TFRecord file to be transformed.
+        destination (str): MindRecord file path to transform into, ensure that no file with the same name
+            exists in the directory.
+        feature_dict (dict[str, `FixedLenFeature
+            <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ ]): Dictionary that states
+            the feature type, and `VarLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/VarLenFeature>`_
+            is not supported.
+        bytes_fields (list[str], optional): The bytes fields which are in `feature_dict` and can be images bytes.
             Default: None.
 
     Raises:
@@ -282,7 +285,7 @@ class TFRecordToMR:
         Execute transformation from TFRecord to MindRecord.
 
         Returns:
-            MSRStatus, whether TFRecord is successfully transformed to MindRecord.
+            MSRStatus, SUCCESS or FAILED.
         """
         writer = FileWriter(self.destination)
         logger.info("Transformed MindRecord schema is: {}, TFRecord feature dict is: {}"
@@ -313,7 +316,10 @@ class TFRecordToMR:
 
     def transform(self):
         """
-        Encapsulate the run function to exit normally
+        Encapsulate the run function to exit normally.
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
         """
 
         t = ExceptionThread(target=self.run)

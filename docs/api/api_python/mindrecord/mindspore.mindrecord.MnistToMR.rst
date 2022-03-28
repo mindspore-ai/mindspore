@@ -6,12 +6,12 @@
     **参数：**
 
     - **source** (str) - 包含t10k-images-idx3-ubyte.gz、train-images-idx3-ubyte.gz、t10k-labels-idx1-ubyte.gz和train-labels-idx1-ubyte.gz数据集文件的目录路径。
-    - **destination** (str) - 转换生成的MindRecord文件路径。
+    - **destination** (str) - 转换生成的MindRecord文件路径，需提前创建目录并且目录下不能存在同名文件。
     - **partition_number** (int，可选) - 生成MindRecord的文件个数。默认值：1。
 
     **异常：**
 
-    - **ValueError** - `source` 、 `destination` 、 `partition_number` 无效。
+    - **ValueError** - 参数 `source` 、 `destination` 、 `partition_number` 无效。
 
 
     .. py:method:: run()
@@ -26,3 +26,7 @@
     .. py:method:: transform()
 
         :func:`mindspore.mindrecord.MnistToMR.run` 函数的包装函数来保证异常时正常退出。
+
+        **返回：**
+
+        MSRStatus，SUCCESS或FAILED。

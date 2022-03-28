@@ -1,15 +1,14 @@
 ﻿mindspore.dataset.OBSMindDataset
 ================================
 
-.. py:class:: mindspore.dataset.OBSMindDataset(dataset_files, server, ak, sk, sync_obs_path, columns_list=None,
-                                            shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=True)
+.. py:class:: mindspore.dataset.OBSMindDataset(dataset_files, server, ak, sk, sync_obs_path, columns_list=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=True)
 
     读取和解析存放在OBS上的MindRecord格式数据集。生成的数据集的列名和列类型取决于MindRecord文件中的保存的列名与类型。
 
     **参数：**
 
     - **dataset_files** (list[str]) - OBS上MindRecord格式数据集文件的路径列表，每个文件的路径前缀为s3://。
-    - **server** (str) - 连接OBS的服务地址。可包含协议类型、域名、端口号。示例： <https://your-endpoint:9000>。
+    - **server** (str) - 连接OBS的服务地址。可包含协议类型、域名、端口号。示例：<https://your-endpoint:9000>。
     - **ak** (str) - 访问密钥中的AK。
     - **sk** (str) - 访问密钥中的SK。
     - **sync_obs_path** (str) - 用于同步操作的OBS路径，用户需要提前创建，目录路径的前缀为s3://。
