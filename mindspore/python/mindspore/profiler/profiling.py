@@ -55,23 +55,24 @@ def _environment_check():
 
 class Profiler:
     """
-    Performance profiling API.
-
-    This API enables MindSpore users to profile the performance of neural network.
-    Profiler supports Ascend and GPU, both of them are used in the same way.
+    MindSpore users can use this class to collect the performance of neural networks.
 
     Args:
-        output_path (str): Output data path.
-        profile_communication (bool): (Ascend only) Whether to collect communication
-            performance data in a multi devices training, collect when True. Default is False.
-            Setting this parameter has no effect during single device training.
-        profile_memory (bool): Whether to collect tensor memory data, collect when True. Default is False.
-        start_profile (bool): The start_profile parameter controls whether to enable or disable performance data
-            collection based on conditions. The default value is True.
+        output_path (str, optional): Output data path. Default: "./data".
+        profile_communication (bool, optional): (Ascend only) Whether to collect communication performance data in
+            a multi devices training,collect when True. Setting this parameter has no effect during single device
+            training. Default: False.
+        profile_memory (bool, optional): (Ascend only) Whether to collect tensor memory data, collect when True.
+            Default: False.
+        start_profile (bool, optional): The start_profile parameter controls whether to enable or disable performance
+            data collection based on conditions. Default: True.
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
             MindSpore cannot parse the generated ascend_job_id directory structure.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np
@@ -295,7 +296,7 @@ class Profiler:
 
     def analyse(self):
         """
-        Collect and analyse performance data, called after training or during training. The example shows above.
+        Collect and analyze training performance data, support calls during and after training. The example shows above.
         """
         if Profiler._has_analysed:
             msg = "Do not analyze twice in the profiler."

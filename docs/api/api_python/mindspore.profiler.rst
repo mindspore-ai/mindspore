@@ -1,26 +1,20 @@
 mindspore.profiler
 ========================
 
-profiler模块简介。
-
 本模块提供Python API，用于启用MindSpore神经网络性能数据的分析。
-用户可以通过 ``import mindspore.profiler.Profiler`` 并初始化Profiler对象以开始分析，并使用 `Profiler.analyse()` 停止收集和分析。
+用户可以通过导入 `mindspore.profiler.Profiler` 然后初始化Profiler对象以开始分析，使用 `Profiler.analyse()` 停止收集和分析。
 用户可通过Mindinsight工具可视化分析结果。
-目前，Profiler支持AICore算子、AICpu算子、HostCpu算子、内存、设备通信、集群等数据的分析。
+目前，Profiler支持AICORE算子、AICPU算子、HostCPU算子、内存、设备通信、集群等数据的分析。
 
 .. py:class:: mindspore.profiler.Profiler(**kwargs)
 
-    性能采集API。
-
-    此API能够让MindSpore用户采集神经网络的性能。
-    Profiler支持Ascend和GPU，两者的使用方式相同。
+    MindSpore用户能够通过该类对神经网络的性能进行采集。
 
     **参数：**
-
-    - **output_path** (str) – 表示输出数据的路径。
-    - **profile_communication** (bool) – （仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为True时，收集这些数据。默认值为False。在单台设备训练中，该参数的设置无效。
-    - **profile_memory** (bool) – （仅限Ascend）表示是否收集Tensor内存数据。当值为True时，收集这些数据。默认值为False。
-    - **start_profile** (bool) – 该参数控制是否在Profiler初始化的时候开启采集数据。默认值为True。
+    - **output_path** (str, 可选) – 表示输出数据的路径。默认值："./data"。
+    - **profile_communication** (bool, 可选) – （仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为True时，收集这些数据。在单台设备训练中，该参数的设置无效。默认值：False。
+    - **profile_memory** (bool, 可选) – （仅限Ascend）表示是否收集Tensor内存数据。当值为True时，收集这些数据。默认值：False。
+    - **start_profile** (bool, 可选) – 该参数控制是否在Profiler初始化的时候开启数据采集。默认值：True。
 
     **异常：**
 
@@ -28,7 +22,7 @@ profiler模块简介。
 
     .. py:method:: analyse()
 
-        收集和分析训练后或训练期间调用的性能数据。样例如上所示。
+        收集和分析训练的性能数据，支持在训练中和训练后调用。样例如上所示。
 
     .. py:method:: start()
 
