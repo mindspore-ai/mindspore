@@ -16,12 +16,12 @@ mindspore.dataset.audio.transforms.FrequencyMasking
 
     **异常：**
 
-    - **TypeError** - 当 `iid_masks` 的类型不为布尔型。
-    - **TypeError** - 当 `freq_mask_param` 的类型不为整型。
+    - **TypeError** - 当 `iid_masks` 的类型不为bool。
+    - **TypeError** - 当 `freq_mask_param` 的类型不为int。
     - **ValueError** - 当 `freq_mask_param` 大于音频频域长度。
-    - **TypeError** - 当 `mask_start` 的类型不为整型。
+    - **TypeError** - 当 `mask_start` 的类型不为int。
     - **ValueError** - 当 `mask_start` 为负数。
-    - **TypeError** - 当 `mask_value` 的类型不为浮点型。
+    - **TypeError** - 当 `mask_value` 的类型不为float。
     - **ValueError** - 当 `mask_value` 为负数。
     - **RuntimeError** - 当输入音频的shape不为<..., freq, time>。
 

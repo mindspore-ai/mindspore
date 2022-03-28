@@ -3,6 +3,8 @@ mindspore.dataset.text.transforms.CaseFold
 
 .. py:class:: mindspore.dataset.text.transforms.CaseFold()
 
-    对UTF-8字符串进行大小写转换，相比 :func:`str.lower` 支持更多字符。
-    
-    .. note:: Windows 平台尚不支持 CaseFold。
+    将UTF-8编码字符串中的字符规范化为小写，相比 :func:`str.lower` 支持更多字符。
+
+    支持的输入规范化形式详见 `ICU_Normalizer2 <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classicu_1_1Normalizer2.html>`_ 。
+
+    .. note:: Windows平台尚不支持 `CaseFold` 。

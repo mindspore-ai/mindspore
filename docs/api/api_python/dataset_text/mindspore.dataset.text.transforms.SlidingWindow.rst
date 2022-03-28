@@ -3,7 +3,7 @@ mindspore.dataset.text.transforms.SlidingWindow
 
 .. py:class:: mindspore.dataset.text.transforms.SlidingWindow(width, axis=0)
 
-    在输入数据的某个维度上进行滑窗切分处理。
+    在输入数据的某个维度上进行滑窗切分处理，当前仅支持处理1-D的Tensor。
 
     **参数：**
 
@@ -12,6 +12,6 @@ mindspore.dataset.text.transforms.SlidingWindow
 
     **异常：**
 
-    - **TypeError** - 参数 `width` 的类型不为整型。
-    - **ValueError** - 参数 `width` 不为正数。
-    - **TypeError** - 参数 `axis` 的类型不为整型。
+    - **TypeError** - 参数 `width` 的类型不为int。
+    - **ValueError** - 参数 `width` 的值不为正数。
+    - **TypeError** - 参数 `axis` 的类型不为int。

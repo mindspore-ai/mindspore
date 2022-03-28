@@ -15,11 +15,11 @@ mindspore.dataset.audio.transforms.TimeStretch
 
     **异常：**
 
-    - **TypeError** - 当 `hop_length` 的类型不为整型。
+    - **TypeError** - 当 `hop_length` 的类型不为int。
     - **ValueError** - 当 `hop_length` 不为正数。
-    - **TypeError** - 当 `n_freq` 的类型不为整型。
+    - **TypeError** - 当 `n_freq` 的类型不为int。
     - **ValueError** - 当 `n_freq` 不为正数。
-    - **TypeError** - 当 `fixed_rate` 的类型不为浮点型。
+    - **TypeError** - 当 `fixed_rate` 的类型不为float。
     - **ValueError** - 当 `fixed_rate` 不为正数。
     - **RuntimeError** - 当输入音频的shape不为<..., freq, num_frame, complex=2>。
 

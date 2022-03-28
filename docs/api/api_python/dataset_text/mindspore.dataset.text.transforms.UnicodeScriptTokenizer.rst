@@ -3,9 +3,9 @@ mindspore.dataset.text.transforms.UnicodeScriptTokenizer
 
 .. py:class:: mindspore.dataset.text.transforms.UnicodeScriptTokenizer(keep_whitespace=False, with_offsets=False)
 
-    使用UnicodeScript分词器对字符串进行分词。
+    使用UnicodeScript分词器对UTF-8编码的字符串进行分词。
 
-    .. note:: Windows 平台尚不支持 UnicodeScriptTokenizer。
+    .. note:: Windows平台尚不支持 `UnicodeScriptTokenizer` 。
 
     **参数：**
 

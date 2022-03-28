@@ -13,7 +13,7 @@ mindspore.dataset.PaddedDataset
 
     - **TypeError** - `padded_samples` 的类型不为list。
     - **TypeError** - `padded_samples` 的元素类型不为dict。
-    - **ValueError** - `padded_samples` 为空列表。
+    - **ValueError** - `padded_samples` 为空的list。
 
     .. include:: mindspore.dataset.Dataset.add_sampler.rst
 

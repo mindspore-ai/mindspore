@@ -15,9 +15,9 @@ mindspore.dataset.text.transforms.WordpieceTokenizer
 
     **异常：**
 
-    - **TypeError** - 当 `vocab` 的类型不为 :class:`mindspore.dataset.text.Vocab` 。
-    - **TypeError** - 当 `suffix_indicator` 的类型不为字符串。
-    - **TypeError** - 当 `max_bytes_per_token` 的类型不为整型。
-    - **TypeError** - 当 `unknown_token` 的类型不为字符串。
-    - **TypeError** - 当 `with_offsets` 的类型不为布尔型。
+    - **TypeError** - 当 `vocab` 不为 :class:`mindspore.dataset.text.Vocab` 类型。
+    - **TypeError** - 当 `suffix_indicator` 的类型不为str。
+    - **TypeError** - 当 `max_bytes_per_token` 的类型不为int。
+    - **TypeError** - 当 `unknown_token` 的类型不为str。
+    - **TypeError** - 当 `with_offsets` 的类型不为bool。
     - **ValueError** - 当 `max_bytes_per_token` 为负数。

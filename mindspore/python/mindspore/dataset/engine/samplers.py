@@ -326,13 +326,24 @@ class DistributedSampler(BuiltinSampler):
 
     Args:
         num_shards (int): Number of shards to divide the dataset into.
-        shard_id (int): Shard ID of the current shard, which should within the range of [0, num_shards-1].
+        shard_id (int): Shard ID of the current shard, which should within the range of [0, `num_shards`-1].
         shuffle (bool, optional): If True, the indices are shuffled, otherwise it will not be shuffled(default=True).
         num_samples (int, optional): The number of samples to draw (default=None, which means sample all elements).
         offset(int, optional): The starting shard ID where the elements in the dataset are sent to, which
-            should be no more than num_shards. This parameter is only valid when a ConcatDataset takes
+            should be no more than `num_shards`. This parameter is only valid when a ConcatDataset takes
             a DistributedSampler as its sampler. It will affect the number of samples of per shard
             (default=-1, which means each shard has the same number of samples).
+
+    Raises:
+        TypeError: If `num_shards` is not of type int.
+        TypeError: If `shard_id` is not of type int.
+        TypeError: If `shuffle` is not of type bool.
+        TypeError: If `num_samples` is not of type int.
+        TypeError: If `offset` is not of type int.
+        ValueError: If `num_samples` is a negative value.
+        RuntimeError: If `num_shards` is not a positive value.
+        RuntimeError: If `shard_id` is smaller than 0 or equal to `num_shards` or larger than `num_shards`.
+        RuntimeError: If `offset` is greater than `num_shards`.
 
     Examples:
         >>> # creates a distributed sampler with 10 shards in total. This shard is shard 5.
@@ -340,17 +351,6 @@ class DistributedSampler(BuiltinSampler):
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
-
-    Raises:
-        TypeError: If num_shards is not an integer value.
-        TypeError: If shard_id is not an integer value.
-        TypeError: If shuffle is not a boolean value.
-        TypeError: If num_samples is not an integer value.
-        TypeError: If offset is not an integer value.
-        ValueError: If num_samples is a negative value.
-        RuntimeError: If num_shards is not a positive value.
-        RuntimeError: If shard_id is smaller than 0 or equal to num_shards or larger than num_shards.
-        RuntimeError: If offset is greater than num_shards.
     """
 
     def __init__(self, num_shards, shard_id, shuffle=True, num_samples=None, offset=-1):
@@ -434,20 +434,20 @@ class PKSampler(BuiltinSampler):
         class_column (str, optional): Name of column with class labels for MindDataset (default='label').
         num_samples (int, optional): The number of samples to draw (default=None, which means sample all elements).
 
+    Raises:
+        TypeError: If `shuffle` is not of type bool.
+        TypeError: If `class_column` is not of type str.
+        TypeError: If `num_samples` is not of type int.
+        NotImplementedError: If `num_class` is not None.
+        RuntimeError: If `num_val` is not a positive value.
+        ValueError: If `num_samples` is a negative value.
+
     Examples:
         >>> # creates a PKSampler that will get 3 samples from every class.
         >>> sampler = ds.PKSampler(3)
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
-
-    Raises:
-        TypeError: If shuffle is not a boolean value.
-        TypeError: If class_column is not a str value.
-        TypeError: If num_samples is not an integer value.
-        NotImplementedError: If num_class is not None.
-        RuntimeError: If num_val is not a positive value.
-        ValueError: If num_samples is a negative value.
     """
 
     def __init__(self, num_val, num_class=None, shuffle=False, class_column='label', num_samples=None):
@@ -517,17 +517,17 @@ class RandomSampler(BuiltinSampler):
         replacement (bool, optional): If True, put the sample ID back for the next draw (default=False).
         num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
+    Raises:
+        TypeError: If `replacement` is not of type bool.
+        TypeError: If `num_samples` is not of type int.
+        ValueError: If `num_samples` is a negative value.
+
     Examples:
         >>> # creates a RandomSampler
         >>> sampler = ds.RandomSampler()
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
-
-    Raises:
-        TypeError: If replacement is not a boolean value.
-        TypeError: If num_samples is not an integer value.
-        ValueError: If num_samples is a negative value.
      """
 
     def __init__(self, replacement=False, num_samples=None):
@@ -582,18 +582,18 @@ class SequentialSampler(BuiltinSampler):
         start_index (int, optional): Index to start sampling at. (default=None, start at first ID)
         num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
+    Raises:
+        TypeError: If `start_index` is not of type int.
+        TypeError: If `num_samples` is not of type int.
+        RuntimeError: If `start_index` is a negative value.
+        ValueError: If `num_samples` is a negative value.
+
     Examples:
         >>> # creates a SequentialSampler
         >>> sampler = ds.SequentialSampler()
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
-
-    Raises:
-        TypeError: If start_index is not an integer value.
-        TypeError: If num_samples is not an integer value.
-        RuntimeError: If start_index is a negative value.
-        ValueError: If num_samples is a negative value.
     """
 
     def __init__(self, start_index=None, num_samples=None):
@@ -650,6 +650,11 @@ class SubsetSampler(BuiltinSampler):
         indices (Any iterable Python object but string): A sequence of indices.
         num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
+    Raises:
+        TypeError: If elements of `indices` are not of type number.
+        TypeError: If `num_samples` is not of type int.
+        ValueError: If `num_samples` is a negative value.
+
     Examples:
         >>> indices = [0, 1, 2, 3, 4, 5]
         >>>
@@ -658,11 +663,6 @@ class SubsetSampler(BuiltinSampler):
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
-
-    Raises:
-        TypeError: If type of indices element is not a number.
-        TypeError: If num_samples is not an integer value.
-        ValueError: If num_samples is a negative value.
     """
 
     def __init__(self, indices, num_samples=None):
@@ -738,17 +738,17 @@ class SubsetRandomSampler(SubsetSampler):
         indices (Any iterable Python object but string): A sequence of indices.
         num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
+    Raises:
+        TypeError: If elements of `indices` are not of type number.
+        TypeError: If `num_samples` is not of type int.
+        ValueError: If `num_samples` is a negative value.
+
     Examples:
         >>> indices = [0, 1, 2, 3, 7, 88, 119]
         >>>
         >>> # create a SubsetRandomSampler, will sample from the provided indices
         >>> sampler = ds.SubsetRandomSampler(indices)
         >>> data = ds.ImageFolderDataset(image_folder_dataset_dir, num_parallel_workers=8, sampler=sampler)
-
-    Raises:
-        TypeError: If type of indices element is not a number.
-        TypeError: If num_samples is not an integer value.
-        ValueError: If num_samples is a negative value.
     """
 
     def parse(self):
@@ -815,6 +815,13 @@ class WeightedRandomSampler(BuiltinSampler):
         num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
         replacement (bool): If True, put the sample ID back for the next draw (default=True).
 
+    Raises:
+        TypeError: If elements of `weights` are not of type number.
+        TypeError: If `num_samples` is not of type int.
+        TypeError: If `replacement` is not of type bool.
+        RuntimeError: If `weights` is empty or all zero.
+        ValueError: If `num_samples` is a negative value.
+
     Examples:
         >>> weights = [0.9, 0.01, 0.4, 0.8, 0.1, 0.1, 0.3]
         >>>
@@ -823,13 +830,6 @@ class WeightedRandomSampler(BuiltinSampler):
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
-
-    Raises:
-        TypeError: If type of weights element is not a number.
-        TypeError: If num_samples is not an integer value.
-        TypeError: If replacement is not a boolean value.
-        RuntimeError: If `weights` is empty or all zero.
-        ValueError: If num_samples is a negative value.
     """
 
     def __init__(self, weights, num_samples=None, replacement=True):

@@ -7,15 +7,13 @@ mindspore.dataset.transforms.c_transforms.Unique
 
     Unique将返回3个Tensor: 运算结果Tensor，索引Tensor，计数Tensor。
 
-    运算结果Tensor包含输入张量的所有唯一元素，且和输入张量的顺序是一样的。
+    - 运算结果Tensor包含输入张量的所有唯一元素，且和输入张量的顺序是一样的。
+    - 索引Tensor包含输入Tensor的每个元素在运算结果中的索引。
+    - 计数Tensor包含运算结果Tensor的每个元素的计数。
 
-    索引Tensor包含输入Tensor的每个元素在运算结果中的索引。
-
-    计数Tensor包含运算结果Tensor的每个元素的计数。
-
-    .. note:: 这个操作需要在batch操作之后调用.
+    .. note:: 需要在 :method:`batch` 操作之后调用该运算。
 
     **异常：**
 
-    - **RuntimeError** - 当给定Tensor具有两列。
+    - **RuntimeError** - 当输入的Tensor具有两列。
 

@@ -5,7 +5,7 @@ mindspore.dataset.text.transforms.WhitespaceTokenizer
 
     基于ICU4C定义的空白字符（' ', '\\\\t', '\\\\r', '\\\\n'）对输入字符串进行分词。
 
-    .. note:: Windows 平台尚不支持 WhitespaceTokenizer。
+    .. note:: Windows平台尚不支持 `WhitespaceTokenizer` 。
 
     **参数：**
 
