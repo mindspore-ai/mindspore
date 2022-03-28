@@ -31,7 +31,7 @@ from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Call
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check
-from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode
+from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, _cache_enable
 from ..nn.metrics import Loss
 from .. import nn
 from ..boost import AutoBoost
@@ -883,7 +883,7 @@ class Model:
                              "is not equal to value in Model.train, got {} and {} separately."
                              .format(train_dataset._warmup_epoch, epoch))
 
-        if dataset_sink_mode and _is_ps_mode():
+        if dataset_sink_mode and _is_ps_mode() and not _cache_enable():
             raise ValueError("Parameter server mode does not support 'data_sink_mode=True'.")
 
         Validator.check_is_int(sink_size)

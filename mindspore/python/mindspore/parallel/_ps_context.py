@@ -279,6 +279,10 @@ def _set_cache_enable(cache_enable):
     ps_context().set_cache_enable(cache_enable)
 
 
+def _cache_enable():
+    return ps_context().cache_enable()
+
+
 def _set_rank_id(rank_id):
     ps_context().set_rank_id(rank_id)
 
