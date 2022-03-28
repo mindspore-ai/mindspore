@@ -42,21 +42,21 @@ class NetMatMul(nn.Cell):
         return self.matmul(x, y)
 
 class Net(nn.Cell):
-    def __init__(self, in_axes, out_axes):
+    def __init__(self, in_strategy, out_strategy):
         super().__init__()
         self.mul_net = NetMul()
         self.matmul_net = NetMatMul()
-        self.mul_net.shard(in_axes=in_axes, out_axes=out_axes)
+        self.mul_net.shard(in_strategy=in_strategy, out_strategy=out_strategy)
 
     def construct(self, x, y):
         out1 = self.matmul_net(x, y)
         out2 = self.matmul_net(x, y)
         return self.mul_net(out1, out2)
 
-def cell_shard_execution(in_axes, out_axes, error_log):
 
-    net = Net(in_axes, out_axes)
+def cell_shard_execution(in_strategy, out_strategy, error_log):
 
+    net = Net(in_strategy, out_strategy)
     x = Tensor(np.ones([128, 128]), dtype=ms.float32)
     y = Tensor(np.ones([128, 128]), dtype=ms.float32)
 
@@ -65,63 +65,66 @@ def cell_shard_execution(in_axes, out_axes, error_log):
     assert error_log in str(err.value)
 
 
-def test_in_axes_numbers_check():
+def test_in_strategy_numbers_check():
     """
     Feature: shard function for cell
-    Description: inconsistent input number and in_axes number
-    Expectation: throw an exception indicating inconsistent input number and in_axes number
+    Description: inconsistent input number and in_strategy number
+    Expectation: throw an exception indicating inconsistent input number and in_strategy number
     """
     set_context()
-    in_axes = ((8, 1), None, (1, 8))
-    out_axes = (None,)
-    error_log = "Input numbers: 2 is not equal to in_axes numbers: 3"
-    cell_shard_execution(in_axes, out_axes, error_log)
+    in_strategy = ((8, 1), None, (1, 8))
+    out_strategy = (None,)
+    error_log = "Input numbers: 2 is not equal to in_strategy numbers: 3"
+    cell_shard_execution(in_strategy, out_strategy, error_log)
 
 
-def test_out_axes_numbers_check():
+def test_out_strategy_numbers_check():
     """
     Feature: shard function for cell
-    Description: inconsistent output number and out_axes number
-    Expectation: throw an exception indicating inconsistent output number and out_axes number
+    Description: inconsistent output number and out_strategy number
+    Expectation: throw an exception indicating inconsistent output number and out_strategy number
     """
     set_context()
-    in_axes = ((8, 1), None)
-    out_axes = (None, (8, 1))
-    error_log = "Output number: 1 is not equal to out_axes number: 2"
-    cell_shard_execution(in_axes, out_axes, error_log)
+    in_strategy = ((8, 1), None)
+    out_strategy = (None, (8, 1))
+    error_log = "Output number: 1 is not equal to out_strategy number: 2"
+    cell_shard_execution(in_strategy, out_strategy, error_log)
 
-def test_in_axes_dimension_check():
+
+def test_in_strategy_dimension_check():
     """
     Feature: shard function for cell
-    Description: inconsistent input dimension and in_axes dimension
-    Expectation: throw an exception indicating inconsistent input_dimension and in_axes dimension
+    Description: inconsistent input dimension and in_strategy dimension
+    Expectation: throw an exception indicating inconsistent input_dimension and in_strategy dimension
     """
     set_context()
-    in_axes = ((8, 1, 1), None)
-    out_axes = (None, (8, 1))
-    error_log = "Input dimension: 2 is not equal to in_axes dimension: 3 at index 0"
-    cell_shard_execution(in_axes, out_axes, error_log)
+    in_strategy = ((8, 1, 1), None)
+    out_strategy = (None, (8, 1))
+    error_log = "Input dimension: 2 is not equal to in_strategy dimension: 3 at index 0"
+    cell_shard_execution(in_strategy, out_strategy, error_log)
 
-def test_out_axes_dimension_check():
+
+def test_out_strategy_dimension_check():
     """
     Feature: shard function for cell
-    Description: inconsistent output dimension and out_axes dimension
-    Expectation: throw an exception indicating inconsistent output_dimension and out_axes dimension
+    Description: inconsistent output dimension and out_strategy dimension
+    Expectation: throw an exception indicating inconsistent output_dimension and out_strategy dimension
     """
     set_context()
-    in_axes = ((8, 1), None)
-    out_axes = ((8,),)
-    error_log = "Output dimension: 2 is not equal to out_axes dimension: 1 at index 0"
-    cell_shard_execution(in_axes, out_axes, error_log)
+    in_strategy = ((8, 1), None)
+    out_strategy = ((8,),)
+    error_log = "Output dimension: 2 is not equal to out_strategy dimension: 1 at index 0"
+    cell_shard_execution(in_strategy, out_strategy, error_log)
 
-def test_in_axes_format_check():
+
+def test_in_strategy_format_check():
     """
     Feature: shard function for cell
-    Description: unsupported in_axes format
-    Expectation: throw an exception indicating an supported in_axes format
+    Description: unsupported in_strategy format
+    Expectation: throw an exception indicating an supported in_strategy format
     """
     set_context()
-    in_axes = ([8, 1], None)
-    out_axes = (None,)
-    error_log = "in_axes should be a two-dimension tuple"
-    cell_shard_execution(in_axes, out_axes, error_log)
+    in_strategy = ([8, 1], None)
+    out_strategy = (None,)
+    error_log = "in_strategy should be a two-dimension tuple"
+    cell_shard_execution(in_strategy, out_strategy, error_log)

@@ -183,7 +183,7 @@ class ResNet(nn.Cell):
                                        in_channel=in_channels[0],
                                        out_channel=out_channels[0],
                                        stride=strides[0])
-        self.layer1.shard(in_axes=(None,), out_axes=(None,))
+        self.layer1.shard(in_strategy=(None,), out_strategy=(None,))
         self.layer2 = self._make_layer(block,
                                        layer_nums[1],
                                        in_channel=in_channels[1],
@@ -194,7 +194,7 @@ class ResNet(nn.Cell):
                                        in_channel=in_channels[2],
                                        out_channel=out_channels[2],
                                        stride=strides[2])
-        self.layer3.shard(in_axes=((8, 1, 1, 1),), out_axes=(None,))
+        self.layer3.shard(in_strategy=((8, 1, 1, 1),), out_strategy=(None,))
         self.layer4 = self._make_layer(block,
                                        layer_nums[3],
                                        in_channel=in_channels[3],
@@ -205,7 +205,7 @@ class ResNet(nn.Cell):
         self.end_point = nn.Dense(2048, num_classes, has_bias=True,
                                   weight_init=weight_variable(),
                                   bias_init=weight_variable()).add_flags_recursive(fp16=True)
-        self.head = F.shard(self.end_point, in_axes=((1, 8),), out_axes=(None,))
+        self.head = F.shard(self.end_point, in_strategy=((1, 8),), out_strategy=(None,))
         self.squeeze = P.Squeeze()
         self.cast = P.Cast()
 
@@ -376,7 +376,7 @@ def test_train_feed(num_classes=65536):
     dataset = ds.GeneratorDataset(dataset, column_names=["image", "label"])
     net = resnet50(num_classes)
     loss = SoftmaxCrossEntropyExpand(sparse=True)
-    loss.shard(in_axes=(None, None), out_axes=(None,))
+    loss.shard(in_strategy=(None, None), out_strategy=(None,))
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(3, dataset, dataset_sink_mode=False, callbacks=parallel_callback)

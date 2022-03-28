@@ -582,8 +582,8 @@ def vjp(fn, inputs, v):
 shard_fn = Shard()
 
 
-def shard(fn, in_axes, out_axes, device="Ascend", level=0):
-    return shard_fn(fn, in_axes, out_axes, device, level)
+def shard(fn, in_strategy, out_strategy, device="Ascend", level=0):
+    return shard_fn(fn, in_strategy, out_strategy, device, level)
 
 
 def arange(start=0, stop=None, step=1, rtype=None):
