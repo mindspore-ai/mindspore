@@ -6,7 +6,7 @@
     在指定的通信组中汇聚Tensor。
 
     .. note::
-        集合中所有进程的Tensor拥有相同的shape和格式。用户在使用之前需要设置环境变量，运行下面的例子。获取详情请点击官方网站 `MindSpore <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_ 。
+        集合中所有进程的Tensor必须具有相同的shape和格式。用户在使用之前需要设置环境变量，运行下面的例子。获取详情请点击官方网站 `MindSpore <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.ops.html#communication-operators>`_ 。
 
     **参数：**
 

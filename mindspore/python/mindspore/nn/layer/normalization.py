@@ -794,7 +794,7 @@ class LayerNorm(Cell):
         epsilon (float): A value added to the denominator for numerical stability. Default: 1e-7.
 
     Inputs:
-        - **x** (Tensor) - The shape of 'x' is :math:`(x_1, x_2, ..., x_R)`,
+        - **x** (Tensor) - The shape of `x` is :math:`(x_1, x_2, ..., x_R)`,
           and `input_shape[begin_norm_axis:]` is equal to `normalized_shape`.
 
     Outputs:

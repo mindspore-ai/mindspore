@@ -5,13 +5,13 @@ mindspore.nn.Unfold
 
     从图像中提取滑窗的区域块。
     
-    输入为一个四维的Tensor，数据格式为NCHW。
+    输入为一个四维的Tensor，数据格式为(N, C, H, W)。
 
     **参数：**
 
-    - **ksizes** (Union[tuple[int], list[int]])：滑窗大小，其格式为[1, ksize_row, ksize_col, 1]的tuple或int列表。
-    - **strides** (Union[tuple[int], list[int]])：滑窗步长，其格式为[1, stride_row, stride_col, 1]的tuple或int列表。
-    - **rates** (Union[tuple[int], list[int]])：滑窗元素之间的空洞个数，其格式为[1, rate_row, rate_col, 1] 的tuple或整数list。
+    - **ksizes** (Union[tuple[int], list[int]])：滑窗大小，其格式为[1, ksize_row, ksize_col, 1]的int组成的tuple或list。
+    - **strides** (Union[tuple[int], list[int]])：滑窗步长，其格式为[1, stride_row, stride_col, 1]的int组成的tuple或list。
+    - **rates** (Union[tuple[int], list[int]])：滑窗元素之间的空洞个数，其格式为[1, rate_row, rate_col, 1] 的int组成的tuple或list。
     - **padding** (str)：填充模式，可选值有："same"或"valid"的字符串，不区分大小写。默认值："valid"。
 
       - **same** - 指所提取的区域块的部分区域可以在原始图像之外，此部分填充为0。
@@ -19,11 +19,11 @@ mindspore.nn.Unfold
 
     **输入：**
 
-    - **x** (Tensor) - 输入四维Tensor， 其shape为[in_batch, in_depth, in_row, in_col]，其数据类型为number。
+    - **x** (Tensor) - 输入四维Tensor， 其shape为[in_batch, in_depth, in_row, in_col]，其数据类型为int。
 
     **输出：**
 
-    Tensor，输出为四维Tensor，数据类型与 `x` 相同，其shape为[out_batch, out_depth, out_row, out_col]，且 `out_batch` 与 `in_batch` 相同。
+    Tensor，输出为四维Tensor，数据类型与 `x` 相同，其shape为(out_batch, out_depth, out_row, out_col)，且 `out_batch` 与 `in_batch` 相同。
 
     :math:`out\_depth = ksize\_row * ksize\_col * in\_depth`
 

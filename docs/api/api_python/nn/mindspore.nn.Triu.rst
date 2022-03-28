@@ -13,7 +13,7 @@ mindspore.nn.Triu
     **输入：**
 
     - **x** (Tensor) - Triu的输入，任意维度的Tensor，其数据类型为Number。
-    - **k** (Int) - 对角线的索引。默认值：0。
+    - **k** (int) - 对角线的索引。默认值：0。
 
     **输出：**
 

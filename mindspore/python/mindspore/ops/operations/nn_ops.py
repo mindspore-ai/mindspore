@@ -1712,7 +1712,7 @@ class MaxPool3D(PrimitiveWithInfer):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             not only the depth, height of movement but also the width of movement,, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value of pad mode is "same" or "valid".
+        pad_mode (str): The optional value of pad mode is "same", "valid" or "pad".
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -1724,13 +1724,14 @@ class MaxPool3D(PrimitiveWithInfer):
               will be returned without padding. Extra pixels will be discarded.
 
             - pad: Implicit paddings on both sides of the input in depth, height and width. The number of "pad" will
-              be padded to the input Tensor borders. "pad" must be greater than or equal to 0.
+              be padded to the input Tensor borders. "pad_list" must be greater than or equal to 0.
 
         pad_list (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings
             of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
             integers, the padding of head, tail, top, bottom, left and right equals to pad[0], pad[1], pad[2],
             pad[3], pad[4] and pad[5] correspondingly.
-        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Only effective in "pad" mode.
+        ceil_mode (Union[bool, None]): Whether to use ceil instead of floor to calculate output shape.
+            Only effective in "pad" mode.
             When "pad_mode" is "pad" and "ceil_mode" is "None", "ceil_mode" will be set as "False". Default: None.
         data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
 
@@ -7530,8 +7531,8 @@ class AvgPool3D(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "SAME", "VALID", "PAD".
-            Default: "VALID".
+        pad_mode (str): The optional value for pad mode, is "same", "valid", "pad".
+            Default: "valid".
 
             - same: Adopts the way of completion. The depth, height and width of the output will be the same as
               the input. The total number of padding will be calculated in depth, horizontal and vertical

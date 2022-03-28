@@ -10,6 +10,8 @@ mindspore.nn.SoftMarginLoss
     .. math::
         \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
 
+    :math:`x.nelement()` 代表 `x` 中元素的个数。
+
     **参数：**
 	
     - **reduction** (str) - 指定应用于输出结果的计算方式。取值为"mean"，"sum"，或"none"。默认值："mean"。
@@ -21,7 +23,7 @@ mindspore.nn.SoftMarginLoss
 
     **输出：**
 
-    Tensor或Scalar，如果 `reduction` 为"none"，其shape与 `logits` 相同。否则，将返回scalar。
+    Tensor或Scalar，如果 `reduction` 为"none"，其shape与 `logits` 相同。否则，将返回Scalar。
 
     **异常：**
 
