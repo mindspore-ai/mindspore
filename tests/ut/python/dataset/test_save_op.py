@@ -561,6 +561,8 @@ def test_case_10():
     d1 = ds.GeneratorDataset(generator_dynamic_2d_1, ["data"], shuffle=False)
 
     with pytest.raises(Exception, match=
-                       "Error: besides dimension 0, other dimension shape is different from the previous's"):
+                       "Tensor with dynamic shape do not currently support saving. Except for the shape of "
+                       "dimension 0, the other dimension shapes must be fixed. "
+                       "You can reshape the Tensor to a fixed shape before saving."):
         d1.save(file_name_auto)
     remove_file(file_name_auto)

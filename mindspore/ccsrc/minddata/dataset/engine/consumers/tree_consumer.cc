@@ -389,6 +389,9 @@ Status SaveToDisk::ValidateParams() {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err);
   }
   std::string real_path;
+  if (dir.ParentPath().empty()) {
+    dir = Path(".") / dir;
+  }
   if (Path::RealPath(dir.ParentPath(), real_path).IsError()) {
     std::string err_msg = "SaveToDisk failed, can not get real dataset path: " + dir.ParentPath();
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -513,7 +516,9 @@ Status SaveToDisk::CheckTensorRowShapes(const std::unordered_map<std::string, in
   }
   auto res = map_compare(*PreTensorRowShapes_ptr, CurrTensorRowShapes);
   CHECK_FAIL_RETURN_UNEXPECTED(res,
-                               "Error: besides dimension 0, other dimension shape is different from the previous's.");
+                               "Tensor with dynamic shape do not currently support saving. Except for the shape of "
+                               "dimension 0, the other dimension shapes must be fixed. "
+                               "You can reshape the Tensor to a fixed shape before saving.");
   return Status::OK();
 }
 
