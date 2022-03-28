@@ -16,7 +16,7 @@ function Run_Converter() {
 }
 
 # source ascend env
-export ASCEND_HOME=/usr/local/Ascend
+export ASCEND_HOME=/usr/local/Ascend/latest
 export PATH=${ASCEND_HOME}/fwkacllib/ccec_compiler/bin:${PATH}
 export LD_LIBRARY_PATH=${ASCEND_HOME}/fwkacllib/lib64:${ASCEND_HOME}/driver/lib64:${LD_LIBRARY_PATH}
 export ASCEND_OPP_PATH=${ASCEND_HOME}/opp
