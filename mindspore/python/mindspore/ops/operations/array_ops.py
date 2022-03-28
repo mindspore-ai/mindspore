@@ -7274,6 +7274,43 @@ class Cummax(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y', 'indices'])
 
 
+class RightShift(Primitive):
+    r"""
+    Shift the value of each position of the tensor to the right several bits.
+    The inputs are two tensors, dtypes of them must be consistent, and the
+    shapes of them could be broadcast.
+
+    .. math::
+
+        \begin{aligned}
+        &out_{i} =x_{i} >> y_{i}
+        \end{aligned}
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor, will be shifted to the right
+          by y in element-wise.
+        - **input_y** (Tensor) - The tensor must have the same type as input_x.
+
+    Outputs:
+        - **output** (Tensor) - The output tensor, has the same type as input_x.
+
+    Raises:
+        TypeError: If `input_x` or `input_y` is not tensor.
+        TypeError: If `input_x` and `input_y` could not be broadcast.
+        >>> rightshift = ops.RightShift()
+        >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.uint8))
+        >>> input_y = Tensor(np.array([1, 1, 1]).astype(np.uint8))
+        >>> output = rightshift(input_x, input_y)
+        >>> print(output)
+        [0 1 1]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize RightShift."""
+        self.init_prim_io_names(inputs=['input_x', 'input_y'], outputs=['output'])
+
+
 class Tril(Primitive):
     """
     Returns the lower triangular part of the matrix (2-D tensor) or batch of matrices input,
