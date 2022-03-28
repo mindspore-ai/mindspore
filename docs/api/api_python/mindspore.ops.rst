@@ -35,30 +35,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.op_info_register
     mindspore.ops.prim_attr_register
 
-算子信息注册
--------------
-
-.. mscnautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.AiCPURegOp
-    mindspore.ops.CustomRegOp
-    mindspore.ops.DataType
-    mindspore.ops.get_vm_impl_fn
-    mindspore.ops.TBERegOp
-
-自定义算子
--------------
-
-.. mscnautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.Custom
-
 神经网络层算子
 ----------------
 
@@ -595,6 +571,34 @@ Parameter操作算子
     :template: classtemplate.rst
 
     mindspore.ops.Depend
+    mindspore.ops.GradOperation
     mindspore.ops.HookBackward
+    mindspore.ops.HyperMap
     mindspore.ops.InsertGradientOf
+    mindspore.ops.Map
+    mindspore.ops.MultitypeFuncGraph
     mindspore.ops.Partial
+
+算子信息注册
+-------------
+
+.. mscnautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.AiCPURegOp
+    mindspore.ops.CustomRegOp
+    mindspore.ops.DataType
+    mindspore.ops.TBERegOp
+    mindspore.ops.get_vm_impl_fn
+
+自定义算子
+-------------
+
+.. mscnautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.Custom
