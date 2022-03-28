@@ -61,6 +61,7 @@ enum class TcpUserCommand {
   kExchangeKeys,
   kGetKeys,
   kGetOneDeviceMeta,
+  kQueryNodeScaleState
 };
 
 // CommunicatorBase is used to receive request and send response for server.

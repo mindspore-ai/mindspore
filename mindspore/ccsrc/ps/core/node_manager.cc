@@ -313,8 +313,12 @@ void NodeManager::UpdateNodeState(const NodeState &state) {
 
 void NodeManager::UpdateClusterState(const ClusterState &state) {
   std::lock_guard<std::mutex> lk(cluster_mutex_);
-  MS_LOG(INFO) << "[state]: Scheduler change state from:" << CommUtil::ClusterStateToString(cluster_state_) << " to "
-               << CommUtil::ClusterStateToString(state);
+  std::string state_str = CommUtil::ClusterStateToString(state);
+  if (state_str.empty() || state == cluster_state_) {
+    return;
+  }
+  MS_LOG(INFO) << "[state]: Cluster state change from:" << CommUtil::ClusterStateToString(cluster_state_) << " to "
+               << state_str;
   cluster_state_ = state;
 }
 

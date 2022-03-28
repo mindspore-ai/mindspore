@@ -44,7 +44,9 @@ enum class NodeScaleState {
   kWaiting,
   // Server/worker node will switch to this state after scheduler's scaling out/in operation is done.
   // When in this state, server/worker node can't send/receive messages.
-  kScaling
+  kScaling,
+  // This state means the server/worker node is begin to start scaling operations.
+  kRollback,
 };
 
 // The class helps worker/server node to elastic scale while running a training job. In this class, the scaling events
@@ -66,6 +68,8 @@ class FollowerScaler {
   void ProcessAfterScaleOut();
   void ProcessAfterScaleIn();
 
+  void ProcessAfterScaleOutRollback();
+
   void RegisterBarrierBeforeScaleOut(const std::string &module, const BarrierBeforeScaleOut &barrier);
   void RegisterBarrierBeforeScaleIn(const std::string &module, const BarrierBeforeScaleIn &barrier);
   void RegisterHandlerAfterScaleOut(const std::string &module, const HandlerAfterScaleOut &handler);
@@ -73,6 +77,8 @@ class FollowerScaler {
 
   // Register the scaling event callbacks to the node.
   void RegisterScaleEventCallbacks();
+
+  std::string GetNodeScaleStateStr();
 
  private:
   AbstractNode *node_;
@@ -87,6 +93,7 @@ class FollowerScaler {
   std::thread process_before_scale_in_thread_;
   std::thread process_after_scale_out_thread_;
   std::thread process_after_scale_in_thread_;
+  std::thread process_after_scale_out_rollback_thread_;
 
   // Variables for signals of scaling out/in operations.
   std::mutex scale_out_mtx_;
@@ -104,6 +111,7 @@ class FollowerScaler {
   std::function<void(void)> ready_for_scale_in_event_callback_;
   std::function<void(void)> scale_out_done_event_callback_;
   std::function<void(void)> scale_in_done_event_callback_;
+  std::function<void(void)> scale_out_rollback_done_event_callback_;
 };
 }  // namespace core
 }  // namespace ps

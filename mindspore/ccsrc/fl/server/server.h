@@ -176,6 +176,8 @@ class BACKEND_EXPORT Server {
   // Synchronize after recovery is completed to ensure consistency.
   void HandleSyncAfterRecoveryRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
+  void HandleQueryNodeScaleStateRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
+
   // The server node is initialized in Server.
   std::shared_ptr<ps::core::ServerNode> server_node_;
 

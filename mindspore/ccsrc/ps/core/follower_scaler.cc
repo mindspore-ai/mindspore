@@ -72,6 +72,18 @@ FollowerScaler::FollowerScaler(AbstractNode *node)
       ProcessAfterScaleIn();
     }
   });
+
+  process_after_scale_out_rollback_thread_ = std::thread([&]() {
+    while (running_.load()) {
+      std::unique_lock<std::mutex> lock(scale_out_mtx_);
+      scale_out_cv_.wait(
+        lock, [&]() -> bool { return !running_.load() || scaling_state_.load() == NodeScaleState::kRollback; });
+      if (!running_.load()) {
+        break;
+      }
+      ProcessAfterScaleOutRollback();
+    }
+  });
 }
 
 FollowerScaler::~FollowerScaler() {
@@ -89,6 +101,9 @@ FollowerScaler::~FollowerScaler() {
   }
   if (process_after_scale_in_thread_.joinable()) {
     process_after_scale_in_thread_.join();
+  }
+  if (process_after_scale_out_rollback_thread_.joinable()) {
+    process_after_scale_out_rollback_thread_.join();
   }
 }
 
@@ -118,11 +133,19 @@ void FollowerScaler::RegisterScaleEventCallbacks() {
     scale_in_cv_.notify_all();
   };
 
+  scale_out_rollback_done_event_callback_ = [&]() -> void {
+    std::unique_lock<std::mutex> lock(scale_out_mtx_);
+    scaling_state_ = NodeScaleState::kRollback;
+    scale_out_cv_.notify_all();
+  };
+
   MS_EXCEPTION_IF_NULL(node_);
   node_->RegisterEventCallback(core::ClusterEvent::READY_FOR_SCALE_OUT, ready_for_scale_out_event_callback_);
   node_->RegisterEventCallback(core::ClusterEvent::READY_FOR_SCALE_IN, ready_for_scale_in_event_callback_);
   node_->RegisterEventCallback(core::ClusterEvent::CLUSTER_SCALE_OUT_DONE, scale_out_done_event_callback_);
   node_->RegisterEventCallback(core::ClusterEvent::CLUSTER_SCALE_IN_DONE, scale_in_done_event_callback_);
+  node_->RegisterEventCallback(core::ClusterEvent::CLUSTER_SCALE_OUT_ROLLBACK_DONE,
+                               scale_out_rollback_done_event_callback_);
 }
 
 void FollowerScaler::ProcessBeforeScaleOut() {
@@ -171,6 +194,11 @@ void FollowerScaler::ProcessAfterScaleIn() {
   node_->set_scale_in_done();
 }
 
+void FollowerScaler::ProcessAfterScaleOutRollback() {
+  MS_LOG(INFO) << "Scaling out rollback operation is done. Do scaling out rollback for this node.";
+  scaling_state_ = NodeScaleState::kNormal;
+}
+
 void FollowerScaler::RegisterBarrierBeforeScaleOut(const std::string &module, const BarrierBeforeScaleOut &barrier) {
   (void)barriers_before_scale_out_.try_emplace(module, barrier);
 }
@@ -185,6 +213,21 @@ void FollowerScaler::RegisterHandlerAfterScaleOut(const std::string &module, con
 
 void FollowerScaler::RegisterHandlerAfterScaleIn(const std::string &module, const HandlerAfterScaleIn &handler) {
   (void)handlers_after_scale_in_.try_emplace(module, handler);
+}
+
+std::string FollowerScaler::GetNodeScaleStateStr() {
+  switch (scaling_state_) {
+    case NodeScaleState::kNormal:
+      return "kNormal";
+    case NodeScaleState::kPreparing:
+      return "kPreparing";
+    case NodeScaleState::kWaiting:
+      return "kWaiting";
+    case NodeScaleState::kScaling:
+      return "kScaling";
+    default:
+      MS_LOG(EXCEPTION) << "scale_state is not supported.";
+  }
 }
 }  // namespace core
 }  // namespace ps
