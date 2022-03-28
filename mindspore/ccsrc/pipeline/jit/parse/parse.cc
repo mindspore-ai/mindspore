@@ -88,6 +88,7 @@ void Parser::BuildMethodMap() {
   stmt_method_map_["Continue"] = &Parser::ParseContinue;
   stmt_method_map_["Pass"] = &Parser::ParsePass;
   stmt_method_map_["Raise"] = &Parser::ParseRaise;
+  stmt_method_map_["Assert"] = &Parser::ParseAssert;
   expr_method_map_["NoneType"] = &Parser::ParseNone;
   expr_method_map_["BinOp"] = &Parser::ParseBinOp;
   expr_method_map_["Name"] = &Parser::ParseName;
@@ -2471,6 +2472,50 @@ FunctionBlockPtr Parser::ParseRaise(const FunctionBlockPtr &block, const py::obj
   CNodePtr return_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), raise_node});
   func_graph->set_return(return_node);
   return block;
+}
+
+FunctionBlockPtr Parser::MakeAssertErrorBlock(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process make AssertError block";
+  MS_EXCEPTION_IF_NULL(block);
+  const std::string kAssertionError = "AssertionError";
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimRaise), NewValueNode(kAssertionError)};
+
+  py::object msg_node = python_adapter::GetPyObjAttr(node, "msg");
+  if (!py::isinstance<py::none>(msg_node)) {
+    auto msg = ParseExprNode(block, msg_node);
+    (void)inputs.emplace_back(msg);
+  }
+
+  auto func_graph = block->func_graph();
+  CNodePtr raise_node = func_graph->NewCNodeInOrder(inputs);
+  CNodePtr return_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), raise_node});
+  func_graph->set_return(return_node);
+  return block;
+}
+
+// assert expression [, arguments]
+// =>
+// if not expression:
+//     raise AssertionError(arguments)
+FunctionBlockPtr Parser::ParseAssert(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast Assert";
+  py::object test_node = python_adapter::GetPyObjAttr(node, "test");
+  AnfNodePtr condition_node = ParseExprNode(block, test_node);
+  condition_node = HandleInterpret(block, condition_node, test_node);
+  MS_EXCEPTION_IF_NULL(block);
+  CNodePtr bool_node = block->ForceToBoolNode(condition_node);
+
+  FunctionBlockPtr true_block = MakeFunctionBlock(*this);
+  FunctionBlockPtr false_block = MakeFunctionBlock(*this);
+  FunctionBlockPtr after_block = MakeFunctionBlock(*this);
+  MakeConditionBlocks(block, true_block, false_block);
+
+  true_block->Jump(after_block, {});
+  false_block = MakeAssertErrorBlock(false_block, node);
+  block->ConditionalJump(bool_node, true_block, false_block);
+
+  after_block->Mature();
+  return after_block;
 }
 
 AnfNodePtr FindPhis(const mindspore::HashMap<ParameterPtr, AnfNodePtr> &removable_phis, const AnfNodePtr &node) {

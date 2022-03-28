@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 namespace pybind11 {
 PYBIND11_RUNTIME_EXCEPTION(attribute_error, PyExc_AttributeError)
 PYBIND11_RUNTIME_EXCEPTION(name_error, PyExc_NameError)
+PYBIND11_RUNTIME_EXCEPTION(assertion_error, PyExc_AssertionError)
 }  // namespace pybind11
 
 #endif  // PYBIND_API_PYBIND_PATCH_H_

@@ -48,6 +48,9 @@ class PyExceptionInitializer {
     if (exception_type == NameError) {
       throw py::name_error(str);
     }
+    if (exception_type == AssertionError) {
+      throw py::assertion_error(str);
+    }
     py::pybind11_fail(str);
   }
 };

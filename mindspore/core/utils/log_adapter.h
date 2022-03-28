@@ -69,16 +69,17 @@ enum ExceptionType {
   TypeError,
   KeyError,
   AttributeError,
-  NameError
+  NameError,
+  AssertionError
 };
 
 // exception types
-const std::vector<std::string> exception_types = {"NoExceptionType",  "UnknownError",        "ArgumentError",
-                                                  "NotSupportError",  "NotExistsError",      "AlreadyExistsError",
-                                                  "UnavailableError", "DeviceProcessError",  "AbortedError",
-                                                  "TimeOutError",     "ResourceUnavailable", "NoPermissionError",
-                                                  "IndexError",       "ValueError",          "TypeError",
-                                                  "KeyError",         "AttributeError",      "NameError"};
+const std::vector<std::string> exception_types = {
+  "NoExceptionType", "UnknownError",       "ArgumentError",       "NotSupportError",
+  "NotExistsError",  "AlreadyExistsError", "UnavailableError",    "DeviceProcessError",
+  "AbortedError",    "TimeOutError",       "ResourceUnavailable", "NoPermissionError",
+  "IndexError",      "ValueError",         "TypeError",           "KeyError",
+  "AttributeError",  "NameError",          "AssertionError"};
 
 static inline std::map<std::string, ExceptionType> exception_types_map = {{"NoExceptionType", NoExceptionType},
                                                                           {"UnknownError", UnknownError},
@@ -97,7 +98,8 @@ static inline std::map<std::string, ExceptionType> exception_types_map = {{"NoEx
                                                                           {"TypeError", TypeError},
                                                                           {"KeyError", KeyError},
                                                                           {"AttributeError", AttributeError},
-                                                                          {"NameError", NameError}};
+                                                                          {"NameError", NameError},
+                                                                          {"AssertionError", AssertionError}};
 
 struct LocationInfo {
   LocationInfo(const char *file, int line, const char *func) : file_(file), line_(line), func_(func) {}
