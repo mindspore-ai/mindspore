@@ -87,8 +87,16 @@ bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h);
 /// \brief Init Lite Mat from pixel, the conversion of currently supports is rbgaTorgb and rgbaTobgr.
 /// \note The length of the pointer must be the same as that of the multiplication of w and h.
 /// \param[in] data Input image data.
-/// \param[in] pixel_type The type of pixel_type.
-/// \param[in] data_type The type of data_type.
+/// \param[in] pixel_type The type of pixel (refer to enum LPixelType).
+///   - LPixelType.BGR, pixel in BGR type.
+///   - LPixelType.RGB, pixel in RGB type.
+///   - LPixelType.RGBA, pixel in RGBA type.
+///   - LPixelType.RGBA2GRAY, convert image from RGBA to GRAY.
+///   - LPixelType.RGBA2BGR, convert image from RGBA to BGR.
+///   - LPixelType.RGBA2RGB, convert image from RGBA to RGB.
+///   - LPixelType.NV212BGR, convert image from NV21 to BGR.
+///   - LPixelType.NV122BGR, convert image from NV12 to BGR.
+/// \param[in] data_type The type of data (refer to LDataType class).
 /// \param[in] w The width of the output image.
 /// \param[in] h The length of the output image.
 /// \param[in] m Used to store image data.
@@ -171,6 +179,10 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
 /// \param[in] left The length of left.
 /// \param[in] right he length of right.
 /// \param[in] pad_type The type of pad.
+///   - PaddBorderType.PADD_BORDER_CONSTANT, fills the border with constant values.
+///   - PaddBorderType.PADD_BORDER_REPLICATE, fills the border with replicate mode.
+///   - PaddBorderType.PADD_BORDER_REFLECT_101, fills the border with reflect 101 mode.
+///   - PaddBorderType.PADD_BORDER_DEFAULT, default pad mode, use reflect 101 mode.
 /// \param[in] fill_b_or_gray B or GRAY.
 /// \param[in] fill_g G.
 /// \param[in] fill_r R.
@@ -317,6 +329,10 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
 /// \param[in] dst_w The width of the output image.
 /// \param[in] dst_h The height of the output image.
 /// \param[in] borderType Edge processing type.
+///   - PaddBorderType.PADD_BORDER_CONSTANT, fills the border with constant values.
+///   - PaddBorderType.PADD_BORDER_REPLICATE, fills the border with replicate mode.
+///   - PaddBorderType.PADD_BORDER_REFLECT_101, fills the border with reflect 101 mode.
+///   - PaddBorderType.PADD_BORDER_DEFAULT, default pad mode, use reflect 101 mode.
 /// \param[in] borderValue Boundary fill value.
 /// \par Example
 /// \code
@@ -344,6 +360,10 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
 /// \param[in] dst_w The width of the output image.
 /// \param[in] dst_h The height of the output image.
 /// \param[in] borderType Edge processing type.
+///   - PaddBorderType.PADD_BORDER_CONSTANT, fills the border with constant values.
+///   - PaddBorderType.PADD_BORDER_REPLICATE, fills the border with replicate mode.
+///   - PaddBorderType.PADD_BORDER_REFLECT_101, fills the border with reflect 101 mode.
+///   - PaddBorderType.PADD_BORDER_DEFAULT, default pad mode, use reflect 101 mode.
 /// \param[in] borderValue Boundary fill value.
 /// \par Example
 /// \code
@@ -442,6 +462,10 @@ bool Transpose(const LiteMat &src, LiteMat &dst);
 /// \param[in] sigmaY The Gaussian kernel standard deviation of height (default=0.f). It should be a positive value,
 ///     or will use the value of sigmaX.
 /// \param[in] pad_type The padding type used while filtering (default=PaddBorderType::PADD_BORDER_DEFAULT).
+///   - PaddBorderType.PADD_BORDER_CONSTANT, fills the border with constant values.
+///   - PaddBorderType.PADD_BORDER_REPLICATE, fills the border with replicate mode.
+///   - PaddBorderType.PADD_BORDER_REFLECT_101, fills the border with reflect 101 mode.
+///   - PaddBorderType.PADD_BORDER_DEFAULT, default pad mode, use reflect 101 mode.
 /// \par Example
 /// \code
 ///     /* Assume p_rgb is a pointer that points to an image with shape (width, height, channel) */
@@ -526,6 +550,10 @@ bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMa
 /// \param[in] ksize The size of Sobel kernel (default=3). It can only be 1, 3, 5 or 7.
 /// \param[in] scale The scale factor for the computed derivative values (default=1.0).
 /// \param[in] pad_type The padding type used while filtering (default=PaddBorderType::PADD_BORDER_DEFAULT).
+///   - PaddBorderType.PADD_BORDER_CONSTANT, fills the border with constant values.
+///   - PaddBorderType.PADD_BORDER_REPLICATE, fills the border with replicate mode.
+///   - PaddBorderType.PADD_BORDER_REFLECT_101, fills the border with reflect 101 mode.
+///   - PaddBorderType.PADD_BORDER_DEFAULT, default pad mode, use reflect 101 mode.
 /// \par Example
 /// \code
 ///     /* Assume p_rgb is a pointer that points to an image with shape (width, height, channel) */
@@ -544,7 +572,7 @@ bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize =
 
 /// \brief Convert RGB image or color image to BGR image.
 /// \param[in] src Input image data.
-/// \param[in] data_type The type of data_type.
+/// \param[in] data_type The type of data (refer to LDataType class).
 /// \param[in] w The width of output image.
 /// \param[in] h The height of output image.
 /// \param[in] mat Output image data.
@@ -563,7 +591,7 @@ bool ConvertRgbToBgr(const LiteMat &src, const LDataType &data_type, int w, int 
 
 /// \brief Convert RGB image or color image to grayscale image.
 /// \param[in] src Input image data.
-/// \param[in] data_type The type of data_type.
+/// \param[in] data_type The type of data (refer to LDataType class).
 /// \param[in] w The width of output image.
 /// \param[in] h The height of output image.
 /// \param[in] mat Output image data.
