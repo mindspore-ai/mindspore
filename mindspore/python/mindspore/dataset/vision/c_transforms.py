@@ -686,11 +686,14 @@ class HWC2CHW(ImageTensorOperation):
     """
     Transpose the input image from shape (H, W, C) to shape (C, H, W). The input image should be 3 channels image.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Raises:
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(),
@@ -770,6 +773,9 @@ class Normalize(ImageTensorOperation):
     Normalize the input image with respect to mean and standard deviation. This operator will normalize
     the input image with: output[channel] = (input[channel] - mean[channel]) / std[channel], where channel >= 1.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
             The mean values must be in range [0.0, 255.0].
@@ -784,7 +790,7 @@ class Normalize(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> decode_op = c_vision.Decode()
@@ -1129,6 +1135,9 @@ class RandomColorAdjust(ImageTensorOperation):
     """
     Randomly adjust the brightness, contrast, saturation, and hue of the input image.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Args:
         brightness (Union[float, list, tuple], optional): Brightness adjustment factor (default=(1, 1)).
             Cannot be negative.
@@ -1158,7 +1167,7 @@ class RandomColorAdjust(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> decode_op = c_vision.Decode()
@@ -1476,6 +1485,9 @@ class RandomHorizontalFlip(ImageTensorOperation):
     """
     Randomly flip the input image horizontally with a given probability.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Args:
         prob (float, optional): Probability of the image being flipped, which must be in range of [0, 1] (default=0.5).
 
@@ -1485,7 +1497,7 @@ class RandomHorizontalFlip(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.RandomHorizontalFlip(0.75)]
@@ -1969,6 +1981,9 @@ class RandomSharpness(ImageTensorOperation):
     Adjust the sharpness of the input image by a fixed or random degree. Degree of 0.0 gives a blurred image,
     degree of 1.0 gives the original image, and degree of 2.0 gives a sharpened image.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Args:
         degrees (Union[list, tuple], optional): Range of random sharpness adjustment degrees,
             which must be non-negative. It should be in (min, max) format. If min=max, then
@@ -1980,7 +1995,7 @@ class RandomSharpness(ImageTensorOperation):
         ValueError: If `degrees` is in (max, min) format instead of (min, max).
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.RandomSharpness(degrees=(0.2, 1.9))]
@@ -2032,6 +2047,9 @@ class RandomVerticalFlip(ImageTensorOperation):
     """
     Randomly flip the input image vertically with a given probability.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
 
@@ -2041,7 +2059,7 @@ class RandomVerticalFlip(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.RandomVerticalFlip(0.25)]
@@ -2091,6 +2109,9 @@ class Rescale(ImageTensorOperation):
     Rescale the input image with the given rescale and shift. This operator will rescale the input image
     with: output = image * rescale + shift.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Args:
         rescale (float): Rescale factor.
         shift (float): Shift factor.
@@ -2100,7 +2121,7 @@ class Rescale(ImageTensorOperation):
         TypeError: If `shift` is not of type float.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.Rescale(1.0 / 255.0, -1.0)]

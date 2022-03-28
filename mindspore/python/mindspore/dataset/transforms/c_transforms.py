@@ -124,6 +124,9 @@ class TypeCast(TensorOperation):
     """
     Tensor operation to cast to a given MindSpore data type.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Args:
         data_type (mindspore.dtype): mindspore.dtype to be cast to.
 
@@ -131,7 +134,7 @@ class TypeCast(TensorOperation):
         TypeError: If `data_type` is not of type bool, int, float or string.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np
