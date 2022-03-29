@@ -55,7 +55,7 @@ class BACKEND_EXPORT Node {
         is_already_finished_(false),
         next_request_id_(0),
         current_node_state_(NodeState::NODE_STARTING),
-        current_cluster_state_(ClusterState::ClUSTER_STARTING) {}
+        current_cluster_state_(ClusterState::CLUSTER_STARTING) {}
   virtual ~Node() = default;
 
   using MessageCallback = std::function<void()>;

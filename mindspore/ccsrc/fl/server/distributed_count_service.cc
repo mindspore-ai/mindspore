@@ -29,7 +29,7 @@ void DistributedCountService::Initialize(const std::shared_ptr<ps::core::ServerN
   MS_EXCEPTION_IF_NULL(server_node);
   server_node_ = server_node;
   local_rank_ = server_node_->rank_id();
-  server_num_ = ps::PSContext::instance()->initial_server_num();
+  server_num_ = server_node->server_num();
   counting_server_rank_ = counting_server_rank;
   return;
 }
@@ -109,6 +109,7 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
     }
     if (!TriggerCounterEvent(name, reason)) {
       MS_LOG(WARNING) << "Leader server trigger count event failed.";
+      Iteration::GetInstance().NotifyNext(false, *reason);
       return false;
     }
   } else {
