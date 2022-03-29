@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.nn.layer import normalization
+from mindspore.ops.operations.array_ops import RightShift
 from mindspore._c_expression import security
 from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
@@ -2550,6 +2551,11 @@ test_case_array_ops = [
         'desc_const': [(64,)],
         'desc_inputs': [[64, 1]],
         'desc_bprop': [[64]]}),
+    ('RightShift', {
+        'block': RightShift(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]), mstype.int32),
+                        Tensor(np.array([5, 2, 3]), mstype.int32)],
+        'skip': ['backward']}),
     ('Cast', {
         'block': P.Cast(),
         'desc_const': [mstype.int32],

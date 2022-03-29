@@ -121,6 +121,7 @@ constexpr auto kOnes = "Ones";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kIdentity = "Identity";
 constexpr auto kConcat = "Concat";
+constexpr auto kRightShift = "RightShift";
 constexpr auto kDiag = "Diag";
 constexpr auto kDiagPart = "DiagPart";
 constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
@@ -373,6 +374,7 @@ GVAR_DEF(PrimitivePtr, kPrimLstsq, std::make_shared<Primitive>(kLstsq));
 GVAR_DEF(PrimitivePtr, kPrimLowerBound, std::make_shared<Primitive>(kLowerBound));
 GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBound));
 GVAR_DEF(PrimitivePtr, kPrimCummax, std::make_shared<Primitive>(kCummax));
+GVAR_DEF(PrimitivePtr, kPrimRightShift, std::make_shared<Primitive>(kRightShift));
 GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTril));
 
 // image
