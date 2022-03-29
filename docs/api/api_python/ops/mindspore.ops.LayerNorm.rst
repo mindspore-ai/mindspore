@@ -14,7 +14,7 @@ mindspore.ops.LayerNorm
 
     **参数：**
 
-    - **begin_norm_axis** (int) - 指定 `input_x` 需进行层归一化的开始，其值必须在[-1, rank(input)范围内。默认值：1。
+    - **begin_norm_axis** (int) - 指定 `input_x` 需进行层归一化的起始维度，其值必须在[-1, rank(input)范围内。默认值：1。
     - **begin_params_axis** (int) - 指定输入参数(`gamma`, `beta`) 需进行层归一化的开始轴，其值必须在[-1, rank(input))范围内。默认值：1。
     - **epsilon** (float) - 添加到分母中的值，以确保数据稳定性。默认值：1e-7。
 

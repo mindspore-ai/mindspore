@@ -10,7 +10,7 @@ mindspore.ops.Neg
 
     **输入：**
  
-    - **x** (Tensor) - Neg的输入，任意维度的Tensor，秩应小于8。其数据类型为number。
+    - **x** (Tensor) - Neg的输入，任意维度的Tensor，秩应小于8。其数据类型为数值型。
 
     **输出：**
 

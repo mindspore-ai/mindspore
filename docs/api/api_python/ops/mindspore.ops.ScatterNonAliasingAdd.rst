@@ -11,7 +11,7 @@
 
     - **input_x** (Parameter) -  ScatterNonAliasingAdd的输入，任意维度的Parameter。其数据类型为float16、float32或int32。
     - **indices** (Tensor) - 指定加法操作的索引。其数据类型为mindspore.int32。
-    - **updates** (Tensor) -指定与 `input_x` 相加操作的Tensor。其数据类型与 `input_x` 相同，shape为 `indices_shape[:-1] + x_shape[indices_shape[-1]:]` 。
+    - **updates** (Tensor) - 指定与 `input_x` 相加操作的Tensor。其数据类型与 `input_x` 相同，shape为 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。
 
     **输出：**
 
@@ -21,5 +21,5 @@
 
     - **TypeError** - `indices` 的数据类型不是int32。
     - **TypeError** - `input_x` 的数据类型不是float16、float32或int32。
-    - **ValueError** - `updates` 的shape不是 `indices_shape[:-1] + x_shape[indices_shape[-1]:]` 。
+    - **ValueError** - `updates` 的shape不是 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。
     - **RuntimeError** - 当 `input_x` 和 `updates` 类型不一致，需要进行类型转换时，如果 `updates` 不支持转成参数 `input_x` 需要的数据类型，就会报错。

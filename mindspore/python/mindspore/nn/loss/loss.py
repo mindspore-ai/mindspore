@@ -651,7 +651,9 @@ class DiceLoss(LossBase):
     The function is shown as follows:
 
     .. math::
-        dice = 1 - \frac{2 * (pred \bigcap true)}{pred \bigcup true}
+        dice = 1 - \frac{2 * |pred \bigcap true|}{|pred| + |true| + smooth}
+
+    :math:`pred` represent `logits`, :math:`true` represent `labels` .
 
     Args:
         smooth (float): A term added to the denominator to improve numerical stability. Should be greater than 0.
