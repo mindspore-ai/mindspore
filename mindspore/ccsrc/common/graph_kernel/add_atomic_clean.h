@@ -32,6 +32,13 @@ struct AtomicAddInfo {
   size_t real_output_num{0};
 };
 
+struct AtomicAddUserInfo {
+  AnfNodePtr clean_node{nullptr};
+  AnfNodePtr update_state_node{nullptr};
+  AnfNodePtr user_node{nullptr};
+  size_t user_input_idx{0};
+};
+
 class AtomicAddChecker {
  public:
   AtomicAddChecker() = default;
@@ -82,20 +89,18 @@ class AtomicCleanInsertter : public opt::Pass {
                                                   const KernelGraphPtr &main_graph, TypeId dst_type);
   void InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
                          const std::vector<AtomicAddInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
-  CNodePtr InsertUpdateState(const KernelGraphPtr &main_graph, const CNodePtr &composite_node) const;
-  void CorrectAbstract(const AnfNodePtr &composite_node,
-                       const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &process_infos) const;
+  CNodePtr InsertUpdateState(const KernelGraphPtr &main_graph, const AnfNodePtr &node) const;
   void CreateInplaceAssignNodeAndCorrectReturn(
     const FuncGraphPtr &sub_graph, const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &parameters_infos);
   void ProcessOriginCNodeUser(const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
                               const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
-                              const AnfNodePtr &update_state_node, const FuncGraphManagerPtr &mng);
+                              const FuncGraphManagerPtr &mng);
 
  private:
-  std::vector<std::tuple<AnfNodePtr, int, AnfNodePtr>> FindOriginCNodeUsers(
+  std::vector<AtomicAddUserInfo> FindOriginCNodeUsers(
     const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
     const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
-    const FuncGraphManagerPtr &mng, bool correct_index) const;
+    const FuncGraphManagerPtr &mng) const;
 };
 using AtomicCleanInsertterPtr = std::shared_ptr<AtomicCleanInsertter>;
 }  // namespace mindspore::graphkernel
