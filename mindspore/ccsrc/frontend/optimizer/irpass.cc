@@ -183,6 +183,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Addn
   merge_addn_ = MakeSubstitution(std::make_shared<MergeAddN>(), "merge_addn", prim::kPrimAddN);
   addn_zero_filter_ = MakeSubstitution(std::make_shared<AddNZeroFilter>(), "addn_zero_filter", prim::kPrimAddN);
+  addn_check_dump_ = MakeSubstitution(std::make_shared<AddNCheckDump>(), "addn_check_dump", prim::kPrimAddN);
 
   // AccumulateNV2
   accumulaten_eliminater_ =
