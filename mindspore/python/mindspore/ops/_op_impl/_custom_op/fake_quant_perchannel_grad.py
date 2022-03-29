@@ -144,7 +144,7 @@ def fake_quant_perchannel_grad_param(x, min_val, max_val, channel_axis,
 
     shape_c = [1] * len(x_shape)
     shape_c[channel_axis_] = min_val.get("ori_shape")[0]
-    if x_format == "NC1HWC0" and channel_axis_ == 1:
+    if shape_c[channel_axis_] != x_shape[channel_axis_]:
         shape_c = min_val.get("shape")
     return x_shape, shape_c, x_dtype
 
