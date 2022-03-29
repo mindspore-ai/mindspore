@@ -51,7 +51,7 @@ mindspore.nn.LSTM
 
     **异常：**
 
-    - **TypeError** - `input_size`， `hidden_size` 或  `num_layers` 不是整数。
+    - **TypeError** - `input_size`， `hidden_size` 或  `num_layers` 不是int。
     - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
-    - **TypeError** - `dropout` 既不是浮点数也不是整数。
+    - **TypeError** - `dropout` 既不是float也不是int。
     - **ValueError** - `dropout` 不在[0.0, 1.0]范围内。
