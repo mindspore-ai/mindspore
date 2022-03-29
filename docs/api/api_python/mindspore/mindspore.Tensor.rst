@@ -96,13 +96,25 @@ mindspore.Tensor
 
         NumPy的ndarray，该ndarray与Tensor共享内存地址。
 
+    .. py:method:: assign_value(value)
+
+        将另一个Tensor的值赋给当前Tensor。
+
+        **参数：**
+
+        - **value** (Tensor) - 用于赋值的Tensor。
+        
+        **返回：**
+
+        Tensor，赋值后的Tensor。
+
     .. py:method:: astype(dtype, copy=True)
 
         将Tensor转为指定数据类型，可指定是否返回副本。
 
         **参数：**
 
-        - **dtype** (Union[`mindspore.dtype` , str]) - 指定的Tensor数据类型，可以是: `mindspore.dtype.float32` 或 `float32` 的格式。默认值：`mindspore.dtype.float32` 。
+        - **dtype** (Union[`mindspore.dtype` , `numpy.dtype` , str]) - 指定的Tensor数据类型，可以是: `mindspore.dtype.float32` , `numpy.float32` 或 `float32` 的格式。默认值：`mindspore.dtype.float32` 。
         - **copy** (bool, optional) - 默认情况下，astype返回新拷贝的Tensor。如果该参数设为False，则返回输入Tensor而不是副本。默认值：True。
 
         **返回：**

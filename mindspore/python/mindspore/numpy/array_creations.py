@@ -499,9 +499,9 @@ def rand(*shape, dtype=mstype.float32):
 
 def randint(minval, maxval=None, shape=None, dtype=mstype.int32):
     """
-    Return random integers from minval (inclusive) to maxval (exclusive). Return random integers from the
-    discrete uniform distribution of the specified dtype in the “half-open” interval :math:`[minval, maxval)`.
-    If maxval is None (the default), the value range will be [0, minval), in this case, minval must be greater than 0.
+    Return random integers from minval (inclusive) to maxval (exclusive). Return random integers from the discrete
+    uniform distribution of the specified dtype in the “half-open” interval :math:`[minval, maxval)`. If maxval is
+    None (the default), the value range will be :math:`[0, minval)`, in this case, minval must be greater than 0.
 
     Args:
         minval(Union[int]): Start value of interval. The interval includes this value. When `maxval`
