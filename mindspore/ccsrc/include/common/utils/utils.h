@@ -552,6 +552,7 @@ constexpr auto kAttrInterProcessEdgeName = "inter_process_edge_name";
 constexpr auto kAttrForwardOpOutputId = "forward_op_output_id";
 constexpr auto kAttrGroupRankIds = "group_rank_ids";
 constexpr auto kAttrReuseCommunication = "reuse_communication_node";
+constexpr auto kAttrPrecisionFlag = "precision_flag";
 
 // TODO(dsj): for ms_function running in graph_mode. should be delete later
 constexpr auto kAttrMSFunction = "ms_function_graph";

@@ -336,10 +336,6 @@ std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape, const AnfNod
   if (shape.size() >= kDim5) {
     return shape;
   }
-  if (node != nullptr) {
-    MS_LOG(INFO) << "Start padding shape to 5d by default reshape type, node [" << node->fullname_with_scope()
-                 << "], detail info: " << node->DebugString();
-  }
   std::vector<T> shape_5d(kNcdhw, 1);
   switch (shape.size()) {
     case N_ncdhw:
@@ -363,7 +359,8 @@ std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape, const AnfNod
       shape_5d[W_ncdhw] = shape[H_ncdhw];
       break;
     default:
-      MS_LOG(EXCEPTION) << "Unexpected shape :" << shape;
+      auto node_info = (node != nullptr) ? ". Node: " + node->fullname_with_scope() : " .";
+      MS_LOG(EXCEPTION) << "Unexpected shape :" << shape << node_info;
   }
   return shape_5d;
 }
@@ -373,10 +370,6 @@ std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape, const AnfNod
  * */
 template <typename T>
 std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape, const AnfNodePtr &node = nullptr) {
-  if (node != nullptr) {
-    MS_LOG(INFO) << "Start padding shape to 4d by default reshape type, node [" << node->fullname_with_scope()
-                 << "], detail info: " << node->DebugString();
-  }
   std::vector<T> shape_4d(kNchwDims, 1);
   switch (shape.size()) {
     case kN:
@@ -397,7 +390,8 @@ std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape, const AnfNod
       (void)std::copy(shape.begin(), shape.end(), shape_4d.begin());
       break;
     default:
-      MS_LOG(EXCEPTION) << "Unexpected shape : " << shape;
+      auto node_info = (node != nullptr) ? ". Node: " + node->fullname_with_scope() : " .";
+      MS_LOG(EXCEPTION) << "Unexpected shape : " << shape << node_info;
   }
   return shape_4d;
 }
@@ -443,8 +437,8 @@ template <typename T>
 std::vector<T> PaddingShape(const std::vector<T> &shape, const std::string &format, const std::string &pad_index = {""},
                             const AnfNodePtr &node = nullptr) {
   if (node != nullptr) {
-    MS_LOG(INFO) << "Start padding shape for node: [" << node->fullname_with_scope() << "], format: " << format
-                 << ", detail info: " << node->DebugString();
+    MS_LOG(DEBUG) << "Start padding shape for node: [" << node->fullname_with_scope() << "], format: " << format
+                  << ", detail info: " << node->DebugString();
   }
   std::vector<T> host_shape;
   if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
