@@ -3,14 +3,14 @@ mindspore.dataset.vision.c_transforms.RandomResizeWithBBox
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomResizeWithBBox(size)
 
-    使用随机选择的插值模式来调整输入图像的大小，并相应地调整边界框的大小。
+    对输入图像使用随机选择的 :class:`mindspore.dataset.vision.Inter` 插值方式去调整它的尺寸大小，并相应地调整边界框的尺寸大小。
 
     **参数：**
 
-    - **size** (Union[int, sequence]) - 调整后图像的输出大小。如果 `size` 是一个整数，图像的短边将被调整为 `size` 大小，并依据短边的调整比例相应调整图像长边的大小。如果 `size` 是一个长度为2的序列，其输入格式应该为 (height, width)。
+    - **size** (Union[int, sequence]) - 调整后图像的输出尺寸大小。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
 
     **异常：**
 
-    - **TypeError** - 当 `size` 的类型不为整型或整型序列。
+    - **TypeError** - 当 `size` 的类型不为int或Sequence[int]类型。
     - **ValueError** - 当 `size` 不为正数。
     - **RuntimeError** - 当输入图像的shape不为<H, W>或<H, W, C>。

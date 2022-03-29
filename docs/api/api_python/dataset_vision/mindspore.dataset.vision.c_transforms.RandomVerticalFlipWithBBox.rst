@@ -7,7 +7,7 @@ mindspore.dataset.vision.c_transforms.RandomVerticalFlipWithBBox
 
     **参数：**
 
-    - **prob** (float, optional) - 图像被翻转的概率，默认值：0.5。
+    - **prob** (float, 可选) - 图像被翻转的概率，默认值：0.5。
 
     **异常：**
 

@@ -3,7 +3,7 @@ mindspore.dataset.vision.c_transforms.RandomHorizontalFlip
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomHorizontalFlip(prob=0.5)
 
-    以给定的概率水平随机翻转输入图像。
+    对输入图像按给定的概率进行水平随机翻转。
 
     **参数：**
 
