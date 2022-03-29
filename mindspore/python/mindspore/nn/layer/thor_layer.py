@@ -19,13 +19,15 @@ import mindspore.common.dtype as mstype
 import mindspore.log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer, Initializer
+from mindspore.communication.management import get_group_size, get_rank
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore._checkparam import Validator, Rel, twice
 from mindspore import context
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
-from mindspore.parallel._ps_context import _is_role_worker, _get_ps_context
+from mindspore.parallel._ps_context import _is_role_worker, _get_ps_context, \
+    _set_rank_id, _insert_hash_table_size, _set_cache_enable
 from mindspore.parallel._utils import _get_parallel_mode, _get_full_batch
 from mindspore.context import ParallelMode
 from mindspore.ops.primitive import constexpr
@@ -40,7 +42,8 @@ class DenseThor(Cell):
     The dense connected layer and saving the information needed for THOR.
 
     Applies dense connected layer for the input and saves the information A and G in the dense connected layer
-    needed for THOR, the detail can be seen in paper: https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf
+    needed for THOR, the detail can be seen in `THOR, Trace-based Hardware-driven layer-ORiented Natural
+    Gradient Descent Computation <https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf>`_.
     This layer implements the operation as:
 
     .. math::
