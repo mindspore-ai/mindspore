@@ -8,12 +8,12 @@
 
     **参数：**
 
-    - **source** (str) - 待转换的CIFAR-100数据集文件的目录路径。
-    - **destination** (str) - 转换生成的MindRecord文件路径。
+    - **source** (str) - 待转换的CIFAR-100数据集文件所在目录的路径。
+    - **destination** (str) - 转换生成的MindRecord文件路径，需提前创建目录并且目录下不能存在同名文件。
 
     **异常：**
 
-    - **ValueError** - `source` 或 `destination` 无效。
+    - **ValueError** -  参数 `source` 或 `destination` 无效。
 
 
     .. py:method:: run(fields=None)
@@ -27,12 +27,12 @@
 
         **返回：**
 
-        MSRStatus，CIFAR-100数据集是否成功转换为MindRecord格式数据集。
+        MSRStatus，SUCCESS或FAILED。
 
 
     .. py:method:: transform(fields=None)
 
-        :func:`mindspore.mindrecord.Cifar100ToMR.run` 函数的包装函数来保证异常时正常退出。
+        :func:`mindspore.mindrecord.Cifar100ToMR.run` 的包装函数来保证异常时正常退出。
 
         **参数：**
 
@@ -41,4 +41,4 @@
 
         **返回：**
 
-        MSRStatus，CIFAR-100数据集是否成功转换为MindRecord格式数据集。
+        MSRStatus，SUCCESS或FAILED。
