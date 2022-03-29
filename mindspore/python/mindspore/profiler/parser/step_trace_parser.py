@@ -597,7 +597,7 @@ class AscendStepTraceParser(BaseStepTraceParser):
                         if len(binary_data) < step_trace_size:
                             break
                         unpacked_data = StructType.unpack_binary_data(TS_TRACK_STEP_TRACE_STRUCT, binary_data)
-                        if unpacked_data['rptType'] != STEP_TRACE_RPT_TYPE:
+                        if unpacked_data.get('rptType') != STEP_TRACE_RPT_TYPE:
                             continue
                         ts_tracks.append(unpacked_data)
             except (IOError, OSError) as err:

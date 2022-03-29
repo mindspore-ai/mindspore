@@ -214,7 +214,7 @@ class FlopsParser:
             raise ProfilerRawFileException(
                 'aicore.data file does not have enough content to be parsed'
             )
-
+        aicore_file_path = os.path.realpath(aicore_file_path)
         try:
             with open(aicore_file_path, "rb") as aicore_file:
                 all_log_struct = aicore_file.read(self.AICORE_LOG_SIZE * read_count)
@@ -292,7 +292,7 @@ class FlopsParser:
         if not os.path.exists(optime_file_path):
             logger.critical(f'The {optime_file_path} file does not exist.')
             raise ProfilerFileNotFoundException(optime_file_path)
-
+        optime_file_path = os.path.realpath(optime_file_path)
         try:
             with open(optime_file_path, 'r') as f:
                 lines = f.readlines()
@@ -336,7 +336,7 @@ class FlopsParser:
         scope_list.insert(0, "Total")
         scope_depth = len(scope_list)
         for idx in range(scope_depth - 1):
-            key_name = scope_list[idx] + " " + scope_list[idx + 1]
+            key_name = '{} {}'.format(scope_list[idx], scope_list[idx + 1])
             self._flops_each_scope.setdefault(key_name, 0)
             self._flops_each_scope[key_name] += task_fops
 

@@ -123,6 +123,7 @@ def get_file_join_name(input_path, file_name):
         file_join_name = os.path.join(input_path, '%s.join' % file_name)
         if os.path.exists(file_join_name):
             os.remove(file_join_name)
+        file_join_name = os.path.realpath(file_join_name)
         with open(file_join_name, 'ab') as bin_data:
             for i in name_list:
                 file = input_path + os.sep + i

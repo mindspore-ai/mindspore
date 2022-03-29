@@ -147,6 +147,7 @@ class Profiler:
         self._has_started_twice = False
         self.start_profile = True
         self._profile_memory = False
+        self._stop_time = 0
 
         # Setup and start MindData Profiling
         self._md_profiler = cde.GlobalContext.profiling_manager()
@@ -165,39 +166,60 @@ class Profiler:
             self._cpu_profiler.init(self._output_path)
 
         if self._device_target and self._device_target == DeviceTarget.CPU.value:
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                raise RuntimeError("Pynative model is not supported on CPU currently.")
-
-            self.start_profile = kwargs.pop("start_profile", True)
-            if not isinstance(self.start_profile, bool):
-                raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
-                                f"but got type {type(self.start_profile)}")
+            self._cpu_profiler_init(kwargs)
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                raise RuntimeError("Pynative model is not supported on GPU currently.")
-            self._parse_parameter_for_gpu(**kwargs)
-
-            gpu_profiler = c_expression.GPUProfiler
-            self._gpu_profiler = gpu_profiler.get_instance()
-            self._gpu_profiler.init(self._output_path)
-            if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
-                self._dev_id = str(get_rank())
-            os.environ['DEVICE_ID'] = self._dev_id
+            self._gpu_profiler_init(kwargs)
 
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
-            self._init_time = int(time.time() * 10000000)
-            logger.info("Profiling: profiling init time: %d", self._init_time)
-            self._parse_parameter_for_ascend(**kwargs)
-            os.environ['DEVICE_ID'] = self._dev_id
+            self._ascend_profiler_init(kwargs)
 
-            self._ascend_profiling_options = json.dumps(self._construct_profiling_options())
-            # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
-            if len(self._ascend_profiling_options) > 2048:
-                msg = f"For '{self.__class__.__name__}', the environment parameter length exceeds " \
-                      f"the limit (2048), please input valid parameters."
-                logger.critical(msg)
-                raise ValueError(msg)
+    def _cpu_profiler_init(self, kwargs):
+        """Cpu profiler init."""
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Pynative model is not supported on CPU currently.")
+
+        self.start_profile = kwargs.pop("start_profile", True)
+        if not isinstance(self.start_profile, bool):
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
+                            f"but got type {type(self.start_profile)}")
+
+    def _gpu_profiler_init(self, kwargs):
+        """Gpu profiler init."""
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Pynative model is not supported on GPU currently.")
+        self._parse_parameter_for_gpu(kwargs)
+
+        gpu_profiler = c_expression.GPUProfiler
+        self._gpu_profiler = gpu_profiler.get_instance()
+        self._gpu_profiler.init(self._output_path)
+        if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
+            self._dev_id = str(get_rank())
+        os.environ['DEVICE_ID'] = self._dev_id
+
+    def _ascend_profiler_init(self, kwargs):
+        """Ascend profiler init."""
+        self._init_time = int(time.time() * 10000000)
+        logger.info("Profiling: profiling init time: %d", self._init_time)
+        self._parse_parameter_for_ascend(kwargs)
+        os.environ['DEVICE_ID'] = self._dev_id
+
+        self._ascend_profiling_options = json.dumps(self._construct_profiling_options())
+        # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
+        if len(self._ascend_profiling_options) > 2048:
+            msg = f"For '{self.__class__.__name__}', the environment parameter length exceeds " \
+                  f"the limit (2048), please input valid parameters."
+            logger.critical(msg)
+            raise ValueError(msg)
+        # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
+        self._ascend_profiler = c_expression.AscendProfiler.get_instance()
+        self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
+        base_profiling_container_path = os.path.join(self._output_path, "container")
+        container_path = os.path.join(base_profiling_container_path, self._dev_id)
+        data_path = os.path.join(container_path, "data")
+        data_path = validate_and_normalize_path(data_path)
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
 
     def _construct_profiling_options(self):
         """
@@ -227,7 +249,7 @@ class Profiler:
 
         return profiling_options
 
-    def _parse_parameter_for_gpu(self, **kwargs):
+    def _parse_parameter_for_gpu(self, kwargs):
         """Parse parameter in Proflier when the device target is GPU."""
 
         self.start_profile = kwargs.pop("start_profile", True)
@@ -249,7 +271,7 @@ class Profiler:
         if self._profile_memory:
             raise RuntimeError(f"The parameter profile_memory is not supported on GPU currently.")
 
-    def _parse_parameter_for_ascend(self, **kwargs):
+    def _parse_parameter_for_ascend(self, kwargs):
         """Parse parameter in Proflier when the device target is Ascend."""
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
@@ -357,6 +379,28 @@ class Profiler:
             self._ascend_pynative_analyse()
         else:
             self._ascend_graph_analyse()
+
+    def _ascend_graph_memory_analyse(self, points):
+        """Analyse memory usage info."""
+        if self._profile_memory:
+            try:
+                logger.info("Profiling: analyzing the memory usage info.")
+                self._analyse_memory_usage(points)
+            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+                logger.warning(err.message)
+            finally:
+                pass
+
+    def _ascend_graph_hccl_analyse(self):
+        """Analyse hccl profiler info."""
+        if self._profile_communication:
+            try:
+                logger.info("Profiling: analyzing the hccl profiler info.")
+                self._analyse_hccl_info()
+            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+                logger.warning(err.message)
+            finally:
+                pass
 
     def _ascend_graph_op_analyse(self, source_path):
         """
@@ -476,25 +520,8 @@ class Profiler:
         finally:
             pass
 
-        # analyse memory usage info
-        if self._profile_memory:
-            try:
-                logger.info("Profiling: analyzing the memory usage info.")
-                self._analyse_memory_usage(points)
-            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
-                logger.warning(err.message)
-            finally:
-                pass
-
-        # analyse hccl profiler info
-        if self._profile_communication:
-            try:
-                logger.info("Profiling: analyzing the hccl profiler info.")
-                self._analyse_hccl_info()
-            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
-                logger.warning(err.message)
-            finally:
-                pass
+        self._ascend_graph_memory_analyse(points)
+        self._ascend_graph_hccl_analyse()
 
         # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
         flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
@@ -581,23 +608,10 @@ class Profiler:
         pynative_profiler = c_expression.PynativeProfiler
         self._pynative_profiler = pynative_profiler.get_instance()
         self._pynative_profiler.init(self._output_path)
-
-        self._ascend_profiler = c_expression.AscendProfiler.get_instance()
-        self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
         self._ascend_profiler.start()
 
     def _ascend_graph_start(self):
         """Ascend graph mode start profiling."""
-        # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
-        self._ascend_profiler = c_expression.AscendProfiler.get_instance()
-        self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
-        base_profiling_container_path = os.path.join(self._output_path, "container")
-        container_path = os.path.join(base_profiling_container_path, self._dev_id)
-        data_path = os.path.join(container_path, "data")
-        data_path = validate_and_normalize_path(data_path)
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-
         self._ascend_profiler.start()
 
     def stop(self):
