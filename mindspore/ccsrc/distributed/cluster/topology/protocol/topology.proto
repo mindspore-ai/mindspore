@@ -21,6 +21,10 @@ message RegistrationMessage {
   string node_id = 1;
 }
 
+message UnregistrationMessage {
+  string node_id = 1;
+}
+
 message HeartbeatMessage {
   string node_id = 1;
 }

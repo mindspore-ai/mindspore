@@ -59,9 +59,10 @@ static bool FillMetaServerAddress(struct MetaServerAddress *address) {
 }
 
 __attribute__((unused)) static std::unique_ptr<MessageBase> CreateMessage(const std::string &dest_url,
+                                                                          const MessageName &name,
                                                                           const std::string &content) {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
-  message->name = std::to_string(static_cast<int>(MessageName::kRegistration));
+  message->name = std::to_string(static_cast<int>(name));
   message->from = AID("", "");
   message->to = AID("", dest_url);
   message->body = content;

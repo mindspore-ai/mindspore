@@ -60,6 +60,8 @@ bool MetaServerNode::InitTCPServer() {
   // Configure the message processors for the TCP server.
   message_handlers_[MessageName::kRegistration] =
     std::bind(&MetaServerNode::ProcessRegister, this, std::placeholders::_1);
+  message_handlers_[MessageName::kUnregistration] =
+    std::bind(&MetaServerNode::ProcessUnregister, this, std::placeholders::_1);
   message_handlers_[MessageName::kHeartbeat] =
     std::bind(&MetaServerNode::ProcessHeartbeat, this, std::placeholders::_1);
   return true;
@@ -94,6 +96,22 @@ void MetaServerNode::ProcessRegister(const std::shared_ptr<MessageBase> &message
   }
 }
 
+void MetaServerNode::ProcessUnregister(const std::shared_ptr<MessageBase> &message) {
+  MS_EXCEPTION_IF_NULL(message);
+
+  UnregistrationMessage unregistration;
+  const std::string &body = message->Body();
+  unregistration.ParseFromArray(body.c_str(), body.length());
+
+  const auto &node_id = unregistration.node_id();
+  std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
+  if (nodes_.find(node_id) == nodes_.end()) {
+    MS_LOG(ERROR) << "Received unregistration message from invalid compute graph node: " << node_id;
+    return;
+  }
+  nodes_.erase(node_id);
+}
+
 void MetaServerNode::ProcessHeartbeat(const std::shared_ptr<MessageBase> &message) {
   MS_EXCEPTION_IF_NULL(message);
 
@@ -120,6 +138,7 @@ void MetaServerNode::UpdateTopoState() {
         MS_LOG(ERROR) << "Failed to initialize the cluster topology after waiting for " << kTopoInitTimeout.count()
                       << " milliseconds.";
         topo_state_ = TopoState::kFailed;
+        continue;
       }
 
       std::shared_lock<std::shared_mutex> lock(nodes_mutex_);

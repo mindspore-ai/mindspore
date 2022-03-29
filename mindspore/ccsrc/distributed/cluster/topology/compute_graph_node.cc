@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <utility>
 #include "utils/log_adapter.h"
 #include "distributed/cluster/topology/utils.h"
 #include "distributed/cluster/topology/common.h"
@@ -40,6 +41,9 @@ bool ComputeGraphNode::Initialize() {
 }
 
 bool ComputeGraphNode::Finalize() {
+  // Exit the compute graph node from the cluster topology.
+  RETURN_IF_FALSE_WITH_LOG(Unregister(), "Failed to send unregistration message to the meta server.");
+
   // Release the TCP client.
   if (tcp_client_ != nullptr) {
     const auto &server_url = meta_server_addr_.GetUrl();
@@ -59,11 +63,29 @@ bool ComputeGraphNode::Register() {
   reg_msg.set_node_id(node_id_);
 
   std::string content = reg_msg.SerializeAsString();
-  auto message = CreateMessage(server_url, content);
+  auto message = CreateMessage(server_url, MessageName::kRegistration, content);
   MS_EXCEPTION_IF_NULL(message);
 
   tcp_client_->SendSync(std::move(message));
   return true;
+}
+
+bool ComputeGraphNode::Unregister() {
+  MS_EXCEPTION_IF_NULL(tcp_client_);
+
+  UnregistrationMessage unreg_msg;
+  unreg_msg.set_node_id(node_id_);
+
+  std::string content = unreg_msg.SerializeAsString();
+  auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kUnregistration, content);
+  MS_EXCEPTION_IF_NULL(message);
+
+  auto retval = tcp_client_->SendSync(std::move(message));
+  if (retval > 0) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool ComputeGraphNode::Heartbeat() {
@@ -74,7 +96,7 @@ bool ComputeGraphNode::Heartbeat() {
 
   const auto &server_url = meta_server_addr_.GetUrl();
   std::string content = hb_msg.SerializeAsString();
-  auto message = CreateMessage(server_url, content);
+  auto message = CreateMessage(server_url, MessageName::kHeartbeat, content);
   MS_EXCEPTION_IF_NULL(message);
 
   tcp_client_->SendSync(std::move(message));
