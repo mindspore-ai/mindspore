@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,24 @@
 
 package com.mindspore.config;
 
+import com.mindspore.lite.NativeLibrary;
+
 /**
  * Define mindspore version info.
  *
  * @since v1.0
  */
 public class Version {
+    static {
+        try {
+            NativeLibrary.loadLibs();
+        } catch (Exception e) {
+            System.err.println("Failed to load MindSporLite native library.");
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
     /**
      * Get MindSpore Lite version info.
      *

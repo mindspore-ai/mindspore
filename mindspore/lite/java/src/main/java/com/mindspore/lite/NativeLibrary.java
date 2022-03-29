@@ -16,6 +16,10 @@ public class NativeLibrary {
             LOGGER.info("Native lib has been loaded.");
             return;
         }
+        loadLibs();
+    }
+
+    public static void loadLibs() {
         loadLib(makeResourceName("lib" + GLOG_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_JNI_LIBNAME + ".so"));
