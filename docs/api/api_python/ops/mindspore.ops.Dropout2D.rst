@@ -3,9 +3,9 @@ mindspore.ops.Dropout2D
 
 .. py:class:: mindspore.ops.Dropout2D(keep_prob=0.5)
 
-    在训练期间，根据概率 :math:`1 - keep\_prob` ，随机的将一些通道设置为0，且服从伯努利分布。（对于shape为 :math:`(N, C, H, W)` 的四维Tensor，通道特征图指的是shape为 :math:`(H, W)` 的二维特征图。）
+    在训练期间，根据概率 `1 - keep\_prob` ，随机的将一些通道设置为0，且服从伯努利分布。（对于shape为 :math:`(N, C, H, W)` 的四维Tensor，通道特征图指的是shape为 :math:`(H, W)` 的二维特征图。）
 
-    例如，对于批量输入的第 :math:`i_th` 样本的第:math:`j_th` 通道为二维Tensor，即input[i,j]。在前向传播过程中，输入样本的每个通道都有可能被置为0，置为0的概率为 :math:`1 - keep\_prob`，且服从伯努利分布。
+    例如，对于批量输入的第 :math:`i_th` 样本的第 :math:`j_th` 通道为二维Tensor，即input[i,j]。在前向传播过程中，输入样本的每个通道都有可能被置为0，置为0的概率为 `1 - keep\_prob`，且服从伯努利分布。
     
     论文 `Dropout: A Simple Way to Prevent Neural Networks from Overfitting <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ 中提出了该技术，并证明其能有效地减少过度拟合，防止神经元共适应。更多详细信息，请参见 `Improving neural networks by preventing co-adaptation of feature detectors <https://arxiv.org/pdf/1207.0580.pdf>`_ 。
 
@@ -17,7 +17,7 @@ mindspore.ops.Dropout2D
 
     **输入：**
 
-    - **x** (Tensor) - shape为 :math:`(N, C, H, W)` 的四维张量，其中N是批量大小，C是通道数，H是特征高度，W是特征宽度。数据类型应为int8、int16、int32、int64、float16或float32。
+    - **x** (Tensor) - shape为 :math:`(N, C, H, W)` 的四维张量，其中N是批处理，C是通道数，H是特征高度，W是特征宽度。数据类型应为int8、int16、int32、int64、float16或float32。
 
     **输出：**
 

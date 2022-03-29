@@ -20,14 +20,14 @@ mindspore.ops.ReduceMax
 
     Tensor，shape与输入 `x` 相同。
 
-    - 如果轴为()，且keep_dims为False，则输出一个0维Tensor，表示输入Tensor中所有元素的最大值。
+    - 如果 `axis` 为()，且keep_dims为False，则输出一个0维Tensor，表示输入Tensor中所有元素的最大值。
 
-    - 如果轴为int，取值为2，并且keep_dims为False，则输出的shape为 :math:`(x_1, x_3, ..., x_R)` 。
+    - 如果 `axis` 为int，取值为2，并且keep_dims为False，则输出的shape为 :math:`(x_1, x_3, ..., x_R)` 。
 
-    - 如果轴为tuple(int)，取值为(2, 3)，并且keep_dims为False，则输出的shape为 :math:`(x_1, x_4, ..., x_R)` 。
+    - 如果 `axis` 为tuple(int)或list(int)，取值为(2, 3)，并且keep_dims为False，则输出的shape为 :math:`(x_1, x_4, ..., x_R)` 。
 
     **异常：**
 
     - **TypeError** - `keep_dims` 不是bool。
-    - **TypeError** - `x` 不是tensor。
+    - **TypeError** - `x` 不是Tensor。
     - **TypeError** - `axis` 不是int、tuple或list。
