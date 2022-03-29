@@ -192,7 +192,7 @@ class WriterPool(ctx.Process):
             is_exit = True
 
         if not self._writers:
-            logger.warning("Can not find any writer to write summary data, "
+            logger.warning("Can not find any SummaryWriter to write summary data, "
                            "so SummaryRecord will not record data.")
             is_exit = True
 

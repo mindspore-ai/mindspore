@@ -75,15 +75,15 @@ def process_export_options(export_options):
 
     unexpected_params = set(export_options) - set(_DEFAULT_EXPORT_OPTIONS)
     if unexpected_params:
-        raise ValueError(f'For `export_options` the keys {unexpected_params} are unsupported, '
+        raise ValueError(f'For "SummaryRecord", the keys {unexpected_params} of "export_options" are unsupported, '
                          f'expect the follow keys: {list(_DEFAULT_EXPORT_OPTIONS.keys())}')
 
     for export_option, export_format in export_options.items():
         unexpected_format = {export_format} - _DEFAULT_EXPORT_OPTIONS.get(export_option)
         if unexpected_format:
             raise ValueError(
-                f'For `export_options`, the export_format {unexpected_format} are unsupported for {export_option}, '
-                f'expect the follow values: {list(_DEFAULT_EXPORT_OPTIONS.get(export_option))}')
+                f'For "SummaryRecord", the export_format {unexpected_format} of "export_options" are unsupported '
+                f'for {export_option}, expect the follow values: {list(_DEFAULT_EXPORT_OPTIONS.get(export_option))}')
 
     for item in set(export_options):
         check_value_type(item, export_options.get(item), [str, type(None)])
@@ -178,7 +178,8 @@ class SummaryRecord:
         Validator.check_str_by_regular(file_suffix)
 
         if max_file_size is not None and max_file_size < 0:
-            logger.warning("The 'max_file_size' should be greater than 0.")
+            logger.warning(f"For '{self.__class__.__name__}', the 'max_file_size' should be greater than 0. "
+                           f"but got value {max_file_size}.")
             max_file_size = None
 
         Validator.check_value_type(arg_name='raise_exception', arg_value=raise_exception, valid_types=bool)
@@ -239,8 +240,8 @@ class SummaryRecord:
         """
         mode_spec = 'train', 'eval'
         if mode not in mode_spec:
-            raise ValueError(f'For "{self.__class__.__name__}", {repr(mode)} is not a recognized mode, '
-                             f'expect mode is train or eval')
+            raise ValueError(f'For "{self.__class__.__name__}.set_mode", {repr(mode)} is not a '
+                             f'recognized mode, expect the parameter "mode" is "train" or "eval"')
         self._mode = mode
 
     def add_value(self, plugin, name, value):
@@ -300,14 +301,16 @@ class SummaryRecord:
         """
         if plugin in ('tensor', 'scalar', 'image', 'histogram'):
             if not name or not isinstance(name, str):
-                raise ValueError(f'For "{self.__class__.__name__}", {repr(name)} is not a valid tag name, '
-                                 f'expect type is str.')
+                raise ValueError(f'For "{self.__class__.__name__}", the parameter "name" type should be str, '
+                                 f'but got {type(name)}.')
             if not isinstance(value, Tensor):
-                raise TypeError(f'Expect the value to be Tensor, but got {type(value).__name__}')
+                raise TypeError(f'For "{self.__class__.__name__}", the parameter "value" expect to be Tensor, '
+                                f'but got {type(value).__name__}')
             np_value = _check_to_numpy(plugin, value)
             if name in {item['tag'] for item in self._data_pool[plugin]}:
                 entry = repr(f'{name}/{plugin}')
-                logger.warning(f'{entry} has duplicate values. Only the newest one will be recorded.')
+                logger.warning(f'For "{self.__class__.__name__}.add_value", {entry} has duplicate values. '
+                               f'Only the newest one will be recorded.')
             data = dict(tag=name, value=np_value)
             export_plugin = '{}_format'.format(plugin)
             if self._export_options is not None and export_plugin in self._export_options:
@@ -323,8 +326,8 @@ class SummaryRecord:
         elif plugin == PluginEnum.LANDSCAPE.value:
             self._data_pool[plugin].append(dict(tag=name, value=value.SerializeToString()))
         else:
-            raise ValueError(f'For "{self.__class__.__name__}", no such plugin of {repr(plugin)}, '
-                             f'expect value is one of [tensor, scalar, image, histogram, train_lineage, '
+            raise ValueError(f'For "{self.__class__.__name__}.add_value", no such "plugin" of {repr(plugin)} '
+                             f', expect value is one of [tensor, scalar, image, histogram, train_lineage, '
                              f'eval_lineage, dataset_graph, custom_lineage_data, graph, landscape]')
 
     def record(self, step, train_network=None, plugin_filter=None):
