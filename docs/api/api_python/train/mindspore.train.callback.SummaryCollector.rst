@@ -26,7 +26,7 @@
       - **collect_input_data** (bool) - 表示是否为每次训练收集数据集。目前仅支持图像数据。如果数据集中有多列数据，则第一列应为图像数据。默认值：True。
       - **collect_dataset_graph** (bool) - 表示是否收集训练阶段的数据集图。默认值：True。
       - **histogram_regular** (Union[str, None]) - 收集参数分布页面的权重和偏置，并在MindInsight中展示。此字段允许正则表达式控制要收集的参数。不建议一次收集太多参数，因为这会影响性能。注：如果收集的参数太多并且内存不足，训练将会失败。默认值：None，表示只收集网络的前五个超参。
-      - **collect_landscape** (Union[dict, None]) - 收集创建loss地形图所需要的参数。
+      - **collect_landscape** (Union[dict, None]) - 表示是否收集创建loss地形图所需要的参数。如果设置None,则不收集任何参数。默认收集所有参数并且将会保存在`{summary_dir}/ckpt_dir/train_metadata.json`文件中。
 
         - **landscape_size** (int) - 指定生成loss地形图的图像分辨率。例如：如果设置为128，则loss地形图的分辨率是128*128。注意：计算loss地形图的时间随着分辨率的增大而增加。默认值：40。可选值：3-256。
         - **unit** (str) - 指定训练过程中保存checkpoint时，下方参数 `intervals` 以何种形式收集模型权重。例如：将 `intervals` 设置为[[1, 2, 3, 4]]，如果 `unit` 设置为step，则收集模型权重的频率单位为step，将保存1-4个step的模型权重，而 `unit` 设置为epoch，则将保存1-4个epoch的模型权重。默认值：step。可选值：epoch/step。
