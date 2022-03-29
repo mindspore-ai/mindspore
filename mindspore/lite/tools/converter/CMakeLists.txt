@@ -215,6 +215,9 @@ set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=m
 set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 
+add_library(converter_runtime_mid OBJECT ${LITE_SRC})
+add_dependencies(converter_runtime_mid fbs_src fbs_inner_src)
+
 add_library(converter_src_mid OBJECT ${CONVERTER_SRC})
 add_dependencies(converter_src_mid fbs_src fbs_inner_src)
 
@@ -225,7 +228,6 @@ target_compile_definitions(converter_src_mid PRIVATE BACKEND_DLL)
 
 add_executable(converter_lite
         main.cc
-        ${LITE_SRC}
         )
 add_dependencies(converter_lite fbs_src fbs_inner_src)
 if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
@@ -246,6 +248,7 @@ endif()
 target_link_libraries(converter_lite PRIVATE
         ccsrc_src_mid
         converter_src_mid
+        converter_runtime_mid
         cpu_ops_mid
         nnacl_mid
         cpu_kernel_mid

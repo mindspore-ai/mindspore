@@ -12,6 +12,11 @@ mkdir -pv ${CUR_DIR}/do_test
 # prepare data for ut
 cd ${CUR_DIR}/do_test
 cp ${BUILD_DIR}/test/lite-test ./
+ENABLE_CONVERTER_TEST=false
+if [ -f "${BUILD_DIR}/test/lite-test-converter" ]; then
+  cp ${BUILD_DIR}/test/lite-test-converter ./
+  ENABLE_CONVERTER_TEST=true
+fi
 cp ${BUILD_DIR}/googletest/googlemock/gtest/libgtest.so ./
 cp ${BUILD_DIR}/googletest/googlemock/gtest/libgmock.so ./
 ls -l *.so*
@@ -56,10 +61,11 @@ echo 'run common ut tests'
 # test cases of INT8 OP
 ## ./lite-test --gtest_filter=TestPadInt8.*
 ./lite-test --gtest_filter=TestDeconvInt8.*
-
-./lite-test --gtest_filter="ModelParserRegistryTest.TestRegistry"
-./lite-test --gtest_filter="NodeParserRegistryTest.TestRegistry"
-./lite-test --gtest_filter="PassRegistryTest.TestRegistry"
+if [ "$ENABLE_CONVERTER_TEST" = true ];then
+  ./lite-test-converter --gtest_filter="ModelParserRegistryTest.TestRegistry"
+  ./lite-test-converter --gtest_filter="NodeParserRegistryTest.TestRegistry"
+  ./lite-test-converter --gtest_filter="PassRegistryTest.TestRegistry"
+fi
 ./lite-test --gtest_filter="TestRegistry.TestAdd"
 ./lite-test --gtest_filter="TestRegistryCustomOp.TestCustomAdd"
 
@@ -81,11 +87,12 @@ echo 'run inference ut tests'
 ./lite-test --gtest_filter="ControlFlowTest.TestMergeWhileModel"
 
 echo 'run mindrt parallel ut test'
-./lite-test --gtest_filter="MindrtParallelTest.*"
+if [ "$ENABLE_CONVERTER_TEST" = true ];then
+  ./lite-test-converter --gtest_filter="MindrtParallelTest.*"
+  echo 'user set output tensors st test'
+  ./lite-test --gtest_filter="GraphTest.UserSetGraphOutput*"
+fi
 ./lite-test --gtest_filter="BenchmarkTest.mindrtParallelOffline*"
-
-echo 'user set output tensors st test'
-./lite-test --gtest_filter="GraphTest.UserSetGraphOutput*"
 
 echo 'run custom delegate st test'
 ./lite-test --gtest_filter="DelegateTest.CustomDelegate"
