@@ -153,8 +153,8 @@ Status AutoTune::SummarizeTreeConfiguration(std::vector<std::string> *out) {
     if (!op->inlined() && op->Name() != "DeviceQueueOp") {
       std::stringstream s;
       s << std::left << std::setw(op_name_width) << op->NameWithID() << "(num_parallel_workers:" << std::right
-        << std::setw(val_width) << op->NumWorkers() << ", prefetch_size:" << std::setw(val_width)
-        << op->ConnectorCapacity() << ")";
+        << std::setw(val_width) << (op->NumWorkers() == 0 ? "NA" : std::to_string(op->NumWorkers()))
+        << ", prefetch_size:" << std::setw(val_width) << op->ConnectorCapacity() << ")";
       (void)out->emplace_back(s.str());
     }
   }
