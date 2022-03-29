@@ -34,6 +34,7 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   register_message.set_role(node_info_.node_role_);
   register_message.set_ip(node_info_.ip_);
   register_message.set_port(node_info_.port_);
+  register_message.set_fl_iteration_num(PSContext::instance()->fl_iteration_num());
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << " begin to register to the scheduler!";
@@ -735,8 +736,6 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
   if (heartbeat_resp_message.cluster_state() != current_cluster_state_ &&
       current_cluster_state_ != ClusterState::CLUSTER_SCALE_IN &&
       current_cluster_state_ != ClusterState::CLUSTER_SCALE_OUT) {
-    MS_LOG(INFO) << "cluster change state from:" << CommUtil::ClusterStateToString(current_cluster_state_) << " to "
-                 << CommUtil::ClusterStateToString(heartbeat_resp_message.cluster_state());
     UpdateClusterState(heartbeat_resp_message.cluster_state());
   }
   MS_LOG(DEBUG) << "The current cluster state from heartbeat:"

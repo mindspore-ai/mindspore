@@ -89,6 +89,7 @@ void Server::Run() {
   Recover();
   MS_LOG(INFO) << "Server started successfully.";
   safemode_ = false;
+  is_ready_ = true;
   lock.unlock();
 
   // Wait communicators to stop so the main thread is blocked.
@@ -461,6 +462,17 @@ void Server::StartCommunicator() {
     return;
   }
 
+  MS_LOG(INFO) << "Start communicator with worker.";
+  (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                        MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
+                        if (typeid(*communicator.get()) != typeid(ps::core::TcpCommunicator)) {
+                          if (!communicator->Start()) {
+                            MS_LOG(EXCEPTION) << "Starting communicator with worker failed.";
+                          }
+                        }
+                      });
+
   MS_EXCEPTION_IF_NULL(server_node_);
   MS_EXCEPTION_IF_NULL(communicator_with_server_);
   MS_LOG(INFO) << "Start communicator with server.";
@@ -472,15 +484,6 @@ void Server::StartCommunicator() {
   CollectiveOpsImpl::GetInstance().Initialize(server_node_);
   DistributedCountService::GetInstance().Initialize(server_node_, kLeaderServerRank);
   MS_LOG(INFO) << "This server rank is " << server_node_->rank_id();
-
-  MS_LOG(INFO) << "Start communicator with worker.";
-  (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
-                        MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
-                        if (!communicator->Start()) {
-                          MS_LOG(EXCEPTION) << "Starting communicator with worker failed.";
-                        }
-                      });
 }
 
 void Server::Recover() {
@@ -695,6 +698,8 @@ void Server::HandleSyncAfterRecoveryRequest(const std::shared_ptr<ps::core::Mess
     }
   }
 }
+
+bool Server::IsReady() const { return is_ready_.load(); }
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

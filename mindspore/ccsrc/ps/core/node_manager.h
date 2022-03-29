@@ -50,7 +50,7 @@ class NodeManager {
         next_server_rank_id_(0),
         meta_data_(nullptr),
         node_state_(NodeState::NODE_STARTING),
-        cluster_state_(ClusterState::ClUSTER_STARTING) {}
+        cluster_state_(ClusterState::CLUSTER_STARTING) {}
   virtual ~NodeManager() = default;
   using OnPersist = std::function<void()>;
   // When initializing nodes, the initial number of nodes will be assigned to the total number of nodes.
@@ -63,7 +63,7 @@ class NodeManager {
   // Fetch metadata information of all nodes.
   std::vector<ServersMeta> FetchAllNodesMeta();
 
-  void UpdateCluster();
+  void UpdateCluster(bool is_cluster_ready);
   void AddFinishNode(const std::string &finish_message);
 
   // After the scheduler receives the scale_out_done node, it will save this node.
@@ -134,6 +134,8 @@ class NodeManager {
   bool IsAllNodeInPersisting();
 
   bool IsAllNodesAlive() const;
+
+  bool VerifyClusterNodesParam();
 
  private:
   std::mutex node_mutex_;

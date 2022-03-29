@@ -25,7 +25,10 @@ namespace fl {
 namespace server {
 class Server;
 class Iteration;
-std::atomic<uint32_t> kPrintTimes = 0;
+std::atomic<uint32_t> kJobNotReadyPrintTimes = 0;
+std::atomic<uint32_t> kJobNotAvailablePrintTimes = 0;
+std::atomic<uint32_t> kClusterSafeModePrintTimes = 0;
+
 const uint32_t kPrintTimesThreshold = 3000;
 Round::Round(const std::string &name, bool check_timeout, size_t time_window, bool check_count, size_t threshold_count,
              bool server_num_as_threshold)
@@ -133,8 +136,6 @@ void Round::BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel) 
 
 void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_ERROR_IF_NULL_WO_RET_VAL(message);
-  MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
-
   std::string reason = "";
   if (!IsServerAvailable(&reason)) {
     if (!message->SendResponse(reason.c_str(), reason.size())) {
@@ -143,6 +144,8 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
     }
     return;
   }
+
+  MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
   (void)(Iteration::GetInstance().running_round_num_++);
   bool ret = kernel_->Launch(reinterpret_cast<const uint8_t *>(message->data()), message->len(), message);
   // Must send response back no matter what value Launch method returns.
@@ -201,25 +204,35 @@ bool Round::IsServerAvailable(std::string *reason) {
     return true;
   }
 
+  if (!Server::GetInstance().IsReady()) {
+    if (kJobNotReadyPrintTimes % kPrintTimesThreshold == 0) {
+      MS_LOG(WARNING) << "The server's training job is not ready, please retry " + name_ + " later.";
+      kJobNotReadyPrintTimes = 0;
+    }
+    kJobNotReadyPrintTimes += 1;
+    *reason = ps::kJobNotReady;
+    return false;
+  }
+
   // If the server state is Disable or Finish, refuse the request.
   if (Iteration::GetInstance().instance_state() == InstanceState::kDisable ||
       Iteration::GetInstance().instance_state() == InstanceState::kFinish) {
-    if (kPrintTimes % kPrintTimesThreshold == 0) {
+    if (kJobNotAvailablePrintTimes % kPrintTimesThreshold == 0) {
       MS_LOG(WARNING) << "The server's training job is disabled or finished, please retry " + name_ + " later.";
-      kPrintTimes = 0;
+      kJobNotAvailablePrintTimes = 0;
     }
-    kPrintTimes += 1;
+    kJobNotAvailablePrintTimes += 1;
     *reason = ps::kJobNotAvailable;
     return false;
   }
 
   // If the server is still in safemode, reject the request.
   if (Server::GetInstance().IsSafeMode()) {
-    if (kPrintTimes % kPrintTimesThreshold == 0) {
+    if (kClusterSafeModePrintTimes % kPrintTimesThreshold == 0) {
       MS_LOG(WARNING) << "The cluster is still in safemode, please retry " << name_ << " later.";
-      kPrintTimes = 0;
+      kClusterSafeModePrintTimes = 0;
     }
-    kPrintTimes += 1;
+    kClusterSafeModePrintTimes += 1;
     *reason = ps::kClusterSafeMode;
     return false;
   }
