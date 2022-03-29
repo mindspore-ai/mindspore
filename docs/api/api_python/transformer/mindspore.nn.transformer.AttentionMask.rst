@@ -1,6 +1,6 @@
 ﻿.. py:class:: mindspore.nn.transformer.AttentionMask(seq_length, parallel_config=default_dpmp_config)
 
-    从输入掩码中获取下三角矩阵。输入掩码是值为1或0的二维Tensor (batch_size, seq_length)。1表示当前位置是一个有效的标记，其他值则表示当前位置不是一个有效的标记。
+    从输入掩码中获取下三角矩阵。输入掩码是值为1或0的二维Tensor (batch_size, seq_length)。1表示当前位置是一个有效的标记，0则表示当前位置不是一个有效的标记。
 
     **参数：**
 
