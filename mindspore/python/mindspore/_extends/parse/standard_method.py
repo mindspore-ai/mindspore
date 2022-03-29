@@ -1931,7 +1931,7 @@ def csr_abs(x):
 
 def csr_mv(x, dense_vector):
     """Implementation of `abs` for CSRTensor."""
-    check_value_type('dense_vector', dense_vector, (Tensor_,), 'Tensor')
+    check_value_type('dense_vector', dense_vector, (Tensor_,), 'CSRTensor.mv')
     return F.csr_mv(x, dense_vector)
 
 

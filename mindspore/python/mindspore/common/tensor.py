@@ -2846,7 +2846,7 @@ class CSRTensor(CSRTensor_):
             [[2.]
             [1.]]
         """
-        validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'Tensor')
+        validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'CSRTensor.mv')
         return tensor_operator_registry.get("csr_mv")(self, dense_vector)
 
     def sum(self, axis):

@@ -399,7 +399,7 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
   }
   constexpr int64_t kDimTwo = 2;
   if (indices_shp[kIndexOne] != kDimTwo) {
-    MS_EXCEPTION(ValueError) << "For COOTensor, `indices.shape[" << kIndexOne << "]` must be " << kDimTwo << "but got "
+    MS_EXCEPTION(ValueError) << "For COOTensor, `indices.shape[" << kIndexOne << "]` must be " << kDimTwo << ",but got "
                              << indices_shp[kIndexOne];
   }
 
@@ -718,11 +718,13 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
     return elem;
   });
   if (shape_vec.size() != kSizeTwo) {
-    MS_EXCEPTION(ValueError) << "Currently only supports 2-dimensional csr tensor, got shape length = "
+    MS_EXCEPTION(ValueError) << "Currently only supports 2-dimensional csr tensor, but got shape length = "
                              << shape_vec.size() << ".";
   }
   if (values_shp.size() + 1 != shape_vec.size()) {
-    MS_EXCEPTION(ValueError) << "Values' dimension should equal to csr_tensor's dimension - 1.";
+    MS_EXCEPTION(ValueError) << "Values' dimension should equal to csr_tensor's dimension - 1, but got"
+                             << "Values' dimension: " << values_shp.size()
+                             << ", csr_tensor's dimension: " << shape_vec.size() << ".";
   }
   if (shape_vec[kIndexZero] + 1 != indptr_shp[kIndexZero]) {
     MS_EXCEPTION(ValueError) << "Indptr must have length (1 + shape[0]), but got: " << indptr_shp[kIndexZero];
