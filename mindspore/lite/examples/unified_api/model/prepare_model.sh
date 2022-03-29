@@ -17,7 +17,7 @@ $CONVERTER &> /dev/null
 if [ "$?" -ne 0 ]; then
   if ! command -v converter_lite &> /dev/null
   then
-    tar -xzf ../../../../../output/mindspore-lite-*-linux-x64.tar.gz --strip-components 4 --wildcards --no-anchored converter_lite *so.* *.so
+    tar -xzf ../../../../../output/mindspore-lite-*-linux-x64.tar.gz --strip-components 4 --wildcards --no-anchored 'converter_lite' '*so.*' '*.so'
     if [ -f ./converter_lite ]; then
       CONVERTER=./converter_lite
     else
