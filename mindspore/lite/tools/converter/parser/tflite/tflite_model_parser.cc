@@ -30,6 +30,7 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/parser/tflite/tflite_inputs_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/converter/parser/lite_model_parser_creator.h"
 #include "tools/converter/parser/unify_format.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"

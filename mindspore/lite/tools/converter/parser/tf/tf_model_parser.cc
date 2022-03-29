@@ -35,6 +35,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/converter/parser/lite_model_parser_creator.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/log_util.h"
 #include "tools/converter/parser/unify_format.h"

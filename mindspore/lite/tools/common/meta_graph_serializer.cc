@@ -65,38 +65,9 @@ std::fstream *ReopenFile(const std::string &file_path, std::ios_base::openmode o
 }  // namespace
 
 bool MetaGraphSerializer::InitPath(const std::string &output_path) {
-  this->save_path_.clear();
-  this->model_name_.clear();
-  auto pos = output_path.find_last_of('/');
-  if (pos == std::string::npos) {
-    pos = output_path.find_last_of('\\');
-  }
-  std::string model_name;
-  if (pos == std::string::npos) {
-#ifdef _WIN32
-    this->save_path_ = ".\\";
-#else
-    this->save_path_ = "./";
-#endif
-    model_name = output_path;
-  } else {
-    this->save_path_ = output_path.substr(0, pos + 1);
-    model_name = output_path.substr(pos + 1);
-  }
-  this->save_path_ = RealPath(this->save_path_.c_str());
-  if (this->save_path_.empty()) {
-    MS_LOG(DEBUG) << "File path not regular: " << this->save_path_;
+  if (!ParserPathAndModelName(output_path, &this->save_path_, &this->model_name_)) {
+    MS_LOG(ERROR) << "parser save path and model name from output_path failed.";
     return false;
-  }
-  auto suffix_pos = model_name.find_last_of('.');
-  if (suffix_pos == std::string::npos) {
-    this->model_name_ = model_name;
-  } else {
-    if (model_name.substr(suffix_pos + 1) == "ms") {
-      this->model_name_ = model_name.substr(0, suffix_pos);
-    } else {
-      this->model_name_ = model_name;
-    }
   }
 #ifdef _WIN32
   save_model_path_ = save_path_ + "\\" + model_name_ + ".ms";

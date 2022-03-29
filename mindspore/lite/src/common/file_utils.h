@@ -82,6 +82,8 @@ inline int WriteToBin(const std::string &file_path, void *data, const size_t siz
 }
 
 std::string GetDirectory(const std::string &path);
+
+bool ParserPathAndModelName(const std::string &output_path, std::string *save_path, std::string *model_name);
 }  // namespace lite
 }  // namespace mindspore
 
