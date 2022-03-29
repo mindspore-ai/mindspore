@@ -26,7 +26,6 @@ using mindspore::lite::InnerContext;
 using mindspore::lite::LiteSession;
 using mindspore::lite::Tensor;
 using mindspore::schema::PrimitiveType_Abs;
-using mindspore::TypeId::kNumberTypeFloat32;
 
 class SchedulerTest : public mindspore::CommonTest {
  public:

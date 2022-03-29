@@ -105,11 +105,11 @@ void StridedSliceCpuKernelMod::InitParallelParam() {
 
 void StridedSliceCpuKernelMod::InitSliceParam(const CNodePtr &kernel_node, std::vector<int64_t> *begin,
                                               std::vector<int64_t> *end, std::vector<int64_t> *stride) {
-  static const std::unordered_map<TypeId, std::pair<LiteDataType, int>> type_convert_map = {
-    {kNumberTypeBool, {kDataTypeBool, sizeof(bool)}},
-    {kNumberTypeInt32, {kDataTypeInt, sizeof(int)}},
-    {kNumberTypeFloat32, {kDataTypeFloat, sizeof(float)}},
-    {kNumberTypeFloat64, {kDataTypeFloat64, sizeof(double)}}};
+  static const std::unordered_map<TypeId, std::pair<TypeIdC, int>> type_convert_map = {
+    {kNumberTypeBool, {::kNumberTypeBool, sizeof(bool)}},
+    {kNumberTypeInt32, {::kNumberTypeInt32, sizeof(int)}},
+    {kNumberTypeFloat32, {::kNumberTypeFloat32, sizeof(float)}},
+    {kNumberTypeFloat64, {::kNumberTypeFloat64, sizeof(double)}}};
 
   auto type_pair = type_convert_map.find(dtype_);
   if (type_pair == type_convert_map.end()) {

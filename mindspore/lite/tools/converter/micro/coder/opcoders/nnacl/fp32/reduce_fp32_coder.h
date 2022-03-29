@@ -38,7 +38,7 @@ class ReduceFP32Coder final : public ReduceBaseCoder {
  private:
   int ReSize() override;
   int MallocTmpBuffer();
-  LiteDataType data_type_{kDataTypeFloat};
+  TypeIdC data_type_{::kNumberTypeFloat32};
   std::vector<float *> data_buffers_;
 };
 }  // namespace mindspore::lite::micro::nnacl

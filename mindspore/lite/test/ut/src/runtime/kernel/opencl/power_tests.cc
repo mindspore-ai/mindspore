@@ -19,7 +19,6 @@
 // PrimitiveType_PowFusion: src/ops/populate/power_populate.cc
 
 using mindspore::lite::Tensor;
-using mindspore::schema::Format::Format_NHWC;
 namespace mindspore::lite::opencl::test {
 class TestPowerOpenCLCI : public CommonTest {
  public:

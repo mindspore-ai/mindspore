@@ -42,7 +42,7 @@ void InitStridedSliceParam(StridedSliceParameter *param, const lite::Tensor *in_
   }
   param->num_axes_ = dim;
   param->in_shape_length_ = dim;
-  param->data_type = kDataTypeFloat;
+  param->data_type = ::kNumberTypeFloat32;
   param->begins_mask_ = 0;
   param->ends_mask_ = 0;
   param->ellipsisMask_ = 0;

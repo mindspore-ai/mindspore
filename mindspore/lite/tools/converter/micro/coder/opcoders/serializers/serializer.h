@@ -255,7 +255,7 @@ class Serializer {
   void GenCode(uint8_t t) { code << std::to_string(t); }
   void GenCode(decltype(nullptr) t) { code << "NULL"; }
   void GenCode(const char *t) { code << t; }
-  void GenCode(LiteDataType t) { code << "(LiteDataType)" << t; }
+  void GenCode(TypeIdC t) { code << "(TypeIdC)" << t; }
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_SERIALIZERS_SERIALIZER_H_

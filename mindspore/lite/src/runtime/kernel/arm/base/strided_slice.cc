@@ -221,16 +221,16 @@ int StridedSliceCPUKernel::NormalRun() {
   auto input = in_tensors_.at(0);
   switch (input->data_type()) {
     case kNumberTypeInt8:
-      param_->data_type = kDataTypeInt8;
+      param_->data_type = ::kNumberTypeInt8;
       break;
     case kNumberTypeFloat32:
-      param_->data_type = kDataTypeFloat;
+      param_->data_type = ::kNumberTypeFloat32;
       break;
     case kNumberTypeFloat16:
-      param_->data_type = kDataTypeFloat16;
+      param_->data_type = ::kNumberTypeFloat16;
       break;
     case kNumberTypeInt32:
-      param_->data_type = kDataTypeInt;
+      param_->data_type = ::kNumberTypeInt32;
       break;
     default:
       MS_LOG(ERROR) << "Not supported data type: " << input->data_type();

@@ -41,9 +41,9 @@ int ReduceFP32Coder::MallocTmpBuffer() {
 
 int ReduceFP32Coder::ReSize() {
   if (input_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    data_type_ = kDataTypeFloat;
+    data_type_ = ::kNumberTypeFloat32;
   } else {
-    data_type_ = kDataTypeInt;
+    data_type_ = ::kNumberTypeInt32;
   }
   return ReduceBaseCoder::ReSize();
 }
@@ -103,7 +103,7 @@ int ReduceFP32Coder::DoCode(CoderContext *const context) {
     outer_size_ = outer_sizes_.at(i);
     inner_size_ = inner_sizes_.at(i);
     axis_size_ = axis_sizes_.at(i);
-    if (data_type_ == kDataTypeFloat) {
+    if (data_type_ == ::kNumberTypeFloat32) {
       code.CodeFunction(reduce, outer_size_, inner_size_, axis_size_, src_addr, dst_addr, 0, thread_num_);
     } else {
       code.CodeFunction(int_reduce, outer_size_, inner_size_, axis_size_, src_addr, dst_addr, 0, thread_num_);
