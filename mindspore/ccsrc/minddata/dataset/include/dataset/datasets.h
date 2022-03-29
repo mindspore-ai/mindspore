@@ -988,7 +988,7 @@ class MS_API ZipDataset : public Dataset {
 std::shared_ptr<SchemaObj> MS_API SchemaCharIF(const std::vector<char> &schema_file);
 
 /// \brief Function to create a SchemaObj.
-/// \param[in] schema_file Path of schema file.
+/// \param[in] schema_file Path of schema file (default = "", which means do not set the path).
 /// \return Shared pointer to the current schema.
 /// \par Example
 /// \code
@@ -2392,7 +2392,7 @@ class MS_API EMnistDataset : public Dataset {
 };
 
 /// \brief Function to create a EMnistDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] name Name of splits for EMNIST, can be "byclass", "bymerge", "balanced", "letters", "digits" or "mnist".
 /// \param[in] usage Usage of EMNIST, can be "train", "test" or "all" (default = "all").
@@ -2423,7 +2423,7 @@ EMnist(const std::string &dataset_dir, const std::string &name, const std::strin
 }
 
 /// \brief Function to create a EMnistDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] name Name of splits for EMNIST, can be "byclass", "bymerge", "balanced", "letters", "digits" or "mnist".
 /// \param[in] usage Usage of EMNIST, can be "train", "test" or "all".
@@ -2438,7 +2438,7 @@ inline std::shared_ptr<EMnistDataset> MS_API EMnist(const std::string &dataset_d
 }
 
 /// \brief Function to create a EMnistDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] name Name of splits for EMNIST, can be "byclass", "bymerge", "balanced", "letters", "digits" or "mnist".
 /// \param[in] usage Usage of EMNIST, can be "train", "test" or "all".
@@ -2538,7 +2538,7 @@ class MS_API FakeImageDataset : public Dataset {
 };
 
 /// \brief Function to create a FakeImageDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] num_images The number of images to generate, which must be positive (default = 1000).
 /// \param[in] image_size Size of the images, which must be a vector of three positive values
 ///    (default = {224, 224, 3}).
@@ -2556,7 +2556,7 @@ FakeImage(int32_t num_images = 1000, const std::vector<int32_t> &image_size = {2
 }
 
 /// \brief Function to create a FakeImageDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] num_images The number of images to generate, which must be positive.
 /// \param[in] image_size Size of the images, which must be a vector of three positive values.
 /// \param[in] num_classes The number of classes of the images, which must be positive.
@@ -2572,7 +2572,7 @@ inline std::shared_ptr<FakeImageDataset> MS_API FakeImage(int32_t num_images, co
 }
 
 /// \brief Function to create a FakeImageDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] num_images The number of images to generate, which must be positive.
 /// \param[in] image_size Size of the images, which must be a vector of three positive values.
 /// \param[in] num_classes The number of classes of the images, which must be positive.
@@ -2699,7 +2699,7 @@ class MS_API FlickrDataset : public Dataset {
 };
 
 /// \brief Function to create a FlickrDataset
-/// \notes The generated dataset has two columns ["image", "annotation"]
+/// \note The generated dataset has two columns ["image", "annotation"]
 /// \param[in] dataset_dir The dataset dir to be read
 /// \param[in] annotation_file The annotation file to be read
 /// \param[in] decode Decode the images after reading (default=false).
@@ -2731,7 +2731,7 @@ Flickr(const std::string &dataset_dir, const std::string &annotation_file, bool 
 }
 
 /// \brief Function to create a FlickrDataset
-/// \notes The generated dataset has two columns ["image", "annotation"]
+/// \note The generated dataset has two columns ["image", "annotation"]
 /// \param[in] dataset_dir The dataset dir to be read
 /// \param[in] annotation_file The annotation file to be read
 /// \param[in] decode Decode the images after reading.
@@ -2746,7 +2746,7 @@ inline std::shared_ptr<FlickrDataset> MS_API Flickr(const std::string &dataset_d
 }
 
 /// \brief Function to create a FlickrDataset
-/// \notes The generated dataset has two columns ["image", "annotation"]
+/// \note The generated dataset has two columns ["image", "annotation"]
 /// \param[in] dataset_dir The dataset dir to be read
 /// \param[in] annotation_file The annotation file to be read
 /// \param[in] decode Decode the images after reading.
@@ -3207,7 +3207,7 @@ class MS_API KITTIDataset : public Dataset {
 };
 
 /// \brief Function to create a KITTIDataset.
-/// \notes When usage is 'train', the generated dataset has multi-columns, 'image', 'label', 'truncated',
+/// \note When usage is 'train', the generated dataset has multi-columns, 'image', 'label', 'truncated',
 ///     'occluded', 'alpha', 'bbox', 'dimensions', 'location', 'rotation_y'; When usage is 'test',
 ///     the generated dataset has one column 'image'.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3239,7 +3239,7 @@ KITTI(const std::string &dataset_dir, const std::string &usage = "train", bool d
 }
 
 /// \brief Function to create a KITTIDataset.
-/// \notes When usage is 'train', the generated dataset has multi-columns, 'image', 'label', 'truncated',
+/// \note When usage is 'train', the generated dataset has multi-columns, 'image', 'label', 'truncated',
 ///     'occluded', 'alpha', 'bbox', 'dimensions', 'location', 'rotation_y'; When usage is 'test',
 ///     the generated dataset has one column 'image'.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3255,7 +3255,7 @@ inline std::shared_ptr<KITTIDataset> MS_API KITTI(const std::string &dataset_dir
 }
 
 /// \brief Function to create a KITTIDataset.
-/// \notes When usage is 'train', the generated dataset has multi-columns, 'image', 'label', 'truncated',
+/// \note When usage is 'train', the generated dataset has multi-columns, 'image', 'label', 'truncated',
 ///     'occluded', 'alpha', 'bbox', 'dimensions', 'location', 'rotation_y'; When usage is 'test',
 ///     the generated dataset has one column 'image'.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -3392,7 +3392,7 @@ class MS_API LFWDataset : public Dataset {
 };
 
 /// \brief Function to create a LFWDataset.
-/// \notes When usage is 'people', the generated dataset has two columns ["image", "label"];
+/// \note When usage is 'people', the generated dataset has two columns ["image", "label"];
 ///     When task is 'pairs', the generated dataset has three columns ["image1", "image2", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] task Set the task type of reading LFW, support "people" and "pairs" (default = "people").
@@ -3429,7 +3429,7 @@ LFW(const std::string &dataset_dir, const std::string &task = "people", const st
 }
 
 /// \brief Function to create a LFWDataset.
-/// \notes When usage is 'people', the generated dataset has two columns ["image", "label"];
+/// \note When usage is 'people', the generated dataset has two columns ["image", "label"];
 ///     When task is 'pairs', the generated dataset has three columns ["image1", "image2", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] task Set the task type of reading LFW, support "people" and "pairs".
@@ -3448,7 +3448,7 @@ inline std::shared_ptr<LFWDataset> MS_API LFW(const std::string &dataset_dir, co
 }
 
 /// \brief Function to create a LFWDataset.
-/// \notes When usage is 'people', the generated dataset has two columns ["image", "label"];
+/// \note When usage is 'people', the generated dataset has two columns ["image", "label"];
 ///     When task is 'pairs', the generated dataset has three columns ["image1", "image2", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] task Set the task type of reading LFW, support "people" and "pairs".
@@ -4363,7 +4363,7 @@ class MS_API OmniglotDataset : public Dataset {
 };
 
 /// \brief Function to create an OmniglotDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] background A flag to use background dataset or evaluation dataset (Default=true).
 /// \param[in] decode Decode the images after reading (Default=false).
@@ -4393,7 +4393,7 @@ Omniglot(const std::string &dataset_dir, bool background = true, bool decode = f
 }
 
 /// \brief Function to create an OmniglotDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] background A flag to use background dataset or evaluation dataset.
 /// \param[in] decode Decode the images after reading.
@@ -4407,7 +4407,7 @@ inline std::shared_ptr<OmniglotDataset> MS_API Omniglot(const std::string &datas
 }
 
 /// \brief Function to create an OmniglotDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] background A flag to use background dataset or evaluation dataset.
 /// \param[in] decode Decode the images after reading.
@@ -4861,7 +4861,7 @@ class MS_API SBUDataset : public Dataset {
 };
 
 /// \brief Function to create a SBUDataset.
-/// \notes The generated dataset has two columns ["image", "caption"].
+/// \note The generated dataset has two columns ["image", "caption"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] decode Decode the images after reading (default=false).
 /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
@@ -4890,7 +4890,7 @@ SBU(const std::string &dataset_dir, bool decode = false,
 }
 
 /// \brief Function to create a SBUDataset.
-/// \notes The generated dataset has two columns ["image", "caption"].
+/// \note The generated dataset has two columns ["image", "caption"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] decode Decode the images after reading.
 /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
@@ -4902,7 +4902,7 @@ inline std::shared_ptr<SBUDataset> MS_API SBU(const std::string &dataset_dir, bo
 }
 
 /// \brief Function to create a SBUDataset.
-/// \notes The generated dataset has two columns ["image", "caption"].
+/// \note The generated dataset has two columns ["image", "caption"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] decode Decode the images after reading.
 /// \param[in] sampler Sampler object used to choose samples from the dataset.
@@ -5217,7 +5217,7 @@ class MS_API STL10Dataset : public Dataset {
 };
 
 /// \brief Function to create a STL10 Dataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] usage Usage of STL10, can be "train", "test", "unlabeled", "train+unlabeled" or "all" (default = "all").
 /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
@@ -5232,7 +5232,7 @@ STL10(const std::string &dataset_dir, const std::string &usage = "all",
 }
 
 /// \brief Function to create a STL10 Dataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] usage Usage of STL10, can be "train", "test", "unlabeled" or "train+unlabeled" or "all"
 /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
@@ -5245,7 +5245,7 @@ inline std::shared_ptr<STL10Dataset> MS_API STL10(const std::string &dataset_dir
 }
 
 /// \brief Function to create a STL10 Dataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] usage Usage of STL10, can be "train", "test", "unlabeled", "train+unlabeled" or "all"
 /// \param[in] sampler Sampler object used to choose samples from the dataset.
@@ -5640,7 +5640,7 @@ class MS_API USPSDataset : public Dataset {
 };
 
 /// \brief Function to create a USPSDataset.
-/// \notes The generated dataset has two columns ["image", "label"].
+/// \note The generated dataset has two columns ["image", "label"].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] usage Usage of USPS, can be "train", "test" or "all" (Default = "all").
 /// \param[in] num_samples The number of samples to be included in the dataset
@@ -6173,11 +6173,11 @@ inline std::shared_ptr<YesNoDataset> MS_API YesNo(const std::string &dataset_dir
 /// \param[in] id A user assigned session id for the current pipeline.
 /// \param[in] mem_sz Size of the memory set aside for the row caching (default=0 which means unlimited,
 ///     note that it might bring in the risk of running out of memory on the machine).
-/// \param[in] spill Spill to disk if out of memory (default=False).
-/// \param[in] hostname optional host name (default="127.0.0.1").
-/// \param[in] port optional port (default=50052).
-/// \param[in] num_connections optional number of connections (default=12).
-/// \param[in] prefetch_sz optional prefetch size (default=20).
+/// \param[in] spill Spill to disk if out of memory.
+/// \param[in] hostname optional host name (default=std::nullopt, means to use "127.0.0.1").
+/// \param[in] port optional port (default=std::nullopt, means to use 50052).
+/// \param[in] num_connections optional number of connections (default=std::nullopt, means to use 12).
+/// \param[in] prefetch_sz optional prefetch size (default=std::nullopt, means to use 20).
 /// \return Shared pointer to DatasetCache. If error, nullptr is returned.
 std::shared_ptr<DatasetCache> MS_API CreateDatasetCacheCharIF(
   session_id_type id, uint64_t mem_sz, bool spill, const std::optional<std::vector<char>> &hostname = std::nullopt,
@@ -6188,11 +6188,11 @@ std::shared_ptr<DatasetCache> MS_API CreateDatasetCacheCharIF(
 /// \param[in] id A user assigned session id for the current pipeline.
 /// \param[in] mem_sz Size of the memory set aside for the row caching (default=0 which means unlimited,
 ///     note that it might bring in the risk of running out of memory on the machine).
-/// \param[in] spill Spill to disk if out of memory (default=False).
-/// \param[in] hostname optional host name (default="127.0.0.1").
-/// \param[in] port optional port (default=50052).
-/// \param[in] num_connections optional number of connections (default=12).
-/// \param[in] prefetch_sz optional prefetch size (default=20).
+/// \param[in] spill Spill to disk if out of memory.
+/// \param[in] hostname optional host name (default=std::nullopt, means to use "127.0.0.1").
+/// \param[in] port optional port (default=std::nullopt, means to use 50052).
+/// \param[in] num_connections optional number of connections (default=std::nullopt, means to use 12).
+/// \param[in] prefetch_sz optional prefetch size (default=std::nullopt, means to use 20).
 /// \return Shared pointer to DatasetCache. If error, nullptr is returned.
 /// \par Example
 /// \code
