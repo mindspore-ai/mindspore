@@ -28,12 +28,12 @@ mindspore.nn.thor
     :math:`\otimes` 表示克罗内克尔积， :math:`\gamma` 表示学习率。
 
     .. note::
-        在分离参数组时，如果权重衰减为正，则每个组的权重衰减将应用于参数。当不分离参数组时，如果 `weight_decay` 为正数，则API中的 `weight_decay` 将应用于名称中没有'beta'或 'gamma'的参数。
+        在分离参数组时，每个组的 `weight_decay` 将应用于对应参数。当不分离参数组时，优化器中的 `weight_decay` 将应用于名称中没有'beta'或 'gamma'的参数。
 
-        在分离参数组时，如果要集中梯度，请将grad_centralization设置为True，但梯度集中只能应用于卷积层的参数。
+        在分离参数组时，如果要集中梯度，请将grad_centralization设置为True，但集中梯度只能应用于卷积层的参数。
         如果非卷积层的参数设置为True，则会报错。
 
-        为了提高参数组的性能，可以支持参数的自定义顺序。
+        为了提高参数组的性能，可以支持自定义参数的顺序。
 
     **参数：**
         
@@ -42,13 +42,13 @@ mindspore.nn.thor
     - **damping** (Tensor) - 阻尼值。
     - **momentum** (float) - float类型的超参数，表示移动平均的动量。至少为0.0。
     - **weight_decay** (int, float) - 权重衰减（L2 penalty）。必须等于或大于0.0。默认值：0.0。
-    - **loss_scale** (float) - loss缩放的值。必须大于0.0。一般情况下，使用默认值。默认值：1.0。
+    - **loss_scale** (float) - loss损失缩放系数。必须大于0.0。一般情况下，使用默认值。默认值：1.0。
     - **batch_size** (int) - batch的大小。默认值：32。
     - **use_nesterov** (bool) - 启用Nesterov动量。默认值：False。
     - **decay_filter** (function) - 用于确定权重衰减应用于哪些层的函数，只有在weight_decay>0时才有效。默认值：lambda x: x.name not in []。
     - **split_indices** (list) - 按A/G层（A/G含义见上述公式）索引设置allreduce融合策略。仅在分布式计算中有效。ResNet50作为一个样本，A/G的层数分别为54层，当split_indices设置为[26,53]时，表示A/G被分成两组allreduce，一组为0~26层，另一组是27~53层。默认值：None。
     - **enable_clip_grad** (bool) - 是否剪切梯度。默认值：False。
-    - **frequency** (int) - A/G和$A^{-1}/G^{-1}$的更新间隔。当频率等于N（N大于1）时，A/G和$A^{-1}/G^{-1}$将每N步更新一次，和其他步骤将使用过时的A/G和$A^{-1}/G^{-1}$更新权重。默认值：100。
+    - **frequency** (int) - A/G和$A^{-1}/G^{-1}$的更新间隔。每隔frequency个step，A/G和$A^{-1}/G^{-1}$将更新一次。必须大于1。默认值：100。
 
     **输入：**
 

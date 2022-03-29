@@ -185,7 +185,6 @@ class ConvertModelUtils:
 
         Args:
             model (Object): High-Level API for Training.
-                            `Model` groups layers into an object with training features.
             network (Cell): A training network.
             loss_fn (Cell): Objective function. Default: None.
             optimizer (Cell): Optimizer used to updating the weights. Default: None.
@@ -208,7 +207,6 @@ class ConvertModelUtils:
 
         Returns:
              model (Object): High-Level API for Training.
-                            `Model` groups layers into an object with training features.
 
         Supported Platforms:
             ``Ascend`` ``GPU``

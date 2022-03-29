@@ -31,7 +31,6 @@ from mindspore.nn.wrap import DistributedGradReducer
 from mindspore.train.train_thor.convert_utils import ConvertNetUtils
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
-
 # Enumerates types of Layer
 Other = -1
 Conv = 1
@@ -59,6 +58,7 @@ def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment):
     success = True
     success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
     return success
+
 
 IS_ENABLE_GLOBAL_NORM = False
 GRADIENT_CLIP_TYPE = 1
@@ -99,6 +99,7 @@ def clip_gradient(enable_clip_grad, gradients):
         else:
             gradients = hyper_map_op(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), gradients)
     return gradients
+
 
 C0 = 16
 
@@ -272,6 +273,15 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
     :math:`\lambda` represents :math:`damping`, :math:`g_i` represents gradients of the i-th layer,
     :math:`\otimes` represents Kronecker product, :math:`\gamma` represents 'learning rate'
 
+     Note:
+        When a parameter group is separated, 'weight_decay' of each group is applied to the corresponding parameter.
+        'weight_decay' in the optimizer is applied to arguments that do not have 'beta' or 'gamma' in their name
+        when the argument group is not separated.
+        When separating parameter groups, set grad_centralization to True if you want to concentrate gradients,
+        but concentration gradients can only be applied to parameters of the convolution layer.
+        If the parameter for the unconvolutional layer is set to True, an error will be reported.
+        To improve the performance of parameter groups, you can customize the order of parameters.
+
     Args:
         net (Cell): The training network.
 
@@ -361,6 +371,7 @@ class ThorGpu(Optimizer):
     """
     ThorGpu
     """
+
     def __init__(self, net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, batch_size=32,
                  use_nesterov=False, decay_filter=lambda x: x.name not in [], split_indices=None,
                  enable_clip_grad=False, frequency=100):
@@ -432,7 +443,6 @@ class ThorGpu(Optimizer):
         self.square = P.Square()
         self.expand = P.ExpandDims()
 
-
     def _define_gpu_reducer(self, split_indices):
         """define gpu reducer"""
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
@@ -448,7 +458,6 @@ class ThorGpu(Optimizer):
             auto_parallel_context().set_all_reduce_fusion_split_indices(self.split_indices, "hccl_world_groupsum8")
             self.grad_reducer_a = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=6)
             self.grad_reducer_g = DistributedGradReducer(self.matrix_a_cov, mean, degree, fusion_type=8)
-
 
     def _process_matrix_init_and_weight_idx_map(self, net):
         """for GPU, process matrix init shape, and get weight idx map"""
@@ -704,7 +713,6 @@ class ThorAscend(Optimizer):
         self.frequency = frequency
         self._define_ascend_reducer(split_indices)
 
-
     def get_frequency(self):
         """get thor frequency"""
         return self.frequency
@@ -891,7 +899,6 @@ class ThorAscend(Optimizer):
             input_matrix = self.concat((input_matrix, matrix_sup))
         return input_matrix
 
-
     def _get_abs_max(self, matrix_inv, origin_dim):
         """get matrix abs max"""
         cholesky_shape = self.shape(matrix_inv)
@@ -904,7 +911,6 @@ class ThorAscend(Optimizer):
             matrix_abs = P.Abs()(matrix_inv)
             matrix_max = P.ReduceMax(keep_dims=False)(matrix_abs)
         return matrix_max, matrix_inv
-
 
     def _get_fc_ainv_ginv(self, index, damping_step, gradients, matrix_a_allreduce, matrix_g_allreduce,
                           matrix_a_max_allreduce, matrix_g_max_allreduce):
@@ -983,7 +989,6 @@ class ThorAscend(Optimizer):
             matrix_a_inv = P.Pad(((0, 0), (0, self.C0 - in_channels), (0, 0),
                                   (0, self.C0 - in_channels)))(matrix_a_inv)
         return matrix_a_inv
-
 
     def _get_ainv_ginv_amax_gmax_list(self, gradients, damping_step, matrix_a_allreduce, matrix_g_allreduce,
                                       matrix_a_max_allreduce, matrix_g_max_allreduce):
