@@ -60,6 +60,7 @@ def test_np_print_2():
     net = PrintNet()
     res = net()
     print("res: ", res)
+    assert (res.asnumpy() == [1, 2, 3, 4, 5]).all()
 
 
 @pytest.mark.level0
@@ -86,28 +87,6 @@ def test_tensor_print_1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_tensor_print_2():
-    """
-    Feature: JIT Fallback
-    Description: Support print.
-    Expectation: No exception.
-    """
-    class PrintNet(nn.Cell):
-        def construct(self):
-            x = np.array([1, 2, 3, 4, 5])
-            print("Tensor(x): ", Tensor(x))
-            return Tensor(x)
-
-    net = PrintNet()
-    res = net()
-    print("res: ", res)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_print_cnode_1():
     """
     Feature: JIT Fallback
@@ -124,6 +103,7 @@ def test_print_cnode_1():
     y = Tensor(np.array([1, 2, 3, 4, 5]))
     res = print_func(x, y)
     print("res: ", res)
+    assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
 
 
 @pytest.mark.level0
@@ -147,6 +127,7 @@ def test_print_cnode_2():
 
     res = print_func()
     print("res: ", res)
+    assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
 
 
 @pytest.mark.level0
@@ -170,6 +151,7 @@ def test_print_cnode_3():
 
     res = print_func()
     print("res: ", res)
+    assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
 
 
 @pytest.mark.level0
@@ -225,3 +207,71 @@ def test_print_validate():
         res = print_func()
         print("res: ", res)
     assert "Should not use Python object in runtime" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_format_np():
+    """
+    Feature: JIT Fallback
+    Description: Support print.
+    Expectation: No exception.
+    """
+    @ms_function
+    def print_func():
+        np_x = np.array([1, 2, 3, 4, 5])
+        np_y = np.array([1, 2, 3, 4, 5])
+        np_sum = np_x + np_y
+        print("np_sum: {}".format(np_sum))
+        return Tensor(np_sum)
+
+    res = print_func()
+    print("res: ", res)
+    assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_format_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Support print.
+    Expectation: No exception.
+    """
+    @ms_function
+    def print_func():
+        x = Tensor(np.array([1, 2, 3, 4, 5]))
+        y = Tensor(np.array([1, 2, 3, 4, 5]))
+        tensor_sum = x + y
+        print("tensor_sum: {}".format(tensor_sum))
+        return tensor_sum
+
+    res = print_func()
+    print("res: ", res)
+    assert (res.asnumpy() == [2, 4, 6, 8, 10]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_string_format():
+    """
+    Feature: JIT Fallback
+    Description: Support print(string % var).
+    Expectation: No exception.
+    """
+    @ms_function
+    def print_func():
+        print("I'm %s. I'm %d years old." % ('MindSpore', 3))
+        return 0
+
+    res = print_func()
+    print("res: ", res)

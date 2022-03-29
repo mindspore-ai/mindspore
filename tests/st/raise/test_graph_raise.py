@@ -169,7 +169,11 @@ def test_raise_6():
         print("res:", res)
 
 
-@pytest.mark.skip(reason='Not support graph raise feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_raise_7():
     """
     Feature: graph raise.
@@ -188,7 +192,11 @@ def test_raise_7():
     assert "Not expected value, x is [1, 3, 5, 7, 9]" in str(info.value)
 
 
-@pytest.mark.skip(reason='Not support graph raise feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_raise_8():
     """
     Feature: graph raise.
@@ -237,11 +245,15 @@ def test_raise_9():
     assert "The input can not be 11." in str(info.value)
 
 
-@pytest.mark.skip(reason='Not support graph raise feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_raise_10():
     """
-    Feature: graph raise.
-    Description: Test raise.
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise(string % var).
     Expectation: No exception.
     """
     class RaiseNet(nn.Cell):
