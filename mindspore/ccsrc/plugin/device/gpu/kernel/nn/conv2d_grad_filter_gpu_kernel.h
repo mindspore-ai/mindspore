@@ -45,6 +45,8 @@ constexpr size_t kWidth2DStrideIndex = 3;
 constexpr size_t k2DDilationSize = 4;
 constexpr size_t kHeight2DDilationIndex = 2;
 constexpr size_t kWidth2DDilationIndex = 3;
+constexpr auto StaticInput = 2;
+constexpr auto DynamicInput = 3;
 
 template <typename T, typename S = int64_t>
 class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
@@ -121,6 +123,9 @@ class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
     kernel_node_ = kernel_node;
     InitResource();
     (void)CheckParam(kernel_node);
+    if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
+      return true;
+    }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
@@ -250,6 +255,8 @@ class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
     n_ = 0;
     c_ = 0;
     group_ = 1;
+    stride_.clear();
+    dilation_.clear();
     is_null_input_ = false;
     kernel_name_ = "Conv2dGradFilter";
     input_size_ = 0;
@@ -318,8 +325,19 @@ class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
  private:
   void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
+    if (input_num != StaticInput && input_num != DynamicInput) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2 or 3, but got " << input_num;
+    }
+    if (input_num == DynamicInput) {
+      is_dynamic_attr_ = true;
+    }
+    if (GetDynamicAttrIntValue(kernel_node, kShapeIndex_, &filter_shape_)) {
+      get_dynamic_attr_value_ = true;
+    }
+    if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
+      input_size_list_.push_back(0);
+      input_size_list_.push_back(0);
+      output_size_list_.push_back(0);
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
@@ -350,13 +368,18 @@ class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
     }
   }
   void GetFilterShape(const CNodePtr &kernel_node, std::vector<size_t> *filter_shape) {
-    auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "filter_sizes");
-    (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*filter_shape),
-                         [](const ValuePtr &e) -> size_t {
-                           auto cast_value = e->cast<Int64ImmPtr>();
-                           MS_EXCEPTION_IF_NULL(cast_value);
-                           return static_cast<int>(cast_value->value());
-                         });
+    if (is_dynamic_attr_ && get_dynamic_attr_value_) {
+      (void)std::transform(std::begin(filter_shape_), std::end(filter_shape_), std::back_inserter(*filter_shape),
+                           [](const int64_t &e) -> size_t { return (LongToSize(e)); });
+    } else {
+      auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "filter_sizes");
+      (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*filter_shape),
+                           [](const ValuePtr &e) -> size_t {
+                             auto cast_value = e->cast<Int64ImmPtr>();
+                             MS_EXCEPTION_IF_NULL(cast_value);
+                             return static_cast<int>(cast_value->value());
+                           });
+    }
   }
   void Set4DDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &filter_shape,
                  const std::vector<size_t> &in_shape) {
@@ -435,6 +458,10 @@ class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
   size_t padded_size_;
   size_t workspace_size_;
   bool use_pad_;
+  bool is_dynamic_attr_{false};
+  bool get_dynamic_attr_value_{false};
+  std::vector<int64_t> filter_shape_;
+  static constexpr size_t kShapeIndex_{2};
 };
 }  // namespace kernel
 }  // namespace mindspore

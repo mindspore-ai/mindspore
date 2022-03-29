@@ -378,13 +378,18 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
     }
   }
   void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
-    auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "input_sizes");
-    (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
-                         [](const ValuePtr &e) -> size_t {
-                           auto cast_value = e->cast<Int64ImmPtr>();
-                           MS_EXCEPTION_IF_NULL(cast_value);
-                           return static_cast<int>(cast_value->value());
-                         });
+    if (is_dynamic_attr_ && get_dynamic_attr_value_) {
+      (void)std::transform(std::begin(input_shape_), std::end(input_shape_), std::back_inserter(*input_shape),
+                           [](const int64_t &e) -> size_t { return (LongToSize(e)); });
+    } else {
+      auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "input_sizes");
+      (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
+                           [](const ValuePtr &e) -> size_t {
+                             auto cast_value = e->cast<Int64ImmPtr>();
+                             MS_EXCEPTION_IF_NULL(cast_value);
+                             return static_cast<int>(cast_value->value());
+                           });
+    }
   }
   void Set4DDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &input_shape,
                  const std::vector<size_t> &filter_shape) {
