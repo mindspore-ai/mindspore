@@ -189,12 +189,14 @@ def _calculate_gain(nonlinearity, param=None):
             # True/False are instances of int, hence check above
             negative_slope = param
         else:
-            raise ValueError("'negative_slope' {} is not a valid number. When 'nonlinearity' has been set to "
+            raise ValueError("For 'HeUniform', 'negative_slope' {} is not a valid number."
+                             "When 'nonlinearity' has been set to "
                              "'leaky_relu', 'negative_slope' should be int or float type, but got "
                              "{}.".format(param, type(param)))
         res = math.sqrt(2.0 / (1 + negative_slope ** 2))
     else:
-        raise ValueError("The argument 'nonlinearity' should be one of ['sigmoid', 'tanh', 'relu' or 'leaky_relu'], "
+        raise ValueError("For 'HeUniform', the argument 'nonlinearity' should be one of "
+                         "['sigmoid', 'tanh', 'relu' or 'leaky_relu'], "
                          "but got {}.".format(nonlinearity))
     return res
 
@@ -469,8 +471,8 @@ class Dirac(Initializer):
         shapes = arr.shape
         if shapes[0] % self.groups != 0:
             raise ValueError("For Dirac initializer, the first dimension of"
-                             "the initialized tensor must be divisible by group, "
-                             "but got {}/{}.".format(shapes[0], self.groups))
+                             "the initialized tensor must be divisible by groups, "
+                             "but got first dimension{}, groups{}.".format(shapes[0], self.groups))
 
         out_channel_per_group = shapes[0] // self.groups
         min_dim = min(out_channel_per_group, shapes[1])
@@ -564,15 +566,16 @@ class VarianceScaling(Initializer):
     def __init__(self, scale=1.0, mode='fan_in', distribution='truncated_normal'):
         super(VarianceScaling, self).__init__(scale=scale, mode=mode, distribution=distribution)
         if scale <= 0.:
-            raise ValueError("For VarianceScaling initializer, scale must be greater than 0, but got {}.".format(scale))
+            raise ValueError("For VarianceScaling initializer, "
+                             "the argument 'scale' must be greater than 0, but got {}.".format(scale))
 
         if mode not in ['fan_in', 'fan_out', 'fan_avg']:
-            raise ValueError('For VarianceScaling initializer, mode must be fan_in, '
-                             'fan_out or fan_avg, but got {}.'.format(mode))
+            raise ValueError("For VarianceScaling initializer, the argument 'mode' must be fan_in, "
+                             "fan_out or fan_avg, but got {}.".format(mode))
 
         if distribution not in ['uniform', 'truncated_normal', 'untruncated_normal']:
-            raise ValueError('For VarianceScaling initializer, distribution must be uniform, '
-                             'truncated_norm or untruncated_norm, but got {}.'.format(distribution))
+            raise ValueError("For VarianceScaling initializer, the argument 'distribution' must be uniform, "
+                             "truncated_norm or untruncated_norm, but got {}.".format(distribution))
 
         self.scale = scale
         self.mode = mode
@@ -718,14 +721,15 @@ def initializer(init, shape=None, dtype=mstype.float32):
         >>> tensor4 = initializer(0, [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
-        raise TypeError("The type of the 'init' argument should be 'Tensor', 'number', 'string' "
+        raise TypeError("For 'initializer', the type of the 'init' argument should be 'Tensor', 'number', 'string' "
                         "or 'initializer', but got {}.".format(type(init)))
 
     if isinstance(init, Tensor):
         init_shape = init.shape
         shape = shape if isinstance(shape, (tuple, list)) else [shape]
         if shape is not None and init_shape != tuple(shape):
-            raise ValueError("The shape of the 'init' argument should be same as the argument 'shape', but got the "
+            raise ValueError("For 'initializer', the shape of the 'init' argument should be same as "
+                             "the argument 'shape', but got the "
                              "'init' shape {} and the 'shape' {}.".format(list(init.shape), shape))
         return init
 
@@ -736,7 +740,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
     for value in shape if shape is not None else ():
         if not isinstance(value, int) or value <= 0:
-            raise ValueError(f"The argument 'shape' is invalid, the value of 'shape' must be positive integer, "
+            raise ValueError(f"For 'initializer', the argument 'shape' is invalid, the value of 'shape' "
+                             f"must be positive integer, "
                              f"but got {shape}")
 
     if isinstance(init, str):
