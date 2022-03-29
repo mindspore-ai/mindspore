@@ -22,17 +22,15 @@
 #
 # Augments:
 #   - PYTHON_VERSION: python version to set up. [3.7(default), 3.8, 3.9]
-#   - MINDSPORE_VERSION: mindspore version to install, default 1.6.0
 #   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
 #
 # Usage:
 #   Run script like `bash -i ./euleros-ascend-source.sh`.
-#   To set augments, run it as `PYTHON_VERSION=3.9 MINDSPORE_VERSION=1.5.0 bash -i ./euleros-ascend-source.sh`.
+#   To set augments, run it as `PYTHON_VERSION=3.9 bash -i ./euleros-ascend-source.sh`.
 
 set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
-MINDSPORE_VERSION=${MINDSPORE_VERSION:-1.6.0}
 OPENMPI=${OPENMPI:-off}
 
 available_py_version=(3.7 3.8 3.9)
