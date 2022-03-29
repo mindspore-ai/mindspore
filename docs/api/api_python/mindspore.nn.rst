@@ -289,6 +289,8 @@ LearningRateSchedule类
 
 .. mscnplatformautosummary::
     :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
 
     mindspore.nn.CosineDecayLR
     mindspore.nn.ExponentialDecayLR
@@ -319,6 +321,8 @@ Dynamic LR函数
     
 .. mscnplatformautosummary::
     :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
 
     mindspore.nn.cosine_decay_lr
     mindspore.nn.exponential_decay_lr
@@ -402,6 +406,8 @@ Dynamic LR函数
 
 .. mscnplatformautosummary::
     :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
 
     mindspore.nn.Jvp
     mindspore.nn.Vjp

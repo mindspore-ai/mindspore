@@ -32,7 +32,7 @@ mindspore.nn.probability.distribution.Geometric
 
         Tensor，伯努利试验成功的概率值。
 
-   .. py:method:: cdf(value, probs)
+    .. py:method:: cdf(value, probs)
 
         在给定值下计算累积分布函数（Cumulatuve Distribution Function, CDF）。
 
