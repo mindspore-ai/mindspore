@@ -213,6 +213,11 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
     // newly generated one.
     if (RecoveryContext::GetInstance()->enable_recovery()) {
       ret = CheckUniqueIDLatest(group_name, root_info_size, root_info);
+      if (!ret) {
+        // The time interval for querying latest unique id from scheduler: 3 second.
+        constexpr uint32_t kWaitDuration = 3;
+        std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
+      }
     }
   }
 
