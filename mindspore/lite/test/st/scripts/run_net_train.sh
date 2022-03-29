@@ -47,6 +47,15 @@ function Run_Converter() {
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
     fail=0
+
+    # parallel processing
+    fifo_file="fifo_file.txt"
+    mkfifo ${fifo_file}
+    exec 6<>${fifo_file}
+    rm -f ${fifo_file}
+    max_parallel_jobs=6
+    for ((i = 0; i < ${max_parallel_jobs}; i++)); do echo; done >&6
+
     # Convert mindspore train models:
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
@@ -67,30 +76,36 @@ function Run_Converter() {
                 continue
             fi
         fi
-        echo ${model_name} >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_prefix}'.mindir --outputFile='${ms_models_path}'/'${model_name}' --trainModel=true' ${WEIGHT_QUANT} >> "${run_converter_log_file}"
-        ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} --trainModel=true ${WEIGHT_QUANT}
-        if [ $? = 0 ]; then
-            converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
-            fail=1
-        fi
-        # If Transfer sesstion convert backbone model
-        if [[ "${enable_transfer}" == "1" ]]; then
-            model_prefix=${line_array[0]}'_bb'
-            model_name=${line_array[0]}'_bb'
-            echo ${model_name} >> "${run_converter_log_file}"
-            echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}'.mindir --outputFile='${ms_models_path}'/'${model_name} ${WEIGHT_QUANT} >> "${run_converter_log_file}"
-            ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} ${WEIGHT_QUANT}
-            if [ $? = 0 ]; then
-                converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-            else
-                converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
-                fail=1
-            fi
-        fi
+        read -u6
+        {
+          echo ${model_name} >> "${run_converter_log_file}"
+          echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_prefix}'.mindir --outputFile='${ms_models_path}'/'${model_name}' --trainModel=true' ${WEIGHT_QUANT} >> "${run_converter_log_file}"
+          ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} --trainModel=true ${WEIGHT_QUANT}
+          if [ $? = 0 ]; then
+              converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+          else
+              converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+              fail=1
+          fi
+          # If Transfer sesstion convert backbone model
+          if [[ "${enable_transfer}" == "1" ]]; then
+              model_prefix=${line_array[0]}'_bb'
+              model_name=${line_array[0]}'_bb'
+              echo ${model_name} >> "${run_converter_log_file}"
+              echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}'.mindir --outputFile='${ms_models_path}'/'${model_name} ${WEIGHT_QUANT} >> "${run_converter_log_file}"
+              ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} ${WEIGHT_QUANT}
+              if [ $? = 0 ]; then
+                  converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+              else
+                  converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+                  fail=1
+              fi
+          fi
+          echo >&6
+        } &
     done < ${models_ms_train_config}
+    wait
+    exec 6>&-
     return ${fail}
 }
 
