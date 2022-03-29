@@ -139,6 +139,24 @@ void ParseAttrValue(const std::string &type, const std::string &attr_name, const
       input_shape_attr_list->add_i(shape);
     }
     (*node_attr)[attr_name] = input_shape_attr;
+  } else if (type == "listFloat") {
+    std::vector<float> attr_value;
+    auto value_type = value->type();
+    MS_EXCEPTION_IF_NULL(value_type);
+    auto value_type_str = value_type->ToString();
+    if (value_type_str == "float") {
+      auto data = GetValue<float>(value);
+      attr_value.push_back(data);
+    } else {
+      attr_value = GetValue<std::vector<float>>(value);
+    }
+    mindspore::AttrValue input_shape_attr;
+    mindspore::AttrValue_ArrayValue *input_shape_attr_list = input_shape_attr.mutable_array();
+    MS_EXCEPTION_IF_NULL(input_shape_attr_list);
+    for (const auto shape : attr_value) {
+      input_shape_attr_list->add_f(shape);
+    }
+    (*node_attr)[attr_name] = input_shape_attr;
   } else {
     MS_LOG(EXCEPTION) << "type: " << type << "not support";
   }

@@ -1054,6 +1054,51 @@ class ReduceMin(_Reduce):
     """
 
 
+class Bucketize(Primitive):
+    """
+    Bucketizes 'input' based on 'boundaries'.
+
+    Args:
+        boundaries (list_float): A sorted list of floats gives the boundary of the buckets, and no default value.
+
+    Inputs:
+        - **input** (Tensor) - A tensor containing the search value(s).
+
+    Outputs:
+        Tensor, with the same shape as the input, and data type is int32.
+
+    Raises:
+        TypeError: If `boundaries` is not a listFloat.
+        TypeError: If `input` is not a Tensor.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> class Bucketize(nn.Cell):
+        ...     def __init__(self, boundaries):
+        ...         super().__init__()
+        ...         self.bucketize = op.Bucketize(boundaries=boundaries)
+        ...     def construct(self, input):
+        ...         return self.bucketize(input)
+        >>> input = Tensor(np.array([[3, 6, 9], [3, 6, 9]]).astype(np.int32))
+        >>> boundaries = list(np.array([1., 3., 5., 7., 9.]))
+        >>> net = Bucketize(boundaries)
+        >>> output = net(input)
+        >>> print(output)
+        [[2 3 5]
+         [2 3 5]]
+    """
+
+    @prim_attr_register
+    def __init__(self, boundaries):
+        """Initialize Bucketize"""
+        validator.check_value_type("boundaries", boundaries, [list], self.name)
+        for index, one_boundaries in enumerate(boundaries):
+            validator.check_value_type('boundaries[%d]' % index, one_boundaries, [float], self.name)
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
+
+
 class ReduceProd(_Reduce):
     """
     Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can

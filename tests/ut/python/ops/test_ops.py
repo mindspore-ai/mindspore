@@ -30,6 +30,7 @@ from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
+from mindspore.ops.operations.math_ops import Bucketize
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
@@ -1862,6 +1863,10 @@ test_case_math_ops = [
     ('Conj', {
         'block': P.Real(),
         'desc_inputs': [[2, 2]],
+        'skip': ['backward']}),
+    ('Bucketize', {
+        'block': Bucketize(boundaries=[1., 3., 5., 7., 9.]),
+        'desc_inputs': [Tensor(np.array([[-1, 6, 8], [3, 6, 9]]).astype(np.float))],
         'skip': ['backward']}),
 ]
 
