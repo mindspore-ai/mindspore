@@ -42,7 +42,7 @@ mindspore.nn.probability.distribution.Bernoulli
 
         Tensor，累积分布函数的值。
 
-    .. py:method:: cross_entropy(dist, probs1_b, probs1)
+    .. py:method:: cross_entropy(dist, probs1_b, probs1_a)
 
         计算分布a和b之间的交叉熵。
 
@@ -50,7 +50,7 @@ mindspore.nn.probability.distribution.Bernoulli
 
         - **dist** (str) - 分布的类型。
         - **probs1_b** (Tensor) - 对比分布的伯努利实验成功的概率。
-        - **probs1** (Tensor) - 伯努利实验成功的概率。默认值：None。
+        - **probs1_a** (Tensor) - 伯努利实验成功的概率。默认值：None。
 
         **返回：**
 
@@ -62,13 +62,13 @@ mindspore.nn.probability.distribution.Bernoulli
 
         **参数：**
 
-        - **probs1_b** (Tensor) - 对比分布的伯努利实验成功的概率。默认值：None。
+        - **probs1** (Tensor) - 对比分布的伯努利实验成功的概率。默认值：None。
 
         **返回：**
 
         Tensor，熵的值。
 
-    .. py:method:: kl_loss(dist, probs1)
+    .. py:method:: kl_loss(dist, probs1_b, probs1_a)
 
         计算KL散度，即KL(a||b)。
 
@@ -76,7 +76,7 @@ mindspore.nn.probability.distribution.Bernoulli
 
         - **dist** (str) - 分布的类型。
         - **probs1_b** (Tensor) - 对比分布的伯努利实验成功的概率。
-        - **probs1** (Tensor) - 伯努利实验成功的概率。默认值：None。
+        - **probs1_a** (Tensor) - 伯努利实验成功的概率。默认值：None。
 
         **返回：**
 

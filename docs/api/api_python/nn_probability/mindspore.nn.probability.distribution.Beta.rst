@@ -31,11 +31,11 @@ mindspore.nn.probability.distribution.Beta
     .. py:method:: concentration0
         :property:
 
-      返回concentration0（也称为 Beta 分布的 beta）。
+        返回concentration0（也称为 Beta 分布的 beta）。
 
-    **返回：**
+        **返回：**
 
-    Tensor，concentration0 的值。
+        Tensor，concentration0 的值。
 
     .. py:method:: concentration1
         :property:
