@@ -406,12 +406,13 @@ class FeedForward(Cell):
                  parallel_config=default_dpmp_config):
         super(FeedForward, self).__init__()
         _check_config(parallel_config)
-        dp = parallel_config.data_parallel
         mp = parallel_config.model_parallel
         if expert_num > 1:
             ep = parallel_config.expert_parallel
         else:
             ep = 1
+        # ffn use less dp than other ops when use_moe, due to there are ops use dp and ep.
+        dp = int(parallel_config.data_parallel / ep)
         if ffn_hidden_size % mp != 0:
             raise ValueError("For 'FeedForward', the class variable 'ffn_hidden_size' must be a multiple of the"
                              "num of "
