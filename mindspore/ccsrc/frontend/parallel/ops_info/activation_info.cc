@@ -28,6 +28,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/redistribution_operator_infer.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 
 namespace mindspore {
 namespace parallel {
@@ -614,6 +615,34 @@ Status L2LossInfo::InferTensorMap() {
   }
   // outputs_shape is [], so clearing its tensor map.
   outputs_tensor_map_[0].clear();
+  return SUCCESS;
+}
+
+Status L2LossInfo::InferForwardCommunication() {
+  forward_op_.clear();
+  Shape group_create_map;
+  if (repeated_calc_num_ > 1) {
+    if (repeated_num_in_dev_matrix_right_) {
+      group_create_map.push_back(0);
+    } else {
+      group_create_map.push_back(SizeToLong(dev_matrix_shape_.size()) - 1);
+    }
+  }
+
+  std::vector<Group> group_list;
+  if (CreateGroupByTensorMap(group_create_map, &group_list) != SUCCESS) {
+    ReportError(name_ + ": Create group failed.");
+    return FAILED;
+  }
+  if (group_list.empty()) {
+    MS_LOG(INFO) << name_ << ": Forward all reduce is not required";
+    return SUCCESS;
+  }
+
+  Operator op = CreateAllReduceOp(REDUCE_OP_SUM, group_list[0].name());
+  forward_op_.push_back(op);
+  MS_LOG(INFO) << name_ << ": The group name of forward all reduce is " << group_list[0].name();
+
   return SUCCESS;
 }
 }  // namespace parallel

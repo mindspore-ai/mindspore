@@ -353,5 +353,39 @@ void LerpInfo::ReComputeBatchSplitFlagList() {
   Shape expand_weight_shape = ExpandShape(expand_a_shape, inputs_shape_.at(2));
   (expand_weight_shape.at(0) != 1) ? (split_flag_list_[2] = true) : (split_flag_list_[2] = false);
 }
+
+Status MaskedFillInfo::GetAttrs() {
+  input_size_ = inputs_shape_.size();
+  if (input_size_ != 2 && input_size_ != 3) {
+    MS_LOG(ERROR) << name_ << ": inputs_shape_.size() must be 2 or 3, but got size " << input_size_;
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status MaskedFillInfo::InferTensorMap() {
+  if (ArithmeticBase::InferTensorMap() != SUCCESS) {
+    return FAILED;
+  }
+
+  if (input_size_ == 3) {
+    // append a void tensor map for 0-dimensional tensor input 'value'
+    (void)inputs_tensor_map_.emplace_back(TensorMap());
+  }
+  return SUCCESS;
+}
+
+std::vector<StrategyPtr> MaskedFillInfo::GenerateOpStrategies(int64_t stage_id) {
+  auto sp_vector = ArithmeticBase::GenerateOpStrategies(stage_id);
+  if (input_size_ == 3) {
+    // append void strategy for input `value`
+    for (size_t i = 0; i < sp_vector.size(); ++i) {
+      auto strategies = sp_vector[i]->GetInputDim();
+      (void)strategies.emplace_back(Dimensions());
+      sp_vector[i] = std::make_shared<Strategy>(stage_id, strategies);
+    }
+  }
+  return sp_vector;
+}
 }  // namespace parallel
 }  // namespace mindspore

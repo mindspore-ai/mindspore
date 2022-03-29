@@ -374,13 +374,22 @@ class SoftShrinkInfo : public ActivationOther {
 
 class L2LossInfo : public ActivationOther {
  public:
-  L2LossInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &output_shape,
+  L2LossInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
              const PrimitiveAttrs &attrs)
-      : ActivationOther(name, inputs_shape, output_shape, attrs, std::make_shared<L2LossCost>()) {}
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<L2LossCost>()) {}
   ~L2LossInfo() = default;
 
  protected:
   Status InferTensorMap() override;
+  Status InferForwardCommunication() override;
+};
+
+class ErfinvInfo : public ActivationOther {
+ public:
+  ErfinvInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<ErfinvCost>()) {}
+  ~ErfinvInfo() override = default;
 };
 }  // namespace parallel
 }  // namespace mindspore

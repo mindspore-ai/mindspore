@@ -1809,18 +1809,19 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
     std::vector<ValuePtr> elements;
     for (size_t i = 0; i < shape_list[0].size(); i++) {
       if (shape_list[0][i].empty()) {
-        MS_LOG(EXCEPTION) << "shape_list[ " << i << " ].size() is zero";
+        (void)elements.emplace_back(MakeValue(Dimensions()));
+        continue;
       }
       Dimensions input_strategy;
-      if (!shape_list[0][i].empty() && shape_list[0][i][0] % dev_num == 0) {
+      if (shape_list[0][i][0] % dev_num == 0) {
         input_strategy.push_back(dev_num);
-      } else if (!shape_list[0][i].empty()) {
+      } else {
         input_strategy.push_back(1);
       }
       for (size_t j = 1; j < shape_list[0][i].size(); j++) {
         input_strategy.push_back(1);
       }
-      elements.push_back(MakeValue(input_strategy));
+      (void)elements.emplace_back(MakeValue(input_strategy));
     }
     ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
     attrs_temp[IN_STRATEGY] = strategy;

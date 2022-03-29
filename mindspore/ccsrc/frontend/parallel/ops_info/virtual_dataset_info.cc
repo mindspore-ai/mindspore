@@ -71,8 +71,9 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
       max_size_strategy_dim_ = i;
     }
   }
-  if (std::find(stra[max_size_strategy_dim_].begin(), stra[max_size_strategy_dim_].end(), shard_num_) ==
-      stra[max_size_strategy_dim_].end()) {
+  if (!stra[max_size_strategy_dim_].empty() &&
+      std::find(stra[max_size_strategy_dim_].begin(), stra[max_size_strategy_dim_].end(), shard_num_) ==
+        stra[max_size_strategy_dim_].end()) {
     MS_LOG(ERROR) << name_
                   << ": For each dataset input, the shard strategy can be not shard, "
                      "or shard in one dim with the same shard size between each input."
@@ -96,7 +97,7 @@ Status VirtualDatasetInfo::InferForwardCommunication() { return SUCCESS; }
 Status VirtualDatasetInfo::InferTensorMap() {
   auto dev_mat_origin = strategy_->GetInputDim()[max_size_strategy_dim_];
   auto slice_dim_iter = std::find(dev_mat_origin.begin(), dev_mat_origin.end(), shard_num_);
-  if (slice_dim_iter == dev_mat_origin.end()) {
+  if (!dev_mat_origin.empty() && slice_dim_iter == dev_mat_origin.end()) {
     MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support shard in one dim.";
     return FAILED;
   }
@@ -108,8 +109,7 @@ Status VirtualDatasetInfo::InferTensorMap() {
       if (dim == 1) {
         tensor_map_index.push_back(MAP_NONE);
       } else if (dim == shard_num_) {
-        if (repeated_num_in_dev_matrix_right_ && dev_matrix_shape_.size() != dev_mat_origin.size() &&
-            is_auto_parallel_) {
+        if (repeated_calc_num_ > 1 && repeated_num_in_dev_matrix_right_ && is_auto_parallel_) {
           tensor_map_index.push_back(dev_mat_origin.size() - slice_dim);
         } else {
           tensor_map_index.push_back(dev_mat_origin.size() - 1 - slice_dim);
@@ -176,8 +176,10 @@ Status VirtualDatasetInfo::GenerateStrategies(int64_t stage_id) {
     }
     for (auto &shape : inputs_shape_) {
       Shape temp;
-      temp.emplace_back(SizeToLong(total_dev_num));
-      (void)temp.insert(temp.end(), shape.size() - 1, 1);
+      if (!shape.empty()) {
+        temp.emplace_back(SizeToLong(total_dev_num));
+        (void)temp.insert(temp.end(), shape.size() - 1, 1);
+      }
       strategy.push_back(temp);
     }
   }

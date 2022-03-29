@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_SPLIT_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_SPLIT_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_GAMMA_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_GAMMA_INFO_H_
 
 #include <string>
 #include <memory>
 #include <vector>
 
+#include "utils/hash_map.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
@@ -28,41 +29,36 @@
 
 namespace mindspore {
 namespace parallel {
-class SplitInfo : public OperatorInfo {
+class GammaInfo : public OperatorInfo {
  public:
-  SplitInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+  GammaInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
             const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<SplitCost>()) {}
-  ~SplitInfo() override = default;
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<GammaCost>()) {}
+  ~GammaInfo() override = default;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
+  void UpdateShape(const CNodePtr &cnode);
+  void ReplaceNodeInputOrAttrs() override;
+  void ReComputeBatchSplitFlagList() override;
+  int64_t ComputeOpAndPrevEdgeParameterInvolved() override;
 
  protected:
+  Status InferAttrs() override;
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status InferAsLossDivisor() override;
-  virtual std::string GetSplitAxisAttrName() const { return AXIS; }
 
  private:
-  size_t axis_ = 0;
-};
+  void ResetInputsShape();
+  bool IsNotSplittableStrategy(const Dimensions &strategy);
 
-class SplitVInfo : public SplitInfo {
- public:
-  SplitVInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-             const PrimitiveAttrs &attrs)
-      : SplitInfo(operator_name, inputs_shape, outputs_shape, attrs) {}
-  ~SplitVInfo() override = default;
-
- protected:
-  std::string GetSplitAxisAttrName() const override { return SPLIT_DIM; };
+  int64_t seed_ = 0;
+  int64_t seed2_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_SPLIT_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_GAMMA_INFO_H_

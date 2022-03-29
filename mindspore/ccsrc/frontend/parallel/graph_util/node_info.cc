@@ -76,7 +76,16 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
     } else {
       inputs_seq = node_inputs[1]->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
     }
-    return std::vector<bool>(inputs_seq.size(), false);
+    size_t inputs_seq_tensor_size = inputs_seq.size();
+    for (const auto &inputs_seq_value : inputs_seq) {
+      auto tensor = inputs_seq_value->cast<tensor::TensorPtr>();
+      if (tensor == nullptr) {
+        MS_LOG(DEBUG) << "The value not is not a tensor.";
+        inputs_seq_tensor_size = 0;
+        break;
+      }
+    }
+    return std::vector<bool>(inputs_seq_tensor_size, false);
   }
   if ((node_inputs.size() == 2) &&
       (AnfNodeIsPrimitive(node_inputs[1], MAKE_TUPLE) || AnfNodeIsPrimitive(node_inputs[1], MAKE_LIST))) {
@@ -168,7 +177,10 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
     }
     for (auto &ele : inputs_seq) {
       auto tensor = ele->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
+      if (tensor == nullptr) {
+        inputs_type_len.clear();
+        return inputs_type_len;
+      }
       inputs_type_len.push_back(GetLengthOfDataType(tensor->Dtype()));
     }
     return inputs_type_len;

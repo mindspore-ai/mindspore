@@ -263,6 +263,31 @@ class LerpInfo : public ArithmeticBase {
  private:
   size_t inputs_size_ = 0;
 };
+
+class SquaredDifferenceInfo : public ArithmeticBase {
+ public:
+  SquaredDifferenceInfo(const std::string &name, const Shapes &input_shape, const Shapes &output_shape,
+                        const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, input_shape, output_shape, attrs, std::make_shared<SquaredDifferenceCost>()) {}
+  ~SquaredDifferenceInfo() override = default;
+};
+
+class MaskedFillInfo : public ArithmeticBase {
+ public:
+  MaskedFillInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &output_shape,
+                 const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, output_shape, attrs, std::make_shared<MaskedFillCost>()) {}
+  ~MaskedFillInfo() override = default;
+
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+
+ protected:
+  Status GetAttrs() override;
+  Status InferTensorMap() override;
+
+ private:
+  size_t input_size_ = 0;
+};
 }  // namespace parallel
 }  // namespace mindspore
 

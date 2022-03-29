@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_UNIFORM_REAL_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_UNIFORM_REAL_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_LIN_SPACE_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_LIN_SPACE_INFO_H_
 
 #include <string>
 #include <memory>
@@ -29,33 +29,34 @@
 
 namespace mindspore {
 namespace parallel {
-class UniformRealInfo : public OperatorInfo {
+class LinSpaceInfo : public OperatorInfo {
  public:
-  UniformRealInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                  const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<UniformRealCost>()) {}
-  ~UniformRealInfo() override = default;
+  LinSpaceInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<LinSpaceCost>()) {}
+  ~LinSpaceInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
-  void UpdateShape(const CNodePtr &cnode);
-  void ReplaceNodeInputOrAttrs() override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
-  Status InferAttrs() override;
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferForwardCommunication() override { return SUCCESS; }
 
  private:
-  void ResetInputsShape();
+  Status InferSliceId();
+  Status ComputeReplaceGraph(const CNodePtr &cnode);
+  int64_t GetSplitNum();
 
-  int64_t seed_ = 0;
-  int64_t seed2_ = 0;
+  int64_t slice_id_ = 0;
+  int64_t output_size_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_UNIFORM_REAL_INFO_H_
+#endif

@@ -42,6 +42,7 @@ AnfNodePtr CreateTypeFloat(int64_t nbits);
 AnfNodePtr CreatInt64Imm(int64_t value);
 AnfNodePtr CreateFP32Imm(float value);
 AnfNodePtr CreateInt32Tensor(int64_t value);
+AnfNodePtr CreateFP32Tensor(float value);
 AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr);
 AnfNodePtr CreateTuple(const std::vector<int64_t> &tuple);
 std::string HashInstanceName(const std::string &name);

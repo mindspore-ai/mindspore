@@ -201,30 +201,6 @@ Status ReduceMethod::InferForwardCommunication() {
   return SUCCESS;
 }
 
-ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype) {
-  // Create AllReduceSum op
-  Operator op0 = CreateAllReduceOp(REDUCE_OP_SUM, forward_group[0].name());
-  std::string group_name = forward_group[0].name();
-  MS_LOG(INFO) << "The group of forward all reduce is " << group_name;
-
-  // Create RealDiv op
-  OperatorName operator1_name = REAL_DIV;
-  std::vector<Device> device_list = forward_group[0].GetDevicesList();
-  auto divisor = static_cast<float>(device_list.size());
-  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(divisor, dtype);
-  ValuePtr op1_param_value = MakeValue(tensor_ptr);
-  Attr op1_param = std::make_pair("divisor", op1_param_value);
-  OperatorParams operator1_params = {std::make_pair(op1_param, 2)};
-  OperatorAttrs operator1_attrs;
-  OperatorArgs operator1_args = std::make_pair(operator1_attrs, operator1_params);
-  Operator op1 = std::make_pair(operator1_name, operator1_args);
-  ForwardOp forward_op = {op0, op1};
-
-  std::string dtype_name = dtype->ToString();
-  MS_LOG(INFO) << "The divisor of Div op is " << device_list.size() << ", the dtype is " << dtype_name;
-  return forward_op;
-}
-
 Status ReduceMeanInfo::InferForwardCommunication() {
   auto strategies = strategy_->GetInputDim();
   Dimensions stra = strategies.at(0);
@@ -801,7 +777,7 @@ Status SquareSumAllInfo::InferGroup() {
   // if repeated calculation and the repeated_calc_num_ insert to the first dimension of dev matrix,
   // it need to handle the first dimension of map.
   if ((dev_matrix_shape_.size() > size) && !repeated_num_in_dev_matrix_right_) {
-    group_creat_map.push_back(SizeToInt(dev_matrix_shape_.size() - size_t(1)));
+    group_creat_map.push_back(SizeToLong(dev_matrix_shape_.size() - size_t(1)));
   }
 
   for (size_t index = 0; index < size; ++index) {

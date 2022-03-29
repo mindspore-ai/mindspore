@@ -1110,3 +1110,89 @@ def test_matmul_xlogy_broadcast():
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
     compile_net(net, x, y, b)
+
+
+def test_matmul_squared_difference_broadcast():
+    """
+    Feature: distribute operator SquaredDifference in auto parallel.
+    Description: mul-SquaredDifference net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+            self.squared_difference = P.SquaredDifference().shard(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.squared_difference(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 4), (4, 1))
+    strategy2 = ((4, 1), (1, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 1]), dtype=ms.float32)
+    b = Tensor(np.ones([1, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_masked_fill_broadcast_with_value_float():
+    """
+    Feature: distribute operator MaskedFill in auto parallel.
+    Description: mul-MaskedFill net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+            self.masked_fill = P.MaskedFill().shard(strategy2)
+            self.value = 1.0
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.masked_fill(out, b, self.value)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 4), (4, 1))
+    strategy2 = ((4, 1), (1, 2))
+    net = Net(strategy1, strategy2)
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 1]), dtype=ms.float32)
+    b = Tensor(np.ones([1, 64]), dtype=ms.bool_)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_masked_fill_broadcast_with_value_tensor():
+    """
+    Feature: distribute operator MaskedFill in auto parallel.
+    Description: mul-MaskedFill net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+            self.masked_fill = P.MaskedFill().shard(strategy2)
+            self.value = Tensor(1.0, ms.float32)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.masked_fill(out, b, self.value)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 4), (4, 1))
+    strategy2 = ((4, 1), (1, 2), ())
+    net = Net(strategy1, strategy2)
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 1]), dtype=ms.float32)
+    b = Tensor(np.ones([1, 64]), dtype=ms.bool_)
+    compile_net(net, x, y, b)

@@ -243,6 +243,13 @@ REGISTER(InplaceSubInfo);
 REGISTER(CdistInfo);
 REGISTER(L2LossInfo);
 REGISTER(LerpInfo);
+REGISTER(SquaredDifferenceInfo);
+REGISTER(ErfinvInfo);
+REGISTER(MaskedFillInfo);
+REGISTER(SplitVInfo);
+REGISTER(GammaInfo);
+REGISTER(KLDivLossInfo);
+REGISTER(LinSpaceInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -192,6 +192,8 @@ using IOUCost = CastCost;
 using RandomChoicWithMaskCost = CastCost;
 using IsFiniteCost = CastCost;
 using RintCost = CastCost;
+using GammaCost = CastCost;
+using LinSpaceCost = CastCost;
 
 class SqrtCost : public CastCost {
  public:
@@ -247,6 +249,7 @@ using ErfcCost = ReLU6Cost;
 using ActivationInfoCost = ReLU6Cost;
 using SelectCost = ReLU6Cost;
 using XlogyCost = ReLU6Cost;
+using ErfinvCost = ReLU6Cost;
 
 class TransposeCost : public CastCost {
  public:
@@ -634,6 +637,7 @@ using BitwiseOrCost = SubCost;
 using BitwiseXorCost = SubCost;
 using AddNCost = SubCost;
 using InplaceAddCost = SubCost;
+using MaskedFillCost = SubCost;
 
 class MulCost : public SubCost {
  public:
@@ -646,6 +650,7 @@ class MulCost : public SubCost {
 using MulNoNanCost = MulCost;
 using GatherDCost = MulCost;
 using LerpCost = MulCost;
+using SquaredDifferenceCost = MulCost;
 
 class DivCost : public SubCost {
  public:
@@ -777,6 +782,7 @@ using ReduceMethodCost = ReduceSumCost;
 using ReduceProdCost = ReduceSumCost;
 using SquareSumAllCost = ReduceSumCost;
 using L2LossCost = ReduceSumCost;
+using KLDivLossCost = ReduceSumCost;
 
 class ReduceMeanCost : public ReduceSumCost {
  public:

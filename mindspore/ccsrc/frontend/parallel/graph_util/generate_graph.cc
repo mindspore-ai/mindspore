@@ -91,6 +91,19 @@ AnfNodePtr CreateInt32Tensor(int64_t value) {
   return anf_node_ptr;
 }
 
+static mindspore::HashMap<float, AnfNodePtr> float_tensor_map = {};
+AnfNodePtr CreateFP32Tensor(float value) {
+  auto it = float_tensor_map.find(value);
+  if (it != float_tensor_map.end()) {
+    return it->second;
+  }
+  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<tensor::Tensor>(value, kFloat32);
+  ValuePtr value_ptr = MakeValue(tensor_ptr);
+  auto anf_node_ptr = ValuePtrToAnfNodePtr(value_ptr);
+  float_tensor_map[value] = anf_node_ptr;
+  return anf_node_ptr;
+}
+
 AnfNodePtr CreateTypeInt(int64_t nbits) {
   ValuePtr value_ptr = MakeValue(std::make_shared<Int>(nbits));
   return ValuePtrToAnfNodePtr(value_ptr);
