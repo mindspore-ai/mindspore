@@ -2,7 +2,7 @@
 
     论文 `Attention Is All You Need <https://arxiv.org/pdf/1706.03762v5.pdf>`_ 中所述的多头注意力的实现。给定src_seq_length长度的query向量，tgt_seq_length长度的key向量和value，注意力计算流程如下：
 
-    .. math:
+    .. math::
            MultiHeadAttention(query, key, vector) = Dropout(Concat(head_1, \dots, head_h)W^O)
 
     其中， `head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)` 。注意：输出层的投影计算中带有偏置参数。

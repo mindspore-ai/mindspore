@@ -23,7 +23,7 @@ mindspore.nn.AdaSumByGradWrapCell
 
     **参数：**
 
-    - **optimizer** (nn.optimizer) - 必须是单输入的优化器：
+    - **optimizer** (nn.optimizer) - 必须是单输入的优化器。
 
     **输入：**
 

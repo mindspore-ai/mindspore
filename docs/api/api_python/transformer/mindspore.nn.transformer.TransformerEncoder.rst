@@ -35,4 +35,4 @@
     Tuple，表示一个包含(`output`, `layer_present`)的元组。
 
     - **output** (Tensor) - use_past为False或is_first_iteration为True时，表示shape为(batch_size, seq_length, hidden_size)或(batch_size * seq_length, hidden_size)的层输出的float tensor。否则，shape将为(batch_size, 1, hidden_size)。
-    - **layer_present** (Tuple) - 大小为num_layers的元组，其中每个元组都包含shape为((batch_size, num_heads, size_per_head, seq_length)或(batch_size, num_heads, seq_length, size_per_head))的投影key向量和value向量的Tensor。
+    - **layer_present** (Tuple) - 大小为num_layers的元组，其中每个元组都包含shape为((batch_size, num_heads, size_per_head, seq_length)或(batch_size, num_heads, seq_length, size_per_head))的投影key向量和value向量的Tensor的元组。
