@@ -32,7 +32,7 @@
 
 .. py:method:: create_tuple_iterator(columns=None, num_epochs=-1, output_numpy=False, do_copy=True)
 
-    基于数据集对象创建迭代器，输出数据为ndarray组成的列表。
+    基于数据集对象创建迭代器，输出数据为 `numpy.ndarray` 组成的列表。
 
     可以通过参数 `columns` 指定输出的所有列名及列的顺序。如果columns未指定，列的顺序将保持不变。
 
@@ -95,7 +95,7 @@
 
     **参数：**
 
-    - **func** (function) - 数据处理函数，要求输入必须为一个'ndarray'，返回值是一个'Dataset'对象。
+    - **func** (function) - 数据处理函数，要求输入必须为一个 `numpy.ndarray` ，返回值是一个 `Dataset` 对象。
 
     **返回：**
 
@@ -104,7 +104,7 @@
     **异常：**
 
     - **TypeError** - `func` 不是函数。
-    - **TypeError** - `func` 的返回值不是数据集对象。
+    - **TypeError** - `func` 的返回值不是 `Dataset` 对象。
 
 .. py:method:: get_batch_size()
 
@@ -120,7 +120,7 @@
 
     **返回：**
 
-    dict，描述类别名称到索引的键值对映射关系，通常为str-to-int格式。针对COCO数据集，类别名称到索引映射关系描述形式为str-to-list<int>格式，列表中的第二个数字表示超级类别。
+    dict，描述类别名称到索引的键值对映射关系，通常为str-to-int格式。针对COCO数据集，类别名称到索引映射关系描述形式为str-to-list<int>格式，列表中的第二个数字表示超类别。
 
 
 .. py:method:: get_col_names()
@@ -154,7 +154,7 @@
 
     **返回：**
 
-    input index信息的元组。
+    tuple，数据集的input index信息。
 
 .. py:method:: map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None, max_rowsize=16, offload=None)
 
@@ -239,7 +239,7 @@
 
 .. py:method:: repeat(count=None)
 
-    重复此数据集 `count` 次。如果 `count` 为None或-1，则无限重复。
+    重复此数据集 `count` 次。如果 `count` 为None或-1，则无限重复迭代。
 
     .. note::
         repeat和batch的顺序反映了batch的数量。建议：repeat操作在batch操作之后使用。
@@ -391,10 +391,10 @@
     **异常：**
 
     - **RuntimeError** - 数据集对象不支持 `get_dataset_size` 或者 `get_dataset_size` 返回None。
-    - **RuntimeError** - sizes是整数列表，并且size中所有元素的总和不等于数据集大小。
-    - **RuntimeError** - sizes是float列表，并且计算后存在大小为0的拆分子数据集。
+    - **RuntimeError** - `sizes` 是list[int]，并且 `sizes` 中所有元素的总和不等于数据集大小。
+    - **RuntimeError** - `sizes` 是list[float]，并且计算后存在大小为0的拆分子数据集。
     - **RuntimeError** - 数据集对象在调用拆分之前已进行分片。
-    - **ValueError** - sizes是float列表，且并非所有float数都在0和1之间，或者float数的总和不等于1。
+    - **ValueError** - `sizes` 是list[float]，且并非所有float数值都在0和1之间，或者float数值的总和不等于1。
 
     **返回：**
 

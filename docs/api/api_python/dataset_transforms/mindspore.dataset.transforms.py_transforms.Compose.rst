@@ -16,9 +16,9 @@ mindspore.dataset.transforms.py_transforms.Compose
 
     **异常：**
 
-    - **TypeError** - 参数 `transforms` 类型不为 list。
-    - **ValueError** - 参数 `transforms` 的长度为空。
-    - **TypeError** - 参数 `transforms` 的元素不是Python的callable对象。
+    - **TypeError** - 参数 `transforms` 类型不为list。
+    - **ValueError** - 参数 `transforms` 是空的list。
+    - **TypeError** - 参数 `transforms` 的元素不是Python的可调用对象。
 
     .. py:method:: reduce(operations)
 

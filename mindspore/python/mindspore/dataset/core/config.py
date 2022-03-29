@@ -107,8 +107,8 @@ def set_seed(seed):
         seed(int): Random number seed. It is used to generate deterministic random numbers.
 
     Raises:
-        TypeError: If seed isn't of type int.
-        ValueError: If seed < 0 or seed > UINT32_MAX(4294967295).
+        TypeError: If `seed` isn't of type int.
+        ValueError: If `seed` < 0 or `seed` > UINT32_MAX(4294967295).
 
     Examples:
         >>> # Set a new global configuration value for the seed value.
@@ -150,8 +150,8 @@ def set_prefetch_size(size):
         size (int): The length of the cache queue.
 
     Raises:
-        TypeError: If size is not of type int.
-        ValueError: If size <= 0 or size > INT32_MAX(2147483647).
+        TypeError: If `size` is not of type int.
+        ValueError: If `size` <= 0 or `size` > INT32_MAX(2147483647).
 
     Note:
         Since total memory used for prefetch can grow very large with high number of workers,
@@ -193,8 +193,8 @@ def set_num_parallel_workers(num):
         num (int): Number of parallel workers to be used as a default for each operation.
 
     Raises:
-        TypeError: If num is not of type int.
-        ValueError: If num <= 0 or num > INT32_MAX(2147483647).
+        TypeError: If `num` is not of type int.
+        ValueError: If `num` <= 0 or `num` > INT32_MAX(2147483647).
 
     Examples:
         >>> # Set a new global configuration value for the number of parallel workers.
@@ -234,7 +234,7 @@ def set_numa_enable(numa_enable):
         numa_enable (bool): Whether to use numa bind feature.
 
     Raises:
-        TypeError: If numa_enable is not a boolean data type.
+        TypeError: If `numa_enable` is not a boolean data type.
 
     Examples:
         >>> # Set a new global configuration value for the state of numa enabled.
@@ -269,8 +269,8 @@ def set_monitor_sampling_interval(interval):
         interval (int): Interval (in milliseconds) to be used for performance monitor sampling.
 
     Raises:
-        TypeError: If interval is not type int.
-        ValueError: If interval <= 0 or interval > INT32_MAX(2147483647).
+        TypeError: If `interval` is not type int.
+        ValueError: If `interval` <= 0 or `interval` > INT32_MAX(2147483647).
 
     Examples:
         >>> # Set a new global configuration value for the monitor sampling interval.
@@ -314,7 +314,7 @@ def set_auto_num_workers(enable):
         enable (bool): Whether to enable auto num_workers feature or not.
 
     Raises:
-        TypeError: If enable is not of boolean type.
+        TypeError: If `enable` is not of boolean type.
 
     Examples:
         >>> # Enable auto_num_worker feature, this might override the num_parallel_workers passed in by user
@@ -336,11 +336,13 @@ def _set_auto_workers_config(option):
     Option #4 leaf_num_workers:batch_num_workers:map_num_workers=2:2:1
     Option #5 leaf_num_workers:batch_num_workers:map_num_workers=2:1:2
     Option #6 leaf_num_workers:batch_num_workers:map_num_workers=1:2:2
+
     Args:
         option (int): The id of the profile to use.
+
     Raises:
-        TypeError: If option is not of type int.
-        ValueError: If option is not within the range of [0, 6].
+        TypeError: If `option` is not of type int.
+        ValueError: If `option` is not within the range of [0, 6].
     """
     if not isinstance(option, int) or isinstance(option, bool):
         raise TypeError("option isn't of type int.")
@@ -372,8 +374,8 @@ def set_callback_timeout(timeout):
         timeout (int): Timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
 
     Raises:
-        TypeError: If timeout is not type int.
-        ValueError: If timeout <= 0 or timeout > INT32_MAX(2147483647).
+        TypeError: If `timeout` is not type int.
+        ValueError: If `timeout` <= 0 or `timeout` > INT32_MAX(2147483647).
 
     Examples:
         >>> # Set a new global configuration value for the timeout value.
@@ -420,7 +422,7 @@ def load(file):
         file (str): Path of the configuration file to be loaded.
 
     Raises:
-        RuntimeError: If file is invalid and parsing fails.
+        RuntimeError: If `file` is invalid and parsing fails.
 
     Examples:
         >>> # Set new default configuration according to values in the configuration file.
@@ -577,7 +579,7 @@ def set_enable_shared_mem(enable):
         enable (bool): Whether to use shared memory in operators when python_multiprocessing=True.
 
     Raises:
-        TypeError: If enable is not a boolean data type.
+        TypeError: If `enable` is not a boolean data type.
 
     Examples:
         >>> # Enable shared memory feature to improve the performance of Python multiprocessing.
@@ -605,7 +607,7 @@ def set_sending_batches(batch_num):
          increase, default is 0 which means will send all batches in dataset.
 
     Raises:
-        TypeError: If batch_num is not of type int.
+        TypeError: If `batch_num` is not of type int.
 
     Examples:
         >>> # Set a new global configuration value for the sending batches
@@ -659,7 +661,7 @@ def set_enable_watchdog(enable):
         enable (bool): Whether to launch a watchdog Python thread. System default: True.
 
     Raises:
-        TypeError: If enable is not a boolean data type.
+        TypeError: If `enable` is not a boolean data type.
 
     Examples:
         >>> # Set a new global configuration value for the state of watchdog Python thread as enabled.
@@ -695,7 +697,8 @@ def set_multiprocessing_timeout_interval(interval):
           process/thread gets data from subprocess/child threads. System default: 300s.
 
     Raises:
-        ValueError: If interval <= 0 or interval > INT32_MAX(2147483647).
+        TypeError: If `interval` is not of type int.
+        ValueError: If `interval` <= 0 or `interval` > INT32_MAX(2147483647).
 
     Examples:
         >>> # Set a new global configuration value for multiprocessing/multithreading timeout when getting data.

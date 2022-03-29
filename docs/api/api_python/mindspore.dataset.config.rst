@@ -115,7 +115,7 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **TypeError** - `numa_enable` 不是布尔数据类型。
+    - **TypeError** - `numa_enable` 不是bool类型。
 
 .. py:function:: mindspore.dataset.config.get_numa_enable()
 
@@ -186,7 +186,7 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **TypeError** - enable不是布尔类型。
+    - **TypeError** - `enable` 不是bool类型。
 
 .. py:function:: mindspore.dataset.config.get_auto_num_workers()
 
@@ -209,7 +209,7 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **TypeError** - `enable` 不是布尔数据类型。
+    - **TypeError** - `enable` 不是bool类型。
 
 .. py:function:: mindspore.dataset.config.get_enable_shared_mem()
 
@@ -237,9 +237,9 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **TypeError** - 当 `enable` 的类型不为布尔型。
-    - **TypeError** - 当 `json_filepath` 的类型不为字符串。
-    - **RuntimeError** - 当 `json_filepath` 为空字符串。
+    - **TypeError** - 当 `enable` 的类型不为bool。
+    - **TypeError** - 当 `json_filepath` 的类型不为str。
+    - **RuntimeError** - 当 `json_filepath` 字符长度为0。
     - **RuntimeError** - 当 `json_filepath` 为目录。
     - **RuntimeError** - 当 `json_filepath` 路径不存在。
     - **RuntimeError** - 当 `json_filepath` 没有写入权限。
@@ -266,8 +266,8 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **TypeError** - 当 `interval` 类型不为整型。
-    - **ValueError** - 当 `interval` 不为非负数。
+    - **TypeError** - 当 `interval` 类型不为int。
+    - **ValueError** - 当 `interval` 的值小于零。
 
 .. py:function:: mindspore.dataset.config.get_autotune_interval()
 
@@ -276,6 +276,28 @@ API示例所需模块的导入代码如下：
     **返回：**
 
     int，自动数据加速的配置调整step间隔。
+
+.. py:function:: mindspore.dataset.config.set_auto_offload(offload)
+
+    设置是否开启数据异构加速。
+
+    数据异构加速可以自动将数据处理的部分运算分配到不同的异构硬件（GPU或Ascend）上，以提高数据处理的速度。
+
+     **参数：**
+
+    - **offload** (bool) - 是否开启数据异构加速。
+
+    **异常：**
+
+    - **TypeError** - 当 `offload` 的类型不为bool。
+
+.. py:function:: mindspore.dataset.config.get_auto_offload()
+
+    获取当前是否开启数据异构加速。
+
+    **返回：**
+
+    bool，表示是否开启数据异构加速。
 
 .. py:function:: mindspore.dataset.config.set_enable_watchdog(enable)
 
@@ -287,7 +309,7 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **TypeError** - `enable` 不是布尔数据类型。
+    - **TypeError** - `enable` 不是bool类型。
 
 
 .. py:function:: mindspore.dataset.config.get_enable_watchdog()

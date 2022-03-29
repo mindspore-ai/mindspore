@@ -12,8 +12,8 @@ mindspore.dataset.SequentialSampler
 
     **异常：**
 
-    - **TypeError** `start_index` 不是整数值。
-    - **TypeError** `num_samples` 不是整数值。
+    - **TypeError** `start_index` 的类型不是int。
+    - **TypeError** `num_samples` 的类型不是int。
     - **RuntimeError** `start_index` 为负值。
     - **ValueError** `num_samples` 为负值。
 

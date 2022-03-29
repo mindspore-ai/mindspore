@@ -1,7 +1,7 @@
 mindspore.dataset.transforms.c_transforms.Relational
 ====================================================
 
-.. py:class:: mindspore.dataset.transforms.c_transforms.Relational()
+.. py:class:: mindspore.dataset.transforms.c_transforms.Relational
 
     关系操作符，可以取值为Relational.EQ、Relational.NE、Relational.GT、Relational.GE、Relational.LT、Relational.LE。
 

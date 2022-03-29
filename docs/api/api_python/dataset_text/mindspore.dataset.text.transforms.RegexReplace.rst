@@ -7,7 +7,7 @@ mindspore.dataset.text.transforms.RegexReplace
 
     有关支持的正则表达式的模式，请参阅 https://unicode-org.github.io/icu/userguide/strings/regexp.html。
 
-    .. note:: Windows 平台尚不支持 RegexReplace。
+    .. note:: Windows平台尚不支持 `RegexReplace` 。
 
     **参数：**
 
@@ -17,6 +17,6 @@ mindspore.dataset.text.transforms.RegexReplace
 
     **异常：**
 
-    - **TypeError** - 参数 `pattern` 的类型不是string。
-    - **TypeError** - 参数 `replace` 的类型不是string。
+    - **TypeError** - 参数 `pattern` 的类型不是str。
+    - **TypeError** - 参数 `replace` 的类型不是str。
     - **TypeError** - 参数 `separator` 的类型不是bool。

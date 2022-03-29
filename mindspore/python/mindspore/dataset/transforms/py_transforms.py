@@ -99,7 +99,7 @@ class OneHotOp(PyTensorOperation):
     Raises:
         TypeError: `num_classes` is not of type int.
         TypeError: `smoothing_rate` is not of type float.
-        ValueError: `prob` is not in range [0.0, 1.0]。
+        ValueError: `smoothing_rate` is not in range [0.0, 1.0].
 
     Supported Platforms:
         ``CPU``
