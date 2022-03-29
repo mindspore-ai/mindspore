@@ -17,6 +17,7 @@
 #include <jni.h>
 #include "common/ms_log.h"
 #include "include/api/model_parallel_runner.h"
+#include "include/api/context.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(JNIEnv *env, jobject thiz,
                                                                                jstring model_path,
@@ -35,13 +36,57 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     }
   } else {
     auto *c_runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
+    auto origin_context = c_runner_config->context;
+    if (origin_context == nullptr) {
+      MS_LOGE("context is nullptr.");
+      delete runner;
+      return (jlong) nullptr;
+    }
+    auto copy_context = std::make_shared<mindspore::Context>();
+    if (copy_context == nullptr) {
+      MS_LOGE("new context is nullptr.");
+      delete runner;
+      return (jlong) nullptr;
+    }
+    copy_context->SetThreadNum(origin_context->GetThreadNum());
+    copy_context->SetEnableParallel(origin_context->GetEnableParallel());
+    copy_context->SetThreadAffinity(origin_context->GetThreadAffinityMode());
+    auto &copy_device_list = copy_context->MutableDeviceInfo();
+    auto origin_device_list = origin_context->MutableDeviceInfo();
+    for (size_t i = 0; i < origin_device_list.size(); i++) {
+      auto origin_device = origin_device_list[i];
+      if (origin_device->GetDeviceType() == mindspore::kCPU) {
+        auto origin_device_info = origin_device->Cast<mindspore::CPUDeviceInfo>();
+        auto copy_device_info = std::make_shared<mindspore::CPUDeviceInfo>();
+        if (copy_device_info == nullptr) {
+          MS_LOGE("new copy_device_info is nullptr.");
+          delete runner;
+          return (jlong) nullptr;
+        }
+        auto enable_fp16 = origin_device_info->GetEnableFP16();
+        copy_device_info->SetEnableFP16(enable_fp16);
+        copy_device_list.push_back(copy_device_info);
+      } else if (origin_device->GetDeviceType() == mindspore::kGPU) {
+        auto origin_device_info = origin_device->Cast<mindspore::GPUDeviceInfo>();
+        auto copy_device_info = std::make_shared<mindspore::GPUDeviceInfo>();
+        if (copy_device_info == nullptr) {
+          MS_LOGE("new copy_device_info is nullptr.");
+          delete runner;
+          return (jlong) nullptr;
+        }
+        auto enable_fp16 = origin_device_info->GetEnableFP16();
+        copy_device_info->SetEnableFP16(enable_fp16);
+        copy_device_list.push_back(copy_device_info);
+      }
+    }
     auto runner_config = std::make_shared<mindspore::RunnerConfig>();
     if (runner_config == nullptr) {
       delete runner;
       MS_LOGE("Make RunnerConfig failed");
       return (jlong) nullptr;
     }
-    runner_config.reset(c_runner_config);
+    runner_config->context = copy_context;
+    runner_config->workers_num = c_runner_config->workers_num;
     auto ret = runner->Init(model_path_str, runner_config);
     if (ret != mindspore::kSuccess) {
       delete runner;
