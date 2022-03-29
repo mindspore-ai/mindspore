@@ -22,7 +22,7 @@
 #
 # Augments:
 #   - PYTHON_VERSION: python version to set up. [3.7(default), 3.8, 3.9]
-#   - MINDSPORE_VERSION: mindspore version to install, default 1.6.0
+#   - MINDSPORE_VERSION: mindspore version to install
 #   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
 #
 # Usage:
@@ -32,7 +32,7 @@
 set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
-MINDSPORE_VERSION=${MINDSPORE_VERSION:-1.6.0}
+MINDSPORE_VERSION=${MINDSPORE_VERSION:-EMPTY}
 OPENMPI=${OPENMPI:-off}
 
 available_py_version=(3.7 3.8 3.9)
@@ -92,4 +92,8 @@ env_name=mindspore_py3${PYTHON_VERSION##*.}
 conda create -n $env_name python=${PYTHON_VERSION} -y
 conda activate $env_name
 
-conda install mindspore-ascend -c mindspore -c conda-forge
+install_name="mindspore-ascend"
+if [[ $MINDSPORE_VERSION != "EMPTY" ]]; then
+    install_name="${install_name}=${MINDSPORE_VERSION}"
+fi
+conda install ${install_name} -c mindspore -c conda-forge -y
