@@ -684,7 +684,7 @@ if platform.system().lower() != 'windows':
 
     class BasicTokenizer(TextTensorOperation):
         """
-        Tokenize the input UTF-8 string by specific rules.
+        Tokenize the input UTF-8 encoded string by specific rules.
 
         Note:
             `BasicTokenizer` is not supported on Windows platform yet.
@@ -695,11 +695,12 @@ if platform.system().lower() != 'windows':
                 If False, will only apply `NormalizeUTF8` operation of mode `normalization_form` on the input.
                 Default: False.
             keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
-            normalization_form (NormalizeForm, optional): Normalization mode, only valid when `lower_case` is False,
-                can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
+            normalization_form (NormalizeForm, optional):
+                `Unicode normalization forms <http://unicode.org/reports/tr15/>`_, only valid when `lower_case`
+                is False, can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
                 NormalizeForm.NFKD. Default: NormalizeForm.NONE.
 
-                - NormalizeForm.NONE, do nothing for input string.
+                - NormalizeForm.NONE, do nothing to input string.
                 - NormalizeForm.NFC, normalize with Normalization Form C.
                 - NormalizeForm.NFKC, normalize with Normalization Form KC.
                 - NormalizeForm.NFD, normalize with Normalization Form D.
@@ -715,6 +716,7 @@ if platform.system().lower() != 'windows':
             TypeError: If `normalization_form` is not of type :class:`mindspore.dataset.text.NormalizeForm`.
             TypeError: If `preserve_unused_token` is not of type bool.
             TypeError: If `with_offsets` is not of type bool.
+            RuntimeError: If dtype of input Tensor is not str.
 
         Supported Platforms:
             ``CPU``
@@ -742,7 +744,6 @@ if platform.system().lower() != 'windows':
             ...                                                               "offsets_limit"],
             ...                                               column_order=["token", "offsets_start",
             ...                                                             "offsets_limit"])
-
         """
 
         @check_basic_tokenizer
@@ -782,8 +783,17 @@ if platform.system().lower() != 'windows':
                 If False, will only apply `NormalizeUTF8` operation of mode `normalization_form` on the input.
                 Default: False.
             keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
-            normalization_form (NormalizeForm, optional): Normalization mode, only valid when `lower_case` is False.
-                See `NormalizeUTF8` for details. Default: NormalizeForm.NONE.
+            normalization_form (NormalizeForm, optional):
+                `Unicode normalization forms <http://unicode.org/reports/tr15/>`_, only valid when `lower_case`
+                is False, can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
+                NormalizeForm.NFKD. Default: NormalizeForm.NONE.
+
+                - NormalizeForm.NONE, do nothing to input string.
+                - NormalizeForm.NFC, normalize with Normalization Form C.
+                - NormalizeForm.NFKC, normalize with Normalization Form KC.
+                - NormalizeForm.NFD, normalize with Normalization Form D.
+                - NormalizeForm.NFKD, normalize with Normalization Form KD.
+
             preserve_unused_token (bool, optional): If True, will not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
             with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.

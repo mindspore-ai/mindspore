@@ -9,4 +9,4 @@ mindspore.dataset.vision.py_transforms.ToPIL
 
     **异常：**
 
-    - **TypeError** - 当输入图像的类型不为 :class:`numpy.ndarray` 或 :class:`PIL.Image` 。
+    - **TypeError** - 当输入图像的类型不为 :class:`numpy.ndarray` 或 :class:`PIL.Image.Image` 。

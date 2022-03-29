@@ -5,15 +5,15 @@ mindspore.dataset.vision.py_transforms.LinearTransformation
 
     使用指定的变换方阵和均值向量对输入numpy.ndarray图像进行线性变换。
 
-    先将输入图像展平为一维，从中减去均值向量，然后计算其与变换方阵的点积，最后再变形回原始形状。
+    先将输入图像展平为一维，从中减去均值向量，然后计算其与变换方阵的点积，最后再变形回原始shape。
 
     **参数：**
         
-    - **transformation_matrix** (numpy.ndarray) - 形如(D, D)的变换方阵，其中
+    - **transformation_matrix** (numpy.ndarray) - shape为(D, D)的变换方阵，其中
 
       :math:`D = C \times H \times W` 。
 
-    - **mean_vector** (numpy.ndarray) - 形如(D,)的均值向量，其中
+    - **mean_vector** (numpy.ndarray) - shape为(D,)的均值向量，其中
 
       :math:`D = C \times H \times W` 。
 

@@ -7,17 +7,17 @@ mindspore.dataset.vision.py_transforms.RandomColorAdjust
 
     **参数：**
 
-    - **brightness** (Union[float, sequence]，可选) - 亮度调节系数的随机选取范围，需为非负数。若输入浮点型，将从[max(0, 1 - brightness), 1 + brightness)中随机生成亮度调节系数；若输入2元素序列，需按(min, max)顺序排列。默认值：(1, 1)。
-    - **contrast** (Union[float, sequence]，可选) - 对比度调节系数的随机选取范围，需为非负数。若输入浮点型，将从[max(0, 1 - contrast), 1 + contrast)中随机生成对比度调节系数；若输入2元素序列，需按(min, max)顺序排列。默认值：(1, 1)。
-    - **saturation** (Union[float, sequence]，可选) - 饱和度调节系数的随机选取范围，需为非负数。若输入浮点型，将从[max(0, 1 - saturation), 1 + saturation)中随机生成饱和度调节系数；若输入2元素序列，需按(min, max)顺序排列。默认值：(1, 1)。
-    - **hue** (Union[float, sequence]，可选) - 色调调节系数的随机选取范围。若输入浮点型，取值范围为[0, 0.5]，将从[-hue, hue)中随机生成色调调节系数；若输入2元素序列，元素取值范围为[-0.5, 0.5]，且需按(min, max)顺序排列。默认值：(0, 0)。
+    - **brightness** (Union[float, Sequence[float, float]]，可选) - 亮度调节系数的随机选取范围，需为非负数。若输入float，将从[max(0, 1 - `brightness` ), 1 + `brightness` )中随机生成亮度调节系数；若输入Sequence[float, float]，需按(min, max)顺序排列。默认值：(1, 1)。
+    - **contrast** (Union[float, Sequence[float, float]]，可选) - 对比度调节系数的随机选取范围，需为非负数。若输入float，将从[max(0, 1 - `contrast` ), 1 + `contrast` )中随机生成对比度调节系数；若输入Sequence[float, float]，需按(min, max)顺序排列。默认值：(1, 1)。
+    - **saturation** (Union[float, Sequence[float, float]]，可选) - 饱和度调节系数的随机选取范围，需为非负数。若输入float，将从[max(0, 1 - `saturation` ), 1 + `saturation` )中随机生成饱和度调节系数；若输入Sequence[float, float]，需按(min, max)顺序排列。默认值：(1, 1)。
+    - **hue** (Union[float, Sequence[float, float]]，可选) - 色调调节系数的随机选取范围。若输入float，取值范围为[0, 0.5]，将从[- `hue` , `hue` )中随机生成色调调节系数；若输入Sequence[float, float]，元素取值范围为[-0.5, 0.5]，且需按(min, max)顺序排列。默认值：(0, 0)。
 
     **异常：**
 
-    - **TypeError** - 当 `brightness` 的类型不为浮点型或浮点型序列。
-    - **TypeError** - 当 `contrast` 的类型不为浮点型或浮点型序列。
-    - **TypeError** - 当 `saturation` 的类型不为浮点型或浮点型序列。
-    - **TypeError** - 当 `hue` 的类型不为浮点型或浮点型序列。
+    - **TypeError** - 当 `brightness` 的类型不为float或Sequence[float, float]。
+    - **TypeError** - 当 `contrast` 的类型不为float或Sequence[float, float]。
+    - **TypeError** - 当 `saturation` 的类型不为float或Sequence[float, float]。
+    - **TypeError** - 当 `hue` 的类型不为float或Sequence[float, float]。
     - **ValueError** - 当 `brightness` 为负数。
     - **ValueError** - 当 `contrast` 为负数。
     - **ValueError** - 当 `saturation` 为负数。
