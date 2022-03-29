@@ -21,7 +21,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
 constexpr int kMinCostPerThread = 16384;
 #endif
 int GatherRun(void *cdata, int task_id, float, float) {
@@ -137,7 +137,7 @@ int GatherBaseCPUKernel::ChooseThreadCuttingstrategy() {
     return RET_OK;
   }
   int64_t block_size = 1;
-#ifdef SERVER_INFERENCE
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   auto all_bytes = static_cast<int64_t>(out_tensors_.front()->Size());
   if (all_bytes <= static_cast<int64_t>(kMinCostPerThread)) {
     block_boundary_infos_.emplace_back(BlockBoundaryInfo{0, 0, outer_size_, 0});
