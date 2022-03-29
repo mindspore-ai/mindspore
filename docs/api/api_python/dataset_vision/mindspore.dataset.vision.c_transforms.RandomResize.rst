@@ -3,16 +3,14 @@ mindspore.dataset.vision.c_transforms.RandomResize
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomResize(size)
 
-    使用随机选择的插值模式调整输入图像的大小。
+    对输入图像使用随机选择的 :class:`mindspore.dataset.vision.Inter` 插值方式去调整它的尺寸大小。
 
     **参数：**
 
-    - **size**  (Union[int, sequence]) - 调整后图像的输出大小。 大小值必须为正。
-      如果 size 是整数，则图像的较小边缘将调整为具有相同图像纵横比的该值。
-      如果 size 是一个长度为 2 的序列，它应该是 (高度, 宽度)。
+    - **size**  (Union[int, sequence]) - 调整后图像的输出尺寸大小。大小值必须为正。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
 
     **异常：**
 
-    - **TypeError** - 如果 `size` 不是整型或整型序列类型。
+    - **TypeError** - 如果 `size` 不是int或Sequence[int]类型。
     - **ValueError** - 如果 `size` 不是正数。
     - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。
