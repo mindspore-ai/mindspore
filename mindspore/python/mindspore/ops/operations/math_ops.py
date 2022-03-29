@@ -636,7 +636,7 @@ class ReduceMean(_Reduce):
           the output is a 0-D tensor representing the mean of all elements in the input tensor.
         - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
+        - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Raises:
@@ -713,7 +713,7 @@ class ReduceSum(_Reduce):
           the output is a 0-D tensor representing the sum of all elements in the input tensor.
         - If axis is int, set as 2, and keep_dims is False,
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
+        - If axis is tuple(int) or list(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Raises:

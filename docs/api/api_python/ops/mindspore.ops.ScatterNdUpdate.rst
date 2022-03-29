@@ -23,7 +23,7 @@ mindspore.ops.ScatterNdUpdate
 
     - **input_x** (Parameter) - ScatterNdUpdate的输入，任意维度的Parameter。
     - **indices** (Tensor) - 指定更新操作的索引，数据类型为int32。
-    - **updates** (Tensor) - 指定与 `input_x` 更新操作的Tensor，类型与输入相同。shape为 `indices_shape[:-1] + x_shape[indices_shape[-1]:]` 。
+    - **updates** (Tensor) - 指定与 `input_x` 更新操作的Tensor，类型与输入相同。shape为 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。
 
     **输出：**
 

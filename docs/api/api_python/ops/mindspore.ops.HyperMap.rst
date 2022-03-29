@@ -3,9 +3,9 @@ mindspore.ops.HyperMap
 
 .. py:class:: mindspore.ops.HyperMap(ops=None, reverse=False)
 
-    `HyperMap` 可以对输入序列做集合运算。
+    对输入序列做集合运算。
    
-    对序列的每个元素或嵌套序列进行运算。与 `Map` 不同，`HyperMap` 能够用于嵌套结构。
+    对序列的每个元素或嵌套序列进行运算。与 `mindspore.ops.Map` 不同，`HyperMap` 能够用于嵌套结构。
 
     **参数：**
 
@@ -17,7 +17,7 @@ mindspore.ops.HyperMap
     - **args** (Tuple[sequence]) -  如果 `ops` 不是None，则所有入参都应该是具有相同长度的序列，并且序列的每一行都是运算的输入。如果 `ops` 是None，则第一个入参是运算，其余都是输入。
 
     .. note::
-        对于算子的输入，输入数量应该等于输入 `ops` 的数量。
+        输入数量等于 `ops` 的输入数量。
 
     **输出：**
 
