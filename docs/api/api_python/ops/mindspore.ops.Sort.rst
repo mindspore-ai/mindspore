@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Sort(axis=-1, descending=False)
 
-    根据指定的维度对输入Tensor的元素进行排序。默认为升序排序。
+    根据指定的轴对输入Tensor的元素进行排序。默认为升序排序。
 
     **参数：**
 

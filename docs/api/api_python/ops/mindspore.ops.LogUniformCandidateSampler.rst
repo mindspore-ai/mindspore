@@ -5,7 +5,7 @@ mindspore.ops.LogUniformCandidateSampler
 
     使用log-uniform(Zipfian)分布对一组类进行采样。
 
-    该操作从整数范围[0, range_max)中随机采样一个采样类（sampled_candidates）的Tensor。
+    该操作从整数范围[0, `range_max` )中随机采样一个采样类( `sampled_candidates` )的Tensor。
 
     **参数：**
 
@@ -17,7 +17,7 @@ mindspore.ops.LogUniformCandidateSampler
 
     **输入：**
 
-    - **true_classes** (Tensor) - 目标类，其数据类型为int64，shape为[batch_size, num_true]。
+    - **true_classes** (Tensor) - 目标类，其数据类型为int64，shape为(batch_size, num_true)。
 
     **输出：**
 

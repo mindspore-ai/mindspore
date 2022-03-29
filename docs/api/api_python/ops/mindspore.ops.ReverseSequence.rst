@@ -17,7 +17,7 @@ mindspore.ops.ReverseSequence
 
     **输出：**
 
-    shape和数据类型与输入的相同。
+    shape和数据类型与输入相同。
 
     **异常：**
 
