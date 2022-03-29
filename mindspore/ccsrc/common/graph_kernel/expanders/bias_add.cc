@@ -36,21 +36,23 @@ class BiasAdd : public OpDesc {
   ~BiasAdd() = default;
 
  protected:
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     auto input_x = inputs[0];
     auto input_y = inputs[1];
     if (input_x->format == kOpFormat_NCHW) {
-      input_y = gb.Emit("Reshape", {input_y}, {{"shape", MakeValue(ExpandDimsInferShape(input_y->shape, {1, 2}))}});
+      auto target_shape = ExpandDimsInferShape(input_y->shape, {1, 2});
+      input_y = gb.Reshape(input_y, target_shape);
     } else if (input_x->format == kOpFormat_DEFAULT) {
       auto data_format = GetValue<std::string>(attrs_["format"]);
       size_t channel_idx = (data_format == kOpFormat_NHWC) ? input_x->shape.size() - 1 : 1;
       std::vector<int64_t> axis((input_x->shape.size() - channel_idx) - 1, -1);
       if (!axis.empty()) {
-        input_y = gb.Emit("Reshape", {input_y}, {{"shape", MakeValue(ExpandDimsInferShape(input_y->shape, axis))}});
+        auto target_shape = ExpandDimsInferShape(input_y->shape, axis);
+        input_y = gb.Reshape(input_y, target_shape);
       }
     }
-    return {gb.Emit("Add", {input_x, input_y})};
+    auto result = gb.Add(input_x, input_y);
+    return {result};
   }
 };
 OP_EXPANDER_REGISTER("BiasAdd", BiasAdd);

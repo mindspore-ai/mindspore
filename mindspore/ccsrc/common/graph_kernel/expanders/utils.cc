@@ -39,7 +39,7 @@ inner::LiteGraphPtr OpDesc::Run(const BaseInfoList &inputs, const BaseInfoList &
   for (auto &inp : inputs) {
     (void)gb.Parameter(inp);
   }
-  auto result = this->Expand();
+  auto result = this->Expand(gb.Get()->inputs());
   gb.SetOutputs(result);
   if (!this->CheckOutputs()) {
     return nullptr;
@@ -58,7 +58,7 @@ bool OpDesc::CheckOutputs() {
   for (size_t i = 0; i < outputs.size(); i++) {
     if (outputs[i]->shape != outputs_info_[i].shape) {
       std::ostringstream oss;
-      oss << "Op " << this->op_ << "'s output shape [";
+      oss << "Op " << this->name_ << "'s output shape [";
       for (auto s : outputs[i]->shape) {
         oss << s << ",";
       }
@@ -71,12 +71,12 @@ bool OpDesc::CheckOutputs() {
       return false;
     }
     if (outputs[i]->type != outputs_info_[i].type) {
-      MS_LOG(INFO) << "Op " << this->op_ << "'s output type [" << outputs[i]->type << "] is wrong, expect: ["
+      MS_LOG(INFO) << "Op " << this->name_ << "'s output type [" << outputs[i]->type << "] is wrong, expect: ["
                    << outputs_info_[i].type << "]";
       return false;
     }
     if (outputs[i]->format != outputs_info_[i].format) {
-      MS_LOG(INFO) << "Op " << this->op_ << "'s output format [" << outputs[i]->format << "] is wrong, expect: ["
+      MS_LOG(INFO) << "Op " << this->name_ << "'s output format [" << outputs[i]->format << "] is wrong, expect: ["
                    << outputs_info_[i].format << "]";
       return false;
     }

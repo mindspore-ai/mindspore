@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,16 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-class Softplus : public OpDesc {
+class Softsign : public OpDesc {
  public:
-  Softplus() {}
-  ~Softplus() = default;
+  Softsign() {}
+  ~Softsign() = default;
 
  protected:
   bool CheckInputs() override {
     const auto &input_x = inputs_info_[0];
     if (input_x.type != kNumberTypeFloat32 && input_x.type != kNumberTypeFloat16) {
-      MS_LOG(INFO) << "In Softplus, input_x's dtype must be float16 or float32";
+      MS_LOG(INFO) << "In Softsign, input_x's dtype must be float16 or float32";
       return false;
     }
     return true;
@@ -38,12 +38,12 @@ class Softplus : public OpDesc {
 
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
-    auto exp_x = gb.Exp(input_x);
+    auto abs_x = gb.Abs(input_x);
     auto const_one = gb.Const(1.0, input_x->type);
-    auto exp_x_add_one = gb.Add(exp_x, const_one);
-    auto result = gb.Log(exp_x_add_one);
+    auto abs_x_add_one = gb.Add(abs_x, const_one);
+    auto result = gb.Div(input_x, abs_x_add_one);
     return {result};
   }
 };
-OP_EXPANDER_REGISTER("Softplus", Softplus);
+OP_EXPANDER_REGISTER("Softsign", Softsign);
 }  // namespace mindspore::graphkernel::expanders

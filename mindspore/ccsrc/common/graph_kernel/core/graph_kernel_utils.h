@@ -24,6 +24,7 @@
 #include "ir/func_graph.h"
 #include "utils/hash_map.h"
 #include "common/graph_kernel/model/lite_graph.h"
+#include "common/graph_kernel/model/graph_builder.h"
 
 namespace mindspore::graphkernel {
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";

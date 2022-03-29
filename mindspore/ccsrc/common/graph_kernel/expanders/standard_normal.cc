@@ -29,8 +29,7 @@ class StandardNormal : public OpDesc {
   ~StandardNormal() {}
 
  protected:
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     auto shape = MakeValue(outputs_info_[0].shape);
     auto result =

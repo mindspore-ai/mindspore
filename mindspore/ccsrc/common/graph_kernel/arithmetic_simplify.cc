@@ -320,7 +320,7 @@ inner::NodePtr PatternTree::AlterGraph(const std::shared_ptr<ParaMap> &para_to_r
   auto res = std::make_shared<PatternNodePtrList>();
   DfsTraverse(res, rhs_root_);
   auto all_attrs = SetAttributes(origin_root);
-  inner::LiteGraph::GraphBuilder gb("");
+  inner::GraphBuilder gb("");
   mindspore::HashMap<PatternNodePtr, inner::NodePtr> pattern_to_ref;
   for (auto &n : (*res)) {
     if (PatternNodeType(n->op()) != inner::NType::Primitive) continue;
@@ -619,12 +619,12 @@ void ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
   auto &outputs = litegraph->GetOutputs();
   for (size_t i = 0; i < outputs.size(); i++) {
     if (outputs[i]->NodeType() == inner::NType::Value) {
-      inner::LiteGraph::GraphBuilder gb;
+      inner::GraphBuilder gb;
       std::vector<int64_t> new_shape = {1};
       auto op_ptr = gb.Emit("BroadcastTo", {outputs[i]}, {{"shape", MakeValue(new_shape)}});
       litegraph->SetOutput(i, op_ptr);
     } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
-      inner::LiteGraph::GraphBuilder gb;
+      inner::GraphBuilder gb;
       auto op_ptr = gb.Emit("Reshape", {outputs[i]}, {{"shape", MakeValue(outputs[i]->shape)}});
       litegraph->SetOutput(i, op_ptr);
     }

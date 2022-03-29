@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,7 @@ class LambApplyOptimizerAssign : public OpDesc {
   ~LambApplyOptimizerAssign() = default;
 
  protected:
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &grad = inputs[0];
     const auto &inputv = inputs[1];
     const auto &inputm = inputs[2];
@@ -43,56 +42,56 @@ class LambApplyOptimizerAssign : public OpDesc {
     const auto &weight_decay_rate = inputs[11];
 
     // next_v
-    auto square_grad = gb.Emit("Mul", {grad, grad});
-    auto mul_3_result = gb.Emit("Mul", {square_grad, one_minus_beta_2});
-    auto mul_2_result = gb.Emit("Mul", {inputv, beta_2});
-    auto next_v = gb.Emit("Add", {mul_2_result, mul_3_result});
+    auto square_grad = gb.Mul(grad, grad);
+    auto mul_3_result = gb.Mul(square_grad, one_minus_beta_2);
+    auto mul_2_result = gb.Mul(inputv, beta_2);
+    auto next_v = gb.Add(mul_2_result, mul_3_result);
 
     // next_m
-    auto mul_0_result = gb.Emit("Mul", {inputm, beta_1});
-    auto mul_1_result = gb.Emit("Mul", {grad, one_minus_beta_1});
-    auto next_m = gb.Emit("Add", {mul_0_result, mul_1_result});
+    auto mul_0_result = gb.Mul(inputm, beta_1);
+    auto mul_1_result = gb.Mul(grad, one_minus_beta_1);
+    auto next_m = gb.Add(mul_0_result, mul_1_result);
 
     auto shape = next_m->shape;
-    tensor::TensorPtr data = std::make_shared<tensor::Tensor>(static_cast<double>(1.0), TypeIdToType(beta_2->type));
-    auto const_one = gb.Value(data);
+    auto const_one = gb.Const(1.0, beta_2->type);
 
-    auto beta_1_tensor = gb.Emit("BroadcastTo", {beta_1}, {{"shape", MakeValue(shape)}});
-    auto beta_2_tensor = gb.Emit("BroadcastTo", {beta_2}, {{"shape", MakeValue(shape)}});
-
-    // pow
-    auto beta_1_log = gb.Emit("Log", {beta_1_tensor});
-    auto mul_res_1 = gb.Emit("Mul", {beta_1_log, steps});
-    auto beta_1_steps = gb.Emit("Exp", {mul_res_1});
-
-    auto neg_beta_1_step = gb.Emit("Neg", {beta_1_steps});
-    auto beta1_correction = gb.Emit("Add", {neg_beta_1_step, const_one});
-
-    auto next_m_unbiased = gb.Emit("RealDiv", {next_m, beta1_correction});
+    auto beta_1_tensor = gb.BroadcastTo(beta_1, shape);
+    auto beta_2_tensor = gb.BroadcastTo(beta_2, shape);
 
     // pow
-    auto beta_2_log = gb.Emit("Log", {beta_2_tensor});
-    auto mul_res_2 = gb.Emit("Mul", {beta_2_log, steps});
-    auto beta_2_steps = gb.Emit("Exp", {mul_res_2});
+    auto beta_1_log = gb.Log(beta_1_tensor);
+    auto mul_res_1 = gb.Mul(beta_1_log, steps);
+    auto beta_1_steps = gb.Exp(mul_res_1);
 
-    auto neg_beta_2_step = gb.Emit("Neg", {beta_2_steps});
-    auto beta2_correction = gb.Emit("Add", {neg_beta_2_step, const_one});
+    auto neg_beta_1_step = gb.Neg(beta_1_steps);
+    auto beta1_correction = gb.Add(neg_beta_1_step, const_one);
 
-    auto next_v_unbiased = gb.Emit("RealDiv", {next_v, beta2_correction});
+    auto next_m_unbiased = gb.Div(next_m, beta1_correction);
+
+    // pow
+    auto beta_2_log = gb.Log(beta_2_tensor);
+    auto mul_res_2 = gb.Mul(beta_2_log, steps);
+    auto beta_2_steps = gb.Exp(mul_res_2);
+
+    auto neg_beta_2_step = gb.Neg(beta_2_steps);
+    auto beta2_correction = gb.Add(neg_beta_2_step, const_one);
+
+    auto next_v_unbiased = gb.Div(next_v, beta2_correction);
     // update
-    auto sqrt_next_v = gb.Emit("Sqrt", {next_v_unbiased});
+    auto sqrt_next_v = gb.Sqrt(next_v_unbiased);
 
-    auto add_2_result = gb.Emit("Add", {sqrt_next_v, epsilon});
-    auto update = gb.Emit("RealDiv", {next_m_unbiased, add_2_result});
+    auto add_2_result = gb.Add(sqrt_next_v, epsilon);
+    auto update = gb.Div(next_m_unbiased, add_2_result);
     // update do_use_weight_decay
-    auto do_use_weight_mul = gb.Emit("Mul", {input_param, weight_decay_rate});
-    auto do_use_weight_decay = gb.Emit("Mul", {do_use_weight_mul, do_use_weight});
-    auto update_res = gb.Emit("Add", {do_use_weight_decay, update});
+    auto do_use_weight_mul = gb.Mul(input_param, weight_decay_rate);
+    auto do_use_weight_decay = gb.Mul(do_use_weight_mul, do_use_weight);
+    auto update_res = gb.Add(do_use_weight_decay, update);
 
-    auto next_v_res = gb.Emit("Assign", {inputv, next_v});
-    auto next_m_res = gb.Emit("Assign", {inputm, next_m});
+    auto next_v_res = gb.Assign(inputv, next_v);
+    auto next_m_res = gb.Assign(inputm, next_m);
+    auto result = {update_res, next_v_res, next_m_res};
 
-    return {update_res, next_v_res, next_m_res};
+    return result;
   }
 };
 OP_EXPANDER_REGISTER("LambApplyOptimizerAssign", LambApplyOptimizerAssign);

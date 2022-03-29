@@ -33,7 +33,7 @@ class OpExpanderFactory {
   std::shared_ptr<OpDesc> GetExpander(const std::string &op) {
     if (auto iter = creators.find(op); iter != creators.end()) {
       auto expander_ptr = iter->second();
-      expander_ptr->op_ = op;
+      expander_ptr->name_ = op;
       return expander_ptr;
     }
     return nullptr;

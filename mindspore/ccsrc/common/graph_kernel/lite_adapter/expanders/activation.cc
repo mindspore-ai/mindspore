@@ -24,8 +24,7 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-NodePtr GetActivationExpander(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs,
-                              int64_t activation_type) {
+NodePtr GetActivationExpander(const inner::GraphBuilder &gb, const NodePtrList &inputs, int64_t activation_type) {
   switch (activation_type) {
     case ActivationType::RELU:
       return ReluExpand(gb, inputs);
@@ -47,9 +46,9 @@ class Activation : public OpDesc {
   ~Activation() = default;
 
  protected:
-  NodePtrList Expand() override {
+  NodePtrList Expand(const NodePtrList &inputs) override {
     auto activation_type = GetValue<int64_t>(attrs_["activation_type"]);
-    return {GetActivationExpander(gb, gb.Get()->inputs(), activation_type)};
+    return {GetActivationExpander(gb, inputs, activation_type)};
   }
 };
 OP_EXPANDER_REGISTER("Activation", Activation);

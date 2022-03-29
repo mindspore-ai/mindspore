@@ -270,7 +270,7 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph) 
 
 inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
                                                 HashMap<inner::NodePtr, AnfNodePtr> *op_node_map) {
-  inner::LiteGraph::GraphBuilder gb(GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)));
+  inner::GraphBuilder gb(GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)));
   std::map<AnfNodePtr, inner::NodePtr> node_map;
   auto todos = TopoSort(func_graph->output());
   const auto &params = func_graph->parameters();
