@@ -364,6 +364,9 @@ STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_
   auto dim_size = element_shape_proto.dim_size();
   std::vector<int> tensor_list_data(dim_size + 2);
   tensor_list_data[0] = TensorFlowUtils::GetTFDataType(tensorflow::DataType(element_dtype));
+  if (tensor_list_data[0] == kNumberTypeFloat64) {
+    tensor_list_data[0] = kNumberTypeFloat32;
+  }
   tensor_list_data[1] = element_shape_proto.dim_size();
   for (int i = 0; i < dim_size; i++) {
     auto dim = element_shape_proto.dim(i).size();

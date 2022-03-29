@@ -275,6 +275,14 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, Al
   std::vector<std::vector<int> > tensor_shape{};
   std::transform(src.tensors_.begin(), src.tensors_.end(), std::back_inserter(tensor_shape),
                  [](const Tensor *tensor_item) { return tensor_item->shape(); });
+
+  for (LiteQuantParam quant : src.quant_params()) {
+    result->AddQuantParam(quant);
+  }
+
+  if (result->shape().empty()) {
+    return result;
+  }
   result->MallocTensorListData(src_tensor_dtype, tensor_shape);
   if (copy_data) {
     for (size_t i = 1; i < src.tensors_.size(); ++i) {
@@ -287,10 +295,6 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, Al
       }
     }
     result->own_data_ = src.own_data_;
-  }
-
-  for (LiteQuantParam quant : src.quant_params()) {
-    result->AddQuantParam(quant);
   }
 
   return result;
