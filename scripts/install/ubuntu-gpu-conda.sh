@@ -25,7 +25,7 @@
 #
 # Augments:
 #   - PYTHON_VERSION: python version to install. [3.7(default), 3.8, 3.9]
-#   - MINDSPORE_VERSION: mindspore version to install, default 1.6.0
+#   - MINDSPORE_VERSION: mindspore version to install
 #   - CUDA_VERSION: CUDA version to install. [10.1, 11.1(default)]
 #   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
 #
@@ -36,7 +36,7 @@
 set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
-MINDSPORE_VERSION=${MINDSPORE_VERSION:-1.6.0}
+MINDSPORE_VERSION=${MINDSPORE_VERSION:-EMPTY}
 CUDA_VERSION=${CUDA_VERSION:-11.1}
 OPENMPI=${OPENMPI:-off}
 
@@ -151,7 +151,11 @@ cudnn_version_map["10.1"]="7.6.5"
 cudnn_version_map["11.1"]="8.1.0"
 conda create -n $env_name python=${PYTHON_VERSION} -y
 conda activate $env_name
-conda install mindspore-gpu=${MINDSPORE_VERSION} \
+install_name="mindspore-gpu"
+if [[ $MINDSPORE_VERSION != "EMPTY" ]]; then
+    install_name="${install_name}=${MINDSPORE_VERSION}"
+fi
+conda install ${install_name} \
     cudatoolkit=${CUDA_VERSION} cudnn=${cudnn_version_map[$CUDA_VERSION]} -c mindspore -c conda-forge -y
 
 # check mindspore installation
