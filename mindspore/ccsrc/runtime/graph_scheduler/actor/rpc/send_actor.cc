@@ -22,7 +22,7 @@ namespace mindspore {
 namespace runtime {
 void SendActor::SetRouteInfo(uint32_t, const std::string &, const std::string &send_src_node_name,
                              const std::string &send_dst_node_name) {
-  auto peer_actor_id = send_src_node_name + kInterProcessEdgeMark + send_dst_node_name;
+  auto peer_actor_id = inter_process_edge_name_;
   peer_actor_ids_.emplace_back(peer_actor_id);
   rpc_output_node_name_.emplace_back(send_dst_node_name);
 }
@@ -69,6 +69,7 @@ void SendActor::SendOutput(OpContext<DeviceTensor> *const context) {
     std::string peer_server_url = peer.second;
     auto message = BuildRpcMessage(send_output, peer_server_url);
     MS_ERROR_IF_NULL_WO_RET_VAL(message);
+    MS_LOG(INFO) << "Rpc actor send message for inter-process edge: " << peer.first;
     client_->SendAsync(std::move(message));
   }
 }

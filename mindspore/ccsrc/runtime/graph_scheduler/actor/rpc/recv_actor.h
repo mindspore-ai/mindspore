@@ -35,7 +35,8 @@ class RecvActor : public RpcActor {
                      GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
                      const std::set<size_t> &modifiable_ref_output_indexes)
       : RpcActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
-                 modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor) {}
+                 modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor),
+        is_context_valid_(false) {}
   ~RecvActor() override = default;
 
   // Besides set the op context, this method also notify the message handler to 'RunOpInterProcessData'.
@@ -53,12 +54,15 @@ class RecvActor : public RpcActor {
   bool StartServer();
 
  protected:
-  // When an inter-process data received, this method is called.
-  void RunOpInterProcessData(const std::shared_ptr<MessageBase> &msg, OpContext<DeviceTensor> *const context);
-
   // Besides the checking method in base class AbstractActor, condition of inter-process arrows should be checked for
   // recv actor.
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
+
+  // When an inter-process data received, this method is called.
+  void RunOpInterProcessData(const std::shared_ptr<MessageBase> &msg, OpContext<DeviceTensor> *const context);
+
+  // Besides erasing input data and input controls when finish actor running, inter-process inputs should be erased.
+  void EraseInput(const OpContext<DeviceTensor> *context) override;
 
  private:
   // The message callback of the tcp server.
