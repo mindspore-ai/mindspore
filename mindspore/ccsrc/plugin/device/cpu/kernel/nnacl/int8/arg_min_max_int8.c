@@ -33,7 +33,7 @@ void CalcParameter(const int *shape, int dims_number, int axis, int *pre_axis_co
 
 void SetOutputValue(float value, int32_t index, int8_t *output1, int8_t *output2, int offset,
                     float output_inverse_scale, float output_zp, bool out_value) {
-  if (output2) {
+  if (output2 != NULL) {
     int32_t *output1_index = (int32_t *)output1;
     output1_index[offset] = index;
     output2[offset] = value * output_inverse_scale + output_zp;
@@ -62,7 +62,7 @@ void DoArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, con
       if (!param->get_max_) {
         value = FLT_MAX;
       }
-      int32_t index = 0.0f;
+      int32_t index = 0;
       for (int k = 0; k < axis_count; ++k) {
         float value_tmp = input[input_offset + k * after_axis_count + j] * in_quant_arg->scale_ + bias;
         if (param->get_max_) {
@@ -78,8 +78,6 @@ void DoArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, con
         }
       }
       SetOutputValue(value, index, output1, output2, output_offset + j, output_inverse_scale, output_zp, out_value);
-      // float real_out = out_value ? value : index;
-      // output[output_offset + j] = real_out * output_inverse_scale + output_zp;
     }
   }
 }
@@ -129,8 +127,6 @@ void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output1, int8_t *output2, co
       int out_offset = j * param->out_strides_[0] + i;
       SetOutputValue(param->arg_elements_[j].data_.f_data_, param->arg_elements_[j].index_, output1, output2,
                      out_offset, output_inverse_scale, output_zp, out_value);
-      // float real_out = out_value ? param->arg_elements_[j].data_.f_data_ : param->arg_elements_[j].index_;
-      // output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
     }
   }
 }
@@ -161,8 +157,6 @@ void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output1, int8_t *output2, co
         int out_offset = out_dim0_offset + j + k * param->out_strides_[1];
         SetOutputValue(param->arg_elements_[j].data_.f_data_, param->arg_elements_[j].index_, output1, output2,
                        out_offset, output_inverse_scale, output_zp, out_value);
-        // float real_out = out_value ? param->arg_elements_[k].data_.f_data_ : param->arg_elements_[k].index_;
-        // output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
       }
     }
   }
@@ -197,8 +191,6 @@ void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output1, int8_t *output2, co
           int out_offset = out_dim1_offset + k + l * param->out_strides_[2];
           SetOutputValue(param->arg_elements_[j].data_.f_data_, param->arg_elements_[j].index_, output1, output2,
                          out_offset, output_inverse_scale, output_zp, out_value);
-          // float real_out = out_value ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
-          // output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
         }
       }
     }
@@ -237,8 +229,6 @@ void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output1, int8_t *output2, co
           int out_offset = out_dim2_offset + l;
           SetOutputValue(param->arg_elements_[j].data_.f_data_, param->arg_elements_[j].index_, output1, output2,
                          out_offset, output_inverse_scale, output_zp, out_value);
-          // float real_out = out_value ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
-          // output[out_offset] = GetInt8Output(real_out, output_inverse_scale, output_zp);
         }
       }
     }
