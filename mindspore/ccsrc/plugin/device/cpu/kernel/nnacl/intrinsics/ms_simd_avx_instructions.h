@@ -55,6 +55,8 @@
 #define MS_CEIL256_F32 _mm256_ceil_ps
 #define MS_MUL256_F32(src1, src2) _mm256_mul_ps(src1, src2)
 #define MS_MUL256_EPI32(src1, src2) _mm256_mullo_epi32(src1, src2)
+#define MS_FMADD256_F32(src1, src2, src3) _mm256_fmadd_ps(src1, src2, src3)
+#define MS_FMSUB256_F32(src1, src2, src3) _mm256_fmsub_ps(src1, src2, src3)
 #define MS_DIV256_F32(src1, src2) _mm256_div_ps(src1, src2)
 #define MS_MUL256_N_F32(src1, src2) _mm256_mul_ps(src1, _mm256_set1_ps(src2))
 #define MS_MUL256_N_EPI32(src1, src2) _mm256_mullo_epi32(src1, _mm256_set1_epi32(src2))
@@ -74,6 +76,14 @@ static inline float MS_GET_MAX256_F32(__m256 src) {
   float result = MS_F32X8_GETI(src, 0);
   for (int i = 1; i < 8; i++) {  // avx block num : 8
     result = fmaxf(result, MS_F32X8_GETI(src, i));
+  }
+  return result;
+}
+
+static inline float MS_GET_SUM256_F32(__m256 src) {
+  float result = MS_F32X8_GETI(src, 0);
+  for (int i = 1; i < 8; i++) {  // avx block num : 8
+    result = result + MS_F32X8_GETI(src, i);
   }
   return result;
 }
