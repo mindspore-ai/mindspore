@@ -3,8 +3,6 @@
 
 .. py:class:: mindspore.ops.BroadcastTo(shape)
 
-    对输入Tensor广播到指定shape。
-
     将输入shape广播到目标shape。如果目标shape中有-1的维度，它将被该维度中的输入shape的值替换。
 
     当输入shape广播到目标shape时，它从最后一个维度开始。如果目标shape中有-1的维度，则-1维度不能位于一个不存在的维度中。

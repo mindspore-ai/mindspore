@@ -3,7 +3,7 @@ mindspore.ops.Identity
 
 .. py:class:: mindspore.ops.Identity
 
-    返回与输入具有相同shape和值得Tensor。
+    返回与输入具有相同shape和值的Tensor。
 
     **输入：**
 

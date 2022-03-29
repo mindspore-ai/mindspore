@@ -3,9 +3,9 @@
 
 .. py:class:: mindspore.ops.ComputeAccidentalHits(num_true=1)
 
-    计算与候选抽样目标类匹配的位置id。
+    计算与目标类完全匹配的抽样样本的位置id。
 
-    当目标类与样本类匹配时，我们称之为"accidental hit"。accidental hit的计算结果包含三部分(index、id、weight)，其中index代表目标类中的行号，id代表候选抽样中的位置，weight为FLOAT_MAX。FLOAT_MAX表示Float类型中的最大值。
+    当目标类与抽样类匹配时，我们称之为"accidental hit"。accidental hit的计算结果包含三部分(indices、ids、weights)，其中index代表目标类中的行号，id代表候选抽样中的位置，weight为float类型中的最大值。
 
     **参数：**
 
@@ -14,7 +14,7 @@
     **输入：**
 
     - **true_classes** (Tensor) - 目标类。数据类型为int32或int64，shape为 :math:`(batch\_size, num\_true)` 。
-    - **sampled_candidates** (Tensor) - 指定算子的候选采样结果，代表训练样本的类型。其数据类型为int32或int64，shape为 :math:`(num\_sampled, )` 。
+    - **sampled_candidates** (Tensor) - 算子的候选采样结果，代表训练样本的类别。其数据类型为int32或int64，shape为 :math:`(num\_sampled, )` 。
 
     **输出：**
 

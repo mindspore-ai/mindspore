@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Cast
 
-    返回指定新数据类型后的Tensor
+    转换输入Tensor的数据类型。
 
     **输入：**
     

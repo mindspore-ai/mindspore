@@ -23,4 +23,4 @@
 
     **异常：**
 
-    - **TypeError** - root_rank不是整数或group不是字符串。
+    - **TypeError** - root_rank不是int或group不是str。
