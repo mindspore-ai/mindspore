@@ -53,6 +53,9 @@ class AutoTune {
   /// \brief Helper to print the tree configuration
   void PrintTreeConfiguration() const;
 
+  /// \brief Helper to print the logs after/post the main loop in AutoTune
+  void PostMainLogging() const;
+
   /// \brief Helper to summarize the execution tree
   /// \param[out] out An output vector of string to store the summary
   /// \return Status object
