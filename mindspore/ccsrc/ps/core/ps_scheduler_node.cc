@@ -152,12 +152,12 @@ void PSSchedulerNode::ProcessSendUniqueID(const std::shared_ptr<TcpServer> &serv
   uint32_t rank_id = send_unique_id_msg.rank_id();
   std::string group_name = send_unique_id_msg.group_name();
   MS_LOG(INFO) << "Receive send unique id request, group name: " << group_name << ", node id: " << node_id
-               << ", rank id: " << rank_id;
+               << ", group rank id: " << rank_id;
 
   bool ret = false;
   std::string error = "";
   if (rank_id != 0) {
-    error = "The rank id: " + std::to_string(rank_id) + " of worker which sends unique id should be 0";
+    error = "The group rank id: " + std::to_string(rank_id) + " of worker which sends unique id should be 0";
     MS_LOG(ERROR) << error;
   } else {
     unique_id_group_[group_name] = send_unique_id_msg.unique_id();
@@ -166,7 +166,7 @@ void PSSchedulerNode::ProcessSendUniqueID(const std::shared_ptr<TcpServer> &serv
 
   GeneralResponse(server, conn, meta, ret, error);
   MS_LOG(INFO) << "Respond send unique id request, group name: " << group_name << ", node id: " << node_id
-               << ", rank id: " << rank_id;
+               << ", group rank id: " << rank_id;
 }
 
 void PSSchedulerNode::ProcessQueryUniqueID(const std::shared_ptr<TcpServer> &server,
@@ -180,10 +180,8 @@ void PSSchedulerNode::ProcessQueryUniqueID(const std::shared_ptr<TcpServer> &ser
   QueryUniqueIDMessage query_msg;
   query_msg.ParseFromArray(data, SizeToInt(size));
   std::string node_id = query_msg.node_id();
-  uint32_t rank_id = query_msg.rank_id();
   std::string group_name = query_msg.group_name();
-  MS_LOG(INFO) << "Receive query unique id request, group name: " << group_name << ", node id: " << node_id
-               << ", rank id: " << rank_id;
+  MS_LOG(INFO) << "Receive query unique id request, group name: " << group_name << ", node id: " << node_id;
 
   auto iter = unique_id_group_.find(group_name);
   bool is_success = (iter != unique_id_group_.end());
@@ -200,8 +198,7 @@ void PSSchedulerNode::ProcessQueryUniqueID(const std::shared_ptr<TcpServer> &ser
     return;
   }
 
-  MS_LOG(INFO) << "Respond query unique id request, group name: " << group_name << ", node id: " << node_id
-               << ", rank id: " << rank_id;
+  MS_LOG(INFO) << "Respond query unique id request, group name: " << group_name << ", node id: " << node_id;
 }
 
 void PSSchedulerNode::ProcessSendFinishTransform(const std::shared_ptr<TcpServer> &server,
