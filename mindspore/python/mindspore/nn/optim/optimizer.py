@@ -135,10 +135,13 @@ class Optimizer(Cell):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
+    _support_parallel_optimizer = False
 
     def __init__(self, learning_rate, parameters, weight_decay=0.0, loss_scale=1.0):
         super(Optimizer, self).__init__(auto_prefix=False)
         parameters = self._parameters_base_check(parameters, "parameters")
+        self.param_rank = None
+        self.optim_filter = None
         if not all(isinstance(x, Parameter) for x in parameters) and not all(isinstance(x, dict) for x in parameters):
             raise TypeError("For 'Optimizer', all elements of the argument 'parameters' must be 'Parameter' or 'dict',"
                             " please check the 'parameters'.")
@@ -237,9 +240,9 @@ class Optimizer(Cell):
         else:
             self.use_parallel = False
         if self.use_parallel:
-            if self.cls_name not in ["Lamb", "AdamWeightDecay", "AdaFactor"]:
-                raise RuntimeError("For 'Optimizer', parallel optimizer only support optimizer 'Lamb' and "
-                                   "'AdamWeightDecay' and 'AdaFactor', but got {}.".format(self.cls_name))
+            if not self._support_parallel_optimizer:
+                raise RuntimeError("For 'Optimizer', parallel optimizer shard doest not support "
+                                   "optimizer {}.".format(self.cls_name))
             self.dev_num = _get_device_num()
             if self.dev_num > self.param_length:
                 raise RuntimeError("Parallel optimizer can not be applied when the number of parameters {} is"

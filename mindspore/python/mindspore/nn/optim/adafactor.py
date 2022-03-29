@@ -267,6 +267,7 @@ class AdaFactor(Optimizer):
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
+    _support_parallel_optimizer = True
 
     @opt_init_args_register
     def __init__(self,
