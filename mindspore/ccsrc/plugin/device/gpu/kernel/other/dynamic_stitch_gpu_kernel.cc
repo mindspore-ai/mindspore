@@ -61,8 +61,10 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
 }
 
 void DynamicStitchKernelMod::UpdateOp() {
+  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                             "DynamicStitch cudaStreamSynchronized failed");
   auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
-  output_shape[0] = max_index_ + 1;
+  output_shape[0] = IntToSize(max_index_) + 1;
   auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), n_);
   common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
   MS_LOG(DEBUG) << "Run PostExecute for dynamicstitch, real output shape is " << output_shape;
@@ -79,6 +81,7 @@ void DynamicStitchKernelMod::InitSizeLists() { return; }
 bool DynamicStitchKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs, void *stream) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
+  stream_ptr_ = stream;
   auto max_index_dev = GetDeviceAddress<int>(workspace, 0);
   auto output_addr = GetDeviceAddress<unsigned char>(outputs, 0);
   // Init output  and max_index with 0
@@ -94,11 +97,9 @@ bool DynamicStitchKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
     CallStitch(index_addr, data_addr, output_addr, index_num, one_data_ele_num_ * data_type_size_, max_index_dev,
                cuda_stream);
   }
-  int temp = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&temp, max_index_dev, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
-                             "Copy max_index failed")
-  max_index_ = IntToSize(temp);
+  CHECK_CUDA_RET_WITH_EXCEPT(
+    kernel_node_, cudaMemcpyAsync(&max_index_, max_index_dev, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
+    "Copy max_index failed")
   return true;
 }
 }  // namespace kernel
