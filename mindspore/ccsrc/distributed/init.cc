@@ -30,7 +30,7 @@ bool Initialize() {
   }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
-  if (cluster::ClusterContext::instance()->initialized()) {
+  if (cluster::ClusterContext::instance()->initialized() && !collective::CollectiveManager::instance()->initialized()) {
     // Server and Scheduler don't use collective communication library.
     auto node = cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);
