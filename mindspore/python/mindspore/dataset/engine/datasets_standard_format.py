@@ -380,8 +380,10 @@ class OBSMindDataset(GeneratorDataset):
     Examples:
         >>> dataset_obs_dir = ["s3://path/to/obs_dataset_file_1", "s3://path/to/obs_dataset_file_2"]
         >>> sync_obs_dir = "s3://sync-dir"
-        >>> dataset = ds.MindDataset(dataset_obs_dir, "https://your-endpoint:9000", "AK of OBS", "SK of OBS",
-        ...                          sync_obs_dir, shuffle=True, num_shards=num_shards, shard_id=shard_id)
+        >>> num_shards = 8
+        >>> shard_id = 0
+        >>> dataset = ds.OBSMindDataset(dataset_obs_dir, "https://your-endpoint:9000", "AK of OBS", "SK of OBS",
+        ...                             sync_obs_dir, shuffle=True, num_shards=num_shards, shard_id=shard_id)
     """
 
     @check_obsminddataset
