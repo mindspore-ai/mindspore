@@ -202,7 +202,7 @@ class Slice(TensorOperation):
             5.  :py:obj:`Ellipsis`: Slice the whole dimension, same result with `None`.
 
     Raises:
-        TypeError: If `slices` is not of type int, list[int], :py:obj:'slice', :py:obj:'None' or :py:obj:'Ellipsis'.
+        TypeError: If `slices` is not of type int, list[int], :py:obj:`slice`, :py:obj:`None` or :py:obj:`Ellipsis`.
 
     Supported Platforms:
         ``CPU``
