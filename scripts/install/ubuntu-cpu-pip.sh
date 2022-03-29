@@ -24,16 +24,21 @@
 #
 # Augments:
 #   - PYTHON_VERSION: python version to install. [3.7(default), 3.8, 3.9]
-#   - MINDSPORE_VERSION: mindspore version to install, default 1.6.0
+#   - MINDSPORE_VERSION: mindspore version to install, required
 #
 # Usage:
-#   Run script like `bash ./ubuntu-cpu-pip.sh`.
+#   Run script like `MINDSPORE_VERSION=1.6.1 bash ./ubuntu-cpu-pip.sh`.
 #   To set augments, run it as `PYTHON_VERSION=3.9 MINDSPORE_VERSION=1.5.0 bash ./ubuntu-cpu-pip.sh`.
 
 set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
-MINDSPORE_VERSION=${MINDSPORE_VERSION:-1.6.0}
+MINDSPORE_VERSION=${MINDSPORE_VERSION:-EMPTY}
+
+if [[ $MINDSPORE_VERSION == "EMPTY" ]]; then
+    echo "MINDSPORE_VERSION not set, please check available versions at https://www.mindspore.cn/versions."
+    exit 1
+fi
 
 available_py_version=(3.7 3.8 3.9)
 if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
