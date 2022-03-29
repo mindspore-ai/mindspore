@@ -59,16 +59,9 @@ void KernelMod::InferShape() {
   auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
   for (size_t i = 0; i < input_size; i++) {
-    AnfNodePtr real_input = nullptr;
-    size_t real_input_index = 0;
-    if (real_input_nodes_.count(i) > 0) {
-      real_input = real_input_nodes_[i].first.lock();
-      real_input_index = real_input_nodes_[i].second;
-    } else {
-      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
-      real_input = input_node_with_index.first;
-      real_input_index = input_node_with_index.second;
-    }
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i, false);
+    auto real_input = input_node_with_index.first;
+    auto real_input_index = input_node_with_index.second;
     MS_EXCEPTION_IF_NULL(real_input);
     if (skip_nop_node) {
       InferShapeForNopNode(real_input);

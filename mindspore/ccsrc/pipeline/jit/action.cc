@@ -111,12 +111,10 @@ void DisableMindRT(const ResourcePtr &res) {
   auto parallel_mode = parallel_context->parallel_mode();
   bool is_parallel_mode = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
   bool enable_old_runtime = (common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "0");
-  bool use_old_vm_for_dynamic_shape = func_graph->exist_multi_target() && IsDynamicShapeGraph(func_graph);
   bool use_old_vm_for_control_parallel =
     func_graph->exist_multi_target() && ExistControlFlow(func_graph) && is_parallel_mode;
-  if (enable_old_runtime || use_old_vm_for_dynamic_shape || use_old_vm_for_control_parallel) {
-    // Heterogeneous scenario + dynamic_shape runs in MsBackend.
-    MS_LOG(INFO) << "Disable mindRT in the heterogeneous + dynamic shape scenario.";
+  if (enable_old_runtime || use_old_vm_for_control_parallel) {
+    MS_LOG(INFO) << "Disable mindRT in the heterogeneous + control flow + parallel scenario.";
     context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
     // Update the backend.
     auto new_backend = compile::CreateBackend();
