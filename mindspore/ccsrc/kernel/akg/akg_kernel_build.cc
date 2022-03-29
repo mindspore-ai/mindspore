@@ -473,15 +473,9 @@ std::vector<std::string> AkgKernelBuilder::GetKernelJsonsByHashId(const std::vec
   return jsons;
 }
 
-bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args) {
-  repeat_nodes_.clear();
-  auto new_build_args = GetNotCachedKernels(build_args);
-  if (new_build_args.empty()) {
-    return true;
-  }
-
+bool AkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &build_args) {
   AkgKernelPool kp;
-  auto ret = kp.Init(new_build_args);
+  auto ret = kp.Init(build_args);
   if (ret != 0) {
     MS_LOG(ERROR) << "AkgKernelPool init failed.";
     return false;
@@ -495,7 +489,7 @@ bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build
   }
 
   if (!fetched_ids.empty()) {
-    auto jsons = GetKernelJsonsByHashId(new_build_args, fetched_ids);
+    auto jsons = GetKernelJsonsByHashId(build_args, fetched_ids);
 
     auto client = GetClient();
     MS_EXCEPTION_IF_NULL(client);
@@ -526,6 +520,20 @@ bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build
 
   if (kp.Release() != 0) {
     MS_LOG(ERROR) << "AkgKernelPool release failed.";
+    return false;
+  }
+
+  return true;
+}
+
+bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args) {
+  repeat_nodes_.clear();
+  auto new_build_args = GetNotCachedKernels(build_args);
+  if (new_build_args.empty()) {
+    return true;
+  }
+
+  if (!ParallelBuild(new_build_args)) {
     return false;
   }
 
@@ -582,6 +590,8 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
   std::vector<JsonNodePair> json_and_node;
   for (const auto &anf_node : anf_nodes) {
     MS_EXCEPTION_IF_NULL(anf_node);
+    // Node already has kernel mod, no need to process it.
+    if (AnfAlgo::GetKernelMod(anf_node) != nullptr) continue;
     graphkernel::DumpOption option;
     option.get_compute_capability = true;
     AkgKernelJsonGenerator akg_kernel_json_generator(option);

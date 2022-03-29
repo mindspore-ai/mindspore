@@ -41,6 +41,8 @@ class GraphKernelOptimizer {
   PassManagerPtr HighLevelOpt2() const;
   // Combine kernels
   PassManagerPtr Combine() const;
+  // Build kernels
+  PassManagerPtr Build() const;
   // Post-process
   PassManagerPtr PostProcess() const;
 

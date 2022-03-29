@@ -54,6 +54,7 @@
 #include "common/graph_kernel/reduce_fake_out_mem.h"
 #include "common/graph_kernel/depend_elimination.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "common/graph_kernel/graph_kernel_build.h"
 
 namespace mindspore::graphkernel {
 using opt::CommonSubexpressionElimination;
@@ -204,8 +205,18 @@ PassManagerPtr GraphKernelOptimizer::Combine() const {
   return pm;
 }
 
+PassManagerPtr GraphKernelOptimizer::Build() const {
+  auto pm = std::make_shared<GraphKernelPassManager>(6, "build");
+  pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
+  // Compile graph kernel nodes, and inline nodes if compile failed.
+  pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1);
+  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
+  pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
+  return pm;
+}
+
 PassManagerPtr GraphKernelOptimizer::PostProcess() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(6, "postprocess");
+  auto pm = std::make_shared<GraphKernelPassManager>(7, "postprocess");
   // Make Tuple for the inputs of UpdateState. (the reverse of SpreadUpdateState)
   pm->Add(std::make_shared<ShrinkUpdateState>(), OptLevel_1);
 
@@ -235,6 +246,7 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   optimizer->AddPassManager(Split());
   optimizer->AddPassManager(HighLevelOpt2());
   optimizer->AddPassManager(Combine());
+  optimizer->AddPassManager(Build());
   optimizer->AddPassManager(PostProcess());
 
   auto mng = GkUtils::GetFuncGraphManager(kernel_graph);
