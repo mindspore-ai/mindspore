@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <chrono>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "actor/msg.h"
@@ -65,6 +66,15 @@ __attribute__((unused)) static std::unique_ptr<MessageBase> CreateMessage(const 
   message->to = AID("", dest_url);
   message->body = content;
   return message;
+}
+
+__attribute__((unused)) static std::chrono::high_resolution_clock::time_point Now() {
+  return std::chrono::high_resolution_clock::now();
+}
+
+__attribute__((unused)) static std::chrono::milliseconds ElapsedTime(
+  const std::chrono::high_resolution_clock::time_point &start_time) {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(Now() - start_time);
 }
 }  // namespace topology
 }  // namespace cluster

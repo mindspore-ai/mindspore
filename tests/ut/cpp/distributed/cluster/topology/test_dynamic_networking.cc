@@ -40,11 +40,22 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
   common::SetEnv(kEnvMetaServerPort, server_port.c_str());
 
-  MetaServerNode msn("meta_server_node");
+  size_t total_node_num = 1;
+  MetaServerNode msn("meta_server_node", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
   ComputeGraphNode cgn("compute_graph_node");
   ASSERT_TRUE(cgn.Initialize());
+
+  size_t interval = 1;
+  size_t retry = 30;
+  while (((msn.GetAliveNodeNum() != total_node_num) || (msn.TopologyState() != TopoState::kInitialized)) &&
+         (retry-- > 0)) {
+    sleep(interval);
+  }
+
+  ASSERT_EQ(total_node_num, msn.GetAliveNodeNum());
+  ASSERT_EQ(TopoState::kInitialized, msn.TopologyState());
 
   cgn.Finalize();
   msn.Finalize();

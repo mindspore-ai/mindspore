@@ -30,6 +30,11 @@ bool MetaServerNode::Initialize() {
 
   // Init the TCP server.
   RETURN_IF_FALSE_WITH_LOG(InitTCPServer(), "Failed to create the TCP server.");
+
+  start_time_ = Now();
+
+  // Init the thread for monitoring the state of the cluster topo.
+  topo_monitor_ = std::thread(&MetaServerNode::UpdateTopoState, this);
   return true;
 }
 
@@ -39,6 +44,10 @@ bool MetaServerNode::Finalize() {
     tcp_server_->Finalize();
     tcp_server_.reset();
   }
+
+  // Stop the topo monitor thread.
+  enable_monitor_ = false;
+  topo_monitor_.join();
   return true;
 }
 
@@ -75,6 +84,7 @@ void MetaServerNode::ProcessRegister(const std::shared_ptr<MessageBase> &message
 
   // Add the compute graph node into registered nodes.
   const auto &node_id = registration.node_id();
+  std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) == nodes_.end()) {
     std::shared_ptr<ComputeGraphNodeState> node_state = std::make_shared<ComputeGraphNodeState>(node_id);
     nodes_[node_id] = node_state;
@@ -93,12 +103,44 @@ void MetaServerNode::ProcessHeartbeat(const std::shared_ptr<MessageBase> &messag
 
   // Update the state(timestamp) of this node.
   const auto &node_id = heartbeat.node_id();
-  if (nodes_.find(node_id) == nodes_.end()) {
+  std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
+  if (nodes_.find(node_id) != nodes_.end()) {
     auto &node = nodes_[node_id];
     time(&(node->last_update));
   } else {
     MS_LOG(ERROR) << "Invalid node: " << node_id << ".";
   }
+}
+
+void MetaServerNode::UpdateTopoState() {
+  while (enable_monitor_) {
+    if (topo_state_ == TopoState::kInitializing) {
+      // Set the state of topo to `kFailed` if the topology is still in process of initializtion but timed out.
+      if (ElapsedTime(start_time_) > kTopoInitTimeout) {
+        MS_LOG(ERROR) << "Failed to initialize the cluster topology after waiting for " << kTopoInitTimeout.count()
+                      << " milliseconds.";
+        topo_state_ = TopoState::kFailed;
+      }
+
+      std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
+      if (nodes_.size() == total_node_num_) {
+        MS_LOG(INFO) << "The cluster topology has been constructed successfully";
+        topo_state_ = TopoState::kInitialized;
+        continue;
+      }
+      MS_LOG(INFO) << "The cluster topology is in the process of constructing, current alive node num: ("
+                   << nodes_.size() << "/" << total_node_num_ << ")";
+    }
+    static const size_t interval = 3;
+    sleep(interval);
+  }
+}
+
+TopoState MetaServerNode::TopologyState() { return topo_state_; }
+
+size_t MetaServerNode::GetAliveNodeNum() {
+  std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
+  return nodes_.size();
 }
 }  // namespace topology
 }  // namespace cluster
