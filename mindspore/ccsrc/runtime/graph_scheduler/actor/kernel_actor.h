@@ -79,6 +79,7 @@ class KernelActor : public DebugAwareActor {
   const CNodePtr &kernel() const { return kernel_; }
   const std::set<size_t> &modifiable_ref_input_indexes() const { return modifiable_ref_input_indexes_; }
   const std::set<size_t> &modifiable_ref_output_indexes() const { return modifiable_ref_output_indexes_; }
+  bool is_dynamic_shape() const { return is_dynamic_shape_; }
 
  protected:
   void Init() override;

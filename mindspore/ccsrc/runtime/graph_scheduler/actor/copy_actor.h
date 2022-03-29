@@ -37,7 +37,9 @@ using mindspore::device::DeviceContext;
 class CopyActor : public MemoryAwareActor {
  public:
   CopyActor(const std::string &name, const AID &memory_manager_aid)
-      : MemoryAwareActor(name, KernelTransformType::kCopyActor, nullptr, memory_manager_aid), output_(nullptr) {}
+      : MemoryAwareActor(name, KernelTransformType::kCopyActor, nullptr, memory_manager_aid),
+        output_(nullptr),
+        is_need_update_output_size_(false) {}
   ~CopyActor() override = default;
 
   // The memory related operation interface.
@@ -46,7 +48,8 @@ class CopyActor : public MemoryAwareActor {
   // The copy processing after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
-  const DeviceTensorPtr &output() const { return output_; }
+  const DeviceTensor *output() const { return output_; }
+  bool is_need_update_output_size() const { return is_need_update_output_size_; }
 
  protected:
   void Init() override;
@@ -66,8 +69,9 @@ class CopyActor : public MemoryAwareActor {
   // The output device tensor is saved from the output or fetched by device_tensor_store_keys_.
   std::vector<DeviceTensor *> output_device_tensor_;
 
-  // The output is created in the copy actor build, so can't be the raw pointer.
-  DeviceTensorPtr output_;
+  DeviceTensor *output_;
+  // The output size needs to be updated in the dynamic shape scene.
+  bool is_need_update_output_size_;
 };
 
 using CopyActorPtr = std::shared_ptr<CopyActor>;

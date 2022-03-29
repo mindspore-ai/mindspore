@@ -88,6 +88,16 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
       ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
     }
   }
+
+  if (actor->internal_parameters().size() > 0) {
+    ofs << "\t\tinternal_parameters:" << actor->internal_parameters().size() << "\n ";
+    for (auto &internal_parameter_iter : actor->internal_parameters()) {
+      auto internal_parameter = internal_parameter_iter.second.lock();
+      MS_EXCEPTION_IF_NULL(internal_parameter);
+      ofs << "\t\t\toutput_index:" << internal_parameter_iter.first
+          << "\tinternal_parameter:" << internal_parameter->DebugString() << "\n";
+    }
+  }
 }
 
 void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
@@ -140,7 +150,8 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(kernel);
   ofs << "\t\tkernel_name:" << kernel->fullname_with_scope()
       << "\tinputs_num:" << common::AnfAlgo::GetInputTensorNum(kernel)
-      << "\toutputs_num:" << common::AnfAlgo::GetOutputTensorNum(kernel) << "\n";
+      << "\toutputs_num:" << common::AnfAlgo::GetOutputTensorNum(kernel)
+      << "\tis_dynamic_shape:" << actor->is_dynamic_shape() << "\n";
   for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(kernel); ++i) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
@@ -201,6 +212,8 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
   }
 
   DumpAbstractActor(actor, ofs);
+
+  ofs << "\t\tis_need_update_output_size:" << actor->is_need_update_output_size() << "\n ";
   ofs << "\n";
 }
 
