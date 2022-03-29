@@ -18,7 +18,6 @@
 #include "gtest/gtest.h"
 #include "common/common_test.h"
 #include "include/errorcode.h"
-#include "tools/converter/converter.h"
 #include "src/lite_session.h"
 #include "src/lite_kernel.h"
 #include "src/common/file_utils.h"
@@ -28,6 +27,7 @@
 #include "include/api/serialization.h"
 #include "include/api/cell.h"
 
+using std::string;
 namespace mindspore {
 class GraphTest : public mindspore::CommonTest {
  public:
