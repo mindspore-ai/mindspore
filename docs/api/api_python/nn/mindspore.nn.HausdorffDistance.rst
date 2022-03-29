@@ -19,7 +19,7 @@ mindspore.nn.HausdorffDistance
     - **distance_metric** (string)：支持如下三种距离计算方法："euclidean"、"chessboard" 或 "taxicab"。默认值："euclidean"。
     - **percentile** (float)：0到100之间的浮点数。指定最终返回的Hausdorff距离的百分位数。默认值：None。
     - **directed** (bool)：如果为True，为单向Hausdorff距离，只计算h(y_pred, y)距离；如果为False，为双向Hausdorff距离，计算max(h(y_pred, y), h(y, y_pred))。默认值：False。
-    - **crop** (bool)：是否裁剪输入图像，仅保留foregrounds。为了保证y_pred和y的shape匹配，使用(y_pred | y)，即两图像的并集来确定bounding box。默认值：True。
+    - **crop** (bool)：是否裁剪输入图像，仅保留目标区域。为了保证y_pred和y的shape匹配，使用(y_pred | y)，即两图像的并集来确定bounding box。默认值：True。
 
     .. py:method:: clear()
 
