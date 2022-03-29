@@ -176,7 +176,7 @@ class EmbeddingLookup(Cell):
             ['DEVICE', 'CPU']. Default: 'CPU'.
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
             :class:`mindspore.nn.EmbeddingLookup`. Default: :class:`mindspore.nn.EmbeddingLookup.BATCH_SLICE`.
-        manual_shapes (tuple): The accompaniment array in field slice mode, Default: None.
+        manual_shapes (tuple): The accompaniment array in field slice mode. Default: None.
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
                                        or None. Default: None
         sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
