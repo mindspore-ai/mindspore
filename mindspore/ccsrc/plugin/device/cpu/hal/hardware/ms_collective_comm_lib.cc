@@ -73,10 +73,12 @@ bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vect
   return true;
 }
 
-bool MsCollectiveCommLib::BroadcastUniqueID(const std::string &group_name, bool is_root_node, size_t root_info_size,
-                                            void *root_info) const {
+bool MsCollectiveCommLib::BroadcastUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) {
   CHECK_IF_NULL(root_info);
-  if (is_root_node) {
+  auto group = GetGroup(group_name);
+  CHECK_IF_NULL(group);
+  uint32_t group_rank_id = group->GetGroupRank(node_->rank_id());
+  if (group_rank_id == 0) {
     while (!SendUniqueID(group_name, root_info_size, root_info)) {
       MS_LOG(WARNING) << "Send unique id to scheduler failed, retrying...";
       if (finalized_.load()) {
@@ -160,11 +162,13 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
                                        const void *root_info) const {
   CHECK_IF_NULL(root_info);
   CHECK_IF_NULL(node_);
+
   ps::core::SendUniqueIDMessage send_unique_id_msg;
   send_unique_id_msg.set_node_id(node_->node_id());
-  send_unique_id_msg.set_rank_id(node_->rank_id());
+  send_unique_id_msg.set_rank_id(0);
   send_unique_id_msg.set_group_name(group_name);
   send_unique_id_msg.set_unique_id(root_info, root_info_size);
+
   std::shared_ptr<std::vector<unsigned char>> output = nullptr;
   if (!node_->SendToScheduler(send_unique_id_msg.SerializeAsString().data(),
                               send_unique_id_msg.SerializeAsString().size(), NodeCommand::SEND_UNIQUE_ID, &output)) {
@@ -187,7 +191,6 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
   CHECK_IF_NULL(node_);
   ps::core::QueryUniqueIDMessage query_unique_id_msg;
   query_unique_id_msg.set_node_id(node_->node_id());
-  query_unique_id_msg.set_rank_id(node_->rank_id());
   query_unique_id_msg.set_group_name(group_name);
   std::shared_ptr<std::vector<unsigned char>> output = nullptr;
   if (!node_->SendToScheduler(query_unique_id_msg.SerializeAsString().data(),

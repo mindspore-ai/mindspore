@@ -292,10 +292,8 @@ message SendUniqueIDMessage {
 message QueryUniqueIDMessage {
   // The unique node id.
   string node_id = 1;
-  // The rank id of the node in the cluster.
-  uint32 rank_id = 2;
   // The group name of goupt which need to initialize collective communication.
-  string group_name = 3;
+  string group_name = 2;
 }
 
 message QueryUniqueIDRespMessage {
