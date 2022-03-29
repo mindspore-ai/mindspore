@@ -11,7 +11,7 @@ mindspore.dataset.transforms.c_transforms.Unique
     - 索引Tensor包含输入Tensor的每个元素在运算结果中的索引。
     - 计数Tensor包含运算结果Tensor的每个元素的计数。
 
-    .. note:: 需要在 :method:`batch` 操作之后调用该运算。
+    .. note:: 需要在 `batch` 操作之后调用该运算。
 
     **异常：**
 
