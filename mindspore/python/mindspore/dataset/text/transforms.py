@@ -709,6 +709,16 @@ if platform.system().lower() != 'windows':
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
             with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
 
+        Raises:
+            TypeError: If `lower_case` is not of type bool.
+            TypeError: If `keep_whitespace` is not of type bool.
+            TypeError: If `normalization_form` is not of type :class:`mindspore.dataset.text.NormalizeForm`.
+            TypeError: If `preserve_unused_token` is not of type bool.
+            TypeError: If `with_offsets` is not of type bool.
+
+        Supported Platforms:
+            ``CPU``
+
         Examples:
             >>> from mindspore.dataset.text import NormalizeForm
             >>>

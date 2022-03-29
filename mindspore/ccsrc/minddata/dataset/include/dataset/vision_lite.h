@@ -397,7 +397,7 @@ class MS_API ResizePreserveAR final : public TensorTransform {
 };
 
 /// \brief RGB2BGR TensorTransform.
-/// \notes Convert the format of input image from RGB to BGR.
+/// \note Convert the format of input image from RGB to BGR.
 class MS_API RGB2BGR final : public TensorTransform {
  public:
   /// \brief Constructor.
