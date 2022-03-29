@@ -2822,7 +2822,7 @@ class CSRTensor(CSRTensor_):
         Sparse matrix-vector multiplication.
 
         Args:
-            dense_vector (Tensor) - A dense Tensor, its shape must be (csr_tensor.shape[1], 1)
+            dense_vector (Tensor): A dense Tensor, its shape must be (csr_tensor.shape[1], 1)
 
         Returns:
             Tensor.
@@ -2843,7 +2843,7 @@ class CSRTensor(CSRTensor_):
             [[2.]
             [1.]]
         """
-        validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'Tensor')
+        validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'CSRTensor.mv')
         return tensor_operator_registry.get("csr_mv")(self, dense_vector)
 
     def sum(self, axis):
@@ -2851,7 +2851,7 @@ class CSRTensor(CSRTensor_):
         Reduces a dimension of a CSRTensor by summing all elements in the dimension.
 
         Args:
-            axis (int) - The dimensions to reduce.
+            axis (int): The dimensions to reduce.
 
         Returns:
             Tensor, the dtype is the same as `CSRTensor.values`.
