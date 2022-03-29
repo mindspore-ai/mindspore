@@ -43,9 +43,10 @@ class DynamicStitchKernelMod : public NativeGpuKernelMod {
  private:
   size_t n_;
   size_t real_ele_num_;
-  size_t max_index_;
+  int max_index_;
   size_t one_data_ele_num_;
   size_t data_type_size_;
+  void *stream_ptr_;
 };
 
 MS_REG_GPU_KERNEL(DynamicStitch, DynamicStitchKernelMod)
