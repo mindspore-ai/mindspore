@@ -11,5 +11,5 @@ mindspore.dataset.vision.py_transforms.RandomGrayscale
 
     **异常：**
 
-    - **TypeError** - 当 `prob` 的类型不为浮点型。
+    - **TypeError** - 当 `prob` 的类型不为float。
     - **ValueError** - 当 `prob` 取值不在[0, 1]范围内。

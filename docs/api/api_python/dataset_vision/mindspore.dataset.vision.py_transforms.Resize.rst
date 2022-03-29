@@ -3,11 +3,11 @@ mindspore.dataset.vision.py_transforms.Resize
 
 .. py:class:: mindspore.dataset.vision.py_transforms.Resize(size, interpolation=Inter.BILINEAR)
 
-    将输入PIL图像放缩为指定大小。
+    将输入PIL图像放缩为指定尺寸大小。
 
     **参数：**
 
-    - **size** (Union[int, sequence]) - 图像放缩的大小。若输入整型，将调整图像的较短边为此值，而保持图像的宽高比不变；若输入2元素序列，则以2个元素分别为高和宽放缩至(height, width)大小。
+    - **size** (Union[int, Sequence[int, int]]) - 图像放缩的尺寸大小。若输入int，将调整图像的较短边为此值，而保持图像的宽高比不变；若输入Sequence[int, int]，则以2个元素分别为高和宽进行放缩。
     - **interpolation** (Inter，可选) - 插值方式，取值可为 Inter.NEAREST、Inter.ANTIALIAS、Inter.BILINEAR 或 Inter.BICUBIC。默认值：Inter.BILINEAR。
 
       - **Inter.NEAREST**：最近邻插值。
@@ -17,6 +17,6 @@ mindspore.dataset.vision.py_transforms.Resize
 
     **异常：**
 
-    - **TypeError** - 当 `size` 的类型不为整型或整型序列。
+    - **TypeError** - 当 `size` 的类型不为int或Sequence[int, int]。
     - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
     - **ValueError** - 当 `size` 不为正数。
