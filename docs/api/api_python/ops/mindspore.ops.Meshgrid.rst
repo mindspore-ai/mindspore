@@ -9,7 +9,7 @@ mindspore.ops.Meshgrid
 
     **参数：**
 
-    - **indexing** ('xy', 'ij', optional) - 'xy'或'ij'。默认值：'xy'。以笛卡尔坐标'xy'或者矩阵'ij'索引作为输出。以长度为 `M` 和 `N` 的二维输入，取值为'xy'时，输出的shape为 `(N, M)` ，取值为'ij'时，输出的shape为 `(M, N)` 。以长度为 `M` , `N` 和 `P` 的三维输入，取值为'xy'时，输出的shape为 `(N, M, P)` ，取值为'ij'时，输出的shape为 `(M, N, P)` 。
+    - **indexing** ('xy', 'ij', optional) - 'xy'或'ij'。以笛卡尔坐标'xy'或者矩阵'ij'索引作为输出。以长度为 `M` 和 `N` 的二维输入，取值为'xy'时，输出的shape为 :math:`(N, M)` ，取值为'ij'时，输出的shape为 :math:`(M, N)` 。以长度为 `M` , `N` 和 `P` 的三维输入，取值为'xy'时，输出的shape为 :math:`(N, M, P)` ，取值为'ij'时，输出的shape为 :math:`(M, N, P)` 。默认值：'xy'。
 
     **输入：**
 

@@ -5,7 +5,7 @@ mindspore.ops.NLLLoss
 
     获取预测值和目标值之间的负对数似然损失。
 
-    reduction=none时，负对数似然损失如下：
+    reduction为'none'时，负对数似然损失如下：
 
     .. math::
         \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
@@ -17,7 +17,7 @@ mindspore.ops.NLLLoss
     reduction不为'none'（默认为'mean'），则
 
     .. math::
-        \ell(x, t)=\left\{\begin{array}{ll}
+        \ell(x, t)=L=\left\{\begin{array}{ll}
         \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean'; } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
         \end{array}\right.
@@ -34,10 +34,10 @@ mindspore.ops.NLLLoss
 
     **输出：**
 
-    由 `loss` 和 `total_weight` 组成的2个Tensor的元组。
+    由 `loss` 和 `total_weight` 组成的2个Tensor的tuple。
 
-    - **loss** (Tensor) - 当 `reduction` 为'none'且 `logits` 为2维Tensor时， `loss` 的shape为 :math:`(N,)` 。否则， `loss` 为scalar。数据类型与 `input's` 相同。
-    - **total_weight** (Tensor) - `total_weight` 是scalar，数据类型与 `weight's` 相同。
+    - **loss** (Tensor) - 当 `reduction` 为'none'且 `logits` 为2维Tensor时， `loss` 的shape为 :math:`(N,)` 。否则， `loss` 为scalar。数据类型与 `logits` 相同。
+    - **total_weight** (Tensor) - `total_weight` 是scalar，数据类型与 `weight` 相同。
 
     **异常：**
 
