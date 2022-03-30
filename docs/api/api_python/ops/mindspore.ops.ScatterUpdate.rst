@@ -3,9 +3,9 @@
 
 .. py:class:: mindspore.ops.ScatterUpdate(use_locking=True)
 
-    使用给定的更新值和输入索引更新数据的值。
+    使用给定的更新值和输入索引更新输入Tensor的值。
 
-    对于每个在 `indices.shape` 中的 `i, ..., j` ：
+    若 `indices` 的shape为(i, ..., j)，则
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j], :]= \text{updates}[i, ..., j, :]
