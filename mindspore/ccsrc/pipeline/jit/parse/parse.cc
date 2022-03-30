@@ -774,13 +774,10 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   auto new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
   UpdateInterpretForUserNode(new_node, {left_node, right_node});
   // Handling % symbol in formatted string values by JIT Fallback.
-  // For example, string % var, "The string is: %s." % str  or "The number is: %d." % num
-  if (IsPrimitiveCNode(left_node, prim::kPrimMakeTuple)) {
-    auto inputs = left_node->cast<CNodePtr>()->inputs();
-    if (inputs.size() <= 1) {
-      MS_LOG(EXCEPTION) << "Unexpected maketuple node:" << left_node->DebugString();
-    }
-    auto str_node = inputs[1];
+  // The string AnfNode may be created by ParseJoinedStr or ParseStr.
+  // For example, string % var, f"The string is: %s." % str  or "The number is: %d." % num
+  static const auto use_fallback = (support_fallback() != "0");
+  if (use_fallback) {
     auto op_cnode = op_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(op_cnode);
     const size_t symbol_index = 2;
@@ -788,12 +785,28 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
       MS_LOG(EXCEPTION) << "Unexpected symbol node:" << op_node->DebugString();
     }
     auto mod_node = op_cnode->input(symbol_index);
-    if (IsValueNode<StringImm>(str_node) && IsValueNode<Symbol>(mod_node)) {
-      new_node->set_interpret(true);
-      auto new_interpret_node = HandleInterpret(block, new_node, node);
-      return new_interpret_node;
+    if (IsValueNode<Symbol>(mod_node)) {
+      if (IsPrimitiveCNode(left_node, prim::kPrimMakeTuple)) {
+        // left_node created by ParseJoinedStr
+        auto inputs = left_node->cast<CNodePtr>()->inputs();
+        if (inputs.size() <= 1) {
+          MS_LOG(EXCEPTION) << "Unexpected maketuple node:" << left_node->DebugString();
+        }
+        auto str_node = inputs[1];
+        if (IsValueNode<StringImm>(str_node)) {
+          new_node->set_interpret(true);
+          auto new_interpret_node = HandleInterpret(block, new_node, node);
+          return new_interpret_node;
+        }
+      } else if (IsValueNode<StringImm>(left_node)) {
+        // left_node created by ParseStr
+        new_node->set_interpret(true);
+        auto new_interpret_node = HandleInterpret(block, new_node, node);
+        return new_interpret_node;
+      }
     }
   }
+
   return new_node;
 }
 
