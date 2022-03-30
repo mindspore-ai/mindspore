@@ -820,7 +820,7 @@ bool SchedulerNode::Finish(const uint32_t &) {
   return true;
 }
 
-void SchedulerNode::ProcessScaleoutRollback(const std::shared_ptr<HttpMessageHandler> &resp) {
+void SchedulerNode::ProcessScaleOutRollback(const std::shared_ptr<HttpMessageHandler> &resp) {
   MS_EXCEPTION_IF_NULL(resp);
   RequestProcessResult status(RequestProcessResultCode::kSuccess);
   if (node_manager_.GetClusterState() != ClusterState::CLUSTER_SCALE_OUT) {
@@ -829,8 +829,21 @@ void SchedulerNode::ProcessScaleoutRollback(const std::shared_ptr<HttpMessageHan
     resp->ErrorResponse(HTTP_BADREQUEST, status);
     return;
   }
-  // set the last worker num and last server num
+
+  if (node_manager_.GetClusterState() == ClusterState::CLUSTER_SCALE_OUT_ROLLBACK) {
+    std::string message =
+      "The cluster state is already in CLUSTER_SCALE_OUT_ROLLBACK, does not need to rollback again.";
+    ERROR_STATUS(status, RequestProcessResultCode::kSystemError, message);
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  if (!QueryNodeScaleState(resp)) {
+    return;
+  }
+
   ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
+  // set the last worker num and last server num and start cluster scale out rollback
   node_manager_.set_worker_num(clusterConfig.initial_worker_num);
   node_manager_.set_server_num(clusterConfig.initial_server_num);
   node_manager_.set_total_node_num(clusterConfig.initial_total_node_num);
@@ -838,17 +851,17 @@ void SchedulerNode::ProcessScaleoutRollback(const std::shared_ptr<HttpMessageHan
   MS_LOG(INFO) << "After scale out rollback, the last worker num:" << clusterConfig.initial_worker_num
                << ", the last server num:" << clusterConfig.initial_server_num;
 
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_OUT_ROLLBACK);
   auto node_infos = node_manager_.nodes_info();
   node_manager_.ResetMetadata();
   for (const auto &kvs : node_infos) {
     auto client = GetOrCreateClient(kvs.second);
     MS_EXCEPTION_IF_NULL(client);
     MS_EXCEPTION_IF_NULL(leader_scaler_);
-    leader_scaler_->ScaleOutAsync(client, node_manager_);
+    leader_scaler_->ScaleOutRollbackAsync(client, node_manager_);
   }
 
   MS_LOG(INFO) << "Scheduler send scale out rollback successful.";
-  node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_OUT);
   nlohmann::json js;
   js["message"] = "Cluster scale out rollback success.";
   js["code"] = kSuccessCode;
@@ -857,6 +870,57 @@ void SchedulerNode::ProcessScaleoutRollback(const std::shared_ptr<HttpMessageHan
 
   resp->SetRespCode(HTTP_OK);
   resp->SendResponse();
+}
+
+bool SchedulerNode::QueryNodeScaleState(const std::shared_ptr<HttpMessageHandler> &resp) {
+  ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
+  uint64_t request_id = AddMessageTrack(clusterConfig.initial_server_num);
+  std::unordered_map<uint32_t, VectorPtr> outputs;
+
+  set_message_callback(request_id, [&]() {
+    receive_messages_mutex_.lock();
+    outputs = receive_messages_[request_id];
+    (void)receive_messages_.erase(request_id);
+    receive_messages_mutex_.unlock();
+  });
+
+  auto node_infos = node_manager_.nodes_info();
+  for (const auto &kvs : node_infos) {
+    if (kvs.second.node_role_ == NodeRole::SERVER) {
+      auto client = GetOrCreateClient(kvs.second);
+      MS_EXCEPTION_IF_NULL(client);
+      MS_EXCEPTION_IF_NULL(instance_manager_);
+      instance_manager_->QueryNodeScaleState(client, node_manager_, request_id, node_info_);
+    }
+  }
+
+  bool res = Wait(request_id);
+  if (!res) {
+    std::string message = "The query node scale state is timeout.";
+    RequestProcessResult result(RequestProcessResultCode::kSystemError, message);
+    MS_LOG(WARNING) << message;
+    resp->ErrorResponse(HTTP_BADREQUEST, result);
+    return false;
+  }
+
+  for (const auto &output : outputs) {
+    std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
+    nlohmann::json dataJson = nlohmann::json::parse(data);
+    if (dataJson["node_scale_state"] != "kWaiting") {
+      res = false;
+      break;
+    }
+  }
+
+  if (!res) {
+    std::string message =
+      "Cluster servers are ready for scaling rollback. Please process server scaling rollback later.";
+    RequestProcessResult result(RequestProcessResultCode::kSystemError, message);
+    MS_LOG(WARNING) << message;
+    resp->ErrorResponse(HTTP_BADREQUEST, result);
+    return false;
+  }
+  return true;
 }
 
 void SchedulerNode::ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &resp) {
@@ -1387,7 +1451,7 @@ void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t
   callbacks_["/disableFLS"] = disable_fls;
   (void)http_server_->RegisterRoute("/disableFLS", &callbacks_["/disableFLS"]);
 
-  OnRequestReceive scale_out_rollback = std::bind(&SchedulerNode::ProcessScaleoutRollback, this, std::placeholders::_1);
+  OnRequestReceive scale_out_rollback = std::bind(&SchedulerNode::ProcessScaleOutRollback, this, std::placeholders::_1);
   callbacks_["/scaleoutRollback"] = scale_out_rollback;
   (void)http_server_->RegisterRoute("/scaleoutRollback", &callbacks_["/scaleoutRollback"]);
 

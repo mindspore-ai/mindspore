@@ -97,6 +97,26 @@ void InstanceManager::DisableFLSAsync(const std::shared_ptr<TcpClient> &client, 
 
   MS_LOG(INFO) << "The scheduler is sending query instance to workers and servers!";
 }
+
+void InstanceManager::QueryNodeScaleState(const std::shared_ptr<TcpClient> &client, const NodeManager &,
+                                          const uint64_t &request_id, const NodeInfo &node_info) {
+  MS_EXCEPTION_IF_NULL(client);
+  MS_EXCEPTION_IF_NULL(node_);
+  auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
+  message_meta->set_cmd(NodeCommand::SEND_DATA);
+  message_meta->set_request_id(request_id);
+  message_meta->set_rank_id(node_info.rank_id_);
+  message_meta->set_role(node_info.node_role_);
+  message_meta->set_user_cmd(static_cast<int32_t>(TcpUserCommand::kQueryNodeScaleState));
+
+  std::string res;
+  if (!client->SendMessage(message_meta, Protos::RAW, res.data(), res.length())) {
+    MS_LOG(WARNING) << "Send query node scale state timeout!";
+  }
+
+  MS_LOG(INFO) << "The scheduler is sending query node scale state to workers and servers!";
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

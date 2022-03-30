@@ -58,6 +58,21 @@ void LeaderScaler::ScaleInAsync(const std::shared_ptr<TcpClient> &client, const 
 
   MS_LOG(INFO) << "The scheduler is sending scale in to workers and servers!";
 }
+
+void LeaderScaler::ScaleOutRollbackAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager) {
+  MS_EXCEPTION_IF_NULL(client);
+  MS_EXCEPTION_IF_NULL(node_);
+  auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
+  message_meta->set_cmd(NodeCommand::SCALE_OUT_ROLLBACK);
+
+  std::string data = "";
+  if (!node_->SendMessageSync(client, message_meta, Protos::PROTOBUF, data.data(), data.size())) {
+    MS_LOG(WARNING) << "Send scale out rollback timeout!";
+  }
+
+  MS_LOG(INFO) << "The scheduler is sending scale out rollback to workers and servers!";
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
