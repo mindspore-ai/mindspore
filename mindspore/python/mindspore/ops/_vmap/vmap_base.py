@@ -174,18 +174,25 @@ def _bdim_at_front(x, src, axis_size):
     return mnp.moveaxis(x, src, 0)
 
 
-def _handle_scalar_broadcasting(nd, x):
+@constexpr
+def _broadcast_shape(nd, x_ndim, x_shape):
+    return x_shape + (1,) * (nd - x_ndim)
+
+
+def _handle_scalar_broadcasting(nd, x, dim):
     x_shape = F.shape(x)
     x_ndim = len(x_shape)
-    if nd == x_ndim:
+    if dim is None or nd == x_ndim:
         return x
-    return F.reshape(x, x_shape + (1,) * (nd - x_ndim))
+    broadcast_shape = _broadcast_shape(nd, x_ndim, x_shape)
+    return F.reshape(x, broadcast_shape)
 
 
 @vmap_rules_getters.register(P.Add)
 @vmap_rules_getters.register(P.Sub)
 @vmap_rules_getters.register(P.Mul)
 @vmap_rules_getters.register(P.Div)
+@vmap_rules_getters.register(P.RealDiv)
 def get_math_binary_op_vmap_rule(prim, axis_size):
     """VmapRule for binary operations, such as `Add` and `Sub`."""
     def vmap_rule(x_in, y_in):
@@ -195,18 +202,135 @@ def get_math_binary_op_vmap_rule(prim, axis_size):
 
         x, x_bdim = x_in
         y, y_bdim = y_in
-        x = _bdim_at_front(x, x_bdim, axis_size)
-        y = _bdim_at_front(y, y_bdim, axis_size)
+        x_shape = F.shape(x)
+        y_shape = F.shape(y)
+        if x_bdim == y_bdim and x_shape == y_shape:
+            out = prim(x, y)
+            return (out, x_bdim)
+
+        if F.rank(x):
+            x = _bdim_at_front(x, x_bdim, 1)
+        if F.rank(y):
+            y = _bdim_at_front(y, y_bdim, 1)
         x_nd = F.rank(x)
         y_nd = F.rank(y)
         ndim = x_nd
         if y_nd > ndim:
             ndim = y_nd
 
-        x = _handle_scalar_broadcasting(ndim, x)
-        y = _handle_scalar_broadcasting(ndim, y)
+        x = _handle_scalar_broadcasting(ndim, x, x_bdim)
+        y = _handle_scalar_broadcasting(ndim, y, y_bdim)
 
         out = prim(x, y)
+        return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.AddN)
+def get_add_n_vmap_rule(prim, axis_size):
+    """VmapRule for AddN operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(*inputs_in):
+        is_all_none, result = vmap_general_preprocess(prim, *inputs_in)
+        if is_all_none:
+            return result
+
+        if not isinstance(inputs_in, (tuple, list)):
+            _raise_value_error("The 'x' of P.AddN is neither tuple nor list.")
+
+        ndim = 0
+        args = inputs_in[0]
+        vals = ()
+        for each_arg in args:
+            x, bdim = each_arg
+            x = _bdim_at_front(x, bdim, axis_size)
+            x_nd = F.rank(x)
+            if x_nd > ndim:
+                ndim = x_nd
+            vals = vals + (x,)
+
+        out = prim(vals)
+        return (out, 0)
+
+    return vmap_rule
+
+
+@constexpr
+def _get_bias_broadcast_shape(x_shape, bias_shape, bias_dim, data_format):
+    """Get the broadcast shape for bias and use it in 'BiasAdd' VmapRule."""
+    bias_rank = len(bias_shape)
+    if bias_dim is None and bias_rank == 1:
+        bias_batch = 1
+        bias_channel = bias_shape[0]
+    elif bias_dim is not None and bias_rank == 2:
+        bias_batch = bias_shape[0]
+        bias_channel = bias_shape[1]
+    else:
+        raise ValueError("The rank of 'bias' in 'BiasAdd' operator is invalid, which is rank: " + bias_rank +
+                         " with bias_dim: " + bias_dim + '.')
+
+    # The 'Biasadd' operator supports 2-5 dimensions input, and another 'batch' dimension is added to the front in
+    # vmap scenario.
+    x_min_rank = 3
+    x_max_rank = 5
+    if data_format == "NCDHW":
+        x_max_rank += 1
+    x_rank = len(x_shape)
+
+    if x_rank < x_min_rank or x_rank > x_max_rank:
+        raise ValueError("For primitive[BiasAdd] in vmap, the dims of input_x must be in [x_min_rank, " + x_max_rank +
+                         "], but got " + x_rank + ".")
+
+    if data_format == "NHWC":
+        # In the 'NHWC' data format ('BN**C' actually), the last dimension is channel axis.
+        x_channel = x_shape[-1]
+        if x_channel != bias_channel:
+            raise ValueError("For 'BiadAdd, bias_channel should be equal to x_channel, but got date format: " +
+                             data_format + ", got bias_channel: " + bias_channel + ", x_channel: " + x_channel + ".")
+        if bias_dim is None:
+            bias_broadcast_shape = (1,) * (x_rank - bias_rank) + (bias_channel,)
+        else:
+            bias_broadcast_shape = (bias_batch,) + (1,) * (x_rank - bias_rank) + (bias_channel,)
+    else:
+        # In the 'NCHW' or 'NCDHW' data format ('BNC**' actually), the third dimension is channel axis.
+        x_channel = x_shape[2]
+        if x_channel != bias_channel:
+            raise ValueError("For 'BiadAdd, bias_channel should be equal to x_channel, but got date format: " +
+                             data_format + ", got bias_channel: " + bias_channel + ", x_channel: " + x_channel + ".")
+        bias_broadcast_shape = (bias_batch, 1, bias_channel)
+        if x_rank == x_min_rank:
+            return bias_broadcast_shape
+        bias_broadcast_shape = bias_broadcast_shape + (1,) * (x_rank, x_min_rank)
+    return bias_broadcast_shape
+
+
+@vmap_rules_getters.register(P.BiasAdd)
+def get_bias_add_vmap_rule(prim, axis_size):
+    """VmapRule for `BiasAdd` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+        data_format = "NCHW"
+    else:
+        data_format = prim.data_format
+    add_op = P.Add()
+
+    def vmap_rule(input_in, bias_in):
+        is_all_none, result = vmap_general_preprocess(prim, input_in, bias_in)
+        if is_all_none:
+            return result
+
+        input_x, x_dim = input_in
+        bias, bias_dim = bias_in
+        input_x = _bdim_at_front(input_x, x_dim, axis_size)
+        bias = _bdim_at_front(bias, bias_dim, axis_size)
+        x_shape = F.shape(input_x)
+        bias_shape = F.shape(bias)
+        bias_broadcast_shape = _get_bias_broadcast_shape(x_shape, bias_shape, bias_dim, data_format)
+        bias = F.reshape(bias, bias_broadcast_shape)
+        out = add_op(input_x, bias)
         return (out, 0)
 
     return vmap_rule
@@ -360,6 +484,26 @@ def get_partical_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register("Cast")
+def get_cast_vmap_rule(prim, axis_size):
+    """VmapRule for `Cast` operation."""
+    if isinstance(prim, str):
+        prim_name = prim
+        prim = Primitive(prim)
+    else:
+        prim_name = prim.name
+
+    def vmap_rule(input_in, type_in):
+        input_x, x_dim = input_in
+        dtype, type_dim = type_in
+        if type_dim is not None:
+            _raise_value_error("The source axis of 'type' in " + prim_name + " must be None, but got ", type_dim)
+        out = prim(input_x, dtype)
+        return (out, x_dim)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register("Load")
 def get_load_vmap_rule(prim, axis_size):
     """VmapRule for `Load` operation."""
@@ -376,6 +520,7 @@ def get_load_vmap_rule(prim, axis_size):
 
 @vmap_rules_getters.register(P.Assign)
 @vmap_rules_getters.register(P.AssignAdd)
+@vmap_rules_getters.register(P.AssignSub)
 def get_assign_vmap_rule(prim, axis_size):
     """VmapRule for `Assign*` operations, such as `Assign` and `AssignAdd`."""
     if isinstance(prim, str):

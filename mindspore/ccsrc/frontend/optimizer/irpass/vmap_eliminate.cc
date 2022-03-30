@@ -24,9 +24,9 @@ namespace opt {
 namespace irpass {
 namespace internal {
 // White list of primitives consistent before and after transformation.
-mindspore::HashSet<std::string> throughtout_op{prim::kPrimMakeTuple->name(), prim::kPrimMakeList->name(),
-                                               prim::kPrimDepend->name(), prim::kPrimReturn->name(),
-                                               prim::kPrimUpdateState->name()};
+mindspore::HashSet<std::string> throughtout_op{prim::kPrimMakeTuple->name(),   prim::kPrimMakeList->name(),
+                                               prim::kPrimDepend->name(),      prim::kPrimReturn->name(),
+                                               prim::kPrimUpdateState->name(), prim::kPrimStopGradient->name()};
 CNodePtr BuildBindInAxisTupleInput(const AnfNodePtr &input, const ValuePtr &in_axis, FuncGraphPtr fg) {
   auto input_abs_elements = dyn_cast<abstract::AbstractTuple>(input->abstract());
   ValueSequencePtr in_axis_value_sequence = nullptr;
@@ -267,14 +267,57 @@ AnfNodePtr ExpandVmapPrimitive(const AnfNodePtr &vnode, const pipeline::Resource
   return nullptr;
 }
 
+AnfNodePtr CopyNodeToVmap(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto &node_user_map = mng->node_users();
+  auto user = node_user_map.find(node);
+  if (user != node_user_map.end() && !user->second.empty()) {
+    auto user_set = user->second;
+    if (user_set.size() > 1) {
+      MS_LOG(DEBUG) << "The " << node->DebugString() << " is used in more than one place.";
+      bool need_copy = false;
+      // We assume that the nodes used in the unified graph are continuous in most cases, therefore, checking the
+      // head and tail nodes can pick up the most scenes of that the ValueNode are used by multiple graphs, otherwise,
+      // traverse the entire set.
+      if (user_set.front().first->func_graph() != func_graph || user_set.back().first->func_graph() != func_graph) {
+        need_copy = true;
+      } else {
+        for (auto pair : user_set) {
+          if (pair.first->func_graph() != func_graph) {
+            need_copy = true;
+            break;
+          }
+        }
+      }
+      if (need_copy) {
+        MS_LOG(DEBUG) << "Copy the " << node->DebugString() << " so that it can only be used in this graph.";
+        auto value_node = dyn_cast<ValueNode>(node);
+        MS_EXCEPTION_IF_NULL(value_node);
+        auto value = value_node->value();
+        MS_EXCEPTION_IF_NULL(value);
+        auto copy_node = NewValueNode(value);
+        for (auto pair : user_set) {
+          if (pair.first->func_graph() == func_graph) {
+            auto user_node = pair.first->cast<CNodePtr>();
+            mng->SetEdge(user_node, pair.second, copy_node);
+          }
+        }
+        return copy_node;
+      }
+    }
+  }
+  return node;
+}
+
 void BindNoneAxis(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng) {
   MS_EXCEPTION_IF_NULL(node);
-  const auto node_user_map = mng->node_users();
+  auto &node_user_map = mng->node_users();
   auto user = node_user_map.find(node);
   if (user != node_user_map.end() && !user->second.empty()) {
     auto make_tuple = NewValueNode(prim::kPrimMakeTuple);
     auto replace_node = func_graph->NewCNode({make_tuple, node, NewValueNode(kNone)});
-    for (auto pair : user->second) {
+    auto user_set = user->second;
+    for (auto pair : user_set) {
       if (pair.first->func_graph() == func_graph) {
         auto user_node = pair.first->cast<CNodePtr>();
         mng->SetEdge(user_node, pair.second, replace_node);
@@ -295,6 +338,7 @@ void ExpandVmapValueNode(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBa
       MS_LOG(DEBUG) << node->DebugString() << " has been transformed.";
       continue;
     }
+    node = CopyNodeToVmap(node, vmap_fg, manager);
     if (IsValueNode<FuncGraph>(node)) {
       MS_LOG(DEBUG) << "Map FuncGraph node " << node->DebugString() << ".";
       visited_node->insert(node);
