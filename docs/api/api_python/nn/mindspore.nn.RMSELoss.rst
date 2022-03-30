@@ -12,9 +12,9 @@ mindspore.nn.RMSELoss
 
     **输入：**
 
-    - **logits** （Tensor） - 输入的预测值，任意维度的Tensor。
-    - **labels** （Tensor） - 输入的目标值，任意维度的Tensor。一般与 `logits` 的shape相同。如果 `logits` 和 `labels` 的shape不同，需支持广播。
+    - **logits** (Tensor) - 输入的预测值，任意维度的Tensor。
+    - **labels** (Tensor) - 输入的目标值，任意维度的Tensor。一般与 `logits` 的shape相同。如果 `logits` 和 `labels` 的shape不同，需支持广播。
 
     **输出：**
 
-    Tensor，输出值为加权损失值，其数据类型为float，其shape为0。
+    Tensor，输出值为加权损失值，其数据类型为float，其shape为()。

@@ -307,7 +307,7 @@ class ReLU6(Cell):
 
     .. math::
 
-        \min(\max(0, x), 6).
+        Y = \min(\max(0, x), 6).
 
     The input is a Tensor of any valid shape.
 
@@ -621,7 +621,7 @@ class PReLU(Cell):
 
     .. math::
 
-        prelu(x_i)= \max(0, x_i) + w * \min(0, x_i),
+        PReLU(x_i)= \max(0, x_i) + w * \min(0, x_i),
 
     where :math:`x_i` is an element of an channel of the input.
 

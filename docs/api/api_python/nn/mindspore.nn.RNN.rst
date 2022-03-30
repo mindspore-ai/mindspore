@@ -10,7 +10,7 @@ mindspore.nn.RNN
     .. math::
         h_t = \tanh(W_{ih} x_t + b_{ih} + W_{hh} h_{(t-1)} + b_{hh})
 
-    这里的 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t`是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是上一层在 `t-1` 时刻的隐藏状态，或在 `0` 时刻的初始隐藏状态。如果 ``nonlinearity`` 是'relu'，则使用 :math:`\text{ReLU}` 而不是 :math:`\tanh` 。
+    这里的 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t`是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是上一层在 :math:`t-1` 时刻的隐藏状态，或初始隐藏状态。如果 `nonlinearity` 是'relu'，则使用 :math:`\text{relu}` 而不是 :math:`\tanh` 。
 
     **参数：**
 	
@@ -27,11 +27,11 @@ mindspore.nn.RNN
 	
     - **x** (Tensor) - 数据类型为mindspore.float32或mindspore.float16，shape为(seq_len, batch_size, `input_size`)或(batch_size, seq_len, `input_size`)的Tensor。
     - **hx** (Tensor) - 数据类型为mindspore.float32或mindspore.float16，shape为(num_directions * `num_layers`, batch_size, `hidden_size`)的Tensor。 `hx` 的数据类型与 `x` 相同。
-    - **seq_length** (Tensor) - 输入batch的序列长度，Tensor的shape为 :math:`(\text{batch_size})` 。此输入指明真实的序列长度，以避免使用填充后的元素计算隐藏状态，影响最后的输出。当**x**被填充元素时，建议使用此输入。默认值：None。
+    - **seq_length** (Tensor) - 输入batch的序列长度，Tensor的shape为 `(batch_size)` 。此输入指明真实的序列长度，以避免使用填充后的元素计算隐藏状态，影响最后的输出。当**x**被填充元素时，建议使用此输入。默认值：None。
 
     **输出：**
 
-    Tuple，包含(`output`, `h_n`)的tuple。
+    Tuple，包含(`output`, `hx_n`)的tuple。
 
     - **output** (Tensor) - shape为(seq_len, batch_size, num_directions * `hidden_size`)或(batch_size, seq_len, num_directions * `hidden_size`)的Tensor。
     - **hx_n** (Tensor) - shape为(num_directions * `num_layers` , batch_size, `hidden_size`)的Tensor。
