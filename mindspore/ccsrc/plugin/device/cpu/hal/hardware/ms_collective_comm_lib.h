@@ -51,8 +51,7 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
 
   bool AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) const override;
 
-  bool BroadcastUniqueID(const std::string &group_name, bool is_root_node, size_t root_info_size,
-                         void *root_info) const override;
+  bool BroadcastUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) override;
 
   bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
                  const std::string &group_name, void *stream = nullptr) override;
