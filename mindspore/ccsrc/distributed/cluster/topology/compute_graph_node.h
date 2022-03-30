@@ -40,6 +40,9 @@ class ComputeGraphNode : public NodeBase {
   // Send the register message to the meta server node when this node process startup.
   bool Register();
 
+  // Send the unregister message to the meta server node.
+  bool Unregister();
+
   // Send the heartbeat message to the meta server node.
   bool Heartbeat();
 

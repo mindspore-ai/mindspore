@@ -81,6 +81,9 @@ class MetaServerNode : public NodeBase {
   // Process the received register message sent from compute graph nodes.
   void ProcessRegister(const std::shared_ptr<MessageBase> &message);
 
+  // Process the received unregister message sent from compute graph nodes.
+  void ProcessUnregister(const std::shared_ptr<MessageBase> &message);
+
   // Process the received heartbeat message sent from compute graph nodes.
   void ProcessHeartbeat(const std::shared_ptr<MessageBase> &message);
 

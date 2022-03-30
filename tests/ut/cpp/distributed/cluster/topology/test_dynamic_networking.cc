@@ -58,6 +58,13 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
   ASSERT_EQ(TopoState::kInitialized, msn.TopologyState());
 
   cgn.Finalize();
+
+  retry = 30;
+  while (msn.GetAliveNodeNum() > 0 && retry-- > 0) {
+    sleep(interval);
+  }
+  ASSERT_EQ(0, msn.GetAliveNodeNum());
+
   msn.Finalize();
 }
 }  // namespace topology
