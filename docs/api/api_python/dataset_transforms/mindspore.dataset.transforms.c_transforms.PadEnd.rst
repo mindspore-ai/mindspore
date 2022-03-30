@@ -16,7 +16,7 @@ mindspore.dataset.transforms.c_transforms.PadEnd
     - **TypeError** - 参数 `pad_shape` 的类型不为list。
     - **TypeError** - 参数 `pad_value` 的类型不为str、float、bool、int或bytes。
     - **TypeError** - 参数 `pad_shape` 的元素类型不为int。
-    - **ValueError** - 参数 `pad_shape` 的元素类型不为正数。
+    - **ValueError** - 参数 `pad_shape` 的元素不为正数。
 
 
     
