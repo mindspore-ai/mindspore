@@ -159,6 +159,37 @@ std::vector<AnfNodePtr> FetchAllMonadNodeByNode(const AnfNodePtr &node) {
   }
   return results;
 }
+
+// Check whether the exit actor corresponding to the call node to the to actor already exists control arrow.
+bool IsControlArrowExistForCallNode(const AnfNodePtr &node, const AbstractActor *const to_actor,
+                                    const ControlNodeParserPtr &parser) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(to_actor);
+  MS_EXCEPTION_IF_NULL(parser);
+  if (!common::AnfAlgo::IsCallNode(node)) {
+    MS_LOG(EXCEPTION) << "Invalid call node:" << node->DebugString();
+  }
+  int branch_id = parser->FetchBranchIDByCallNode(node);
+
+  const auto &func_graphs = parser->FetchFuncGraphbyCallNode(node);
+  if (func_graphs.empty()) {
+    MS_LOG(EXCEPTION) << "Failed to get funcgraph by call node:" << node->DebugString();
+  }
+  MS_EXCEPTION_IF_NULL(*(func_graphs.begin()));
+  auto actor_name = (*(func_graphs.begin()))->ToString() + kExitActorNameSuffix;
+  const auto &actor = FetchActor(actor_name);
+  MS_EXCEPTION_IF_NULL(actor);
+  const auto &exit_actor = dynamic_cast<ExitActor *>(actor);
+  MS_EXCEPTION_IF_NULL(exit_actor);
+
+  const auto &branch_arrows = exit_actor->output_branch_control_arrows();
+  const auto &arrow_iter = branch_arrows.find(branch_id);
+  if (arrow_iter == branch_arrows.end()) {
+    return false;
+  }
+  const auto &arrows = arrow_iter->second;
+  return std::find(arrows.begin(), arrows.end(), to_actor->GetAID()) != arrows.end();
+}
 }  // namespace
 
 ControlActorSetPtr ControlNodeScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
@@ -1313,6 +1344,12 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
 
     std::vector<AbstractActor *> from_actors;
     if (common::AnfAlgo::IsCallNode(depend_node)) {
+      // If the actor already exists with control arrow, skip it.
+      if (IsControlArrowExistForCallNode(depend_node, to_actor, parser)) {
+        MS_LOG(DEBUG) << "Control arrow from call node:" << depend_node << " to actor:" << to_actor->GetAID()
+                      << "is exist, skip it";
+        continue;
+      }
       int branch_id = parser->FetchBranchIDByCallNode(depend_node);
       const auto &func_graphs = parser->FetchFuncGraphbyCallNode(depend_node);
       if (func_graphs.empty()) {
@@ -1379,6 +1416,8 @@ void ControlNodeScheduler::LinkControlArrowByKernelGraphGroup(const GraphCompile
     auto to_actor = dynamic_cast<ControlActor *>(stack_actor);
     MS_EXCEPTION_IF_NULL(to_actor);
     for (const auto &monad_input : graph_group->monad_inputs_) {
+      MS_LOG(DEBUG) << "Add monad control arrow for group:" << graph_group->group_name_
+                    << " to actor:" << to_actor->GetAID() << " by monad input:" << monad_input->DebugString();
       LinkControlArrowByAutoMonad(to_actor, monad_input, parser);
     }
   }
@@ -1803,22 +1842,8 @@ bool ControlNodeScheduler::CheckActorValid(const ActorSet *actor_set) const {
     return true;
   }
 
-  for (const auto &kernel_actor : actor_set->kernel_actors_) {
-    std::string exit_actor_name = "";
-    for (const auto arrow : kernel_actor->output_data_arrows_) {
-      MS_EXCEPTION_IF_NULL(arrow);
-      if (arrow->to_op_id_.Name().find(kExitActorNameSuffix) == std::string::npos) {
-        continue;
-      }
-      if (exit_actor_name == "") {
-        exit_actor_name = arrow->to_op_id_.Name();
-        continue;
-      }
-      if (exit_actor_name != arrow->to_op_id_.Name()) {
-        MS_LOG(EXCEPTION) << "Kernel actor:" << kernel_actor->GetAID() << " link to two exit actor:" << exit_actor_name
-                          << " and:" << arrow->to_op_id_.Name();
-      }
-    }
+  if (!CheckKernelActorValid(actor_set->kernel_actors_)) {
+    return false;
   }
 
   auto control_actors = CollectActors(actor_set->control_actors_);
@@ -1851,6 +1876,44 @@ bool ControlNodeScheduler::CheckActorValid(const ActorSet *actor_set) const {
     MS_EXCEPTION_IF_NULL(exit_actor);
     if (CheckExitActorInvalid(exit_actor)) {
       MS_LOG(EXCEPTION) << "Invalid exit actor:" << exit_actor->GetAID();
+    }
+  }
+
+  // Since some control arrows of stack actors need to be counted according to aid, the input control arrow cannot
+  // be repeated, otherwise the count will be inaccurate. But there are exceptions, if the control arrow does not
+  // need to be counted according to aid, it can be repeated.
+  for (const auto &stack_actor : actor_set->control_actors_->stack_actors_) {
+    MS_EXCEPTION_IF_NULL(stack_actor);
+    const auto &input_control_aids = stack_actor->input_control_arrow_aids();
+    std::set<AID> aid_set;
+    (void)std::for_each(input_control_aids.begin(), input_control_aids.end(),
+                        [&aid_set](const auto &aid) { (void)aid_set.emplace(aid); });
+    if (aid_set.size() != input_control_aids.size()) {
+      MS_LOG(WARNING) << "Stack actor:" << stack_actor->GetAID() << " has duplicate control arrows.";
+    }
+  }
+  return true;
+}
+
+bool ControlNodeScheduler::CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) const {
+  for (const auto &kernel_actor : kernel_actors) {
+    MS_EXCEPTION_IF_NULL(kernel_actor);
+    std::string exit_actor_name = "";
+
+    for (const auto arrow : kernel_actor->output_data_arrows_) {
+      MS_EXCEPTION_IF_NULL(arrow);
+      if (arrow->to_op_id_.Name().find(kExitActorNameSuffix) == std::string::npos) {
+        continue;
+      }
+      if (exit_actor_name == "") {
+        exit_actor_name = arrow->to_op_id_.Name();
+        continue;
+      }
+      if (exit_actor_name != arrow->to_op_id_.Name()) {
+        MS_LOG(EXCEPTION) << "Kernel actor:" << kernel_actor->GetAID() << " link to two exit actor:" << exit_actor_name
+                          << " and:" << arrow->to_op_id_.Name();
+        return false;
+      }
     }
   }
   return true;
