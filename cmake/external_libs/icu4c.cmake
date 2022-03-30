@@ -2,7 +2,6 @@ set(LIB_ICU_COMMON icuuc)
 set(LIB_ICU_DATA icudata)
 set(LIB_ICU_I18N icui18n)
 
-set(ENABLE_GITEE_EULER OFF)
 if(ENABLE_GITEE_EULER)
     set(GIT_REPOSITORY "https://gitee.com/src-openeuler/icu.git")
     set(GIT_TAG "openEuler-22.03-LTS")

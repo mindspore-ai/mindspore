@@ -1,4 +1,3 @@
-set(ENABLE_GITEE_EULER OFF)
 if(ENABLE_GITEE_EULER)
     set(GIT_REPOSITORY "https://gitee.com/src-openeuler/abseil-cpp.git")
     set(GIT_TAG "openEuler-22.03-LTS")
