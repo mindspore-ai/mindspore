@@ -276,11 +276,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         raise TypeError("For 'save_checkpoint', the argument 'save_obj' should be nn.Cell or list, "
                         "but got {}.".format(type(save_obj)))
     if not isinstance(ckpt_file_name, str):
-        raise TypeError("The argument {} for checkpoint file name is invalid, 'ckpt_file_name' must be "
+        raise TypeError("For 'save_checkpoint', the argument {} for checkpoint file name is invalid,"
+                        "'ckpt_file_name' must be "
                         "string, but got {}.".format(ckpt_file_name, type(ckpt_file_name)))
     ckpt_file_name = os.path.realpath(ckpt_file_name)
     if os.path.isdir(ckpt_file_name):
-        raise IsADirectoryError("The argument `ckpt_file_name`: {} is a directory, "
+        raise IsADirectoryError("For 'save_checkpoint', the argument `ckpt_file_name`: {} is a directory, "
                                 "it should be a file name.".format(ckpt_file_name))
     if not ckpt_file_name.endswith('.ckpt'):
         ckpt_file_name += ".ckpt"
@@ -501,7 +502,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                 continue
             data = element.tensor.tensor_content
             data_type = element.tensor.tensor_type
-            np_type = tensor_to_np_type[data_type]
+            np_type = tensor_to_np_type.get(data_type)
             ms_type = tensor_to_ms_type[data_type]
             element_data = np.frombuffer(data, np_type)
             param_data_list.append(element_data)
@@ -529,7 +530,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
 
     except BaseException as e:
         logger.critical("Failed to load the checkpoint file '%s'.", ckpt_file_name)
-        raise ValueError(e.__str__() + "\nFailed to load the checkpoint file {}.".format(ckpt_file_name))
+        raise ValueError(e.__str__() + "\nFor 'load_checkpoint', "
+                         "failed to load the checkpoint file {}.".format(ckpt_file_name))
 
     if not parameter_dict:
         raise ValueError(f"The loaded parameter dict is empty after filtering, please check whether "
@@ -564,7 +566,7 @@ def _check_checkpoint_param(ckpt_file_name, filter_prefix=None):
         if isinstance(filter_prefix, str):
             filter_prefix = (filter_prefix,)
         if not filter_prefix:
-            raise ValueError("For 'load_checkpoint', the 'filter_prefix' can't be empty when "
+            raise ValueError("For 'load_checkpoint', the argument 'filter_prefix' can't be empty when "
                              "'filter_prefix' is list or tuple.")
         for index, prefix in enumerate(filter_prefix):
             if not isinstance(prefix, str):
@@ -865,7 +867,8 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     check_input_data(*inputs, data_class=Tensor)
 
     if file_format == 'GEIR':
-        logger.warning(f"Format 'GEIR' is deprecated, it would be removed in future release, use 'AIR' instead.")
+        logger.warning(f"For 'export', format 'GEIR' is deprecated, "
+                       f"it would be removed in future release, use 'AIR' instead.")
         file_format = 'AIR'
 
     supported_formats = ['AIR', 'ONNX', 'MINDIR']
@@ -1363,13 +1366,14 @@ def restore_group_info_list(group_info_file_name):
         >>> restore_list = restore_group_info_list("./group_info.pb")
     """
     if not isinstance(group_info_file_name, str):
-        raise TypeError(f"The group_info_file_name should be str, but got {type(group_info_file_name)}.")
+        raise TypeError(f"For 'restore_group_info_list', the argument 'group_info_file_name' should be str, "
+                        f"but got {type(group_info_file_name)}.")
 
     if not os.path.isfile(group_info_file_name):
-        raise ValueError(f"No such group info file: {group_info_file_name}.")
+        raise ValueError(f"No such group information file: {group_info_file_name}.")
 
     if os.path.getsize(group_info_file_name) == 0:
-        raise ValueError("The group info file should not be empty.")
+        raise ValueError("The group information file should not be empty.")
 
     parallel_group_map = ParallelGroupMap()
 
@@ -1379,7 +1383,7 @@ def restore_group_info_list(group_info_file_name):
 
     restore_list = parallel_group_map.ckpt_restore_rank_list
     if not restore_list:
-        raise ValueError("The group info file has no restore rank list.")
+        raise ValueError("The group information file has no restore rank list.")
 
     restore_rank_list = [rank for rank in restore_list.dim]
     return restore_rank_list
@@ -1405,7 +1409,7 @@ def build_searched_strategy(strategy_filename):
         >>> strategy = build_searched_strategy("./strategy_train.ckpt")
     """
     if not isinstance(strategy_filename, str):
-        raise TypeError(f"For 'build_searched_strategy', the 'strategy_filename' should be string, "
+        raise TypeError(f"For 'build_searched_strategy', the argument 'strategy_filename' should be string, "
                         f"but got {type(strategy_filename)}.")
 
     if not os.path.isfile(strategy_filename):
@@ -1474,14 +1478,15 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         Parameter (name=network.embedding_table, shape=(12,), dtype=Float64, requires_grad=True)
     """
     if not isinstance(sliced_parameters, list):
-        raise TypeError(f"For 'merge_sliced_parameter', the 'sliced_parameters' should be list, "
+        raise TypeError(f"For 'merge_sliced_parameter', the argument 'sliced_parameters' should be list, "
                         f"but got {type(sliced_parameters)}.")
 
     if not sliced_parameters:
-        raise ValueError("For 'merge_sliced_parameter', the 'sliced_parameters' should not be empty.")
+        raise ValueError("For 'merge_sliced_parameter', the argument 'sliced_parameters' should not be empty.")
 
     if strategy and not isinstance(strategy, dict):
-        raise TypeError(f"For 'merge_sliced_parameter', the 'strategy' should be dict, but got {type(strategy)}.")
+        raise TypeError(f"For 'merge_sliced_parameter', the argument 'strategy' should be dict, "
+                        f"but got {type(strategy)}.")
 
     try:
         parameter_name = sliced_parameters[0].name
@@ -1576,7 +1581,8 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         train_dev_count *= dim
     if train_dev_count != ckpt_file_len:
         raise ValueError(f"For 'Load_distributed_checkpoint', the length of 'checkpoint_filenames' should be "
-                         f"equal to the device count of training process. But the length of 'checkpoint_filenames'"
+                         f"equal to the device count of training process. "
+                         f"But got the length of 'checkpoint_filenames'"
                          f" is {ckpt_file_len} and the device count is {train_dev_count}.")
     rank_list = _infer_rank_list(train_strategy, predict_strategy)
 

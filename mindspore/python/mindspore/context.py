@@ -251,7 +251,8 @@ class _Context:
 
     def set_variable_memory_max_size(self, variable_memory_max_size):
         """set values of variable_memory_max_size and graph_memory_max_size"""
-        logger.warning("The parameter 'variable_memory_max_size' is deprecated, and will be removed in a future "
+        logger.warning("For 'context.set_context', the parameter 'variable_memory_max_size' is deprecated, "
+                       "and will be removed in a future "
                        "version. Please use parameter 'max_device_memory' instead.")
         if not Validator.check_str_by_regular(variable_memory_max_size, _re_pattern):
             raise ValueError("For 'context.set_context', the argument 'variable_memory_max_size' should be in correct"
@@ -281,13 +282,15 @@ class _Context:
     def set_mempool_block_size(self, mempool_block_size):
         """Set the block size of memory pool."""
         if _get_mode() == GRAPH_MODE:
-            logger.warning("Graph mode not support mempool_block_size context currently")
+            logger.warning("Graph mode doesn't supportto set parameter 'mempool_block_size' of context currently")
             return
         if not Validator.check_str_by_regular(mempool_block_size, _re_pattern):
-            raise ValueError("Context param mempool_block_size should be in correct format! Such as \"10GB\"")
+            raise ValueError("For 'context.set_context', the argument 'mempool_block_size' should be in "
+                             "correct format! Such as \"10GB\"")
         mempool_block_size_value = float(mempool_block_size[:-2])
         if mempool_block_size_value < 1.0:
-            raise ValueError("Context param mempool_block_size should be greater or equal to \"1GB\"")
+            raise ValueError("For 'context.set_context',  the argument 'mempool_block_size' should be "
+                             "greater or equal to \"1GB\"")
         self.set_param(ms_ctx_param.mempool_block_size, mempool_block_size_value)
 
     def set_print_file_path(self, file_path):
@@ -626,8 +629,10 @@ def _check_target_specific_cfgs(device, arg_key):
     supported_devices = device_cfgs[arg_key]
     if device in supported_devices:
         return True
-    logger.warning(f"Config '{arg_key}' only supports devices in {supported_devices}, current device is '{device}'"
-                   ", ignore it.")
+    logger.warning(f"For 'context.set_context', "
+                   f"the argument 'device_target' only supports devices in {supported_devices}, "
+                   f"but got '{arg_key}', current device is '{device}'"
+                   f", ignore it.")
     return False
 
 
@@ -894,7 +899,7 @@ def set_context(**kwargs):
     for key, value in kwargs.items():
         if key in ('enable_profiling', 'profiling_options', 'enable_auto_mixed_precision',
                    'enable_dump', 'save_dump_path'):
-            logger.warning(f" '{key}' parameters will be deprecated."
+            logger.warning(f"For 'context.set_context', '{key}' parameters will be deprecated."
                            "For details, please see the interface parameter API comments")
             continue
         if not _check_target_specific_cfgs(device, key):

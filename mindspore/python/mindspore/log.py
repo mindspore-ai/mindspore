@@ -276,7 +276,7 @@ def _get_env_config():
 def _check_directory_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
     """Check whether directory is legitimate."""
     if not isinstance(target, str):
-        raise ValueError("Args directory {} must be string, please check it".format(target))
+        raise ValueError("The directory {} must be string, please check it".format(target))
     if reg is None:
         reg = r"^[\/0-9a-zA-Z\_\-\.\:\\]+$"
     if re.match(reg, target, flag) is None:
