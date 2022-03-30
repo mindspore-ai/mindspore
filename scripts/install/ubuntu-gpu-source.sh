@@ -113,8 +113,7 @@ sudo update-alternatives --install /usr/bin/python python /usr/bin/python$PYTHON
 # pip
 python -m pip install -U pip -i https://pypi.tuna.tsinghua.edu.cn/simple
 echo -e "alias pip='python -m pip'" >> ~/.bashrc
-source ~/.bashrc
-pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # install cuda/cudnn
 cd /tmp
@@ -144,8 +143,8 @@ set +e && source ~/.bashrc
 set -e
 
 # wheel
-pip install wheel
+python -m pip install wheel
 # python 3.9 needs setuptools>44.0
-pip install -U setuptools
+python -m pip install -U setuptools
 
 echo "The environment is ready to clone and compile mindspore."
