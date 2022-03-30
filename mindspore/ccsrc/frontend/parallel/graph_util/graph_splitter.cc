@@ -51,7 +51,13 @@ ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_
   tensor::TensorPtr fake_tensor = nullptr;
   if (use_origin_node) {
     MS_EXCEPTION_IF_NULL(origin_node);
-    auto origin_abstract = origin_node->abstract()->cast<abstract::AbstractTensorPtr>();
+    abstract::AbstractTensorPtr origin_abstract;
+    if (origin_node->abstract()->isa<abstract::AbstractTuple>()) {
+      auto get_one_tuple_element = origin_node->abstract()->cast<abstract::AbstractTuplePtr>()->elements()[0];
+      origin_abstract = get_one_tuple_element->cast<abstract::AbstractTensorPtr>();
+    } else {
+      origin_abstract = origin_node->abstract()->cast<abstract::AbstractTensorPtr>();
+    }
     MS_EXCEPTION_IF_NULL(origin_abstract);
     fake_tensor = std::make_shared<tensor::Tensor>(origin_abstract->element()->BuildType()->type_id(),
                                                    origin_abstract->shape()->shape());
@@ -186,11 +192,14 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
 }
 
 void ParameterServerMode::PreBuildDistributedGraph() {
+  MS_LOG(INFO) << "Start pre-building distribtued graph in Parameter Server mode.";
   MS_EXCEPTION_IF_NULL(node_labels_);
   ProcessForSplittedOptimizer();
+  MS_LOG(INFO) << "End pre-building distribtued graph in Parameter Server mode.";
 }
 
 void ParameterServerMode::PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {
+  MS_LOG(INFO) << "Start post-building distribtued graph in Parameter Server mode.";
   MS_EXCEPTION_IF_NULL(node_labels_);
   // Judge the node role number validation.
   uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
@@ -225,7 +234,7 @@ void ParameterServerMode::PostBuildDistributedGraph(const InterProcessOpEdgesInf
           OperatorLabel worker_label = {i, distributed::kEnvRoleOfWorker};
           InterProcessOpEdge edge = {ps_optimizer, node_labels_->at(ps_optimizer), dst_node, worker_label};
           auto duplicated_send_node = CreateSendNode(func_graph_, edge);
-          node_labels_->at(duplicated_send_node) = edge.src_label;
+          node_labels_->insert(std::make_pair(duplicated_send_node, edge.src_label));
           new_make_tuple_inputs.emplace_back(duplicated_send_node);
         }
         auto new_make_tuple_node = func_graph_->NewCNode(new_make_tuple_inputs);
@@ -234,6 +243,7 @@ void ParameterServerMode::PostBuildDistributedGraph(const InterProcessOpEdgesInf
       }
     }
   }
+  MS_LOG(INFO) << "End post-building distribtued graph in Parameter Server mode.";
 }
 
 void ParameterServerMode::ProcessForSplittedOptimizer() {
@@ -422,7 +432,11 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
   MS_EXCEPTION_IF_NULL(new_node);
 
   // Step 3: Set the new node's abstract and attrs.
-  if (many_to_one_node_name == kConcatOpName) {
+  if (many_to_one_node_name == kAddNOpName) {
+    common::AnfAlgo::SetNodeAttr("N", MakeValue(static_cast<int64_t>(total_inputs_number)), new_node);
+    common::AnfAlgo::SetNodeAttr("n", MakeValue(static_cast<int64_t>(total_inputs_number)), new_node);
+    new_node->set_abstract(real_input->abstract());
+  } else if (many_to_one_node_name == kConcatOpName) {
     auto origin_abs = real_input->abstract()->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(origin_abs);
 
@@ -470,6 +484,7 @@ void GraphSplitter::Run() {
   if (std::find_if(node_labels_.begin(), node_labels_.end(), [&](const auto &node_to_label) {
         return node_to_label.second != this_process_label_;
       }) == node_labels_.end()) {
+    MS_LOG(INFO) << "No need to build and split distributed graph.";
     return;
   }
 
@@ -498,7 +513,6 @@ void GraphSplitter::Run() {
 
 void GraphSplitter::DyeGraph() {
   MS_EXCEPTION_IF_NULL(func_graph_);
-
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
   (void)std::for_each(all_nodes.begin(), all_nodes.end(), [this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
@@ -584,99 +598,22 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOperators() {
 
 void GraphSplitter::SplitGraph(const std::vector<SplitGraphSegment> &segments,
                                const InterProcessOpEdgesInfo &comm_edges) {
-  // Traverse all the segments to add Depend for this process's graph.
+  // Step 1: Traverse all the segments to add Depend for this process's graph.
   // The list of corresponding in and out degrees. In another word, the map between one segments' input send nodes. and
   // output recv nodes.
-  std::vector<std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>>> in_out_degree_list;
-
-  // Traverse all the segments to add Depend for this process's graph.
-  for (const auto &segment : segments) {
-    // If this segment should be on current process, continue.
-    if (segment.label == this_process_label_) {
-      continue;
-    }
-    std::vector<AnfNodePtr> nodes = segment.nodes;
-    if (nodes.empty()) {
-      MS_LOG(EXCEPTION) << "This segment is empty.";
-      return;
-    }
-
-    auto segment_first_node = nodes[0];
-    if (node_labels_[segment_first_node] != segment.label) {
-      MS_LOG(EXCEPTION) << "Node label " << node_labels_[segment_first_node].to_string()
-                        << " is not the same as segment label " << segment.label.to_string();
-    }
-
-    // Prepare for adding Depend between in-degree and out-degree of this segment because the execution order should be
-    // kept consistent.
-    std::vector<AnfNodePtr> concerned_in_degree_nodes = FindInterProcessInDegree(nodes, comm_edges);
-    std::vector<AnfNodePtr> concerned_out_degree_nodes = FindInterProcessOutDegree(nodes, comm_edges);
-    if (concerned_in_degree_nodes.empty()) {
-      continue;
-    }
-    in_out_degree_list.emplace_back(std::make_pair(concerned_in_degree_nodes, concerned_out_degree_nodes));
-  }
-
+  InOutDegreeList in_out_degree_list = GenerateInOutDegreeList(segments, comm_edges);
   if (in_out_degree_list.empty()) {
-    MS_LOG(ERROR) << "This process has no split graph. Optimize out the whole graph.";
+    MS_LOG(WARNING) << "After splitting, this process has no graph on it. So optimize out the whole graph.";
     auto return_value_node = CreateFakeValueNode(false);
     (void)func_graph_->manager()->Replace(func_graph_->output(), return_value_node);
     return;
   }
 
-  // This tuple is key to the dependency of send nodes so that they will not be optimized out in some cases.
-  std::vector<AnfNodePtr> send_node_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  for (size_t i = 0; i < in_out_degree_list.size(); i++) {
-    auto &concerned_in_degree_nodes = in_out_degree_list[i].first;
-    auto &concerned_out_degree_nodes = in_out_degree_list[i].second;
-    send_node_tuple_inputs.insert(send_node_tuple_inputs.end(), concerned_in_degree_nodes.begin(),
-                                  concerned_in_degree_nodes.end());
-    if (concerned_out_degree_nodes.empty()) {
-      // If this is the last segment's in and out degrees and has no out degrees, connect the send nodes to graph's
-      // output.
-      if (i == in_out_degree_list.size() - 1) {
-        auto make_tuple_node = func_graph_->NewCNode(send_node_tuple_inputs);
-        std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend)};
-        out.push_back(send_node_tuple_inputs.back());
-        out.push_back(make_tuple_node);
-        auto out_node = func_graph_->NewCNode(out);
-        MS_EXCEPTION_IF_NULL(out_node);
-        out_node->set_abstract(send_node_tuple_inputs.back()->abstract());
-        (void)func_graph_->manager()->Replace(func_graph_->output(), out_node);
-      }
-    } else {
-      auto make_tuple_node = func_graph_->NewCNode(send_node_tuple_inputs);
-      for (auto &recv : concerned_out_degree_nodes) {
-        std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), recv->cast<CNodePtr>()->inputs()[1],
-                                                make_tuple_node};
-        auto depend = func_graph_->NewCNode(depend_input);
-        depend->set_abstract(recv->cast<CNodePtr>()->inputs()[1]->abstract());
-        func_graph_->manager()->SetEdge(recv, 1, depend);
-      }
-      // Reset the make tuple node inputs for next segments in degrees.
-      send_node_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-    }
-  }
+  // Step 2: Add dependency between segments on this process.
+  AddDependencyBetweenSegments(in_out_degree_list);
 
-  // Eliminate nodes which should be launched by other processes by set output edge.
-  for (auto &edge : comm_edges) {
-    InterProcessOpPair send_recv_pair = edge.second;
-    auto send_node = std::get<0>(send_recv_pair);
-    auto recv_node = std::get<1>(send_recv_pair);
-    auto user_node = std::get<2>(send_recv_pair);
-    int user_node_index = std::get<3>(send_recv_pair);
-
-    OperatorLabel send_label = node_labels_[send_node];
-    OperatorLabel recv_label = node_labels_[recv_node];
-    if (send_label == recv_label) {
-      MS_LOG(EXCEPTION) << "The Send and Recv must have different label. But got Send: " << send_label.to_string()
-                        << ", Recv: " << recv_label.to_string();
-    }
-
-    if (recv_label == this_process_label_) {
-      func_graph_->manager()->SetEdge(user_node, user_node_index, recv_node);
-    }
-  }
+  // Step 3: Eliminate nodes not on this process.
+  EliminateExtraNodes(comm_edges);
 }
 
 void GraphSplitter::DumpDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {
@@ -790,6 +727,104 @@ std::vector<AnfNodePtr> GraphSplitter::FindInterProcessOutDegree(const std::vect
     }
   }
   return results;
+}
+
+InOutDegreeList GraphSplitter::GenerateInOutDegreeList(const std::vector<SplitGraphSegment> &segments,
+                                                       const InterProcessOpEdgesInfo &comm_edges) {
+  MS_LOG(INFO) << "Start finding inter-process in-degrees.";
+
+  InOutDegreeList in_out_degree_list;
+  // Traverse all the segments to add Depend for this process's graph.
+  for (const auto &segment : segments) {
+    // If this segment should be on current process, continue.
+    if (segment.label == this_process_label_) {
+      continue;
+    }
+    std::vector<AnfNodePtr> nodes = segment.nodes;
+    if (nodes.empty()) {
+      MS_LOG(EXCEPTION) << "This segment is empty.";
+      return in_out_degree_list;
+    }
+
+    auto segment_first_node = nodes[0];
+    if (node_labels_[segment_first_node] != segment.label) {
+      MS_LOG(EXCEPTION) << "Node label " << node_labels_[segment_first_node].to_string()
+                        << " is not the same as segment label " << segment.label.to_string();
+    }
+
+    // Prepare for adding Depend between in-degree and out-degree of this segment because the execution order should be
+    // kept consistent.
+    std::vector<AnfNodePtr> concerned_in_degree_nodes = FindInterProcessInDegree(nodes, comm_edges);
+    std::vector<AnfNodePtr> concerned_out_degree_nodes = FindInterProcessOutDegree(nodes, comm_edges);
+    if (concerned_in_degree_nodes.empty()) {
+      continue;
+    }
+    in_out_degree_list.emplace_back(std::make_pair(concerned_in_degree_nodes, concerned_out_degree_nodes));
+  }
+  MS_LOG(INFO) << "End finding inter-process in-degrees.";
+  return in_out_degree_list;
+}
+
+void GraphSplitter::AddDependencyBetweenSegments(const InOutDegreeList &in_out_degree_list) {
+  MS_LOG(INFO) << "Start adding dependency between segments.";
+  // This tuple is key to the dependency of send nodes so that they will not be optimized out in some cases.
+  std::vector<AnfNodePtr> send_node_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < in_out_degree_list.size(); i++) {
+    auto &concerned_in_degree_nodes = in_out_degree_list[i].first;
+    auto &concerned_out_degree_nodes = in_out_degree_list[i].second;
+    send_node_tuple_inputs.insert(send_node_tuple_inputs.end(), concerned_in_degree_nodes.begin(),
+                                  concerned_in_degree_nodes.end());
+    if (concerned_out_degree_nodes.empty()) {
+      // If this is the last segment's in and out degrees and has no out degrees, connect the send nodes to graph's
+      // output.
+      if (i == in_out_degree_list.size() - 1) {
+        auto make_tuple_node = func_graph_->NewCNode(send_node_tuple_inputs);
+        std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend)};
+        out.push_back(send_node_tuple_inputs.back());
+        out.push_back(make_tuple_node);
+        auto out_node = func_graph_->NewCNode(out);
+        MS_EXCEPTION_IF_NULL(out_node);
+        out_node->set_abstract(send_node_tuple_inputs.back()->abstract());
+        (void)func_graph_->manager()->Replace(func_graph_->output(), out_node);
+      }
+    } else {
+      auto make_tuple_node = func_graph_->NewCNode(send_node_tuple_inputs);
+      for (auto &recv : concerned_out_degree_nodes) {
+        std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), recv->cast<CNodePtr>()->inputs()[1],
+                                                make_tuple_node};
+        auto depend = func_graph_->NewCNode(depend_input);
+        depend->set_abstract(recv->cast<CNodePtr>()->inputs()[1]->abstract());
+        func_graph_->manager()->SetEdge(recv, 1, depend);
+      }
+      // Reset the make tuple node inputs for next segments in degrees.
+      send_node_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    }
+  }
+  MS_LOG(INFO) << "End adding dependency between segments.";
+}
+
+void GraphSplitter::EliminateExtraNodes(const InterProcessOpEdgesInfo &comm_edges) {
+  MS_LOG(INFO) << "Start eliminating nodes not on this process.";
+  // Eliminate nodes which should be launched by other processes by set output edge.
+  for (auto &edge : comm_edges) {
+    InterProcessOpPair send_recv_pair = edge.second;
+    auto send_node = std::get<0>(send_recv_pair);
+    auto recv_node = std::get<1>(send_recv_pair);
+    auto user_node = std::get<2>(send_recv_pair);
+    int user_node_index = std::get<3>(send_recv_pair);
+
+    OperatorLabel send_label = node_labels_[send_node];
+    OperatorLabel recv_label = node_labels_[recv_node];
+    if (send_label == recv_label) {
+      MS_LOG(EXCEPTION) << "The Send and Recv must have different label. But got Send: " << send_label.to_string()
+                        << ", Recv: " << recv_label.to_string();
+    }
+
+    if (recv_label == this_process_label_) {
+      func_graph_->manager()->SetEdge(user_node, user_node_index, recv_node);
+    }
+  }
+  MS_LOG(INFO) << "End eliminating nodes not on this process.";
 }
 
 bool GraphSplitter::IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodePtr &node2) {

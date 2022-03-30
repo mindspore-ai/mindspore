@@ -18,12 +18,10 @@
 
 namespace mindspore {
 namespace runtime {
-void RpcActor::SetInterProcessEdgeName(const std::string &src_node_name, const std::string &dst_node_name) {
-  inter_process_edge_name_ = src_node_name + kInterProcessEdgeMark + dst_node_name;
-}
-
 void RpcActor::SetOpcontext(OpContext<DeviceTensor> *const op_context) { op_context_ = op_context; }
 
-void RpcActor::SetActorRouteRableProxy(const ActorRouteTableProxyPtr &proxy) { actor_route_table_proxy_ = proxy; }
+void RpcActor::set_actor_route_table_proxy(const ActorRouteTableProxyPtr &proxy) { actor_route_table_proxy_ = proxy; }
+
+void RpcActor::set_inter_process_edge_name(const std::string &edge_name) { inter_process_edge_name_ = edge_name; }
 }  // namespace runtime
 }  // namespace mindspore

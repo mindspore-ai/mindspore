@@ -48,13 +48,13 @@ class GpuCommManager : public CommManager {
 
   bool GetRankID(const std::string &group, unsigned int *rank_id) const override {
     *rank_id = CollectiveInitializer::instance().GetRankIDByGroup(group);
-    MS_LOG(INFO) << "This process rank id is " << *rank_id << " in group " << group;
+    MS_LOG(DEBUG) << "This process rank id is " << *rank_id << " in group " << group;
     return true;
   }
 
   bool GetRankSize(const std::string &group, unsigned int *rank_size) const override {
     *rank_size = CollectiveInitializer::instance().GetGroupSize(group);
-    MS_LOG(INFO) << "Group " << group << " size is " << *rank_size;
+    MS_LOG(DEBUG) << "Group " << group << " size is " << *rank_size;
     return true;
   }
 

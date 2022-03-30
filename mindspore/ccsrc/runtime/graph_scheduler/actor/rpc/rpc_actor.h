@@ -63,10 +63,10 @@ class RpcActor : public KernelActor {
   virtual void ResetOpcontext() {}
 
   // Set the actor route proxy for rpc actors.
-  void SetActorRouteRableProxy(const ActorRouteTableProxyPtr &proxy);
+  void set_actor_route_table_proxy(const ActorRouteTableProxyPtr &proxy);
 
   // Set the inter-process edge name for rpc actor.
-  void SetInterProcessEdgeName(const std::string &src_node_name, const std::string &dst_node_name);
+  void set_inter_process_edge_name(const std::string &edge_name);
 
   // Set some info which will be used for rpc routing.
   virtual void SetRouteInfo(uint32_t peer_rank, const std::string &peer_role, const std::string &src_node_name,

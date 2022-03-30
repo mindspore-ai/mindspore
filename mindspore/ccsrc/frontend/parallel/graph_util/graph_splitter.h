@@ -104,6 +104,9 @@ struct InterProcessOpEdge {
 using InterProcessOpPair = std::tuple<CNodePtr, CNodePtr, CNodePtr, int>;
 using InterProcessOpEdgesInfo = std::map<InterProcessOpEdge, InterProcessOpPair>;
 
+// The list of in and out degrees of one segment.
+using InOutDegreeList = std::vector<std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>>>;
+
 constexpr char kAttrUpdateParameter[] = "update_parameter";
 constexpr char kAttrParameterInputIndex[] = "parameter_input_index";
 constexpr char kAttrGradientInputIndex[] = "gradient_input_index";
@@ -278,6 +281,16 @@ class GraphSplitter {
                                                    const InterProcessOpEdgesInfo &comm_edges);
   std::vector<AnfNodePtr> FindInterProcessOutDegree(const std::vector<AnfNodePtr> &nodes,
                                                     const InterProcessOpEdgesInfo &comm_edges);
+
+  // Generate in and out degrees list of the segments to add dependency between segments.
+  InOutDegreeList GenerateInOutDegreeList(const std::vector<SplitGraphSegment> &segments,
+                                          const InterProcessOpEdgesInfo &comm_edges);
+
+  // For the segments on this process, dependency edges should be created so that they won't be optimized out.
+  void AddDependencyBetweenSegments(const InOutDegreeList &in_out_degree_list);
+
+  // Replace nodes inputs with Recv nodes to eliminate extra nodes not on this process.
+  void EliminateExtraNodes(const InterProcessOpEdgesInfo &comm_edges);
 
   // Judge whether two nodes have the same distributed label.
   bool IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodePtr &node2);

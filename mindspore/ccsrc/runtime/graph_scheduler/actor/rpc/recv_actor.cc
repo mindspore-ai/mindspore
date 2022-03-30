@@ -26,6 +26,7 @@ namespace mindspore {
 namespace runtime {
 void RecvActor::SetOpcontext(OpContext<DeviceTensor> *const op_context) {
   std::unique_lock<std::mutex> lock(context_mtx_);
+  MS_EXCEPTION_IF_NULL(op_context);
   op_context_ = op_context;
   is_context_valid_ = true;
   context_cv_.notify_all();
@@ -71,6 +72,9 @@ bool RecvActor::StartServer() {
 }
 
 void RecvActor::RunOpInterProcessData(const std::shared_ptr<MessageBase> &msg, OpContext<DeviceTensor> *const context) {
+  // Once recv actor is launched, reset the op_context so that the next step's recv will not be launched in advance.
+  ResetOpcontext();
+
   MS_ERROR_IF_NULL_WO_RET_VAL(msg);
   MS_ERROR_IF_NULL_WO_RET_VAL(op_context_);
   auto &sequential_num = context->sequential_num_;
@@ -119,11 +123,20 @@ bool RecvActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) co
   return true;
 }
 
+void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
+  KernelActor::EraseInput(context);
+  if (input_op_inter_process_.count(context->sequential_num_) != 0) {
+    (void)input_op_inter_process_.erase(context->sequential_num_);
+  }
+}
+
 void RecvActor::HandleMessage(const std::shared_ptr<MessageBase> &msg) {
   // Block the message handler if the context is invalid.
   std::unique_lock<std::mutex> lock(context_mtx_);
   context_cv_.wait(lock, [this] { return is_context_valid_; });
   lock.unlock();
+
+  MS_LOG(INFO) << "Rpc actor recv message for inter-process edge: " << inter_process_edge_name_;
 
   MS_ERROR_IF_NULL_WO_RET_VAL(msg);
   MS_ERROR_IF_NULL_WO_RET_VAL(op_context_);
