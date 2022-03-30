@@ -17,9 +17,6 @@
 #include "src/delegate/tensorrt/op/tensorrt_plugin.h"
 
 namespace mindspore::lite {
-nvinfer1::PluginFieldCollection TensorRTPluginCreater::field_collection_{};
-std::vector<nvinfer1::PluginField> TensorRTPluginCreater::fields_;
-
 nvinfer1::DimsExprs TensorRTPlugin::getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs *inputs,
                                                         int nbInputs, nvinfer1::IExprBuilder &exprBuilder) noexcept {
   return inputs[0];
@@ -65,21 +62,4 @@ void TensorRTPlugin::destroy() noexcept {
 void TensorRTPlugin::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
 
 const char *TensorRTPlugin::getPluginNamespace() const noexcept { return name_space_.c_str(); }
-
-TensorRTPluginCreater::TensorRTPluginCreater(const std::string &plugin_name) {
-  // Fill PluginFieldCollection with PluginField arguments metadata
-  field_collection_.nbFields = fields_.size();
-  field_collection_.fields = fields_.data();
-  plugin_name_ = plugin_name;
-}
-
-const char *TensorRTPluginCreater::getPluginName() const noexcept { return plugin_name_.c_str(); }
-
-const char *TensorRTPluginCreater::getPluginVersion() const noexcept { return plugin_version_.c_str(); }
-
-const nvinfer1::PluginFieldCollection *TensorRTPluginCreater::getFieldNames() noexcept { return &field_collection_; }
-
-void TensorRTPluginCreater::setPluginNamespace(const char *libNamespace) noexcept { name_space_ = libNamespace; }
-
-const char *TensorRTPluginCreater::getPluginNamespace() const noexcept { return name_space_.c_str(); }
 }  // namespace mindspore::lite

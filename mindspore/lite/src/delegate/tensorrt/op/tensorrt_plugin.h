@@ -63,19 +63,32 @@ class TensorRTPlugin : public nvinfer1::IPluginV2DynamicExt {
   std::string plugin_name_;
 };
 
+template <class T>
 class TensorRTPluginCreater : public nvinfer1::IPluginCreator {
  public:
-  explicit TensorRTPluginCreater(const std::string &plugin_name);
+  explicit TensorRTPluginCreater(const std::string &plugin_name) : plugin_name_(plugin_name) {
+    // Fill PluginFieldCollection with PluginField arguments metadata
+    field_collection_.nbFields = fields_.size();
+    field_collection_.fields = fields_.data();
+  }
 
-  const char *getPluginName() const noexcept override;
+  const char *getPluginName() const noexcept override { return plugin_name_.c_str(); }
 
-  const char *getPluginVersion() const noexcept override;
+  const char *getPluginVersion() const noexcept override { return plugin_version_.c_str(); }
 
-  const nvinfer1::PluginFieldCollection *getFieldNames() noexcept override;
+  const nvinfer1::PluginFieldCollection *getFieldNames() noexcept override { return &field_collection_; }
 
-  void setPluginNamespace(const char *pluginNamespace) noexcept override;
+  void setPluginNamespace(const char *pluginNamespace) noexcept override { name_space_ = std::string(pluginNamespace); }
 
-  const char *getPluginNamespace() const noexcept override;
+  const char *getPluginNamespace() const noexcept override { return name_space_.c_str(); }
+
+  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept {
+    return new (std::nothrow) T(name, fc);
+  }
+
+  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData, size_t serialLength) noexcept {
+    return new (std::nothrow) T(name, serialData, serialLength);
+  }
 
  protected:
   static nvinfer1::PluginFieldCollection field_collection_;

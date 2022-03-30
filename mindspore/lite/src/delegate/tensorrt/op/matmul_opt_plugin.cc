@@ -25,6 +25,11 @@
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(MatmulOptPluginCreater);
+template class TensorRTPluginCreater<MatmulOptPlugin>;
+template <class T>
+nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
+template <class T>
+std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
 // MatmulOptPlugin
 int MatmulOptPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
@@ -105,23 +110,5 @@ size_t MatmulOptPlugin::getSerializationSize() const noexcept { return 2 * sizeo
 void MatmulOptPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &a_trans_, sizeof(bool));
   SerializeValue(&buffer, &b_trans_, sizeof(bool));
-}
-
-nvinfer1::IPluginV2 *MatmulOptPluginCreater::createPlugin(const char *name,
-                                                          const nvinfer1::PluginFieldCollection *fc) noexcept {
-  const nvinfer1::PluginField *fields = fc->fields;
-  bool a_trans = static_cast<const bool *>(fields[0].data)[0];
-  bool b_trans = static_cast<const bool *>(fields[1].data)[0];
-  return new (std::nothrow) MatmulOptPlugin(name, a_trans, b_trans);
-}
-
-nvinfer1::IPluginV2 *MatmulOptPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                               size_t serialLength) noexcept {
-  bool a_trans;
-  DeserializeValue(&serialData, &serialLength, &a_trans, sizeof(bool));
-  bool b_trans;
-  DeserializeValue(&serialData, &serialLength, &b_trans, sizeof(bool));
-  MS_LOG(DEBUG) << name << " is deserialize as a_trans: " << a_trans << ", b_trans: " << b_trans;
-  return new (std::nothrow) MatmulOptPlugin(name, a_trans, b_trans);
 }
 }  // namespace mindspore::lite

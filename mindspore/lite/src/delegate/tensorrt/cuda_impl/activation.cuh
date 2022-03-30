@@ -20,4 +20,7 @@
 template <typename T>
 void Sigmoid(const T *input1, T *output, int element_cnt, cudaStream_t stream);
 
+template <typename T>
+void Gelu(const T *input1, T *output, int element_cnt, cudaStream_t stream);
+
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_ACTIVATION_H_

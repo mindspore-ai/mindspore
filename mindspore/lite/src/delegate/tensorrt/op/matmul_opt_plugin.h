@@ -28,8 +28,19 @@ class MatmulOptPlugin : public TensorRTPlugin {
   MatmulOptPlugin(const std::string name, bool a_trans, bool b_trans)
       : TensorRTPlugin(name, std::string(MATMUL_OPT_PLUGIN_NAME)), a_trans_(a_trans), b_trans_(b_trans) {}
 
-  // It doesn't make sense to make GeluPluginDynamic without arguments, so we delete
-  // default constructor.
+  MatmulOptPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
+      : TensorRTPlugin(std::string(name), std::string(MATMUL_OPT_PLUGIN_NAME)) {
+    const nvinfer1::PluginField *fields = fc->fields;
+    a_trans_ = static_cast<const bool *>(fields[0].data)[0];
+    b_trans_ = static_cast<const bool *>(fields[1].data)[0];
+  }
+
+  MatmulOptPlugin(const char *name, const void *serialData, size_t serialLength)
+      : TensorRTPlugin(std::string(name), std::string(MATMUL_OPT_PLUGIN_NAME)) {
+    DeserializeValue(&serialData, &serialLength, &a_trans_, sizeof(bool));
+    DeserializeValue(&serialData, &serialLength, &b_trans_, sizeof(bool));
+  }
+
   MatmulOptPlugin() = delete;
 
   // IPluginV2DynamicExt Methods
@@ -53,15 +64,9 @@ class MatmulOptPlugin : public TensorRTPlugin {
   cublasOperation_t operations_[2]{CUBLAS_OP_N, CUBLAS_OP_N};
   cudaDataType data_types_[4]{CUDA_R_32F, CUDA_R_32F, CUDA_R_32F, CUDA_R_32F};
 };
-
-class MatmulOptPluginCreater : public TensorRTPluginCreater {
+class MatmulOptPluginCreater : public TensorRTPluginCreater<MatmulOptPlugin> {
  public:
   MatmulOptPluginCreater() : TensorRTPluginCreater(std::string(MATMUL_OPT_PLUGIN_NAME)) {}
-
-  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept override;
-
-  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData,
-                                         size_t serialLength) noexcept override;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_MATMUL_OPT_PLUGIN_H_
