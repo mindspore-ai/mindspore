@@ -469,9 +469,9 @@
 
         .. note:: 仅在图模式、全自动并行(AUTO_PARALLEL)模式下生效。
 
-    .. py:method:: shard(in_axes, out_axes, device="Ascend", level=0)
+    .. py:method:: shard(in_strategy, out_strategy, device="Ascend", level=0)
 
-        指定输入/输出Tensor的分布策略，其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 in_axes/out_axes需要为元组类型，
+        指定输入/输出Tensor的分布策略，其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 in_strategy/out_strategy需要为元组类型，
         其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： `mindspore.ops.Primitive.shard` 的描述，也可以设置为None，会默认以数据并行执行。
         其余算子的并行策略由输入输出指定的策略推导得到。
 
@@ -479,8 +479,8 @@
 
         **参数：**
 
-        - **in_axes** (tuple) – 指定各输入的切分策略，输入元组的每个元素可以为元组或None，元组即具体指定输入每一维的切分策略，None则会默认以数据并行执行。
-        - **out_axes** (tuple) – 指定各输出的切分策略，用法同in_axes。
+        - **in_strategy** (tuple) – 指定各输入的切分策略，输入元组的每个元素可以为元组或None，元组即具体指定输入每一维的切分策略，None则会默认以数据并行执行。
+        - **out_strategy** (tuple) – 指定各输出的切分策略，用法同in_strategy。
         - **device** (string) - 指定执行设备，可以为["CPU", "GPU", "Ascend"]中任意一个，默认值："Ascend"。目前尚未使能。
         - **level** (int) - 指定搜索切分策略的目标函数，即是最大化计算通信比、最小化内存消耗、最大化执行速度等。可以为[0, 1, 2]中任意一个，默认值：0。目前仅支持
           最大化计算通信比，其余模式尚未使能。
@@ -488,6 +488,18 @@
         **返回：**
 
         Cell类型，Cell本身。
+
+    .. py:method:: auto_cast_inputs(inputs)
+
+        在混合精度下，自动对输入进行类型转换。
+
+        **参数：**
+
+        **inputs** (tuple) – construct方法的输入。
+
+        **返回：**
+
+        Tuple类型，经过类型转换后的输入。
 
     .. py:method:: set_grad(requires_grad=True)
 

@@ -547,7 +547,15 @@ class Cell(Cell_):
         return self
 
     def auto_cast_inputs(self, inputs):
-        """Auto cast inputs in mixed precision scenarios."""
+        """
+        Auto cast inputs in mixed precision scenarios.
+
+        Args:
+            inputs (tuple): the inputs of construct.
+
+        Returns:
+            Tuple, the inputs after data type cast.
+        """
         cast_inputs = inputs
         mixed_type = self.get_mixed_precision_type()
         if mixed_type == MixedPrecisionType.FP16:
@@ -1128,7 +1136,7 @@ class Cell(Cell_):
 
         def _updata(param):
             if param in replace:
-                return replace[param]
+                return replace.get(param)
             layout = None
             set_sliced = False
             if auto_parallel_mode:
