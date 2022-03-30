@@ -123,6 +123,23 @@ static inline void simd_exp256(MS_FLOAT32X8 input, float *dst) {
 }
 #endif
 
+static inline float simd_exp32_f32(float data) {
+  typedef union {
+    float f;
+    int i;
+  } fi;
+  static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};  // Approximate calculation param
+  data = MSMAX(-88.0f, MSMIN(88.0f, data));                                             // clamp(-88, 88)
+  int integer = data / param[0];
+  float decimal = data - integer * param[0];
+  fi int_exp;
+  int_exp.i = (integer + 127) << 23;  // Approximate calculation : (integer + 127) << 23
+  // Approximate calculation
+  const float decimal_exp =
+    1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
+  return int_exp.f * decimal_exp;
+}
+
 static inline void simd_exp32(float src, float *dst) {
   typedef union {
     float f;
