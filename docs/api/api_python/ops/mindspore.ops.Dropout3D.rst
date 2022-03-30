@@ -5,11 +5,11 @@
 
     随机丢弃层。
 
-    Dropout是一种正则化手段，该算子根据丢弃概率 :math:`1 - keep\_prob` ，在训练过程中随机将一些神经元输出设置为0，通过阻止神经元节点间的相关性来减少过拟合，在推理过程中，此层返回与 `x` 相同的Tensor。对于shape为NCDHW的五维Tensor，通道特征图指的是shape为DHW的三维特征图。
+    Dropout是一种正则化手段，通过在训练中以 :math:`1 - keep\_prob` 的概率随机将神经元输出设置为0，起到减少神经元相关性的作用，避免过拟合。在推理过程中，此层返回与 `x` 相同的Tensor。对于shape为NCDHW的五维Tensor，通道特征图指的是shape为DHW的三维特征图。
 
     例如，输入的批数据中第 :math:`i_th` 个样本的第 :math:`j_th` 个通道，则可三维Tensor input[i,j,k]。
 
-    Dropout3D可以提高通feature map之间的独立性。
+    Dropout3D可以提高feature map之间的独立性。
 
     **参数：**
 
