@@ -7,8 +7,8 @@ mindspore.ops.MaskedSelect
 
     **输入：**
 
-    - **x** (Tensor) - 需要进行索引操作的输入Tensor，其shape为 :math:`(x_1, x_2, ..., x_R)` 。
-    - **mask** (Tensor[bool]) - 要进行索引的布尔掩码，其shape为 :math:`(x_1, x_2, ..., x_R)` 。
+    - **x** (Tensor) - 输入的Tensor，其shape为 :math:`(x_1, x_2, ..., x_R)` 。
+    - **mask** (Tensor[bool]) - 输入的布尔掩码，其shape为 :math:`(x_1, x_2, ..., x_R)` 。
 
     **输出：**
 

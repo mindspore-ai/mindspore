@@ -133,8 +133,8 @@ def sequence_mask(lengths, maxlen=None):
     """
     Returns a mask tensor representing the first N positions of each cell.
 
-    If lengths has shape [d_1, d_2, ..., d_n], then the resulting tensor mask has type and shape
-    [d_1, d_2, ..., d_n, maxlen], with mask[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])
+    If `lengths` has shape (d_1, d_2, ..., d_n), then the resulting tensor mask has type and shape
+    (d_1, d_2, ..., d_n, maxlen), with mask[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])
 
     Args:
         lengths (Tensor): Tensor to calculate the mask for. All values in this tensor should be
@@ -143,7 +143,7 @@ def sequence_mask(lengths, maxlen=None):
             type as elements in `lengths`. Default is None.
 
     Outputs:
-        One mask tensor of shape lengths.shape + (maxlen,).
+        One mask tensor of shape `lengths.shape + (maxlen,)` .
 
     Raises:
         TypeError: If `lengths` is not a Tensor.
